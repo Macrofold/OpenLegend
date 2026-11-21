@@ -40,7 +40,7 @@ pub struct RuntimeConsolidationTicket {
     pub(super) scope: Arc<NpcHistoricalScope>,
     selection: NpcSourceSelection,
     limits: ConsolidationLimits,
-    presentation: MaintenancePresentation,
+    presentation: Option<MaintenancePresentation>,
     files: String,
     _files: ByteReservation,
     sources: Option<PreparedNpcSources>,
@@ -56,7 +56,7 @@ impl NativeWorldSession {
     ) -> Result<RuntimeConsolidationTicket, RuntimeError> {
         let _decode = decode_preparation(input, &self.budget)?;
         let input = serde_json::from_slice(input).map_err(failure)?;
-        self.bind_consolidation_direct(body, input)
+        self.bind_consolidation_owned(body, input, true)
     }
 
     /// Binds an owned, actor-scoped selection to the live native maintenance read.
@@ -64,7 +64,16 @@ impl NativeWorldSession {
     pub fn bind_consolidation_direct(
         &mut self,
         body: &RuntimeMaintenanceRead,
+        input: RuntimeConsolidationBinding,
+    ) -> Result<RuntimeConsolidationTicket, RuntimeError> {
+        self.bind_consolidation_owned(body, input, false)
+    }
+
+    fn bind_consolidation_owned(
+        &mut self,
+        body: &RuntimeMaintenanceRead,
         mut input: RuntimeConsolidationBinding,
+        bridge_packet: bool,
     ) -> Result<RuntimeConsolidationTicket, RuntimeError> {
         self.require_active()?;
         let state = &self.session.accepted().map_err(failure)?.state;
@@ -125,14 +134,16 @@ impl NativeWorldSession {
             .as_ref()
             .and_then(|m| m.get(actor))
             .map(|inner| inner.revision);
-        let (files, files_storage) = if admission.dream_episode.is_some() {
+        let (files, files_storage) = if bridge_packet && admission.dream_episode.is_some() {
             body.read.files(state, &self.budget).map_err(failure)?
         } else {
             let storage = self.budget.reserve(2).map_err(failure)?;
             ("[]".to_owned(), storage)
         };
-        let presentation =
-            MaintenancePresentation::capture(state, actor, &self.budget).map_err(failure)?;
+        let presentation = bridge_packet
+            .then(|| MaintenancePresentation::capture(state, actor, &self.budget))
+            .transpose()
+            .map_err(failure)?;
         let scope = NpcHistoricalScope::capture_personal(state, actor, serial, &self.budget)
             .map_err(failure)?;
         input.selection.consolidation_job = Some(input.job_id.clone());
@@ -525,7 +536,10 @@ impl RuntimeConsolidationTicket {
                 actor_id: &self.scope.actor_id,
                 inner_revision: self.inner_revision,
                 files,
-                presentation: &self.presentation,
+                presentation: self
+                    .presentation
+                    .as_ref()
+                    .ok_or_else(|| failure("consolidation has no bridge packet"))?,
                 sources,
             },
             budget,

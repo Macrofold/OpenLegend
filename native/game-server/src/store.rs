@@ -22,7 +22,7 @@ mod npc_schedule;
 mod npc_sources;
 mod privacy_edit;
 mod read;
-mod recall;
+pub(crate) mod recall;
 mod received;
 mod schema;
 mod source_versions;

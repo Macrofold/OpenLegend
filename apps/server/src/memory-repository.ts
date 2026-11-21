@@ -205,6 +205,68 @@ const sourceColumnNames = [
   'sequence',
 ];
 const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
+
+const linguisticSpeechSql =
+  "a.payload::jsonb->'speech'->>'intelligibility' IN ('partial','clear') AND a.payload::jsonb->'speech'->>'perception'<>'seen'";
+
+function consolidationRecentSpeechSql(world: string, actor: string): string {
+  // Nonlinguistic cues remain recallable without taking places in the
+  // protected verbatim speech pool.
+  return `SELECT s.id FROM recall_sources s JOIN mind_awareness a ON a.world_id=s.world_id AND a.id=s.record_id
+    WHERE s.world_id=${world} AND s.actor_id=${actor} AND s.eligible=1 AND s.source_kind='awareness'
+      AND s.event_type='speech' AND ${linguisticSpeechSql}
+    ORDER BY s.at DESC,s.sequence DESC,s.id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech}`;
+}
+
+/** Only routine eligible evidence can anchor hourly work. Important accounts
+ * in that batch stay as boundaries between routine groups. */
+export function consolidationAnchorSql(scope: string, cutoff: string, speech: [string, string]) {
+  return `SELECT r.at,r.sequence,r.id FROM recall_sources r
+    WHERE ${scope} AND r.at<=${cutoff} AND r.importance<${EXPERIENCE_LIMITS.protectedImportance}
+      AND (r.source_kind='awareness' OR r.memory_kind='episode')
+      AND r.id NOT IN (${consolidationRecentSpeechSql(...speech)})
+    ORDER BY r.at,r.sequence,r.id LIMIT 1`;
+}
+
+/** Chronological metadata only. The source owner must admit complete bodies
+ * before loading them. A daily partition keeps its original revision ceiling. */
+export function consolidationSourceSql(input: {
+  scope: string;
+  from: string;
+  to: string;
+  after: [string, string, string];
+  speech: [string, string];
+  limit: string;
+  dailyRevision?: [string, string, string];
+  fields?: string;
+}) {
+  const { scope, from, to, after, speech, limit, dailyRevision, fields = sourceColumns } = input;
+  const daily = dailyRevision !== undefined;
+  const payload = Object.entries(sourceTables)
+    .map(
+      ([kind, table]) =>
+        `WHEN '${kind}' THEN (SELECT octet_length(payload) FROM ${table} t WHERE t.world_id=r.world_id AND t.id=r.record_id)`,
+    )
+    .join(' ');
+  return `SELECT ${fields}, CASE r.source_kind ${payload} END AS payload_bytes FROM recall_sources r
+    WHERE ${scope}
+      AND NOT (r.source_kind='awareness' AND r.importance>=${EXPERIENCE_LIMITS.protectedImportance} AND EXISTS (
+        SELECT 1 FROM recall_place_capsules p WHERE p.world_id=r.world_id AND p.actor_id=r.actor_id
+          AND p.owner_id=r.id AND p.owner_kind=r.source_kind AND p.owner_revision=r.revision))
+      AND r.at>=${from} AND r.at${daily ? '<' : '<='}${to}
+      AND (r.at,r.sequence,r.id) ${daily ? '>' : '>='} (${after.join(',')})
+      AND (r.source_kind='awareness' OR r.memory_kind='episode'${daily ? " OR r.source_kind='summary'" : ''})
+      AND r.id NOT IN (${consolidationRecentSpeechSql(...speech)})
+      ${
+        dailyRevision
+          ? `AND EXISTS (
+        SELECT 1 FROM mind_memories m WHERE r.source_kind='memory' AND m.world_id=r.world_id AND m.id=r.record_id AND m.revision<=${dailyRevision[0]}
+        UNION ALL SELECT 1 FROM mind_awareness a WHERE r.source_kind='awareness' AND a.world_id=r.world_id AND a.id=r.record_id AND a.revision<=${dailyRevision[1]}
+        UNION ALL SELECT 1 FROM mind_summaries s WHERE r.source_kind='summary' AND s.world_id=r.world_id AND s.id=r.record_id AND s.revision<=${dailyRevision[2]})`
+          : ''
+      }
+    ORDER BY r.at,r.sequence,r.id LIMIT ${limit}`;
+}
 /** Current recall rows and their lexical admission are one statement. The
  * stand-alone release uses this same trusted SQL with typed parameter markers. */
 export function memoryProjectionSql(hardBytes: string, input = '?'): string {
@@ -3389,11 +3451,6 @@ export class MemoryRepository {
     if (this.sourceEditPending(scope)) throw new MemoryPreparationError();
     return [scope.worldId, scope.actorId, scope.generation];
   }
-  /** SQL counterpart of hasLinguisticSpeech: no-word cues remain recallable evidence,
-   * but cannot crowd the automatic dialogue or protected verbatim pool. */
-  private get linguisticSpeech(): string {
-    return "a.payload::jsonb->'speech'->>'intelligibility' IN ('partial','clear') AND a.payload::jsonb->'speech'->>'perception'<>'seen'";
-  }
   async context(
     scope: MemoryScope,
     requiredIds: string[],
@@ -3937,22 +3994,15 @@ export class MemoryRepository {
         .get();
       if (head?.['generation'] !== scope.generation) return null;
       const throughRevision = review?.throughRevision ?? Number(head['revision']);
-      const from = mode === 'daily' ? (review?.day ?? -1) * 86400 : -Number.MAX_VALUE;
-      const to = mode === 'daily' ? from + 86400 : simTime - EXPERIENCE_LIMITS.rawHours * 3600;
+      const daySeconds = EXPERIENCE_LIMITS.reviewDaySeconds;
+      const from = mode === 'daily' ? (review?.day ?? -1) * daySeconds : -Number.MAX_VALUE;
+      const to = mode === 'daily' ? from + daySeconds : simTime - EXPERIENCE_LIMITS.rawHours * 3600;
       let after = review?.after ?? { at: -Number.MAX_VALUE, sequence: 0, id: '' };
       if (mode === 'hourly') {
         // Start at actual routine work, then retain protected incidents inside that
         // prefix as grouping barriers. Old protected originals cannot starve later work.
         const anchor = await this.db
-          .prepare(
-            `SELECT r.at,r.sequence,r.id FROM recall_sources r
-          WHERE ${this.eligible} AND r.at<=? AND r.importance<${EXPERIENCE_LIMITS.protectedImportance}
-          AND (r.source_kind='awareness' OR r.memory_kind='episode')
-          AND r.id NOT IN (SELECT s.id FROM recall_sources s JOIN mind_awareness a ON a.world_id=s.world_id AND a.id=s.record_id
-            WHERE s.world_id=? AND s.actor_id=? AND s.eligible=1 AND s.source_kind='awareness' AND s.event_type='speech'
-            AND ${this.linguisticSpeech} ORDER BY s.at DESC,s.sequence DESC,s.id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech})
-          ORDER BY r.at,r.sequence,r.id LIMIT 1`,
-          )
+          .prepare(consolidationAnchorSql(this.eligible, '?', ['?', '?']))
           .get(...this.params(scope), to, scope.worldId, scope.actorId);
         if (!anchor) return null;
         after = {
@@ -3961,27 +4011,17 @@ export class MemoryRepository {
           id: String(anchor['id']),
         };
       }
-      const payloadBytes = 'octet_length(payload)';
       const rows = await this.db
         .prepare(
-          `SELECT ${sourceColumns}, CASE r.source_kind ${Object.entries(sourceTables)
-            .map(
-              ([kind, table]) =>
-                `WHEN '${kind}' THEN (SELECT ${payloadBytes} FROM ${table} t WHERE t.world_id=r.world_id AND t.id=r.record_id)`,
-            )
-            .join(' ')} END AS payload_bytes FROM recall_sources r
-        WHERE ${this.eligible} AND NOT (r.source_kind='awareness' AND r.importance>=${EXPERIENCE_LIMITS.protectedImportance} AND EXISTS (SELECT 1 FROM recall_place_capsules p WHERE p.world_id=r.world_id AND p.actor_id=r.actor_id AND p.owner_id=r.id AND p.owner_kind=r.source_kind AND p.owner_revision=r.revision)) AND r.at>=? AND r.at${mode === 'daily' ? '<' : '<='}?
-        AND (r.at,r.sequence,r.id) ${mode === 'hourly' ? '>=' : '>'} (?,?,?)
-        AND (r.source_kind='awareness' OR r.memory_kind='episode'${mode === 'daily' ? " OR r.source_kind='summary'" : ''})
-        AND r.id NOT IN (SELECT s.id FROM recall_sources s JOIN mind_awareness a ON a.world_id=s.world_id AND a.id=s.record_id WHERE s.world_id=? AND s.actor_id=? AND s.eligible=1 AND s.source_kind='awareness' AND s.event_type='speech' AND ${this.linguisticSpeech} ORDER BY s.at DESC,s.sequence DESC,s.id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech})
-        ${
-          mode === 'daily'
-            ? `AND EXISTS (SELECT 1 FROM ${'mind_memories'} m WHERE r.source_kind='memory' AND m.world_id=r.world_id AND m.id=r.record_id AND m.revision<=?
-          UNION ALL SELECT 1 FROM mind_awareness a WHERE r.source_kind='awareness' AND a.world_id=r.world_id AND a.id=r.record_id AND a.revision<=?
-          UNION ALL SELECT 1 FROM mind_summaries s WHERE r.source_kind='summary' AND s.world_id=r.world_id AND s.id=r.record_id AND s.revision<=?)`
-            : ''
-        }
-        ORDER BY r.at,r.sequence,r.id LIMIT ?`,
+          consolidationSourceSql({
+            scope: this.eligible,
+            from: '?',
+            to: '?',
+            after: ['?', '?', '?'],
+            speech: ['?', '?'],
+            limit: '?',
+            ...(mode === 'daily' ? { dailyRevision: ['?', '?', '?'] } : {}),
+          }),
         )
         .all(
           ...this.params(scope),
@@ -4025,12 +4065,15 @@ export class MemoryRepository {
       let bytes = 0;
       const first = ordered[0]?.memory;
       if (!first) return null;
-      const end = Math.min(first.at + 21600, (Math.floor(first.at / 86400) + 1) * 86400);
+      const firstDay = Math.floor(first.at / daySeconds);
+      const end = Math.min(
+        first.at + EXPERIENCE_LIMITS.consolidationWindowHours * 3600,
+        (firstDay + 1) * daySeconds,
+      );
       for (const entry of ordered) {
         if (
           mode === 'hourly' &&
-          (entry.memory.at > end ||
-            Math.floor(entry.memory.at / 86400) !== Math.floor(first.at / 86400))
+          (entry.memory.at > end || Math.floor(entry.memory.at / daySeconds) !== firstDay)
         )
           break;
         const size = Buffer.byteLength(JSON.stringify(entry.entry));

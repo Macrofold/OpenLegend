@@ -3,6 +3,7 @@
 
 mod apply;
 mod decide;
+mod maintenance;
 pub(crate) mod preview;
 mod retry;
 pub(crate) use retry::ChatRetryRequest;

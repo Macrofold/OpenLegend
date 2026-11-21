@@ -96,22 +96,18 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         llm_configured: macrofold || language,
         limit_usd,
     };
-    let schedule = (display.jev_configured && limit_usd > 0.0).then(|| {
-        Arc::new(crate::npc::schedule::ScheduleInbox::new(
-            game.cognition.clone(),
-            custody.clone(),
-        ))
-    });
+    let schedule = Arc::new(crate::npc::schedule::ScheduleInbox::new(
+        game.cognition.clone(),
+        custody.clone(),
+        display.jev_configured && limit_usd > 0.0,
+    ));
     let saves = LiveSaves::new(
         game.world.clone(),
         game.store.clone(),
         custody.clone(),
         game.language().cloned(),
     )?;
-    let saves = Arc::new(match &schedule {
-        Some(schedule) => saves.with_schedule(schedule.clone()),
-        None => saves,
-    });
+    let saves = Arc::new(saves.with_schedule(schedule.clone()));
     let checkpoints = Arc::new(crate::store::checkpoint::CheckpointSchedule::new(
         game.store.clone(),
         saves.clone(),
@@ -226,14 +222,22 @@ async fn run(
     clock: Arc<GameClock>,
     saves: Arc<LiveSaves>,
     decisions: Arc<crate::npc::Director>,
-    schedule: Option<Arc<crate::npc::schedule::ScheduleInbox>>,
+    schedule: Arc<crate::npc::schedule::ScheduleInbox>,
     checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
     end_http: watch::Sender<bool>,
     game: Arc<CurrentServer>,
 ) -> Result<(), LaunchError> {
     let http_stop = end_http.subscribe();
-    let scheduler = schedule
-        .map(|inbox| tokio::spawn(decisions.clone().run_schedule(inbox, end_http.subscribe())));
+    let scheduler = tokio::spawn(
+        decisions
+            .clone()
+            .run_schedule(schedule.clone(), end_http.subscribe()),
+    );
+    let maintenance = tokio::spawn(
+        decisions
+            .clone()
+            .run_maintenance(schedule, end_http.subscribe()),
+    );
     let checkpoint_stop = end_http.subscribe();
     let checkpoint_work = checkpoints.run(checkpoint_stop);
     let (end_clock, clock_stop) = watch::channel(false);
@@ -270,12 +274,10 @@ async fn run(
     let stop_decisions = async move {
         // Let the scheduler acknowledge its in-flight PostgreSQL write and
         // register the corresponding task before draining decision owners.
-        let scheduled = match scheduler {
-            Some(task) => task.await,
-            None => Ok(()),
-        };
+        let (scheduled, maintained) = tokio::join!(scheduler, maintenance);
         let settled = decisions.stop().await;
         scheduled?;
+        maintained?;
         settled?;
         Ok::<_, LaunchError>(())
     };

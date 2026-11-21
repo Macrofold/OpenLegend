@@ -250,6 +250,8 @@ export const EXPERIENCE_LIMITS = {
   conversationSpeech: 512,
   protectedImportance: 8,
   consolidationPressure: 8192,
+  consolidationWindowHours: 6,
+  reviewDaySeconds: 86_400,
   summaryBytes: 1200,
   historyDays: 30,
 } as const;
@@ -1710,12 +1712,7 @@ export function acceptConsolidation(
   const positions = new Map(sources.map((entry, index) => [experienceEntryKey(entry), index]));
   let previousPosition = -1;
   for (const group of groups) {
-    if (
-      !group.sourceKeys.length ||
-      !group.text.trim() ||
-      byteCount(group.text) > EXPERIENCE_LIMITS.summaryBytes
-    )
-      return reject('Invalid memory group.');
+    if (!group.sourceKeys.length || !group.text.trim()) return reject('Invalid memory group.');
     for (const key of group.sourceKeys) {
       if (!expected.has(key) || used.has(key)) return reject('Unknown or repeated source.');
       used.add(key);
@@ -1735,6 +1732,9 @@ export function acceptConsolidation(
       .filter((source) => source.importance >= EXPERIENCE_LIMITS.protectedImportance);
     if (important.length && (group.sourceKeys.length !== 1 || group.text !== important[0]!.summary))
       return reject('Important incidents must remain separate and unchanged.');
+    // Protected text has its existing account admission and creates no summary.
+    if (!important.length && byteCount(group.text) > EXPERIENCE_LIMITS.summaryBytes)
+      return reject('Invalid memory group.');
   }
   if (used.size !== sources.length)
     return reject('Every supplied source requires explicit coverage.');

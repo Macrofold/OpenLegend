@@ -11,6 +11,16 @@ pub use reflection::RuntimeReflectionTicket;
 pub struct RuntimeMaintenanceRead {
     pub(crate) read: Arc<crate::capture::maintenance::MaintenanceCapture>,
 }
+pub struct RuntimeDreamReview {
+    pub world_id: String,
+    pub generation: String,
+    pub accepted_cut: u64,
+    pub at: f64,
+    pub ready_at: f64,
+    pub available: bool,
+    pub episode: String,
+    _storage: ByteReservation,
+}
 pub struct RuntimeMaintenancePublication {
     _lease: crate::host::PublicationLease,
     fence: Arc<CandidateFence>,
@@ -45,6 +55,39 @@ struct SupportInput {
 }
 
 impl NativeWorldSession {
+    /// Read just the installed continuous sleep opportunity for one actor.
+    /// Holds no personal history body or permission to spend on inference.
+    pub fn dream_review(&self, actor: &str) -> Result<Option<RuntimeDreamReview>, RuntimeError> {
+        use crate::capture::maintenance::{MaintenancePurpose, available, dream_status};
+
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let Some((episode, elapsed, after)) = dream_status(state, actor) else {
+            return Ok(None);
+        };
+        let world = &state.physical.header.id;
+        let generation = &state.generation;
+        let at = state.physical.header.sim_time;
+        let ready_at = at + (after - elapsed).max(0.);
+        let bytes = std::mem::size_of::<RuntimeDreamReview>()
+            .checked_add(world.len())
+            .and_then(|n| n.checked_add(generation.len()))
+            .and_then(|n| n.checked_add(episode.len()))
+            .ok_or_else(|| failure("capacity"))?;
+        let storage = self.budget.reserve(bytes).map_err(failure)?;
+        Ok(Some(RuntimeDreamReview {
+            world_id: world.clone(),
+            generation: generation.clone(),
+            accepted_cut: state.accepted_cut,
+            at,
+            ready_at,
+            available: !state.physical.header.paused
+                && available(state, actor, MaintenancePurpose::Maintenance).map_err(failure)?,
+            episode: episode.to_owned(),
+            _storage: storage,
+        }))
+    }
+
     pub fn maintenance_population(&self) -> Result<RuntimeJson, RuntimeError> {
         self.require_active()?;
         RuntimeJson::encode(

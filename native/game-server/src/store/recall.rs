@@ -23,6 +23,7 @@ use tokio_postgres::Transaction;
 pub(crate) mod activity_results;
 mod checkpoint_accounts;
 pub(crate) mod consolidation;
+pub(crate) mod maintenance_scan;
 mod recovery;
 
 const TABLE: &str = "mind_awareness";

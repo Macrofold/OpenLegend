@@ -32,8 +32,8 @@ pub use learning::{RuntimeActivityLearning, RuntimeActivityLearningStep};
 mod startup;
 pub use maintenance::{
     RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
-    RuntimeConsolidationTicket, RuntimeMaintenancePublication, RuntimeMaintenanceRead,
-    RuntimeReflectionTicket,
+    RuntimeConsolidationTicket, RuntimeDreamReview, RuntimeMaintenancePublication,
+    RuntimeMaintenanceRead, RuntimeReflectionTicket,
 };
 mod npc;
 mod npc_intake;

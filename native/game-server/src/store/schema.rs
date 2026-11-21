@@ -32,6 +32,7 @@ pub struct StorageSchema {
 pub(crate) struct RecallStatements {
     pub insert: String,
     pub reconcile: String,
+    pub maintenance: super::recall::maintenance_scan::MaintenanceQueries,
 }
 
 #[derive(Deserialize)]
@@ -178,6 +179,7 @@ impl StorageSchema {
             .checked_add(self.recall.insert.capacity())?
             .checked_add(self.upsert_job.capacity())?
             .checked_add(self.recall.reconcile.capacity())?
+            .checked_add(self.recall.maintenance.retained_bytes()?)?
             .checked_add(self.default_story.get().len())?
             .checked_add(self.transcript_account.capacity())?
             .checked_add(self.banner_account.capacity())?
@@ -216,6 +218,7 @@ impl StorageSchema {
             || self.banner_account.is_empty()
             || self.recall.insert.is_empty()
             || self.recall.reconcile.is_empty()
+            || !self.recall.maintenance.valid()
             || self.lexical.work.is_empty()
             || self.lexical.write.is_empty()
             || self.lexical.complete.is_empty()

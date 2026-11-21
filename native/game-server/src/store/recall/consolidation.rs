@@ -32,6 +32,30 @@ pub(crate) struct PreparedConsolidation {
     _custody: ByteReservation,
 }
 
+pub(crate) struct ConsolidationCursorWrite {
+    pub key: String,
+    pub previous: Option<String>,
+    pub next: String,
+    pub _custody: ByteReservation,
+}
+
+impl ConsolidationCursorWrite {
+    pub(crate) async fn commit(&self, tx: &Transaction<'_>) -> StoreResult<()> {
+        let saved = tx
+            .execute(
+                "INSERT INTO meta(key,value) SELECT $1,$2 WHERE $3::text IS NULL \
+             OR EXISTS(SELECT 1 FROM meta WHERE key=$1) \
+             ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE meta.value=$3",
+                &[&self.key, &self.next, &self.previous],
+            )
+            .await?;
+        if saved != 1 {
+            return Err(StoreError::StaleCut);
+        }
+        Ok(())
+    }
+}
+
 impl Store {
     /// Compile candidate summaries into private search placements before the
     /// world can accept. The saved prefix keeps the canonical bodies and archives.
@@ -140,6 +164,7 @@ impl PreparedConsolidation {
         ConsolidationProjection {
             prepared: self,
             store,
+            cursor: None,
         }
     }
 }
@@ -147,6 +172,14 @@ impl PreparedConsolidation {
 pub(crate) struct ConsolidationProjection<'a> {
     prepared: &'a PreparedConsolidation,
     store: &'a Store,
+    cursor: Option<&'a ConsolidationCursorWrite>,
+}
+
+impl<'a> ConsolidationProjection<'a> {
+    pub(crate) fn with_cursor(mut self, cursor: &'a ConsolidationCursorWrite) -> Self {
+        self.cursor = Some(cursor);
+        self
+    }
 }
 
 impl PrefixProjection for ConsolidationProjection<'_> {
@@ -274,6 +307,9 @@ impl PrefixProjection for ConsolidationProjection<'_> {
                     ],
                 )
                 .await?;
+        }
+        if let Some(cursor) = self.cursor {
+            cursor.commit(transaction).await?;
         }
         Ok(())
     }

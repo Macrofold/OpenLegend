@@ -303,10 +303,7 @@ impl PreparedConsolidation {
         let mut through = 0usize;
         let mut drafts = Vec::with_capacity(groups.len());
         for group in groups {
-            if group.source_keys.is_empty()
-                || group.text.trim_is_empty()
-                || group.text.utf8_len() as u64 > limits.summary_bytes
-            {
+            if group.source_keys.is_empty() || group.text.trim_is_empty() {
                 return Err(ExecutionError::InvalidCheckpoint.into());
             }
             let mut indices = Vec::with_capacity(group.source_keys.len());
@@ -327,6 +324,11 @@ impl PreparedConsolidation {
                     return Err(ExecutionError::InvalidCheckpoint.into());
                 }
                 continue;
+            }
+            // An exact protected reading creates no summary and keeps its
+            // existing account admission. The output bound applies here.
+            if group.text.utf8_len() as u64 > limits.summary_bytes {
+                return Err(ExecutionError::InvalidCheckpoint.into());
             }
             let entries: Vec<_> = indices.iter().map(|i| &request.sources[*i]).collect();
             let first_summary = entries

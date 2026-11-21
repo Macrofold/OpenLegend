@@ -13,6 +13,7 @@ import {
   experienceEntryKey,
   experienceReading,
   ACTIVITY_SYNTAX,
+  EXPERIENCE_LIMITS,
   dreamStatus,
   dreamPolicy,
   bodyThinkingBlocked,
@@ -491,7 +492,7 @@ export class CognitionMaintenance {
               continue;
             const dreamReady = safe && !!dream && dream.elapsedSeconds >= dream.afterSeconds;
             const hasMemories = history.hasMemories;
-            const day = Math.floor(actor.simTime / 86400);
+            const day = Math.floor(actor.simTime / EXPERIENCE_LIMITS.reviewDaySeconds);
             const dreamReviewDue = dreamReady && day > 0;
             const reflectionExecutable = this.reflectionExecutable;
             const reflectionDue =

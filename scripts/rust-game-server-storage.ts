@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { nativeSetupSettings } from '../packages/domain/src/native-install.js';
+import { EXPERIENCE_LIMITS } from '../packages/domain/src/experience.js';
 import { summaryMemoryPrefix } from '../packages/domain/src/experience-manifest.js';
 import { rustGameServerViewPolicy } from './rust-game-server-view.js';
 import { rustGameServerDecisionPolicy } from './rust-game-server-cognition.js';
@@ -55,8 +56,12 @@ import {
 } from '../apps/server/src/native-install-inputs.js';
 
 import {
+  consolidationAnchorSql,
+  consolidationSourceSql,
   memoryProjectionSql,
   memoryReconciliationSql,
+  MAINTENANCE_BYTES,
+  MAINTENANCE_SOURCES,
   MEMORY_HISTORY_TABLES,
 } from '../apps/server/src/memory-repository.js';
 
@@ -112,6 +117,17 @@ async function storageSchema(adminUrl: string) {
           orderedWrites: Boolean(node.uniqueIndexes?.length),
         }));
         let jobParameter = 0;
+        const consolidationScope =
+          'r.world_id=$1 AND r.actor_id=$2 AND (SELECT generation FROM world_head WHERE id=1)=$3 AND r.eligible=1';
+        const consolidationPage = {
+          scope: consolidationScope,
+          from: '$4',
+          to: '$5',
+          after: ['$6', '$7', '$8'] as [string, string, string],
+          speech: ['$1', '$2'] as [string, string],
+          limit: '$9',
+          fields: 'r.source_kind,r.id,r.revision,r.at,r.sequence,r.importance',
+        };
         return {
           version: DATABASE_SCHEMA,
           permittedUnmarked: [...ASSET_TABLES, ...AUTHORITY_TABLES],
@@ -197,6 +213,21 @@ async function storageSchema(adminUrl: string) {
               'SELECT actor_id,id,$4::text FROM unnest($2::text[],$3::text[]) c(actor_id,id)',
               '$1',
             ),
+            maintenance: {
+              anchor: consolidationAnchorSql(consolidationScope, '$4', ['$1', '$2']),
+              hourly: consolidationSourceSql(consolidationPage),
+              daily: consolidationSourceSql({
+                ...consolidationPage,
+                dailyRevision: ['$10', '$10', '$10'],
+              }),
+              maximumRows: MAINTENANCE_SOURCES,
+              maximumBytes: MAINTENANCE_BYTES,
+              rawAgeSeconds: EXPERIENCE_LIMITS.rawHours * 3600,
+              hourlyWindowSeconds: EXPERIENCE_LIMITS.consolidationWindowHours * 3600,
+              daySeconds: EXPERIENCE_LIMITS.reviewDaySeconds,
+              protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
+              summaryBytes: EXPERIENCE_LIMITS.summaryBytes,
+            },
           },
           tables,
         };

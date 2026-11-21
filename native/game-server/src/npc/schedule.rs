@@ -28,7 +28,10 @@ use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
-use tokio::{sync::watch, time::Instant};
+use tokio::{
+    sync::{Notify, watch},
+    time::Instant,
+};
 
 mod select;
 
@@ -36,25 +39,32 @@ pub(crate) struct ScheduleInbox {
     policy: Arc<crate::decision_render::DecisionPolicy>,
     budget: ByteBudget,
     queued: Mutex<Wake>,
+    ordinary: bool,
+    maintenance: Mutex<Wake>,
+    maintenance_ready: Notify,
 }
 
-pub(crate) struct ScheduleWake(Mutex<Option<Wake>>);
+pub(crate) struct ScheduleWake(Mutex<Option<(Wake, Wake)>>);
 
 #[derive(Default)]
-struct Wake {
-    all: bool,
-    actors: IndexMap<String, ByteReservation>,
+pub(super) struct Wake {
+    pub(super) all: bool,
+    pub(super) actors: IndexMap<String, ByteReservation>,
 }
 
 impl ScheduleInbox {
     pub(crate) fn new(
         policy: Arc<crate::decision_render::DecisionPolicy>,
         budget: ByteBudget,
+        ordinary: bool,
     ) -> Self {
         Self {
             policy,
             budget,
             queued: Mutex::new(Wake::default()),
+            ordinary,
+            maintenance: Mutex::new(Wake::default()),
+            maintenance_ready: Notify::new(),
         }
     }
 
@@ -63,24 +73,45 @@ impl ScheduleInbox {
     /// with their actual persistence and private evidence owners.
     pub(crate) fn stage(&self, changes: &ChangedRows) -> Result<ScheduleWake, RuntimeError> {
         let mut wake = Wake::default();
+        let mut maintenance = Wake::default();
         let policy = &self.policy.scheduling;
         for (table, rows) in &changes.writes {
             if table.starts_with("config_") && !policy.actor_paths.contains_key(table) {
-                wake.all = true;
+                wake.all = self.ordinary;
+                maintenance.all = true;
             }
             for row in rows {
-                self.actor(&mut wake, table, &row.id)?;
+                self.actor(&mut wake, &mut maintenance, table, &row.id)?;
             }
         }
         for (table, ids) in &changes.deletes {
             for id in ids {
-                self.actor(&mut wake, table, id)?;
+                self.actor(&mut wake, &mut maintenance, table, id)?;
             }
         }
-        Ok(ScheduleWake(Mutex::new(Some(wake))))
+        Ok(ScheduleWake(Mutex::new(Some((wake, maintenance)))))
     }
 
-    fn actor(&self, wake: &mut Wake, table: &str, id: &str) -> Result<(), RuntimeError> {
+    fn actor(
+        &self,
+        wake: &mut Wake,
+        maintenance: &mut Wake,
+        table: &str,
+        id: &str,
+    ) -> Result<(), RuntimeError> {
+        let changes_review = matches!(
+            table,
+            "sim_actors"
+                | "sim_entities"
+                | "sim_actor_conditions"
+                | "sim_processes"
+                | "sim_status_effects"
+                | "mind_state"
+                | "mind_privacy_revisions"
+        );
+        if !self.ordinary && !changes_review {
+            return Ok(());
+        }
         // Source's fallback applies specifically to identities of physical
         // entities. Other shared owners cannot wake a fabricated actor.
         let field = self.policy.scheduling.actor_paths.get(table).copied();
@@ -94,12 +125,13 @@ impl ScheduleInbox {
                 .is_some_and(|value| value == "entities")
                 .then_some(2)
         });
-        if let Some(actor) = index.and_then(|index| path.get(index)).map(Cow::as_ref)
-            && !wake.actors.contains_key(actor)
-        {
-            let held = self.budget.reserve(512 + actor.len())?;
-            wake.actors.try_reserve(1).map_err(|_| CapacityError)?;
-            wake.actors.insert(actor.to_owned(), held);
+        if let Some(actor) = index.and_then(|index| path.get(index)).map(Cow::as_ref) {
+            if self.ordinary {
+                wake.insert(actor, &self.budget)?;
+            }
+            if changes_review {
+                maintenance.insert(actor, &self.budget)?;
+            }
         }
         Ok(())
     }
@@ -107,16 +139,47 @@ impl ScheduleInbox {
     /// Consume at accepted publication, before another cut can be accepted.
     /// Newer wakes for the same resident reuse the pending ownership.
     pub(crate) fn accept(&self, wake: &ScheduleWake) {
-        let Some(wake) = wake.0.lock().expect("NPC wake ownership").take() else {
+        let Some((wake, maintenance)) = wake.0.lock().expect("NPC wake ownership").take() else {
             return;
         };
-        let mut queued = self.queued.lock().expect("NPC wake queue");
-        queued.all |= wake.all;
-        queued.actors.extend(wake.actors);
+        if self.ordinary {
+            self.queued.lock().expect("NPC wake queue").merge(wake);
+        }
+        if maintenance.all || !maintenance.actors.is_empty() {
+            self.maintenance
+                .lock()
+                .expect("maintenance wake queue")
+                .merge(maintenance);
+            self.maintenance_ready.notify_one();
+        }
     }
 
     fn take(&self) -> Wake {
         std::mem::take(&mut *self.queued.lock().expect("NPC wake queue"))
+    }
+
+    pub(super) fn take_maintenance(&self) -> Wake {
+        std::mem::take(&mut *self.maintenance.lock().expect("maintenance wake queue"))
+    }
+
+    pub(super) async fn maintenance_ready(&self) {
+        self.maintenance_ready.notified().await;
+    }
+}
+
+impl Wake {
+    fn insert(&mut self, actor: &str, budget: &ByteBudget) -> Result<(), RuntimeError> {
+        if !self.actors.contains_key(actor) {
+            let held = budget.reserve(512 + actor.len())?;
+            self.actors.try_reserve(1).map_err(|_| CapacityError)?;
+            self.actors.insert(actor.to_owned(), held);
+        }
+        Ok(())
+    }
+
+    fn merge(&mut self, next: Self) {
+        self.all |= next.all;
+        self.actors.extend(next.actors);
     }
 }
 
