@@ -553,7 +553,7 @@ impl Director {
                 player_speech_event_id: None,
                 retry_of: None,
                 request: JobRequest {
-                    text: proposal.text.into(),
+                    text: proposal.text,
                     npc_id: actor.clone(),
                     volume: None,
                 },

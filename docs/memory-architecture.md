@@ -703,6 +703,8 @@ An advisory scheduling read can fail without changing the world or dispatching a
 
 The stand-alone resident decision scheduler keeps a wake pending when intake lacks temporary space or PostgreSQL confirms that a stale or capacity-refused scheduling write rolled back. A later world publication can reevaluate the wake. Provider work starts only after admission commits. An unknown outcome stops scheduling until recovery can establish what committed.
 
+The stand-alone scheduler and reply formatter read only the fields their decisions and prompts consume. Accepted text and source identities stay exact. UTF-8 prompts show isolated UTF-16 units as visible escapes and distinguish literal backslashes in those passages. The native source still owns permission, freshness and exact saved wording.
+
 ## Action occurrences and learned-method support
 
 Own native action occurrences preserve selected meaning, observed effects, multiple outputs and bounded dependency links in the existing record repository. Explicit inspection pages cold history. Routine residency/compaction preserves lawful acquisition support; authorized forgetting invalidates dependent learning and current privacy overlays survive older checkpoint restoration. [Action records and learned activities](action-experience.md) owns these contracts and their measured bounds.

@@ -21,7 +21,13 @@ The experiments follow the [prior profile findings](2026-11-20-rust-hot-path-com
 
 The 15 steady windows in these two campaigns recorded 1,824 automatic jobs prompted by current physical relations, 586 prompted by events, and zero optional-discovery jobs. The counts come from durable jobs. Individual jobs can use more than one model judgment. Slowing optional curiosity further would miss the work exercised in this opening.
 
-**Recall, scheduler intake, and body deadline comparisons remain open.** Campaign `8080089e-123b-4eec-853d-8aa47d11b53c` froze candidates `9da6700c34fc`, `3488206b08d7`, and `2eab0b629e8e`, respectively, against the common control. AWS access expired after the worker started. Collect and verify the original campaign, including worker cleanup, before deciding whether to keep each change. The focused checks below cover the review repairs. The final ordinary-play rollout and its integrated cold continuation still need verification on the retained revision.
+**Recall preparation retained.** Its frozen candidate used 3.8–7.2% less combined CPU per completed game-second in all three pairs. Automatic resident judgments varied, including one pair in which the candidate completed more. The final implementation retains the narrow recall path, with the exact-text repair qualified separately below.
+
+**Scheduler intake retained with an exact-text reader.** The frozen one-intake candidate used 2.9–6.8% less combined CPU per completed game-second across the three pairs. It also ran fewer automatic judgments in every pair, so the comparison cannot assign the full saving to decoding. The final typed reader supersedes the frozen candidate's Unicode-only JSON reader. The old timings belong to the frozen revision.
+
+**Body deadline sharing retained as a simplification.** Combined CPU changed by −2.4%, −5.1% and +2.1%. The comparison supplies no repeatable CPU gain. The focused timing check and exact saved cuts justify sharing the same attribute read and threshold across comparison and forecasting.
+
+All 12 physical runs in `8080089e-123b-4eec-853d-8aa47d11b53c` completed the required ordinary workload and cold continuation. The manifest verified all 161 files. The runner recorded clean cleanup and retired slot 5, and AWS reported neither the instance nor its volume. The controller settled its estimated cost at $0.732312 with no campaign reservation left.
 
 ## Matched 180-second windows
 
@@ -29,26 +35,38 @@ Each entry gives median / mean / p95, control → candidate. The CPU figures use
 
 | Experiment              | Server CPU, % of one core             | PostgreSQL CPU, % of one core   | Game speed, % of intended                         | Paired combined CPU change, % |
 | ----------------------- | ------------------------------------- | ------------------------------- | ------------------------------------------------- | ----------------------------- |
+| Recall preparation      | 49.91/49.95/51.23 → 46.96/47.06/47.34 | 7.20/7.20/7.40 → 7.01/6.99/7.06 | 100.000/100.009/100.028 → 100.000/100.000/100.000 | -5.18 / -7.15 / -3.83         |
+| Scheduler intake        | 49.91/49.95/51.23 → 47.76/47.78/49.14 | 7.20/7.20/7.40 → 6.70/6.70/6.79 | 100.000/100.009/100.028 → 100.000/100.009/100.028 | -6.75 / -4.27 / -2.94         |
+| Body deadlines          | 49.91/49.95/51.23 → 48.68/49.12/50.06 | 7.20/7.20/7.40 → 6.87/6.97/7.22 | 100.000/100.009/100.028 → 100.000/100.009/100.028 | -2.41 / -5.10 / +2.06         |
 | Compact job status      | 43.02/44.91/50.12 → 45.29/45.87/47.28 | 5.90/6.30/7.16 → 6.02/6.08/6.26 | 100.000/100.000/100.028 → 100.000/99.991/100.000  | +8.05 / -10.99 / +9.63        |
 | Lexical reuse           | 43.02/44.91/50.12 → 44.72/44.46/45.91 | 5.90/6.30/7.16 → 6.27/6.31/6.50 | 100.000/100.000/100.028 → 100.000/99.992/100.000  | +7.18 / -8.54 / +0.35         |
 | Speech ownership lookup | 50.13/50.13/52.23 → 49.06/51.34/55.97 | 6.66/6.66/6.90 → 6.52/6.55/7.08 | 100.000/100.000/100.001 → 100.000/100.010/100.028 | -6.80 / +1.49 / +11.52        |
 
 | Experiment              | Command response, ms        | First movement receipt, ms        | Durable acknowledgement, ms             | Combined CPU, median ms/game-second | Concurrent memory peak, median MiB |
 | ----------------------- | --------------------------- | --------------------------------- | --------------------------------------- | ----------------------------------- | ---------------------------------- |
+| Recall preparation      | 6.5/6.9/10.5 → 6.3/6.8/11.1 | 50.7/53.7/78.9 → 51.5/52.6/79.7   | 605.2/600.0/1088.3 → 566.4/589.6/1081.6 | 9.483 → 8.994                       | 534.9 → 535.3                      |
+| Scheduler intake        | 6.5/6.9/10.5 → 6.6/7.1/12.4 | 50.7/53.7/78.9 → 48.5/50.2/73.2   | 605.2/600.0/1088.3 → 581.9/588.6/1085.8 | 9.483 → 9.078                       | 534.9 → 530.6                      |
+| Body deadlines          | 6.5/6.9/10.5 → 6.9/7.3/13.1 | 50.7/53.7/78.9 → 47.4/50.7/78.8   | 605.2/600.0/1088.3 → 542.1/567.4/1082.1 | 9.483 → 9.255                       | 534.9 → 534.1                      |
 | Compact job status      | 8.6/8.7/14.0 → 7.0/7.8/13.3 | 68.9/64.4/105.3 → 66.6/59.9/95.8  | 567.2/581.9/1057.7 → 573.1/592.1/1062.7 | 8.142 → 8.552                       | 519.4 → 537.6                      |
 | Lexical reuse           | 8.6/8.7/14.0 → 7.0/7.4/12.1 | 68.9/64.4/105.3 → 60.1/58.3/100.8 | 567.2/581.9/1057.7 → 544.2/567.1/1059.6 | 8.142 → 8.483                       | 519.4 → 530.4                      |
 | Speech ownership lookup | 7.3/8.0/14.0 → 7.1/7.3/10.4 | 49.7/50.8/77.4 → 56.6/56.5/93.8   | 548.3/581.4/1088.5 → 606.5/595.4/1102.1 | 9.423 → 9.251                       | 569.8 → 571.6                      |
 
 Database and allocation figures below are steady-run medians except for the transient reservation peak, which covers the whole server lifecycle. SQL trips and transferred bytes come from the focused wire trace. The ordinary table uses the database-wide scan and commit counters.
 
-| Experiment              | Database commits | PostgreSQL scan counter | WAL, MB      | Database growth, MB | Transient reservation peak, MiB | Client CPU, % of one core |
-| ----------------------- | ---------------- | ----------------------- | ------------ | ------------------- | ------------------------------- | ------------------------- |
-| Compact job status      | 8703 → 9360      | 1936817 → 981267        | 95.4 → 109.6 | 29.7 → 33.9         | 188.5 → 187.3                   | 0.84 → 0.86               |
-| Lexical reuse           | 8703 → 9052      | 1936817 → 2696296       | 95.4 → 104.2 | 29.7 → 33.5         | 188.5 → 187.6                   | 0.84 → 0.84               |
-| Speech ownership lookup | 9241 → 8697      | 1263344 → 1144020       | 97.9 → 100.6 | 32.3 → 33.1         | 185.2 → 185.9                   | 0.93 → 0.92               |
+| Experiment              | Database commits | PostgreSQL scan counter | WAL, MB       | Database growth, MB | Transient reservation peak, MiB | Client CPU, % of one core |
+| ----------------------- | ---------------- | ----------------------- | ------------- | ------------------- | ------------------------------- | ------------------------- |
+| Recall preparation      | 9411 → 9181      | 3112235 → 2037140       | 105.7 → 107.4 | 35.5 → 35.0         | 199.5 → 203.7                   | 0.89 → 0.89               |
+| Scheduler intake        | 9411 → 8741      | 3112235 → 2083361       | 105.7 → 100.8 | 35.5 → 32.2         | 199.5 → 185.3                   | 0.89 → 0.88               |
+| Body deadlines          | 9411 → 9091      | 3112235 → 2026873       | 105.7 → 102.3 | 35.5 → 31.2         | 199.5 → 181.6                   | 0.89 → 0.88               |
+| Compact job status      | 8703 → 9360      | 1936817 → 981267        | 95.4 → 109.6  | 29.7 → 33.9         | 188.5 → 187.3                   | 0.84 → 0.86               |
+| Lexical reuse           | 8703 → 9052      | 1936817 → 2696296       | 95.4 → 104.2  | 29.7 → 33.5         | 188.5 → 187.6                   | 0.84 → 0.84               |
+| Speech ownership lookup | 9241 → 8697      | 1263344 → 1144020       | 97.9 → 100.6  | 32.3 → 33.1         | 185.2 → 185.9                   | 0.93 → 0.92               |
 
 | Experiment              | Control source | Candidate source | Frozen campaign                        | Completed runs |
 | ----------------------- | -------------- | ---------------- | -------------------------------------- | -------------- |
+| Recall preparation      | `36ea64692091` | `9da6700c34fc`   | `8080089e-123b-4eec-853d-8aa47d11b53c` | 6/6            |
+| Scheduler intake        | `36ea64692091` | `3488206b08d7`   | `8080089e-123b-4eec-853d-8aa47d11b53c` | 6/6            |
+| Body deadlines          | `36ea64692091` | `2eab0b629e8e`   | `8080089e-123b-4eec-853d-8aa47d11b53c` | 6/6            |
 | Compact job status      | `36ea64692091` | `99d097da43e2`   | `89f67b13-dbbf-4604-b73b-47be2a55f2ef` | 6/6            |
 | Lexical reuse           | `36ea64692091` | `ef5a3191f3a5`   | `89f67b13-dbbf-4604-b73b-47be2a55f2ef` | 6/6            |
 | Speech ownership lookup | `4173d7a41315` | `a9bce622ddf7`   | `dc40cf1e-ff6e-4c9a-86aa-e81c871a1dbf` | 6/6            |
@@ -61,4 +79,12 @@ The schema-64 checks passed on local PostgreSQL with pinned Rust 1.99.1 debug bu
 - **Status and retry.** The authenticated state route displayed the same four permitted statuses out of 525 jobs before and after reopening. It withheld the foreign-owned job with missing scope metadata even though it referenced the viewer's own speech. An explicit retry read the failed job's stored text exactly, refused a superseded same-scope attempt, ignored four newer jobs with different scope, and saved one reply for two requests with the same ID. Reopening returned the same receipt. A 4,000-row PostgreSQL plan used the existing speech index for retry eligibility.
 - **Held recall.** While a memory review was held, the player moved and either withdrew the selected evidence or cancelled the request. Both cases saved movement and returned the expected refusal without applying a reply. Reopening recovered the terminal receipt. NPC reference binding still checks externally supplied ordinals against the permitted selection.
 - **Speech and restore.** Both server paths saved the exact spoken text containing NUL and an isolated UTF-16 unit, with three permitted searchable rows each. The stand-alone server reopened the saved speech. The recovery command removed 68 old speech links and preserved the other job values, two already-unlinked jobs, and access grants. Failure on the second page rolled back all 64 earlier staged edits, and retry and cold reopening recovered one exact receipt.
-- **Known limit.** The same speech still reproduced a stand-alone scheduler stop before selection, including on cold reopening. The SQL fixes preserve the original speech and remove the save failure. Scheduler and reply preparation for this special input still require the [tracked exact-text read changes](../../../maintainers/native-simulation-core.md#npc-and-background-work-follow-up).
+- **Baseline failure.** The same speech had still stopped the stand-alone scheduler and prevented a reply. The original save retained the wording. The next check covers the scheduler and reply repair through that same input.
+
+## Exact text gameplay
+
+The disposable HTTP scenario compared local Rust builds `2f7644ffa3d8` and `c06736491ac5` against separate PostgreSQL databases and a controlled HTTPS provider. It sent speech containing a NUL, an isolated UTF-16 unit, and a literal escape. The earlier build saved the exact speech, then stopped scheduling and failed the reply before provider dispatch.
+
+The repaired build preserved the original speech and three searchable personal rows. The actual provider prompt preserved the NUL and distinguished the isolated unit from the literal escape. One reply committed, a replay returned the same receipt, and a second resident completed a background decision while retaining their original evidence. An authorized walk, the receipt and the original wording survived cold reopening. A new ordinary conversation then completed. Separate held withdrawal and cancellation cases saved movement and recovered their terminal receipts without applying a reply. All owned local processes and databases cleaned up.
+
+The scheduler's selective reader also matched the prior scheduling digests, proposals, deadlines and source order in six ordinary diagnostic cases. An additional case preserved the exact cue containing an isolated unit, a NUL and an astral character through job preparation. These checks establish correctness. The retained joint build's ordinary-play check is separate from the frozen timing comparison.

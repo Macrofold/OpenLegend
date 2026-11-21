@@ -1,10 +1,10 @@
 //! Bounded personal recall discovery and disclosure before executable decisions.
 
 use super::{
-    Arc, ByteBudget, ByteReservation, CallFailure, CurrentServer, FundedJson, ProjectionPurpose,
-    ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket, Work, capture_origin, consumer,
-    decode_capture, describe_experience, ensure_running, get_u64, invalid, json,
-    personal_description, personal_evidence, project, project_markers, read_request, records,
+    Arc, ByteBudget, ByteReservation, CallFailure, CurrentRead, CurrentServer, PersonalSources,
+    ProjectionPurpose, ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket, Work,
+    capture_origin, consumer, describe_experience, ensure_running, get_u64, invalid, json,
+    personal_description, personal_evidence, project, project_markers, read_request,
 };
 use crate::{
     decision_render::{BoundAttention, RenderError},
@@ -17,7 +17,7 @@ use std::collections::{HashMap, HashSet};
 pub(in crate::npc::decide) struct Collected {
     pub(super) original: Option<RuntimeNpcRead>,
     pub(super) attention: OriginAttention,
-    pub(super) sources: Option<FundedJson>,
+    pub(super) sources: Option<PersonalSources>,
     pub(super) required: Vec<usize>,
     optional: Vec<usize>,
     pub(super) frame: ReceivedFrame,
@@ -131,21 +131,20 @@ pub(in crate::npc::decide) async fn collect(
             .await
             .map_err(|error| CallFailure::World(error).at("original-sources"))?;
         let product = original.latest_sources_packet(budget).map_err(invalid)?;
-        let data = FundedJson::read(
-            std::str::from_utf8(product.bytes()).map_err(invalid)?,
-            budget,
-        )?;
-        let inventory = &data.value["inventory"];
-        for missing in records(&inventory["unavailablePersonal"])? {
-            let index = usize::try_from(get_u64(missing)?).map_err(invalid)?;
+        let data = PersonalSources::read(&product, budget)?;
+        let inventory = &data.value.inventory;
+        for &index in &inventory.unavailable_personal {
             if selected.get(index).ok_or(CallFailure::Invalid)?.1 {
                 return Err(CallFailure::Stale("decision-selected-account-withdrawn"));
             }
         }
-        let personal = records(&inventory["personal"])?;
+        let personal = &inventory.personal;
         for (row, source) in personal.iter().enumerate() {
-            let index = usize::try_from(get_u64(&source["selection"])?).map_err(invalid)?;
-            if selected.get(index).ok_or(CallFailure::Invalid)?.1 {
+            if selected
+                .get(source.selection)
+                .ok_or(CallFailure::Invalid)?
+                .1
+            {
                 required.push(row);
             } else {
                 optional.push(row);
@@ -155,20 +154,15 @@ pub(in crate::npc::decide) async fn collect(
         // relevance judgment. The index already supplied bounded candidates.
         let mut recent: Vec<_> = (0..personal.len())
             .filter_map(|row| {
-                let (source, at) = personal.get(row).and_then(|source| {
-                    let value = &source["value"];
-                    value["at"]
-                        .as_f64()
-                        .or_else(|| value["to"].as_f64())
-                        .map(|at| (source, at))
-                })?;
-                let id = source["reference"]["id"].as_str()?;
+                let source = &personal[row];
+                let at = source.value.at.or(source.value.to)?;
+                let id = source.reference.id.as_str();
                 let is_direct_stimulus = work
                     .job
                     .job
                     .player_speech_event_id
                     .as_ref()
-                    .is_some_and(|event| source["value"]["eventId"] == event.as_str());
+                    .is_some_and(|event| source.value.event_id.as_deref() == Some(event.as_str()));
                 (!is_direct_stimulus).then_some((row, at, id))
             })
             .collect();
@@ -218,7 +212,7 @@ impl Collected {
             .capture_npc_recall(game.clone(), request)
             .await
             .map_err(|error| CallFailure::World(error).at("recall-current-context"))?;
-        let facts = decode_capture(fresh.recall_packet(budget).map_err(invalid)?, budget)?;
+        let facts = CurrentRead::read(&fresh.recall_packet(budget).map_err(invalid)?, budget)?;
         let _custody = self.projection_custody(&facts, budget)?;
         let source_data = self.sources.as_ref().map(|data| &data.value);
         let mut ranked = Vec::new();
@@ -231,12 +225,12 @@ impl Collected {
             &self.required,
             ProjectionPurpose::Recall,
         )?;
-        let rows = records(&source_data.ok_or(CallFailure::Invalid)?["inventory"]["personal"])?;
+        let rows = &source_data.ok_or(CallFailure::Invalid)?.inventory.personal;
         for &row in &self.optional {
             let source = rows.get(row).ok_or(CallFailure::Invalid)?;
             let (description, _) = personal_description(source)?;
             let experience = describe_experience(game, source, &description)?;
-            let kind = if source["value"]["eventType"] == "speech" {
+            let kind = if source.value.event_type.as_deref() == Some("speech") {
                 "conversation"
             } else {
                 "memory"
@@ -270,11 +264,9 @@ impl Collected {
                 }),
         );
         let selection = &mut binding["selection"];
-        selection["evidence"] = personal_evidence(source_data, disclosed)?;
+        selection["evidence"] = personal_evidence(source_data, disclosed);
         let request_bytes = crate::wire::encode(&binding, b"", b"", budget).map_err(invalid)?;
-        let through = self
-            .through
-            .max(get_u64(&facts.value["self"]["acceptedCut"])?);
+        let through = self.through.max(get_u64(&facts.value.own["acceptedCut"])?);
         let origin = work.automatic.as_ref().map(|trigger| trigger.read.clone());
         let binding = game
             .world
@@ -322,7 +314,7 @@ impl Collected {
 
     pub(super) fn projection_custody(
         &self,
-        fresh: &FundedJson,
+        fresh: &CurrentRead,
         budget: &ByteBudget,
     ) -> Result<ByteReservation, CallFailure> {
         // A selected ordinal produces two 24-byte aliases, a two-field JSON
