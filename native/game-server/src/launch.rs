@@ -10,7 +10,12 @@ use axum::{
     middleware::{self, Next},
     response::Response,
 };
-use std::{error::Error, path::Path, sync::Arc, time::Duration};
+use std::{
+    error::Error,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
 use tokio::{net::TcpListener, sync::watch};
 use tower_http::services::{ServeDir, ServeFile};
 
@@ -107,9 +112,20 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         Some(schedule) => saves.with_schedule(schedule.clone()),
         None => saves,
     });
+    let checkpoints = Arc::new(crate::store::checkpoint::CheckpointSchedule::new(
+        game.store.clone(),
+        saves.clone(),
+        world_id.clone(),
+        PathBuf::from(setting("OPEN_LEGEND_DATA_DIR", ".data")?).join("saves"),
+    ));
     let clock = Arc::new(
-        GameClock::new(game.clone(), saves.clone(), game.view_policy().base_ratio())
-            .with_inputs(presence.clone(), inputs.clone()),
+        GameClock::new(
+            game.clone(),
+            saves.clone(),
+            checkpoints.clone(),
+            game.view_policy().base_ratio(),
+        )
+        .with_inputs(presence.clone(), inputs.clone()),
     );
     let decisions = Arc::new(crate::npc::Director::new(
         game.clone(),
@@ -136,6 +152,7 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         setting("OPEN_LEGEND_GOD_MODE", "false")? == "true",
         http_stop.clone(),
         request_owner,
+        checkpoints.clone(),
     )
     .map_err(|_| "Could not establish per-process player reference keys")?;
     let game_routes = Router::new()
@@ -176,6 +193,7 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         saves,
         decisions,
         schedule,
+        checkpoints,
         end_http,
         game.clone(),
     )
@@ -209,12 +227,15 @@ async fn run(
     saves: Arc<LiveSaves>,
     decisions: Arc<crate::npc::Director>,
     schedule: Option<Arc<crate::npc::schedule::ScheduleInbox>>,
+    checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
     end_http: watch::Sender<bool>,
     game: Arc<CurrentServer>,
 ) -> Result<(), LaunchError> {
     let http_stop = end_http.subscribe();
     let scheduler = schedule
         .map(|inbox| tokio::spawn(decisions.clone().run_schedule(inbox, end_http.subscribe())));
+    let checkpoint_stop = end_http.subscribe();
+    let checkpoint_work = checkpoints.run(checkpoint_stop);
     let (end_clock, clock_stop) = watch::channel(false);
     let (end_saves, save_stop) = watch::channel(false);
     let (end_lexical, lexical_stop) = watch::channel(false);
@@ -230,15 +251,17 @@ async fn run(
     };
     let clock_work = clock.run(clock_stop);
     let save_work = saves.run(save_stop);
-    tokio::pin!(http, clock_work, save_work);
+    tokio::pin!(http, clock_work, save_work, checkpoint_work);
     let mut http_result = None;
     let mut clock_result = None;
     let mut save_result = None;
     let mut decision_result = None;
+    let mut checkpoints_stopped = false;
     let signal = tokio::select! {
         result = &mut http => { http_result = Some(result); Ok(()) }
         result = &mut clock_work => { clock_result = Some(result); Ok(()) }
         result = &mut save_work => { save_result = Some(result); Ok(()) }
+        _ = &mut checkpoint_work => { checkpoints_stopped = true; Ok(()) }
         result = shutdown_signal() => result,
     };
     let _ = end_http.send(true);
@@ -258,7 +281,11 @@ async fn run(
     };
     tokio::pin!(stop_decisions);
     // Let pending accepted commands finish while their writer still runs.
-    while http_result.is_none() || clock_result.is_none() || decision_result.is_none() {
+    while http_result.is_none()
+        || clock_result.is_none()
+        || decision_result.is_none()
+        || !checkpoints_stopped
+    {
         tokio::select! {
             result = &mut http, if http_result.is_none() => {
                 http_result = Some(result);
@@ -271,6 +298,9 @@ async fn run(
             }
             result = &mut stop_decisions, if decision_result.is_none() => {
                 decision_result = Some(result);
+            }
+            _ = &mut checkpoint_work, if !checkpoints_stopped => {
+                checkpoints_stopped = true;
             }
         }
     }

@@ -7,7 +7,7 @@ mod attempts;
 pub(crate) use attempts::{
     AttemptAdmission, AttemptRequest, InferenceClass, ModelReceipt, ModelUsage, ReservedAttempt,
 };
-mod checkpoint;
+pub(crate) mod checkpoint;
 pub use checkpoint::RecoveredCheckpoint;
 pub(crate) use checkpoint::{
     AdministrativeCheckpoint, CheckpointHistory, RecoveryAuthority, read_recovery_authority,
@@ -154,6 +154,7 @@ pub struct Store {
     writer: Mutex<Session>,
     reader: Mutex<Session>,
     simulation_reader: Mutex<Session>,
+    checkpoint_connection: (Config, MakeRustlsConnect),
     admitted: AtomicBool,
     writer_connected: Arc<AtomicBool>,
     budget: ByteBudget,
@@ -220,7 +221,7 @@ impl Store {
             .resize(schema.retained_bytes().ok_or(StoreError::Capacity)?)
             .map_err(|_| StoreError::Capacity)?;
         let reader = Self::read_only_session(&config, tls.clone()).await?;
-        let simulation_reader = Self::read_only_session(&config, tls).await?;
+        let simulation_reader = Self::read_only_session(&config, tls.clone()).await?;
         let writer_connected = Arc::clone(&writer.connected);
         Ok(Self {
             schema,
@@ -228,6 +229,7 @@ impl Store {
             writer: Mutex::new(writer),
             reader: Mutex::new(reader),
             simulation_reader: Mutex::new(simulation_reader),
+            checkpoint_connection: (config, tls),
             admitted: AtomicBool::new(true),
             writer_connected,
             budget,

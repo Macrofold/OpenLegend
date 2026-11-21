@@ -13,7 +13,7 @@ use crate::{
     player_command::PlayerCommands,
     player_references::ReferenceIssuer,
     presence::Presence,
-    store::{CommitError, StoreError},
+    store::{CommitError, StoreError, checkpoint::CheckpointSchedule},
     wire,
     world::WorldError,
     world_input::{InputUpdate, WorldInputs},
@@ -32,6 +32,7 @@ use std::{sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
 pub(crate) mod actions;
 pub(crate) mod assets;
+mod checkpoint;
 mod dialogue;
 mod event_history;
 mod history;
@@ -56,6 +57,7 @@ struct PlayerRoutes {
     expected_world: String,
     capacity: Arc<Semaphore>,
     grace: Duration,
+    checkpoints: Arc<CheckpointSchedule>,
     // Declared last so the clone releases its world owners before this signal.
     _request_owner: tokio::sync::watch::Sender<()>,
 }
@@ -77,6 +79,7 @@ pub(crate) fn router(
     god_mode: bool,
     stop: tokio::sync::watch::Receiver<bool>,
     request_owner: tokio::sync::watch::Sender<()>,
+    checkpoints: Arc<CheckpointSchedule>,
 ) -> Result<Router, getrandom::Error> {
     let commands = Arc::new(PlayerCommands::new(
         game.clone(),
@@ -97,6 +100,7 @@ pub(crate) fn router(
         expected_world,
         capacity: Arc::new(Semaphore::new(capacity)),
         grace,
+        checkpoints,
         _request_owner: request_owner,
     };
     let streams = Arc::new(Semaphore::new(streams));
@@ -109,6 +113,11 @@ pub(crate) fn router(
         .route("/api/presence", post(presence_report))
         .route("/api/control", post(manual_clock))
         .route("/api/input", post(update_input))
+        .route("/api/saves/create", post(checkpoint::create))
+        .route("/api/saves/list", post(checkpoint::list))
+        .route("/api/saves/delete", post(checkpoint::delete))
+        .route("/api/saves/settings", post(checkpoint::settings))
+        .route("/api/saves/acknowledge", post(checkpoint::ack))
         .route("/api/known-places", post(known_places::list))
         .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))

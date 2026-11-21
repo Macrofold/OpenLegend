@@ -6,7 +6,7 @@ use crate::{
     boot::CurrentServer,
     live_save::{AcceptedSaveInput, LiveSaves},
     presence::Presence,
-    store::{MetadataProjection, StoreError},
+    store::{MetadataProjection, StoreError, checkpoint::CheckpointSchedule},
     world::{ApplicationStart, IO_YIELD, ProtectedCommit, WorldError},
     world_input::{InputSnapshot, WorldInputs},
 };
@@ -35,9 +35,21 @@ struct Advance {
     save: Option<Arc<AcceptedSaveInput>>,
 }
 
+struct CheckpointInterval<'a> {
+    checkpoints: &'a CheckpointSchedule,
+    elapsed: Duration,
+}
+
+impl Drop for CheckpointInterval<'_> {
+    fn drop(&mut self) {
+        self.checkpoints.advance(self.elapsed);
+    }
+}
+
 pub struct GameClock {
     game: Arc<CurrentServer>,
     saves: Arc<LiveSaves>,
+    checkpoints: Arc<CheckpointSchedule>,
     base_ratio: f64,
     presence: Option<Arc<Presence>>,
     inputs: Option<Arc<WorldInputs>>,
@@ -45,10 +57,16 @@ pub struct GameClock {
 }
 
 impl GameClock {
-    pub fn new(game: Arc<CurrentServer>, saves: Arc<LiveSaves>, base_ratio: f64) -> Self {
+    pub(crate) fn new(
+        game: Arc<CurrentServer>,
+        saves: Arc<LiveSaves>,
+        checkpoints: Arc<CheckpointSchedule>,
+        base_ratio: f64,
+    ) -> Self {
         Self {
             game,
             saves,
+            checkpoints,
             base_ratio,
             presence: None,
             inputs: None,
@@ -400,6 +418,12 @@ impl GameClock {
                 }
                 other => other?,
             };
+            // The checkpoint uses nonwaiting save admission. Deliver its
+            // interval after this pass drops the ordinary intake read guard.
+            let mut checkpoint = CheckpointInterval {
+                checkpoints: &self.checkpoints,
+                elapsed: Duration::ZERO,
+            };
             let _ordinary = self.saves.enter_ordinary().await;
             let from = previous;
             previous = now;
@@ -443,6 +467,7 @@ impl GameClock {
                 let entrance = if gap.is_zero() { from } else { now - admitted };
                 inputs.credit(entrance, now, clock.at + debt, ratio)?;
             }
+            checkpoint.elapsed = admitted;
             let offered = admitted.as_secs_f64() * ratio;
             debt += offered;
             openlegend_simulation::profile_count!(OFFERED, (offered * 1_000_000.0) as u64);

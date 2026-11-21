@@ -5,6 +5,11 @@ use super::{CurrentOpening, Store, StoreError, StoreResult};
 use serde::{Deserialize, Serialize};
 use tokio_postgres::Transaction;
 
+pub(super) const RETAINED_RELEASE: &str = concat!(
+    include_str!("assets-closure.sql"),
+    include_str!("assets-retained.sql")
+);
+
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct AssetRevision {
@@ -41,7 +46,7 @@ impl AssetRevision {
         Ok(release)
     }
 
-    fn key(&self) -> String {
+    pub(super) fn key(&self) -> String {
         serde_json::to_string(&[
             &self.owner.kind,
             &self.owner.id,
@@ -129,10 +134,7 @@ impl Store {
         reader
             .client
             .query_opt(
-                concat!(
-                    include_str!("assets-closure.sql"),
-                    include_str!("assets-retained.sql")
-                ),
+                RETAINED_RELEASE,
                 &[
                     &key,
                     &release.manifest_sha256,
@@ -191,13 +193,9 @@ impl Store {
         let reference = serde_json::to_value(&release).map_err(|_| StoreError::InvalidRecord)?;
         let saved = openlegend_simulation::encoding::json_record(&[world, slot])
             .map_err(|_| StoreError::InvalidRecord)?;
-        let retained = concat!(
-            include_str!("assets-closure.sql"),
-            include_str!("assets-retained.sql")
-        );
         let current = tx
             .query_opt(
-                retained,
+                RETAINED_RELEASE,
                 &[
                     &key,
                     &release.manifest_sha256,
@@ -212,7 +210,7 @@ impl Store {
             return Ok(());
         }
         tx.query_opt(
-            retained,
+            RETAINED_RELEASE,
             &[
                 &key,
                 &release.manifest_sha256,

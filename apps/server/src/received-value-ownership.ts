@@ -31,6 +31,26 @@ export function receivedRowOwner(table: string, row: RowChange): Owner {
   };
 }
 
+/** Startup and checkpoint integrity only. The supplied parameter binds the
+ * selected world in the same transaction as the actual exported records. */
+export function receivedOwnershipAuditSql(
+  evidence: 'physical' | 'retained',
+  worldParameter = '?',
+): string {
+  const expected = [...currentOwners, 'mind_temporal_pages']
+    .map(
+      (table) =>
+        `SELECT p.world_id,'${table}' AS owner_kind,p.id AS owner_id,p.actor_id,v.id AS value_id
+        FROM ${table} p CROSS JOIN LATERAL unnest(p.value_refs) v(id)
+        WHERE p.world_id=${worldParameter}${evidence === 'retained' ? ` AND ${retainedEvidenceRowSql(table, 'p')}` : ''}`,
+    )
+    .join(' UNION ');
+  return `WITH expected AS MATERIALIZED (${expected}), actual AS MATERIALIZED (
+        SELECT u.* FROM received_value_uses u WHERE u.world_id=${worldParameter}${evidence === 'retained' ? ` AND ${retainedReceivedUseSql('u')}` : ''}
+      ) SELECT 1 AS invalid FROM ((SELECT * FROM expected EXCEPT SELECT * FROM actual)
+        UNION ALL (SELECT * FROM actual EXCEPT SELECT * FROM expected)) missing LIMIT 1`;
+}
+
 /** Transactional reverse references derived from canonical owners. Neither this
  * projection nor a retained value ID grants a character access to evidence. */
 export class ReceivedValueOwnership {
@@ -59,21 +79,8 @@ export class ReceivedValueOwnership {
 
   /** Startup/checkpoint integrity only; never a movement or command admission scan. */
   async validate(worldId: string, evidence: 'physical' | 'retained' = 'physical'): Promise<void> {
-    const expected = [...currentOwners, 'mind_temporal_pages']
-      .map((table) => {
-        const temporal = table === 'mind_temporal_pages';
-        return `SELECT p.world_id,'${temporal ? 'mind_temporal_pages' : table}' AS owner_kind,p.id AS owner_id,p.actor_id,v.id AS value_id
-        FROM ${table} p CROSS JOIN LATERAL unnest(p.value_refs) v(id)
-        WHERE p.world_id=?${evidence === 'retained' ? ` AND ${retainedEvidenceRowSql(table, 'p')}` : ''}`;
-      })
-      .join(' UNION ');
     const mismatch = await this.db
-      .prepare(
-        `WITH expected AS MATERIALIZED (${expected}), actual AS MATERIALIZED (
-        SELECT u.* FROM received_value_uses u WHERE u.world_id=?${evidence === 'retained' ? ` AND ${retainedReceivedUseSql('u')}` : ''}
-      ) SELECT 1 AS invalid FROM ((SELECT * FROM expected EXCEPT SELECT * FROM actual)
-        UNION ALL (SELECT * FROM actual EXCEPT SELECT * FROM expected)) missing LIMIT 1`,
-      )
+      .prepare(receivedOwnershipAuditSql(evidence))
       .get(...Array(currentOwners.length + 2).fill(worldId));
     if (mismatch)
       throw new Error('Received evidence ownership disagrees with its canonical records.');

@@ -23,11 +23,17 @@ use uuid::Uuid;
 
 mod archives;
 mod authority;
+mod capture;
+pub(crate) use capture::CaptureError;
+mod capture_assets;
+mod catalog;
+pub(crate) use catalog::CheckpointCursor;
 mod history_read;
 mod positions;
 mod provider;
 mod recover;
 mod retention;
+mod schedule;
 mod support;
 mod version_baseline;
 mod write;
@@ -36,6 +42,8 @@ pub(crate) use authority::{RecoveryAuthority, read_recovery_authority};
 pub(crate) use history_read::PreparedCheckpointHistory;
 pub(crate) use positions::reconcile_history_positions;
 pub use recover::RecoveredCheckpoint;
+pub(crate) use schedule::CheckpointSchedule;
+pub(crate) use schedule::Settings as CheckpointSettings;
 
 const METADATA: usize = 16 * 1024;
 const FILE_BUFFER: usize = 64 * 1024;
@@ -52,6 +60,9 @@ pub(crate) struct CheckpointFormat {
     pub(super) rows: usize,
     pub(super) page: usize,
     pub(super) history_tables: Vec<String>,
+    pub(super) capture_selection: BTreeMap<String, String>,
+    pub(super) capture_ownership: String,
+    schedule: schedule::SchedulePolicy,
     pub(super) history_position_tables: Vec<String>,
     pub(super) retention_preparation: Box<RawValue>,
     pub(super) history_edit: HistoryEditSql,
@@ -80,6 +91,7 @@ impl CheckpointFormat {
             .encoding
             .capacity()
             .checked_add(self.format.capacity())?
+            .checked_add(self.capture_ownership.capacity())?
             .checked_add(self.retention_preparation.get().len())?
             .checked_add(self.archive_selection.capacity())?
             .checked_add(self.support_membership.capacity())?
@@ -87,14 +99,18 @@ impl CheckpointFormat {
             .checked_add(self.history_edit.dependencies.capacity())?
             .checked_add(self.history_edit.alias_pages.capacity())?
             .checked_add(self.history_edit.addressed_pages.capacity())?;
-        let bytes = self.account_metadata.iter().try_fold(
-            bytes.checked_add(self.summary_memory_prefix.capacity())?,
-            |n, (table, sql)| {
-                n.checked_add(table.capacity())?
-                    .checked_add(sql.capacity())?
-                    .checked_add(128)
-            },
-        )?;
+        let bytes = self
+            .account_metadata
+            .iter()
+            .chain(&self.capture_selection)
+            .try_fold(
+                bytes.checked_add(self.summary_memory_prefix.capacity())?,
+                |n, (table, sql)| {
+                    n.checked_add(table.capacity())?
+                        .checked_add(sql.capacity())?
+                        .checked_add(128)
+                },
+            )?;
         [&self.history_tables, &self.history_position_tables]
             .into_iter()
             .try_fold(bytes, |bytes, values| {
@@ -118,6 +134,8 @@ impl CheckpointFormat {
             || self.rows <= schema.tables.len()
             || self.row_bytes > self.bytes
             || self.archive_selection.is_empty()
+            || self.capture_ownership.is_empty()
+            || !self.schedule.valid()
             || self.archive_rows == 0
             || self.support_membership.is_empty()
             || self.retention_membership.is_empty()
@@ -156,6 +174,10 @@ impl CheckpointFormat {
                     || !table.bytes().all(|c| c.is_ascii_lowercase() || c == b'_')
                     || !known.insert(table)
             })
+            || self
+                .capture_selection
+                .iter()
+                .any(|(table, sql)| !known.contains(table.as_str()) || sql.is_empty())
         {
             return Err(StoreError::Schema);
         }
@@ -163,7 +185,7 @@ impl CheckpointFormat {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Metadata {
     id: String,
@@ -181,7 +203,36 @@ struct Metadata {
     sequence: Option<u64>,
 }
 
-#[derive(Deserialize)]
+impl Metadata {
+    fn valid(&self, id: &str, world: &str, contract: &CheckpointFormat) -> bool {
+        !(self.id != id
+            || self.world_id != world
+            || self.format != contract.format
+            || self.encoding != contract.encoding
+            || self.label.is_empty()
+            || self.label.encode_utf16().count() > 80
+            || !self.created_at.ends_with('Z')
+            || chrono::DateTime::parse_from_rfc3339(&self.created_at).is_err()
+            || !self.sim_time.is_finite()
+            || self.rows == 0
+            || self.rows > contract.rows
+            || self.bytes == 0
+            || self.bytes > contract.bytes
+            || self
+                .revision
+                .is_some_and(|revision| revision > MAX_SAFE_INTEGER)
+            || self
+                .sequence
+                .is_some_and(|sequence| sequence == 0 || sequence > MAX_SAFE_INTEGER)
+            || self.checksum.len() != 64
+            || !self
+                .checksum
+                .bytes()
+                .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c)))
+    }
+}
+
+#[derive(Clone, Copy, Deserialize, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "lowercase")]
 enum MetadataKind {
     Manual,
@@ -189,7 +240,7 @@ enum MetadataKind {
     Recovery,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Header {
     encoding: String,
@@ -286,31 +337,7 @@ impl AdministrativeCheckpoint {
             file(&directory.join("metadata.json"), METADATA)?.take((METADATA + 1) as u64);
         let metadata: Metadata =
             serde_json::from_reader(metadata).map_err(|_| StoreError::InvalidRecord)?;
-        if metadata.id != id
-            || metadata.world_id != world
-            || metadata.format != contract.format
-            || metadata.encoding != contract.encoding
-            || metadata.label.is_empty()
-            || metadata.label.encode_utf16().count() > 80
-            || !metadata.created_at.ends_with('Z')
-            || chrono::DateTime::parse_from_rfc3339(&metadata.created_at).is_err()
-            || !metadata.sim_time.is_finite()
-            || metadata.rows == 0
-            || metadata.rows > contract.rows
-            || metadata.bytes == 0
-            || metadata.bytes > contract.bytes
-            || metadata
-                .revision
-                .is_some_and(|revision| revision > MAX_SAFE_INTEGER)
-            || metadata
-                .sequence
-                .is_some_and(|sequence| sequence == 0 || sequence > MAX_SAFE_INTEGER)
-            || metadata.checksum.len() != 64
-            || !metadata
-                .checksum
-                .bytes()
-                .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
-        {
+        if !metadata.valid(id, world, contract) {
             return Err(StoreError::InvalidRecord);
         }
         let _kind = metadata.kind;

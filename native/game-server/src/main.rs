@@ -4,15 +4,33 @@ use std::ffi::OsString;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
+mod checkpoint_file;
+
 const USAGE: &str = "Usage: openlegend-game-server serve|check-open|initialize-storage RELEASE_DIRECTORY
        openlegend-game-server recover-checkpoint RELEASE_DIRECTORY CHECKPOINT_DIRECTORY SLOT_ID OPERATION_ID [FLOOR_SLOT_ID]";
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
+fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let mut arguments = std::env::args_os().skip(1);
     let mode = arguments.next();
     let release = arguments.next().map(PathBuf::from);
     let release = release.ok_or(USAGE)?;
+    if mode.as_deref().and_then(std::ffi::OsStr::to_str) == Some("checkpoint-file") {
+        let id = text(arguments.next())?;
+        let nonce = text(arguments.next())?;
+        if arguments.next().is_some() {
+            return Err(USAGE.into());
+        }
+        return Ok(checkpoint_file::write(&release, &id, &nonce)?);
+    }
+    run(mode, release, arguments)
+}
+
+#[tokio::main]
+async fn run(
+    mode: Option<OsString>,
+    release: PathBuf,
+    mut arguments: impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error + Send + Sync>> {
     let database = std::env::var("OPEN_LEGEND_DATABASE_URL")
         .map_err(|_| "OPEN_LEGEND_DATABASE_URL is required")?
         .parse()

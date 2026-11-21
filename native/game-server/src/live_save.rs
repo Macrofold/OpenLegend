@@ -145,7 +145,22 @@ impl LiveSaves {
     pub(crate) async fn enter_protected(
         self: &Arc<Self>,
     ) -> Result<RwLockWriteGuard<'_, ()>, WorldError> {
-        let held = self.intake.write().await;
+        self.drain_protected(self.intake.write().await).await
+    }
+
+    /// Automatic checkpoint admission must leave the intake queue unchanged
+    /// on contention. Once admitted it uses the normal durable prefix drain.
+    pub(crate) async fn try_enter_protected(
+        self: &Arc<Self>,
+    ) -> Result<RwLockWriteGuard<'_, ()>, WorldError> {
+        let held = self.intake.try_write().map_err(|_| HostError::Busy)?;
+        self.drain_protected(held).await
+    }
+
+    async fn drain_protected<'a>(
+        self: &Arc<Self>,
+        held: RwLockWriteGuard<'a, ()>,
+    ) -> Result<RwLockWriteGuard<'a, ()>, WorldError> {
         while self.flush().await? {}
         Ok(held)
     }

@@ -38,11 +38,19 @@ export class CheckpointBusyError extends GameSaveError {}
 
 /** Operator policy, outside gameplay rewind (docs/limits/persistence.md#sv01). */
 export const AUTOSAVE_DEFAULTS = { enabled: true, intervalMinutes: 5, retain: 3 } as const;
+export const AUTOSAVE_LIMITS = {
+  intervalMinutes: { min: 1, max: 1440 },
+  retain: { min: 1, max: 20 },
+} as const;
 const settingsSchema = z
   .object({
     enabled: z.boolean(),
-    intervalMinutes: z.number().int().min(1).max(1440),
-    retain: z.number().int().min(1).max(20),
+    intervalMinutes: z
+      .number()
+      .int()
+      .min(AUTOSAVE_LIMITS.intervalMinutes.min)
+      .max(AUTOSAVE_LIMITS.intervalMinutes.max),
+    retain: z.number().int().min(AUTOSAVE_LIMITS.retain.min).max(AUTOSAVE_LIMITS.retain.max),
   })
   .strict();
 const storedSettingsSchema = settingsSchema.extend({ revision: z.number().int().positive() });
