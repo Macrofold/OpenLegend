@@ -1,9 +1,9 @@
 import type { JobRecord } from './store.js';
 import { sqlTextKey } from './sql-rows.js';
 
-/** SQL identity keys use their exact JSON string encoding. This keeps isolated
- * UTF-16 units out of PostgreSQL's JSON decoder without conflating identities. */
-const key = (value: string | undefined) =>
+/** Encode SQL keys and display text without exposing isolated UTF-16 units to
+ * PostgreSQL's JSON decoder. */
+const storedText = (value: string | undefined) =>
   typeof value === 'string' ? sqlTextKey(value) : undefined;
 
 /** Rebuildable job routing and display fields. The canonical request remains TEXT. */
@@ -15,29 +15,29 @@ export function jobSelection(job: JobRecord): string {
     kind: job.kind,
     status: job.status,
     completedAt: job.completedAt,
-    playerSpeechEventId: key(job.playerSpeechEventId),
-    npcId: key(job.request.npcId),
+    playerSpeechEventId: storedText(job.playerSpeechEventId),
+    npcId: storedText(job.request.npcId),
     displayOwner: owner
-      ? { accountId: key(owner.accountId), actorId: key(owner.actorId) }
+      ? { accountId: storedText(owner.accountId), actorId: storedText(owner.actorId) }
       : null,
     // The actual private content of a thought is never part of the status display.
-    displayMessage: job.kind === 'thought' ? undefined : key(job.message),
+    displayMessage: job.kind === 'thought' ? undefined : storedText(job.message),
     queueLatencyMs: job.queueLatencyMs,
     totalLatencyMs: job.totalLatencyMs,
     request: invention
       ? {
           invention: {
-            worldId: key(invention.worldId),
-            actorId: key(invention.actorId),
-            timelineId: key(invention.timelineId),
+            worldId: storedText(invention.worldId),
+            actorId: storedText(invention.actorId),
+            timelineId: storedText(invention.timelineId),
           },
         }
       : undefined,
     decision: decision
       ? {
-          worldId: key(decision.worldId),
-          actorId: key(decision.actorId),
-          timelineId: key(decision.timelineId),
+          worldId: storedText(decision.worldId),
+          actorId: storedText(decision.actorId),
+          timelineId: storedText(decision.timelineId),
           phase: decision.phase,
           higher: decision.higher ? { state: decision.higher.state } : undefined,
         }

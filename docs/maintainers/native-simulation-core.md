@@ -1118,7 +1118,7 @@ The optional change to bystander movement memory in profiler proposal 2 remains 
 
 ### NPC and background-work follow-up
 
-The [profiling findings](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-hot-path-comparisons.md#next-profiling-candidates-outside-movement-perception-and-saving) define this batch. The following are separate experiments. Each must complete its real caller checks and matched comparisons before retention.
+The [profiling findings](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-hot-path-comparisons.md#next-profiling-candidates-outside-movement-perception-and-saving) define this batch. The following are separate experiments. Each must complete its real caller checks and matched comparisons before retention. The [evidence record](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-npc-background-work.md) records the passed callers and preserved fixture failures.
 
 | Experiment          | Implementation and completion check                                                                                                                                                                                                                                                                       |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
