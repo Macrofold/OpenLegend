@@ -3,12 +3,13 @@
 
 use super::{CommitError, Store, StoreError, StoreResult, durable_head, ordinal, sql_ordinal};
 use crate::language::{LanguageError, LanguageProvider, LexicalVector};
+use indexmap::IndexMap;
 use openlegend_simulation::{
     encoding::json_record,
-    host::{ByteBudget, ByteReservation},
+    host::{ByteBudget, ByteReservation, map_storage},
 };
 use serde::Serialize;
-use std::{collections::HashSet, sync::Arc};
+use std::{collections::HashSet, mem::size_of, sync::Arc};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,20 +37,27 @@ pub struct PendingLexical {
 struct Prepared {
     claim: Claim,
     expected: bool,
-    vector: Option<LexicalVector>,
+    vector: Option<usize>,
 }
 
 pub struct PreparedLexical {
     world: String,
     generation: String,
     rows: Vec<Prepared>,
+    vectors: Vec<LexicalVector>,
     _storage: ByteReservation,
+}
+
+impl PreparedLexical {
+    fn vector(&self, row: &Prepared) -> Option<&str> {
+        row.vector.map(|index| self.vectors[index].as_str())
+    }
 }
 
 impl PendingLexical {
     /// Prepare admitted search text without holding a Postgres transaction.
-    /// The optional vectors carry independent storage until their fixed-key
-    /// transaction completes, while this original input is released promptly.
+    /// Exact equal text shares one vector within this batch. The borrowed text
+    /// lookup ends here, and each source keeps its own claim for publication.
     pub fn prepare(
         self,
         language: &LanguageProvider,
@@ -61,49 +69,72 @@ impl PendingLexical {
             pending,
             mut storage,
         } = self;
-        let _transition = budget
-            .reserve(
-                pending
-                    .len()
-                    .checked_mul(std::mem::size_of::<Prepared>())
-                    .ok_or(LanguageError::Capacity)?,
+        let capacity = pending.len();
+        let lookup = if capacity > 1 { capacity } else { 0 };
+        let transition = capacity
+            .checked_mul(
+                size_of::<Prepared>() + size_of::<LexicalVector>() + size_of::<Option<usize>>(),
             )
+            .and_then(|bytes| bytes.checked_add(map_storage::<&str, usize>(lookup)?))
+            .ok_or(LanguageError::Capacity)?;
+        let _transition = budget
+            .reserve(transition)
             .map_err(|_| LanguageError::Capacity)?;
-        let mut rows = Vec::with_capacity(pending.len());
-        for row in pending {
-            let vector = if row.removing {
-                None
-            } else {
-                row.text
-                    .as_deref()
-                    .map(|text| language.lexical_vector(text, budget))
-                    .transpose()?
-            };
-            rows.push(Prepared {
+        let mut by_text = IndexMap::with_capacity(lookup);
+        let mut indices = Vec::with_capacity(capacity);
+        let mut vectors = Vec::with_capacity(capacity);
+        for row in &pending {
+            let mut vector = None;
+            if let Some(text) = row.text.as_deref().filter(|_| !row.removing) {
+                let index = match by_text.get(text) {
+                    Some(index) => *index,
+                    None => {
+                        let index = vectors.len();
+                        vectors.push(language.lexical_vector(text, budget)?);
+                        if lookup != 0 {
+                            by_text.insert(text, index);
+                        }
+                        index
+                    }
+                };
+                vector = Some(index);
+            }
+            indices.push(vector);
+        }
+        drop(by_text);
+        let rows: Vec<_> = pending
+            .into_iter()
+            .zip(indices)
+            .map(|(row, vector)| Prepared {
                 claim: row.claim,
                 expected: !row.removing && row.text.as_deref().is_some_and(|s| !s.is_empty()),
                 vector,
-            });
-        }
+            })
+            .collect();
+        let carriers = rows
+            .capacity()
+            .checked_mul(size_of::<Prepared>())
+            .and_then(|bytes| {
+                bytes.checked_add(vectors.capacity().checked_mul(size_of::<LexicalVector>())?)
+            })
+            .and_then(|bytes| bytes.checked_add(4096 + world.capacity() + generation.capacity()))
+            .ok_or(LanguageError::Capacity)?;
         let bytes = rows
             .iter()
-            .try_fold(
-                4096usize + world.capacity() + generation.capacity(),
-                |bytes, row| {
-                    bytes
-                        .checked_add(row.claim.actor.capacity())?
-                        .checked_add(row.claim.id.capacity())?
-                        .checked_add(row.claim.kind.capacity())?
-                        .checked_add(row.claim.revision.capacity())?
-                        .checked_add(std::mem::size_of::<Prepared>())
-                },
-            )
+            .try_fold(carriers, |bytes, row| {
+                bytes
+                    .checked_add(row.claim.actor.capacity())?
+                    .checked_add(row.claim.id.capacity())?
+                    .checked_add(row.claim.kind.capacity())?
+                    .checked_add(row.claim.revision.capacity())
+            })
             .ok_or(LanguageError::Capacity)?;
         storage.resize(bytes).map_err(|_| LanguageError::Capacity)?;
         Ok(PreparedLexical {
             world,
             generation,
             rows,
+            vectors,
             _storage: storage,
         })
     }
@@ -173,7 +204,7 @@ impl Store {
             let transfer=plan.rows.iter().try_fold(16384usize,|bytes,row| {
                 let key=1024usize.checked_add(row.claim.actor.len())?.checked_add(row.claim.id.len())?
                     .checked_add(row.claim.kind.len())?.checked_add(row.claim.revision.len())?;
-                bytes.checked_add(key.checked_mul(12)?)?.checked_add(row.vector.as_ref().map_or(0,|value|value.as_str().len()).checked_mul(12)?)
+                bytes.checked_add(key.checked_mul(12)?)?.checked_add(plan.vector(row).map_or(0,str::len).checked_mul(12)?)
             }).ok_or(StoreError::Capacity)?;
             let _sql=store.budget.reserve(transfer).map_err(|_|StoreError::Capacity)?;
             let requested:Vec<_>=plan.rows.iter().map(|row|&row.claim).collect();
@@ -203,7 +234,7 @@ impl Store {
                 let admitted=selected.try_get::<_,i64>(1)?;
                 if available && row.expected {expected.push(&row.claim);}
                 writes.push(Write {claim:&row.claim,budget:admitted,
-                    vector:if available && admitted>0 {row.vector.as_ref().map(LexicalVector::as_str)} else {None}});
+                    vector:if available && admitted>0 {plan.vector(row)} else {None}});
             }
             drop(found);
             if writes.is_empty() {return Ok(true);}
