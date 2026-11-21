@@ -38,14 +38,14 @@ Creator authority and a separately supported full-invention grant can authorize 
 
 | Kind of state               | Meaning                                                     | Example                                  | What it does not automatically do                                            |
 | --------------------------- | ----------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------- |
-| Competence                  | Capability within an authored task domain                   | Practical craft rank                     | Grant a method the actor never learned, create tools or force wise choices   |
+| Character skill             | Proficiency at an activity defined by the world             | Practical craft rank                     | Grant a method the actor never learned, create tools or force wise choices   |
 | Bodily property             | A supported physical characteristic                         | A world's strength measure               | Overrule actual reach, mass, support or the relevant physical action owner   |
 | Resource                    | A quantity that can be gained or spent through real sources | Charge or mana                           | Become free because a roll succeeded                                         |
 | Temporary condition         | A scoped influence with a cause and duration                | Impaired grip from an admitted condition | Stack indefinitely under renamed copies or become permanent without its rule |
 | Descriptive trait or belief | Authored characterization or a person's interpretation      | Patient, suspicious, inexperienced       | Force speech, consent, friendship or a private mind state on another person  |
 | Check result                | The outcome of one actual admitted uncertainty              | Patch secured; finishing required        | Become a universal success permission or a new permanent stat                |
 
-The same displayed word can have different meanings in different worlds, but its actual definition must be unambiguous within its use. A resource and a competence called focus cannot silently share one writable value. Renaming a stat does not change its effects; changing its effects is a reviewed rule revision.
+Use **character skill** in prose for the kind of state called **competence** in the technical design. The same displayed word can have different meanings in different worlds, but its definition must be unambiguous within each world. A resource and a character skill both called focus must keep separate values. Renaming a stat does not change its effects; changing its effects is a reviewed rule revision.
 
 Missing, unknown, inapplicable and zero are different. A world can explicitly define untrained rank zero for applicable actors. It must not turn an absent optional attribute into zero on every creature or initialize a hidden skill merely because an action queried it. If required support is absent, identify the missing behavior or choose another already supported method.
 

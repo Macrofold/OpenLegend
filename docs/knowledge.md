@@ -53,9 +53,9 @@ Fictional NPC pads and observer identities are private to their owner and author
 - Implementation: [Feature tasks](maintainers/cognition-redesign.md).
 - Limits and constraints: [Memory, knowledge and consolidation inventory](limits/memory.md).
 
-## Learned methods
+## Learned activities
 
-Reusable action methods have world-scoped structural definitions and actor-owned acquisitions, separate from recipe invention and prose notepads. Independent permitted reproduction can reuse a definition; catalogue existence alone grants no knowledge. Private support, revocation, compatible-definition checks and tentative evidence follow [action records and learned activities](action-experience.md).
+A learned activity belongs to the character who retained the steps from experience. Two characters who independently learn the same activity can share a method definition within the world. Each keeps a private record of learning it. A catalogue entry, an invented recipe or a written claim in a notepad supplies no such record. The rules for evidence, correction and later use belong to [action records and learned activities](action-experience.md#learning-and-shared-definitions).
 
 ## Physical production-method records
 
@@ -63,7 +63,7 @@ An ordinary item definition may disclose one exact installed production method t
 
 **Learn this method** is an explicit instantaneous native transaction. It rechecks current item/placement revisions, exact record meaning, disclosure eligibility, deliberate inspection and the installed method's native compiled meaning before calling the existing recipe-knowledge grant. It creates no item and consumes no record. Repeating it returns **already known** without another acquisition; read-only preview changes no stock, knowledge, history or saved randomness. An unavailable or changed record refuses before granting anything. A portable record can move through ordinary custody and teach another permitted visitor, without an invisible site copy.
 
-The acquired method is actor-private, distinct from prose notepads and reusable action activities. Authored methods carry world provenance rather than invented-by attribution. Installing them teaches nobody, and record learning never completes the bundled live-invention goal. Manufacture and later use retain their normal knowledge, material, work, equipment and target checks. Same-format persistence preserves actual stock, source-bearing acquisitions and taken items; no restored world is reseeded. [Generic owner](../packages/domain/src/recipe-records.ts), [world content](worlds/base/rewarding-expeditions.md), [AV01](maintainers/parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions), [evidence](verification/rewarding-expeditions.md), [content limits](limits/base-world.md#av-l01--finite-authored-expeditions).
+The acquired method is actor-private, distinct from prose notepads and learned activities. Authored methods carry world provenance rather than invented-by attribution. Installing them teaches nobody, and record learning never completes the bundled live-invention goal. Manufacture and later use retain their normal knowledge, material, work, equipment and target checks. Same-format persistence preserves actual stock, source-bearing acquisitions and taken items; no restored world is reseeded. [Generic owner](../packages/domain/src/recipe-records.ts), [world content](worlds/base/rewarding-expeditions.md), [AV01](maintainers/parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions), [evidence](verification/rewarding-expeditions.md), [content limits](limits/base-world.md#av-l01--finite-authored-expeditions).
 
 ## Selected stealth evidence and familiarity consumer
 

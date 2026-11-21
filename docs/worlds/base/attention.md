@@ -133,7 +133,7 @@ Current native and fixture evidence is recorded in [Attention and personal memor
 
 ## How many incidental subjects an NPC tracks
 
-An NPC can track **at most one subject at a time solely because of an ordinary cue**. For example, a gatekeeper can see several passersby and follow one more closely because their movement stands out. Someone addressing the gatekeeper can draw attention through direct involvement. Urgency, deliberate focus and current work also have their own priorities within the overall limit. Player-controlled characters use the usual attention capacity.
+An actor whose saved controller is `npc` can track **at most one subject at a time solely because of an ordinary cue**. For example, a gatekeeper can see several passersby and follow one more closely because their movement stands out. Someone addressing the gatekeeper can draw attention through direct involvement. Urgency, deliberate focus and current work also have their own priorities within the overall limit. Actors using the `player` or `native` controller use the usual attention capacity. [Actor controllers](../../glossary/characters-and-cognition.md#who-is-acting) · [Selection in TypeScript](../../../packages/domain/src/attention.ts) · [Selection in Rust](../../../native/simulation/src/attention/policy.rs)
 
 The game also gives subjects a turn for closer observation when their current description has yet to be included in a decision for this NPC. That is what “discovery” means in attention selection. A familiar person whose appearance has changed can qualify. Choosing someone to observe does not itself request an AI decision.
 

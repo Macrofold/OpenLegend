@@ -26,7 +26,7 @@ The selected sequence is:
 
 1. Let the player request an optional reading of already permitted speech, with a narrowly scoped preference for new direct replies.
 2. Independently let the player dictate into a private editable draft and explicitly send chosen words.
-3. Complete a live, consented, two-human slate conversation using short textual turns and optional reading/dictation.
+3. Have two consenting players call each other through their characters’ slates using short text turns with optional reading or dictation.
 4. Qualify a separate short timed doorway exchange with speaker-approved words, real physical boundaries and suitable mechanical pacing.
 5. Consider characteristic human recordings or unrestricted simultaneous voice only after their distinct disclosure, caption, interruption and cost problems have a demonstrated solution.
 
@@ -82,7 +82,7 @@ The human's microphone is an interface input. Recording a draft does not force t
 
 ## 6. A call is an answered private conversation
 
-The first call is between two human-controlled people already connected through the selected DG24 world affordance. Each person separately chooses **Allow calls** for the relevant contact and can silence that person's invitations. Enabling it permits an invitation, not automatic acceptance, recording or microphone capture. No NPC calls, voicemail, conference calls, external notifications or account-wide calling are selected.
+The first proposed call connects two players whose characters have already exchanged contacts through the DG24 message slates. Each person separately chooses **Allow calls** for the relevant contact and can silence that person's invitations. Enabling it permits an invitation, not automatic acceptance, recording or microphone capture. No NPC calls, voicemail, conference calls, external notifications or account-wide calling are selected.
 
 The installed slate family must explicitly support the extension. Existing primitive inventory does not change. A person needs the actual carried valid bound slate and current operating capability; contacts, history and private authority still belong to the person. The item remains ordinary finite property, with DG24's recovery and replacement behavior.
 
@@ -140,7 +140,7 @@ Reconnection establishes present authority and shows permitted call history. It 
 
 A restored fictional history can contain a formerly active call's accepted words, but not an operational open connection. Current privacy, erasure, blocks, control and device revocations still apply; DG25/SL10 governs any offered private historical cut. No discarded-future audio or post-cut call text returns as new inbox material.
 
-Changing embodiment never transfers another person's private call corpus. The first human-only route avoids the still-unqualified NPC derivative problem. Adding NPC calls later must satisfy NC22's participant-restricted thoughts, summaries, outward outputs, creator inspection and control transitions before they are offered. “The NPC will keep it secret” is not enforcement.
+Changing embodiment never transfers another person's private call corpus. The first proposed calls connect player characters. Before offering NPC calls, verify under NC22 that private call content remains restricted to participants when an NPC thinks, produces a summary or communicates, when a creator inspects the NPC and when control of the character changes. “The NPC will keep it secret” is not enforcement.
 
 ## 8. The selected doorway extension
 

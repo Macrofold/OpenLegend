@@ -128,7 +128,7 @@ Before enabling reuse, audit the shared packet's actual formatter consumers for 
 
 Use an exact tuple: runtime installation identity, world ID, timeline/generation, account ID, session ID/revision, grant revision, actor ID, audience and event-window request. Definition/geometry installation identity is bound by the capture and checked on reuse. Only embodied audiences share. Different worlds, accounts, sessions, actors, grants, timelines, event windows or inspection audiences do not.
 
-Exclude connection ID and control generation only from this raw-facts key. They remain in each ordinary RequestScope, currentness check, token construction, reference binding and final view. Do not substitute a command-recovery key or silently alter the existing full `scopeKey`.
+Exclude connection ID and control generation only from this raw-facts key. They remain in each ordinary RequestScope, freshness check, token construction, reference binding and final view. Do not substitute a command-recovery key or silently alter the existing full `scopeKey`.
 
 Bind the group to the accepted cut at acquisition as well as that tuple. Inside the service's existing accepted-boundary route, capture the native handle identity, generation and `progress.throughCut` alongside the actual capture. Before another borrower and again in its final publication callback, require that same handle/generation/cut. A changed cut retires further reuse; it never relabels old facts with a newer host revision. Read the service's already-held scalar progress, not `liveReadCuts()`, a new SQL lookup or a new bridge capture. This conservative check is specific to P: ordinary captures retain their existing scoped currentness contract.
 

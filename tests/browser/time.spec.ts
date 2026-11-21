@@ -164,7 +164,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       await other.goto('http://127.0.0.1:' + address.port);
       await expect(other.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await expect(
-        other.getByText('OpenLegend is open in another tab.', { exact: true }),
+        other.getByText('Open Legend is open in another tab.', { exact: true }),
       ).toBeVisible();
       expect(await other.evaluate(() => sessionStorage.getItem('open-legend:tab-id'))).not.toBe(
         identity,

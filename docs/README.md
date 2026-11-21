@@ -1,4 +1,4 @@
-# OpenLegend documentation
+# Open Legend documentation
 
 Choose the owner for your question; these indexes are navigation, not required reading lists. Known owners can be opened directly. Current behavior, proposed scope and recorded evidence have different authority under the [documentation system](documentation-system.md).
 

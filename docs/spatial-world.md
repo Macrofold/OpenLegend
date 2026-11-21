@@ -2,7 +2,7 @@
 
 ## Presentation contract
 
-[World presentation](world-presentation.md) is the canonical owner for default-lit sprite/mesh artwork, multi-receiver dynamic shadows, depth/read-through behavior, configurable player visibility settings and smooth right-drag camera controls. These never change physical sight, sound, support or action authority.
+[World presentation](world-presentation.md) is the canonical owner for default-lit sprite/mesh artwork, multi-receiver dynamic shadows, scene depth and see-through reveal, configurable player visibility settings and smooth right-drag camera controls. These never change physical sight, sound, support or action authority.
 
 ## Renderer boundary
 
@@ -224,7 +224,7 @@ Light and sound are physical inputs under installed world rules. Rendered bright
 
 **Implemented display feature.** Two independent bottom-right **Sight** and **Hearing** icon toggles save device-local preferences through the existing preference helper; both start off. Hover/focus explanations identify the complete regions and reference. The same controls remain available below an open narrow conversation sheet. They change only graphics: character senses, observations, recognition, descriptions, memories, AI information, actions and spending admission are unchanged.
 
-Sight uses continuous teal outlines with short hover labels **Clear sight** and **Within sight**. The inner division reuses the existing presentation-only focus fraction; it adds no observation or description tier. The outer limit uses the character's actual sight range. Native line-of-sight queries from the character's eye to the same-sized reference person's exposed body clip both areas against physical geometry. Camera floor focus, cutaways and read-through do not change that geometry.
+Sight uses continuous teal outlines with short hover labels **Clear sight** and **Within sight**. The inner division reuses the existing presentation-only focus fraction; it adds no observation or description tier. The outer limit uses the character's actual sight range. Native line-of-sight queries from the character's eye to the same-sized reference person's exposed body clip both areas against physical geometry. Camera floor focus, cutaways and see-through reveal do not change that geometry.
 
 Hearing uses dashed amber outlines with short hover labels **Clear speech**, **Some words** and **Faint sound**. The reference is **normal-volume speech from someone the controlled character's size**, using their body/ear anchors. Native acoustic thresholds, hearing sensitivity and background sound determine the radii; native barrier transmission adjusts the sampled reach. This is a possible-speaker guide, not a map of actual people or sound sources. Sound can cross a sight-blocking barrier when the authored transmission permits it. Existing hearing, intelligibility and speech-volume rules are unchanged.
 
@@ -252,11 +252,11 @@ Camera movement is usable while the simulation is paused. It does not advance ti
 
 Levels remain named/grouped support surfaces, not necessarily equally spaced horizontal planes. A sloped path can span several heights while remaining one connected surface. Ordinary camera UI does not select or hide entire floors.
 
-Holding **Option (Alt)** makes currently character-visible things readable through roofs, upper floors and other permitted camera scenery. The renderer reuses the existing authorized-silhouette read-through mask rather than hiding whole geometry; unknown contents stay unknown. Collision, support, physical sight, shadow casting and acoustics remain intact. Releasing the key, moving into UI, focus loss or suspension restores the configured presentation. [World presentation](world-presentation.md#local-read-through) owns the exact scope, gesture and rendering policy.
+Holding **Option (Alt)** makes currently character-visible things readable through roofs, upper floors and other permitted camera scenery. The renderer reuses the existing mask for drawing permitted silhouettes rather than hiding whole geometry; unknown contents stay unknown. Collision, support, physical sight, shadow casting and acoustics remain intact. Releasing the key, moving into UI, focus loss or suspension restores the configured presentation. [World presentation](world-presentation.md#see-through-reveal) owns the exact scope, gesture and rendering policy.
 
 **Selected physical-awareness target:** bodily/sensory state and native evidence determine acquisition for players and NPCs. Camera or viewport framing may select how permitted information is presented or optionally attended; it cannot establish or refuse physical acquisition. A camera-side wall can hide a body-visible object from the displayed view, and an approved cutaway can remove that presentation obstruction without changing body sight. Creator inspection remains a separate audience and grants no ordinary character knowledge.
 
-The former viewport-narrows-bodily-exposure target was not implemented and is superseded by the [shared awareness contract](projects/stealth-awareness-tech-design.md#shared-contracts). Current profile-configurable local read-through still displays only already body-authorized targets. This reconciliation does not claim that the new physical gaze/detail model is delivered; [World presentation](world-presentation.md#local-read-through) retains current rendering behavior.
+The former viewport-narrows-bodily-exposure target was not implemented and is superseded by the [shared awareness contract](projects/stealth-awareness-tech-design.md#shared-contracts). The player’s see-through reveal setting displays only subjects their character can currently see. This reconciliation does not claim that the new physical gaze/detail model is delivered; [World presentation](world-presentation.md#see-through-reveal) retains current rendering behavior.
 
 ### Picking and controls
 
@@ -264,7 +264,7 @@ A compact bottom-right camera toolbar keeps zoom, recenter, follow-player and Si
 
 A click intersects actual permitted spatial geometry, not an assumed `y=0` plane. Where several surfaces lie beneath the pointer, choose the nearest visible supported intersection; held Option does not turn movement into a click through covering geometry. Preserve the actual XYZ point and support identity when submitting a destination. The server independently checks the submitted location and actor permissions.
 
-Combat aiming uses the same camera geometry with a separate [subject-or-point contract](projects/action-execution-and-skill-expression-tech-design.md#15-physical-pointer-aim-consequence-review-and-cancellation). Every accepted release re-picks current geometry. An eligible displayed living body selects its exact effective-body center for subject aim; other permitted hits retain exact XYZ. The shooter's native anchor, not the camera, starts the released ray. Camera read-through grants no collision bypass.
+Combat aiming uses the same camera geometry with a separate [subject-or-point contract](projects/action-execution-and-skill-expression-tech-design.md#15-physical-pointer-aim-consequence-review-and-cancellation). Every accepted release re-picks current geometry. An eligible displayed living body selects its exact effective-body center for subject aim; other permitted hits retain exact XYZ. The shooter's native anchor, not the camera, starts the released ray. See-through reveal does not change which physical objects can block a shot.
 
 Preserve existing click-to-act and contextual menus. Orbit and pan gestures must not accidentally submit movement on release. Provide keyboard and visible-button alternatives, touch controls, recenter, and reduced-motion behavior. Existing inventory/crafting/world-agent shortcuts must not be silently reused for camera controls.
 

@@ -1090,7 +1090,7 @@ export class WorldAuthoringService {
     const reason = !c.godMode
       ? 'World-owner mode is required for this authoring surface.'
       : !mcp?.allowWrites || mcp.worldId !== this.service.world.id || mcp.expiresAt <= Date.now()
-        ? 'Configure an unexpired writable OpenLegend MCP connector for this world.'
+        ? 'Configure an unexpired writable Open Legend MCP connector for this world.'
         : !c.macrofoldKey || !/^[a-f0-9-]{36}$/i.test(c.macrofoldWorldConnectionId)
           ? 'Configure the Macrofold API key and an approved World Agent connection.'
           : !c.macrofoldWorkerId

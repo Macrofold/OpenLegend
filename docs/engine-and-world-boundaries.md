@@ -4,13 +4,13 @@
 
 [Spatial world](spatial-world.md) owns the XYZ/support/query boundary. The first provider supports bounded public planar patches embedded in 3D and finite blockers; the wilderness module supplies the lookout, profiles and native flight route. Keep those content choices replaceable rather than treating every world as a wilderness. Sensory definitions remain replaceable policies consuming geometry; rendering/appearance never admits physical capabilities. Broader provider/profile registration remains EWF/SW work.
 
-**Status: target architecture.** This document defines the intended separation between OpenLegend's runtime and the realities built with it. It does not claim that the current implementation already has a general module runtime. [Architecture](architecture.md) describes executable behavior; [EWF delivery](maintainers/extensible-world-foundation.md) tracks the missing shared foundation.
+**Status: target architecture.** This document defines the intended separation between Open Legend's runtime and the realities built with it. It does not claim that the current implementation already has a general module runtime. [Architecture](architecture.md) describes executable behavior; [EWF delivery](maintainers/extensible-world-foundation.md) tracks the missing shared foundation.
 
 ## 1. The product being built
 
-**OpenLegend should be an engine for running authored realities, with a strong default reality—not a fixed survival game with an ever-growing collection of mod hooks.**
+**Open Legend should be an engine for running authored realities, with a strong default reality—not a fixed survival game with an ever-growing collection of mod hooks.**
 
-Build OpenLegend first and extract its reusable engine boundaries through playable features. The final architecture is a direction, not an instruction to complete every abstraction before making the game useful. A v1-specific implementation is acceptable when its responsibility, current limitation, and future replacement boundary are explicit.
+Build Open Legend first and extract its reusable engine boundaries through playable features. The final architecture is a direction, not an instruction to complete every abstraction before making the game useful. A v1-specific implementation is acceptable when its responsibility, current limitation, and future replacement boundary are explicit.
 
 **Worlds define what exists and how it behaves. The runtime defines how admitted rules are represented, executed, combined, authorized, inspected, and preserved.**
 
@@ -130,7 +130,7 @@ When a newly discovered case fails, trace the owner and complete producer-to-con
 
 ### Trace selected world behavior through its consumers
 
-Before changing a selected rule, installation or authored explanation, identify the actual producer and every consumer that independently constructs its meaning: ordinary and inventory menus, entity/equipped shortcuts, resident choices, grounding/help/schema examples, activity/status descriptions, records, learned methods and restoration. Trace defaults and explicit operator overrides through actual execution as well as startup. Component presence or linked implementation code alone cannot establish installation. A temporary missing prerequisite differs from an omitted capability; each affected consumer uses the same selected owner rather than recreating a bundled fallback.
+Before changing a selected rule, installation or authored explanation, identify the actual producer and every consumer that independently constructs its meaning: ordinary and inventory menus, entity/equipped shortcuts, resident choices, grounding/help/schema examples, activity/status descriptions, records, learned activities and restoration. Trace defaults and explicit operator overrides through actual execution as well as startup. Component presence or linked implementation code alone cannot establish installation. A temporary missing prerequisite differs from an omitted capability; each affected consumer uses the same selected owner rather than recreating a bundled fallback.
 
 Verify the changed selected meaning through its affected downstream callers, including secondary shortcuts and current wording. When a change adds, replaces or removes a supported rule in an installation, or changes how the system selects or applies that rule, include a materially different supported rule and check what happens when the rule is omitted. For content added under an unchanged selection mechanism, exercise its actual installation and affected callers. Preserve historical facts separately from current availability: exact trusted meaning can interpret finished records without granting another attempt, while resumable work needs its current required support. For action records, output bindings or reusable methods, also read the relevant [action-experience contract](action-experience.md). [The October 14 review](verification/world-engine-boundaries.md#requested-full-review--october-14-2026) found these missed consumers after the primary menu/executor already used the selected rules; it supplies examples, not new universal gameplay laws.
 
@@ -168,15 +168,15 @@ Keep detailed work in the focused tracker. Do not create an independent permanen
 
 The same storage mechanism may support multiple types, but their meanings differ:
 
-| Concept                    | Appropriate starting model                                                                                |
-| -------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Fullness or battery charge | Reservoir with bounds, rates, replenishment, and transition policies                                      |
-| Temperature or mass        | Quantity with units, precision, applicability, and conversion rules                                       |
-| Skill                      | Proficiency and knowledge, with explicitly supported prerequisites and action effects                     |
-| Trait                      | Category, disposition, structured value, or bounded narrative description                                 |
-| Empathy                    | Interpretation/behavior disposition unless the world deliberately defines a numerical mechanic            |
-| Health                     | A body-model value or derived condition summary; not universally a mandatory scalar                       |
-| Psychological need         | State with declared satisfaction mechanisms and controller relevance, not necessarily a physical resource |
+| Concept                    | Appropriate starting model                                                                                             |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Fullness or battery charge | Reservoir with bounds, rates, replenishment, and transition policies                                                   |
+| Temperature or mass        | Quantity with units, precision, applicability, and conversion rules                                                    |
+| Character skill            | Proficiency at an activity, with explicitly supported action effects and any required knowledge or other prerequisites |
+| Trait                      | Category, disposition, structured value, or bounded narrative description                                              |
+| Empathy                    | Interpretation/behavior disposition unless the world deliberately defines a numerical mechanic                         |
+| Health                     | A body-model value or derived condition summary; not universally a mandatory scalar                                    |
+| Psychological need         | State with declared satisfaction mechanisms and controller relevance, not necessarily a physical resource              |
 
 A bar is a projection of state. A useful new mechanic includes its state contract, update rules, effects, observation policy, controller meaning, available responses, and presentation. Its name alone grants none of these.
 
