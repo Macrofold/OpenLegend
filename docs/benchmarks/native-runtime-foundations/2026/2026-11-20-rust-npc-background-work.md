@@ -21,6 +21,8 @@ The experiments follow the [prior profile findings](2026-11-20-rust-hot-path-com
 
 The 15 steady windows in these two campaigns recorded 1,824 automatic jobs prompted by current physical relations, 586 prompted by events, and zero optional-discovery jobs. The counts come from durable jobs. Individual jobs can use more than one model judgment. Slowing optional curiosity further would miss the work exercised in this opening.
 
+**Recall, scheduler intake, and body deadline comparisons remain open.** Campaign `8080089e-123b-4eec-853d-8aa47d11b53c` froze candidates `9da6700c34fc`, `3488206b08d7`, and `2eab0b629e8e`, respectively, against the common control. AWS access expired after the worker started. Collect and verify the original campaign, including worker cleanup, before deciding whether to keep each change. The final integrated cold-continuation check and the focused check that missing job ownership cannot expose a status row are still open on the final retained code.
+
 ## Matched 180-second windows
 
 Each entry gives median / mean / p95, control → candidate. The CPU figures use three steady windows per arm, with all server threads counted once and PostgreSQL measured separately. First movement ends at stream receipt. The latency figures pool 96 steady walks per arm. Savings acknowledgements use the database observer.
