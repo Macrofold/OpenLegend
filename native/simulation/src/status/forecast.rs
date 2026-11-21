@@ -143,6 +143,9 @@ fn condition_transition(
         StatusCondition::Any { any } => {
             return compound(read, bindings, false, any.iter(), rates, epsilon, meters);
         }
+        StatusCondition::Compare { compare } => {
+            return comparison_transition(read, bindings, compare, rates, epsilon, meters);
+        }
         _ => {}
     }
     let matches = read.evaluate_metered(bindings, condition, meters)?.matches;
@@ -160,45 +163,53 @@ fn condition_transition(
             };
             edge(daily_window.start).min(edge(daily_window.end))
         }
-        StatusCondition::Compare { compare } => {
-            let target = bindings.target(compare.target);
-            let Some(AttributeValue::Number(value)) = read.value(target, &compare.attribute)?
-            else {
-                return Ok(Transition {
-                    matches,
-                    after: f64::INFINITY,
-                });
-            };
-            let rate = rates.get(target, &compare.attribute);
-            let range = read
-                .attributes
-                .get(&compare.attribute)
-                .and_then(|definition| attribute_range(read.entities.get(target), definition));
-            let saturated = range.is_some_and(|(min, max)| {
-                (value <= min && rate < 0.0) || (value >= max && rate > 0.0)
-            });
-            if rate == 0.0 || saturated {
-                f64::INFINITY
-            } else {
-                let threshold = read.comparison_value(bindings, compare);
-                if value == threshold {
-                    let after = match compare.operator {
-                        Comparison::Equal => false,
-                        Comparison::NotEqual => true,
-                        Comparison::GreaterThanOrEqual => rate > 0.0,
-                        Comparison::LessThan | Comparison::LessThanOrEqual => rate < 0.0,
-                    };
-                    if matches == after {
-                        f64::INFINITY
-                    } else {
-                        epsilon.max(2.0 * value.abs() * f64::EPSILON / rate.abs())
-                    }
-                } else {
-                    until_threshold(value, rate, threshold, epsilon)
-                }
-            }
-        }
         _ => f64::INFINITY,
+    };
+    Ok(Transition { matches, after })
+}
+
+fn comparison_transition(
+    read: &StatusRead<'_>,
+    bindings: EffectBindings<'_>,
+    compare: &AttributeComparison,
+    rates: &AttributeRates<'_>,
+    epsilon: f64,
+    meters: &mut WorkMeters,
+) -> Result<Transition, ExecutionError> {
+    charge_status_test(meters)?;
+    let target = bindings.target(compare.target);
+    let AttributeComparisonRead {
+        matches,
+        number,
+        threshold,
+        range,
+    } = read.compare_attribute(target, compare, true)?;
+    let Some(value) = number else {
+        return Ok(Transition {
+            matches,
+            after: f64::INFINITY,
+        });
+    };
+    let rate = rates.get(target, &compare.attribute);
+    let saturated = range.is_some_and(|(min, max)| {
+        (value <= min && rate < 0.0) || (value >= max && rate > 0.0)
+    });
+    let after = if rate == 0.0 || saturated {
+        f64::INFINITY
+    } else if value == threshold {
+        let after = match compare.operator {
+            Comparison::Equal => false,
+            Comparison::NotEqual => true,
+            Comparison::GreaterThanOrEqual => rate > 0.0,
+            Comparison::LessThan | Comparison::LessThanOrEqual => rate < 0.0,
+        };
+        if matches == after {
+            f64::INFINITY
+        } else {
+            epsilon.max(2.0 * value.abs() * f64::EPSILON / rate.abs())
+        }
+    } else {
+        until_threshold(value, rate, threshold, epsilon)
     };
     Ok(Transition { matches, after })
 }

@@ -956,6 +956,21 @@ fn compare_status(left: Option<&StatusValue>, operator: Comparison, right: &Stat
     }
 }
 
+fn charge_status_test(
+    meters: &mut crate::work::WorkMeters,
+) -> Result<(), crate::execution::ExecutionError> {
+    meters
+        .charge(&[(crate::work::WorkUnit::Tests, 1)])
+        .map_err(crate::execution::ExecutionError::Work)
+}
+
+struct AttributeComparisonRead {
+    matches: bool,
+    number: Option<f64>,
+    threshold: f64,
+    range: Option<(f64, f64)>,
+}
+
 impl StatusRead<'_> {
     /// Exact ordinary-status admission. Contributions remain another compiled
     /// family and cannot borrow this path's simpler self-owned state shape.
@@ -972,11 +987,7 @@ impl StatusRead<'_> {
         definition: &StatusDefinition,
         meters: &mut crate::work::WorkMeters,
     ) -> Result<bool, crate::execution::ExecutionError> {
-        self.can_activate_with_charge(bindings, definition, &mut || {
-            meters
-                .charge(&[(crate::work::WorkUnit::Tests, 1)])
-                .map_err(crate::execution::ExecutionError::Work)
-        })
+        self.can_activate_with_charge(bindings, definition, &mut || charge_status_test(meters))
     }
     fn can_activate_with_charge<E: From<ValueError>>(
         &self,
@@ -1078,6 +1089,15 @@ impl StatusRead<'_> {
         ) else {
             return Ok(None);
         };
+        self.bound_attribute_value(entity, definition, attribute_id)
+    }
+
+    fn bound_attribute_value(
+        &self,
+        entity: &Entity,
+        definition: &AttributeDefinition,
+        attribute_id: &str,
+    ) -> Result<Option<AttributeValue>, ValueError> {
         if entity.actor.is_some() {
             read_attribute(entity, definition, self.window)
         } else {
@@ -1144,25 +1164,52 @@ impl StatusRead<'_> {
         })
     }
 
-    fn comparison_value(
+    /// Read one current attribute and evaluate the predicate. A forecaster
+    /// also needs its bounds to determine whether its rate can cross the
+    /// threshold. Use the same reading only within this immutable status read.
+    fn compare_attribute(
         &self,
-        bindings: EffectBindings<'_>,
+        target: &str,
         comparison: &AttributeComparison,
-    ) -> f64 {
-        if comparison.unit.as_deref() != Some("fractionOfRange") {
-            return comparison.value;
-        }
-        let entity = self.entities.get(bindings.target(comparison.target));
-        let Some(definition) = self.attributes.get(&comparison.attribute) else {
-            return comparison.value;
+        forecast_bounds: bool,
+    ) -> Result<AttributeComparisonRead, ValueError> {
+        let attribute = self
+            .entities
+            .get(target)
+            .zip(self.attributes.get(&comparison.attribute));
+        let left = match attribute {
+            Some((entity, definition)) => self
+                .bound_attribute_value(entity, definition, &comparison.attribute)?
+                .map(|value| match value {
+                    AttributeValue::Number(number) => StatusValue::Number(number),
+                    AttributeValue::Category(category) => StatusValue::Text(category),
+                }),
+            None => None,
         };
-        let Some(entity) = entity else {
-            return comparison.value;
+        let number = match left.as_ref() {
+            Some(StatusValue::Number(value)) => Some(*value),
+            _ => None,
         };
-        match attribute_range(Some(entity), definition) {
-            Some((min, max)) => min + comparison.value * (max - min),
-            None => comparison.value,
-        }
+        let fractional = comparison.unit.as_deref() == Some("fractionOfRange");
+        let range = if fractional || (forecast_bounds && number.is_some()) {
+            attribute.and_then(|(entity, definition)| attribute_range(Some(entity), definition))
+        } else {
+            None
+        };
+        let threshold = match range {
+            Some((min, max)) if fractional => min + comparison.value * (max - min),
+            _ => comparison.value,
+        };
+        Ok(AttributeComparisonRead {
+            matches: compare_status(
+                left.as_ref(),
+                comparison.operator,
+                &StatusValue::Number(threshold),
+            ),
+            number,
+            threshold,
+            range,
+        })
     }
 
     pub fn local_hour(&self) -> f64 {
@@ -1186,11 +1233,7 @@ impl StatusRead<'_> {
         condition: &StatusCondition,
         meters: &mut crate::work::WorkMeters,
     ) -> Result<ConditionEvaluation, crate::execution::ExecutionError> {
-        self.evaluate_with_charge(bindings, condition, &mut || {
-            meters
-                .charge(&[(crate::work::WorkUnit::Tests, 1)])
-                .map_err(crate::execution::ExecutionError::Work)
-        })
+        self.evaluate_with_charge(bindings, condition, &mut || charge_status_test(meters))
     }
     fn evaluate_with_charge<E: From<ValueError>>(
         &self,
@@ -1225,19 +1268,9 @@ impl StatusRead<'_> {
                 }
                 matches
             }
-            StatusCondition::Compare { compare } => {
-                let left = self
-                    .value(bindings.target(compare.target), &compare.attribute)?
-                    .map(|value| match value {
-                        AttributeValue::Number(number) => StatusValue::Number(number),
-                        AttributeValue::Category(category) => StatusValue::Text(category),
-                    });
-                compare_status(
-                    left.as_ref(),
-                    compare.operator,
-                    &StatusValue::Number(self.comparison_value(bindings, compare)),
-                )
-            }
+            StatusCondition::Compare { compare } => self
+                .compare_attribute(bindings.target(compare.target), compare, false)?
+                .matches,
             StatusCondition::Field { field } => {
                 match self.entities.get(bindings.target(field.target)) {
                     Some(entity) => compare_status(
