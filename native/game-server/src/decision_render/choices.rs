@@ -147,9 +147,9 @@ impl DecisionPolicy {
                 text(&wording["strikes"][definition()?][usize::from(meaning["hunting"] == true)])?,
                 &[("name", &name(&target["name"], NameArticle::Definite)?)],
             ),
-            // The captured cast keeps its exact installed and owned-tool text
-            // in Rust. This formatter supplies only common choice details.
-            "fish" => String::new(),
+            // The capture supplies the selected recipe or cast text. This
+            // formatter adds the common target and work details.
+            "fish" | "cook" => String::new(),
             _ => return Err(WorldError::ProviderKind),
         };
         if let Some(temporary) = offer["temporary"].as_object() {
@@ -168,7 +168,7 @@ impl DecisionPolicy {
         if source["hasAction"] == true && offer["hasCommand"] == true {
             result.push_str(text(&wording["transitions"][text(&offer["transition"])?])?);
         }
-        if matches!(kind, "follow" | "status" | "strike" | "fish")
+        if matches!(kind, "follow" | "status" | "strike" | "fish" | "cook")
             && (meaning["body"].is_null() || target["visible"] == true)
         {
             let distance = if meaning["body"].is_null() {

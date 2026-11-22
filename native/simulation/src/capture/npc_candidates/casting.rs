@@ -190,7 +190,9 @@ impl NpcCandidateCursor {
     }
 }
 
-fn text_bound<'a>(parts: impl IntoIterator<Item = &'a JsText>) -> Result<usize, ExecutionError> {
+pub(super) fn text_bound<'a>(
+    parts: impl IntoIterator<Item = &'a JsText>,
+) -> Result<usize, ExecutionError> {
     // An exact JavaScript string may retain both UTF-16 units and its quoted
     // JSON spelling. A fresh join must coexist with its original inputs.
     parts

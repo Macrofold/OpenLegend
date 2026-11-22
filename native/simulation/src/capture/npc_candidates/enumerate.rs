@@ -331,9 +331,24 @@ impl NpcCandidateCursor {
                         .is_some_and(|body| rules.manual_work_body_plans.contains(&body.plan))
                 {
                     self.cast_tools = None;
-                    self.stage = Enumerate::Strike(0, 0);
+                    self.stage = Enumerate::Cook(0, 0);
                 } else {
                     self.offer_cast(core, index, tool, preparation_id)?;
+                }
+            }
+            Enumerate::Cook(index, recipe) => {
+                if index == self.targets.len()
+                    || installed.retained.preparations.is_empty()
+                    || !core.state.inventory.has_children(&self.actor)
+                    || !actor
+                        .body
+                        .as_ref()
+                        .is_some_and(|body| rules.manual_work_body_plans.contains(&body.plan))
+                {
+                    self.cooking = None;
+                    self.stage = Enumerate::Strike(0, 0);
+                } else {
+                    self.offer_cooking(core, index, recipe, preparation_id)?;
                 }
             }
             Enumerate::Strike(target_index, definition_index) => {

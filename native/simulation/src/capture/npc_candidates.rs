@@ -33,6 +33,8 @@ use descriptions::DescriptionContext;
 pub(crate) use descriptions::{NpcDescriptionsAnswer, NpcDescriptionsRequest};
 mod casting;
 use casting::CastTools;
+mod cooking;
+use cooking::CookingChoices;
 
 struct Target {
     body: usize,
@@ -41,6 +43,7 @@ struct Target {
     support: Option<String>,
     interaction_height: f64,
     alive: bool,
+    heat_lit: bool,
     visible: bool,
 }
 #[derive(Clone, Copy)]
@@ -56,6 +59,7 @@ enum Enumerate {
     Probe(usize),
     Approach(usize),
     Fish(usize, usize),
+    Cook(usize, usize),
     Strike(usize, usize),
     CurrentWork(usize),
     PausedWork(usize),
@@ -98,6 +102,7 @@ pub(crate) struct NpcCandidateCursor {
     activity: Option<NpcActivityPreparation>,
     activity_done: Option<NpcActivityRead>,
     cast_tools: Option<CastTools>,
+    cooking: Option<CookingChoices>,
 }
 
 #[derive(Serialize)]
@@ -207,6 +212,7 @@ impl NpcCandidateCursor {
                 support: body.support_surface_id.clone(),
                 interaction_height: profile.interaction_height,
                 alive: target.actor.as_ref().is_some_and(|actor| actor.alive),
+                heat_lit: body.heat_lit == Some(true),
                 visible: false,
             });
         }
@@ -263,6 +269,7 @@ impl NpcCandidateCursor {
             activity: None,
             activity_done: None,
             cast_tools: None,
+            cooking: None,
         })
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
@@ -298,7 +305,7 @@ impl NpcCandidateCursor {
     }
     fn command(
         &self,
-        input: &CommandInput<'_>,
+        input: &impl Serialize,
     ) -> Result<(NativeCommand, ByteReservation), ExecutionError> {
         let length =
             crate::encoding::json_record_len(input).map_err(|_| ExecutionError::Invariant)?;
@@ -536,6 +543,7 @@ impl NpcCandidateCursor {
                     let mut offer = self.pending.take().ok_or(ExecutionError::Invariant)?;
                     if outcome.ok {
                         self.describe_cast(core, &mut offer)?;
+                        self.describe_cooking(core, &mut offer)?;
                         self.append(offer)?;
                     } else if matches!(offer.meaning, NpcOfferMeaning::Strike { .. })
                         && matches!(

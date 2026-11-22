@@ -158,7 +158,15 @@ Disposable loopback PostgreSQL cases confirmed a cooked meat result after ordina
 
 A real browser selected the fish recipe and displayed the exact cooked item in Inventory. The result retained its private material link to the ordinary Source cast used to prepare the fixture. The stand-alone cast has separate evidence above. The Rust run used source tree `74ef96147cc39c5c79a3ff13ddfbe2c821156757` and executable SHA-256 `c4a54ecb8fe07f50e13b284912735756b289902d979b686c1f169ce93923de3e`. Raw caller results are retained in the task's `nsc04-cooking-20261122` evidence directory.
 
-These are local gameplay checks with the stand-alone executable, ordinary saves and a disposable database for each case. They establish the caught-item and cooking junction, including the preserved private ingredient source. [Eating the result](#stand-alone-rust-eating) has a connected player case. An NPC independently choosing to cook remains a separate caller.
+These are local gameplay checks with the stand-alone executable, ordinary saves and a disposable database for each case. They establish the caught-item and cooking junction, including the preserved private ingredient source. [Eating the result](#stand-alone-rust-eating) has a connected player case.
+
+### An NPC chooses to cook in Rust
+
+The NPC's action list uses the same installed recipes and ingredient assignment as the player menu. It prepares that assignment only when the NPC can see a lit fire and has stock. The native command preview checks the exact recipe and lots, and the eventual command owns the actual work and consumption. The provider receives an option description with the observed fire name. Ingredient IDs stay inside the simulation.
+
+A player used the real Speak route and walked while the server’s controlled HTTPS decision was held. Selecting the offered recipe spent one raw portion and saved one cooked item with the exact recipe and ingredient links. An identical request recovered the original result, and a cold restart retained the item and movement. Cancellation spent nothing. An unlit fire and missing stock produced no cooking choices. In a separate run the player put out the fire through its ordinary action while the choice was held. The saved fire remained unlit and the received decision was refused during application, leaving the ingredients and original outcome intact after restart.
+
+Tree `948b3b6e170b` and executable `9a84121bf0e8` passed the locked Rust build and addon check, type check and network check. The five local results under `nsc04-npc-cooking-20261122` are `first-accept` (`077eb086d7a4`), `qualified-cancel` (`d8239d26eb3e`), `qualified-unlit` (`057d723e207c`), `qualified-missing` (`b30452884b87`) and `qualified-put-out` (`9cfb30fa361f`). The disposable databases were removed and no paid provider calls ran. This qualifies choosing and executing an installed cooking recipe. NPC fire tending and the cost of richer offer lists remain open.
 
 ## Stand-alone Rust River line manufacture
 
@@ -168,7 +176,7 @@ The player took that exact tool to the Camp river reach, caught one fish and red
 
 Separate cases covered cancellation after the debit, a saved current-format NPC manufacture that finished after reopening, and an actor who owned all the materials but had never learned the recipe. Cancellation produced no tool. The unlearned method stayed private and its command left all quantities unchanged. An earlier cancellation check tried a new login after restart and correctly could not recover the old private receipt.
 
-The checked Rust source tree was `c0b907e17e8fe1fde53a446d7b0699cf61ee7ce0` and the executable SHA-256 was `5bc99ad84ecbb1417b672628e13ec30d5a18c97060e521721eb7f0c2843cb45c`. These cases used ordinary clocks, browser streams and isolated loopback PostgreSQL databases. No provider call ran. The local checks establish gameplay and persistence. Retained-tool and repeat manufacture, new recipe learning and NPC selection of cooking have separate callers.
+The checked Rust source tree was `c0b907e17e8fe1fde53a446d7b0699cf61ee7ce0` and the executable SHA-256 was `5bc99ad84ecbb1417b672628e13ec30d5a18c97060e521721eb7f0c2843cb45c`. These cases used ordinary clocks, browser streams and isolated loopback PostgreSQL databases. No provider call ran. The local checks establish gameplay and persistence. Retained-tool and repeat manufacture and new recipe learning have separate callers. [NPC cooking](#an-npc-chooses-to-cook-in-rust) uses the installed recipe and exact ingredients.
 
 ## Stand-alone Rust eating
 
