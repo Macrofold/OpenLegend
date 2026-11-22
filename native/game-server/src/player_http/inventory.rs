@@ -3,6 +3,9 @@
 
 use super::*;
 
+mod world_storage;
+pub(super) use world_storage::access;
+
 pub(super) async fn page(State(state): State<PlayerRoutes>, request: Request) -> Response {
     let Ok(_slot) = state.capacity.try_acquire() else {
         return busy();
@@ -33,6 +36,9 @@ pub(super) async fn page(State(state): State<PlayerRoutes>, request: Request) ->
                         "inventory-unavailable",
                         "Choose a valid carried inventory.",
                     ));
+                }
+                if let Some(contact) = input.container().filter(|id| id.starts_with("contact-")) {
+                    return world_storage::page(&state, session, scope, &input, contact, language);
                 }
                 session.with_player_direct_inventory(
                     &scope.account_id,

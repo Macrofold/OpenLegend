@@ -20,7 +20,7 @@ mod account_retention;
 mod control;
 pub use crate::commands::{PlayerTravelDestination, PlayerTravelIntent};
 pub use crate::plans::PlanMode;
-pub use player::{CoordinateRefusal, DirectInventory, InventoryContainer, InventoryCrumb, TypedWalk};
+pub use player::{CoordinateRefusal, DirectInventory, InventoryContainer, InventoryCrumb, RuntimeWorldStorage, TypedWalk};
 pub use crate::outings::view::{OutingViews, PlayerOuting};
 pub use crate::worlds::base_outings::TravelOperation;
 pub use account_retention::RuntimeAccountRetention;

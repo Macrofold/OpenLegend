@@ -106,6 +106,8 @@ struct TradeLabels {
 struct StorageHint {
     container_id: String,
     placement_revision: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    revision: Option<u64>,
 }
 
 /// The exact ordinary `EntityView` fields backed by permitted capture families.
@@ -181,6 +183,7 @@ pub fn prepare_contacts(
     references: &PlayerReferences<'_>,
     player_can_speak: bool,
     trade_reader_revision: &str,
+    inspected_storage: Option<(&str, u64)>,
     budget: &ByteBudget,
 ) -> Result<PreparedContacts, SceneError> {
     if read.trade_terms != "none"
@@ -215,6 +218,7 @@ pub fn prepare_contacts(
             references,
             player_can_speak,
             trade_reader_revision,
+            inspected_storage,
         )?);
     }
     Ok(PreparedContacts {
@@ -232,6 +236,7 @@ fn project_contact(
     references: &PlayerReferences<'_>,
     player_can_speak: bool,
     trade_reader_revision: &str,
+    inspected_storage: Option<(&str, u64)>,
 ) -> Result<ObservedEntity, SceneError> {
     let received = row.body_facet().ok_or(SceneError::Capture)?;
     let SensoryFacet::Body { body } = &received.value else {
@@ -337,6 +342,7 @@ fn project_contact(
     let storage = body.storage.as_ref().map(|storage| StorageHint {
         container_id: id.clone(),
         placement_revision: storage.placement_revision,
+        revision: inspected_storage.filter(|(id, _)| *id == row.source_id).map(|(_, revision)| revision),
     });
     Ok(ObservedEntity {
         id,

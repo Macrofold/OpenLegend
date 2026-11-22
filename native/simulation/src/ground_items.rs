@@ -1,5 +1,7 @@
 //! Current direct ground stock for ordinary physical pickup. The caller owns
 //! the viewing/contact witness. These reads grant neither sight nor custody.
+pub(crate) mod inspection;
+
 use crate::install::ItemDefinitionRead;
 use crate::simulation::SimulationState;
 use crate::state::{Entity, ItemLot, Placement};

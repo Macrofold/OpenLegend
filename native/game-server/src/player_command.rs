@@ -89,6 +89,10 @@ struct CommandInput {
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     container_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    after: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    expected_scope: Option<JsText>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     fire_operation: Option<FireOperation>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     hearth_plan: Option<crate::player_http::hearth::HearthPlan>,
@@ -607,7 +611,8 @@ impl PlayerCommands {
                                 begin_facts.request.command.position.as_ref()
                             };
                             let raw = &begin_facts.request.command;
-                            let target_ref = raw.target_id.as_deref();
+                            let inspected_world = matches!(raw.kind, CommandKind::InspectItem) && raw.item_id.is_none();
+                            let target_ref = if inspected_world { raw.container_id.as_deref() } else { raw.target_id.as_deref() };
                             let own_status = matches!(raw.kind, CommandKind::StatusEffect)
                                 && target_ref == Some(begin_scope.scope.actor_id.as_str());
                             let speech_target = match (raw.kind, target_ref) {
@@ -779,7 +784,8 @@ impl CommandRequest {
                     || command.outing_id.is_some() || command.destination_id.is_some()
                     || command.purpose.is_some()))
             || (!matches!(command.kind, CommandKind::Unequip) && command.placement_revision.is_some())
-            || (!matches!(command.kind, CommandKind::InspectItem) && command.container_id.is_some())
+            || (!matches!(command.kind, CommandKind::InspectItem)
+                && (command.container_id.is_some() || command.after.is_some() || command.expected_scope.is_some()))
             || command.quantity.is_some_and(|quantity| {
                 !matches!(command.kind, CommandKind::Pickup | CommandKind::Drop)
                     || quantity == 0 || quantity > openlegend_simulation::identity::MAX_SAFE_INTEGER
@@ -847,9 +853,17 @@ impl CommandRequest {
                     && command.target_id.is_none()
                     && command.gathering_mode.is_none()
                     && command.expected_action_id.is_none()
-                    && command.item_id.as_deref().is_some_and(id)
                     && command.container_id.as_deref().is_some_and(id)
-                    && command.expected_revision.is_some() => Ok(()),
+                    && match command.item_id.as_deref() {
+                        Some(item) => id(item) && command.expected_revision.is_some()
+                            && command.after.is_none() && command.expected_scope.is_none(),
+                        None => command.container_id.as_deref().is_some_and(|id| id.starts_with("contact-"))
+                            && match (command.after.as_deref(), command.expected_scope.as_ref(), command.expected_revision) {
+                                (None, None, None) => true,
+                                (Some(after), Some(scope), Some(_)) => id(after) && scope.units_len() == 64,
+                                _ => false,
+                            },
+                    } => Ok(()),
             CommandKind::Follow
                 if command.position.is_none()
                     && command.expected_action_id.is_none()
@@ -1097,6 +1111,12 @@ impl PreparedRequest {
                 };
                 Ok(RuntimePlayerCommand::Travel(input))
             }
+            CommandKind::InspectItem if input.item_id.is_none() => Ok(RuntimePlayerCommand::InspectStorage {
+                root: target.ok_or(StoreError::InvalidRecord)?,
+                after: input.after.as_deref(),
+                expected_scope: input.expected_scope.as_ref(),
+                expected_revision: input.expected_revision,
+            }),
             CommandKind::InspectItem => Ok(RuntimePlayerCommand::InspectItem {
                 item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 container: input.container_id.as_deref().ok_or(StoreError::InvalidRecord)?,

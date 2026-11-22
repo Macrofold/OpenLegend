@@ -7,6 +7,28 @@ impl PhysicalMutation<'_> {
         id: &str,
         make_player: bool,
     ) -> Result<(), ExecutionError> {
+        self.set_actor_access_metadata(id, make_player, None)
+    }
+
+    /// The already funded page moves into the same actor-storage journal as
+    /// control reconciliation. It grants no read until the disclosure owner
+    /// checks its current contents, physical reach and visible contact.
+    pub(crate) fn install_inventory_inspection(
+        &mut self,
+        id: &str,
+        page: crate::state::InventoryInspection,
+        custody: ByteReservation,
+    ) -> Result<(), ExecutionError> {
+        self.journal.reservation.merge(custody)?;
+        self.set_actor_access_metadata(id, false, Some(page))
+    }
+
+    fn set_actor_access_metadata(
+        &mut self,
+        id: &str,
+        make_player: bool,
+        page: Option<crate::state::InventoryInspection>,
+    ) -> Result<(), ExecutionError> {
         let handle = self
             .state
             .entities
@@ -18,7 +40,8 @@ impl PhysicalMutation<'_> {
             .resolve(handle)
             .and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;
-        if (!make_player || actor.controller == "player") && actor.inventory_inspection.is_none() {
+        let control_changes = make_player && actor.controller != "player";
+        if !control_changes && page.is_none() && actor.inventory_inspection.is_none() {
             return Ok(());
         }
         self.journal.reserve(
@@ -48,8 +71,8 @@ impl PhysicalMutation<'_> {
             .resolve_mut(handle)
             .and_then(|e| e.actor.as_mut())
             .ok_or(ExecutionError::Invariant)?;
-        let inspection = actor.inventory_inspection.take();
-        if make_player && actor.controller != "player" {
+        let inspection = std::mem::replace(&mut actor.inventory_inspection, page);
+        if control_changes {
             actor.controller = "player".to_owned();
         }
         if let Some(controller) = controller {
@@ -67,7 +90,9 @@ impl PhysicalMutation<'_> {
             &mut self.journal.reservation,
             false,
         )?;
-        self.state.bodies.refresh(&self.state.entities, id)?;
+        if control_changes {
+            self.state.bodies.refresh(&self.state.entities, id)?;
+        }
         Ok(())
     }
 }

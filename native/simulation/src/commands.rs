@@ -286,6 +286,7 @@ pub(crate) enum NativeCommand {
     InspectInventory {
         envelope: CommandEnvelope,
         selected: Option<InspectedItem>,
+        world: Option<InspectedStorage>,
     },
     InspectActivities {
         envelope: CommandEnvelope,
@@ -314,6 +315,14 @@ pub struct InspectedItem {
     pub(crate) expected_revision: u64,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct InspectedStorage {
+    pub(crate) root: String,
+    pub(crate) after: Option<String>,
+    pub(crate) expected_scope: Option<crate::text::JsText>,
+    pub(crate) expected_revision: Option<u64>,
+}
+
 fn inventory_inspection_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -328,16 +337,36 @@ fn inventory_inspection_input(raw: &str) -> Result<NativeCommand, serde_json::Er
         container_id: Option<String>,
         #[serde(default, deserialize_with = "deserialize_present_safe_integer")]
         expected_revision: Option<u64>,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        after: Option<String>,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        expected_scope: Option<crate::text::JsText>,
     }
     let input: Input = serde_json::from_str(raw)?;
-    let selected = match (input.item_id, input.container_id, input.expected_revision) {
-        (None, None, None) => None,
-        (Some(item_id), Some(container_id), Some(expected_revision))
+    let continuation = match (input.after, input.expected_scope) {
+        (None, None) => None,
+        (Some(after), Some(scope))
+            if is_safe_record_id(&after) && scope.units_len() == 64 =>
+        {
+            Some((after, scope))
+        }
+        _ => return Err(serde::de::Error::custom("Invalid inspection continuation.")),
+    };
+    let (selected, world) = match (input.item_id, input.container_id, input.expected_revision, continuation) {
+        (None, None, None, None) => (None, None),
+        (Some(item_id), Some(container_id), Some(expected_revision), None)
             if is_safe_record_id(&item_id) && is_safe_record_id(&container_id) =>
         {
-            Some(InspectedItem { item_id, container_id, expected_revision })
+            (Some(InspectedItem { item_id, container_id, expected_revision }), None)
         }
-        _ => return Err(serde::de::Error::custom("Invalid exact item inspection.")),
+        (None, Some(root), revision, continuation)
+            if is_safe_record_id(&root) && revision.is_some() == continuation.is_some() =>
+        {
+            let (after, expected_scope) = continuation
+                .map_or((None, None), |(after, scope)| (Some(after), Some(scope)));
+            (None, Some(InspectedStorage { root, after, expected_scope, expected_revision: revision }))
+        }
+        _ => return Err(serde::de::Error::custom("Invalid inventory inspection.")),
     };
     if !input.headers.valid() {
         return Err(serde::de::Error::custom("Invalid selected native command binding."));
@@ -345,6 +374,7 @@ fn inventory_inspection_input(raw: &str) -> Result<NativeCommand, serde_json::Er
     Ok(NativeCommand::InspectInventory {
         envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
         selected,
+        world,
     })
 }
 
@@ -907,7 +937,7 @@ impl NativeCommand {
         matches!(
             self,
             Self::Strike { .. }
-                | Self::InspectInventory { selected: None, .. }
+                | Self::InspectInventory { selected: None, world: None, .. }
         )
     }
     pub(crate) fn recorded(&self) -> Result<Self, serde_json::Error> {

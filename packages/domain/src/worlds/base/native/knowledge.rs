@@ -702,16 +702,7 @@ impl<'a> PersonalNameReader<'a> {
                 return Ok(label.into());
             }
         }
-        if self
-            .entities
-            .get(self.observer_id)
-            .and_then(|entity| entity.actor.as_ref())
-            .is_some_and(|actor| actor.inventory_inspection.is_some())
-            || self
-                .entities
-                .get(id)
-                .is_some_and(|entity| entity.item.is_some())
-        {
+        if self.entities.get(id).is_some_and(|entity| entity.item.is_some()) {
             return Err(unavailable());
         }
         Ok((&self.rules.unidentified).into())

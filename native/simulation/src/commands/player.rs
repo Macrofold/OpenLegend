@@ -44,6 +44,7 @@ pub enum RuntimePlayerCommand<'a> {
     Pickup { target: &'a str, item: Option<&'a str>, quantity: Option<u64> },
     Drop { item: &'a str, quantity: u64 },
     InspectItem { item: &'a str, container: &'a str, expected_revision: u64 },
+    InspectStorage { root: &'a str, after: Option<&'a str>, expected_scope: Option<&'a crate::text::JsText>, expected_revision: Option<u64> },
     Eat(&'a str),
     Equip(&'a str),
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
@@ -71,6 +72,7 @@ impl RuntimePlayerCommand<'_> {
                     + inputs.iter().map(|(role, item)| role.len() + item.len()).sum::<usize>()
             }
             Self::InspectItem { item, container, .. } => item.len() + container.len(),
+            Self::InspectStorage { root, after, expected_scope, .. } => root.len() + after.map_or(0, str::len) + expected_scope.map_or(0, crate::text::JsText::storage_bytes),
             Self::Eat(item) | Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
         }
     }
@@ -109,6 +111,9 @@ impl RuntimePlayerCommand<'_> {
         }
         if let Self::InspectItem { item, container, expected_revision } = self {
             return bind_inspection(id, actor, item, container, expected_revision);
+        }
+        if let Self::InspectStorage { root, after, expected_scope, expected_revision } = self {
+            return bind_storage_inspection(id, actor, root, after, expected_scope, expected_revision);
         }
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
@@ -193,7 +198,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } | Self::Handover { .. } | Self::Travel(_) => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::InspectStorage { .. } | Self::Follow { .. } | Self::Handover { .. } | Self::Travel(_) => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => ("eat", None, None, None, Some(item), None),
@@ -320,7 +325,7 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } | Self::Handover { .. } | Self::Travel(_) => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::InspectStorage { .. } | Self::Follow { .. } | Self::Handover { .. } | Self::Travel(_) => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },
@@ -455,7 +460,40 @@ fn bind_inspection(
         selected: Some(super::InspectedItem {
             item_id: item.into(), container_id: container.into(), expected_revision,
         }),
+        world: None,
     }, signature))
+}
+
+fn bind_storage_inspection(
+    id: &str,
+    actor: &str,
+    root: &str,
+    after: Option<&str>,
+    expected_scope: Option<&crate::text::JsText>,
+    expected_revision: Option<u64>,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Inspection<'a> {
+        #[serde(rename = "type")]
+        kind: &'static str,
+        id: &'a str,
+        actor_id: &'a str,
+        human_initiated: bool,
+        container_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        after: Option<&'a str>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        expected_scope: Option<&'a crate::text::JsText>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        expected_revision: Option<u64>,
+    }
+    let value = Inspection {
+        id, actor_id: actor, kind: "inspect-inventory", human_initiated: true,
+        container_id: root, after, expected_scope, expected_revision,
+    };
+    let signature = json_record(&value)?;
+    Ok((super::inventory_inspection_input(&signature)?, signature))
 }
 
 fn player_headers(id: &str, actor: &str) -> CommandHeaders {

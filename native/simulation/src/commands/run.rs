@@ -37,6 +37,7 @@ mod drop;
 mod pickup;
 mod inspect_activities;
 mod inspect_item;
+mod inspect_storage;
 mod feeding;
 mod gathering;
 mod natural_contact;
@@ -119,6 +120,9 @@ enum Phase {
     GiftApply,
     GiftPrivate,
     ContactReach,
+    StorageSight,
+    StorageReach,
+    StoragePage,
     ContactRoute,
     FeedApproach,
     Probe,
@@ -168,6 +172,7 @@ pub(crate) struct CommandCursor {
     view_reservation: Option<ByteReservation>,
     display: Option<super::ActivityDisplayCursor>,
     prepared_emission: Option<EventEmissionIntent>,
+    storage_inspection: Option<inspect_storage::PreparedStorage>,
     before_action_id: Option<String>,
     chosen_work_done: bool,
     source_scope_started: bool,
@@ -259,6 +264,7 @@ impl CommandCursor {
             view_reservation: None,
             display: None,
             prepared_emission: None,
+            storage_inspection: None,
             before_action_id: None,
             chosen_work_done: false,
             source_scope_started: false,
@@ -350,6 +356,7 @@ impl CommandCursor {
         self.view = None;
         self.view_reservation = None;
         self.prepared_emission = None;
+        self.storage_inspection = None;
         self.conditions = None;
         self.exposure = None;
         self.follow = None;
@@ -804,6 +811,14 @@ impl CommandCursor {
                             self.finish_discovery_geometry(core, answer)?;
                             return self.drive(core, None);
                         }
+                        if matches!(self.phase, Phase::StorageSight) {
+                            let actor = self.command.envelope().actor_id.clone();
+                            return self.storage_sight(core, &actor, answer);
+                        }
+                        if matches!(self.phase, Phase::StorageReach) {
+                            let actor = self.command.envelope().actor_id.clone();
+                            return self.storage_reach(core, &actor, answer);
+                        }
                         if matches!(self.phase, Phase::GatherSight) {
                             let sight = self.sight.take().ok_or(ExecutionError::Invariant)?
                                 .finish(answer).map_err(|_| ExecutionError::Invariant)?;
@@ -1132,6 +1147,9 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::InspectInventory { world: Some(_), .. } => {
+                            if self.start_storage_inspection(core, &actor_id)? { return Ok(Progress::Geometry); }
+                        }
                         NativeCommand::InspectInventory { selected: Some(_), .. } => {
                             if let Some(event) = self.inspect_item(core, &actor_id)? {
                                 return Ok(Progress::Occurrence(event));
@@ -1278,6 +1296,8 @@ impl CommandCursor {
                         NativeCommand::Say { .. } => self.phase = Phase::Speech,
                     }
                 }
+                Phase::StoragePage => return self.storage_occurrence(core, &actor_id),
+                Phase::StorageSight | Phase::StorageReach => return Err(ExecutionError::Invariant),
                 Phase::Standing => {
                     let body = core
                         .state

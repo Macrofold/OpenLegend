@@ -2,6 +2,8 @@
 //! read borrow survives a provider/SQL await; the immutable evidence owner does.
 use super::*;
 mod inventory;
+mod world_storage;
+pub use world_storage::RuntimeWorldStorage;
 pub use inventory::{DirectInventory, InventoryContainer, InventoryCrumb};
 mod status_menu;
 mod hearth;
@@ -73,6 +75,7 @@ pub struct RuntimePlayerViewSource {
     pub places_revision: u64,
     pub place_note_revision: u64,
     pub inventory_revision: u64,
+    pub world_storage: Option<(String, u64)>,
     recent_story_age: f64,
     presentation_release: Option<Box<RawValue>>,
     pub presentation_release_revision: Option<u64>,
@@ -1249,6 +1252,16 @@ fn capture_view_source(
         .actor_milestones
         .as_ref()
         .and_then(|rows| rows.get(actor));
+    let storage = state.physical.entities.get(actor)
+        .and_then(|body| body.actor.as_ref())
+        .and_then(|body| body.inventory_inspection.as_ref())
+        .and_then(|page| page.container_id.as_deref())
+        .and_then(|root| crate::ground_items::inspection::WorldStorage::selected(state, actor, root));
+    let world_storage = match storage {
+        Some(storage) => storage.inspection(budget).map_err(failure)?
+            .map(|page| (storage.root.id.as_str(), page.revision)),
+        None => None,
+    };
     let bytes = milestones
         .map_or(Some(0), |rows| {
             rows.keys()
@@ -1263,6 +1276,7 @@ fn capture_view_source(
                     .map_or(0, |release| release.get().len()),
             )
         })
+        .and_then(|bytes| bytes.checked_add(world_storage.map_or(0, |(root, _)| root.len())))
         .ok_or_else(|| failure("capacity"))?;
     let custody = budget.reserve(bytes).map_err(failure)?;
     Ok(RuntimePlayerViewSource {
@@ -1277,6 +1291,7 @@ fn capture_view_source(
         places_revision: state.experience.known_place_revision(actor),
         place_note_revision: state.reception.actor_knowledge.place_revision(actor),
         inventory_revision: state.administration.object_membership.revision,
+        world_storage: world_storage.map(|(root, revision)| (root.to_owned(), revision)),
         recent_story_age: state
             .installed
             .attention

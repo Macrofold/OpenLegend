@@ -13,6 +13,8 @@ use openlegend_simulation::{
 use serde::{Deserialize, Serialize};
 use std::{mem::size_of, sync::LazyLock};
 
+mod world_storage;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct InventoryPageRequest {
@@ -91,6 +93,17 @@ static COPY: LazyLock<EquipmentCopy> = LazyLock::new(|| {
     ))
     .expect("authored equipment language")
 });
+
+/// Return each input's locale-equivalence rank so the existing custody order
+/// remains stable for ties in either direction. The caller funds the list.
+fn collation_ranks(language: &LanguageProvider, names: &[JsText]) -> Result<Vec<u32>, InventoryPageError> {
+    let (sorted, groups) = language.collate(names).map_err(|_| InventoryPageError::Capacity)?;
+    let mut ranks = vec![0; names.len()];
+    for (index, rank) in sorted.into_iter().zip(groups) {
+        ranks[index as usize] = rank;
+    }
+    Ok(ranks)
+}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -293,11 +306,7 @@ impl PlayerScenePolicy {
                 let names = (0..count)
                     .map(|index| inventory.name(index).cloned().map_err(Read))
                     .collect::<Result<Vec<_>, _>>()?;
-                let (sorted, groups) = language.collate(&names).map_err(|_| Capacity)?;
-                let mut ranks = vec![0; count];
-                for (index, rank) in sorted.into_iter().zip(groups) {
-                    ranks[index as usize] = rank;
-                }
+                let ranks = collation_ranks(language, &names)?;
                 if matches!(input.sort, Sort::NameDesc) {
                     order.sort_by_key(|index| std::cmp::Reverse(ranks[*index]));
                 } else {

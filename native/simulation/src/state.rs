@@ -104,8 +104,8 @@ pub struct Named {
     pub indefinite_article: Option<String>,
 }
 
-/// A restore admits this validated private read continuation solely to clear
-/// it through the owned metadata journal before publication.
+/// The actor's most recent deliberate private inspection. A page is useful
+/// only while its current contents and access match the captured scope.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct InventoryInspection {

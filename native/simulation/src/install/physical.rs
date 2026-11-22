@@ -649,7 +649,7 @@ fn validate_entity(
     entity: &Entity,
     installed: &PhysicalDefinitions<'_>,
     now: f64,
-    purpose: super::InstallPurpose,
+    _purpose: super::InstallPurpose,
 ) -> Result<(), InstallError> {
     if !crate::narration::valid_name_parts(
         &entity.name,
@@ -824,7 +824,6 @@ fn validate_entity(
         if actor.attack_mode_notice.is_some()
             || actor.encounters.is_some()
             || actor.coaching_episode_id.is_some()
-            || (purpose != super::InstallPurpose::Restore && actor.inventory_inspection.is_some())
         {
             return Err(InstallError::CurrentFormat);
         }

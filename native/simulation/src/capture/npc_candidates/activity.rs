@@ -89,13 +89,6 @@ impl NpcActivityPreparation {
             .entities
             .get(actor)
             .ok_or(ExecutionError::MissingActor)?;
-        if observer
-            .actor
-            .as_ref()
-            .is_some_and(|actor| actor.inventory_inspection.is_some())
-        {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
         // The selected activity options below use only the admitted social
         // and movement owners. They never claim or offer an item.
         core.state.physical.participation.require_closed_social();

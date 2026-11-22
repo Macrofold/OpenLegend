@@ -425,6 +425,8 @@ pub(crate) async fn prepare_view(
                 &scoped,
                 own.can_speak,
                 &own.trade_reader_revision,
+                read.view_source().map_err(runtime)?.world_storage.as_ref()
+                    .map(|(root, revision)| (root.as_str(), *revision)),
                 &budget,
             )
             .map_err(ViewError::Capture)?;

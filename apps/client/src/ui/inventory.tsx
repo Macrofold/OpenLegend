@@ -15,6 +15,7 @@ import {
 import { Popover } from 'react-aria-components';
 import type {
   ActionOption,
+  CommandInput,
   ContainerPage,
   GameView,
   InventoryItemView,
@@ -442,15 +443,18 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         ? 'This container moved or is no longer within permitted reach. Open it again from the world.'
         : undefined,
     nativeInspection: !!worldRoot,
-    inspect(input) {
-      void operations.dispatch({
-        id: 'inspect-container-contents',
-        label: 'Inspect container contents',
-        enabled: visible && connected && view.player.canUseInventory,
-        command: input,
-      });
-    },
+    inspect: inspectWorldContents,
   });
+  function inspectWorldContents(input: CommandInput) {
+    void operations.dispatch({
+      id: 'inspect-container-contents',
+      label: 'Inspect container contents',
+      enabled: workspaceVisible && connected && view.player.canUseInventory,
+      command: input,
+    });
+  }
+  const openingRoot =
+    openContainer && view.entities.find((entity) => entity.id === openContainer.containerId);
   const requestId = openContainer?.requestId;
   useLayoutEffect(() => {
     focusAvailable.current = workspaceVisible && connected;
@@ -461,15 +465,17 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   }, [workspaceVisible, connected, requestId, scope]);
   useLayoutEffect(() => {
     if (!openContainer || requestSeen.current === openContainer.requestId) return;
+    // The command receipt and its permitted view arrive independently.
+    // Wait for the accepted inspection in this view before installing its pane.
+    if (openContainer.scope !== scope || openingRoot?.storage?.revision === undefined) return;
     requestSeen.current = openContainer.requestId;
-    if (openContainer.scope !== scope) return;
     openBag(
       openContainer.containerId,
       openContainer.name,
       captureWorldRoot(openContainer.containerId),
       openContainer.opener,
     );
-  }, [requestId, scope]);
+  }, [requestId, scope, openingRoot?.storage?.revision]);
   const operations = useInventoryCommand({
     worldId: view.worldId,
     actorId: view.player.id,
@@ -1448,6 +1454,8 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
               expectedRootId: bag.root?.id ?? view.player.id,
               carriedRevision: bag.root ? undefined : view.player.inventoryRevision,
               blockedReason,
+              nativeInspection: !!bag.root,
+              inspect: bag.root ? inspectWorldContents : undefined,
             }}
           >
             {content}
