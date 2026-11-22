@@ -79,7 +79,11 @@ pub use read_cut::{
     RuntimeActivityHistoryRead, RuntimeKnownPlaceRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead,
 };
 mod restore;
-pub use restore::{RuntimeRestoreMembership, RuntimeRestorePlacement};
+pub use restore::{
+    RestoreArchive, RestoreArchiveCategory, RestoreBinding, RestoreGrant, RestoreInput,
+    RestoreMetadataInput, RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreMembership,
+    RuntimeRestorePlacement,
+};
 mod retained_values;
 pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
 pub use handoff::RuntimeOutputHandoff;

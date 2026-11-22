@@ -19,8 +19,9 @@ use crate::text::JsText;
 use serde::Deserialize;
 use std::sync::Arc;
 mod retention;
+pub use retention::RestoreRetentionPreparation;
 use retention::{
-    RestoreRetentionCursor, RestoreRetentionPreparation, RetentionAnswer, RetentionStep,
+    RestoreRetentionCursor, RetentionAnswer, RetentionStep,
 };
 
 /// This is the actual packed private SQL view held through restore's bounded
@@ -90,7 +91,7 @@ impl RestoreReadProjection {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct RestoreInput {
+pub struct RestoreInput {
     pub privacy: RestorePrivacyInput,
     pub metadata: RestoreMetadataInput,
     pub retention_preparation: RestoreRetentionPreparation,

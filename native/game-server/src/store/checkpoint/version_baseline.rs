@@ -65,7 +65,7 @@ impl Store {
                 let next = retained.remove(&[actor_id, kind, id, revision]);
                 let desired = if let Some(next) = next {
                     let observed = ordinal(row.try_get(6)?)?;
-                    if usize::try_from(observed).ok() != Some(next.bytes) {
+                    if observed != next.bytes {
                         return Err(StoreError::InvalidRecord);
                     }
                     Some(if kind == "perspective" {

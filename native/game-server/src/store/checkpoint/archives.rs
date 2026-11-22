@@ -8,40 +8,16 @@ use crate::store::{DurableHead, MAX_SAFE_INTEGER, Store, StoreError, StoreResult
 use openlegend_simulation::encoding::{json_record, json_record_len, sha256_hex};
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::records::SqlCell;
-use openlegend_simulation::runtime::{RuntimeProvider, RuntimeProviderInput};
+use openlegend_simulation::runtime::{
+    RestoreInput, RestoreMetadataInput, RuntimeProvider, RuntimeProviderInput,
+};
+pub(super) use openlegend_simulation::runtime::{
+    RestoreArchive as Archive, RestoreArchiveCategory as Category,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use std::borrow::Cow;
 use tokio_postgres::Transaction;
-
-#[derive(Clone, Copy, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub(super) enum Category {
-    Optional,
-    Required,
-    Speech,
-}
-
-impl Category {
-    pub(super) fn as_str(self) -> &'static str {
-        match self {
-            Self::Optional => "optional",
-            Self::Required => "required",
-            Self::Speech => "speech",
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct Archive {
-    pub(super) actor_id: String,
-    pub(super) kind: String,
-    pub(super) id: String,
-    pub(super) revision: String,
-    pub(super) category: Category,
-    pub(super) bytes: usize,
-}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -74,17 +50,6 @@ struct Selected {
 struct Answer<'a> {
     binding: &'a Binding,
     selected: Vec<Selected>,
-}
-
-pub(crate) struct RestoreInput {
-    encoded: String,
-    _custody: ByteReservation,
-}
-
-impl RestoreInput {
-    pub(crate) fn bytes(&self) -> &[u8] {
-        self.encoded.as_bytes()
-    }
 }
 
 impl Store {
@@ -224,12 +189,11 @@ impl Store {
     /// validated current installation. A checkpoint cannot supply that fact.
     pub(crate) fn prepare_restore_input(
         &self,
-        current: &RecoveryAuthority,
+        current: RecoveryAuthority,
         history: &CheckpointHistory,
         timeline: &str,
-        privacy: &super::authority::AcceptedPrivacy,
-    ) -> StoreResult<RestoreInput> {
-        use super::authority::{AcceptedPrivacy, ActorOwner, WorldGrant};
+        privacy: super::authority::AcceptedPrivacy,
+    ) -> StoreResult<(RestoreInput, [ByteReservation; 2])> {
         #[derive(Deserialize)]
         struct Stored<'a> {
             world_id: &'a str,
@@ -240,23 +204,6 @@ impl Store {
             #[serde(borrow)]
             payload: Cow<'a, str>,
             retention_class: Category,
-        }
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Metadata<'a> {
-            identity_floor: u64,
-            actor_owners: &'a [ActorOwner],
-            world_grants: &'a [WorldGrant],
-            privacy_revisions: &'a indexmap::IndexMap<String, u64>,
-            namespace: &'a str,
-            archives: Vec<Archive>,
-        }
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Input<'a> {
-            privacy: &'a AcceptedPrivacy,
-            metadata: Metadata<'a>,
-            retention_preparation: &'a RawValue,
         }
         if uuid::Uuid::parse_str(timeline).is_err() || current.timeline == timeline {
             return Err(StoreError::InvalidRecord);
@@ -270,6 +217,7 @@ impl Store {
             .reserve(
                 rows.len()
                     .checked_mul(size_of::<Archive>())
+                    .and_then(|size| size.checked_add(timeline.len()))
                     .ok_or(StoreError::Capacity)?,
             )
             .map_err(|_| StoreError::Capacity)?;
@@ -297,26 +245,26 @@ impl Store {
                 id: row.source_id.to_owned(),
                 revision: row.revision.to_owned(),
                 category: row.retention_class,
-                bytes: row.payload.len(),
+                bytes: u64::try_from(row.payload.len()).map_err(|_| StoreError::Capacity)?,
             });
         }
-        let input = Input {
+        // The externally selected storage contract still enters through its
+        // canonical decoder. Only our already validated SQL data moves directly.
+        let retention_preparation = serde_json::from_str(self.restore_retention_preparation().get())
+            .map_err(|_| StoreError::InvalidRecord)?;
+        let input = RestoreInput {
             privacy,
-            metadata: Metadata {
+            metadata: RestoreMetadataInput {
                 identity_floor: current.identity_floor,
-                actor_owners: &current.owners,
-                world_grants: &current.grants,
-                privacy_revisions: &current.privacy_revisions,
-                namespace: timeline,
+                actor_owners: current.owners,
+                world_grants: current.grants,
+                privacy_revisions: current.privacy_revisions,
+                namespace: timeline.to_owned(),
                 archives,
             },
-            retention_preparation: self.restore_retention_preparation(),
+            retention_preparation,
         };
-        let (encoded, custody) = self.encode_restore_output(&input, MAX_SAFE_INTEGER as usize)?;
-        Ok(RestoreInput {
-            encoded,
-            _custody: custody,
-        })
+        Ok((input, [current.storage, budget]))
     }
 
     pub(super) fn encode_restore_output(

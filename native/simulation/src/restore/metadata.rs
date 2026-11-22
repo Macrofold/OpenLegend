@@ -10,29 +10,38 @@ use std::mem::size_of;
 #[path = "archives.rs"]
 mod archives;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct RestoreBinding {
+pub struct RestoreBinding {
     pub actor_id: String,
     pub account_id: String,
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct RestoreGrant {
+pub struct RestoreGrant {
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub actor_id: Option<String>,
     pub account_id: String,
 }
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum ArchiveCategory {
+pub enum ArchiveCategory {
     Optional,
     Required,
     Speech,
 }
+impl ArchiveCategory {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Optional => "optional",
+            Self::Required => "required",
+            Self::Speech => "speech",
+        }
+    }
+}
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct RestoreArchive {
+pub struct RestoreArchive {
     pub actor_id: String,
     pub kind: String,
     pub id: String,
@@ -43,7 +52,7 @@ pub(crate) struct RestoreArchive {
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct RestoreMetadataInput {
+pub struct RestoreMetadataInput {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub identity_floor: u64,
     pub actor_owners: Vec<RestoreBinding>,

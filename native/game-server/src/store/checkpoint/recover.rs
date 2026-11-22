@@ -379,24 +379,21 @@ impl Store {
             }
             ReplacementAuthority::DamagedBackup => floor,
         };
-        let authority = read_recovery_authority(tx, expected, floor, &self.budget).await?;
+        let mut authority = read_recovery_authority(tx, expected, floor, &self.budget).await?;
         if let Some(operator) = operator {
             if operator.timeline_id != authority.timeline {
                 return Err(StoreError::StaleCut);
             }
             assert_saved_grant(tx, operator, "save").await?;
         }
-        let current_privacy;
-        let privacy = if let Some(ledger) = &authority.ledger {
-            ledger
+        let (privacy, privacy_custody) = if let Some(ledger) = authority.ledger.take() {
+            (ledger, None)
         } else {
             if matches!(source, ReplacementAuthority::DamagedBackup) {
                 return Err(StoreError::InvalidRecord);
             }
-            current_privacy = self
-                .current_recovery_privacy(tx, &expected.world_id)
-                .await?;
-            &current_privacy.0
+            let (ledger, custody) = self.current_recovery_privacy(tx, &expected.world_id).await?;
+            (ledger, Some(custody))
         };
         let (mut opening, history) = slot.into_opening(self, replacement.clone())?;
         opening.prepare_language(language, &self.budget)?;
@@ -425,7 +422,8 @@ impl Store {
             &[&replacement.world_id, &replacement.generation],
         )
         .await?;
-        let restore_input = self.prepare_restore_input(&authority, &history, timeline, privacy)?;
+        let (restore_input, restore_custody) =
+            self.prepare_restore_input(authority, &history, timeline, privacy)?;
         drop(history);
         let mut upstream = opening.custody;
         upstream
@@ -459,9 +457,9 @@ impl Store {
             None
         };
         let key = session
-            .begin_restore_with_materials(restore_input.bytes(), materials)
+            .begin_restore_direct(restore_input, materials)
             .map_err(runtime)?;
-        drop(restore_input);
+        drop((restore_custody, privacy_custody));
         let mut pending: Option<(RuntimeProvider, RuntimeProviderInput)> = None;
         let ready = loop {
             let (provider, answer) = match pending.take() {

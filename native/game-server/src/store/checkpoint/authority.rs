@@ -10,29 +10,10 @@ use openlegend_simulation::encoding::js_trim;
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use openlegend_simulation::records::SqlCell;
 use openlegend_simulation::values::{MAX_RECORD_ID_UNITS, is_safe_record_id};
-use serde::{Deserialize, Serialize};
 use tokio_postgres::Transaction;
 
-#[derive(Deserialize, Serialize, PartialEq, Eq)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct AcceptedPrivacy {
-    pub forgotten: IndexMap<String, Vec<String>>,
-    pub corrections: IndexMap<String, IndexMap<String, String>>,
-}
-
-#[derive(Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct ActorOwner {
-    pub actor_id: String,
-    pub account_id: String,
-}
-
-#[derive(Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct WorldGrant {
-    pub actor_id: Option<String>,
-    pub account_id: String,
-}
+pub(crate) use openlegend_simulation::runtime::RestorePrivacyInput as AcceptedPrivacy;
+use openlegend_simulation::runtime::{RestoreBinding as ActorOwner, RestoreGrant as WorldGrant};
 
 pub(crate) struct RecoveryAuthority {
     pub head: DurableHead,
@@ -44,7 +25,7 @@ pub(crate) struct RecoveryAuthority {
     /// With a damaged target, absence is a refusal. A healthy native install
     /// may instead establish privacy from its validated current records.
     pub ledger: Option<AcceptedPrivacy>,
-    _storage: ByteReservation,
+    pub(super) storage: ByteReservation,
 }
 
 /// Fetch the identity floor and present privileges from one database snapshot.
@@ -198,7 +179,7 @@ pub(crate) async fn read_recovery_authority(
         grants,
         privacy_revisions,
         ledger,
-        _storage: storage,
+        storage,
     })
 }
 

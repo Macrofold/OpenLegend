@@ -16,10 +16,10 @@ use std::{mem::size_of, sync::Arc};
 
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct RestoreRetentionPreparation {
-    pub accounts: crate::experience::RetentionPreparation,
-    pub support: SupportPreparation,
-    pub rounds: usize,
+pub struct RestoreRetentionPreparation {
+    pub(super) accounts: crate::experience::RetentionPreparation,
+    pub(super) support: SupportPreparation,
+    pub(super) rounds: usize,
 }
 enum Phase {
     Knowledge,

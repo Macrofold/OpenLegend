@@ -92,7 +92,8 @@ pub(crate) use privacy_prepare::{
     HistoryEditReadRequest, HistoryPreparationError, PreparedPrivacyEdit, PrivacyPreparationCursor,
     PrivacyPreparationStep,
 };
-pub(crate) use restore::{RestorePrivacyCursor, RestorePrivacyInput, RestorePrivacyStep};
+pub use restore::RestorePrivacyInput;
+pub(crate) use restore::{RestorePrivacyCursor, RestorePrivacyStep};
 mod hydration;
 mod invalidation;
 mod mutation;

@@ -1,6 +1,14 @@
 //! Restoration alone can reconcile an inactive installation. Until a genuine
 //! whole-install receipt is adopted, it cannot admit gameplay or private reads.
 use super::*;
+pub use crate::{
+    experience::RestorePrivacyInput,
+    restore::{
+        ArchiveCategory as RestoreArchiveCategory, RestoreArchive, RestoreBinding, RestoreGrant,
+        RestoreMetadataInput,
+    },
+    simulation::restore::{RestoreInput, RestoreRetentionPreparation},
+};
 
 /// Exact application metadata of a prepared, still closed installation.
 pub struct RuntimeRestorePlacement<'a> {
@@ -275,12 +283,36 @@ impl NativeWorldSession {
         bytes: &[u8],
         materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
     ) -> Result<CandidateKey, RuntimeError> {
+        self.require_unused_restore()?;
+        let _decode = decode_preparation(bytes, &self.budget)?;
+        let input: RestoreInput = serde_json::from_slice(bytes).map_err(failure)?;
+        self.start_restore_reconciliation(input, materials)
+    }
+
+    /// Start reconciliation from the Rust application's admitted operational
+    /// input. The caller keeps its staging reservation until the cursor has
+    /// admitted its own metadata, privacy and retention work.
+    pub fn begin_restore_direct(
+        &mut self,
+        input: RestoreInput,
+        materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_unused_restore()?;
+        self.start_restore_reconciliation(input, materials)
+    }
+
+    fn require_unused_restore(&self) -> Result<(), RuntimeError> {
         if self.active || !self.restore_installation || self.restoring.is_some() {
             return Err(failure("restore requires an unused inactive installation"));
         }
-        let _decode = decode_preparation(bytes, &self.budget)?;
-        let input: crate::simulation::restore::RestoreInput =
-            serde_json::from_slice(bytes).map_err(failure)?;
+        Ok(())
+    }
+
+    fn start_restore_reconciliation(
+        &mut self,
+        input: RestoreInput,
+        materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
+    ) -> Result<CandidateKey, RuntimeError> {
         let key = self
             .session
             .begin_restore(input, self.history_edit_limits, materials)

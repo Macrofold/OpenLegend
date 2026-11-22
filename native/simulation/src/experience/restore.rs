@@ -7,9 +7,9 @@ use crate::host::retained_size::{HeapBytes, heap_record};
 use crate::host::{ByteBudget, ByteReservation, CandidateKey};
 use crate::language::CollationRequest;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct RestorePrivacyInput {
+pub struct RestorePrivacyInput {
     pub forgotten: IndexMap<String, Vec<String>>,
     pub corrections: IndexMap<String, IndexMap<String, String>>,
 }
