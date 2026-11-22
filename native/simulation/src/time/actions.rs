@@ -60,7 +60,8 @@ impl SliceActions {
                 .installed
                 .capabilities
                 .capability_blocked(Some(entity), "locomotion")?;
-            if (action.stage == "working" || action.awaiting_moving_contact())
+            if action.follow.is_none()
+                && (action.stage == "working" || action.awaiting_moving_contact())
                 && (!restricted || action.kind == "status-effect" || action.is_natural_contact() || action.is_manufacturing())
             {
                 reservation.resize(

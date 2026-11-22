@@ -199,6 +199,20 @@ impl MechanicalForecast {
                 }
             }
         }
+        // Following needs coherent poses on both ends of the selected
+        // interval. Other movement can still use private travel sampling.
+        let follows = || participants.actors().iter().filter(selected)
+            .filter_map(|handle| physical.entities.resolve(*handle))
+            .filter_map(|entity| {
+                let action = entity.actor.as_ref()?.action.as_ref()?;
+                action.follow.as_ref()?;
+                Some((&entity.id, action.target_id.as_ref()?))
+            });
+        for (follower, target) in follows() {
+            reference_count = reference_count.checked_add(2).ok_or(ExecutionError::Capacity)?;
+            reference_bytes = heap_sum([reference_bytes, follower.len(), target.len()])
+                .ok_or(ExecutionError::Capacity)?;
+        }
         reservation.resize(
             heap_sum([
                 reservation.bytes(),
@@ -208,6 +222,10 @@ impl MechanicalForecast {
             .ok_or(ExecutionError::Capacity)?,
         )?;
         let mut referenced = IndexSet::with_capacity(reference_count);
+        for (follower, target) in follows() {
+            referenced.insert(follower.clone());
+            referenced.insert(target.clone());
+        }
         for handle in participants.statuses().iter().filter(selected) {
             let entity = physical
                 .entities
@@ -338,6 +356,9 @@ impl MechanicalForecast {
             let Some(action) = &actor.action else {
                 continue;
             };
+            if let Some(deadline) = action.follow.as_ref().and_then(|follow| follow.until) {
+                bound.at(deadline);
+            }
             if action.kind == "status-effect" {
                 continue;
             }

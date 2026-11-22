@@ -862,9 +862,9 @@ impl AdvanceCursor {
                             && !actor.incapacitated
                             && action.is_some()
                             && (!arrival
-                                || action.is_some_and(|action| action.stage == "approaching"))
+                                || action.is_some_and(|action| action.stage == "approaching" || action.follow.is_some()))
                             && (locomotion
-                                || action.is_some_and(|action| action.kind == "status-effect"))
+                                || action.is_some_and(|action| action.kind == "status-effect" || action.follow.is_some()))
                         {
                             self.reconcile = Some(ReconcileCursor::Action(MoveAdvanceCursor::new(
                                 &entity.id.clone(),

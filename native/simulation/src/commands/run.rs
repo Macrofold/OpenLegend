@@ -26,6 +26,7 @@ mod discovery;
 mod casting;
 mod preparing_food;
 mod fire;
+mod follow;
 mod hearth;
 mod manufacture;
 mod equipment;
@@ -81,6 +82,7 @@ enum Phase {
     Support,
     Standing,
     Route,
+    Follow,
     FeedReach,
     GatherSight,
     CastSight,
@@ -153,6 +155,7 @@ pub(crate) struct CommandCursor {
     phase: Phase,
     queries: Option<GeometryQueries>,
     contact_route: Option<crate::contact::StrikeRoute>,
+    follow: Option<crate::movement::follow::FollowCursor>,
     hearth: Option<hearth::PreparedHearth>,
     binding: GeometryBinding,
     resolved: Option<SurfacePoint>,
@@ -236,6 +239,7 @@ impl CommandCursor {
             phase: Phase::Start,
             queries: None,
             contact_route: None,
+            follow: None,
             hearth: None,
             binding,
             resolved: None,
@@ -268,6 +272,7 @@ impl CommandCursor {
             .as_ref()
             .map(|sight| sight.queries())
             .or_else(|| self.contact_route.as_ref().map(|route| route.queries()))
+            .or_else(|| self.follow.as_ref().and_then(|cursor| cursor.queries()))
             .or(self.queries.as_ref())
     }
     pub(crate) fn actor_id(&self) -> &str {
@@ -285,6 +290,7 @@ impl CommandCursor {
         self.prepared_emission = None;
         self.conditions = None;
         self.exposure = None;
+        self.follow = None;
         Ok(())
     }
     fn begin_chosen_work(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
@@ -674,6 +680,12 @@ impl CommandCursor {
                         }
                     }
                     CommandAnswer::Geometry(mut answer) => {
+                        if matches!(self.phase, Phase::Follow) {
+                            if self.follow_step(core, Some(answer))? {
+                                return Ok(Progress::Geometry);
+                            }
+                            return self.drive(core, None);
+                        }
                         if matches!(self.phase, Phase::ContactRoute) {
                             if self.finish_contact_route(core, answer)? {
                                 return Ok(Progress::Geometry);
@@ -889,6 +901,7 @@ impl CommandCursor {
             }
             let actor_id = self.command.envelope().actor_id.clone();
             match self.phase {
+                Phase::Follow => return Ok(Progress::Geometry),
                 Phase::Start => {
                     let prior = core
                         .state
@@ -1105,8 +1118,12 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::Follow { .. } => {
+                            if self.prepare_follow(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
                         NativeCommand::Outing { .. }
-                        | NativeCommand::Follow { .. }
                         | NativeCommand::InspectInventory { selected: None, .. }
                         | NativeCommand::InspectActivities { .. } => {
                             return Err(ExecutionError::Invariant);
@@ -1597,6 +1614,9 @@ impl CommandCursor {
                         false
                     };
                     if !native && !routine {
+                        if matches!(self.command, NativeCommand::Follow { .. }) {
+                            return self.follow_started(core, &actor_id);
+                        }
                         if matches!(self.command, NativeCommand::Feed { .. }) {
                             return self.feeding_started(core, &actor_id);
                         }

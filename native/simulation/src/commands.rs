@@ -257,13 +257,11 @@ pub(crate) enum NativeCommand {
         envelope: CommandEnvelope,
         attempt_id: String,
     },
-    /// These current syntax families participate in genuine discovery and
-    /// record-size preparation. Their physical executors are outside the
-    /// selected installation, so ordinary execution refuses before effects.
     Follow {
         envelope: CommandEnvelope,
         target_id: String,
         distance: Option<f64>,
+        parameters: crate::movement::follow::FollowParameters,
     },
     Strike {
         envelope: CommandEnvelope,
@@ -334,6 +332,45 @@ fn inventory_inspection_input(raw: &str) -> Result<NativeCommand, serde_json::Er
     Ok(NativeCommand::InspectInventory {
         envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
         selected,
+    })
+}
+
+fn follow_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Input {
+        #[serde(rename = "type")]
+        _kind: String,
+        #[serde(flatten)]
+        headers: CommandHeaders,
+        target_id: String,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        distance: Option<f64>,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        relation: Option<crate::movement::follow::FollowRelation>,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        on_lost: Option<crate::movement::follow::FollowLoss>,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        until: Option<f64>,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        complete: Option<bool>,
+    }
+    let input: Input = serde_json::from_str(raw)?;
+    if !input.headers.valid() || !is_safe_record_id(&input.target_id)
+        || input.complete == Some(false)
+    {
+        return Err(serde::de::Error::custom("Invalid selected follow binding."));
+    }
+    Ok(NativeCommand::Follow {
+        envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
+        target_id: input.target_id,
+        distance: input.distance,
+        parameters: crate::movement::follow::FollowParameters {
+            relation: input.relation,
+            on_lost: input.on_lost,
+            until: input.until,
+            complete: input.complete,
+        },
     })
 }
 
@@ -408,6 +445,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         }
         if tag.kind == "place-hearth" {
             return hearth_input(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if tag.kind == "follow" {
+            return follow_input(raw.get()).map_err(serde::de::Error::custom);
         }
         if tag.kind == "tend-fire" {
             return fire_care_input(raw.get()).map_err(serde::de::Error::custom);
@@ -635,23 +675,6 @@ impl<'de> Deserialize<'de> for NativeCommand {
                 envelope,
                 expected_action_id: input.expected_action_id,
             }),
-            "follow"
-                if !discovery_extras
-                    && input.attempt_id.is_none()
-                    && input.definition_id.is_none()
-                    && input.weapon_item_id.is_none()
-                    && input.auto_equip.is_none()
-                    && input.after.is_none()
-                    && input.method_after.is_none() =>
-            {
-                Ok(Self::Follow {
-                    envelope,
-                    target_id: input.target_id.ok_or_else(|| {
-                        D::Error::custom("Following requires its selected target.")
-                    })?,
-                    distance: input.distance,
-                })
-            }
             "strike"
                 if !discovery_extras
                     && input.attempt_id.is_none()
@@ -828,7 +851,6 @@ impl NativeCommand {
         matches!(
             self,
             Self::Outing { .. }
-                | Self::Follow { .. }
                 | Self::Strike { .. }
                 | Self::InspectInventory { selected: None, .. }
                 | Self::InspectActivities { .. }

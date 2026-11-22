@@ -26,6 +26,7 @@ use std::mem::size_of;
 mod casting;
 mod preparing_food;
 mod fire;
+mod follow;
 mod hearth;
 mod manufacture;
 mod feeding;
@@ -52,6 +53,7 @@ enum Progress {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
     Start,
+    Follow,
     ContactMotionStart,
     ContactMotion,
     ZeroMotion,
@@ -79,6 +81,7 @@ pub(crate) struct MoveAdvanceCursor {
     phase: Phase,
     motion: Option<MotionOperation>,
     contact: Option<Box<ImpactCursor>>,
+    follow: Option<Box<super::follow::FollowCursor>>,
     meal_sight: Option<crate::reception::SightBatch>,
     queries: Option<(GeometryQueries, ByteReservation)>,
     binding: GeometryBinding,
@@ -160,6 +163,7 @@ impl MoveAdvanceCursor {
             phase: Phase::Start,
             motion: None,
             contact: None,
+            follow: None,
             meal_sight: None,
             queries: None,
             binding,
@@ -249,6 +253,8 @@ impl MoveAdvanceCursor {
     pub(crate) fn queries(&self) -> Result<&GeometryQueries, ExecutionError> {
         if let Some(contact) = &self.contact {
             contact.queries()
+        } else if let Some(follow) = &self.follow {
+            follow.queries().ok_or(ExecutionError::Invariant)
         } else if let Some(motion) = &self.motion {
             motion.queries().ok_or(ExecutionError::Invariant)
         } else if let Some(sight) = &self.meal_sight {
@@ -329,6 +335,11 @@ impl MoveAdvanceCursor {
             }
         } else if self.event.is_some() || self.pending.is_some() {
             return Err(ExecutionError::UnfinishedOccurrence);
+        }
+        if self.follow.is_some() {
+            if self.follow_step(core, geometry.take())? {
+                return Ok(Progress::Geometry);
+            }
         }
         if self.motion.is_none() {
             if let Some(mut answer) = geometry.take() {
@@ -503,7 +514,12 @@ impl MoveAdvanceCursor {
                     core.physical()
                         .clear_movement_path(&self.actor_id, action_id)?;
                 }
-                self.phase = if self.phase == Phase::ContactMotion {
+                self.phase = if !complete
+                    && bound(core, &self.actor_id, action_id, self.physical_life)?.1.follow.is_some()
+                {
+                    self.fail(&installed.occurrence_rules.value().response.offers.follow_outcomes.blocked)?;
+                    Phase::Finish
+                } else if self.phase == Phase::ContactMotion {
                     Phase::Done
                 } else if self.phase == Phase::ZeroMotion {
                     Phase::Check
@@ -591,6 +607,18 @@ impl MoveAdvanceCursor {
                     self.action_id = Some(action.id.clone());
                     self.physical_life =
                         entity.physical_life().ok_or(ExecutionError::MissingActor)?;
+                    if action.follow.is_some() {
+                        if self.seconds > 0.0 {
+                            if action.stage == "approaching" && action.navigation.is_none() && !action.path.is_empty() {
+                                self.start_motion(core, installed.movement_speed(entity)? * self.seconds, Phase::PositiveMotion)?;
+                            } else {
+                                self.phase = Phase::Done;
+                            }
+                        } else if self.prepare_follow(core)? {
+                            return Ok(Progress::Geometry);
+                        }
+                        continue;
+                    }
                     if action.is_natural_contact() {
                         self.contact = Some(Box::new(ImpactCursor::new(
                             &self.actor_id,
@@ -984,7 +1012,8 @@ impl MoveAdvanceCursor {
                     )?));
                 }
                 Phase::Done => return Ok(Progress::Complete),
-                Phase::Route
+                Phase::Follow
+                | Phase::Route
                 | Phase::Probe
                 | Phase::ZeroMotion
                 | Phase::PositiveMotion

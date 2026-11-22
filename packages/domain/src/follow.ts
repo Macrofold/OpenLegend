@@ -18,7 +18,7 @@ import { rememberSighting } from './agency.js';
 import type { SurfacePoint } from '@open-legend/spatial';
 import type { Action, Command, Entity, WorldState } from './types.js';
 
-import { FOLLOW_RULES } from './worlds/base/navigation.js';
+import { FOLLOW_OUTCOMES, FOLLOW_RULES } from './worlds/base/navigation.js';
 export { FOLLOW_RULES } from './worlds/base/navigation.js';
 
 /** Initial controller state from the admitted command; the kernel owns the action. */
@@ -169,7 +169,7 @@ function pursue(world: WorldState, actor: Entity, action: Action): string | null
   const follow = action.follow!;
   const point = follow.lastSeen!.point;
   if (distance(worldPosition(actor), point) <= FOLLOW_RULES.resumeMargin)
-    return 'reached where the target was last seen; it is not in view.';
+    return FOLLOW_OUTCOMES.lastSeenReached;
   action.stage = 'approaching';
   if (action.navigation?.failure) return action.navigation.failure;
   if (action.navigation && pendingRouteCurrent(world, actor, action)) return null;
@@ -178,7 +178,7 @@ function pursue(world: WorldState, actor: Entity, action: Action): string | null
     follow.pursuing = true;
     const path = routeTo(world, actor, action, point);
     if (!path || (path.status !== 'reached' && path.status !== 'pending'))
-      return 'no supported route reaches where the target was last seen.';
+      return FOLLOW_OUTCOMES.lastSeenNoRoute;
     action.path = path.path;
     navigationMembershipChanged(world, actor.id);
     action.navigation = path.status === 'pending' ? { request: path.request } : undefined;

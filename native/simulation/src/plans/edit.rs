@@ -94,11 +94,7 @@ impl PlanEditCursor {
         Ok(())
     }
     fn valid_command(core: &CoreMutation<'_>, command: &NativeCommand) -> bool {
-        super::validation::valid_command(
-            command,
-            core.state.installed.speech_action.value(),
-            core.state.installed.acoustics.value(),
-        )
+        super::validation::valid_command(command, &core.state.installed)
     }
     fn captured_step(core: &CoreMutation<'_>, command: NativeCommand) -> PlanStep {
         let mut target_episodes = IndexMap::new();

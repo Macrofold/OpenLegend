@@ -1215,6 +1215,7 @@ enum UndoKey {
     Action(usize, u64),
     ActionPath(usize, u64),
     ActionRoute(usize, u64),
+    ActionFollow(usize, u64),
     ActionReplans(usize, u64),
     ActionNavigation(usize, u64),
     ActionRemaining(usize, u64),
@@ -1469,6 +1470,11 @@ enum Undo {
         entity: EntityHandle,
         action_id: String,
         before: crate::state::FundedActionRoute,
+    },
+    ActionFollow {
+        entity: EntityHandle,
+        action_id: String,
+        before: crate::state::FundedActionFollow,
     },
     Heading {
         entity: EntityHandle,
@@ -2304,6 +2310,9 @@ impl PhysicalJournal {
                     drop(action_storage::swap_route(
                         state, entity, &action_id, before,
                     )?);
+                }
+                Undo::ActionFollow { entity, action_id, before } => {
+                    drop(state.entities.swap_action_follow(entity, &action_id, before)?);
                 }
                 Undo::Heading { entity, before } => {
                     state

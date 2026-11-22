@@ -838,6 +838,7 @@ impl PhysicalJournal {
                         | Undo::Action { entity, .. }
                         | Undo::ActionPath { entity, .. }
                         | Undo::ActionRoute { entity, .. }
+                        | Undo::ActionFollow { entity, .. }
                         | Undo::ActionReplans { entity, .. }
                         | Undo::ActionNavigation { entity, .. }
                         | Undo::ActionRemaining { entity, .. }
@@ -902,6 +903,7 @@ impl PhysicalJournal {
                         }
                         Undo::ActionPath { .. }
                         | Undo::ActionRoute { .. }
+                        | Undo::ActionFollow { .. }
                         | Undo::ActionReplans { .. }
                         | Undo::ActionNavigation { .. }
                         | Undo::ActionRemaining { .. }

@@ -25,7 +25,7 @@ use crate::values::{
     deserialize_safe_integer,
 };
 pub(crate) use action_storage::{
-    FundedAction, FundedActionNavigation, FundedActionPath, FundedActionRoute, FundedAttackObservers,
+    FundedAction, FundedActionFollow, FundedActionNavigation, FundedActionPath, FundedActionRoute, FundedAttackObservers,
     FundedStrikeMotion,
 };
 pub(crate) use agency::AgencyOrder;
@@ -703,7 +703,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub follow: Option<UnconvertedField>,
+    pub(crate) follow: Option<crate::movement::follow::FollowState>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -843,6 +843,7 @@ impl Action {
             || self.is_cooking()
             || self.is_picking_up()
             || self.is_tending_fire()
+            || self.is_following()
             || self.is_placing_hearth()
     }
 
@@ -852,6 +853,13 @@ impl Action {
 
     pub(crate) fn awaiting_moving_contact(&self) -> bool {
         self.is_natural_contact() && self.stage == "approaching"
+    }
+
+    pub(crate) fn is_following(&self) -> bool {
+        self.kind == "follow"
+            && self.follow.is_some()
+            && self.target_id.is_some()
+            && self.target_life.is_some()
     }
 
     pub(crate) fn is_gathering(&self) -> bool {
@@ -932,7 +940,7 @@ impl Action {
             || self.food_preparation.is_some() != (self.kind == "cook")
             || self.fishing.is_some() != (self.kind == "fish")
             || self.guard.is_some()
-            || self.follow.is_some()
+            || self.follow.is_some() != (self.kind == "follow")
             || self.transferred.is_some()
             || self.quantity.is_some_and(|n| n == 0 || !self.is_picking_up())
             || self.recipe_id.is_some() != self.is_manufacturing()
@@ -1121,6 +1129,19 @@ impl Action {
         action.fishing = Some(Box::new(binding));
         action
     }
+    pub(crate) fn following(
+        id: String,
+        target: String,
+        life: u64,
+        follow: crate::movement::follow::FollowState,
+    ) -> Self {
+        let mut action = Self::native_action(id, "follow", "working");
+        action.target_id = Some(target);
+        action.target_life = Some(life);
+        action.follow = Some(follow);
+        action
+    }
+
     pub(crate) fn movement(
         id: String,
         destination: RecordedSurfacePoint,
@@ -1609,20 +1630,23 @@ impl Entity {
             _ => None,
         }
     }
-    pub fn supported_position(&self) -> Option<SurfacePoint> {
+    /// Borrow the supporting surface with its accepted point. Read-only
+    /// checks can reuse the position without allocating a surface identifier.
+    pub(crate) fn world_support(&self) -> Option<(Point, &str)> {
         match &self.placement {
-            Some(Placement::World {
-                position,
-                support_surface_id: Some(surface),
-                ..
-            }) => Some(SurfacePoint {
-                x: position.x,
-                y: position.y,
-                z: position.z,
-                surface_id: surface.clone(),
-            }),
+            Some(Placement::World { position, support_surface_id: Some(surface), .. }) => {
+                Some((*position, surface))
+            }
             _ => None,
         }
+    }
+    pub fn supported_position(&self) -> Option<SurfacePoint> {
+        self.world_support().map(|(position, surface)| SurfacePoint {
+            x: position.x,
+            y: position.y,
+            z: position.z,
+            surface_id: surface.to_owned(),
+        })
     }
     pub fn physical_life(&self) -> Option<u64> {
         self.actor

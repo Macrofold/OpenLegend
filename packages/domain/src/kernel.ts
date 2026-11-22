@@ -472,6 +472,7 @@ import { exposedPlaces, placeLandmarkIndex } from './places.js';
 import { reconcileConditions } from './conditions.js';
 import { gatheringYield, gatheringBindingProblem } from './gathering.js';
 import { FOLLOW_RULES, followState, updateFollowPath, followUnavailable } from './follow.js';
+import { FOLLOW_OUTCOMES } from './worlds/base/navigation.js';
 import { updateContactEpisodes } from './contact-acquisition.js';
 import { confirmActionRevision, activityCommandSyntax } from './agency.js';
 import { current, isDraft } from 'immer';
@@ -2319,12 +2320,9 @@ function prepareNativeOperation(
           selectedOccurrenceRules(world).response.offers.availability.invalidFollow.message,
         );
       if (command.until !== undefined && command.until <= world.simTime)
-        return reject('invalid-follow', 'That stopping time has already passed.');
+        return reject(FOLLOW_OUTCOMES.expired.code, FOLLOW_OUTCOMES.expired.message);
       if (command.complete && (command.until === undefined || command.relation || command.onLost))
-        return reject(
-          'invalid-follow',
-          'Finite proximity movement needs an original stopping time and current sight, without a continuing formation or lost-sight policy.',
-        );
+        return reject(FOLLOW_OUTCOMES.finiteRequired.code, FOLLOW_OUTCOMES.finiteRequired.message);
       action = temporary('follow', 0);
       action.targetId = command.targetId;
       action.targetLife = entityGet(world.entities, command.targetId)!.actor?.physicalLife ?? 0;
@@ -4638,7 +4636,9 @@ function executeCommandNative(
                       actor,
                       action.type === 'cook'
                         ? preparationCopy.started
-                        : `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+                        : action.type === 'follow'
+                          ? FOLLOW_OUTCOMES.started
+                          : `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
                     ),
         actor,
         action.targetId,
@@ -5732,11 +5732,7 @@ function advanceAction(
         world,
         actor.id,
         action.id,
-        outcome(
-          true,
-          'follow-time-limit',
-          'The original following time ended; arrival is not implied.',
-        ),
+        outcome(true, FOLLOW_OUTCOMES.limit.code, FOLLOW_OUTCOMES.limit.message),
       );
       actor.actor!.action = null;
       return;
@@ -5745,7 +5741,7 @@ function advanceAction(
       capabilityBlocked(world, actor, 'actions') ||
       capabilityBlocked(world, actor, 'locomotion')
     ) {
-      failAction(world, actor, events, 'following is no longer available to this body.');
+      failAction(world, actor, events, FOLLOW_OUTCOMES.restricted);
       return;
     }
     const wasApproaching = action.stage === 'approaching';
@@ -5760,7 +5756,7 @@ function advanceAction(
       !action.navigation &&
       !moveAlongPath(world, actor, action.path, nativeMovementSpeed(world, actor) * seconds)
     )
-      failAction(world, actor, events, 'the following route became physically blocked.');
+      failAction(world, actor, events, FOLLOW_OUTCOMES.blocked);
     if (actor.actor!.action && action.follow?.complete) {
       const target = entityGet(world.entities, action.targetId!);
       if (
@@ -5774,8 +5770,8 @@ function advanceAction(
           action.id,
           outcome(
             true,
-            'follow-arrived',
-            `Reached the selected ${action.follow.distance} m proximity. This movement has ended; no attack was performed.`,
+            FOLLOW_OUTCOMES.arrived.code,
+            FOLLOW_OUTCOMES.arrived.message.replace('{distance}', String(action.follow.distance)),
           ),
         );
         actor.actor!.action = null;

@@ -72,6 +72,12 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     target_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    distance: Option<f64>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    follow_until: Option<f64>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    complete_follow: Option<bool>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -232,6 +238,7 @@ impl SelectedKnownPlace {
 #[serde(rename_all = "lowercase")]
 enum CommandKind {
     Move,
+    Follow,
     Cancel,
     Gather,
     Fish,
@@ -586,7 +593,7 @@ impl PlayerCommands {
                                         return Ok(ApplicationStart::Existing(
                                             ResultOwner::Refused(
                                                 "stale-contact",
-                                                if matches!(raw.kind, CommandKind::StatusEffect) {
+                                                if matches!(raw.kind, CommandKind::StatusEffect | CommandKind::Follow) {
                                                     "Choose a target you can see now."
                                                 } else {
                                                     "Choose a resource you can see now."
@@ -686,6 +693,8 @@ impl CommandRequest {
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
             || (!matches!(command.kind, CommandKind::PlaceHearth) && command.hearth_plan.is_some())
+            || (!matches!(command.kind, CommandKind::Follow)
+                && (command.distance.is_some() || command.follow_until.is_some() || command.complete_follow.is_some()))
             || (!matches!(command.kind, CommandKind::Say)
                 && (command.text.is_some() || command.volume.is_some()))
             || (!matches!(command.kind, CommandKind::StatusEffect)
@@ -709,6 +718,16 @@ impl CommandRequest {
                     && command.item_id.as_deref().is_some_and(id)
                     && command.container_id.as_deref().is_some_and(id)
                     && command.expected_revision.is_some() => Ok(()),
+            CommandKind::Follow
+                if command.position.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.known_place.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.item_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.distance.is_none_or(|n| n.is_finite() && n > 0.0)
+                    && command.follow_until.is_none_or(|n| n.is_finite() && n >= 0.0)
+                    && command.complete_follow != Some(false) => Ok(()),
             CommandKind::Move
                 if command.expected_action_id.is_none()
                     && command.target_id.is_none()
@@ -899,6 +918,12 @@ impl PreparedRequest {
                 item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 container: input.container_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 expected_revision: input.expected_revision.ok_or(StoreError::InvalidRecord)?,
+            }),
+            CommandKind::Follow => Ok(RuntimePlayerCommand::Follow {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                distance: input.distance,
+                until: input.follow_until,
+                complete: input.complete_follow,
             }),
             CommandKind::Move => Ok(RuntimePlayerCommand::Move(
                 destination.ok_or(StoreError::InvalidRecord)?,

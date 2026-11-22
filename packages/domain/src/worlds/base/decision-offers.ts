@@ -1,7 +1,7 @@
 import { namePhrase, type Named } from '@open-legend/language';
 import { BASE_ACTION_DEFAULTS, BASE_FAMILY_FACTS } from './actions.js';
 import { BASE_MANUAL_WORK_BODY_PLANS } from './bodies.js';
-import { FOLLOW_RULES } from './navigation.js';
+import { FOLLOW_OUTCOMES, FOLLOW_RULES } from './navigation.js';
 import { BASE_STRIKE_BODY_RULES } from './strikes.js';
 import { BASE_GUARD_TEXT } from './shield-defense.js';
 import { BASE_HUNTING } from './hunting.js';
@@ -17,6 +17,7 @@ export const BASE_DECISION_OFFERS = {
   strikeCommand: 'strike',
   interactionRadius: BASE_ACTION_DEFAULTS.interactionRadius,
   follow: FOLLOW_RULES,
+  followOutcomes: FOLLOW_OUTCOMES,
   followSuggestions: 4,
   manualWorkBodyPlans: BASE_MANUAL_WORK_BODY_PLANS,
   naturalStrikeBodyPlans: BASE_STRIKE_BODY_RULES.unrestrictedBodyPlans,

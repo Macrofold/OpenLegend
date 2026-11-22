@@ -13,6 +13,7 @@ use serde::Serialize;
 #[derive(Clone, Copy)]
 pub enum RuntimePlayerCommand<'a> {
     Move(&'a SurfacePoint),
+    Follow { target: &'a str, distance: Option<f64>, until: Option<f64>, complete: Option<bool> },
     Cancel(Option<&'a str>),
     Gather { target: &'a str, tool: Option<&'a str>, mode: Option<GatheringMode> },
     Fish { target: &'a str, tool: &'a str },
@@ -48,6 +49,7 @@ impl RuntimePlayerCommand<'_> {
     pub(crate) fn selected_text_bytes(self) -> usize {
         match self {
             Self::Move(point) => point.surface_id.len(),
+            Self::Follow { target, .. } => target.len(),
             Self::Cancel(action) => action.map_or(0, str::len),
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } | Self::Pickup { target, item: tool, .. } => target.len() + tool.len(),
@@ -70,6 +72,9 @@ impl RuntimePlayerCommand<'_> {
         id: &str,
         actor: &str,
     ) -> Result<(NativeCommand, String), serde_json::Error> {
+        if let Self::Follow { target, distance, until, complete } = self {
+            return bind_follow(id, actor, target, distance, until, complete);
+        }
         if let Self::Cook {
             heat, preparation_id, preparation_version, preparation_digest, inputs
         } = self {
@@ -173,7 +178,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => ("eat", None, None, None, Some(item), None),
@@ -294,7 +299,7 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },
@@ -311,6 +316,53 @@ impl RuntimePlayerCommand<'_> {
         };
         Ok((command, signature))
     }
+}
+
+fn bind_follow(
+    id: &str,
+    actor: &str,
+    target: &str,
+    distance: Option<f64>,
+    until: Option<f64>,
+    complete: Option<bool>,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Signature<'a> {
+        actor_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        complete: Option<bool>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        distance: Option<f64>,
+        human_initiated: bool,
+        id: &'a str,
+        target_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        until: Option<f64>,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid() || !crate::values::is_safe_record_id(target)
+        || distance.is_some_and(|value| !value.is_finite())
+        || until.is_some_and(|value| !value.is_finite())
+        || complete == Some(false)
+    {
+        return Err(serde::ser::Error::custom("Invalid follow command binding."));
+    }
+    let input = Signature {
+        actor_id: actor, complete, distance, human_initiated: true,
+        id, target_id: target, kind: "follow", until,
+    };
+    let fields = 5 + usize::from(complete.is_some()) + usize::from(distance.is_some()) + usize::from(until.is_some());
+    let encoding = CommandEncoding::from_ordered(&input, fields)?;
+    let signature = json_record(&input)?;
+    Ok((NativeCommand::Follow {
+        envelope: headers.envelope(encoding),
+        target_id: target.into(),
+        distance,
+        parameters: crate::movement::follow::FollowParameters { relation: None, on_lost: None, until, complete },
+    }, signature))
 }
 
 fn bind_inspection(

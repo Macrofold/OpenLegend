@@ -11,6 +11,7 @@ pub struct DecisionOfferRules {
     pub strike_command: String,
     pub interaction_radius: f64,
     pub follow: FollowOfferRules,
+    pub follow_outcomes: FollowOutcomes,
     #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     pub follow_suggestions: u64,
     pub manual_work_body_plans: Vec<String>,
@@ -226,6 +227,19 @@ pub struct FollowOfferRules {
     pub target_displacement: f64,
     pub heading_evidence: f64,
     pub slot_tolerance: f64,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FollowOutcomes {
+    pub started: String,
+    pub expired: super::base_ordinary_actions::ActionMessage,
+    pub finite_required: super::base_ordinary_actions::ActionMessage,
+    pub limit: super::base_ordinary_actions::ActionMessage,
+    pub arrived: super::base_ordinary_actions::ActionMessage,
+    pub restricted: String,
+    pub blocked: String,
+    pub last_seen_reached: String,
+    pub last_seen_no_route: String,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

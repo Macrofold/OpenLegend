@@ -46,6 +46,7 @@ impl HeapBytes for Action {
             self.native_locomotion.heap_bytes()?,
             self.strike_motion.heap_bytes()?,
             self.attack_observers.heap_bytes()?,
+            self.follow.heap_bytes()?,
             self.feeding.heap_bytes()?,
             self.gathering.heap_bytes()?,
             self.material_permission.heap_bytes()?,
@@ -90,6 +91,7 @@ fn heap<T: HeapBytes>(value: &T) -> Result<usize, ExecutionError> {
 pub(crate) struct ActionStorage {
     base: crate::host::ResidentReservation,
     route: ActionRouteStorage,
+    follow: Option<crate::host::ResidentReservation>,
     strike_motion: Option<crate::host::ResidentReservation>,
     attack_observers: Option<crate::host::ResidentReservation>,
 }
@@ -151,6 +153,9 @@ impl ActionStorage {
         let path = heap(&value.path)?;
         let navigation = heap(&value.navigation)?;
         let stage = value.stage.capacity();
+        let follow = value.follow.as_ref().map(|state| {
+            budget.adopt_record(storage.split_off(heap(state)?)?).map_err(ExecutionError::from)
+        }).transpose()?;
         let strike_motion = value
             .strike_motion
             .as_ref()
@@ -178,11 +183,13 @@ impl ActionStorage {
             base: budget.adopt_record(storage)?,
             strike_motion,
             attack_observers,
+            follow,
         })
     }
     pub(crate) fn is_funded_by(&self, budget: &ByteBudget) -> bool {
         budget.resident().owns(&self.base)
             && self.route.is_funded_by(budget)
+            && self.follow.as_ref().is_none_or(|storage| budget.resident().owns(storage))
             && self
                 .attack_observers
                 .as_ref()
@@ -194,6 +201,9 @@ impl ActionStorage {
     }
     pub(crate) fn retain(&self, budget: &ByteBudget) -> Result<(), ExecutionError> {
         budget.retain_record(&self.base)?;
+        if let Some(storage) = &self.follow {
+            budget.retain_record(storage)?;
+        }
         if let Some(storage) = &self.strike_motion {
             budget.retain_record(storage)?;
         }
@@ -221,6 +231,24 @@ impl std::ops::Deref for FundedAction {
     type Target = Action;
     fn deref(&self) -> &Action {
         &self.value
+    }
+}
+pub(crate) struct FundedActionFollow {
+    pub value: crate::movement::follow::FollowState,
+    storage: crate::host::ResidentReservation,
+}
+impl FundedActionFollow {
+    pub(crate) fn from_storage(
+        value: crate::movement::follow::FollowState,
+        mut storage: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let bytes = heap(&value)?;
+        if storage.bytes() < bytes {
+            return Err(ExecutionError::Capacity);
+        }
+        storage.resize(bytes)?;
+        Ok(Self { value, storage: budget.adopt_record(storage)? })
     }
 }
 pub(crate) struct FundedActionRoute {
@@ -346,6 +374,7 @@ impl EntityStore {
                     .checked_sub(
                         heap_sum([
                             heap(&action.path)?,
+                            heap(&action.follow)?,
                             heap(&action.navigation)?,
                             action.stage.capacity(),
                             heap(&action.strike_motion)?,
@@ -357,6 +386,9 @@ impl EntityStore {
                 slot.action_storage = Some(ActionStorage {
                     base: budget.reserve_record(other)?,
                     route,
+                    follow: action.follow.as_ref().map(|state| {
+                        budget.reserve_record(heap(state)?).map_err(ExecutionError::from)
+                    }).transpose()?,
                     attack_observers: action
                         .attack_observers
                         .as_ref()
@@ -422,6 +454,38 @@ impl EntityStore {
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
         self.action_storage(handle)?.route.retain(budget)
+    }
+
+    pub(crate) fn retain_action_follow(
+        &self,
+        handle: EntityHandle,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let storage = self.action_storage(handle)?.follow.as_ref().ok_or(ExecutionError::Invariant)?;
+        budget.retain_record(storage)?;
+        Ok(())
+    }
+
+    pub(crate) fn swap_action_follow(
+        &mut self,
+        handle: EntityHandle,
+        action_id: &str,
+        next: FundedActionFollow,
+    ) -> Result<FundedActionFollow, ExecutionError> {
+        let slot = self.slots.get_mut(handle.slot)
+            .filter(|slot| slot.generation == handle.generation)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let action = slot.entity.as_mut().and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.action.as_mut()).filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?;
+        let value = action.follow.as_mut().ok_or(ExecutionError::Invariant)?;
+        let storage = slot.action_storage.as_mut().and_then(|storage| storage.follow.as_mut())
+            .filter(|storage| storage.shares_owner(&next.storage))
+            .ok_or(ExecutionError::Invariant)?;
+        Ok(FundedActionFollow {
+            value: std::mem::replace(value, next.value),
+            storage: std::mem::replace(storage, next.storage),
+        })
     }
 
     pub(crate) fn retain_attack_observers(

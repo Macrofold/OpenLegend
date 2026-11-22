@@ -7,6 +7,7 @@ heap_record!(DecisionOfferRules {
     strike_command,
     interaction_radius,
     follow,
+    follow_outcomes,
     follow_suggestions,
     manual_work_body_plans,
     natural_strike_body_plans,
@@ -79,4 +80,9 @@ heap_record!(HuntingMethods {
     melee,
     ranged_weapon,
     unarmed
+});
+
+heap_record!(FollowOutcomes {
+    started, expired, finite_required, limit, arrived, restricted, blocked,
+    last_seen_reached, last_seen_no_route
 });

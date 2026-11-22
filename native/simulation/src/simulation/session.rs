@@ -634,6 +634,7 @@ impl Session {
                 crate::commands::NativeCommand::Cancel { .. }
                     | crate::commands::NativeCommand::Move { .. }
                     | crate::commands::NativeCommand::PlaceHearth { .. }
+                    | crate::commands::NativeCommand::Follow { .. }
             )
         {
             return Err(ExecutionError::UnsupportedFamily.into());

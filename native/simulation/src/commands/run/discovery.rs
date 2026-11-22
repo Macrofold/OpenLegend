@@ -78,33 +78,6 @@ impl CommandCursor {
                 )?;
                 return Ok(false);
             }
-            NativeCommand::Follow {
-                target_id,
-                distance,
-                ..
-            } => {
-                let separation = distance.unwrap_or(rules.follow.default_distance);
-                if target_id == actor_id
-                    || !separation.is_finite()
-                    || separation <= 0.
-                    || separation < rules.follow.minimum_distance
-                    || separation > rules.follow.maximum_distance
-                {
-                    self.discovery_refuse(&rules.availability.invalid_follow)?;
-                    return Ok(false);
-                }
-                if installed
-                    .capabilities
-                    .capability_blocked(Some(entity), "locomotion")?
-                {
-                    self.discovery_result(
-                        false,
-                        &rules.availability.follow_unavailable_code,
-                        &rules.availability.follow_restricted,
-                    )?;
-                    return Ok(false);
-                }
-            }
             NativeCommand::Strike {
                 definition_id,
                 weapon_item_id,
@@ -164,7 +137,7 @@ impl CommandCursor {
             _ => return Err(ExecutionError::Invariant),
         }
         let target = match &self.command {
-            NativeCommand::Follow { target_id, .. } | NativeCommand::Strike { target_id, .. } => {
+            NativeCommand::Strike { target_id, .. } => {
                 target_id
             }
             _ => return Err(ExecutionError::Invariant),
@@ -201,8 +174,7 @@ impl CommandCursor {
                     .map_err(ExecutionError::Sensor)?;
                 let actor_id = &self.command.envelope().actor_id;
                 let target_id = match &self.command {
-                    NativeCommand::Follow { target_id, .. }
-                    | NativeCommand::Strike { target_id, .. } => target_id,
+                    NativeCommand::Strike { target_id, .. } => target_id,
                     _ => return Err(ExecutionError::Invariant),
                 };
                 if seen.seen(target_id) != Some(true) {
@@ -220,15 +192,6 @@ impl CommandCursor {
                     .entities
                     .get(target_id)
                     .ok_or(ExecutionError::MissingEntity)?;
-                if matches!(self.command, NativeCommand::Follow { .. }) {
-                    if !target.actor.as_ref().is_some_and(|actor| actor.alive) {
-                        return self.discovery_result(
-                            false,
-                            &rules.availability.follow_unavailable_code,
-                            &rules.availability.follow_dead,
-                        );
-                    }
-                } else {
                     let Some(source) = actor.actor.as_ref().filter(|a| a.alive && !a.incapacitated)
                     else {
                         return self.discovery_refuse(&rules.availability.attack_source);
@@ -270,7 +233,6 @@ impl CommandCursor {
                     {
                         return Err(ExecutionError::UnsupportedFamily);
                     }
-                }
                 let actor_profile = crate::status::effective_body_profile(actor, &self.budget)?;
                 let target_profile = crate::status::effective_body_profile(target, &self.budget)?;
                 let mut from = actor
@@ -301,11 +263,6 @@ impl CommandCursor {
                     .get(&self.command.envelope().actor_id)
                     .ok_or(ExecutionError::MissingActor)?;
                 let (target_id, reach) = match &self.command {
-                    NativeCommand::Follow {
-                        target_id,
-                        distance,
-                        ..
-                    } => (target_id, distance.unwrap_or(rules.follow.default_distance)),
                     NativeCommand::Strike {
                         target_id,
                         definition_id,
@@ -390,17 +347,6 @@ impl CommandCursor {
                         self.discovery_ready(core)?;
                     }
                     other => {
-                        if matches!(self.command, NativeCommand::Follow { .. }) {
-                            self.discovery_result(
-                                false,
-                                &rules.availability.follow_unavailable_code,
-                                if matches!(other, RoutePlan::BudgetExceeded { .. }) {
-                                    &rules.availability.follow_budget
-                                } else {
-                                    &rules.availability.follow_no_route
-                                },
-                            )?;
-                        } else {
                             let code = match other {
                                 RoutePlan::BudgetExceeded { .. } => "budget-exceeded",
                                 RoutePlan::InvalidEndpoint { .. } => "invalid-endpoint",
@@ -411,7 +357,6 @@ impl CommandCursor {
                                 code,
                                 &installed.ordinary_actions.value().no_route.message,
                             )?;
-                        }
                     }
                 }
             }

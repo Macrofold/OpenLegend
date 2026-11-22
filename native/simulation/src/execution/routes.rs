@@ -329,4 +329,37 @@ impl PhysicalMutation<'_> {
         }
         Ok(())
     }
+    /// Replace the follower’s observation and timing without copying its
+    /// path. The candidate keeps only the exact prior funded field for undo.
+    pub(crate) fn replace_action_follow(
+        &mut self,
+        id: &str,
+        action_id: &str,
+        after: crate::state::FundedActionFollow,
+    ) -> Result<(), ExecutionError> {
+        let handle = self.state.entities.handle(id).ok_or(ExecutionError::MissingEntity)?;
+        let current = self.state.entities.resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id)
+            .and_then(|action| action.follow.as_ref())
+            .ok_or(ExecutionError::Invariant)?;
+        if *current == after.value {
+            return Ok(());
+        }
+        self.journal.reserve(
+            heap_sum([2 * size_of::<Undo>(), action_id.len()])
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let key = UndoKey::ActionFollow(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        if first {
+            self.state.entities.retain_action_follow(handle, &self.journal.budget)?;
+        }
+        let before = self.state.entities.swap_action_follow(handle, action_id, after)?;
+        if first {
+            self.journal.retain(key, Undo::ActionFollow { entity: handle, action_id: action_id.into(), before })?;
+        }
+        Ok(())
+    }
 }

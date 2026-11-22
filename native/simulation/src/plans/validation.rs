@@ -11,20 +11,6 @@ pub(crate) fn valid_choice_command(
     world: &crate::simulation::InstalledWorld,
 ) -> bool {
     match command {
-        NativeCommand::Follow {
-            target_id,
-            distance,
-            ..
-        } => {
-            let rules = &world.occurrence_rules.value().response.offers.follow;
-            is_safe_record_id(target_id)
-                && distance.is_none_or(|n| {
-                    n.is_finite()
-                        && n > 0.
-                        && n >= rules.minimum_distance
-                        && n <= rules.maximum_distance
-                })
-        }
         NativeCommand::Strike {
             target_id,
             definition_id,
@@ -45,18 +31,13 @@ pub(crate) fn valid_choice_command(
                 && *history_after <= crate::identity::MAX_SAFE_INTEGER as i64
                 && *method_after <= crate::identity::MAX_SAFE_INTEGER
         }
-        _ => valid_command(
-            command,
-            world.speech_action.value(),
-            world.acoustics.value(),
-        ),
+        _ => valid_command(command, world),
     }
 }
 
 pub(crate) fn valid_command(
     command: &NativeCommand,
-    speech: &crate::worlds::InstalledSpeechAction,
-    acoustics: &crate::reception::AcousticPolicy,
+    world: &crate::simulation::InstalledWorld,
 ) -> bool {
     if command
         .envelope()
@@ -72,6 +53,11 @@ pub(crate) fn valid_command(
                 .iter()
                 .all(|n| n.is_finite())
                 && is_safe_record_id(&destination.surface_id)
+        }
+        NativeCommand::Follow { target_id, distance, parameters, envelope } => {
+            is_safe_record_id(target_id)
+                && parameters.distance(&world.occurrence_rules.value().response.offers,
+                    *distance, 0.0, *target_id == envelope.actor_id).is_ok()
         }
         NativeCommand::StatusEffect {
             target_id,
@@ -90,11 +76,11 @@ pub(crate) fn valid_command(
             ..
         } => {
             !text.trim_is_empty()
-                && (text.units_len() as u64) <= speech.maximum_characters
+                && (text.units_len() as u64) <= world.speech_action.value().maximum_characters
                 && target_id.as_ref().is_none_or(|id| is_safe_record_id(id))
                 && volume
                     .as_ref()
-                    .is_none_or(|v| acoustics.volume(v).is_some())
+                    .is_none_or(|v| world.acoustics.value().volume(v).is_some())
         }
         NativeCommand::Outing { .. }
         | NativeCommand::TendFire { .. }
@@ -104,7 +90,6 @@ pub(crate) fn valid_command(
         | NativeCommand::Eat { .. }
         | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }
-        | NativeCommand::Follow { .. }
         | NativeCommand::Strike { .. }
         | NativeCommand::InspectInventory { .. }
         | NativeCommand::InspectActivities { .. }
@@ -125,11 +110,7 @@ fn step(
     if !is_safe_record_id(&step.id)
         || step.command.envelope().id != step.id
         || step.command.envelope().actor_id != actor
-        || !valid_command(
-            &step.command,
-            world.speech_action.value(),
-            world.acoustics.value(),
-        )
+        || !valid_command(&step.command, world)
         || !valid_evidence(step.result_evidence.as_ref(), actor)
         || (step.status == StepStatus::Running
             && !step

@@ -866,7 +866,15 @@ fn validate_entity(
                     || !crate::reception::combat_observation::valid_observers(receipts)
                 })
                 || (a.strike_motion.is_some() && !a.is_natural_contact())
-                || (a.target_life.is_some() && !a.is_natural_contact())
+                || (a.follow.is_some() && !a.is_following())
+                || (a.is_following()
+                    && (!matches!(a.stage.as_str(), "approaching" | "working")
+                        || a.target_life.is_some_and(|life| life > crate::identity::MAX_SAFE_INTEGER)
+                        || (a.stage == "working" && (!a.path.is_empty() || a.navigation.is_some()))
+                        || a.remaining_seconds != 0.0
+                        || a.total_seconds != 0.0
+                        || a.destination.is_some()))
+                || (a.target_life.is_some() && !a.is_natural_contact() && !a.is_following())
                 || (!a.has_ground_motion() && !a.is_natural_contact() && !a.is_manufacturing() && a.kind != "status-effect")
         }) {
             return Err(InstallError::CurrentFormat);
@@ -1127,6 +1135,15 @@ pub(super) fn validate_physical_item_references(
                 || action.is_tending_fire() && !crate::fire_care::valid_saved(
                     action, state, installed.fire_care.as_ref().map(|rule| rule.value()),
                 )
+                || (action.kind == "follow"
+                    && (!action.is_following()
+                        || action.target_id.as_deref() == Some(id)
+                        || action.follow.as_ref().is_none_or(|follow| {
+                            !follow.valid(
+                                &installed.occurrence_rules.value().response.offers.follow,
+                                state.header.sim_time,
+                            )
+                        })))
         }) {
             return Err(InstallError::CurrentFormat);
         }
