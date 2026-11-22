@@ -25,6 +25,8 @@ import { EXPERIENCE_LIMITS } from '../packages/domain/src/experience.js';
 import { summaryMemoryPrefix } from '../packages/domain/src/experience-manifest.js';
 import { rustGameServerViewPolicy } from './rust-game-server-view.js';
 import { rustGameServerDecisionPolicy } from './rust-game-server-cognition.js';
+import { entityValues } from '../packages/domain/src/entity-collection.js';
+import { bodyProfile, spatialMap } from '../packages/domain/src/spatial-state.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import {
   DATABASE_SCHEMA,
@@ -275,7 +277,7 @@ async function storageSchema() {
   };
 }
 
-async function openingDefinitions(url: string) {
+async function openingArtifacts(url: string, includeNavigation: boolean) {
   // Artifact building reads the selected provisioned opening. It cannot take
   // the writer lock or run a schema initializer on that database.
   const database = new PostgresDatabase(url, true);
@@ -289,15 +291,24 @@ async function openingDefinitions(url: string) {
       const selected = await records.load(true);
       if (!selected || selected.revision !== opening.records.durableRevision)
         throw new Error('The public view artifact needs the same installed opening.');
+      const world = selected.state.world;
       return {
+        navigation: includeNavigation
+          ? {
+              map: spatialMap(world),
+              profiles: [...entityValues(world.entities)].flatMap((entity) =>
+                entity.actor ? [bodyProfile(entity)] : [],
+              ),
+            }
+          : undefined,
         definitions: {
           settings: nativeSetupSettings,
           storage: nativeStorageSettings,
           layouts: nativeRecordLayouts(),
           definitions: nativeDefinitionSources(opening),
         },
-        view: rustGameServerViewPolicy(selected.state.world),
-        cognition: rustGameServerDecisionPolicy(selected.state.world),
+        view: rustGameServerViewPolicy(world),
+        cognition: rustGameServerDecisionPolicy(world),
       };
     });
   } finally {
@@ -305,16 +316,19 @@ async function openingDefinitions(url: string) {
   }
 }
 
-const [output, openingUrl, browserAssetIndex, ...unknown] = process.argv.slice(2);
-if (!output || unknown.length)
+const args = process.argv.slice(2);
+const includeNavigation = args.at(-1) === '--with-navigation';
+if (includeNavigation) args.pop();
+const [output, openingUrl, browserAssetIndex, ...unknown] = args;
+if (!output || unknown.length || (includeNavigation && !openingUrl))
   throw new Error(
-    'Usage: node --import tsx scripts/rust-game-server-storage.ts OUTPUT [CURRENT_OPENING_URL [BROWSER_ASSET_INDEX]]',
+    'Usage: node --import tsx scripts/rust-game-server-storage.ts OUTPUT [CURRENT_OPENING_URL [BROWSER_ASSET_INDEX] [--with-navigation]]',
   );
 
 const storage = JSON.stringify(await storageSchema());
 if (openingUrl) {
   const [artifacts, assetIndex, { maxObjectBytes }] = await Promise.all([
-    openingDefinitions(openingUrl),
+    openingArtifacts(openingUrl, includeNavigation),
     readAssetIndex(browserAssetIndex),
     readAssetConfiguration(),
   ]);
@@ -330,6 +344,16 @@ if (openingUrl) {
     await writeFile(join(output, 'view.json'), view, { flag: 'wx' });
     await writeFile(join(output, 'cognition.json'), cognition, { flag: 'wx' });
     await writeFile(join(output, 'assets.json'), assets, { flag: 'wx' });
+    // Build against the same opening as the installed definitions. Do the
+    // expensive bake after releasing the database snapshot.
+    if (artifacts.navigation) {
+      const { writeRustNavigationRelease } = await import('./rust-game-server-navigation.js');
+      await writeRustNavigationRelease(
+        join(output, 'navigation'),
+        artifacts.navigation.map,
+        artifacts.navigation.profiles,
+      );
+    }
     await writeFile(
       join(output, 'manifest.json'),
       JSON.stringify({
