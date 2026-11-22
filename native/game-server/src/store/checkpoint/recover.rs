@@ -287,6 +287,11 @@ impl Store {
         .await?;
         self.stage_checkpoint(tx, expected, &opening, &history)
             .await?;
+        tx.execute(
+            "DELETE FROM memory_vectors WHERE world_id=$1 AND generation<>$2",
+            &[&replacement.world_id, &replacement.generation],
+        )
+        .await?;
         let restore_input = self.prepare_restore_input(&authority, &history, timeline, privacy)?;
         drop(history);
         let mut upstream = opening.custody;
@@ -458,9 +463,9 @@ impl Store {
             let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
             self.rebuild_checkpoint_projections(tx, &replacement.world_id, &decoder)
                 .await?;
+            self.finish_checkpoint_operations(tx, &replacement, timeline, decoder.hard_bytes)
+                .await?;
         }
-        self.finish_checkpoint_operations(tx, &replacement, timeline)
-            .await?;
         let encoded = json_record(&output.receipt).map_err(|_| StoreError::InvalidRecord)?;
         tx.execute(
             "INSERT INTO meta (key,value) VALUES ($1,$2)",
@@ -660,6 +665,7 @@ impl Store {
         tx: &Transaction<'_>,
         head: &DurableHead,
         timeline: &str,
+        recall_hard_bytes: u64,
     ) -> StoreResult<()> {
         let world = &head.world_id;
         RequestIdentity::restore(tx, world, timeline).await?;
@@ -669,19 +675,21 @@ impl Store {
         ).await?;
         self.detach_job_speech(tx).await?;
         tx.execute(
-            "DELETE FROM memory_vectors WHERE world_id=$1 AND generation<>$2",
-            &[world, &head.generation],
+            &self.schema.recall.restore_vectors,
+            &[world, &sql_ordinal(recall_hard_bytes)?],
         )
         .await?;
+        tx.execute(&self.schema.recall.reused_vector_queue, &[world])
+            .await?;
         // Scheduling caches can only refer to this old timeline. Provider
         // charges, invocation receipts and independently granted accounts stay.
         let roots = [
-            "vectors",
-            "interests",
-            "reflection-queue",
-            "semantic-schedule",
-        ]
-        .map(|kind| format!("integration:{kind}:{world}:"));
+            format!("integration:vectors:{world}:"),
+            format!("integration:interests:{world}:"),
+            format!("integration:reflection-queue:{world}:"),
+            format!("integration:semantic-schedule:{world}:"),
+            crate::store::recall::semantic::query_world_prefix(world)?,
+        ];
         tx.execute("DELETE FROM meta WHERE EXISTS (SELECT 1 FROM unnest($1::text[]) q(prefix) WHERE starts_with(key,q.prefix))", &[&roots.as_slice()]).await?;
         Ok(())
     }

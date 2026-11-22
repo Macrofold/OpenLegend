@@ -343,6 +343,33 @@ AND NOT EXISTS (SELECT 1 FROM wanted w WHERE w.actor_id=q.actor_id AND w.source_
 IS DISTINCT FROM (excluded.source_revision,excluded.importance,excluded.at)`;
 }
 
+/** Reattach cached vectors only for exact eligible accounts in the current
+ * generation. The database computes and enforces the per-actor derived charge
+ * without hydrating vector bodies on the host. Call inside the source write. */
+export function memoryVectorReuseSql(world: string, hardBytes: string, selection = ''): string {
+  return `WITH candidates AS MATERIALIZED (
+    SELECT c.world_id,c.actor_id,h.generation,c.source_id,c.source_revision,c.model,c.dimensions,c.embedding::public.vector AS embedding
+    FROM recall_sources r JOIN memory_vector_cache c ON c.world_id=r.world_id AND c.actor_id=r.actor_id AND c.source_id=r.id AND c.source_revision=r.revision
+    JOIN world_head h ON h.world_id=r.world_id
+    WHERE r.world_id=${world} AND r.eligible=1${selection}
+      AND NOT EXISTS (SELECT 1 FROM memory_vectors v WHERE v.world_id=c.world_id AND v.actor_id=c.actor_id AND v.source_id=c.source_id AND v.model=c.model AND v.dimensions=c.dimensions AND v.generation=h.generation AND v.source_revision=c.source_revision)
+  ), sized AS (
+    SELECT candidate.*,SUM(${derivedChargeSql('vector', 'candidate')}) OVER(PARTITION BY world_id,actor_id ORDER BY source_id,model,dimensions ROWS UNBOUNDED PRECEDING) AS charge
+    FROM candidates candidate
+  ) INSERT INTO memory_vectors
+    SELECT world_id,actor_id,generation,source_id,source_revision,model,dimensions,embedding FROM sized s
+    WHERE COALESCE((SELECT bytes FROM memory_derived_usage u WHERE u.world_id=s.world_id AND u.actor_id=s.actor_id),0)+s.charge<=${hardBytes}
+    ON CONFLICT(world_id,actor_id,source_id,model,dimensions) DO UPDATE SET generation=excluded.generation,source_revision=excluded.source_revision,embedding=excluded.embedding
+    WHERE (memory_vectors.generation,memory_vectors.source_revision) IS DISTINCT FROM (excluded.generation,excluded.source_revision)`;
+}
+
+/** Remove only queued versions the same transaction made searchable. */
+export function memoryVectorReuseQueueSql(world: string, selection = ''): string {
+  return `DELETE FROM memory_index_queue q WHERE q.world_id=${world}${selection}
+  AND EXISTS (SELECT 1 FROM memory_vectors v
+    WHERE v.world_id=q.world_id AND v.actor_id=q.actor_id AND v.source_id=q.source_id AND v.source_revision=q.source_revision AND v.model=q.model AND v.dimensions=q.dimensions)`;
+}
+
 interface PreparedSource {
   row: RowChange;
   actorId: string;
@@ -5267,27 +5294,11 @@ export class MemoryRepository {
           : '';
       await this.db
         .prepare(
-          `WITH candidates AS MATERIALIZED (
-        SELECT c.world_id,c.actor_id,h.generation,c.source_id,c.source_revision,c.model,c.dimensions,c.embedding::public.vector AS embedding
-        FROM recall_sources r JOIN memory_vector_cache c ON c.world_id=r.world_id AND c.actor_id=r.actor_id AND c.source_id=r.id AND c.source_revision=r.revision
-        JOIN world_head h ON h.world_id=r.world_id
-        WHERE r.world_id=? AND r.eligible=1${selected('r')}
-          AND NOT EXISTS (SELECT 1 FROM memory_vectors v WHERE v.world_id=c.world_id AND v.actor_id=c.actor_id AND v.source_id=c.source_id AND v.model=c.model AND v.dimensions=c.dimensions AND v.generation=h.generation AND v.source_revision=c.source_revision)
-      ), sized AS (
-        SELECT candidate.*,SUM(${derivedChargeSql('vector', 'candidate')}) OVER(PARTITION BY world_id,actor_id ORDER BY source_id,model,dimensions ROWS UNBOUNDED PRECEDING) AS charge
-        FROM candidates candidate
-      ) INSERT INTO memory_vectors
-        SELECT world_id,actor_id,generation,source_id,source_revision,model,dimensions,embedding FROM sized s
-        WHERE COALESCE((SELECT bytes FROM memory_derived_usage u WHERE u.world_id=s.world_id AND u.actor_id=s.actor_id),0)+s.charge<=${this.derivedAllowance?.hardBytes ?? 0}
-        ON CONFLICT(world_id,actor_id,source_id,model,dimensions) DO UPDATE SET generation=excluded.generation,source_revision=excluded.source_revision,embedding=excluded.embedding
-        WHERE (memory_vectors.generation,memory_vectors.source_revision) IS DISTINCT FROM (excluded.generation,excluded.source_revision)`,
+          memoryVectorReuseSql('?', String(this.derivedAllowance?.hardBytes ?? 0), selected('r')),
         )
         .run(worldId, ...(changed ? [JSON.stringify(batch)] : []));
       await this.db
-        .prepare(
-          `DELETE FROM memory_index_queue q WHERE q.world_id=?${selected('q')} AND EXISTS (SELECT 1 FROM memory_vectors v
-        WHERE v.world_id=q.world_id AND v.actor_id=q.actor_id AND v.source_id=q.source_id AND v.source_revision=q.source_revision AND v.model=q.model AND v.dimensions=q.dimensions)`,
-        )
+        .prepare(memoryVectorReuseQueueSql('?', selected('q')))
         .run(worldId, ...(changed ? [JSON.stringify(batch)] : []));
     }
     if (changed) await this.trimDerived(worldId, changed.keys());

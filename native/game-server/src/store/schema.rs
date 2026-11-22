@@ -32,6 +32,8 @@ pub struct StorageSchema {
 pub(crate) struct RecallStatements {
     pub insert: String,
     pub reconcile: String,
+    pub restore_vectors: String,
+    pub reused_vector_queue: String,
     pub maintenance: super::recall::maintenance_scan::MaintenanceQueries,
 }
 

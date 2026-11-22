@@ -73,6 +73,8 @@ import {
   consolidationSourceSql,
   memoryProjectionSql,
   memoryReconciliationSql,
+  memoryVectorReuseQueueSql,
+  memoryVectorReuseSql,
   MAINTENANCE_BYTES,
   MAINTENANCE_SOURCES,
   MEMORY_HISTORY_TABLES,
@@ -222,6 +224,8 @@ async function storageSchema(adminUrl: string) {
           },
           recall: {
             insert: memoryProjectionSql('$2::bigint', '$1::text'),
+            restoreVectors: memoryVectorReuseSql('$1', '$2::bigint'),
+            reusedVectorQueue: memoryVectorReuseQueueSql('$1'),
             reconcile: memoryReconciliationSql(
               'SELECT actor_id,id,$4::text FROM unnest($2::text[],$3::text[]) c(actor_id,id)',
               '$1',

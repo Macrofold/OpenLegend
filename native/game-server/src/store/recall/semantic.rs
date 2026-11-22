@@ -185,12 +185,25 @@ impl SemanticClaim {
     }
 }
 
+const QUERY_SCOPE: [&str; 2] = ["personal-vectors", "memory-query"];
+
 pub(crate) fn query_key(world: &str, actor: &str) -> StoreResult<String> {
     Ok(format!(
         "integration:{}",
-        json_record(&["personal-vectors", "memory-query", world, actor])
+        json_record(&[QUERY_SCOPE[0], QUERY_SCOPE[1], world, actor])
             .map_err(|_| StoreError::InvalidRecord)?
     ))
+}
+
+pub(crate) fn query_world_prefix(world: &str) -> StoreResult<String> {
+    let mut key = format!(
+        "integration:{}",
+        json_record(&[QUERY_SCOPE[0], QUERY_SCOPE[1], world])
+            .map_err(|_| StoreError::InvalidRecord)?
+    );
+    key.pop();
+    key.push(',');
+    Ok(key)
 }
 
 impl SemanticScope {
