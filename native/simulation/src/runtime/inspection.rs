@@ -16,6 +16,7 @@ pub struct RuntimeWorldInspection<'a> {
 pub enum RuntimeDefinitionKind {
     Item,
     Attribute,
+    Sense,
     BodyPolicy,
     Recipe,
     ItemHandling,
@@ -56,6 +57,13 @@ impl NativeWorldSession {
                 Some(RuntimeDefinitionInspection::Complete {
                     name: attribute.value().name.as_str().into(),
                     payload: attribute.source(),
+                })
+            }
+            RuntimeDefinitionKind::Sense => {
+                let sense = installed.senses.get(id)?;
+                Some(RuntimeDefinitionInspection::Complete {
+                    name: sense.value().id().into(),
+                    payload: sense.source(),
                 })
             }
             RuntimeDefinitionKind::BodyPolicy => {
