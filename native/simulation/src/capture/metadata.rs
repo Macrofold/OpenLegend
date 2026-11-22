@@ -92,7 +92,7 @@ impl<'a> PlayerMetadata<'a> {
             .flat_map(|markers| markers.iter())
             .enumerate()
         {
-            ordered.push((index, key.as_str(), marker));
+            ordered.push((index, key.as_str(), &**marker));
         }
         ordered.sort_unstable_by_key(|(index, key, _)| match crate::encoding::array_index(key) {
             Some(value) => (0, value as usize),

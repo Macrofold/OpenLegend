@@ -151,6 +151,7 @@ struct CandidateFrame {
     restore_metadata: usize,
     memory: crate::host::MemoryCheckpoint,
     knowledge: crate::knowledge::KnowledgeCheckpoint,
+    markers: crate::knowledge::cartography::MarkerCheckpoint,
     encounters: crate::events::EncounterCheckpoint,
     appraisals: crate::appraisals::AppraisalCheckpoint,
     cognition: crate::cognition::CognitionCheckpoint,
@@ -186,6 +187,7 @@ pub(crate) struct CandidateJournal {
     pub(crate) outings: crate::outings::OutingJournal,
     pub(crate) restore_metadata: crate::restore::MetadataJournal,
     pub knowledge: crate::knowledge::KnowledgeJournal,
+    pub markers: crate::knowledge::cartography::MarkerJournal,
     owner: Arc<()>,
     base_cut: u64,
     installed: Arc<crate::simulation::InstalledWorld>,
@@ -214,6 +216,7 @@ pub(crate) struct CandidateJournal {
     root_experience: ExperienceCheckpoint,
     root_commands: CommandCheckpoint,
     root_knowledge: crate::knowledge::KnowledgeCheckpoint,
+    root_markers: crate::knowledge::cartography::MarkerCheckpoint,
     root_outings: crate::outings::OutingCheckpoint,
     root_responses: crate::response::ResponseCheckpoint,
     root_recognition: crate::worlds::InstalledRecognitionCheckpoint,
@@ -252,6 +255,9 @@ impl CandidateJournal {
         budget: &ByteBudget,
     ) -> Result<(), crate::records::RecordEncodingError> {
         let reception = &state.reception;
+        self.markers.encode_changes(
+            &reception.map_markers, &state.installed.schema, &state.records, output, budget,
+        )?;
         self.knowledge.encode_changes(
             &reception.actor_knowledge,
             &state.installed.schema,
@@ -453,6 +459,8 @@ impl CandidateJournal {
         let commands = CommandJournal::new(budget)?;
         let knowledge = crate::knowledge::KnowledgeJournal::new(budget)?;
         let root_knowledge = knowledge.checkpoint(&state.reception.actor_knowledge);
+        let markers = crate::knowledge::cartography::MarkerJournal::default();
+        let root_markers = markers.checkpoint();
         let outings = crate::outings::OutingJournal::new(budget)?;
         let root_outings = outings.checkpoint(&state.outings);
         let root_commands = commands.checkpoint();
@@ -486,6 +494,7 @@ impl CandidateJournal {
             experience,
             commands,
             knowledge,
+            markers,
             outings,
             responses,
             acquisitions,
@@ -505,6 +514,7 @@ impl CandidateJournal {
             root_experience,
             root_commands,
             root_knowledge,
+            root_markers,
             root_outings,
             root_responses,
             root_recognition,
@@ -551,6 +561,7 @@ impl CandidateJournal {
             restore_metadata: self.restore_metadata.checkpoint(),
             memory: self.memory.checkpoint()?,
             knowledge: self.knowledge.checkpoint(&state.reception.actor_knowledge),
+            markers: self.markers.checkpoint(),
             encounters,
             appraisals: state.appraisals.checkpoint(),
             cognition: self.cognition.checkpoint(),
@@ -628,6 +639,7 @@ impl CandidateJournal {
             .rollback_to(&mut state.commands, frame.commands)?;
         self.knowledge
             .rollback_to(&mut state.reception.actor_knowledge, frame.knowledge)?;
+        self.markers.rollback_to(&mut state.reception.map_markers, frame.markers)?;
         self.outings
             .rollback_to(&mut state.outings, frame.outings)?;
         self.responses
@@ -696,6 +708,7 @@ impl CandidateJournal {
             .rollback_to(&mut state.commands, self.root_commands)?;
         self.knowledge
             .rollback_to(&mut state.reception.actor_knowledge, self.root_knowledge)?;
+        self.markers.rollback_to(&mut state.reception.map_markers, self.root_markers)?;
         self.outings
             .rollback_to(&mut state.outings, self.root_outings)?;
         self.responses

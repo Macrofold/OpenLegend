@@ -297,9 +297,13 @@ pub struct Marker {
     z: f64,
     label: JsText,
     icon: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    note: Option<JsText>,
-    note_revision: u64,
+    note: MarkerNote,
+}
+
+#[derive(PartialEq, Serialize)]
+struct MarkerNote {
+    text: JsText,
+    revision: u64,
 }
 
 impl PreparedSelf {
@@ -670,8 +674,10 @@ pub fn prepare_self(
                 z: field.marker.z,
                 label: field.marker.label.clone(),
                 icon: field.marker.icon.clone(),
-                note: field.note.cloned(),
-                note_revision: field.note_revision,
+                note: MarkerNote {
+                    text: field.note.cloned().unwrap_or_default(),
+                    revision: field.note_revision,
+                },
             })
             .collect(),
         can_steer: facts.can_steer,

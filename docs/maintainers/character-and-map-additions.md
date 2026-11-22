@@ -22,6 +22,8 @@ The [paused future-mechanics decisions and prerequisites](#future-mechanics--pau
 
 **Exit:** markers, notes and search survive a reload; an unknown place shows no name; nothing reaches another player. **Depends on:** the Gildmoss HUD and main panel from the [overhaul](../projects/interface-art-direction-overhaul-plan.md).
 
+The stand-alone Rust [marker editor](../verification/character-and-map-additions.md#stand-alone-rust-private-map-markers--november-22-2026) passes the private marker, attached note, search, save and restart journey. Writing notes on retained places still has a separate Rust caller join.
+
 ## Future mechanics — paused design decisions and prerequisites
 
 CMA03–CMA06 are paused and outside this UI assignment. The accepted targets remain in the feature/technical design; proposed coefficients are unchanged. The preserved prototype offers evidence and candidate mechanisms, not current delivery or settled answers to these questions. These items do not block UI completion and do not require an answer from Mike during this assignment.

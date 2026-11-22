@@ -437,7 +437,10 @@ fn assemble_selected_core(
         display.clone(),
         budget,
     )?;
-    let mut reception = read_reception_rows(&mut import, roots, received, &schema, budget)?;
+    let mut reception = read_reception_rows(
+        &mut import, roots, received, installed.content.cartography.as_ref(),
+        &physical.entities, &schema, budget,
+    )?;
     reception.fund_originals(budget)?;
     reception.fund_current_records(budget)?;
     let mut revisions = OriginalRevisionRegistry::new(budget)?;

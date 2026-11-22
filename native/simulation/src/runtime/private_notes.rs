@@ -3,8 +3,9 @@
 use super::*;
 use crate::appraisals::{ACTIVE_PAGE, RuntimePrivateFeeling, private_appraisal_page};
 use crate::encoding::js_string_cmp;
+use crate::knowledge::cartography::MarkerEntry;
 use crate::reception::{
-    KnowledgeDocument, KnowledgeOrigin, KnowledgeSubject, MapMarker, ObserverSubject,
+    KnowledgeDocument, KnowledgeOrigin, KnowledgeSubject, ObserverSubject,
 };
 use crate::text::{JsText, TextRef};
 use crate::worlds::InstalledPersonalNameReader;
@@ -237,7 +238,7 @@ fn project_notepad<'a, 'view>(
     note: &'a KnowledgeDocument,
     limits: Option<Limits>,
     names: &'view InstalledPersonalNameReader<'a>,
-    markers: Option<&'a IndexMap<String, MapMarker>>,
+    markers: Option<&'a IndexMap<String, MarkerEntry>>,
 ) -> Result<Notepad<'view>, RuntimeError> {
     let label = match &note.subject_id {
         None => "General knowledge".into(),

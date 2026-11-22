@@ -674,7 +674,9 @@ struct OwnNpcObservation<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     map_marker_labels: Option<OwnNpcMapLabels<'a>>,
 }
-struct OwnNpcMapLabels<'a>(&'a indexmap::IndexMap<String, crate::reception::MapMarker>);
+struct OwnNpcMapLabels<'a>(
+    &'a indexmap::IndexMap<String, crate::knowledge::cartography::MarkerEntry>,
+);
 impl Serialize for OwnNpcMapLabels<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeMap;

@@ -25,6 +25,7 @@ pub(crate) struct InstalledContent {
     /// Presentation is installed authored data, not a source of permissions or
     /// executable policy. The Node formatter may share this same immutable cut.
     pub presentation: Option<Arc<RawValue>>,
+    pub cartography: Option<crate::knowledge::cartography::Cartography>,
     pub time_policy: TimePolicy,
     pub profile: WorldProfile,
 }
@@ -48,6 +49,7 @@ impl InstalledContent {
         Ok(Self {
             _storage: None,
             presentation: presentation.map(Arc::from),
+            cartography: None,
             time_policy,
             profile,
         })
@@ -59,6 +61,10 @@ impl InstalledContent {
         if self._storage.is_some() {
             return Err(super::InstallError::CurrentFormat);
         }
+        self.cartography = crate::knowledge::cartography::Cartography::prepare(
+            self.presentation.as_deref(),
+            budget,
+        )?;
         let bytes = self
             .profile
             .id

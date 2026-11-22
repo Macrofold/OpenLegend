@@ -33,6 +33,7 @@ mod handoff;
 mod inspection;
 pub use inspection::{RuntimeItemDefinitionInspection, RuntimeWorldInspection};
 mod knowledge;
+pub use crate::knowledge::cartography::{MapMarkerEdit, MarkerChange};
 mod learning;
 mod maintenance;
 pub use learning::{RuntimeActivityLearning, RuntimeActivityLearningStep};

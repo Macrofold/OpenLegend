@@ -186,6 +186,7 @@ pub(crate) fn router(
         .route("/api/mind", post(notes::get))
         .route("/api/mind/subjects", post(notes::subjects::read))
         .route("/api/knowledge", post(notes::edit))
+        .route("/api/map/marker", post(notes::marker::edit))
         .route("/api/activity-history", post(activity_history::read))
         .route("/api/nickname", post(notes::nickname::edit))
         .route("/api/narration/regenerate", post(history::regenerate))

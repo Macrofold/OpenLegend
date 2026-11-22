@@ -235,6 +235,8 @@ pub(crate) fn read_reception_rows(
     import: &mut RowImport,
     roots: ReceptionRoots,
     received_values: Option<ReceivedValues>,
+    cartography: Option<&crate::knowledge::cartography::Cartography>,
+    entities: &crate::state::EntityStore,
     schema: &RecordSchema,
     budget: &crate::host::ByteBudget,
 ) -> Result<ReceptionState, InstallError> {
@@ -548,12 +550,11 @@ pub(crate) fn read_reception_rows(
             "visiblePlaces",
             roots.visible_places,
         )?,
-        map_markers: nested_maps(
-            import,
-            "mind_map_markers_owners",
-            "mind_map_markers",
-            "mapMarkers",
-            roots.map_markers,
+        map_markers: crate::knowledge::cartography::MapMarkers::install(
+            nested_maps(import, "mind_map_markers_owners", "mind_map_markers", "mapMarkers", roots.map_markers)?,
+            cartography,
+            |actor| entities.get(actor).is_some_and(|entity| entity.actor.is_some()),
+            budget,
         )?,
     };
     state.visibility_storage = Some(

@@ -44,13 +44,33 @@ impl NativeWorldSession {
         self.session.begin_personal_edit(cursor).map_err(failure)
     }
 
+    /// Admit only the current player's marker collection to the authoritative
+    /// knowledge candidate. The installed map supplies bounds and icon choices.
+    pub fn begin_owner_map_marker(
+        &mut self,
+        account: &str,
+        actor: &str,
+        edit: super::MapMarkerEdit,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        self.session
+            .accepted()
+            .map_err(failure)?
+            .require_player_read(account, actor)
+            .map_err(failure)?;
+        let cursor =
+            crate::knowledge::KnowledgeEditCursor::marker(actor.into(), edit, &self.budget)
+                .map_err(failure)?;
+        self.session.begin_personal_edit(cursor).map_err(failure)
+    }
+
     /// Bind the authenticated player's own note against current recognition or
-    /// a retained private document before entering the ordinary revisioned writer.
+    /// their current map marker. Both use the same revisioned document writer.
     pub fn begin_owner_knowledge_edit(
         &mut self,
         account: &str,
         actor: &str,
-        subject: Option<ObserverSubject>,
+        subject: Option<KnowledgeSubject>,
         expected_revision: i64,
         text: JsText,
     ) -> Result<CandidateKey, RuntimeError> {
@@ -60,34 +80,57 @@ impl NativeWorldSession {
             .require_player_read(account, actor)
             .map_err(failure)?;
         let state = &accepted.state;
-        let mut permitted = true;
-        if let Some(person) = &subject {
-            let names = crate::worlds::InstalledPersonalNameReader::prepare(
-                &state.physical,
-                &state.reception,
-                &state.installed,
-                &state.experience,
-                actor,
-            )
-            .map_err(failure)?;
-            let retained = match person {
-                ObserverSubject::Entity { entity_id } => {
-                    names.can_remember_subject(entity_id).map_err(failure)?
-                }
-                ObserverSubject::Individual { .. } => names
-                    .observer_individual(person)
-                    .is_some_and(|identity| identity.seed_only != Some(true)),
-            };
-            permitted = person.validate()
-                && (retained
-                    || super::private_notes::person_notepad(state, actor, person, &self.budget)?
-                        .is_some());
-        }
+        let permitted = match &subject {
+            None => true,
+            Some(KnowledgeSubject::MapMarker { marker_id }) => state
+                .reception
+                .map_markers
+                .as_ref()
+                .and_then(|root| root.get(actor))
+                .is_some_and(|markers| markers.contains_key(marker_id)),
+            Some(KnowledgeSubject::Place { .. }) => false,
+            Some(subject) => {
+                let person = match subject {
+                    KnowledgeSubject::Entity { entity_id } => ObserverSubject::Entity {
+                        entity_id: entity_id.clone(),
+                    },
+                    KnowledgeSubject::Individual { individual_id } => ObserverSubject::Individual {
+                        individual_id: individual_id.clone(),
+                    },
+                    _ => unreachable!("marker and place subjects handled above"),
+                };
+                let names = crate::worlds::InstalledPersonalNameReader::prepare(
+                    &state.physical,
+                    &state.reception,
+                    &state.installed,
+                    &state.experience,
+                    actor,
+                )
+                .map_err(failure)?;
+                let retained = match &person {
+                    ObserverSubject::Entity { entity_id } => {
+                        names.can_remember_subject(entity_id).map_err(failure)?
+                    }
+                    ObserverSubject::Individual { .. } => names
+                        .observer_individual(&person)
+                        .is_some_and(|identity| identity.seed_only != Some(true)),
+                };
+                person.validate()
+                    && (retained
+                        || super::private_notes::person_notepad(
+                            state,
+                            actor,
+                            &person,
+                            &self.budget,
+                        )?
+                        .is_some())
+            }
+        };
         self.session
             .begin_knowledge_edit(
                 actor.into(),
                 KnowledgeEdit {
-                    subject_id: subject.map(super::private_notes::person_note_subject),
+                    subject_id: subject,
                     expected_revision,
                     text,
                 },

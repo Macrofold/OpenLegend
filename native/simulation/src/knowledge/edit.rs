@@ -24,6 +24,7 @@ impl CompletedKnowledgeEdit {
 }
 
 enum PrivateEdit {
+    Marker(super::cartography::MapMarkerEdit),
     Note {
         edit: KnowledgeEdit,
         permitted: bool,
@@ -68,6 +69,23 @@ impl KnowledgeEditCursor {
             _storage: storage,
         })
     }
+    pub(crate) fn marker(
+        actor_id: String,
+        edit: super::cartography::MapMarkerEdit,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let storage = budget.reserve(heap_sum([
+            size_of::<Self>(), actor_id.capacity(),
+            edit.heap_bytes().ok_or(ExecutionError::Capacity)?,
+        ]).ok_or(ExecutionError::Capacity)?)?;
+        Ok(Self {
+            actor_id,
+            edit: PrivateEdit::Marker(edit),
+            done: false,
+            _storage: storage,
+        })
+    }
+
     pub(crate) fn nickname(
         actor_id: String,
         contact: String,
@@ -106,6 +124,7 @@ impl KnowledgeEditCursor {
         self.done = true;
         let checkpoint = core.journal.checkpoint(core.state)?;
         let result = match &self.edit {
+            PrivateEdit::Marker(edit) => super::cartography::edit_marker(core, &self.actor_id, edit, budget),
             PrivateEdit::Note { edit, permitted } => edit_knowledge(
                 core,
                 &self.actor_id,
@@ -153,7 +172,7 @@ impl KnowledgeEditCursor {
         }
     }
 }
-fn result(
+pub(super) fn result(
     ok: bool,
     code: &str,
     message: &str,

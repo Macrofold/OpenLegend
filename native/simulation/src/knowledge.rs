@@ -9,6 +9,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize, Serializer};
 use std::mem::size_of;
 
+pub(crate) mod cartography;
 mod state;
 pub(crate) use state::{KnowledgeCheckpoint, KnowledgeEntry, KnowledgeJournal, KnowledgeState};
 mod edit;

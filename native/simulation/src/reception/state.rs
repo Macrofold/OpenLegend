@@ -245,7 +245,7 @@ pub struct ReceptionState {
     pub visible_objects: Option<IndexMap<String, Vec<String>>>,
     pub visible_people: Option<IndexMap<String, Vec<String>>>,
     pub visible_places: Option<IndexMap<String, IndexMap<String, u64>>>,
-    pub map_markers: Option<IndexMap<String, IndexMap<String, MapMarker>>>,
+    pub(crate) map_markers: crate::knowledge::cartography::MapMarkers,
 }
 
 impl ReceptionState {

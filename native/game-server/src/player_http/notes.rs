@@ -9,7 +9,7 @@ use openlegend_simulation::{
     appraisals::RuntimePrivateFeeling,
     encoding::json_record,
     host::CandidateKey,
-    reception::ObserverSubject,
+    reception::{KnowledgeSubject, ObserverSubject},
     runtime::{
         NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimeMindFile, RuntimePrivateNotes,
     },
@@ -18,6 +18,7 @@ use openlegend_simulation::{
 };
 use std::borrow::Cow;
 mod inspection;
+pub(super) mod marker;
 pub(super) mod nickname;
 pub(super) mod subjects;
 
@@ -35,7 +36,7 @@ struct OwnerEdit {
     world_id: String,
     generation: String,
     #[serde(deserialize_with = "Option::deserialize")]
-    subject_id: Option<ObserverSubject>,
+    subject_id: Option<KnowledgeSubject>,
     expected_revision: i64,
     text: JsText,
 }
