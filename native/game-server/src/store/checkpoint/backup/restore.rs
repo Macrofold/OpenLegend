@@ -19,7 +19,8 @@ mod files;
 mod occupied;
 mod operations;
 pub(crate) use artwork::{ArtworkOperator, require_completed_artwork_restore};
-pub(crate) use occupied::DamagedReplacement;
+pub use occupied::BackupPredecessor;
+pub(crate) use occupied::BackupReplacement;
 
 const DIRECTORY_OWNER: &str = "integration:save-directory-owner";
 const ATTEMPT_PREFIX: &str = "integration:restore-attempt:";
@@ -44,7 +45,7 @@ impl Store {
         source: &Path,
         data: &Path,
         artwork_operator: Option<ArtworkOperator>,
-        replacement: Option<DamagedReplacement>,
+        replacement: Option<BackupReplacement>,
         validate: impl FnOnce(CurrentOpening) -> F + Send + 'static,
     ) -> Result<RestoredBackup, CommitError>
     where
@@ -127,7 +128,7 @@ impl Store {
         }
         if let Some(replacement) = replacement {
             return self
-                .replace_damaged_from_backup(
+                .replace_from_backup(
                     occupied::Package {
                         source,
                         manifest,
@@ -139,6 +140,7 @@ impl Store {
                     },
                     existing,
                     replacement,
+                    validate,
                 )
                 .await;
         }
@@ -189,7 +191,7 @@ impl Store {
         let selection = manifest.clone();
         let attempt = local(move || {
             files::write_owner(&target, owner)?;
-            files::begin(&target, &selection, owner, None).map(Arc::new)
+            files::begin(&target, &selection, owner, None, None).map(Arc::new)
         })
         .await
         .map_err(CommitError::RolledBack)?;
@@ -502,7 +504,9 @@ impl Store {
             let target = directory.to_owned();
             let store = self.clone();
             let head = state.head.clone();
-            local(move || {
+            let attempt_id = attempt.id;
+            let world = attempt.world_id.clone();
+            let orphan = local(move || {
                 files::reconcile(
                     &target,
                     &attempt,
@@ -514,6 +518,12 @@ impl Store {
                 )
             })
             .await?;
+            if let Some(orphan) = orphan {
+                self.release_checkpoint_assets(&world, &orphan, false)
+                    .await?;
+            }
+            let target = directory.to_owned();
+            local(move || files::finish_attempt(&target, attempt_id)).await?;
         }
         Ok(())
     }

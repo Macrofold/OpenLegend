@@ -277,6 +277,7 @@ impl CheckpointSchedule {
                 .capture_local_checkpoint(
                     Some(&self.saves),
                     self.directory.clone(),
+                    None,
                     &self.world,
                     id,
                     MetadataKind::Manual,
@@ -339,6 +340,7 @@ impl CheckpointSchedule {
                 .capture_local_checkpoint(
                     Some(&self.saves),
                     self.directory.clone(),
+                    None,
                     &self.world,
                     id,
                     MetadataKind::Auto,

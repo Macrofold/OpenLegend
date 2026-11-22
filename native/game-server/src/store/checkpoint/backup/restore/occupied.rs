@@ -1,15 +1,22 @@
-//! Apply a validated backup to a damaged same-world target through the
-//! existing checkpoint replacement. Its present operational owners survive.
+//! Apply a validated backup through the existing same-world checkpoint writer.
+//! Its present operational owners survive.
 
 use super::*;
 use crate::language::LanguageProvider;
+use crate::store::checkpoint::pre_load::BeforeLoad;
 use crate::store::checkpoint::recover::ReplacementAuthority;
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::runtime::RuntimeInstallDefinitions;
 
-pub(crate) struct DamagedReplacement {
+#[derive(Clone, Copy)]
+pub enum BackupPredecessor {
+    Readable,
+    Damaged { floor: Option<Uuid> },
+}
+
+pub(crate) struct BackupReplacement {
     pub operation: Uuid,
-    pub floor: Option<Uuid>,
+    pub predecessor: BackupPredecessor,
     pub definitions: RuntimeInstallDefinitions,
     pub definition_custody: ByteReservation,
     pub language: Arc<LanguageProvider>,
@@ -27,12 +34,16 @@ pub(super) struct Package {
 }
 
 impl Store {
-    pub(super) async fn replace_damaged_from_backup(
+    pub(super) async fn replace_from_backup<F>(
         self: &Arc<Self>,
         package: Package,
         existing: RestoreState,
-        replacement: DamagedReplacement,
-    ) -> Result<RestoredBackup, CommitError> {
+        replacement: BackupReplacement,
+        validate: impl FnOnce(CurrentOpening) -> F,
+    ) -> Result<RestoredBackup, CommitError>
+    where
+        F: Future<Output = StoreResult<NativeWorldSession>>,
+    {
         let expected = existing
             .head
             .filter(|head| head.world_id == package.manifest.world_id)
@@ -41,7 +52,11 @@ impl Store {
             .await
             .map_err(CommitError::RolledBack)?;
         let request_key = format!("integration:load-request:{}", replacement.operation);
-        let requested = format!("backup:{}", package.id);
+        let source = match replacement.predecessor {
+            BackupPredecessor::Readable => "readable-backup",
+            BackupPredecessor::Damaged { .. } => "backup",
+        };
+        let requested = format!("{source}:{}", package.id);
         let (observed, prior) = self
             .read_recovery_witness(&request_key)
             .await
@@ -74,17 +89,24 @@ impl Store {
             .map_err(CommitError::RolledBack);
         }
 
-        match self.current_opening().await {
-            Err(StoreError::InvalidRecord | StoreError::DamagedInstallation) => {}
-            Err(error) => return Err(CommitError::RolledBack(error)),
-            Ok(_) => {
+        let (floor_id, recovery) = match (replacement.predecessor, self.current_opening().await) {
+            (BackupPredecessor::Readable, Ok(opening)) => {
+                drop(validate(opening).await.map_err(CommitError::RolledBack)?);
+                (None, Some(Uuid::new_v4().to_string()))
+            }
+            (
+                BackupPredecessor::Damaged { floor },
+                Err(StoreError::InvalidRecord | StoreError::DamagedInstallation),
+            ) => (floor, None),
+            (_, Err(error)) => return Err(CommitError::RolledBack(error)),
+            (BackupPredecessor::Damaged { .. }, Ok(_)) => {
                 eprintln!(
                     "This recovery requires structural damage in the current target records."
                 );
                 return Err(CommitError::RolledBack(StoreError::StaleCut));
             }
-        }
-        let floor = if let Some(id) = replacement.floor {
+        };
+        let floor = if let Some(id) = floor_id {
             // Read only an already retained target checkpoint. None of this
             // backup's files have been published to that directory yet.
             Some(
@@ -108,7 +130,7 @@ impl Store {
         let revision = expected.revision;
         let attempt = local(move || {
             files::write_owner(&target, owner)?;
-            files::begin(&target, &manifest, owner, Some(revision))
+            files::begin(&target, &manifest, owner, Some(revision), recovery)
         })
         .await
         .map(Arc::new)
@@ -130,9 +152,16 @@ impl Store {
             )
         })
         .await;
-        let result = match saved {
+        let prepared = match saved {
+            Ok(saves) => self
+                .capture_backup_predecessor(&directory, &expected, &attempt)
+                .await
+                .map(|point| (saves, point)),
+            Err(error) => Err(error),
+        };
+        let result = match prepared {
             Err(error) => Err(CommitError::RolledBack(error)),
-            Ok(saves) => {
+            Ok((saves, before_load)) => {
                 let store = self.clone();
                 let previous = expected.clone();
                 let operation = replacement.operation;
@@ -165,6 +194,7 @@ impl Store {
                             generation: Uuid::new_v4().to_string(),
                             revision: previous
                                 .revision
+                                .max(checkpoint.revision)
                                 .checked_add(1)
                                 .ok_or(StoreError::Capacity)?,
                         };
@@ -184,8 +214,12 @@ impl Store {
                                 &replacement.language,
                                 &replacement.installed_release,
                                 None,
-                                None,
-                                ReplacementAuthority::DamagedBackup,
+                                before_load.as_ref(),
+                                if before_load.is_some() {
+                                    ReplacementAuthority::ReadableBackup
+                                } else {
+                                    ReplacementAuthority::DamagedBackup
+                                },
                             )
                             .await?;
                         let marker_key = format!("{ATTEMPT_PREFIX}{}", attempt.id);
@@ -207,6 +241,40 @@ impl Store {
         self.finish_restore_files(&directory, owner, Some(expected), &result)
             .await;
         result
+    }
+
+    async fn capture_backup_predecessor(
+        self: &Arc<Self>,
+        directory: &Path,
+        expected: &DurableHead,
+        attempt: &Arc<files::Attempt>,
+    ) -> StoreResult<Option<BeforeLoad>> {
+        let Some(id) = attempt.recovery_id.as_ref() else {
+            return Ok(None);
+        };
+        let root = directory.to_owned();
+        let pending = attempt.clone();
+        let stage = local(move || files::prepare_recovery(&root, &pending)).await?;
+        let point = self
+            .capture_pre_load_in(
+                directory,
+                Some(stage.clone()),
+                &expected.world_id,
+                id.clone(),
+            )
+            .await
+            .map_err(|error| {
+                eprintln!("Could not protect the world before backup replacement: {error}");
+                StoreError::InvalidRecord
+            })?;
+        let root = directory.to_owned();
+        let attempt_id = attempt.id;
+        let revision = expected.revision;
+        local(move || {
+            files::publish_recovery(&root, &stage, attempt_id, point.metadata(), revision)?;
+            Ok(Some(point))
+        })
+        .await
     }
 }
 

@@ -78,6 +78,7 @@ impl Store {
         self: &Arc<Self>,
         saves: Option<&Arc<LiveSaves>>,
         root: PathBuf,
+        staged_root: Option<PathBuf>,
         world: &str,
         id: String,
         kind: MetadataKind,
@@ -93,6 +94,9 @@ impl Store {
         })
         .await
         .map_err(|_| CaptureError::Format)??;
+        // Stopped backup replacement scans the real catalog for sequence
+        // allocation while the file remains private to the recorded attempt.
+        let output = staged_root.unwrap_or(root);
         let mut reader = Self::read_only_session(
             &self.checkpoint_connection.0,
             self.checkpoint_connection.1.clone(),
@@ -125,7 +129,7 @@ impl Store {
             let capture = SnapshotCapture::new(&self.schema, &self.budget, opened);
             let file = capture
                 .write(
-                    &root,
+                    &output,
                     world,
                     &id,
                     &tx,
@@ -145,7 +149,7 @@ impl Store {
         }
         .await;
         if result.is_err()
-            && let Ok(false) = tokio::fs::try_exists(root.join(&id)).await
+            && let Ok(false) = tokio::fs::try_exists(output.join(&id)).await
         {
             let _ = self.release_checkpoint_assets(world, &id, true).await;
         }

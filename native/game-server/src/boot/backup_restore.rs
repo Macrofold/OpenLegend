@@ -2,17 +2,23 @@
 //! same native opening and geometry owner as the normal listener.
 
 use super::*;
-use crate::store::checkpoint::{ArtworkOperator, DamagedReplacement, RestoredBackup};
+use crate::store::checkpoint::{ArtworkOperator, BackupReplacement, RestoredBackup};
+
+pub enum BackupRestoreMode {
+    Empty,
+    Artwork(String),
+    Replace(uuid::Uuid, BackupPredecessor),
+}
 
 pub async fn restore_world(
     release: &Path,
     database: Config,
     data: &Path,
     source: &Path,
-    artwork_principal: Option<String>,
-    damaged: Option<(uuid::Uuid, Option<uuid::Uuid>)>,
+    mode: BackupRestoreMode,
 ) -> Result<RestoredBackup, BootError> {
-    let startup = Arc::new(StartupStorage::open(release, database, 1, damaged.is_none()).await?);
+    let initialize = !matches!(mode, BackupRestoreMode::Replace(..));
+    let startup = Arc::new(StartupStorage::open(release, database, 1, initialize).await?);
     let installed = || {
         InstalledAssets::load(
             &release.join("assets.json"),
@@ -22,32 +28,36 @@ pub async fn restore_world(
             startup.host.budget(),
         )
     };
-    let artwork = if let Some(principal) = artwork_principal {
-        if !openlegend_simulation::values::is_safe_record_id(&principal) {
-            return Err(StoreError::InvalidRecord.into());
+    let (artwork, replacement) = match mode {
+        BackupRestoreMode::Empty => (None, None),
+        BackupRestoreMode::Artwork(principal) => {
+            if !openlegend_simulation::values::is_safe_record_id(&principal) {
+                return Err(StoreError::InvalidRecord.into());
+            }
+            (
+                Some(ArtworkOperator {
+                    principal,
+                    installed: installed()?.release().clone(),
+                }),
+                None,
+            )
         }
-        let assets = installed()?;
-        Some(ArtworkOperator {
-            principal,
-            installed: assets.release().clone(),
-        })
-    } else {
-        None
-    };
-    let replacement = if let Some((operation, floor)) = damaged {
-        let budget = startup.host.budget();
-        let (definitions, definition_custody) =
-            read_definitions(release, &startup.manifest, budget)?;
-        Some(DamagedReplacement {
-            operation,
-            floor,
-            definitions,
-            definition_custody,
-            language: Arc::new(LanguageProvider::open(&release.join("language"), budget)?),
-            installed_release: installed()?.release().clone(),
-        })
-    } else {
-        None
+        BackupRestoreMode::Replace(operation, predecessor) => {
+            let budget = startup.host.budget();
+            let (definitions, definition_custody) =
+                read_definitions(release, &startup.manifest, budget)?;
+            (
+                None,
+                Some(BackupReplacement {
+                    operation,
+                    predecessor,
+                    definitions,
+                    definition_custody,
+                    language: Arc::new(LanguageProvider::open(&release.join("language"), budget)?),
+                    installed_release: installed()?.release().clone(),
+                }),
+            )
+        }
     };
     let validator = startup.clone();
     let release = release.to_owned();

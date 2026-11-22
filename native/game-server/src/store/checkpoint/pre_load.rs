@@ -64,6 +64,10 @@ impl BeforeLoad {
     pub(super) fn file_id(&self) -> &str {
         &self.0.id
     }
+
+    pub(super) fn metadata(&self) -> &Metadata {
+        &self.0
+    }
 }
 
 impl Store {
@@ -74,11 +78,25 @@ impl Store {
         directory: &Path,
         world: &str,
     ) -> Result<BeforeLoad, CaptureError> {
+        self.capture_pre_load_in(directory, None, world, Uuid::new_v4().to_string())
+            .await
+    }
+
+    /// The stopped restore supplies its already-journaled slot and a private
+    /// output directory. Nothing enters the retained catalog until it has an owner marker.
+    pub(super) async fn capture_pre_load_in(
+        self: &Arc<Self>,
+        directory: &Path,
+        staged: Option<std::path::PathBuf>,
+        world: &str,
+        id: String,
+    ) -> Result<BeforeLoad, CaptureError> {
         self.capture_local_checkpoint(
             None,
             directory.to_owned(),
+            staged,
             world,
-            Uuid::new_v4().to_string(),
+            id,
             MetadataKind::Recovery,
             LABEL.to_owned(),
             || Ok(()),

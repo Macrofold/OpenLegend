@@ -28,7 +28,8 @@ use tokio_postgres::Config;
 use tokio_postgres_rustls::MakeRustlsConnect;
 use tokio_util::task::AbortOnDropHandle;
 mod backup_restore;
-pub use backup_restore::restore_world;
+pub use crate::store::checkpoint::BackupPredecessor;
+pub use backup_restore::{BackupRestoreMode, restore_world};
 
 const TRANSIENT_BYTES: usize = 2 * 1024 * 1024 * 1024;
 type BootError = Box<dyn Error + Send + Sync>;

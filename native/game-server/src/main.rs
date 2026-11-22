@@ -1,5 +1,6 @@
 use openlegend_game_server::boot::{
-    CurrentServer, backup_world, initialize_storage, recover_checkpoint, restore_world,
+    BackupPredecessor, BackupRestoreMode, CurrentServer, backup_world, initialize_storage,
+    recover_checkpoint, restore_world,
 };
 use std::error::Error;
 use std::ffi::OsString;
@@ -11,6 +12,7 @@ mod checkpoint_file;
 const USAGE: &str = "Usage: openlegend-game-server serve|check-open|initialize-storage RELEASE_DIRECTORY
        openlegend-game-server backup-world RELEASE_DIRECTORY NEW_BACKUP_DIRECTORY
        openlegend-game-server restore-world RELEASE_DIRECTORY BACKUP_DIRECTORY
+       openlegend-game-server restore-world RELEASE_DIRECTORY BACKUP_DIRECTORY --replace OPERATION_ID
        openlegend-game-server restore-world RELEASE_DIRECTORY BACKUP_DIRECTORY --replace-damaged OPERATION_ID [FLOOR_SLOT_ID]
        openlegend-game-server recover-checkpoint RELEASE_DIRECTORY CHECKPOINT_DIRECTORY SLOT_ID OPERATION_ID [FLOOR_SLOT_ID]";
 
@@ -68,10 +70,14 @@ async fn run(
             let source = arguments.next().map(PathBuf::from).ok_or(USAGE)?;
             // Used by the authenticated asset recovery tool. This stages a
             // quarantined install and never authorizes artwork delivery.
-            let (artwork, damaged) = match arguments.next() {
-                None => (None, None),
+            let mode = match arguments.next() {
+                None => BackupRestoreMode::Empty,
                 Some(option) if option == "--artwork-operator" => {
-                    (Some(text(arguments.next())?), None)
+                    BackupRestoreMode::Artwork(text(arguments.next())?)
+                }
+                Some(option) if option == "--replace" => {
+                    let operation = text(arguments.next())?.parse::<uuid::Uuid>()?;
+                    BackupRestoreMode::Replace(operation, BackupPredecessor::Readable)
                 }
                 Some(option) if option == "--replace-damaged" => {
                     let operation = text(arguments.next())?.parse::<uuid::Uuid>()?;
@@ -79,7 +85,7 @@ async fn run(
                         .next()
                         .map(|value| text(Some(value))?.parse::<uuid::Uuid>().map_err(|_| USAGE))
                         .transpose()?;
-                    (None, Some((operation, floor)))
+                    BackupRestoreMode::Replace(operation, BackupPredecessor::Damaged { floor })
                 }
                 _ => return Err(USAGE.into()),
             };
@@ -88,8 +94,7 @@ async fn run(
             }
             let data = std::env::var_os("OPEN_LEGEND_DATA_DIR")
                 .map_or_else(|| PathBuf::from(".data"), PathBuf::from);
-            let result =
-                restore_world(&release, database, &data, &source, artwork, damaged).await?;
+            let result = restore_world(&release, database, &data, &source, mode).await?;
             write_report(&result)
         }
         Some("recover-checkpoint") => {

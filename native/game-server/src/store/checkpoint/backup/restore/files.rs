@@ -2,6 +2,7 @@
 //! the operational restore policy. Files only move before an admitted install.
 
 use super::*;
+use crate::store::checkpoint::MetadataKind;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
@@ -27,7 +28,7 @@ pub(super) struct Attempt {
     saves: Vec<String>,
     preexisting: BTreeSet<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    recovery_id: Option<String>,
+    pub(super) recovery_id: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -160,10 +161,11 @@ pub(super) fn next_attempt(
             || slots.len() > contract.backup.slots
             || attempt.saves.iter().any(|id| !valid_id(id))
             || attempt.preexisting.iter().any(|id| !slots.contains(id))
-            || attempt
-                .recovery_id
-                .as_deref()
-                .is_some_and(|id| !valid_id(id))
+            || attempt.recovery_id.as_deref().is_some_and(|id| {
+                !valid_id(id)
+                    || attempt.starting_revision.is_none()
+                    || attempt.saves.iter().any(|save| save == id)
+            })
         {
             return Err(StoreError::InvalidRecord);
         }
@@ -177,12 +179,20 @@ pub(super) fn begin(
     manifest: &Manifest,
     directory_owner: Uuid,
     starting_revision: Option<u64>,
+    recovery_id: Option<String>,
 ) -> StoreResult<Attempt> {
     let mut preexisting = BTreeSet::new();
     for id in &manifest.saves {
         if exists(&directory.join(id)).map_err(io_error)? {
             preexisting.insert(id.clone());
         }
+    }
+    if let Some(id) = recovery_id.as_ref()
+        && (starting_revision.is_none()
+            || manifest.saves.contains(id)
+            || exists(&directory.join(id)).map_err(io_error)?)
+    {
+        return Err(StoreError::InvalidRecord);
     }
     let attempt = Attempt {
         format: FORMAT.into(),
@@ -192,7 +202,7 @@ pub(super) fn begin(
         starting_revision,
         saves: manifest.saves.iter().cloned().collect(),
         preexisting,
-        recovery_id: None,
+        recovery_id,
     };
     let journal = directory.join(JOURNALS);
     if !exists(&journal).map_err(io_error)? {
@@ -246,7 +256,7 @@ pub(super) fn publish(
             verify_slot(&destination, &prior, contract, &mut scratch)?;
             continue;
         }
-        let stage = directory.join(format!(".restore-pending-{}-{id}", attempt.id));
+        let stage = pending_slot(directory, attempt, id);
         private_directory(&stage).map_err(io_error)?;
         artwork.retain(
             id,
@@ -262,23 +272,63 @@ pub(super) fn publish(
         let mut meta = private_file(&stage.join("metadata.json")).map_err(io_error)?;
         meta.write_all(&raw).map_err(io_error)?;
         meta.sync_all().map_err(io_error)?;
-        durable_json(
-            &stage.join(SLOT_OWNER),
-            &SlotOwner {
-                attempt_id: attempt.id,
-                id: id.clone(),
-                world_id: attempt.world_id.clone(),
-                checksum: metadata.checksum,
-            },
-        )?;
-        publish_directory(&stage, &destination).map_err(io_error)?;
-        File::open(directory)
-            .and_then(|parent| parent.sync_all())
-            .map_err(io_error)?;
+        publish_owned_slot(directory, &stage, attempt.id, &metadata)?;
     }
     (Into::<[u8; 32]>::into(identity.finalize()) == expected)
         .then_some(artwork)
         .ok_or(StoreError::InvalidRecord)
+}
+
+fn pending_slot(directory: &Path, attempt: &Attempt, id: &str) -> PathBuf {
+    directory.join(format!(".restore-pending-{}-{id}", attempt.id))
+}
+
+pub(super) fn prepare_recovery(directory: &Path, attempt: &Attempt) -> StoreResult<PathBuf> {
+    let id = attempt
+        .recovery_id
+        .as_deref()
+        .ok_or(StoreError::InvalidRecord)?;
+    let stage = pending_slot(directory, attempt, id);
+    private_directory(&stage).map_err(io_error)?;
+    Ok(stage)
+}
+
+pub(super) fn publish_recovery(
+    directory: &Path,
+    stage: &Path,
+    attempt_id: Uuid,
+    point: &Metadata,
+    revision: u64,
+) -> StoreResult<()> {
+    if point.kind != Some(MetadataKind::Recovery) || point.revision != Some(revision) {
+        return Err(StoreError::StaleCut);
+    }
+    publish_owned_slot(directory, &stage.join(&point.id), attempt_id, point)?;
+    fs::remove_dir(stage).map_err(io_error)?;
+    File::open(directory)
+        .and_then(|parent| parent.sync_all())
+        .map_err(io_error)
+}
+
+fn publish_owned_slot(
+    directory: &Path,
+    stage: &Path,
+    attempt_id: Uuid,
+    point: &Metadata,
+) -> StoreResult<()> {
+    durable_json(
+        &stage.join(SLOT_OWNER),
+        &SlotOwner {
+            attempt_id,
+            id: point.id.clone(),
+            world_id: point.world_id.clone(),
+            checksum: point.checksum.clone(),
+        },
+    )?;
+    publish_directory(stage, &directory.join(&point.id)).map_err(io_error)?;
+    File::open(directory)
+        .and_then(|parent| parent.sync_all())
+        .map_err(io_error)
 }
 
 pub(super) struct RetainedArtwork {
@@ -358,7 +408,7 @@ pub(super) fn reconcile(
     head: Option<&DurableHead>,
     protected: Option<&str>,
     contract: &CheckpointFormat,
-) -> StoreResult<()> {
+) -> StoreResult<Option<String>> {
     let file_owner: Option<DirectoryOwner> = read_json(&directory.join(OWNER), 1024)?;
     if file_owner.map(|owner| owner.id) != Some(database_owner)
         || attempt.directory_owner != database_owner
@@ -368,17 +418,16 @@ pub(super) fn reconcile(
     if !installed {
         if head.map(|head| head.revision) != attempt.starting_revision
             || head.is_some_and(|head| head.world_id != attempt.world_id)
-            || attempt.recovery_id.is_some()
         {
             return Err(StoreError::StaleCut);
         }
         verify_world(directory, &attempt.world_id, contract)?;
         let mut scratch = Vec::new();
-        for id in &attempt.saves {
+        for id in attempt.saves.iter().chain(&attempt.recovery_id) {
             if attempt.preexisting.contains(id) || protected == Some(id.as_str()) {
                 continue;
             }
-            let stage = directory.join(format!(".restore-pending-{}-{id}", attempt.id));
+            let stage = pending_slot(directory, attempt, id);
             if exists(&stage).map_err(io_error)? {
                 // The UUID attempt owned this unpublished path before copy.
                 // A published save still needs its matching embedded witness.
@@ -408,8 +457,16 @@ pub(super) fn reconcile(
             .and_then(|parent| parent.sync_all())
             .map_err(io_error)?;
     }
+    Ok(attempt
+        .recovery_id
+        .as_ref()
+        .filter(|id| !installed && protected != Some(id.as_str()))
+        .cloned())
+}
+
+pub(super) fn finish_attempt(directory: &Path, attempt_id: Uuid) -> StoreResult<()> {
     let journals = directory.join(JOURNALS);
-    fs::remove_file(journals.join(format!("{}.json", attempt.id))).map_err(io_error)?;
+    fs::remove_file(journals.join(format!("{attempt_id}.json"))).map_err(io_error)?;
     File::open(journals)
         .and_then(|parent| parent.sync_all())
         .map_err(io_error)

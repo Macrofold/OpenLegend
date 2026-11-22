@@ -120,6 +120,7 @@ impl Store {
         &self,
         transaction: &Transaction<'_>,
         expected: &DurableHead,
+        captured_revision: u64,
         checkpoint: &CurrentOpening,
         history: &CheckpointHistory,
     ) -> StoreResult<()> {
@@ -128,7 +129,8 @@ impl Store {
             || candidate.database_schema != self.schema.version
             || candidate.generation == expected.generation
             || candidate.generation.is_empty()
-            || Some(candidate.durable_revision) != expected.revision.checked_add(1)
+            || Some(candidate.durable_revision)
+                != expected.revision.max(captured_revision).checked_add(1)
         {
             return Err(StoreError::StaleCut);
         }

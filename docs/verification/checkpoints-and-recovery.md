@@ -196,6 +196,18 @@ The run used frozen base `e986c85abc5281cc2447215e87c530e532b391e4`, the exact f
 
 The same executable passed the empty-target restore, selected artwork restore, and retained-checkpoint replacement again. The retained-checkpoint case refused during the second SQL page and left all 70 job rows unchanged before retry and cold opening. Raw results are in `no-artwork-refreshed/result.json`, `artwork-refreshed/result.json` and `retained-refreshed/result.json` beside the completed run.
 
+## Stand-alone Rust backup replacement on a readable target
+
+On November 22, 2026, the stopped Rust command installed an older same-world backup over a readable PostgreSQL target. It preserved the target's current accounts, grants, forgotten evidence and interrupted provider charge. The new **Before last load** file matched the exact target revision and carried the restore attempt's durable owner. The installation also kept an earlier recovery file, the target manual checkpoint and the incoming retained checkpoint.
+
+An independent PostgreSQL refusal prevented capture. Another refused installation after capture. Both left the original gameplay and pointer in place. Killing the process during the actual installation left complete, attempt-owned files. Retry removed those abandoned copies, preserved the files that existed before it and installed one replacement. Repeating the exact receipt kept newer play. Reusing its ID with another package or mode refused. Chromium showed the backup at x=23.65, saved a new walk to x=23.30, reopened there, and loaded the distinct predecessor at x=22.95 through **Before last load**.
+
+A revision 11 backup initially could not replace a readable revision 6 target. The portable restore now installs revision 12. The newly imported manual checkpoint loads through the running server. The same file placed directly in the older target's local catalog was refused before the portable restore. With artwork installed, the new recovery checkpoint kept its exact asset pins after commit. An injected rollback released its pins. Current withdrawal still gave an authenticated artwork request HTTP 403 after gameplay recovery. The empty-target artwork quarantine and the damaged-target rollback, exact retry and cold continuation also passed.
+
+The locked build used base `583a2af381db`, scoped changes `28cf053a0b16` and executable `5a0ec1f1677f`. A public re-export was reordered for formatting after the pin. The disposable archive `nsc04-readable-operational-restore-20261122` retains `older-qualified`, `newer-qualified`, `damaged-verified` and `artwork-verified`. Earlier results preserve the future-revision refusals, stale browser scopes and fixture assumptions about empty-target replay and withdrawn artwork. The network and scoped formatting checks passed. All fixture databases were removed. Rust ran without Node on its path. The separate artwork authority tool used local records, and no model or AWS calls were made. [Operator instructions](../save-and-load.md#stopped-operational-backup).
+
+The separate stopped `recover-checkpoint` caller adopted a target-owned slot from revision 8 to 9 and left **Before last load** absent. That remaining R5 gap is recorded in `retained-predecessor-audit.log` in the same archive.
+
 ## Typed Rust checkpoint input — November 22, 2026
 
 The Rust recovery entry point passes the validated authority, privacy ledger, archive references and retention limits directly to the inactive simulation. The file and PostgreSQL readers still validate their current formats, and the writer commits the completed replacement and receipt together.

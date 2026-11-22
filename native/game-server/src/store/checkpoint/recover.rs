@@ -110,6 +110,7 @@ pub(super) struct Adoption {
 pub(super) enum ReplacementAuthority {
     RetainedCheckpoint,
     DamagedBackup,
+    ReadableBackup,
 }
 
 impl Adoption {
@@ -369,15 +370,21 @@ impl Store {
         before_load: Option<&BeforeLoad>,
         source: ReplacementAuthority,
     ) -> StoreResult<Adoption> {
-        if slot.revision > expected.revision {
+        // A retained local slot cannot come from ahead of its target. An
+        // operational backup comes from a separately verified database cut.
+        if matches!(source, ReplacementAuthority::RetainedCheckpoint)
+            && slot.revision > expected.revision
+        {
             return Err(StoreError::StaleCut);
         }
+        let captured_revision = slot.revision;
         let slot_id = slot.id.clone();
         let floor = match source {
             ReplacementAuthority::RetainedCheckpoint => {
                 floor.or_else(|| (slot.revision == expected.revision).then_some(&slot))
             }
             ReplacementAuthority::DamagedBackup => floor,
+            ReplacementAuthority::ReadableBackup => None,
         };
         let mut authority = read_recovery_authority(tx, expected, floor, &self.budget).await?;
         if let Some(operator) = operator {
@@ -415,7 +422,7 @@ impl Store {
             &mut opening,
         )
         .await?;
-        self.stage_checkpoint(tx, expected, &opening, &history)
+        self.stage_checkpoint(tx, expected, captured_revision, &opening, &history)
             .await?;
         tx.execute(
             "DELETE FROM memory_vectors WHERE world_id=$1 AND generation<>$2",
