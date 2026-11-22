@@ -961,7 +961,7 @@ export class WorldService {
   /** Detached work owns a new queue turn and no inherited request authority.
    * Keeping the parent's live ALS token would let it bypass the single writer.
    * docs/performance/scheduling.md#work-placement-and-buffering */
-  private runDetached<T>(operation: () => T): T {
+  runDetached<T>(operation: () => T): T {
     return this.mutationContext.exit(() => this.authorityContext.run(undefined, operation));
   }
   /** One coherent world mutation. Foreground arrivals ask native work to return

@@ -112,16 +112,19 @@ export async function dispatchDecision<R extends DispatchRun, T>(
     };
   }
   const evidenceActor = host.current(run);
-  const sourceAccess = host.store.memories?.sourceAccessRevision({
-    worldId: host.worldId,
-    actorId: evidenceActor,
-  });
+  // Descriptive Act sends only the player's text and a target-present bit.
+  // Its current callback still rechecks control, life and the chosen target.
+  const readsActorEvidence = !run.job.request.action?.expression;
+  const sourceAccess = readsActorEvidence
+    ? host.store.memories?.sourceAccessRevision({ worldId: host.worldId, actorId: evidenceActor })
+    : undefined;
   // Every actual request is already rendered when this boundary is entered.
   // Join its fixed save prefix before reserving/dispatching. Preserve an earlier
   // caller-owned cut across its validation waits and unrelated publications.
   await host.whenDurable(evidenceThrough ?? host.durabilityTicket());
   const sourceActorId = host.current(run);
   const sourceAccessFailure = (): DecisionDependencyFailure | undefined => {
+    if (!readsActorEvidence) return;
     const scope = { worldId: host.worldId, actorId: sourceActorId };
     if (sourceAccess !== host.store.memories?.sourceAccessRevision(scope))
       return { condition: 'source-access-revision', dependency: sourceActorId };
@@ -137,15 +140,17 @@ export async function dispatchDecision<R extends DispatchRun, T>(
     });
   let fenceFailure: DecisionDependencyFailure | undefined;
   const captureSourceFence = () =>
-    host.privateReadFence(
-      sourceActorId,
-      () => host.current(run) === sourceActorId,
-      track
-        ? (failure) => {
-            fenceFailure = failure;
-          }
-        : undefined,
-    );
+    !readsActorEvidence
+      ? () => true
+      : host.privateReadFence(
+          sourceActorId,
+          () => host.current(run) === sourceActorId,
+          track
+            ? (failure) => {
+                fenceFailure = failure;
+              }
+            : undefined,
+        );
   let sourceCurrent = captureSourceFence();
   const revalidateSource = run.revalidateJudgmentSource;
   const selectedPublicationCurrent = run.receptionPublicationCurrent;
