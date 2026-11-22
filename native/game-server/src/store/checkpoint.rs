@@ -24,6 +24,7 @@ use uuid::Uuid;
 mod archives;
 mod authority;
 mod backup;
+pub use backup::RestoredBackup;
 pub(super) use backup::write_operational_backup;
 mod capture;
 pub(crate) use capture::CaptureError;
@@ -217,10 +218,20 @@ struct Metadata {
 
 impl Metadata {
     fn valid(&self, id: &str, world: &str, contract: &CheckpointFormat) -> bool {
+        self.valid_format(id, world, contract, &contract.format)
+    }
+
+    fn valid_format(
+        &self,
+        id: &str,
+        world: &str,
+        contract: &CheckpointFormat,
+        format: &str,
+    ) -> bool {
         !(self.id != id
             || self.world_id.is_empty()
             || self.world_id != world
-            || self.format != contract.format
+            || self.format != format
             || self.encoding != contract.encoding
             || self.label.is_empty()
             || self.label.encode_utf16().count() > 80

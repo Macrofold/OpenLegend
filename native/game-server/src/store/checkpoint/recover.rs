@@ -698,7 +698,7 @@ impl Store {
         }
     }
 
-    async fn current_recovery_privacy(
+    pub(super) async fn current_recovery_privacy(
         &self,
         tx: &Transaction<'_>,
         world: &str,

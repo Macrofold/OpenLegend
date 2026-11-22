@@ -494,22 +494,46 @@ impl NativeWorldSession {
     /// Lend the installed law to the first publication transaction. The
     /// caller reads each canonical account from its own staged SQL rows.
     pub fn opening_recall_decoder(&self) -> Result<RuntimeRecallDecoder<'_>, RuntimeError> {
-        if self.active || self.restore_installation {
-            return Err(failure(
-                "recall preparation requires an unpublished opening",
-            ));
-        }
-        let state = &self.session.accepted().map_err(failure)?.state;
-        if state.durable_revision != 1
-            || state.accepted_cut != 0
-            || state.physical.header.sim_time != 0.0
-            || !state.physical.header.paused
-        {
+        let state = self.unpublished_recall_state()?;
+        if state.durable_revision != 1 || state.physical.header.sim_time != 0.0 {
             return Err(failure(
                 "recall preparation requires the first paused revision",
             ));
         }
         RuntimeRecallDecoder::for_state(state, &self.budget)
+    }
+
+    /// Lend the current installed law to a stopped, empty-target backup
+    /// restore. The reader decodes separately funded staged database rows.
+    pub fn operational_recall_decoder(
+        &self,
+        world: &str,
+        generation: &str,
+        revision: u64,
+    ) -> Result<RuntimeRecallDecoder<'_>, RuntimeError> {
+        let state = self.unpublished_recall_state()?;
+        if state.physical.header.id != world
+            || state.generation != generation
+            || state.durable_revision != revision
+        {
+            return Err(failure(
+                "recall preparation requires the staged recovery cut",
+            ));
+        }
+        RuntimeRecallDecoder::for_state(state, &self.budget)
+    }
+
+    fn unpublished_recall_state(
+        &self,
+    ) -> Result<&crate::simulation::SimulationState, RuntimeError> {
+        if self.active || self.restore_installation {
+            return Err(failure("recall preparation requires an unpublished world"));
+        }
+        let state = &self.session.accepted().map_err(failure)?.state;
+        if state.accepted_cut != 0 || !state.physical.header.paused {
+            return Err(failure("recall preparation requires a paused installation"));
+        }
+        Ok(state)
     }
 }
 

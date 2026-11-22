@@ -1,5 +1,5 @@
 use openlegend_game_server::boot::{
-    CurrentServer, backup_world, initialize_storage, recover_checkpoint,
+    CurrentServer, backup_world, initialize_storage, recover_checkpoint, restore_world,
 };
 use std::error::Error;
 use std::ffi::OsString;
@@ -10,6 +10,7 @@ mod checkpoint_file;
 
 const USAGE: &str = "Usage: openlegend-game-server serve|check-open|initialize-storage RELEASE_DIRECTORY
        openlegend-game-server backup-world RELEASE_DIRECTORY NEW_BACKUP_DIRECTORY
+       openlegend-game-server restore-world RELEASE_DIRECTORY BACKUP_DIRECTORY
        openlegend-game-server recover-checkpoint RELEASE_DIRECTORY CHECKPOINT_DIRECTORY SLOT_ID OPERATION_ID [FLOOR_SLOT_ID]";
 
 fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -61,6 +62,16 @@ async fn run(
                 .map_or_else(|| PathBuf::from(".data"), PathBuf::from);
             let retained = backup_world(&release, database, &data, &destination).await?;
             write_report(&serde_json::json!({"retainedCheckpoints": retained}))
+        }
+        Some("restore-world") => {
+            let source = arguments.next().map(PathBuf::from).ok_or(USAGE)?;
+            if arguments.next().is_some() {
+                return Err(USAGE.into());
+            }
+            let data = std::env::var_os("OPEN_LEGEND_DATA_DIR")
+                .map_or_else(|| PathBuf::from(".data"), PathBuf::from);
+            let result = restore_world(&release, database, &data, &source).await?;
+            write_report(&result)
         }
         Some("recover-checkpoint") => {
             let directory = arguments.next().map(PathBuf::from).ok_or(USAGE)?;

@@ -3,7 +3,9 @@
 //! directory becomes visible only after every private file is synchronized.
 
 use super::capture::{CaptureError, SnapshotCapture, SnapshotKind};
-use super::{CheckpointFormat, FILE_BUFFER, METADATA, Metadata, file, pre_load, read_line};
+use super::{
+    CheckpointFormat, FILE_BUFFER, METADATA, Metadata, file, io_error, pre_load, read_line,
+};
 use crate::store::{Session, StorageSchema, Store, StoreError, durable_head};
 use openlegend_simulation::{encoding::hex_bytes, host::ByteBudget};
 use serde::{Deserialize, Serialize};
@@ -20,6 +22,8 @@ use std::path::Path;
 use tokio::time::Instant;
 use tokio_postgres::IsolationLevel;
 use uuid::Uuid;
+mod restore;
+pub use restore::RestoredBackup;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -60,14 +64,14 @@ impl BackupFormat {
     }
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Manifest<'a> {
-    format: &'a str,
-    world_id: &'a str,
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Manifest {
+    format: String,
+    world_id: String,
     checkpoint: Uuid,
     operations: Uuid,
-    saves: BTreeSet<String>,
+    saves: Vec<String>,
 }
 
 /// Holds a shared advisory lock on the normal writer key throughout capture
@@ -122,11 +126,11 @@ pub(in crate::store) async fn write_operational_backup(
     private_directory(&staging)?;
     let result: Result<usize, CaptureError> = async {
         let mut manifest = Manifest {
-            format: &contract.backup.format,
-            world_id: world,
+            format: contract.backup.format.clone(),
+            world_id: world.clone(),
             checkpoint: Uuid::new_v4(),
             operations: Uuid::new_v4(),
-            saves: BTreeSet::new(),
+            saves: Vec::new(),
         };
         let checkpoints = staging.join("checkpoints");
         let capture = SnapshotCapture::new(schema, budget, Instant::now());
@@ -168,7 +172,9 @@ pub(in crate::store) async fn write_operational_backup(
                     .ok_or(StoreError::Capacity)?,
             )
             .map_err(|_| StoreError::Capacity)?;
-        manifest.saves = copy_slots(&data.join("saves"), &staging.join("saves"), world, contract)?;
+        manifest.saves = copy_slots(&data.join("saves"), &staging.join("saves"), world, contract)?
+            .into_iter()
+            .collect();
         if let Some(pointed) = pointed
             && !manifest.saves.contains(&pointed)
         {
@@ -219,13 +225,8 @@ fn copy_slots(
             continue;
         }
         let path = entry.path();
-        let mut raw = Vec::new();
-        file(&path.join("metadata.json"), METADATA)?
-            .take(METADATA as u64 + 1)
-            .read_to_end(&mut raw)?;
-        let metadata: Metadata =
-            serde_json::from_slice(&raw).map_err(|_| StoreError::InvalidRecord)?;
-        if raw.len() > METADATA || !metadata.valid(name, &metadata.world_id, contract) {
+        let (metadata, raw) = slot_metadata(&path)?;
+        if !metadata.valid(name, &metadata.world_id, contract) {
             return Err(StoreError::InvalidRecord.into());
         }
         if metadata.world_id != world {
@@ -261,13 +262,29 @@ fn copy_slot(
     contract: &CheckpointFormat,
     scratch: &mut Vec<u8>,
 ) -> Result<(), CaptureError> {
+    let mut output =
+        BufWriter::with_capacity(FILE_BUFFER, private_file(&target.join("world.jsonl"))?);
+    stream_slot(source, metadata, contract, scratch, |line| {
+        output.write_all(line)?;
+        Ok(())
+    })?;
+    output.flush()?;
+    output.get_ref().sync_all()?;
+    Ok(())
+}
+
+fn stream_slot(
+    source: &Path,
+    metadata: &Metadata,
+    contract: &CheckpointFormat,
+    scratch: &mut Vec<u8>,
+    mut consume: impl FnMut(&[u8]) -> Result<(), CaptureError>,
+) -> Result<(), CaptureError> {
     let body = file(&source.join("world.jsonl"), contract.bytes)?;
     if body.metadata()?.len() != metadata.bytes as u64 {
         return Err(StoreError::InvalidRecord.into());
     }
     let mut input = BufReader::with_capacity(FILE_BUFFER, body);
-    let mut output =
-        BufWriter::with_capacity(FILE_BUFFER, private_file(&target.join("world.jsonl"))?);
     let mut hash = Sha256::new();
     let mut bytes = 0;
     let mut rows = 0;
@@ -284,7 +301,7 @@ fn copy_slot(
         if rows > metadata.rows || bytes > metadata.bytes {
             return Err(StoreError::InvalidRecord.into());
         }
-        output.write_all(scratch)?;
+        consume(scratch)?;
     }
     if rows != metadata.rows
         || bytes != metadata.bytes
@@ -292,9 +309,19 @@ fn copy_slot(
     {
         return Err(StoreError::InvalidRecord.into());
     }
-    output.flush()?;
-    output.get_ref().sync_all()?;
     Ok(())
+}
+
+fn slot_metadata(path: &Path) -> Result<(Metadata, Vec<u8>), CaptureError> {
+    let mut raw = Vec::new();
+    file(&path.join("metadata.json"), METADATA)?
+        .take(METADATA as u64 + 1)
+        .read_to_end(&mut raw)?;
+    if raw.len() > METADATA {
+        return Err(StoreError::InvalidRecord.into());
+    }
+    let metadata = serde_json::from_slice(&raw).map_err(|_| StoreError::InvalidRecord)?;
+    Ok((metadata, raw))
 }
 
 fn exists(path: &Path) -> io::Result<bool> {

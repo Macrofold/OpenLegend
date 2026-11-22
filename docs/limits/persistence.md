@@ -388,7 +388,7 @@ Earlier feeling conversion supported only the known fear/discomfort format and d
 
 **Reason / tradeoff:** The files cannot join the PostgreSQL transaction, so durable ownership evidence and an in-transaction commit marker distinguish an orphan from a committed slot after process death. The small marker files and one database meta record per successful restore cost space; refusing ambiguous/shared ownership is safer than deleting a usable recovery point. First use of an unmarked same-world directory relies on the operator's exclusive-directory choice; the marker cannot prove past ownership. Servers must be stopped for operational restore; the marker is an operational-restore guard, not a general cross-process file lock. [Implementation](../../apps/server/src/operational-restore-attempt.ts), [slot publication](../../apps/server/src/operational-backup.ts).
 
-[Implementation](../../scripts/restore-world.ts).
+[TypeScript operator command](../../scripts/restore-world.ts) · [Stand-alone Rust empty-target restore](../../native/game-server/src/store/checkpoint/backup/restore.rs).
 
 ## SB19
 
