@@ -81,14 +81,9 @@ pub(super) fn prepare(
     match cursor.step(core, supplied)? {
         LearningPreparationStep::History(q) => history(answer, q, budget),
         LearningPreparationStep::Format(q) => format(answer, q, budget),
-        LearningPreparationStep::Canonical(q) => question(
-            answer,
-            ProviderKind::Digest,
-            q.binding,
-            q,
-            budget,
-            LearningReply::Canonical,
-        ),
+        LearningPreparationStep::Canonical(q) => {
+            digest_question(answer, q, budget, LearningReply::Canonical)
+        }
         LearningPreparationStep::Complete(batch) => Ok(Poll::Complete(batch)),
         LearningPreparationStep::Context(_) => Err(ExecutionError::Invariant.into()),
     }
@@ -108,14 +103,9 @@ pub(super) fn publish(
     match cursor.step(core, supplied)? {
         LearningPublicationStep::History(q) => history(answer, q, budget),
         LearningPublicationStep::Format(q) => format(answer, q, budget),
-        LearningPublicationStep::Canonical(q) => question(
-            answer,
-            ProviderKind::Digest,
-            q.binding,
-            q,
-            budget,
-            LearningReply::Canonical,
-        ),
+        LearningPublicationStep::Canonical(q) => {
+            digest_question(answer, q, budget, LearningReply::Canonical)
+        }
         LearningPublicationStep::Complete(done) => Ok(Poll::Complete(done)),
     }
 }
