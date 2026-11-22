@@ -837,6 +837,18 @@ impl RuntimeProvider {
         Ok(request.geometry().map(compute))
     }
 
+    /// Give the formatter the proposed clock scalars and exact request binding.
+    /// This read cannot apply a clock change or retain any world data.
+    pub fn with_control<T>(
+        &self,
+        format: impl FnOnce(crate::geometry::GeometryBinding, bool, f64) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question
+            .control()
+            .map(|request| format(request.binding, request.paused, request.speed)))
+    }
+
     pub fn asks_known_places(&self) -> Result<bool, RuntimeError> {
         Ok(self.question()?.kind() == crate::simulation::ProviderKind::KnownPlaces)
     }
@@ -909,6 +921,9 @@ impl RuntimeProvider {
         let question = self.question()?;
         if let Some(geometry) = question.geometry_envelope() {
             return RuntimeJson::encode(&geometry, budget);
+        }
+        if let Some(control) = question.control_envelope() {
+            return RuntimeJson::encode(&control, budget);
         }
         if let Some(utterance) = question.utterance_envelope() {
             return RuntimeJson::encode(&utterance, budget);

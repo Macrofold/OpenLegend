@@ -35,6 +35,11 @@ pub(crate) fn answer(
     if let Some(answer) = request.format_activity_learning(budget)? {
         return Ok(Some(answer));
     }
+    if let Some(answer) = request.with_control(|binding, paused, speed| {
+        control_format::answer(binding, paused, speed, budget)
+    })? {
+        return answer.map(Some);
+    }
     if let Some(answer) = request.with_utterance(|binding, text| {
         let prepared = language
             .ok_or(WorldError::ProviderKind)?
@@ -87,7 +92,7 @@ pub(crate) fn answer(
             serde_json::from_str(request).map_err(|_| WorldError::ProviderKind)?;
         if !matches!(
             envelope.kind,
-            "display" | "control" | "canonical" | "digest"
+            "display" | "canonical" | "digest"
         ) {
             return Ok(None);
         }
@@ -108,7 +113,6 @@ pub(crate) fn answer(
         let workspace = budget.reserve(bytes).map_err(HostError::from)?;
         let value = match envelope.kind {
             "display" => LocalFormat::Display(activity_format::format(envelope.value)?),
-            "control" => LocalFormat::Control(control_format::format(envelope.value)?),
             "canonical" | "digest" => {
                 #[derive(Deserialize)]
                 struct Command<'a> {

@@ -1,6 +1,6 @@
 //! Saved application controls use the ordinary private checkpoint and a
 //! protected SQL prefix. They do not advance gameplay sequence or native time.
-use super::{DriveError, ProviderKind};
+use super::DriveError;
 use crate::commands::Outcome;
 use crate::execution::CoreMutation;
 use crate::geometry::GeometryBinding;
@@ -10,9 +10,9 @@ use crate::text::JsText;
 use serde::{Deserialize, Serialize};
 use std::mem::size_of;
 
-#[derive(Serialize)]
+#[derive(Clone, Copy, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(super) struct ControlFormat {
+pub(crate) struct ControlFormat {
     pub binding: GeometryBinding,
     pub paused: bool,
     pub speed: f64,
@@ -136,8 +136,5 @@ impl HostControlCursor {
             },
             _storage: storage,
         })
-    }
-    pub(super) fn kind(&self) -> ProviderKind {
-        ProviderKind::Control
     }
 }

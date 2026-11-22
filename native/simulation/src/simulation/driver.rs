@@ -139,6 +139,7 @@ pub(crate) struct ProviderQuestion {
 enum QuestionBody {
     Json(String),
     Geometry(Box<GeometryQueries>),
+    Control(super::host_control::ControlFormat),
     Utterance(UtteranceRequest),
     Words(WordsProviderRequest),
     Collation(CollationProviderRequest),
@@ -197,6 +198,23 @@ impl ProviderQuestion {
 
     pub(crate) fn geometry_envelope(&self) -> Option<QuestionEnvelope<'_, GeometryQueries>> {
         self.geometry().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    pub(crate) fn control(&self) -> Option<&super::host_control::ControlFormat> {
+        match &self.body {
+            QuestionBody::Control(request) => Some(request),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn control_envelope(
+        &self,
+    ) -> Option<QuestionEnvelope<'_, super::host_control::ControlFormat>> {
+        self.control().map(|value| QuestionEnvelope {
             kind: self.kind,
             binding: self.binding,
             value,
@@ -1399,17 +1417,20 @@ impl OperationCursor {
                         CompletedOperation::HostControl(cursor.finish_presentation(budget)?),
                     )))
                 }
-                None => {
-                    let kind = cursor.kind();
+                None if answer.is_none() => {
                     let request = cursor.format(core)?;
-                    question(
-                        answer,
-                        kind,
-                        request.binding,
-                        request,
-                        budget,
+                    let backing = ProviderQuestion::reserve_backing(budget)?;
+                    let reservation = budget.reserve(0).map_err(|_| DriveError::Capacity)?;
+                    Ok(Poll::Question(
+                        Arc::new(ProviderQuestion {
+                            kind: ProviderKind::Control,
+                            binding: request.binding,
+                            body: QuestionBody::Control(*request),
+                            _reservation: reservation,
+                            backing,
+                        }),
                         OperationReply::HostControl,
-                    )
+                    ))
                 }
                 Some(OperationReply::HostControl) => {
                     let Answer::Control(reply) = direct(answer, ProviderKind::Control)? else {
