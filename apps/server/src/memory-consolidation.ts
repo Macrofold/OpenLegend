@@ -110,10 +110,12 @@ export const CONSOLIDATION_INSTRUCTIONS = `You maintain a person's remembered ex
 Return distinct useful memory groups in the supplied chronological order. Every routine source handle must appear exactly once. Gaps in chronologicalPosition mark protected incidents or omitted boundaries; never merge across a gap. Protected incidents are retained unchanged by the engine. A group may contain only a contiguous run of routine sources: never merge an early and later memory across an intervening memory assigned to another group or a protected incident. Merge only repeated routine experiences about the same activity, people and situation. During daily review, update matching existing summaries instead of creating duplicate entries for that day. Keep unrelated incidents, changed outcomes and conflicting accounts separate. Preserve first-person perspective, attribution, uncertainty, chronology and meaningful changes; testimony is not witnessing. Never invent causes or facts. There is no storage-slot or compression target. Keep distinct memories as separate groups when they cannot safely merge. Return feasible=false with no groups only when you cannot produce a faithful, complete grouping. Each group's text must fit 1200 UTF-8 bytes. Important incidents are preserved separately and exactly by the engine.`;
 
 export const CONSOLIDATION_OUTPUT_TOKENS = 8192;
+export const CONSOLIDATION_HOURLY_SUFFIX =
+  ' Return interpretation as null; this request only consolidates its supplied sources.';
 // Transport allowances bound each call, never the number of retained memories.
 // docs/memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall
-const INPUT_CHARACTERS = 55_000 * 4;
-const OUTPUT_CHARACTERS = CONSOLIDATION_OUTPUT_TOKENS * 4 * 0.75;
+export const CONSOLIDATION_INPUT_CHARACTERS = 55_000 * 4;
+export const CONSOLIDATION_OUTPUT_CHARACTERS = CONSOLIDATION_OUTPUT_TOKENS * 4 * 0.75;
 export function consolidationRequests(
   batch: ConsolidationBatch,
   world: WorldState,
@@ -169,8 +171,15 @@ export function consolidationRequestsFromRead(
     const input = JSON.stringify({ [handle]: value }).length;
     // Estimate the lossless singleton output: compression must not be needed to fit.
     const output = JSON.stringify({ sourceIds: [handle], text: reading.summary }).length;
-    if (inputSize + input > INPUT_CHARACTERS || outputSize + output > OUTPUT_CHARACTERS) flush();
-    if (inputSize + input > INPUT_CHARACTERS || outputSize + output > OUTPUT_CHARACTERS)
+    if (
+      inputSize + input > CONSOLIDATION_INPUT_CHARACTERS ||
+      outputSize + output > CONSOLIDATION_OUTPUT_CHARACTERS
+    )
+      flush();
+    if (
+      inputSize + input > CONSOLIDATION_INPUT_CHARACTERS ||
+      outputSize + output > CONSOLIDATION_OUTPUT_CHARACTERS
+    )
       throw new Error(
         'One memory exceeds the consolidation request allowance; original memories retained.',
       );

@@ -9,7 +9,7 @@ use crate::{
         CommitError, DurableHead, PreparedConsolidation, StoreError, durable_head,
         recall::{
             consolidation::ConsolidationCursorWrite,
-            maintenance_scan::{ConsolidationWindow, PendingReview, ReviewPosition},
+            maintenance_scan::{ConsolidationWindow, ReviewPosition},
         },
     },
     world::{ProtectedCommit, WorldError},
@@ -106,7 +106,7 @@ pub(crate) async fn review_protected_day(
             through_revision,
             after: None,
         };
-        let cursor = cursor_write(review, next)?;
+        let cursor = review.write(&next)?;
         game.store
             .operational(move |transaction| {
                 Box::pin(async move {
@@ -152,7 +152,7 @@ pub(crate) async fn review_protected_day(
     let digest = json_record(&binding).map_err(RuntimeError::application_refused)?;
     let job_id = format!("memory-review:{}", sha256_hex(digest.as_bytes()));
     drop(digest);
-    let cursor = cursor_write(review, next)?;
+    let cursor = review.write(&next)?;
     let ticket = prepare(
         game,
         selection.head,
@@ -171,7 +171,17 @@ pub(crate) async fn review_protected_day(
     let Some((groups, allocation)) = ticket.protected_groups(game.host.budget())? else {
         return Ok(ReviewFollowUp::RoutinePending);
     };
-    match apply(game, saves, ticket, groups, allocation, stop, Some(cursor)).await? {
+    match apply(
+        game,
+        saves,
+        ticket,
+        groups,
+        allocation,
+        PublicationConsent { stop, deadline },
+        Some(cursor),
+    )
+    .await?
+    {
         ConsolidationOutcome::Published if selection.complete => {
             Ok(ReviewFollowUp::Tomorrow(tomorrow))
         }
@@ -180,30 +190,6 @@ pub(crate) async fn review_protected_day(
             Err(StoreError::StaleCut.into())
         }
     }
-}
-
-fn cursor_write(
-    mut owned: PendingReview,
-    next: ReviewPosition,
-) -> Result<ConsolidationCursorWrite, WorldError> {
-    let len = json_record_len(&next).map_err(RuntimeError::application_refused)?;
-    owned
-        .custody
-        .resize(
-            owned
-                .custody
-                .bytes()
-                .checked_add(len.checked_mul(3).ok_or(StoreError::Capacity)?)
-                .ok_or(StoreError::Capacity)?,
-        )
-        .map_err(RuntimeError::from)?;
-    let next = json_record(&next).map_err(RuntimeError::application_refused)?;
-    Ok(ConsolidationCursorWrite {
-        key: owned.key,
-        previous: owned.previous,
-        next,
-        _custody: owned.custody,
-    })
 }
 
 pub(crate) async fn prepare(
@@ -246,31 +232,49 @@ struct Finish {
     projection: Option<PreparedConsolidation>,
 }
 
+pub(crate) struct PublicationConsent {
+    pub stop: watch::Receiver<bool>,
+    pub deadline: Instant,
+}
+
+impl PublicationConsent {
+    fn current(&self) -> Result<(), WorldError> {
+        if *self.stop.borrow() {
+            Err(HostError::Cancelled.into())
+        } else if Instant::now() >= self.deadline {
+            Err(WorldError::NpcDecisionExpired)
+        } else {
+            Ok(())
+        }
+    }
+}
+
 pub(crate) async fn apply(
     game: &Arc<CurrentServer>,
     saves: &Arc<LiveSaves>,
     ticket: RuntimeConsolidationTicket,
     groups: Vec<RuntimeConsolidationGroup>,
     allocation: ByteReservation,
-    stop: watch::Receiver<bool>,
+    consent: PublicationConsent,
     cursor: Option<ConsolidationCursorWrite>,
 ) -> Result<ConsolidationOutcome, WorldError> {
-    if *stop.borrow() {
-        return Err(HostError::Cancelled.into());
-    }
+    consent.current()?;
     let _source_edit = game.world.begin_source_edit(ticket.actor_id())?;
     let _barrier = saves.enter_protected().await?;
     let source = game.clone();
     let writer = game.store.clone();
     let stage = writer.clone();
-    let before_begin = stop.clone();
+    let before_begin = PublicationConsent {
+        stop: consent.stop.clone(),
+        deadline: consent.deadline,
+    };
     let finish = game
         .world
         .execute_protected(
             move |world| {
-                if *before_begin.borrow() {
-                    return Err(RuntimeError::application_refused(HostError::Cancelled));
-                }
+                before_begin
+                    .current()
+                    .map_err(RuntimeError::application_refused)?;
                 let _allocation = allocation;
                 world.begin_consolidation_direct(&mut Some(ticket), groups)
             },
@@ -307,12 +311,7 @@ pub(crate) async fn apply(
                     projection,
                 })
             },
-            move || {
-                if *stop.borrow() {
-                    return Err(HostError::Cancelled.into());
-                }
-                Ok(())
-            },
+            move || consent.current(),
             move |finish, prefix| -> ProtectedCommit<'_> {
                 Box::pin(async move {
                     let prepared = finish.projection.as_ref().ok_or(CommitError::RolledBack(

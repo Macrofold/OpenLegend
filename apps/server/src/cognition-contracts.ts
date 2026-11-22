@@ -272,6 +272,9 @@ export const summarySchema = z
     ),
   })
   .strict();
+export const hourlySummarySchema = summarySchema.extend({ interpretation: z.null() });
+export const hourlySummaryJsonSchema = () =>
+  z.toJSONSchema(hourlySummarySchema, { target: 'draft-7' });
 
 /** Reflection and daily interpretation expose the same finite publication cut.
  * Trigger bookkeeping and physical action handles are not durable person identities. */

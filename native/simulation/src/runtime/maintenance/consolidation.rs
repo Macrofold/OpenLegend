@@ -1,5 +1,6 @@
 //! One native-owned maintenance batch survives model work. SQL answers the
 //! existing scoped Sources questions; it never supplies interpretation grants.
+use super::witness::{ConsolidationWatch, ConsolidationWatches};
 use super::*;
 use crate::capture::maintenance::{
     MaintenanceAdmission, MaintenanceCapture, MaintenanceInterpretation, MaintenancePresentation,
@@ -11,7 +12,9 @@ use crate::experience::consolidation::ConsolidationLimits;
 use crate::host::retained_size::HeapBytes;
 use std::mem::size_of;
 mod dream;
+mod reading;
 pub use dream::RuntimeConsolidationDream;
+pub use reading::{RuntimeConsolidationReading, RuntimeConsolidationReadings};
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuntimeConsolidationBinding {
@@ -44,6 +47,8 @@ pub struct RuntimeConsolidationTicket {
     files: String,
     _files: ByteReservation,
     sources: Option<PreparedNpcSources>,
+    watch_sources: bool,
+    watch: Option<ConsolidationWatch>,
     interpretation: Option<Arc<MaintenanceInterpretation>>,
     candidate: Option<CandidateKey>,
     _storage: ByteReservation,
@@ -163,6 +168,8 @@ impl NativeWorldSession {
             files,
             _files: files_storage,
             sources: None,
+            watch_sources: !bridge_packet,
+            watch: None,
             interpretation: None,
             candidate: None,
             _storage: storage,
@@ -223,6 +230,30 @@ impl NativeWorldSession {
             SessionStep::NpcSources(sources) => {
                 ticket.candidate = None;
                 ticket.sources = Some(sources);
+                if ticket.watch_sources && ticket.sources_ready() && ticket.has_routine() {
+                    if self.consolidation_watches.is_none() {
+                        self.consolidation_watches = Some(ConsolidationWatches::new(&self.budget)?);
+                    }
+                    let state = &self.session.accepted().map_err(failure)?.state;
+                    let records = ticket
+                        .sources
+                        .as_ref()
+                        .expect("checked sources")
+                        .personal
+                        .iter()
+                        .map(|source| {
+                            source
+                                .current_record()
+                                .expect("checked exact source")
+                                .as_ref()
+                        });
+                    ticket.watch = Some(
+                        self.consolidation_watches
+                            .as_ref()
+                            .expect("created registry")
+                            .watch(records, &state.installed.schema, &self.budget)?,
+                    );
+                }
                 RuntimeNpcPreparationStep::Complete
             }
             _ => return Err(failure("consolidation source preparation produced effects")),
@@ -245,7 +276,12 @@ impl NativeWorldSession {
     ) -> Result<bool, RuntimeError> {
         self.require_active()?;
         let state = &self.session.publication_read().map_err(failure)?.state;
-        Ok(ticket.scope.still_permitted(state)
+        Ok(!state.physical.header.paused
+            && ticket
+                .watch
+                .as_ref()
+                .is_none_or(ConsolidationWatch::current)
+            && ticket.scope.still_permitted(state)
             && ticket
                 .body
                 .current(state, &ticket.admission)
@@ -400,6 +436,10 @@ impl NativeWorldSession {
 impl RuntimeConsolidationTicket {
     pub fn actor_id(&self) -> &str {
         &self.scope.actor_id
+    }
+
+    pub fn accepted_cut(&self) -> u64 {
+        self.scope.accepted_cut
     }
 
     /// Return exact singleton readings for a protected-only or previously

@@ -2,6 +2,14 @@ import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { hourlySummaryJsonSchema } from '../apps/server/src/cognition-contracts.js';
+import {
+  CONSOLIDATION_HOURLY_SUFFIX,
+  CONSOLIDATION_INPUT_CHARACTERS,
+  CONSOLIDATION_INSTRUCTIONS,
+  CONSOLIDATION_OUTPUT_CHARACTERS,
+  CONSOLIDATION_OUTPUT_TOKENS,
+} from '../apps/server/src/memory-consolidation.js';
 import { nativeSetupSettings } from '../packages/domain/src/native-install.js';
 import { EXPERIENCE_LIMITS } from '../packages/domain/src/experience.js';
 import { summaryMemoryPrefix } from '../packages/domain/src/experience-manifest.js';
@@ -227,6 +235,11 @@ async function storageSchema(adminUrl: string) {
               daySeconds: EXPERIENCE_LIMITS.reviewDaySeconds,
               protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
               summaryBytes: EXPERIENCE_LIMITS.summaryBytes,
+              hourlyInstructions: CONSOLIDATION_INSTRUCTIONS + CONSOLIDATION_HOURLY_SUFFIX,
+              hourlySchema: hourlySummaryJsonSchema(),
+              inputCharacters: CONSOLIDATION_INPUT_CHARACTERS,
+              outputCharacters: CONSOLIDATION_OUTPUT_CHARACTERS,
+              outputTokens: CONSOLIDATION_OUTPUT_TOKENS,
             },
           },
           tables,

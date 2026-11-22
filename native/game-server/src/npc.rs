@@ -45,6 +45,7 @@ pub(crate) struct Director {
     saves: Arc<LiveSaves>,
     authority: Arc<Authority>,
     models: Option<settings::ConfiguredModels>,
+    summary_model: Option<settings::SummaryModel>,
     dispatch: Arc<DecisionDispatch>,
     slots: Arc<Slots>,
     tasks: Mutex<Option<tokio::task::JoinSet<()>>>,
@@ -145,6 +146,11 @@ impl Director {
         limit_usd: f64,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let (maximum, models) = settings::from_env(limit_usd)?;
+        let summary_model = settings::summary_model(
+            models.as_ref(),
+            limit_usd,
+            game.store.schema.recall.maintenance.output_tokens,
+        )?;
         let budget = game.host.budget().clone();
         let dispatch = Arc::new(DecisionDispatch::new(game.clone(), maximum)?);
         Ok(Self {
@@ -152,6 +158,7 @@ impl Director {
             saves,
             authority,
             models,
+            summary_model,
             dispatch,
             slots: Arc::new(Slots::new(budget, maximum)),
             tasks: Mutex::new(Some(tokio::task::JoinSet::new())),

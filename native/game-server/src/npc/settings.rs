@@ -34,12 +34,7 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
     }
     let ceiling_micro_usd = micro_usd(budget_usd)?;
     let jev_only = setting("AI_JEV_ONLY", "false")? == "true";
-    let jev_price = number("JEV_INPUT_USD_PER_MILLION", 0.042, 0.0, 1000.0)?;
-    let jev_minimum = number("JEV_CALL_RESERVE_USD", 0.005, 0.000001, 1.0)?;
-    let judgment_amount = micro_usd(jev_minimum.max(
-        (500_000.0 + if macrofold.is_some() { 1024.0 } else { 0.0 }) * jev_price / 1_000_000.0,
-    ))?;
-    let embedding = micro_usd(number("EMBEDDING_CALL_RESERVE_USD", 0.01, 0.000001, 1.0)?)?;
+    let judgment_amount = judgment_allowance(macrofold.is_some())?;
     let (judgment, fast, complex, generation) = if let Some(token) = macrofold {
         let base = setting("MACROFOLD_BASE_URL", "http://localhost:3210")?;
         let billing = match setting("MACROFOLD_BILLING_MODE", "byok")?.as_str() {
@@ -131,7 +126,7 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
         };
         (judgment, fast, complex, generation)
     };
-    let interactive = 3 * judgment_amount + 2 * generation + embedding;
+    let interactive = interactive_allowance(judgment_amount, generation)?;
     Ok((
         limit,
         Some(ConfiguredModels {
@@ -145,6 +140,81 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
             jev_only,
         }),
     ))
+}
+
+pub(super) struct SummaryModel {
+    pub model: Model,
+    pub ceiling: u64,
+    pub timeout: Duration,
+}
+
+pub(super) fn summary_model(
+    models: Option<&ConfiguredModels>,
+    budget_usd: f64,
+    output_tokens: usize,
+) -> Result<Option<SummaryModel>, Error> {
+    if budget_usd == 0.0 || setting("AI_JEV_ONLY", "false")? == "true" {
+        return Ok(None);
+    }
+    let assigned = models.and_then(|models| models.routes.fast.as_ref());
+    let (model, interactive) = if let Some(fast) = assigned
+        && let Some(route) = &fast.macrofold
+    {
+        (
+            Model {
+                destination: fast.destination.clone(),
+                requested: setting("MACROFOLD_SUMMARY_MODEL", "openai/gpt-5-nano")?,
+                amount_micro_usd: fast.amount_micro_usd,
+                output_tokens,
+                effort: Some("low"),
+                macrofold: Some(MacrofoldCatalog {
+                    billing: route.billing,
+                    connection: route.connection.clone(),
+                }),
+            },
+            models.expect("configured Macrofold").interactive,
+        )
+    } else {
+        let Some(token) = optional("OPENAI_API_KEY")? else {
+            return Ok(None);
+        };
+        let (floor, input, output) = direct_prices()?;
+        let reserve = |input_tokens| {
+            micro_usd(floor.max(0.25).max(
+                (input_tokens * input + output_tokens as f64 * output) / 1_000_000.0,
+            ))
+        };
+        (
+            Model {
+                destination: ProviderDestination::new(ProviderRoute::OpenAi, None, &token)?,
+                requested: setting("COGNITION_SUMMARY_MODEL", "gpt-5-nano")?,
+                amount_micro_usd: reserve(500_000.0)?,
+                output_tokens,
+                effort: Some("low"),
+                macrofold: None,
+            },
+            interactive_allowance(judgment_allowance(false)?, reserve(120_000.0)?)?,
+        )
+    };
+    let ceiling = micro_usd(budget_usd)?.saturating_sub(interactive);
+    if ceiling < model.amount_micro_usd {
+        return Ok(None);
+    }
+    let timeout = Duration::from_secs_f64(number("AI_TIMEOUT_SECONDS", 35.0, 5.0, 120.0)?);
+    Ok(Some(SummaryModel { model, ceiling, timeout }))
+}
+
+fn judgment_allowance(macrofold: bool) -> Result<u64, Error> {
+    let price = number("JEV_INPUT_USD_PER_MILLION", 0.042, 0.0, 1000.0)?;
+    let minimum = number("JEV_CALL_RESERVE_USD", 0.005, 0.000001, 1.0)?;
+    micro_usd(minimum.max(
+        (500_000.0 + if macrofold { 1024.0 } else { 0.0 }) * price / 1_000_000.0,
+    ))
+}
+
+fn interactive_allowance(judgment: u64, generation: u64) -> Result<u64, Error> {
+    let embedding = micro_usd(number("EMBEDDING_CALL_RESERVE_USD", 0.01, 0.000001, 1.0)?)?;
+    Ok(3 * judgment + 2 * generation + embedding)
 }
 
 pub(super) fn narrator_model(

@@ -32,8 +32,9 @@ pub use learning::{RuntimeActivityLearning, RuntimeActivityLearningStep};
 mod startup;
 pub use maintenance::{
     RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
-    RuntimeConsolidationTicket, RuntimeDreamReview, RuntimeMaintenancePublication,
-    RuntimeMaintenanceRead, RuntimeReflectionTicket,
+    RuntimeConsolidationReading, RuntimeConsolidationReadings, RuntimeConsolidationTicket,
+    RuntimeDreamReview, RuntimeHourlyReview, RuntimeMaintenancePublication, RuntimeMaintenanceRead,
+    RuntimeReflectionTicket,
 };
 mod npc;
 mod npc_intake;
@@ -705,6 +706,7 @@ pub struct NativeWorldSession {
     prepared_output: Option<CandidateKey>,
     active_response: Option<npc::ActiveNpcResponse>,
     held_receipts: npc::HeldReceiptRegistry,
+    consolidation_watches: Option<Arc<maintenance::witness::ConsolidationWatches>>,
     history_policy_id: String,
     history_policy_revision: u64,
     _history_policy_custody: ResidentReservation,
@@ -862,6 +864,7 @@ impl NativeWorldSession {
             prepared_output: None,
             active_response: None,
             held_receipts,
+            consolidation_watches: None,
             history_policy_id,
             history_policy_revision,
             _history_policy_custody: history_policy_custody,
@@ -1227,6 +1230,16 @@ impl NativeWorldSession {
             .is_none_or(|prepared| *prepared != key)
         {
             return Err(failure(FenceError::NotReady));
+        }
+        if let Some(watches) = &self.consolidation_watches
+            && watches.active()
+            && self.session.fence().phase() == crate::host::CandidatePhase::Accepted
+        {
+            // The fence is already irrevocably accepted. Read the exact
+            // changes while the prepared owner still has them, before the
+            // save acknowledgement can discard the accepted prefix.
+            let (_, _, _, changes, ..) = self.session.prepared_products(key).map_err(failure)?;
+            watches.observe(changes);
         }
         let accepted = self.session.finish_settlement(key).map_err(failure)?;
         self.finish_response_continuation(key, accepted.is_some());

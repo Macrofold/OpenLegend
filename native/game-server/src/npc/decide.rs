@@ -24,7 +24,7 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::{sync::watch, time::Instant};
 
-mod prepare;
+pub(super) mod prepare;
 
 pub(super) struct Models {
     pub(super) judgment: Model,
@@ -48,7 +48,7 @@ pub(super) struct MacrofoldCatalog {
 }
 
 impl Model {
-    fn route<'a>(
+    pub(super) fn route<'a>(
         &'a self,
         allowance: &'a str,
         deadline: Instant,

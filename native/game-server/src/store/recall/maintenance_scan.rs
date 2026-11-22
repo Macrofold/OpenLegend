@@ -2,7 +2,7 @@
 //! snapshot. The native private source reader hydrates the selected bodies
 //! under its own custody and current permission check.
 
-use super::{Store, StoreError, StoreResult};
+use super::{Store, StoreError, StoreResult, consolidation::ConsolidationCursorWrite};
 use crate::store::{DurableHead, durable_head, ordinal, read::admitted_query, sql_ordinal};
 use openlegend_simulation::{
     experience::{PersonalSourceKind, PersonalSourceRef},
@@ -10,6 +10,7 @@ use openlegend_simulation::{
     runtime::{NpcPersonalSelection, NpcSourceSelection},
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::{mem::size_of, sync::Arc};
 use tokio_postgres::{Row, types::ToSql};
 
@@ -26,6 +27,11 @@ pub(crate) struct MaintenanceQueries {
     pub day_seconds: f64,
     pub protected_importance: f64,
     pub summary_bytes: u64,
+    pub hourly_instructions: String,
+    pub hourly_schema: Value,
+    pub input_characters: usize,
+    pub output_characters: usize,
+    pub output_tokens: usize,
 }
 
 impl MaintenanceQueries {
@@ -33,7 +39,13 @@ impl MaintenanceQueries {
         self.anchor
             .capacity()
             .checked_add(self.hourly.capacity())?
-            .checked_add(self.daily.capacity())
+            .checked_add(self.daily.capacity())?
+            .checked_add(self.hourly_instructions.capacity())?
+            .checked_add(
+                openlegend_simulation::encoding::json_record_len(&self.hourly_schema)
+                    .ok()?
+                    .checked_mul(8)?,
+            )
     }
 
     pub(crate) fn valid(&self) -> bool {
@@ -43,6 +55,11 @@ impl MaintenanceQueries {
             && self.maximum_rows != 0
             && self.maximum_bytes != 0
             && self.summary_bytes != 0
+            && !self.hourly_instructions.is_empty()
+            && self.hourly_schema.is_object()
+            && self.input_characters > 4096
+            && self.output_characters > 128
+            && self.output_tokens != 0
             && [
                 self.day_seconds,
                 self.hourly_window_seconds,
@@ -85,12 +102,56 @@ pub(crate) struct ReviewPosition {
     pub after: Option<ConsolidationPosition>,
 }
 
-pub(crate) struct PendingReview {
+pub(crate) struct PendingSchedule<T> {
     pub key: String,
     pub timeline: String,
-    pub current: Option<ReviewPosition>,
+    pub current: Option<T>,
     pub previous: Option<String>,
     pub custody: ByteReservation,
+}
+
+pub(crate) type PendingReview = PendingSchedule<ReviewPosition>;
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct HourlyPosition {
+    pub hour: u64,
+    pub timeline: String,
+    pub source_digest: String,
+    pub outcome: HourlyOutcome,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum HourlyOutcome {
+    Prepared,
+    Published,
+    Refused,
+}
+
+impl<T> PendingSchedule<T> {
+    pub(crate) fn write(mut self, next: &T) -> StoreResult<ConsolidationCursorWrite>
+    where
+        T: Serialize,
+    {
+        use openlegend_simulation::encoding::{json_record, json_record_len};
+        let len = json_record_len(next).map_err(|_| StoreError::InvalidRecord)?;
+        self.custody
+            .resize(
+                self.custody
+                    .bytes()
+                    .checked_add(len.checked_mul(3).ok_or(StoreError::Capacity)?)
+                    .ok_or(StoreError::Capacity)?,
+            )
+            .map_err(|_| StoreError::Capacity)?;
+        let next = json_record(next).map_err(|_| StoreError::InvalidRecord)?;
+        Ok(ConsolidationCursorWrite {
+            key: self.key,
+            previous: self.previous,
+            next,
+            _custody: self.custody,
+        })
+    }
 }
 
 pub(crate) struct SelectedConsolidation {
@@ -110,11 +171,36 @@ impl Store {
         expected: DurableHead,
         actor: &str,
     ) -> StoreResult<PendingReview> {
+        self.pending_maintenance(expected, actor, "memory-review", |p: &ReviewPosition| {
+            &p.timeline
+        })
+        .await
+    }
+
+    pub(crate) async fn pending_hourly(
+        self: &Arc<Self>,
+        expected: DurableHead,
+        actor: &str,
+    ) -> StoreResult<PendingSchedule<HourlyPosition>> {
+        self.pending_maintenance(expected, actor, "cleanup", |p: &HourlyPosition| &p.timeline)
+            .await
+    }
+
+    async fn pending_maintenance<T>(
+        self: &Arc<Self>,
+        expected: DurableHead,
+        actor: &str,
+        kind: &'static str,
+        position_timeline: for<'a> fn(&'a T) -> &'a str,
+    ) -> StoreResult<PendingSchedule<T>>
+    where
+        T: serde::de::DeserializeOwned + Send + 'static,
+    {
         let mut custody = self
             .budget
             .reserve(2048 + expected.world_id.len() * 4 + actor.len() * 2)
             .map_err(|_| StoreError::Capacity)?;
-        let key = format!("integration:memory-review:{}:{actor}", expected.world_id);
+        let key = format!("integration:{kind}:{}:{actor}", expected.world_id);
         let timeline_key = format!("integration:world-timeline:{}", expected.world_id);
         let store = self.clone();
         self.read_simulation_cut(move |tx| {
@@ -158,17 +244,50 @@ impl Store {
                 let timeline: String =
                     serde_json::from_str(timeline).map_err(|_| StoreError::InvalidRecord)?;
                 let current = previous
-                    .map(serde_json::from_str::<ReviewPosition>)
+                    .map(serde_json::from_str::<T>)
                     .transpose()
                     .map_err(|_| StoreError::InvalidRecord)?
-                    .filter(|position| position.timeline == timeline);
-                Ok(PendingReview {
+                    .filter(|position| position_timeline(position) == timeline);
+                Ok(PendingSchedule {
                     key,
                     timeline,
                     current,
                     previous: previous.map(str::to_owned),
                     custody,
                 })
+            })
+        })
+        .await
+    }
+
+    /// Read the next eligible routine anchor for an actor whose current
+    /// hourly selection was empty. Nothing polls this query while it sleeps.
+    pub(crate) async fn next_hourly_source(
+        self: &Arc<Self>,
+        expected: DurableHead,
+        actor: String,
+    ) -> StoreResult<Option<f64>> {
+        let store = self.clone();
+        self.read_simulation_cut(move |tx| {
+            Box::pin(async move {
+                if durable_head(tx).await?.as_ref() != Some(&expected) {
+                    return Err(StoreError::StaleCut);
+                }
+                let policy = &store.schema.recall.maintenance;
+                let (_wire, rows) = admitted_query(
+                    tx,
+                    &policy.anchor,
+                    &[&expected.world_id, &actor, &expected.generation, &f64::MAX],
+                    &store.budget,
+                )
+                .await?;
+                rows.first()
+                    .map(|row| {
+                        row.try_get::<_, f64>(0)
+                            .map(|at| at + policy.raw_age_seconds)
+                            .map_err(StoreError::from)
+                    })
+                    .transpose()
             })
         })
         .await

@@ -32,6 +32,7 @@ use tokio_util::task::TaskTracker;
 const TURN_WAIT: Duration = Duration::from_secs(5);
 pub(crate) const IO_YIELD: Duration = Duration::from_millis(8);
 mod npc;
+mod recall_maintenance;
 pub(crate) use npc::NpcBinding;
 mod player_history;
 pub(crate) mod narrator;

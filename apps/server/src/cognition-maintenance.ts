@@ -38,6 +38,7 @@ import type { CognitionExecution, ExecutionLease } from './cognition-execution.j
 import { ActorWork } from './actor-work.js';
 import { activeIntakeChanges, installedThinkingToken } from './interests.js';
 import {
+  CONSOLIDATION_HOURLY_SUFFIX,
   CONSOLIDATION_INSTRUCTIONS,
   CONSOLIDATION_OUTPUT_TOKENS,
   type ConsolidationBatch,
@@ -45,7 +46,11 @@ import {
 import { decisionAllowance, interactiveAllowance } from './cognition-budget.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { LEVEL_LIMITS, REFLECTION_WORKSPACE_INSTRUCTIONS } from './cognition-contracts.js';
+import {
+  hourlySummarySchema,
+  LEVEL_LIMITS,
+  REFLECTION_WORKSPACE_INSTRUCTIONS,
+} from './cognition-contracts.js';
 import type { MacrofoldBackend } from './macrofold.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { digest, type JobRecord } from './store.js';
@@ -626,6 +631,7 @@ export class CognitionMaintenance {
                     hour,
                     timeline: this.host.timelineId,
                     sourceDigest: digest(batch.sources),
+                    outcome: 'prepared',
                   }),
                 ))
               )
@@ -1119,7 +1125,8 @@ export class CognitionMaintenance {
               const requests = prepared.requests;
               for (const [index, { context, handles }] of requests.entries()) {
                 const offered = await prepared.request(index, context, handles);
-                const { schema, interpreting } = offered;
+                const { interpreting } = offered;
+                const schema = interpreting ? offered.schema : hourlySummarySchema;
                 const request: GenerateRequest = {
                   requestId: `${job.id}:summary:${index}`,
                   actorScope: actorId,
@@ -1132,7 +1139,7 @@ export class CognitionMaintenance {
                     CONSOLIDATION_INSTRUCTIONS +
                     (interpreting
                       ? ' Use interpretation to retain a useful imagined dream or private realization, or return null when unwarranted. All its upserted records must use source imagined. Link records to existing mind document IDs or return complete files with identity.md preserved exactly; return files as null when unchanged. Use only the supplied subject and source handles. Preserve all unchanged records, protected identity and active obligations. Keep thoughts brief. Never turn dream content into witnessed facts.'
-                      : ' Return interpretation as null; this request only consolidates its supplied sources.'),
+                      : CONSOLIDATION_HOURLY_SUFFIX),
                   context: offered.context,
                   schema: z.toJSONSchema(schema, { target: 'draft-7' }),
                   signal: controller.signal,

@@ -3,9 +3,10 @@
 use super::*;
 mod consolidation;
 mod reflection;
+pub(super) mod witness;
 pub use consolidation::{
     RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
-    RuntimeConsolidationTicket,
+    RuntimeConsolidationReading, RuntimeConsolidationReadings, RuntimeConsolidationTicket,
 };
 pub use reflection::RuntimeReflectionTicket;
 pub struct RuntimeMaintenanceRead {
@@ -19,6 +20,14 @@ pub struct RuntimeDreamReview {
     pub ready_at: f64,
     pub available: bool,
     pub episode: String,
+    _storage: ByteReservation,
+}
+pub struct RuntimeHourlyReview {
+    pub world_id: String,
+    pub generation: String,
+    pub accepted_cut: u64,
+    pub at: f64,
+    pub available: bool,
     _storage: ByteReservation,
 }
 pub struct RuntimeMaintenancePublication {
@@ -55,6 +64,39 @@ struct SupportInput {
 }
 
 impl NativeWorldSession {
+    /// Read the current actor and installed maintenance opportunity. The
+    /// scheduler still needs an exact, separately admitted source selection.
+    pub fn hourly_review(&self, actor: &str) -> Result<Option<RuntimeHourlyReview>, RuntimeError> {
+        use crate::capture::maintenance::{MaintenancePurpose, available};
+
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        if state.physical.entities.get(actor).is_none_or(|entity| {
+            !entity.has_memory()
+                || entity.actor.as_ref().is_none_or(|body| {
+                    !body.alive
+                        || body.controller != "npc"
+                        || body.capabilities.as_ref().is_some_and(|rules| !rules.inner_world)
+                })
+        }) {
+            return Ok(None);
+        }
+        let world_id = &state.physical.header.id;
+        let generation = &state.generation;
+        let storage = self.budget.reserve(
+            std::mem::size_of::<RuntimeHourlyReview>() + world_id.len() + generation.len(),
+        )?;
+        Ok(Some(RuntimeHourlyReview {
+            world_id: world_id.clone(),
+            generation: generation.clone(),
+            accepted_cut: state.accepted_cut,
+            at: state.physical.header.sim_time,
+            available: !state.physical.header.paused
+                && available(state, actor, MaintenancePurpose::Maintenance).map_err(failure)?,
+            _storage: storage,
+        }))
+    }
+
     /// Read just the installed continuous sleep opportunity for one actor.
     /// Holds no personal history body or permission to spend on inference.
     pub fn dream_review(&self, actor: &str) -> Result<Option<RuntimeDreamReview>, RuntimeError> {

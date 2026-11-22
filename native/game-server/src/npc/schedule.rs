@@ -105,6 +105,9 @@ impl ScheduleInbox {
                 | "sim_processes"
                 | "sim_status_effects"
                 | "mind_state"
+                | "mind_awareness"
+                | "mind_memories"
+                | "mind_summaries"
                 | "mind_privacy_revisions"
         );
         if !self.ordinary && !changes_review {
