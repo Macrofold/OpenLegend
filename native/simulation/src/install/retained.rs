@@ -633,7 +633,7 @@ pub(crate) fn install_retained(
             )
         };
     let assembly_families = assembly.map(|(rows, _)| rows);
-    let (items, _item_preparation) = prepare_items(
+    let (mut items, _item_preparation) = prepare_items(
         &item_definitions,
         &item_input,
         assembly_families.as_ref(),
@@ -745,6 +745,26 @@ pub(crate) fn install_retained(
             method_storage.merge(prepared).map_err(|_| InstallError::Capacity)?;
             manufacture.insert(id.to_owned(), method);
         }
+    }
+    // Resolve the exact display pin once for each installed physical record.
+    // An unavailable method leaves its ordinary physical item intact.
+    for index in 0..items.len() {
+        let (_, item) = items.get_index(index).ok_or(InstallError::DefinitionBody)?;
+        let Some(record) = &item.recipe_record else { continue };
+        let id = &record.method.id;
+        let (Some(body), Some(canonical)) = (recipes.get(id), recipe_canonical.get(id)) else {
+            continue;
+        };
+        let _workspace = super::reserve_typed_parse::<crate::manufacturing::Definition<'_>>(
+            body, 128, Some(size_of::<(&str, &RawValue)>()), budget,
+        )?;
+        let definition: crate::manufacturing::Definition<'_> =
+            serde_json::from_str(body).map_err(|_| InstallError::DefinitionBody)?;
+        let available = definition.supports_record(
+            &record.method, canonical.get(), family_pins, &handling_pin, &items,
+        )?;
+        items.get_index_mut(index).and_then(|(_, item)| item.recipe_record.as_mut())
+            .ok_or(InstallError::DefinitionBody)?.available = available;
     }
     let mut installed = RetainedDefinitions {
         _storage: None,

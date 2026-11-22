@@ -167,7 +167,67 @@ pub(crate) fn item_handling_pin(canonical: &str) -> Result<DefinitionPin, Instal
     })
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Origin<'a> {
+    kind: &'a str,
+    family_pin: Option<DefinitionPin>,
+}
+
+#[derive(Deserialize)]
+struct Provenance<'a> {
+    source: &'a str,
+}
+
 impl Definition<'_> {
+    /// Bind a physical record's displayed method to its installed body and
+    /// current dependencies, without admitting this family for manufacture.
+    pub(crate) fn supports_record(
+        &self,
+        expected: &DefinitionPin,
+        canonical: &str,
+        family_pins: &[DefinitionPin],
+        policy_pin: &DefinitionPin,
+        items: &IndexMap<String, ItemDefinitionRead>,
+    ) -> Result<bool, InstallError> {
+        let origin: Origin<'_> =
+            serde_json::from_str(self.source.get()).map_err(|_| InstallError::DefinitionBody)?;
+        let provenance: Provenance<'_> = serde_json::from_str(self.provenance.get())
+            .map_err(|_| InstallError::DefinitionBody)?;
+        if self.id != expected.id
+            || self.version != expected.version
+            || origin.kind != "family"
+            || !origin.family_pin.is_some_and(|family| family_pins.contains(&family))
+            || provenance.source != "authored-world"
+            || !self.dependencies_match(items, policy_pin)
+            || self.outputs.iter().any(|output| {
+                !items.get(&output.definition.id).is_some_and(|item| item.pin == output.definition)
+            })
+        {
+            return Ok(false);
+        }
+        Ok(mechanical_pin(self.id.clone(), self.version, canonical, &self.digest)? == *expected)
+    }
+
+    fn dependencies_match(
+        &self,
+        items: &IndexMap<String, ItemDefinitionRead>,
+        policy_pin: &DefinitionPin,
+    ) -> bool {
+        let mut policy = false;
+        for reference in &self.dependency_references {
+            match reference.kind.as_str() {
+                "item-definition"
+                    if items.get(&reference.pin.id).is_some_and(|item| item.pin == reference.pin) => {}
+                "item-handling-policy" if !policy && reference.pin == *policy_pin => policy = true,
+                _ => return false,
+            }
+        }
+        policy && self.inputs.iter().all(|input| items.get(&input.definition_id).is_some_and(|item|
+            self.dependency_references.iter().any(|dep| dep.kind == "item-definition" && dep.pin == item.pin)
+        ))
+    }
+
     pub(crate) fn install(
         self,
         key: &str,
@@ -178,12 +238,6 @@ impl Definition<'_> {
         items: &IndexMap<String, ItemDefinitionRead>,
         item_rows: &RetainedMap,
     ) -> Result<Option<InstalledMethod>, InstallError> {
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Origin<'a> {
-            kind: &'a str,
-            family_pin: Option<DefinitionPin>,
-        }
         let origin: Origin<'_> =
             serde_json::from_str(self.source.get()).map_err(|_| InstallError::DefinitionBody)?;
         let Some(family) = origin.family_pin.filter(|_| origin.kind == "family") else {
@@ -193,10 +247,6 @@ impl Definition<'_> {
         else {
             return Ok(None);
         };
-        #[derive(Deserialize)]
-        struct Provenance<'a> {
-            source: &'a str,
-        }
         let provenance: Provenance<'_> = serde_json::from_str(self.provenance.get())
             .map_err(|_| InstallError::DefinitionBody)?;
         if provenance.source != "authored-world" {
@@ -250,36 +300,15 @@ impl Definition<'_> {
         {
             return Err(InstallError::DefinitionBody);
         }
+        if !self.dependencies_match(items, policy_pin) {
+            return Err(InstallError::DefinitionPin);
+        }
         let mut counts = IndexMap::<&str, u64>::new();
         for input in &self.inputs {
-            let item = items
-                .get(&input.definition_id)
-                .ok_or(InstallError::DefinitionPin)?;
-            if !self
-                .dependency_references
-                .iter()
-                .any(|dep| dep.kind == "item-definition" && dep.pin == item.pin)
-            {
-                return Err(InstallError::DefinitionPin);
-            }
             let count = counts.entry(input.definition_id.as_str()).or_default();
             *count = count
                 .checked_add(input.quantity)
                 .ok_or(InstallError::DefinitionBody)?;
-        }
-        let mut policy = false;
-        for reference in &self.dependency_references {
-            match reference.kind.as_str() {
-                "item-definition"
-                    if items
-                        .get(&reference.pin.id)
-                        .is_some_and(|item| item.pin == reference.pin) => {}
-                "item-handling-policy" if !policy && reference.pin == *policy_pin => policy = true,
-                _ => return Err(InstallError::DefinitionPin),
-            }
-        }
-        if !policy {
-            return Err(InstallError::DefinitionPin);
         }
         let totals = counts
             .into_iter()

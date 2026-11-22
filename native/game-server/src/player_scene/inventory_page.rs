@@ -14,6 +14,14 @@ use serde::{Deserialize, Serialize};
 use std::{mem::size_of, sync::LazyLock};
 
 mod world_storage;
+use super::self_view::recipes::InspectedRecipe;
+
+#[derive(Serialize)]
+struct RecipeRecord {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    method: Option<InspectedRecipe>,
+    message: &'static str,
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -120,6 +128,8 @@ struct Item<'a> {
     characteristics: Option<[HeldPlacement; 1]>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     equipment_conflicts: Vec<EquipmentConflict<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    recipe_record: Option<RecipeRecord>,
 }
 
 #[derive(Serialize)]
@@ -508,6 +518,7 @@ impl PlayerScenePolicy {
                 actions,
                 characteristics,
                 equipment_conflicts,
+                recipe_record: None,
             });
         }
         let source = *inventory.breadcrumbs.last().ok_or(Stale)?;

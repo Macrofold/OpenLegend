@@ -20,7 +20,7 @@ use std::sync::Arc;
 mod inventory;
 use inventory::{EquipmentBinding, ItemBinding};
 mod practice;
-mod recipes;
+pub(super) mod recipes;
 use practice::{PracticePolicy, PracticeView, project_practice};
 
 #[derive(Deserialize)]
@@ -43,6 +43,12 @@ pub struct OwnPolicy {
     practice: PracticePolicy,
     melee: MeleePolicy,
     trade: TradePolicy,
+}
+
+impl OwnPolicy {
+    pub(super) fn authored_recipe(&self, id: &str) -> Option<&Arc<recipes::RecipeTemplate>> {
+        self.authored_recipes.get(id)
+    }
 }
 
 #[derive(Deserialize)]

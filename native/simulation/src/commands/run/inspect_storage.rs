@@ -1,6 +1,6 @@
 //! A deliberate, bounded world inspection. The ordinary command owns sight,
 //! reach, exact continuation, private acquisitions and the accepted page.
-use super::inspect_item::{ItemEvidence, ItemPlace, prepare_item_evidence};
+use super::inspect_item::{ItemEvidence, ItemInspection, ItemPlace, prepare_item_evidence};
 use super::*;
 use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
 use crate::ground_items::inspection::{PAGE_DESCRIPTION_BYTES, PAGE_ITEMS, WorldStorage};
@@ -272,6 +272,7 @@ fn prepare_storage(
                 parent: root.root,
                 label: &name.name().name,
             },
+            ItemInspection::Page,
             budget,
         )?
         else {

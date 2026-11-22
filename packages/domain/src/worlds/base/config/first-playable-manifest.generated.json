@@ -517,7 +517,7 @@
     "id": "item-35",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "field-sling-record", "version": 1, "digest": "11cybyh" },
+    "definition": { "id": "field-sling-record", "version": 1, "digest": "1p5m9re" },
     "quantity": 1,
     "parentId": "item-31"
   },
@@ -722,7 +722,7 @@
     "id": "item-61",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "field-sling-record", "version": 1, "digest": "11cybyh" },
+    "definition": { "id": "field-sling-record", "version": 1, "digest": "1p5m9re" },
     "quantity": 1,
     "parentId": "watchpost-cache"
   },

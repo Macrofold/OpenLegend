@@ -7,14 +7,13 @@ use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use std::{mem::size_of, sync::Arc};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Details {
     id: String,
     name: JsText,
     description: JsText,
     family: JsText,
-    #[serde(skip_serializing_if = "Option::is_none")]
     category: Option<Box<RawValue>>,
     outputs: Box<RawValue>,
     facts: Box<RawValue>,
@@ -59,10 +58,23 @@ struct Tool {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct RecipeTemplate {
+pub(in crate::player_scene) struct RecipeTemplate {
     details: Details,
     ingredients: Vec<Ingredient>,
     retained_tools: Vec<Tool>,
+}
+
+impl RecipeTemplate {
+    pub(in crate::player_scene) fn stock_definitions(&self) -> impl Iterator<Item = &str> + Clone {
+        self.ingredients
+            .iter()
+            .map(|item| item.definition_id.as_str())
+            .chain(self.retained_tools.iter().flat_map(|tool| {
+                tool.choices
+                    .iter()
+                    .map(|choice| choice.definition_id.as_str())
+            }))
+    }
 }
 
 /// Only the current quantities are owned by this view. Authored descriptions
@@ -73,20 +85,12 @@ pub struct Recipe {
 }
 
 impl Recipe {
-    pub(super) fn prepare(
+    pub(in crate::player_scene) fn prepare(
         template: &Arc<RecipeTemplate>,
         inventory: &IndexMap<&str, u64>,
         custody: &mut ByteReservation,
     ) -> Result<Self, SceneError> {
-        let definitions = template
-            .ingredients
-            .iter()
-            .map(|item| item.definition_id.as_str())
-            .chain(template.retained_tools.iter().flat_map(|tool| {
-                tool.choices
-                    .iter()
-                    .map(|choice| choice.definition_id.as_str())
-            }));
+        let definitions = template.stock_definitions();
         let count = definitions.clone().count();
         let bytes = count
             .checked_mul(size_of::<u64>())
@@ -126,6 +130,23 @@ where
 
 impl Serialize for Recipe {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.serialize_details(serializer, true)
+    }
+}
+
+pub(in crate::player_scene) struct InspectedRecipe(pub Recipe);
+impl Serialize for InspectedRecipe {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.serialize_details(serializer, false)
+    }
+}
+
+impl Recipe {
+    fn serialize_details<S: serde::Serializer>(
+        &self,
+        serializer: S,
+        known: bool,
+    ) -> Result<S::Ok, S::Error> {
         #[derive(Serialize)]
         struct IngredientView<'a> {
             #[serde(flatten)]
@@ -146,8 +167,21 @@ impl Serialize for Recipe {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct View<'a, I, T> {
-            #[serde(flatten)]
-            details: &'a Details,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            id: Option<&'a str>,
+            name: &'a JsText,
+            description: &'a JsText,
+            family: &'a JsText,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            category: Option<&'a RawValue>,
+            outputs: &'a RawValue,
+            facts: &'a RawValue,
+            limitations: &'a RawValue,
+            work_seconds: f64,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            origin: Option<&'a str>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            provenance: Option<&'a JsText>,
             ingredients: I,
             retained_tools: T,
         }
@@ -181,8 +215,19 @@ impl Serialize for Recipe {
                 ),
             }
         });
+        let details = &template.details;
         View {
-            details: &template.details,
+            id: known.then_some(details.id.as_str()),
+            name: &details.name,
+            description: &details.description,
+            family: &details.family,
+            category: details.category.as_deref(),
+            outputs: &details.outputs,
+            facts: &details.facts,
+            limitations: &details.limitations,
+            work_seconds: details.work_seconds,
+            origin: known.then_some(details.origin.as_str()),
+            provenance: known.then_some(&details.provenance),
             ingredients: Rows(ingredients),
             retained_tools: Rows(retained_tools),
         }

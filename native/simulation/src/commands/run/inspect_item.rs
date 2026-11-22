@@ -42,7 +42,6 @@ struct AdditionalFacts {
     inscription: Option<JsText>,
     melee: Option<serde::de::IgnoredAny>,
     place_report: Option<serde::de::IgnoredAny>,
-    recipe_record: Option<serde::de::IgnoredAny>,
 }
 
 impl CommandCursor {
@@ -114,6 +113,7 @@ impl CommandCursor {
             body,
             lot,
             ItemPlace::Possession(bag_name),
+            ItemInspection::Selected,
             &self.budget,
         )?
         else {
@@ -196,12 +196,18 @@ pub(super) struct ItemEvidence {
     pub description_bytes: usize,
 }
 
+pub(super) enum ItemInspection {
+    Page,
+    Selected,
+}
+
 pub(super) fn prepare_item_evidence(
     state: &crate::simulation::SimulationState,
     actor: &str,
     body: &crate::state::Entity,
     lot: crate::install::OwnedItem<'_>,
     place: ItemPlace<'_>,
+    inspection: ItemInspection,
     budget: &ByteBudget,
 ) -> Result<Option<ItemEvidence>, ExecutionError> {
     let definition_set = &state.installed.retained;
@@ -219,7 +225,11 @@ pub(super) fn prepare_item_evidence(
     )?;
     let facts: AdditionalFacts =
         serde_json::from_str(raw).map_err(|_| ExecutionError::Invariant)?;
-    if facts.place_report.is_some() || facts.recipe_record.is_some() {
+    // The page records the item's ordinary description. Exact recipe reading
+    // has its own action, while a place report also needs exposure on a page.
+    if facts.place_report.is_some()
+        || (matches!(inspection, ItemInspection::Selected) && definition.recipe_record.is_some())
+    {
         return Err(ExecutionError::UnsupportedFamily);
     }
     let mut workspace = budget.reserve(

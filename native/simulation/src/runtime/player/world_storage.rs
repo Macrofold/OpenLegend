@@ -6,6 +6,7 @@ use crate::geometry::RoutePlan;
 use crate::ground_items::inspection::WorldStorage;
 use crate::state::{InventoryInspection, Named, SurfacePoint};
 use crate::{reception::SensoryFacet, simulation::SimulationState};
+use indexmap::IndexMap;
 
 pub struct RuntimeWorldStorage<'a> {
     pub name: &'a Named,
@@ -14,6 +15,7 @@ pub struct RuntimeWorldStorage<'a> {
     pub ready: bool,
     pub stance: Option<&'a SurfacePoint>,
     pub inspection: Option<&'a InventoryInspection>,
+    actor: &'a str,
     state: &'a SimulationState,
 }
 
@@ -23,9 +25,43 @@ pub struct InspectedItemRead<'a> {
     pub description: Option<&'a crate::text::JsText>,
     pub properties: &'a [crate::text::JsText],
     pub container: bool,
+    pub recipe_record: Option<InspectedRecipeRecord<'a>>,
+}
+
+pub enum InspectedRecipeRecord<'a> {
+    Available { recipe_id: &'a str, known: bool },
+    Unavailable,
 }
 
 impl<'a> RuntimeWorldStorage<'a> {
+    /// Fill only the requested material definitions from this actor's current
+    /// accessible possessions. Caller holds the selected page and its funding.
+    pub fn tally_recipe_stock(
+        &self,
+        quantities: &mut IndexMap<&str, u64>,
+    ) -> Result<(), RuntimeError> {
+        if quantities.is_empty() {
+            return Ok(());
+        }
+        self.state
+            .inventory
+            .visit_owned(
+                &self.state.physical,
+                &self.state.installed.retained,
+                self.actor,
+                self.actor,
+                &mut |item| {
+                    if let Some(count) = quantities.get_mut(item.definition_id) {
+                        *count = count
+                            .saturating_add(item.quantity)
+                            .min(crate::identity::MAX_SAFE_INTEGER);
+                    }
+                    Ok(())
+                },
+            )
+            .map_err(failure)
+    }
+
     /// Return only an exact member of the captured page, with its retained
     /// description and live quantity at the same verified contents revision.
     pub fn item(&self, index: usize) -> Result<InspectedItemRead<'a>, RuntimeError> {
@@ -77,6 +113,21 @@ impl<'a> RuntimeWorldStorage<'a> {
             description: definition.description.as_ref(),
             properties: &definition.properties,
             container: definition.is_container(),
+            recipe_record: definition.recipe_record.as_ref().map(|record| {
+                if record.available {
+                    let id = &record.method.id;
+                    InspectedRecipeRecord::Available {
+                        recipe_id: id,
+                        known: self
+                            .state
+                            .learned_capabilities
+                            .known_recipes(self.actor)
+                            .contains(id),
+                    }
+                } else {
+                    InspectedRecipeRecord::Unavailable
+                }
+            }),
         })
     }
 }
@@ -183,6 +234,7 @@ impl NativeWorldSession {
                             } else {
                                 None
                             },
+                            actor: &root.actor.id,
                             state: &simulation.state,
                         },
                         &self.budget,

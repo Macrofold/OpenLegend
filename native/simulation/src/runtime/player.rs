@@ -3,7 +3,7 @@
 use super::*;
 mod inventory;
 mod world_storage;
-pub use world_storage::RuntimeWorldStorage;
+pub use world_storage::{InspectedRecipeRecord, RuntimeWorldStorage};
 pub use inventory::{DirectInventory, InventoryContainer, InventoryCrumb};
 mod status_menu;
 mod hearth;

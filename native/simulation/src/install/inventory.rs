@@ -81,7 +81,26 @@ pub(super) struct ItemDefinitionFields {
     #[serde(default)]
     tracks_material_origins: bool,
     assembly_material: Option<MaterialRole>,
+    recipe_record: Option<ItemRecipeRecord>,
 }
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct ItemRecipeRecord {
+    pub method: DefinitionPin,
+    #[serde(rename = "disclosure")]
+    _disclosure: RecipeDisclosure,
+    #[serde(skip)]
+    pub available: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum RecipeDisclosure {
+    Method,
+}
+
+heap_record!(ItemRecipeRecord { method });
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -146,6 +165,7 @@ pub(crate) struct ItemDefinitionRead {
     equipment: Option<Equipment>,
     pub tracks_material_origins: bool,
     pub material: Option<ItemMaterialRule>,
+    pub(crate) recipe_record: Option<ItemRecipeRecord>,
 }
 
 impl ItemDefinitionRead {
@@ -163,6 +183,7 @@ impl ItemDefinitionRead {
         };
         if pin.id != key
             || !pin.is_valid()
+            || value.recipe_record.as_ref().is_some_and(|record| !record.method.is_valid())
             || !crate::narration::valid_name_parts(
                 &value.name,
                 value.name_form.as_deref(),
@@ -244,6 +265,7 @@ impl ItemDefinitionRead {
             tracks_material_origins: value.tracks_material_origins
                 || value.assembly_material.is_some(),
             material,
+            recipe_record: value.recipe_record,
         })
     }
 
@@ -293,7 +315,8 @@ heap_record!(ItemDefinitionRead {
     gathering_tool,
     fishing_tool,
     material,
-    equipment
+    equipment,
+    recipe_record
 });
 heap_record!(GatheringTool { resource_id });
 heap_record!(FishingTool { kind });
