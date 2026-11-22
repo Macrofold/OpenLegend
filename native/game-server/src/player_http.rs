@@ -39,6 +39,7 @@ mod event_history;
 mod history;
 pub(crate) mod hearth;
 mod inventory;
+mod inventions;
 mod notes;
 mod known_places;
 mod operations;
@@ -199,6 +200,8 @@ pub(crate) fn router(
         .route("/api/chat", post(dialogue::chat))
         .route("/api/chat/retry", post(dialogue::chat))
         .route("/api/chat/receipt", post(dialogue::receipt))
+        .route("/api/inventions/list", post(inventions::list))
+        .route("/api/inventions/receipt", post(inventions::receipt))
         .route("/api/ai/cancel", post(dialogue::cancel))
         .route(
             "/api/player-interaction/availability",

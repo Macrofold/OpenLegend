@@ -65,19 +65,19 @@ pub(super) async fn chat(State(state): State<PlayerRoutes>, request: Request) ->
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct ReceiptRequest {
-    request_id: String,
-    timeline: String,
+pub(super) struct ReceiptRequest {
+    pub request_id: String,
+    pub timeline: String,
 }
 
 #[derive(Serialize)]
-struct Recovered<'a, T: Serialize> {
-    ok: bool,
-    scope: &'a str,
-    status: &'static str,
-    message: &'a openlegend_simulation::text::JsText,
+pub(super) struct Recovered<'a, T: Serialize> {
+    pub ok: bool,
+    pub scope: &'a str,
+    pub status: &'static str,
+    pub message: &'a openlegend_simulation::text::JsText,
     #[serde(skip_serializing_if = "Option::is_none")]
-    result: Option<T>,
+    pub result: Option<T>,
 }
 
 pub(super) async fn receipt(State(state): State<PlayerRoutes>, request: Request) -> Response {

@@ -17,6 +17,7 @@ pub(crate) use checkpoint::{
     reconcile_history_positions,
 };
 mod history;
+pub(crate) mod inventions;
 mod jobs;
 mod known_places;
 mod lexical;

@@ -15,6 +15,45 @@ pub struct RuntimeManufactureOffer<'a> {
 }
 
 impl NativeWorldSession {
+    /// Recheck recipe references for a bounded retained history at publication.
+    /// The callback borrows current installed rows and learns neither new
+    /// methods nor material availability. A digest comparison scans the
+    /// selected canonical row and borrows only its serialized `digest` member.
+    pub fn with_player_recipe_references<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        publish: impl FnOnce(&dyn Fn(&str, Option<&str>) -> bool) -> T,
+    ) -> Result<T, RuntimeError> {
+        self.require_active()?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        simulation
+            .require_player_read(account, actor)
+            .map_err(failure)?;
+        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        let state = &simulation.state;
+        let known = state.learned_capabilities.known_recipes(actor);
+        let recipes = &state.installed.retained.recipes;
+        #[derive(serde::Deserialize)]
+        struct Digest<'a> {
+            #[serde(borrow)]
+            digest: &'a serde_json::value::RawValue,
+        }
+        Ok(publish(&|id, expected| {
+            let Some(recipe) = recipes
+                .get(id)
+                .filter(|_| known.iter().any(|known| known == id))
+            else {
+                return false;
+            };
+            expected.is_none_or(|expected| {
+                serde_json::from_str::<Digest<'_>>(recipe).is_ok_and(|record| {
+                    crate::encoding::sha256_hex(record.digest.get().as_bytes()) == expected
+                })
+            })
+        }))
+    }
+
     pub fn with_player_manufacture_offer<T>(
         &self,
         account: &str,
