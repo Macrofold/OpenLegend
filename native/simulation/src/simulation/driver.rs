@@ -142,6 +142,7 @@ enum QuestionBody {
     Control(super::host_control::ControlFormat),
     PlanCommand(Arc<crate::plans::PlanCommandRequest>),
     Display(Arc<crate::commands::ActivityDisplayRequest>),
+    Digest(Arc<crate::language::CanonicalJsonValue>),
     Utterance(UtteranceRequest),
     Words(WordsProviderRequest),
     Collation(CollationProviderRequest),
@@ -254,6 +255,32 @@ impl ProviderQuestion {
             kind: self.kind,
             binding: self.binding,
             value,
+        })
+    }
+
+    pub(crate) fn digest(&self) -> Option<&crate::language::CanonicalJsonValue> {
+        match &self.body {
+            QuestionBody::Digest(input) => Some(input),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn digest_envelope(&self) -> Option<impl Serialize + '_> {
+        #[derive(Serialize)]
+        struct Digest<'a> {
+            binding: GeometryBinding,
+            value: &'a crate::records::SqlCell,
+        }
+        #[derive(Serialize)]
+        struct Envelope<'a> {
+            kind: ProviderKind,
+            binding: GeometryBinding,
+            value: Digest<'a>,
+        }
+        self.digest().map(|input| Envelope {
+            kind: self.kind,
+            binding: self.binding,
+            value: Digest { binding: self.binding, value: &input.value },
         })
     }
 
@@ -2223,6 +2250,24 @@ fn poll_display(
     }
 }
 
+fn digest_question<T, R>(
+    answer: &Option<Answer>,
+    request: &crate::language::CanonicalJsonRequest,
+    budget: &ByteBudget,
+    route: R,
+) -> Result<Poll<T, R>, DriveError> {
+    if answer.is_some() {
+        return Err(DriveError::StaleResponse);
+    }
+    let question = ProviderQuestion::prepare_bound(
+        ProviderKind::Digest,
+        request.binding,
+        QuestionBody::Digest(Arc::clone(request.input())),
+        budget,
+    )?;
+    Ok(Poll::Question(question, route))
+}
+
 fn poll_command(
     cursor: &mut CommandOperation,
     core: &mut CoreMutation<'_>,
@@ -2252,9 +2297,7 @@ fn poll_command(
                 return geometry_question(answer, q, budget, CommandReply::Geometry);
             }
             CommandOperationStep::TravelTerms(q) => {
-                return question(
-                    answer, ProviderKind::Digest, q.binding, q, budget, CommandReply::TravelTerms,
-                );
+                return digest_question(answer, q, budget, CommandReply::TravelTerms);
             }
             CommandOperationStep::Event(child) => {
                 let child_route = match route.take() {
@@ -2574,7 +2617,7 @@ fn poll_advance(
                 return collation_question(answer, q, budget, AdvanceReply::Collation);
             }
             AdvanceStep::TravelTerms(q) => {
-                return question(answer, ProviderKind::Digest, q.binding, q, budget, AdvanceReply::TravelTerms);
+                return digest_question(answer, q, budget, AdvanceReply::TravelTerms);
             }
             AdvanceStep::Event(child) => {
                 let child_route = match route.take() {
@@ -2730,14 +2773,7 @@ fn poll_response(
                 );
             }
             ResponseStep::Digest(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Digest,
-                    q.binding,
-                    q,
-                    budget,
-                    ResponseReply::Digest,
-                );
+                return digest_question(answer, q, budget, ResponseReply::Digest);
             }
             ResponseStep::Normalization(q) => {
                 return question(

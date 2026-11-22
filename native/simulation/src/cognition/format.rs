@@ -18,7 +18,7 @@ impl Serialize for MaintenanceFormatRequest {
         use serde::ser::SerializeStruct;
         let mut out = serializer.serialize_struct("MaintenanceFormat", 2)?;
         out.serialize_field("binding", &self.canonical.binding)?;
-        out.serialize_field("publication", &self.canonical.value)?;
+        out.serialize_field("publication", self.canonical.value())?;
         out.end()
     }
 }
@@ -95,7 +95,7 @@ impl MaintenanceFormatRequest {
     }
 
     pub(crate) fn publication(&self) -> &SqlCell {
-        &self.canonical.value
+        self.canonical.value()
     }
 
     pub(crate) fn finish(
@@ -114,7 +114,7 @@ impl MaintenanceFormatRequest {
                 ExecutionError::InvalidCheckpoint => HistoryPreparationError::StaleResponse,
                 _ => HistoryPreparationError::MalformedResponse,
             })?;
-        let value = &self.canonical.value;
+        let value = self.canonical.value();
         let files = value
             .get("files")
             .and_then(SqlCell::as_array)

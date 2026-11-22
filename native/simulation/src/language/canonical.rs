@@ -1,6 +1,6 @@
-//! The source canonicalJson uses Node ICU for property ordering. Prepare one
-//! finite JSON value there, then bind and compare its complete semantic
-//! cells here. The provider never receives world state or decides permissions.
+//! Canonical bytes use the source ICU property order. Both hosts receive a
+//! finite funded value and the simulation compares its complete semantic
+//! cells. The formatter never receives live world state or grants permissions.
 use crate::execution::ExecutionError;
 use crate::geometry::GeometryBinding;
 use crate::host::retained_size::HeapBytes;
@@ -12,12 +12,26 @@ use std::sync::Arc;
 #[derive(Serialize)]
 pub(crate) struct CanonicalJsonRequest {
     pub binding: GeometryBinding,
-    pub value: SqlCell,
+    #[serde(rename = "value")]
+    input: Arc<CanonicalJsonValue>,
     #[serde(skip)]
     reservation: ByteReservation,
     #[serde(skip)]
     budget: ByteBudget,
 }
+#[derive(Serialize)]
+#[serde(transparent)]
+pub(crate) struct CanonicalJsonValue {
+    pub value: SqlCell,
+    #[serde(skip)]
+    reservation: ByteReservation,
+}
+impl CanonicalJsonValue {
+    pub(crate) fn bytes(&self) -> usize {
+        self.reservation.bytes()
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CanonicalJsonAnswer {
@@ -41,16 +55,15 @@ impl CanonicalJsonRequest {
         value: &SqlCell,
         budget: &ByteBudget,
     ) -> Result<Arc<Self>, ExecutionError> {
-        let bytes = value
-            .heap_bytes()
-            .and_then(|n| {
-                n.checked_add(std::mem::size_of::<Self>() + 2 * std::mem::size_of::<usize>())
-            })
-            .ok_or(ExecutionError::Capacity)?;
-        let reservation = budget.reserve(bytes)?;
+        let input_custody = budget.reserve(Self::value_bytes(value)?)?;
+        let reservation =
+            budget.reserve(std::mem::size_of::<Self>() + 2 * std::mem::size_of::<usize>())?;
         Ok(Arc::new(Self {
             binding,
-            value: value.clone(),
+            input: Arc::new(CanonicalJsonValue {
+                value: value.clone(),
+                reservation: input_custody,
+            }),
             reservation,
             budget: budget.clone(),
         }))
@@ -79,12 +92,39 @@ impl CanonicalJsonRequest {
         )?;
         let value = serde_json::from_str(&json).map_err(|_| ExecutionError::Invariant)?;
         drop(json);
+        let input_bytes = Self::value_bytes(&value)?;
+        reservation.resize(reservation.bytes().max(input_bytes))?;
+        let input_custody = reservation.split_off(input_bytes)?;
         Ok(Self {
             binding,
-            value,
+            input: Arc::new(CanonicalJsonValue {
+                value,
+                reservation: input_custody,
+            }),
             reservation,
             budget: budget.clone(),
         })
+    }
+
+    fn value_bytes(value: &SqlCell) -> Result<usize, ExecutionError> {
+        value
+            .heap_bytes()
+            .and_then(|bytes| {
+                bytes.checked_add(
+                    std::mem::size_of::<CanonicalJsonValue>() + 2 * std::mem::size_of::<usize>(),
+                )
+            })
+            .ok_or(ExecutionError::Capacity)
+    }
+
+    pub(crate) fn value(&self) -> &SqlCell {
+        &self.input.value
+    }
+
+    /// Share the already admitted immutable value. The caller keeps its
+    /// comparison workspace even if the provider still owns this value.
+    pub(crate) fn input(&self) -> &Arc<CanonicalJsonValue> {
+        &self.input
     }
     /// The mutable borrow gives one cursor exclusive use of its prefunded
     /// comparison workspace; malformed replies leave the question available.
@@ -103,18 +143,13 @@ impl CanonicalJsonRequest {
         }
         let decoding = crate::experience::encoded_body_bound(&answer.canonical)
             .map_err(|_| ExecutionError::Capacity)?;
-        let required = self
-            .value
-            .heap_bytes()
-            .and_then(|n| n.checked_add(decoding))
-            .and_then(|n| n.checked_add(answer.canonical.capacity()))
-            .ok_or(ExecutionError::Capacity)?;
+        // The value and the supplied answer both have their own custody.
         let _extra = self
             .budget
-            .reserve(required.saturating_sub(self.reservation.bytes()))?;
+            .reserve(decoding.saturating_sub(self.reservation.bytes()))?;
         let decoded: SqlCell =
             serde_json::from_str(&answer.canonical).map_err(|_| ExecutionError::Invariant)?;
-        if decoded != self.value {
+        if &decoded != self.value() {
             return Err(ExecutionError::Invariant);
         }
         Ok(())
@@ -124,7 +159,7 @@ impl CanonicalJsonRequest {
         answer: CanonicalJsonAnswer,
     ) -> Result<PreparedCanonicalJson, ExecutionError> {
         self.validate(&answer)?;
-        drop(self.value);
+        drop(self.input);
         self.reservation.resize(answer.canonical.capacity())?;
         Ok(PreparedCanonicalJson {
             body: answer.canonical,

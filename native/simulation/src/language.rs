@@ -10,7 +10,7 @@ use std::cmp::Ordering;
 use std::mem::size_of;
 
 mod canonical;
-pub(crate) use canonical::{CanonicalJsonAnswer, CanonicalJsonRequest, PreparedCanonicalJson};
+pub(crate) use canonical::{CanonicalJsonAnswer, CanonicalJsonRequest, CanonicalJsonValue, PreparedCanonicalJson};
 mod attempts;
 pub(crate) use attempts::{
     AttemptNormalizationAnswer, AttemptNormalizationRequest, FreeTypedActionSyntax,

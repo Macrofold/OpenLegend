@@ -885,6 +885,18 @@ impl RuntimeProvider {
         Ok(self.question()?.kind() == crate::simulation::ProviderKind::KnownPlaces)
     }
 
+    /// Borrow the immutable digest input. The cursor owns its separate
+    /// comparison workspace. The formatter admits the canonical bytes it emits.
+    pub fn with_digest<T>(
+        &self,
+        format: impl FnOnce(crate::geometry::GeometryBinding, &crate::records::SqlCell, usize) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question
+            .digest()
+            .map(|value| format(question.binding(), &value.value, value.bytes())))
+    }
+
     /// Borrow the exact authorized speech string for local ICU preparation.
     /// Any retained result needs its own admitted storage.
     pub fn with_utterance<T>(
@@ -962,6 +974,9 @@ impl RuntimeProvider {
         }
         if let Some(command) = question.plan_command_envelope() {
             return RuntimeJson::encode(&command, budget);
+        }
+        if let Some(digest) = question.digest_envelope() {
+            return RuntimeJson::encode(&digest, budget);
         }
         if let Some(utterance) = question.utterance_envelope() {
             return RuntimeJson::encode(&utterance, budget);
