@@ -50,6 +50,7 @@ heap_record!(RetainedDefinitions {
     supply_opportunities,
     food_preparations,
     cast_definitions,
+    casts,
     invention_policy,
     story_policy,
     item_definitions,

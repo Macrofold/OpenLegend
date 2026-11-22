@@ -11,6 +11,7 @@ pub enum RuntimePlayerCommand<'a> {
     Move(&'a SurfacePoint),
     Cancel(Option<&'a str>),
     Gather { target: &'a str, tool: Option<&'a str>, mode: Option<GatheringMode> },
+    Fish { target: &'a str, tool: &'a str },
     Equip(&'a str),
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
 }
@@ -21,6 +22,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Move(point) => point.surface_id.len(),
             Self::Cancel(action) => action.map_or(0, str::len),
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
+            Self::Fish { target, tool } => target.len() + tool.len(),
             Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
         }
     }
@@ -88,6 +90,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Move(point) => ("move", Some(point), None, None, None, None),
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
             Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
+            Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Equip(item) => ("equip", None, None, None, Some(item), None),
             Self::Unequip { item, .. } => ("unequip", None, None, None, Some(item), None),
         };
@@ -171,6 +174,11 @@ impl RuntimePlayerCommand<'_> {
                         std::io::ErrorKind::InvalidData, "Invalid selected gathering tool."
                     ))
                 })?,
+            },
+            Self::Fish { target, tool } => NativeCommand::Fish {
+                envelope,
+                target_id: target.into(),
+                item_id: tool.into(),
             },
             Self::Equip(item) => NativeCommand::Equipment {
                 envelope,

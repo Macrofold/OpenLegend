@@ -200,6 +200,12 @@ impl Store {
         &self,
         read: PreparedKnownPlaceRead,
     ) -> StoreResult<RuntimeProviderInput> {
+        // The operation still owns the world turn. If its place projection
+        // needs a pending save, let the owner roll back this attempt and keep
+        // elapsed time. Holding the turn until that save would block its capture.
+        if read.suffix_changes_owner {
+            return Err(StoreError::KnownPlacesPendingSave);
+        }
         let budget = self.budget.clone();
         self.read_simulation_cut(move |transaction| {
             Box::pin(async move {
@@ -214,8 +220,8 @@ impl Store {
                 };
                 // A divergent pending owner requires the corresponding derived
                 // capsule overlay. Do not silently fill that hole from older SQL.
-                if read.suffix_changes_owner || (!detached_durable && read.detached_changes_owner) {
-                    return Err(StoreError::StaleCut);
+                if !detached_durable && read.detached_changes_owner {
+                    return Err(StoreError::KnownPlacesPendingSave);
                 }
                 let sentinel = sql_ordinal(read.maximum_rows.checked_add(1).ok_or(StoreError::Capacity)?)?;
                 let older = read.detached_supports.as_ref().filter(|_| !detached_durable);

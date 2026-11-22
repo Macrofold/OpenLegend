@@ -195,6 +195,7 @@ enum CommandKind {
     Move,
     Cancel,
     Gather,
+    Fish,
     Equip,
     Unequip,
 }
@@ -614,6 +615,16 @@ impl CommandRequest {
                     Err(AccessError::Forbidden.into())
                 }
             }
+            CommandKind::Fish
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.item_id.as_deref().is_some_and(id)
+                    && command.gathering_mode.is_none() =>
+            {
+                Ok(())
+            }
             CommandKind::Equip | CommandKind::Unequip
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -697,6 +708,10 @@ impl PreparedRequest {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 tool: input.item_id.as_deref(),
                 mode: input.gathering_mode,
+            }),
+            CommandKind::Fish => Ok(RuntimePlayerCommand::Fish {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                tool: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
             }),
             CommandKind::Equip => Ok(RuntimePlayerCommand::Equip(
                 input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,

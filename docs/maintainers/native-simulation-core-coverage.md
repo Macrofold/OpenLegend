@@ -370,6 +370,8 @@ Source: `packages/domain/src/types.ts`; 60 declared fields. `?` retains source o
 
 Nested bindings that need particular care: `follow` contains observed last-seen position/episode/deadline and cannot read a hidden live target; `navigation.request` is source/action-bound; `strikeMotion`, ranged release and recovery can outlive ordinary cancellation; construction/material/recipe pins name historical meaning. They are not interchangeable generic timers.
 
+The [finite cast checks](../verification/river-meal.md#stand-alone-rust-casts) cover `Action.fishing` and `itemId` with exact source, installed rules, tool and output pins, the selected stance, ordinary approach and earned work. The shared stock and item owners commit a catch together. The player command and current-format saved action have caller evidence. NPC choice and the complete meal still need their connected journeys.
+
 ### Responses, agency and experience
 
 Rows below use the planned N → R/S disposition unless a narrower X form is stated. The candidate ledger and delivery record report implemented and checked scopes. Server H validates operational permission again after waits. Fields are exhaustive at the declared interface level; nested unions retain their existing source contract.
@@ -410,6 +412,8 @@ The plan/result field names and result-address rows above use the current select
 `ExperiencePrivacy` is an operational H/S overlay despite sharing the domain shape. It must survive gameplay rewind without importing later character knowledge. `ActorMind`/`InnerWorld` and response interpretation remain private; source snapshot, evidence IDs, publication and reconsideration fences must not be replaced by one global world revision. `ActorAgency.semantic` opportunity bookkeeping is not itself an interpretation invalidation.
 
 ### Current perception, recording and animal continuation
+
+The stand-alone animal clock consumes `NativeForagingState.packId`, the installed regroup rule and the personally seen companion's life and position. It commits one ordinary Move and saves its deadline, actual travel and observed support in `sim_animal_behavior`. The [visible and hidden companion checks](../verification/first-threat-encounter.md#stand-alone-rust-pack-regrouping) cover Source-equivalent destination selection and cold continuation. Positive hunt and search work still requires its controller and receiving owners.
 
 N owns canonical acquisition/continuation; R captures only already permitted selected facts; S preserves actual records and clocks. `recent` directories and process-local indexes are rebuildable and supply no new observation. All conversion remains pending.
 
@@ -458,7 +462,7 @@ N owns canonical acquisition/continuation; R captures only already permitted sel
 
 Inherited/compact representations remain part of the same closure: `ReceivedAddress` adds `actorId`, `physicalLife`, `epoch` to `ReceivedPosition` (`batchOrder`, `entryIndex`, `memberIndex`); `TemporalFacetReference` inherits `TemporalValueReference.valueRef`; `TemporalReceipt` inherits locator ownership; `NativeFlightLocomotion` inherits `NativeLocomotion`. `CurrentStoredField` is `LiveFacetSupport` minus envelope metadata/revision plus `originalOrdinal`/`semanticRevision`. `CurrentGroupTimes` independently encodes measured-through, measured-from, acquired, confirmed-from and confirmed-through. `CurrentContact.content` carries exact received groups; `CurrentContact.sight` is not detail acquisition. `ReceivedReceipt` inherits the remaining `TemporalReceipt` content and adds `clock?`, `sources`, `frames`, `frame?`, compact `origin?` and `facets`; `ReceivedField` keeps independent detail/pose/proof clocks. No converter may flatten these distinctions into one timestamp.
 
-Selected resource foraging retains `profile`, `home`, `anchors`, `mode`, `reviewAt`, `destination?`, `emptySources`, `anchorFood?` and `work?`. Work retains `kind`, `actionId`, `sourceId?`, `startedAt`, `endsAt`, `travelledMetres` and `lastPoint`. Bodyless exposed food stock retains `definitionId`, `quantity`, `workSeconds` and `revision?` in `sim_resources`; the unconverted `cast?` binding still refuses. Pack, hunting, regrouping, airborne and other feeding sources remain X. A positive selected dependency must be ported. `wander`'s due-at versus earned remaining-time branches and `episode`'s actual acoustic/refuge/danger/proposal/movement state must survive save/restore. No initialization-generated second announcement is permitted.
+Selected resource foraging retains `profile`, `home`, `anchors`, `mode`, `reviewAt`, `destination?`, `emptySources`, `anchorFood?` and `work?`. Work retains `kind`, `actionId`, `sourceId?`, `startedAt`, `endsAt`, `travelledMetres` and `lastPoint`. Bodyless exposed food stock retains `definitionId`, `quantity`, `workSeconds` and `revision?` in `sim_resources`. The typed `cast?` binding adds the installed stance, endpoint and water bounds. Routine flight, selected feeding and visible pack regrouping have scoped evidence. Hunting, directed alarm flight and additional feeding sources still need their positive cases. `wander`'s due-at versus earned remaining-time branches and `episode`'s acoustic/refuge/danger/proposal/movement state must survive save and restore. Reopening a world preserves the original announcements.
 
 ## Command, preview and publication branches
 

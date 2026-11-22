@@ -96,6 +96,96 @@ pub struct RuntimeGatherOffer<'a> {
     pub quantity: u64,
     pub sequence: u64,
 }
+
+pub enum RuntimeResourceOffer<'a> {
+    Gather(RuntimeGatherOffer<'a>),
+    Fish(RuntimeFishOffer<'a>),
+}
+
+pub struct RuntimeFishOffer<'a> {
+    pub name: &'a crate::text::JsText,
+    pub available_text: &'a crate::text::JsText,
+    pub action_label: &'a crate::text::JsText,
+    pub description: &'a crate::text::JsText,
+    pub tool_required_text: &'a crate::text::JsText,
+    pub supply: &'a crate::text::JsText,
+    pub exhausted: bool,
+    pub paused: bool,
+    pub sequence: u64,
+    pub tools: &'a [RuntimeFishTool<'a>],
+}
+
+pub struct RuntimeFishTool<'a> {
+    pub id: &'a str,
+    pub name: &'a crate::text::JsText,
+}
+
+fn fish_offer<T>(
+    state: &crate::simulation::SimulationState,
+    actor: &str,
+    name: &crate::text::JsText,
+    source: crate::casts::Source<'_>,
+    budget: &ByteBudget,
+    consume: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
+) -> Result<T, RuntimeError> {
+    let mut _custody = budget.reserve(0)?;
+    let mut tools = Vec::new();
+    let rules = &source.rules.definition;
+    let installed = &state.installed.retained;
+    state
+        .inventory
+        .visit_owned(
+            &state.physical.entities,
+            installed,
+            actor,
+            actor,
+            &mut |item| {
+                let definition = installed
+                    .items
+                    .get(item.definition_id)
+                    .ok_or(crate::execution::ExecutionError::Invariant)?;
+                if item.available_quantity != 0
+                    && definition.fishing_kind() == Some(rules.tool_kind.as_str())
+                {
+                    if tools.len() == tools.capacity() {
+                        let next = tools.capacity().checked_mul(2).ok_or(CapacityError)?.max(4);
+                        let bytes = next
+                            .checked_mul(size_of::<RuntimeFishTool<'_>>())
+                            .ok_or(CapacityError)?;
+                        // Keep the old vector funded until the replacement succeeds.
+                        let replacement = budget.reserve(bytes)?;
+                        tools
+                            .try_reserve_exact(next - tools.len())
+                            .map_err(|_| CapacityError)?;
+                        _custody = replacement;
+                    }
+                    tools.push(RuntimeFishTool {
+                        id: item.id,
+                        name: &item.named.name,
+                    });
+                }
+                Ok(())
+            },
+        )
+        .map_err(failure)?;
+    let exhausted = source.stock.quantity == 0;
+    consume(RuntimeResourceOffer::Fish(RuntimeFishOffer {
+        name,
+        available_text: &rules.available_text,
+        action_label: &rules.action_label,
+        description: &rules.description,
+        tool_required_text: &rules.tool_required_text,
+        supply: if exhausted {
+            &rules.exhausted_text
+        } else {
+            &rules.supply_unknown_text
+        },
+        exhausted,
+        paused: state.physical.header.paused,
+        sequence: state.physical.header.sequence,
+        tools: &tools,
+    }))
+}
 impl RuntimePlayerPublication {
     pub fn can_use_inventory(&self) -> bool {
         self.can_use_inventory
@@ -233,14 +323,16 @@ impl NativeWorldSession {
             .map_err(failure)
     }
 
-    /// Select a currently observed gathering source and publish in the same
-    /// turn. The application compares its own opaque reference in `matches`.
-    pub fn with_player_gathering_offer<T>(
+    /// Resolve one observed resource under the current disclosure lease. Only
+    /// a selected cast visits this player's accessible possessions. The offer
+    /// borrows current facts; callers encode or independently fund their output
+    /// before leaving the callback.
+    pub fn with_player_resource_offer<T>(
         &self,
         account: &str,
         actor: &str,
         mut matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
-        use_offer: impl FnOnce(RuntimeGatherOffer<'_>) -> Result<T, RuntimeError>,
+        use_offer: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
     ) -> Result<Option<T>, RuntimeError> {
         self.require_active()?;
         let simulation = self.session.accepted().map_err(failure)?;
@@ -255,29 +347,36 @@ impl NativeWorldSession {
                 else {
                     return false;
                 };
+                let name = &body.name.name;
+                let id = body.source_id;
+                if observed.kind != "resource" || !matches(body) {
+                    return false;
+                }
+                let state = &simulation.state;
+                if let Some(source) = crate::casts::source(state, id) {
+                    let encode = encode.take().expect("one selected source");
+                    result = Some(fish_offer(state, actor, name, source, &self.budget, encode));
+                    return true;
+                }
                 let Some((definition, quantity)) = observed.subtype.as_ref().zip(observed.quantity)
                 else {
                     return false;
                 };
-                let retained = &simulation.state.installed.retained;
+                let retained = &state.installed.retained;
                 let Some(item) = retained.items.get(definition).filter(|item| item.portable) else {
                     return false;
                 };
-                if retained.bare_hand_gathering.is_none() || observed.kind != "resource" {
-                    return false;
-                }
-                let name = &body.name.name;
-                if !matches(body) {
+                if retained.bare_hand_gathering.is_none() {
                     return false;
                 }
                 let encode = encode.take().expect("one selected source");
-                result = Some(encode(RuntimeGatherOffer {
+                result = Some(encode(RuntimeResourceOffer::Gather(RuntimeGatherOffer {
                     name,
                     material: &item.named.name,
                     label: item.gather_label.as_ref(),
                     quantity: quantity as u64,
                     sequence,
-                }));
+                })));
                 true
             })
             .map_err(failure)?;

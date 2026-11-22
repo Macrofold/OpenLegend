@@ -140,6 +140,7 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
             heap_sum([
                 bytes,
                 entity.item.heap_bytes()?,
+                entity.resource.as_ref().map_or(Some(0), |resource| resource.cast.heap_bytes())?,
                 match &entity.placement {
                     Some(Placement::World { .. }) => 0,
                     placement => placement.heap_bytes()?,

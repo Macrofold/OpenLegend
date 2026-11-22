@@ -23,6 +23,7 @@ use crate::narration::{Narration, NarrationPart, PersonRole};
 use crate::native_response::{NavigationWait, profile_key};
 use crate::state::{Action, Entity, NavigationPending, Placement, Point, SurfacePoint};
 use std::mem::size_of;
+mod casting;
 mod feeding;
 mod gathering;
 
@@ -56,6 +57,7 @@ enum Phase {
     Arrival,
     FeedReach,
     FeedSight,
+    CastLine,
     Finish,
     Clear,
     Stopped,
@@ -72,9 +74,10 @@ pub(crate) struct MoveAdvanceCursor {
     meal_sight: Option<crate::reception::SightBatch>,
     queries: Option<(GeometryQueries, ByteReservation)>,
     binding: GeometryBinding,
-    failure: Option<String>,
+    failure: Option<crate::text::JsText>,
     pending: Option<PendingActionFinish>,
     gathered_item: Option<crate::commands::ActivityOutput>,
+    cast_result: Option<Outcome>,
     event: Option<String>,
     after_event: Phase,
     budget: ByteBudget,
@@ -153,6 +156,7 @@ impl MoveAdvanceCursor {
             failure: None,
             pending: None,
             gathered_item: None,
+            cast_result: None,
             event: None,
             after_event: Phase::Done,
             budget: budget.clone(),
@@ -322,6 +326,9 @@ impl MoveAdvanceCursor {
                 let (_, action) = bound(core, &self.actor_id, action_id, self.physical_life)?;
                 if self.phase == Phase::FeedReach {
                     return self.feed_reach_answer(core, answer.sight.pop() == Some(true));
+                }
+                if self.phase == Phase::CastLine {
+                    return self.finish_cast_line(core, answer);
                 }
                 let replans = action.replans;
                 let route = match self.phase {
@@ -573,6 +580,9 @@ impl MoveAdvanceCursor {
                     if (action.feeding.is_some() || action.is_gathering()) && action.stage == "working" {
                         return self.begin_feed_check(core);
                     }
+                    if action.is_casting() && action.stage == "working" {
+                        return self.advance_cast(core);
+                    }
                     if action.stage == "working" {
                         if core.physical().advance_timed_work(
                             &self.actor_id,
@@ -637,10 +647,19 @@ impl MoveAdvanceCursor {
                     if action.feeding.is_some() || action.is_gathering() {
                         return self.begin_feed_check(core);
                     }
+                    let tolerance = if action.is_casting() {
+                        let Some(source) = action.target_id.as_deref().and_then(|id| crate::casts::source(core.state, id)) else {
+                            self.fail(crate::casts::messages().missing_source)?;
+                            continue;
+                        };
+                        source.rules.definition.stance_tolerance
+                    } else {
+                        installed.movement_settings.arrival_tolerance
+                    };
                     if in_reach(
                         entity,
                         action,
-                        installed.movement_settings.arrival_tolerance,
+                        tolerance,
                     ) {
                         self.phase = Phase::Arrival;
                         continue;
@@ -723,6 +742,11 @@ impl MoveAdvanceCursor {
                     let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
                     let (entity, action) =
                         bound(core, &self.actor_id, action_id, self.physical_life)?;
+                    if action.is_casting() {
+                        self.start_target_work(core, action.replans)?;
+                        self.phase = Phase::Done;
+                        continue;
+                    }
                     if !in_reach(
                         entity,
                         action,
@@ -779,7 +803,7 @@ impl MoveAdvanceCursor {
                             .map_err(|_| ExecutionError::Invariant)?;
                         return Ok(Progress::Occurrence(self.emit(
                             core,
-                            text,
+                            text.into(),
                             &rules.movement_arrival_event,
                             Phase::Finish,
                         )?));
@@ -790,7 +814,7 @@ impl MoveAdvanceCursor {
                         rules
                             .maximum_message_bytes()
                             .ok_or(ExecutionError::Capacity)?
-                            + self.failure.as_ref().map_or(0, String::len),
+                            + self.failure.as_ref().map_or(0, crate::text::JsText::storage_bytes),
                     )?;
                     let result = if let Some(reason) = &self.failure {
                         Outcome {
@@ -798,7 +822,7 @@ impl MoveAdvanceCursor {
                             outputs: None,
                             ok: false,
                             code: "action-failed".into(),
-                            message: reason.clone().into(),
+                            message: reason.clone(),
                             recipe_id: None,
                             item_id: None,
                             entity_id: None,
@@ -806,6 +830,8 @@ impl MoveAdvanceCursor {
                             plan_id: None,
                             action_id: None,
                         }
+                    } else if let Some(result) = self.cast_result.take() {
+                        result
                     } else if let Some(output) = self.gathered_item.take() {
                         let mut completed = rules.movement_completed.outcome(true);
                         completed.message = crate::worlds::base_gathering::copy().completed.as_str().into();
@@ -873,20 +899,17 @@ impl MoveAdvanceCursor {
                     };
                 }
                 Phase::Stopped => {
-                    let reason = self.failure.as_ref().ok_or(ExecutionError::Invariant)?;
+                    let reason_bytes = self.failure.as_ref().ok_or(ExecutionError::Invariant)?.storage_bytes();
                     self.reserve(
                         rules.action_stopped_prefix.len()
-                            + reason.len()
+                            + reason_bytes
                             + 3 * size_of::<NarrationPart>()
                             + self.actor_id.len() * 3
                             + rules.action_stopped_event.len()
                             + 128,
                     )?;
-                    let text = format!(
-                        "{}{}",
-                        rules.action_stopped_prefix,
-                        self.failure.as_deref().ok_or(ExecutionError::Invariant)?
-                    );
+                    let reason = self.failure.as_ref().ok_or(ExecutionError::Invariant)?;
+                    let text = crate::text::JsText::concat(&[&rules.action_stopped_prefix.as_str().into(), reason]);
                     return Ok(Progress::Occurrence(self.emit(
                         core,
                         text,
@@ -901,7 +924,8 @@ impl MoveAdvanceCursor {
                 | Phase::PositiveMotion
                 | Phase::ContactMotion
                 | Phase::FeedReach
-                | Phase::FeedSight => {
+                | Phase::FeedSight
+                | Phase::CastLine => {
                     return Err(ExecutionError::Invariant);
                 }
             }
@@ -910,7 +934,7 @@ impl MoveAdvanceCursor {
     fn emit(
         &mut self,
         core: &mut CoreMutation<'_>,
-        text: String,
+        text: crate::text::JsText,
         event_type: &str,
         next: Phase,
     ) -> Result<StagedOccurrence, ExecutionError> {
@@ -921,7 +945,7 @@ impl MoveAdvanceCursor {
             article: None,
         });
         parts.push(NarrationPart::Literal(" ".into()));
-        parts.push(NarrationPart::Literal(text.into()));
+        parts.push(NarrationPart::Literal(text));
         let event = core.stage_event(EventEmissionIntent {
             event_type: event_type.into(),
             text: EmissionText::Narration(Narration { parts }),

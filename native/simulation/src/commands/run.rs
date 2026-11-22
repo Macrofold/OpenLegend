@@ -23,6 +23,7 @@ use crate::narration::{Narration, NarrationPart, PersonRole};
 use crate::state::{Action, NavigationPending, SurfacePoint};
 use crate::work::{MeterToken, WorkUnit};
 mod discovery;
+mod casting;
 mod equipment;
 mod feeding;
 mod gathering;
@@ -74,6 +75,8 @@ enum Phase {
     Route,
     FeedReach,
     GatherSight,
+    CastSight,
+    CastLine,
     ContactReach,
     ContactRoute,
     FeedApproach,
@@ -304,6 +307,10 @@ impl CommandCursor {
         }
         if matches!(self.command, NativeCommand::Gather { .. }) {
             self.prepare_gathering_view(core)?;
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::Fish { .. }) {
+            self.prepare_cast_view(core)?;
             return Ok(false);
         }
         if self.display.is_none() {
@@ -573,6 +580,9 @@ impl CommandCursor {
                             }
                             return self.drive(core, None);
                         }
+                        if matches!(self.phase, Phase::CastSight) {
+                            return self.cast_sight(core, answer);
+                        }
                         if matches!(self.phase, Phase::StatusSight) {
                             let sight = self
                                 .sight
@@ -700,6 +710,7 @@ impl CommandCursor {
                                         Phase::FeedApproach
                                     };
                             }
+                            Phase::CastLine => return self.cast_line(core, answer),
                             Phase::ContactReach => {
                                 self.queries = None;
                                 if answer.sight.pop().ok_or(ExecutionError::Invariant)? {
@@ -986,6 +997,11 @@ impl CommandCursor {
                         }
                         NativeCommand::Gather { .. } => {
                             if self.prepare_gathering(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
+                        NativeCommand::Fish { .. } => {
+                            if self.prepare_cast(core)? {
                                 return Ok(Progress::Geometry);
                             }
                         }
@@ -1470,6 +1486,9 @@ impl CommandCursor {
                         }
                         if matches!(self.command, NativeCommand::Gather { .. }) {
                             return self.gathering_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::Fish { .. }) {
+                            return self.cast_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::Strike { .. }) {
                             return self.natural_contact_started(core, &actor_id);
@@ -2067,6 +2086,8 @@ impl CommandCursor {
                 | Phase::Probe
                 | Phase::FeedReach
                 | Phase::GatherSight
+                | Phase::CastSight
+                | Phase::CastLine
                 | Phase::ContactReach
                 | Phase::ContactRoute
                 | Phase::StatusSight

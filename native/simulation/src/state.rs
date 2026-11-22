@@ -670,7 +670,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub fishing: Option<UnconvertedField>,
+    pub fishing: Option<Box<crate::casts::Binding>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -836,6 +836,7 @@ impl Action {
         self.kind == "move"
             || (self.kind == "feed" && self.feeding.is_some())
             || self.is_gathering()
+            || self.is_casting()
     }
 
     pub(crate) fn owns_ground_route(&self) -> bool {
@@ -848,6 +849,10 @@ impl Action {
 
     pub(crate) fn is_gathering(&self) -> bool {
         self.kind == "gather" && self.gathering.is_some()
+    }
+
+    pub(crate) fn is_casting(&self) -> bool {
+        self.kind == "fish" && self.fishing.is_some()
     }
 
     pub(crate) fn is_natural_contact(&self) -> bool {
@@ -884,13 +889,13 @@ impl Action {
             || self.recipe_pin.is_some()
             || self.manufacture_tools.is_some()
             || self.food_preparation.is_some()
-            || self.fishing.is_some()
+            || self.fishing.is_some() != (self.kind == "fish")
             || self.guard.is_some()
             || self.follow.is_some()
             || self.transferred.is_some()
             || self.quantity.is_some()
             || self.recipe_id.is_some()
-            || (self.item_id.is_some() && !self.is_gathering())
+            || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting()))
             || self.weapon_item_id.is_some()
             || self.ammo_item_id.is_some()
             || self.heat_id.is_some()
@@ -1011,6 +1016,23 @@ impl Action {
         action.remaining_seconds = seconds;
         action.total_seconds = seconds;
         action.gathering = Some(Box::new(binding));
+        action
+    }
+    pub(crate) fn fish(
+        id: String,
+        target: String,
+        tool: String,
+        stance: SurfacePoint,
+        seconds: f64,
+        binding: crate::casts::Binding,
+    ) -> Self {
+        let mut action = Self::native_action(id, "fish", "working");
+        action.target_id = Some(target);
+        action.item_id = Some(tool);
+        action.destination = Some(stance.into());
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
+        action.fishing = Some(Box::new(binding));
         action
     }
     pub(crate) fn movement(
@@ -1260,7 +1282,7 @@ pub struct Resource {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub cast: Option<UnconvertedField>,
+    pub cast: Option<Box<crate::casts::CastSource>>,
     #[serde(
         default,
         deserialize_with = "crate::values::deserialize_present_safe_integer",

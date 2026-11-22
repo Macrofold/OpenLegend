@@ -1277,7 +1277,9 @@ function prepareVisualSourceValues(
           : {}),
         label: selectedOutwardBodyName(world, subject),
         ...(subject.assembly ? { assembly: assemblyPresentation(world, subject.id) } : {}),
-        ...(subject.resource ? { quantity: subject.resource.quantity } : {}),
+        ...(subject.resource && !subject.resource.cast
+          ? { quantity: subject.resource.quantity }
+          : {}),
         ...(subject.heat ? { heatLit: subject.heat.lit } : {}),
         ...(subject.remains ? { remainsPhase: subject.remains.phase } : {}),
         ...(subject.container ||

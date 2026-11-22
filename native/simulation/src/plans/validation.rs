@@ -94,6 +94,7 @@ pub(crate) fn valid_command(
         NativeCommand::Outing { .. }
         | NativeCommand::Feed { .. }
         | NativeCommand::Gather { .. }
+        | NativeCommand::Fish { .. }
         | NativeCommand::Equipment { .. }
         | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }

@@ -45,6 +45,7 @@ pub(super) fn start_record(
         NativeCommand::Gather {
             target_id, tool, ..
         } => [Some(target_id), tool.item_id.as_deref()],
+        NativeCommand::Fish { target_id, item_id, .. } => [Some(target_id), Some(item_id)],
         NativeCommand::Equipment { item_id, .. } => [Some(item_id), None],
         _ => [None, None],
     };

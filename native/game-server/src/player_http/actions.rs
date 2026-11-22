@@ -1,8 +1,13 @@
-//! The selected context action opens the existing browser's conversation
-//! composer. The menu itself spends nothing and never submits speech.
+//! Read one visible resource or person for the ordinary context menu. The
+//! on-demand menu spends nothing and never starts an action.
 
 use super::*;
-use openlegend_simulation::{runtime::RuntimeError, text::JsText};
+use openlegend_simulation::{
+    encoding::{json_record, sha256_hex},
+    host::CapacityError,
+    runtime::{RuntimeError, RuntimeFishOffer, RuntimeGatherOffer, RuntimeResourceOffer},
+    text::JsText,
+};
 use std::sync::LazyLock;
 
 #[derive(Deserialize)]
@@ -82,19 +87,41 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                 &scoped,
                 Capability::Play,
                 false,
-                |scope, _| -> Result<_, RuntimeError> {
+                |scope, controls| -> Result<_, RuntimeError> {
                     let budget = game.host.budget();
                     let _workspace = budget.reserve(2048)?;
-                    let references = tokens.scoped(scope).map_err(RuntimeError::application_refused)?;
+                    let references = tokens
+                        .scoped(scope)
+                        .map_err(RuntimeError::application_refused)?;
                     let mut error = None;
-                    let offered = session.with_player_gathering_offer(
-                        &scope.account_id, &scope.actor_id,
-                        |body| match references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id) {
+                    let offered = session.with_player_resource_offer(
+                        &scope.account_id,
+                        &scope.actor_id,
+                        |body| match references.contact(
+                            body.source_id,
+                            body.physical_life.unwrap_or(0),
+                            body.lease_id,
+                        ) {
                             Ok(reference) => reference == *for_menu,
-                            Err(problem) => { error = Some(problem); false }
+                            Err(problem) => {
+                                error = Some(problem);
+                                false
+                            }
                         },
-                        |offer| {
-                            gathering(&for_menu, offer, game.construction_grants, budget)
+                        |offer| match offer {
+                            RuntimeResourceOffer::Gather(offer) => {
+                                gathering(&for_menu, offer, game.construction_grants, budget)
+                            }
+                            RuntimeResourceOffer::Fish(offer) => {
+                                let available = if !controls {
+                                    Some("Take control of your character to act here.")
+                                } else if offer.paused {
+                                    Some("Resume the world to act.")
+                                } else {
+                                    None
+                                };
+                                fishing(&for_menu, offer, available, budget)
+                            }
                         },
                     )?;
                     if let Some(error) = error {
@@ -124,65 +151,50 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
     }
 }
 
-fn gathering(
-    selected: &str,
-    offer: openlegend_simulation::runtime::RuntimeGatherOffer<'_>,
-    construction_grants: bool,
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ResourceCommand<'a> {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    target_id: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    item_id: Option<&'a str>,
+}
+
+#[derive(Serialize)]
+#[serde(tag = "kind", rename_all = "lowercase")]
+enum ResourceIntent<'a> {
+    Command { command: ResourceCommand<'a> },
+    Unavailable,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ResourceAction<'a> {
+    id: String,
+    label: JsText,
+    category: &'static str,
+    description: &'a JsText,
+    keywords: [&'a JsText; 2],
+    target_id: &'a str,
+    enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<&'a JsText>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    facts: Option<[(&'static str, &'a JsText); 1]>,
+    intent: ResourceIntent<'a>,
+}
+
+fn resource_menu(
+    revision: u64,
+    actions: &[ResourceAction<'_>],
+    category: &'static str,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
-    let _workspace = budget.reserve(
-        4096 + 8 * (offer.name.storage_bytes() + offer.material.storage_bytes() + selected.len())
-            + offer.label.map_or(0, |label| 8 * label.storage_bytes()),
-    )?;
-    #[derive(Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct MenuCopy<'a> {
-        name: &'a str,
-        fallback_prefix: &'a str,
-        menu_description: &'a str,
-        menu_empty: &'a str,
-        menu_keyword: &'a str,
-    }
-    static COPY: LazyLock<MenuCopy<'static>> = LazyLock::new(|| {
-        serde_json::from_str(include_str!(
-            "../../../../packages/domain/src/worlds/base/gathering-copy.json"
-        ))
-        .expect("authored gathering menu")
-    });
-    let label = offer
-        .label
-        .cloned()
-        .unwrap_or_else(|| JsText::concat(&[&COPY.fallback_prefix.into(), offer.name]));
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Command<'a> {
-        #[serde(rename = "type")]
-        kind: &'static str,
-        target_id: &'a str,
-    }
-    #[derive(Serialize)]
-    struct Intent<'a> {
-        kind: &'static str,
-        command: Command<'a>,
-    }
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Action<'a> {
-        id: String,
-        label: JsText,
-        category: &'static str,
-        description: &'static str,
-        keywords: [&'a JsText; 2],
-        target_id: &'a str,
-        enabled: bool,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        reason: Option<&'static str>,
-        intent: Intent<'a>,
-    }
     #[derive(Serialize)]
     struct Catalogue<'a> {
         revision: u64,
-        actions: [Action<'a>; 1],
+        actions: &'a [ResourceAction<'a>],
         categories: [&'static str; 1],
     }
     #[derive(Serialize)]
@@ -190,35 +202,13 @@ fn gathering(
         ok: bool,
         catalogue: Catalogue<'a>,
     }
-    let keyword: JsText = COPY.menu_keyword.into();
-    let action = Action {
-        id: format!("gather-{selected}"),
-        label,
-        category: COPY.name,
-        description: COPY.menu_description,
-        keywords: [offer.material, &keyword],
-        target_id: selected,
-        enabled: offer.quantity != 0 && !construction_grants,
-        reason: if construction_grants {
-            Some(crate::player_command::CONSTRUCTION_GATHER_UNAVAILABLE)
-        } else {
-            (offer.quantity == 0).then_some(COPY.menu_empty)
-        },
-        intent: Intent {
-            kind: "command",
-            command: Command {
-                kind: "gather",
-                target_id: selected,
-            },
-        },
-    };
     wire::encode(
         &Menu {
             ok: true,
             catalogue: Catalogue {
-                revision: offer.sequence,
-                actions: [action],
-                categories: [COPY.name],
+                revision,
+                actions,
+                categories: [category],
             },
         },
         b"",
@@ -226,6 +216,135 @@ fn gathering(
         budget,
     )
     .map_err(RuntimeError::application_refused)
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GatherMenuCopy {
+    name: &'static str,
+    fallback_prefix: JsText,
+    menu_description: JsText,
+    menu_empty: JsText,
+    menu_keyword: JsText,
+}
+
+static GATHER: LazyLock<GatherMenuCopy> = LazyLock::new(|| {
+    serde_json::from_str(include_str!(
+        "../../../../packages/domain/src/worlds/base/gathering-copy.json"
+    ))
+    .expect("authored gathering menu")
+});
+
+fn gathering(
+    selected: &str,
+    offer: RuntimeGatherOffer<'_>,
+    construction_grants: bool,
+    budget: &ByteBudget,
+) -> Result<Bytes, RuntimeError> {
+    let _workspace = budget.reserve(
+        4096 + 8 * (offer.name.storage_bytes() + offer.material.storage_bytes() + selected.len())
+            + offer.label.map_or(0, |label| 8 * label.storage_bytes()),
+    )?;
+    let label = offer
+        .label
+        .cloned()
+        .unwrap_or_else(|| JsText::concat(&[&GATHER.fallback_prefix, offer.name]));
+    let unavailable = construction_grants
+        .then(|| JsText::from(crate::player_command::CONSTRUCTION_GATHER_UNAVAILABLE));
+    let action = ResourceAction {
+        id: format!("gather-{selected}"),
+        label,
+        category: GATHER.name,
+        description: &GATHER.menu_description,
+        keywords: [offer.material, &GATHER.menu_keyword],
+        target_id: selected,
+        enabled: offer.quantity != 0 && !construction_grants,
+        reason: unavailable
+            .as_ref()
+            .or_else(|| (offer.quantity == 0).then_some(&GATHER.menu_empty)),
+        facts: None,
+        intent: ResourceIntent::Command {
+            command: ResourceCommand {
+                kind: "gather",
+                target_id: selected,
+                item_id: None,
+            },
+        },
+    };
+    resource_menu(offer.sequence, &[action], GATHER.name, budget)
+}
+
+fn fishing(
+    selected: &str,
+    offer: RuntimeFishOffer<'_>,
+    unavailable: Option<&'static str>,
+    budget: &ByteBudget,
+) -> Result<Bytes, RuntimeError> {
+    let _workspace = budget.reserve(2048)?;
+    let supply = Some([("Supply", offer.supply)]);
+    if offer.tools.is_empty() {
+        return resource_menu(
+            offer.sequence,
+            &[ResourceAction {
+                id: format!("fish-{selected}"),
+                label: offer.available_text.clone(),
+                category: GATHER.name,
+                description: offer.description,
+                keywords: [offer.name, offer.available_text],
+                target_id: selected,
+                enabled: false,
+                reason: Some(offer.tool_required_text),
+                facts: supply,
+                intent: ResourceIntent::Unavailable,
+            }],
+            GATHER.name,
+            budget,
+        );
+    }
+    let bytes = offer.tools.iter().try_fold(0_usize, |total, tool| {
+        offer
+            .action_label
+            .storage_bytes()
+            .checked_add(tool.name.storage_bytes())
+            .and_then(|bytes| bytes.checked_mul(6))
+            .and_then(|bytes| bytes.checked_add(128 + std::mem::size_of::<ResourceAction<'_>>()))
+            .and_then(|bytes| total.checked_add(bytes))
+            .ok_or(CapacityError)
+    })?;
+    let _actions = budget.reserve(bytes)?;
+    let mut actions = Vec::new();
+    actions
+        .try_reserve_exact(offer.tools.len())
+        .map_err(|_| CapacityError)?;
+    let unavailable = unavailable.map(JsText::from);
+    let reason = unavailable
+        .as_ref()
+        .or_else(|| offer.exhausted.then_some(offer.supply));
+    let space = JsText::from(" ");
+    for tool in offer.tools {
+        // A tuple digest disambiguates tools even when a name or ID contains a delimiter.
+        let binding =
+            json_record(&(selected, tool.id)).map_err(RuntimeError::application_refused)?;
+        actions.push(ResourceAction {
+            id: format!("fish-{}", sha256_hex(binding.as_bytes())),
+            label: JsText::concat(&[offer.action_label, &space, tool.name]),
+            category: GATHER.name,
+            description: offer.description,
+            keywords: [offer.name, tool.name],
+            target_id: selected,
+            enabled: reason.is_none(),
+            reason,
+            facts: supply,
+            intent: ResourceIntent::Command {
+                command: ResourceCommand {
+                    kind: "fish",
+                    target_id: selected,
+                    item_id: Some(tool.id),
+                },
+            },
+        });
+    }
+    resource_menu(offer.sequence, &actions, GATHER.name, budget)
 }
 
 pub(crate) fn conversation(

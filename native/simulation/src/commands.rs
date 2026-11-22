@@ -198,6 +198,11 @@ pub(crate) enum NativeCommand {
         target_id: String,
         tool: crate::gathering::ToolChoice,
     },
+    Fish {
+        envelope: CommandEnvelope,
+        target_id: String,
+        item_id: String,
+    },
     Equipment {
         envelope: CommandEnvelope,
         item_id: String,
@@ -294,7 +299,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
         if (input.kind != "gather" && input.gathering_mode.is_some())
-            || (!matches!(input.kind.as_str(), "gather" | "feed" | "equip" | "unequip") && input.item_id.is_some())
+            || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "equip" | "unequip") && input.item_id.is_some())
             || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
         {
             return Err(D::Error::custom("Unexpected item selection."));
@@ -421,6 +426,22 @@ impl<'de> Deserialize<'de> for NativeCommand {
                 let tool = crate::gathering::ToolChoice::new(input.gathering_mode, input.item_id)
                     .ok_or_else(|| D::Error::custom("Invalid gathering tool selection."))?;
                 Ok(Self::Gather { envelope, target_id, tool })
+            }
+            "fish"
+                if !extras_for_say
+                    && input.text.is_none()
+                    && input.target_role.is_none()
+                    && input.self_introduction.is_none()
+                    && input.volume.is_none()
+                    && input.gathering_mode.is_none() =>
+            {
+                Ok(Self::Fish {
+                    envelope,
+                    target_id: input.target_id.filter(|id| is_safe_record_id(id))
+                        .ok_or_else(|| D::Error::custom("A cast requires a selected source."))?,
+                    item_id: input.item_id.filter(|id| is_safe_record_id(id))
+                        .ok_or_else(|| D::Error::custom("A cast requires a selected tool."))?,
+                })
             }
             "say" if !extras_for_say => Ok(Self::Say {
                 envelope,
@@ -551,6 +572,7 @@ impl NativeCommand {
             | Self::Move { envelope, .. }
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
+            | Self::Fish { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
@@ -574,6 +596,7 @@ impl NativeCommand {
             | Self::Move { envelope, .. }
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
+            | Self::Fish { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
@@ -591,6 +614,7 @@ impl NativeCommand {
             Self::Move { .. } => "move",
             Self::Feed { .. } => "feed",
             Self::Gather { .. } => "gather",
+            Self::Fish { .. } => "fish",
             Self::Equipment { request, .. } => match request {
                 crate::execution::EquipmentRequest::Equip => "equip",
                 crate::execution::EquipmentRequest::Unequip { .. } => "unequip",

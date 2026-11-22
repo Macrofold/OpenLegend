@@ -90,6 +90,7 @@ pub enum StoreError {
     AwaitingCreation,
     DamagedInstallation,
     StaleCut,
+    KnownPlacesPendingSave,
     InvalidRecord,
     Capacity,
     Cancelled,
@@ -112,6 +113,7 @@ impl fmt::Display for StoreError {
             Self::DamagedInstallation =>
                 "This database contains retained data but has no current world header",
             Self::StaleCut => "PostgreSQL does not match the selected world revision",
+            Self::KnownPlacesPendingSave => "The selected place evidence is awaiting the ordinary save",
             Self::InvalidRecord => "A current PostgreSQL record is invalid",
             Self::Capacity => "PostgreSQL transfer cannot fit its allowance",
             Self::Cancelled => "PostgreSQL operation was cancelled before commit",

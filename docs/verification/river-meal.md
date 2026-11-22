@@ -119,6 +119,23 @@ Existing catalogue/view/boundary files passed 21 cases; four selected native see
 
 **Additional second-review Jev cost: $0. Cumulative task cost: provider-reported estimate $0.00092; outstanding reservations $0; no unresolved commitment.** No paid call, automatic retry or new live autonomy/acceptance claim was made.
 
+## Stand-alone Rust casts
+
+The [full-server conversion](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server) uses the same two authored reaches, tool definition, result text and saved random sequence. The local specimens gave the actor an already produced River line. A separate Source run crafted that exact definition from wood, cord and bone. Loading its completed craft record still reaches the stand-alone activity collection's current-format refusal. Tool manufacture and the cooked meal remain separate conversion checks.
+
+The stand-alone source `927a9ec8ef8410b36ee708e673a37fd1491bd0ce` ran executable `fad5e6aee90a…` against disposable PostgreSQL. The Rust process served the browser and owned the live game. Preparation tools and the browser were separate processes. No paid provider ran.
+
+- In Chromium, selecting **Fish here with River line** started an actual cast. It took 180 game seconds and saved one raw fish, one catch event and one stock decrement from four to three. Source produced the same item definition, result and next random value `791795222`. The original request replayed warm and recovered after restart. The player still held the fish and could walk.
+- At the far bend, the player walked to the authored stance at `(7, 0.6, 34)` before starting 240 game seconds of work. One catch took stock from six to five. An empty camp cast advanced the saved sequence once to `3078294470`, with stock four and no new item. Stop ended a separate accepted cast with stock and randomness unchanged. All three cases reopened, recovered the original result and continued walking.
+- The player view hid remaining stock. The menu showed authored information, refused a forged reach or tool and disabled casts without a compatible held tool or with an exhausted reach. Those refusals left stock and randomness unchanged. An earlier Source view exposed four remaining fish. Both sensory producers now omit that field for cast resources, so ordinary body history receives the same limited facts as the menu.
+- A separate current-format NPC action had 120 game seconds of work remaining at reopen. The original cast finished at game second 180 with stock four to three and next random value `2150542776`, exactly as the Source fixture. The other player's view preserved the NPC's private inventory. The world saved and reopened again. This verifies a saved NPC cast continuing after restart. Voluntary choice through the NPC's permitted offers has its own pending check.
+
+The exact menu check first exposed a nested clock read during resource disclosure and a mismatch in the format of the public menu facts. Reading the clock value from the already accepted resource view and emitting the existing public label/value pairs fixed both. A blocked line correctly refused execution and left stock and randomness unchanged. The menu still needs its own blocked-line check. The no-tool, depleted and saved-cast checks exited with zero outstanding native reservations.
+
+An immediate cast at game second zero also exposed a clock failure. The clock needed the actor's known-place records, but some of those records were still waiting for the ordinary save. The store treated this as a mismatched world revision and stopped the clock. The provider now distinguishes this expected wait. The clock rolls back that attempt, keeps elapsed time, releases the world turn and retries on a later tick. The read still refuses a truly mismatched revision. In frozen source `1d966d8d1bf8487637f1a4c8814e9f5979bdb4cd`, executable `d44ee32bc27b…`, both the original catch and miss cases started at game second zero, finished at 180, saved exactly once, recovered the original receipt and continued play after restart. Their action records now also retain the exact source and tool binding.
+
+The broader tool-custody and shared final-fish cases still need stand-alone caller evidence. These local checks establish correctness for their cases. CPU and latency comparisons remain part of the full-server qualification.
+
 ## Maintained records
 
 - Scope/status: [AV05](../maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking).

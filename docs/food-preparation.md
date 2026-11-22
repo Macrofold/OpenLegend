@@ -26,6 +26,8 @@ Completed action records retain their captured facts if an installed preparation
 
 The source pin includes its capability, placement and output meaning but excludes mutable quantity. Another actor's catch can therefore leave a still-lawful attempt pending; exhaustion is decided against actual stock at resolution. Neither inspection nor preview samples randomness. Public and NPC projections hide exact remaining catch stock; they may describe ordinary chance/time and an inspected exhausted source. Preview grants no execution or future outcome knowledge.
 
+The stand-alone Rust server runs casts through its ordinary movement and timed work. A cast uses the installed dry stance and line, and its result uses the same carried-item and save owners as other stock work. The [stand-alone checks](verification/river-meal.md#stand-alone-rust-casts) track browser and restart coverage separately from tool manufacture, cooking and NPC choice.
+
 ## Persistence, ownership and work growth
 
 The current world format requires both definition maps. Selective PostgreSQL records store those maps; pending work retains exact definition/source/tool/input bindings, duration, remaining simulation work and actual consumption. Current-format validation rejects missing or changed definitions and malformed bindings/timing. Completed receipts and actual stock survive reopen without replay. Closing a player's control retains the separate existing departure/cancellation rule; a saved pending native attempt is not a promise to continue work after that player departs. [Save and load](save-and-load.md) and the [development save policy](../AGENTS.md#development-save-policy) remain authoritative; no legacy reader, reset or migration is added.

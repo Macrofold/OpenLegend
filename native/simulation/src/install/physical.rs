@@ -1082,7 +1082,6 @@ pub(super) fn validate_physical_item_references(
             }
             if entity.actor.is_some()
                 || entity.kind != "resource"
-                || stock.cast.is_some()
                 || !stock.work_seconds.is_finite()
                 || stock.work_seconds <= 0.0
                 || entity.supported_position().is_none()
@@ -1090,6 +1089,16 @@ pub(super) fn validate_physical_item_references(
                 return Err(InstallError::UnsupportedFamily(
                     "resource stock placement or use",
                 ));
+            }
+            if let Some(cast) = stock.cast.as_deref() {
+                if !cast.valid()
+                    || !retained.casts.contains_key(&cast.definition_id)
+                    || !installed.geometry.spatial.surfaces.iter()
+                        .any(|surface| surface.id == cast.stance.surface_id)
+                    || !retained.items.get(&stock.definition_id).is_some_and(|item| item.portable)
+                {
+                    return Err(InstallError::CurrentFormat);
+                }
             }
         }
         validate_resource_foraging(entity, state, installed)?;

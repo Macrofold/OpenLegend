@@ -115,6 +115,7 @@ pub(crate) struct RetainedDefinitions {
     pub supply_opportunities: Option<RetainedMap>,
     pub food_preparations: RetainedMap,
     pub cast_definitions: RetainedMap,
+    pub casts: IndexMap<String, crate::casts::InstalledCast>,
     pub invention_policy: RetainedOne,
     pub story_policy: Option<RetainedOne>,
     pub item_definitions: RetainedMap,
@@ -601,6 +602,24 @@ pub(crate) fn install_retained(
             Some(policy.bare_hand_quantity)
         }
     };
+    let (cast_definitions, cast_input) = r
+        .verified_map("castDefinitions", "config_cast_definitions", Some(input.cast_definitions))?
+        .ok_or(InstallError::ParentPresence)?;
+    let (_cast_canonical_storage, cast_canonical) =
+        canonical_entries(&cast_definitions, &cast_input, budget)?;
+    let mut cast_preparation = budget
+        .reserve(map_storage::<String, crate::casts::InstalledCast>(cast_definitions.len())
+            .ok_or(InstallError::Capacity)?)
+        .map_err(|_| InstallError::Capacity)?;
+    let mut casts = IndexMap::with_capacity(cast_definitions.len());
+    for (id, body) in cast_definitions.entries() {
+        let storage = super::reserve_typed_parse::<crate::casts::Definition>(body, id.len(), None, budget)?;
+        let definition: crate::casts::Definition =
+            serde_json::from_str(body).map_err(|_| InstallError::DefinitionBody)?;
+        cast_preparation.merge(storage).map_err(|_| InstallError::Capacity)?;
+        let canonical = cast_canonical.get(id).ok_or(InstallError::DefinitionBody)?;
+        casts.insert(id.to_owned(), definition.install(id, canonical.get())?);
+    }
     let flight_routes = r
         .map(
             "flightRoutes",
@@ -678,13 +697,8 @@ pub(crate) fn install_retained(
                 Some(input.food_preparations),
             )?
             .ok_or(InstallError::ParentPresence)?,
-        cast_definitions: r
-            .map(
-                "castDefinitions",
-                "config_cast_definitions",
-                Some(input.cast_definitions),
-            )?
-            .ok_or(InstallError::ParentPresence)?,
+        cast_definitions,
+        casts,
         invention_policy,
         story_policy: r.one("storyPolicy", "config_story", input.story_policy)?,
         item_definitions,
@@ -708,6 +722,19 @@ pub(crate) fn install_retained(
 
 /// Compile the facts used by custody and visible stock from the already
 /// verified release. Each nested canonical record has the exact Source pin.
+fn canonical_entries<'a>(
+    definitions: &RetainedMap,
+    input: &'a CanonicalInput,
+    budget: &crate::host::ByteBudget,
+) -> Result<(crate::host::ByteReservation, IndexMap<String, &'a RawValue>), InstallError> {
+    let storage = budget.reserve(input.canonical.len().checked_add(
+        map_storage::<String, &RawValue>(definitions.len().checked_mul(2)
+            .ok_or(InstallError::Capacity)?).ok_or(InstallError::Capacity)?
+    ).ok_or(InstallError::Capacity)?).map_err(|_| InstallError::Capacity)?;
+    let canonical = serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionBody)?;
+    Ok((storage, canonical))
+}
+
 fn prepare_items(
     definitions: &RetainedMap,
     input: &CanonicalInput,
@@ -720,25 +747,7 @@ fn prepare_items(
     ),
     InstallError,
 > {
-    let _canonical = budget
-        .reserve(
-            input
-                .canonical
-                .len()
-                .checked_add(
-                    map_storage::<String, &RawValue>(
-                        definitions
-                            .len()
-                            .checked_mul(2)
-                            .ok_or(InstallError::Capacity)?,
-                    )
-                    .ok_or(InstallError::Capacity)?,
-                )
-                .ok_or(InstallError::Capacity)?,
-        )
-        .map_err(|_| InstallError::Capacity)?;
-    let canonical: IndexMap<String, &RawValue> =
-        serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionBody)?;
+    let (_canonical_storage, canonical) = canonical_entries(definitions, input, budget)?;
     let mut workspace = budget
         .reserve(
             map_storage::<String, ItemDefinitionRead>(definitions.len())

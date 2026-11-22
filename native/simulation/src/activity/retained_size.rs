@@ -190,6 +190,8 @@ impl HeapBytes for NativeCommand {
                 target_id.heap_bytes()?,
                 tool.heap_bytes()?,
             ]),
+            Self::Fish { envelope, target_id, item_id } =>
+                heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?, item_id.heap_bytes()?]),
             Self::Strike {
                 envelope,
                 target_id,

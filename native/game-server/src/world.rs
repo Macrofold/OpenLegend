@@ -81,6 +81,7 @@ impl WorldError {
         match self {
             Self::Host(HostError::Busy | HostError::Capacity)
             | Self::Fence(FenceError::Busy)
+            | Self::Storage(StoreError::KnownPlacesPendingSave)
             | Self::Geometry(
                 crate::spatial::SpatialError::Capacity
                 | crate::spatial::SpatialError::NavigationBusy,

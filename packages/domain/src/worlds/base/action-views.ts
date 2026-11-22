@@ -32,6 +32,7 @@ import {
 } from './shield-defense.js';
 import { evasionDescription } from './combat-views.js';
 import gatheringCopy from './gathering-copy.json' with { type: 'json' };
+import castCopy from './cast-copy.json' with { type: 'json' };
 
 export const BASE_FOOD_ACTION_WORDING = {
   cookingDescription:
@@ -41,7 +42,7 @@ export const BASE_FOOD_ACTION_WORDING = {
     'Choose an installed preparation, its ingredients and a perceived heat source.',
   cookingHeatRequiredText: 'A perceived lit heat source is needed.',
   fishingDescription: 'Choose one cast at a compatible finite source using the selected tool.',
-  fishingLabel: 'Fish once',
+  fishingLabel: castCopy.label,
   fishingHereLabel: 'Fish here',
   fishingRequiredText: 'Choose a perceived compatible reach and an accessible fishing tool.',
   fishingBindingText: 'Choose a river reach and an exact fishing tool.',
@@ -446,8 +447,7 @@ function activityView(
       });
       view.facts.push({
         name: 'approach',
-        value:
-          'Use the selected dry bank stance with a clear line into the declared water; time is spent even on an empty attempt',
+        value: castCopy.approach,
         critical: true,
       });
     }

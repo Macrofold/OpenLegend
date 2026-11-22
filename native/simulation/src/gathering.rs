@@ -164,6 +164,7 @@ pub(crate) fn bound_yield(
 
 pub(crate) fn validate_saved_work(
     state: &SimulationState,
+    budget: &crate::host::ByteBudget,
 ) -> Result<(), crate::install::InstallError> {
     use crate::install::InstallError;
     for id in state.physical.entities.ordered_ids() {
@@ -176,10 +177,16 @@ pub(crate) fn validate_saved_work(
             .actor
             .as_ref()
             .and_then(|actor| actor.action.as_ref())
-            .filter(|action| action.is_gathering())
         else {
             continue;
         };
+        if action.is_casting() {
+            crate::casts::validate_saved_work(state, id, action, budget)?;
+            continue;
+        }
+        if !action.is_gathering() {
+            continue;
+        }
         let source = action
             .target_id
             .as_deref()

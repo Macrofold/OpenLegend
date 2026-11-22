@@ -68,7 +68,7 @@ pub(super) struct ItemDefinitionFields {
     #[serde(default)]
     properties: Vec<crate::text::JsText>,
     ammunition: Option<serde::de::IgnoredAny>,
-    fishing_tool: Option<serde::de::IgnoredAny>,
+    fishing_tool: Option<FishingTool>,
     gathering_tool: Option<GatheringTool>,
     #[serde(default)]
     pub portable: bool,
@@ -118,6 +118,12 @@ struct GatheringTool {
     quantity: u64,
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FishingTool {
+    kind: String,
+}
+
 pub(crate) struct ItemDefinitionRead {
     pub pin: DefinitionPin,
     pub named: Named,
@@ -127,6 +133,7 @@ pub(crate) struct ItemDefinitionRead {
     pub properties: Vec<crate::text::JsText>,
     pub category: &'static str,
     gathering_tool: Option<GatheringTool>,
+    fishing_tool: Option<FishingTool>,
     pub portable: bool,
     packing_load: Option<u64>,
     container: Option<ContainerDefinition>,
@@ -162,6 +169,7 @@ impl ItemDefinitionRead {
                 .gathering_tool
                 .as_ref()
                 .is_some_and(|tool| !is_safe_record_id(&tool.resource_id) || tool.quantity == 0)
+            || value.fishing_tool.as_ref().is_some_and(|tool| !is_safe_record_id(&tool.kind))
         {
             return Err(InstallError::DefinitionBody);
         }
@@ -217,6 +225,7 @@ impl ItemDefinitionRead {
             properties: value.properties,
             category,
             gathering_tool: value.gathering_tool,
+            fishing_tool: value.fishing_tool,
             portable: value.portable,
             packing_load: value.packing_load,
             container: value.container,
@@ -240,6 +249,10 @@ impl ItemDefinitionRead {
             .is_some_and(|gear| gear.uses.contains(&EquipmentUse::Gather))
     }
 
+    pub(crate) fn fishing_kind(&self) -> Option<&str> {
+        self.fishing_tool.as_ref().map(|tool| tool.kind.as_str())
+    }
+
     pub(crate) fn equipment_ports(&self) -> Option<&[String]> {
         self.equipment.as_ref().map(|gear| gear.ports.as_slice())
     }
@@ -257,10 +270,12 @@ heap_record!(ItemDefinitionRead {
     description,
     properties,
     gathering_tool,
+    fishing_tool,
     material,
     equipment
 });
 heap_record!(GatheringTool { resource_id });
+heap_record!(FishingTool { kind });
 heap_record!(ItemMaterialRule { initial_attributes });
 impl HeapBytes for Equipment {
     fn heap_bytes(&self) -> Option<usize> {

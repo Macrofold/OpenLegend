@@ -154,6 +154,7 @@ impl ActivityDisplayCursor {
             NativeCommand::Outing { .. }
                 | NativeCommand::Feed { .. }
                 | NativeCommand::Gather { .. }
+                | NativeCommand::Fish { .. }
                 | NativeCommand::Equipment { .. }
                 | NativeCommand::Cancel { .. }
                 | NativeCommand::WithdrawAttempt { .. }
@@ -400,6 +401,7 @@ impl ActivityDisplayCursor {
             NativeCommand::Outing { .. }
             | NativeCommand::Feed { .. }
             | NativeCommand::Gather { .. }
+            | NativeCommand::Fish { .. }
             | NativeCommand::Equipment { .. }
             | NativeCommand::Cancel { .. }
             | NativeCommand::WithdrawAttempt { .. }

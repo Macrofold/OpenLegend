@@ -84,6 +84,11 @@ pub enum OrdinaryAction {
     },
     Strike(Option<StrikeRead>),
     Gather(GatherRead),
+    Fish {
+        description: JsText,
+        supply: JsText,
+        selected_tool: JsText,
+    },
 }
 
 pub struct GatherRead {
@@ -345,6 +350,18 @@ pub fn format(
                 JsText::concat(&[&before.into(), &read.material, &after.into()]),
             ));
             purpose.unwrap_or_else(|| copy.name.as_str().into())
+        }
+        OrdinaryAction::Fish { description, supply, selected_tool } => {
+            #[derive(Deserialize)]
+            struct CastCopy<'a> { label: &'a str, approach: &'a str }
+            static COPY: OnceLock<CastCopy<'static>> = OnceLock::new();
+            let copy = COPY.get_or_init(|| serde_json::from_str(include_str!("../cast-copy.json"))
+                .expect("base cast activity wording"));
+            tool = Some(selected_tool);
+            facts.push(fact("cast", description));
+            facts.push(fact("supply", supply));
+            facts.push(fact("approach", copy.approach.into()));
+            purpose.unwrap_or_else(|| copy.label.into())
         }
     };
     Some(ActivityView {

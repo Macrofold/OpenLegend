@@ -193,7 +193,9 @@ pub(super) fn prepare_visual_source(
             indefinite_article: label.indefinite_article.map(str::to_owned),
         }),
         assembly: None,
-        quantity: resource.map(|(stock, _)| stock.quantity as f64),
+        quantity: resource
+            .filter(|(stock, _)| stock.cast.is_none())
+            .map(|(stock, _)| stock.quantity as f64),
         heat_lit: subject.heat.as_ref().map(|heat| heat.lit),
         remains_phase: subject
             .remains
