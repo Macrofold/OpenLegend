@@ -102,7 +102,16 @@ fn membership(
             .actor
             .as_ref()
             .is_some_and(|actor| actor.controller == "player"),
-        entity.spatial.flight.is_some() || entity.spatial.fall_velocity.is_some(),
+        entity.spatial.flight.is_some()
+            || entity.spatial.fall_velocity.is_some()
+            || (active
+                && entity.animal.as_ref().is_some_and(|animal| {
+                    animal.aerial_route_id.is_some()
+                        || animal
+                            .episode
+                            .as_ref()
+                            .is_some_and(|e| e.aerial_route_id.is_some())
+                })),
     ];
     Ok(flags
         .into_iter()

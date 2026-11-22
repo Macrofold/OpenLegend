@@ -1,6 +1,7 @@
 //! One ordinary ground response turn, including entity-local navigation waits.
 //! Completing this decision admits no movement: the command owner still checks
 //! and commits the chosen intention through its ordinary occurrence boundaries.
+use super::aerial::{AerialPreparation, AerialStep, AerialTurn};
 use super::ground::{block_response, physical_unavailable};
 use super::search::{GroundSearchCursor, SearchDecision, SearchStep};
 use super::{
@@ -44,6 +45,8 @@ enum Phase {
     Readiness,
     Physical,
     Danger,
+    Aerial,
+    Ground,
     Search,
     Done,
 }
@@ -55,6 +58,8 @@ pub(crate) struct GroundResponseCursor {
     question: Option<(GeometryQueries, ByteReservation)>,
     direct: Option<GuardedRoutePlan>,
     danger: Option<DangerBatch>,
+    assessment: Option<crate::native_danger::DangerAssessment>,
+    aerial: Option<AerialTurn>,
     search: Option<GroundSearchCursor>,
     _reservation: ByteReservation,
 }
@@ -63,6 +68,7 @@ impl GroundResponseCursor {
         self.search
             .as_ref()
             .and_then(GroundSearchCursor::geometry_request)
+            .or_else(|| self.aerial.as_ref().and_then(AerialTurn::geometry_request))
             .or_else(|| self.question.as_ref().map(|(question, _)| question))
             .or_else(|| self.danger.as_ref().map(DangerBatch::queries))
     }
@@ -81,6 +87,8 @@ impl GroundResponseCursor {
             question: None,
             direct: None,
             danger: None,
+            assessment: None,
+            aerial: None,
             search: None,
             _reservation: reservation,
         })
@@ -120,6 +128,15 @@ impl GroundResponseCursor {
                         return Ok(self.complete(GroundResponseDecision::None));
                     }
                     if !actor.alive || state.physical_life != actor.physical_life.unwrap_or(0) {
+                        if entity
+                            .spatial
+                            .flight
+                            .as_ref()
+                            .is_some_and(|flight| flight.native_locomotion.is_some())
+                        {
+                            crate::body::reconcile_native_control(core, &self.actor)?;
+                            return Ok(self.complete(GroundResponseDecision::None));
+                        }
                         let life = actor.physical_life.unwrap_or(0);
                         let bytes = state.acoustic_patterns.keys().try_fold(
                             state
@@ -150,9 +167,6 @@ impl GroundResponseCursor {
                         return Ok(self.complete(GroundResponseDecision::None));
                     }
                     selected_profile(&core.state.installed, state)?;
-                    if entity.spatial.flight.is_some() {
-                        return Err(ExecutionError::UnsupportedFamily);
-                    }
                     self.phase = Phase::Readiness;
                 }
                 Phase::Readiness => {
@@ -336,6 +350,60 @@ impl GroundResponseCursor {
                         &mut core.journal.meters,
                         &sight,
                     )?;
+                    if !assessment.complete {
+                        block_response(&mut core.physical(), &installed, &self.actor, false)?;
+                        return Ok(self.complete(GroundResponseDecision::None));
+                    }
+                    self.assessment = Some(assessment);
+                    self.phase = Phase::Aerial;
+                }
+                Phase::Aerial => {
+                    if self.aerial.is_none() {
+                        match AerialTurn::prepare(
+                            core,
+                            &self.actor,
+                            self.assessment.as_ref().ok_or(ExecutionError::Invariant)?,
+                            self.candidate,
+                            budget,
+                        )? {
+                            AerialPreparation::Ground => {
+                                self.phase = Phase::Ground;
+                                continue;
+                            }
+                            AerialPreparation::Handled => {
+                                return Ok(self.complete(GroundResponseDecision::None));
+                            }
+                            AerialPreparation::Ready(turn) => self.aerial = Some(turn),
+                        }
+                    }
+                    match self
+                        .aerial
+                        .as_mut()
+                        .ok_or(ExecutionError::Invariant)?
+                        .step(
+                            core,
+                            &self.actor,
+                            self.assessment.as_ref().ok_or(ExecutionError::Invariant)?,
+                            answer.take(),
+                            budget,
+                        )? {
+                        AerialStep::Geometry => {
+                            return Ok(GroundResponseStep::Geometry(
+                                self.aerial
+                                    .as_ref()
+                                    .and_then(AerialTurn::geometry_request)
+                                    .ok_or(ExecutionError::Invariant)?,
+                            ));
+                        }
+                        AerialStep::Handled => {
+                            return Ok(self.complete(GroundResponseDecision::None));
+                        }
+                        AerialStep::Ground => self.phase = Phase::Ground,
+                    }
+                }
+                Phase::Ground => {
+                    let installed = core.state.installed.clone();
+                    let assessment = self.assessment.take().ok_or(ExecutionError::Invariant)?;
                     // Decision acquisition only reconciles danger. Actual visual
                     // receiving and continuity belong to the perception phase.
                     let turn = ground_turn(

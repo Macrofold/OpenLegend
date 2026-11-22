@@ -85,7 +85,7 @@ pub(super) fn physical_unavailable(
             .capabilities
             .capability_blocked(Some(animal), "actions")?
         || animal.spatial.fall_velocity.is_some()
-        || animal.supported_position().is_none())
+        || (animal.spatial.flight.is_none() && animal.supported_position().is_none()))
 }
 
 pub(super) fn block_response(

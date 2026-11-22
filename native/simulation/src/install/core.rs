@@ -309,6 +309,8 @@ fn assemble_selected_core(
         &physical.entities,
         &retained.flight_corridors,
         &geometry.spatial.surfaces,
+        &meanings.response_profiles,
+        physical.header.sim_time,
         occurrence_rules.value().flight.as_ref(),
         spatial.epsilon,
     )?;

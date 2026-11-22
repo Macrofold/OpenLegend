@@ -54,7 +54,29 @@ pub(crate) fn route_danger_separation(
     epsilon: f64,
     meters: &mut WorkMeters,
 ) -> Result<f64, WorkError> {
-    if path.is_empty() {
+    route_danger_separation_points(
+        from,
+        path.iter().map(SurfacePoint::point),
+        body,
+        danger,
+        profile,
+        at,
+        epsilon,
+        meters,
+    )
+}
+
+pub(crate) fn route_danger_separation_points(
+    from: Point,
+    path: impl ExactSizeIterator<Item = Point>,
+    body: Extent,
+    danger: &NativeDanger,
+    profile: &NativeResponseProfile,
+    at: f64,
+    epsilon: f64,
+    meters: &mut WorkMeters,
+) -> Result<f64, WorkError> {
+    if path.len() == 0 {
         return Ok(danger_separation(from, body, danger, profile, at));
     }
     let mut minimum = f64::INFINITY;
@@ -67,7 +89,6 @@ pub(crate) fn route_danger_separation(
     let uncertainty = danger.uncertainty(profile, at);
     for point in path {
         meters.charge(&[(WorkUnit::Tests, 1)])?;
-        let point = point.point();
         minimum = minimum.min(
             moving_bodies_minimum_separation(
                 BodyPiece {

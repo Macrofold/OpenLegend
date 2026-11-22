@@ -579,9 +579,14 @@ pub(crate) fn reconcile_native_control(
     {
         return Ok(());
     }
-    if entity.spatial.flight.is_some() || entity.threat.is_some() {
+    if entity.threat.is_some() {
         return Err(ExecutionError::UnsupportedFamily);
     }
+    let owned_flight = entity
+        .spatial
+        .flight
+        .as_ref()
+        .is_some_and(|flight| flight.native_locomotion.is_some());
     let owned = actor
         .action
         .as_ref()
@@ -601,6 +606,7 @@ pub(crate) fn reconcile_native_control(
             .as_ref()
             .is_none_or(|foraging| foraging.work.is_none())
         && !owned
+        && !owned_flight
         && animal.acoustic_patterns.is_empty()
         && animal.physical_life == actor.physical_life.unwrap_or(0)
     {
@@ -626,6 +632,9 @@ pub(crate) fn reconcile_native_control(
         .keys()
         .cloned()
         .collect();
+    if owned_flight {
+        crate::flight::retire_response_flight(core, id)?;
+    }
     crate::native_controller::foraging::relinquish(&mut core.physical(), id)?;
     *core.physical().snapshot_episode(id)? = None;
     for key in keys {

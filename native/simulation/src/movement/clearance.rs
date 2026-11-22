@@ -77,7 +77,34 @@ impl PathClearanceCursor {
         answer: Option<GeometryAnswers>,
         budget: &ByteBudget,
     ) -> Result<PathClearanceStep<'a>, ExecutionError> {
-        if path.len() != self.count {
+        self.step_path(
+            core,
+            path.len(),
+            |index| path[index].point(),
+            answer,
+            budget,
+        )
+    }
+
+    pub(crate) fn step_air<'a>(
+        &'a mut self,
+        core: &mut CoreMutation<'_>,
+        path: &[Point],
+        answer: Option<GeometryAnswers>,
+        budget: &ByteBudget,
+    ) -> Result<PathClearanceStep<'a>, ExecutionError> {
+        self.step_path(core, path.len(), |index| path[index], answer, budget)
+    }
+
+    fn step_path<'a>(
+        &'a mut self,
+        core: &mut CoreMutation<'_>,
+        length: usize,
+        point: impl Fn(usize) -> Point,
+        answer: Option<GeometryAnswers>,
+        budget: &ByteBudget,
+    ) -> Result<PathClearanceStep<'a>, ExecutionError> {
+        if length != self.count {
             return Err(ExecutionError::Invariant);
         }
         if let Some(mut answer) = answer {
@@ -129,7 +156,7 @@ impl PathClearanceCursor {
                         &core.state.installed.status_policy,
                         actor,
                         self.from,
-                        path[self.index].point(),
+                        point(self.index),
                         budget,
                         &mut core.journal.meters,
                     )
@@ -139,7 +166,7 @@ impl PathClearanceCursor {
             }
             let sweep = self.sweep.as_ref().ok_or(ExecutionError::Invariant)?;
             if self.next == sweep.bounds.len() {
-                self.from = path[self.index].point();
+                self.from = point(self.index);
                 self.index += 1;
                 self.sweep = None;
                 continue;
@@ -177,7 +204,7 @@ impl PathClearanceCursor {
             question.body_sweeps = vec![BodySweepGroup {
                 bounds: sweep.bounds[self.next..self.next + count].to_vec(),
                 from: self.from,
-                to: path[self.index].point(),
+                to: point(self.index),
                 body: sweep.body.clone(),
                 mode: BodySweepMode::FirstHit,
             }];

@@ -73,6 +73,8 @@ pub(crate) struct FlightLocomotion {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Corridor {
     id: String,
+    #[serde(skip)]
+    pub digest: String,
     pub body: BodyProfile,
     pub speed: f64,
     pub climb_speed: f64,
@@ -107,7 +109,7 @@ pub(crate) enum FlightContinuation {
     },
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct FlightConnection {
     pub kind: FlightConnectionKind,
@@ -249,6 +251,11 @@ pub(crate) fn validate_flyers(
     entities: &EntityStore,
     routes: &Corridors,
     surfaces: &[crate::geometry::WalkableSurface],
+    profiles: &IndexMap<
+        String,
+        crate::install::VerifiedDefinition<crate::native_response::NativeResponseProfile>,
+    >,
+    now: f64,
     rules: Option<&crate::worlds::base_cognition::FlightRules>,
     epsilon: f64,
 ) -> Result<(), InstallError> {
@@ -276,6 +283,35 @@ pub(crate) fn validate_flyers(
                     .get(id)
                     .is_none_or(|route| entity.ordinary_body_profile() != &route.body)
             })
+        {
+            return Err(InstallError::CurrentFormat);
+        }
+        let episode = entity
+            .animal
+            .as_ref()
+            .and_then(|animal| animal.episode.as_ref());
+        if episode
+            .and_then(|episode| episode.aerial_route_id.as_ref())
+            .is_some_and(|id| {
+                routes
+                    .get(id)
+                    .is_none_or(|route| entity.ordinary_body_profile() != &route.body)
+            })
+            || episode
+                .and_then(|episode| episode.refuge.as_ref())
+                .is_some_and(|refuge| {
+                    refuge.flight_route_id.as_ref().is_some_and(|id| {
+                        routes.get(id).is_none_or(|route| {
+                            route.points.last().is_none_or(|point| {
+                                point.landing_surface_id.as_ref() != Some(&refuge.point.surface_id)
+                                    || crate::spatial::distance(
+                                        point.position,
+                                        refuge.point.point(),
+                                    ) > epsilon
+                            })
+                        })
+                    })
+                })
         {
             return Err(InstallError::CurrentFormat);
         }
@@ -317,9 +353,6 @@ pub(crate) fn validate_flyers(
         let Some(flight) = flight else {
             continue;
         };
-        if flight.native_locomotion.is_some() || flight.awaiting_choice.is_some() {
-            return Err(InstallError::UnsupportedFamily("directed flight escape"));
-        }
         let route = routes
             .get(&flight.route_id)
             .ok_or(InstallError::CurrentFormat)?;
@@ -327,9 +360,57 @@ pub(crate) fn validate_flyers(
             .points
             .get(flight.next)
             .ok_or(InstallError::CurrentFormat)?;
+        if let Some(binding) = &flight.native_locomotion {
+            let profile_key = crate::native_response::profile_key(&binding.profile)
+                .map_err(|_| InstallError::CurrentFormat)?;
+            let profile = profiles
+                .get(&profile_key)
+                .ok_or(InstallError::CurrentFormat)?
+                .value();
+            if profile
+                .locomotion
+                .get(&binding.locomotion)
+                .and_then(|rate| rate.flight_escape)
+                .is_none()
+                || binding.mode != crate::native_response::LocomotionMode::Escape
+                || !crate::values::is_safe_record_id(&binding.id)
+                || !crate::values::is_safe_record_id(&binding.episode_id)
+                || entity.physical_life() != Some(binding.physical_life)
+                || !(0.0..=now).contains(&binding.selected_at)
+                || binding.draw.is_some_and(|draw| !(0.0..1.0).contains(&draw))
+                || binding.route_digest != route.digest
+                || binding.stop_at.is_some_and(|stop| {
+                    stop != flight.next || waypoint.landing_surface_id.is_some()
+                })
+                || flight.stop_at_landing.is_none()
+                    && episode.is_none_or(|episode| {
+                        episode.id != binding.episode_id
+                            || episode.profile_pin != binding.profile
+                            || episode.locomotion != binding.locomotion
+                            || episode.proposal_generation != binding.generation
+                            || episode.movement.as_ref().is_none_or(|m| {
+                                m.kind != crate::native_response::MovementKind::Flight
+                                    || m.id != binding.id
+                            })
+                            || binding.stop_at.is_none()
+                                && episode.refuge.as_ref().is_none_or(|refuge| {
+                                    refuge.flight_route_id.as_ref() != Some(&flight.route_id)
+                                        || refuge.generation != binding.generation
+                                })
+                    })
+            {
+                return Err(InstallError::CurrentFormat);
+            }
+        }
         if entity.actor.is_none()
             || entity.body_profile().as_ref() != &route.body
             || !(0.0..=86_400.0).contains(&flight.wait_seconds)
+            || flight.awaiting_choice.is_some_and(|awaiting| {
+                !awaiting
+                    || flight.native_locomotion.is_none()
+                    || flight.at_rest.is_some()
+                    || flight.stop_at_landing.is_some()
+            })
             || flight.stop_at_landing == Some(false)
             || flight.at_rest == Some(false)
             || flight.at_rest == Some(true)
@@ -365,7 +446,8 @@ heap_record!(Corridor {
     body,
     continuation,
     response_connections,
-    points
+    points,
+    digest
 });
 impl HeapBytes for FlightContinuation {
     fn heap_bytes(&self) -> Option<usize> {
@@ -375,4 +457,196 @@ impl HeapBytes for FlightContinuation {
             Self::Join { route_id, .. } => route_id.heap_bytes(),
         }
     }
+}
+
+/// Match the Source route label once at installation. The typed corridor has
+/// fixed ASCII property names and no user-keyed object dictionaries, so ASCII
+/// key sorting matches its canonical shape.
+pub(crate) fn install_corridor(
+    body: &str,
+    budget: &crate::host::ByteBudget,
+) -> Result<Corridor, InstallError> {
+    let mut route: Corridor =
+        serde_json::from_str(body).map_err(|_| InstallError::CurrentFormat)?;
+    let bound = crate::encoding::json_tree_allocation_bound(body)
+        .and_then(|bounds| bounds.checked_add(body.len().checked_mul(2)?))
+        .ok_or(InstallError::Capacity)?;
+    let _held = budget.reserve(bound).map_err(|_| InstallError::Capacity)?;
+    let mut raw: serde_json::Value =
+        serde_json::from_str(body).map_err(|_| InstallError::CurrentFormat)?;
+    raw.sort_all_objects();
+    let canonical = crate::encoding::json_value(&raw).map_err(|_| InstallError::CurrentFormat)?;
+    route.digest = crate::encoding::content_label(&canonical);
+    Ok(route)
+}
+
+pub(crate) fn support(entity: &crate::state::Entity) -> Option<&str> {
+    match &entity.placement {
+        Some(Placement::World {
+            support_surface_id, ..
+        }) => support_surface_id.as_deref(),
+        _ => None,
+    }
+}
+
+/// Settle at the actual arrived authored perch without restarting a decorative
+/// wait. A completed response relinquishes only its exact flight binding.
+pub(crate) fn hold_response_perch(
+    core: &mut crate::execution::CoreMutation<'_>,
+    handle: crate::state::EntityHandle,
+    epsilon: f64,
+    finish: bool,
+) -> Result<(), crate::execution::ExecutionError> {
+    use crate::execution::ExecutionError;
+    let entity = core
+        .state
+        .physical
+        .entities
+        .resolve(handle)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let Some(flight) = &entity.spatial.flight else {
+        return Ok(());
+    };
+    let route = core
+        .state
+        .installed
+        .retained
+        .flight_corridors
+        .get(&flight.route_id)
+        .ok_or(ExecutionError::Invariant)?;
+    let arrived = (flight.next + route.points.len() - 1) % route.points.len();
+    let waypoint = &route.points[arrived];
+    let position = entity
+        .world_position()
+        .ok_or(ExecutionError::InvalidPosition)?;
+    let perch = flight.at_rest.is_none()
+        && support(entity).is_some()
+        && waypoint.landing_surface_id.as_deref() == support(entity)
+        && crate::spatial::distance(waypoint.position, position) <= epsilon;
+    if !perch && !(finish && flight.native_locomotion.is_some()) {
+        return Ok(());
+    }
+    let bytes = flight.heap_bytes().ok_or(ExecutionError::Capacity)?;
+    core.physical().reserve_response_growth(bytes)?;
+    let mut next = core
+        .state
+        .physical
+        .entities
+        .resolve(handle)
+        .and_then(|entity| entity.spatial.flight.clone())
+        .ok_or(ExecutionError::Invariant)?;
+    if perch {
+        next.next = arrived;
+        next.wait_seconds = 0.0;
+        next.at_rest = Some(true);
+    }
+    if finish {
+        next.native_locomotion = None;
+    }
+    core.physical().replace_flight(handle, Some(next), None)
+}
+
+/// Follow only the authored successor edges. The caller still has to prove
+/// physical clearance from the actual body at each boundary.
+pub(crate) fn successor<'a>(
+    routes: &'a Corridors,
+    route: &'a Corridor,
+    next: usize,
+) -> Option<(&'a Corridor, usize)> {
+    if next + 1 < route.points.len() {
+        return Some((route, next + 1));
+    }
+    match &route.continuation {
+        FlightContinuation::Loop => Some((route, 0)),
+        FlightContinuation::Land { .. } => None,
+        FlightContinuation::Join { route_id, next } => Some((routes.get(route_id)?, *next)),
+    }
+}
+
+impl Corridor {
+    pub(crate) fn id(&self) -> &str {
+        &self.id
+    }
+}
+
+/// A detached response may finish only the already released motion up to its
+/// next supported landing. Replaced/dead body life never keeps that grant.
+pub(crate) fn retire_response_flight(
+    core: &mut crate::execution::CoreMutation<'_>,
+    id: &str,
+) -> Result<(), crate::execution::ExecutionError> {
+    use crate::execution::ExecutionError;
+    let handle = core
+        .state
+        .physical
+        .entities
+        .handle(id)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let entity = core
+        .state
+        .physical
+        .entities
+        .resolve(handle)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let Some(flight) = &entity.spatial.flight else {
+        return Ok(());
+    };
+    let Some(binding) = &flight.native_locomotion else {
+        return Ok(());
+    };
+    if support(entity).is_some() {
+        return core.physical().replace_flight(handle, None, None);
+    }
+    let routes = &core.state.installed.retained.flight_corridors;
+    let can_reach_landing = if entity.physical_life() == Some(binding.physical_life)
+        && entity
+            .actor
+            .as_ref()
+            .is_some_and(|actor| actor.alive && !actor.incapacitated)
+    {
+        let route = routes
+            .get(&flight.route_id)
+            .ok_or(ExecutionError::Invariant)?;
+        let bound = routes.values().map(|r| r.points.len()).sum::<usize>();
+        let mut edge = Some((route, flight.next));
+        let mut landing = false;
+        for _ in 0..bound {
+            let Some((route, next)) = edge else {
+                break;
+            };
+            if route
+                .points
+                .get(next)
+                .ok_or(ExecutionError::Invariant)?
+                .landing_surface_id
+                .is_some()
+            {
+                landing = true;
+                break;
+            }
+            edge = successor(routes, route, next);
+        }
+        landing
+    } else {
+        false
+    };
+    if !can_reach_landing {
+        return core.physical().replace_flight(handle, None, Some(0.0));
+    }
+    let bytes = flight.heap_bytes().ok_or(ExecutionError::Capacity)?;
+    core.physical().reserve_response_growth(bytes)?;
+    let mut next = core
+        .state
+        .physical
+        .entities
+        .resolve(handle)
+        .and_then(|entity| entity.spatial.flight.clone())
+        .ok_or(ExecutionError::Invariant)?;
+    next.stop_at_landing = Some(true);
+    next.awaiting_choice = None;
+    next.native_locomotion
+        .as_mut()
+        .ok_or(ExecutionError::Invariant)?
+        .stop_at = None;
+    core.physical().replace_flight(handle, Some(next), None)
 }

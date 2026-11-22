@@ -3,15 +3,16 @@
 
 use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
 use crate::execution::{CoreMutation, ExecutionError, StagedOccurrence};
-use crate::flight::{Corridor, FlightContinuation, FlightProgress, FlightWaypoint};
+use crate::flight::{Corridor, FlightContinuation, FlightProgress, FlightWaypoint, support};
 use crate::geometry::{
     FlightSegment, GeometryAnswers, GeometryBinding, GeometryQueries, StandingQuery,
 };
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation};
+use crate::native_danger::{DangerAssessment, DangerBatch};
 use crate::simulation::{InstalledWorld, PhysicalState};
 use crate::spatial::{distance, interpolate};
-use crate::state::{Entity, EntityHandle, Named, Placement, Point, SurfacePoint};
+use crate::state::{Entity, EntityHandle, Named, Point, SurfacePoint};
 use crate::worlds::base_cognition::FlightRules;
 use std::mem::size_of;
 
@@ -41,6 +42,10 @@ pub(super) fn motion_reach(
     {
         return Ok(Some(0.0));
     }
+    if let Some(binding) = &flight.native_locomotion {
+        let route = corridor(installed, flight)?;
+        return Ok(Some(rates(installed, entity, route, binding)?.0 * seconds));
+    }
     // Correlated corridors retain the same body. A joined corridor may have
     // a faster authored rate before the end of this same broad read window.
     let routes = &installed.retained.flight_corridors;
@@ -67,15 +72,6 @@ fn corridor<'a>(
         .ok_or(ExecutionError::Invariant)
 }
 
-fn support(entity: &Entity) -> Option<&str> {
-    match &entity.placement {
-        Some(Placement::World {
-            support_surface_id, ..
-        }) => support_surface_id.as_deref(),
-        _ => None,
-    }
-}
-
 fn can_advance(entity: &Entity, installed: &InstalledWorld) -> Result<bool, ExecutionError> {
     Ok(entity
         .actor
@@ -87,14 +83,74 @@ fn can_advance(entity: &Entity, installed: &InstalledWorld) -> Result<bool, Exec
             .capability_blocked(Some(entity), "locomotion")?
         && !(support(entity).is_some()
             && entity
+                .spatial
+                .flight
+                .as_ref()
+                .is_some_and(|flight| flight.native_locomotion.is_none())
+            && entity
                 .animal
                 .as_ref()
                 .is_some_and(|animal| animal.episode.is_some())))
 }
 
-fn travel(route: &Corridor, from: Point, target: Point) -> f64 {
-    let horizontal_and_vertical = distance(from, target) / route.speed;
-    horizontal_and_vertical.max((target.y - from.y).abs() / route.climb_speed)
+fn rates(
+    installed: &InstalledWorld,
+    entity: &Entity,
+    route: &Corridor,
+    binding: &crate::flight::FlightLocomotion,
+) -> Result<(f64, f64), ExecutionError> {
+    let current = entity
+        .spatial
+        .flight
+        .as_ref()
+        .ok_or(ExecutionError::Invariant)?;
+    if binding.route_digest != corridor(installed, current)?.digest {
+        return Err(ExecutionError::Invariant);
+    }
+    let key = crate::native_response::profile_key(&binding.profile)
+        .map_err(|_| ExecutionError::Invariant)?;
+    let profile = installed
+        .response_profiles
+        .get(&key)
+        .ok_or(ExecutionError::Invariant)?
+        .value();
+    let speed = profile
+        .locomotion
+        .get(&binding.locomotion)
+        .and_then(|r| r.flight_escape)
+        .ok_or(ExecutionError::Invariant)?;
+    let factor = if profile.movement_factors.scars {
+        crate::body::scar_factor(
+            installed
+                .body_policy
+                .as_ref()
+                .map(crate::install::VerifiedDefinition::value),
+            entity,
+            crate::body::ScarEffect::Movement,
+        )
+    } else {
+        1.0
+    };
+    Ok((speed * factor, route.climb_speed * factor))
+}
+
+fn travel(
+    installed: &InstalledWorld,
+    entity: &Entity,
+    route: &Corridor,
+    from: Point,
+    target: Point,
+) -> Result<f64, ExecutionError> {
+    let (speed, climb) = match entity
+        .spatial
+        .flight
+        .as_ref()
+        .and_then(|flight| flight.native_locomotion.as_ref())
+    {
+        Some(binding) => rates(installed, entity, route, binding)?,
+        None => (route.speed, route.climb_speed),
+    };
+    Ok((distance(from, target) / speed).max((target.y - from.y).abs() / climb))
 }
 
 fn below(installed: &InstalledWorld, point: Point) -> Option<(f64, &str)> {
@@ -177,7 +233,7 @@ pub(super) fn boundary(
                     .get(flight.next)
                     .ok_or(ExecutionError::Invariant)?;
                 let separation = distance(point, target.position);
-                let duration = travel(route, point, target.position);
+                let duration = travel(installed, entity, route, point, target.position)?;
                 bound = bound.min(duration * (travel_limit / separation).min(1.0));
             }
         }
@@ -195,6 +251,7 @@ struct FlightLeg {
     questions: GeometryQueries,
     destination: Point,
     arrived: bool,
+    landing_check: Option<DangerBatch>,
     _storage: ByteReservation,
 }
 
@@ -214,7 +271,12 @@ impl FlightCursor {
     }
 
     pub(super) fn questions(&self) -> Option<&GeometryQueries> {
-        self.pending.as_ref().map(|flight| &flight.questions)
+        self.pending
+            .as_ref()
+            .map(|flight| match &flight.landing_check {
+                Some(batch) => batch.queries(),
+                None => &flight.questions,
+            })
     }
 
     pub(super) fn step(
@@ -235,30 +297,95 @@ impl FlightCursor {
             let Some(position) = entity.world_position() else {
                 return Err(ExecutionError::InvalidPosition);
             };
-            if let Some(plan) = self.pending.take() {
-                let answer = answers.take().ok_or(ExecutionError::Invariant)?;
-                plan.questions
-                    .validate_answers(&answer)
-                    .map_err(|_| ExecutionError::InvalidPosition)?;
-                self.next += 1;
-                if !answer.flight[0] || answer.standing.first() == Some(&false) {
-                    continue;
-                }
+            if let Some(mut plan) = self.pending.take() {
+                let installed = core.state.installed.clone();
                 let flight = entity
                     .spatial
                     .flight
                     .as_ref()
                     .ok_or(ExecutionError::Invariant)?;
-                let route = corridor(&core.state.installed, flight)?;
+                let route = corridor(&installed, flight)?;
                 let target = route
                     .points
                     .get(flight.next)
                     .ok_or(ExecutionError::Invariant)?;
-                if target.landing_surface_id.is_some()
-                    && blocked_landing(core, handle, target.position, entity)
-                {
-                    continue;
+                let has_landing = target.landing_surface_id.is_some();
+                let guarded =
+                    flight.native_locomotion.is_some() && flight.stop_at_landing.is_none();
+                if plan.landing_check.is_none() {
+                    let answer = answers.take().ok_or(ExecutionError::Invariant)?;
+                    plan.questions
+                        .validate_answers(&answer)
+                        .map_err(|_| ExecutionError::InvalidPosition)?;
+                    if !answer.flight[0]
+                        || answer.standing.first() == Some(&false)
+                        || has_landing && blocked_landing(core, handle, target.position, entity)
+                    {
+                        self.next += 1;
+                        refuse_flight_leg(core, handle)?;
+                        continue;
+                    }
+                    if guarded && has_landing {
+                        let landing_binding = GeometryBinding::new(
+                            crate::host::CandidateKey {
+                                id: binding.candidate_id,
+                                base_cut: binding.base_cut,
+                                generation: binding.generation,
+                            },
+                            installed.geometry.spatial.revision,
+                            core.journal.next_provider_serial()?,
+                        );
+                        let batch = DangerBatch::prepare(
+                            &core.state.physical,
+                            &installed,
+                            &entity.id,
+                            landing_binding,
+                            budget,
+                        )?;
+                        let needs_sight = !batch.queries().is_empty();
+                        plan.landing_check = Some(batch);
+                        if needs_sight {
+                            self.pending = Some(plan);
+                            return Ok(FlightStep::Geometry);
+                        }
+                    }
                 }
+                self.next += 1;
+                if let Some(batch) = plan.landing_check.take() {
+                    let (assessment, sight) = match answers.take() {
+                        Some(answer) => batch.finish(answer)?,
+                        None => {
+                            let binding = batch.queries().binding;
+                            batch.finish_sight(binding, &[])?
+                        }
+                    };
+                    let _id_storage = budget.reserve(entity.id.len())?;
+                    let id = entity.id.clone();
+                    let assessment = assessment.reconcile(
+                        &mut crate::execution::PhysicalMutation {
+                            state: &mut core.state.physical,
+                            journal: &mut core.journal.physical,
+                        },
+                        &installed,
+                        &mut core.journal.meters,
+                        &sight,
+                    )?;
+                    if !landing_is_safe(core, &id, target.position, &assessment)? {
+                        refuse_flight_leg(core, handle)?;
+                        continue;
+                    }
+                }
+                let entity = core
+                    .state
+                    .physical
+                    .entities
+                    .resolve(handle)
+                    .ok_or(ExecutionError::Invariant)?;
+                let flight = entity
+                    .spatial
+                    .flight
+                    .as_ref()
+                    .ok_or(ExecutionError::Invariant)?;
                 let _id = budget.reserve(entity.id.len())?;
                 let id = entity.id.clone();
                 if self.seconds == 0.0 {
@@ -272,7 +399,7 @@ impl FlightCursor {
                 }
                 let next = plan
                     .arrived
-                    .then(|| after_waypoint(flight, route, budget))
+                    .then(|| after_waypoint(flight, route, &installed, budget))
                     .transpose()?;
                 let guarded_landing = plan
                     .arrived
@@ -284,7 +411,12 @@ impl FlightCursor {
                 core.physical()
                     .set_flight_position(&id, plan.destination, surface)?;
                 if let Some((next, _held)) = next {
+                    let reconsider = next.awaiting_choice.is_some()
+                        || next.at_rest.is_some() && next.native_locomotion.is_some();
                     core.physical().replace_flight(handle, Some(next), None)?;
+                    if reconsider {
+                        review_flight_now(core, handle)?;
+                    }
                 }
                 if landed {
                     return Ok(FlightStep::Event(occurrence(
@@ -319,7 +451,7 @@ impl FlightCursor {
                     .as_ref()
                     .is_some_and(|actor| actor.alive && !actor.incapacitated)
             {
-                core.physical().replace_flight(handle, None, Some(0.0))?;
+                end_air_progress(core, handle, Some(0.0))?;
                 self.next += 1;
                 continue;
             }
@@ -327,23 +459,35 @@ impl FlightCursor {
                 self.next += 1;
                 continue;
             }
-            if flight.native_locomotion.is_some() {
-                return Err(ExecutionError::UnsupportedFamily);
-            }
             let route = corridor(&core.state.installed, flight)?;
             if flight.at_rest.is_some() {
                 if self.seconds == 0.0
                     && flight.stop_at_landing.is_none()
-                    && let FlightContinuation::Land {
-                        resume_route_id: Some(resume),
-                    } = &route.continuation
+                    && entity
+                        .animal
+                        .as_ref()
+                        .is_none_or(|animal| animal.episode.is_none())
+                    && entity
+                        .actor
+                        .as_ref()
+                        .is_some_and(|actor| actor.controller == "native")
                 {
-                    let (mut next, _held) = copy_progress(flight, resume.len(), budget)?;
-                    next.route_id = resume.clone();
-                    next.at_rest = None;
-                    next.next = 1;
-                    core.physical().replace_flight(handle, Some(next), None)?;
-                    continue;
+                    let routes = &core.state.installed.retained.flight_corridors;
+                    let next = match &route.continuation {
+                        FlightContinuation::Land { resume_route_id } => resume_route_id
+                            .as_ref()
+                            .and_then(|resume| routes.get(resume))
+                            .map(|route| (route, 1)),
+                        _ => crate::flight::successor(routes, route, flight.next),
+                    };
+                    if let Some((route, waypoint)) = next {
+                        let (mut next, _held) = copy_progress(flight, route.id().len(), budget)?;
+                        next.route_id = route.id().to_owned();
+                        next.at_rest = None;
+                        next.next = waypoint;
+                        core.physical().replace_flight(handle, Some(next), None)?;
+                        continue;
+                    }
                 }
                 self.next += 1;
                 continue;
@@ -371,9 +515,17 @@ impl FlightCursor {
                 .points
                 .get(flight.next)
                 .ok_or(ExecutionError::Invariant)?;
-            let duration = travel(route, position, target.position);
+            let duration = travel(
+                &core.state.installed,
+                entity,
+                route,
+                position,
+                target.position,
+            )?;
             let arrived = self.seconds > 0.0 && duration <= self.seconds;
-            let fraction = if grounded {
+            let fraction = if duration == 0.0 {
+                1.0
+            } else if grounded {
                 (0.001 / distance(position, target.position)).min(1.0)
             } else if arrived {
                 1.0
@@ -448,6 +600,7 @@ fn prepare_leg(
         questions,
         destination,
         arrived,
+        landing_check: None,
         _storage: storage,
     })
 }
@@ -469,10 +622,20 @@ fn copy_progress(
 fn after_waypoint(
     flight: &FlightProgress,
     route: &Corridor,
+    installed: &InstalledWorld,
     budget: &ByteBudget,
 ) -> Result<(FlightProgress, ByteReservation), ExecutionError> {
     let growth = match &route.continuation {
-        FlightContinuation::Join { route_id, .. } => route_id.len(),
+        FlightContinuation::Join { route_id, .. } => {
+            route_id.len()
+                + installed
+                    .retained
+                    .flight_corridors
+                    .get(route_id)
+                    .ok_or(ExecutionError::Invariant)?
+                    .digest
+                    .len()
+        }
         _ => 0,
     };
     let (mut next, held) = copy_progress(flight, growth, budget)?;
@@ -481,9 +644,18 @@ fn after_waypoint(
         .get(flight.next)
         .ok_or(ExecutionError::Invariant)?;
     next.wait_seconds = waypoint.wait_seconds;
-    if flight.stop_at_landing.is_some() && waypoint.landing_surface_id.is_some() {
+    if flight
+        .native_locomotion
+        .as_ref()
+        .and_then(|binding| binding.stop_at)
+        == Some(flight.next)
+    {
+        next.awaiting_choice = Some(true);
+        next.wait_seconds = 0.0;
+    } else if flight.stop_at_landing.is_some() && waypoint.landing_surface_id.is_some() {
         next.at_rest = Some(true);
         next.wait_seconds = 0.0;
+        next.native_locomotion = None;
     } else if flight.next + 1 < route.points.len() {
         next.next += 1;
     } else {
@@ -498,6 +670,15 @@ fn after_waypoint(
             } => {
                 next.route_id = route_id.clone();
                 next.next = *waypoint;
+                if let Some(binding) = &mut next.native_locomotion {
+                    binding.route_digest = installed
+                        .retained
+                        .flight_corridors
+                        .get(route_id)
+                        .ok_or(ExecutionError::Invariant)?
+                        .digest
+                        .clone();
+                }
             }
         }
     }
@@ -659,4 +840,149 @@ fn occurrence(
         origin: None,
         exposure: None,
     })
+}
+
+fn review_flight_now(
+    core: &mut CoreMutation<'_>,
+    handle: EntityHandle,
+) -> Result<(), ExecutionError> {
+    let entity = core
+        .state
+        .physical
+        .entities
+        .resolve(handle)
+        .ok_or(ExecutionError::Invariant)?;
+    let owns_flight = entity
+        .spatial
+        .flight
+        .as_ref()
+        .and_then(|flight| flight.native_locomotion.as_ref())
+        .is_some_and(|binding| {
+            entity
+                .animal
+                .as_ref()
+                .and_then(|state| state.episode.as_ref())
+                .is_some_and(|episode| episode.id == binding.episode_id)
+        });
+    if !owns_flight {
+        return Ok(());
+    }
+    let id_bytes = entity.id.len();
+    let at = core.state.physical.header.sim_time;
+    core.physical().reserve_response_growth(id_bytes)?;
+    let id = core
+        .state
+        .physical
+        .entities
+        .resolve(handle)
+        .ok_or(ExecutionError::MissingEntity)?
+        .id
+        .clone();
+    let mut mutation = core.physical();
+    mutation
+        .snapshot_episode(&id)?
+        .as_mut()
+        .ok_or(ExecutionError::Invariant)?
+        .review_at = at;
+    mutation.behavior_changed(&id, false)
+}
+
+fn refuse_flight_leg(
+    core: &mut CoreMutation<'_>,
+    handle: EntityHandle,
+) -> Result<(), ExecutionError> {
+    let entity = core
+        .state
+        .physical
+        .entities
+        .resolve(handle)
+        .ok_or(ExecutionError::Invariant)?;
+    let flight = entity
+        .spatial
+        .flight
+        .as_ref()
+        .ok_or(ExecutionError::Invariant)?;
+    if flight.stop_at_landing.is_some() {
+        let fall = support(entity).is_none().then_some(0.0);
+        end_air_progress(core, handle, fall)?;
+    } else if flight.native_locomotion.is_some() {
+        core.physical().await_flight_choice(handle)?;
+        review_flight_now(core, handle)?;
+    }
+    Ok(())
+}
+
+/// An unavailable attached movement cannot leave a saved reference to its old
+/// route. The body may fall, while the private controller can still review.
+fn end_air_progress(
+    core: &mut CoreMutation<'_>,
+    handle: EntityHandle,
+    fall: Option<f64>,
+) -> Result<(), ExecutionError> {
+    let entity = core
+        .state
+        .physical
+        .entities
+        .resolve(handle)
+        .ok_or(ExecutionError::Invariant)?;
+    let owns_flight = entity
+        .spatial
+        .flight
+        .as_ref()
+        .and_then(|flight| flight.native_locomotion.as_ref())
+        .is_some_and(|binding| {
+            entity
+                .animal
+                .as_ref()
+                .and_then(|state| state.episode.as_ref())
+                .is_some_and(|episode| episode.id == binding.episode_id)
+        });
+    let id_bytes = entity.id.len();
+    core.physical().reserve_response_growth(id_bytes)?;
+    let id = core
+        .state
+        .physical
+        .entities
+        .resolve(handle)
+        .ok_or(ExecutionError::MissingEntity)?
+        .id
+        .clone();
+    let mut mutation = core.physical();
+    mutation.replace_flight(handle, None, fall)?;
+    if owns_flight {
+        mutation
+            .snapshot_episode(&id)?
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?
+            .movement = None;
+        mutation.behavior_changed(&id, false)?;
+    }
+    Ok(())
+}
+
+fn landing_is_safe(
+    core: &CoreMutation<'_>,
+    id: &str,
+    point: Point,
+    assessment: &DangerAssessment,
+) -> Result<bool, ExecutionError> {
+    assessment.require_current(&core.state.physical, id)?;
+    if !assessment.complete {
+        return Ok(false);
+    }
+    let entity = core
+        .state
+        .physical
+        .entities
+        .get(id)
+        .ok_or(ExecutionError::Invariant)?;
+    let state = entity.animal.as_ref().ok_or(ExecutionError::Invariant)?;
+    let profile = crate::native_controller::selected_profile(&core.state.installed, state)?;
+    crate::native_controller::flight_landing_clear(
+        entity,
+        point,
+        assessment,
+        profile,
+        core.state.physical.header.sim_time,
+    )
 }

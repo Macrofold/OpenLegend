@@ -1042,14 +1042,16 @@ impl AdvanceCursor {
                     }
                     if self.response.is_none() {
                         let id = self.actor(core, handle)?;
-                        let state = core
+                        let entity = core
                             .state
                             .physical
                             .entities
                             .resolve(handle)
-                            .and_then(|entity| entity.animal.as_ref())
                             .ok_or(ExecutionError::Invariant)?;
+                        let state = entity.animal.as_ref().ok_or(ExecutionError::Invariant)?;
                         let episode = state.episode.as_ref().ok_or(ExecutionError::Invariant)?;
+                        let has_flight =
+                            entity.spatial.flight.is_some() || episode.aerial_route_id.is_some();
                         let prepared = self.prepared.iter().position(|(actor, _)| actor == id);
                         // A saved wait can become ready or stale before its
                         // review date. The controller owns that readiness read.
@@ -1060,9 +1062,12 @@ impl AdvanceCursor {
                             self.next += 1;
                             continue;
                         }
-                        // A private review may only renew its clock. Source
-                        // retains earned rates through that read; an actual
-                        // route/stop settles them at NativeCommand admission.
+                        // Aerial choices directly admit an existing flight
+                        // continuation. Settle elapsed rates from the old
+                        // movement first. Ground routes still use NativeCommand.
+                        if has_flight && self.pending_flush(core, Phase::AnimalChoices, budget)? {
+                            continue;
+                        }
                         let id = self.actor(core, handle)?;
                         let supplied = prepared.map(|at| self.prepared.remove(at).1);
                         self.response = Some(GroundResponseCursor::prepare(
@@ -1077,6 +1082,16 @@ impl AdvanceCursor {
                         Some(AdvanceAnswer::Geometry(value)) => Some(value),
                         _ => return Err(invalid().into()),
                     };
+                    let flight_before = self.mechanics.as_ref().and_then(|_| {
+                        let entity = core.state.physical.entities.resolve(handle)?;
+                        let has_aerial_choice = entity.spatial.flight.is_some()
+                            || entity
+                                .animal
+                                .as_ref()
+                                .and_then(|animal| animal.episode.as_ref())
+                                .is_some_and(|episode| episode.aerial_route_id.is_some());
+                        has_aerial_choice.then(|| core.journal.physical.change_cursor())
+                    });
                     let decision = match self
                         .response
                         .as_mut()
@@ -1086,6 +1101,18 @@ impl AdvanceCursor {
                         GroundResponseStep::Geometry(_) => return Ok(Progress::Geometry),
                         GroundResponseStep::Complete(value) => value.into_decision(),
                     };
+                    // A private review that only renews a clock leaves the
+                    // current mechanical forecast intact.
+                    if let Some(before) = flight_before
+                        && core
+                            .journal
+                            .physical
+                            .changes_since(before)?
+                            .iter()
+                            .any(|change| matches!(change, PhysicalChange::Behavior { .. }))
+                    {
+                        self.discard_mechanics()?;
+                    }
                     self.response = None;
                     self.next += 1;
                     match decision {

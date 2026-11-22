@@ -178,9 +178,9 @@ Do not apply the new deer escape speed to antler preparation, pursuit timing or 
 
 ## Bird flight and unsupported routes
 
-An alarm must reach the bird controller even while a bird is perched on, waiting for or traversing its ordinary flight route. The current early return for any `spatial.flight` must not silently discard the episode. Existing airborne movement retains sole ownership of the body; record the alarm immediately and redirect only through a valid, swept connection in the admitted flight graph.
+The same controller receives an alarm while a bird is perched on, waiting for or traversing its ordinary flight route. It records the personally acquired cue immediately. The flight owner keeps control of the body and redirects it only through a valid, swept connection in the admitted flight graph.
 
-The current authored graph contains west `(12, 34.5)` and east `(28, 20)` ground refuges, with height and support resolved by the initializer. Seeded rocks and decorative trees stay outside their authored 1.5-metre clearing radius. The ordinary deck loop remains selected; native danger-driven choices now use these corridors through the existing flight owner. Complete integration qualification remains with CTR03–CTR04.
+The current authored graph contains west `(12, 34.5)` and east `(28, 20)` ground refuges, with height and support resolved by the initializer. Seeded rocks and decorative trees stay outside their authored 1.5-metre clearing radius. The ordinary deck loop remains selected. The stand-alone server's [connected flight checks](../../verification/spatial-cadence-main-integration.md#stand-alone-rust-airborne-alarms) cover the existing east escape and return corridors. Complete integration qualification remains with CTR03–CTR04.
 
 For the starting woodland bird, author at least two alternative escape destinations/perches and connections into the existing air corridors, on distinct sides of the clearing. Rank valid destinations against the same complete danger set using **three-dimensional body separation** and corridor clearance. A high perch is useful only when its physical position actually meets those tests. Its mere `perch` label does not make it safe.
 

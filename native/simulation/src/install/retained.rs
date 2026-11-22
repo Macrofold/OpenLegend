@@ -679,7 +679,7 @@ pub(crate) fn install_retained(
         flight_preparation
             .merge(storage)
             .map_err(|_| InstallError::Capacity)?;
-        let route = serde_json::from_str(body).map_err(|_| InstallError::CurrentFormat)?;
+        let route = crate::flight::install_corridor(body, budget)?;
         flight_corridors.insert(id.to_owned(), route);
     }
     let (recipes, recipe_input) = r

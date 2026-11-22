@@ -15,8 +15,10 @@ mod event;
 pub(crate) use event::{acquire_event, event_reception_needed, require_supported_event};
 mod ground;
 pub(crate) use ground::{GroundTurn, ground_turn, proposal_current};
+mod aerial;
 pub(crate) mod feeding;
 pub(crate) mod foraging;
+pub(crate) use aerial::separation_is_clear as flight_landing_clear;
 mod movement;
 pub(crate) mod territorial;
 pub(crate) use movement::{complete_movement, movement_refused};
@@ -413,12 +415,22 @@ fn begin_alarm(
         return Ok(false);
     }
     let fresh = state.episode.is_none();
+    let aerial_route_id = state.aerial_route_id.as_ref().or_else(|| {
+        mutation
+            .state
+            .entities
+            .resolve(handle)?
+            .spatial
+            .flight
+            .as_ref()
+            .map(|f| &f.route_id)
+    });
     let storage = if fresh {
         std::mem::size_of::<NativeResponseEpisode>()
             + state.profile.id.len()
             + state.profile.digest.len()
             + state.locomotion.len()
-            + state.aerial_route_id.as_ref().map_or(0, String::len)
+            + aerial_route_id.map_or(0, String::len)
             + id.len()
     } else {
         0
@@ -429,16 +441,26 @@ fn begin_alarm(
             .ok_or(ExecutionError::Capacity)?,
     )?;
     let initial = if fresh {
-        let state = mutation
+        let entity = mutation
             .state
             .entities
             .resolve(handle)
-            .and_then(|body| body.animal.as_ref())
             .ok_or(ExecutionError::Invariant)?;
+        let state = entity.animal.as_ref().ok_or(ExecutionError::Invariant)?;
         Some((
             state.profile.clone(),
             state.locomotion.clone(),
-            state.aerial_route_id.clone(),
+            state
+                .aerial_route_id
+                .as_ref()
+                .or_else(|| {
+                    entity
+                        .spatial
+                        .flight
+                        .as_ref()
+                        .map(|flight| &flight.route_id)
+                })
+                .cloned(),
         ))
     } else {
         None
@@ -534,9 +556,6 @@ pub(crate) fn acquire_sound(
     if band < minimum {
         return Ok(());
     }
-    if animal.spatial.flight.is_some() {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
     let handle = mutation
         .state
         .entities
@@ -604,6 +623,12 @@ pub(crate) fn acquire_sound(
                 .as_ref()
                 .and_then(|actor| actor.action.as_ref())
                 .is_some_and(|action| action.id == movement.id)
+                || animal
+                    .spatial
+                    .flight
+                    .as_ref()
+                    .and_then(|flight| flight.native_locomotion.as_ref())
+                    .is_some_and(|binding| binding.id == movement.id)
         });
     begin_alarm(
         mutation,

@@ -53,3 +53,29 @@ impl PhysicalMutation<'_> {
             .settle_operational_memory(entity, &mut self.journal.reservation, false)
     }
 }
+
+impl PhysicalMutation<'_> {
+    /// A refused owned flight waits at its actual physical pose for a new
+    /// finite choice. The previous flight remains recoverable in the journal.
+    pub(crate) fn await_flight_choice(
+        &mut self,
+        handle: EntityHandle,
+    ) -> Result<(), ExecutionError> {
+        let flight = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.spatial.flight.as_ref())
+            .ok_or(ExecutionError::Invariant)?;
+        self.journal
+            .reserve(flight.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        let mut flight = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.spatial.flight.clone())
+            .ok_or(ExecutionError::Invariant)?;
+        flight.awaiting_choice = Some(true);
+        self.replace_flight(handle, Some(flight), None)
+    }
+}

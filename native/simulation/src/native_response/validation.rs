@@ -103,9 +103,6 @@ pub(crate) fn validate_native_response(
     }
     if let Some(episode) = &state.episode {
         let active = selected(profiles, &episode.profile_pin)?;
-        if episode.aerial_route_id.is_some() {
-            return Err(UnconvertedFamily);
-        }
         if !actor.alive
             || actor.controller != "native"
             || !is_safe_record_id(&episode.id)
@@ -264,9 +261,6 @@ pub(crate) fn validate_native_response(
             }
         }
         if let Some(refuge) = &episode.refuge {
-            if refuge.flight_route_id.is_some() {
-                return Err(UnconvertedFamily);
-            }
             if !surface(&refuge.point)
                 || !past(refuge.selected_at, now)
                 || refuge.generation > MAX_SAFE_INTEGER
@@ -283,7 +277,15 @@ pub(crate) fn validate_native_response(
             }
         }
         if let Some(movement) = &episode.movement {
-            if movement.kind == MovementKind::Flight || !is_safe_record_id(&movement.id) {
+            if !is_safe_record_id(&movement.id)
+                || (movement.kind == MovementKind::Flight
+                    && entity
+                        .spatial
+                        .flight
+                        .as_ref()
+                        .and_then(|flight| flight.native_locomotion.as_ref())
+                        .is_none_or(|binding| binding.id != movement.id))
+            {
                 return Err(Continuation);
             }
         }
