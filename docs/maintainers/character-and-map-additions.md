@@ -22,7 +22,7 @@ The [paused future-mechanics decisions and prerequisites](#future-mechanics--pau
 
 **Exit:** markers, notes and search survive a reload; an unknown place shows no name; nothing reaches another player. **Depends on:** the Gildmoss HUD and main panel from the [overhaul](../projects/interface-art-direction-overhaul-plan.md).
 
-The stand-alone Rust [marker editor](../verification/character-and-map-additions.md#stand-alone-rust-private-map-markers--november-22-2026) passes the private marker, attached note, search, save and restart journey. Writing notes on retained places still has a separate Rust caller join.
+The stand-alone Rust [marker editor](../verification/character-and-map-additions.md#stand-alone-rust-private-map-markers--november-22-2026) passes the private marker, attached note, search, save and restart journey. The stand-alone [retained-place editor](../verification/character-and-map-additions.md#stand-alone-rust-retained-place-notes--november-22-2026) also passes exact owner selection, search, clearing, withdrawal and saved continuation when the physical landmark is absent.
 
 ## Future mechanics — paused design decisions and prerequisites
 

@@ -179,7 +179,7 @@ impl NativeWorldSession {
         let mut page = BinaryHeap::with_capacity(NOTE_PAGE);
         let mut more_notes = false;
         if let Some((documents, after)) = documents.zip(notes_after) {
-            for (key, document) in documents {
+            for (key, document) in documents.iter() {
                 if js_string_cmp(key, after).is_le() {
                     continue;
                 }

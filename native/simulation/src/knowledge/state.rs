@@ -18,8 +18,21 @@ impl Serialize for KnowledgeEntry {
         self.document.serialize(serializer)
     }
 }
+#[derive(Default)]
+pub(crate) struct ActorKnowledge {
+    documents: IndexMap<String, KnowledgeEntry>,
+    // The map reads these notes from the accepted world. Its display revision
+    // rolls back with the documents and ignores other knowledge subjects.
+    place_revision: u64,
+}
+impl std::ops::Deref for ActorKnowledge {
+    type Target = IndexMap<String, KnowledgeEntry>;
+    fn deref(&self) -> &Self::Target {
+        &self.documents
+    }
+}
 pub(crate) struct KnowledgeState {
-    pub(super) documents: Option<IndexMap<String, IndexMap<String, KnowledgeEntry>>>,
+    pub(super) documents: Option<IndexMap<String, ActorKnowledge>>,
     metadata: ResidentReservation,
 }
 impl KnowledgeState {
@@ -31,7 +44,7 @@ impl KnowledgeState {
             .as_ref()
             .map_or(Some(0), |root| {
                 root.iter().try_fold(
-                    map_storage::<String, IndexMap<String, KnowledgeEntry>>(root.len())?,
+                    map_storage::<String, ActorKnowledge>(root.len())?,
                     |n, (actor, docs)| {
                         heap_sum([
                             n,
@@ -60,7 +73,13 @@ impl KnowledgeState {
                         )?;
                         values.insert(key, KnowledgeEntry { document, storage });
                     }
-                    out.insert(actor, values);
+                    out.insert(
+                        actor,
+                        ActorKnowledge {
+                            documents: values,
+                            place_revision: 0,
+                        },
+                    );
                 }
                 Ok(out)
             })
@@ -74,11 +93,17 @@ impl KnowledgeState {
             .resize(state.metadata_bytes().ok_or(ExecutionError::Capacity)?)?;
         Ok(state)
     }
-    pub(crate) fn as_ref(&self) -> Option<&IndexMap<String, IndexMap<String, KnowledgeEntry>>> {
+    pub(crate) fn as_ref(&self) -> Option<&IndexMap<String, ActorKnowledge>> {
         self.documents.as_ref()
     }
     pub(crate) fn is_some(&self) -> bool {
         self.documents.is_some()
+    }
+    pub(crate) fn place_revision(&self, actor: &str) -> u64 {
+        self.documents
+            .as_ref()
+            .and_then(|root| root.get(actor))
+            .map_or(0, |owner| owner.place_revision)
     }
     pub(crate) fn get(
         &self,
@@ -96,7 +121,7 @@ impl KnowledgeState {
     fn metadata_bytes(&self) -> Option<usize> {
         self.documents.as_ref().map_or(Some(0), |root| {
             root.iter().try_fold(
-                map_storage::<String, IndexMap<String, KnowledgeEntry>>(root.capacity())?,
+                map_storage::<String, ActorKnowledge>(root.capacity())?,
                 |n, (actor, docs)| {
                     heap_sum([
                         n,
@@ -123,6 +148,7 @@ pub(super) enum KnowledgeUndo {
         actor: String,
         key: String,
         prior: Option<(usize, KnowledgeEntry)>,
+        place_revision: u64,
     },
 }
 pub(crate) struct KnowledgeJournal {
@@ -162,16 +188,22 @@ impl KnowledgeJournal {
                         .shift_remove(&actor)
                         .ok_or(ExecutionError::Invariant)?;
                 }
-                KnowledgeUndo::Document { actor, key, prior } => {
+                KnowledgeUndo::Document {
+                    actor,
+                    key,
+                    prior,
+                    place_revision,
+                } => {
                     let docs = state
                         .documents
                         .as_mut()
                         .and_then(|root| root.get_mut(&actor))
                         .ok_or(ExecutionError::Invariant)?;
-                    docs.shift_remove(&key);
+                    docs.documents.shift_remove(&key);
                     if let Some((index, entry)) = prior {
-                        docs.shift_insert(index, key, entry);
+                        docs.documents.shift_insert(index, key, entry);
                     }
+                    docs.place_revision = place_revision;
                 }
             }
         }
@@ -201,7 +233,7 @@ impl KnowledgeJournal {
         }
         let root = state.documents.as_ref();
         let growth = if root.is_none_or(|root| root.len() == root.capacity()) {
-            map_storage::<String, IndexMap<String, KnowledgeEntry>>(
+            map_storage::<String, ActorKnowledge>(
                 root.map_or(3, |root| ((root.len() + 1) * 2).max(3)),
             )
             .ok_or(ExecutionError::Capacity)?
@@ -228,7 +260,7 @@ impl KnowledgeJournal {
             .map_err(|_| ExecutionError::Capacity)?;
         let root = state.documents.get_or_insert_with(IndexMap::new);
         root.try_reserve(1).map_err(|_| ExecutionError::Capacity)?;
-        root.insert(actor.into(), IndexMap::new());
+        root.insert(actor.into(), ActorKnowledge::default());
         self.undo.push(KnowledgeUndo::Observer {
             actor: actor.into(),
         });
@@ -254,6 +286,15 @@ impl KnowledgeJournal {
             .and_then(|root| root.get(actor))
             .ok_or(ExecutionError::Invariant)?;
         let new_document = !docs.contains_key(&key);
+        let place_revision = docs.place_revision;
+        let next_place_revision =
+            if matches!(document.subject_id, Some(KnowledgeSubject::Place { .. })) {
+                place_revision
+                    .checked_add(1)
+                    .ok_or(ExecutionError::Identity)?
+            } else {
+                place_revision
+            };
         if let Some(prior) = docs.get(&key) {
             self.budget.retain_record(&prior.storage)?;
         }
@@ -294,14 +335,20 @@ impl KnowledgeJournal {
             .and_then(|root| root.get_mut(actor))
             .ok_or(ExecutionError::Invariant)?;
         if new_document {
-            docs.try_reserve(1).map_err(|_| ExecutionError::Capacity)?;
+            docs.documents
+                .try_reserve(1)
+                .map_err(|_| ExecutionError::Capacity)?;
         }
         let index = docs.get_index_of(&key);
-        let prior = docs.insert(key.clone(), KnowledgeEntry { document, storage });
+        let prior = docs
+            .documents
+            .insert(key.clone(), KnowledgeEntry { document, storage });
+        docs.place_revision = next_place_revision;
         self.undo.push(KnowledgeUndo::Document {
             actor: actor.into(),
             key,
             prior: index.zip(prior),
+            place_revision,
         });
         state
             .metadata

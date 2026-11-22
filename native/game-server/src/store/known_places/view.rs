@@ -76,6 +76,10 @@ impl KnownPlaceViewPage {
 }
 
 impl PreparedKnownPlaceRead {
+    pub(crate) fn accepted_cut(&self) -> u64 {
+        self.binding.base_cut
+    }
+
     pub(crate) fn view_identity(&self) -> StoreResult<(&str, u64)> {
         let history = self.history.as_ref().ok_or(StoreError::InvalidRecord)?;
         Ok((&self.generation, history.privacy_revision))
@@ -124,7 +128,7 @@ impl Store {
             // The historical path must also hydrate the exact supporting body;
             // a different read cut cannot fill missing pending canonical rows.
             if overlay.has_changes() || read.suffix_changes_owner || (!detached_durable && read.detached_changes_owner) {
-                return Err(StoreError::StaleCut);
+                return Err(StoreError::KnownPlacesPendingSave);
             }
             let visited = if request.search.is_some() { PLACE_SEARCH_SCAN } else { PAGE };
             let limit = visited + 1;

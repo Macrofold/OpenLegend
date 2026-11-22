@@ -45,7 +45,9 @@ impl KnowledgeJournal {
                     owners.entry(actor.as_str()).or_insert(false);
                     documents.entry(actor.as_str()).or_default();
                 }
-                KnowledgeUndo::Document { actor, key, prior } => {
+                KnowledgeUndo::Document {
+                    actor, key, prior, ..
+                } => {
                     owners.entry(actor.as_str()).or_insert(true);
                     documents
                         .entry(actor.as_str())
@@ -74,7 +76,10 @@ impl KnowledgeJournal {
                 &["world", "actorKnowledge", actor],
                 None,
                 &selected,
-                state.as_ref().and_then(|root| root.get(actor)),
+                state
+                    .as_ref()
+                    .and_then(|root| root.get(actor))
+                    .map(|docs| &**docs),
                 false,
                 |document| columns(document, actor, budget),
                 output,

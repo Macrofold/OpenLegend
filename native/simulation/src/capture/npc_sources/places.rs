@@ -118,8 +118,7 @@ impl PreparedKnownPlaceSources {
         support_rows: Vec<InstalledRow>,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        if !scope.still_permitted(state)
-            || !personal_rows.pages.is_empty()
+        if !personal_rows.pages.is_empty()
             || !personal_rows.values.is_empty()
             || !personal_rows.parents.is_empty()
             || personal_rows.duplicate_summary.is_some()

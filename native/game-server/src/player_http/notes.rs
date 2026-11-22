@@ -3,6 +3,7 @@ use super::*;
 use crate::{
     language::LanguageProvider,
     live_save::AcceptedSaveInput,
+    player_command::{PlaceReference, SelectedKnownPlace},
     world::{ApplicationStart, PlayerDisclosure},
 };
 use openlegend_simulation::{
@@ -37,6 +38,11 @@ struct OwnerEdit {
     generation: String,
     #[serde(deserialize_with = "Option::deserialize")]
     subject_id: Option<KnowledgeSubject>,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_option"
+    )]
+    place: Option<PlaceReference>,
     expected_revision: i64,
     text: JsText,
 }
@@ -186,20 +192,65 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
         world_id,
         generation,
         subject_id,
+        place,
         expected_revision,
         text,
         ..
     } = request;
-    let maintenance = state.clock.maintenance().clone();
-    let selected_for_edit = selected.clone();
-    let authority = state.authority.clone();
+    if place.as_ref().is_some_and(|place| !place.valid()) {
+        return request_error();
+    }
+    let selected_place = match (&subject_id, place) {
+        (Some(KnowledgeSubject::Place { place_id }), Some(place)) if *place_id == place.id => {
+            if let Err(error) =
+                state
+                    .authority
+                    .current(&selected, Capability::Play, true, |_, _| ())
+            {
+                return access_failure(error);
+            }
+            match SelectedKnownPlace::read(
+                &state.game,
+                &state.authority,
+                &selected,
+                &place,
+                Some(tokio::time::Instant::now() + REQUEST_TIMEOUT),
+            )
+            .await
+            {
+                Ok(Some(selection)) => Some((place.id, selection.evidence)),
+                Ok(None)
+                | Err(WorldError::ProjectionChanged | WorldError::SourceEditPending)
+                | Err(WorldError::Storage(StoreError::StaleCut)) => return known_places::changed(),
+                Err(error) => return failed(error),
+            }
+        }
+        _ => None,
+    };
+    let place_edit = selected_place.is_some();
+    let world = state.game.world.clone();
     let edited = execute_edit(
         &state,
         selected.clone(),
         world_id,
         generation,
+        true,
         move |session, scope| {
-            maintenance.allow_ordinary(&authority, &selected_for_edit)?;
+            if let Some((place_id, evidence)) = selected_place {
+                // Read the selected proof again inside the writer turn. The
+                // shared acceptance check also covers a privacy edit arriving
+                // after this check and before settlement.
+                world
+                    .with_current_player_history(session, &evidence, |_| Ok(()))?
+                    .ok_or(WorldError::SourceEditPending)?;
+                return Ok(session.begin_owner_place_note(
+                    &scope.account_id,
+                    &scope.actor_id,
+                    place_id,
+                    expected_revision,
+                    text,
+                )?);
+            }
             Ok(session.begin_owner_knowledge_edit(
                 &scope.account_id,
                 &scope.actor_id,
@@ -222,6 +273,7 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
             "stale-world",
             "The world changed. Reload the editor.",
         ),
+        Err(WorldError::SourceEditPending) if place_edit => known_places::changed(),
         Err(error) => failed(error),
     }
 }
@@ -231,6 +283,7 @@ async fn execute_edit(
     selected: Arc<AuthorizedScope>,
     world_id: String,
     generation: String,
+    check_maintenance: bool,
     begin: impl FnOnce(
         &mut NativeWorldSession,
         &crate::authority::RequestScope,
@@ -239,6 +292,14 @@ async fn execute_edit(
     + 'static,
 ) -> Result<Option<StagedEdit>, WorldError> {
     let admitted = state.saves.enter_ordinary().await;
+    // Start and Ready need the exclusive save gate. Check the current window
+    // before taking the grant-cache lock for the synchronous candidate start.
+    if check_maintenance {
+        state
+            .clock
+            .maintenance()
+            .allow_ordinary(&state.authority, &selected)?;
+    }
     state.saves.check_admission(tokio::time::Instant::now())?;
     let game = state.game.clone();
     let begin_authority = state.authority.clone();

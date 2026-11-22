@@ -9,6 +9,11 @@ use crate::{
     presence::Presence,
 };
 use openlegend_simulation::encoding::{json_record, sha256_hex};
+use std::sync::LazyLock;
+
+// A cold install starts new display counters even when the saved timeline is
+// unchanged. A browser cannot reuse a page from the earlier server process.
+static PLACE_VIEW_EPOCH: LazyLock<uuid::Uuid> = LazyLock::new(uuid::Uuid::new_v4);
 
 pub(crate) struct ViewHostInput {
     access: PlayerAccess,
@@ -191,7 +196,13 @@ impl ViewHostInput {
                 revision: history_revision,
                 epoch,
                 memory_revision,
-                places_revision: format!("{}:{}", control.generation, input.places_revision),
+                places_revision: format!(
+                    "{}:{}:{}:{}",
+                    *PLACE_VIEW_EPOCH,
+                    control.generation,
+                    input.places_revision,
+                    input.place_note_revision,
+                ),
                 narrator: None,
             },
             paused_stop: self.paused_stop,

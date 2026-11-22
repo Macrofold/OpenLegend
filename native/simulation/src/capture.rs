@@ -934,6 +934,7 @@ pub(crate) fn with_actor_self<T>(
                     .actor_knowledge
                     .as_ref()
                     .and_then(|root| root.get(actor_id))
+                    .map(|docs| &**docs)
             })
             .flatten(),
         inner_world: private

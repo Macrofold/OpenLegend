@@ -194,43 +194,59 @@ pub(crate) struct SelectedKnownPlace {
 }
 
 impl SelectedKnownPlace {
-    /// Use the exact SQL snapshot selected under the tab's initial scope.
-    /// Later use requires a fresh native/source and authority check.
+    /// Use the exact SQL snapshot selected under the tab’s initial scope.
+    /// An editor or inspection without ordinary intake can await one needed
+    /// save, then select the same supplied reference in a fresh permitted cut.
     pub(crate) async fn read(
         game: &CurrentServer,
         authority: &Arc<Authority>,
         scope: &Arc<AuthorizedScope>,
         reference: &PlaceReference,
+        retry_until: Option<tokio::time::Instant>,
     ) -> Result<Option<Self>, WorldError> {
-        let (selected, cut) = game
-            .world
-            .capture_known_place_view(authority.clone(), scope.clone(), 1)
-            .await?;
-        let page = game
-            .store
-            .read_known_place_view(
+        let mut retry_until = retry_until;
+        loop {
+            let (selected, cut) = game
+                .world
+                .capture_known_place_view(authority.clone(), scope.clone(), 1)
+                .await?;
+            let through = cut.accepted_cut();
+            let page = game.store.read_known_place_view(
                 cut,
                 PlaceViewRequest {
                     id: Some(reference.id.clone()),
                     after: None,
                     search: None,
                 },
-            )
-            .await?;
-        let exact = page
-            .places
-            .first()
-            .zip(page.references.first())
-            .is_some_and(|(place, source)| {
-                place.capsule.place_id == reference.id
-                    && source.source_id == reference.source_id
-                    && source.revision == reference.revision
-            });
-        if !exact {
-            return Ok(None);
+            ).await;
+            let page = match (page, retry_until.take()) {
+                (Ok(page), _) => page,
+                (Err(StoreError::KnownPlacesPendingSave), Some(until)) => {
+                    drop(selected);
+                    game.world.when_durable(through, until).await?;
+                    continue;
+                }
+                (Err(StoreError::StaleCut), Some(_)) => continue,
+                (Err(error), _) => return Err(error.into()),
+            };
+            let exact = page
+                .places
+                .first()
+                .zip(page.references.first())
+                .is_some_and(|(place, source)| {
+                    place.capsule.place_id == reference.id
+                        && source.source_id == reference.source_id
+                        && source.revision == reference.revision
+                });
+            if !exact {
+                return Ok(None);
+            }
+            return match game.world.admit_known_place_view(selected, page).await {
+                Ok((evidence, page)) => Ok(Some(Self { evidence, page })),
+                Err(WorldError::ProjectionChanged) => Ok(None),
+                Err(error) => Err(error),
+            };
         }
-        let (evidence, page) = game.world.admit_known_place_view(selected, page).await?;
-        Ok(Some(Self { evidence, page }))
     }
 
     pub(crate) fn destination(
@@ -513,9 +529,9 @@ impl PlayerCommands {
                 let remembered = reference.is_some();
                 let selected_place = match reference {
                     Some(reference) => {
-                        match SelectedKnownPlace::read(&self.game, permits, &scope, reference).await
+                        match SelectedKnownPlace::read(&self.game, permits, &scope, reference, None).await
                         {
-                            Err(WorldError::Storage(StoreError::StaleCut)) => None,
+                            Err(WorldError::Storage(StoreError::StaleCut | StoreError::KnownPlacesPendingSave)) => None,
                             value => value?,
                         }
                     }

@@ -86,16 +86,13 @@ pub(in crate::player_http) async fn edit(
     let Some((world, generation, edit)) = input.into_request() else {
         return request_error();
     };
-    let maintenance = state.clock.maintenance().clone();
-    let selected_for_edit = selected.clone();
-    let authority = state.authority.clone();
     let edited = execute_edit(
         &state,
         selected.clone(),
         world,
         generation,
+        true,
         move |session, scope| {
-            maintenance.allow_ordinary(&authority, &selected_for_edit)?;
             Ok(session.begin_owner_map_marker(&scope.account_id, &scope.actor_id, edit)?)
         },
     )

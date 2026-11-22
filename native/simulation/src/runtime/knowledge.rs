@@ -139,30 +139,46 @@ impl NativeWorldSession {
             .map_err(failure)
     }
 
-    pub fn begin_knowledge_edit(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
+    /// The authenticated application has checked the exact retained place
+    /// source in this accepted turn. The place need not still exist in the
+    /// physical world. This permits only this player's private document.
+    pub fn begin_owner_place_note(
+        &mut self,
+        account: &str,
+        actor: &str,
+        place_id: String,
+        expected_revision: i64,
+        text: JsText,
+    ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input: KnowledgeInput = serde_json::from_slice(input).map_err(failure)?;
         self.session
             .accepted()
             .map_err(failure)?
-            .require_player_read(&input.account_id, &input.actor_id)
+            .require_player_read(account, actor)
             .map_err(failure)?;
-        // Permission to this place is supplied by the server's selected-source
-        // owner, as for remembered movement. It grants neither a physical read
-        // nor another character's document. No client permission list enters.
         self.session
             .begin_knowledge_edit(
-                input.actor_id,
+                actor.into(),
                 KnowledgeEdit {
-                    subject_id: Some(KnowledgeSubject::Place {
-                        place_id: input.place_id,
-                    }),
-                    expected_revision: input.expected_revision as i64,
-                    text: input.text,
+                    subject_id: Some(KnowledgeSubject::Place { place_id }),
+                    expected_revision,
+                    text,
                 },
                 true,
             )
             .map_err(failure)
+    }
+
+    pub fn begin_knowledge_edit(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let input: KnowledgeInput = serde_json::from_slice(input).map_err(failure)?;
+        self.begin_owner_place_note(
+            &input.account_id,
+            &input.actor_id,
+            input.place_id,
+            input.expected_revision as i64,
+            input.text,
+        )
     }
 }

@@ -69,6 +69,7 @@ pub struct RuntimePlayerViewSource {
     pub privacy_revision: u64,
     pub memory_cut: u64,
     pub places_revision: u64,
+    pub place_note_revision: u64,
     pub inventory_revision: u64,
     recent_story_age: f64,
     presentation_release: Option<Box<RawValue>>,
@@ -1374,6 +1375,7 @@ fn capture_view_source(
         // substitute for the exact source/permission check on a memory read.
         memory_cut: state.accepted_cut,
         places_revision: state.experience.known_place_revision(actor),
+        place_note_revision: state.reception.actor_knowledge.place_revision(actor),
         inventory_revision: state.administration.object_membership.revision,
         recent_story_age: state
             .installed

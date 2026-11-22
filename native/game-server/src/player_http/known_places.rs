@@ -80,11 +80,23 @@ pub(super) async fn list(State(state): State<PlayerRoutes>, request: Request) ->
         Ok(search) => search,
         Err(error) => return error,
     };
-    for _ in 0..2 {
-        match read_page(&state, &scope, request.cursor.as_deref(), search.clone()).await {
+    let until = tokio::time::Instant::now() + REQUEST_TIMEOUT;
+    for retry_until in [Some(until), None] {
+        match read_page(
+            &state,
+            &scope,
+            request.cursor.as_deref(),
+            search.clone(),
+            retry_until,
+        )
+        .await
+        {
             Ok(PlayerDisclosure::Published(bytes)) => return json_response(StatusCode::OK, bytes),
             Ok(PlayerDisclosure::Busy | PlayerDisclosure::Changed)
-            | Err(WorldError::Storage(StoreError::StaleCut)) => continue,
+            | Err(WorldError::Storage(StoreError::StaleCut | StoreError::KnownPlacesPendingSave)) =>
+            {
+                continue;
+            }
             Ok(PlayerDisclosure::Unchanged) => return changed(),
             Err(WorldError::ProjectionChanged) => return changed(),
             Err(error) => return failed(error),
@@ -110,11 +122,15 @@ pub(super) async fn inspect(State(state): State<PlayerRoutes>, request: Request)
     if !reference.valid() {
         return changed();
     }
-    for _ in 0..2 {
-        match read_detail(&state, &scope, &reference).await {
+    let until = tokio::time::Instant::now() + REQUEST_TIMEOUT;
+    for retry_until in [Some(until), None] {
+        match read_detail(&state, &scope, &reference, retry_until).await {
             Ok(PlayerDisclosure::Published(bytes)) => return json_response(StatusCode::OK, bytes),
             Ok(PlayerDisclosure::Busy | PlayerDisclosure::Changed)
-            | Err(WorldError::Storage(StoreError::StaleCut)) => continue,
+            | Err(WorldError::Storage(StoreError::StaleCut | StoreError::KnownPlacesPendingSave)) =>
+            {
+                continue;
+            }
             Ok(PlayerDisclosure::Unchanged) | Err(WorldError::ProjectionChanged) => break,
             Err(error) => return failed(error),
         }
@@ -229,9 +245,11 @@ async fn read_detail(
     state: &PlayerRoutes,
     scope: &Arc<AuthorizedScope>,
     reference: &PlaceReference,
+    retry_until: Option<tokio::time::Instant>,
 ) -> Result<PlayerDisclosure, WorldError> {
     let Some(selected) =
-        SelectedKnownPlace::read(&state.game, &state.authority, scope, reference).await?
+        SelectedKnownPlace::read(&state.game, &state.authority, scope, reference, retry_until)
+            .await?
     else {
         return Ok(PlayerDisclosure::Unchanged);
     };
@@ -239,90 +257,94 @@ async fn read_detail(
     let Some(preview) = preview(state, scope, &selected).await? else {
         return Ok(PlayerDisclosure::Changed);
     };
-    state.game.world.disclose_history_at(
-        &state.authority,
-        &selected.evidence,
-        Some(preview.cut),
-        |_, budget| {
-            let [witness] = selected.page.places.as_slice() else {
-                return Err(StoreError::InvalidRecord.into());
-            };
-            let [source] = selected.page.references.as_slice() else {
-                return Err(StoreError::InvalidRecord.into());
-            };
-            let EncounterExposure::Place {
-                label,
-                description,
-                location_label,
-                point,
-                ..
-            } = &witness.exposure
-            else {
-                return Err(StoreError::InvalidRecord.into());
-            };
-            let _text = budget
-                .reserve(description_bytes(&source.correction).ok_or(StoreError::Capacity)?)
-                .map_err(|_| StoreError::Capacity)?;
-            let corrected = corrected_description(&source.correction);
-            #[derive(Serialize)]
-            #[serde(rename_all = "camelCase")]
-            struct Inspection<'a> {
-                ok: bool,
-                place: PlaceEntry<'a, ()>,
-                move_description: &'a str,
-                #[serde(rename = "move")]
-                movement: Movement<'a>,
-            }
-            #[derive(Serialize)]
-            struct Movement<'a> {
-                id: &'static str,
-                label: &'static str,
-                command: PlaceCommand<'a>,
-                enabled: bool,
-                #[serde(skip_serializing_if = "Option::is_none")]
-                reason: Option<&'a JsText>,
-            }
-            #[derive(Serialize)]
-            #[serde(rename_all = "camelCase")]
-            struct PlaceCommand<'a> {
-                #[serde(rename = "type")]
-                kind: &'static str,
-                known_place: &'a PlaceReference,
-            }
-            wire::encode(
-                &Inspection {
-                    ok: true,
-                    place: PlaceEntry {
-                        id: &witness.capsule.place_id,
-                        source_id: &source.source_id,
-                        revision: &source.revision,
-                        label,
-                        position: point,
-                        location_label,
-                        description: corrected.as_ref().unwrap_or(description),
-                        time: witness.capsule.observed_at,
-                        corrected: corrected.is_some(),
-                        note: None,
-                    },
-                    move_description: &state.game.view_policy().controls.move_description,
-                    movement: Movement {
-                        id: "move-to-known-place",
-                        label: "Move to last-known location",
-                        command: PlaceCommand {
-                            kind: "move",
-                            known_place: reference,
+    state
+        .game
+        .world
+        .disclose_history_at(
+            &state.authority,
+            &selected.evidence,
+            Some(preview.cut),
+            |_, budget| {
+                let [witness] = selected.page.places.as_slice() else {
+                    return Err(StoreError::InvalidRecord.into());
+                };
+                let [source] = selected.page.references.as_slice() else {
+                    return Err(StoreError::InvalidRecord.into());
+                };
+                let EncounterExposure::Place {
+                    label,
+                    description,
+                    location_label,
+                    point,
+                    ..
+                } = &witness.exposure
+                else {
+                    return Err(StoreError::InvalidRecord.into());
+                };
+                let _text = budget
+                    .reserve(description_bytes(&source.correction).ok_or(StoreError::Capacity)?)
+                    .map_err(|_| StoreError::Capacity)?;
+                let corrected = corrected_description(&source.correction);
+                #[derive(Serialize)]
+                #[serde(rename_all = "camelCase")]
+                struct Inspection<'a> {
+                    ok: bool,
+                    place: PlaceEntry<'a, ()>,
+                    move_description: &'a str,
+                    #[serde(rename = "move")]
+                    movement: Movement<'a>,
+                }
+                #[derive(Serialize)]
+                struct Movement<'a> {
+                    id: &'static str,
+                    label: &'static str,
+                    command: PlaceCommand<'a>,
+                    enabled: bool,
+                    #[serde(skip_serializing_if = "Option::is_none")]
+                    reason: Option<&'a JsText>,
+                }
+                #[derive(Serialize)]
+                #[serde(rename_all = "camelCase")]
+                struct PlaceCommand<'a> {
+                    #[serde(rename = "type")]
+                    kind: &'static str,
+                    known_place: &'a PlaceReference,
+                }
+                wire::encode(
+                    &Inspection {
+                        ok: true,
+                        place: PlaceEntry {
+                            id: &witness.capsule.place_id,
+                            source_id: &source.source_id,
+                            revision: &source.revision,
+                            label,
+                            position: point,
+                            location_label,
+                            description: corrected.as_ref().unwrap_or(description),
+                            time: witness.capsule.observed_at,
+                            corrected: corrected.is_some(),
+                            note: None,
                         },
-                        enabled: preview.reason.is_none(),
-                        reason: preview.reason.as_ref(),
+                        move_description: &state.game.view_policy().controls.move_description,
+                        movement: Movement {
+                            id: "move-to-known-place",
+                            label: "Move to last-known location",
+                            command: PlaceCommand {
+                                kind: "move",
+                                known_place: reference,
+                            },
+                            enabled: preview.reason.is_none(),
+                            reason: preview.reason.as_ref(),
+                        },
                     },
-                },
-                b"",
-                b"",
-                budget,
-            )
-            .map_err(WorldError::Wire)
-        },
-    )
+                    b"",
+                    b"",
+                    budget,
+                )
+                .map_err(WorldError::Wire)
+            },
+        )
+        .await
 }
 
 async fn read_page(
@@ -330,6 +352,7 @@ async fn read_page(
     scope: &Arc<AuthorizedScope>,
     cursor: Option<&str>,
     search: Option<PlaceViewSearch>,
+    retry_until: Option<tokio::time::Instant>,
 ) -> Result<PlayerDisclosure, WorldError> {
     let game = &state.game;
     let world = &game.world;
@@ -371,6 +394,7 @@ async fn read_page(
             Ok(after.to_owned())
         })
         .transpose()?;
+    let through = cut.accepted_cut();
     let page = game
         .store
         .read_known_place_view(
@@ -381,77 +405,88 @@ async fn read_page(
                 search,
             },
         )
-        .await?;
+        .await;
+    let page = match (page, retry_until) {
+        (Ok(page), _) => page,
+        (Err(StoreError::KnownPlacesPendingSave), Some(until)) => {
+            drop(selected);
+            world.when_durable(through, until).await?;
+            return Ok(PlayerDisclosure::Changed);
+        }
+        (Err(error), _) => return Err(error.into()),
+    };
     let (selected, page) = world.admit_known_place_view(selected, page).await?;
     let world_id = &scope.scope.world_id;
-    world.disclose_history(&state.authority, &selected, |session, budget| {
-        session.with_player_place_facts(
-            &scope.scope.account_id,
-            &scope.scope.actor_id,
-            page.places
-                .iter()
-                .map(|place| (place.capsule.place_id.as_str(), None)),
-            |notes| {
-                let bytes = page
-                    .references
+    world
+        .disclose_history(&state.authority, &selected, |session, budget| {
+            session.with_player_place_facts(
+                &scope.scope.account_id,
+                &scope.scope.actor_id,
+                page.places
                     .iter()
-                    .try_fold(512_usize, |bytes, reference| {
-                        bytes.checked_add(description_bytes(&reference.correction)?)
-                    })
-                    .ok_or(StoreError::Capacity)?;
-                let _preparation = budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
-                let mut descriptions = Vec::with_capacity(page.places.len());
-                for reference in &page.references {
-                    descriptions.push(corrected_description(&reference.correction));
-                }
-                let mut entries = Vec::with_capacity(page.places.len());
-                for (((witness, reference), facts), correction) in page
-                    .places
-                    .iter()
-                    .zip(&page.references)
-                    .zip(notes)
-                    .zip(&descriptions)
-                {
-                    let EncounterExposure::Place {
-                        label,
-                        description,
-                        location_label,
-                        point,
-                        ..
-                    } = &witness.exposure
-                    else {
-                        return Err(StoreError::InvalidRecord.into());
-                    };
-                    entries.push(PlaceEntry {
-                        id: &witness.capsule.place_id,
-                        source_id: &reference.source_id,
-                        revision: &reference.revision,
-                        label,
-                        description: correction.as_ref().unwrap_or(description),
-                        location_label,
-                        position: point,
-                        time: witness.capsule.observed_at,
-                        corrected: correction.is_some(),
-                        note: Some(&facts.note),
-                    });
-                }
-                wire::encode(
-                    &PlacePage {
-                        ok: true,
-                        world_id,
-                        generation: &generation,
-                        entries,
-                        next: page.next.map(|next| format!("{fence}.{next}")),
-                        scan_limited: page.scan_limited,
-                    },
-                    b"",
-                    b"",
-                    budget,
-                )
-                .map_err(WorldError::Wire)
-            },
-        )?
-    })
+                    .map(|place| (place.capsule.place_id.as_str(), None)),
+                |notes| {
+                    let bytes = page
+                        .references
+                        .iter()
+                        .try_fold(512_usize, |bytes, reference| {
+                            bytes.checked_add(description_bytes(&reference.correction)?)
+                        })
+                        .ok_or(StoreError::Capacity)?;
+                    let _preparation = budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+                    let mut descriptions = Vec::with_capacity(page.places.len());
+                    for reference in &page.references {
+                        descriptions.push(corrected_description(&reference.correction));
+                    }
+                    let mut entries = Vec::with_capacity(page.places.len());
+                    for (((witness, reference), facts), correction) in page
+                        .places
+                        .iter()
+                        .zip(&page.references)
+                        .zip(notes)
+                        .zip(&descriptions)
+                    {
+                        let EncounterExposure::Place {
+                            label,
+                            description,
+                            location_label,
+                            point,
+                            ..
+                        } = &witness.exposure
+                        else {
+                            return Err(StoreError::InvalidRecord.into());
+                        };
+                        entries.push(PlaceEntry {
+                            id: &witness.capsule.place_id,
+                            source_id: &reference.source_id,
+                            revision: &reference.revision,
+                            label,
+                            description: correction.as_ref().unwrap_or(description),
+                            location_label,
+                            position: point,
+                            time: witness.capsule.observed_at,
+                            corrected: correction.is_some(),
+                            note: Some(&facts.note),
+                        });
+                    }
+                    wire::encode(
+                        &PlacePage {
+                            ok: true,
+                            world_id,
+                            generation: &generation,
+                            entries,
+                            next: page.next.map(|next| format!("{fence}.{next}")),
+                            scan_limited: page.scan_limited,
+                        },
+                        b"",
+                        b"",
+                        budget,
+                    )
+                    .map_err(WorldError::Wire)
+                },
+            )?
+        })
+        .await
 }
 
 fn description_bytes(correction: &Option<Option<JsText>>) -> Option<usize> {
@@ -521,7 +556,7 @@ fn search_query(
     }))
 }
 
-fn changed() -> Response {
+pub(super) fn changed() -> Response {
     refusal(
         StatusCode::CONFLICT,
         "history-changed",

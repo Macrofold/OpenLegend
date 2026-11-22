@@ -340,13 +340,21 @@ impl HostedWorld {
         self.call(move |session| {
             let values = page.take_witnesses().map_err(WorldError::from);
             Ok(values.and_then(|(personal, supports, custody)| {
-                session.admit_history_places_direct(
-                    &mut selected.read,
-                    &page.places,
-                    personal,
-                    supports,
-                    custody,
-                )?;
+                session
+                    .admit_history_places_direct(
+                        &mut selected.read,
+                        &page.places,
+                        personal,
+                        supports,
+                        custody,
+                    )
+                    .map_err(|error| {
+                        if error.stale_reason().is_some() {
+                            WorldError::ProjectionChanged
+                        } else {
+                            error.into()
+                        }
+                    })?;
                 Ok((selected, page))
             }))
         })
@@ -354,26 +362,27 @@ impl HostedWorld {
     }
 
     /// Check the original tab and native privacy at the actual transport
-    /// handoff. Keep selection, encoding and the funded outgoing bytes in one
-    /// synchronous disclosure turn and never loan the authority past it.
-    pub(crate) fn disclose_history(
-        &self,
+    /// handoff. The admitted selection can wait for its turn without repeating
+    /// SQL. Reauthorization and encoding remain synchronous within that turn.
+    pub(crate) async fn disclose_history(
+        self: &Arc<Self>,
         authority: &Authority,
         selected: &PlayerHistoryRead,
         publish: impl FnOnce(&NativeWorldSession, &ByteBudget) -> Result<Bytes, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
-        self.disclose_history_at(authority, selected, None, publish)
+        self.disclose_history_at(authority, selected, None, publish).await
     }
 
     /// An inspected movement preview is valid only at the accepted cut where
     /// it ran. The original private source must still be eligible there.
-    pub(crate) fn disclose_history_at(
-        &self,
+    pub(crate) async fn disclose_history_at(
+        self: &Arc<Self>,
         authority: &Authority,
         selected: &PlayerHistoryRead,
         preview_cut: Option<u64>,
         publish: impl FnOnce(&NativeWorldSession, &ByteBudget) -> Result<Bytes, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
+        let _turn = self.clone().player_disclosure_turn().await?;
         authority
             .current_private_view(
                 &selected.scope,
@@ -382,14 +391,6 @@ impl HostedWorld {
                     if self.closing.load(Ordering::Acquire) {
                         return Err(HostError::Closed.into());
                     }
-                    let Ok(_turn) = self.turn.try_lock() else {
-                        return Ok(PlayerDisclosure::Busy);
-                    };
-                    let _turn = super::held_turn(
-                        _turn,
-                        #[cfg(feature = "profile-campaign")]
-                        openlegend_simulation::profile::sites::TURN_VIEW,
-                    );
                     let session = match self.session.try_lock() {
                         Ok(session) => session,
                         Err(std::sync::TryLockError::WouldBlock) => {

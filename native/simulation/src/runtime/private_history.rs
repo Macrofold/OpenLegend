@@ -577,6 +577,9 @@ impl NativeWorldSession {
             return Err(failure("history places already selected or wrong purpose"));
         }
         let state = &self.session.accepted().map_err(failure)?.state;
+        if let Some(reason) = read.scope.refusal(state) {
+            return Err(stale(reason));
+        }
         read.places = Some(prepare(state, Arc::clone(&read.scope)).map_err(failure)?);
         Ok(())
     }

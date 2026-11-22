@@ -39,7 +39,8 @@ impl NpcReferenceFacts {
             .reception
             .actor_knowledge
             .as_ref()
-            .and_then(|owners| owners.get(actor));
+            .and_then(|owners| owners.get(actor))
+            .map(|docs| &**docs);
         let count = notes.map_or(0, indexmap::IndexMap::len);
         let bytes = size_of::<Self>()
             .checked_add(

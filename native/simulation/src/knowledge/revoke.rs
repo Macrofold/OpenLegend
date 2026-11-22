@@ -13,7 +13,7 @@ pub(crate) fn revoke_knowledge_documents(
         .actor_knowledge
         .as_ref()
         .and_then(|root| root.get(actor))
-        .map_or(0, IndexMap::len);
+        .map_or(0, |docs| docs.len());
     for index in 0..count {
         let (key, entry) = core
             .state
