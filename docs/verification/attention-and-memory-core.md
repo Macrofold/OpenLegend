@@ -83,7 +83,13 @@ A disposable actor with $1.80 of settled application charges and a $2 ceiling ha
 
 The schema-64 listener used the frozen `7b4a87552` component closure plus the daily scheduling and typed formatter changes. Its SHA-256 was `92eb211e756f3597b84a12ed2e6b15708d7d20d9d1a6174994fb2a99c6140472` and the generated storage artifact was `da87ef2ad9cd7caef1efe0da3a3d202fd7a4c01db98f75d5144ca69c5b7ea78a`. The earlier positive publication stopped at the missing formatter. Its preserved result and the completed `typed-*` cases are under `nsc04-daily-dream-20261121.zL2sPj4i` in the verification workspace. These checks cover local correctness with controlled responses.
 
-Richer hourly evidence projection, cross-partition/backlog and fresh sleep episode cases remain under [NSC04-R2](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
+### Hourly cleanup and completed-day review in one running world — November 22, 2026
+
+One disposable world with a player, two human NPCs and three hares started at game second 85,599.5. A research fixture prepared each NPC's records through the existing memory owner. Source excluded the younger routine account before its six-hour boundary and selected the expected completed-day records for the other NPC. On the normal Rust clock, the aging account crossed six hours and went through the real scheduled HTTPS request. The server saved its summary and retired the routine original. The older protected record stayed exact.
+
+The second NPC's installed sleep episode crossed midnight in the same run. The scheduled daily request retained chronological positions 0, 2 and 3, with the protected account kept privately at position 1. An authenticated player walked and received a durable command result while HTTPS was held. The daily summaries, imagined dream and completed-day cursor saved together. Cold reopening preserved the walk and returned both actor-scoped summaries through the creator's authorized recollections search. The ordinary player search refused the other actor's record. There were two completed attempts with zero recorded charges, no restart attempt and no provider spend.
+
+The frozen Rust source was `c0b907e17e8fe1fde53a446d7b0699cf61ee7ce0` and executable SHA-256 `5bc99ad84ecbb1417b672628e13ec30d5a18c97060e521721eb7f0c2843cb45c`. Raw inputs and results are under `nsc04-combined-memory-20261122/final` in the local verification workspace. Richer hourly evidence, later-partition refusal, backlog and a fresh sleep episode still need their own cases under [NSC04-R2](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
 
 ### Scheduled intentional reflection on the Rust listener — November 21, 2026
 
