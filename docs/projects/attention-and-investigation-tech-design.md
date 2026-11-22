@@ -178,6 +178,8 @@ B's orient-once completion leaves achieved pose. Maintained directives stop at t
 
 ### 4.1 Event and level subscriptions
 
+For several conditions under one watch, use the [compound predicate and subscription rules](witness-decisions-and-memory-tech-design.md#3-supply-evidence-for-the-reasons). The existing work owner retains the single control, expiry and disposition.
+
 Required method, coverage and stop predicates run at the existing domain action, acquisition and temporal boundary. Derived EPR/interests/ActorWork subscriptions notify optional semantic reconsideration; they do not gate native completion or expiration. Scope subscriptions to the exact active owner; they are disposable dependency indexes, never evidence or continuation authority.
 
 | Dependency                                                                   | Producer and handling                                                                                           |
