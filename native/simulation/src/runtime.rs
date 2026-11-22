@@ -125,6 +125,9 @@ pub use npc::{
 };
 pub use player::{InspectedRecipeRecord, RuntimeWorldStorage};
 pub use player::{
+    RuntimeOfferCursor, RuntimeOfferPage, RuntimeOfferProblem, RuntimeOfferSelection, RuntimeOfferSource,
+};
+pub use player::{
     CoordinateRefusal, DirectInventory, FireOperation, InteractionMode, InventoryContainer,
     InventoryCrumb, PlayerInteractionFacts, RuntimeFireChoice, RuntimeFireMenu, RuntimeFishOffer,
     RuntimeFishTool, RuntimeFoodMenu, RuntimeGatherOffer, RuntimeHearthCatalogue,

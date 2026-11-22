@@ -29,6 +29,7 @@ const RECENT_CURSOR: &[u8] = b"openlegend-private-recent-cursor";
 const RECENT_EDIT: &[u8] = b"openlegend-private-recent-edit";
 const PEOPLE_CURSOR: &[u8] = b"openlegend-private-people-cursor";
 const TRADE_CURSOR: &[u8] = b"openlegend-private-trade-cursor";
+const OFFER_RECIPIENT_CURSOR: &[u8] = b"openlegend-private-offer-recipient-cursor";
 
 #[derive(serde::Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -115,6 +116,14 @@ impl ReferenceIssuer {
 
     pub(crate) fn open_trade_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
         self.open_private(TRADE_CURSOR, token)
+    }
+
+    pub(crate) fn seal_offer_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(OFFER_RECIPIENT_CURSOR, value)
+    }
+
+    pub(crate) fn open_offer_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(OFFER_RECIPIENT_CURSOR, token)
     }
 
     fn seal_private(&self, purpose: &[u8], value: &impl Serialize) -> Option<String> {

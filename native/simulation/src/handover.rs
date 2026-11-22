@@ -716,6 +716,61 @@ impl TradeEvidence {
     }
 }
 
+/// Read-only admission for a proposal. The source's pending offers are the
+/// same for a whole recipient page. No recipient's stock is consulted.
+pub(crate) struct ProposalWindow<'a> {
+    pending: &'a GiftState,
+    owner: &'a str,
+    previous: Option<&'a str>,
+    at: f64,
+    outgoing_full: bool,
+}
+
+impl<'a> ProposalWindow<'a> {
+    pub(crate) fn new(
+        state: &'a crate::simulation::SimulationState,
+        owner: &'a str,
+        previous: Option<&'a GiftOffer>,
+        policy: &crate::install::SocialOfferReadPolicy,
+    ) -> Self {
+        let pending = &state.physical.gifts;
+        let previous = previous.map(|offer| offer.id.as_str());
+        let at = state.physical.header.sim_time;
+        let outgoing = pending.for_actor(owner).filter(|offer| {
+            offer.expires_at > at && Some(offer.id.as_str()) != previous && offer.offerer_id == owner
+        }).count();
+        Self { pending, owner, previous, at, outgoing_full: outgoing as u64 >= policy.outgoing }
+    }
+
+    pub(crate) fn item_busy(&self, id: &str) -> bool {
+        self.pending.for_item(id).is_some_and(|offer| Some(offer.id.as_str()) != self.previous)
+    }
+
+    pub(crate) fn recipient_problem<'b>(
+        &self,
+        recipient: &str,
+        policy: &'b crate::install::SocialOfferReadPolicy,
+    ) -> Option<(&'static str, &'b crate::text::JsText)> {
+        let current = |offer: &&GiftOffer| {
+            offer.expires_at > self.at && Some(offer.id.as_str()) != self.previous
+        };
+        if self.outgoing_full {
+            return Some(("too-many-outgoing", &policy.messages.outgoing));
+        }
+        let incoming = self.pending.for_actor(recipient).filter(current)
+            .filter(|offer| offer.recipient_id == recipient).count();
+        if incoming as u64 >= policy.incoming {
+            return Some(("too-many-incoming", &policy.messages.incoming));
+        }
+        if policy.one_pending_per_pair
+            && self.pending.for_actor(self.owner).filter(current).any(|offer| offer.party(recipient))
+        {
+            return Some(("offer-pending", &policy.messages.pair));
+        }
+        None
+    }
+}
+
 /// For gifts, a previous split/revision is allowed if equivalent unclaimed
 /// units remain at the original directly accessible custodian.
 pub(crate) fn usable_lot<'a>(

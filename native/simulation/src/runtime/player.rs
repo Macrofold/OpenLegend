@@ -3,6 +3,10 @@
 use super::*;
 mod inventory;
 mod world_storage;
+mod offer_recipients;
+pub use offer_recipients::{
+    RuntimeOfferCursor, RuntimeOfferPage, RuntimeOfferProblem, RuntimeOfferSelection, RuntimeOfferSource,
+};
 pub use world_storage::{InspectedRecipeRecord, RuntimeWorldStorage};
 pub use inventory::{DirectInventory, InventoryContainer, InventoryCrumb};
 mod status_menu;

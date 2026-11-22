@@ -42,7 +42,7 @@ mod retained;
 pub(crate) use knowledge::{Grant, GrantSource, LearnedCapabilities, LearnedJournal, MethodProof, RecipeAuthority, grant_bound, install_learned_capabilities};
 pub(crate) use retained::{
     ParticipationReadPolicy, RetainedDefinitionInputs, RetainedDefinitions, RetainedMap,
-    RetainedOne, install_retained,
+    RetainedOne, SocialOfferReadPolicy, install_retained,
 };
 mod social;
 pub(crate) use social::{SocialSettings, install_social};

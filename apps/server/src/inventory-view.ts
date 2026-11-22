@@ -1,5 +1,6 @@
 import {
   BASE_EQUIPMENT_COPY,
+  BASE_HANDOVER,
   BASE_ITEM_MOVE_COPY,
   currentObservedBodyGrants,
 } from '@open-legend/domain';
@@ -727,9 +728,7 @@ export function inventoryDestinationPage(
       source.quantity < 1 ||
       source.quantity > availableItemQuantity(world, source.itemId))
   )
-    throw new HistoryCursorError(
-      'The selected item or its source changed. Refresh before choosing a destination.',
-    );
+    throw new HistoryCursorError(BASE_HANDOVER.copy.recipientSourceChanged);
   const parentId = request.parentId ?? '',
     query = (request.query ?? '').trim().toLocaleLowerCase();
   if (
@@ -803,7 +802,7 @@ export function inventoryDestinationPage(
   )
     throw new HistoryCursorError('Observed contents changed. Refresh destinations.');
   if (cursor.phase === 'spatial' && cursor.spatialRevision !== spatialMembership())
-    throw new HistoryCursorError('Nearby destinations changed. Refresh destinations.');
+    throw new HistoryCursorError(BASE_HANDOVER.copy.recipientPageChanged);
   const entries: InventoryDestination[] = [];
   let scanned = 0,
     materialized = 0,
@@ -857,7 +856,7 @@ export function inventoryDestinationPage(
         ? { name: 'My possessions', nameForm: 'proper' as const }
         : observerName(world, scope.actorId, id)),
       location: recipient
-        ? 'Nearby person, offer requires their acceptance'
+        ? BASE_HANDOVER.copy.recipientLocation
         : containerLocation(service, scope, id),
       ...(!recipient &&
       (custodian(world, id) === scope.actorId ||

@@ -4,7 +4,7 @@ use super::*;
 use crate::{
     execution::gift::{GiftMessenger, gift_narration, gift_terms, stage_gift_notice},
     handover::{
-        GiftDescription, GiftDescriptions, GiftLot, GiftOffer, GiftOperation, gift_participant,
+        GiftDescription, GiftDescriptions, GiftLot, GiftOffer, GiftOperation, ProposalWindow, gift_participant,
         loose_lot_current, loose_offer_current, prepare_loose_lot,
     },
     worlds::base_handover::GIFT_COPY as copy,
@@ -375,11 +375,7 @@ impl CommandCursor {
                 .requested_items
                 .as_deref()
                 .ok_or(ExecutionError::Invariant)?;
-            let used_elsewhere = |id: &str| {
-                pending
-                    .for_item(id)
-                    .is_some_and(|offer| prior.is_none_or(|prior| offer.id != prior.id))
-            };
+            let window = ProposalWindow::new(state, owner, prior, policy);
             let mut own = Vec::with_capacity(offered.len());
             for selected in offered {
                 let lot = match prepare_loose_lot(state, owner, selected) {
@@ -389,7 +385,7 @@ impl CommandCursor {
                         return Ok(None);
                     }
                 };
-                if used_elsewhere(&selected.item_id) {
+                if window.item_busy(&selected.item_id) {
                     self.gift_refusal("already-offered", copy.already_offered)?;
                     return Ok(None);
                 }
@@ -435,41 +431,14 @@ impl CommandCursor {
                 let mut next = disclosed.clone();
                 next.quantity = selected.quantity;
                 if !loose_lot_current(state, target_id, &next, true)
-                    || used_elsewhere(&next.item_id)
+                    || window.item_busy(&next.item_id)
                 {
                     self.gift_refusal("offer-lapsed", copy.reciprocal_unavailable)?;
                     return Ok(None);
                 }
                 wanted.push(next);
             }
-            let current = |offer: &&GiftOffer| {
-                offer.expires_at > at && prior.is_none_or(|old| offer.id != old.id)
-            };
-            let outgoing = pending
-                .for_actor(owner)
-                .filter(current)
-                .filter(|offer| offer.offerer_id == owner)
-                .count();
-            let incoming = pending
-                .for_actor(target_id)
-                .filter(current)
-                .filter(|offer| offer.recipient_id == *target_id)
-                .count();
-            let conflict = if outgoing as u64 >= policy.outgoing {
-                Some(("too-many-outgoing", &policy.messages.outgoing))
-            } else if incoming as u64 >= policy.incoming {
-                Some(("too-many-incoming", &policy.messages.incoming))
-            } else if policy.one_pending_per_pair
-                && pending
-                    .for_actor(owner)
-                    .filter(current)
-                    .any(|offer| offer.party(target_id))
-            {
-                Some(("offer-pending", &policy.messages.pair))
-            } else {
-                None
-            };
-            if let Some((code, message)) = conflict {
+            if let Some((code, message)) = window.recipient_problem(target_id, policy) {
                 let mut refusal = outcome(false, code, "");
                 refusal.message = message.clone();
                 self.outcome = Some(refusal);
