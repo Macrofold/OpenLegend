@@ -206,15 +206,12 @@ const sourceColumnNames = [
 ];
 const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
 
-const linguisticSpeechSql =
-  "a.payload::jsonb->'speech'->>'intelligibility' IN ('partial','clear') AND a.payload::jsonb->'speech'->>'perception'<>'seen'";
-
 function consolidationRecentSpeechSql(world: string, actor: string): string {
-  // Nonlinguistic cues remain recallable without taking places in the
-  // protected verbatim speech pool.
-  return `SELECT s.id FROM recall_sources s JOIN mind_awareness a ON a.world_id=s.world_id AND a.id=s.record_id
+  // Reuse the admitted dialogue flag. Exact speech bodies can preserve UTF-16
+  // code units PostgreSQL cannot decode, and this selection needs no text.
+  return `SELECT s.id FROM recall_sources s
     WHERE s.world_id=${world} AND s.actor_id=${actor} AND s.eligible=1 AND s.source_kind='awareness'
-      AND s.event_type='speech' AND ${linguisticSpeechSql}
+      AND s.event_type='speech' AND s.linguistic=1
     ORDER BY s.at DESC,s.sequence DESC,s.id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech}`;
 }
 

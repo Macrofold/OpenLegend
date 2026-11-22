@@ -416,6 +416,10 @@ invalidate later use. Native creator additions derive summary attribution and
 chronology from existing sources, rather than accepting supplied relationship
 claims. No raw global event substitutes for a missing observer record.
 
+The hourly and daily readers select protected speech using the same saved
+heard-speech flag as dialogue recall. They select the eligible actor and exact
+record revisions before reading the original words.
+
 Complete tagged source records reach maintenance and model preparation. A summary
 stores one native-derived typed coverage collection, including selected source
 revisions and inherited references, plus its required speech-attribution manifest.
