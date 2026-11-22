@@ -101,6 +101,7 @@ pub use player::{
     InteractionMode, PlayerInteractionFacts, RuntimePlayerCommand, RuntimePlayerInputState,
     RuntimePlayerPublication, RuntimePlayerRead, RuntimeGatherOffer,
     RuntimeFishOffer, RuntimeFishTool, RuntimePickupOffer, RuntimeResourceOffer, RuntimeHeatContact, RuntimeFoodMenu, RuntimePreparation,
+    RuntimeStatusMenu, RuntimeStatusChoice,
 };
 pub use reply_preview::{
     RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,

@@ -12,6 +12,7 @@ use std::sync::LazyLock;
 mod preparation;
 mod pickup;
 mod manufacture;
+mod status;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,6 +43,8 @@ struct Position {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct MenuRequest {
+    #[serde(default)]
+    catalogue: bool,
     target_id: Option<String>,
     item_id: Option<String>,
     // The inventory picker identifies a display group and its available amount.
@@ -82,7 +85,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
     if recipe.is_some() && (target.is_some() || item.is_some()) {
         return access_failure(AccessError::Changed);
     }
-    if target.is_none() && item.is_none() && recipe.is_none() {
+    if !input.catalogue && target.is_none() && item.is_none() && recipe.is_none() {
         return refusal(
             StatusCode::BAD_REQUEST,
             "unsupported-action-context",
@@ -93,6 +96,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
     let for_menu = linked.clone();
     let game = state.game.clone();
     let scoped = access.clone();
+    let catalogue = input.catalogue;
     let authority = state.authority.clone();
     let tokens = state.references.clone();
     let resource = state
@@ -106,6 +110,17 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                 |scope, controls| -> Result<_, RuntimeError> {
                     let budget = game.host.budget();
                     let _workspace = budget.reserve(2048)?;
+                    let own_status = for_menu.as_deref() == Some(scope.actor_id.as_str());
+                    if item.is_none()
+                        && recipe.is_none()
+                        && (own_status || catalogue && for_menu.is_none())
+                    {
+                        return session.with_player_status_menu(
+                            &scope.account_id,
+                            &scope.actor_id,
+                            |menu| status::render(menu, controls, budget),
+                        ).map(Some);
+                    }
                     if let Some(recipe) = recipe.as_deref() {
                         return session.with_player_manufacture_offer(
                             &scope.account_id, &scope.actor_id, recipe,

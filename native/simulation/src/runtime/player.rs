@@ -1,6 +1,8 @@
 //! One selected player capture and its final scoped disclosure fence. No native
 //! read borrow survives a provider/SQL await; the immutable evidence owner does.
 use super::*;
+mod status_menu;
+pub use status_menu::{RuntimeStatusChoice, RuntimeStatusMenu};
 use crate::capture::{
     CapturedPlayerControls, PlayerControlFacts, PlayerControlPreparation, PlayerPerception,
     PlayerSelfFacts,

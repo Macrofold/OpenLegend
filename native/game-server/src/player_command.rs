@@ -14,7 +14,7 @@ use crate::{
 };
 use axum::body::Bytes;
 use openlegend_simulation::{
-    commands::SpeechTargetRole,
+    commands::{SpeechTargetRole, StatusOperation},
     encoding::{json_record, sha256_hex},
     gathering::GatheringMode,
     host::{ByteBudget, ByteReservation},
@@ -113,6 +113,12 @@ struct CommandInput {
     text: Option<JsText>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     volume: Option<SpeechVolume>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    definition_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    effect_operation: Option<StatusOperation>,
+    #[serde(rename = "facing", default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    facing_heading: Option<f64>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -221,6 +227,8 @@ enum CommandKind {
     Craft,
     Eat,
     Say,
+    #[serde(rename = "status-effect")]
+    StatusEffect,
     Equip,
     Unequip,
 }
@@ -507,6 +515,8 @@ impl PlayerCommands {
                             };
                             let raw = &begin_facts.request.command;
                             let target_ref = raw.target_id.as_deref();
+                            let own_status = matches!(raw.kind, CommandKind::StatusEffect)
+                                && target_ref == Some(begin_scope.scope.actor_id.as_str());
                             let speech_target = match (raw.kind, target_ref) {
                                 (CommandKind::Say, Some(contact)) => {
                                     let Some(target) = begin_references.resolve_speech_target(
@@ -538,7 +548,9 @@ impl PlayerCommands {
                                 }
                                 _ => None,
                             };
-                            let target = match target_ref.filter(|_| !matches!(raw.kind, CommandKind::Say)) {
+                            let target = match target_ref.filter(|_| {
+                                !own_status && !matches!(raw.kind, CommandKind::Say)
+                            }) {
                                 None => None,
                                 Some(contact) => {
                                     let selected = if matches!(raw.kind, CommandKind::Pickup) {
@@ -555,7 +567,11 @@ impl PlayerCommands {
                                         return Ok(ApplicationStart::Existing(
                                             ResultOwner::Refused(
                                                 "stale-contact",
-                                                "Choose a resource you can see now.",
+                                                if matches!(raw.kind, CommandKind::StatusEffect) {
+                                                    "Choose a target you can see now."
+                                                } else {
+                                                    "Choose a resource you can see now."
+                                                },
                                             ),
                                         ));
                                     };
@@ -564,7 +580,8 @@ impl PlayerCommands {
                             };
                             let command = begin_facts.command(
                                 position,
-                                target.as_ref().map(|value| value.id.as_str()),
+                                target.as_ref().map(|value| value.id.as_str())
+                                    .or(own_status.then_some(begin_scope.scope.actor_id.as_str())),
                                 speech_target.as_ref().map(|value| (value.id.as_str(), value.role)),
                             )?;
                             Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
@@ -647,6 +664,9 @@ impl CommandRequest {
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
             || (!matches!(command.kind, CommandKind::Say)
                 && (command.text.is_some() || command.volume.is_some()))
+            || (!matches!(command.kind, CommandKind::StatusEffect)
+                && (command.definition_id.is_some() || command.effect_operation.is_some()
+                    || command.facing_heading.is_some()))
             || (!matches!(command.kind, CommandKind::Cook)
                 && (command.preparation_id.is_some()
                     || command.preparation_version.is_some()
@@ -726,6 +746,17 @@ impl CommandRequest {
                     && command.gathering_mode.is_none()
                     && command.target_id.as_deref().is_none_or(id)
                     && command.text.is_some() => Ok(()),
+            CommandKind::StatusEffect
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.item_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.definition_id.as_deref()
+                        .is_some_and(openlegend_simulation::values::is_safe_record_id)
+                    && command.effect_operation.is_some()
+                    && command.facing_heading.is_none_or(f64::is_finite) => Ok(()),
             CommandKind::Cook
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -845,6 +876,12 @@ impl PreparedRequest {
                 text: input.text.as_ref().ok_or(StoreError::InvalidRecord)?,
                 target: speech_target,
                 volume: input.volume,
+            }),
+            CommandKind::StatusEffect => Ok(RuntimePlayerCommand::Status {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                definition: input.definition_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                operation: input.effect_operation.ok_or(StoreError::InvalidRecord)?,
+                facing: input.facing_heading,
             }),
             CommandKind::Cook => Ok(RuntimePlayerCommand::Cook {
                 heat: target.ok_or(StoreError::InvalidRecord)?,

@@ -168,7 +168,7 @@ impl CommandHeaders {
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum StatusOperation {
+pub enum StatusOperation {
     Activate,
     Deactivate,
 }

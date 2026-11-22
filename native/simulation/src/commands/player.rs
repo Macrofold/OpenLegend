@@ -1,6 +1,6 @@
 //! The authorized browser handler passes its already-decoded command input.
 
-use super::{CommandEncoding, CommandHeaders, NativeCommand, SpeechTargetRole};
+use super::{CommandEncoding, CommandHeaders, NativeCommand, SpeechTargetRole, StatusOperation};
 use crate::encoding::json_record;
 use crate::gathering::{GatheringMode, ToolChoice};
 use crate::state::SurfacePoint;
@@ -21,6 +21,12 @@ pub enum RuntimePlayerCommand<'a> {
         text: &'a JsText,
         target: Option<(&'a str, SpeechTargetRole)>,
         volume: Option<SpeechVolume>,
+    },
+    Status {
+        target: &'a str,
+        definition: &'a str,
+        operation: StatusOperation,
+        facing: Option<f64>,
     },
     Cook {
         heat: &'a str,
@@ -44,6 +50,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } | Self::Pickup { target, item: tool } => target.len() + tool.len(),
             Self::Craft { recipe } => recipe.len(),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
+            Self::Status { target, definition, .. } => target.len() + definition.len(),
             Self::Cook { heat, preparation_id, preparation_digest, inputs, .. } => {
                 heat.len() + preparation_id.len() + preparation_digest.len()
                     + inputs.iter().map(|(role, item)| role.len() + item.len()).sum::<usize>()
@@ -65,6 +72,9 @@ impl RuntimePlayerCommand<'_> {
                 version: preparation_version,
                 digest: preparation_digest.into(),
             }, inputs);
+        }
+        if let Self::Status { target, definition, operation, facing } = self {
+            return bind_status(id, actor, target, definition, operation, facing);
         }
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
@@ -144,7 +154,9 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
-            Self::Cook { .. } => unreachable!("food preparation uses its own typed wire fields"),
+            Self::Cook { .. } | Self::Status { .. } => {
+                unreachable!("specialized commands bind their own fields")
+            }
             Self::Eat(item) => ("eat", None, None, None, Some(item), None),
             Self::Equip(item) => ("equip", None, None, None, Some(item), None),
             Self::Unequip { item, .. } => ("unequip", None, None, None, Some(item), None),
@@ -162,15 +174,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Say { text, target, volume } => (Some(text), target.map(|(_, role)| role), volume),
             _ => (None, None, None),
         };
-        let headers = CommandHeaders {
-            id: id.to_owned(),
-            actor_id: actor.to_owned(),
-            cooperation: None,
-            combat_help_id: None,
-            human_initiated: Some(true),
-            purpose: None,
-            chosen_purpose: None,
-        };
+        let headers = player_headers(id, actor);
         if !headers.valid()
             || recipe_id.is_some_and(|id| !crate::values::is_safe_record_id(id))
             || destination
@@ -264,7 +268,9 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
-            Self::Cook { .. } => unreachable!("food preparation uses its own typed wire fields"),
+            Self::Cook { .. } | Self::Status { .. } => {
+                unreachable!("specialized commands bind their own fields")
+            }
             Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },
             Self::Equip(item) => NativeCommand::Equipment {
                 envelope,
@@ -279,6 +285,76 @@ impl RuntimePlayerCommand<'_> {
         };
         Ok((command, signature))
     }
+}
+
+fn player_headers(id: &str, actor: &str) -> CommandHeaders {
+    CommandHeaders {
+        id: id.to_owned(),
+        actor_id: actor.to_owned(),
+        cooperation: None,
+        combat_help_id: None,
+        human_initiated: Some(true),
+        purpose: None,
+        chosen_purpose: None,
+    }
+}
+
+fn bind_status(
+    id: &str,
+    actor: &str,
+    target: &str,
+    definition: &str,
+    operation: StatusOperation,
+    facing_heading: Option<f64>,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct StatusCommand<'a> {
+        actor_id: &'a str,
+        definition_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        facing_heading: Option<f64>,
+        human_initiated: bool,
+        id: &'a str,
+        operation: StatusOperation,
+        target_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid()
+        || ![target, definition].into_iter().all(crate::values::is_safe_record_id)
+        || facing_heading.is_some_and(|heading| !heading.is_finite())
+    {
+        return Err(serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Invalid status command binding.",
+        )));
+    }
+    let record = StatusCommand {
+        actor_id: actor,
+        definition_id: definition,
+        facing_heading,
+        human_initiated: true,
+        id,
+        operation,
+        target_id: target,
+        kind: "status-effect",
+    };
+    let encoding = CommandEncoding::from_ordered(&record, 7 + usize::from(facing_heading.is_some()))?;
+    let signature = json_record(&record)?;
+    Ok((
+        NativeCommand::StatusEffect {
+            envelope: headers.envelope(encoding),
+            target_id: target.into(),
+            definition_id: definition.into(),
+            operation,
+            facing_heading,
+            resting_place_id: None,
+            resting_bay: None,
+        },
+        signature,
+    ))
 }
 
 fn bind_food_preparation(
@@ -317,15 +393,7 @@ fn bind_food_preparation(
         #[serde(rename = "type")]
         kind: &'static str,
     }
-    let headers = CommandHeaders {
-        id: id.to_owned(),
-        actor_id: actor.to_owned(),
-        cooperation: None,
-        combat_help_id: None,
-        human_initiated: Some(true),
-        purpose: None,
-        chosen_purpose: None,
-    };
+    let headers = player_headers(id, actor);
     if !headers.valid()
         || !definition.is_valid()
         || !crate::values::is_safe_record_id(heat)
