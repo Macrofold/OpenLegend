@@ -4,6 +4,8 @@ use super::*;
 use crate::reception::ObserverSubject;
 use crate::records::SqlCell;
 use indexmap::{IndexMap, IndexSet};
+mod direct;
+pub use direct::RuntimePreparedDream;
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Binding {
@@ -32,6 +34,7 @@ pub struct RuntimeConsolidationDream {
     scope: Arc<NpcHistoricalScope>,
     identities: IndexMap<String, ObserverSubject>,
     evidence: IndexMap<String, String>,
+    direct: Option<direct::DreamPrompt>,
     _storage: ByteReservation,
 }
 impl NativeWorldSession {
@@ -43,6 +46,14 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let input: Binding = serde_json::from_slice(input).map_err(failure)?;
+        self.bind_consolidation_dream_owned(ticket, input)
+    }
+
+    fn bind_consolidation_dream_owned(
+        &self,
+        ticket: &RuntimeConsolidationTicket,
+        input: Binding,
+    ) -> Result<RuntimeConsolidationDream, RuntimeError> {
         let state = &self.session.accepted().map_err(failure)?.state;
         let view = ticket
             .interpretation
@@ -155,6 +166,7 @@ impl NativeWorldSession {
             scope: Arc::clone(&ticket.scope),
             identities,
             evidence,
+            direct: None,
             _storage: storage,
         })
     }
@@ -177,7 +189,20 @@ impl RuntimeConsolidationDream {
             .map_err(failure)?
             .checked_add(crate::experience::encoded_body_bound(&ticket.files).map_err(failure)?)
             .ok_or_else(|| failure("capacity"))?;
-        let mut storage = budget
+        let storage = self.reserve_publication(ticket, bytes, budget)?;
+        let raw: SqlCell = serde_json::from_slice(input).map_err(failure)?;
+        self.prepare_value(ticket, raw, storage, || {
+            serde_json::from_str(&ticket.files).map_err(failure)
+        })
+    }
+
+    fn reserve_publication(
+        &self,
+        ticket: &RuntimeConsolidationTicket,
+        bytes: usize,
+        budget: &ByteBudget,
+    ) -> Result<ByteReservation, RuntimeError> {
+        budget
             .reserve(
                 bytes
                     .checked_add(
@@ -205,8 +230,16 @@ impl RuntimeConsolidationDream {
                     })
                     .ok_or_else(|| failure("capacity"))?,
             )
-            .map_err(failure)?;
-        let raw: SqlCell = serde_json::from_slice(input).map_err(failure)?;
+            .map_err(failure)
+    }
+
+    fn prepare_value(
+        &self,
+        ticket: &RuntimeConsolidationTicket,
+        raw: SqlCell,
+        mut storage: ByteReservation,
+        previous_files: impl FnOnce() -> Result<SqlCell, RuntimeError>,
+    ) -> Result<crate::cognition::dream::DreamInput, RuntimeError> {
         let SqlCell::Object(mut raw) = raw else {
             return Err(failure("dream interpretation must be an object"));
         };
@@ -219,7 +252,7 @@ impl RuntimeConsolidationDream {
         let files = match raw.shift_remove("files") {
             // Strict inference uses null for unchanged files. Resolve against
             // this admitted ticket, never a newer live mind or provider data.
-            Some(SqlCell::Null) | None => serde_json::from_str(&ticket.files).map_err(failure)?,
+            Some(SqlCell::Null) | None => previous_files()?,
             Some(value) => value,
         };
         let thoughts = raw

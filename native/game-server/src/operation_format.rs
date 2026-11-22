@@ -10,9 +10,10 @@ use crate::{
 };
 use openlegend_simulation::{
     activity::ActivityView,
-    encoding::{json_record, json_tree_allocation_bound},
+    encoding::{json_record, json_record_len, json_tree_allocation_bound},
     geometry::GeometryBinding,
     host::ByteBudget,
+    records::SqlCell,
     runtime::{RuntimeProvider, RuntimeProviderInput},
     text::JsText,
 };
@@ -46,14 +47,24 @@ enum Formatted {
     Words(PreparedWordLists),
 }
 
-/// Borrow the funded request and admit its finite decoded text, facts and JSON
-/// backing before formatting. Hand off only the owned encoded reply; the
-/// candidate still checks its current binding and admits what it retains.
+/// Borrow the funded request and admit the output and workspace. Mind
+/// formatting and geometry use typed replies. The remaining bridge-formatted
+/// operations still hand the candidate independently funded encoded results.
 pub(crate) fn answer(
     request: &RuntimeProvider,
     budget: &ByteBudget,
     language: Option<&LanguageProvider>,
 ) -> Result<Option<RuntimeProviderInput>, WorldError> {
+    if let Some(answer) = request.with_maintenance_format(|binding, publication| {
+        format_maintenance(
+            binding,
+            publication,
+            budget,
+            language.ok_or(WorldError::ProviderKind)?,
+        )
+    })? {
+        return answer.map(Some);
+    }
     request.with_request(|request| {
         let envelope: Envelope<'_> =
             serde_json::from_str(request).map_err(|_| WorldError::ProviderKind)?;
@@ -170,4 +181,80 @@ pub(crate) fn answer(
             .map_err(HostError::from)?;
         Ok(Some(RuntimeProviderInput::new(answer, custody)))
     })?
+}
+
+fn format_maintenance(
+    binding: GeometryBinding,
+    publication: &SqlCell,
+    budget: &ByteBudget,
+    language: &LanguageProvider,
+) -> Result<RuntimeProviderInput, WorldError> {
+    let files = publication
+        .get("files")
+        .and_then(SqlCell::as_array)
+        .ok_or(WorldError::ProviderKind)?;
+    let thoughts = publication
+        .get("thoughts")
+        .and_then(SqlCell::as_array)
+        .ok_or(WorldError::ProviderKind)?;
+    let bytes = json_record_len(publication).map_err(|_| WorldError::ProviderKind)?;
+    let custody = budget
+        .reserve(
+            bytes
+                .checked_mul(2)
+                .and_then(|n| n.checked_add(files.len().checked_mul(size_of::<u64>() + 1)?))
+                .and_then(|n| n.checked_add(thoughts.len().checked_mul(size_of::<u64>())?))
+                .and_then(|n| n.checked_add(512))
+                .ok_or(HostError::Capacity)?,
+        )
+        .map_err(HostError::from)?;
+    let mut valid_paths = Vec::with_capacity(files.len());
+    let mut file_words = Vec::with_capacity(files.len());
+    for file in files {
+        let path = file
+            .get("path")
+            .and_then(SqlCell::as_text)
+            .ok_or(WorldError::ProviderKind)?;
+        let text = file
+            .get("text")
+            .and_then(SqlCell::as_text)
+            .ok_or(WorldError::ProviderKind)?;
+        valid_paths.push(language.valid_mind_path(path));
+        file_words.push(
+            language
+                .maintenance_words(&[path, text], budget)
+                .map_err(WorldError::Language)?,
+        );
+    }
+    let mut thought_words = Vec::with_capacity(thoughts.len());
+    for thought in thoughts {
+        let thought = thought.as_text().ok_or(WorldError::ProviderKind)?;
+        thought_words.push(
+            language
+                .maintenance_words(&[thought], budget)
+                .map_err(WorldError::Language)?,
+        );
+    }
+    let _encoding = budget
+        .reserve(bytes.checked_mul(2).ok_or(HostError::Capacity)?)
+        .map_err(HostError::from)?;
+    let input = json_record(publication).map_err(|_| WorldError::ProviderKind)?;
+    let _sort = budget
+        .reserve(json_tree_allocation_bound(&input).ok_or(HostError::Capacity)?)
+        .map_err(HostError::from)?;
+    // Canonical text is retained by the publication itself for exact
+    // duplicate checks. The provider's typed carrier never encodes an envelope.
+    let mut canonical = Vec::with_capacity(input.len());
+    write_canonical(&input, &|a, b| language.compare_utf8(a, b), &mut canonical)
+        .map_err(WorldError::Language)?;
+    let canonical = String::from_utf8(canonical).map_err(|_| WorldError::ProviderKind)?;
+    Ok(RuntimeProviderInput::maintenance_format(
+        binding,
+        canonical,
+        valid_paths,
+        file_words,
+        thought_words,
+        custody,
+        budget,
+    )?)
 }

@@ -112,6 +112,8 @@ Return distinct useful memory groups in the supplied chronological order. Every 
 export const CONSOLIDATION_OUTPUT_TOKENS = 8192;
 export const CONSOLIDATION_HOURLY_SUFFIX =
   ' Return interpretation as null; this request only consolidates its supplied sources.';
+export const CONSOLIDATION_DAILY_SUFFIX =
+  ' Use interpretation to retain a useful imagined dream or private realization, or return null when unwarranted. All its upserted records must use source imagined. Link records to existing mind document IDs or return complete files with identity.md preserved exactly; return files as null when unchanged. Use only the supplied subject and source handles. Preserve all unchanged records, protected identity and active obligations. Keep thoughts brief. Never turn dream content into witnessed facts.';
 // Transport allowances bound each call, never the number of retained memories.
 // docs/memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall
 export const CONSOLIDATION_INPUT_CHARACTERS = 55_000 * 4;

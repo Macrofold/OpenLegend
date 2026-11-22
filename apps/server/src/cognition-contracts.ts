@@ -296,6 +296,19 @@ export function boundSummarySchema(subjects: string[], evidence: string[]) {
       .nullable(),
   });
 }
+/** Each empty/nonempty combination uses the actual provider-compatible schema. */
+export const dreamSummaryTemplates = () =>
+  [false, true].flatMap((subjects) =>
+    [false, true].map((evidence) =>
+      z.toJSONSchema(
+        boundSummarySchema(
+          subjects ? ['__OPENLEGEND_DREAM_SUBJECT__'] : [],
+          evidence ? ['__OPENLEGEND_DREAM_EVIDENCE__'] : [],
+        ),
+        { target: 'draft-7' },
+      ),
+    ),
+  );
 export const LEVEL_LIMITS = {
   2: { outputTokens: 1024, effort: 'low' as const },
   3: { outputTokens: 4096, effort: 'low' as const },

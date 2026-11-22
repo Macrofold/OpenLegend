@@ -9,7 +9,9 @@ use crate::{
         CommitError, DurableHead, PreparedConsolidation, StoreError, durable_head,
         recall::{
             consolidation::ConsolidationCursorWrite,
-            maintenance_scan::{ConsolidationWindow, ReviewPosition},
+            maintenance_scan::{
+                ConsolidationWindow, PendingReview, ReviewPosition, SelectedConsolidation,
+            },
         },
     },
     world::{ProtectedCommit, WorldError},
@@ -20,6 +22,7 @@ use openlegend_simulation::{
     runtime::{
         NativeWorldSession, RuntimeConsolidationBinding, RuntimeConsolidationGroup,
         RuntimeConsolidationTicket, RuntimeDirectOutput, RuntimeDreamReview, RuntimeError,
+        RuntimePreparedDream,
     },
     text::JsText,
 };
@@ -30,7 +33,16 @@ use tokio::{sync::watch, time::Instant};
 pub(crate) enum ReviewFollowUp {
     Tomorrow(f64),
     NextPartition,
-    RoutinePending,
+    RoutinePending(DailySelection),
+}
+
+pub(crate) struct DailySelection {
+    pub review: PendingReview,
+    pub selection: SelectedConsolidation,
+    pub next: ReviewPosition,
+    pub attempt: ReviewPosition,
+    pub episode: String,
+    pub tomorrow: f64,
 }
 
 /// Commit one completed-day partition whose selected sources can all be
@@ -82,6 +94,7 @@ pub(crate) async fn review_protected_day(
     let (through_revision, after) = prior.map_or((None, None), |cursor| {
         (cursor.through_revision, cursor.after)
     });
+    let prior_after = after.clone();
     let selection = game
         .store
         .select_consolidation(
@@ -120,17 +133,32 @@ pub(crate) async fn review_protected_day(
             .map_err(WorldError::Commit)?;
         return Ok(ReviewFollowUp::Tomorrow(tomorrow));
     };
-    if !selection.protected_only {
-        return Ok(ReviewFollowUp::RoutinePending);
-    }
     let next = ReviewPosition {
         day,
         timeline: review.timeline.clone(),
         completed: selection.complete,
         failed: false,
         through_revision: Some(selection.through_revision),
-        after: Some(selection.after),
+        after: Some(selection.after.clone()),
     };
+    if !selection.protected_only {
+        let attempt = ReviewPosition {
+            day,
+            timeline: review.timeline.clone(),
+            completed: false,
+            failed: true,
+            through_revision: Some(selection.through_revision),
+            after: prior_after,
+        };
+        return Ok(ReviewFollowUp::RoutinePending(DailySelection {
+            review,
+            selection,
+            next,
+            attempt,
+            episode: scope.episode,
+            tomorrow,
+        }));
+    }
     let binding = (
         &selection.head.generation,
         &review.timeline,
@@ -169,7 +197,7 @@ pub(crate) async fn review_protected_day(
     )
     .await?;
     let Some((groups, allocation)) = ticket.protected_groups(game.host.budget())? else {
-        return Ok(ReviewFollowUp::RoutinePending);
+        return Err(StoreError::StaleCut.into());
     };
     match apply(
         game,
@@ -177,6 +205,7 @@ pub(crate) async fn review_protected_day(
         ticket,
         groups,
         allocation,
+        None,
         PublicationConsent { stop, deadline },
         Some(cursor),
     )
@@ -255,6 +284,7 @@ pub(crate) async fn apply(
     ticket: RuntimeConsolidationTicket,
     groups: Vec<RuntimeConsolidationGroup>,
     allocation: ByteReservation,
+    dream: Option<RuntimePreparedDream>,
     consent: PublicationConsent,
     cursor: Option<ConsolidationCursorWrite>,
 ) -> Result<ConsolidationOutcome, WorldError> {
@@ -276,7 +306,11 @@ pub(crate) async fn apply(
                     .current()
                     .map_err(RuntimeError::application_refused)?;
                 let _allocation = allocation;
-                world.begin_consolidation_direct(&mut Some(ticket), groups)
+                if let Some(dream) = dream {
+                    world.begin_daily_consolidation_direct(&mut Some(ticket), groups, dream)
+                } else {
+                    world.begin_consolidation_direct(&mut Some(ticket), groups)
+                }
             },
             move |question| {
                 let source = source.clone();

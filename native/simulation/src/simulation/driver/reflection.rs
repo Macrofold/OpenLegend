@@ -46,14 +46,7 @@ pub(super) fn poll_reflection(
         match cursor.step(core, supplied.take())? {
             ReflectionStep::Complete(value) => return Ok(Poll::Complete(value)),
             ReflectionStep::Format(q) => {
-                return question(
-                    answer,
-                    ProviderKind::MaintenanceFormat,
-                    q.binding(),
-                    q,
-                    budget,
-                    ReflectionReply::Format,
-                );
+                return maintenance_question(answer, q, budget, ReflectionReply::Format);
             }
             ReflectionStep::Sources(q) => {
                 return question(

@@ -4,10 +4,10 @@
 use super::{
     Director,
     schedule::ScheduleInbox,
-    slots::{Admission, SlotPriority},
+    slots::{Admission, DecisionSlot, SlotPriority},
 };
 use crate::{
-    recall_maintenance::{ReviewFollowUp, review_protected_day},
+    recall_maintenance::{DailySelection, ReviewFollowUp, review_protected_day},
     store::StoreError,
     world::WorldError,
 };
@@ -19,6 +19,7 @@ use openlegend_simulation::{
 use openlegend_world_host::pool::HostError;
 use std::{sync::Arc, time::Duration};
 use tokio::{sync::watch, time::Instant};
+mod daily;
 mod hourly;
 
 const INSPECTION_INTERVAL: Duration = Duration::from_secs(1);
@@ -31,7 +32,7 @@ struct DueActor {
     next_real: Instant,
     dirty: bool,
     next_hourly: f64,
-    hourly_running: bool,
+    paid: Option<tokio::task::Id>,
     custody: ByteReservation,
 }
 
@@ -44,11 +45,18 @@ impl DueActor {
             next_real: Instant::now(),
             dirty: true,
             next_hourly: 0.,
-            hourly_running: false,
+            paid: None,
             custody,
         }
     }
 }
+
+enum PaidWork {
+    Hourly(hourly::Selected),
+    Daily(DailySelection),
+}
+
+type PaidResult = (String, bool, Result<f64, WorldError>);
 
 impl Director {
     pub(crate) async fn run_maintenance(
@@ -64,8 +72,8 @@ impl Director {
                 while paid.join_next().await.is_some() {}
                 return;
             }
-            while let Some(joined) = paid.try_join_next() {
-                finish_hourly(joined, &mut due);
+            while let Some(joined) = paid.try_join_next_with_id() {
+                finish_paid(joined, &mut due);
             }
             let wake = inbox.take_maintenance();
             for (actor, custody) in wake.actors {
@@ -110,11 +118,10 @@ impl Director {
             {
                 let selected = due.values().position(|actor| {
                     actor.next_real <= now
+                        && actor.paid.is_none()
                         && (actor.dirty
                             || actor.next_game <= clock.at
-                            || self.summary_model.is_some()
-                                && !actor.hourly_running
-                                && actor.next_hourly <= clock.at)
+                            || self.summary_model.is_some() && actor.next_hourly <= clock.at)
                 });
                 if let Some(index) = selected {
                     let (actor, mut work) = due.shift_remove_index(index).expect("selected actor");
@@ -122,17 +129,18 @@ impl Director {
                     work.dirty = false;
                     work.next_real = now + INSPECTION_INTERVAL;
                     let daily = if inspect_daily {
-                        self.inspect_maintenance(&actor, &mut work).await
+                        self.inspect_maintenance(&actor, &mut work, &mut paid, stop.clone())
+                            .await
                     } else {
                         Ok(true)
                     };
                     match daily {
-                        Ok(false) if self.summary_model.is_none() && !work.hourly_running => {
+                        Ok(false) if self.summary_model.is_none() => {
                             continue;
                         }
                         Ok(false) => (),
                         Ok(true) => (),
-                        Err(WorldError::Host(HostError::Cancelled)) if *stop.borrow() => return,
+                        Err(WorldError::Host(HostError::Cancelled)) if *stop.borrow() => continue,
                         Err(error)
                             if error.is_admission_refusal()
                                 || matches!(error, WorldError::Storage(StoreError::StaleCut)) =>
@@ -146,7 +154,7 @@ impl Director {
                         }
                     }
                     if self.summary_model.is_some()
-                        && !work.hourly_running
+                        && work.paid.is_none()
                         && work.next_hourly <= clock.at
                     {
                         match self
@@ -154,6 +162,9 @@ impl Director {
                             .await
                         {
                             Ok(()) => (),
+                            Err(WorldError::Host(HostError::Cancelled)) if *stop.borrow() => {
+                                continue;
+                            }
                             Err(error)
                                 if error.is_admission_refusal()
                                     || matches!(
@@ -179,16 +190,18 @@ impl Director {
             tokio::select! {
                 _ = stop.changed() => (),
                 _ = inbox.maintenance_ready() => (),
-                Some(joined) = paid.join_next(), if !paid.is_empty() => finish_hourly(joined, &mut due),
+                Some(joined) = paid.join_next_with_id(), if !paid.is_empty() => finish_paid(joined, &mut due),
                 _ = tokio::time::sleep(INSPECTION_INTERVAL), if reload || !due.is_empty() => (),
             }
         }
     }
 
     async fn inspect_maintenance(
-        &self,
+        self: &Arc<Self>,
         actor: &str,
         work: &mut DueActor,
+        tasks: &mut tokio::task::JoinSet<PaidResult>,
+        service_stop: watch::Receiver<bool>,
     ) -> Result<bool, WorldError> {
         let id = actor.to_owned();
         let Some(scope) = self
@@ -239,7 +252,20 @@ impl Director {
         work.next_game = match result {
             ReviewFollowUp::Tomorrow(at) => at,
             ReviewFollowUp::NextPartition => 0.,
-            ReviewFollowUp::RoutinePending => f64::INFINITY,
+            ReviewFollowUp::RoutinePending(plan) => {
+                if self.summary_model.is_some() {
+                    work.paid = Some(self.start_inference(
+                        actor,
+                        tasks,
+                        slot,
+                        PaidWork::Daily(plan),
+                        service_stop,
+                    ));
+                    0.
+                } else {
+                    f64::INFINITY
+                }
+            }
         };
         Ok(true)
     }
@@ -248,8 +274,8 @@ impl Director {
         self: &Arc<Self>,
         actor: &str,
         work: &mut DueActor,
-        tasks: &mut tokio::task::JoinSet<(String, Result<f64, WorldError>)>,
-        mut service_stop: watch::Receiver<bool>,
+        tasks: &mut tokio::task::JoinSet<PaidResult>,
+        service_stop: watch::Receiver<bool>,
     ) -> Result<(), WorldError> {
         let id = actor.to_owned();
         let Some(scope) = self
@@ -279,50 +305,93 @@ impl Director {
         else {
             return Ok(());
         };
-        work.hourly_running = true;
+        work.paid = Some(self.start_inference(
+            actor,
+            tasks,
+            slot,
+            PaidWork::Hourly(selection),
+            service_stop,
+        ));
+        Ok(())
+    }
+
+    fn start_inference(
+        self: &Arc<Self>,
+        actor: &str,
+        tasks: &mut tokio::task::JoinSet<PaidResult>,
+        slot: DecisionSlot,
+        work: PaidWork,
+        mut service_stop: watch::Receiver<bool>,
+    ) -> tokio::task::Id {
         let actor = actor.to_owned();
         let director = self.clone();
-        tasks.spawn(async move {
-            let stopped = slot.resident.stop.subscribe();
-            let future = hourly::run(
-                &director.game,
-                &director.saves,
-                &director.dispatch,
-                director.summary_model.as_ref().expect("admitted route"),
-                selection,
-                stopped,
-            );
-            tokio::pin!(future);
-            let result = tokio::select! {
-                result = &mut future => result,
-                _ = async { let _ = service_stop.wait_for(|stopped| *stopped).await; } => {
-                    slot.resident.stop.send_replace(true);
-                    future.await
-                }
-            };
-            (actor, result)
-        });
-        Ok(())
+        tasks
+            .spawn(async move {
+                let stopped = slot.resident.stop.subscribe();
+                let daily = matches!(&work, PaidWork::Daily(_));
+                let future = async {
+                    let model = director.summary_model.as_ref().expect("admitted route");
+                    match work {
+                        PaidWork::Hourly(plan) => {
+                            hourly::run(
+                                &director.game,
+                                &director.saves,
+                                &director.dispatch,
+                                model,
+                                plan,
+                                stopped,
+                            )
+                            .await
+                        }
+                        PaidWork::Daily(plan) => {
+                            daily::run(
+                                &director.game,
+                                &director.saves,
+                                &director.dispatch,
+                                model,
+                                plan,
+                                stopped,
+                            )
+                            .await
+                        }
+                    }
+                };
+                tokio::pin!(future);
+                let result = tokio::select! {
+                    result = &mut future => result,
+                    _ = async { let _ = service_stop.wait_for(|stopped| *stopped).await; } => {
+                        slot.resident.stop.send_replace(true);
+                        future.await
+                    }
+                };
+                (actor, daily, result)
+            })
+            .id()
     }
 }
 
-fn finish_hourly(
-    joined: Result<(String, Result<f64, WorldError>), tokio::task::JoinError>,
+fn finish_paid(
+    joined: Result<(tokio::task::Id, PaidResult), tokio::task::JoinError>,
     due: &mut IndexMap<String, DueActor>,
 ) {
-    let Ok((actor, result)) = joined else {
-        eprintln!("An hourly memory worker stopped unexpectedly");
-        for work in due.values_mut().filter(|work| work.hourly_running) {
-            work.hourly_running = false;
-            work.next_real = Instant::now() + READ_BACKOFF;
+    let (actor, daily, result) = match joined {
+        Ok((_, outcome)) => outcome,
+        Err(error) => {
+            eprintln!("A memory maintenance worker stopped unexpectedly");
+            if let Some(work) = due.values_mut().find(|work| work.paid == Some(error.id())) {
+                work.paid = None;
+                work.next_real = Instant::now() + READ_BACKOFF;
+                work.dirty = true;
+            }
+            return;
         }
-        return;
     };
     let Some(work) = due.get_mut(&actor) else {
         return;
     };
-    work.hourly_running = false;
+    work.paid = None;
     match result {
+        Ok(next) if daily => work.next_game = next,
         Ok(next) => work.next_hourly = next,
         Err(error)
             if error.is_admission_refusal()
@@ -331,8 +400,9 @@ fn finish_hourly(
             ()
         }
         Err(error) => {
-            eprintln!("Hourly memory work deferred: {error}");
+            eprintln!("Memory maintenance deferred: {error}");
             work.next_real = Instant::now() + READ_BACKOFF;
+            work.dirty = true;
         }
     }
 }

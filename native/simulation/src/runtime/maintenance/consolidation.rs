@@ -13,7 +13,7 @@ use crate::host::retained_size::HeapBytes;
 use std::mem::size_of;
 mod dream;
 mod reading;
-pub use dream::RuntimeConsolidationDream;
+pub use dream::{RuntimeConsolidationDream, RuntimePreparedDream};
 pub use reading::{RuntimeConsolidationReading, RuntimeConsolidationReadings};
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -50,8 +50,14 @@ pub struct RuntimeConsolidationTicket {
     watch_sources: bool,
     watch: Option<ConsolidationWatch>,
     interpretation: Option<Arc<MaintenanceInterpretation>>,
+    dream_revision: Option<(u64, u64)>,
     candidate: Option<CandidateKey>,
     _storage: ByteReservation,
+}
+
+enum SubmittedDream<'a> {
+    Bridge(&'a RuntimeConsolidationDream, &'a [u8]),
+    Direct(RuntimePreparedDream),
 }
 impl NativeWorldSession {
     pub fn bind_consolidation(
@@ -171,6 +177,7 @@ impl NativeWorldSession {
             watch_sources: !bridge_packet,
             watch: None,
             interpretation: None,
+            dream_revision: None,
             candidate: None,
             _storage: storage,
         })
@@ -276,7 +283,23 @@ impl NativeWorldSession {
     ) -> Result<bool, RuntimeError> {
         self.require_active()?;
         let state = &self.session.publication_read().map_err(failure)?.state;
+        let draft_current = ticket.dream_revision.is_none_or(|(mind, inner)| {
+            let actor = &ticket.scope.actor_id;
+            state
+                .minds
+                .minds
+                .as_ref()
+                .and_then(|owners| owners.get(actor))
+                .is_some_and(|current| current.revision == mind)
+                && state
+                    .minds
+                    .inner_worlds
+                    .as_ref()
+                    .and_then(|owners| owners.get(actor))
+                    .is_some_and(|current| current.revision == inner)
+        });
         Ok(!state.physical.header.paused
+            && draft_current
             && ticket
                 .watch
                 .as_ref()
@@ -341,7 +364,7 @@ impl NativeWorldSession {
         let input: Groups = serde_json::from_slice(input).map_err(failure)?;
         let dream = match (dream, interpretation) {
             (None, None) => None,
-            (Some(dream), Some(raw)) => Some((dream, raw)),
+            (Some(dream), Some(raw)) => Some(SubmittedDream::Bridge(dream, raw)),
             _ => {
                 return Err(failure(
                     "dream publication requires its native binding and raw interpretation",
@@ -361,11 +384,22 @@ impl NativeWorldSession {
         self.begin_consolidation_owned(owner, groups, None, true)
     }
 
+    /// The first daily provider answer travels as an admitted Rust value.
+    /// Summary coverage and interpretation settle in the same protected save.
+    pub fn begin_daily_consolidation_direct(
+        &mut self,
+        owner: &mut Option<RuntimeConsolidationTicket>,
+        groups: Vec<RuntimeConsolidationGroup>,
+        dream: RuntimePreparedDream,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.begin_consolidation_owned(owner, groups, Some(SubmittedDream::Direct(dream)), true)
+    }
+
     fn begin_consolidation_owned(
         &mut self,
         owner: &mut Option<RuntimeConsolidationTicket>,
         groups: Vec<RuntimeConsolidationGroup>,
-        dream: Option<(&RuntimeConsolidationDream, &[u8])>,
+        dream: Option<SubmittedDream<'_>>,
         protected: bool,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
@@ -397,9 +431,18 @@ impl NativeWorldSession {
                     .ok_or_else(|| failure("capacity"))?,
             )
             .map_err(failure)?;
-        let dream = dream
-            .map(|(dream, raw)| dream.prepare(ticket, raw, &self.budget))
-            .transpose()?;
+        let dream = match dream {
+            None => None,
+            Some(SubmittedDream::Bridge(dream, raw)) => {
+                Some(dream.prepare(ticket, raw, &self.budget)?)
+            }
+            Some(SubmittedDream::Direct(dream)) if Arc::ptr_eq(&dream.scope, &ticket.scope) => {
+                Some(dream.input)
+            }
+            Some(SubmittedDream::Direct(_)) => {
+                return Err(failure("daily answer lost its original offer"));
+            }
+        };
         let candidate = self
             .session
             .begin_consolidation(crate::cognition::consolidation::ConsolidationInput {

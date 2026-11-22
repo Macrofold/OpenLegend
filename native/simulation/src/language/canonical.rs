@@ -7,6 +7,7 @@ use crate::host::retained_size::HeapBytes;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::records::SqlCell;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Serialize)]
 pub(crate) struct CanonicalJsonRequest {
@@ -33,6 +34,28 @@ impl PreparedCanonicalJson {
     }
 }
 impl CanonicalJsonRequest {
+    /// Make an independently owned, immutable formatter input from an existing
+    /// typed value. The active cursor and its provider borrow the same body.
+    pub(crate) fn copy_cell(
+        binding: GeometryBinding,
+        value: &SqlCell,
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, ExecutionError> {
+        let bytes = value
+            .heap_bytes()
+            .and_then(|n| {
+                n.checked_add(std::mem::size_of::<Self>() + 2 * std::mem::size_of::<usize>())
+            })
+            .ok_or(ExecutionError::Capacity)?;
+        let reservation = budget.reserve(bytes)?;
+        Ok(Arc::new(Self {
+            binding,
+            value: value.clone(),
+            reservation,
+            budget: budget.clone(),
+        }))
+    }
+
     pub(crate) fn prepare<T: Serialize>(
         binding: GeometryBinding,
         input: &T,
@@ -66,6 +89,15 @@ impl CanonicalJsonRequest {
     /// The mutable borrow gives one cursor exclusive use of its prefunded
     /// comparison workspace; malformed replies leave the question available.
     pub(crate) fn validate(&mut self, answer: &CanonicalJsonAnswer) -> Result<(), ExecutionError> {
+        self.validate_shared_value(answer)
+    }
+
+    /// A typed format question shares only its immutable input with the
+    /// worker; validation still runs once in the owning candidate lane.
+    pub(crate) fn validate_shared_value(
+        &self,
+        answer: &CanonicalJsonAnswer,
+    ) -> Result<(), ExecutionError> {
         if answer.binding != self.binding {
             return Err(ExecutionError::InvalidCheckpoint);
         }

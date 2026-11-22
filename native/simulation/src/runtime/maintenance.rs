@@ -7,6 +7,7 @@ pub(super) mod witness;
 pub use consolidation::{
     RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
     RuntimeConsolidationReading, RuntimeConsolidationReadings, RuntimeConsolidationTicket,
+    RuntimePreparedDream,
 };
 pub use reflection::RuntimeReflectionTicket;
 pub struct RuntimeMaintenanceRead {

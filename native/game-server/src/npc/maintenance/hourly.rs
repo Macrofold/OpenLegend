@@ -28,8 +28,9 @@ use openlegend_simulation::{
     encoding::{json_record, json_record_len, sha256_hex},
     host::{ByteBudget, ByteReservation, CapacityError},
     runtime::{
-        RuntimeConsolidationBinding, RuntimeConsolidationGroup, RuntimeConsolidationTicket,
-        RuntimeError, RuntimeHourlyReview,
+        RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
+        RuntimeConsolidationReadings, RuntimeConsolidationTicket, RuntimeError,
+        RuntimeHourlyReview, RuntimePreparedDream,
     },
 };
 use openlegend_world_host::pool::HostError;
@@ -158,26 +159,23 @@ pub(super) async fn run(
     }
     let job = format!("hourly-memory:{digest}");
     let settings = &game.store.schema.recall.maintenance;
-    let ticket = Arc::new(
-        recall_maintenance::prepare(
-            game,
-            selection.head,
-            selection.actor,
-            RuntimeConsolidationBinding {
-                job_id: job.clone(),
-                selection: selection.selection,
-                protected_importance: settings.protected_importance,
-                summary_bytes: settings.summary_bytes,
-                requires_body: true,
-                dream_episode: None,
-            },
-            custody,
-        )
-        .await?,
-    );
+    let ticket = recall_maintenance::prepare(
+        game,
+        selection.head,
+        selection.actor,
+        RuntimeConsolidationBinding {
+            job_id: job.clone(),
+            selection: selection.selection,
+            protected_importance: settings.protected_importance,
+            summary_bytes: settings.summary_bytes,
+            requires_body: true,
+            dream_episode: None,
+        },
+        custody,
+    )
+    .await?;
     let budget = game.host.budget();
-    let readings = ticket.consolidation_readings(budget)?;
-    let prepared = prompt::partitions(&readings, game)?;
+    let prepared = prepare_inference(game, ticket, false).await?;
     require_live(&stopped, deadline)?;
     let mut mark = HourlyPosition {
         hour,
@@ -189,23 +187,18 @@ pub(super) async fn run(
     // Record the exact source set before reserving or starting a provider.
     // A restart can observe an unresolved attempt without paying for it again.
     let marker = save_marker(game, &head, marker).await?;
-    let groups = collect(
-        model, dispatch, game, &stopped, deadline, &job, &ticket, readings, prepared,
-    )
-    .await;
+    let groups = collect(model, dispatch, game, &stopped, deadline, &job, prepared).await;
     match groups {
-        Ok((groups, allocation)) if require_live(&stopped, deadline).is_ok() => {
+        Ok(answer) if require_live(&stopped, deadline).is_ok() => {
             mark.outcome = HourlyOutcome::Published;
             let published = following(&marker, &mark, budget)?;
-            let ticket = Arc::try_unwrap(ticket).map_err(|_| {
-                RuntimeError::application_refused("consolidation holds a provider lease")
-            })?;
             match recall_maintenance::apply(
                 game,
                 saves,
-                ticket,
-                groups,
-                allocation,
+                answer.ticket,
+                answer.groups,
+                answer.allocation,
+                answer.dream,
                 PublicationConsent {
                     stop: stopped,
                     deadline,
@@ -229,7 +222,10 @@ pub(super) async fn run(
     Ok(next_hour)
 }
 
-fn require_live(stopped: &watch::Receiver<bool>, deadline: Instant) -> Result<(), WorldError> {
+pub(super) fn require_live(
+    stopped: &watch::Receiver<bool>,
+    deadline: Instant,
+) -> Result<(), WorldError> {
     if *stopped.borrow() {
         Err(HostError::Cancelled.into())
     } else if Instant::now() >= deadline {
@@ -239,7 +235,7 @@ fn require_live(stopped: &watch::Receiver<bool>, deadline: Instant) -> Result<()
     }
 }
 
-async fn save_marker(
+pub(super) async fn save_marker(
     game: &CurrentServer,
     expected: &DurableHead,
     marker: ConsolidationCursorWrite,
@@ -261,9 +257,9 @@ async fn save_marker(
         .map_err(WorldError::Commit)
 }
 
-fn following(
+pub(super) fn following(
     marker: &ConsolidationCursorWrite,
-    status: &HourlyPosition,
+    status: &impl serde::Serialize,
     budget: &ByteBudget,
 ) -> Result<ConsolidationCursorWrite, WorldError> {
     let bytes = json_record_len(status).map_err(RuntimeError::application_refused)?;
@@ -278,12 +274,12 @@ fn following(
     })
 }
 
-struct HourlyDisclosure {
+struct ConsolidationDisclosure {
     ticket: Arc<RuntimeConsolidationTicket>,
     deadline: Instant,
 }
 
-impl ProviderDisclosure for HourlyDisclosure {
+impl ProviderDisclosure for ConsolidationDisclosure {
     fn start(
         &self,
         turn: NpcDisclosureTurn<'_>,
@@ -307,32 +303,113 @@ impl ProviderDisclosure for HourlyDisclosure {
     }
 }
 
-async fn collect(
+pub(super) struct PreparedInference {
+    ticket: RuntimeConsolidationTicket,
+    readings: RuntimeConsolidationReadings,
+    partitions: prompt::Partitions,
+    dream: Option<RuntimeConsolidationDream>,
+}
+
+pub(super) async fn prepare_inference(
+    game: &CurrentServer,
+    ticket: RuntimeConsolidationTicket,
+    daily: bool,
+) -> Result<PreparedInference, WorldError> {
+    let budget = game.host.budget();
+    let readings = ticket.consolidation_readings(budget)?;
+    let mut partitions = prompt::partitions(&readings, game, daily)?;
+    let (ticket, dream) = if daily {
+        let count = partitions.values[0].routine.len();
+        let allocation = budget
+            .reserve(count * std::mem::size_of::<usize>())
+            .map_err(RuntimeError::from)?;
+        let positions = readings
+            .readings
+            .iter()
+            .enumerate()
+            .filter_map(|(position, source)| (!source.protected).then_some(position))
+            .take(count)
+            .collect::<Vec<_>>();
+        game.world
+            .capture(move |world| {
+                let _allocation = allocation;
+                let mut ticket = ticket;
+                let dream = world.prepare_consolidation_dream_direct(&mut ticket, &positions)?;
+                Ok((ticket, dream))
+            })
+            .await?
+    } else {
+        (ticket, None)
+    };
+    if let Some(dream) = &dream {
+        partitions.append_dream(dream, budget)?;
+    }
+    Ok(PreparedInference {
+        ticket,
+        readings,
+        partitions,
+        dream,
+    })
+}
+
+pub(super) struct InferenceAnswer {
+    pub ticket: RuntimeConsolidationTicket,
+    pub groups: Vec<RuntimeConsolidationGroup>,
+    pub allocation: ByteReservation,
+    pub dream: Option<RuntimePreparedDream>,
+}
+
+pub(super) async fn collect(
     settings: &SummaryModel,
     dispatch: &Arc<DecisionDispatch>,
     game: &CurrentServer,
     stopped: &watch::Receiver<bool>,
     deadline: Instant,
     job: &str,
-    ticket: &Arc<RuntimeConsolidationTicket>,
-    readings: openlegend_simulation::runtime::RuntimeConsolidationReadings,
-    partitions: prompt::Partitions,
-) -> Result<(Vec<RuntimeConsolidationGroup>, ByteReservation), CallFailure> {
+    prepared: PreparedInference,
+) -> Result<InferenceAnswer, CallFailure> {
+    let PreparedInference {
+        ticket,
+        readings,
+        partitions,
+        dream,
+    } = prepared;
+    let ticket = Arc::new(ticket);
     let model = &settings.model;
     let policy = &game.store.schema.recall.maintenance;
     let budget = game.host.budget();
     let billing = model.macrofold.as_ref().map(|catalog| catalog.billing);
     let amount = model.amount_micro_usd.to_string();
     let mut output = prompt::Coverage::new(readings, budget)?;
+    let mut interpretation = None;
     for (index, partition) in partitions.values.into_iter().enumerate() {
         require_live(stopped, deadline).map_err(CallFailure::World)?;
         let id = format!("{job}:summary:{index}");
+        let dream = dream.as_ref().filter(|_| index == 0);
+        let interpreting = dream.is_some();
+        let schema = dream
+            .map(|offer| prompt::dream_schema(policy, offer, budget))
+            .transpose()?;
+        let instructions = if interpreting {
+            &policy.daily_instructions
+        } else {
+            &policy.hourly_instructions
+        };
+        if partition.prompt.len().saturating_add(instructions.len()) > 500_000 {
+            return Err(CallFailure::Invalid);
+        }
         let generation = Generation {
             schema_name: "memory_consolidation",
-            schema: &policy.hourly_schema,
-            instructions: &policy.hourly_instructions,
+            schema: schema
+                .as_ref()
+                .map_or(&policy.hourly_schema, |schema| &schema.value),
+            instructions,
             prompt: &partition.prompt,
-            effort: model.effort,
+            effort: if interpreting {
+                Some(&policy.daily_effort)
+            } else {
+                model.effort
+            },
             max_output_tokens: model.output_tokens,
             stream: false,
         };
@@ -346,7 +423,7 @@ async fn collect(
         )?;
         let digest = sha256_hex(partition.prompt.as_bytes());
         let decode_budget = budget.clone();
-        let reply = dispatch
+        let mut reply = dispatch
             .submit(
                 PreparedCall {
                     request,
@@ -357,7 +434,7 @@ async fn collect(
                         provider: InferenceClass::OpenAi,
                         category: "maintenance",
                         stage: "memory_consolidation",
-                        level: Some(2),
+                        level: Some(if interpreting { 5 } else { 2 }),
                         background: true,
                         amount: model.amount_micro_usd,
                         ceiling: settings.ceiling,
@@ -372,7 +449,7 @@ async fn collect(
                     evidence_cut: ticket.accepted_cut(),
                     preview: None,
                 },
-                HourlyDisclosure {
+                ConsolidationDisclosure {
                     ticket: ticket.clone(),
                     deadline,
                 },
@@ -383,19 +460,37 @@ async fn collect(
                             .map_err(|_| CallFailure::Invalid)?
                         {
                             TextResult::Refused => Err(CallFailure::Invalid),
-                            TextResult::Complete(text) => prompt::decode(text, &decode_budget),
+                            TextResult::Complete(text) => {
+                                prompt::decode(text, &decode_budget, interpreting)
+                            }
                         }
                     } else {
                         let text = provider::direct_text(response, &decode_budget)
                             .map_err(|_| CallFailure::Invalid)?;
-                        prompt::decode(&text.text, &decode_budget)
+                        prompt::decode(&text.text, &decode_budget, interpreting)
                     }
                 }),
             )
             .await?;
+        if let Some(value) = reply.interpretation.take() {
+            interpretation = Some(
+                dream
+                    .ok_or(CallFailure::Invalid)?
+                    .prepare_publication_direct(&ticket, value, &mut reply.custody, budget)
+                    .map_err(|error| CallFailure::World(error.into()))?,
+            );
+        }
         output.accept(partition.routine, reply, policy.summary_bytes)?;
     }
-    output.finish()
+    let ticket = Arc::try_unwrap(ticket)
+        .map_err(|_| CallFailure::Stale("consolidation holds a provider lease"))?;
+    let (groups, allocation) = output.finish()?;
+    Ok(InferenceAnswer {
+        ticket,
+        groups,
+        allocation,
+        dream: interpretation,
+    })
 }
 
 fn capacity(error: CapacityError) -> CallFailure {

@@ -50,6 +50,55 @@ impl LexicalVector {
 }
 
 impl LanguageProvider {
+    /// Mind filenames follow the current engine's 1–64-letter/number path
+    /// grammar with spaces, underscores and hyphens, and an exact .md suffix.
+    pub(crate) fn valid_mind_path(&self, path: &JsText) -> bool {
+        let Some(stem) = path.as_unicode().and_then(|path| path.strip_suffix(".md")) else {
+            return false;
+        };
+        !stem.is_empty()
+            && stem.chars().enumerate().all(|(index, character)| {
+                index < 64
+                    && (matches!(character, '_' | ' ' | '-')
+                        || matches!(unsafe { (self.lexical.category)(character as i32) }, 1..=5 | 9..=11))
+            })
+    }
+
+    /// Count NFKC-normalized whitespace-separated words with the same pinned
+    /// Unicode data as Source, preserving isolated UTF-16 units as nonspaces.
+    pub(crate) fn maintenance_words(
+        &self,
+        parts: &[&JsText],
+        budget: &ByteBudget,
+    ) -> Result<u64, LanguageError> {
+        use LanguageError::Capacity;
+        let capacity = parts
+            .iter()
+            .try_fold(parts.len().saturating_sub(1), |total, text| {
+                total.checked_add(text.units_len()).ok_or(Capacity)
+            })?;
+        let _input = budget
+            .reserve(capacity.checked_mul(size_of::<u16>()).ok_or(Capacity)?)
+            .map_err(|_| Capacity)?;
+        let mut input = Vec::with_capacity(capacity);
+        for (index, part) in parts.iter().enumerate() {
+            if index != 0 {
+                input.push(u16::from(b' '));
+            }
+            input.extend(part.units());
+        }
+        let (normalized, _normalization) = self.normalize_units(&input, budget)?;
+        let mut count = 0;
+        let mut in_word = false;
+        for unit in normalized {
+            let word = !char::from_u32(unit.into())
+                .is_some_and(openlegend_simulation::encoding::is_js_whitespace);
+            count += u64::from(word && !in_word);
+            in_word = word;
+        }
+        Ok(count)
+    }
+
     /// Prepare a saved intention's exact Source match text with the pinned ICU
     /// data. Return its own admitted bytes for the current-record installer.
     pub(crate) fn normalize_intention(
@@ -198,6 +247,15 @@ impl LanguageProvider {
         input: &[u16],
         budget: &ByteBudget,
     ) -> Result<(Vec<u16>, ByteReservation), LanguageError> {
+        let (normalized, _normalized) = self.normalize_units(input, budget)?;
+        self.lowercase_units(&normalized, budget)
+    }
+
+    fn normalize_units(
+        &self,
+        input: &[u16],
+        budget: &ByteBudget,
+    ) -> Result<(Vec<u16>, ByteReservation), LanguageError> {
         use LanguageError::{Capacity, Provider};
         let length = i32::try_from(input.len()).map_err(|_| Capacity)?;
         let mut status = 0;
@@ -207,10 +265,9 @@ impl LanguageProvider {
         if status > 0 || model.is_null() {
             return Err(Provider);
         }
-        let (normalized, _normalized) = transform(budget, |output, maximum, status| unsafe {
+        transform(budget, |output, maximum, status| unsafe {
             (self.lexical.normalize)(model, input.as_ptr(), length, output, maximum, status)
-        })?;
-        self.lowercase_units(&normalized, budget)
+        })
     }
 
     pub(super) fn lowercase_units(

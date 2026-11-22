@@ -34,7 +34,7 @@ pub use maintenance::{
     RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
     RuntimeConsolidationReading, RuntimeConsolidationReadings, RuntimeConsolidationTicket,
     RuntimeDreamReview, RuntimeHourlyReview, RuntimeMaintenancePublication, RuntimeMaintenanceRead,
-    RuntimeReflectionTicket,
+    RuntimePreparedDream, RuntimeReflectionTicket,
 };
 mod npc;
 mod npc_intake;
@@ -271,6 +271,7 @@ enum RuntimeAnswerBody {
     Json(String),
     Geometry(Box<crate::geometry::GeometryAnswers>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
+    Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
 }
 impl RuntimeProviderInput {
     /// The caller already admitted and owns this String's backing. Its actual
@@ -318,6 +319,36 @@ impl RuntimeProviderInput {
             custody: wrapper,
         })
     }
+
+    /// Adopt the funded facts for this exact mind-format request. The
+    /// candidate still validates canonical text and all publication effects.
+    pub fn maintenance_format(
+        binding: crate::geometry::GeometryBinding,
+        canonical: String,
+        valid_paths: Vec<bool>,
+        file_words: Vec<u64>,
+        thought_words: Vec<u64>,
+        answer_custody: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        if !budget.owns(&answer_custody) {
+            return Err(failure("mind formatting belongs to another native budget"));
+        }
+        let custody = budget.reserve(0)?;
+        let answer = crate::cognition::format::MaintenanceFormatAnswer::checked(
+            binding,
+            canonical,
+            valid_paths,
+            file_words,
+            thought_words,
+            answer_custody,
+        )
+        .map_err(failure)?;
+        Ok(Self {
+            body: RuntimeAnswerBody::Maintenance(Box::new(answer)),
+            custody,
+        })
+    }
 }
 
 fn provider_response(
@@ -349,6 +380,12 @@ fn provider_response(
                         ));
                     }
                     ProviderResponse::npc_sources(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::Maintenance(answer) => {
+                    if question.maintenance().is_none() {
+                        return Err(failure("mind format answer requires its typed request"));
+                    }
+                    ProviderResponse::maintenance(question.binding(), answer, input.custody)
                 }
             }
             .map_err(failure)
@@ -585,7 +622,7 @@ impl RuntimeProvider {
         let request = self.question()?;
         let json = request
             .json()
-            .ok_or_else(|| failure("geometry requires a typed provider"))?;
+            .ok_or_else(|| failure("this request needs a typed provider"))?;
         Ok(use_request(json))
     }
 
@@ -603,10 +640,25 @@ impl RuntimeProvider {
         Ok(self.question()?.kind() == crate::simulation::ProviderKind::KnownPlaces)
     }
 
+    /// Lend the active mind publication to the pure ICU formatter. A provider
+    /// can only return separately funded text facts for this exact question.
+    pub fn with_maintenance_format<T>(
+        &self,
+        format: impl FnOnce(crate::geometry::GeometryBinding, &crate::records::SqlCell) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question
+            .maintenance()
+            .map(|ask| format(ask.binding(), ask.publication())))
+    }
+
     pub fn json(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let question = self.question()?;
         if let Some(geometry) = question.geometry_envelope() {
             return RuntimeJson::encode(&geometry, budget);
+        }
+        if let Some(maintenance) = question.maintenance_envelope() {
+            return RuntimeJson::encode(&maintenance, budget);
         }
         // Other provider families already own an encoded body. Copy only this
         // selected output; JavaScript buffers can never alias canonical bytes.

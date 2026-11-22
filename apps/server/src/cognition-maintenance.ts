@@ -38,6 +38,7 @@ import type { CognitionExecution, ExecutionLease } from './cognition-execution.j
 import { ActorWork } from './actor-work.js';
 import { activeIntakeChanges, installedThinkingToken } from './interests.js';
 import {
+  CONSOLIDATION_DAILY_SUFFIX,
   CONSOLIDATION_HOURLY_SUFFIX,
   CONSOLIDATION_INSTRUCTIONS,
   CONSOLIDATION_OUTPUT_TOKENS,
@@ -1137,9 +1138,7 @@ export class CognitionMaintenance {
                   task: 'memory_consolidation',
                   instructions:
                     CONSOLIDATION_INSTRUCTIONS +
-                    (interpreting
-                      ? ' Use interpretation to retain a useful imagined dream or private realization, or return null when unwarranted. All its upserted records must use source imagined. Link records to existing mind document IDs or return complete files with identity.md preserved exactly; return files as null when unchanged. Use only the supplied subject and source handles. Preserve all unchanged records, protected identity and active obligations. Keep thoughts brief. Never turn dream content into witnessed facts.'
-                      : CONSOLIDATION_HOURLY_SUFFIX),
+                    (interpreting ? CONSOLIDATION_DAILY_SUFFIX : CONSOLIDATION_HOURLY_SUFFIX),
                   context: offered.context,
                   schema: z.toJSONSchema(schema, { target: 'draft-7' }),
                   signal: controller.signal,

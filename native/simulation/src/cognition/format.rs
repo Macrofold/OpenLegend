@@ -7,10 +7,11 @@ use crate::host::{ByteBudget, ByteReservation};
 use crate::language::{CanonicalJsonAnswer, CanonicalJsonRequest};
 use crate::records::SqlCell;
 use serde::{Deserialize, Serialize};
-use std::mem::size_of;
+use std::{mem::size_of, sync::Arc};
 
+#[derive(Clone)]
 pub(crate) struct MaintenanceFormatRequest {
-    canonical: CanonicalJsonRequest,
+    canonical: Arc<CanonicalJsonRequest>,
 }
 impl Serialize for MaintenanceFormatRequest {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -40,6 +41,32 @@ pub(crate) struct VerifiedMaintenanceFormat {
     _storage: ByteReservation,
 }
 impl MaintenanceFormatAnswer {
+    pub(crate) fn checked(
+        binding: GeometryBinding,
+        canonical_publication: String,
+        valid_paths: Vec<bool>,
+        file_words: Vec<u64>,
+        thought_words: Vec<u64>,
+        mut storage: ByteReservation,
+    ) -> Result<Self, ExecutionError> {
+        let bytes = canonical_publication
+            .capacity()
+            .checked_add(valid_paths.capacity() * size_of::<bool>())
+            .and_then(|n| n.checked_add(file_words.capacity().checked_mul(size_of::<u64>())?))
+            .and_then(|n| n.checked_add(thought_words.capacity().checked_mul(size_of::<u64>())?))
+            .and_then(|n| n.checked_add(size_of::<Self>()))
+            .ok_or(ExecutionError::Capacity)?;
+        storage.resize(bytes)?;
+        Ok(Self {
+            binding,
+            canonical_publication,
+            valid_paths,
+            file_words,
+            thought_words,
+            storage: Some(storage),
+        })
+    }
+
     pub(crate) fn decode(text: &str, budget: &ByteBudget) -> Result<Self, HistoryPreparationError> {
         let storage =
             crate::install::reserve_typed_parse::<Self>(text, size_of::<u64>(), None, budget)
@@ -56,16 +83,21 @@ impl MaintenanceFormatAnswer {
 impl MaintenanceFormatRequest {
     pub(crate) fn prepare(
         binding: GeometryBinding,
-        publication: &impl Serialize,
+        publication: &SqlCell,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         Ok(Self {
-            canonical: CanonicalJsonRequest::prepare(binding, publication, budget)?,
+            canonical: CanonicalJsonRequest::copy_cell(binding, publication, budget)?,
         })
     }
     pub(crate) fn binding(&self) -> GeometryBinding {
         self.canonical.binding
     }
+
+    pub(crate) fn publication(&self) -> &SqlCell {
+        &self.canonical.value
+    }
+
     pub(crate) fn finish(
         &mut self,
         mut answer: MaintenanceFormatAnswer,
@@ -76,7 +108,7 @@ impl MaintenanceFormatRequest {
             canonical: answer.canonical_publication,
         };
         self.canonical
-            .validate(&canonical)
+            .validate_shared_value(&canonical)
             .map_err(|error| match error {
                 ExecutionError::Capacity => HistoryPreparationError::Capacity,
                 ExecutionError::InvalidCheckpoint => HistoryPreparationError::StaleResponse,

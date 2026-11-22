@@ -139,6 +139,7 @@ pub(crate) struct ProviderQuestion {
 enum QuestionBody {
     Json(String),
     Geometry(Box<GeometryQueries>),
+    Maintenance(crate::cognition::format::MaintenanceFormatRequest),
 }
 
 #[derive(Serialize)]
@@ -160,19 +161,36 @@ impl ProviderQuestion {
     pub(crate) fn json(&self) -> Option<&str> {
         match &self.body {
             QuestionBody::Json(json) => Some(json),
-            QuestionBody::Geometry(_) => None,
+            QuestionBody::Geometry(_) | QuestionBody::Maintenance(_) => None,
         }
     }
 
     pub(crate) fn geometry(&self) -> Option<&GeometryQueries> {
         match &self.body {
             QuestionBody::Geometry(queries) => Some(queries),
-            QuestionBody::Json(_) => None,
+            QuestionBody::Json(_) | QuestionBody::Maintenance(_) => None,
         }
     }
 
     pub(crate) fn geometry_envelope(&self) -> Option<QuestionEnvelope<'_, GeometryQueries>> {
         self.geometry().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    pub(crate) fn maintenance(&self) -> Option<&crate::cognition::format::MaintenanceFormatRequest> {
+        match &self.body {
+            QuestionBody::Maintenance(ask) => Some(ask),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn maintenance_envelope(
+        &self,
+    ) -> Option<QuestionEnvelope<'_, crate::cognition::format::MaintenanceFormatRequest>> {
+        self.maintenance().map(|value| QuestionEnvelope {
             kind: self.kind,
             binding: self.binding,
             value,
@@ -253,6 +271,7 @@ enum AnswerBody {
     Json(String),
     Geometry(Box<GeometryAnswers>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
+    Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
 }
 
 /// The host funds construction before moving the incoming allocation here.
@@ -310,6 +329,22 @@ impl ProviderResponse {
             kind: ProviderKind::Sources,
             binding,
             body: AnswerBody::NpcSources(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn maintenance(
+        binding: GeometryBinding,
+        answer: Box<crate::cognition::format::MaintenanceFormatAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::MaintenanceFormat,
+            binding,
+            body: AnswerBody::Maintenance(answer),
             _reservation: reservation,
         })
     }
@@ -694,6 +729,27 @@ fn geometry_question<V, R>(
     }
     Ok(Poll::Question(
         ProviderQuestion::prepare_geometry(queries, budget)?,
+        route,
+    ))
+}
+fn maintenance_question<V, R>(
+    answer: &Option<Answer>,
+    request: &crate::cognition::format::MaintenanceFormatRequest,
+    budget: &ByteBudget,
+    route: R,
+) -> Result<Poll<V, R>, DriveError> {
+    if answer.is_some() {
+        return Err(DriveError::StaleResponse);
+    }
+    let backing = ProviderQuestion::reserve_backing(budget)?;
+    Ok(Poll::Question(
+        Arc::new(ProviderQuestion {
+            kind: ProviderKind::MaintenanceFormat,
+            binding: request.binding(),
+            body: QuestionBody::Maintenance(request.clone()),
+            _reservation: budget.reserve(0).map_err(|_| DriveError::Capacity)?,
+            backing,
+        }),
         route,
     ))
 }
@@ -1451,6 +1507,9 @@ impl OperationDriver {
                     }
                     AnswerBody::NpcSources(value) => {
                         (Some(Answer::Sources(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::Maintenance(value) => {
+                        (Some(Answer::MaintenanceFormat(*value)), Some(_reservation), None)
                     }
                     AnswerBody::Json(json) => {
                         let decoded = if matches!(

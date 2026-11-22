@@ -2,8 +2,13 @@ import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { hourlySummaryJsonSchema } from '../apps/server/src/cognition-contracts.js';
 import {
+  dreamSummaryTemplates,
+  hourlySummaryJsonSchema,
+  LEVEL_LIMITS,
+} from '../apps/server/src/cognition-contracts.js';
+import {
+  CONSOLIDATION_DAILY_SUFFIX,
   CONSOLIDATION_HOURLY_SUFFIX,
   CONSOLIDATION_INPUT_CHARACTERS,
   CONSOLIDATION_INSTRUCTIONS,
@@ -237,6 +242,9 @@ async function storageSchema(adminUrl: string) {
               summaryBytes: EXPERIENCE_LIMITS.summaryBytes,
               hourlyInstructions: CONSOLIDATION_INSTRUCTIONS + CONSOLIDATION_HOURLY_SUFFIX,
               hourlySchema: hourlySummaryJsonSchema(),
+              dailyInstructions: CONSOLIDATION_INSTRUCTIONS + CONSOLIDATION_DAILY_SUFFIX,
+              dailySchemas: dreamSummaryTemplates(),
+              dailyEffort: LEVEL_LIMITS[5].effort,
               inputCharacters: CONSOLIDATION_INPUT_CHARACTERS,
               outputCharacters: CONSOLIDATION_OUTPUT_CHARACTERS,
               outputTokens: CONSOLIDATION_OUTPUT_TOKENS,

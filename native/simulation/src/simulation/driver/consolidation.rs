@@ -47,14 +47,9 @@ pub(super) fn poll_consolidation(
     };
     match cursor.step(core, supplied)? {
         ConsolidationStep::Complete(done) => Ok(Poll::Complete(done)),
-        ConsolidationStep::Dream(q) => question(
-            answer,
-            ProviderKind::MaintenanceFormat,
-            q.binding(),
-            q,
-            budget,
-            ConsolidationReply::Dream,
-        ),
+        ConsolidationStep::Dream(q) => {
+            maintenance_question(answer, q, budget, ConsolidationReply::Dream)
+        }
         ConsolidationStep::Sources(q) => question(
             answer,
             ProviderKind::Sources,

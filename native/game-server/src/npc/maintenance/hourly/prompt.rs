@@ -2,22 +2,147 @@
 //! confer another person's identity or access outside the chosen sources.
 
 use super::{CallFailure, capacity};
-use crate::{boot::CurrentServer, npc::decide::prepare::game_time};
+use crate::{
+    boot::CurrentServer, npc::decide::prepare::game_time,
+    store::recall::maintenance_scan::MaintenanceQueries, world::WorldError,
+};
 use openlegend_simulation::{
     encoding::{json_record, json_record_len},
     experience::PersonalSourceKind,
     host::{ByteBudget, ByteReservation, CapacityError},
     records::SqlCell,
-    runtime::{RuntimeConsolidationGroup, RuntimeConsolidationReadings},
+    runtime::{
+        RuntimeConsolidationDream, RuntimeConsolidationGroup, RuntimeConsolidationReadings,
+        RuntimeError,
+    },
     text::JsText,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
+use serde_json::Value;
 use std::{mem::size_of, ops::Range};
 
 pub(super) struct Partitions {
     pub values: Vec<Partition>,
+    custody: ByteReservation,
+}
+
+impl Partitions {
+    pub(super) fn append_dream(
+        &mut self,
+        dream: &RuntimeConsolidationDream,
+        budget: &ByteBudget,
+    ) -> Result<(), WorldError> {
+        let fields = dream.prompt_fields();
+        let bytes = json_record_len(&fields).map_err(RuntimeError::application_refused)?;
+        let _working = budget
+            .reserve(
+                bytes
+                    .checked_mul(3)
+                    .ok_or(CapacityError)
+                    .map_err(RuntimeError::from)?,
+            )
+            .map_err(RuntimeError::from)?;
+        let fields = json_record(&fields).map_err(RuntimeError::application_refused)?;
+        let prompt = &mut self.values[0].prompt;
+        if !fields.starts_with('{') || !fields.ends_with('}') || !prompt.ends_with('}') {
+            return Err(RuntimeError::application_refused("invalid daily context").into());
+        }
+        self.custody
+            .resize(
+                self.custody
+                    .bytes()
+                    .checked_add(bytes)
+                    .ok_or(CapacityError)
+                    .map_err(RuntimeError::from)?,
+            )
+            .map_err(RuntimeError::from)?;
+        prompt
+            .try_reserve_exact(bytes)
+            .map_err(|_| RuntimeError::from(CapacityError))?;
+        prompt.pop();
+        prompt.push(',');
+        prompt.push_str(&fields[1..]);
+        Ok(())
+    }
+}
+
+pub(super) struct DreamSchema {
+    pub value: Value,
     _custody: ByteReservation,
+}
+
+/// Bind the finite strict schema originated by the Source contract to this
+/// one request's opaque subject and evidence handle sets.
+pub(super) fn dream_schema(
+    policy: &MaintenanceQueries,
+    offer: &RuntimeConsolidationDream,
+    budget: &ByteBudget,
+) -> Result<DreamSchema, CallFailure> {
+    let subjects = offer.subject_aliases();
+    let evidence = offer.evidence_aliases();
+    let key = usize::from(subjects.size_hint().0 > 0) * 2 + usize::from(evidence.size_hint().0 > 0);
+    let template = &policy.daily_schemas[key];
+    let bytes = json_record_len(template)
+        .map_err(|_| CallFailure::Invalid)?
+        .checked_mul(8)
+        .and_then(|n| {
+            n.checked_add(
+                offer
+                    .subject_aliases()
+                    .chain(offer.evidence_aliases())
+                    .try_fold(0usize, |n, id| n.checked_add(96 + id.len()))?,
+            )
+        })
+        .ok_or_else(|| capacity(CapacityError))?;
+    let storage = budget.reserve(bytes).map_err(capacity)?;
+    let mut template = template.clone();
+    let subjects = subjects
+        .map(|alias| Value::String(alias.to_owned()))
+        .collect::<Vec<_>>();
+    let evidence = evidence
+        .map(|alias| Value::String(alias.to_owned()))
+        .collect::<Vec<_>>();
+    fn bind(value: &mut Value, subjects: &[Value], evidence: &[Value]) -> usize {
+        match value {
+            Value::Object(fields) => {
+                let marker = fields.get("const").and_then(Value::as_str).or_else(|| {
+                    let [marker] = fields.get("enum")?.as_array()?.as_slice() else {
+                        return None;
+                    };
+                    marker.as_str()
+                });
+                let choices = match marker {
+                    Some("__OPENLEGEND_DREAM_SUBJECT__") => Some(subjects),
+                    Some("__OPENLEGEND_DREAM_EVIDENCE__") => Some(evidence),
+                    _ => None,
+                };
+                if let Some(choices) = choices.filter(|choices| !choices.is_empty()) {
+                    fields.remove("const");
+                    fields.insert("enum".to_owned(), Value::Array(choices.to_vec()));
+                    1
+                } else {
+                    fields
+                        .values_mut()
+                        .map(|value| bind(value, subjects, evidence))
+                        .sum()
+                }
+            }
+            Value::Array(values) => values
+                .iter_mut()
+                .map(|value| bind(value, subjects, evidence))
+                .sum(),
+            _ => 0,
+        }
+    }
+    if bind(&mut template, &subjects, &evidence)
+        != usize::from(!subjects.is_empty()) + usize::from(!evidence.is_empty())
+    {
+        return Err(CallFailure::Invalid);
+    }
+    Ok(DreamSchema {
+        value: template,
+        _custody: storage,
+    })
 }
 
 pub(super) struct Partition {
@@ -60,10 +185,13 @@ struct Facts<'a> {
 pub(super) fn partitions(
     readings: &RuntimeConsolidationReadings,
     game: &CurrentServer,
+    daily: bool,
 ) -> Result<Partitions, crate::world::WorldError> {
-    use openlegend_simulation::runtime::RuntimeError;
-
-    const BASE: &str = r#"{"mode":"hourly","memoryOwner":"self","sources":{"#;
+    let base = if daily {
+        r#"{"mode":"daily","memoryOwner":"self","sources":{"#
+    } else {
+        r#"{"mode":"hourly","memoryOwner":"self","sources":{"#
+    };
     let policy = &game.store.schema.recall.maintenance;
     let world = &game.view_policy().world;
     let budget = game.host.budget();
@@ -71,7 +199,7 @@ pub(super) fn partitions(
         .reserve(512 + readings.readings.len() * size_of::<Partition>())
         .map_err(RuntimeError::from)?;
     let mut values = Vec::with_capacity(readings.readings.len());
-    let base_input = BASE.len() + policy.hourly_instructions.encode_utf16().count() + 4096;
+    let base_input = base.len() + policy.hourly_instructions.encode_utf16().count() + 4096;
     let mut input = base_input;
     let mut output = 128;
     let mut prompt = String::new();
@@ -150,7 +278,7 @@ pub(super) fn partitions(
             .into());
         }
         let addition =
-            value.len() + handle.len() + 5 + if start == index { BASE.len() + 2 } else { 0 };
+            value.len() + handle.len() + 5 + if start == index { base.len() + 2 } else { 0 };
         custody
             .resize(
                 custody
@@ -164,7 +292,7 @@ pub(super) fn partitions(
             .try_reserve_exact(addition)
             .map_err(|_| RuntimeError::from(CapacityError))?;
         if start == index {
-            prompt.push_str(BASE);
+            prompt.push_str(base);
         } else {
             prompt.push(',');
         }
@@ -185,10 +313,7 @@ pub(super) fn partitions(
         )
         .into());
     }
-    Ok(Partitions {
-        values,
-        _custody: custody,
-    })
+    Ok(Partitions { values, custody })
 }
 
 fn finish_partition(values: &mut Vec<Partition>, prompt: &mut String, routine: Range<usize>) {
@@ -203,7 +328,7 @@ fn finish_partition(values: &mut Vec<Partition>, prompt: &mut String, routine: R
 #[serde(deny_unknown_fields)]
 struct Answer {
     feasible: bool,
-    interpretation: Box<RawValue>,
+    interpretation: SqlCell,
     groups: Vec<Group>,
 }
 
@@ -216,19 +341,30 @@ struct Group {
 
 pub(super) struct Decoded {
     groups: Vec<Group>,
-    _custody: ByteReservation,
+    pub(super) interpretation: Option<SqlCell>,
+    pub(super) custody: ByteReservation,
 }
 
-pub(super) fn decode(text: &str, budget: &ByteBudget) -> Result<Decoded, CallFailure> {
+pub(super) fn decode(
+    text: &str,
+    budget: &ByteBudget,
+    interpreting: bool,
+) -> Result<Decoded, CallFailure> {
     let bytes = SqlCell::json_decode_bound(text).ok_or(CallFailure::Invalid)?;
     let custody = budget.reserve(bytes).map_err(capacity)?;
     let answer: Answer = serde_json::from_str(text).map_err(|_| CallFailure::Invalid)?;
-    if !answer.feasible || answer.interpretation.get() != "null" || answer.groups.is_empty() {
+    if !answer.feasible || answer.groups.is_empty() {
         return Err(CallFailure::Invalid);
     }
+    let interpretation = match answer.interpretation {
+        SqlCell::Null => None,
+        object @ SqlCell::Object(_) if interpreting => Some(object),
+        _ => return Err(CallFailure::Invalid),
+    };
     Ok(Decoded {
         groups: answer.groups,
-        _custody: custody,
+        interpretation,
+        custody,
     })
 }
 
@@ -297,7 +433,8 @@ impl Coverage {
         }
         let Decoded {
             groups,
-            mut _custody,
+            mut custody,
+            ..
         } = decoded;
         let mut retained = 0;
         for group in groups {
@@ -336,8 +473,8 @@ impl Coverage {
         if self.covered != range.end {
             return Err(CallFailure::Invalid);
         }
-        _custody.resize(retained).map_err(capacity)?;
-        self.custody.merge(_custody).map_err(capacity)?;
+        custody.resize(retained).map_err(capacity)?;
+        self.custody.merge(custody).map_err(capacity)?;
         Ok(())
     }
 

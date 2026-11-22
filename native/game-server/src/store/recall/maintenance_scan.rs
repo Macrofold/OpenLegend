@@ -29,6 +29,9 @@ pub(crate) struct MaintenanceQueries {
     pub summary_bytes: u64,
     pub hourly_instructions: String,
     pub hourly_schema: Value,
+    pub daily_instructions: String,
+    pub daily_schemas: [Value; 4],
+    pub daily_effort: String,
     pub input_characters: usize,
     pub output_characters: usize,
     pub output_tokens: usize,
@@ -36,16 +39,23 @@ pub(crate) struct MaintenanceQueries {
 
 impl MaintenanceQueries {
     pub(crate) fn retained_bytes(&self) -> Option<usize> {
+        let schemas = std::iter::once(&self.hourly_schema)
+            .chain(&self.daily_schemas)
+            .try_fold(0usize, |bytes, schema| {
+                bytes.checked_add(
+                    openlegend_simulation::encoding::json_record_len(schema)
+                        .ok()?
+                        .checked_mul(8)?,
+                )
+            })?;
         self.anchor
             .capacity()
             .checked_add(self.hourly.capacity())?
             .checked_add(self.daily.capacity())?
             .checked_add(self.hourly_instructions.capacity())?
-            .checked_add(
-                openlegend_simulation::encoding::json_record_len(&self.hourly_schema)
-                    .ok()?
-                    .checked_mul(8)?,
-            )
+            .checked_add(self.daily_instructions.capacity())?
+            .checked_add(self.daily_effort.capacity())?
+            .checked_add(schemas)
     }
 
     pub(crate) fn valid(&self) -> bool {
@@ -57,6 +67,9 @@ impl MaintenanceQueries {
             && self.summary_bytes != 0
             && !self.hourly_instructions.is_empty()
             && self.hourly_schema.is_object()
+            && !self.daily_instructions.is_empty()
+            && !self.daily_effort.is_empty()
+            && self.daily_schemas.iter().all(Value::is_object)
             && self.input_characters > 4096
             && self.output_characters > 128
             && self.output_tokens != 0
@@ -83,7 +96,7 @@ pub(crate) enum ConsolidationWindow {
     },
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ConsolidationPosition {
     pub at: f64,

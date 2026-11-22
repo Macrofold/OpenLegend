@@ -33,6 +33,10 @@ pub(crate) struct NpcSubjectFact {
     _storage: ByteReservation,
 }
 impl NpcSubjectFact {
+    pub(crate) fn label(&self) -> &JsText {
+        &self.label
+    }
+
     /// A captured personal document can stay editable after recognition ends.
     pub(super) fn has_notepad_text(&self) -> bool {
         self.note_characters > 0
