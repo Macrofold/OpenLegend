@@ -37,6 +37,7 @@ heap_record!(SocialOfferReadPolicy {
 heap_record!(RetainedDefinitions {
     knowledge_policy,
     item_handling,
+    item_handling_pin,
     item_handling_read,
     gathering_policy,
     work_batch_policy,

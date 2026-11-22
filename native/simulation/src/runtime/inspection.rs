@@ -1,7 +1,7 @@
 //! Bounded inspection of the installed public world and exact authored data.
 
 use super::{NativeWorldSession, RuntimeError, RuntimeProgress, failure};
-use crate::text::TextRef;
+use crate::{text::TextRef, values::DefinitionPin};
 
 pub struct RuntimeWorldInspection<'a> {
     pub progress: RuntimeProgress<'a>,
@@ -18,6 +18,7 @@ pub enum RuntimeDefinitionKind {
     Attribute,
     BodyPolicy,
     Recipe,
+    ItemHandling,
 }
 
 pub enum RuntimeDefinitionInspection<'a> {
@@ -27,6 +28,10 @@ pub enum RuntimeDefinitionInspection<'a> {
     },
     /// The application must remove private authoring provenance before disclosure.
     Recipe(&'a str),
+    ItemHandling {
+        payload: &'a str,
+        pin: &'a DefinitionPin,
+    },
 }
 
 impl NativeWorldSession {
@@ -65,6 +70,16 @@ impl NativeWorldSession {
             RuntimeDefinitionKind::Recipe => Some(RuntimeDefinitionInspection::Recipe(
                 installed.retained.recipes.get(id)?,
             )),
+            RuntimeDefinitionKind::ItemHandling => {
+                let pin = &installed.retained.item_handling_pin;
+                if id != pin.id {
+                    return None;
+                }
+                Some(RuntimeDefinitionInspection::ItemHandling {
+                    payload: installed.retained.item_handling.payload(),
+                    pin,
+                })
+            }
         });
         Ok(inspect(RuntimeWorldInspection {
             progress: self.accepted_progress()?,

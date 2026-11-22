@@ -11,6 +11,7 @@ use openlegend_simulation::{
     host::{ByteBudget, ByteReservation},
     runtime::{RuntimeDefinitionInspection, RuntimeDefinitionKind, RuntimeWorldInspection},
     text::{JsText, TextRef},
+    values::DefinitionPin,
 };
 use rmcp::{
     ErrorData, RoleServer, ServerHandler,
@@ -31,10 +32,11 @@ const ITEM_DEFINITION: &str = "item-definition";
 const ATTRIBUTE: &str = "attribute";
 const BODY_POLICY: &str = "body-policy";
 const RECIPE: &str = "recipe";
+const ITEM_HANDLING: &str = "item-handling-policy";
 const RESULT_BYTES: usize = 64 * 1024;
 const CONTEXT_DESCRIPTION: &str =
     "Inspect the current world profile, installed revision, policy and available read tools.";
-const INSPECT_DESCRIPTION: &str = "Read an exact installed item, attribute, body policy or recipe definition. No live bodies, inventory, memory or private authoring data.";
+const INSPECT_DESCRIPTION: &str = "Read an exact installed item, attribute, body policy, recipe or item handling definition. No live bodies, inventory, memory or private authoring data.";
 
 #[derive(Clone)]
 pub(super) struct WorldTools {
@@ -261,6 +263,7 @@ fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Fa
                 ATTRIBUTE => RuntimeDefinitionKind::Attribute,
                 BODY_POLICY => RuntimeDefinitionKind::BodyPolicy,
                 RECIPE => RuntimeDefinitionKind::Recipe,
+                ITEM_HANDLING => RuntimeDefinitionKind::ItemHandling,
                 _ => return Err(Failure::Unavailable),
             };
             Ok(Selection::Inspect(input, kind))
@@ -300,7 +303,13 @@ impl Selection {
                     controlled_actor_id: None,
                     manifest_revision: read.manifest_revision,
                     policy: raw(read.policy)?,
-                    definition_kinds: &[ITEM_DEFINITION, ATTRIBUTE, BODY_POLICY, RECIPE],
+                    definition_kinds: &[
+                        ITEM_DEFINITION,
+                        ATTRIBUTE,
+                        BODY_POLICY,
+                        RECIPE,
+                        ITEM_HANDLING,
+                    ],
                     tools: [
                         Description {
                             name: CONTEXT,
@@ -322,29 +331,65 @@ impl Selection {
                     definition_reply(snapshot, input, name, payload, budget)
                 }
                 RuntimeDefinitionInspection::Recipe(source) => {
-                    recipe_reply(snapshot, input, source, budget)
+                    projected_reply(snapshot, input, source, Projection::Recipe, budget)
                 }
+                RuntimeDefinitionInspection::ItemHandling { payload, pin } => projected_reply(
+                    snapshot,
+                    input,
+                    payload,
+                    Projection::ItemHandling(pin),
+                    budget,
+                ),
             },
         }
     }
 }
 
-/// Match Source's exact `recipe` inspection, including its public field order.
-/// Borrow nested values from the installed row and fund only this read's output.
+enum Projection<'a> {
+    Recipe,
+    ItemHandling(&'a DefinitionPin),
+}
+
+/// Prepare one independently funded public record in Source property order.
+/// Nested values borrow the installed data for this request only.
 /// docs/world-agent-mcp.md#stand-alone-rust-read-scope
-fn recipe_reply(
+fn projected_reply(
     snapshot: Snapshot<'_>,
     input: &InspectInput,
     source: &str,
+    projection: Projection<'_>,
     budget: &ByteBudget,
 ) -> Result<PreparedReply, Failure> {
     let workspace = json_tree_allocation_bound(source).ok_or(Failure::Capacity)?;
     let _workspace = budget.reserve(workspace).map_err(|_| Failure::Capacity)?;
+    let _pin_memory: ByteReservation;
+    let policy_pin: String;
+    let recipe_name: JsText;
     let mut fields: IndexMap<String, &RawValue> =
         serde_json::from_str(source).map_err(|_| Failure::Unavailable)?;
-    fields.shift_remove("provenance");
-    let name: JsText = serde_json::from_str(fields.get("name").ok_or(Failure::Unavailable)?.get())
-        .map_err(|_| Failure::Unavailable)?;
+    let name = match projection {
+        Projection::Recipe => {
+            fields.shift_remove("provenance");
+            recipe_name =
+                serde_json::from_str(fields.get("name").ok_or(Failure::Unavailable)?.get())
+                    .map_err(|_| Failure::Unavailable)?;
+            (&recipe_name).into()
+        }
+        Projection::ItemHandling(pin) => {
+            // Append the pin used by manufacturing without recomputing it.
+            let pin_bytes = json_record_len(pin).map_err(|_| Failure::Unavailable)?;
+            let memory = pin_bytes
+                .checked_mul(2)
+                .and_then(|bytes| {
+                    bytes.checked_add(std::mem::size_of::<(String, &RawValue)>() + "pin".len())
+                })
+                .ok_or(Failure::Capacity)?;
+            _pin_memory = budget.reserve(memory).map_err(|_| Failure::Capacity)?;
+            policy_pin = json_record(pin).map_err(|_| Failure::Unavailable)?;
+            fields.insert("pin".into(), raw(&policy_pin)?);
+            "Item handling policy".into()
+        }
+    };
     let bytes = json_record_len(&fields).map_err(|_| Failure::Unavailable)?;
     if bytes > RESULT_BYTES {
         return Err(Failure::Capacity);
@@ -353,7 +398,7 @@ fn recipe_reply(
     let mut output = Vec::with_capacity(bytes);
     write_json_record(&fields, &mut output).map_err(|_| Failure::Unavailable)?;
     let payload = std::str::from_utf8(&output).map_err(|_| Failure::Unavailable)?;
-    definition_reply(snapshot, input, (&name).into(), payload, budget)
+    definition_reply(snapshot, input, name, payload, budget)
 }
 
 fn definition_reply(
