@@ -41,6 +41,7 @@ export type NativeNpcOfferMeaning =
       readonly reach: number;
     }
   | { readonly kind: 'probe'; readonly probe: number }
+  | { readonly kind: 'fish'; readonly body: number }
   | {
       readonly kind: 'strike';
       readonly body: number;
@@ -166,6 +167,7 @@ export interface NativeNpcDescriptionRead {
     readonly health: Parameters<typeof formatObservedBodyHealth>[0] | null;
   }[];
   readonly offers: readonly {
+    readonly description?: string;
     readonly id: string;
     readonly meaning: NativeNpcOfferMeaning;
     readonly transition: WorkTransitionMode;
@@ -307,6 +309,21 @@ export function formatNativeNpcCandidateDescriptions(
         target = targetDetails(meaning.body);
         break;
       }
+      case 'fish':
+        subjectIds = [body(meaning.body).sourceId];
+        // An already prepared choice includes the exact native text and the
+        // common details. A formatter request asks only for those details.
+        if (offer.description !== undefined)
+          return {
+            ordinal,
+            id: offer.id,
+            description: offer.description,
+            subjectIds,
+            transition: offer.transition,
+          };
+        base = { description: '' };
+        target = targetDetails(meaning.body);
+        break;
     }
     const description = offer.temporary
       ? formatCandidateTemporary(base.description, {

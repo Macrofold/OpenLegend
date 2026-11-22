@@ -31,6 +31,8 @@ mod descriptions;
 use activity::{NpcActivityPreparation, NpcActivityRead};
 use descriptions::DescriptionContext;
 pub(crate) use descriptions::{NpcDescriptionsAnswer, NpcDescriptionsRequest};
+mod casting;
+use casting::CastTools;
 
 struct Target {
     body: usize,
@@ -51,6 +53,7 @@ enum Enumerate {
     Status(usize, usize),
     Probe(usize),
     Approach(usize),
+    Fish(usize, usize),
     Strike(usize, usize),
     CurrentWork(usize),
     PausedWork(usize),
@@ -91,6 +94,7 @@ pub(crate) struct NpcCandidateCursor {
     descriptions_done: bool,
     activity: Option<NpcActivityPreparation>,
     activity_done: Option<NpcActivityRead>,
+    cast_tools: Option<CastTools>,
 }
 
 #[derive(Serialize)]
@@ -108,6 +112,8 @@ struct CommandInput<'a> {
     target_id: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     definition_id: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    item_id: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     operation: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -127,6 +133,7 @@ impl<'a> CommandInput<'a> {
             kind,
             target_id: None,
             definition_id: None,
+            item_id: None,
             operation: None,
             destination: None,
             after: None,
@@ -250,6 +257,7 @@ impl NpcCandidateCursor {
             descriptions_done: false,
             activity: None,
             activity_done: None,
+            cast_tools: None,
         })
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
@@ -419,7 +427,16 @@ impl NpcCandidateCursor {
                             .ok_or(ExecutionError::Capacity)?,
                     )?;
                     for (offer, description) in self.offers.iter_mut().zip(answer.descriptions) {
-                        offer.description = Some(description);
+                        if let Some(prepared) = offer.description.as_mut() {
+                            casting::append_offer_details(
+                                prepared,
+                                &description,
+                                &mut offer._storage,
+                                &self.budget,
+                            )?;
+                        } else {
+                            offer.description = Some(description);
+                        }
                     }
                     self.activity_done
                         .as_mut()
@@ -513,6 +530,7 @@ impl NpcCandidateCursor {
                     let (outcome, guard) = completed.into_parts();
                     let mut offer = self.pending.take().ok_or(ExecutionError::Invariant)?;
                     if outcome.ok {
+                        self.describe_cast(core, &mut offer)?;
                         self.append(offer)?;
                     } else if matches!(offer.meaning, NpcOfferMeaning::Strike { .. })
                         && matches!(

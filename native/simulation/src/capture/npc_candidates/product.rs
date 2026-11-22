@@ -65,6 +65,9 @@ pub(crate) enum NpcOfferMeaning {
         distance: f64,
         reach: f64,
     },
+    Fish {
+        body: usize,
+    },
     Probe {
         probe: usize,
     },

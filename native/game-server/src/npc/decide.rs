@@ -599,38 +599,13 @@ async fn finish_native(
         saves.signal_view();
         return Ok(());
     };
-    let transient = game
-        .host
-        .budget()
-        .reserve(4096)
-        .map_err(response_capacity)?;
     let mode = if choice.transition == "continue" {
         "enqueue"
     } else {
         choice.transition
     };
-    let action = record([
-        ("kind", "known".into()),
-        ("mode", mode.into()),
-        ("actionId", choice.id.as_str().into()),
-        ("verb", SqlCell::Null),
-        ("targetEntityId", SqlCell::Null),
-        ("description", SqlCell::Null),
-    ]);
-    let operation = record([
-        ("localId", "action".into()),
-        ("requiresAccepted", SqlCell::Array(Vec::new())),
-        ("talk", SqlCell::Null),
-        ("think", SqlCell::Null),
-        ("goal", SqlCell::Null),
-        ("plan", SqlCell::Null),
-        ("act", action),
-    ]);
-    let payload = RuntimeNpcOperations::new(
-        record([("operations", SqlCell::Array(vec![operation]))]),
-        transient,
-    )
-    .map_err(|error| CallFailure::World(error.into()))?;
+    let payload = RuntimeNpcOperations::known_action(&choice.id, mode, game.host.budget())
+        .map_err(|error| CallFailure::World(error.into()).at("response-preparation"))?;
     super::apply::apply(
         saves,
         game,
@@ -850,15 +825,6 @@ fn generation_failure(error: RenderError) -> CallFailure {
     } else {
         CallFailure::Invalid
     }
-}
-
-fn record<const N: usize>(fields: [(&str, SqlCell); N]) -> SqlCell {
-    SqlCell::Object(
-        fields
-            .into_iter()
-            .map(|(name, value)| (name.to_owned(), value))
-            .collect(),
-    )
 }
 
 fn effects(

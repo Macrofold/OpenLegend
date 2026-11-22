@@ -220,6 +220,90 @@ pub struct RuntimeNpcOperations {
 }
 
 impl RuntimeNpcOperations {
+    /// Fund the three fixed response records and their text before building
+    /// a level-one choice. This owns the same response shape as generation;
+    /// the native response still validates and applies the captured alias.
+    pub fn known_action(
+        alias: &str,
+        mode: &str,
+        budget: &ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        use crate::host::retained_size::map_storage;
+        use crate::records::SqlCell;
+        use std::mem::size_of;
+
+        const ACTION: [&str; 6] = [
+            "kind",
+            "mode",
+            "actionId",
+            "verb",
+            "targetEntityId",
+            "description",
+        ];
+        const OPERATION: [&str; 7] = [
+            "localId",
+            "requiresAccepted",
+            "talk",
+            "think",
+            "goal",
+            "plan",
+            "act",
+        ];
+        const RESPONSE: [&str; 1] = ["operations"];
+        const KNOWN: &str = "known";
+        const LOCAL_ID: &str = "action";
+
+        fn backing(keys: &[&str]) -> Option<usize> {
+            keys.iter()
+                .try_fold(map_storage::<String, SqlCell>(keys.len())?, |bytes, key| {
+                    bytes.checked_add(key.len())
+                })
+        }
+        fn record<const N: usize>(keys: [&str; N], values: [SqlCell; N]) -> SqlCell {
+            let mut cells = indexmap::IndexMap::with_capacity(N);
+            cells.extend(keys.into_iter().map(str::to_owned).zip(values));
+            SqlCell::Object(cells)
+        }
+
+        let bytes = heap_sum([
+            backing(&ACTION).ok_or(CapacityError)?,
+            backing(&OPERATION).ok_or(CapacityError)?,
+            backing(&RESPONSE).ok_or(CapacityError)?,
+            KNOWN.len(),
+            LOCAL_ID.len(),
+            alias.len(),
+            mode.len(),
+            size_of::<SqlCell>(),
+            size_of::<crate::response::ActorResponse>(),
+        ])
+        .ok_or(CapacityError)?;
+        let custody = budget.reserve(bytes)?;
+        let action = record(
+            ACTION,
+            [
+                KNOWN.into(),
+                mode.into(),
+                alias.into(),
+                SqlCell::Null,
+                SqlCell::Null,
+                SqlCell::Null,
+            ],
+        );
+        let op = record(
+            OPERATION,
+            [
+                LOCAL_ID.into(),
+                SqlCell::Array(Vec::new()),
+                SqlCell::Null,
+                SqlCell::Null,
+                SqlCell::Null,
+                SqlCell::Null,
+                action,
+            ],
+        );
+        Self::new(record(RESPONSE, [SqlCell::Array(vec![op])]), custody)
+    }
+
     /// Move an already funded response into the mutation attempt. Keep the
     /// retained graph funded through waits and release decode workspace here.
     pub fn new(

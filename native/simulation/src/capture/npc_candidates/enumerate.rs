@@ -289,11 +289,24 @@ impl NpcCandidateCursor {
             }
             Enumerate::Approach(index) => {
                 if index == self.targets.len() {
-                    self.stage = Enumerate::Strike(0, 0);
+                    self.stage = Enumerate::Fish(0, 0);
                     return Ok(true);
                 }
                 self.stage = Enumerate::Approach(index + 1);
                 self.begin_approach(core, index)?;
+            }
+            Enumerate::Fish(index, tool) => {
+                if index == self.targets.len()
+                    || !actor
+                        .body
+                        .as_ref()
+                        .is_some_and(|body| rules.manual_work_body_plans.contains(&body.plan))
+                {
+                    self.cast_tools = None;
+                    self.stage = Enumerate::Strike(0, 0);
+                } else {
+                    self.offer_cast(core, index, tool, preparation_id)?;
+                }
             }
             Enumerate::Strike(target_index, definition_index) => {
                 if target_index == self.targets.len() {

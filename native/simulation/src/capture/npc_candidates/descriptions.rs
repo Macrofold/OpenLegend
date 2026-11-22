@@ -29,6 +29,14 @@ pub(super) struct DescriptionContext {
     _storage: ByteReservation,
 }
 impl DescriptionContext {
+    pub(super) fn observed_name(&self, ordinal: usize) -> Option<&JsText> {
+        let index = self
+            .bodies
+            .binary_search_by_key(&ordinal, |body| body.ordinal)
+            .ok()?;
+        Some(&self.bodies[index].name.name)
+    }
+
     pub(super) fn prepare(
         core: &CoreMutation<'_>,
         read: &AcceptedActorRead,

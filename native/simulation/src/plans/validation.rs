@@ -78,6 +78,9 @@ pub(crate) fn valid_command(
             definition_id,
             ..
         } => is_safe_record_id(target_id) && is_safe_record_id(definition_id),
+        NativeCommand::Fish {
+            target_id, item_id, ..
+        } => is_safe_record_id(target_id) && is_safe_record_id(item_id),
         NativeCommand::Say {
             text,
             target_id,
@@ -94,7 +97,6 @@ pub(crate) fn valid_command(
         NativeCommand::Outing { .. }
         | NativeCommand::Feed { .. }
         | NativeCommand::Gather { .. }
-        | NativeCommand::Fish { .. }
         | NativeCommand::Equipment { .. }
         | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }
