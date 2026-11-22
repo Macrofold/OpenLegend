@@ -396,12 +396,20 @@ impl NativeWorldSession {
         {
             return Ok(Err("native-response-additional-history"));
         }
-        if disclosure && !crate::handover::GiftReply::choices_current(
-            state,
-            actor_id,
-            ticket.bindings.actions.values().filter_map(|choice| choice.gift_reply.as_ref()),
-            &self.budget,
-        ).map_err(failure)? {
+        if disclosure
+            && !crate::handover::GiftReply::choices_current(
+                state,
+                actor_id,
+                ticket.bindings.actions.values().filter_map(|choice| {
+                    choice
+                        .handover
+                        .as_ref()
+                        .and_then(crate::handover::NpcHandover::reply)
+                }),
+                &self.budget,
+            )
+            .map_err(failure)?
+        {
             return Ok(Err("native-response-gift-terms"));
         }
         if ticket.checks_query_evidence {

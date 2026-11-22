@@ -77,7 +77,7 @@ pub enum NpcOfferMeaning {
     FireCare {
         body: usize,
     },
-    GiftReply {
+    Handover {
         body: usize,
     },
     Probe {
@@ -112,20 +112,20 @@ pub(crate) struct PreparedNpcOffer {
 pub(crate) enum PreparedNpcInstruction {
     Continue,
     Command(NativeCommand),
-    GiftReply(crate::handover::GiftReply),
+    Handover(crate::handover::NpcHandover),
 }
 
 impl PreparedNpcInstruction {
     pub(crate) fn command(&self) -> Option<&NativeCommand> {
         match self {
             Self::Command(command) => Some(command),
-            Self::Continue | Self::GiftReply(_) => None,
+            Self::Continue | Self::Handover(_) => None,
         }
     }
 
-    pub(crate) fn gift_reply(&self) -> Option<&crate::handover::GiftReply> {
+    pub(crate) fn handover(&self) -> Option<&crate::handover::NpcHandover> {
         match self {
-            Self::GiftReply(reply) => Some(reply),
+            Self::Handover(choice) => Some(choice),
             Self::Continue | Self::Command(_) => None,
         }
     }

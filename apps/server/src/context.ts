@@ -76,7 +76,12 @@ import {
   inventionFamily,
   recipeFamily,
 } from '@open-legend/domain';
-import { attributeDefinition, readAttribute, offerRecipientProblem } from '@open-legend/domain';
+import {
+  BASE_HANDOVER,
+  attributeDefinition,
+  readAttribute,
+  offerRecipientProblem,
+} from '@open-legend/domain';
 import { visionRadius } from '@open-legend/domain';
 import { fireCareOptions, hearthPlacementOptions } from './fire-actions.js';
 import { gateUseOptions, prepareBoundaryImpactOptions } from './construction.js';
@@ -859,8 +864,8 @@ export function npcCandidates(
       actions.push({ id: option.id, description: option.label, command: option.command });
   // Offers and replies are immediate and never interrupt work. Replies to every pending
   // offer with a visible party are listed (bounded by three offers per offerer). New offers
-  // go only to the nearest three people who can take items within reach. A player's typed
-  // request names what to offer, so it may bind more lots than a character's shortlist.
+  // go only to nearby recipients within the authored shortlist. A player's typed
+  // request can bind more lots than a character's shortlist.
   const typed = actor.controller === 'player';
   const here = worldPosition(observed.actor);
   const people = observed.visibleEntities.filter((e) => e.actor?.alive && e.id !== actorId);
@@ -871,20 +876,21 @@ export function npcCandidates(
         Math.hypot(worldPosition(a).x - here.x, worldPosition(a).z - here.z) -
         Math.hypot(worldPosition(b).x - here.x, worldPosition(b).z - here.z),
     )
-    .slice(0, 3);
+    .slice(0, BASE_HANDOVER.nearestProposalRecipients);
   let offerCandidates = 0;
+  const proposalLimit = typed ? BASE_HANDOVER.typedProposals : BASE_HANDOVER.residentProposals;
   for (const person of people) {
     const offering = recipients.includes(person);
     for (const option of handoverOptions(service.world, actorId, inventory, person, {
       offers: offering,
-      maxLots: typed ? 12 : 4,
+      maxLots: typed ? BASE_HANDOVER.typedProposalLots : BASE_HANDOVER.residentProposalLots,
       contributions: true,
       permissions: service.store.authority!.constructionPermissions(service.world.id),
     })) {
       const isOffer =
         option.command.handoverOperation === 'offer' ||
         option.command.handoverOperation === 'counter';
-      if (isOffer && offerCandidates >= (typed ? 24 : 12)) continue;
+      if (isOffer && offerCandidates >= proposalLimit) continue;
       if (option.received)
         checked.set(option.command, {
           ok: true,

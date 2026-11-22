@@ -40,6 +40,7 @@ use cooking::CookingChoices;
 mod fire;
 use fire::FuelChoices;
 mod gifts;
+use gifts::GiftProposals;
 
 struct Target {
     body: usize,
@@ -59,6 +60,7 @@ enum Enumerate {
     ActivityMethodsNext,
     Inventory,
     Continue,
+    GiftProposal(usize, usize),
     Follow(usize, usize),
     Status(usize, usize),
     Probe(usize),
@@ -75,6 +77,7 @@ enum Enumerate {
 enum Waiting {
     Reach(usize),
     Route(usize),
+    GiftReach,
 }
 
 pub(crate) struct NpcCandidateCursor {
@@ -110,6 +113,7 @@ pub(crate) struct NpcCandidateCursor {
     cast_tools: Option<CastTools>,
     cooking: Option<CookingChoices>,
     fuels: Option<FuelChoices>,
+    gift_proposals: Option<GiftProposals>,
 }
 
 #[derive(Serialize)]
@@ -278,6 +282,7 @@ impl NpcCandidateCursor {
             cast_tools: None,
             cooking: None,
             fuels: None,
+            gift_proposals: None,
         })
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
@@ -353,24 +358,44 @@ impl NpcCandidateCursor {
         let copy = self
             .budget
             .reserve(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        let preview = command.clone();
+        self.preview_offer(
+            core,
+            preview,
+            copy,
+            PreparedNpcOffer {
+                description: None,
+                id,
+                meaning,
+                command: PreparedNpcInstruction::Command(command),
+                transition,
+                temporary: None,
+                next_at: None,
+                _storage: guard,
+            },
+        )
+    }
+
+    fn preview_offer(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        command: NativeCommand,
+        copy: ByteReservation,
+        offer: PreparedNpcOffer,
+    ) -> Result<(), ExecutionError> {
         let binding = GeometryBinding::new(
             self.candidate,
             core.state.installed.geometry.spatial.revision,
             core.journal.next_provider_serial()?,
         );
-        let child = CommandChoiceCursor::new(command.clone(), transition, binding, &self.budget)?;
-        self.child = Some(child);
+        self.child = Some(CommandChoiceCursor::new(
+            command,
+            offer.transition,
+            binding,
+            &self.budget,
+        )?);
         self.child_copy = Some(copy);
-        self.pending = Some(PreparedNpcOffer {
-            description: None,
-            id,
-            meaning,
-            command: PreparedNpcInstruction::Command(command),
-            transition,
-            temporary: None,
-            next_at: None,
-            _storage: guard,
-        });
+        self.pending = Some(offer);
         Ok(())
     }
     fn id(&self, parts: &[&str]) -> Result<(String, ByteReservation), ExecutionError> {
@@ -447,9 +472,9 @@ impl NpcCandidateCursor {
                             .ok_or(ExecutionError::Capacity)?,
                     )?;
                     for (offer, description) in self.offers.iter_mut().zip(answer.descriptions) {
-                        // Gift terms are already exact. The format adapter
+                        // Handover terms are already exact. The format adapter
                         // only supplies a placeholder for this issued row.
-                        if offer.command.gift_reply().is_some() {
+                        if offer.command.handover().is_some() {
                             continue;
                         }
                         if let Some(prepared) = offer.description.as_mut() {
@@ -491,6 +516,11 @@ impl NpcCandidateCursor {
                         .as_mut()
                         .ok_or(ExecutionError::Invariant)?
                         .answer(answer)?;
+                }
+                NpcCandidateAnswer::Geometry(answer)
+                    if matches!(self.waiting, Some(Waiting::GiftReach)) =>
+                {
+                    self.finish_gift_reach(core, answer)?
                 }
                 NpcCandidateAnswer::Geometry(answer) if self.queries.is_some() => {
                     self.answer_geometry(core, answer)?
@@ -558,6 +588,14 @@ impl NpcCandidateCursor {
                         self.describe_cast(core, &mut offer)?;
                         self.describe_cooking(core, &mut offer)?;
                         self.describe_fire(core, &mut offer)?;
+                        if let Some(proposals) = self.gift_proposals.as_mut()
+                            && matches!(
+                                offer.command.handover(),
+                                Some(crate::handover::NpcHandover::Offer { .. })
+                            )
+                        {
+                            proposals.completed += 1;
+                        }
                         self.append(offer)?;
                     } else if matches!(offer.meaning, NpcOfferMeaning::Strike { .. })
                         && matches!(

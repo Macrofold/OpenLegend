@@ -124,7 +124,7 @@ impl ResponseWorkIdentity {
 pub(crate) struct ResponseActionChoice {
     pub invocation: Option<crate::records::SqlCell>,
     #[serde(skip)]
-    pub gift_reply: Option<crate::handover::GiftReply>,
+    pub handover: Option<crate::handover::NpcHandover>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub purpose: Option<PurposeBinding>,
     pub transition: crate::commands::WorkTransitionMode,
@@ -482,7 +482,7 @@ impl HeapBytes for ResponseActionChoice {
     fn heap_bytes(&self) -> Option<usize> {
         heap_sum([
             self.invocation.heap_bytes()?,
-            self.gift_reply.heap_bytes()?,
+            self.handover.heap_bytes()?,
             self.purpose.heap_bytes()?,
             self.expected_work.heap_bytes()?,
         ])

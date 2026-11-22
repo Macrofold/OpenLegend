@@ -12,14 +12,47 @@ use crate::{
 };
 
 impl NativeCommand {
-    /// Construct the exact, actor-owned direct reply after the menu alias is
-    /// resolved. The command still goes through the ordinary consent writer.
-    pub(crate) fn gift_reply(
+    /// Prepare an exact immediate Handover from a held NPC choice. The
+    /// resulting command still goes through the ordinary consent writer.
+    pub(crate) fn npc_handover(
         actor: &str,
         id: String,
-        reply: &crate::handover::GiftReply,
+        choice: &crate::handover::NpcHandover,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        use crate::handover::NpcHandover;
+        let target = choice.target();
+        let _scratch = budget.reserve(
+            [
+                id.len(),
+                actor.len(),
+                target.len(),
+                choice.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            ]
+            .into_iter()
+            .try_fold(1024usize, |n, len| n.checked_add(len.checked_mul(12)?))
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let gift = match choice {
+            NpcHandover::Reply(reply) => crate::handover::GiftIntent {
+                handover_operation: if reply.accept {
+                    GiftOperation::Accept
+                } else {
+                    GiftOperation::Decline
+                },
+                offered_items: None,
+                requested_items: None,
+                offer_id: Some(reply.id.clone()),
+                expected_offer_revision: Some(reply.revision),
+            },
+            NpcHandover::Offer { lot, .. } => crate::handover::GiftIntent {
+                handover_operation: GiftOperation::Offer,
+                offered_items: Some(vec![lot.selection()]),
+                requested_items: Some(Vec::new()),
+                offer_id: None,
+                expected_offer_revision: None,
+            },
+        };
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Input<'a> {
@@ -31,26 +64,17 @@ impl NativeCommand {
             #[serde(flatten)]
             gift: &'a crate::handover::GiftIntent,
         }
-        let _scratch = budget.reserve(
-            [id.len(), actor.len(), reply.offerer.len(), reply.id.len()]
-                .into_iter()
-                .try_fold(512usize, |n, len| n.checked_add(len.checked_mul(12)?))
-                .ok_or(ExecutionError::Capacity)?,
-        )?;
-        let gift = crate::handover::GiftIntent {
-            handover_operation: if reply.accept { GiftOperation::Accept } else { GiftOperation::Decline },
-            offered_items: None,
-            requested_items: None,
-            offer_id: Some(reply.id.clone()),
-            expected_offer_revision: Some(reply.revision),
-        };
-        let encoding = CommandEncoding::from_ordered(&Input {
-            id: &id,
-            actor_id: actor,
-            kind: "handover",
-            target_id: &reply.offerer,
-            gift: &gift,
-        }, 7).map_err(|_| ExecutionError::Invariant)?;
+        let encoding = CommandEncoding::from_ordered(
+            &Input {
+                id: &id,
+                actor_id: actor,
+                kind: "handover",
+                target_id: target,
+                gift: &gift,
+            },
+            7,
+        )
+        .map_err(|_| ExecutionError::Invariant)?;
         Ok(Self::Handover {
             envelope: CommandHeaders {
                 id,
@@ -61,7 +85,7 @@ impl NativeCommand {
                 purpose: None,
                 chosen_purpose: None,
             }.envelope(encoding),
-            target_id: reply.offerer.clone(),
+            target_id: target.to_owned(),
             gift,
         })
     }

@@ -47,7 +47,27 @@ pub struct GiftLot {
     )]
     pub subtree_revision: Option<u64>,
 }
+impl HeapBytes for GiftLot {
+    fn heap_bytes(&self) -> Option<usize> {
+        crate::host::retained_size::heap_sum([
+            self.item_id.heap_bytes()?,
+            self.definition_pin.id.heap_bytes()?,
+            self.definition_pin.digest.heap_bytes()?,
+        ])
+    }
+}
+
 impl GiftLot {
+    pub(crate) fn selection(&self) -> GiftSelection {
+        GiftSelection {
+            item_id: self.item_id.clone(),
+            quantity: self.quantity,
+            expected_revision: Some(self.revision),
+            placement_revision: Some(self.placement_revision),
+            expected_contents_revision: self.contents_revision,
+        }
+    }
+
     /// Check the actual persisted offer shape before using its received terms.
     /// This confers no stock access. The command rechecks current ownership.
     pub fn valid_shape(&self) -> bool {
@@ -1100,6 +1120,41 @@ pub(crate) struct GiftReply {
 }
 
 crate::host::retained_size::heap_record!(GiftReply { offerer, id, reference });
+
+/// Handover selected from a held NPC catalogue always runs as one immediate
+/// command. The provider can select the alias without supplying new terms.
+#[derive(Clone)]
+pub(crate) enum NpcHandover {
+    Reply(GiftReply),
+    Offer { recipient: String, lot: GiftLot },
+}
+
+impl NpcHandover {
+    pub(crate) fn target(&self) -> &str {
+        match self {
+            Self::Reply(reply) => &reply.offerer,
+            Self::Offer { recipient, .. } => recipient,
+        }
+    }
+
+    pub(crate) fn reply(&self) -> Option<&GiftReply> {
+        match self {
+            Self::Reply(reply) => Some(reply),
+            Self::Offer { .. } => None,
+        }
+    }
+}
+
+impl HeapBytes for NpcHandover {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Reply(reply) => reply.heap_bytes(),
+            Self::Offer { recipient, lot } => {
+                recipient.heap_bytes()?.checked_add(lot.heap_bytes()?)
+            }
+        }
+    }
+}
 
 impl GiftReply {
     fn matches(&self, received: &ReceivedGifts) -> bool {

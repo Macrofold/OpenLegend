@@ -22,7 +22,7 @@ pub(super) fn action(source: &ResponseActionChoice) -> ResponseActionChoice {
             .invocation
             .as_ref()
             .map(SqlCell::clone_within_heap_bound),
-        gift_reply: source.gift_reply.clone(),
+        handover: source.handover.clone(),
         purpose: source.purpose.as_ref().map(|purpose| PurposeBinding {
             definition: purpose.definition.clone(),
             id: purpose.id.clone(),

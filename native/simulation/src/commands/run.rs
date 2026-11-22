@@ -1148,14 +1148,16 @@ impl CommandCursor {
                             continue;
                         }
                     }
-                    if self.preparation_mode.is_some()
-                        && matches!(
+                    // Immediate social choices preview with existing work left
+                    // alone. Handover still cannot become a queued plan step.
+                    if let Some(mode) = self.preparation_mode
+                        && (matches!(
                             self.command,
                             NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
                                 | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
-                                | NativeCommand::Drop { .. } | NativeCommand::Handover { .. }
-                                | NativeCommand::TransferItem { .. }
-                        )
+                                | NativeCommand::Drop { .. } | NativeCommand::TransferItem { .. }
+                        ) || matches!(self.command, NativeCommand::Handover { .. })
+                            && mode != super::WorkTransitionMode::Continue)
                     {
                         self.reserve(128)?;
                         self.outcome = Some(outcome(

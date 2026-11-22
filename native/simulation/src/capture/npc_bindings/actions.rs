@@ -38,7 +38,7 @@ pub(crate) fn prepare_ordinary_actions(
             .get(selected.ordinal)
             .ok_or_else(invalid)?;
         let command = offer.command.command();
-        let gift_reply = offer.command.gift_reply();
+        let handover = offer.command.handover();
         let text = command.map(|command| command.source_encoding());
         reserve(
             &mut storage,
@@ -53,7 +53,9 @@ pub(crate) fn prepare_ordinary_actions(
                     .and_then(|c| c.envelope().chosen_purpose.as_ref())
                     .map_or(Some(0), HeapBytes::heap_bytes)
                     .ok_or(ExecutionError::Capacity)?,
-                gift_reply.map_or(Some(0), HeapBytes::heap_bytes).ok_or(ExecutionError::Capacity)?,
+                handover
+                    .map_or(Some(0), HeapBytes::heap_bytes)
+                    .ok_or(ExecutionError::Capacity)?,
                 text.map_or(0, str::len)
                     .checked_mul(12)
                     .ok_or(ExecutionError::Capacity)?,
@@ -84,7 +86,7 @@ pub(crate) fn prepare_ordinary_actions(
             selected.alias.clone(),
             ResponseActionChoice {
                 invocation,
-                gift_reply: gift_reply.cloned(),
+                handover: handover.cloned(),
                 purpose: command.and_then(|command| command.envelope().chosen_purpose.clone()),
                 transition: offer.transition,
                 expected_work: current.work.clone(),

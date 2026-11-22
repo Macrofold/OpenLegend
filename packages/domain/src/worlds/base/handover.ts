@@ -8,6 +8,13 @@ import { person, subjectNarration } from '../../narration.js';
 export const BASE_HANDOVER = {
   /** Compact generated suggestions; retained exact disclosures remain addressable. */
   candidateLots: copy.candidateLots,
+  nearestProposalRecipients: copy.nearestProposalRecipients,
+  residentProposalLots: copy.residentProposalLots,
+  residentProposals: copy.residentProposals,
+  typedProposalLots: copy.typedProposalLots,
+  typedProposals: copy.typedProposals,
+  /** Internal lot identities give equal-priority proposals a stable order. */
+  compareLotIds: (a: string, b: string) => Number(a > b) - Number(a < b),
   copy,
   text: {
     title: copy.title,
@@ -59,7 +66,9 @@ export const BASE_HANDOVER = {
     exchangeDescription: (give: string, receive: string) =>
       `Give ${give} to receive ${receive}. Availability is checked when agreeing.`,
     giftDescription: (give: string, person: string, minutes: number) =>
-      `Offer ${give} to ${person}. Nothing moves unless they accept within ${minutes} game minutes; I keep it meanwhile and can withdraw it.`,
+      copy.giftDescription.replace(/\{(give|person|minutes)\}/g, (_slot, key) =>
+        key === 'give' ? give : key === 'person' ? person : String(minutes),
+      ),
     replyGift: (accept: boolean, person: string, terms: string) =>
       (accept ? copy.replyAcceptGift : copy.replyDeclineGift).replace(
         /\{(person|terms)\}/g,

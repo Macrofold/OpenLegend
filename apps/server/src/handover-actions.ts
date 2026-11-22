@@ -214,7 +214,8 @@ export function handoverOptions(
     .sort(
       (a, b) =>
         Number(!world.itemDefinitions[a.definitionId]!.nutrition) -
-          Number(!world.itemDefinitions[b.definitionId]!.nutrition) || a.id.localeCompare(b.id),
+          Number(!world.itemDefinitions[b.definitionId]!.nutrition) ||
+        BASE_HANDOVER.compareLotIds(a.id, b.id),
     )
     .slice(0, maxLots);
   const known = knownTradeLots(world, actorId, person.id);

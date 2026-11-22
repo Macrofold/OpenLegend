@@ -149,6 +149,10 @@ impl NpcCandidateCursor {
                     next_at: None,
                     _storage: guard,
                 })?;
+                self.begin_gift_reach(core)?;
+            }
+            Enumerate::GiftProposal(target, lot) => {
+                self.offer_gift(core, target, lot, preparation_id)?;
             }
             Enumerate::Follow(index, count) => {
                 if index == self.targets.len()

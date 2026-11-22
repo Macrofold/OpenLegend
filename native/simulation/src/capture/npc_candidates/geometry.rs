@@ -2,7 +2,10 @@
 use super::*;
 
 impl NpcCandidateCursor {
-    fn binding(&mut self, core: &mut CoreMutation<'_>) -> Result<GeometryBinding, ExecutionError> {
+    pub(super) fn binding(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+    ) -> Result<GeometryBinding, ExecutionError> {
         Ok(GeometryBinding::new(
             self.candidate,
             core.state.installed.geometry.spatial.revision,
@@ -179,6 +182,7 @@ impl NpcCandidateCursor {
         let waiting = self.waiting.ok_or(ExecutionError::InvalidCheckpoint)?;
         let _query_storage = self._query_storage.take();
         match waiting {
+            Waiting::GiftReach => return Err(ExecutionError::InvalidCheckpoint),
             Waiting::Reach(index) => {
                 let ray = query.sight.first().ok_or(ExecutionError::Invariant)?;
                 let reach = core

@@ -43,7 +43,7 @@ export type NativeNpcOfferMeaning =
       readonly reach: number;
     }
   | { readonly kind: 'probe'; readonly probe: number }
-  | { readonly kind: 'fish' | 'cook' | 'fire-care' | 'gift-reply'; readonly body: number }
+  | { readonly kind: 'fish' | 'cook' | 'fire-care' | 'handover'; readonly body: number }
   | {
       readonly kind: 'strike';
       readonly body: number;
@@ -319,7 +319,7 @@ export function formatNativeNpcCandidateDescriptions(
         target = targetDetails(meaning.body);
         break;
       }
-      case 'gift-reply':
+      case 'handover':
         return {
           ordinal,
           id: offer.id,
