@@ -11,8 +11,9 @@ use crate::store::assets::AssetRevision;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::Response;
-use openlegend_simulation::runtime::RuntimeError;
+use openlegend_simulation::runtime::{RuntimeError, RuntimeOverview};
 use serde::Serialize;
+use serde_json::value::RawValue;
 
 pub(super) mod access;
 pub(super) mod maintenance;
@@ -37,10 +38,27 @@ struct Operations<'a> {
     presentation_release_revision: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     access: Option<access::AccessSection<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    overview: Option<Overview<'a>>,
     clock: Clock<'a>,
     maintenance: Option<&'a crate::operator_maintenance::Notice>,
     #[serde(skip_serializing_if = "Option::is_none")]
     maintenance_history: Option<Vec<&'a crate::operator_maintenance::Notice>>,
+}
+
+#[derive(Serialize)]
+struct Overview<'a> {
+    map: OverviewMap<'a>,
+    #[serde(flatten)]
+    locations: &'a RuntimeOverview,
+}
+
+#[derive(Serialize)]
+struct OverviewMap<'a> {
+    width: f64,
+    height: f64,
+    tiles: &'a RawValue,
+    terrain: &'a RawValue,
 }
 
 #[derive(Serialize)]
@@ -66,13 +84,14 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
         Ok(scope) => scope,
         Err(error) => return access_failure(error),
     };
-    let (manages_access, manages_saves) =
+    let (manages_access, manages_saves, spectates) =
         match state
             .authority
             .current_operations(&authorized, |_, caps, _| {
                 (
                     caps.contains(&Capability::ManageAccess),
                     caps.contains(&Capability::Save),
+                    caps.contains(&Capability::Spectate),
                 )
             }) {
             Ok(allowed) => allowed,
@@ -83,7 +102,7 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
         return busy();
     };
     let published = state.clock.maintenance().clone();
-    let (clock, generation, artwork, artwork_revision, maintenance) = match state
+    let (clock, generation, artwork, artwork_revision, maintenance, locations) = match state
         .game
         .world
         .capture(move |world| {
@@ -106,6 +125,7 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
                 reference,
                 revision,
                 published.snapshot(),
+                spectates.then(|| world.public_overview()).transpose()?,
             ))
         })
         .await
@@ -144,6 +164,7 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
     };
     let world = state.game.world.clone();
     let revision = maintenance.revision;
+    let source_generation = generation.clone();
     let disclose = move || match state.authority.current_operations(
         &authorized,
         |scope, capabilities, local| {
@@ -160,6 +181,19 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
             };
             let presentation = &state.game.view_policy().world;
             let (day, hour) = clock_parts(clock.at, presentation.offset_hours);
+            let overview = locations.as_ref().and_then(|locations| {
+                capabilities
+                    .contains(&Capability::Spectate)
+                    .then(|| Overview {
+                        map: OverviewMap {
+                            width: presentation.map.width,
+                            height: presentation.map.height,
+                            tiles: &presentation.map.tiles,
+                            terrain: &presentation.map.terrain,
+                        },
+                        locations,
+                    })
+            });
             let value = Operations {
                 ok: true,
                 world_id: &scope.world_id,
@@ -179,6 +213,7 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
                 access: roster
                     .as_ref()
                     .map(|roster| access::AccessSection::new(roster, &scope.account_id)),
+                overview,
                 clock: Clock {
                     seconds: clock.at,
                     day,
@@ -208,7 +243,11 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
             let artwork_current = artwork_revision.is_none_or(|expected| {
                 world.saved_presentation_release().1.unwrap_or(0) == expected
             });
-            Ok((artwork_current && world.clock()?.maintenance_revision == revision).then(disclose))
+            let timeline_current = world.accepted_progress()?.generation == source_generation;
+            Ok((timeline_current
+                && artwork_current
+                && world.clock()?.maintenance_revision == revision)
+                .then(disclose))
         })
         .await
     {
