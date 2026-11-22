@@ -55,8 +55,8 @@ const receiptSchema = z
 /** Gameplay-only retention; see docs/architecture.md#performance-critical-path for recovery boundaries. */
 export class CommandReceipts {
   constructor(private db: SqlDatabase) {}
-  async initialize() {
-    await this.db.exec(`CREATE TABLE IF NOT EXISTS gameplay_receipts (
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`CREATE TABLE IF NOT EXISTS gameplay_receipts (
       world_id TEXT NOT NULL, id TEXT NOT NULL, epoch BIGINT NOT NULL,
       expires_at BIGINT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,id));
       CREATE INDEX IF NOT EXISTS gameplay_expiry ON gameplay_receipts(world_id,epoch,expires_at);`);

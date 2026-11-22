@@ -1917,12 +1917,12 @@ export class MemoryRepository {
     }
   }
 
-  async initialize() {
-    const existing = await this.db
+  static async assertSearchSchema(db: Pick<SqlDatabase, 'prepare'>): Promise<void> {
+    const existing = await db
       .prepare("SELECT to_regclass('open_legend.recall_sources') AS relation")
       .get();
     if (existing?.['relation']) {
-      const columns = await this.db
+      const columns = await db
         .prepare(
           `SELECT a.attname AS name,format_type(a.atttypid,a.atttypmod) AS type,
             a.attgenerated AS generated,a.attnotnull AS required,
@@ -1956,7 +1956,9 @@ export class MemoryRepository {
           'Unsupported memory search projection. Existing data was not converted or deleted.',
         );
     }
-    await this.db.exec(`
+  }
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`
       CREATE TABLE IF NOT EXISTS recall_sources (
         world_id TEXT NOT NULL REFERENCES world_head(world_id), actor_id TEXT NOT NULL,
         id TEXT NOT NULL, source_kind TEXT NOT NULL, record_id TEXT NOT NULL, revision TEXT NOT NULL,
@@ -2023,7 +2025,7 @@ export class MemoryRepository {
         model TEXT NOT NULL,dimensions BIGINT NOT NULL,embedding TEXT NOT NULL,
         PRIMARY KEY(world_id,actor_id,source_id,source_revision,model,dimensions));
     `);
-    await this.db.exec(`
+    await db.exec(`
       CREATE INDEX IF NOT EXISTS recall_maintenance ON recall_sources(world_id,actor_id,eligible,at,sequence,id);
       CREATE INDEX IF NOT EXISTS recall_maintenance_routine ON recall_sources(world_id,actor_id,at,sequence,id)
         WHERE eligible=1 AND importance<${EXPERIENCE_LIMITS.protectedImportance} AND (source_kind='awareness' OR memory_kind='episode');
@@ -2032,10 +2034,10 @@ export class MemoryRepository {
     // Only participant/item keys are indexed, never descriptions or a second
     // knowledge state. Direct index updates avoid a growing pending-list scan
     // for each exact read before vacuum; ordinary observations are excluded.
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS mind_trade_disclosure_keys ON mind_awareness
+    await db.exec(`CREATE INDEX IF NOT EXISTS mind_trade_disclosure_keys ON mind_awareness
       USING GIN ((${tradeKeys('mind_awareness')}) jsonb_path_ops) WITH (fastupdate=off)
       WHERE ${tradeFamily('mind_awareness')}`);
-    await this.db.exec(`
+    await db.exec(`
       CREATE TABLE IF NOT EXISTS memory_vectors (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,generation TEXT NOT NULL,source_id TEXT NOT NULL,
         source_revision TEXT NOT NULL,model TEXT NOT NULL,dimensions BIGINT NOT NULL,embedding public.vector NOT NULL,
@@ -2045,14 +2047,14 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS memory_vector_scope ON memory_vectors(world_id,actor_id,generation,model,dimensions,source_id,source_revision);
     `);
     for (const table of ['mind_awareness', 'mind_memories', 'mind_summaries'])
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS ${table}_retention_candidates
+      await db.exec(`CREATE INDEX IF NOT EXISTS ${table}_retention_candidates
         ON ${table}(world_id,actor_id,retention_class,policy_priority,at,source_id COLLATE "C")
         WHERE active_or_protected=0 AND retention_class<>'sensory';
         CREATE INDEX IF NOT EXISTS ${table}_retention_due
         ON ${table}(world_id,actor_id,next_due_at)
         WHERE active_or_protected=0 AND retention_class<>'sensory';`);
-    await this.lexical.initialize();
-    await initializeMemoryDerivatives(this.db);
+    await LexicalProjection.initializeSchema(db);
+    await initializeMemoryDerivatives(db);
   }
   temporalHistory(
     scope: MemoryScope,

@@ -597,8 +597,8 @@ export class HistoryRepository {
       .prepare('SELECT id FROM history_events WHERE world_id=? AND response_id=? LIMIT 1')
       .get(worldId, responseId));
   }
-  async initialize() {
-    await this.db.exec(`
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`
       CREATE TABLE IF NOT EXISTS history_totals (
         world_id TEXT PRIMARY KEY, event_count BIGINT NOT NULL CHECK(event_count>=0));
       CREATE TABLE IF NOT EXISTS story_banners (
@@ -647,7 +647,7 @@ export class HistoryRepository {
         PRIMARY KEY(world_id,narration_id,owner_id,event_id));
       CREATE INDEX IF NOT EXISTS story_event_reverse ON story_event_sources(world_id,event_id);
     `);
-    await initializePerceivedEventIndexes(this.db);
+    await initializePerceivedEventIndexes(db);
   }
   private async revokeStories(worldId: string, id: string, ownerId?: string) {
     const rows = await this.db

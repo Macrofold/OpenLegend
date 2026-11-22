@@ -330,7 +330,9 @@ export function perspectiveField(name: 'order' | 'type', alias = ''): string {
 }
 /** Index the existing perspective, not all world events; the same columns drive reads.
  * docs/perceived-world-events.md#4-query-and-storage-behavior */
-export async function initializePerceivedEventIndexes(db: SqlDatabase): Promise<void> {
+export async function initializePerceivedEventIndexes(
+  db: Pick<SqlDatabase, 'exec'>,
+): Promise<void> {
   await db.exec(`
     CREATE INDEX IF NOT EXISTS history_perspective_order ON history_perspectives(world_id,actor_id,position,event_id);
     CREATE INDEX IF NOT EXISTS history_perspective_type_order ON history_perspectives(world_id,actor_id,event_type,position,event_id);

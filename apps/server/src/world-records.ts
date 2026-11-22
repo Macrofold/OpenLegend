@@ -432,7 +432,7 @@ export class WorldRecords {
     this.retirements.set(state, { rows, positions, previous });
   }
   needsHotPrune = false;
-  private currentContributionsPredicate(alias = ''): string {
+  private static currentContributionsPredicate(alias = ''): string {
     const json = (field: string) => `${alias}payload::jsonb ->> '${field}'`;
     // Only explicit terminal independent instances leave the current working set;
     // singleton cooldowns remain present. Complete capture validates cold rows too.
@@ -494,8 +494,8 @@ export class WorldRecords {
         throw new Error('Physical material provenance references a missing source identity.');
     }
   }
-  async initialize() {
-    await this.db.exec(`CREATE TABLE IF NOT EXISTS world_head (
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`CREATE TABLE IF NOT EXISTS world_head (
       id BIGINT PRIMARY KEY CHECK (id=1), world_id TEXT NOT NULL UNIQUE,
       revision BIGINT NOT NULL CHECK (revision>=0), generation TEXT NOT NULL
     )`);
@@ -517,10 +517,10 @@ export class WorldRecords {
         .map((child) => create(child.node, node))
         .join('\n')}`;
     };
-    await this.db.exec(create(WORLD_RECORD_SCHEMA));
+    await db.exec(create(WORLD_RECORD_SCHEMA));
     // An immutable ID may be hydrated again, never rebound to different contents.
     // Enforce this at the one SQL owner without a preceding ownership/read scan.
-    await this.db.exec(`CREATE OR REPLACE FUNCTION reject_received_value_mutation() RETURNS trigger
+    await db.exec(`CREATE OR REPLACE FUNCTION reject_received_value_mutation() RETURNS trigger
       LANGUAGE plpgsql AS $$ BEGIN
         RAISE EXCEPTION 'An immutable received value cannot change its contents.';
       END $$;
@@ -528,14 +528,14 @@ export class WorldRecords {
       CREATE TRIGGER received_value_immutable BEFORE UPDATE OF payload ON mind_perception_values
         FOR EACH ROW WHEN (OLD.payload::jsonb IS DISTINCT FROM NEW.payload::jsonb)
         EXECUTE FUNCTION reject_received_value_mutation()`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS temporal_page_buckets
+    await db.exec(`CREATE INDEX IF NOT EXISTS temporal_page_buckets
       ON mind_temporal_pages USING gin(lookup_buckets)`);
     const lineageCustodian = "(payload::jsonb ->> 'custodianId')";
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
+    await db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
       ON sim_object_lineage(world_id,(${lineageCustodian}),slot)`);
     // All receipt membership reads use the bounded lookup vocabulary plus exact
     // array checks; raw receipt/fact keys must not grow another GIN dictionary.
-    await this.db.exec(`
+    await db.exec(`
       CREATE INDEX IF NOT EXISTS mind_memories_recent ON mind_memories(world_id,at);
       CREATE INDEX IF NOT EXISTS mind_memories_unresolved ON mind_memories(world_id,parent_id,position) WHERE unresolved=1;
       CREATE INDEX IF NOT EXISTS mind_corrections_world_source ON mind_corrections(world_id,source_id,actor_id);
@@ -543,11 +543,11 @@ export class WorldRecords {
       CREATE INDEX IF NOT EXISTS mind_corrections_evidence ON mind_corrections(world_id,actor_id,correction_id);
     `);
     const appraisalState = "payload::jsonb ->> 'state'";
-    await this.db.exec(
+    await db.exec(
       `CREATE INDEX IF NOT EXISTS mind_appraisals_current ON mind_appraisals(world_id,parent_id,position) WHERE ${appraisalState}='active' OR ${appraisalState} IS NULL`,
     );
-    await this.db.exec(
-      `CREATE INDEX IF NOT EXISTS sim_status_effects_current ON sim_status_effects(world_id,parent_id,position) WHERE ${this.currentContributionsPredicate()}`,
+    await db.exec(
+      `CREATE INDEX IF NOT EXISTS sim_status_effects_current ON sim_status_effects(world_id,parent_id,position) WHERE ${WorldRecords.currentContributionsPredicate()}`,
     );
   }
   async head() {
@@ -1591,7 +1591,7 @@ export class WorldRecords {
       const currentPredicate = !active
         ? ''
         : table === 'sim_status_effects'
-          ? ` AND ${this.currentContributionsPredicate('t.')}`
+          ? ` AND ${WorldRecords.currentContributionsPredicate('t.')}`
           : table === 'mind_appraisals'
             ? ` AND (t.payload::jsonb ->> 'state'='active' OR t.payload::jsonb ->> 'state' IS NULL)`
             : ['sim_object_lineage', 'sim_object_retirements'].includes(table)

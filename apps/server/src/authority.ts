@@ -367,8 +367,8 @@ export class AuthorityRepository {
   private controls = new Map<string, ControlLease>();
   private listeners = new Set<() => void>();
   constructor(private readonly db: SqlDatabase) {}
-  async initialize() {
-    await this.db.exec(`
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`
       CREATE TABLE IF NOT EXISTS auth_accounts (id TEXT PRIMARY KEY, issuer TEXT NOT NULL, subject TEXT NOT NULL, UNIQUE(issuer,subject));
       CREATE TABLE IF NOT EXISTS auth_sessions (id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE, account_id TEXT NOT NULL REFERENCES auth_accounts(id), revision BIGINT NOT NULL, expires_at BIGINT NOT NULL);
       CREATE INDEX IF NOT EXISTS auth_sessions_expiry ON auth_sessions(expires_at);

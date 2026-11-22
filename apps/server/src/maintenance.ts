@@ -190,8 +190,8 @@ export function maintenanceView(window: MaintenanceWindow): MaintenanceWindowVie
 /** Durable operational windows, outside gameplay saves and rewind. */
 export class MaintenanceRepository {
   constructor(private readonly db: SqlDatabase) {}
-  async initialize(): Promise<void> {
-    await this.db.exec(
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(
       'CREATE TABLE IF NOT EXISTS ops_maintenance (world_id TEXT NOT NULL, id TEXT NOT NULL, updated_at BIGINT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,id))',
     );
   }

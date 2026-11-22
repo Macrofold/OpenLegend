@@ -84,7 +84,8 @@ import {
   type ControlRequest,
 } from './authority.js';
 import type { AppConfig } from './config.js';
-import { DATABASE_SCHEMA, digest, type SqlGameRepository } from './store.js';
+import { DATABASE_SCHEMA } from './game-storage-schema.js';
+import { digest, type SqlGameRepository } from './store.js';
 import { NativeCurrentOpening } from './native-current-opening.js';
 import { NativeDefinitionCapture } from './native-definition-capture.js';
 import {

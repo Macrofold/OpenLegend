@@ -3,7 +3,8 @@ import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { restoredSourceVersions } from './source-version-retention.js';
 import { HISTORY_TABLES, validateHistoryEvidence } from './history.js';
-import { digest, type SavedWorld, type SqlDatabase } from './store.js';
+import { digest } from './content-digest.js';
+import type { SavedWorld, SqlDatabase } from './store.js';
 import type { AutosaveSettings, CheckpointFailure, GameSaveSummary } from '@open-legend/protocol';
 import { SaveFiles, compareSaves, type SavePosition, type SaveFileMetadata } from './save-files.js';
 import {
@@ -362,10 +363,12 @@ export class GameSaves {
       await this.worker?.close();
     }
   }
-  async initialize(cleanInterruptedStages = true) {
+  async prepareStartup(cleanInterruptedStages = true) {
     await this.worker?.ready;
     if (cleanInterruptedStages) await this.files.cleanInterruptedStages();
-    await this.db.exec(`CREATE TABLE IF NOT EXISTS game_saves (
+  }
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`CREATE TABLE IF NOT EXISTS game_saves (
       id TEXT PRIMARY KEY, world_id TEXT NOT NULL, label TEXT NOT NULL,
       created_at TEXT NOT NULL, sim_time REAL NOT NULL, format TEXT NOT NULL,
       checksum TEXT NOT NULL, payload TEXT NOT NULL

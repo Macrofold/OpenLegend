@@ -92,7 +92,7 @@ function candidatesSql() {
  * aggregate actual changed rows once, including conflict-update and rollback, so
  * every existing writer shares the same charge owner without repeated SUM scans.
  * docs/projects/bookkeeping-simplification-runtime-design.md#51-search-and-derived-storage */
-export async function initializeMemoryDerivatives(db: SqlDatabase): Promise<void> {
+export async function initializeMemoryDerivatives(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
   await db.exec(`CREATE TABLE IF NOT EXISTS memory_derived_usage (
     world_id TEXT NOT NULL,actor_id TEXT NOT NULL,bytes BIGINT NOT NULL,
     PRIMARY KEY(world_id,actor_id));`);

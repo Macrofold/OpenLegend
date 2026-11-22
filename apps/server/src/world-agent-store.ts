@@ -120,8 +120,8 @@ function recordPayload(value: unknown): string {
 }
 export class WorldAgentStore {
   constructor(readonly db: SqlDatabase) {}
-  async initialize() {
-    await this.db.exec(`CREATE TABLE IF NOT EXISTS world_agent_sessions (
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`CREATE TABLE IF NOT EXISTS world_agent_sessions (
       id TEXT PRIMARY KEY, world_id TEXT NOT NULL, context_hash TEXT NOT NULL, payload TEXT NOT NULL);
       CREATE UNIQUE INDEX IF NOT EXISTS world_agent_context ON world_agent_sessions(context_hash);
       CREATE INDEX IF NOT EXISTS world_agent_world ON world_agent_sessions(world_id,id);

@@ -643,7 +643,10 @@ export class AssetRepository {
     };
   }
   async initialize(): Promise<void> {
-    await this.db.exec(`
+    await AssetRepository.initializeSchema(this.db);
+  }
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`
       CREATE TABLE IF NOT EXISTS asset_domains (
         boundary TEXT NOT NULL, access_domain TEXT NOT NULL, payload TEXT NOT NULL,
         PRIMARY KEY(boundary,access_domain));

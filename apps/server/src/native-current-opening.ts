@@ -15,7 +15,8 @@ import type { NativeMilestones } from './native-milestones.js';
 import { NativeRetention } from './native-retention.js';
 import { parseSourceJson } from './native-source-preparation.js';
 import type { OperationalSettings } from './native-world-service.js';
-import { DATABASE_SCHEMA, type SqlGameRepository } from './store.js';
+import { DATABASE_SCHEMA } from './game-storage-schema.js';
+import type { SqlGameRepository } from './store.js';
 import { RECORD_NODES } from './world-record-schema.js';
 
 interface OpeningHeader {

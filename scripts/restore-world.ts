@@ -27,7 +27,8 @@ import { recoveryFile, SAVE_FORMAT, type SavePayload } from '../apps/server/src/
 import { GameSaves } from '../apps/server/src/game-saves.js';
 import { SaveFiles } from '../apps/server/src/save-files.js';
 import { readConfig } from '../apps/server/src/config.js';
-import { DATABASE_SCHEMA, SqlGameRepository } from '../apps/server/src/store.js';
+import { DATABASE_SCHEMA } from '../apps/server/src/game-storage-schema.js';
+import { SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import {
   reapplyExperiencePrivacy,

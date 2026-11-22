@@ -28,8 +28,8 @@ function sourcePins(sources: VectorSource[]): string {
 /** Derived embeddings stay in PostgreSQL. Only source IDs and top-match scores leave it. */
 export class VectorStore {
   constructor(private db: SqlDatabase) {}
-  async initialize() {
-    await this.db.exec(`
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`
       CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
       CREATE TABLE IF NOT EXISTS recall_vectors (
         scope TEXT NOT NULL, model TEXT NOT NULL, dimensions INTEGER NOT NULL,

@@ -12,7 +12,8 @@ import {
   type WorkVector,
 } from '@open-legend/domain';
 import { nativeSetupSettings } from '@open-legend/domain/native-install';
-import { DATABASE_SCHEMA, type NativeWorldAdoption, type SqlGameRepository } from './store.js';
+import { DATABASE_SCHEMA } from './game-storage-schema.js';
+import type { NativeWorldAdoption, SqlGameRepository } from './store.js';
 import { nativeDefinitionSources } from './native-definition-sources.js';
 import { nativeRecordLayouts, nativeStorageSettings } from './native-install-inputs.js';
 import { NativeDefinitionCapture } from './native-definition-capture.js';

@@ -47,7 +47,6 @@ import {
   sumSafeIntegers,
 } from '@open-legend/ai';
 import {
-  AUTHORITY_TABLES,
   AuthorityRepository,
   type AuthorityFence,
   type AccountBinding,
@@ -58,7 +57,7 @@ import {
 } from './authority.js';
 import { InviteRepository } from './invites.js';
 import { MaintenanceRepository } from './maintenance.js';
-import { ASSET_TABLES, AssetRepository } from './asset-repository.js';
+import { AssetRepository } from './asset-repository.js';
 import { assertAssetBinding, type AssetRevisionReference } from '@open-legend/assets';
 import {
   compactHistory,
@@ -106,7 +105,7 @@ import {
   uncertainAttemptMicroUsd,
   type AttemptBudgetSnapshot,
 } from './attempt-budget.js';
-import { WorldAgentStore } from './world-agent-store.js';
+import { DATABASE_SCHEMA, assertGameSchema, initializeGameSchema } from './game-storage-schema.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { CreationTargetRepository } from './creation-target.js';
 import {
@@ -214,7 +213,6 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '65';
 // A checkpoint installs complete physical history; its pages cannot first pass
 // ordinary append classification against the abandoned timeline.
 const restoreDiffTables = new Set(
@@ -1066,94 +1064,14 @@ export class SqlGameRepository implements GameRepository {
   readonly ready: Promise<void>;
   private async initialize() {
     await this.db.transaction(async () => {
-      // Reject old layouts before any table/index initialization can modify them.
-      // Runtime never converts or deletes incompatible data. An agent may prepare
-      // replacement development state under AGENTS.md#development-save-policy.
-      const existing = await this.db
-        .prepare("SELECT to_regclass('open_legend.meta') AS relation")
-        .get();
-      if (existing?.['relation']) {
-        const version = await this.db.prepare('SELECT value FROM meta WHERE key=?').get('schema');
-        if (version?.['value'] !== DATABASE_SCHEMA)
-          throw new Error(
-            `Unsupported database schema: stored ${String(version?.['value'] ?? 'missing')}, required ${DATABASE_SCHEMA}. Existing data was not changed. Follow README.md's development database recovery guidance; do not edit the stored schema marker.`,
-          );
-      }
-      // The asset CLI owns its catalog independently of a gameplay database marker.
-      // Fresh gameplay may share that current catalog; every other unversioned table
-      // still refuses before initialization. docs/asset-workflow.md#publish-an-exact-revision
-      if (
-        !existing?.['relation'] &&
-        (await this.db
-          .prepare(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema='open_legend' AND NOT (table_name = ANY(?::text[])) LIMIT 1",
-          )
-          // Artwork and access have independent owners and can be installed
-          // before a game's first initialization. Any unmarked game/storage
-          // table still refuses startup; this never admits an older world.
-          .get([...ASSET_TABLES, ...AUTHORITY_TABLES]))
-      )
-        throw new Error('Database schema marker is missing. Existing data was not changed.');
-      const schema = `
-      CREATE TABLE IF NOT EXISTS jobs (
-        id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, selection JSONB NOT NULL, created_at BIGINT NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS jobs_recent ON jobs (created_at DESC, id DESC);
-      CREATE INDEX IF NOT EXISTS jobs_inventor ON jobs ((selection #>> '{request,invention,worldId}'), (selection #>> '{request,invention,actorId}'), created_at, id);
-      CREATE INDEX IF NOT EXISTS jobs_speech_event ON jobs ((selection #>> '{playerSpeechEventId}')) WHERE (selection #>> '{kind}') = 'chat';
-      CREATE INDEX IF NOT EXISTS jobs_inventor_timeline ON jobs ((selection #>> '{request,invention,worldId}'), (selection #>> '{request,invention,actorId}'), (selection #>> '{request,invention,timelineId}'), created_at, id);
-      CREATE INDEX IF NOT EXISTS jobs_unfinished ON jobs(id) WHERE (selection #>> '{status}') IN ('queued','judging','generating');
-      CREATE UNIQUE INDEX IF NOT EXISTS decision_actor_active ON jobs
-        ((selection #>> '{decision,worldId}'), (selection #>> '{decision,timelineId}'), (selection #>> '{decision,actorId}'))
-        WHERE (selection #>> '{decision,higher,state}') IN ('queued','preparing','reserved','dispatched');
-      CREATE INDEX IF NOT EXISTS decision_unfinished ON jobs(id)
-        WHERE (selection #>> '{decision,phase}') IN ('immediate','waiting-primary','higher');
-      CREATE TABLE IF NOT EXISTS attempts (
-        id TEXT PRIMARY KEY, provider TEXT NOT NULL, status TEXT NOT NULL,
-        reserved BIGINT NOT NULL CHECK (reserved >= 0), spent BIGINT NOT NULL DEFAULT 0 CHECK (spent >= 0),
-        receipt TEXT, created_at BIGINT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS cognition_attempt_links (
-        attempt_id TEXT PRIMARY KEY REFERENCES attempts(id), root_job_id TEXT NOT NULL,
-        category TEXT NOT NULL, level INTEGER, stage TEXT NOT NULL,
-        execution_class TEXT NOT NULL CHECK(execution_class IN ('primary','background')),
-        dispatch_intent BOOLEAN NOT NULL DEFAULT false
-      );
-      CREATE INDEX IF NOT EXISTS cognition_attempt_root ON cognition_attempt_links(root_job_id,attempt_id);
-      CREATE INDEX IF NOT EXISTS attempts_unsettled ON attempts(id) WHERE status IN ('reserved','uncertain');
-      CREATE INDEX IF NOT EXISTS attempts_created ON attempts(created_at,id);
-      CREATE TABLE IF NOT EXISTS attempt_scopes (attempt_id TEXT PRIMARY KEY, actor_id TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS attempt_budgets (attempt_id TEXT PRIMARY KEY, budget_id TEXT NOT NULL);
-      CREATE INDEX IF NOT EXISTS attempt_budget_scope ON attempt_budgets(budget_id, attempt_id);
-      CREATE INDEX IF NOT EXISTS attempt_actor ON attempt_scopes(actor_id,attempt_id);
-      CREATE TABLE IF NOT EXISTS intelligence_calls (id TEXT PRIMARY KEY, started_at TEXT NOT NULL, payload TEXT NOT NULL, selection JSONB NOT NULL, summary TEXT NOT NULL, stage TEXT NOT NULL);
-      CREATE INDEX IF NOT EXISTS intelligence_calls_time ON intelligence_calls(started_at DESC, id DESC);
-      CREATE INDEX IF NOT EXISTS intelligence_calls_parent_time ON intelligence_calls((selection #>> '{parentId}'), started_at DESC, id DESC);
-      CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS player_profiles (
-        id TEXT PRIMARY KEY, revision BIGINT NOT NULL,
-        show_unavailable_actions BIGINT NOT NULL CHECK (show_unavailable_actions IN (0, 1)),
-        pause_when_hidden BIGINT NOT NULL DEFAULT 1 CHECK (pause_when_hidden IN (0, 1))
-      );
-    `;
-      await this.db.exec(schema);
-
+      await assertGameSchema(this.db);
+      await initializeGameSchema(this.db, {
+        verifyMemoryLayout: () => MemoryRepository.assertSearchSchema(this.db),
+        // An awaiting target must refuse retained files before ordinary startup cleanup.
+        prepareCheckpointDirectory: () =>
+          this.saves.prepareStartup(!this.initialization.preserveSaveStages),
+      });
       this.vectors = new VectorStore(this.db);
-      await this.vectors.initialize();
-
-      await this.records.initialize();
-      await this.receivedOwnership.initialize();
-      await this.memories.initialize();
-      await new WorldAgentStore(this.db).initialize();
-      await this.history.initialize();
-      // An awaiting target must refuse retained files before ordinary startup cleanup.
-      await this.saves.initialize(!this.initialization.preserveSaveStages);
-      await this.commands.initialize();
-      await this.authority.initialize();
-      await this.assets.initialize();
-      await this.invites.initialize();
-      await this.maintenance.initialize();
-      await this.creationTargets.initialize();
       await this.db
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
         .run('schema', DATABASE_SCHEMA);

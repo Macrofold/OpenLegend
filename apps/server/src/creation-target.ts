@@ -82,8 +82,8 @@ export function creationTargetOccupiedSql(): string {
 export class CreationTargetRepository {
   constructor(readonly db: SqlDatabase) {}
 
-  async initialize(): Promise<void> {
-    await this.db.exec(`
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`
       CREATE TABLE IF NOT EXISTS creation_target_registration (
         id BIGINT PRIMARY KEY CHECK(id=1), target_id TEXT NOT NULL UNIQUE,
         generation BIGINT NOT NULL CHECK(generation>0),

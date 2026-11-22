@@ -56,8 +56,8 @@ export function receivedOwnershipAuditSql(
 export class ReceivedValueOwnership {
   constructor(private readonly db: SqlDatabase) {}
 
-  async initialize(): Promise<void> {
-    await this.db.exec(`
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`
       CREATE UNIQUE INDEX IF NOT EXISTS received_value_identity
         ON mind_perception_values(world_id,source_id);
       CREATE TABLE IF NOT EXISTS received_value_uses (

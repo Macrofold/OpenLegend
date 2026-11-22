@@ -6,7 +6,7 @@ import {
   type DefinitionPin,
   type currentAttentionCues,
 } from '@open-legend/domain';
-import { digest } from './store.js';
+import { digest } from './content-digest.js';
 
 export const THOUGHT_RESPONSE_INTERRUPTION = { importance: 8, urgency: 8 } as const;
 
