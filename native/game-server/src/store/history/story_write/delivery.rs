@@ -23,6 +23,12 @@ use tokio_postgres::{Row, Transaction};
 
 const FAILED: &str = "Narration failed.";
 
+#[derive(Clone, Copy)]
+enum StorySourceScope {
+    Generation,
+    RetainedPassage,
+}
+
 pub(crate) struct ClaimedStory {
     pub(crate) head: DurableHead,
     pub(crate) grant_revision: Option<u64>,
@@ -152,8 +158,14 @@ impl ClaimedStory {
         self._custody.bytes()
     }
 
+    /// Borrow the fixed causal sources. Optional context is selected afresh
+    /// at this story's original anchor for each explicit generation.
     pub(crate) fn sources(&self) -> impl Iterator<Item = StoryEvidence<'_>> {
-        self.job.sources.iter().map(StoryEvidence::from)
+        self.job
+            .sources
+            .iter()
+            .filter(|source| self.mandatory_source(&source.id))
+            .map(StoryEvidence::from)
     }
 
     pub(crate) fn mandatory_source(&self, id: &str) -> bool {
@@ -224,7 +236,13 @@ impl Store {
         self.read_operational(move |tx| {
             Box::pin(async move {
                 store
-                    .story_sources_current(tx, &story, &optional, "running")
+                    .story_sources_current(
+                        tx,
+                        &story,
+                        &optional,
+                        "running",
+                        StorySourceScope::Generation,
+                    )
                     .await
             })
         })
@@ -239,7 +257,7 @@ impl Store {
     ) -> StoreResult<StoryOptionalRows> {
         let store = self.clone();
         self.read_operational(move |tx| Box::pin(async move {
-            let ids = story.job.sources.iter().map(|source| &source.id).collect::<Vec<_>>();
+            let ids = &story.job.item.source_ids;
             let limit = (16usize.saturating_sub(ids.len()).min(8)) as i64;
             let sql = format!("WITH selected AS MATERIALIZED (
                 SELECT p.* FROM history_perspectives p WHERE p.world_id=$1 AND p.actor_id=$2 AND p.position<=$3
@@ -266,12 +284,29 @@ impl Store {
                 StoryOutput::Generated { cited_optional, .. } => cited_optional.as_slice(),
                 _ => &[],
             };
-            let valid = store.story_sources_current(tx, &story, optional, "running").await?.is_some();
-            if matches!(output, StoryOutput::Revoked) || !valid {
-                cancel_story(tx, world, &mut current, valid).await?;
+            let valid = !matches!(output, StoryOutput::Revoked)
+                && store.story_sources_current(tx, &story, optional, "running", StorySourceScope::Generation)
+                    .await?.is_some();
+            if !valid {
+                let restore_previous = current.previous_item.is_some()
+                    && store.story_sources_current(tx, &story, &[], "running", StorySourceScope::RetainedPassage)
+                        .await?.is_some();
+                cancel_story(tx, world, &mut current, restore_previous).await?;
                 return Ok(false);
             }
+            // The hidden previous entry still owned its old citations while
+            // regeneration was running. Replace them at the same durable
+            // boundary as the new prose and its actual cited source bodies.
             current.previous_item = None;
+            let required = &current.item.source_ids;
+            let before = current.sources.len();
+            current.sources.retain(|source| required.contains(&source.id));
+            if current.sources.len() != before {
+                tx.execute(
+                    "DELETE FROM story_context_sources WHERE world_id=$1 AND owner_id=$2 AND narration_id=$3",
+                    &[&world, &owner, &current.id],
+                ).await?;
+            }
             current.item.revision = current.item.revision.checked_add(1).ok_or(StoreError::Capacity)?;
             let mut retained = Vec::new();
             match output {
@@ -281,10 +316,12 @@ impl Store {
                     current.item.authored_fallback = Some(false);
                     current.reason = None;
                     retained.push(_custody);
-                    let ids = cited_optional.iter().map(OptionalStorySource::id).collect::<Vec<_>>();
-                    tx.execute("INSERT INTO story_context_sources (world_id,narration_id,owner_id,event_id)
-                        SELECT $1,$2,$3,s.event FROM unnest($4::text[]) s(event) ON CONFLICT DO NOTHING",
-                        &[&world,&current.id,&current.owner_id,&ids]).await?;
+                    if !cited_optional.is_empty() {
+                        let ids = cited_optional.iter().map(OptionalStorySource::id).collect::<Vec<_>>();
+                        tx.execute("INSERT INTO story_context_sources (world_id,narration_id,owner_id,event_id)
+                            SELECT $1,$2,$3,s.event FROM unnest($4::text[]) s(event) ON CONFLICT DO NOTHING",
+                            &[&world,&current.id,&current.owner_id,&ids]).await?;
+                    }
                     for item in cited_optional {
                         current.sources.push(item.source);
                         retained.push(item._custody);
@@ -303,7 +340,6 @@ impl Store {
                         text
                     } else { FAILED.into() };
                     current.item.authored_fallback = Some(has_authored_introduction);
-                    tx.execute("DELETE FROM story_context_sources WHERE world_id=$1 AND owner_id=$2 AND narration_id=$3", &[&world,&owner,&current.id]).await?;
                 }
                 StoryOutput::Revoked => unreachable!("revocation handled before publication"),
             }
@@ -360,7 +396,7 @@ impl Store {
             let head = durable_head(tx).await?.filter(|head| head.world_id == world).ok_or(StoreError::StaleCut)?;
             let grant_revision = story_grant(tx,&world,&owner,&actor).await?;
             let story = ClaimedStory { head, grant_revision, job, _custody };
-            if store.story_sources_current(tx,&story,&[],&story.job.state).await?.is_none() { return Ok(false); }
+            if store.story_sources_current(tx,&story,&[],&story.job.state,StorySourceScope::RetainedPassage).await?.is_none() { return Ok(false); }
             job=story.job;
             job.previous_item=Some(job.item.clone());
             job.state="queued".into();
@@ -408,8 +444,11 @@ impl Store {
             || job.item.id != id
             || job.owner_id != owner
             || job.actor_id != row.try_get::<_, &str>(1)?
-            || job.sources.is_empty()
+            || job.item.source_ids.is_empty()
             || job.sources.len() > 16
+            || job.item.source_ids.iter().any(|id| {
+                job.sources.iter().filter(|source| source.id == *id).count() != 1
+            })
         {
             return Err(StoreError::InvalidRecord);
         }
@@ -422,6 +461,7 @@ impl Store {
         story: &ClaimedStory,
         cited_optional: &[OptionalStorySource],
         state: &str,
+        scope: StorySourceScope,
     ) -> StoreResult<Option<StoryRevisions>> {
         let (owner, actor) = story.principal();
         let world = &story.head.world_id;
@@ -465,6 +505,10 @@ impl Store {
                 .job
                 .sources
                 .iter()
+                .filter(|source| {
+                    matches!(scope, StorySourceScope::RetainedPassage)
+                        || story.mandatory_source(&source.id)
+                })
                 .chain(cited_optional.iter().map(|entry| &entry.source))
         };
         let ids = sources().map(|source| &source.id).collect::<Vec<_>>();
