@@ -1,4 +1,6 @@
 import type { WorldState, WorldEvent } from '../../types.js';
+import type { Obligation } from '../../commitments.js';
+import presentation from './config/promise-presentation.json' with { type: 'json' };
 
 /** Native occurrence names remain open; a removed world behavior cannot be
  * promised as an automatic completion. Presentation is only a partial view.
@@ -21,6 +23,44 @@ export const BASE_PROMISE_RULES = {
   importance: 10,
   summaryPrefix: 'said: ',
 } as const;
+
+const recordedPromise = new RegExp(
+  BASE_PROMISE_RULES.admissionPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+  'i',
+);
+
+/** Present the installed completion rule and its stored outcome. The caller
+ * retains responsibility for the owner and the observer's knowledge. */
+export function describePromise(world: WorldState, summary: string, obligation: Obligation) {
+  const { completion, status } = obligation;
+  const start = summary.search(recordedPromise);
+  const gathered =
+    completion?.eventType === BASE_PROMISE_RULES.completionEvent
+      ? completion.definitionId
+        ? (world.itemDefinitions[completion.definitionId]?.name ?? presentation.undefinedItem)
+        : presentation.anyItem
+      : undefined;
+  const terms =
+    gathered !== undefined
+      ? `${presentation.gatherTermsPrefix}${gathered}.`
+      : completion
+        ? presentation.unsupportedTerms
+        : status === 'active' || status === 'overdue'
+          ? presentation.untrackedOpen
+          : presentation.untrackedPast;
+  let evidence = null;
+  if (status === 'fulfilled') {
+    evidence =
+      gathered === undefined
+        ? presentation.keptOther
+        : `${presentation.keptGatherPrefix}${gathered}.`;
+  } else if (status === 'cancelled') {
+    evidence = presentation.cancelled;
+  } else if (status === 'overdue') {
+    evidence = completion ? presentation.overdueTracked : presentation.overdueUntracked;
+  }
+  return { words: start < 0 ? summary : summary.slice(start), terms, evidence };
+}
 
 /** The literal phrase belongs to this world; whitespace and line handling use
  * the same ordinary JavaScript grammar as speech text. */

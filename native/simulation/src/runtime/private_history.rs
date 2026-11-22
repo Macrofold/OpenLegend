@@ -6,6 +6,11 @@ use std::mem::size_of;
 use std::sync::atomic::AtomicBool;
 
 mod activity_inspection;
+mod promises;
+pub use promises::{
+    RuntimePromisePosition, RuntimePromisePresentation, RuntimePromiseSelection, RuntimePromiseView,
+    RuntimeResidentPromise,
+};
 pub use activity_inspection::RuntimeActivityInspection;
 mod recent;
 pub use recent::{

@@ -12,6 +12,7 @@ import { EventTime, GameDeadline } from './event-time';
 import './character-sheet.css';
 import { PersonKnowledge } from './diagnostics';
 import { Promises } from './promises';
+import { captionScope } from '../speech-captions';
 import { PerceivedEventText } from './perceived-event-text';
 import type { CommandDispatcher } from '../command-request';
 import { OutingStatus } from './outing-status';
@@ -765,7 +766,8 @@ export function EntityDetail({
           <div className="ol-person-column">
             <Section title="Commitments">
               <Promises
-                personId={entity.id}
+                key={captionScope(view)}
+                personId={entity.communicationReference ?? entity.id}
                 visible={visible && personTab === 'overview'}
                 revision={view.historyRevision}
               />

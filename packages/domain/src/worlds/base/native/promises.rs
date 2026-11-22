@@ -300,3 +300,96 @@ impl PromiseRules {
 
 #[path = "policy_residency/promises.rs"]
 mod policy_residency;
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Presentation<'a> {
+    undefined_item: &'a str,
+    any_item: &'a str,
+    gather_terms_prefix: &'a str,
+    kept_gather_prefix: &'a str,
+    unsupported_terms: &'a str,
+    untracked_open: &'a str,
+    untracked_past: &'a str,
+    kept_other: &'a str,
+    cancelled: &'a str,
+    overdue_tracked: &'a str,
+    overdue_untracked: &'a str,
+}
+
+#[derive(Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum ObligationStatus {
+    Active,
+    Overdue,
+    Fulfilled,
+    Cancelled,
+}
+
+impl ObligationStatus {
+    pub(crate) fn label(self) -> &'static str {
+        match self {
+            Self::Active => "open",
+            Self::Overdue => "overdue",
+            Self::Fulfilled => "kept",
+            Self::Cancelled => "cancelled",
+        }
+    }
+}
+
+impl PromiseRules {
+    pub(crate) fn recorded_words(&self, summary: crate::text::JsText) -> crate::text::JsText {
+        let lower = summary.ascii_lowercase();
+        let prefix = crate::text::JsText::from(self.admission_prefix.as_str()).ascii_lowercase();
+        match lower.find_from(&prefix, 0) {
+            Some(start) if start != 0 => summary.slice(start..summary.units_len()),
+            _ => summary,
+        }
+    }
+
+    /// Describe only the installed completion family. Application projections
+    /// receive words and never disclose an internal occurrence type or id.
+    pub(crate) fn describe(
+        &self,
+        tracked_event: Option<&str>,
+        named_item: Option<Option<&crate::text::JsText>>,
+        status: ObligationStatus,
+    ) -> (crate::text::JsText, Option<crate::text::JsText>) {
+        use crate::text::JsText;
+        static COPY: std::sync::OnceLock<Presentation<'static>> = std::sync::OnceLock::new();
+        let words = COPY.get_or_init(|| {
+            serde_json::from_str(include_str!("../config/promise-presentation.json"))
+                .expect("the bundled promise presentation is valid")
+        });
+        let gathered =
+            (tracked_event == Some(self.completion_event.as_str())).then(|| match named_item {
+                Some(Some(name)) => name.clone(),
+                Some(None) => words.undefined_item.into(),
+                None => words.any_item.into(),
+            });
+        let phrase =
+            |prefix: &str, name: &JsText| JsText::concat(&[&prefix.into(), name, &".".into()]);
+        let terms = if let Some(name) = &gathered {
+            phrase(words.gather_terms_prefix, name)
+        } else if tracked_event.is_some() {
+            words.unsupported_terms.into()
+        } else if matches!(status, ObligationStatus::Active | ObligationStatus::Overdue) {
+            words.untracked_open.into()
+        } else {
+            words.untracked_past.into()
+        };
+        let evidence = match status {
+            ObligationStatus::Active => None,
+            ObligationStatus::Overdue if tracked_event.is_some() => {
+                Some(words.overdue_tracked.into())
+            }
+            ObligationStatus::Overdue => Some(words.overdue_untracked.into()),
+            ObligationStatus::Fulfilled => Some(gathered.as_ref().map_or_else(
+                || words.kept_other.into(),
+                |name| phrase(words.kept_gather_prefix, name),
+            )),
+            ObligationStatus::Cancelled => Some(words.cancelled.into()),
+        };
+        (terms, evidence)
+    }
+}

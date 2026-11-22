@@ -108,6 +108,20 @@ The state snapshot was 129 KB with the 261-stack pile and 327 KB with the 1,001-
 
 **Limits:** only one human exists locally, so cross-account denial is by construction (no actor parameter) rather than a second-account request. Promises made by an NPC through model output were not produced.
 
+### Promises on the stand-alone Rust server
+
+November 22, 2026. The ordinary signed-in speech and gathering commands recorded three open promises. Gathering one stone changed the supported promise from open to kept and saved the exact gathering event as evidence. Unsupported wording stayed open. The narrow Chromium Journal showed the kept result and used the existing keyboard paging controls. The 29 kept promises appeared in pages of 20 and 9, with no repeats. Accented text, combining marks and an isolated UTF-16 code unit survived speech, the promise record and cold reopening.
+
+The owner recovered the same promises after signing back in. A second player received an empty list for their own character. Requests to name another actor, use their cursor or reuse an invalidated tab were refused. Source and Rust independently served the same 29 kept promises, and Rust also opened the completed Source world through the existing current-format store.
+
+A PostgreSQL lock held a promise read in progress. On the first Rust build it also blocked a new walk's receipt on the common reader. The new build used a request-owned history connection. The same walk was accepted and the new position was already visible while the query was held. Ordinary saving recorded it, and a cold open returned that position. In a separate held read, the creator withdrew an older promise before publication. The in-flight response withheld it, the old cursor expired, and fresh pages returned the 28 remaining kept promises. PostgreSQL removed the withdrawn source from the eligible index.
+
+Native write and exact-text results use tree `44658e3135bd` and executable `94f58c44e5c2`. The held reads and browser use tree `fcf5d18b87f1` and executable `b8b98febf469`. Result hashes are `98b7b8af85e1` for the held walk and `6434c8f07b6e` for withdrawal. The Source run with the shared authored wording uses tree `9f2cd55adb48` and result `65c4f3bad97d`. The owner databases were disposable and the warm and cold Rust listeners released their reservations. All provider traffic was local and controlled. There is no throughput or model-quality claim.
+
+At 16 open obligations, the seventeenth utterance was still saved once and survived replay and restart. It did not create another obligation. Disconnecting only the request-owned PostgreSQL connection during each history page returned a partial result with 20 then 9 kept promises. The regular receipt still returned, and a fresh history request reported a complete result. These checks use result `f52bc5efe073` on the same executable.
+
+Rust loaded all 29 saved promise bodies into resident history in this world. The check exercised its indexed page selection, held SQL, restart and live pending completions. Serving a body that has left the resident set and creation plus completion in the same save prefix need separate evidence.
+
 ## Reaction bubbles
 
 **Precondition checked:** accepted gestures already exist as committed `expression` events (seven fixed verbs admitted by `commitActorResponse`, no mechanical effects) and reach a viewer only through that viewer's perceived-event projection. The overlay therefore proceeded (the tracker's “record the gap and stop” branch did not apply).

@@ -101,9 +101,27 @@ struct Body {
     sources: Vec<PersonalSourceRef>,
     manifest: Option<Manifest>,
     impression: Option<Impression>,
+    obligation: Option<Box<RawValue>>,
     evidence: Option<OriginalObservations>,
     #[serde(flatten)]
     observations: OriginalObservations,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Obligation {
+    evidence_id: String,
+    status: ObligationStatus,
+    revision: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ObligationStatus {
+    Active,
+    Overdue,
+    Fulfilled,
+    Cancelled,
 }
 
 pub(super) struct Placement {
@@ -292,24 +310,24 @@ impl Store {
                     decoder,
                 )?);
             }
-            self.insert_retained_accounts(tx, world, source_kind(kind), hard, &placements)
+            self.insert_retained_accounts(tx, world, source_kind(kind), hard, placements.iter())
                 .await?;
         }
         Ok(())
     }
 
-    pub(super) async fn insert_retained_accounts(
+    pub(super) async fn insert_retained_accounts<'a>(
         &self,
         tx: &Transaction<'_>,
         world: &str,
         kind: &str,
         hard: i64,
-        rows: &[Placement],
+        rows: impl Iterator<Item = &'a Placement> + Clone,
     ) -> StoreResult<()> {
         // The compiled placement and the PostgreSQL parameter live together.
         // Keep a separate charge for the joined arrays and their wire copies.
         let wire = rows
-            .iter()
+            .clone()
             .try_fold(1024usize, |n, row| n.checked_add(row.sql_output_bytes()?))
             .and_then(|n| n.checked_mul(3))
             .ok_or(StoreError::Capacity)?;
@@ -317,7 +335,7 @@ impl Store {
             .budget
             .reserve(wire)
             .map_err(|_| StoreError::Capacity)?;
-        let fields = array(rows.iter().map(|row| row.source.as_str()));
+        let fields = array(rows.clone().map(|row| row.source.as_str()));
         tx.query_opt(&self.schema.recall.insert, &[&fields, &hard])
             .await?;
         drop(fields);
@@ -325,21 +343,21 @@ impl Store {
             (
                 "mind_source_dependencies",
                 array(
-                    rows.iter()
+                    rows.clone()
                         .flat_map(|row| row.exact.iter().map(String::as_str)),
                 ),
             ),
             (
                 "recall_place_capsules",
                 array(
-                    rows.iter()
+                    rows.clone()
                         .flat_map(|row| row.places.iter().map(String::as_str)),
                 ),
             ),
             (
                 "mind_impression_spans",
                 array(
-                    rows.iter()
+                    rows.clone()
                         .flat_map(|row| row.spans.iter().map(String::as_str)),
                 ),
             ),
@@ -351,7 +369,7 @@ impl Store {
             }
         }
         let learning = rows
-            .iter()
+            .clone()
             .flat_map(|row| {
                 row.learning.iter().map(move |(kind, source)| {
                     (*kind, row.actor.as_str(), row.id.as_str(), source.as_str())
@@ -359,8 +377,8 @@ impl Store {
             })
             .collect::<Vec<_>>();
         Self::write_learning_dependencies(tx, world, kind, &learning).await?;
-        let actors: Vec<_> = rows.iter().map(|row| row.actor.as_str()).collect();
-        let ids: Vec<_> = rows.iter().map(|row| row.id.as_str()).collect();
+        let actors: Vec<_> = rows.clone().map(|row| row.actor.as_str()).collect();
+        let ids: Vec<_> = rows.clone().map(|row| row.id.as_str()).collect();
         tx.execute(
             &self.schema.recall.reconcile,
             &[&world, &actors, &ids, &Option::<&str>::None],
@@ -380,14 +398,43 @@ pub(super) fn compile_placement(
     compile_account(world, kind, image, data, Some(decoder))
 }
 
-/// A new native remembered interpretation carries exact provenance but
-/// acquires no direct observation, recognition or new place.
-pub(super) fn compile_impression(world: &str, image: AccountImage<'_>) -> StoreResult<Placement> {
+/// Native interpretations and commitments carry no additional direct
+/// observations, recognition or place discoveries. Their exact event links,
+/// impression provenance and current recall policy use the same SQL compiler.
+pub(super) fn compile_memory_write(
+    world: &str,
+    image: AccountImage<'_>,
+    kind: &str,
+) -> StoreResult<Placement> {
     let data: Body =
         serde_json::from_str(image.payload).map_err(|_| StoreError::DerivedProjectionRequired)?;
-    if data.kind.as_deref() != Some("impression")
-        || data.source.as_deref() != Some("inferred")
-        || data.impression.is_none()
+    let supported = match kind {
+        "impression" => {
+            data.source.as_deref() == Some("inferred")
+                && data.impression.is_some()
+                && data.obligation.is_none()
+        }
+        "commitment" => {
+            data.source.as_deref() == Some("observed")
+                && data.impression.is_none()
+                && data
+                    .obligation
+                    .as_ref()
+                    .and_then(|value| serde_json::from_str::<Obligation>(value.get()).ok())
+                    .is_some_and(|obligation| {
+                        obligation.revision > 0
+                            && data.event_id.as_deref() == Some(obligation.evidence_id.as_str())
+                            && data.resolved
+                                == Some(matches!(
+                                    obligation.status,
+                                    ObligationStatus::Fulfilled | ObligationStatus::Cancelled
+                                ))
+                    })
+        }
+        _ => false,
+    };
+    if !supported
+        || data.kind.as_deref() != Some(kind)
         || data.manifest.is_some()
         || data.evidence.is_some()
         || data.observations.originals().next().is_some()

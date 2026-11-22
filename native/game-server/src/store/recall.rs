@@ -20,11 +20,11 @@ use serde::{Serialize, Serializer};
 use std::collections::HashSet;
 use tokio_postgres::Transaction;
 
-pub(crate) mod memory_appends;
 pub(crate) mod browse;
 mod checkpoint_accounts;
 pub(crate) mod consolidation;
 pub(crate) mod maintenance_scan;
+pub(crate) mod memory_writes;
 pub(crate) mod ranking_edit;
 mod recovery;
 pub(crate) mod semantic;

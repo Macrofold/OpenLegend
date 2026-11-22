@@ -17,6 +17,7 @@ use std::sync::Arc;
 
 mod inspection;
 mod person_editor;
+pub(crate) mod promises;
 
 const PAGE: usize = 20;
 const CHUNK: usize = 250;

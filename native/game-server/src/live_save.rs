@@ -5,7 +5,7 @@ use crate::{
     language::LanguageProvider,
     npc::schedule::{ScheduleInbox, ScheduleWake},
     store::{
-        AdmittedJob, CommitError, GameplayReceipt, OrdinaryProjection, PreparedMemoryAppends,
+        AdmittedJob, CommitError, GameplayReceipt, OrdinaryProjection, PreparedMemoryWrites,
         PreparedRecall, Store, StoreError,
     },
     world::{HostedWorld, WorldError},
@@ -37,7 +37,7 @@ pub struct AcceptedSaveInput {
     history: RuntimeHistory,
     receipt: Option<GameplayReceipt>,
     job: Option<Arc<AdmittedJob>>,
-    memory_appends: Option<Arc<PreparedMemoryAppends>>,
+    memory_writes: Option<Arc<PreparedMemoryWrites>>,
     wake: Option<ScheduleWake>,
     _custody: ByteReservation,
 }
@@ -48,7 +48,7 @@ pub(crate) struct ProtectedGameplaySave {
     history: RuntimeHistory,
     eligibility: Option<RuntimeHistoryCuts>,
     recall: Option<PreparedRecall>,
-    memory_appends: Option<Arc<PreparedMemoryAppends>>,
+    memory_writes: Option<Arc<PreparedMemoryWrites>>,
     recall_hard_bytes: i64,
     story_enqueued: AtomicBool,
 }
@@ -61,7 +61,7 @@ impl ProtectedGameplaySave {
     ) -> Result<Self, RuntimeError> {
         product
             .prepare_protected_gameplay_save(budget, |history, eligibility, recall| {
-                let memory_appends =
+                let memory_writes =
                     OrdinaryProjection::validate_candidate(store, recall.changes, &history)?;
                 let recall_hard_bytes =
                     i64::try_from(recall.hard_bytes).map_err(|_| StoreError::Capacity)?;
@@ -70,7 +70,7 @@ impl ProtectedGameplaySave {
                     history,
                     eligibility,
                     recall,
-                    memory_appends,
+                    memory_writes,
                     recall_hard_bytes,
                     story_enqueued: AtomicBool::new(false),
                 })
@@ -85,7 +85,7 @@ impl ProtectedGameplaySave {
     ) -> OrdinaryProjection<'a> {
         OrdinaryProjection::new(store, std::slice::from_ref(&self.history))
             .with_projections(self.eligibility.as_ref(), self.recall.as_ref(), language)
-            .with_memory_appends(self.memory_appends.as_slice(), self.recall_hard_bytes)
+            .with_memory_writes(self.memory_writes.as_slice(), self.recall_hard_bytes)
     }
 
     pub(crate) fn record_commit(&self, projection: &OrdinaryProjection<'_>) {
@@ -94,7 +94,7 @@ impl ProtectedGameplaySave {
     }
 
     pub(crate) fn acknowledged(&self, saves: &LiveSaves) {
-        if self.recall.is_some() || self.memory_appends.is_some() {
+        if self.recall.is_some() || self.memory_writes.is_some() {
             saves.signal_recall_change();
         }
         if self.story_enqueued.load(Ordering::Relaxed) {
@@ -137,7 +137,7 @@ struct PreparedPrefix {
     jobs: Vec<Arc<AdmittedJob>>,
     eligibility: Option<RuntimeHistoryCuts>,
     recall: Option<PreparedRecall>,
-    memory_appends: Vec<Arc<PreparedMemoryAppends>>,
+    memory_writes: Vec<Arc<PreparedMemoryWrites>>,
     recall_hard_bytes: i64,
     _custody: ByteReservation,
 }
@@ -336,7 +336,7 @@ impl LiveSaves {
             ));
         }
         let history = products.retain_history();
-        let memory_appends =
+        let memory_writes =
             OrdinaryProjection::validate_candidate(&self.store, products.changes(), &history)
                 .map_err(RuntimeError::application_refused)?;
         let old = pending.queue.capacity();
@@ -358,7 +358,7 @@ impl LiveSaves {
             history,
             receipt,
             job,
-            memory_appends,
+            memory_writes,
             wake,
             _custody: custody,
         }))
@@ -557,8 +557,8 @@ impl LiveSaves {
                                 self.language.as_deref(),
                             )
                             .with_conversation_jobs(&flight.prepared.jobs)
-                            .with_memory_appends(
-                                &flight.prepared.memory_appends,
+                            .with_memory_writes(
+                                &flight.prepared.memory_writes,
                                 flight.prepared.recall_hard_bytes,
                             );
                     let result = self
@@ -612,8 +612,7 @@ impl LiveSaves {
                     pending.queue.pop_front();
                 }
                 drop(pending);
-                if flight.prepared.recall.is_some() || !flight.prepared.memory_appends.is_empty()
-                {
+                if flight.prepared.recall.is_some() || !flight.prepared.memory_writes.is_empty() {
                     self.signal_recall_change();
                 }
                 if flight.story_enqueued {
@@ -727,10 +726,10 @@ impl LiveSaves {
                     .checked_add(std::mem::size_of::<Arc<AdmittedJob>>())
                     .ok_or(StoreError::Capacity)?;
             }
-            if input.memory_appends.is_some() {
+            if input.memory_writes.is_some() {
                 memory_count += 1;
                 bytes = bytes
-                    .checked_add(std::mem::size_of::<Arc<PreparedMemoryAppends>>())
+                    .checked_add(std::mem::size_of::<Arc<PreparedMemoryWrites>>())
                     .ok_or(StoreError::Capacity)?;
             }
         }
@@ -749,8 +748,8 @@ impl LiveSaves {
         let mut jobs = Vec::new();
         jobs.try_reserve_exact(jobs_count)
             .map_err(|_| StoreError::Capacity)?;
-        let mut memory_appends = Vec::new();
-        memory_appends
+        let mut memory_writes = Vec::new();
+        memory_writes
             .try_reserve_exact(memory_count)
             .map_err(|_| StoreError::Capacity)?;
         for input in selected() {
@@ -761,8 +760,8 @@ impl LiveSaves {
             if let Some(job) = &input.job {
                 jobs.push(job.clone());
             }
-            if let Some(memories) = &input.memory_appends {
-                memory_appends.push(memories.clone());
+            if let Some(memories) = &input.memory_writes {
+                memory_writes.push(memories.clone());
             }
         }
         let eligibility = session.capture_save_history_cuts(through, &histories)?;
@@ -777,7 +776,7 @@ impl LiveSaves {
             jobs,
             eligibility,
             recall,
-            memory_appends,
+            memory_writes,
             recall_hard_bytes,
             _custody: custody,
         })

@@ -8,6 +8,7 @@ import { BASE_SIMULATION_TIME_RULES } from './worlds/base/time.js';
 import { baseOutwardActivity, changedOutwardNotice } from './worlds/base/senses.js';
 import {
   recognizePromise,
+  describePromise,
   allowsCommitmentCompletion,
   BASE_PROMISE_RULES,
   nativePromiseDefinitions,
@@ -828,6 +829,15 @@ export function selectedOutwardBodyActivity(world: WorldState, entity: Entity) {
 export function selectedCommitmentLimit(world: WorldState): number {
   selectedCreationProfileForWorld(world);
   return BASE_PROMISE_RULES.limit;
+}
+
+export function selectedPromisePresentation(
+  world: WorldState,
+  summary: string,
+  obligation: import('./commitments.js').Obligation,
+) {
+  selectedCreationProfileForWorld(world);
+  return describePromise(world, summary, obligation);
 }
 
 /** Meaningful notices use the same selected reality as acquired activity details. */

@@ -45,6 +45,7 @@ mod known_places;
 mod operations;
 mod person_editor;
 mod preview;
+mod promises;
 mod recall;
 mod save_access;
 mod trade;
@@ -186,6 +187,7 @@ pub(crate) fn router(
         .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))
         .route("/api/memories", post(recall::recollections))
+        .route("/api/commitments", post(promises::list))
         .route("/api/mind", post(notes::get))
         .route("/api/mind/subjects", post(notes::subjects::read))
         .route("/api/knowledge", post(notes::edit))

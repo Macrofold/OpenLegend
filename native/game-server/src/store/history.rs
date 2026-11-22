@@ -3,7 +3,7 @@
 
 use super::{
     AdmittedJob, PrefixProjection, PreparedRecall, Store, StoreError, StoreResult, postgres_text,
-    recall::memory_appends::{self, PreparedMemoryAppends},
+    recall::memory_writes::{self, PreparedMemoryWrites},
     sql_ordinal,
 };
 use crate::language::{LanguageProvider, canonical::KeyOrder};
@@ -38,8 +38,8 @@ pub struct OrdinaryProjection<'a> {
     recall: Option<&'a PreparedRecall>,
     language: Option<&'a LanguageProvider>,
     jobs: &'a [Arc<AdmittedJob>],
-    memory_appends: &'a [Arc<PreparedMemoryAppends>],
-    memory_append_hard_bytes: i64,
+    memory_writes: &'a [Arc<PreparedMemoryWrites>],
+    memory_write_hard_bytes: i64,
     story_enqueued: AtomicBool,
 }
 
@@ -52,8 +52,8 @@ impl<'a> OrdinaryProjection<'a> {
             recall: None,
             language: None,
             jobs: &[],
-            memory_appends: &[],
-            memory_append_hard_bytes: 0,
+            memory_writes: &[],
+            memory_write_hard_bytes: 0,
             story_enqueued: AtomicBool::new(false),
         }
     }
@@ -69,13 +69,13 @@ impl<'a> OrdinaryProjection<'a> {
         self.story_enqueued.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn with_memory_appends(
+    pub(crate) fn with_memory_writes(
         mut self,
-        memories: &'a [Arc<PreparedMemoryAppends>],
+        memories: &'a [Arc<PreparedMemoryWrites>],
         hard_bytes: i64,
     ) -> Self {
-        self.memory_appends = memories;
-        self.memory_append_hard_bytes = hard_bytes;
+        self.memory_writes = memories;
+        self.memory_write_hard_bytes = hard_bytes;
         self
     }
 
@@ -97,7 +97,7 @@ impl<'a> OrdinaryProjection<'a> {
         store: &Store,
         changes: &ChangedRows,
         history: &RuntimeHistory,
-    ) -> StoreResult<Option<Arc<PreparedMemoryAppends>>> {
+    ) -> StoreResult<Option<Arc<PreparedMemoryWrites>>> {
         if unsupported_rows(changes) || expiry::missing_proof(changes, history) {
             return Err(StoreError::DerivedProjectionRequired);
         }
@@ -110,7 +110,7 @@ impl<'a> OrdinaryProjection<'a> {
         {
             store.story_policy(history)?;
         }
-        store.prepare_memory_appends(changes, history)
+        store.prepare_memory_writes(changes, history)
     }
 }
 
@@ -129,13 +129,9 @@ fn unsupported_rows(changes: &ChangedRows) -> bool {
         .writes
         .get("mind_awareness")
         .is_some_and(|rows| rows.iter().any(|row| !row.create));
-    let memory_edit = changes.deletes.contains_key(memory_appends::TABLE)
-        || changes
-            .writes
-            .get(memory_appends::TABLE)
-            .is_some_and(|rows| rows.iter().any(|row| !row.create));
+    let memory_removal = changes.deletes.contains_key(memory_writes::TABLE);
     leaf || awareness_update
-        || memory_edit
+        || memory_removal
         || [
             "data_world",
             "world_settings",
@@ -203,15 +199,14 @@ impl PrefixProjection for OrdinaryProjection<'_> {
         if let Some(recall) = self.recall {
             self.store.write_recall(transaction, rows, recall).await?;
         }
-        if !self.memory_appends.is_empty()
-            || rows.changes.writes.contains_key(memory_appends::TABLE)
+        if !self.memory_writes.is_empty() || rows.changes.writes.contains_key(memory_writes::TABLE)
         {
             self.store
-                .write_memory_appends(
+                .write_memory_writes(
                     transaction,
                     rows,
-                    self.memory_appends,
-                    self.memory_append_hard_bytes,
+                    self.memory_writes,
+                    self.memory_write_hard_bytes,
                 )
                 .await?;
         }

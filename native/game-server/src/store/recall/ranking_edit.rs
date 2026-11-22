@@ -314,7 +314,7 @@ impl PrefixProjection for EditorProjection<'_> {
                         &row.world,
                         source_kind(row.kind),
                         row.hard_bytes,
-                        std::slice::from_ref(placement),
+                        std::iter::once(placement),
                     )
                     .await
             }

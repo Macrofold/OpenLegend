@@ -79,6 +79,7 @@ pub use private_notes::{
 };
 mod reply_preview;
 pub use private_history::{
+    RuntimePromisePosition, RuntimePromisePresentation, RuntimePromiseSelection, RuntimePromiseView, RuntimeResidentPromise,
     RuntimeActivityInspection, RuntimePlayerTranscriptRead, RuntimePrivateHistoryPublication,
     RuntimePrivateHistoryRead,
     RuntimeRecentBrowse, RuntimeRecentPosition, RuntimeRecentReceipt, RuntimeRecentSourceRead,

@@ -1,5 +1,6 @@
-import { entityGet } from '@open-legend/domain';
 import {
+  entityGet,
+  selectedPromisePresentation,
   selectedCommitmentLimit,
   observerDescription,
   recognizesSubject,
@@ -13,6 +14,7 @@ import { z } from 'zod';
 import { AuthorityError, scopeKey, type RequestScope } from './authority.js';
 import { HistoryCursorError } from './perceived-events.js';
 import { digest } from './store.js';
+import { communicationReference } from './public-contact-references.js';
 import type { WorldService } from './world-service.js';
 
 /** Past promises per page (docs/limits/base-world.md#bw04). */
@@ -21,18 +23,9 @@ const cursorSchema = z
   .object({ v: z.literal(1), fence: z.string(), at: z.number(), id: z.string() })
   .strict();
 
-/** Bundled-world wording for the one native completion rule (gathering an item) and the
- * honest fallbacks. docs/worlds/base/social.md#spoken-promises */
-function promiseView(world: WorldState, actorId: string, memory: MemoryRecord): OwnPromise {
+function promiseView(world: WorldState, scope: RequestScope, memory: MemoryRecord): OwnPromise {
+  const actorId = scope.actorId;
   const obligation = memory.obligation!;
-  const completion = obligation.completion;
-  const gathered =
-    completion?.eventType === 'gathered'
-      ? completion.definitionId
-        ? (world.itemDefinitions[completion.definitionId]?.name ?? 'an item no longer defined')
-        : 'anything'
-      : undefined;
-  const start = memory.summary.search(/I promise to/i);
   const recipientId = memory.entityIds.find((id) => id !== actorId);
   const status =
     obligation.status === 'fulfilled'
@@ -43,35 +36,18 @@ function promiseView(world: WorldState, actorId: string, memory: MemoryRecord): 
   return {
     id: memory.id,
     revision: obligation.revision,
-    words: start >= 0 ? memory.summary.slice(start) : memory.summary,
+    ...selectedPromisePresentation(world, memory.summary, obligation),
     // An internal historical identity does not identify a currently unrecognized
     // body. Keep the promise readable without granting that person-window join.
-    recipientId: recipientId && recognizesSubject(world, actorId, recipientId) ? recipientId : null,
+    recipientId:
+      recipientId && recognizesSubject(world, actorId, recipientId)
+        ? communicationReference(scope, { id: recipientId })
+        : null,
     recipient: recipientId ? observerDescription(world, actorId, recipientId, 'definite') : null,
     madeAt: memory.at,
     status,
-    terms:
-      gathered !== undefined
-        ? `Kept automatically when you gather ${gathered}.`
-        : completion
-          ? 'Checked automatically by a completion rule this list cannot describe.'
-          : status === 'open' || status === 'overdue'
-            ? 'This world does not check this promise automatically, so it stays open.'
-            : 'This world does not check this promise automatically.',
     dueAt: obligation.dueAt ?? null,
     keptAt: obligation.fulfilledAt ?? null,
-    evidence:
-      status === 'kept'
-        ? gathered !== undefined
-          ? `You gathered ${gathered}.`
-          : 'An action of yours matched its completion rule.'
-        : status === 'cancelled'
-          ? 'Cancelled. This does not mean anyone else agreed to release you.'
-          : status === 'overdue'
-            ? completion
-              ? 'The deadline passed before the checked action happened.'
-              : 'The deadline passed.'
-            : null,
   };
 }
 
@@ -137,10 +113,10 @@ export async function commitmentPage(
     ok: true,
     worldId: world.id,
     generation,
-    open: open.sort((a, b) => b.at - a.at).map((memory) => promiseView(world, actorId, memory)),
+    open: open.sort((a, b) => b.at - a.at).map((memory) => promiseView(world, scope, memory)),
     openLimit: selectedCommitmentLimit(world),
     counted: unresolvedCommitmentCount(world, actorId),
-    past: past.map((memory) => promiseView(world, actorId, memory)),
+    past: past.map((memory) => promiseView(world, scope, memory)),
     next: next ? Buffer.from(JSON.stringify({ v: 1, fence, ...next })).toString('base64url') : null,
     partial: !memories || !head,
   };

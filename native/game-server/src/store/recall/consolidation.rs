@@ -275,7 +275,7 @@ impl PrefixProjection for ConsolidationProjection<'_> {
                     &prepared.world,
                     "summary",
                     prepared.hard_bytes,
-                    &prepared.summaries,
+                    prepared.summaries.iter(),
                 )
                 .await?;
         }

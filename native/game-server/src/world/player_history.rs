@@ -1,6 +1,7 @@
 //! One authorized tab's private history capture and final checked handoff.
 
 use super::*;
+use crate::authority::RequestScope;
 
 mod activity;
 use crate::store::recall::browse::{MemoryBrowseCut, MemoryPage};
@@ -74,6 +75,22 @@ impl HostedWorld {
         scope: Arc<AuthorizedScope>,
         actor: String,
     ) -> Result<(PlayerHistoryRead, Arc<MemoryBrowseCut>), WorldError> {
+        self.capture_recollections_with(authority, scope, actor, |_, _| Ok(()))
+            .await
+            .map(|(read, cut, ())| (read, cut))
+    }
+
+    /// Prepare a small extra product from this exact accepted private read
+    /// before yielding to the durable page query.
+    pub(crate) async fn capture_recollections_with<T: Send + 'static>(
+        self: &Arc<Self>,
+        authority: Arc<Authority>,
+        scope: Arc<AuthorizedScope>,
+        actor: String,
+        prepare: impl FnOnce(&NativeWorldSession, &RequestScope) -> Result<T, WorldError>
+        + Send
+        + 'static,
+    ) -> Result<(PlayerHistoryRead, Arc<MemoryBrowseCut>, T), WorldError> {
         let _turn = self.enter().await?;
         let budget = self.host.budget().clone();
         self.call(move |session| {
@@ -106,13 +123,14 @@ impl HostedWorld {
                         )?
                         .ok_or(AccessError::Forbidden)?;
                     let cut = cut.map_err(HostError::from)?;
-                    Ok::<_, WorldError>((read, Arc::new(cut)))
+                    let product = prepare(session, permit)?;
+                    Ok::<_, WorldError>((read, Arc::new(cut), product))
                 },
             );
             Ok(result
                 .map_err(WorldError::from)
                 .and_then(|result| result)
-                .map(|(read, cut)| (PlayerHistoryRead { scope, read }, cut)))
+                .map(|(read, cut, product)| (PlayerHistoryRead { scope, read }, cut, product)))
         })
         .await?
     }
@@ -184,6 +202,34 @@ impl HostedWorld {
                     .map_or(PlayerDisclosure::Changed, PlayerDisclosure::Published))
             },
         )
+    }
+
+    /// The caller already pinned live promises or loaded saved bodies outside
+    /// the turn. Recheck both owners and prepare the reply before disclosing.
+    pub(crate) async fn disclose_promises<'a>(
+        &self,
+        authority: &Authority,
+        selected: &PlayerHistoryRead,
+        references: impl IntoIterator<Item = &'a openlegend_simulation::experience::PersonalSourceRef>,
+        publish: impl FnOnce(
+            openlegend_simulation::runtime::RuntimePromisePresentation<'_>,
+            &ByteBudget,
+        ) -> Result<Bytes, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
+        let _turn = self.enter().await?;
+        let actor = selected.read.actor_id();
+        self.with_private_reader(authority, &selected.scope, actor, |session, _| {
+            Ok(self
+                .with_unedited_history(actor, || {
+                    session
+                        .with_player_promise_presentation(&selected.read, references, |prepared| {
+                            publish(prepared, self.host.budget())
+                        })?
+                        .transpose()
+                })?
+                .flatten()
+                .map_or(PlayerDisclosure::Changed, PlayerDisclosure::Published))
+        })
     }
 
     /// The caller owns a world turn. Keep the same session and app grant

@@ -262,9 +262,10 @@ impl Store {
         })
     }
 
-    /// Explicit diagnostic reads can wait on PostgreSQL without occupying the
-    /// ordinary receipt reader or a simulation cut. The admitted HTTP request
-    /// owns this read-only session through the fixed snapshot, including cancellation.
+    /// An admitted inspection or history request can wait on PostgreSQL
+    /// without occupying the ordinary receipt reader or a simulation cut. The
+    /// request owns its read-only session through the fixed snapshot and drops
+    /// it on cancellation.
     pub(crate) async fn read_isolated<R>(
         &self,
         work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
