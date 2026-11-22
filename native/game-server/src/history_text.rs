@@ -96,7 +96,7 @@ fn speech_description(value: &PerceivedSpeech) -> JsText {
     .description
 }
 
-pub(super) fn described<'a>(
+pub(crate) fn described<'a>(
     values: impl Iterator<Item = MaterializedTemporalValue<'a>>,
     change: TemporalChange,
     has_facets: bool,

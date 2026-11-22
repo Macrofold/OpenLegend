@@ -17,6 +17,30 @@ pub(crate) struct NpcReceiptPrefix {
     pub through_order: u64,
 }
 
+impl NpcReceiptPrefix {
+    /// The latest address from this block that the original cut can name.
+    /// This routes storage only; each materialized receipt is checked again.
+    pub(crate) fn block_ceiling(
+        &self,
+        directory: &crate::received::ReceivedChargeDirectory,
+        header: &crate::received::ReceivedChargeEntry,
+    ) -> Option<u64> {
+        let epoch = self.epoch.as_deref()?;
+        if header.order > self.through_order {
+            return None;
+        }
+        let ceiling = header.entry_index;
+        if directory.epoch != epoch || directory.physical_life != self.physical_life {
+            return Some(ceiling);
+        }
+        match i128::from(header.batch_order).cmp(&i128::from(self.through_batch_order)) {
+            std::cmp::Ordering::Less => Some(ceiling),
+            std::cmp::Ordering::Equal => Some(ceiling.min(u64::try_from(self.through_entry_index).ok()?)),
+            std::cmp::Ordering::Greater => None,
+        }
+    }
+}
+
 #[derive(Serialize)]
 #[serde(tag = "state", rename_all = "kebab-case")]
 pub(crate) enum NpcHistoryPrefix {

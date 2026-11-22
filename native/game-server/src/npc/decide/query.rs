@@ -16,8 +16,10 @@ use std::mem::size_of;
 
 mod bodies;
 mod boundaries;
+mod history;
 mod regions;
 use bodies::{BodyPage, BodyQueryRead};
+pub(super) use history::HistoryReads;
 pub(super) use regions::Regions;
 
 pub(super) enum Draft {
@@ -70,6 +72,7 @@ enum QueryResult<'a> {
     Separation(Separation),
     Bodies(BodyPage<'a>),
     Boundaries(boundaries::Boundaries),
+    History(history::HistoryPage),
 }
 
 #[derive(Serialize)]
@@ -136,6 +139,7 @@ impl Answers<'_> {
                 QueryResult::Separation(result) => result.bind(binding)?,
                 QueryResult::Bodies(result) => result.bind(binding)?,
                 QueryResult::Boundaries(result) => result.bind(binding)?,
+                QueryResult::History(result) => result.bind(binding)?,
             }
         }
         Ok(())
@@ -205,6 +209,7 @@ pub(super) fn answer<'a>(
     reference_scope: &str,
     frame: &super::prepare::ReceivedFrame,
     regions: Option<&Regions>,
+    historical: &HistoryReads,
 ) -> Result<Answers<'a>, CallFailure> {
     if questions.len() as u64 > policy.maximum_queries {
         return Err(CallFailure::Invalid);
@@ -258,6 +263,16 @@ pub(super) fn answer<'a>(
                 )?,
             ),
             "expand" => QueryResult::Bodies(bodies.expand(field("region")?, &mut remaining)?),
+            "history" => QueryResult::History(historical.answer(
+                original,
+                current,
+                binding,
+                query,
+                budget,
+                reference_scope,
+                frame,
+                maximum,
+            )?),
             "boundaries" => QueryResult::Boundaries(boundaries::answer(
                 binding.received_anchor(original, current, field("anchor")?),
                 original,
@@ -275,6 +290,7 @@ pub(super) fn answer<'a>(
             excess = match answers.results.last_mut().map(|answer| &mut answer.result) {
                 Some(QueryResult::Bodies(last)) => last.trim(excess)?,
                 Some(QueryResult::Boundaries(last)) => last.trim(excess)?,
+                Some(QueryResult::History(last)) => last.trim(excess),
                 _ => excess,
             };
             if excess != 0 {

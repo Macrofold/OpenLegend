@@ -14,6 +14,8 @@ use std::sync::atomic::AtomicBool;
 
 mod bindings;
 mod held_sources;
+mod history;
+pub use history::RuntimeNpcHistoryWindow;
 mod origin;
 mod personal;
 mod perspectives;
@@ -365,6 +367,11 @@ impl NativeWorldSession {
             let law = state.installed.account_law();
             use crate::experience::EvidenceCutMember;
             let situation = &ticket.bindings.situation;
+            if !crate::response::receipt_sources_current(state, actor_id, situation)
+                .map_err(failure)?
+            {
+                return Ok(Err("native-response-query-receipts"));
+            }
             let current = situation
                 .current_references
                 .values()
@@ -710,15 +717,7 @@ impl NativeWorldSession {
             }
             SessionStep::NpcSources(sources) => {
                 read.candidate_key = None;
-                sources
-                    .validate_origin(&read.read, &self.budget)
-                    .map_err(failure)?;
-                self.held_receipts
-                    .register(&sources, &read.receipt_payload, &self.budget)
-                    .map_err(failure)?;
-                Arc::get_mut(&mut read.sources)
-                    .ok_or_else(|| failure("NPC sources are already issued"))?
-                    .push(sources);
+                self.retain_npc_sources(read, sources)?;
                 RuntimeNpcPreparationStep::Complete
             }
             _ => return Err(failure("NPC discovery produced an executable completion")),
@@ -755,6 +754,16 @@ impl NativeWorldSession {
         if read.candidate_key.is_some() {
             return Err(failure("NPC read preparation is active"));
         }
+        self.reserve_npc_inventory(read)?;
+        let key = self
+            .session
+            .begin_npc_sources(Arc::clone(&read.historical_scope), request)
+            .map_err(failure)?;
+        read.candidate_key = Some(key);
+        Ok(key)
+    }
+
+    fn reserve_npc_inventory(&self, read: &mut RuntimeNpcRead) -> Result<(), RuntimeError> {
         if Arc::strong_count(&read.sources) != 1 || Arc::strong_count(&read._custody) != 1 {
             return Err(failure(
                 "NPC source preparation is still retained by an execution",
@@ -788,13 +797,24 @@ impl NativeWorldSession {
                 .try_reserve_exact(additional)
                 .map_err(failure)?;
         }
-        let key = self
-            .session
-            .begin_npc_sources(Arc::clone(&read.historical_scope), request)
-            .map_err(failure)?;
-        read.candidate_key = Some(key);
-        Ok(key)
+        Ok(())
     }
+
+    fn retain_npc_sources(
+        &mut self,
+        read: &mut RuntimeNpcRead,
+        sources: crate::capture::PreparedNpcSources,
+    ) -> Result<usize, RuntimeError> {
+        sources.validate_origin(&read.read, &self.budget).map_err(failure)?;
+        self.held_receipts.register(&sources, &read.receipt_payload, &self.budget)
+            .map_err(failure)?;
+        let inventories = Arc::get_mut(&mut read.sources)
+            .ok_or_else(|| failure("NPC sources are already issued"))?;
+        let ordinal = inventories.len();
+        inventories.push(sources);
+        Ok(ordinal)
+    }
+
     /// Only the live session can bind a withdrawal proof to the actor's actual
     /// current physical life. Node cannot construct this retained-source grant.
     pub(super) fn held_source_proof(

@@ -79,6 +79,37 @@ impl HostedWorld {
         .await?
     }
 
+    /// The source read pins the accepted storage overlay, then returns the
+    /// world turn before PostgreSQL I/O. The NPC's older chronology survives
+    /// that wait and the later native admission rechecks current permission.
+    pub(crate) async fn read_npc_history(
+        self: &Arc<Self>,
+        original: Box<RuntimeNpcRead>,
+        from: f64,
+        through: f64,
+    ) -> Result<(Box<RuntimeNpcRead>, Option<usize>, bool, u64, u64), WorldError> {
+        let store = self.store.clone();
+        let (mut original, window, storage) = self
+            .capture(move |session| {
+                let (window, storage) = session.with_npc_history(&original, from, through, |read| {
+                    store.prepare_recent_sources(read)
+                })?;
+                Ok((original, window, storage))
+            })
+            .await?;
+        let (incomplete, limit, operations) = (window.incomplete, window.limit, window.operations);
+        let Some(storage) = storage else {
+            return Ok((original, None, incomplete, limit, operations));
+        };
+        let rows = self.store.read_source_rows(storage?).await?;
+        let _turn = self.enter().await?;
+        self.call(move |session| {
+            let inventory = rows.admit(|rows| session.admit_npc_history(&mut original, window, rows))?;
+            Ok((original, Some(inventory), incomplete, limit, operations))
+        })
+        .await
+    }
+
     pub(crate) async fn capture_reply_preview(
         self: &Arc<Self>,
         authority: Arc<Authority>,

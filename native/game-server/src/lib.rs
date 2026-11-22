@@ -10,6 +10,7 @@ mod decision_dispatch;
 mod decision_render;
 mod embodiment;
 pub mod game_clock;
+mod history_text;
 pub mod language;
 pub mod launch;
 mod lexical_maintenance;

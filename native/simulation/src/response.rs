@@ -32,6 +32,7 @@ mod expression;
 mod run;
 mod slots;
 mod sources;
+pub(crate) use sources::receipt_sources_current;
 pub(crate) use expression::{
     CompletedExpression, ExpressionAnswer, ExpressionCursor, ExpressionStep,
 };

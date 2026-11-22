@@ -44,6 +44,10 @@ pub struct RuntimeRecentSourceRead<'a> {
 }
 
 impl<'a> RuntimeRecentReceipt<'a> {
+    pub(in crate::runtime) fn from_capture(item: &'a crate::capture::CapturedNpcReceipt) -> Self {
+        Self { item }
+    }
+
     pub fn receipt(&self) -> &'a TemporalReceipt {
         self.item.capture.receipt()
     }
@@ -104,11 +108,23 @@ impl NativeWorldSession {
         receipts: &[NpcReceiptSelection],
         prepare: impl FnOnce(RuntimeRecentSourceRead<'_>) -> T,
     ) -> Result<T, RuntimeError> {
+        if !matches!(read.purpose, HistoryPurpose::Recent) {
+            return Err(failure("recent read lost its accepted cut"));
+        }
+        self.with_receipt_source_rows(&read.scope, receipts, Some(read.scope.accepted_cut), prepare)
+    }
+
+    /// Hold only the current save owners needed to supply these exact earlier
+    /// receipt addresses. Their original evidence ceiling is checked on admission.
+    pub(in crate::runtime) fn with_receipt_source_rows<T>(
+        &self,
+        scope: &crate::capture::NpcHistoricalScope,
+        receipts: &[NpcReceiptSelection],
+        current_cut: Option<u64>,
+        prepare: impl FnOnce(RuntimeRecentSourceRead<'_>) -> T,
+    ) -> Result<T, RuntimeError> {
         let (metadata, save) = self.session.accepted_save_read().map_err(failure)?;
-        let scope = &read.scope;
-        if !matches!(read.purpose, HistoryPurpose::Recent)
-            || metadata.through_cut != scope.accepted_cut
-        {
+        if current_cut.is_some_and(|cut| cut != metadata.through_cut) {
             return Err(failure("recent read lost its accepted cut"));
         }
         let (detached, suffix) = save.pending_read_rows();
@@ -236,25 +252,12 @@ impl NativeWorldSession {
                 };
                 if header.through_at < (scope.at - scope.max_age_seconds).max(0.0)
                     || header.at > scope.at
-                    || header.order > prefix.through_order
                 {
                     continue;
                 }
-                let mut ceiling = header.entry_index;
-                if Some(block.epoch.as_str()) == prefix.epoch.as_deref()
-                    && block.physical_life == prefix.physical_life
-                {
-                    let batch = i128::from(header.batch_order);
-                    if batch > i128::from(prefix.through_batch_order) {
-                        continue;
-                    }
-                    if batch == i128::from(prefix.through_batch_order) {
-                        let Ok(entry) = u64::try_from(prefix.through_entry_index) else {
-                            continue;
-                        };
-                        ceiling = ceiling.min(entry);
-                    }
-                }
+                let Some(mut ceiling) = prefix.block_ceiling(block, header) else {
+                    continue;
+                };
                 if let Some(before) = before {
                     if header.batch_order > before.batch_order {
                         continue;

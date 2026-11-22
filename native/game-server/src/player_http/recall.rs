@@ -15,7 +15,6 @@ use openlegend_simulation::{
 };
 
 mod recent;
-pub(super) mod recent_text;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

@@ -40,7 +40,7 @@ pub use npc_bindings::{
 };
 pub(crate) use npc_bindings::{
     NpcBindingMaps, NpcBindingRead, NpcBindingSelection, NpcObservationAlias,
-    NpcObservationOrdinal, NpcPerspectiveOrdinal, npc_perspectives_current,
+    NpcObservationOrdinal, NpcPerspectiveOrdinal, NpcReceiptAlias, npc_perspectives_current,
     prepare_ordinary_actions,
 };
 pub(crate) use npc_references::NpcReferenceFacts;

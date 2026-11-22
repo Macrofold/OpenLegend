@@ -637,7 +637,7 @@ pub(super) fn packet_failure(error: RuntimeError) -> CallFailure {
 /// Prompts use UTF-8. Escape isolated UTF-16 units visibly, and distinguish
 /// literal backslashes within that passage from these display escapes. The
 /// original observation, evidence reference and authority stay in native.
-fn prompt_text(value: &JsText) -> Cow<'_, str> {
+pub(super) fn prompt_text(value: &JsText) -> Cow<'_, str> {
     if let Some(text) = value.as_unicode() {
         return Cow::Borrowed(text);
     }

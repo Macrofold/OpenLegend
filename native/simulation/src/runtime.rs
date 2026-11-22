@@ -113,7 +113,7 @@ pub(crate) use npc::HeldSourceProof;
 pub use npc::{
     RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcBoundaryFact, RuntimeNpcConsumer,
     RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcFeeling, RuntimeNpcFeelingTarget,
-    RuntimeNpcFeelings, RuntimeNpcObservedBody, RuntimeNpcOffer, RuntimeNpcOperations,
+    RuntimeNpcFeelings, RuntimeNpcHistoryWindow, RuntimeNpcObservedBody, RuntimeNpcOffer, RuntimeNpcOperations,
     RuntimeNpcPersonalSource, RuntimeNpcPersonalSources, RuntimeNpcPreparationStep,
     RuntimeNpcPresentedBody, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
     RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,

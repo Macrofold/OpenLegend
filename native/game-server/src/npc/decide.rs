@@ -381,6 +381,27 @@ pub(super) async fn run(
                         .reopen_npc_for_queries(prior, work.permit.clone())
                         .await
                         .map_err(prepare::binding_failure)?;
+                    let (original, historical) = if query::HistoryReads::requested(&questions) {
+                        // The originating read already funds its own backing.
+                        // Keep this optional storage future off ordinary NPC
+                        // worker stacks, including while the accepted read moves.
+                        let read = query::HistoryReads::prepare(
+                            &game.world, Box::new(original), &current, &binding, &questions, budget,
+                        );
+                        let _storage = budget.reserve(std::mem::size_of_val(&read)).map_err(response_capacity)?;
+                        let mut cancelled = work.cancellation.clone();
+                        let (selected, history) = tokio::select! {
+                            biased;
+                            _ = stopped(&mut cancelled) =>
+                                return Err(CallFailure::Cancelled.at("situation-history")),
+                            _ = tokio::time::sleep_until(work.deadline) =>
+                                return Err(CallFailure::Stale("decision-deadline").at("situation-history")),
+                            prepared = Box::pin(read) => prepared?,
+                        };
+                        (*selected, history)
+                    } else {
+                        (original, query::HistoryReads::empty(budget)?)
+                    };
                     prepared.context.fields["situationQueries"] = false.into();
                     let (response, schema) = {
                         let answers = query::answer(
@@ -393,6 +414,7 @@ pub(super) async fn run(
                             prepared.context.reference_scope(),
                             &prepared.frame,
                             regions.as_ref(),
+                            &historical,
                         )?;
                         let (mut response, schema) = prepared
                             .context

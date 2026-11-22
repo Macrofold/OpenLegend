@@ -62,6 +62,21 @@ impl RuntimeNpcBindingRequest {
         }
     }
 
+    /// Historical subjects use the original received track, never a name or
+    /// a current entity identity supplied by the model.
+    pub fn received_history_track<'a>(
+        &self,
+        original: &'a RuntimeNpcRead,
+        current: &RuntimeNpcRead,
+        alias: &str,
+    ) -> Option<&'a str> {
+        let ordinal = self.received_anchor(original, current, alias)?;
+        let read = &original.read.perception;
+        let body = read.query_bodies.get(ordinal)?.as_ref()?;
+        let facet = read.evidence.cut().current.get(body.facets[0]?)?;
+        Some(&facet.exposure.track)
+    }
+
     pub fn received_separation(
         &self,
         original: &RuntimeNpcRead,
@@ -141,6 +156,34 @@ impl RuntimeNpcBindingRequest {
         observations.push(NpcObservationAlias {
             alias: alias.into(),
             source: NpcObservationOrdinal::Acquired { ordinal },
+        });
+        Ok(())
+    }
+
+    /// Bind a receipt that is present in the final answer. The original read
+    /// retains the selected row and its independent source eligibility.
+    pub fn bind_query_receipt(
+        &mut self,
+        alias: &str,
+        inventory: usize,
+        ordinal: usize,
+    ) -> Result<(), RuntimeError> {
+        use crate::capture::NpcReceiptAlias;
+        let receipts = &mut self.request.selection.receipts;
+        if receipts.iter().any(|previous| previous.alias == alias) {
+            return Ok(());
+        }
+        self._custody.resize(
+            self._custody
+                .bytes()
+                .checked_add(size_of::<NpcReceiptAlias>() + alias.len())
+                .ok_or(CapacityError)?,
+        )?;
+        receipts.try_reserve_exact(1).map_err(|_| CapacityError)?;
+        receipts.push(NpcReceiptAlias {
+            alias: alias.into(),
+            inventory,
+            ordinal,
         });
         Ok(())
     }

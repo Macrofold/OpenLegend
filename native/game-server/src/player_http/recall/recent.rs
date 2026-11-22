@@ -220,7 +220,7 @@ fn format_page(
         }
         incomplete |=
             receipt.facets.is_empty() && receipt.header.change != TemporalChange::Occurrence;
-        let mut text = recent_text::described(
+        let mut text = crate::history_text::described(
             selected.values(),
             receipt.header.change,
             !receipt.facets.is_empty(),
