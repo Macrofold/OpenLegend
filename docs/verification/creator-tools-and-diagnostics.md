@@ -58,6 +58,14 @@ A request waiting for its body received HTTP 403 when the operator loaded a chec
 
 The local executable was built with `--locked` from source `ee6067de1553d9816866b778f7437148232cccb7`, SHA-256 `277073e1a1403e3fcf718dfff867080d410ec1b1a369ae86b62f6f89d855c193`. The evidence is in `nsc04-mcp-read-20261121.rV2jDBjR/connected/result.json` under the external verification root. The earlier runs retain the caller that normalized the intended wrong Host header and the Rust static-fallback HTTP 405, which the explicit disabled route now replaces. This was a local correctness check with no paid provider work or performance comparison.
 
+### Installed attribute definitions — November 22, 2026
+
+The official MCP client read two installed attribute definitions through `ol_inspect` on independent TypeScript and Rust worlds using the same opening. One definition declares owner-only gameplay values and the other public values. The authored labels, data and version hashes matched TypeScript in Rust's structured result and text result. The earlier Rust executable returned `unavailable` for the same attribute request. Its item read still worked, and the expanded Rust read preserved the exact item result.
+
+A prior version, missing definition, relationship request and supplied foreign world returned no definition. A private body and an unknown body received the same denial. A memory reference and a forged authoring handle also refused. The same definition remained readable after rotating the connector credential and restarting the server. The client that retained the old credential received HTTP 401, and the replacement credential received HTTP 403 at expiry.
+
+The locked local build used base `b7de06fb0040ce5ca5eb343b1823a2545e0907c9`, patch SHA-256 `386eae03b057f7bc165067e78e3c72c8db776bd62ce34d32492a86e653d28997` and executable SHA-256 `023df452b66d52cae7586d4d457a189fbca275a385818b7cc7b3cdbf0d4db0f2`. The exact caller, results and cleanup are in `nsc04-mcp-attributes-20261122` under the external verification root. The Rust server ran with Node absent from its runtime path. The three candidate shutdowns released transient, resident and pending-save memory, and all four fixture databases were confirmed absent. This was a local correctness check with no paid provider work or speed comparison.
+
 ## Stand-alone Rust private mind inspection
 
 On November 22, 2026, the authenticated creator opened a currently visible NPC through **In view** and **Inspect private mind** in Chromium. The browser sent the scoped contact reference. Direct requests before the privacy edit returned the saved documents, thoughts, recent experiences, commitments and notes for that NPC. The documents and About me text matched the Source owners. An exact note and experience included lone UTF-16 code units. Ordinary state, another tab's contact and a forged contact disclosed no private body. An ordinary Notes request for the NPC refused.

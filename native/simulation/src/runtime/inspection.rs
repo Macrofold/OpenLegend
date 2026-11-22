@@ -1,7 +1,7 @@
 //! Bounded inspection of the installed public world and exact authored data.
 
 use super::{NativeWorldSession, RuntimeError, RuntimeProgress, failure};
-use crate::text::JsText;
+use crate::text::TextRef;
 
 pub struct RuntimeWorldInspection<'a> {
     pub progress: RuntimeProgress<'a>,
@@ -9,31 +9,44 @@ pub struct RuntimeWorldInspection<'a> {
     pub profile_version: u64,
     pub manifest_revision: u64,
     pub policy: &'a str,
-    pub item_definition: Option<RuntimeItemDefinitionInspection<'a>>,
+    pub definition: Option<RuntimeDefinitionInspection<'a>>,
 }
 
-pub struct RuntimeItemDefinitionInspection<'a> {
-    pub name: &'a JsText,
+#[derive(Clone, Copy)]
+pub enum RuntimeDefinitionKind {
+    Item,
+    Attribute,
+}
+
+pub struct RuntimeDefinitionInspection<'a> {
+    pub name: TextRef<'a>,
     pub payload: &'a str,
 }
 
 impl NativeWorldSession {
-    /// Read the authorized world's header and optional public item definition
+    /// Read the authorized world's header and one optional public definition
     /// in one accepted cut. No actor, account, inventory or memory reads run.
     /// A result kept after this callback must independently fund its data.
     pub fn inspect_world<T>(
         &self,
-        item_definition_id: Option<&str>,
+        selected: Option<(RuntimeDefinitionKind, &str)>,
         inspect: impl FnOnce(RuntimeWorldInspection<'_>) -> T,
     ) -> Result<T, RuntimeError> {
         self.require_active()?;
         let current = self.session.accepted().map_err(failure)?;
         let installed = &current.state.installed;
-        let item_definition = item_definition_id.and_then(|id| {
-            Some(RuntimeItemDefinitionInspection {
-                name: &installed.retained.items.get(id)?.named.name,
+        let definition = selected.and_then(|(kind, id)| match kind {
+            RuntimeDefinitionKind::Item => Some(RuntimeDefinitionInspection {
+                name: (&installed.retained.items.get(id)?.named.name).into(),
                 payload: installed.retained.item_definitions.get(id)?,
-            })
+            }),
+            RuntimeDefinitionKind::Attribute => {
+                let attribute = installed.attributes.get(id)?;
+                Some(RuntimeDefinitionInspection {
+                    name: attribute.value().name.as_str().into(),
+                    payload: attribute.source(),
+                })
+            }
         });
         Ok(inspect(RuntimeWorldInspection {
             progress: self.accepted_progress()?,
@@ -41,7 +54,7 @@ impl NativeWorldSession {
             profile_version: installed.content.profile.version,
             manifest_revision: installed.manifest.revision,
             policy: installed.retained.invention_policy.payload(),
-            item_definition,
+            definition,
         }))
     }
 }

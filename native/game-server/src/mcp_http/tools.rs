@@ -6,8 +6,8 @@ use crate::world::HostedWorld;
 use openlegend_simulation::{
     encoding::{json_record, json_record_len, json_tree_allocation_bound, sha256_hex},
     host::{ByteBudget, ByteReservation},
-    runtime::RuntimeWorldInspection,
-    text::JsText,
+    runtime::{RuntimeDefinitionKind, RuntimeWorldInspection},
+    text::TextRef,
 };
 use rmcp::{
     ErrorData, RoleServer, ServerHandler,
@@ -25,11 +25,11 @@ use std::{borrow::Cow, sync::Arc};
 const CONTEXT: &str = "ol_context";
 const INSPECT: &str = "ol_inspect";
 const ITEM_DEFINITION: &str = "item-definition";
+const ATTRIBUTE: &str = "attribute";
 const RESULT_BYTES: usize = 64 * 1024;
 const CONTEXT_DESCRIPTION: &str =
     "Inspect the current world profile, installed revision, policy and available read tools.";
-const INSPECT_DESCRIPTION: &str =
-    "Read an exact installed item definition. No live bodies, inventory, memory or authoring data.";
+const INSPECT_DESCRIPTION: &str = "Read an exact installed item or attribute definition. No live bodies, inventory, memory or authoring data.";
 
 #[derive(Clone)]
 pub(super) struct WorldTools {
@@ -155,11 +155,7 @@ impl ServerHandler for WorldTools {
             biased;
             _ = context.ct.cancelled() => return Ok(Failure::Expired.result().into()),
             result = self.world.capture(move |world| {
-                let id = match &selected {
-                    Selection::Context => None,
-                    Selection::Inspect(input) => Some(input.id.as_str()),
-                };
-                world.inspect_world(id, |read| {
+                world.inspect_world(selected.definition(), |read| {
                     if !access.current() || access.config.world_id != read.progress.world_id {
                         return Err(Failure::Expired);
                     }
@@ -210,7 +206,7 @@ enum Section {
 
 enum Selection {
     Context,
-    Inspect(InspectInput),
+    Inspect(InspectInput, RuntimeDefinitionKind),
 }
 
 fn valid(value: &str, min: usize, max: usize) -> bool {
@@ -248,22 +244,32 @@ fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Fa
             if matches!(input.kind.as_str(), "entity" | "item" | "memory-record") {
                 return Err(Failure::Forbidden);
             }
-            if input.kind != ITEM_DEFINITION
-                || input.sections.as_ref().is_some_and(|sections| {
-                    sections
-                        .iter()
-                        .any(|section| matches!(section, Section::Relationships))
-                })
-            {
+            if input.sections.as_ref().is_some_and(|sections| {
+                sections
+                    .iter()
+                    .any(|section| matches!(section, Section::Relationships))
+            }) {
                 return Err(Failure::Unavailable);
             }
-            Ok(Selection::Inspect(input))
+            let kind = match input.kind.as_str() {
+                ITEM_DEFINITION => RuntimeDefinitionKind::Item,
+                ATTRIBUTE => RuntimeDefinitionKind::Attribute,
+                _ => return Err(Failure::Unavailable),
+            };
+            Ok(Selection::Inspect(input, kind))
         }
         _ => Err(Failure::Invalid),
     }
 }
 
 impl Selection {
+    fn definition(&self) -> Option<(RuntimeDefinitionKind, &str)> {
+        match self {
+            Self::Context => None,
+            Self::Inspect(input, kind) => Some((*kind, &input.id)),
+        }
+    }
+
     fn reply(
         &self,
         read: RuntimeWorldInspection<'_>,
@@ -287,7 +293,7 @@ impl Selection {
                     controlled_actor_id: None,
                     manifest_revision: read.manifest_revision,
                     policy: raw(read.policy)?,
-                    definition_kinds: &[ITEM_DEFINITION],
+                    definition_kinds: &[ITEM_DEFINITION, ATTRIBUTE],
                     tools: [
                         Description {
                             name: CONTEXT,
@@ -304,10 +310,10 @@ impl Selection {
                 },
                 budget,
             ),
-            Self::Inspect(input) => {
-                let definition = read.item_definition.ok_or(Failure::Unavailable)?;
-                // Authored item definitions keep the exact canonical Source
-                // JSON. Its content identity is the existing inspection pin.
+            Self::Inspect(input, _) => {
+                let definition = read.definition.ok_or(Failure::Unavailable)?;
+                // Source inspection versions hash the authored field order.
+                // The definition's native pin may use canonical key order.
                 let version = sha256_hex(definition.payload.as_bytes());
                 if input
                     .version
@@ -317,7 +323,7 @@ impl Selection {
                     return Err(Failure::Stale);
                 }
                 let reference = DefinitionRef {
-                    kind: ITEM_DEFINITION,
+                    kind: &input.kind,
                     id: &input.id,
                     version: &version,
                 };
@@ -379,7 +385,7 @@ struct ContextData<'a> {
 
 #[derive(Serialize)]
 struct DefinitionRef<'a> {
-    kind: &'static str,
+    kind: &'a str,
     id: &'a str,
     version: &'a str,
 }
@@ -389,7 +395,7 @@ struct DefinitionRef<'a> {
 struct Node<'a> {
     #[serde(rename = "ref")]
     reference: &'a DefinitionRef<'a>,
-    label: &'a JsText,
+    label: TextRef<'a>,
     layer: &'static str,
     can_inspect: bool,
 }
