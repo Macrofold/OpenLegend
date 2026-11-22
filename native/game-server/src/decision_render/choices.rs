@@ -1,190 +1,186 @@
 use super::DecisionPolicy;
 use crate::world::WorldError;
 use openlegend_simulation::{
-    encoding::{json_record, json_tree_allocation_bound},
+    capture::{NpcActivityLabel, NpcDescriptionOffer, NpcDescriptionsRequest, NpcOfferMeaning},
+    commands::WorkTransitionMode,
+    encoding::json_record,
     host::ByteBudget,
     narration::{NameArticle, name_phrase},
-    runtime::{RuntimeProvider, RuntimeProviderInput},
-    state::{Named, Point},
+    reception::AttributeView,
+    runtime::{LocalFormat, RuntimeProvider, RuntimeProviderInput},
+    state::Named,
+    text::JsText,
+    values::AttributeValue,
 };
 use openlegend_world_host::pool::HostError;
-use serde::{Deserialize, Serialize};
-use serde_json::{Value, value::RawValue};
+use serde_json::Value;
 
 impl DecisionPolicy {
-    /// Name the actual installed offers supplied by the live candidate. The
-    /// decoded labels contain no executable command and the candidate checks
-    /// its own binding before retaining the answer.
+    /// Render the selected facts directly and return independently funded
+    /// labels. The candidate still owns their bindings and all commands.
     pub(crate) fn answer_choices(
         &self,
         question: &RuntimeProvider,
         budget: &ByteBudget,
     ) -> Result<Option<RuntimeProviderInput>, WorldError> {
-        question.with_request(|request| {
-            #[derive(Deserialize)]
-            struct Request<'a> {
-                kind: &'a str,
-                value: &'a RawValue,
-            }
-            let request: Request<'_> = serde_json::from_str(request).map_err(invalid)?;
-            if request.kind != "choice-descriptions" {
-                return Ok(None);
-            }
-            let size =
-                json_tree_allocation_bound(request.value.get()).ok_or(WorldError::ProviderKind)?;
-            let _decoded = budget.reserve(size).map_err(HostError::from)?;
-            let input: Value = serde_json::from_str(request.value.get()).map_err(invalid)?;
-            let offers = input["offers"].as_array().ok_or(WorldError::ProviderKind)?;
-            let labels = input["activityLabels"]
-                .as_array()
-                .ok_or(WorldError::ProviderKind)?;
-            let allocations = size
-                .checked_add(4096)
-                .and_then(|n| n.checked_add(4096 * (offers.len() + labels.len())))
-                .ok_or(HostError::Capacity)?;
-            let mut custody = budget.reserve(allocations).map_err(HostError::from)?;
-            let descriptions = offers
-                .iter()
-                .map(|offer| self.offer(&input, offer))
-                .collect::<Result<Vec<_>, _>>()?;
-            let activity_labels = labels
-                .iter()
-                .map(|label| self.activity(label))
-                .collect::<Result<Vec<_>, _>>()?;
-            #[derive(Serialize)]
-            #[serde(rename_all = "camelCase")]
-            struct Answer<'a> {
-                binding: &'a Value,
-                descriptions: Vec<String>,
-                activity_labels: Vec<String>,
-            }
-            let answer = json_record(&Answer {
-                binding: &input["binding"],
-                descriptions,
-                activity_labels,
-            })
-            .map_err(invalid)?;
-            custody.resize(answer.capacity()).map_err(HostError::from)?;
-            Ok(Some(RuntimeProviderInput::new(answer, custody)))
-        })?
+        question
+            .with_choice_descriptions(|binding, request| {
+                let count = request
+                    .offers()
+                    .len()
+                    .checked_add(request.activity_labels().len())
+                    .ok_or(HostError::Capacity)?;
+                let bytes = request
+                    .admitted_bytes()
+                    .checked_mul(2)
+                    .and_then(|bytes| bytes.checked_add(4096usize.checked_mul(count)?))
+                    .and_then(|bytes| bytes.checked_add(4096))
+                    .ok_or(HostError::Capacity)?;
+                let custody = budget.reserve(bytes).map_err(HostError::from)?;
+                let descriptions = request
+                    .offers()
+                    .iter()
+                    .map(|offer| self.offer(request, offer).map(JsText::from))
+                    .collect::<Result<Vec<_>, _>>()?;
+                let activity_labels = request
+                    .activity_labels()
+                    .iter()
+                    .map(|label| self.activity(label).map(JsText::from))
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok(RuntimeProviderInput::local_format(
+                    binding,
+                    LocalFormat::ChoiceDescriptions {
+                        descriptions,
+                        activity_labels,
+                    },
+                    custody,
+                )?)
+            })?
+            .transpose()
     }
 
-    fn offer(&self, input: &Value, offer: &Value) -> Result<String, WorldError> {
-        let wording = &self.choices;
-        let source = &input["self"];
-        let meaning = &offer["meaning"];
-        let kind = text(&meaning["kind"])?;
-        let target = if let Some(ordinal) = meaning["body"].as_u64() {
-            input["bodies"]
-                .as_array()
-                .and_then(|list| {
-                    list.iter()
-                        .find(|item| item["ordinal"].as_u64() == Some(ordinal))
-                })
-                .ok_or(WorldError::ProviderKind)?
-        } else {
-            source
+    fn offer(
+        &self,
+        input: &NpcDescriptionsRequest,
+        offer: &NpcDescriptionOffer,
+    ) -> Result<String, WorldError> {
+        use NpcOfferMeaning as Meaning;
+        let words = &self.choices;
+        let body = match offer.meaning {
+            Meaning::Follow { body }
+            | Meaning::Approach { body, .. }
+            | Meaning::Strike { body, .. }
+            | Meaning::Fish { body }
+            | Meaning::Cook { body }
+            | Meaning::FireCare { body } => Some(body),
+            Meaning::Status { body, .. } => body,
+            _ => None,
         };
-        let definition = || {
-            meaning["definition"]
-                .as_u64()
-                .and_then(|id| usize::try_from(id).ok())
-                .ok_or(WorldError::ProviderKind)
+        let target = match body {
+            Some(ordinal) => input.subject(ordinal).ok_or(WorldError::ProviderKind)?,
+            None => input.myself(),
         };
-        let mut result = match kind {
-            "activities" | "inspection" => text(&wording[kind])?.to_owned(),
-            "activity-page" => openlegend_simulation::activity::inspection_next_label(
-                meaning["page"].as_str().ok_or(WorldError::ProviderKind)?,
-            )
-            .ok_or(WorldError::ProviderKind)?
-            .to_owned(),
-            "continuation" => match meaning["actionType"].as_str() {
-                Some(action) => fill(text(&wording[kind][0])?, &[("action", action)]),
-                None => text(&wording[kind][if meaning["planPending"] == true { 1 } else { 2 }])?
-                    .to_owned(),
+        let mut result = match &offer.meaning {
+            Meaning::Activities => text(&words["activities"])?.to_owned(),
+            Meaning::Inspection => text(&words["inspection"])?.to_owned(),
+            Meaning::ActivityPage { page } => {
+                openlegend_simulation::activity::inspection_next_label(page)
+                    .ok_or(WorldError::ProviderKind)?
+                    .to_owned()
+            }
+            Meaning::Continuation {
+                action_type,
+                plan_pending,
+            } => match action_type {
+                Some(action) => fill(text(&words["continuation"][0])?, &[("action", action)]),
+                None => text(&words["continuation"][if *plan_pending { 1 } else { 2 }])?.to_owned(),
             },
-            "follow" => fill(
-                text(&wording[kind])?,
-                &[("name", &name(&target["name"], NameArticle::Definite)?)],
+            Meaning::Follow { .. } => fill(
+                text(&words["follow"])?,
+                &[("name", &name(target.name, NameArticle::Definite)?)],
             ),
-            "status" => {
-                let definition = definition()?;
+            Meaning::Status {
+                definition, active, ..
+            } => {
                 let status = text(
-                    &wording["activations"][definition][if meaning["active"] == true {
-                        "deactivate"
-                    } else {
-                        "activate"
-                    }],
+                    &words["activations"][*definition]
+                        [if *active { "deactivate" } else { "activate" }],
                 )?;
-                if meaning["body"].is_null() {
-                    fill(text(&wording[kind][0])?, &[("label", status)])
+                if body.is_none() {
+                    fill(text(&words["status"][0])?, &[("label", status)])
                 } else {
                     fill(
-                        text(&wording[kind][1])?,
-                        &[("label", status), ("name", text(&target["name"]["name"])?)],
+                        text(&words["status"][1])?,
+                        &[("label", status), ("name", unicode(&target.name.name)?)],
                     )
                 }
             }
-            "approach" => fill(
-                text(&wording[kind])?,
+            Meaning::Approach {
+                distance, reach, ..
+            } => fill(
+                text(&words["approach"])?,
                 &[
-                    ("name", &name(&target["name"], NameArticle::Definite)?),
-                    ("distance", &format!("{:.1}", number(&meaning["distance"])?)),
-                    ("reach", &number_text(&meaning["reach"])?),
+                    ("name", &name(target.name, NameArticle::Definite)?),
+                    ("distance", &format!("{distance:.1}")),
+                    ("reach", &number_text(*reach)?),
                 ],
             ),
-            "probe" => {
-                let index = meaning["probe"]
-                    .as_u64()
-                    .and_then(|id| usize::try_from(id).ok())
-                    .ok_or(WorldError::ProviderKind)?;
-                fill(
-                    text(&wording[kind])?,
-                    &[("direction", text(&wording["probes"][index])?)],
-                )
-            }
-            "strike" => fill(
-                text(&wording["strikes"][definition()?][usize::from(meaning["hunting"] == true)])?,
-                &[("name", &name(&target["name"], NameArticle::Definite)?)],
+            Meaning::Probe { probe } => fill(
+                text(&words["probe"])?,
+                &[("direction", text(&words["probes"][*probe])?)],
             ),
-            // The capture supplies the installed action text. This formatter
-            // adds the common target and work details.
-            "fish" | "cook" | "fire-care" => String::new(),
-            _ => return Err(WorldError::ProviderKind),
+            Meaning::Strike {
+                definition,
+                hunting,
+                ..
+            } => fill(
+                text(&words["strikes"][*definition][usize::from(*hunting)])?,
+                &[("name", &name(target.name, NameArticle::Definite)?)],
+            ),
+            // Their core actions supplied an installed activity description.
+            Meaning::Fish { .. } | Meaning::Cook { .. } | Meaning::FireCare { .. } => String::new(),
         };
-        if let Some(temporary) = offer["temporary"].as_object() {
-            let next = offer.get("nextAt").map(number_text).transpose()?;
+        if let Some(temporary) = &offer.temporary {
+            let next = offer.next_at.map(number_text).transpose()?;
             result.push_str(&fill(
-                text(&wording["temporary"][usize::from(next.is_some())])?,
+                text(&words["temporary"][usize::from(next.is_some())])?,
                 &[
-                    (
-                        "reason",
-                        text(temporary.get("message").ok_or(WorldError::ProviderKind)?)?,
-                    ),
+                    ("reason", unicode(&temporary.message)?),
                     ("next", next.as_deref().unwrap_or_default()),
                 ],
             ));
         }
-        if source["hasAction"] == true && offer["hasCommand"] == true {
-            result.push_str(text(&wording["transitions"][text(&offer["transition"])?])?);
+        if input.has_action() && offer.has_command {
+            let mode = match offer.transition {
+                WorkTransitionMode::Continue => "continue",
+                WorkTransitionMode::Enqueue => "enqueue",
+                WorkTransitionMode::Replace => "replace",
+                WorkTransitionMode::Interrupt => "interrupt",
+            };
+            result.push_str(text(&words["transitions"][mode])?);
         }
-        if matches!(kind, "follow" | "status" | "strike" | "fish" | "cook" | "fire-care")
-            && (meaning["body"].is_null() || target["visible"] == true)
+        if matches!(
+            offer.meaning,
+            Meaning::Follow { .. }
+                | Meaning::Status { .. }
+                | Meaning::Strike { .. }
+                | Meaning::Fish { .. }
+                | Meaning::Cook { .. }
+                | Meaning::FireCare { .. }
+        ) && target.visible
         {
-            let distance = if meaning["body"].is_null() {
+            let distance = if body.is_none() {
                 0.0
             } else {
-                let a: Point =
-                    serde_json::from_value(source["position"].clone()).map_err(invalid)?;
-                let b: Point =
-                    serde_json::from_value(target["position"].clone()).map_err(invalid)?;
+                let a = input.myself().position;
+                let b = target.position;
                 (a.x - b.x).hypot((a.y - b.y).hypot(a.z - b.z))
             };
-            let health = self.health(&target["health"])?;
+            let health = self.health(target.health)?;
             result.push_str(&fill(
-                text(&wording["target"][usize::from(!health.is_empty())])?,
+                text(&words["target"][usize::from(!health.is_empty())])?,
                 &[
-                    ("name", &name(&target["name"], NameArticle::Indefinite)?),
+                    ("name", &name(target.name, NameArticle::Indefinite)?),
                     ("health", &health),
                     ("distance", &format!("{distance:.1}")),
                 ],
@@ -193,30 +189,31 @@ impl DecisionPolicy {
         Ok(result)
     }
 
-    fn activity(&self, label: &Value) -> Result<String, WorldError> {
-        let wording = &self.choices["activity"];
-        match label["kind"].as_str() {
-            Some("camp-own") => Ok(text(&wording["camp"])?.to_owned()),
-            Some("hands") => Ok(fill(
-                text(&wording["hands"])?,
-                &[("label", text(&label["label"])?)],
+    fn activity(&self, label: &NpcActivityLabel) -> Result<String, WorldError> {
+        let words = &self.choices["activity"];
+        match label {
+            NpcActivityLabel::CampOwn => Ok(text(&words["camp"])?.to_owned()),
+            NpcActivityLabel::Hands { label } => {
+                Ok(fill(text(&words["hands"])?, &[("label", unicode(label)?)]))
+            }
+            NpcActivityLabel::Person { name: person } => Ok(fill(
+                text(&words["person"])?,
+                &[("name", &name(person, NameArticle::Definite)?)],
             )),
-            Some("person") => Ok(fill(
-                text(&wording["person"])?,
-                &[("name", &name(&label["name"], NameArticle::Definite)?)],
-            )),
-            _ => Err(WorldError::ProviderKind),
         }
     }
 
-    fn health(&self, value: &Value) -> Result<String, WorldError> {
-        let Some(amount) = value["value"].as_f64() else {
+    fn health(&self, value: Option<&AttributeView>) -> Result<String, WorldError> {
+        let Some(value) = value else {
             return Ok(String::new());
         };
-        let max = value.get("max").map(number_text).transpose()?;
+        let Some(AttributeValue::Number(amount)) = value.value else {
+            return Ok(String::new());
+        };
+        let max = value.max.map(number_text).transpose()?;
         let min = value
-            .get("min")
-            .filter(|value| value.as_f64().is_some_and(|v| v != 0.0))
+            .min
+            .filter(|value| *value != 0.0)
             .map(number_text)
             .transpose()?;
         let form = if max.is_none() {
@@ -227,11 +224,11 @@ impl DecisionPolicy {
             2
         };
         let amount = format!("{amount:.3e}").parse::<f64>().map_err(invalid)?;
-        let amount = json_record(&amount).map_err(invalid)?;
+        let amount = number_text(amount)?;
         Ok(fill(
             text(&self.choices["health"][form])?,
             &[
-                ("attr", text(&value["name"])?),
+                ("attr", &value.name),
                 ("value", &amount),
                 ("min", min.as_deref().unwrap_or_default()),
                 ("max", max.as_deref().unwrap_or_default()),
@@ -243,23 +240,21 @@ impl DecisionPolicy {
 fn invalid(_: impl std::fmt::Display) -> WorldError {
     WorldError::ProviderKind
 }
+
 fn text(value: &Value) -> Result<&str, WorldError> {
     value.as_str().ok_or(WorldError::ProviderKind)
 }
-fn number(value: &Value) -> Result<f64, WorldError> {
-    value.as_f64().ok_or(WorldError::ProviderKind)
-}
-fn number_text(value: &Value) -> Result<String, WorldError> {
-    json_record(&number(value)?).map_err(invalid)
+
+fn number_text(value: f64) -> Result<String, WorldError> {
+    json_record(&value).map_err(invalid)
 }
 
-fn name(value: &Value, article: NameArticle) -> Result<String, WorldError> {
-    let named: Named = serde_json::from_value(value.clone()).map_err(invalid)?;
-    let phrase = name_phrase(&named, article, false);
-    phrase
-        .as_unicode()
-        .map(str::to_owned)
-        .ok_or(WorldError::ProviderKind)
+fn unicode(value: &JsText) -> Result<&str, WorldError> {
+    value.as_unicode().ok_or(WorldError::ProviderKind)
+}
+
+fn name(value: &Named, article: NameArticle) -> Result<String, WorldError> {
+    Ok(unicode(&name_phrase(value, article, false))?.to_owned())
 }
 
 /// Substitute only authored template markers; literal actor text can contain

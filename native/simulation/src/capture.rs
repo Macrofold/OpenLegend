@@ -59,10 +59,14 @@ pub(crate) use npc_sources::{
 mod npc_selection;
 pub(crate) use npc_selection::NpcObservationSelection;
 mod npc_candidates;
-pub use npc_candidates::{NpcActivityChoice, NpcActivityFacts};
+pub use npc_candidates::{
+    NpcActivityChoice, NpcActivityFacts, NpcDescriptionOffer, NpcDescriptionSubject,
+    NpcDescriptionsRequest, NpcOfferMeaning,
+};
+pub use crate::worlds::base_decision_offers::ActivityChoiceLabel as NpcActivityLabel;
 pub(crate) use npc_candidates::{
     NpcCandidateAnswer, NpcCandidateCursor, NpcCandidateStep, NpcDescriptionsAnswer,
-    NpcDescriptionsRequest, NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead,
+    NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead,
 };
 mod outcomes;
 mod player;

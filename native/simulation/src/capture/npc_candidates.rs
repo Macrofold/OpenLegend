@@ -30,7 +30,9 @@ pub use activity::{NpcActivityChoice, NpcActivityFacts};
 mod descriptions;
 use activity::{NpcActivityPreparation, NpcActivityRead};
 use descriptions::DescriptionContext;
-pub(crate) use descriptions::{NpcDescriptionsAnswer, NpcDescriptionsRequest};
+pub use descriptions::{NpcDescriptionOffer, NpcDescriptionSubject, NpcDescriptionsRequest};
+pub(crate) use descriptions::NpcDescriptionsAnswer;
+pub use product::NpcOfferMeaning;
 mod casting;
 use casting::CastTools;
 mod cooking;
@@ -100,7 +102,7 @@ pub(crate) struct NpcCandidateCursor {
     _cursor_storage: ByteReservation,
     done: bool,
     description_context: Option<DescriptionContext>,
-    description_request: Option<NpcDescriptionsRequest>,
+    description_request: Option<std::sync::Arc<NpcDescriptionsRequest>>,
     descriptions_done: bool,
     activity: Option<NpcActivityPreparation>,
     activity_done: Option<NpcActivityRead>,

@@ -74,9 +74,9 @@ pub struct ActivityHandsChoice {
 
 /// The base activity formatter receives these facts about rows already
 /// selected by the reader. Wording remains with activity-choice-format.ts.
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
-pub(crate) enum ActivityChoiceLabel {
+pub enum ActivityChoiceLabel {
     CampOwn,
     Hands { label: crate::text::JsText },
     Person { name: crate::state::Named },

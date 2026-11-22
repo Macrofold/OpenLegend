@@ -39,13 +39,13 @@ impl PreparedNpcRead {
 
 /// All ordinals address native-owned records from this same capture. They are
 /// formatting inputs, not permission maps that Node can replace on application.
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(
     tag = "kind",
     rename_all = "kebab-case",
     rename_all_fields = "camelCase"
 )]
-pub(crate) enum NpcOfferMeaning {
+pub enum NpcOfferMeaning {
     Activities,
     ActivityPage {
         page: &'static str,
@@ -178,7 +178,7 @@ pub(crate) enum NpcCandidateAnswer {
     Display(CompletedActivityDisplay),
 }
 pub(crate) enum NpcCandidateStep<'a> {
-    Descriptions(&'a NpcDescriptionsRequest),
+    Descriptions(&'a std::sync::Arc<NpcDescriptionsRequest>),
     Geometry(&'a GeometryQueries),
     Display(&'a mut ActivityDisplayCursor),
     Complete(PreparedNpcRead),

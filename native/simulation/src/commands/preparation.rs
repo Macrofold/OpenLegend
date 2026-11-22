@@ -14,7 +14,7 @@ pub(crate) struct InvocationLimits {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum WorkTransitionMode {
+pub enum WorkTransitionMode {
     Continue,
     Enqueue,
     Replace,

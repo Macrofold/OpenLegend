@@ -897,6 +897,18 @@ impl RuntimeProvider {
             .map(|value| format(question.binding(), &value.value, value.bytes())))
     }
 
+    /// Borrow the selected identities, labels and meanings, with no command
+    /// bodies. The formatter must independently fund anything it returns.
+    pub fn with_choice_descriptions<T>(
+        &self,
+        format: impl FnOnce(
+            crate::geometry::GeometryBinding, &crate::capture::NpcDescriptionsRequest,
+        ) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question.choice_descriptions().map(|request| format(question.binding(), request)))
+    }
+
     /// Borrow the exact authorized speech string for local ICU preparation.
     /// Any retained result needs its own admitted storage.
     pub fn with_utterance<T>(
@@ -977,6 +989,9 @@ impl RuntimeProvider {
         }
         if let Some(digest) = question.digest_envelope() {
             return RuntimeJson::encode(&digest, budget);
+        }
+        if let Some(descriptions) = question.choice_descriptions_envelope() {
+            return RuntimeJson::encode(&descriptions, budget);
         }
         if let Some(utterance) = question.utterance_envelope() {
             return RuntimeJson::encode(&utterance, budget);

@@ -143,6 +143,7 @@ enum QuestionBody {
     PlanCommand(Arc<crate::plans::PlanCommandRequest>),
     Display(Arc<crate::commands::ActivityDisplayRequest>),
     Digest(Arc<crate::language::CanonicalJsonValue>),
+    ChoiceDescriptions(Arc<crate::capture::NpcDescriptionsRequest>),
     Utterance(UtteranceRequest),
     Words(WordsProviderRequest),
     Collation(CollationProviderRequest),
@@ -281,6 +282,23 @@ impl ProviderQuestion {
             kind: self.kind,
             binding: self.binding,
             value: Digest { binding: self.binding, value: &input.value },
+        })
+    }
+
+    pub(crate) fn choice_descriptions(&self) -> Option<&crate::capture::NpcDescriptionsRequest> {
+        match &self.body {
+            QuestionBody::ChoiceDescriptions(request) => Some(request),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn choice_descriptions_envelope(
+        &self,
+    ) -> Option<QuestionEnvelope<'_, crate::capture::NpcDescriptionsRequest>> {
+        self.choice_descriptions().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
         })
     }
 
@@ -502,6 +520,7 @@ pub enum LocalFormat {
     Control(JsText),
     Canonical(String),
     Digest(String),
+    ChoiceDescriptions { descriptions: Vec<JsText>, activity_labels: Vec<JsText> },
 }
 
 impl LocalFormat {
@@ -511,6 +530,8 @@ impl LocalFormat {
             Self::Display(view) => view.heap_bytes()?,
             Self::Control(message) => message.storage_bytes(),
             Self::Canonical(canonical) | Self::Digest(canonical) => canonical.capacity(),
+            Self::ChoiceDescriptions { descriptions, activity_labels } =>
+                descriptions.heap_bytes()?.checked_add(activity_labels.heap_bytes()?)?,
         };
         value.checked_add(size_of::<Self>())
     }
@@ -521,7 +542,8 @@ impl LocalFormat {
             (Self::Display(_), ProviderKind::Display)
                 | (Self::Control(_), ProviderKind::Control)
                 | (Self::Canonical(_), ProviderKind::Canonical)
-                | (Self::Digest(_), ProviderKind::Digest))
+                | (Self::Digest(_), ProviderKind::Digest)
+                | (Self::ChoiceDescriptions { .. }, ProviderKind::ChoiceDescriptions))
     }
 
     fn into_answer(self, binding: GeometryBinding) -> Answer {
@@ -533,6 +555,12 @@ impl LocalFormat {
             Self::Digest(canonical) => {
                 Answer::Digest(crate::language::CanonicalJsonAnswer { binding, canonical })
             }
+            Self::ChoiceDescriptions { descriptions, activity_labels } =>
+                Answer::ChoiceDescriptions(crate::capture::NpcDescriptionsAnswer {
+                    binding,
+                    descriptions,
+                    activity_labels,
+                }),
             Self::Canonical(canonical) => Answer::Canonical(Canonical { binding, canonical }),
         }
     }
@@ -2865,14 +2893,16 @@ fn poll_npc_candidates(
     loop {
         match cursor.step(core, supplied.take())? {
             Step::Descriptions(request) => {
-                return question(
-                    answer,
+                if answer.is_some() {
+                    return Err(DriveError::StaleResponse);
+                }
+                let question = ProviderQuestion::prepare_bound(
                     ProviderKind::ChoiceDescriptions,
                     request.binding,
-                    request,
+                    QuestionBody::ChoiceDescriptions(Arc::clone(request)),
                     budget,
-                    NpcCandidateReply::Descriptions,
-                );
+                )?;
+                return Ok(Poll::Question(question, NpcCandidateReply::Descriptions));
             }
             Step::Complete(done) => return Ok(Poll::Complete(done)),
             Step::Geometry(request) => {

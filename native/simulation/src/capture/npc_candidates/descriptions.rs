@@ -4,6 +4,7 @@ use super::*;
 use crate::reception::AttributeView;
 use crate::state::Named;
 use crate::text::JsText;
+use std::sync::Arc;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -129,18 +130,54 @@ impl DescriptionContext {
         })
     }
 }
-pub(crate) struct NpcDescriptionsRequest {
-    pub binding: GeometryBinding,
-    json: String,
-    _storage: ByteReservation,
+/// Formatting gets one authorized, immutable capture. The command bodies
+/// stay in their original catalogue. Only the Node consumer asks for JSON.
+pub struct NpcDescriptionsRequest {
+    pub(crate) binding: GeometryBinding,
+    context: DescriptionContext,
+    offers: Vec<NpcDescriptionOffer>,
+    activity_labels: Vec<crate::capture::NpcActivityLabel>,
+    installed: Arc<crate::simulation::InstalledWorld>,
+    storage: ByteReservation,
 }
+
+pub struct NpcDescriptionSubject<'a> {
+    pub name: &'a Named,
+    pub position: Point,
+    pub visible: bool,
+    pub health: Option<&'a AttributeView>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NpcDescriptionOffer {
+    id: String,
+    pub meaning: NpcOfferMeaning,
+    pub transition: WorkTransitionMode,
+    pub has_command: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temporary: Option<Outcome>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_at: Option<f64>,
+}
+
 impl Serialize for NpcDescriptionsRequest {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let raw: &serde_json::value::RawValue =
-            serde_json::from_str(&self.json).map_err(serde::ser::Error::custom)?;
-        raw.serialize(serializer)
+        use serde::ser::SerializeStruct;
+        let mut output = serializer.serialize_struct("NpcDescriptions", 6)?;
+        output.serialize_field("binding", &self.binding)?;
+        output.serialize_field("self", &self.context.myself)?;
+        output.serialize_field("bodies", &self.context.bodies)?;
+        output.serialize_field("offers", &self.offers)?;
+        output.serialize_field("activityLabels", &self.activity_labels)?;
+        output.serialize_field(
+            "definitions",
+            &super::super::definitions::choice_description_definitions(&self.installed),
+        )?;
+        output.end()
     }
 }
+
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct NpcDescriptionsAnswer {
@@ -149,7 +186,61 @@ pub(crate) struct NpcDescriptionsAnswer {
     #[serde(rename = "activityLabels")]
     pub activity_labels: Vec<JsText>,
 }
+
 impl NpcDescriptionsRequest {
+    pub fn offers(&self) -> &[NpcDescriptionOffer] {
+        &self.offers
+    }
+
+    pub fn activity_labels(&self) -> &[crate::capture::NpcActivityLabel] {
+        &self.activity_labels
+    }
+
+    pub fn has_action(&self) -> bool {
+        self.context.myself.has_action
+    }
+
+    pub fn myself(&self) -> NpcDescriptionSubject<'_> {
+        let myself = &self.context.myself;
+        NpcDescriptionSubject {
+            name: myself.name.name(),
+            position: myself.position,
+            visible: true,
+            health: myself.health.as_ref(),
+        }
+    }
+
+    pub fn subject(&self, ordinal: usize) -> Option<NpcDescriptionSubject<'_>> {
+        let index = self
+            .context
+            .bodies
+            .binary_search_by_key(&ordinal, |body| body.ordinal)
+            .ok()?;
+        let body = &self.context.bodies[index];
+        Some(NpcDescriptionSubject {
+            name: &body.name,
+            position: body.position,
+            visible: body.visible,
+            health: body.health.as_ref(),
+        })
+    }
+
+    /// Upper bound on owned working inputs for the formatter. A separate
+    /// allowance covers authored output, which can outlive this question.
+    pub fn admitted_bytes(&self) -> usize {
+        self.storage
+            .bytes()
+            .saturating_add(self.context._storage.bytes())
+            .saturating_add(
+                self.context
+                    .myself
+                    .name
+                    .name()
+                    .heap_bytes()
+                    .unwrap_or(usize::MAX),
+            )
+    }
+
     pub(super) fn prepare(
         core: &mut CoreMutation<'_>,
         mut context: DescriptionContext,
@@ -158,83 +249,67 @@ impl NpcDescriptionsRequest {
         activity: &NpcActivityRead,
         candidate: CandidateKey,
         budget: &ByteBudget,
-    ) -> Result<Self, ExecutionError> {
+    ) -> Result<Arc<Self>, ExecutionError> {
+        use crate::capture::NpcActivityLabel;
         for body in &mut context.bodies {
             body.visible = targets
                 .binary_search_by_key(&body.ordinal, |target| target.body)
                 .ok()
                 .is_some_and(|index| targets[index].visible);
         }
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Offer<'a> {
-            id: &'a str,
-            meaning: &'a NpcOfferMeaning,
-            transition: WorkTransitionMode,
-            has_command: bool,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            temporary: Option<&'a Outcome>,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            next_at: Option<f64>,
-        }
-        struct Offers<'a>(&'a [PreparedNpcOffer]);
-        impl Serialize for Offers<'_> {
-            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-                use serde::ser::SerializeSeq;
-                let mut out = serializer.serialize_seq(Some(self.0.len()))?;
-                for offer in self.0 {
-                    out.serialize_element(&Offer {
-                        id: &offer.id,
-                        meaning: &offer.meaning,
-                        transition: offer.transition,
-                        has_command: offer.command.is_some(),
-                        temporary: offer.temporary.as_ref(),
-                        next_at: offer.next_at,
-                    })?;
-                }
-                out.end()
-            }
-        }
-        #[derive(Serialize)]
-        struct Input<'a, D: Serialize> {
-            binding: GeometryBinding,
-            #[serde(rename = "self")]
-            myself: &'a Myself,
-            bodies: &'a [Body],
-            offers: Offers<'a>,
-            #[serde(rename = "activityLabels")]
-            activity_labels: &'a [crate::worlds::InstalledActivityChoiceLabel],
-            definitions: D,
-        }
+        let bytes = offers.iter().try_fold(
+            size_of::<Self>() + 2 * size_of::<usize>(),
+            |bytes, offer| {
+                let meaning = match &offer.meaning {
+                    NpcOfferMeaning::Continuation { action_type, .. } => {
+                        action_type.heap_bytes()?
+                    }
+                    _ => 0,
+                };
+                bytes
+                    .checked_add(size_of::<NpcDescriptionOffer>())?
+                    .checked_add(offer.id.len())?
+                    .checked_add(meaning)?
+                    .checked_add(offer.temporary.heap_bytes()?)
+            },
+        );
+        let bytes = activity.labels.iter().try_fold(
+            bytes.ok_or(ExecutionError::Capacity)?,
+            |bytes, label| {
+                let heap = match label {
+                    NpcActivityLabel::CampOwn => Some(0),
+                    NpcActivityLabel::Hands { label } => label.heap_bytes(),
+                    NpcActivityLabel::Person { name } => name.heap_bytes(),
+                };
+                bytes
+                    .checked_add(size_of::<NpcActivityLabel>())
+                    .and_then(|n| n.checked_add(heap?))
+                    .ok_or(ExecutionError::Capacity)
+            },
+        )?;
+        let storage = budget.reserve(bytes)?;
         let binding = GeometryBinding::new(
             candidate,
             core.state.installed.geometry.spatial.revision,
             core.journal.next_provider_serial()?,
         );
-        let input = Input {
+        Ok(Arc::new(Self {
             binding,
-            myself: &context.myself,
-            bodies: &context.bodies,
-            offers: Offers(offers),
-            activity_labels: &activity.labels,
-            definitions: super::super::definitions::choice_description_definitions(
-                &core.state.installed,
-            ),
-        };
-        let length =
-            crate::encoding::json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
-        let mut storage = budget.reserve(
-            length
-                .checked_mul(2)
-                .and_then(|n| n.checked_add(size_of::<Self>()))
-                .ok_or(ExecutionError::Capacity)?,
-        )?;
-        let json = crate::encoding::json_record(&input).map_err(|_| ExecutionError::Invariant)?;
-        storage.resize(json.capacity() + size_of::<Self>())?;
-        Ok(Self {
-            binding,
-            json,
-            _storage: storage,
-        })
+            context,
+            offers: offers
+                .iter()
+                .map(|offer| NpcDescriptionOffer {
+                    id: offer.id.clone(),
+                    meaning: offer.meaning.clone(),
+                    transition: offer.transition,
+                    has_command: offer.command.is_some(),
+                    temporary: offer.temporary.clone(),
+                    next_at: offer.next_at,
+                })
+                .collect(),
+            activity_labels: activity.labels.clone(),
+            installed: Arc::clone(&core.state.installed),
+            storage,
+        }))
     }
 }

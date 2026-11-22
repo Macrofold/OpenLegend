@@ -22,8 +22,9 @@ pub(crate) use invocation::{
 };
 pub(crate) use preparation::{
     CommandChoiceAnswer, CommandChoiceCursor, CommandChoiceStep, InvocationLimits,
-    PreparedCommandChoice, WorkTransitionMode,
+    PreparedCommandChoice,
 };
+pub use preparation::WorkTransitionMode;
 mod operation;
 pub(crate) use operation::*;
 mod exposure;
