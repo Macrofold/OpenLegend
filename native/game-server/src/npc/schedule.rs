@@ -155,7 +155,7 @@ impl ScheduleInbox {
         self.notify_maintenance(maintenance);
     }
 
-    fn notify_maintenance(&self, maintenance: Wake) {
+    pub(super) fn notify_maintenance(&self, maintenance: Wake) {
         if maintenance.all || !maintenance.actors.is_empty() {
             self.maintenance
                 .lock()
@@ -175,6 +175,16 @@ impl ScheduleInbox {
 
     pub(super) async fn maintenance_ready(&self) {
         self.maintenance_ready.notified().await;
+    }
+
+    pub(super) fn reflection_wake(&self, actor: &str) -> Result<Wake, RuntimeError> {
+        let mut wake = Wake::default();
+        wake.insert(actor, &self.budget)?;
+        wake.actors
+            .get_mut(actor)
+            .expect("inserted actor wake")
+            .reflection = true;
+        Ok(wake)
     }
 }
 
@@ -646,12 +656,7 @@ impl Director {
             .map(|index| sources.references[index].clone());
         let mut reflection_wake = Wake::default();
         if cue.is_some() && self.reflection_model.is_some() {
-            reflection_wake.insert(&actor, &inbox.budget)?;
-            reflection_wake
-                .actors
-                .get_mut(&actor)
-                .expect("inserted actor wake")
-                .reflection = true;
+            reflection_wake = inbox.reflection_wake(&actor)?;
         }
         store
             .accept_thought(

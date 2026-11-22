@@ -475,6 +475,10 @@ impl RuntimeNpcResponseTicket {
         &self.current.read.perception.actor_id
     }
 
+    pub fn original_origin(&self) -> super::RuntimeNpcDecisionOrigin<'_> {
+        self.original.decision_origin()
+    }
+
     pub fn receipt_liveness(&self) -> [Weak<AtomicBool>; 2] {
         [
             self.original.receipt_liveness(),

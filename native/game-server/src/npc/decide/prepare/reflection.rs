@@ -32,6 +32,37 @@ pub(in crate::npc) struct PreparedReflection {
     _custody: ByteReservation,
 }
 
+/// The settled judgment can suggest later work without keeping its prompt or
+/// response ticket alive while the immediate decision finishes.
+pub(in crate::npc) struct Recommendation {
+    pub(in crate::npc) world: String,
+    pub(in crate::npc) generation: String,
+    pub(in crate::npc) source: PersonalSourceRef,
+    _custody: ByteReservation,
+}
+
+impl Recommendation {
+    pub(in crate::npc) fn from_decision(
+        ticket: &RuntimeNpcResponseTicket,
+        source: &PersonalSourceRef,
+        budget: &openlegend_simulation::host::ByteBudget,
+    ) -> Option<Self> {
+        let origin = ticket.original_origin();
+        let bytes = size_of::<Self>()
+            + origin.world_id.len()
+            + origin.generation.len()
+            + source.id.len()
+            + source.revision.len();
+        let custody = budget.reserve(bytes).ok()?;
+        Some(Self {
+            world: origin.world_id.to_owned(),
+            generation: origin.generation.to_owned(),
+            source: source.clone(),
+            _custody: custody,
+        })
+    }
+}
+
 pub(in crate::npc) async fn prepare(
     game: &Arc<CurrentServer>,
     actor: &str,

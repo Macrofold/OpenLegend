@@ -750,6 +750,7 @@ impl Director {
         let cancellation = slot.resident.stop.subscribe();
         let deadline = Instant::now() + USEFUL_LIFETIME;
         let actor = job.job.request.npc_id.clone();
+        let mut reflection = None;
         let result = decide::run(
             &self.game,
             &self.saves,
@@ -765,6 +766,7 @@ impl Director {
                 deadline,
                 automatic,
             },
+            &mut reflection,
         )
         .await;
         self.dispatch.previews().end_job(&job.job.id);
@@ -775,7 +777,62 @@ impl Director {
                     job.job.id
                 );
             }
+        } else if let Some(reflection) = reflection
+            && !*slot.resident.stop.borrow()
+            && let Err(error) = self
+                .recommend_reflection(&job.job.request.npc_id, reflection)
+                .await
+        {
+            eprintln!("Failed to queue reflection recommendation: {error}");
         }
+    }
+
+    async fn recommend_reflection(
+        &self,
+        actor: &str,
+        cue: decide::prepare::reflection::Recommendation,
+    ) -> Result<(), WorldError> {
+        let Some(schedule) = self.saves.npc_schedule() else {
+            return Ok(());
+        };
+        let _custody = self
+            .game
+            .host
+            .budget()
+            .reserve(actor.len())
+            .map_err(openlegend_simulation::runtime::RuntimeError::from)?;
+        let selected = actor.to_owned();
+        let (actor, Some(window)) = self
+            .game
+            .world
+            .capture(move |world| {
+                world
+                    .reflection_opportunity(&selected)
+                    .map(|window| (selected, window))
+            })
+            .await?
+        else {
+            return Ok(());
+        };
+        if window.world_id != cue.world || window.generation != cue.generation {
+            return Ok(());
+        }
+        let wake = self
+            .reflection_model
+            .as_ref()
+            .map(|_| schedule.reflection_wake(&actor))
+            .transpose()?;
+        if self
+            .game
+            .store
+            .queue_judged_reflection(cue.world, cue.generation, actor, cue.source)
+            .await
+            .map_err(WorldError::Commit)?
+            && let Some(wake) = wake
+        {
+            schedule.notify_maintenance(wake);
+        }
+        Ok(())
     }
 
     async fn finish_failed(

@@ -87,6 +87,15 @@ impl NativeWorldSession {
         else {
             return Ok(None);
         };
+        let Some(body) = state
+            .physical
+            .entities
+            .get(actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .filter(|body| body.alive && body.controller == "npc")
+        else {
+            return Ok(None);
+        };
         if !state.installed.cognition.reflection
             || !state
                 .minds
@@ -101,19 +110,13 @@ impl NativeWorldSession {
         let storage = self
             .budget
             .reserve(size_of::<RuntimeReflectionOpportunity>() + world.len() + generation.len())?;
-        let idle = state
-            .physical
-            .entities
-            .get(actor)
-            .and_then(|entity| entity.actor.as_ref())
-            .is_some_and(|actor| actor.action.is_none());
         Ok(Some(RuntimeReflectionOpportunity {
             world_id: world.clone(),
             generation: generation.clone(),
             accepted_cut: state.accepted_cut,
             at: state.physical.header.sim_time,
             last_reflection_at: mind.last_reflection_at,
-            idle: idle
+            idle: body.action.is_none()
                 && !state.physical.header.paused
                 && available(state, actor, MaintenancePurpose::Reflection).map_err(failure)?,
             _storage: storage,

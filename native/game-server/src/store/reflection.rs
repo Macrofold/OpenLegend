@@ -69,25 +69,36 @@ fn cue_key(world: &str, actor: &str) -> StoreResult<String> {
     Ok(format!("integration:reflection-queue:{world}:{scope}"))
 }
 
-/// Store the cue with its admitted thought and existing actor-scoped cursor.
+/// Store the latest distinct cue in this actor's single durable queue entry.
 pub(super) async fn queue_cue(
     tx: &tokio_postgres::Transaction<'_>,
     world: &str,
     generation: &str,
     actor: &str,
     source: PersonalSourceRef,
-) -> StoreResult<()> {
+) -> StoreResult<bool> {
     let key = cue_key(world, actor)?;
     let value = json_record(&StoredCue {
         generation: generation.to_owned(),
         source,
     })
     .map_err(|_| StoreError::InvalidRecord)?;
-    tx.execute(
-        "INSERT INTO meta(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+    Ok(tx.execute(
+        "INSERT INTO meta(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE meta.value IS DISTINCT FROM excluded.value",
         &[&key, &value],
-    ).await?;
-    Ok(())
+    ).await? == 1)
+}
+
+async fn cue_eligible(
+    tx: &tokio_postgres::Transaction<'_>,
+    world: &str,
+    actor: &str,
+    source: &PersonalSourceRef,
+) -> StoreResult<bool> {
+    Ok(tx.query_opt(
+        "SELECT 1 FROM recall_sources WHERE world_id=$1 AND actor_id=$2 AND source_kind=$3 AND id=$4 AND revision=$5 AND eligible=1",
+        &[&world, &actor, &source_kind(source.kind), &source.id, &source.revision],
+    ).await?.is_some())
 }
 
 impl ReflectionScope {
@@ -168,6 +179,36 @@ impl ReflectionScope {
 }
 
 impl Store {
+    /// The judgment has already settled. Reuse the scope of its admitted
+    /// source, with a fresh check under the writer that also owns withdrawal.
+    pub(crate) async fn queue_judged_reflection(
+        &self,
+        world: String,
+        generation: String,
+        actor: String,
+        source: PersonalSourceRef,
+    ) -> Result<bool, CommitError> {
+        let bytes =
+            world.len() + generation.len() + actor.len() + source.id.len() + source.revision.len();
+        let _workspace = self
+            .budget
+            .reserve(2048 + bytes * 8)
+            .map_err(|_| CommitError::RolledBack(StoreError::Capacity))?;
+        self.operational(move |tx| {
+            Box::pin(async move {
+                let head = durable_head(tx).await?.ok_or(StoreError::StaleCut)?;
+                if head.world_id != world
+                    || head.generation != generation
+                    || !cue_eligible(tx, &world, &actor, &source).await?
+                {
+                    return Ok(false);
+                }
+                queue_cue(tx, &world, &generation, &actor, source).await
+            })
+        })
+        .await
+    }
+
     /// Indexed existence is enough for the wake. The actual private source
     /// reader acquires complete permitted records only after slot admission.
     pub(crate) async fn reflection_due(
@@ -198,10 +239,7 @@ impl Store {
                     // Ignore an old cue whose source is already gone. It cannot mask a
                     // later ordinary opportunity. Preparation still owns the final check.
                     let eligible = value.generation == scope.generation
-                        && tx.query_opt(
-                            "SELECT 1 FROM recall_sources WHERE world_id=$1 AND actor_id=$2 AND source_kind=$3 AND id=$4 AND revision=$5 AND eligible=1",
-                            &[&scope.world, &scope.actor, &source_kind(value.source.kind), &value.source.id, &value.source.revision],
-                        ).await?.is_some();
+                        && cue_eligible(tx, &scope.world, &scope.actor, &value.source).await?;
                     eligible.then(|| ReflectionCue { source: value.source, stored: raw.to_owned(), _custody: held })
                 } else { None };
                 Ok(ReflectionDue::Ready(cue))

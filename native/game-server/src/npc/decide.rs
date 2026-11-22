@@ -104,6 +104,7 @@ pub(super) async fn run(
     dispatch: &Arc<DecisionDispatch>,
     models: &Models,
     work: Work,
+    reflection: &mut Option<prepare::reflection::Recommendation>,
 ) -> Result<(), CallFailure> {
     openlegend_simulation::profile_body!(
         NPC,
@@ -226,6 +227,14 @@ pub(super) async fn run(
                 .await
                 .map_err(|error| error.at("route"))?;
             ensure_running(&work)?;
+            if available
+                && observed.choice("reflection") == Some("yes")
+                && let Some(source) = work.source.first()
+            {
+                *reflection = prepare::reflection::Recommendation::from_decision(
+                    &prepared.ticket, source, budget,
+                );
+            }
             let selected_route = observed.choice("route").filter(|choice| {
                 observed
                     .probability("route", choice)

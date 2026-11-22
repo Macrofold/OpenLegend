@@ -196,6 +196,10 @@ impl LiveSaves {
         self
     }
 
+    pub(crate) fn npc_schedule(&self) -> Option<&ScheduleInbox> {
+        self.schedule.as_deref()
+    }
+
     pub(crate) fn lexical_waker(&self) -> Arc<Notify> {
         self.lexical_wake.clone()
     }
