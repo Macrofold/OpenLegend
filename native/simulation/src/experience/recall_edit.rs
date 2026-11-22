@@ -19,7 +19,7 @@ pub(crate) struct CompletedRecallEdit {
     outcome: Outcome,
     invalidated: Option<CompletedPrivacyEdit>,
     privacy: Option<PrivacyConstraintChange>,
-    ranking: Option<String>,
+    replacement: Option<String>,
     _storage: ByteReservation,
 }
 impl CompletedRecallEdit {
@@ -37,8 +37,8 @@ impl CompletedRecallEdit {
             .iter()
             .flat_map(CompletedPrivacyEdit::affected)
     }
-    pub(crate) fn ranking_revision(&self) -> Option<&str> {
-        self.ranking.as_deref()
+    pub(crate) fn replacement_revision(&self) -> Option<&str> {
+        self.replacement.as_deref()
     }
     pub(crate) fn privacy_constraints(&self) -> Option<(&[String], &IndexMap<String, String>)> {
         self.privacy
@@ -129,6 +129,7 @@ pub(crate) struct RecallEditCursor {
     limits: HistoryEditLimits,
     memory_alias_added: bool,
     mode: Option<PrivacyEditMode>,
+    rewrite: Option<MemoryRewrite>,
     admission: RecallAdmission,
     checkpoint: Option<CandidateCheckpoint>,
     outcomes: Option<(Outcome, Outcome)>,
@@ -136,10 +137,16 @@ pub(crate) struct RecallEditCursor {
     storage: Option<ByteReservation>,
     done: bool,
 }
+struct MemoryRewrite {
+    revision: String,
+    importance: f64,
+    summary: crate::text::JsText,
+}
 pub(crate) enum RecallAdmission {
     Live(Option<crate::runtime::HeldSourceProof>),
     Replay,
 }
+#[derive(Clone, Copy)]
 enum Disposition {
     Accepted,
     Refused,
@@ -181,6 +188,7 @@ impl RecallEditCursor {
     ) -> Result<Self, ExecutionError> {
         let rules = &core.state.installed.account_rules.value().privacy_outcomes;
         let ranking_outcomes;
+        let stale_memory;
         let (refused, accepted, unavailable) = match &mode {
             PrivacyEditMode::Rank { .. } => {
                 ranking_outcomes = (
@@ -193,7 +201,31 @@ impl RecallEditCursor {
                 );
                 (&ranking_outcomes.0, &ranking_outcomes.1, None)
             }
+            PrivacyEditMode::Rewrite { .. } => {
+                ranking_outcomes = (
+                    ranking_outcome(
+                        false,
+                        "stale",
+                        "This memory changed. Refresh before saving.",
+                    ),
+                    ranking_outcome(true, "person-saved", "Memory saved."),
+                );
+                (
+                    &ranking_outcomes.0,
+                    &ranking_outcomes.1,
+                    Some(&ranking_outcomes.0),
+                )
+            }
+            PrivacyEditMode::InvalidateProse => return Err(ExecutionError::Invariant),
             PrivacyEditMode::Forget => (&rules.commitment, &rules.forgotten, Some(&rules.source)),
+            PrivacyEditMode::ForgetMemory { .. } => {
+                stale_memory = ranking_outcome(
+                    false,
+                    "stale",
+                    "This memory changed. Refresh before saving.",
+                );
+                (&rules.commitment, &rules.forgotten, Some(&stale_memory))
+            }
             PrivacyEditMode::Correct { .. } => (&rules.correction_rejected, &rules.corrected, None),
         };
         let bytes = heap_sum([
@@ -219,7 +251,13 @@ impl RecallEditCursor {
             actor,
             &roots,
             match &mode {
-                PrivacyEditMode::Forget | PrivacyEditMode::Rank { .. } => &[],
+                PrivacyEditMode::Forget
+                | PrivacyEditMode::ForgetMemory { .. }
+                | PrivacyEditMode::Rank { .. }
+                | PrivacyEditMode::Rewrite { .. } => &[],
+                PrivacyEditMode::InvalidateProse => {
+                    unreachable!("only a verified memory enters prose invalidation")
+                }
                 PrivacyEditMode::Correct { event_id } => std::slice::from_ref(event_id),
             },
             candidate,
@@ -242,6 +280,7 @@ impl RecallEditCursor {
             limits,
             memory_alias_added: false,
             mode: Some(mode),
+            rewrite: None,
             admission,
             checkpoint: Some(checkpoint),
             outcomes: Some(outcomes),
@@ -283,12 +322,11 @@ impl RecallEditCursor {
             },
             invalidated,
             privacy,
-            ranking: match self.mode.take() {
-                Some(PrivacyEditMode::Rank { revision, .. })
-                    if matches!(disposition, Disposition::Accepted) =>
-                {
+            replacement: match (disposition, self.mode.take(), self.rewrite.take()) {
+                (Disposition::Accepted, Some(PrivacyEditMode::Rank { revision, .. }), _) => {
                     Some(revision)
                 }
+                (Disposition::Accepted, _, Some(rewrite)) => Some(rewrite.revision),
                 _ => None,
             },
             _storage: self.storage.take().ok_or(ExecutionError::Invariant)?,
@@ -326,17 +364,78 @@ impl RecallEditCursor {
                 }
             };
             self.preparation = None;
+            if let Some(PrivacyEditMode::ForgetMemory { revision }) = self.mode.as_ref() {
+                match super::ranking_edit::current_memory(core, &self.actor, &self.source, revision)
+                {
+                    Ok(Some(_)) => (),
+                    Ok(None) => {
+                        self.abort(core)?;
+                        return Ok(RecallEditStep::Complete(self.complete(
+                            Disposition::NotRetained,
+                            None,
+                            None,
+                        )?));
+                    }
+                    Err(error) => {
+                        self.abort(core)?;
+                        return Err(ExecutionError::from(error).into());
+                    }
+                }
+            }
+            if let Some(PrivacyEditMode::Rewrite {
+                revision, summary, ..
+            }) = self.mode.as_ref()
+            {
+                let changed = super::ranking_edit::prose_changed(
+                    core,
+                    &self.actor,
+                    &self.source,
+                    revision,
+                    summary,
+                    budget,
+                );
+                match changed {
+                    Ok(Some(true)) => (),
+                    Ok(Some(false)) => {
+                        let Some(PrivacyEditMode::Rewrite {
+                            revision,
+                            importance,
+                            ..
+                        }) = self.mode.take()
+                        else {
+                            unreachable!()
+                        };
+                        self.mode = Some(PrivacyEditMode::Rank {
+                            revision,
+                            importance,
+                        });
+                    }
+                    Ok(None) => {
+                        self.abort(core)?;
+                        return Ok(RecallEditStep::Complete(self.complete(
+                            Disposition::NotRetained,
+                            None,
+                            None,
+                        )?));
+                    }
+                    Err(error) => {
+                        self.abort(core)?;
+                        return Err(ExecutionError::from(error).into());
+                    }
+                }
+            }
             if let Some(PrivacyEditMode::Rank {
                 revision,
                 importance,
             }) = self.mode.as_ref()
             {
-                let changed = match super::ranking_edit::replace_importance(
+                let changed = match super::ranking_edit::replace_memory(
                     core,
                     &self.actor,
                     &self.source,
                     revision,
                     *importance,
+                    None,
                     budget,
                 ) {
                     Ok(changed) => changed,
@@ -365,8 +464,11 @@ impl RecallEditCursor {
                 )?));
             }
             let readiness = match self.mode.as_ref().ok_or(ExecutionError::Invariant)? {
-                PrivacyEditMode::Rank { .. } => return Err(ExecutionError::Invariant.into()),
-                PrivacyEditMode::Forget => forget_readiness(
+                PrivacyEditMode::Rank { .. } | PrivacyEditMode::InvalidateProse => {
+                    return Err(ExecutionError::Invariant.into());
+                }
+                PrivacyEditMode::Rewrite { .. } => Ok(RecallReadiness::Ready(None)),
+                PrivacyEditMode::Forget | PrivacyEditMode::ForgetMemory { .. } => forget_readiness(
                     core,
                     &self.actor,
                     &self.source,
@@ -451,13 +553,22 @@ impl RecallEditCursor {
                     PrivacyPreparationStep::Complete(_) => Err(ExecutionError::Invariant.into()),
                 };
             }
-            match PrivacyEditCursor::from_prepared(
-                core,
-                prepared,
-                self.mode.take().ok_or(ExecutionError::Invariant)?,
-                self.candidate,
-                budget,
-            ) {
+            let mode = match self.mode.take().ok_or(ExecutionError::Invariant)? {
+                PrivacyEditMode::Rewrite {
+                    revision,
+                    importance,
+                    summary,
+                } => {
+                    self.rewrite = Some(MemoryRewrite {
+                        revision,
+                        importance,
+                        summary,
+                    });
+                    PrivacyEditMode::InvalidateProse
+                }
+                other => other,
+            };
+            match PrivacyEditCursor::from_prepared(core, prepared, mode, self.candidate, budget) {
                 Ok(edit) => self.edit = Some(edit),
                 Err(error) => {
                     self.abort(core)?;
@@ -491,6 +602,29 @@ impl RecallEditCursor {
                 return Err(error);
             }
         };
+        if let Some(rewrite) = &self.rewrite {
+            // The acquired links and chronology stay immutable. Finish the
+            // old source's dependency cleanup before replacing its prose.
+            match super::ranking_edit::replace_memory(
+                core,
+                &self.actor,
+                &self.source,
+                &rewrite.revision,
+                rewrite.importance,
+                Some(&rewrite.summary),
+                budget,
+            ) {
+                Ok(true) => (),
+                Ok(false) => {
+                    self.abort(core)?;
+                    return Err(ExecutionError::Invariant.into());
+                }
+                Err(error) => {
+                    self.abort(core)?;
+                    return Err(ExecutionError::from(error).into());
+                }
+            }
+        }
         // Source finish() reconciles other commitments even with no occurrence.
         // The physical checkpoint restores the inherited interval/sequence on
         // failure; residency-only preparation never advances either clock.

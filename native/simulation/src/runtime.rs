@@ -71,7 +71,7 @@ mod privacy;
 pub use privacy::RuntimePrivacyEdit;
 mod private_history;
 mod person_editor;
-pub use person_editor::PersonEditorCut;
+pub use person_editor::{PersonEditorCut, PersonMemoryEdit};
 mod private_notes;
 pub use private_notes::{
     RuntimeCreatorMind, RuntimeMindFile, RuntimePersonPage, RuntimePersonPosition,

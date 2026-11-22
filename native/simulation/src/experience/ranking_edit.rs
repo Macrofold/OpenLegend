@@ -1,17 +1,16 @@
-//! Change one exact memory's retrieval rank. Only the already acquired body's
-//! importance changes, so its original events and derived accounts stay valid.
+//! Replace only an exact acquired memory’s editable text and importance.
+//! The caller owns dependent invalidation when the prose changes.
 use super::*;
 use crate::{execution::CoreMutation, host::ByteBudget};
 
-pub(super) fn replace_importance(
-    core: &mut CoreMutation<'_>,
+/// Borrow only the current canonical memory with the selected exact revision.
+pub(super) fn current_memory<'a>(
+    core: &'a CoreMutation<'_>,
     actor: &str,
     id: &str,
     expected: &str,
-    importance: f64,
-    budget: &ByteBudget,
-) -> Result<bool, memory::MemoryAcquisitionError> {
-    let Some(before) = core
+) -> Result<Option<&'a Arc<PersonalSourceRecord>>, ExperienceError> {
+    Ok(core
         .state
         .experience
         .optional_collection(actor, PersonalSourceKind::Memory)?
@@ -21,20 +20,61 @@ pub(super) fn replace_importance(
                 .get(id)
                 .and_then(|position| collection.by_ordinal.get(position))
         })
-        .filter(|record| record.header.reference.revision == expected)
-        .cloned()
-    else {
-        return Ok(false);
+        .filter(|record| record.header.reference.revision == expected))
+}
+
+pub(super) fn prose_changed(
+    core: &CoreMutation<'_>,
+    actor: &str,
+    id: &str,
+    expected: &str,
+    summary: &crate::text::JsText,
+    budget: &ByteBudget,
+) -> Result<Option<bool>, memory::MemoryAcquisitionError> {
+    let Some(memory) = current_memory(core, actor, id, expected)? else {
+        return Ok(None);
     };
     let _work = budget
-        .reserve(memory::encoded_body_bound(before.payload())?)
+        .reserve(memory::encoded_body_bound(memory.payload())?)
+        .map_err(|_| ExperienceError::Capacity)?;
+    let body = memory::MemoryBody::decode(memory.payload())?;
+    let current = body
+        .get::<crate::text::JsText>("summary")?
+        .ok_or(ExperienceError::InvalidBody("memory summary"))?;
+    Ok(Some(current != *summary))
+}
+
+pub(super) fn replace_memory(
+    core: &mut CoreMutation<'_>,
+    actor: &str,
+    id: &str,
+    expected: &str,
+    importance: f64,
+    summary: Option<&crate::text::JsText>,
+    budget: &ByteBudget,
+) -> Result<bool, memory::MemoryAcquisitionError> {
+    let Some(before) = current_memory(core, actor, id, expected)?.cloned() else {
+        return Ok(false);
+    };
+    let added = summary
+        .map_or(Some(0), |text| text.storage_bytes().checked_mul(12))
+        .ok_or(ExperienceError::Capacity)?;
+    let _work = budget
+        .reserve(
+            memory::encoded_body_bound(before.payload())?
+                .checked_add(added)
+                .ok_or(ExperienceError::Capacity)?,
+        )
         .map_err(|_| ExperienceError::Capacity)?;
     let mut body = memory::MemoryBody::decode(before.payload())?;
-    if body.get::<f64>("importance")? == Some(importance) {
+    if summary.is_none() && body.get::<f64>("importance")? == Some(importance) {
         // Repeating a successful edit still requires the exact new hash.
         return Ok(false);
     }
     body.set("importance", &importance)?;
+    if let Some(summary) = summary {
+        body.set("summary", summary)?;
+    }
     let payload = body.encoded()?;
     let projected = body.projection()?;
     let state = &mut core.state;
@@ -87,6 +127,10 @@ pub(super) fn replace_importance(
     core.journal
         .experience
         .replace(&mut state.experience, &before.header.reference, after)?;
+    if summary.is_some() {
+        // The enclosing invalidation advances the actor and physical revisions.
+        return Ok(true);
+    }
     // An independent reader can outlast eviction of the replacement. Renew
     // this actor's read fence without withdrawing its accepted derived text.
     core.journal

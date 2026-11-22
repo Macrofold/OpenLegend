@@ -1384,7 +1384,7 @@ impl Session {
                     let protected = (preparing.journal.material_gather.protected
                         && matches!(&result, CompletedOperation::Advance(done) if done.outcome.ok))
                         || matches!(&result, CompletedOperation::RecallEdit(done)
-                        if done.privacy_change().is_some() || done.ranking_revision().is_some())
+                        if done.privacy_change().is_some() || done.replacement_revision().is_some())
                         || matches!(
                             &result,
                             CompletedOperation::Restore(_) | CompletedOperation::HostControl(_)

@@ -2,13 +2,13 @@
 //! Creator permission is checked separately from an actor's private boundary.
 use super::*;
 use crate::{
-    store::recall::{browse::MemoryPosition, ranking_edit::PreparedRanking},
+    store::recall::{browse::MemoryPosition, ranking_edit::PreparedMemoryEdit},
     world::{PlayerDisclosure, ProtectedCommit},
 };
 use openlegend_simulation::{
     encoding::{json_record, json_tree_allocation_bound, sha256_hex},
     experience::{PersonalSourceKind, PersonalSourceRef},
-    runtime::{PersonEditorCut, RuntimeDirectOutput, RuntimeError},
+    runtime::{PersonEditorCut, PersonMemoryEdit, RuntimeDirectOutput, RuntimeError},
     text::JsText,
     values::is_safe_record_id,
 };
@@ -28,7 +28,37 @@ struct Save {
     cut: PersonEditorCut<'static>,
     entry_id: String,
     expected_hash: String,
-    importance: f64,
+    change: SaveChange,
+}
+
+// Deserialize the text directly from its JSON source. An internally tagged
+// Serde enum buffers fields as Unicode and rejects isolated UTF-16 units.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct SaveChange {
+    operation: SaveOperation,
+    importance: Option<f64>,
+    summary: Option<JsText>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+enum SaveOperation {
+    Update,
+    Forget,
+}
+
+impl SaveChange {
+    fn into_edit(self) -> Option<PersonMemoryEdit> {
+        match (self.operation, self.importance, self.summary) {
+            (SaveOperation::Update, Some(importance), summary) => Some(PersonMemoryEdit::Update {
+                importance,
+                summary,
+            }),
+            (SaveOperation::Forget, None, None) => Some(PersonMemoryEdit::Forget),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -70,7 +100,7 @@ struct ResultView {
 
 struct Staged {
     result: ResultView,
-    ranking: Option<PreparedRanking>,
+    projection: Option<PreparedMemoryEdit>,
     _custody: ByteReservation,
 }
 
@@ -324,11 +354,18 @@ pub(super) async fn save(State(state): State<PlayerRoutes>, request: Request) ->
         Ok(scope) => Arc::new(scope),
         Err(error) => return access_failure(error),
     };
-    let (input, custody): (Save, _) =
-        match json(&parts.headers, body, state.game.host.budget()).await {
-            Ok(input) => input,
-            Err(error) => return error,
-        };
+    let (input, custody): (Save, _) = match read_json(
+        &parts.headers,
+        body,
+        state.game.host.budget(),
+        false,
+        1024 * 1024,
+    )
+    .await
+    {
+        Ok(input) => input,
+        Err(error) => return error,
+    };
     let Some(id) = memory_id(&input.entry_id) else {
         return changed();
     };
@@ -337,28 +374,21 @@ pub(super) async fn save(State(state): State<PlayerRoutes>, request: Request) ->
         id: id.into(),
         revision: input.expected_hash,
     };
-    if !reference.validate() || !(0.0..=10.0).contains(&input.importance) {
+    let Some(change) = input.change.into_edit() else {
+        return request_error();
+    };
+    if !reference.validate() || !change.valid() {
         return refusal(
             StatusCode::BAD_REQUEST,
             "invalid-memory",
-            "Use a memory importance from 0 to 10.",
+            "Use an importance from 0 to 10 and up to 32,768 characters of memory text.",
         );
     }
     let actor = match actor(&state, &scope, input.actor_id).await {
         Ok(actor) => actor,
         Err(problem) => return failed(problem),
     };
-    match save_cut(
-        &state,
-        scope,
-        actor,
-        input.cut,
-        reference,
-        input.importance,
-        custody,
-    )
-    .await
-    {
+    match save_cut(&state, scope, actor, input.cut, reference, change, custody).await {
         Ok(result) => reply(
             &state,
             if result.result.ok {
@@ -382,13 +412,17 @@ async fn save_cut(
     actor: String,
     cut: PersonEditorCut<'static>,
     reference: PersonalSourceRef,
-    importance: f64,
+    change: PersonMemoryEdit,
     custody: ByteReservation,
 ) -> Result<Staged, WorldError> {
     let game = &state.game;
     let grant = state.authority.clone();
     let needs_inspect = actor != scope.scope.actor_id;
     grant.current_recall_operator(&scope, needs_inspect, |_| ())?;
+    let _withdrawal = change
+        .withdraws_source()
+        .then(|| game.world.begin_source_edit(&actor))
+        .transpose()?;
     let _barrier = state.saves.enter_protected().await?;
     grant.current_recall_operator(&scope, needs_inspect, |_| ())?;
     let durable = game
@@ -407,6 +441,7 @@ async fn save_cut(
     let provider = game.clone();
     let preparer = game.store.clone();
     let writer = game.store.clone();
+    let writing_scope = scope.clone();
     let saves = state.saves.clone();
     game.world
         .execute_protected_then(
@@ -426,7 +461,7 @@ async fn save_cut(
                 {
                     return Err(RuntimeError::application_refused(AccessError::Forbidden));
                 }
-                world.begin_memory_ranking(&actor, &cut, reference, importance)
+                world.begin_editor_memory_edit(&actor, &cut, reference, change)
             },
             move |question| {
                 let game = provider.clone();
@@ -450,19 +485,17 @@ async fn save_cut(
                 let outcome = product.outcome();
                 let custody =
                     budget.reserve(512 + outcome.code.len() + outcome.message.storage_bytes())?;
-                let ranking = preparer.prepare_ranking(&product)?;
-                if outcome.ok != ranking.is_some() {
-                    return Err(RuntimeError::application_refused(
-                        StoreError::DerivedProjectionRequired,
-                    ));
-                }
+                let projection = outcome
+                    .ok
+                    .then(|| preparer.prepare_memory_edit(&product))
+                    .transpose()?;
                 Ok(Staged {
                     result: ResultView {
                         ok: outcome.ok,
                         code: outcome.code.clone(),
                         message: outcome.message.clone(),
                     },
-                    ranking,
+                    projection,
                     _custody: custody,
                 })
             },
@@ -473,10 +506,12 @@ async fn save_cut(
             },
             move |staged, prefix| -> ProtectedCommit<'_> {
                 Box::pin(async move {
-                    let ranking = staged.ranking.as_ref().ok_or(CommitError::RolledBack(
+                    let edit = staged.projection.as_ref().ok_or(CommitError::RolledBack(
                         StoreError::DerivedProjectionRequired,
                     ))?;
-                    writer.commit_ranking(ranking, prefix).await
+                    writer
+                        .commit_memory_edit(edit, &writing_scope.scope, prefix)
+                        .await
                 })
             },
             move |_| {

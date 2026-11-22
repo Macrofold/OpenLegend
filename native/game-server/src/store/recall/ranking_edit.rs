@@ -2,7 +2,10 @@
 //! the same prefix. The old exact body stays available to admitted dependents.
 use super::checkpoint_accounts::{AccountImage, Placement, compile_placement};
 use super::*;
-use crate::store::{CommitError, PrefixProjection};
+use crate::{
+    authority::{RequestScope, assert_saved_grant},
+    store::{CommitError, PrefixProjection, PreparedPrivacyEdit},
+};
 use openlegend_simulation::{
     records::SqlCell,
     runtime::{RuntimePreparedProducts, RuntimeSave},
@@ -10,7 +13,7 @@ use openlegend_simulation::{
 
 const KIND: PersonalSourceKind = PersonalSourceKind::Memory;
 
-pub(crate) struct PreparedRanking {
+struct PreparedReplacement {
     world: String,
     generation: String,
     through: u64,
@@ -23,12 +26,49 @@ pub(crate) struct PreparedRanking {
     _custody: ByteReservation,
 }
 
+pub(crate) struct PreparedMemoryEdit {
+    replacement: Option<PreparedReplacement>,
+    invalidation: Option<PreparedPrivacyEdit>,
+}
+
 impl Store {
-    pub(crate) fn prepare_ranking(
+    pub(crate) fn prepare_memory_edit(
         &self,
         product: &RuntimePreparedProducts<'_>,
-    ) -> Result<Option<PreparedRanking>, openlegend_simulation::runtime::RuntimeError> {
-        let Some((actor, id, previous, decoder)) = product.memory_ranking(&self.budget)? else {
+    ) -> Result<PreparedMemoryEdit, openlegend_simulation::runtime::RuntimeError> {
+        let invalidation = product.privacy_edit();
+        let replacement = self.prepare_replacement(product, invalidation.is_some())?;
+        let invalidation = invalidation
+            .map(|edit| {
+                PreparedPrivacyEdit::new(
+                    self,
+                    edit,
+                    product.changes(),
+                    &product.retain_history(),
+                    replacement.as_ref().map(|row| row.record.as_str()),
+                )
+            })
+            .transpose()
+            .map_err(openlegend_simulation::runtime::RuntimeError::application_refused)?;
+        if replacement.is_none() && invalidation.is_none() {
+            return Err(
+                openlegend_simulation::runtime::RuntimeError::application_refused(
+                    StoreError::DerivedProjectionRequired,
+                ),
+            );
+        }
+        Ok(PreparedMemoryEdit {
+            replacement,
+            invalidation,
+        })
+    }
+
+    fn prepare_replacement(
+        &self,
+        product: &RuntimePreparedProducts<'_>,
+        invalidates: bool,
+    ) -> Result<Option<PreparedReplacement>, openlegend_simulation::runtime::RuntimeError> {
+        let Some((actor, id, previous, decoder)) = product.memory_replacement(&self.budget)? else {
             return Ok(None);
         };
         (|| -> StoreResult<_> {
@@ -45,12 +85,12 @@ impl Store {
                 || [
                     table,
                     "mind_awareness",
-                    "mind_summaries",
                     "mind_forgotten",
                     "mind_corrections",
                 ]
                 .into_iter()
                 .any(|name| records.deletes.contains_key(name))
+                || !invalidates && records.deletes.contains_key("mind_summaries")
             {
                 return Err(StoreError::DerivedProjectionRequired);
             }
@@ -113,7 +153,7 @@ impl Store {
                         .ok_or(StoreError::Capacity)?,
                 )
                 .map_err(|_| StoreError::Capacity)?;
-            Ok(Some(PreparedRanking {
+            Ok(Some(PreparedReplacement {
                 world: progress.world_id.into(),
                 generation: progress.generation.into(),
                 through: progress.through_cut,
@@ -129,36 +169,48 @@ impl Store {
         .map_err(openlegend_simulation::runtime::RuntimeError::application_refused)
     }
 
-    pub(crate) async fn commit_ranking(
+    pub(crate) async fn commit_memory_edit(
         &self,
-        prepared: &PreparedRanking,
+        prepared: &PreparedMemoryEdit,
+        scope: &RequestScope,
         save: &RuntimeSave,
     ) -> Result<openlegend_simulation::runtime::RuntimeSaveAcknowledgement, CommitError> {
         self.commit_save(
             save,
             &[],
-            &RankingProjection {
+            &EditorProjection {
                 store: self,
                 prepared,
+                scope,
             },
         )
         .await
     }
 }
 
-struct RankingProjection<'a> {
+struct EditorProjection<'a> {
     store: &'a Store,
-    prepared: &'a PreparedRanking,
+    prepared: &'a PreparedMemoryEdit,
+    scope: &'a RequestScope,
 }
 
-impl PrefixProjection for RankingProjection<'_> {
+impl PrefixProjection for EditorProjection<'_> {
     async fn before_records(
         &self,
         tx: &Transaction<'_>,
         save: &SaveRows,
-        _revision: u64,
+        revision: u64,
     ) -> StoreResult<()> {
-        let row = self.prepared;
+        assert_saved_grant(tx, self.scope, "create").await?;
+        if let Some(invalidation) = &self.prepared.invalidation {
+            invalidation
+                .projection(self.store)
+                .before_records(tx, save, revision)
+                .await?;
+        }
+        let Some(row) = &self.prepared.replacement else {
+            return Ok(());
+        };
         if save.world_id != row.world
             || save.generation != row.generation
             || save.through_cut != row.through
@@ -189,10 +241,18 @@ impl PrefixProjection for RankingProjection<'_> {
     async fn after_records(
         &self,
         tx: &Transaction<'_>,
-        _save: &SaveRows,
-        _revision: u64,
+        save: &SaveRows,
+        revision: u64,
     ) -> StoreResult<()> {
-        let row = self.prepared;
+        if let Some(invalidation) = &self.prepared.invalidation {
+            invalidation
+                .projection(self.store)
+                .after_records(tx, save, revision)
+                .await?;
+        }
+        let Some(row) = &self.prepared.replacement else {
+            return Ok(());
+        };
         self.store
             .insert_retained_accounts(
                 tx,

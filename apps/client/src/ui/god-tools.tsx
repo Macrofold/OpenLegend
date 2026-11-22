@@ -502,10 +502,17 @@ function MemoryEditor({
   update,
   remove,
   drafts,
-  ranking,
+  edit,
 }: {
   drafts?: Map<string, string>;
-  ranking?: { value: string; change(value: string): void };
+  edit?: {
+    importance: string;
+    changeImportance(value: string): void;
+    summary: string;
+    changeSummary(value: string): void;
+    forgetting: boolean;
+    toggleForget(): void;
+  };
   entries: GodMemoryEditorEntry[];
   selected: string | null;
   select(id: string): void;
@@ -543,7 +550,7 @@ function MemoryEditor({
           </div>
           {current.json === undefined ? (
             <LoadingIndicator active label="Loading JSON" className="ol-json-loading" />
-          ) : ranking ? (
+          ) : edit ? (
             <>
               <label>
                 Memory importance
@@ -553,10 +560,28 @@ function MemoryEditor({
                   min={0}
                   max={10}
                   step="any"
-                  value={ranking.value}
-                  onChange={(event) => ranking.change(event.target.value)}
+                  disabled={edit.forgetting}
+                  value={edit.importance}
+                  onChange={(event) => edit.changeImportance(event.target.value)}
                 />
               </label>
+              <label>
+                Memory text
+                <textarea
+                  rows={4}
+                  disabled={edit.forgetting}
+                  value={edit.summary}
+                  onChange={(event) => edit.changeSummary(event.target.value)}
+                />
+              </label>
+              <Button variant={edit.forgetting ? 'quiet' : 'danger'} onPress={edit.toggleForget}>
+                {edit.forgetting ? 'Keep memory' : 'Forget memory'}
+              </Button>
+              {edit.forgetting && (
+                <p role="status">
+                  Save person changes to forget this memory and clear related recollections.
+                </p>
+              )}
               <textarea readOnly aria-label="Memory JSON" value={current.json} />
             </>
           ) : (
@@ -592,9 +617,14 @@ export function PersonMemoryEditor({
   const [selected, setSelected] = useState<GodMemoryEditorEntry | null>(null);
   const [importance, setImportance] = useState('');
   const [previous, setPrevious] = useState('');
+  const [summary, setSummary] = useState('');
+  const [previousSummary, setPreviousSummary] = useState('');
+  const [forgetting, setForgetting] = useState(false);
   const [refreshAt, setRefreshAt] = useState<Date | null>(null);
-  const dirty = !!selected?.json && importance !== previous;
-  const valid = !!importance.trim() && Number(importance) >= 0 && Number(importance) <= 10;
+  const dirty =
+    !!selected?.json && (forgetting || importance !== previous || summary !== previousSummary);
+  const valid =
+    forgetting || (!!importance.trim() && Number(importance) >= 0 && Number(importance) <= 10);
   const load = useCallback(
     async (before?: string) => {
       const attempt = ++generation.current;
@@ -621,7 +651,10 @@ export function PersonMemoryEditor({
               }
             : result,
         );
-        if (!before) setSelected(null);
+        if (!before) {
+          setSelected(null);
+          setForgetting(false);
+        }
         setRefreshAt(new Date());
       } catch (problem) {
         if (generation.current === attempt) setError(String(problem));
@@ -656,10 +689,13 @@ export function PersonMemoryEditor({
       if (generation.current !== attempt) return;
       if (!result.ok || !result.json || result.hash !== entry.hash)
         throw new Error(result.message || 'This memory changed. Refresh and try again.');
-      const record = JSON.parse(result.json) as { importance: number };
+      const record = JSON.parse(result.json) as { importance: number; summary: string };
       setSelected({ ...entry, json: JSON.stringify(record, null, 2) });
       setPrevious(String(record.importance));
       setImportance(String(record.importance));
+      setPreviousSummary(record.summary);
+      setSummary(record.summary);
+      setForgetting(false);
     } catch (problem) {
       if (generation.current === attempt) {
         setSelected(null);
@@ -678,7 +714,13 @@ export function PersonMemoryEditor({
         actorId,
         entryId: selected.id,
         expectedHash: selected.hash,
-        importance: Number(importance),
+        change: forgetting
+          ? { operation: 'forget' }
+          : {
+              operation: 'update',
+              importance: Number(importance),
+              ...(summary !== previousSummary && { summary }),
+            },
         cut: {
           generation: loaded.generation,
           manifestRevision: loaded.manifestRevision,
@@ -688,7 +730,11 @@ export function PersonMemoryEditor({
       });
       if (generation.current !== attempt) return false;
       if (!result.ok) throw new Error(result.message);
-      setPrevious(importance);
+      // The accepted change can withdraw other entries in this read. Clear
+      // the older page even when its replacement is temporarily unavailable.
+      setLoaded(null);
+      setSelected(null);
+      setForgetting(false);
       await load();
       return true;
     } catch (problem) {
@@ -719,7 +765,7 @@ export function PersonMemoryEditor({
     <EditorPanel
       title={`Edit ${loaded.name}`}
       opener={opener}
-      scope="Importance affects which memories come to mind. Saving keeps the original account and its wording."
+      scope="Importance affects which memories come to mind. Changing the wording or forgetting a memory clears recollections that relied on it."
       saveLabel="Save person changes"
       dirty={dirty}
       saving={loading}
@@ -728,6 +774,8 @@ export function PersonMemoryEditor({
       onSave={save}
       onDiscard={() => {
         setImportance(previous);
+        setSummary(previousSummary);
+        setForgetting(false);
         setError('');
       }}
       onClose={close}
@@ -752,7 +800,14 @@ export function PersonMemoryEditor({
                 )}
                 selected={selected?.id ?? null}
                 select={(id) => void select(id)}
-                ranking={{ value: importance, change: setImportance }}
+                edit={{
+                  importance,
+                  changeImportance: setImportance,
+                  summary,
+                  changeSummary: setSummary,
+                  forgetting,
+                  toggleForget: () => setForgetting((previous) => !previous),
+                }}
               />
             </div>
           ),

@@ -47,51 +47,100 @@ impl NativeWorldSession {
     }
 }
 
+/// The authorized editor changes only explicitly selected memory fields. A
+/// deletion uses the same forgetting graph as the original creator route.
+pub enum PersonMemoryEdit {
+    Update {
+        importance: f64,
+        summary: Option<crate::text::JsText>,
+    },
+    Forget,
+}
+impl PersonMemoryEdit {
+    pub fn withdraws_source(&self) -> bool {
+        matches!(
+            self,
+            Self::Forget
+                | Self::Update {
+                    summary: Some(_),
+                    ..
+                }
+        )
+    }
+
+    pub fn valid(&self) -> bool {
+        match self {
+            Self::Update {
+                importance,
+                summary,
+            } => {
+                (0.0..=10.0).contains(importance)
+                    && summary
+                        .as_ref()
+                        .is_none_or(|text| text.character_count() <= 32_768)
+            }
+            Self::Forget => true,
+        }
+    }
+}
+
 impl NativeWorldSession {
-    /// Under the application's protected-turn save, hydrate and edit just one
-    /// selected memory. The operation proves its current body hash again.
-    pub fn begin_memory_ranking(
+    /// Hydrate the exact selected memory inside a protected save. The draft
+    /// and the source’s current revision are enforced before any replacement.
+    pub fn begin_editor_memory_edit(
         &mut self,
         actor: &str,
         expected: &PersonEditorCut<'_>,
         reference: crate::experience::PersonalSourceRef,
-        importance: f64,
+        edit: PersonMemoryEdit,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         if reference.kind != crate::experience::PersonalSourceKind::Memory
             || !reference.validate()
             || !crate::values::is_safe_record_id(&reference.id)
-            || !(0.0..=10.0).contains(&importance)
+            || !edit.valid()
         {
-            return Err(failure("invalid memory importance"));
+            return Err(failure("invalid memory edit"));
         }
         if self.inspect_person_editor(actor, |_, current| current == *expected)? != Some(true) {
             return Err(stale("person-editor-cut"));
         }
+        use crate::experience::PrivacyEditMode;
+        let mode = match edit {
+            PersonMemoryEdit::Update {
+                importance,
+                summary: None,
+            } => PrivacyEditMode::Rank {
+                revision: reference.revision,
+                importance,
+            },
+            PersonMemoryEdit::Update {
+                importance,
+                summary: Some(summary),
+            } => PrivacyEditMode::Rewrite {
+                revision: reference.revision,
+                importance,
+                summary,
+            },
+            PersonMemoryEdit::Forget => PrivacyEditMode::ForgetMemory {
+                revision: reference.revision,
+            },
+        };
         self.session
-            .begin_recall_edit(
-                actor,
-                &reference.id,
-                crate::experience::PrivacyEditMode::Rank {
-                    revision: reference.revision,
-                    importance,
-                },
-                None,
-                self.history_edit_limits,
-            )
+            .begin_recall_edit(actor, &reference.id, mode, None, self.history_edit_limits)
             .map_err(failure)
     }
 }
 
 impl RuntimePreparedProducts<'_> {
-    pub fn memory_ranking<'a>(
+    pub fn memory_replacement<'a>(
         &'a self,
         budget: &'a ByteBudget,
     ) -> Result<Option<(&str, &str, &str, RuntimeRecallDecoder<'a>)>, RuntimeError> {
         let CompletedOperation::RecallEdit(edit) = self.operation else {
             return Ok(None);
         };
-        let Some(old_revision) = edit.ranking_revision() else {
+        let Some(old_revision) = edit.replacement_revision() else {
             return Ok(None);
         };
         Ok(Some((

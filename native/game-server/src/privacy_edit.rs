@@ -253,6 +253,7 @@ pub(crate) async fn edit(
                             edit,
                             product.changes(),
                             &product.retain_history(),
+                            None,
                         )
                         .map_err(RuntimeError::application_refused)?,
                     )

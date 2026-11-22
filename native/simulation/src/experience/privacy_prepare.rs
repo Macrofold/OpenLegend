@@ -1072,6 +1072,11 @@ impl PrivacyPreparationCursor {
                         .records
                         .apply_verified_hydration(metadata)
                         .map_err(|_| invalid())?;
+                    // The selection already owns its body and header charge.
+                    // Transfer only the wrapper and the predecessor storage
+                    // funded by this cursor, including when no pages were loaded.
+                    let prepared_header =
+                        size_of::<PreparedPrivacyEdit>() - size_of::<PrivacySelection>();
                     let bytes = self
                         .predecessors
                         .iter()
@@ -1079,7 +1084,7 @@ impl PrivacyPreparationCursor {
                             self.predecessors
                                 .capacity()
                                 .checked_mul(size_of::<HistoryPredecessor>())
-                                .and_then(|n| n.checked_add(size_of::<PreparedPrivacyEdit>()))
+                                .and_then(|n| n.checked_add(prepared_header))
                                 .ok_or(ExecutionError::Capacity)?,
                             |n, prior| n.checked_add(prior.id.capacity()),
                         )

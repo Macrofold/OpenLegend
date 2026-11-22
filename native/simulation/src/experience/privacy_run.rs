@@ -12,8 +12,22 @@ use crate::worlds::RecognitionPrivacyPreparation;
 
 pub(crate) enum PrivacyEditMode {
     Forget,
-    Rank { revision: String, importance: f64 },
-    Correct { event_id: String },
+    ForgetMemory {
+        revision: String,
+    },
+    Rank {
+        revision: String,
+        importance: f64,
+    },
+    Rewrite {
+        revision: String,
+        importance: f64,
+        summary: crate::text::JsText,
+    },
+    InvalidateProse,
+    Correct {
+        event_id: String,
+    },
 }
 pub(crate) enum PrivacyEditAnswer {
     History(HistoryEditAnswer),
@@ -57,11 +71,18 @@ pub(crate) struct PrivacyEditCursor {
     _storage: ByteReservation,
 }
 impl PrivacyEditMode {
+    pub(super) fn forgets(&self) -> bool {
+        matches!(self, Self::Forget | Self::ForgetMemory { .. })
+    }
+
     pub(super) fn retained_bytes(&self) -> usize {
         match self {
-            Self::Forget => 0,
+            Self::Forget | Self::InvalidateProse => 0,
+            Self::Rewrite {
+                revision, summary, ..
+            } => revision.capacity().saturating_add(summary.storage_bytes()),
             Self::Correct { event_id } => event_id.capacity(),
-            Self::Rank { revision, .. } => revision.capacity(),
+            Self::ForgetMemory { revision } | Self::Rank { revision, .. } => revision.capacity(),
         }
     }
 }
@@ -341,7 +362,7 @@ fn begin(
         selection,
         core.state,
         &released.sources,
-        matches!(mode, PrivacyEditMode::Forget),
+        mode.forgets(),
         budget,
     )?;
     invalidate_temporal_facets(
@@ -356,8 +377,11 @@ fn begin(
     )?;
     for id in &consequences.revoked_facts {
         match mode {
-            PrivacyEditMode::Rank { .. } => return Err(ExecutionError::Invariant),
-            PrivacyEditMode::Forget => {
+            PrivacyEditMode::Rank { .. } | PrivacyEditMode::Rewrite { .. } => {
+                return Err(ExecutionError::Invariant);
+            }
+            PrivacyEditMode::InvalidateProse => (),
+            PrivacyEditMode::Forget | PrivacyEditMode::ForgetMemory { .. } => {
                 core.journal
                     .experience
                     .forget_alias(&mut core.state.experience, &actor, id)?;
@@ -404,7 +428,7 @@ fn finish(
         )
         .map_err(ExecutionError::Activity)?;
     core.revoke_practice_support(actor, affected, budget)?;
-    if matches!(mode, PrivacyEditMode::Forget) {
+    if mode.forgets() {
         for id in affected
             .iter()
             .filter(|id| !consequences.retained_direct.contains(*id))
