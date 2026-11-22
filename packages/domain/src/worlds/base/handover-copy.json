@@ -1,4 +1,5 @@
 {
+  "candidateLots": 6,
   "title": "Trade",
   "noTransfer": "Nothing moves before acceptance.",
   "gift": "Nothing — a gift",
@@ -23,6 +24,8 @@
   "notPortable": "This object cannot be handed over.",
   "quantity": "You do not have that many free to offer.",
   "wholeObject": "Offer the whole object.",
+  "accessGranted": "Clear this bag's access list before offering it.",
+  "duplicateItem": "Choose each item or containing object only once.",
   "alreadyOffered": "These items are already being offered.",
   "unavailable": "These offer terms are no longer available.",
   "expired": "That offer has expired.",
@@ -58,6 +61,12 @@
   "unknown": "No item has been disclosed. They can offer an item first.",
   "replyAcceptGift": "Accept {person}'s gift of {terms}. Receive it into my possession now.",
   "replyDeclineGift": "Decline {person}'s offer of {terms}. Close this proposal; receive nothing and transfer nothing.",
+  "rememberedReply": {
+    "accept": "Accept these offered terms",
+    "decline": "Decline these offered terms",
+    "withdraw": "Withdraw my offer"
+  },
+  "rememberedOfferDescription": "Last known offer. No possessions move until a separately admitted acceptance. Current availability is checked when you attempt it.",
   "replyDuringWork": "Replying does not interrupt unrelated work.",
   "decision": "Choose freely using the exact items, your current needs, possessions and goals. Declining is a valid choice. No item moves before acceptance.",
   "draftChanged": "The offer changed or ended. Keep your draft and review the current terms, or submit a new offer."

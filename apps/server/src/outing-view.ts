@@ -19,6 +19,7 @@ import {
   knownGuideDestinations,
   BASE_OUTING,
   BASE_COMBAT_HELP,
+  BASE_HANDOVER,
   observerDescription,
   seesEntity,
   worldPosition,
@@ -676,16 +677,10 @@ function itemOfferViews(world: WorldState, actorId: string): OutingView[] {
         distance: null,
         deadline: known.expiresAt,
         company: 'Only the personally received terms are known',
-        description:
-          'Last known offer. No possessions move until a separately admitted acceptance. Current availability is checked when you attempt it.',
+        description: BASE_HANDOVER.copy.rememberedOfferDescription,
         choices: (incoming ? (['accept', 'decline'] as const) : (['withdraw'] as const)).map(
           (operation) => {
-            const label =
-              operation === 'accept'
-                ? 'Accept these offered terms'
-                : operation === 'decline'
-                  ? 'Decline these offered terms'
-                  : 'Withdraw my offer';
+            const label = BASE_HANDOVER.copy.rememberedReply[operation];
             return {
               id: JSON.stringify(['known-offer', known.id, known.revision, operation]),
               label,

@@ -9,7 +9,7 @@ use crate::{
         gift::{GiftMessenger, stage_gift_notice},
     },
     geometry::{GeometryAnswers, GeometryBinding, GeometryQueries},
-    handover::{GiftOffer, ReceivedGifts, RetainedGift, loose_offer_still_held},
+    handover::{GiftOffer, ReceivedGifts, RetainedGift, trade_offer_still_held},
     host::{ByteBudget, ByteReservation},
 };
 
@@ -77,7 +77,7 @@ impl DueGifts {
                     .gifts
                     .retained(&id)
                     .ok_or(ExecutionError::Invariant)?;
-                if loose_offer_still_held(state, &retained.offer) {
+                if trade_offer_still_held(state, &retained.offer) {
                     continue;
                 }
                 (Arc::clone(retained), Ending::Lapse)

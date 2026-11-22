@@ -51,11 +51,15 @@ impl GiftLot {
     /// Check the actual persisted offer shape before using its received terms.
     /// This confers no stock access. The command rechecks current ownership.
     pub fn valid_shape(&self) -> bool {
+        let container = self.contents_revision.is_some();
         is_safe_record_id(&self.item_id)
             && self.definition_pin.is_valid()
             && (1..=MAX_SAFE_INTEGER).contains(&self.quantity)
             && self.revision <= MAX_SAFE_INTEGER
             && self.placement_revision <= MAX_SAFE_INTEGER
+            && container == self.capacity.is_some()
+            && container == self.subtree_revision.is_some()
+            && (!container || self.whole)
             && self
                 .capacity
                 .is_none_or(|value| (1..=MAX_SAFE_INTEGER).contains(&value))
@@ -67,11 +71,6 @@ impl GiftLot {
                 .is_none_or(|value| value <= MAX_SAFE_INTEGER)
     }
 
-    fn is_loose_stock(&self) -> bool {
-        self.capacity.is_none()
-            && self.contents_revision.is_none()
-            && self.subtree_revision.is_none()
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -124,7 +123,6 @@ impl GiftOffer {
 
 pub(crate) struct RetainedGift {
     pub(crate) offer: GiftOffer,
-    review_loose_stock: bool,
     _custody: ResidentReservation,
 }
 
@@ -226,9 +224,7 @@ impl GiftState {
             }
             let row = Self::fund(offer, budget).map_err(|_| InstallError::Capacity)?;
             // A save can fall between a stock change and the next clock step.
-            if row.review_loose_stock {
-                state.review.insert(id);
-            }
+            state.review.insert(id);
             state.insert(state.rows.len(), row);
         }
         Ok(state)
@@ -301,10 +297,8 @@ impl GiftState {
         // entry may hold this body independently of current membership.
         let capacity = Self::record_bytes(&offer).ok_or(ExecutionError::Capacity)?;
         let custody = budget.reserve_record(capacity)?;
-        let review_loose_stock = offer.lots().all(GiftLot::is_loose_stock);
         Ok(Arc::new(RetainedGift {
             offer,
-            review_loose_stock,
             _custody: custody,
         }))
     }
@@ -438,7 +432,7 @@ impl GiftState {
     }
 
     pub(crate) fn can_queue_review(&self, id: &str) -> bool {
-        self.rows.get(id).is_some_and(|row| row.review_loose_stock) && !self.review_pending(id)
+        self.rows.contains_key(id) && !self.review_pending(id)
     }
 
     /// The row already funds one review key for its entire pending lifetime.
@@ -742,8 +736,27 @@ impl<'a> ProposalWindow<'a> {
         Self { pending, owner, previous, at, outgoing_full: outgoing as u64 >= policy.outgoing }
     }
 
-    pub(crate) fn item_busy(&self, id: &str) -> bool {
-        self.pending.for_item(id).is_some_and(|offer| Some(offer.id.as_str()) != self.previous)
+    /// Check related promises in indexed ancestors and the selected bag's
+    /// children. No other inventory or proposals are visited.
+    pub(crate) fn item_busy(&self, state: &crate::simulation::SimulationState, id: &str) -> bool {
+        let promised = |id: &str| {
+            self.pending
+                .for_item(id)
+                .is_some_and(|offer| Some(offer.id.as_str()) != self.previous)
+        };
+        if self.pending.is_empty() {
+            return false;
+        }
+        let entities = &state.physical.entities;
+        let selected = entities.get(id);
+        let mut parent = selected.and_then(crate::install::inventory_parent);
+        while let Some(id) = parent {
+            if promised(id) {
+                return true;
+            }
+            parent = entities.get(id).and_then(crate::install::inventory_parent);
+        }
+        selected.is_some_and(|item| stock_tree_has(state, item, &mut |child| promised(&child.id)))
     }
 
     pub(crate) fn recipient_problem<'b>(
@@ -771,8 +784,21 @@ impl<'a> ProposalWindow<'a> {
     }
 }
 
-/// For gifts, a previous split/revision is allowed if equivalent unclaimed
-/// units remain at the original directly accessible custodian.
+fn stock_tree_has(
+    state: &crate::simulation::SimulationState,
+    item: &crate::state::Entity,
+    test: &mut impl FnMut(&crate::state::Entity) -> bool,
+) -> bool {
+    test(item)
+        || (item.container.is_some()
+            && state
+                .inventory
+                .children(&state.physical.entities, &item.id, false)
+                .any(|child| stock_tree_has(state, child, test)))
+}
+
+/// A trade can transfer the whole bag without exposing its children, or
+/// select an accessible lot inside a bag. Use the ordinary custody and work checks.
 pub(crate) fn usable_lot<'a>(
     state: &'a crate::simulation::SimulationState,
     actor: &str,
@@ -783,22 +809,27 @@ pub(crate) fn usable_lot<'a>(
         &'a crate::state::Entity,
         &'a crate::install::ItemDefinitionRead,
     ),
-    (&'static str, &'static str),
+    (&'static str, &'a str),
 > {
     use crate::worlds::base_handover::GIFT_COPY as copy;
-    let entities = &state.physical.entities;
-    let body = entities.get(actor).and_then(|entity| entity.actor.as_ref());
-    let entity = entities
-        .get(id)
-        .filter(|entity| {
-            entity.container.is_none()
-                && state.inventory.has_direct_item(entities, actor, entity)
-                && matches!(
-                    entity.placement,
-                    Some(crate::state::Placement::Contained { .. })
-                )
-        })
+    let entity = crate::install::owned_item_ancestry(&state.physical, actor, id, |_| {})
+        .ok()
+        .flatten()
         .ok_or(("item-unavailable", copy.own_possessions))?;
+    let definition = transferable_lot(state, actor, entity, quantity)?;
+    Ok((entity, definition))
+}
+
+/// Inspect stock after its caller has already established the owner's exact
+/// accessible ancestry. Does not resolve or grant possession.
+pub(crate) fn transferable_lot<'a>(
+    state: &'a crate::simulation::SimulationState,
+    actor: &str,
+    entity: &'a crate::state::Entity,
+    quantity: u64,
+) -> Result<&'a crate::install::ItemDefinitionRead, (&'static str, &'a str)> {
+    use crate::worlds::base_handover::GIFT_COPY as copy;
+    let id = &entity.id;
     let lot = entity
         .item
         .as_ref()
@@ -810,48 +841,72 @@ pub(crate) fn usable_lot<'a>(
         .get(&lot.definition_pin.id)
         .filter(|definition| definition.pin == lot.definition_pin)
         .ok_or(("item-unavailable", copy.own_possessions))?;
-    if !definition.portable {
+    if !definition.portable || lot.assembly_claim.is_some() {
         return Err(("not-portable", copy.not_portable));
     }
     if quantity != lot.quantity && !crate::execution::partitionable_stock(entity, definition) {
         return Err(("whole-object", copy.whole_object));
     }
-    if !crate::execution::can_debit_lot(state, entity, quantity)
-        || body
-            .and_then(|body| body.action.as_ref())
-            .is_some_and(|action| {
-                action.item_id.as_deref() == Some(id)
-                    || action.food_preparation.as_ref().is_some_and(|preparation| {
-                        preparation.inputs.values().any(|input| input == id)
-                    })
-            })
+    if quantity == 0
+        || quantity
+            > lot
+                .quantity
+                .saturating_sub(state.physical.holds.quantity(id))
     {
         return Err(("quantity", copy.quantity));
     }
-    Ok((entity, definition))
+    let action = state
+        .physical
+        .entities
+        .get(actor)
+        .and_then(|entity| entity.actor.as_ref())
+        .and_then(|body| body.action.as_ref());
+    if (action.is_some() || !state.physical.holds.is_empty())
+        && crate::execution::inventory_work_bound(state, action, entity, &mut || Ok(()))
+            .unwrap_or(true)
+    {
+        return Err((
+            "in-use",
+            &state.installed.retained.item_handling_read.drop.needed,
+        ));
+    }
+    if entity.container.is_some()
+        && stock_tree_has(state, entity, &mut |item| {
+            item.container
+                .as_ref()
+                .is_some_and(|bag| bag.access.is_some())
+        })
+    {
+        return Err(("access-granted", copy.access_granted));
+    }
+    Ok(definition)
 }
 
-pub(crate) fn prepare_loose_lot(
-    state: &crate::simulation::SimulationState,
+pub(crate) fn prepare_trade_lot<'a>(
+    state: &'a crate::simulation::SimulationState,
     owner: &str,
     selection: &GiftSelection,
-) -> Result<GiftLot, (&'static str, &'static str)> {
+) -> Result<GiftLot, (&'static str, &'a str)> {
     use crate::worlds::base_handover::GIFT_COPY as copy;
     let (entity, definition) = usable_lot(state, owner, &selection.item_id, selection.quantity)?;
     let item = entity
         .item
         .as_ref()
         .ok_or(("item-unavailable", copy.own_possessions))?;
-    let Some(crate::state::Placement::Contained { revision, .. }) = &entity.placement else {
-        return Err(("item-unavailable", copy.own_possessions));
-    };
+    let revision = placement_revision(entity).ok_or(("item-unavailable", copy.own_possessions))?;
+    let contents_revision = entity
+        .container
+        .as_ref()
+        .map(|_| entity.inventory_revision.unwrap_or_default());
     if selection
         .expected_revision
         .is_some_and(|version| version != item.revision)
         || selection
             .placement_revision
-            .is_some_and(|version| version != *revision)
-        || selection.expected_contents_revision.is_some()
+            .is_some_and(|version| version != revision)
+        || selection
+            .expected_contents_revision
+            .is_some_and(|version| Some(version) != contents_revision)
     {
         return Err(("stale", copy.review_item));
     }
@@ -861,14 +916,24 @@ pub(crate) fn prepare_loose_lot(
         quantity: selection.quantity,
         whole: !crate::execution::partitionable_stock(entity, definition),
         revision: item.revision,
-        placement_revision: *revision,
-        capacity: None,
-        contents_revision: None,
-        subtree_revision: None,
+        placement_revision: revision,
+        capacity: definition.container_capacity(),
+        contents_revision,
+        subtree_revision: entity.container.as_ref().map(|bag| bag.subtree_revision),
     })
 }
 
-pub(crate) fn loose_lot_current(
+fn placement_revision(entity: &crate::state::Entity) -> Option<u64> {
+    match entity.placement {
+        Some(
+            crate::state::Placement::Contained { revision, .. }
+            | crate::state::Placement::Attached { revision, .. },
+        ) => Some(revision),
+        _ => None,
+    }
+}
+
+pub(crate) fn trade_lot_current(
     state: &crate::simulation::SimulationState,
     owner: &str,
     lot: &GiftLot,
@@ -876,13 +941,23 @@ pub(crate) fn loose_lot_current(
 ) -> bool {
     usable_lot(state, owner, &lot.item_id, lot.quantity).is_ok_and(|(entity, definition)| {
         definition.pin == lot.definition_pin
-            && (!exact || entity.item.as_ref().is_some_and(|item| item.revision == lot.revision)
-                && matches!(&entity.placement, Some(crate::state::Placement::Contained { revision, .. }) if *revision == lot.placement_revision))
-            && lot.is_loose_stock()
+            && (!exact
+                || entity
+                    .item
+                    .as_ref()
+                    .is_some_and(|item| item.revision == lot.revision)
+                    && placement_revision(entity) == Some(lot.placement_revision))
+            && definition.container_capacity() == lot.capacity
+            && entity
+                .container
+                .as_ref()
+                .map(|_| entity.inventory_revision.unwrap_or_default())
+                == lot.contents_revision
+            && entity.container.as_ref().map(|bag| bag.subtree_revision) == lot.subtree_revision
     })
 }
 
-pub(crate) fn loose_offer_current(
+pub(crate) fn trade_offer_current(
     state: &crate::simulation::SimulationState,
     offer: &GiftOffer,
 ) -> bool {
@@ -890,11 +965,30 @@ pub(crate) fn loose_offer_current(
     offer
         .offered
         .iter()
-        .all(|lot| loose_lot_current(state, &offer.offerer_id, lot, exact))
+        .all(|lot| trade_lot_current(state, &offer.offerer_id, lot, exact))
         && offer
             .requested
             .iter()
-            .all(|lot| loose_lot_current(state, &offer.recipient_id, lot, true))
+            .all(|lot| trade_lot_current(state, &offer.recipient_id, lot, true))
+}
+
+/// Ordinary consent can remain pending while a recipient temporarily lacks
+/// support for an exposed load. Only acceptance needs that destination.
+pub(crate) fn trade_offer_receivable(
+    state: &crate::simulation::SimulationState,
+    offer: &GiftOffer,
+) -> bool {
+    [
+        (&offer.recipient_id, &offer.offered),
+        (&offer.offerer_id, &offer.requested),
+    ]
+    .into_iter()
+    .all(|(recipient, lots)| {
+        lots.iter().all(|lot| {
+            lot.capacity.is_none()
+                || crate::execution::can_receive_trade_container(state, recipient, &lot.item_id)
+        })
+    })
 }
 
 fn gift_able(entity: &crate::state::Entity) -> bool {
@@ -907,7 +1001,7 @@ fn gift_able(entity: &crate::state::Entity) -> bool {
 
 /// Ongoing consent uses actor life and stock custody. A temporary action
 /// restriction such as sleep prevents a new command without ending an offer.
-pub(crate) fn loose_offer_still_held(
+pub(crate) fn trade_offer_still_held(
     state: &crate::simulation::SimulationState,
     offer: &GiftOffer,
 ) -> bool {
@@ -924,7 +1018,7 @@ pub(crate) fn loose_offer_still_held(
     };
     able(&offer.offerer_id, true)
         && able(&offer.recipient_id, !offer.requested.is_empty())
-        && loose_offer_current(state, offer)
+        && trade_offer_current(state, offer)
 }
 
 pub(crate) fn gift_participant(
@@ -1232,7 +1326,7 @@ impl ReceivedGifts {
             let gift = &record.disclosure;
             (gift.offer.recipient_id == actor
                 && gift.offer.requested.is_empty()
-                && gift.offer.offered.iter().all(GiftLot::is_loose_stock))
+                && gift.offer.offered.iter().all(|lot| lot.capacity.is_none()))
             .then_some((gift, &record.original.header().reference))
         })
     }
@@ -1331,4 +1425,5 @@ pub struct GiftReadLot<'a> {
     pub item: crate::install::OwnedItem<'a>,
     pub description: Option<&'a crate::text::JsText>,
     pub whole: bool,
+    pub contents_revision: Option<u64>,
 }

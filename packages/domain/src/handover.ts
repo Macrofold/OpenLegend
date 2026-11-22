@@ -525,7 +525,7 @@ export function prepareItemOffer(
     const busy = inventoryWorkReason(world, actor.id, item.id);
     if (busy) return outcome(false, 'in-use', busy);
     if (grantedContainer(world, item.id))
-      return outcome(false, 'access-granted', "Clear this bag's access list before offering it.");
+      return outcome(false, 'access-granted', BASE_HANDOVER.copy.accessGranted);
     items.push(item);
   }
   const receivedPrior =
@@ -586,11 +586,11 @@ export function prepareItemOffer(
   const all = [...items.map((item) => item.id), ...requested.map((lot) => lot.itemId)],
     selected = new Set(all);
   if (selected.size !== all.length)
-    return outcome(false, 'duplicate-item', 'Choose each item or containing object only once.');
+    return outcome(false, 'duplicate-item', BASE_HANDOVER.copy.duplicateItem);
   for (const id of all) {
     const ancestors = objectAncestors(world, id);
     if (ancestors.some((ancestor) => ancestor.id !== id && selected.has(ancestor.id)))
-      return outcome(false, 'duplicate-item', 'Choose each item or containing object only once.');
+      return outcome(false, 'duplicate-item', BASE_HANDOVER.copy.duplicateItem);
     if (promised(id) || ancestors.some((entity) => promised(entity.id)) || promisedDescendant(id))
       return requested.some((lot) => lot.itemId === id)
         ? outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable)

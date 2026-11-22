@@ -1,9 +1,9 @@
-//! Read the current recipient choices for one exact, directly carried gift.
+//! Read the current recipient choices for one exact carried gift.
 use super::*;
 use crate::{
     capture::{ActorReadPurpose, PlayerObservedBody, capture_actor_perception},
     geometry::{SightRay, interaction_reach},
-    handover::{GiftSelection, ProposalWindow, gift_participant, prepare_loose_lot},
+    handover::{GiftSelection, ProposalWindow, gift_participant, prepare_trade_lot},
     reception::SightBatch,
     text::JsText,
     values::{deserialize_present_safe_integer, deserialize_safe_integer},
@@ -51,11 +51,11 @@ pub struct RuntimeOfferPage<'a> {
     pub next: Option<RuntimeOfferCursor>,
 }
 
-pub enum RuntimeOfferProblem {
+pub enum RuntimeOfferProblem<'a> {
     Unavailable,
     ChangedSource,
     ChangedPage,
-    BlockedSource(&'static str),
+    BlockedSource(&'a str),
 }
 
 pub struct RuntimeOfferSelection<'a> {
@@ -78,7 +78,7 @@ impl NativeWorldSession {
             &GeometryQueries,
         ) -> Result<(GeometryAnswers, ByteReservation), RuntimeError>,
         consume: impl FnOnce(
-            Result<RuntimeOfferPage<'_>, RuntimeOfferProblem>,
+            Result<RuntimeOfferPage<'_>, RuntimeOfferProblem<'_>>,
             &ByteBudget,
         ) -> Result<T, RuntimeError>,
     ) -> Result<T, RuntimeError> {
@@ -107,11 +107,6 @@ impl NativeWorldSession {
             return consume(Err(Problem::Unavailable), budget);
         };
         let item = selection.item;
-        if item.container_id != actor
-            || item.container_revision != owner.inventory_revision.unwrap_or_default()
-        {
-            return consume(Err(Problem::ChangedSource), budget);
-        }
         let _source = budget.reserve(1024 + 2 * item.item_id.len())?;
         let selected = GiftSelection {
             item_id: item.item_id.clone(),
@@ -120,7 +115,7 @@ impl NativeWorldSession {
             placement_revision: Some(item.placement_revision),
             expected_contents_revision: item.contents_revision,
         };
-        if let Err((code, message)) = prepare_loose_lot(state, actor, &selected) {
+        if let Err((code, message)) = prepare_trade_lot(state, actor, &selected) {
             let problem = if matches!(code, "stale" | "item-unavailable") {
                 Problem::ChangedSource
             } else {
@@ -128,8 +123,19 @@ impl NativeWorldSession {
             };
             return consume(Err(problem), budget);
         }
+        let entities = &state.physical.entities;
+        let source = entities
+            .get(&item.item_id)
+            .and_then(crate::install::inventory_parent)
+            .filter(|parent| *parent == item.container_id)
+            .and_then(|parent| entities.get(parent));
+        if source.is_none_or(|source| {
+            item.container_revision != source.inventory_revision.unwrap_or_default()
+        }) {
+            return consume(Err(Problem::ChangedSource), budget);
+        }
         let window = ProposalWindow::new(state, actor, None, policy);
-        if window.item_busy(&item.item_id) {
+        if window.item_busy(state, &item.item_id) {
             return consume(
                 Err(Problem::BlockedSource(GIFT_COPY.already_offered)),
                 budget,

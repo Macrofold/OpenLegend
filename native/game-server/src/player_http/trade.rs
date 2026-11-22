@@ -174,8 +174,12 @@ fn render(
             revision: lot.item.revision,
             placement_revision: lot.item.placement_revision,
             whole: lot.whole,
-            contents_revision: None,
-            capacity: None,
+            contents_revision: lot.contents_revision,
+            capacity: lot
+                .item
+                .container
+                .as_ref()
+                .map(|container| container.capacity),
         })
         .collect();
     let known_lots = read

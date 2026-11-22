@@ -33,7 +33,7 @@ impl CoreMutation<'_> {
         Ok(())
     }
 
-    /// Both sets of already validated directly held lots move in one undo
+    /// Both sets of already validated carried lots move in one undo
     /// checkpoint. A reciprocal exchange cannot merge away a promised lot
     /// before the other side has moved it.
     pub(crate) fn transfer_handover_lots(
@@ -49,12 +49,11 @@ impl CoreMutation<'_> {
                 (&offer.recipient_id, &offer.offerer_id, &offer.requested),
             ] {
                 for lot in lots {
-                    let Some(moved) = self.transfer_direct_loose_lot(
+                    let Some(moved) = self.transfer_trade_lot(
                         giver,
                         receiver,
                         &lot.item_id,
                         lot.quantity,
-                        "handover",
                         merge,
                     )?
                     else {

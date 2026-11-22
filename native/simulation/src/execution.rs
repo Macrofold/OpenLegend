@@ -43,6 +43,7 @@ mod hearth;
 mod inventory;
 pub(crate) mod gift;
 mod item_holds;
+pub(crate) use inventory::can_receive_trade_container;
 pub(crate) use inventory::partitionable_stock;
 pub use inventory::{OwnedArrangement, OwnedMove, OwnedStockLot, OwnedStockSelection};
 pub(crate) use inventory::{OwnedMoveError, can_split_stock, drop_item_problem, inventory_work_bound, same_container_merge};
@@ -374,7 +375,8 @@ impl CandidateJournal {
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
-        self.physical.queue_gift_reviews(&mut state.physical)?;
+        self.physical
+            .queue_gift_reviews(&mut state.physical, &state.inventory)?;
         self.physical.settle_agency_memory(&mut state.physical)?;
         Ok(PreparedJournalRelease {
             owner: self.owner.clone(),

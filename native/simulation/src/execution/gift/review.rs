@@ -1,4 +1,4 @@
-//! Pending consent follows the exact loose-stock and participant indexes.
+//! Pending consent follows the exact stock and participant indexes.
 //! The current candidate journal identifies mutations and restores its cutoff
 //! together with any review hints on rollback.
 
@@ -9,6 +9,7 @@ impl PhysicalJournal {
     pub(crate) fn queue_gift_reviews(
         &mut self,
         state: &mut PhysicalState,
+        inventory: &crate::install::Inventory,
     ) -> Result<(), ExecutionError> {
         let through = self.undo.len();
         if through == self.gift_review_through || state.gifts.is_empty() {
@@ -43,17 +44,35 @@ impl PhysicalJournal {
             .ok_or(ExecutionError::Invariant)?
         {
             let lot = match undo {
-                Undo::Inventory(edit) if edit.edited_item() || edit.changed_placement() => state
+                Undo::Inventory(edit) if edit.edited_item() || edit.changed_placement() => {
+                    if let Some(item) = state.entities.resolve(edit.child) {
+                        select_changed_stock(
+                            state,
+                            inventory,
+                            item,
+                            edit.changed_placement(),
+                            &mut select,
+                        )?;
+                    }
+                    None
+                }
+                Undo::InventoryAvailability(summary) => state
                     .entities
-                    .resolve(edit.child)
+                    .resolve(summary.handle)
+                    .filter(|entity| entity.container.is_some())
                     .map(|entity| entity.id.as_str()),
                 Undo::ItemHoldAdded { id, .. } => state.holds.get(id).map(|hold| hold.item_id()),
                 Undo::ItemHoldEnded { hold, .. } => Some(hold.item_id()),
-                Undo::Placement { entity, .. } => state
-                    .entities
-                    .resolve(*entity)
-                    .filter(|entity| entity.item.is_some())
-                    .map(|entity| entity.id.as_str()),
+                Undo::Placement { entity, .. } => {
+                    if let Some(item) = state
+                        .entities
+                        .resolve(*entity)
+                        .filter(|entity| entity.item.is_some())
+                    {
+                        select_changed_stock(state, inventory, item, true, &mut select)?;
+                    }
+                    None
+                }
                 _ => None,
             };
             if let Some(offer) = lot.and_then(|id| state.gifts.for_item(id)) {
@@ -83,11 +102,31 @@ impl PhysicalJournal {
     }
 }
 
+fn select_changed_stock(
+    state: &PhysicalState,
+    inventory: &crate::install::Inventory,
+    item: &crate::state::Entity,
+    moved: bool,
+    select: &mut impl FnMut(&str) -> Result<(), ExecutionError>,
+) -> Result<(), ExecutionError> {
+    if let Some(offer) = state.gifts.for_item(&item.id) {
+        select(&offer.id)?;
+    }
+    if moved && item.container.is_some() {
+        // A child's own placement row can stay the same while its enclosing
+        // bag moves to a different custodian.
+        for child in inventory.children(&state.entities, &item.id, false) {
+            select_changed_stock(state, inventory, child, true, select)?;
+        }
+    }
+    Ok(())
+}
+
 impl CoreMutation<'_> {
     pub(crate) fn queue_gift_reviews(&mut self) -> Result<(), ExecutionError> {
         self.journal
             .physical
-            .queue_gift_reviews(&mut self.state.physical)
+            .queue_gift_reviews(&mut self.state.physical, &self.state.inventory)
     }
 
     pub(crate) fn take_gift_review(&mut self, id: &str) -> Result<bool, ExecutionError> {

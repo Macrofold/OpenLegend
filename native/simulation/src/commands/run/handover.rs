@@ -4,8 +4,9 @@ use super::*;
 use crate::{
     execution::gift::{GiftMessenger, gift_narration, gift_terms, stage_gift_notice},
     handover::{
-        GiftDescription, GiftDescriptions, GiftLot, GiftOffer, GiftOperation, ProposalWindow, gift_participant,
-        loose_lot_current, loose_offer_current, prepare_loose_lot,
+        GiftDescription, GiftDescriptions, GiftLot, GiftOffer, GiftOperation, ProposalWindow,
+        gift_participant, prepare_trade_lot, trade_lot_current, trade_offer_current,
+        trade_offer_receivable,
     },
     worlds::base_handover::GIFT_COPY as copy,
 };
@@ -426,14 +427,14 @@ impl CommandCursor {
             let window = ProposalWindow::new(state, owner, prior, policy);
             let mut own = Vec::with_capacity(offered.len());
             for selected in offered {
-                let lot = match prepare_loose_lot(state, owner, selected) {
+                let lot = match prepare_trade_lot(state, owner, selected) {
                     Ok(lot) => lot,
                     Err((code, message)) => {
                         self.gift_refusal(code, message)?;
                         return Ok(None);
                     }
                 };
-                if window.item_busy(&selected.item_id) {
+                if window.item_busy(state, &selected.item_id) {
                     self.gift_refusal("already-offered", copy.already_offered)?;
                     return Ok(None);
                 }
@@ -478,13 +479,36 @@ impl CommandCursor {
                 };
                 let mut next = disclosed.clone();
                 next.quantity = selected.quantity;
-                if !loose_lot_current(state, target_id, &next, true)
-                    || window.item_busy(&next.item_id)
+                if !trade_lot_current(state, target_id, &next, true)
+                    || window.item_busy(state, &next.item_id)
                 {
                     self.gift_refusal("offer-lapsed", copy.reciprocal_unavailable)?;
                     return Ok(None);
                 }
                 wanted.push(next);
+            }
+            let lots = own.iter().chain(&wanted);
+            let entities = &state.physical.entities;
+            for (position, lot) in lots.clone().enumerate() {
+                let twice = lots
+                    .clone()
+                    .take(position)
+                    .any(|other| other.item_id == lot.item_id);
+                let mut parent = entities
+                    .get(&lot.item_id)
+                    .and_then(crate::install::inventory_parent);
+                let mut overlaps = false;
+                while let Some(id) = parent {
+                    if lots.clone().any(|other| other.item_id == id) {
+                        overlaps = true;
+                        break;
+                    }
+                    parent = entities.get(id).and_then(crate::install::inventory_parent);
+                }
+                if twice || overlaps {
+                    self.gift_refusal("duplicate-item", copy.duplicate_item)?;
+                    return Ok(None);
+                }
             }
             if let Some((code, message)) = window.recipient_problem(target_id, policy) {
                 let mut refusal = outcome(false, code, "");
@@ -514,7 +538,9 @@ impl CommandCursor {
         } else {
             let row = prior.ok_or(ExecutionError::Invariant)?;
             let exact = !row.requested.is_empty();
-            if op == GiftOperation::Accept && !loose_offer_current(state, row) {
+            if op == GiftOperation::Accept
+                && !(trade_offer_current(state, row) && trade_offer_receivable(state, row))
+            {
                 self.gift_refusal(
                     "offer-lapsed",
                     if exact {

@@ -13,7 +13,9 @@ mod relocate;
 mod packing;
 mod transfer;
 mod group;
+mod handover;
 use pickup::compatible_lots;
+pub(crate) use handover::can_receive_trade_container;
 pub use transfer::{OwnedArrangement, OwnedMove, OwnedStockLot, OwnedStockSelection};
 pub(crate) use transfer::{OwnedMoveError, can_split_stock, same_container_merge};
 pub(crate) use drop::inventory_work_bound;
@@ -61,7 +63,7 @@ enum ItemEdit {
 
 #[derive(Clone, Copy)]
 pub(super) struct ContentsBefore {
-    handle: EntityHandle,
+    pub(super) handle: EntityHandle,
     revision: Option<u64>,
     bag: Option<(u64, u64, u64, u64)>,
 }

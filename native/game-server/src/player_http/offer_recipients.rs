@@ -215,7 +215,7 @@ pub(super) async fn read(State(state): State<PlayerRoutes>, request: Request) ->
     }
 }
 
-fn problem(reason: RuntimeOfferProblem) -> Response {
+fn problem(reason: RuntimeOfferProblem<'_>) -> Response {
     let (code, message) = match reason {
         RuntimeOfferProblem::Unavailable => ("unavailable", WORDS.recipient_unavailable),
         RuntimeOfferProblem::ChangedSource => ("stale-source", WORDS.recipient_source_changed),

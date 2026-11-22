@@ -7,7 +7,7 @@ import { person, subjectNarration } from '../../narration.js';
 // docs/worlds/base/social.md#offering-and-accepting-possessions
 export const BASE_HANDOVER = {
   /** Compact generated suggestions; retained exact disclosures remain addressable. */
-  candidateLots: 6,
+  candidateLots: copy.candidateLots,
   copy,
   text: {
     title: copy.title,

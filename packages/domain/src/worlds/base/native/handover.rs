@@ -5,6 +5,7 @@ use std::sync::LazyLock;
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct GiftCopy {
+    pub candidate_lots: usize,
     pub changed: &'static str,
     pub reciprocal_separator: &'static str,
     pub reciprocal_unavailable: &'static str,
@@ -20,6 +21,8 @@ pub(crate) struct GiftCopy {
     pub not_portable: &'static str,
     pub quantity: &'static str,
     pub whole_object: &'static str,
+    pub access_granted: &'static str,
+    pub duplicate_item: &'static str,
     pub already_offered: &'static str,
     pub unavailable: &'static str,
     pub expired: &'static str,
