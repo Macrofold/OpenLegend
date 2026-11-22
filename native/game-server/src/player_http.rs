@@ -90,8 +90,8 @@ pub(crate) fn router(
         game.clone(),
         saves.clone(),
         authority.clone(),
-        identity,
         references.clone(),
+        identity,
     ));
     let state = PlayerRoutes {
         authority,
