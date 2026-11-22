@@ -67,7 +67,7 @@ impl AdvanceCursor {
         }
         Ok(false)
     }
-    fn accept_event(&mut self, value: CompletedEvent) -> Result<(), AdvanceError> {
+    fn accept_event(&mut self, core: &mut CoreMutation<'_>, value: CompletedEvent) -> Result<(), AdvanceError> {
         let expected = self.expected.take().ok_or_else(invalid)?;
         if expected.id != value.event.id
             || expected.order != value.completed.order()
@@ -96,6 +96,7 @@ impl AdvanceCursor {
             EventDestination::Appraisal
             | EventDestination::Territorial
             | EventDestination::Flight => {}
+            EventDestination::Travel => self.travel.as_mut().ok_or_else(invalid)?.link_notice(core, &receipt)?,
         }
         self.retain(EventBatch::Event {
             event,
@@ -314,7 +315,7 @@ impl AdvanceCursor {
         budget: &ByteBudget,
     ) -> Result<Progress, AdvanceError> {
         if let Some(AdvanceAnswer::Event(value)) = answer {
-            self.accept_event(value)?;
+            self.accept_event(core, value)?;
             answer = None;
         }
         if self.event.is_some() {
@@ -1237,7 +1238,7 @@ impl AdvanceCursor {
                     self.phase = if destination == Phase::SenseStart {
                         Phase::Predict
                     } else {
-                        Phase::Continue
+                        Phase::Travel
                     };
                     self.perception = Some(PerceptionCursor::prepare(
                         core,
@@ -1370,6 +1371,34 @@ impl AdvanceCursor {
                 }
                 Phase::Endpoint => {
                     self.begin_endpoint(core, budget)?;
+                }
+                Phase::Travel => {
+                    // Run after ordinary endpoint receiving, so arrival and
+                    // company are based on accepted results, not predictions.
+                    if self.travel.is_none() {
+                        if answer.is_some() {
+                            return Err(invalid().into());
+                        }
+                        self.travel = SettleTravel::new(core, self.candidate, budget)?;
+                    }
+                    if let Some(travel) = self.travel.as_mut() {
+                        let input = match answer.take() {
+                            None => None,
+                            Some(AdvanceAnswer::TravelTerms(value)) => Some(TravelAnswer::Terms(value)),
+                            Some(AdvanceAnswer::Geometry(value)) => Some(TravelAnswer::Geometry(value)),
+                            _ => return Err(invalid().into()),
+                        };
+                        match travel.step(core, input, budget)? {
+                            TravelStep::Terms => return Ok(Progress::TravelTerms),
+                            TravelStep::Geometry => return Ok(Progress::Geometry),
+                            TravelStep::Occurrence(value) => {
+                                self.stage_event(core, value, EventDestination::Travel, budget)?;
+                                return Ok(Progress::Event);
+                            }
+                            TravelStep::Complete => self.travel = None,
+                        }
+                    }
+                    self.phase = Phase::Continue;
                 }
                 Phase::Continue => {
                     // Source settles the complete endpoint's commitments after

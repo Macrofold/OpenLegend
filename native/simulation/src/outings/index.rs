@@ -144,6 +144,19 @@ pub(super) struct OutingIndex {
     due: BTreeSet<Due>,
 }
 impl OutingIndex {
+    pub(super) fn by_pair<'a>(
+        &'a self,
+        a: &str,
+        b: &str,
+        budget: &ByteBudget,
+    ) -> Result<OutingIds<'a>, ExecutionError> {
+        let owners = if js_string_cmp(a, b).is_le() {
+            [a, b]
+        } else {
+            [b, a]
+        };
+        related(&self.pair, &owners, budget)
+    }
     pub(super) fn check_replacement(&self, record: &OutingRecord) -> Result<(), ExecutionError> {
         if record
             .keys
@@ -265,12 +278,7 @@ impl OutingState {
         b: &str,
         budget: &ByteBudget,
     ) -> Result<OutingIds<'a>, ExecutionError> {
-        let owners = if js_string_cmp(a, b).is_le() {
-            [a, b]
-        } else {
-            [b, a]
-        };
-        related(&self.index.pair, &owners, budget)
+        self.index.by_pair(a, b, budget)
     }
     pub(crate) fn accepted_id(
         &self,

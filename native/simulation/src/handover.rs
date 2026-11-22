@@ -592,6 +592,14 @@ impl ReceivedGifts {
                     }
                     continue;
                 }
+                // The stand-alone travel projection owns this authored
+                // notice family. Gift terms still require the original
+                // separately admitted item agreement below.
+                if state.installed.travel && header.event_type.as_deref()
+                    == Some(state.installed.ordinary_actions.value().travel.event_type.as_str())
+                {
+                    continue;
+                }
                 // The account's original received record is the authority.
                 // The hot world event and pending consent map grant no reads.
                 let payload = parsed_agreement(record.payload(), budget)?;

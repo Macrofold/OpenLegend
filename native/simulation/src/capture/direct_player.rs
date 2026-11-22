@@ -157,6 +157,13 @@ pub struct PlayerAttemptFacts<'a> {
     pub has_alternative: bool,
 }
 
+/// The finite own activity status held with this accepted player read.
+pub struct PlayerActivity<'a> {
+    pub name: &'a JsText,
+    pub status: &'static str,
+    pub reason: Option<&'a JsText>,
+}
+
 impl<'a> PlayerSelfFacts<'a> {
     pub fn death(&self) -> Option<PlayerDeathFacts<'a>> {
         self.pending_death.map(|death| PlayerDeathFacts {
@@ -253,11 +260,31 @@ impl<'a> PlayerSelfFacts<'a> {
                 .is_some_and(|plan| matches!(plan.status, PlanStatus::Active | PlanStatus::Blocked))
     }
 
-    pub fn has_activity_plan(&self) -> bool {
-        self.agency
-            .plan
-            .as_ref()
-            .is_some_and(|plan| plan.activity.is_some())
+    /// The own requested work admits one finite invocation. Expose only
+    /// its current display name and outcome, never its private plan graph.
+    pub fn activity(&self) -> Result<Option<PlayerActivity<'a>>, &'static str> {
+        use crate::plans::PlanStatus;
+        let Some((plan, activity)) = self.agency.plan.as_ref().and_then(|plan| {
+            plan.activity.as_ref().map(|activity| (plan, activity))
+        }) else {
+            return Ok(None);
+        };
+        activity.single_invoke().map_err(|_| "an unconverted activity graph")?;
+        let name = &activity.request.as_ref().ok_or("a missing own activity request")?.name;
+        let status = match plan.status {
+            PlanStatus::Active => "active",
+            PlanStatus::Blocked => "blocked",
+            PlanStatus::Completed => "completed",
+            PlanStatus::Cancelled => "cancelled",
+        };
+        let reason = activity.reason.as_ref().or_else(|| {
+            if plan.status != PlanStatus::Blocked {
+                return None;
+            }
+            plan.steps.iter().filter(|step| step.status == crate::plans::StepStatus::Blocked)
+                .find_map(|step| step.outcome.as_ref().map(|outcome| &outcome.message))
+        });
+        Ok(Some(PlayerActivity { name, status, reason }))
     }
 
     pub fn communication_subjects(

@@ -29,6 +29,21 @@ pub(crate) enum ResultAcquisitionError {
     Memory(MemoryAcquisitionError),
     Execution(crate::execution::ExecutionError),
 }
+impl From<ResultAcquisitionError> for crate::execution::ExecutionError {
+    fn from(error: ResultAcquisitionError) -> Self {
+        match error {
+            ResultAcquisitionError::Execution(error) => error,
+            ResultAcquisitionError::Activity(error) => Self::Activity(error),
+            ResultAcquisitionError::Experience(error) => Self::Experience(error),
+            ResultAcquisitionError::Received(error) => Self::Received(error),
+            ResultAcquisitionError::Append(TemporalAppendError::Received(error)) =>
+                Self::Received(error),
+            ResultAcquisitionError::Append(TemporalAppendError::Work(error)) => Self::Work(error),
+            ResultAcquisitionError::Memory(error) => error.into(),
+            ResultAcquisitionError::Encoding => Self::Invariant,
+        }
+    }
+}
 impl From<crate::execution::ExecutionError> for ResultAcquisitionError {
     fn from(error: crate::execution::ExecutionError) -> Self {
         Self::Execution(error)

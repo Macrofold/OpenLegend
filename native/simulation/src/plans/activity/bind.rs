@@ -36,28 +36,7 @@ pub(crate) fn bind_single_invoke(
     budget: &ByteBudget,
 ) -> Result<(NativeCommand, ByteReservation), ExecutionError> {
     let invocation = execution.single_invoke()?;
-    if !world
-        .ordinary_actions
-        .value()
-        .plan
-        .supports_requested_movement(invocation.family)
-        || invocation.args.len() != 1
-        || execution.bindings.object_len() != Some(1)
-    {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
-    let argument = invocation
-        .args
-        .get("destination")
-        .filter(|value| value.object_len() == Some(1))
-        .and_then(|value| value.get("role"))
-        .and_then(SqlCell::as_text)
-        .ok_or(ExecutionError::UnsupportedFamily)?;
-    let destination = execution
-        .bindings
-        .get_text(argument)
-        .ok_or(ExecutionError::UnsupportedFamily)?;
-    super::point(destination, true).map_err(|_| ExecutionError::UnsupportedFamily)?;
+    let destination = invocation.movement_point(world)?;
     let command = BoundMove {
         id,
         actor_id: actor,

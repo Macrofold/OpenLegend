@@ -99,6 +99,7 @@ pub(crate) struct NativeDefinitionInputs {
     pub fire_care: Option<DefinitionInput>,
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub hearth_placement: Option<CanonicalInput>,
+    pub travel_host: Option<CanonicalInput>,
     pub observation_rules: DefinitionInput,
     pub event_appraisal_rules: DefinitionInput,
     pub promises: DefinitionInput,

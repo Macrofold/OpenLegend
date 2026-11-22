@@ -13,6 +13,7 @@ impl PlayerChanges<'_> {
     pub(super) fn changed(&self) -> bool {
         let Self { before, after } = self;
         before.body != after.body
+            || before.outings != after.outings
             || before.memory_revision != after.memory_revision
             || before.history != after.history
             || before.inventory_read_revision != after.inventory_read_revision
@@ -35,7 +36,7 @@ impl Serialize for PlayerChanges<'_> {
         after.body.delta(before.body).entries(&mut map)?;
         fields!(map,before,after;required {
           "memoryRevision"=>memory_revision,"inventoryReadRevision"=>inventory_read_revision,
-          "canUseInventory"=>can_use_inventory,"controls"=>controls,
+          "canUseInventory"=>can_use_inventory,"controls"=>controls,"outings"=>outings,
         } optional {"history"=>history,"inputScope"=>input_scope});
         map.end()
     }

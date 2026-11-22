@@ -174,6 +174,7 @@ fn assemble_selected_core(
         ordinary_actions,
         fire_care,
         hearth_placement,
+        travel_host,
         observation_rules,
         event_appraisal_rules,
         promises,
@@ -263,6 +264,9 @@ fn assemble_selected_core(
     let hearth_placement = hearth_placement.map(|input| {
         crate::hearth::InstalledPlacement::install(input, &meanings.manifest, budget)
     }).transpose()?;
+    let travel = travel_host.map(|host| {
+        crate::outings::verify_travel_host(host, &meanings.manifest, budget)
+    }).transpose()?.is_some();
     let promises = selected::<crate::worlds::InstalledPromiseRules>(promises, budget)?;
     let observation_rules =
         selected::<crate::worlds::InstalledObservationRules>(observation_rules, budget)?;
@@ -376,6 +380,7 @@ fn assemble_selected_core(
         ordinary_actions,
         fire_care,
         hearth_placement,
+        travel,
         promises,
         observation_rules,
         event_appraisal_rules,
@@ -400,7 +405,9 @@ fn assemble_selected_core(
     });
     super::physical::validate_physical_item_references(&physical, &installed)?;
     crate::plans::validate_installation(&physical, &installed, &activity, budget)?;
-    let outings = crate::outings::OutingState::install_closed(&mut import, &mut children, budget)?;
+    let outings = crate::outings::OutingState::install(
+        &mut import, &mut children, &installed, &physical, budget,
+    )?;
     // Every presence below is consumed from the actual root, including empty
     // owners. Missing rows never synthesize an empty receiver or personal graph.
     let roots = ReceptionRoots {

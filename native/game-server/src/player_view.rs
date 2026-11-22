@@ -269,6 +269,7 @@ struct ViewOwned {
     own: PreparedSelf,
     contacts: PreparedContacts,
     events: PreparedPlayerEvents,
+    outings: Option<openlegend_simulation::runtime::OutingViews>,
     clock: ClockView,
     controls: Vec<ActionOption>,
     history_text: Option<String>,
@@ -454,6 +455,7 @@ pub(crate) async fn prepare_view(
             let custody = control_custody(&budget, &policy, &host)?;
             let controls = controls(&policy, &host, &own, paused, control.can_recover)?;
             let history_text = history(&policy.world, actual.at);
+            let outings = read.take_outings();
             Ok(PreparedPlayerView {
                 read,
                 owned: ViewOwned {
@@ -463,6 +465,7 @@ pub(crate) async fn prepare_view(
                     own,
                     contacts,
                     events,
+                    outings,
                     clock,
                     controls,
                     history_text,
@@ -683,6 +686,7 @@ impl PreparedPlayerView {
 struct PlayerWire<'a> {
     #[serde(flatten)]
     body: &'a crate::player_scene::PlayerBodyView,
+    outings: &'a [openlegend_simulation::runtime::PlayerOuting],
     memory_revision: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
     history: Option<&'a str>,
@@ -759,6 +763,7 @@ impl ViewOwned {
     fn player(&self, can_use_inventory: bool) -> PlayerWire<'_> {
         PlayerWire {
             body: &self.own.player,
+            outings: self.outings.as_ref().map_or(&[], |value| value.entries.as_slice()),
             memory_revision: &self.host.history.memory_revision,
             history: self.history_text.as_deref(),
             inventory_read_revision: &self.host.inventory,

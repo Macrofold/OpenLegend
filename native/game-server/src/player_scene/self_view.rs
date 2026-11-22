@@ -171,8 +171,18 @@ pub struct PlayerBodyView {
     inventory_revision: u64,
     equipment_ports: Vec<EquipmentBinding>,
     action_attempts: Vec<Attempt>,
-    outings: [(); 0],
+    #[serde(skip_serializing_if = "Option::is_none")]
+    activity: Option<ActivityStatus>,
     action_wording: PublicArt,
+}
+
+#[derive(PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ActivityStatus {
+    name: JsText,
+    status: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<JsText>,
 }
 
 #[derive(PartialEq, Serialize)]
@@ -379,9 +389,7 @@ pub fn prepare_self(
     if !references.matches_reader(facts.world_id, facts.actor_id) {
         return Err(SceneError::Capture);
     }
-    if facts.has_activity_plan() {
-        return Err(SceneError::Unsupported("an unconverted activity graph"));
-    }
+    let activity = facts.activity().map_err(SceneError::Unsupported)?;
     let policy = &scene.self_view;
     let output = facts.projection_bytes().ok_or(SceneError::Capacity)?;
     let output = output
@@ -393,7 +401,13 @@ pub fn prepare_self(
                 .ok_or(SceneError::Capacity)?,
         )
         .ok_or(SceneError::Capacity)?;
-    let mut custody = budget.reserve(output)?;
+    let activity_bytes = activity.as_ref().map_or(0, |activity| {
+        activity.name.storage_bytes() + activity.reason.map_or(0, JsText::storage_bytes)
+    });
+    let mut custody = budget.reserve(output.checked_add(activity_bytes).ok_or(SceneError::Capacity)?)?;
+    let activity = activity.map(|activity| ActivityStatus {
+        name: activity.name.clone(), status: activity.status, reason: activity.reason.cloned(),
+    });
     let (inventory, equipment_ports) =
         inventory::prepare(&facts, &scene.observed.item_art, &mut custody)?;
     let mut recipes = Vec::with_capacity(facts.known_recipes.len());
@@ -622,7 +636,7 @@ pub fn prepare_self(
             inventory_revision: facts.inventory_revision,
             equipment_ports,
             action_attempts: attempts,
-            outings: [],
+            activity,
             action_wording: policy.action_wording.clone(),
         },
         vision: VisionGuide {
@@ -699,7 +713,7 @@ impl BodyFields<'_> {
         removed!(before,after;
           "nameForm"=>name.name_form, "indefiniteArticle"=>name.indefinite_article,"portrait"=>portrait,
           "departureNotice"=>departure_notice,"bodyState"=>body_state,"evasion"=>evasion,
-          "attackSource"=>attack_source,"traits"=>traits,
+          "attackSource"=>attack_source,"traits"=>traits,"activity"=>activity,
         )
     }
     pub(crate) fn entries<S: serde::ser::SerializeMap>(&self, map: &mut S) -> Result<(), S::Error> {
@@ -712,11 +726,11 @@ impl BodyFields<'_> {
           "alive"=>alive,"hasWork"=>has_work,"life"=>life,"participation"=>participation,
           "death"=>death,"scars"=>scars,"action"=>action,"actionAnimation"=>action_animation,
           "inventory"=>inventory,"inventoryRevision"=>inventory_revision,"equipmentPorts"=>equipment_ports,
-          "actionAttempts"=>action_attempts,"outings"=>outings,"actionWording"=>action_wording,
+          "actionAttempts"=>action_attempts,"actionWording"=>action_wording,
         } optional {
           "nameForm"=>name.name_form, "indefiniteArticle"=>name.indefinite_article,"portrait"=>portrait,
           "departureNotice"=>departure_notice,"bodyState"=>body_state,"evasion"=>evasion,
-          "attackSource"=>attack_source,"traits"=>traits,
+          "attackSource"=>attack_source,"traits"=>traits,"activity"=>activity,
         });
         Ok(())
     }

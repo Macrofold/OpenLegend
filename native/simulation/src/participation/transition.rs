@@ -806,7 +806,7 @@ impl ParticipationCursor {
                         self.control = Some(PlanControlCursor::new(
                             &self.request.actor_id,
                             if self.phase == Phase::Cancel {
-                                PlanControlKind::Cancel
+                                PlanControlKind::Cancel { summarize: true }
                             } else {
                                 PlanControlKind::DiscardSuspended
                             },

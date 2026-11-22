@@ -16,7 +16,7 @@ pub(crate) fn travel_command_type() -> &'static str {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum TravelOperation {
+pub enum TravelOperation {
     Invite,
     Accept,
     Decline,

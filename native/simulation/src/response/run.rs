@@ -676,7 +676,7 @@ impl ResponseCursor {
                 self.active = Some(Active::Control {
                     cursor: PlanControlCursor::new(
                         self.bindings.actor_id(),
-                        PlanControlKind::Cancel,
+                        PlanControlKind::Cancel { summarize: true },
                         &self.budget,
                     )?,
                     discard: false,

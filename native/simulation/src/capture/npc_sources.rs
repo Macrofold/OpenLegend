@@ -21,7 +21,7 @@ use std::sync::Arc;
 mod cursor;
 pub(crate) use cursor::{NpcPersonalScope, NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest};
 mod movement;
-pub(crate) use movement::PreparedMovementTerms;
+pub(crate) use movement::{PreparedMovementTerms, movement_terms_from_record};
 mod attribution;
 use attribution::NpcSourceAttribution;
 mod personal;

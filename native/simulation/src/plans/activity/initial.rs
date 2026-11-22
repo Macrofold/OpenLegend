@@ -95,30 +95,7 @@ impl ActivityExecution {
             interrupted: None,
             terminal: None,
         };
-        let invocation = value.single_invoke()?;
-        if !world
-            .ordinary_actions
-            .value()
-            .plan
-            .supports_requested_movement(invocation.family)
-            || invocation.args.len() != 1
-            || value.bindings.object_len() != Some(1)
-        {
-            return Err(ExecutionError::UnsupportedFamily.into());
-        }
-        let role = invocation
-            .args
-            .get("destination")
-            .filter(|argument| argument.object_len() == Some(1))
-            .and_then(|argument| argument.get("role"))
-            .and_then(SqlCell::as_text)
-            .filter(|role| crate::values::is_safe_record_text(role))
-            .ok_or(ExecutionError::UnsupportedFamily)?;
-        let point = value
-            .bindings
-            .get_text(role)
-            .ok_or(ExecutionError::UnsupportedFamily)?;
-        super::point(point, true).map_err(|_| ExecutionError::UnsupportedFamily)?;
+        value.single_invoke()?.movement_point(world)?;
         // captureActivityTargets traverses actual command entity fields. A
         // selected movement leaf with only a point role has no entity pin;
         // other bindings must join that owner instead of receiving empty pins.

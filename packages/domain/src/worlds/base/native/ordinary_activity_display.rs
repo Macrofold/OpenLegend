@@ -169,7 +169,7 @@ fn fact(name: &str, value: JsText) -> ActivityFact {
 /// At installed map extents, the digits are rounded exactly like
 /// Number.toFixed(1). When multiplication rounds to a halfway value, the
 /// fused residual distinguishes an exact tie from a value just below it.
-fn tenth(value: f64) -> String {
+pub(crate) fn tenth(value: f64) -> String {
     let magnitude = value.abs();
     let scaled = magnitude * 10.0;
     let floor = scaled.floor();

@@ -11,7 +11,7 @@ use std::mem::size_of;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum PlanControlKind {
-    Cancel,
+    Cancel { summarize: bool },
     Retire,
     Stop,
     DiscardSuspended,
@@ -404,7 +404,7 @@ impl PlanControlCursor {
                         continue;
                     };
                     if matches!(plan.status, PlanStatus::Completed | PlanStatus::Cancelled) {
-                        self.phase = if self.kind == PlanControlKind::Cancel {
+                        self.phase = if matches!(self.kind, PlanControlKind::Cancel { .. }) {
                             Phase::Done
                         } else {
                             Phase::Retire
@@ -460,7 +460,9 @@ impl PlanControlCursor {
                             .ok_or(ExecutionError::Invariant)?
                             .status = PlanStatus::Cancelled;
                     }
-                    self.report(core, false)?;
+                    if !matches!(self.kind, PlanControlKind::Cancel { summarize: false }) {
+                        self.report(core, false)?;
+                    }
                     self.phase = Phase::CancelFinish;
                 }
                 Phase::CancelFinish => {
@@ -478,7 +480,7 @@ impl PlanControlCursor {
                     }
                     core.physical().advance_agency_revision(&self.actor)?;
                     core.physical().advance_plan_generation(&self.actor)?;
-                    self.phase = if self.kind == PlanControlKind::Cancel {
+                    self.phase = if matches!(self.kind, PlanControlKind::Cancel { .. }) {
                         Phase::Done
                     } else {
                         Phase::Retire

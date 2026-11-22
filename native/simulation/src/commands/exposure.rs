@@ -25,7 +25,7 @@ impl CommandExposure {
         budget: &ByteBudget,
     ) -> Result<Option<Self>, ExecutionError> {
         let id = match command {
-            NativeCommand::Outing { .. } => return Err(ExecutionError::UnsupportedFamily),
+            NativeCommand::Outing { .. } => return Ok(None),
             NativeCommand::StatusEffect { target_id, .. } => target_id,
             NativeCommand::Feed { envelope, .. }
             | NativeCommand::Gather { envelope, .. }

@@ -106,7 +106,9 @@ fn step(
     actor: &str,
     world: &crate::simulation::InstalledWorld,
 ) -> Result<(), InstallError> {
-    if step.activity_key.is_some() {
+    if step.activity_key.as_ref().is_some_and(|key| {
+        !crate::values::is_safe_record_text(key) || !matches!(step.command, NativeCommand::Move { .. })
+    }) {
         return Err(InstallError::UnsupportedFamily("activity graph plan step"));
     }
     if !is_safe_record_id(&step.id)
@@ -262,12 +264,13 @@ pub(crate) fn validate_installation(
                     world,
                     budget,
                 )?;
-                return Err(InstallError::UnsupportedFamily("chosen activity graph"));
             }
+            super::activity::validate_installed_activity(plan, id, world)
+                .map_err(|_| InstallError::UnsupportedFamily("chosen activity graph"))?;
             if !is_safe_record_id(&plan.id)
                 || plan.revision == 0
                 || !valid_evidence(plan.result_evidence.as_ref(), id)
-                || plan.steps.is_empty()
+                || (plan.steps.is_empty() && plan.activity.is_none())
                 || plan.steps.len() as u64 > limits.steps
                 || plan.goal_id.as_ref().is_some_and(|goal| {
                     !goal.is_empty() && !agency.goals.iter().any(|g| g.id == *goal)

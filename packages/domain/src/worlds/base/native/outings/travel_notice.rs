@@ -27,6 +27,18 @@ pub(crate) enum TravelNoticeCause {
     Finished,
 }
 impl TravelNoticeCause {
+    pub(crate) fn reason(self, messages: &super::TravelMessages) -> &str {
+        match self {
+            Self::Declined => &messages.declined,
+            Self::Left => &messages.left,
+            Self::Expired => &messages.expired,
+            Self::Changed => &messages.changed,
+            Self::Unavailable => &messages.unavailable,
+            Self::Interrupted => &messages.interrupted,
+            Self::Finished => &messages.finished,
+        }
+    }
+
     fn text(self) -> &'static str {
         match self {
             Self::Declined => "declined",

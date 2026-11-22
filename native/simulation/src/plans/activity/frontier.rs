@@ -23,6 +23,68 @@ pub(crate) struct SingleInvoke<'a> {
     pub args: &'a IndexMap<String, SqlCell>,
 }
 
+impl<'a> SingleInvoke<'a> {
+    /// Resolve the sole authored movement argument against the selected work
+    /// rules. New requests, command binding and cold validation share this read.
+    pub(crate) fn movement_point(
+        &self,
+        world: &crate::simulation::InstalledWorld,
+    ) -> Result<&'a SqlCell, ExecutionError> {
+        if !world
+            .ordinary_actions
+            .value()
+            .plan
+            .supports_requested_movement(self.family)
+            || self.args.len() != 1
+            || self.execution.bindings.object_len() != Some(1)
+        {
+            return Err(unsupported());
+        }
+        let role = self
+            .args
+            .get("destination")
+            .filter(|argument| argument.object_len() == Some(1))
+            .and_then(|argument| argument.get("role"))
+            .and_then(SqlCell::as_text)
+            .filter(|role| crate::values::is_safe_record_text(role))
+            .ok_or_else(unsupported)?;
+        let point = self
+            .execution
+            .bindings
+            .get_text(role)
+            .ok_or_else(unsupported)?;
+        super::point(point, true).map_err(|_| unsupported())?;
+        Ok(point)
+    }
+}
+
+/// An executable saved frontier uses the same finite binding as a new step.
+/// Reject a mutated actor, destination or step instead of regenerating it.
+pub(crate) fn validate_installed_activity(
+    plan: &ActorPlan,
+    actor: &str,
+    world: &crate::simulation::InstalledWorld,
+) -> Result<(), ExecutionError> {
+    require_supported_activity(plan)?;
+    let Some(execution) = &plan.activity else {
+        return Ok(());
+    };
+    let invocation = execution.single_invoke()?;
+    invocation.movement_point(world)?;
+    if execution.cooperation.is_some() || execution.combat_help_id.is_some() {
+        return Err(unsupported());
+    }
+    if plan
+        .steps
+        .iter()
+        .filter(|step| step.activity_key.is_some())
+        .any(|step| !command_matches(&invocation, plan, actor, &step.command, execution.serial))
+    {
+        return Err(unsupported());
+    }
+    Ok(())
+}
+
 fn unsupported() -> ExecutionError {
     ExecutionError::UnsupportedFamily
 }

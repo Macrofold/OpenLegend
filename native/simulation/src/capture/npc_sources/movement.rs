@@ -47,6 +47,41 @@ pub(crate) struct PreparedMovementTerms {
     terms: Vec<HeldTerms>,
     _storage: ByteReservation,
 }
+/// Decode exact agreement text from a current personally acquired record.
+/// The caller already owns actor, chronology and privacy admission.
+pub(crate) fn movement_terms_from_record(
+    actor: &str, payload: &str, budget: &ByteBudget,
+) -> Result<MovementTerms, ExecutionError> {
+    let _agreement_decode = crate::install::reserve_typed_parse::<Agreement>(
+        payload,
+        size_of::<usize>(),
+        None,
+        budget,
+    )
+    .map_err(|error| match error {
+        crate::install::InstallError::Capacity => ExecutionError::Capacity,
+        _ => ExecutionError::InvalidCheckpoint,
+    })?;
+    let agreement: Agreement = serde_json::from_str(payload)
+        .map_err(|_| ExecutionError::InvalidCheckpoint)?;
+    // JSON.parse accepts literal isolated units within a document's
+    // quoted strings. Reuse the existing exact document codec instead
+    // of narrowing an acquired JS string to Unicode or replacing units.
+    let _document = budget.reserve(
+        agreement
+            .event_data
+            .agreement
+            .json_document_bound()
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let document = agreement
+        .event_data
+        .agreement
+        .json_document()
+        .map_err(|_| ExecutionError::InvalidCheckpoint)?;
+    MovementTerms::decode(actor, &document, budget)
+}
+
 impl PreparedMovementTerms {
     pub(crate) fn prepare(
         state: &SimulationState,
@@ -148,34 +183,7 @@ impl PreparedMovementTerms {
             {
                 return Err(ExecutionError::InvalidCheckpoint);
             }
-            let _agreement_decode = crate::install::reserve_typed_parse::<Agreement>(
-                record.payload(),
-                size_of::<usize>(),
-                None,
-                budget,
-            )
-            .map_err(|error| match error {
-                crate::install::InstallError::Capacity => ExecutionError::Capacity,
-                _ => ExecutionError::InvalidCheckpoint,
-            })?;
-            let agreement: Agreement = serde_json::from_str(record.payload())
-                .map_err(|_| ExecutionError::InvalidCheckpoint)?;
-            // JSON.parse accepts literal isolated units within a document's
-            // quoted strings. Reuse the existing exact document codec instead
-            // of narrowing an acquired JS string to Unicode or replacing units.
-            let _document = budget.reserve(
-                agreement
-                    .event_data
-                    .agreement
-                    .json_document_bound()
-                    .ok_or(ExecutionError::Capacity)?,
-            )?;
-            let document = agreement
-                .event_data
-                .agreement
-                .json_document()
-                .map_err(|_| ExecutionError::InvalidCheckpoint)?;
-            let value = MovementTerms::decode(actor, &document, budget)?;
+            let value = movement_terms_from_record(actor, record.payload(), budget)?;
             let key_bytes = crate::encoding::json_record_len(&(value.family(), value.id()))
                 .map_err(|_| ExecutionError::Invariant)?;
             let _key = budget.reserve(key_bytes.checked_mul(2).ok_or(ExecutionError::Capacity)?)?;

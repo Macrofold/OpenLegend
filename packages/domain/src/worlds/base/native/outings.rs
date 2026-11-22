@@ -20,9 +20,10 @@ pub(crate) use travel_notice::{TravelNoticeCause, TravelNoticeEnding, TravelNoti
 mod travel_accept;
 #[path = "outings/travel_work.rs"]
 mod travel_work;
+pub use travel::TravelOperation;
 pub(crate) use travel::{
     TravelActivityRules, TravelCompanyLabels, TravelDestination, TravelInput, TravelInputError,
-    TravelMessages, TravelOperation, TravelParticipantCapability, TravelRules, TravelTemplates,
+    TravelMessages, TravelParticipantCapability, TravelRules, TravelTemplates,
     travel_command_type,
 };
 pub(crate) use travel_accept::{

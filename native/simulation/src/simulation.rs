@@ -73,6 +73,7 @@ pub(crate) struct InstalledWorld {
     pub ordinary_actions: VerifiedDefinition<crate::worlds::InstalledOrdinaryActionRules>,
     pub fire_care: Option<VerifiedDefinition<crate::fire_care::FireCare>>,
     pub hearth_placement: Option<crate::hearth::InstalledPlacement>,
+    pub travel: bool,
     pub promises: VerifiedDefinition<crate::worlds::InstalledPromiseRules>,
     pub event_appraisal_rules: VerifiedDefinition<crate::worlds::InstalledEventAppraisalRules>,
     pub observation_rules: VerifiedDefinition<crate::worlds::InstalledObservationRules>,

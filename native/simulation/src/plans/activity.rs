@@ -21,7 +21,7 @@ mod initial;
 pub(crate) use bind::bind_single_invoke;
 pub(crate) use frontier::{
     SingleInvoke, append_single_invoke, cancel_single_invoke, record_single_result,
-    require_supported_activity,
+    require_supported_activity, validate_installed_activity,
 };
 pub(crate) use initial::RequestedActivityInitialError;
 

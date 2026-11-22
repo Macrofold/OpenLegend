@@ -13,6 +13,7 @@ mod encoding;
 use encoding::CommandEncoding;
 mod outings_input;
 pub(crate) use outings_input::OutingParameters;
+pub use outings_input::{PlayerTravelDestination, PlayerTravelIntent};
 
 mod invocation;
 mod preparation;
@@ -894,8 +895,7 @@ impl NativeCommand {
     pub(crate) fn discovery_only(&self) -> bool {
         matches!(
             self,
-            Self::Outing { .. }
-                | Self::Strike { .. }
+            Self::Strike { .. }
                 | Self::InspectInventory { selected: None, .. }
         )
     }

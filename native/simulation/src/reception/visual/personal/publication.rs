@@ -434,16 +434,18 @@ impl ObserverReceptionCursor {
             .get(id)
             .and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;
-        // Full physical import refuses combat encounters and offensive action
-        // families; selected command/native writers cannot create them. Ordinary
-        // frontiers do not supply Source's finite prepared-response subject graph.
-        if actor.encounters.is_some()
-            || [actor.agency.plan.as_ref(), actor.agency.suspended_plan()]
-                .into_iter()
-                .flatten()
-                .any(|plan| plan.activity.is_some())
-        {
+        // Ordinary requested movement is a real frontier. Its existing
+        // capability owner still rejects other graphs before visual cues can
+        // feed an unsupported response, and encounters stay closed here.
+        if actor.encounters.is_some() {
             return Err(ExecutionError::UnsupportedFamily);
+        }
+        for plan in [actor.agency.plan.as_ref(), actor.agency.suspended_plan()]
+            .into_iter()
+            .flatten()
+            .filter(|plan| plan.activity.is_some())
+        {
+            crate::plans::require_supported_activity(plan)?;
         }
         Ok(())
     }

@@ -3,7 +3,7 @@ use super::*;
 /// As with activity/learning/models.rs, the canonical ordered cell is the only
 /// body, while validated accessors/index facts avoid another writable map.
 /// In particular JsText values and optional-present empty children are never
-/// round-tripped through serde_json::Value. Live admission is still closed.
+/// round-tripped through serde_json::Value.
 pub(crate) struct OutingRecord {
     body: SqlCell,
     pub(super) facts: crate::worlds::InstalledOutingFacts,

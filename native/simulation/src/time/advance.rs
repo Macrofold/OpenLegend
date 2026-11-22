@@ -31,7 +31,8 @@ use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries};
 use crate::host::retained_size::HeapBytes;
 use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
 use crate::identity::MAX_SAFE_INTEGER;
-use crate::language::{CollationAnswer, CollationRequest};
+use crate::language::{CanonicalJsonAnswer, CanonicalJsonRequest, CollationAnswer, CollationRequest};
+use crate::outings::settle::{SettleTravel, TravelAnswer, TravelStep};
 use crate::movement::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
 use crate::native_controller::foraging::{ForageChoice, ForageIntention, ForageProgress, HuntRouteChoice};
 use crate::native_controller::territorial::{
@@ -105,6 +106,7 @@ pub(crate) enum AdvanceAnswer {
     Participation(crate::participation::CompletedParticipation),
     Geometry(GeometryAnswers),
     Collation(CollationAnswer),
+    TravelTerms(CanonicalJsonAnswer),
     Event(CompletedEvent),
     Plan(CompletedPlanRun),
     Command(CompletedCommandOperation),
@@ -115,6 +117,7 @@ pub(crate) enum AdvanceStep<'a> {
     Continue,
     Geometry(&'a GeometryQueries),
     Collation(&'a CollationRequest),
+    TravelTerms(&'a CanonicalJsonRequest),
     Event(&'a mut EventCursor),
     Plan(&'a mut PlanRunCursor),
     Command(&'a mut CommandOperation),
@@ -333,6 +336,7 @@ enum Phase {
     AppraisalsEnd,
     RemainsEnd,
     SenseEnd,
+    Travel,
     Continue,
     Flush,
     NativeCommand,
@@ -357,6 +361,7 @@ enum EventDestination {
     Endpoint,
     Appraisal,
     Territorial,
+    Travel,
 }
 enum NativeIntention {
     Route(
@@ -418,6 +423,7 @@ pub(crate) struct AdvanceCursor {
     motion_answer: Option<MoveAdvanceAnswer>,
     reconcile: Option<ReconcileCursor>,
     reconcile_answer: Option<ReconcileAnswer>,
+    travel: Option<SettleTravel>,
     plan: Option<PlanRunCursor>,
     command: Option<CommandOperation>,
     command_actor: Option<EntityHandle>,
@@ -513,6 +519,7 @@ impl AdvanceCursor {
                     .and_then(MotionSliceCursor::geometry_request)
             })
             .or_else(|| self.flight.as_ref().and_then(FlightCursor::questions))
+            .or_else(|| self.travel.as_ref().and_then(SettleTravel::geometry))
             .or_else(|| {
                 self.endpoint
                     .as_ref()
@@ -605,6 +612,7 @@ impl AdvanceCursor {
             motion_answer: None,
             reconcile: None,
             reconcile_answer: None,
+            travel: None,
             plan: None,
             command: None,
             command_actor: None,
@@ -846,6 +854,9 @@ impl AdvanceCursor {
                     })
                     .ok_or_else(invalid)?,
             ),
+            Progress::TravelTerms => AdvanceStep::TravelTerms(
+                self.travel.as_ref().and_then(SettleTravel::terms).ok_or_else(invalid)?,
+            ),
             Progress::Event => AdvanceStep::Event(self.event.as_mut().ok_or_else(invalid)?),
             Progress::Participation => {
                 AdvanceStep::Participation(self.participation.as_mut().ok_or_else(invalid)?)
@@ -864,6 +875,7 @@ enum Progress {
     Continue,
     Geometry,
     Collation,
+    TravelTerms,
     Event,
     Plan,
     Command,

@@ -24,7 +24,7 @@ use openlegend_simulation::{
     text::JsText,
     values::deserialize_present_option,
     worlds::base_observed::SpeechVolume,
-    runtime::FireOperation,
+    runtime::{FireOperation, PlayerTravelDestination, PlayerTravelIntent, TravelOperation, TravelWorkMode},
 };
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
@@ -90,6 +90,16 @@ struct CommandInput {
     fire_operation: Option<FireOperation>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     hearth_plan: Option<crate::player_http::hearth::HearthPlan>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    outing_operation: Option<TravelOperation>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    outing_mode: Option<TravelWorkMode>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    outing_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    destination_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    purpose: Option<JsText>,
     #[serde(
         default,
         deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
@@ -260,6 +270,7 @@ enum CommandKind {
     TendFire,
     #[serde(rename = "place-hearth")]
     PlaceHearth,
+    Outing,
     Pickup,
     Drop,
     Cook,
@@ -534,10 +545,8 @@ impl PlayerCommands {
                             }
                             let clock = world.clock()?;
                             if clock.paused
-                                && !(matches!(
-                                    begin_facts.request.command.kind,
-                                    CommandKind::Cancel
-                                ) && clock.manually_paused)
+                                && !(clock.manually_paused
+                                    && begin_facts.request.command.permits_manual_pause())
                             {
                                 return Ok(ApplicationStart::Existing(ResultOwner::Refused(
                                     "paused",
@@ -635,11 +644,24 @@ impl PlayerCommands {
                                     Some(target)
                                 }
                             };
+                            let travel_destination = if let Some(reference) = raw.destination_id.as_deref() {
+                                let Some(destination) = begin_references.resolve_contact(
+                                    world, &begin_scope.scope, reference, &begin_budget,
+                                )? else {
+                                    return Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                        "stale-contact", "Choose a destination you can see now.",
+                                    )));
+                                };
+                                Some(destination)
+                            } else {
+                                None
+                            };
                             let command = begin_facts.command(
                                 position,
                                 target.as_ref().map(|value| value.id.as_str())
                                     .or(own_status.then_some(begin_scope.scope.actor_id.as_str())),
                                 speech_target.as_ref().map(|value| (value.id.as_str(), value.role)),
+                                travel_destination.as_ref().map(|value| value.id.as_str()),
                             )?;
                             Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
                                 &begin_facts.id,
@@ -703,6 +725,14 @@ impl PlayerCommands {
     }
 }
 
+impl CommandInput {
+    fn permits_manual_pause(&self) -> bool {
+        matches!(self.kind, CommandKind::Cancel)
+            || matches!((self.kind, self.outing_operation),
+                (CommandKind::Outing, Some(TravelOperation::Decline | TravelOperation::Leave)))
+    }
+}
+
 impl CommandRequest {
     fn check(&self) -> Result<(), WorldError> {
         fn id(text: &str) -> bool {
@@ -716,8 +746,12 @@ impl CommandRequest {
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
             || Uuid::parse_str(&self.command_epoch).is_err()
-            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem)
+            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing)
                 && command.expected_revision.is_some())
+            || (!matches!(command.kind, CommandKind::Outing)
+                && (command.outing_operation.is_some() || command.outing_mode.is_some()
+                    || command.outing_id.is_some() || command.destination_id.is_some()
+                    || command.purpose.is_some()))
             || (!matches!(command.kind, CommandKind::Unequip) && command.placement_revision.is_some())
             || (!matches!(command.kind, CommandKind::InspectItem) && command.container_id.is_some())
             || command.quantity.is_some_and(|quantity| {
@@ -755,6 +789,32 @@ impl CommandRequest {
                     && command.gathering_mode.is_none() && command.expected_action_id.is_none()
                     && command.item_id.is_none() && command.target_id.as_deref().is_some_and(id)
                     && command.gift().is_some_and(|gift| gift.valid()) => Ok(()),
+            CommandKind::Outing if command.known_place.is_none() && command.gathering_mode.is_none()
+                && command.expected_action_id.is_none() && command.item_id.is_none() =>
+            {
+                let recipient = command.target_id.as_deref();
+                let confirmed = command.outing_id.as_deref().is_some_and(id)
+                    && command.expected_revision.is_some()
+                    && command.target_id.is_none() && command.destination_id.is_none()
+                    && command.position.is_none() && command.purpose.is_none();
+                let valid = match command.outing_operation {
+                    Some(TravelOperation::Invite) => {
+                        recipient.is_some_and(id) && command.outing_mode.is_some()
+                            && command.outing_id.is_none() && command.expected_revision.is_none()
+                            && match (command.position.as_ref(), command.destination_id.as_deref()) {
+                                (Some(point), None) => id(&point.surface_id)
+                                    && [point.x, point.y, point.z].into_iter().all(f64::is_finite),
+                                (None, Some(reference)) => id(reference),
+                                _ => false,
+                            }
+                    }
+                    Some(TravelOperation::Accept) => confirmed && command.outing_mode.is_some(),
+                    Some(TravelOperation::Decline | TravelOperation::Leave) =>
+                        confirmed && command.outing_mode.is_none(),
+                    None => false,
+                };
+                valid.then_some(()).ok_or_else(|| AccessError::Forbidden.into())
+            }
             CommandKind::InspectItem
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -977,6 +1037,7 @@ impl PreparedRequest {
         destination: Option<&'a SurfacePoint>,
         target: Option<&'a str>,
         speech_target: Option<(&'a str, SpeechTargetRole)>,
+        travel_destination: Option<&'a str>,
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
         match input.kind {
@@ -984,6 +1045,30 @@ impl PreparedRequest {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 gift: self.gift.as_ref().ok_or(StoreError::InvalidRecord)?,
             }),
+            CommandKind::Outing => {
+                let operation = input.outing_operation.ok_or(StoreError::InvalidRecord)?;
+                let input = if operation == TravelOperation::Invite {
+                    let destination = match (travel_destination, destination) {
+                        (Some(id), None) => PlayerTravelDestination::Stationary(id),
+                        (None, Some(point)) => PlayerTravelDestination::Point(point),
+                        _ => return Err(StoreError::InvalidRecord.into()),
+                    };
+                    PlayerTravelIntent::Invite {
+                        recipient: target.ok_or(StoreError::InvalidRecord)?,
+                        destination,
+                        mode: input.outing_mode.ok_or(StoreError::InvalidRecord)?,
+                        purpose: input.purpose.as_ref(),
+                    }
+                } else {
+                    PlayerTravelIntent::Remedy {
+                        operation,
+                        invitation: input.outing_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                        revision: input.expected_revision.ok_or(StoreError::InvalidRecord)?,
+                        mode: input.outing_mode,
+                    }
+                };
+                Ok(RuntimePlayerCommand::Travel(input))
+            }
             CommandKind::InspectItem => Ok(RuntimePlayerCommand::InspectItem {
                 item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 container: input.container_id.as_deref().ok_or(StoreError::InvalidRecord)?,

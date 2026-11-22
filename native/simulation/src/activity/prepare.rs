@@ -24,14 +24,18 @@ pub(super) fn start_record(
         .and_then(|entity| entity.actor.as_ref())
         .and_then(|actor| actor.agency.plan.as_ref())
         .filter(|plan| Some(plan.id.as_str()) == parent_id);
-    if plan.is_some_and(|plan| plan.activity.is_some()) {
-        return Err(ActivityError::UnsupportedFamily);
-    }
-    let parent_name = plan.and_then(|plan| {
-        plan.steps
-            .iter()
-            .find_map(|step| step.command.envelope().purpose.as_ref())
-    });
+    let parent_name = match plan.and_then(|plan| plan.activity.as_ref()) {
+        Some(activity) => {
+            // The plan owner admits only this requested single-invocation
+            // envelope. Record its real request name without materializing
+            // a method, output binding or a synthetic parent occurrence.
+            activity.single_invoke().map_err(|_| ActivityError::UnsupportedFamily)?;
+            Some(&activity.request.as_ref().ok_or(ActivityError::InvalidStructure)?.name)
+        }
+        None => plan.and_then(|plan| {
+            plan.steps.iter().find_map(|step| step.command.envelope().purpose.as_ref())
+        }),
+    };
     let fields: [Option<&str>; 2] = match command {
         NativeCommand::Say { target_id, .. } => [target_id.as_deref(), None],
         NativeCommand::StatusEffect {

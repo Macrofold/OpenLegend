@@ -63,9 +63,11 @@ pub(crate) enum CommandOperationAnswer {
     Geometry(GeometryAnswers),
     Event(CompletedEvent),
     Display(super::CompletedActivityDisplay),
+    TravelTerms(crate::language::CanonicalJsonAnswer),
 }
 pub(crate) enum CommandOperationStep<'a> {
     Geometry(&'a GeometryQueries),
+    TravelTerms(&'a crate::language::CanonicalJsonRequest),
     Event(&'a mut EventCursor),
     Display(&'a mut super::ActivityDisplayCursor),
     Complete(CompletedCommandOperation),
@@ -99,6 +101,7 @@ pub(crate) struct CommandOperation {
 }
 enum Progress {
     Geometry,
+    TravelTerms,
     Event,
     Display,
     Complete(CompletedCommandOperation),
@@ -229,6 +232,9 @@ impl CommandOperation {
                 CommandOperationStep::Event(self.event.as_mut().ok_or(ExecutionError::Invariant)?)
             }
             Progress::Complete(value) => CommandOperationStep::Complete(value),
+            Progress::TravelTerms => CommandOperationStep::TravelTerms(
+                self.cursor.travel_terms().ok_or(ExecutionError::Invariant)?,
+            ),
             Progress::Display => CommandOperationStep::Display(
                 self.cursor
                     .display_cursor()
@@ -249,6 +255,9 @@ impl CommandOperation {
             Some(CommandOperationAnswer::Event(value)) => {
                 self.command_answer = Some(self.retain_event(value)?)
             }
+            Some(CommandOperationAnswer::TravelTerms(value)) if self.event.is_none() => {
+                self.command_answer = Some(CommandAnswer::TravelTerms(value));
+            }
             Some(CommandOperationAnswer::Display(value)) if self.event.is_none() => {
                 self.command_answer = Some(CommandAnswer::Display(value));
             }
@@ -264,6 +273,7 @@ impl CommandOperation {
         loop {
             match self.cursor.step(core, self.command_answer.take())? {
                 CommandStep::Geometry(_) => return Ok(Progress::Geometry),
+                CommandStep::TravelTerms(_) => return Ok(Progress::TravelTerms),
                 CommandStep::Display(_) => return Ok(Progress::Display),
                 CommandStep::Occurrence(staged) => {
                     let reservation = budget.reserve(

@@ -28,6 +28,7 @@ mod preparing_food;
 mod fire;
 mod follow;
 mod hearth;
+mod travel;
 mod manufacture;
 mod equipment;
 mod eating;
@@ -57,9 +58,11 @@ pub(crate) enum CommandAnswer {
     Personal(AcquiredActivityResult),
     EvidenceEnded(crate::reception::EndedCurrentEvidence),
     Display(super::CompletedActivityDisplay),
+    TravelTerms(crate::language::CanonicalJsonAnswer),
 }
 pub(crate) enum CommandStep<'a> {
     Geometry(&'a GeometryQueries),
+    TravelTerms(&'a crate::language::CanonicalJsonRequest),
     Occurrence(StagedOccurrence),
     Personal(&'a PendingActivityResult),
     EndEvidence {
@@ -72,6 +75,7 @@ pub(crate) enum CommandStep<'a> {
 }
 pub(super) enum Progress {
     Geometry,
+    TravelTerms,
     Occurrence(StagedOccurrence),
     Personal,
     EndEvidence,
@@ -94,6 +98,14 @@ enum Phase {
     FireSight,
     HearthGeometry,
     DropStanding,
+    TravelStartSight,
+    TravelReach,
+    TravelDestination,
+    TravelTerms,
+    TravelEndReception,
+    TravelNotices,
+    TravelChoice,
+    TravelAccept,
     HearthRoutes,
     HearthNavigation,
     CookReach,
@@ -168,6 +180,7 @@ pub(crate) struct CommandCursor {
     contact_route: Option<crate::contact::StrikeRoute>,
     follow: Option<crate::movement::follow::FollowCursor>,
     hearth: Option<hearth::PreparedHearth>,
+    travel: Option<Box<travel::Consent>>,
     binding: GeometryBinding,
     resolved: Option<SurfacePoint>,
     action: Option<Action>,
@@ -255,6 +268,7 @@ impl CommandCursor {
             contact_route: None,
             follow: None,
             hearth: None,
+            travel: None,
             binding,
             resolved: None,
             action: None,
@@ -281,10 +295,19 @@ impl CommandCursor {
             _reservation: reservation,
         })
     }
+    pub(super) fn travel_terms(&self) -> Option<&crate::language::CanonicalJsonRequest> {
+        self.travel.as_ref()?.notice.as_ref()?.canonical_request().ok()
+    }
     pub(super) fn display_cursor(&mut self) -> Option<&mut super::ActivityDisplayCursor> {
+        if matches!(self.phase, Phase::TravelChoice | Phase::TravelAccept) {
+            return self.travel.as_mut()?.display();
+        }
         self.display.as_mut()
     }
     pub(super) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        if matches!(self.phase, Phase::TravelChoice | Phase::TravelAccept | Phase::TravelEndReception) {
+            return self.travel.as_ref()?.queries();
+        }
         self.sight
             .as_ref()
             .map(|sight| sight.queries())
@@ -299,6 +322,11 @@ impl CommandCursor {
     /// The coordinator calls this on an operational error before rolling back
     /// its command checkpoint. Operational work already spent is never refunded.
     pub(crate) fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        // The selected travel cursor can still own an ordinary child
+        // preview. Close its nested work meter before this command's meter.
+        if let Some(mut child) = self.travel.take() {
+            child.abort(core)?;
+        }
         if let Some(meter) = self.meter.take() {
             core.journal.meters.finish(meter)?;
         }
@@ -609,6 +637,9 @@ impl CommandCursor {
             }
             Progress::Personal => CommandStep::Personal(if let Some(pending) = &self.personal {
                 pending.result()
+            } else if matches!(self.phase, Phase::TravelAccept) {
+                self.travel.as_deref().and_then(travel::Consent::acceptance)
+                    .ok_or(ExecutionError::Invariant)?.personal()?
             } else {
                 self.activation
                     .as_ref()
@@ -628,8 +659,11 @@ impl CommandCursor {
                 }
             }
             Progress::Occurrence(event) => CommandStep::Occurrence(event),
+            Progress::TravelTerms => CommandStep::TravelTerms(
+                self.travel_terms().ok_or(ExecutionError::Invariant)?,
+            ),
             Progress::Display => {
-                CommandStep::Display(self.display.as_mut().ok_or(ExecutionError::Invariant)?)
+                CommandStep::Display(self.display_cursor().ok_or(ExecutionError::Invariant)?)
             }
             Progress::Complete(result) => CommandStep::Complete(result),
             Progress::Choice(_) => return Err(ExecutionError::InvalidCheckpoint),
@@ -647,6 +681,12 @@ impl CommandCursor {
             if let Some(answer) = answer.take() {
                 match answer {
                     CommandAnswer::Display(completed) => {
+                        if matches!(self.phase, Phase::TravelAccept) {
+                            return self.travel_accept(core, Some(crate::worlds::base_outings::TravelAcceptAnswer::Display(completed)));
+                        }
+                        if matches!(self.phase, Phase::TravelChoice) {
+                            return self.travel_choice(core, Some(super::CommandChoiceAnswer::Display(completed)));
+                        }
                         if self.display.is_none() || self.view.is_some() {
                             return Err(ExecutionError::Invariant);
                         }
@@ -659,13 +699,22 @@ impl CommandCursor {
                         if self.event.as_deref() != Some(completed.event_id()) {
                             return Err(ExecutionError::UnfinishedOccurrence);
                         }
+                        if matches!(self.phase, Phase::TravelTerms) {
+                            self.link_travel_notice(core, &completed)?;
+                        }
                         self.event = None;
                         self.phase = self.after_event;
+                    }
+                    CommandAnswer::TravelTerms(terms) => {
+                        return self.accept_travel_notice(core, terms);
                     }
                     CommandAnswer::EvidenceEnded(_) => {
                         return Err(ExecutionError::UnfinishedOccurrence);
                     }
                     CommandAnswer::Personal(acquired) => {
+                        if matches!(self.phase, Phase::TravelAccept) {
+                            return self.travel_accept(core, Some(crate::worlds::base_outings::TravelAcceptAnswer::Personal(acquired)));
+                        }
                         let task = self
                             .personal
                             .take()
@@ -703,6 +752,18 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                             return self.drive(core, None);
+                        }
+                        if matches!(self.phase, Phase::TravelAccept) {
+                            return self.travel_accept(core, Some(crate::worlds::base_outings::TravelAcceptAnswer::Geometry(answer)));
+                        }
+                        if matches!(self.phase, Phase::TravelChoice) {
+                            return self.travel_choice(core, Some(super::CommandChoiceAnswer::Geometry(answer)));
+                        }
+                        if matches!(self.phase, Phase::TravelEndReception) {
+                            return self.finish_travel_end(core, Some(answer));
+                        }
+                        if matches!(self.phase, Phase::TravelStartSight) {
+                            return self.travel_sight(core, answer);
                         }
                         if matches!(self.phase, Phase::ContactRoute) {
                             if self.finish_contact_route(core, answer)? {
@@ -803,6 +864,8 @@ impl CommandCursor {
                                         Phase::FeedApproach
                                     };
                             }
+                            Phase::TravelReach => return self.travel_reach(core, answer.sight.pop().ok_or(ExecutionError::Invariant)?),
+                            Phase::TravelDestination => return self.travel_destination(core, answer.routes.pop()),
                             Phase::HearthGeometry => return self.hearth_geometry(core, answer),
                             Phase::DropStanding => return self.finish_drop(core,
                                 answer.standing.pop().ok_or(ExecutionError::Invariant)?,
@@ -904,7 +967,8 @@ impl CommandCursor {
                         CommandAnswer::EvidenceEnded(value) => {
                             Ok(StatusActivationAnswer::EvidenceEnded(value))
                         }
-                        CommandAnswer::Geometry(_) | CommandAnswer::Display(_) => {
+                        CommandAnswer::Geometry(_) | CommandAnswer::Display(_)
+                        | CommandAnswer::TravelTerms(_) => {
                             Err(ExecutionError::UnfinishedOccurrence)
                         }
                     })
@@ -1164,13 +1228,15 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::Outing { .. } => {
+                            if let Some(next) = self.begin_travel(core)? { return Ok(next); }
+                        }
                         NativeCommand::InspectActivities { .. } => {
                             if let Some(event) = self.inspect_activities(core, &actor_id)? {
                                 return Ok(Progress::Occurrence(event));
                             }
                         }
-                        NativeCommand::Outing { .. }
-                        | NativeCommand::InspectInventory { selected: None, .. } => {
+                        NativeCommand::InspectInventory { selected: None, .. } => {
                             return Err(ExecutionError::Invariant);
                         }
                         NativeCommand::StatusEffect { .. } => self.phase = Phase::Deactivate,
@@ -1293,6 +1359,14 @@ impl CommandCursor {
                     }
                     return Ok(Progress::Geometry);
                 }
+                Phase::TravelNotices => {
+                    if let Some(next) = self.prepare_travel_notice(core)? { return Ok(next); }
+                }
+                // A nested display cursor can yield without an answer while
+                // it prepares more work. Ask its owner for the actual next step.
+                Phase::TravelChoice => return self.travel_choice(core, None),
+                Phase::TravelAccept => return self.travel_accept(core, None),
+                Phase::TravelTerms => return Ok(Progress::TravelTerms),
                 Phase::Prepared => {
                     if core
                         .state
@@ -2297,6 +2371,7 @@ impl CommandCursor {
                 | Phase::CastSight
                 | Phase::CastLine
                 | Phase::FireSight
+                | Phase::TravelStartSight | Phase::TravelReach | Phase::TravelDestination | Phase::TravelEndReception
                 | Phase::HearthGeometry
                 | Phase::DropStanding
                 | Phase::HearthRoutes
@@ -2352,12 +2427,15 @@ fn actor_problem(
         return Ok(Some(ordinary.inactive.outcome(false)));
     }
     let release_self = matches!(command,NativeCommand::StatusEffect{target_id,operation:StatusOperation::Deactivate,..}if target_id==&entity.id);
+    let ends_consent = matches!(command, NativeCommand::Outing { parameters, .. }
+        if matches!(parameters.value().get("operation").and_then(crate::records::SqlCell::as_str),
+            Some("leave" | "decline")));
     if core
         .state
         .installed
         .capabilities
         .capability_blocked(Some(entity), "actions")?
-        && !release_self
+        && !release_self && !ends_consent
         && !matches!(command, NativeCommand::Cancel { .. })
     {
         return Ok(Some(ordinary.actions_restricted.outcome(false)));
@@ -2380,7 +2458,8 @@ fn actor_problem(
     {
         return Ok(Some(ordinary.movement_restricted.outcome(false)));
     }
-    if core.state.physical.header.paused && !matches!(command, NativeCommand::Cancel { .. }) {
+    if core.state.physical.header.paused
+        && !ends_consent && !matches!(command, NativeCommand::Cancel { .. }) {
         return Ok(Some(ordinary.paused.outcome(false)));
     }
     if !actor.alive || actor.incapacitated {

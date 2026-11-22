@@ -846,6 +846,7 @@ enum DisplayReply {
 #[derive(Clone, Copy)]
 enum CommandReply {
     Geometry,
+    TravelTerms,
     Event(EventReply),
     Display(DisplayReply),
 }
@@ -882,6 +883,7 @@ enum AdvanceReply {
     Participation(ParticipationReply),
     Geometry,
     Collation,
+    TravelTerms,
     Event(EventReply),
     Command(CommandReply),
     Plan(PlanReply),
@@ -2096,11 +2098,23 @@ fn poll_command(
         };
         supplied = Some(CommandOperationAnswer::Geometry(v));
     }
+    if matches!(route, Some(CommandReply::TravelTerms)) {
+        route = None;
+        let Answer::Digest(value) = direct(answer, ProviderKind::Digest)? else {
+            return Err(DriveError::StaleResponse);
+        };
+        supplied = Some(CommandOperationAnswer::TravelTerms(value));
+    }
     loop {
         match cursor.step(core, supplied.take(), budget)? {
             CommandOperationStep::Complete(done) => return Ok(Poll::Complete(done)),
             CommandOperationStep::Geometry(q) => {
                 return geometry_question(answer, q, budget, CommandReply::Geometry);
+            }
+            CommandOperationStep::TravelTerms(q) => {
+                return question(
+                    answer, ProviderKind::Digest, q.binding, q, budget, CommandReply::TravelTerms,
+                );
             }
             CommandOperationStep::Event(child) => {
                 let child_route = match route.take() {
@@ -2384,6 +2398,13 @@ fn poll_advance(
         };
         supplied = Some(AdvanceAnswer::Collation(v));
     }
+    if matches!(route, Some(AdvanceReply::TravelTerms)) {
+        route = None;
+        let Answer::Digest(value) = direct(answer, ProviderKind::Digest)? else {
+            return Err(DriveError::StaleResponse);
+        };
+        supplied = Some(AdvanceAnswer::TravelTerms(value));
+    }
     loop {
         match cursor.step(core, supplied.take(), budget)? {
             AdvanceStep::Participation(child) => {
@@ -2407,6 +2428,9 @@ fn poll_advance(
             }
             AdvanceStep::Collation(q) => {
                 return collation_question(answer, q, budget, AdvanceReply::Collation);
+            }
+            AdvanceStep::TravelTerms(q) => {
+                return question(answer, ProviderKind::Digest, q.binding, q, budget, AdvanceReply::TravelTerms);
             }
             AdvanceStep::Event(child) => {
                 let child_route = match route.take() {

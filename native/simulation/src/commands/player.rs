@@ -1,5 +1,6 @@
 //! The authorized browser handler passes its already-decoded command input.
 
+use super::outings_input::PlayerTravelIntent;
 use super::{CommandEncoding, CommandHeaders, NativeCommand, SpeechTargetRole, StatusOperation};
 use crate::encoding::json_record;
 use crate::gathering::{GatheringMode, ToolChoice};
@@ -14,6 +15,7 @@ use serde::Serialize;
 pub enum RuntimePlayerCommand<'a> {
     Move(&'a SurfacePoint),
     Follow { target: &'a str, distance: Option<f64>, until: Option<f64>, complete: Option<bool> },
+    Travel(PlayerTravelIntent<'a>),
     Cancel(Option<&'a str>),
     Gather { target: &'a str, tool: Option<&'a str>, mode: Option<GatheringMode> },
     Fish { target: &'a str, tool: &'a str },
@@ -52,6 +54,7 @@ impl RuntimePlayerCommand<'_> {
         match self {
             Self::Move(point) => point.surface_id.len(),
             Self::Follow { target, .. } => target.len(),
+            Self::Travel(intent) => intent.text_bytes(),
             Self::Cancel(action) => action.map_or(0, str::len),
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } | Self::Pickup { target, item: tool, .. } => target.len() + tool.len(),
@@ -87,6 +90,9 @@ impl RuntimePlayerCommand<'_> {
                 version: preparation_version,
                 digest: preparation_digest.into(),
             }, inputs);
+        }
+        if let Self::Travel(intent) = self {
+            return intent.bind(id, actor);
         }
         if let Self::PlaceHearth { definition, site } = self {
             return bind_hearth(id, actor, definition, site);
@@ -186,7 +192,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } | Self::Handover { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } | Self::Handover { .. } | Self::Travel(_) => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => ("eat", None, None, None, Some(item), None),
@@ -313,7 +319,7 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } | Self::Handover { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } | Self::Handover { .. } | Self::Travel(_) => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },

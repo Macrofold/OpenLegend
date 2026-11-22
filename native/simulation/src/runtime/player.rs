@@ -51,6 +51,7 @@ pub struct RuntimePlayerRead {
     clock: RuntimeClock,
     view_source: Option<RuntimePlayerViewSource>,
     narrator: Option<RuntimeNarratorFence>,
+    outings: Option<crate::outings::view::PreparedOutings>,
     _custody: ByteReservation,
 }
 
@@ -959,6 +960,11 @@ impl NativeWorldSession {
         let view_source = app_view
             .then(|| capture_view_source(&self.session, state, actor, &self.budget))
             .transpose()?;
+        let outings = if app_view && state.installed.travel && state.outings.has_rows() {
+            crate::outings::view::PreparedOutings::prepare(state, actor, &self.budget).map_err(failure)?
+        } else {
+            None
+        };
         let binding = GeometryBinding::new(
             CandidateKey {
                 id: 0,
@@ -999,6 +1005,7 @@ impl NativeWorldSession {
                 clock,
                 view_source,
                 narrator: None,
+                outings,
                 _custody: custody,
             },
             prepared,
@@ -1026,6 +1033,9 @@ impl NativeWorldSession {
             {
                 return Ok(None);
             }
+        }
+        if read.outings.as_ref().is_some_and(|values| !values.current(&simulation.state, &read.actor)) {
+            return Ok(None);
         }
         if let Some(narrator) = &read.narrator {
             let state = &simulation.state;
@@ -1083,6 +1093,12 @@ impl NativeWorldSession {
     }
 }
 impl RuntimePlayerRead {
+    /// The application takes the independently funded view. The same read
+    /// retains only its exact source/consent proof until disclosure.
+    pub fn take_outings(&mut self) -> Option<crate::outings::view::OutingViews> {
+        self.outings.as_mut()?.views.take()
+    }
+
     /// The exact accepted owner for a host control preview prepared after
     /// capturing this view. No other caller may infer authority from the cut.
     pub fn accepted_cut(&self) -> u64 {

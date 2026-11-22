@@ -397,6 +397,35 @@ impl TravelAcceptCursor {
             }
         }
     }
+    pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        if let Some(choice) = &self.choice {
+            choice.geometry_request()
+        } else {
+            self.requested
+                .as_ref()
+                .and_then(RequestedActivityCursor::geometry_request)
+        }
+    }
+
+    pub(crate) fn display_cursor(&mut self) -> Option<&mut crate::commands::ActivityDisplayCursor> {
+        if let Some(choice) = &mut self.choice {
+            choice.display_cursor()
+        } else {
+            self.requested
+                .as_mut()
+                .and_then(RequestedActivityCursor::display_cursor)
+        }
+    }
+
+    pub(crate) fn personal(
+        &self,
+    ) -> Result<&crate::activity::PendingActivityResult, ExecutionError> {
+        self.requested
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .personal()
+    }
+
     pub(crate) fn step<'a>(
         &'a mut self,
         core: &mut CoreMutation<'_>,
@@ -410,30 +439,13 @@ impl TravelAcceptCursor {
             }
         };
         Ok(match progress {
-            Progress::Geometry => TravelAcceptStep::Geometry(if let Some(choice) = &self.choice {
-                choice.geometry_request().ok_or(ExecutionError::Invariant)?
-            } else {
-                self.requested
-                    .as_ref()
-                    .and_then(RequestedActivityCursor::geometry_request)
-                    .ok_or(ExecutionError::Invariant)?
-            }),
-            Progress::Display => {
-                TravelAcceptStep::Display(if let Some(choice) = &mut self.choice {
-                    choice.display_cursor().ok_or(ExecutionError::Invariant)?
-                } else {
-                    self.requested
-                        .as_mut()
-                        .and_then(RequestedActivityCursor::display_cursor)
-                        .ok_or(ExecutionError::Invariant)?
-                })
-            }
-            Progress::Personal => TravelAcceptStep::Personal(
-                self.requested
-                    .as_ref()
-                    .ok_or(ExecutionError::Invariant)?
-                    .personal()?,
+            Progress::Geometry => TravelAcceptStep::Geometry(
+                self.geometry_request().ok_or(ExecutionError::Invariant)?,
             ),
+            Progress::Display => {
+                TravelAcceptStep::Display(self.display_cursor().ok_or(ExecutionError::Invariant)?)
+            }
+            Progress::Personal => TravelAcceptStep::Personal(self.personal()?),
             Progress::Complete => {
                 TravelAcceptStep::Complete(self.result.as_ref().ok_or(ExecutionError::Invariant)?)
             }

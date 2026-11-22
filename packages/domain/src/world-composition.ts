@@ -554,6 +554,10 @@ export function selectedNativeLawDefinitions(
     socialDefaults: BASE_SOCIAL_POLICY,
     speechAction: BASE_SPEECH_ACTION,
     ordinaryActions: BASE_ORDINARY_ACTION_RULES,
+    travelHost:
+      activityHostForCommand(world, 'outing') === BASE_OUTING_HOST
+        ? activityHostPin(BASE_OUTING_HOST)
+        : null,
     hearthPlacement:
       activityHostForCommand(world, 'place-hearth') === BASE_HEARTH_ACTIVITY_HOST
         ? {
