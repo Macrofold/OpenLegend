@@ -17,6 +17,7 @@ use serde_json::value::RawValue;
 
 pub(super) mod access;
 pub(super) mod maintenance;
+pub(super) mod performance;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

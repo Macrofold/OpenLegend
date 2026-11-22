@@ -99,6 +99,7 @@ pub struct GameClock {
     presence: Option<Arc<Presence>>,
     exit_grace: Duration,
     inputs: Option<Arc<WorldInputs>>,
+    started: Instant,
     accepted_reset: Arc<Mutex<Instant>>,
     maintenance: Arc<OperatorMaintenance>,
     identity: Arc<tokio::sync::Mutex<RequestIdentity>>,
@@ -112,6 +113,7 @@ impl GameClock {
         base_ratio: f64,
         identity: Arc<tokio::sync::Mutex<RequestIdentity>>,
     ) -> Self {
+        let started = Instant::now();
         Self {
             game,
             saves,
@@ -120,7 +122,8 @@ impl GameClock {
             presence: None,
             exit_grace: Duration::ZERO,
             inputs: None,
-            accepted_reset: Arc::new(Mutex::new(Instant::now())),
+            started,
+            accepted_reset: Arc::new(Mutex::new(started)),
             maintenance: Arc::new(OperatorMaintenance::default()),
             identity,
         }
@@ -131,6 +134,9 @@ impl GameClock {
     }
     pub(crate) fn maintenance(&self) -> &Arc<OperatorMaintenance> {
         &self.maintenance
+    }
+    pub(crate) fn uptime(&self) -> Duration {
+        self.started.elapsed()
     }
     pub(crate) fn saving_failed(&self) -> bool {
         self.saves.has_failed()

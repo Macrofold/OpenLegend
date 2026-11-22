@@ -17,6 +17,8 @@ For a campaign that needs direct measurements of nested operations, the [hierarc
 
 ## Stand-alone Rust campaigns
 
+An authenticated account with the current Inspect grant may request `GET /api/performance` for service uptime, accepted game time, configured speed, pause reason and save health. The recorder state is disabled, ready for a private command, or armed. The endpoint describes the running service. Its response has no samples and it cannot control the recorder. [Caller checks](../verification/multiplayer-entry-maintenance.md#stand-alone-rust-performance-status--november-22-2026).
+
 Use the [Rust campaign design](../projects/profiling-controls/rust-server.md) to choose a probe family and its matched control. The campaign adapter takes the pinned heavy opening through the existing stand-alone server and managed runner.
 
 - `node --import tsx scripts/performance/profile-campaign.ts plan INPUT.json` freezes a private plan and emits `worker-plan.json`. Supply full `gameSource` and `toolSource` commits, the Open Legend `verificationDirectory`, an unused private `outputDirectory`, and the task's authorized `cloudAllocationId`, `authorizationRef` and `limitUsd`. Set `taskId` to the managed allocation's exact task ID. It defaults to the report's campaign `id` when the two are the same. Set `repetitions` to 3 and `seed` to 1086. Set campaign and case deadlines to include build, play, drain and worker cleanup.

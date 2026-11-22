@@ -141,6 +141,10 @@ pub(crate) fn router(
         .route("/api/saves/receipt", post(checkpoint::receipt))
         .route("/api/operations", axum::routing::get(operations::state))
         .route(
+            "/api/performance",
+            axum::routing::get(operations::performance::status),
+        )
+        .route(
             "/api/maintenance/schedule",
             post(operations::maintenance::edit),
         )

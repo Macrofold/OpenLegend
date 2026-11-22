@@ -135,6 +135,11 @@ impl Recorder {
         Ok(())
     }
 
+    fn close(&self) {
+        self.closed.store(true, Ordering::Release);
+        self.detach();
+    }
+
     fn detach(&self) -> Option<(Capture, u64)> {
         let detached = {
             let mut slot = self
@@ -244,9 +249,16 @@ pub(crate) struct Operator {
 
 impl Drop for Operator {
     fn drop(&mut self) {
-        self.recorder.closed.store(true, Ordering::Release);
-        self.recorder.detach();
+        self.recorder.close();
     }
+}
+
+/// On-demand HTTP tooling can report whether the private recorder is attached
+/// and armed. It never takes the capture lock or borrows recorded samples.
+pub(crate) fn armed() -> Option<bool> {
+    let recorder = RECORDER.get()?;
+    (!recorder.closed.load(Ordering::Acquire))
+        .then(|| recorder.generation.load(Ordering::Acquire) != 0)
 }
 
 pub(crate) fn start_from_operator() -> Option<Operator> {
@@ -288,12 +300,16 @@ fn start() -> Result<Operator, &'static str> {
     std::thread::Builder::new()
         .name("openlegend-profile-operator".into())
         .spawn(move || {
-            if let Err(error) = commands(recorder, output) {
-                recorder.detach();
+            let result = commands(recorder, output);
+            recorder.close();
+            if let Err(error) = result {
                 notify_error(error);
             }
         })
-        .map_err(|_| "could not start the operator control thread")?;
+        .map_err(|_| {
+            recorder.close();
+            "could not start the operator control thread"
+        })?;
     Ok(Operator { recorder })
 }
 
