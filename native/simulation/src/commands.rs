@@ -39,6 +39,7 @@ pub(crate) use native_movement::{
     begin_territorial_move,
 };
 pub(crate) mod player;
+pub use player::OwnedMove;
 mod state;
 pub(crate) use state::*;
 mod display;
@@ -240,6 +241,7 @@ pub(crate) enum NativeCommand {
     },
     Drop { envelope: CommandEnvelope, item_id: String, quantity: u64 },
     Eat { envelope: CommandEnvelope, item_id: String },
+    TransferItem { envelope: CommandEnvelope, selection: OwnedMove<String> },
     Equipment {
         envelope: CommandEnvelope,
         item_id: String,
@@ -914,6 +916,7 @@ impl NativeCommand {
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
             | Self::Eat { envelope, .. }
+            | Self::TransferItem { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::DescriptiveAct { envelope, .. }
@@ -948,6 +951,7 @@ impl NativeCommand {
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
             | Self::Eat { envelope, .. }
+            | Self::TransferItem { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::DescriptiveAct { envelope, .. }
@@ -976,6 +980,7 @@ impl NativeCommand {
             Self::Cook { .. } => "cook",
             Self::Craft { .. } => "craft",
             Self::Eat { .. } => "eat",
+            Self::TransferItem { .. } => "transfer-item",
             Self::Equipment { request, .. } => match request {
                 crate::execution::EquipmentRequest::Equip => "equip",
                 crate::execution::EquipmentRequest::Unequip { .. } => "unequip",

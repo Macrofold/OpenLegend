@@ -32,6 +32,7 @@ mod travel;
 mod typed_plan;
 mod manufacture;
 mod equipment;
+mod transfer_item;
 mod eating;
 mod drop;
 mod pickup;
@@ -251,14 +252,15 @@ impl CommandCursor {
         binding: GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        // These internal operations come from the authenticated player
-        // binder. Public command decoding cannot issue either operation.
+        // The authenticated binder constructs these typed operations directly.
+        // Raw command decoding does not grant their private authority.
         if !matches!(
             command,
             NativeCommand::Cancel {
                 dismiss_review: true,
                 ..
             } | NativeCommand::DescriptiveAct { .. }
+                | NativeCommand::TransferItem { .. }
         ) {
             let decoded: NativeCommand =
                 serde_json::from_str(&canonical).map_err(|_| ExecutionError::Invariant)?;
@@ -1145,6 +1147,7 @@ impl CommandCursor {
                             NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
                                 | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
                                 | NativeCommand::Drop { .. } | NativeCommand::Handover { .. }
+                                | NativeCommand::TransferItem { .. }
                         )
                     {
                         self.reserve(128)?;
@@ -1330,6 +1333,11 @@ impl CommandCursor {
                         NativeCommand::Drop { .. } => {
                             if self.prepare_drop(core, &actor_id)? {
                                 return Ok(Progress::Geometry);
+                            }
+                        }
+                        NativeCommand::TransferItem { .. } => {
+                            if let Some(event) = self.transfer_item(core, &actor_id)? {
+                                return Ok(Progress::Occurrence(event));
                             }
                         }
                         NativeCommand::Equipment { .. } => {

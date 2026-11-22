@@ -1,6 +1,7 @@
 //! The authorized browser handler passes its already-decoded command input.
 
 use super::outings_input::PlayerTravelIntent;
+pub use crate::execution::OwnedMove;
 use super::{CommandEncoding, CommandHeaders, NativeCommand, SpeechTargetRole, StatusOperation};
 use crate::encoding::json_record;
 use crate::gathering::{GatheringMode, ToolChoice};
@@ -70,6 +71,7 @@ pub enum RuntimePlayerCommand<'a> {
     LearnRecord(&'a super::RecipeRecordSelection),
     InspectItem { item: &'a str, container: &'a str, expected_revision: u64 },
     InspectStorage { root: &'a str, after: Option<&'a str>, expected_scope: Option<&'a crate::text::JsText>, expected_revision: Option<u64> },
+    TransferItem(OwnedMove<&'a str>),
     Eat(&'a str),
     Equip(&'a str),
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
@@ -103,6 +105,7 @@ impl RuntimePlayerCommand<'_> {
             Self::LearnRecord(record) => record.item_id.len() + record.record_pin.id.len() + record.record_pin.digest.len(),
             Self::InspectItem { item, container, .. } => item.len() + container.len(),
             Self::InspectStorage { root, after, expected_scope, .. } => root.len() + after.map_or(0, str::len) + expected_scope.map_or(0, crate::text::JsText::storage_bytes),
+            Self::TransferItem(selection) => selection.item_id.len() + selection.target_id.len(),
             Self::Eat(item) | Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
         }
     }
@@ -153,6 +156,9 @@ impl RuntimePlayerCommand<'_> {
         }
         if let Self::LearnRecord(record) = self {
             return bind_record_learning(id, actor, record);
+        }
+        if let Self::TransferItem(selection) = self {
+            return bind_transfer(id, actor, selection);
         }
         if let Self::InspectItem { item, container, expected_revision } = self {
             return bind_inspection(id, actor, item, container, expected_revision);
@@ -254,6 +260,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::Follow { .. }
             | Self::Handover { .. }
             | Self::Travel(_)
+            | Self::TransferItem(_)
             | Self::Strike { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
@@ -397,6 +404,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::Follow { .. }
             | Self::Handover { .. }
             | Self::Travel(_)
+            | Self::TransferItem(_)
             | Self::Strike { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
@@ -414,6 +422,42 @@ impl RuntimePlayerCommand<'_> {
         };
         Ok((command, signature))
     }
+}
+
+fn bind_transfer(
+    id: &str,
+    actor: &str,
+    selection: OwnedMove<&str>,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Binding<'a> {
+        actor_id: &'a str,
+        #[serde(flatten)]
+        selection: OwnedMove<&'a str>,
+        human_initiated: bool,
+        id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid()
+        || !crate::values::is_safe_record_id(selection.item_id)
+        || !crate::values::is_safe_record_id(selection.target_id)
+    {
+        return Err(serde::ser::Error::custom("Invalid item move."));
+    }
+    let input = Binding {
+        actor_id: actor, selection, human_initiated: true, id, kind: "transfer-item",
+    };
+    let encoding = CommandEncoding::from_ordered(
+        &input, 10 + usize::from(selection.expected_contents_revision.is_some()),
+    )?;
+    let signature = encoding.json.get().to_owned();
+    Ok((NativeCommand::TransferItem {
+        envelope: headers.envelope(encoding),
+        selection: selection.map_ids(|id| (*id).to_owned()),
+    }, signature))
 }
 
 fn bind_gift(

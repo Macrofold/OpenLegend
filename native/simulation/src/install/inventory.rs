@@ -82,6 +82,13 @@ pub(super) struct ItemDefinitionFields {
     tracks_material_origins: bool,
     assembly_material: Option<MaterialRole>,
     recipe_record: Option<ItemRecipeRecord>,
+    contents_exposure: Option<ContentsExposure>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ContentsExposure {
+    profile: DefinitionPin,
 }
 
 #[derive(Deserialize)]
@@ -115,6 +122,7 @@ pub(crate) struct ItemMaterialRule {
     pub initial_attributes: Vec<String>,
     pub state_attributes: Vec<String>,
     pub homogeneous: bool,
+    pub bag_refusal: Option<crate::text::JsText>,
 }
 
 #[derive(Deserialize)]
@@ -166,6 +174,8 @@ pub(crate) struct ItemDefinitionRead {
     pub tracks_material_origins: bool,
     pub material: Option<ItemMaterialRule>,
     pub(crate) recipe_record: Option<ItemRecipeRecord>,
+    open_contents: bool,
+    pub(crate) exposed_material: bool,
 }
 
 impl ItemDefinitionRead {
@@ -174,6 +184,7 @@ impl ItemDefinitionRead {
         canonical: &str,
         value: ItemDefinitionFields,
         assembly: Option<&super::retained::RetainedMap>,
+        exposure: Option<&IndexMap<String, &serde_json::value::RawValue>>,
         budget: &ByteBudget,
     ) -> Result<Self, InstallError> {
         let pin = DefinitionPin {
@@ -216,9 +227,10 @@ impl ItemDefinitionRead {
                 return Err(InstallError::DefinitionBody);
             }
         }
-        let material = value.assembly_material.as_ref().map(|role| {
+        let (material, exposed_material) = value.assembly_material.as_ref().map(|role| {
             #[derive(Deserialize)]
             struct Family<'a> {
+                implementation: &'a str,
                 #[serde(borrow)]
                 inventory: IndexMap<&'a str, &'a serde_json::value::RawValue>,
             }
@@ -228,8 +240,31 @@ impl ItemDefinitionRead {
                 .map_err(|_| InstallError::Capacity)?;
             let family: Family<'_> = serde_json::from_str(payload).map_err(|_| InstallError::DefinitionBody)?;
             let rule = family.inventory.get(role.role.as_str()).ok_or(InstallError::DefinitionBody)?;
-            serde_json::from_str::<ItemMaterialRule>(rule.get()).map_err(|_| InstallError::DefinitionBody)
-        }).transpose()?;
+            let material = serde_json::from_str::<ItemMaterialRule>(rule.get())
+                .map_err(|_| InstallError::DefinitionBody)?;
+            Ok::<_, InstallError>((Some(material), family.implementation == "four-corner-flexible-bays"
+                && matches!(role.role.as_str(), "cover" | "fiber")))
+        }).transpose()?.unwrap_or((None, false));
+        if let Some(contents) = &value.contents_exposure {
+            #[derive(Deserialize)]
+            struct Profile<'a> {
+                id: &'a str,
+                version: u64,
+                implementation: &'a str,
+            }
+            let pin = &contents.profile;
+            let payload = exposure.and_then(|profiles| profiles.get(&pin.id))
+                .ok_or(InstallError::DefinitionBody)?;
+            let profile: Profile<'_> = serde_json::from_str(payload.get())
+                .map_err(|_| InstallError::DefinitionBody)?;
+            if value.container.is_none() || !pin.is_valid()
+                || profile.id != pin.id || profile.version != pin.version
+                || profile.implementation != "open-single-level"
+                || crate::encoding::content_label(payload.get()) != pin.digest
+            {
+                return Err(InstallError::DefinitionBody);
+            }
+        }
         let category = if value.equipment.is_some() || value.fishing_tool.is_some() {
             "equipment"
         } else if value.ammunition.is_some() {
@@ -266,6 +301,8 @@ impl ItemDefinitionRead {
                 || value.assembly_material.is_some(),
             material,
             recipe_record: value.recipe_record,
+            open_contents: value.contents_exposure.is_some(),
+            exposed_material,
         })
     }
 
@@ -300,6 +337,14 @@ impl ItemDefinitionRead {
         self.container.is_some()
     }
 
+    pub(crate) fn has_open_contents(&self) -> bool {
+        self.open_contents
+    }
+
+    pub(crate) fn container_maximum_depth(&self) -> Option<u64> {
+        self.container.as_ref().map(|definition| definition.maximum_depth)
+    }
+
     pub(crate) fn container_capacity(&self) -> Option<u64> {
         self.container.as_ref().map(|definition| definition.capacity)
     }
@@ -320,7 +365,7 @@ heap_record!(ItemDefinitionRead {
 });
 heap_record!(GatheringTool { resource_id });
 heap_record!(FishingTool { kind });
-heap_record!(ItemMaterialRule { initial_attributes, state_attributes });
+heap_record!(ItemMaterialRule { initial_attributes, state_attributes, bag_refusal });
 impl HeapBytes for Equipment {
     fn heap_bytes(&self) -> Option<usize> {
         self.ports.heap_bytes()?.checked_add(

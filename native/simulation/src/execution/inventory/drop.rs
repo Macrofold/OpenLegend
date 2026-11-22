@@ -1,5 +1,6 @@
 //! Move carried lots into a nearby supported pile under the existing physical
 //! journal. Bags move with their contents and keep their private inner records.
+use super::packing::PackingChange;
 use super::*;
 use crate::simulation::SimulationState;
 use crate::state::{Action, EntitySpatial, SurfacePoint};
@@ -51,14 +52,14 @@ pub(crate) fn drop_item_problem<'a>(
     // Without a current action or a held lot, no descendant can prevent
     // dropping this bag. Keep the same exact check for active work.
     if (action.is_some() || !physical.holds.is_empty())
-        && drop_work_bound(state, action, entity, &mut visit)?
+        && inventory_work_bound(state, action, entity, &mut visit)?
     {
         return Ok(Some(&copy.needed));
     }
     Ok(None)
 }
 
-fn drop_work_bound(
+pub(super) fn inventory_work_bound(
     state: &SimulationState,
     action: Option<&Action>,
     item: &Entity,
@@ -83,7 +84,7 @@ fn drop_work_bound(
         .inventory
         .children(&state.physical.entities, id, false)
     {
-        if drop_work_bound(state, action, child, visit)? {
+        if inventory_work_bound(state, action, child, visit)? {
             return Ok(true);
         }
     }
@@ -316,57 +317,9 @@ impl CoreMutation<'_> {
             let entities = &self.state.physical.entities;
             let entity = entities.resolve(handle).ok_or(ExecutionError::Invariant)?;
             parent = crate::install::inventory_parent(entity).and_then(|id| entities.handle(id));
-            let before = ContentsBefore {
-                handle,
-                revision: entity.inventory_revision,
-                bag: entity.container.as_ref().map(|bag| {
-                    (
-                        bag.load,
-                        bag.load_revision,
-                        bag.subtree_revision,
-                        bag.height,
-                    )
-                }),
-            };
-            let next = if let Some(bag) = entity.container.as_ref() {
-                let height = self
-                    .state
-                    .inventory
-                    .children(entities, &entity.id, false)
-                    .map(|child| 1 + child.container.as_ref().map_or(0, |bag| bag.height))
-                    .max()
-                    .unwrap_or(0);
-                let remaining = bag
-                    .load
-                    .checked_sub(load)
-                    .ok_or(ExecutionError::Invariant)?;
-                Some((remaining, next_revision(bag.subtree_revision)?, height))
-            } else {
-                None
-            };
-            let revision = if first {
-                before.revision
-            } else {
-                Some(next_revision(before.revision.unwrap_or_default())?)
-            };
-            self.journal.physical.reserve(size_of::<Undo>())?;
-            self.journal
-                .physical
-                .undo
-                .push(Undo::InventoryAvailability(before));
-            let entity = self
-                .state
-                .physical
-                .entities
-                .resolve_mut(handle)
-                .ok_or(ExecutionError::Invariant)?;
-            entity.inventory_revision = revision;
-            if let (Some(bag), Some((load, revision, height))) = (&mut entity.container, next) {
-                bag.load = load;
-                bag.load_revision = revision;
-                bag.subtree_revision = revision;
-                bag.height = height;
-            }
+            self.publish_packing(
+                handle, PackingChange::Remove(load), first,
+            )?;
             first = false;
         }
         Ok(())

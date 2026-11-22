@@ -10,7 +10,11 @@ mod debit;
 mod pickup;
 mod drop;
 mod relocate;
+mod packing;
+mod transfer;
 use pickup::compatible_lots;
+pub use transfer::OwnedMove;
+pub(crate) use transfer::OwnedMoveError;
 pub(crate) use drop::drop_item_problem;
 pub(crate) use pickup::partitionable_stock;
 pub(crate) use debit::{OwnedDebits, can_debit_lot, can_debit_lot_after_hold};
@@ -227,6 +231,7 @@ impl CoreMutation<'_> {
         parent_id: &str,
         item: Entity,
         prepared: ByteReservation,
+        split_source: Option<&str>,
     ) -> Result<(), ExecutionError> {
         let parent = self
             .state
@@ -241,10 +246,17 @@ impl CoreMutation<'_> {
             .resolve(parent)
             .ok_or(ExecutionError::Invariant)?;
         let budget = self.journal.physical.budget.clone();
-        if !(destination.actor.is_some()
-                || destination.kind == self.state.installed.observation_rules.value().pile_kind)
-            || destination.container.is_some()
-            || destination.world_position().is_none()
+        let root = destination.container.is_none() && destination.world_position().is_some()
+            && (destination.actor.is_some()
+                || destination.kind == self.state.installed.observation_rules.value().pile_kind);
+        // Non-root insertion is only an already-admitted split of a direct
+        // child. Production continues to require a supported root.
+        let split_in_bag = destination.container.is_some() && split_source
+            .and_then(|id| self.state.physical.entities.get(id))
+            .is_some_and(|source| self.state.inventory.has_direct_item(
+                &self.state.physical.entities, parent_id, source,
+            ));
+        if !(root || split_in_bag)
             || !matches!(&item.placement, Some(Placement::Contained { parent_entity_id, revision: 0 }) if parent_entity_id == parent_id)
             || item.actor.is_some()
             || item.item.is_none()
@@ -412,7 +424,7 @@ impl CoreMutation<'_> {
             description: None, status_effects: None, mechanism_fields: None, appearance: None, actor: None,
             animal: None, replenisher: None, resource: None, remains: None, heat: None,
         };
-        self.insert_direct_lot(parent, entity, prepared)?;
+        self.insert_direct_lot(parent, entity, prepared, split)?;
         Ok(result)
     }
 

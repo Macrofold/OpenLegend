@@ -1,0 +1,13 @@
+{
+  "unavailable": "Choose an accessible item and destination.",
+  "busy": "This item or its contents are needed by ongoing work.",
+  "stale": "The item or destination changed. Refresh before moving it.",
+  "notPortable": "This object cannot be moved by this action.",
+  "quantity": "That quantity is unavailable or reserved.",
+  "packing": "The bag does not have enough packing capacity.",
+  "depth": "A bag cannot contain itself or exceed the nesting limit.",
+  "noPackingLoad": "This item has no admitted packing load for a bag.",
+  "filledOpenBag": "Keep an open basket with exposed materials directly carried or on supported ground.",
+  "success": "Possessions updated.",
+  "narration": "arranged some belongings."
+}

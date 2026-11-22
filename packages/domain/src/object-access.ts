@@ -1,3 +1,4 @@
+import itemMoveCopy from './worlds/base/item-move-copy.json' with { type: 'json' };
 import { boundActionItemIds } from './action-item-references.js';
 import { entityGet } from './entity-collection.js';
 import { directChildIds, itemFor, objectAncestors, custodian, mergeCompatible } from './objects.js';
@@ -73,7 +74,7 @@ export function inventoryWorkReason(world: WorldState, actorId: string, id: stri
     for (const child of directChildIds(world, itemId)) if (visit(child)) return true;
     return false;
   };
-  return visit(id) ? 'This item or its contents are needed by ongoing work.' : null;
+  return visit(id) ? itemMoveCopy.busy : null;
 }
 /** Discovery mirror of merge-item admission (the kernel merge case and `mergeLots`): an
  * equivalent free lot in the same container that no ongoing work needs. Merge commands

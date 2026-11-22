@@ -14,7 +14,7 @@ use crate::{
 };
 use axum::body::Bytes;
 use openlegend_simulation::{
-    commands::{SpeechTargetRole, StatusOperation},
+    commands::{OwnedMove, SpeechTargetRole, StatusOperation},
     encoding::{json_record, sha256_hex},
     gathering::GatheringMode,
     host::{ByteBudget, ByteReservation},
@@ -126,6 +126,18 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     placement_revision: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    expected_contents_revision: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    target_revision: Option<u64>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -310,6 +322,8 @@ enum CommandKind {
     Outing,
     Pickup,
     Drop,
+    #[serde(rename = "transfer-item")]
+    TransferItem,
     Cook,
     Craft,
     Eat,
@@ -773,7 +787,9 @@ impl PlayerCommands {
                                 _ => None,
                             };
                             let target = match target_ref.filter(|_| {
-                                !own_status && !matches!(raw.kind, CommandKind::Say)
+                                // Arranging private belongings binds the exact owned
+                                // destination in the same native candidate, not a world contact.
+                                !own_status && !matches!(raw.kind, CommandKind::Say | CommandKind::TransferItem)
                             }) {
                                 None => None,
                                 Some(contact) => {
@@ -936,18 +952,21 @@ impl CommandRequest {
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
             || Uuid::parse_str(&self.command_epoch).is_err()
-            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing | CommandKind::LearnRecord)
+            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing | CommandKind::LearnRecord | CommandKind::TransferItem)
                 && command.expected_revision.is_some())
             || (!matches!(command.kind, CommandKind::Outing)
                 && (command.outing_operation.is_some() || command.outing_mode.is_some()
                     || command.outing_id.is_some() || command.destination_id.is_some()
                     || command.purpose.is_some()))
-            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::LearnRecord) && command.placement_revision.is_some())
+            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::LearnRecord | CommandKind::TransferItem)
+                && command.placement_revision.is_some())
+            || (!matches!(command.kind, CommandKind::TransferItem)
+                && (command.target_revision.is_some() || command.expected_contents_revision.is_some()))
             || (!matches!(command.kind, CommandKind::LearnRecord) && command.record_pin.is_some())
             || (!matches!(command.kind, CommandKind::InspectItem)
                 && (command.container_id.is_some() || command.after.is_some() || command.expected_scope.is_some()))
             || command.quantity.is_some_and(|quantity| {
-                !matches!(command.kind, CommandKind::Pickup | CommandKind::Drop)
+                !matches!(command.kind, CommandKind::Pickup | CommandKind::Drop | CommandKind::TransferItem)
                     || quantity == 0 || quantity > openlegend_simulation::identity::MAX_SAFE_INTEGER
             })
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
@@ -1178,6 +1197,17 @@ impl CommandRequest {
                     && command.expected_revision.is_some()
                     && command.placement_revision.is_some()
                     && command.record_pin.as_ref().is_some_and(|pin| pin.is_valid()) => Ok(()),
+            CommandKind::TransferItem
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.item_id.as_deref().is_some_and(id)
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.expected_revision.is_some()
+                    && command.placement_revision.is_some()
+                    && command.target_revision.is_some()
+                    && command.quantity.is_some() => Ok(()),
             CommandKind::Eat | CommandKind::Equip | CommandKind::Unequip
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -1393,6 +1423,15 @@ impl PreparedRequest {
                 preparation_digest: input.preparation_digest.as_deref().ok_or(StoreError::InvalidRecord)?,
                 inputs: input.inputs.as_ref().ok_or(StoreError::InvalidRecord)?,
             }),
+            CommandKind::TransferItem => Ok(RuntimePlayerCommand::TransferItem(OwnedMove {
+                item_id: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                target_id: input.target_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                quantity: input.quantity.ok_or(StoreError::InvalidRecord)?,
+                expected_revision: input.expected_revision.ok_or(StoreError::InvalidRecord)?,
+                placement_revision: input.placement_revision.ok_or(StoreError::InvalidRecord)?,
+                expected_contents_revision: input.expected_contents_revision,
+                target_revision: input.target_revision.ok_or(StoreError::InvalidRecord)?,
+            })),
             CommandKind::Eat => Ok(RuntimePlayerCommand::Eat(input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?)),
             CommandKind::Equip => Ok(RuntimePlayerCommand::Equip(
                 input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,

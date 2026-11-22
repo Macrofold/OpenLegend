@@ -1,3 +1,4 @@
+import itemMoveCopy from './worlds/base/item-move-copy.json' with { type: 'json' };
 import { boundActionItemIds } from './action-item-references.js';
 import { CONSTRUCTION_PERMISSION_LIMITS } from './construction-permissions.js';
 import {
@@ -587,7 +588,7 @@ function ancestorDeltas(
     if (!parent) continue;
     for (const ancestor of objectAncestors(world, parent.id)) {
       if (!ancestor.container) continue;
-      if (load === undefined) throw new Error('This item has no admitted packing load for a bag.');
+      if (load === undefined) throw new Error(itemMoveCopy.noPackingLoad);
       deltas.set(ancestor.id, (deltas.get(ancestor.id) ?? 0) + sign * load);
     }
   }
@@ -606,7 +607,7 @@ function ancestorDeltas(
         'packing load',
       );
       if (next > itemContainerCapacity(world, entityGet(world.entities, id)!)!)
-        throw new Error('The bag does not have enough packing capacity.');
+        throw new Error(itemMoveCopy.packing);
     }
     bump(container.subtreeRevision);
   }
@@ -924,7 +925,7 @@ function quantityPlan(
       checked(container.load + delta) >
         itemContainerCapacity(world, entityGet(world.entities, id)!)!
     )
-      throw new Error('The bag does not have enough packing capacity.');
+      throw new Error(itemMoveCopy.packing);
     bump(container.subtreeRevision);
   }
   return { deltas, parents: [...parents] };
@@ -1124,12 +1125,10 @@ function itemMovePlan(
         child.item &&
         exposedContentsMaterial(world, world.itemDefinitions[child.item.definitionPin.id]!)
       )
-        throw new Error(
-          'Keep an open basket with exposed materials directly carried or on supported ground.',
-        );
+        throw new Error(itemMoveCopy.filledOpenBag);
     }
   if (quantity <= 0 || checked(quantity) > availableItemQuantity(world, id))
-    throw new Error('That quantity is unavailable or reserved.');
+    throw new Error(itemMoveCopy.quantity);
   if (sourceId === destinationId)
     return { entity, lot, sourceId, deltas: new Map<string, number>() };
   if (quantity === lot.quantity && identityBound(world, id))
@@ -1139,7 +1138,7 @@ function itemMovePlan(
     ancestors.some((value) => value.id === id) ||
     ancestors.length + (entity.container?.height ?? 0) > MAX_CONTAINMENT_DEPTH
   )
-    throw new Error('A bag cannot contain itself or exceed the nesting limit.');
+    throw new Error(itemMoveCopy.depth);
   if (quantity !== lot.quantity && (entity.container || lot.individuality === 'individual'))
     throw new Error('An individual object cannot be divided.');
   if (quantity !== lot.quantity) splitAdmission(world, id, quantity);
@@ -1244,7 +1243,7 @@ function jointItemMovePlan(world: WorldState, moves: readonly JointItemMove[]) {
     const container = entityGet(world.entities, id)!.container!;
     const capacity = itemContainerCapacity(world, entityGet(world.entities, id)!)!;
     if (checked(container.load + delta, 'packing load') > capacity)
-      throw new Error('The bag does not have enough packing capacity.');
+      throw new Error(itemMoveCopy.packing);
   }
   return { plans, deltas };
 }

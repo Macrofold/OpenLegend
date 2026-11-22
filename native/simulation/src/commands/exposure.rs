@@ -73,6 +73,7 @@ impl CommandExposure {
             }
             NativeCommand::Say { .. } | NativeCommand::DescriptiveAct { .. } | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
+            | NativeCommand::TransferItem { .. }
             | NativeCommand::Handover { .. }
             | NativeCommand::LearnRecord { .. }
             | NativeCommand::InspectActivities { .. } => return Ok(None),

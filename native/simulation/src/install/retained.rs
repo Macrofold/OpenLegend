@@ -633,12 +633,22 @@ pub(crate) fn install_retained(
             )
         };
     let assembly_families = assembly.map(|(rows, _)| rows);
+    let contents_exposure_input = r.verified_map(
+        "contentsExposureProfiles",
+        "config_contents_exposure_profiles",
+        input.contents_exposure_profiles,
+    )?;
+    let exposure = contents_exposure_input.as_ref()
+        .map(|(rows, input)| canonical_entries(rows, input, budget)).transpose()?;
     let (mut items, _item_preparation) = prepare_items(
         &item_definitions,
         &item_input,
         assembly_families.as_ref(),
+        exposure.as_ref().map(|(_, canonical)| canonical),
         budget,
     )?;
+    std::mem::drop(exposure);
+    let contents_exposure_profiles = contents_exposure_input.map(|(rows, _)| rows);
     let hearths_input = r.verified_map(
         "hearthDefinitions", "config_hearth_definitions", input.hearth_definitions,
     )?;
@@ -790,11 +800,7 @@ pub(crate) fn install_retained(
             "config_construction_profile",
             input.construction_profile,
         )?,
-        contents_exposure_profiles: r.map(
-            "contentsExposureProfiles",
-            "config_contents_exposure_profiles",
-            input.contents_exposure_profiles,
-        )?,
+        contents_exposure_profiles,
         daily_rain_definitions: r.map(
             "dailyRainDefinitions",
             "config_daily_rain_definitions",
@@ -918,6 +924,7 @@ fn prepare_items(
     definitions: &RetainedMap,
     input: &CanonicalInput,
     assembly: Option<&RetainedMap>,
+    exposure: Option<&IndexMap<String, &RawValue>>,
     budget: &crate::host::ByteBudget,
 ) -> Result<
     (
@@ -947,7 +954,7 @@ fn prepare_items(
         let value: ItemDefinitionFields =
             serde_json::from_str(source).map_err(|_| InstallError::DefinitionBody)?;
         let exact = canonical.get(id).ok_or(InstallError::DefinitionBody)?.get();
-        let value = ItemDefinitionRead::from_verified(id, exact, value, assembly, budget)?;
+        let value = ItemDefinitionRead::from_verified(id, exact, value, assembly, exposure, budget)?;
         preparation
             .resize(
                 id.len()

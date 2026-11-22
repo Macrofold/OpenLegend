@@ -1,3 +1,4 @@
+import itemMoveCopy from './worlds/base/item-move-copy.json' with { type: 'json' };
 import recordCopy from './recipe-record-copy.json' with { type: 'json' };
 import activityLearningCopy from './activity-learning-copy.json' with { type: 'json' };
 import inspectionCopy from './inventory-inspection-copy.json' with { type: 'json' };
@@ -3687,14 +3688,14 @@ function executeCommandNative(
               command.id,
             );
             result = {
-              ...outcome(true, 'items-arranged', 'Possessions updated.'),
+              ...outcome(true, 'items-arranged', itemMoveCopy.success),
               itemId: moved[0],
             };
             emit(
               world,
               events,
               'items-arranged',
-              subjectNarration(actor, 'arranged some belongings.'),
+              subjectNarration(actor, itemMoveCopy.narration),
               actor,
               undefined,
               undefined,
@@ -3715,7 +3716,7 @@ function executeCommandNative(
         const item = itemFor(world, command.itemId),
           destination = entityOwn(world.entities, command.targetId);
         if (!canHandleItems(world, actor) || !item || !destination)
-          return reject('unavailable', 'Choose an accessible item and destination.');
+          return reject('unavailable', itemMoveCopy.unavailable);
         try {
           // Another person's carried inventory changes hands only through their acceptance.
           // Scope checks run first, so the refusal cannot probe hidden items or people.
@@ -3760,9 +3761,9 @@ function executeCommandNative(
                 command.expectedContentsRevision) ||
             targetRevision !== command.targetRevision
           )
-            return reject('stale', 'The item or destination changed. Refresh before moving it.');
+            return reject('stale', itemMoveCopy.stale);
           if (world.itemDefinitions[item.definitionId]?.portable !== true)
-            return reject('not-portable', 'This object cannot be moved by this action.');
+            return reject('not-portable', itemMoveCopy.notPortable);
           if (command.type === 'split-item' && destination.id !== item.ownerId)
             return reject('stale', 'Split into the current container.');
           if (command.type === 'merge-item' && command.quantity !== item.quantity)
@@ -3780,12 +3781,12 @@ function executeCommandNative(
                     command.id,
                     !command.cooperation,
                   );
-          result = { ...outcome(true, 'items-arranged', 'Possessions updated.'), itemId: resultId };
+          result = { ...outcome(true, 'items-arranged', itemMoveCopy.success), itemId: resultId };
           emit(
             world,
             events,
             'items-arranged',
-            subjectNarration(actor, `arranged some belongings.`),
+            subjectNarration(actor, itemMoveCopy.narration),
             actor,
             undefined,
             undefined,

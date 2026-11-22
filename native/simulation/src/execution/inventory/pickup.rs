@@ -63,6 +63,17 @@ pub(super) fn compatible_lots(
         })
 }
 
+pub(super) struct DirectRelocation<'a> {
+    pub source: &'a str,
+    pub destination: &'a str,
+    pub actor: &'a str,
+    pub source_owner: Option<&'a str>,
+    pub item: &'a str,
+    pub quantity: u64,
+    pub cause: &'a str,
+    pub merge_receiving_lot: bool,
+}
+
 /// A pickup owns its current ground and receiving lots in one candidate.
 /// Split creates a real identity first, then both portions use the same move.
 impl CoreMutation<'_> {
@@ -118,16 +129,31 @@ impl CoreMutation<'_> {
         &mut self, source: &str, actor: &str, item: &str, quantity: u64, cause: &'static str,
         merge_receiving_lot: bool,
     ) -> Result<Option<String>, ExecutionError> {
+        let source_owner = self.state.physical.entities.get(source)
+            .is_some_and(|entity| entity.actor.is_some()).then_some(source);
+        self.relocate_stock(DirectRelocation {
+            source, destination: actor, actor, source_owner, item, quantity, cause, merge_receiving_lot,
+        })
+    }
+
+    /// A prechecked direct custody change. Inventory commands own access and
+    /// packing admission. This owner keeps split, move, merge and lineage atomic.
+    pub(super) fn relocate_stock(
+        &mut self,
+        request: DirectRelocation<'_>,
+    ) -> Result<Option<String>, ExecutionError> {
+        let DirectRelocation {
+            source, destination, actor, source_owner, item, quantity, cause, merge_receiving_lot,
+        } = request;
         let installed = self.state.installed.clone();
         let entities = &self.state.physical.entities;
         let body = entities.get(actor).ok_or(ExecutionError::MissingActor)?;
         let selected = entities.get(item).ok_or(ExecutionError::MissingEntity)?;
         let selected_lot = selected.item.as_ref().ok_or(ExecutionError::Invariant)?;
         let before = selected_lot.quantity;
-        if quantity == 0 || quantity > before || source == actor || !self.state.inventory.has_direct_item(entities, source, selected) {
+        if quantity == 0 || quantity > before || source == destination || !self.state.inventory.has_direct_item(entities, source, selected) {
             return Err(ExecutionError::Invariant);
         }
-        let owned_source = entities.get(source).is_some_and(|entity| entity.actor.is_some());
         let definition = installed
             .retained
             .items
@@ -141,7 +167,7 @@ impl CoreMutation<'_> {
             let bound = body.actor.as_ref().and_then(|body| body.action.as_ref());
             self.state
                 .inventory
-                .children(entities, actor, false)
+                .children(entities, destination, false)
                 .find(|target| {
                     compatible_lots(selected, target, definition)
                         && self.state.physical.holds.quantity(&target.id) == 0
@@ -175,7 +201,7 @@ impl CoreMutation<'_> {
                 quantity,
                 LotDebit {
                     cause,
-                    custodian: owned_source.then_some(source),
+                    custodian: source_owner,
                     target: Some((LineageKind::Split, &split)),
                 },
             )?;
@@ -183,12 +209,12 @@ impl CoreMutation<'_> {
         } else {
             item.to_owned()
         };
-        self.move_contained_lot(source, actor, &moving)?;
+        self.move_contained_lot(source, destination, &moving)?;
         if let Some(receiver) = receiver {
             self.transfer_activity_sources(&moving, &receiver, quantity, quantity)?;
-            self.grow_direct_lot(actor, &receiver, quantity, false)?;
+            self.grow_direct_lot(destination, &receiver, quantity, false)?;
             self.debit_inventory_lot(
-                actor,
+                destination,
                 &moving,
                 quantity,
                 LotDebit {

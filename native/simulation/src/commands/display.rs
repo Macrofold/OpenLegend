@@ -478,6 +478,7 @@ impl ActivityDisplayCursor {
             | NativeCommand::Fish { .. }
             | NativeCommand::Pickup { .. }
             | NativeCommand::Drop { .. }
+            | NativeCommand::TransferItem { .. }
             | NativeCommand::TendFire { .. }
             | NativeCommand::PlaceHearth { .. }
             | NativeCommand::Cook { .. }
