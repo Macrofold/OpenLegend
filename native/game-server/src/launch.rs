@@ -124,7 +124,7 @@ pub async fn serve(release: &Path, database: DatabaseConfig) -> Result<(), Launc
 }
 
 async fn serve_with_recovery(
-    mut game: PreparedGame,
+    game: PreparedGame,
     listen: TcpListener,
     extra: Option<Router>,
     release: &Path,
@@ -135,44 +135,69 @@ async fn serve_with_recovery(
     let port = listen.local_addr()?.port();
     let directory = PathBuf::from(setting("OPEN_LEGEND_DATA_DIR", ".data")?).join("saves");
     let socket = listen.into_std()?;
+    let custody = game.game.host.budget().clone();
     let loads = game.loads.clone();
-    loop {
-        let listener = TcpListener::from_std(socket.try_clone()?)?;
-        let Some(request) = game.serve(listener, extra.clone()).await? else {
-            return Ok(());
-        };
-        let outcome = startup
-            .recover_live_checkpoint(
-                release,
-                &directory,
-                &request.slot,
-                request.id,
-                &request.authorized.scope,
+    let result = async {
+        let mut game = game;
+        loop {
+            let listener = TcpListener::from_std(socket.try_clone()?)?;
+            let Some(request) = game.serve(listener, extra.clone()).await? else {
+                return Ok(());
+            };
+            report_native_memory("OpenLegend checkpoint handoff memory", &custody);
+            let outcome = startup
+                .recover_live_checkpoint(
+                    release,
+                    &directory,
+                    &request.slot,
+                    request.id,
+                    &request.authorized.scope,
+                )
+                .await;
+            let refused = match outcome {
+                Ok(()) => false,
+                Err(crate::store::CommitError::RolledBack(error)) => {
+                    eprintln!("Live checkpoint load refused: {error}");
+                    true
+                }
+                Err(error) => return Err(error.into()),
+            };
+            let current =
+                CurrentServer::from_storage(release, Some(&release.join("navigation")), &startup)
+                    .await?;
+            game = PreparedGame::open(
+                Arc::new(current),
+                browser.clone(),
+                settings,
+                port,
+                loads.clone(),
             )
-            .await;
-        let refused = match outcome {
-            Ok(()) => false,
-            Err(crate::store::CommitError::RolledBack(error)) => {
-                eprintln!("Live checkpoint load refused: {error}");
-                true
-            }
-            Err(error) => return Err(error.into()),
-        };
-        let current =
-            CurrentServer::from_storage(release, Some(&release.join("navigation")), &startup)
-                .await?;
-        game = PreparedGame::open(
-            Arc::new(current),
-            browser.clone(),
-            settings,
-            port,
-            loads.clone(),
-        )
-        .await?;
-        loads
-            .finish(request, refused)
-            .map_err(|_| "Cannot settle the checkpoint request")?;
+            .await?;
+            loads
+                .finish(request, refused)
+                .map_err(|_| "Cannot settle the checkpoint request")?;
+        }
     }
+    .await;
+    // The socket, operational Store and pending outcomes outlive an individual
+    // world during Load. Release them before reporting a complete shutdown.
+    drop((socket, extra, startup, loads));
+    report_native_memory("OpenLegend native memory", &custody);
+    result
+}
+
+fn report_native_memory(label: &str, custody: &openlegend_simulation::host::ByteBudget) {
+    println!(
+        "{label} {}",
+        serde_json::json!({
+            "transientBytes": custody.used(),
+            "transientPeakBytes": custody.peak(),
+            "residentBytes": custody.resident().used(),
+            "residentPeakBytes": custody.resident().peak(),
+            "pendingSaveBytes": custody.pending_save_used(),
+            "pendingSavePeakBytes": custody.pending_save_peak(),
+        })
+    );
 }
 
 impl PreparedGame {
@@ -371,7 +396,6 @@ impl PreparedGame {
             Some(extra) => routes.merge(extra),
             None => routes,
         };
-        let custody = game.host.budget().clone();
         let run = run(
             listen,
             routes,
@@ -399,17 +423,6 @@ impl PreparedGame {
         } else {
             game.close().await?;
         }
-        println!(
-            "OpenLegend native memory {}",
-            serde_json::json!({
-                "transientBytes": custody.used(),
-                "transientPeakBytes": custody.peak(),
-                "residentBytes": custody.resident().used(),
-                "residentPeakBytes": custody.resident().peak(),
-                "pendingSaveBytes": custody.pending_save_used(),
-                "pendingSavePeakBytes": custody.pending_save_peak(),
-            })
-        );
         run
     }
 }

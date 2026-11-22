@@ -149,6 +149,7 @@ pub(super) async fn serve(
         && activate(receipt).await
     {
         let game = prepared.await?;
+        drop((activate, target));
         println!("OpenLegend listening on {bound}");
         return serve_with_recovery(
             game,
@@ -190,6 +191,7 @@ pub(super) async fn serve(
     };
     let _ = stop.send(true);
     waiting_http.await?;
+    drop(target);
     match opened {
         Some(game) => {
             serve_with_recovery(

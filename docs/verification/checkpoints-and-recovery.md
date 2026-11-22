@@ -142,4 +142,6 @@ Separate conversations reached the controlled HTTPS provider and held either an 
 
 The November 21, 2026 browser, held-generation and stopped-server cases used source `ac8acda3b5dca396925167a827e155081bbf02a9` and local executable `aad89168c742f719680c21e5c7d97f20a95cb3e1b3887e936caca0435dfec004`. The earlier held-attention case used `632edb531fbcc6dca0324231336f00ac247c0587` and executable `315fbe0925680add4e74c9d387bb66824544a1020332c1248ec2792babda5905`. The final run released the old world’s resident and pending-save reservations at every handoff. These are local correctness checks, with no performance comparison or external provider spending.
 
+Final shutdown reports after releasing the listener, retained requests and shared PostgreSQL Store. Checkpoint handoff reports separately because the same Store remains open for the replacement world. The [activity-learning and maintenance replay](attention-and-memory-core.md) confirmed zero transient, resident and pending-save reservations at final shutdown, including a recovered checkpoint and continued play.
+
 Retained asset releases, the other World operations sections and the managed due-capture comparison remain open under [NSC04-R5](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
