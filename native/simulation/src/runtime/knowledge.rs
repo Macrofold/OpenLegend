@@ -17,6 +17,22 @@ struct KnowledgeInput {
 }
 
 impl NativeWorldSession {
+    /// Apply a deliberate focus to the host's already resolved current
+    /// contact. The ordinary personal edit owns rollback and publication.
+    pub fn begin_player_focus(
+        &mut self,
+        account: &str,
+        actor: &str,
+        contact: Option<String>,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        self.session.accepted().map_err(failure)?
+            .require_player_read(account, actor).map_err(failure)?;
+        let cursor = crate::knowledge::KnowledgeEditCursor::focus(actor, contact, &self.budget)
+            .map_err(failure)?;
+        self.session.begin_personal_edit(cursor).map_err(failure)
+    }
+
     /// The authenticated caller has resolved the current person body reference.
     /// Retain the installed name owner's accepted change through ordinary saving.
     pub fn begin_owner_nickname(

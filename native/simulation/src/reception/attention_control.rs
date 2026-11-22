@@ -24,7 +24,9 @@ pub(crate) use read::{
     capture_attention_presentations, capture_attention_read,
 };
 pub(crate) use relations::evaluate_attention_relations;
-pub(crate) use response::{acknowledge_attention, acknowledge_semantic_cause, set_attention_focus};
+pub(crate) use response::{
+    acknowledge_attention, acknowledge_semantic_cause, set_attention_focus, set_player_attention_target,
+};
 pub(crate) use timing::next_attention_work_at;
 pub(crate) use withdrawal::prune_withdrawn_attention;
 

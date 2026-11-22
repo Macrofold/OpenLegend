@@ -61,7 +61,7 @@ Dependencies: integrated shared schema; A current/history/reference families; B 
 
 ## SPX03 — Attention, history and sensory interaction
 
-**Status: PS04-A ordinary detail focus implemented; physical investigation methods not started.** The existing object inspector offers Focus here/Stop focusing through current contact authority, without speech, movement, physical gaze or a watch action. Dependencies for the remaining work: SPX01–02; E methods, actual maintained-method start and own fulfillment; A/C original evidence; F's preparation qualification.
+**Status: PS04-A ordinary detail focus implemented; physical investigation methods not started.** The existing object inspector offers Focus here/Stop focusing through current contact authority, without speech, movement, physical gaze or a watch action. [The stand-alone Rust listener](../verification/attention-and-memory-core.md#deliberate-focus-on-the-stand-alone-rust-server--november-22-2026) serves the same browser control. Dependencies for the remaining work: SPX01–02; E methods, actual maintained-method start and own fulfillment; A/C original evidence; F's preparation qualification.
 
 - [ ] Expose installed finite Watch, Watch for danger, Listen, Scan, Inspect and Investigate through existing action discovery and Current work.
 - [ ] Reuse valid contextual scope/defaults directly in activity review with one Start. Offer Walk while watching as one atomic destination-plus-finite-attention admission, alongside attachment to a compatible current walk. Offer the optional area/vantage selector only for missing/changed choices: keyboard/tap, offered extents, Confirm distinct from Start, Cancel, exact stale handling and no hidden-source defaults.

@@ -122,6 +122,33 @@ pub(crate) fn set_attention_focus(
     select(core, observer, &[], budget)?;
     Ok(true)
 }
+
+/// Select the annotation for an already resolved current body contact. This
+/// does not refresh the contact, and copies only the key needed by the edit.
+pub(crate) fn set_player_attention_target(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    target: Option<&str>,
+    budget: &ByteBudget,
+) -> Result<bool, ExecutionError> {
+    let Some(target) = target else {
+        return set_attention_focus(core, observer, &[], budget);
+    };
+    let Some(key) = owner(&core.state.reception, observer)
+        .and_then(|owner| owner.attention.as_ref())
+        .and_then(|attention| {
+            attention.annotations.iter().find_map(|(key, annotation)| {
+                (annotation.source_id == target).then_some(key)
+            })
+        })
+    else {
+        return Ok(false);
+    };
+    let _selected_key = budget.reserve(key.len())?;
+    let keys = [key.clone()];
+    set_attention_focus(core, observer, &keys, budget)
+}
+
 pub(crate) fn acknowledge_attention(
     core: &mut CoreMutation<'_>,
     observer: &str,

@@ -4,6 +4,7 @@ use super::*;
 use crate::received::KnowledgeAccountChange;
 use crate::text::JsText;
 use crate::values::is_safe_record_id;
+use std::sync::LazyLock;
 
 pub(crate) struct KnowledgeEdit {
     pub subject_id: Option<KnowledgeSubject>,
@@ -25,6 +26,7 @@ impl CompletedKnowledgeEdit {
 
 enum PrivateEdit {
     Promise(crate::experience::PromiseAmendment),
+    Focus(Option<String>),
     Marker(super::cartography::MapMarkerEdit),
     Note {
         edit: KnowledgeEdit,
@@ -46,6 +48,23 @@ pub(crate) struct KnowledgeEditCursor {
     _storage: ByteReservation,
 }
 impl KnowledgeEditCursor {
+    pub(crate) fn focus(
+        actor_id: &str,
+        contact: Option<String>,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let storage = budget.reserve(
+            heap_sum([size_of::<Self>(), actor_id.len(), contact.as_ref().map_or(0, String::capacity)])
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok(Self {
+            actor_id: actor_id.to_owned(),
+            edit: PrivateEdit::Focus(contact),
+            done: false,
+            _storage: storage,
+        })
+    }
+
     pub(crate) fn promise(
         actor_id: String,
         edit: crate::experience::PromiseAmendment,
@@ -146,6 +165,7 @@ impl KnowledgeEditCursor {
                     result(false, "commitment-rejected", "Stale or unsupported obligation change.", budget)
                 }
             }),
+            PrivateEdit::Focus(contact) => edit_focus(core, &self.actor_id, contact.as_deref(), budget),
             PrivateEdit::Marker(edit) => super::cartography::edit_marker(core, &self.actor_id, edit, budget),
             PrivateEdit::Note { edit, permitted } => edit_knowledge(
                 core,
@@ -194,6 +214,37 @@ impl KnowledgeEditCursor {
         }
     }
 }
+
+#[derive(serde::Deserialize)]
+struct FocusCopy {
+    focused: String,
+    cleared: String,
+    unavailable: String,
+}
+
+static FOCUS_COPY: LazyLock<FocusCopy> = LazyLock::new(|| {
+    serde_json::from_str(include_str!(
+        "../../../../packages/domain/src/worlds/base/attention-focus-copy.json"
+    ))
+    .expect("authored attention preference language")
+});
+
+fn edit_focus(
+    core: &mut CoreMutation<'_>,
+    actor: &str,
+    contact: Option<&str>,
+    budget: &ByteBudget,
+) -> Result<CompletedKnowledgeEdit, ExecutionError> {
+    if core.state.physical.header.paused {
+        return result(false, "paused", "Resume the world before acting.", budget);
+    }
+    if !crate::reception::set_player_attention_target(core, actor, contact, budget)? {
+        return result(false, "attention-unavailable", &FOCUS_COPY.unavailable, budget);
+    }
+    let message = if contact.is_some() { &FOCUS_COPY.focused } else { &FOCUS_COPY.cleared };
+    result(true, "attention-selected", message, budget)
+}
+
 pub(super) fn result(
     ok: bool,
     code: &str,

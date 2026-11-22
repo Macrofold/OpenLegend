@@ -18,6 +18,7 @@ use openlegend_simulation::{
     values::is_safe_record_id,
 };
 use std::borrow::Cow;
+pub(super) mod attention;
 mod inspection;
 pub(super) mod marker;
 pub(super) mod nickname;
@@ -293,7 +294,34 @@ pub(super) async fn execute_edit(
     + Send
     + 'static,
 ) -> Result<Option<StagedEdit>, WorldError> {
-    let admitted = state.saves.enter_ordinary().await;
+    let result = apply_edit(state, selected, world_id, generation, check_maintenance, begin).await?;
+    // A confirmed Save Knowledge response retains Source's durable meaning.
+    // The normal background writer owns this wait; no world turn is held.
+    if result.outcome.ok {
+        let until = tokio::time::Instant::now() + REQUEST_TIMEOUT;
+        if state.game.world.when_durable(result.cut, until).await.is_err() {
+            return Ok(None);
+        }
+    }
+    Ok(Some(result))
+}
+
+/// Accept a private edit and stage its ordinary save. An explicit confirmation
+/// that promises durability uses `execute_edit` and waits after this turn.
+async fn apply_edit(
+    state: &PlayerRoutes,
+    selected: Arc<AuthorizedScope>,
+    world_id: String,
+    generation: Option<String>,
+    check_maintenance: bool,
+    begin: impl FnOnce(
+        &mut NativeWorldSession,
+        &crate::authority::RequestScope,
+    ) -> Result<CandidateKey, WorldError>
+    + Send
+    + 'static,
+) -> Result<StagedEdit, WorldError> {
+    let _admitted = state.saves.enter_ordinary().await;
     // Start and Ready need the exclusive save gate. Check the current window
     // before taking the grant-cache lock for the synchronous candidate start.
     if check_maintenance {
@@ -311,7 +339,7 @@ pub(super) async fn execute_edit(
     let stage = state.saves.clone();
     let accept = state.saves.clone();
     game.world.request_advance_publication();
-    let result = game
+    game
         .world
         .execute_and_publish(
             #[cfg(feature = "profile-campaign")]
@@ -362,17 +390,7 @@ pub(super) async fn execute_edit(
             move |edit| accept.accept(&edit.save),
         )
         .await?
-        .ok_or_else(|| WorldError::Access(AccessError::Changed))?;
-    drop(admitted);
-    // A confirmed Save Knowledge response retains Source's durable meaning.
-    // The normal background writer owns this wait; no world turn is held.
-    if result.outcome.ok {
-        let until = tokio::time::Instant::now() + REQUEST_TIMEOUT;
-        if game.world.when_durable(result.cut, until).await.is_err() {
-            return Ok(None);
-        }
-    }
-    Ok(Some(result))
+        .ok_or_else(|| WorldError::Access(AccessError::Changed))
 }
 
 async fn page(

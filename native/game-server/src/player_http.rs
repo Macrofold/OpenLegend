@@ -196,6 +196,7 @@ pub(crate) fn router(
         .route("/api/commitment", post(promises::amend))
         .route("/api/mind", post(notes::get))
         .route("/api/mind/subjects", post(notes::subjects::read))
+        .route("/api/attention", post(notes::attention::edit))
         .route("/api/knowledge", post(notes::edit))
         .route("/api/map/marker", post(notes::marker::edit))
         .route("/api/activity-history", post(activity_history::read))

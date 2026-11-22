@@ -1,4 +1,4 @@
-import { setAttentionFocus, updateWorld } from '@open-legend/domain';
+import { BASE_ATTENTION_FOCUS_COPY, setAttentionFocus, updateWorld } from '@open-legend/domain';
 import type { RequestScope } from './authority.js';
 import { resolveContactTarget } from './public-contact-references.js';
 import type { WorldService } from './world-service.js';
@@ -40,13 +40,13 @@ export function setPlayerAttention(
               code: 'attention-selected',
               message:
                 target === null
-                  ? 'Focus preference cleared.'
-                  : 'Focusing here. Important events can still interrupt.',
+                  ? BASE_ATTENTION_FOCUS_COPY.cleared
+                  : BASE_ATTENTION_FOCUS_COPY.focused,
             }
           : {
               ok: false,
               code: 'attention-unavailable',
-              message: 'That subject is no longer available for attention.',
+              message: BASE_ATTENTION_FOCUS_COPY.unavailable,
             },
       };
     }),

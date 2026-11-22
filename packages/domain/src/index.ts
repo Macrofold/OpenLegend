@@ -30,6 +30,7 @@ export * from './worlds/base/initial-opening.js';
 export * from './worlds/base/opening-readiness.js';
 export * from './worlds/base/starting-worlds.js';
 export { BASE_SOCIAL_POLICY } from './worlds/base/social.js';
+export { default as BASE_ATTENTION_FOCUS_COPY } from './worlds/base/attention-focus-copy.json' with { type: 'json' };
 export { default as BASE_ITEM_MOVE_COPY } from './worlds/base/item-move-copy.json' with { type: 'json' };
 export { baseWorldInitialConstructionSeeds } from './worlds/base/world.js';
 export * from './recipe-records.js';
