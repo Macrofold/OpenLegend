@@ -31,7 +31,9 @@ from mesh_rig_utils import (
     weld_connectivity,
 )
 
-REPO_ART_SCRIPTS = Path(__file__).resolve().parent.parent
+REPO_ART_SCRIPTS = Path(
+    "/Users/mike/Documents/Projects/OpenLegend/.worktrees/metahuman-foundation-poc/scripts/art"
+)
 if str(REPO_ART_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(REPO_ART_SCRIPTS))
 
@@ -150,9 +152,24 @@ def extract_clean_donor_linen_masks(
     fn /= np.maximum(fn_len[:, None], 1e-12)
 
     f_mid_seed = lf_in & (np.abs(fc[:, 0]) <= 0.045) & (fc[:, 1] < -0.05)
+    z_crease_cut = 1.022
     if np.sum(f_mid_seed) >= 20:
-        z_f_p75 = float(np.percentile(fc[f_mid_seed, 2], 75.0))
-        belly_roof_bleed = (fc[:, 1] < -0.125) & (fc[:, 2] > max(1.015, z_f_p75 - 0.005)) & (fn[:, 2] < -0.34)
+        # Locate the deepest inward (`max Y`) geometric sub-apron crease root so the front waistband tucks cleanly
+        # into the crease underneath the overhanging stomach (`eliminating +12 mm waistband flare over the belly lip`):
+        m_cr_scan = (np.abs(fc[:, 0]) <= 0.038) & (fc[:, 1] < -0.130) & (fc[:, 2] >= 0.998) & (fc[:, 2] <= 1.058) & (~br)
+        if np.sum(m_cr_scan) >= 20:
+            zs_cr = np.linspace(1.002, 1.054, 27)
+            ys_cr = np.full_like(zs_cr, -1e9)
+            for iz_c, zv_c in enumerate(zs_cr):
+                mb_c = m_cr_scan & (np.abs(fc[:, 2] - zv_c) <= 0.004)
+                if np.sum(mb_c) >= 4:
+                    ys_cr[iz_c] = float(np.percentile(fc[mb_c, 1], 88))
+            if np.max(ys_cr) > -0.50:
+                z_crease_cut = float(zs_cr[int(np.argmax(ys_cr))]) + 0.003
+        else:
+            z_crease_cut = max(1.018, float(np.percentile(fc[f_mid_seed, 2], 78.0)) - 0.004)
+        z_cut_x = z_crease_cut + 0.060 * np.clip((np.abs(fc[:, 0]) / 0.145) ** 1.75, 0.0, 1.5)
+        belly_roof_bleed = (fc[:, 1] < -0.125) & (fc[:, 2] > z_cut_x) & (fn[:, 2] < -0.18)
         lf_in = lf_in & (~belly_roof_bleed)
 
     d_weld, _, _, _ = weld_connectivity(donor_xyz, donor_tri, decimals=5)
@@ -215,7 +232,8 @@ def extract_clean_donor_linen_masks(
                             seen_h[nb] = True
                             q_h.append(nb)
             if not too_big and len(comp_h) <= 450:
-                if not np.any((fc[comp_h, 1] < -0.125) & (fc[comp_h, 2] > 1.015) & (fn[comp_h, 2] < -0.35)):
+                z_cut_h = z_crease_cut + 0.060 * np.clip((np.abs(fc[comp_h, 0]) / 0.145) ** 1.75, 0.0, 1.5)
+                if not np.any((fc[comp_h, 1] < -0.125) & (fc[comp_h, 2] > z_cut_h) & (fn[comp_h, 2] < -0.18)):
                     main_lf[comp_h] = True
 
     edge_lf: dict[tuple[int, int], list[int]] = {}
@@ -366,9 +384,9 @@ def fit_linen_briefs_to_donor_posed(
         win_p = 0.085
         mp_top = np.abs(phi_lf - ph_q) <= win_p
         if np.sum(mp_top) >= 8:
-            # On `F > 0` anterior (`ph_q < 0.85`), seat the top rim cleanly in the sub-apron crease root (`q = 89%`):
-            q_top = 89.0 if (ad_g > 0.20 and ph_q < 0.85) else 98.5
-            z_top_phi[ip] = float(np.percentile(fc_lf[mp_top, 2], q_top))
+            # `main_lf` already stops cleanly at the true cloth-to-skin crease seam (`excluding fn_z < -0.22`
+            # overhanging belly underside), so `q_top = 98.0%` seats the front waistband right in the true crease root!
+            z_top_phi[ip] = float(np.percentile(fc_lf[mp_top, 2], 98.0 if ad_g > 0.20 else 98.5))
         mp_bot = mp_top & (r_cyl_lf >= 0.48 * r_p75) if (0.42 <= ph_q <= (np.pi - 0.42)) else mp_top
         if np.sum(mp_bot) >= 8:
             z_bot_phi[ip] = float(np.percentile(fc_lf[mp_bot, 2], 1.8))
@@ -407,7 +425,9 @@ def fit_linen_briefs_to_donor_posed(
             dvec = Vector((-sx * ux, -uy, 0.0))
             if ad_g > 0.20 and aphi < 1.05 and zq_val >= z_top_loc - 0.018:
                 rh_l, rn_l, _, rd_l = bvh_lf_only.ray_cast(orig, dvec, 0.43)
-                if rh_l is not None and rd_l is not None and (float(rn_l.x) * sx * ux + float(rn_l.y) * uy > 0.05):
+                # Require anterior outward-facing hit (`rh_l.y < -0.14` and `dot > 0.18`) so dark inguinal shadow holes in
+                # `bvh_lf_only` never hit interior/rear triangles (`preventing any front-panel split on M000-F100`):
+                if rh_l is not None and rd_l is not None and float(rh_l.y) < -0.14 and (float(rn_l.x) * sx * ux + float(rn_l.y) * uy > 0.18):
                     rs.append((0.44 - float(rd_l)) + pad_m)
                     continue
             rh, _, _, rd = bvh_pel.ray_cast(orig, dvec, 0.43)
@@ -706,6 +726,92 @@ def fit_linen_briefs_to_donor_posed(
     pts_arr = np.asarray(pts_list, dtype=np.float64)
     pts_arr[f_idx] = _taubin_relax_grid(pts_arr[f_idx], n_iters=6, lam=0.33, mu=-0.34, mid_ix=mid_ix, clip_m=0.0028)
     pts_arr[b_idx] = _taubin_relax_grid(pts_arr[b_idx], n_iters=6, lam=0.33, mu=-0.34, mid_ix=mid_ix, clip_m=0.0026)
+
+    # One-sided outward (`+Y`) tensioned cloth bridge across Meshy's carved intergluteal butt-crack wedgie,
+    # evaluated strictly along HORIZONTAL constant-world-Z slices (`including bottom rows iv=0..4 against same-Z
+    # leg-hem edges so 0 W-pinch pleats survive at |X|=28mm AND 0 backward profile hook ever forms at the bottom!`):
+    B_grid = pts_arr[b_idx].copy()
+    leg_half_x = B_grid[mid_ix:, 0, 0].copy()
+    leg_half_z = B_grid[mid_ix:, 0, 2].copy()
+    leg_z_ord = np.argsort(leg_half_z)
+    all_bx = np.abs(B_grid[:, :, 0]).ravel()
+    all_by = B_grid[:, :, 1].ravel()
+    all_bz = B_grid[:, :, 2].ravel()
+
+    B_bridged = B_grid.copy()
+    k_bridge_max = 6
+    for iv in range(nv):
+        vv_b = float(iv) / float(nv - 1)
+        dip_env = float(np.sin(np.pi * np.clip(vv_b, 0.0, 1.0))) ** 0.75
+        for ks in range(0, mid_ix - 2):
+            xv = abs(float(B_grid[mid_ix + ks, iv, 0]))
+            yv = float(B_grid[mid_ix + ks, iv, 1])
+            zv = float(B_grid[mid_ix + ks, iv, 2])
+            if xv > 0.092:
+                continue
+            x_edge_z = float(np.interp(zv, leg_half_z[leg_z_ord], leg_half_x[leg_z_ord])) if zv <= float(leg_half_z.max()) else float(leg_half_x[-1])
+            if x_edge_z <= 0.028:
+                continue
+            # Sample flanking covered buttock / leg-hem chord AT THE EXACT SAME WORLD HEIGHT `zv` (`±9 mm`):
+            x_lo_pk = min(0.026, 0.62 * x_edge_z)
+            x_hi_pk = min(0.110, max(x_lo_pk + 0.008, x_edge_z - 0.003))
+            m_same_z = (np.abs(all_bz - zv) <= 0.0095) & (all_bx >= x_lo_pk) & (all_bx <= x_hi_pk)
+            if int(np.sum(m_same_z)) < 3:
+                continue
+            idx_pk_z = int(np.argmax(all_by[m_same_z]))
+            y_pk_z = float(all_by[m_same_z][idx_pk_z])
+            x_pk_z = max(float(all_bx[m_same_z][idx_pk_z]), 0.028)
+            if xv >= x_pk_z:
+                continue
+            m_mid_z = (np.abs(all_bz - zv) <= 0.010) & (all_bx <= 0.006)
+            y_mid_z = float(np.mean(all_by[m_mid_z])) if np.any(m_mid_z) else yv
+            wedgie_d = max(0.0, y_pk_z - y_mid_z)
+            dip_c = min(0.0020, 0.12 * wedgie_d) * dip_env
+            u_sp = xv / x_pk_z
+            y_span = y_pk_z - dip_c * ((1.0 - u_sp * u_sp) ** 1.35)
+            if y_span > yv:
+                k_bridge_max = max(k_bridge_max, ks + 2)
+                B_bridged[mid_ix + ks, iv, 1] = y_span
+                B_bridged[mid_ix - ks, iv, 1] = y_span
+            elif iv <= 4 and yv > y_pk_z + 0.0012:
+                # Flatten any central `_eval_back_polar` bottom bump onto the smooth same-Z leg-hem arch:
+                y_trim = 0.35 * yv + 0.65 * y_pk_z
+                B_bridged[mid_ix + ks, iv, 1] = y_trim
+                B_bridged[mid_ix - ks, iv, 1] = y_trim
+
+    k_fair = min(max(k_bridge_max + 2, 9), mid_ix - 2)
+    B_floor_y = B_bridged[:, :, 1].copy()
+    B_grid = B_bridged
+    for _ in range(6):
+        nxt_B = B_grid.copy()
+        sl_x = slice(mid_ix - k_fair, mid_ix + k_fair + 1)
+        w_in_x = (1.0 - smootherstep((np.abs(np.arange(-k_fair, k_fair + 1, dtype=np.float64)) - float(k_fair - 2.5)) / 3.0))[:, None]
+        lap_y = (
+            0.35 * (B_grid[mid_ix - k_fair - 1 : mid_ix + k_fair, 1:-1, 1] + B_grid[mid_ix - k_fair + 1 : mid_ix + k_fair + 2, 1:-1, 1])
+            + 0.15 * (B_grid[sl_x, :-2, 1] + B_grid[sl_x, 2:, 1])
+            - B_grid[sl_x, 1:-1, 1]
+        )
+        nxt_B[sl_x, 1:-1, 1] = B_grid[sl_x, 1:-1, 1] + (0.42 * w_in_x) * lap_y
+        # Smooth lateral X/Y/Z along bottom rows `iv=0..3` across the `ak=chc=4` gusset seam (`eliminating bottom W-fangs`):
+        for iv_b0 in (0, 1, 2, 3):
+            w_b0 = (0.42 if iv_b0 == 0 else (0.34 if iv_b0 == 1 else 0.24)) * w_in_x[:, 0]
+            lap_row = 0.5 * (B_grid[mid_ix - k_fair - 1 : mid_ix + k_fair, iv_b0] + B_grid[mid_ix - k_fair + 1 : mid_ix + k_fair + 2, iv_b0]) - B_grid[sl_x, iv_b0]
+            nxt_B[sl_x, iv_b0] = B_grid[sl_x, iv_b0] + w_b0[:, None] * lap_row
+        lap_t_y = 0.5 * (B_grid[mid_ix - k_fair - 1 : mid_ix + k_fair, -1, 1] + B_grid[mid_ix - k_fair + 1 : mid_ix + k_fair + 2, -1, 1]) - B_grid[sl_x, -1, 1]
+        nxt_B[sl_x, -1, 1] = B_grid[sl_x, -1, 1] + (0.35 * w_in_x[:, 0]) * lap_t_y
+        mid_hold = (1.0 - smootherstep(np.abs(np.arange(nx, dtype=np.float64) - float(mid_ix)) / float(max(k_bridge_max, 4))))[:, None]
+        nxt_B[:, 2:, 1] = np.maximum(nxt_B[:, 2:, 1], B_floor_y[:, 2:] - 0.0005 - 0.0018 * (1.0 - mid_hold))
+        nxt_B[mid_ix, :, 0] = 0.0
+        for ks in range(1, k_fair + 1):
+            xm = 0.5 * (nxt_B[mid_ix + ks, :, 0] - nxt_B[mid_ix - ks, :, 0])
+            ym = 0.5 * (nxt_B[mid_ix + ks, :, 1] + nxt_B[mid_ix - ks, :, 1])
+            zm = 0.5 * (nxt_B[mid_ix + ks, :, 2] + nxt_B[mid_ix - ks, :, 2])
+            nxt_B[mid_ix + ks, :, 0], nxt_B[mid_ix - ks, :, 0] = xm, -xm
+            nxt_B[mid_ix + ks, :, 1], nxt_B[mid_ix - ks, :, 1] = ym, ym
+            nxt_B[mid_ix + ks, :, 2], nxt_B[mid_ix - ks, :, 2] = zm, zm
+        B_grid = nxt_B
+    pts_arr[b_idx] = B_grid
+
     pts_list = pts_arr.tolist()
 
     for ci, ix in enumerate(range(mid_ix - chc, mid_ix + chc + 1)):
@@ -787,16 +893,15 @@ def fit_linen_briefs_to_donor_posed(
         rib_idx[ci, 8] = b_idx[ix, 0]
         rib_idx[ci, 9] = b_idx[ix, 1]
         rib_idx[ci, 10] = b_idx[ix, 2]
-    for _ in range(5):
-        for step_w in (0.34, -0.35):
+    # Smooth ONLY the perineal gusset interior (`rows 2..8`, tapering to 0 at `ci = 0, 2*chc` so `ix = mid_ix ± chc`
+    # never creates a step groove against `ix = mid_ix ± (chc + 1)` at the bottom of the rear seat!):
+    w_ci_in = np.sin(np.pi * np.linspace(0.0, 1.0, 2 * chc + 1))[1:-1, None, None]
+    for _ in range(4):
+        for step_w in (0.32, -0.33):
             R_rib = pts[rib_idx].copy()
             nxt_R = R_rib.copy()
-            lap_R = 0.25 * (R_rib[:-2, 1:-1] + R_rib[2:, 1:-1] + R_rib[1:-1, :-2] + R_rib[1:-1, 2:]) - R_rib[1:-1, 1:-1]
-            nxt_R[1:-1, 1:-1] = R_rib[1:-1, 1:-1] + step_w * lap_R
-            for ci_e in (0, 2 * chc):
-                nxt_R[ci_e, 1:-1] = R_rib[ci_e, 1:-1] + (0.65 * step_w) * (
-                    0.5 * (R_rib[ci_e, :-2] + R_rib[ci_e, 2:]) - R_rib[ci_e, 1:-1]
-                )
+            lap_R = 0.25 * (R_rib[:-2, 2:8] + R_rib[2:, 2:8] + R_rib[1:-1, 1:7] + R_rib[1:-1, 3:9]) - R_rib[1:-1, 2:8]
+            nxt_R[1:-1, 2:8] = R_rib[1:-1, 2:8] + (step_w * w_ci_in) * lap_R
             pts[rib_idx] = nxt_R
             pts = _symmetrize_brief_pts(pts, mid_v, mir_v, sgn_v, min_x=0.0025)
 

@@ -197,6 +197,405 @@ def couple_canonical_five_toes_to_forefoot(
     return out
 
 
+def _box_blur_2d_nip(arr: np.ndarray, rad: int) -> np.ndarray:
+    out = arr.astype(np.float64, copy=True)
+    k = 2 * rad + 1
+    for _ in range(2):
+        p = np.pad(out, ((rad, rad), (rad, rad)), mode="edge")
+        csx = np.cumsum(np.pad(p, ((0, 0), (1, 0))), axis=1)
+        hx = (csx[:, k:] - csx[:, :-k]) / float(k)
+        csy = np.cumsum(np.pad(hx, ((1, 0), (0, 0))), axis=0)
+        out = (csy[k:, :] - csy[:-k, :]) / float(k)
+    return out
+
+
+def _cardinal_spot_excess(field_in: np.ndarray, r_mm: int = 13) -> np.ndarray:
+    p = np.pad(field_in, r_mm, mode="edge")
+    h0, w0 = field_in.shape
+    n_l = p[:h0, r_mm : r_mm + w0]
+    n_r = p[2 * r_mm :, r_mm : r_mm + w0]
+    n_d = p[r_mm : r_mm + h0, :w0]
+    n_u = p[r_mm : r_mm + h0, 2 * r_mm :]
+    stk = np.stack([field_in - n_l, field_in - n_r, field_in - n_d, field_in - n_u], axis=0)
+    stk_sorted = np.sort(stk, axis=0)
+    return np.minimum(stk_sorted[1], np.mean(stk, axis=0))
+
+
+def _find_canonical_nipple_vertex_pairs(
+    rest_base_low: np.ndarray,
+    low_tri: np.ndarray,
+    rest_base_high: np.ndarray,
+) -> tuple[int, int, int, int]:
+    """Identify the shared canonical pectoral nipple vertex pair on LOD1 and its coincident LOD0 pair."""
+    l_conn = weld_connectivity(rest_base_low, low_tri, decimals=5)
+    l_weld, _, _, l_deg = l_conn
+    cand_pos = np.flatnonzero(
+        (rest_base_low[:, 0] >= 0.095)
+        & (rest_base_low[:, 0] <= 0.132)
+        & (rest_base_low[:, 2] >= 1.445)
+        & (rest_base_low[:, 2] <= 1.482)
+        & (rest_base_low[:, 1] < -0.082)
+    )
+    ref_seed = np.array([0.1088, -0.0988, 1.4624], dtype=np.float64)
+    val7 = [int(v) for v in cand_pos if int(l_deg[int(l_weld[int(v)])]) == 7]
+    pool_p = np.asarray(val7 if val7 else cand_pos, dtype=np.int64)
+    v_l1_pos = int(pool_p[int(np.argmin(np.linalg.norm(rest_base_low[pool_p] - ref_seed[None, :], axis=1)))])
+    mir_pt = np.array([-rest_base_low[v_l1_pos, 0], rest_base_low[v_l1_pos, 1], rest_base_low[v_l1_pos, 2]], dtype=np.float64)
+    v_l1_neg = int(np.argmin(np.linalg.norm(rest_base_low - mir_pt[None, :], axis=1)))
+    v_l0_pos = int(np.argmin(np.linalg.norm(rest_base_high - rest_base_low[v_l1_pos][None, :], axis=1)))
+    v_l0_neg = int(np.argmin(np.linalg.norm(rest_base_high - rest_base_low[v_l1_neg][None, :], axis=1)))
+    return v_l1_pos, v_l1_neg, v_l0_pos, v_l0_neg
+
+
+def _detect_donor_concept_nipple_posed(
+    donor_xyz: np.ndarray,
+    donor_rgb: np.ndarray | None,
+    pose_info: dict | None,
+    coordinate_id: str = "",
+    study_dir: Path | None = None,
+) -> tuple[float, float, float] | None:
+    """Detect the ±X-symmetrized nipple landmark from registered 3D Donor albedo + papilla apex, verified against 2D Front Concept."""
+    saddle_x = float(pose_info.get("axillaSaddleAbsXM", 0.195)) if isinstance(pose_info, dict) else 0.195
+    x_hi = min(0.175, 0.77 * saddle_x)
+    if x_hi <= 0.106:
+        return None
+    xg = np.linspace(0.085, x_hi, int(round((x_hi - 0.085) * 1000.0)) + 1)
+    zg = np.linspace(1.440, 1.575, 136)
+
+    m_dch = (
+        (np.abs(donor_xyz[:, 0]) >= 0.080)
+        & (np.abs(donor_xyz[:, 0]) <= x_hi + 0.010)
+        & (donor_xyz[:, 2] >= 1.430)
+        & (donor_xyz[:, 2] <= 1.585)
+        & (donor_xyz[:, 1] < -0.070)
+    )
+    if int(np.sum(m_dch)) < 120:
+        return None
+    pts_d = donor_xyz[m_dch]
+    has_rgb = donor_rgb is not None and len(donor_rgb) == len(donor_xyz)
+    rgb_d = (
+        np.power(np.clip(donor_rgb[m_dch], 0.0, 1.0), 1.0 / 2.2)
+        if has_rgb
+        else np.full((len(pts_d), 3), 0.65, dtype=np.float64)
+    )
+    Y3 = np.full((len(xg), len(zg)), np.nan, dtype=np.float64)
+    L3 = np.full((len(xg), len(zg)), np.nan, dtype=np.float64)
+    R3 = np.full((len(xg), len(zg)), np.nan, dtype=np.float64)
+    ax_d = np.abs(pts_d[:, 0])
+    for ix, xv in enumerate(xg):
+        mx = np.abs(ax_d - xv) <= 0.0035
+        if not np.any(mx):
+            continue
+        sub_p = pts_d[mx]
+        sub_c = rgb_d[mx]
+        for iz, zv in enumerate(zg):
+            mz = np.abs(sub_p[:, 2] - zv) <= 0.0035
+            if np.any(mz):
+                k_f = np.argsort(sub_p[mz, 1])[: max(1, min(4, int(np.sum(mz))))]
+                Y3[ix, iz] = float(np.mean(sub_p[mz, 1][k_f]))
+                cm = sub_c[mz][k_f].mean(axis=0)
+                L3[ix, iz] = float(cm.mean())
+                R3[ix, iz] = float(cm[0] - 0.65 * cm[1] - 0.35 * cm[2])
+    for arr3 in (Y3, L3, R3):
+        for ix in range(len(xg)):
+            ok = np.isfinite(arr3[ix])
+            if int(np.sum(ok)) >= 4:
+                arr3[ix] = np.interp(zg, zg[ok], arr3[ix, ok])
+        for iz in range(len(zg)):
+            ok = np.isfinite(arr3[:, iz])
+            if int(np.sum(ok)) >= 4:
+                arr3[:, iz] = np.interp(xg, xg[ok], arr3[ok, iz])
+    if not np.all(np.isfinite(Y3)):
+        return None
+
+    Y3_in = _box_blur_2d_nip(Y3, 2)
+    Y3_out = _box_blur_2d_nip(Y3, 10)
+    L3_in = _box_blur_2d_nip(L3, 3)
+    R3_in = _box_blur_2d_nip(R3, 4)
+    pap3 = (Y3_out - Y3_in) * 1000.0
+    c_dark3 = _cardinal_spot_excess(-L3_in, 13)
+    c_pink3 = _cardinal_spot_excess(R3_in, 13)
+    dYdX = np.gradient(_box_blur_2d_nip(Y3, 5), 0.001, axis=0)
+    dYdZ = np.gradient(_box_blur_2d_nip(Y3, 5), 0.001, axis=1)
+    valid_mound = (
+        (dYdX < 0.78)
+        & (dYdZ > -0.34)
+        & (pap3 >= -0.20)
+        & (xg[:, None] >= 0.102)
+        & (xg[:, None] <= x_hi - 0.002)
+        & (zg[None, :] >= 1.465)
+        & (zg[None, :] <= 1.560)
+    )
+    if not np.any(valid_mound):
+        return None
+
+    sc_3d_map = np.where(
+        valid_mound & ((c_pink3 > 0.0004) | (pap3 > 1.2)),
+        0.0012 * np.clip(pap3, 0.0, 4.0) + np.maximum(c_dark3, 0.0) * np.maximum(c_pink3 + 0.001, 0.0) * 220.0,
+        -1e9,
+    )
+    if float(np.max(sc_3d_map)) <= -1e8:
+        sc_3d_map = np.where(valid_mound, pap3, -1e9)
+
+    sc_2d_map = None
+    ix2, iz2 = 0, 0
+    if study_dir is not None and coordinate_id:
+        cands = sorted((study_dir / "grid-9-20261112" / "candidates").glob(f"*-{coordinate_id}.png"))
+        if cands:
+            try:
+                import bpy as _bpy_img
+
+                c_img = _bpy_img.data.images.load(str(cands[0]), check_existing=False)
+                c_img.colorspace_settings.name = "Non-Color"
+                cw, ch = int(c_img.size[0]), int(c_img.size[1])
+                px_raw = np.empty(cw * ch * 4, dtype=np.float32)
+                c_img.pixels.foreach_get(px_raw)
+                _bpy_img.data.images.remove(c_img)
+                arr_c = np.flipud(px_raw.reshape(ch, cw, 4)[:, :, :3]) * 255.0
+                fg_all = np.linalg.norm(arr_c - arr_c[8, 8][None, None, :], axis=2) > 18.0
+                col_cnt = fg_all.sum(axis=0)
+                s1 = int(cw * 0.30) + int(np.argmin(col_cnt[int(cw * 0.30) : int(cw * 0.44)]))
+                fa = arr_c[:, :s1, :]
+                ys, xs = np.nonzero(np.linalg.norm(fa - fa[6, 6][None, None, :], axis=2) > 18.0)
+                if len(ys) > 500:
+                    ry0, ry1 = int(ys.min()), int(ys.max())
+                    stature_m = float(donor_xyz[:, 2].max() - donor_xyz[:, 2].min())
+                    tx = xs[ys < ry0 + max(12, int(0.10 * (ry1 - ry0)))]
+                    rxm = float(0.5 * (tx.min() + tx.max()))
+                    px_per_m = float(ry1 - ry0) / max(stature_m, 1.50)
+                    L2 = np.zeros((len(xg), len(zg)), dtype=np.float64)
+                    R2 = np.zeros((len(xg), len(zg)), dtype=np.float64)
+                    for ix, xv in enumerate(xg):
+                        px_l = int(np.clip(round(rxm - xv * px_per_m), 0, s1 - 1))
+                        px_r = int(np.clip(round(rxm + xv * px_per_m), 0, s1 - 1))
+                        for iz, zv in enumerate(zg):
+                            py_i = int(np.clip(round(ry1 - zv * px_per_m), 0, ch - 1))
+                            rgb_px = 0.5 * (fa[py_i, px_l] + fa[py_i, px_r]) / 255.0
+                            L2[ix, iz] = float(rgb_px.mean())
+                            R2[ix, iz] = float(rgb_px[0] - 0.65 * rgb_px[1] - 0.35 * rgb_px[2])
+                    c_dark2 = _cardinal_spot_excess(-_box_blur_2d_nip(L2, 3), 13)
+                    c_pink2 = _cardinal_spot_excess(_box_blur_2d_nip(R2, 4), 13)
+                    sc_2d_map = np.where(
+                        valid_mound & (c_pink2 > 0.0005),
+                        np.maximum(c_dark2, 0.0) * np.maximum(c_pink2, 0.0) * 200.0,
+                        -1e9,
+                    )
+                    ix2, iz2 = np.unravel_index(int(np.argmax(sc_2d_map)), sc_2d_map.shape)
+            except Exception:
+                sc_2d_map = None
+
+    if sc_2d_map is not None and float(sc_2d_map[ix2, iz2]) > 0.0:
+        dist2_c = ((xg[:, None] - xg[ix2]) / 0.022) ** 2 + ((zg[None, :] - zg[iz2]) / 0.022) ** 2
+        sc_j = np.where(valid_mound, np.maximum(sc_3d_map, 0.0) * np.exp(-0.5 * dist2_c) + 0.50 * np.maximum(sc_2d_map, 0.0), -1e9)
+    else:
+        sc_j = sc_3d_map
+    ixj, izj = np.unravel_index(int(np.argmax(sc_j)), sc_j.shape)
+    return float(xg[ixj]), float(Y3_out[ixj, izj]), float(zg[ixj])
+
+
+def _align_and_sculpt_canonical_nipples_lod0(
+    rest_base_high: np.ndarray,
+    high_fit: np.ndarray,
+    high_tri: np.ndarray,
+    rest_base_low: np.ndarray,
+    low_tri: np.ndarray,
+    seam_mask: np.ndarray,
+    donor_xyz: np.ndarray,
+    donor_tri: np.ndarray,
+    donor_rgb: np.ndarray | None,
+    donor_bridged_axilla_faces: np.ndarray | None,
+    posed_base_high: np.ndarray,
+    jac_high: np.ndarray,
+    pose_info: dict | None,
+    coordinate_id: str = "",
+    study_dir: Path | None = None,
+) -> tuple[np.ndarray, dict | None]:
+    """Slide the shared canonical nipple vertex pair along the Donor chest surface to the detected photo landmark and sculpt 3D papilla/areola relief."""
+    nip_tgt = _detect_donor_concept_nipple_posed(donor_xyz, donor_rgb, pose_info, coordinate_id=coordinate_id, study_dir=study_dir)
+    if nip_tgt is None:
+        return high_fit, None
+    x_nip, y_nip_env, z_nip = nip_tgt
+    v_l1_pos, v_l1_neg, v_l0_pos, v_l0_neg = _find_canonical_nipple_vertex_pairs(rest_base_low, low_tri, rest_base_high)
+
+    h_conn = weld_connectivity(rest_base_high, high_tri, decimals=5)
+    h_weld, (h_es, h_ed), h_mult, h_deg = h_conn
+    n_u = len(h_mult)
+    first_u = np.zeros(n_u, dtype=np.int64)
+    first_u[h_weld[::-1]] = np.arange(len(h_weld) - 1, -1, -1)
+    ru = rest_base_high[first_u]
+    pu = np.column_stack([np.bincount(h_weld, weights=high_fit[:, c], minlength=n_u) / h_mult for c in range(3)])
+    mid_u = np.abs(ru[:, 0]) < 2.5e-4
+    lock_u = np.isin(np.arange(n_u), h_weld[seam_mask])
+    deg_f = np.maximum(h_deg.astype(np.float64), 1.0)
+    jac_u = jac_high[first_u]
+    u0_pos = int(h_weld[v_l0_pos])
+    u0_neg = int(h_weld[v_l0_neg])
+
+    # 1) Relax any pre-existing off-LOD1 witness bump (`around (±0.120, -0.090, 1.465)`) so only the true landmark carries relief:
+    r_old_nip = np.hypot(np.abs(ru[:, 0]) - 0.120, ru[:, 2] - 1.465)
+    w_relax_old = (
+        np.where(~lock_u, 1.0, 0.0)
+        * (1.0 - smootherstep((r_old_nip - 0.010) / 0.012))
+        * smootherstep((-ru[:, 1] - 0.065) / 0.020)
+    )
+    old_idx = np.flatnonzero(w_relax_old > 0.01)
+    if len(old_idx):
+        for _ in range(5):
+            nbr_o = np.column_stack([np.bincount(h_es, weights=pu[h_ed, c], minlength=n_u) / deg_f for c in range(3)])
+            pu[old_idx] += (0.48 * w_relax_old[old_idx])[:, None] * (nbr_o[old_idx] - pu[old_idx])
+            pu[mid_u, 0] = 0.0
+
+    # 2) Build clean anterior Donor chest BVH (`excluding bridged axilla`) for ±X-symmetrized surface re-projection during tangent advection:
+    saddle_x = float(pose_info.get("axillaSaddleAbsXM", 0.195)) if isinstance(pose_info, dict) else 0.195
+    fc_d = donor_xyz[donor_tri].mean(axis=1)
+    keep_ch = (np.abs(fc_d[:, 0]) <= saddle_x + 0.018) & (fc_d[:, 2] >= 1.320) & (fc_d[:, 2] <= 1.650) & (fc_d[:, 1] < -0.045)
+    if donor_bridged_axilla_faces is not None and len(donor_bridged_axilla_faces) == len(donor_tri):
+        keep_ch &= ~np.asarray(donor_bridged_axilla_faces, dtype=bool)
+    if int(np.sum(keep_ch)) < 200:
+        return pu[h_weld], None
+    bvh_ch = BVHTree.FromPolygons(donor_xyz.tolist(), donor_tri[keep_ch].tolist(), all_triangles=True)
+
+    seam_pts_u = ru[lock_u]
+    d_seam_u = (
+        np.sqrt(np.min(np.sum((ru[:, None, :] - seam_pts_u[None, :, :]) ** 2, axis=2), axis=1))
+        if len(seam_pts_u)
+        else np.full(n_u, 1.0, dtype=np.float64)
+    )
+    w_seam_ok = smootherstep((d_seam_u - 0.020) / 0.028)
+
+    def _query_sym_chest_y_and_nrm(xq_abs: float, zq: float, y_hint: float) -> tuple[float | None, np.ndarray | None]:
+        ys_q = []
+        ns_q = []
+        for sx_q in (-1.0, 1.0):
+            rh_q, rn_q, _, _ = bvh_ch.ray_cast(Vector((sx_q * xq_abs, -0.42, zq)), Vector((0.0, 1.0, 0.0)), 0.40)
+            if rh_q is not None and float(rh_q.y) < -0.055 and float(rn_q.y) < -0.22:
+                ys_q.append(float(rh_q.y))
+                ns_q.append(np.array([sx_q * float(rn_q.x), float(rn_q.y), float(rn_q.z)], dtype=np.float64))
+            else:
+                nh_q, nn_q, _, nd_q = bvh_ch.find_nearest(Vector((sx_q * xq_abs, y_hint, zq)), 0.025)
+                if nh_q is not None and nd_q < 0.022 and float(nn_q.y) < -0.22:
+                    ys_q.append(float(nh_q.y))
+                    ns_q.append(np.array([sx_q * float(nn_q.x), float(nn_q.y), float(nn_q.z)], dtype=np.float64))
+        if not ys_q:
+            return None, None
+        n_m = np.mean(ns_q, axis=0)
+        n_m /= max(float(np.linalg.norm(n_m)), 1e-12)
+        return float(np.mean(ys_q)), n_m
+
+    # 3) Smooth 3-step diffeomorphic chest tangent-plane advection + ±X-symmetrized Donor chest surface re-projection:
+    posed_init = posed_base_high[first_u] + np.einsum("vij,vj->vi", jac_u, pu - ru)
+    dx_tot = abs(x_nip - 0.5 * (abs(float(posed_init[u0_pos, 0])) + abs(float(posed_init[u0_neg, 0]))))
+    dz_tot = abs(z_nip - 0.5 * (float(posed_init[u0_pos, 2]) + float(posed_init[u0_neg, 2])))
+    sx_adv = max(0.048, 2.15 * dx_tot)
+    sz_adv = max(0.052, 2.15 * dz_tot)
+
+    for step_gain in (0.45, 0.65, 1.00):
+        posed_cur = posed_base_high[first_u] + np.einsum("vij,vj->vi", jac_u, pu - ru)
+        cur_x = 0.5 * (abs(float(posed_cur[u0_pos, 0])) + abs(float(posed_cur[u0_neg, 0])))
+        cur_z = 0.5 * (float(posed_cur[u0_pos, 2]) + float(posed_cur[u0_neg, 2]))
+        dx_step = step_gain * (x_nip - cur_x)
+        dz_step = step_gain * (z_nip - cur_z)
+        if float(np.hypot(dx_step, dz_step)) < 1.5e-4:
+            break
+        px_a = np.abs(posed_cur[:, 0])
+        py_c = posed_cur[:, 1]
+        pz_c = posed_cur[:, 2]
+        r2_g = ((px_a - cur_x) / sx_adv) ** 2 + ((pz_c - cur_z) / sz_adv) ** 2
+        w_adv = (
+            np.where(~lock_u, 1.0, 0.0)
+            * w_seam_ok
+            * np.exp(-0.5 * r2_g)
+            * smootherstep((px_a - 0.024) / 0.024)
+            * (1.0 - smootherstep((px_a - (saddle_x - 0.012)) / 0.024))
+            * smootherstep((pz_c - 1.335) / 0.032)
+            * (1.0 - smootherstep((pz_c - 1.622) / 0.026))
+            * smootherstep((-py_c - 0.075) / 0.028)
+        )
+        # Ensure the nipple anchor pair itself gets full `1.0` weight inside the chest interior:
+        w_adv[u0_pos] = 1.0
+        w_adv[u0_neg] = 1.0
+        act_u = np.flatnonzero(w_adv > 0.008)
+        for u_i in act_u:
+            wu = float(w_adv[u_i])
+            sgn_x = 1.0 if float(ru[u_i, 0]) >= 0.0 else -1.0
+            nx_p = abs(float(posed_cur[u_i, 0])) + wu * dx_step
+            nz_p = float(posed_cur[u_i, 2]) + wu * dz_step
+            y_surf, _ = _query_sym_chest_y_and_nrm(nx_p, nz_p, float(posed_cur[u_i, 1]))
+            w_y_snap = float(smootherstep(np.array([wu / 0.16]))[0])
+            ny_p = (1.0 - w_y_snap) * float(posed_cur[u_i, 1]) + w_y_snap * (y_surf if y_surf is not None else float(posed_cur[u_i, 1]))
+            dp_p = np.array([sgn_x * nx_p - float(posed_cur[u_i, 0]), ny_p - float(posed_cur[u_i, 1]), nz_p - float(posed_cur[u_i, 2])], dtype=np.float64)
+            try:
+                dp_r = np.linalg.solve(jac_u[u_i], dp_p)
+            except np.linalg.LinAlgError:
+                dp_r = dp_p
+            nrm_dp = float(np.linalg.norm(dp_r))
+            if nrm_dp > 0.065:
+                dp_r *= 0.065 / nrm_dp
+            pu[u_i] += dp_r
+        pu[mid_u, 0] = 0.0
+
+    # 4) Sculpt clean 3D areola dome (`0.75 mm`, sigma=12.0 mm) + papilla (`2.15 mm`, sigma=4.6 mm) centered on `u0_pos / u0_neg`:
+    posed_post = posed_base_high[first_u] + np.einsum("vij,vj->vi", jac_u, pu - ru)
+    y_base_nip, n_nip_pos = _query_sym_chest_y_and_nrm(x_nip, z_nip, y_nip_env)
+    if n_nip_pos is None:
+        n_nip_pos = np.array([0.18, -0.96, -0.10], dtype=np.float64)
+        n_nip_pos /= float(np.linalg.norm(n_nip_pos))
+    # Smooth local chest-envelope base height around `(x_nip, z_nip)` so we never double-stack on top of an existing Donor papilla:
+    y_env_nip = float(y_nip_env) if y_base_nip is None else max(float(y_base_nip), float(y_nip_env))
+    px_f = np.abs(posed_post[:, 0])
+    py_f = posed_post[:, 1]
+    pz_f = posed_post[:, 2]
+    d_nip_3d = np.hypot(px_f - x_nip, pz_f - z_nip)
+    in_mound = np.flatnonzero((~lock_u) & (py_f < -0.075) & (d_nip_3d <= 0.028))
+    for u_m in in_mound:
+        sgn_x = 1.0 if float(ru[u_m, 0]) >= 0.0 else -1.0
+        r_m = float(d_nip_3d[u_m])
+        # Flatten any raw Meshy noise spike within `r <= 9 mm` to smooth chest envelope `Y3_out` before adding clean symmetric papilla:
+        w_flat = float(np.exp(-0.5 * ((r_m / 0.0065) ** 2)))
+        y_loc_env = float(posed_post[u_m, 1])
+        if r_m <= 0.010:
+            y_s, _ = _query_sym_chest_y_and_nrm(float(px_f[u_m]), float(pz_f[u_m]), float(py_f[u_m]))
+            if y_s is not None:
+                y_loc_env = max(float(y_s), y_env_nip + (float(y_s) - float(y_base_nip if y_base_nip is not None else y_s)))
+        h_pap = 0.00215 * float(np.exp(-0.5 * ((r_m / 0.0046) ** 2))) + 0.00075 * float(np.exp(-0.5 * ((r_m / 0.0120) ** 2)))
+        n_dir = np.array([sgn_x * float(n_nip_pos[0]), float(n_nip_pos[1]), float(n_nip_pos[2])], dtype=np.float64)
+        dp_base = np.array([0.0, w_flat * (y_loc_env - float(posed_post[u_m, 1])), 0.0], dtype=np.float64)
+        dp_mound = dp_base + h_pap * n_dir
+        try:
+            pu[u_m] += np.linalg.solve(jac_u[u_m], dp_mound)
+        except np.linalg.LinAlgError:
+            pu[u_m] += dp_mound
+    pu[mid_u, 0] = 0.0
+
+    # Enforce exact ±X mirror symmetry across modified chest vertices:
+    kd_ch = KDTree(n_u)
+    for ui_k, pt_k in enumerate(ru):
+        kd_ch.insert(pt_k.tolist(), ui_k)
+    kd_ch.balance()
+    pu_sym = pu.copy()
+    mod_ch = np.flatnonzero((np.abs(ru[:, 0]) <= 0.24) & (ru[:, 2] >= 1.30) & (ru[:, 2] <= 1.66) & (ru[:, 1] < -0.03) & (~lock_u))
+    for ui_s in mod_ch:
+        if mid_u[ui_s]:
+            pu_sym[ui_s, 0] = 0.0
+        else:
+            _, jm_s, dm_s = kd_ch.find([-float(ru[ui_s, 0]), float(ru[ui_s, 1]), float(ru[ui_s, 2])])
+            if jm_s is not None and dm_s < 0.0025 and ru[ui_s, 0] * ru[jm_s, 0] < 0.0:
+                pu_sym[ui_s, 0] = 0.5 * (pu[ui_s, 0] - pu[jm_s, 0])
+                pu_sym[ui_s, 1] = 0.5 * (pu[ui_s, 1] + pu[jm_s, 1])
+                pu_sym[ui_s, 2] = 0.5 * (pu[ui_s, 2] + pu[jm_s, 2])
+    out_high = pu_sym[h_weld]
+    info_nip = {
+        "vLod1Pos": v_l1_pos,
+        "vLod1Neg": v_l1_neg,
+        "vLod0Pos": v_l0_pos,
+        "vLod0Neg": v_l0_neg,
+        "targetPosedXAbsM": round(x_nip, 4),
+        "targetPosedYM": round(y_env_nip, 4),
+        "targetPosedZM": round(z_nip, 4),
+    }
+    return out_high, info_nip
+
+
 def guard_and_reduce_body_and_head(
     rest_base_high: np.ndarray,
     rest_fit_high_raw: np.ndarray,
@@ -235,6 +634,9 @@ def guard_and_reduce_body_and_head(
     donor_linen_faces: np.ndarray | None = None,
     donor_linen_rim_faces: np.ndarray | None = None,
     sex: str = "auto",
+    donor_rgb: np.ndarray | None = None,
+    coordinate_id: str = "",
+    study_dir: Path | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
     """Guard orientation and self-intersections on rest LOD0, reduced LOD1, and headSkin without shrinking volumes."""
     high_conn = weld_connectivity(rest_base_high, high_tri, decimals=5)
@@ -715,7 +1117,7 @@ def guard_and_reduce_body_and_head(
     coinc_v, coinc_s = np.where(d_h_seam < 5e-4)
     lod0_seam_mask[coinc_v] = True
 
-    ad_key = np.array([float(adipose_gate), float(muscle_gate), 20261121.6], dtype=np.float64)
+    ad_key = np.array([float(adipose_gate), float(muscle_gate), 20261121.12], dtype=np.float64)
     high_fit_clean = high_fit.copy()
     low_fit_clean = low_fit.copy()
     high_fit = _stage_cache_eval(
@@ -866,7 +1268,8 @@ def guard_and_reduce_body_and_head(
                     if np.any(ok_xp):
                         Y_pc_g[:, iz_p] = np.interp(x_pc_g, x_pc_g[ok_xp], Y_pc_g[ok_xp, iz_p])
                 if np.all(np.isfinite(Y_pc_g)):
-                    # Light 2-pass de-faceting preserves 100% of the pendulous pectoral belly & curved `Z = 1.436 m` inframammary crease:
+                    # Light 2-pass de-faceting preserves 100% of the pendulous pectoral belly & curved `Z = 1.436 m` inframammary crease
+                    # (`3D nipple/areola landmark correspondence runs after chest fitting via `_align_canonical_nipples_to_donor` — zero hardcoded (X, Z) bumps!`):
                     for _ in range(2):
                         yx_p = Y_pc_g.copy()
                         yx_p[0, :] = 0.50 * Y_pc_g[0, :] + 0.50 * Y_pc_g[1, :]
@@ -874,12 +1277,6 @@ def guard_and_reduce_body_and_head(
                         yz_p = yx_p.copy()
                         yz_p[:, 1:-1] = 0.20 * yx_p[:, :-2] + 0.60 * yx_p[:, 1:-1] + 0.20 * yx_p[:, 2:]
                         Y_pc_g = yz_p
-                    # Subtle `2.2 mm` physiological nipple papilla dome at `c21`'s lower-outer pectoral mound (`±132 mm, 1.474 m`,
-                    # cleanly ABOVE the `Z ~ 1.448 m` curved inframammary crease!) so normal map & sulcus AO capture crisp nipples:
-                    xx_np, zz_np = np.meshgrid(x_pc_g, z_pc_g, indexing="ij")
-                    r2_np = ((xx_np - 0.132) / 0.0068) ** 2 + ((zz_np - 1.474) / 0.0062) ** 2
-                    r2_ar = ((xx_np - 0.132) / 0.0145) ** 2 + ((zz_np - 1.474) / 0.0135) ** 2
-                    Y_pc_g -= 0.0022 * np.exp(-r2_np) + 0.0008 * np.exp(-r2_ar)
                     dx_pc = float(x_pc_g[1] - x_pc_g[0])
                     dz_pc = float(z_pc_g[1] - z_pc_g[0])
                     hf_u = np.column_stack([np.bincount(high_weld, weights=high_fit[:, c], minlength=len(h_mult)) / h_mult for c in range(3)])
@@ -956,6 +1353,25 @@ def guard_and_reduce_body_and_head(
                 adipose_gate=adipose_gate,
                 muscle_gate=muscle_gate,
             ),
+        )
+    nipple_align_info: dict | None = None
+    if donor_xyz is not None and donor_tri is not None and posed_base_high is not None and jac_high is not None:
+        high_fit, nipple_align_info = _align_and_sculpt_canonical_nipples_lod0(
+            rest_base_high,
+            high_fit,
+            high_tri,
+            rest_base_low,
+            low_tri,
+            seam_mask=lod0_seam_mask,
+            donor_xyz=donor_xyz,
+            donor_tri=donor_tri,
+            donor_rgb=donor_rgb,
+            donor_bridged_axilla_faces=donor_bridged_axilla_faces,
+            posed_base_high=posed_base_high,
+            jac_high=jac_high,
+            pose_info=pose_info,
+            coordinate_id=coordinate_id,
+            study_dir=study_dir,
         )
     # ZERO 3D world-space pins! Only 1D plantar floor Z >= 0.0 (with plantar contact Z = rest_z; X and Y 100% free!)
     _ = body_sole_toe_pin
@@ -1205,6 +1621,59 @@ def guard_and_reduce_body_and_head(
     )
     if adipose_gate >= 0.999:
         low_fit = couple_canonical_five_toes_to_forefoot(rest_base_low, low_fit)
+    if nipple_align_info is not None:
+        hbvh_nip_l1 = BVHTree.FromPolygons(high_fit.tolist(), high_tri.tolist(), all_triangles=True)
+        vl1_p = int(nipple_align_info["vLod1Pos"])
+        vl1_n = int(nipple_align_info["vLod1Neg"])
+        vl0_p = int(nipple_align_info["vLod0Pos"])
+        vl0_n = int(nipple_align_info["vLod0Neg"])
+        mapped_nip_cur = np.einsum("ni,nij->nj", map_weights, (high_fit - rest_base_high)[red_faces])
+        for grp in unique_alias_groups:
+            mapped_nip_cur[grp] = mapped_nip_cur[grp].mean(axis=0)
+        bary_nip_l1 = rest_base_low + mapped_nip_cur
+        # Sync the anterior pectoral nipple halo onto `high_fit` (`strictly above creases-lod1's curved inframammary fold on F>0`)
+        # and preserve a crisp `~1.65 mm` LOD1 cone bud at the shared canonical nipple landmark:
+        d_nip_r = np.minimum(
+            np.linalg.norm(rest_base_low - rest_base_low[vl1_p][None, :], axis=1),
+            np.linalg.norm(rest_base_low - rest_base_low[vl1_n][None, :], axis=1),
+        )
+        if adipose_gate > 0.20:
+            w_nip_l1 = (
+                (1.0 - smootherstep((d_nip_r - 0.032) / 0.018))
+                * smootherstep((rest_base_low[:, 2] - 1.448) / 0.010)
+                * np.where(~low_seam_mask, 1.0, 0.0)
+            )
+        else:
+            w_pec_sync = (
+                (1.0 - smootherstep((np.abs(rest_base_low[:, 0]) - 0.185) / 0.025))
+                * smootherstep((rest_base_low[:, 2] - 1.355) / 0.018)
+                * (1.0 - smootherstep((rest_base_low[:, 2] - 1.605) / 0.024))
+                * smootherstep((-rest_base_low[:, 1] - 0.055) / 0.025)
+            )
+            w_nip_l1 = np.maximum(1.0 - smootherstep((d_nip_r - 0.036) / 0.024), w_pec_sync) * np.where(~low_seam_mask, 1.0, 0.0)
+        for vn_i in np.flatnonzero(w_nip_l1 > 0.01):
+            wn_v = float(w_nip_l1[vn_i])
+            p_nb = bary_nip_l1[vn_i].copy()
+            hn_b, _, _, dn_b = hbvh_nip_l1.find_nearest(Vector(p_nb.tolist()), 0.018)
+            if hn_b is not None and dn_b < 0.015:
+                p_nb = np.asarray(hn_b, dtype=np.float64)
+            low_fit[vn_i] = (1.0 - wn_v) * low_fit[vn_i] + wn_v * p_nb
+        l_w_n, (l_es_n, l_ed_n), _, _ = low_conn
+        for vl1_c, vl0_c in ((vl1_p, vl0_p), (vl1_n, vl0_n)):
+            u_c_n = int(l_w_n[vl1_c])
+            nb_u_n = l_ed_n[l_es_n == u_c_n]
+            nb_v_n = [int(np.flatnonzero(l_w_n == int(u_nb))[0]) for u_nb in nb_u_n if int(u_nb) != u_c_n]
+            if nb_v_n:
+                p_ring = low_fit[nb_v_n].mean(axis=0)
+                p_apex = high_fit[vl0_c]
+                # Keep X/Z dead-on `high_fit[vl0_c]` and `~1.65 mm` outward papilla height on the coarse 19 mm LOD1 triangle fan:
+                low_fit[vl1_c] = p_ring + 0.58 * (p_apex - p_ring)
+                low_fit[vl1_c, 0] = float(p_apex[0])
+                low_fit[vl1_c, 2] = float(p_apex[2])
+        low_fit[vl1_p, 0] = 0.5 * (low_fit[vl1_p, 0] - low_fit[vl1_n, 0])
+        low_fit[vl1_n, 0] = -low_fit[vl1_p, 0]
+        low_fit[vl1_p, 1] = low_fit[vl1_n, 1] = 0.5 * (low_fit[vl1_p, 1] + low_fit[vl1_n, 1])
+        low_fit[vl1_p, 2] = low_fit[vl1_n, 2] = 0.5 * (low_fit[vl1_p, 2] + low_fit[vl1_n, 2])
     if resolved_sex == "male":
         # Preserve `high_fit`'s exact Donor-anchored male anterior pouch & full perineal crotch-base arch on runtime `LOD1`
         # (`overriding any legacy 0.946m saddle floor inside cached `pelvis-lod1` while keeping inner thighs/glutes untouched!`):
@@ -1309,7 +1778,7 @@ def guard_and_reduce_body_and_head(
                 wm_v = float(w_ant_m1[vi_m])
                 p_bary = bary_from_high[vi_m].copy()
                 is_ext_f_m1 = (adipose_gate > 0.80) and (abs(float(muscle_gate) - 0.50) > 0.10)
-                in_f_cup_l1 = (adipose_gate > 0.20) and (rl_x_a[vi_m] <= 0.118) and (0.895 <= rl_z[vi_m] <= 1.078) and (rl_y[vi_m] < 0.045)
+                in_f_cup_l1 = (adipose_gate > 0.20) and (rl_x_a[vi_m] <= 0.168) and (0.885 <= rl_z[vi_m] <= 1.168) and (rl_y[vi_m] < 0.045)
                 in_ext_mth_l1 = is_ext_f_m1 and (0.004 <= rl_x_a[vi_m] <= 0.072) and (0.680 <= rl_z[vi_m] <= 0.895)
                 in_ext_torso_l1 = is_ext_f_m1 and (
                     ((rl_x_a[vi_m] <= 0.045) and (1.135 <= rl_z[vi_m] <= 1.255) and (rl_y[vi_m] < -0.085))
@@ -1390,7 +1859,8 @@ def guard_and_reduce_body_and_head(
             sgn_r1 = np.sign(ru1_m[:, 0])
             lu_pts = np.column_stack([np.bincount(l_weld, weights=low_fit[:, c], minlength=len(l_mult)) / l_mult for c in range(3)])
             lu_pts[l_mid_u | cleft_mid_l1, 0] = 0.0
-            pel_reg_m = (ax_r1 <= 0.145) & (ru1_m[:, 2] >= 0.885) & (ru1_m[:, 2] <= (1.078 if adipose_gate > 0.20 else 1.155))
+            z_pel_reg_hi = np.where(ru1_m[:, 1] < -0.020, 1.030, 1.125) if adipose_gate > 0.20 else 1.155
+            pel_reg_m = (ax_r1 <= 0.145) & (ru1_m[:, 2] >= 0.885) & (ru1_m[:, 2] <= z_pel_reg_hi)
             reg_u_idx = np.flatnonzero(pel_reg_m)
             for _ in range(8):
                 nrm_l1 = vertex_normals(lu_pts[l_weld], low_tri, l_weld)[l_first_u]
@@ -1435,7 +1905,7 @@ def guard_and_reduce_body_and_head(
                     if (donor_linen_faces is not None and len(donor_linen_faces) == len(donor_tri))
                     else (_eval_brief_level_set_bl(donor_xyz[donor_tri].mean(axis=1)) > 0.0)
                 )
-                p_br1, t_br1, _ = fit_linen_briefs_to_donor_posed(
+                p_br1, t_br1, br_meta_l1 = fit_linen_briefs_to_donor_posed(
                     donor_xyz,
                     donor_tri,
                     lf_src_l1,
@@ -1446,6 +1916,66 @@ def guard_and_reduce_body_and_head(
                 )
                 posed_h_l1 = posed_base_high + np.einsum("vij,vj->vi", jac_high, high_fit - rest_base_high)
                 r_br1 = unpose_donor_briefs_to_rest(p_br1, t_br1, posed_h_l1, high_fit, high_tri)
+                wb_r1_pts = r_br1[br_meta_l1["fIdx"][:, -1]]
+                wb_r1_ord = np.argsort(wb_r1_pts[:, 0])
+                wb_r1_x = wb_r1_pts[wb_r1_ord, 0]
+                wb_r1_z = wb_r1_pts[wb_r1_ord, 2]
+                if adipose_gate > 0.20:
+                    # Project all exposed `LOD1` lower-stomach vertices horizontally onto `high_fit` (`hbvh_m_l1`) right down to
+                    # the exact `r_br1` waistband seam + restore triangle-chord sagitta so 0 orange overhang deficit survives:
+                    z_wb_l1_v = np.interp(np.clip(low_fit[:, 0], wb_r1_x[0], wb_r1_x[-1]), wb_r1_x, wb_r1_z)
+                    m_st_l1 = (
+                        (rl_x_a <= 0.168)
+                        & (low_fit[:, 1] < -0.135)
+                        & (low_fit[:, 2] >= z_wb_l1_v + 0.0035)
+                        & (low_fit[:, 2] <= 1.162)
+                        & ~((rl_x_a <= 0.036) & (low_fit[:, 2] >= 1.148))
+                    )
+                    for vs_i in np.flatnonzero(m_st_l1):
+                        xs_q = float(low_fit[vs_i, 0])
+                        zs_cur = float(low_fit[vs_i, 2])
+                        z_wb_i = float(z_wb_l1_v[vs_i])
+                        # Slide the coarse `LOD1` lower-belly row (`24..54 mm` above the crease) `-9 mm` down onto `high_fit`'s
+                        # rounded overhang lip knee so `LOD1` reproduces the full lower-belly hang without chord truncation:
+                        w_lip_sl = float(smootherstep(np.array([(zs_cur - (z_wb_i + 0.020)) / 0.012]))[0]) * float(
+                            1.0 - smootherstep(np.array([(zs_cur - (z_wb_i + 0.056)) / 0.016]))[0]
+                        )
+                        zs_q = max(z_wb_i + 0.006, zs_cur - 0.0095 * w_lip_sl)
+                        rh_s, rn_s, _, _ = hbvh_m_l1.ray_cast(Vector((xs_q, -0.38, zs_q)), Vector((0.0, 1.0, 0.0)), 0.34)
+                        if rh_s is not None and float(rh_s.y) < -0.14 and (float(rn_s.y) < -0.05 or float(rn_s.z) < -0.25):
+                            low_fit[vs_i, 1] = float(rh_s.y)
+                            low_fit[vs_i, 2] = zs_q
+                    tc_ap1 = low_fit[low_tri].mean(axis=1)
+                    sag_ap_s = np.zeros(len(low_fit), dtype=np.float64)
+                    sag_ap_c = np.zeros(len(low_fit), dtype=np.float64)
+                    for ti_ap, cap_v in enumerate(tc_ap1):
+                        z_wb_tc = float(np.interp(np.clip(float(cap_v[0]), wb_r1_x[0], wb_r1_x[-1]), wb_r1_x, wb_r1_z))
+                        if (z_wb_tc + 0.002 <= float(cap_v[2]) <= 1.158) and (abs(float(cap_v[0])) <= 0.162) and (float(cap_v[1]) < -0.14):
+                            ha_c, hna_c, _, dma_c = hbvh_m_l1.find_nearest(Vector(cap_v.tolist()), 0.024)
+                            if ha_c is not None and dma_c < 0.020:
+                                sd_ap = float(np.dot(np.asarray(ha_c, dtype=np.float64) - cap_v, np.asarray(hna_c, dtype=np.float64)))
+                                if sd_ap > 0.00020:
+                                    for vv_ap in low_tri[ti_ap]:
+                                        sag_ap_s[vv_ap] += min(sd_ap, 0.0046)
+                                        sag_ap_c[vv_ap] += 1.0
+                    nrm_ap1 = vertex_normals(low_fit, low_tri, low_conn[0])
+                    z_wb_l1_v2 = np.interp(np.clip(low_fit[:, 0], wb_r1_x[0], wb_r1_x[-1]), wb_r1_x, wb_r1_z)
+                    for vv_a in np.flatnonzero((sag_ap_c > 0.5) & (rl_x_a <= 0.160) & (low_fit[:, 1] < -0.14) & (low_fit[:, 2] >= z_wb_l1_v2 + 0.003) & (low_fit[:, 2] <= 1.158)):
+                        dp_ap1 = min(1.08 * (sag_ap_s[vv_a] / sag_ap_c[vv_a]), 0.0042) * nrm_ap1[vv_a]
+                        if rl_x_a[vv_a] < 2.5e-4:
+                            dp_ap1[0] = 0.0
+                        low_fit[vv_a] += dp_ap1
+                    lf_ap_sym = low_fit.copy()
+                    for vv_s in np.flatnonzero((rl_x_a <= 0.170) & (low_fit[:, 1] < -0.10) & (low_fit[:, 2] >= 0.99) & (low_fit[:, 2] <= 1.17)):
+                        if rl_x_a[vv_s] < 2.5e-4:
+                            lf_ap_sym[vv_s, 0] = 0.0
+                        else:
+                            _, jm_a, dm_a = kd_m_l1.find([-float(rest_base_low[vv_s, 0]), float(rest_base_low[vv_s, 1]), float(rest_base_low[vv_s, 2])])
+                            if jm_a is not None and dm_a < 0.0035 and rest_base_low[vv_s, 0] * rest_base_low[jm_a, 0] < 0.0:
+                                lf_ap_sym[vv_s, 0] = 0.5 * (low_fit[vv_s, 0] - low_fit[jm_a, 0])
+                                lf_ap_sym[vv_s, 1] = 0.5 * (low_fit[vv_s, 1] + low_fit[jm_a, 1])
+                                lf_ap_sym[vv_s, 2] = 0.5 * (low_fit[vv_s, 2] + low_fit[jm_a, 2])
+                    low_fit = lf_ap_sym
                 bvh_rbr1 = BVHTree.FromPolygons(r_br1.tolist(), t_br1.tolist(), all_triangles=True)
                 c_br1 = weld_connectivity(r_br1, t_br1, decimals=5)
                 vn_rbr1 = vertex_normals(r_br1, t_br1, c_br1[0])
@@ -1485,6 +2015,10 @@ def guard_and_reduce_body_and_head(
                     tuck_vs = sorted({int(v) for bt_i, _ in ov_l_br for v in sub_l1_tri[int(bt_i)]})
                     moved_any = False
                     for vi_t in tuck_vs:
+                        if adipose_gate > 0.20 and float(low_fit[vi_t, 1]) < -0.045:
+                            z_wb_vt = float(np.interp(np.clip(float(low_fit[vi_t, 0]), wb_r1_x[0], wb_r1_x[-1]), wb_r1_x, wb_r1_z))
+                            if float(low_fit[vi_t, 2]) >= z_wb_vt + 0.0015 or float(rest_base_low[vi_t, 2]) >= 1.052:
+                                continue
                         hb_t, _, ti_t, db_t = bvh_rbr1.find_nearest(Vector(low_fit[vi_t].tolist()), 0.060)
                         if hb_t is None or ti_t is None or db_t >= 0.052:
                             continue
@@ -1812,6 +2346,11 @@ def sculpt_male_anterior_pelvic_mound(
         kd_rim.insert(pt_rm.tolist(), idx_rm)
     kd_rim.balance()
 
+    wb_f_pts = posed_br[br_meta["fIdx"][:, -1]]
+    wb_f_ord = np.argsort(wb_f_pts[:, 0])
+    wb_f_x = wb_f_pts[wb_f_ord, 0]
+    wb_f_z = wb_f_pts[wb_f_ord, 2]
+
     # Canonical eligibility gate (`excluding overhanging belly skin above the crease and lower thigh shafts`):
     w_trunk_elig = (
         (1.0 - smootherstep((ax_ru - 0.215) / 0.025))
@@ -1819,7 +2358,7 @@ def sculpt_male_anterior_pelvic_mound(
         * (1.0 - smootherstep((rz_ru - 1.245) / 0.028))
     )
     if ad_g > 0.20:
-        apron_skin_excl = smootherstep((-ry_ru - 0.035) / 0.025) * smootherstep((rz_ru - 1.076) / 0.016)
+        apron_skin_excl = smootherstep((-ry_ru - 0.035) / 0.025) * smootherstep((rz_ru - 1.046) / 0.014)
         w_trunk_elig = w_trunk_elig * (1.0 - apron_skin_excl)
 
     w_cov_u = np.zeros(n_u, dtype=np.float64)
@@ -1829,6 +2368,11 @@ def sculpt_male_anterior_pelvic_mound(
         posed_cur = posed_base[first_u] + np.einsum("vij,vj->vi", jac_u, pu - ru)
         for u_c in cand_pel:
             pt_q = posed_cur[u_c]
+            # Never pull exposed bare lower-stomach skin at/above the front waistband seam behind `posed_br`:
+            if float(pt_q[1]) < -0.020:
+                z_wb_q = float(np.interp(np.clip(float(pt_q[0]), wb_f_x[0], wb_f_x[-1]), wb_f_x, wb_f_z))
+                if float(pt_q[2]) >= z_wb_q - 0.0005:
+                    continue
             hit_b, _, ti_b, dist_b = bvh_br.find_nearest(Vector(pt_q.tolist()), 0.072)
             if hit_b is None or ti_b is None or dist_b >= 0.066:
                 continue
@@ -1841,21 +2385,19 @@ def sculpt_male_anterior_pelvic_mound(
             )
             if w_in <= 0.004:
                 continue
-            w_cov_u[u_c] = max(w_cov_u[u_c], w_in)
             ia, ib, ic = int(br_tri[int(ti_b), 0]), int(br_tri[int(ti_b), 1]), int(br_tri[int(ti_b), 2])
             bary = _barycentric_on_tri(hb_np, posed_br[ia], posed_br[ib], posed_br[ic])
             n_sm = bary[0] * vn_br[ia] + bary[1] * vn_br[ib] + bary[2] * vn_br[ic]
             n_sm /= max(float(np.linalg.norm(n_sm)), 1e-12)
-            # Clean `1.9..2.8 mm` inward normal offset (`flush with donorReg at rim`) + natural vertical posterior gluteal crease:
             off_in = 0.0019 + 0.0009 * float(smootherstep(np.array([float(d_rim) / 0.0100]))[0])
-            if hb_np[1] > 0.015:
-                w_cx = 1.0 - float(smootherstep(np.array([abs(float(hb_np[0])) / (0.028 if ad_g > 0.20 else 0.024)]))[0])
-                w_cz = float(smootherstep(np.array([(float(hb_np[2]) - (z_cr_min + 0.022)) / 0.038]))[0]) * float(
-                    1.0 - smootherstep(np.array([(float(hb_np[2]) - (z_b_top - 0.028)) / 0.038]))[0]
-                )
-                off_in += (0.0065 if ad_g > 0.20 else 0.0045) * w_cx * w_cz
+            in_rear_cleft = (float(hb_np[1]) > 0.015) and (abs(float(hb_np[0])) < 0.062)
             p_tgt = hb_np - off_in * n_sm
             dn_s = float(np.dot(p_tgt - pt_q, n_sm))
+            # One-sided inward clearance in the posterior intergluteal valley: NEVER pull bare `bodySkin`'s natural gluteal crease outward
+            # toward `linenBriefs`'s tensioned cloth bridge!
+            if in_rear_cleft and dn_s > 0.0:
+                continue
+            w_cov_u[u_c] = max(w_cov_u[u_c], w_in)
             dp_p = (gain_n * w_in * dn_s) * n_sm
             try:
                 dp_r = np.linalg.solve(jac_u[u_c], dp_p)
@@ -1869,7 +2411,7 @@ def sculpt_male_anterior_pelvic_mound(
 
     for gain_pass in (0.92, 0.90):
         _project_covered_bare_skin(gain_pass)
-        cov_act = np.flatnonzero(w_cov_u > 0.01)
+        cov_act = np.flatnonzero((w_cov_u > 0.01) & ~((ry_ru > 0.015) & (ax_ru < 0.036)))
         if len(cov_act):
             wc_t = (0.36 * w_cov_u[cov_act])[:, None]
             nm_c = ~mid_u[cov_act]
@@ -2091,38 +2633,58 @@ def sculpt_male_anterior_pelvic_mound(
             f_idx = np.union1d(f_idx, bk_idx)
             pu[mid_u, 0] = 0.0
 
-        keep_ap_d = (np.abs(fc_d[:, 0]) <= 0.185) & (fc_d[:, 2] >= z_f_top + 0.004) & (fc_d[:, 2] <= 1.165) & (fc_d[:, 1] < -0.12)
+        # Full 100% Donor bare lower-stomach correspondence right down to the sub-apron crease root (`including overhanging belly
+        # underside triangles where Meshy bled white pixels inside the crease, keeping a 3.5 mm vertical seam separation above posed_br`):
+        bvh_ap_d = None
+        keep_ap_d = (
+            (np.abs(fc_d[:, 0]) <= 0.205)
+            & (fc_d[:, 2] >= z_f_top - 0.002)
+            & (fc_d[:, 2] <= 1.215)
+            & (fc_d[:, 1] < -0.08)
+        )
+        if donor_bridged_thigh_faces is not None and len(donor_bridged_thigh_faces) == len(donor_tri):
+            keep_ap_d &= ~np.asarray(donor_bridged_thigh_faces, dtype=bool)
         if int(np.sum(keep_ap_d)) >= 80:
             bvh_ap_d = BVHTree.FromPolygons(donor_xyz.tolist(), donor_tri[keep_ap_d].tolist(), all_triangles=True)
-            posed_ap = posed_base[first_u] + np.einsum("vij,vj->vi", jac_u, pu - ru)
-            px_ap, py_ap, pz_ap = np.abs(posed_ap[:, 0]), posed_ap[:, 1], posed_ap[:, 2]
-            z_ap_lo = (z_f_top + 0.008) + 0.036 * (np.clip(px_ap / 0.145, 0.0, 1.0) ** 1.8)
-            w_ap_rim = (
-                ad_g
-                * w_exp_gate
-                * (1.0 - smootherstep((px_ap - 0.145) / 0.026))
-                * smootherstep((pz_ap - z_ap_lo) / 0.015)
-                * (1.0 - smootherstep((pz_ap - 1.135) / 0.028))
-                * smootherstep((-py_ap - 0.188) / 0.028)
-            )
-            ap_idx = np.flatnonzero(w_ap_rim > 0.01)
-            for u_ap in ap_idx:
-                pts_lr_ap: list[np.ndarray] = []
-                for sx_ap in (-1.0, 1.0):
-                    qv_ap = Vector((sx_ap * float(px_ap[u_ap]), float(py_ap[u_ap]), float(pz_ap[u_ap])))
-                    dh_ap, dn_ap, _, dd_ap = bvh_ap_d.find_nearest(qv_ap, 0.028)
-                    if dh_ap is not None and dd_ap < 0.025 and float(dn_ap.y) < -0.14:
-                        pts_lr_ap.append(np.array([0.0, float(dh_ap.y) - float(py_ap[u_ap]), float(dh_ap.z) - float(pz_ap[u_ap])], dtype=np.float64))
-                if pts_lr_ap:
-                    dp_ap_p = (0.86 * float(w_ap_rim[u_ap])) * np.mean(pts_lr_ap, axis=0)
-                    try:
-                        dp_ap_r = np.linalg.solve(jac_u[u_ap], dp_ap_p)
-                    except np.linalg.LinAlgError:
-                        dp_ap_r = dp_ap_p
-                    if float(np.linalg.norm(dp_ap_r)) <= 0.024:
-                        pu[u_ap] += dp_ap_r
-            f_idx = np.union1d(f_idx, ap_idx)
-            pu[mid_u, 0] = 0.0
+
+            def _project_bare_lower_stomach_y(gain_st: float) -> np.ndarray:
+                posed_ap = posed_base[first_u] + np.einsum("vij,vj->vi", jac_u, pu - ru)
+                px_ap, py_ap, pz_ap = np.abs(posed_ap[:, 0]), posed_ap[:, 1], posed_ap[:, 2]
+                z_wb_ap = np.interp(np.clip(posed_ap[:, 0], wb_f_x[0], wb_f_x[-1]), wb_f_x, wb_f_z)
+                w_ap_rim = (
+                    ad_g
+                    * (1.0 - smootherstep((px_ap - 0.172) / 0.024))
+                    * smootherstep((pz_ap - (z_wb_ap + 0.0030)) / 0.0055)
+                    * (1.0 - smootherstep((pz_ap - 1.162) / 0.026))
+                    * smootherstep((-py_ap - 0.145) / 0.030)
+                    * (1.0 - np.where((px_ap <= 0.036) & (pz_ap >= 1.148), 1.0, 0.0))
+                )
+                ap_idx_loc = np.flatnonzero(w_ap_rim > 0.01)
+                for u_ap in ap_idx_loc:
+                    x_abs_q = float(px_ap[u_ap])
+                    y_cur_q = float(py_ap[u_ap])
+                    z_cur_q = float(pz_ap[u_ap])
+                    ys_lr_ap: list[float] = []
+                    for sx_ap in ((-1.0, 1.0) if x_abs_q > 1e-4 else (1.0,)):
+                        dh_ap, dn_ap, _, _ = bvh_ap_d.ray_cast(Vector((sx_ap * x_abs_q, -0.39, z_cur_q)), Vector((0.0, 1.0, 0.0)), 0.36)
+                        if dh_ap is not None and float(dh_ap.y) < -0.14 and (float(dn_ap.y) < -0.04 or float(dn_ap.z) < -0.25):
+                            ys_lr_ap.append(float(dh_ap.y))
+                    if ys_lr_ap:
+                        dy_ap_p = (gain_st * float(w_ap_rim[u_ap])) * (float(np.mean(ys_lr_ap)) - y_cur_q)
+                        if abs(dy_ap_p) > 1e-5:
+                            try:
+                                dp_ap_r = np.linalg.solve(jac_u[u_ap], np.array([0.0, dy_ap_p, 0.0], dtype=np.float64))
+                            except np.linalg.LinAlgError:
+                                dp_ap_r = np.array([0.0, dy_ap_p, 0.0], dtype=np.float64)
+                            nrm_apr = float(np.linalg.norm(dp_ap_r))
+                            if nrm_apr > 0.045:
+                                dp_ap_r *= 0.045 / nrm_apr
+                            pu[u_ap] += dp_ap_r
+                pu[mid_u, 0] = 0.0
+                return ap_idx_loc
+
+            for gain_ap in (0.94, 0.92):
+                f_idx = np.union1d(f_idx, _project_bare_lower_stomach_y(gain_ap))
 
         # 3d) Extreme-muscle `F=100%` lower medial thighs (`X_med_d`) + subtle `LOD0` elbow fullness:
         if is_ext_full:
@@ -2455,6 +3017,8 @@ def sculpt_male_anterior_pelvic_mound(
             pu[f_idx] += 0.22 * dp_f2t
             pu[mid_u, 0] = 0.0
     _project_covered_bare_skin(0.90)
+    if ad_g > 0.20 and bvh_ap_d is not None:
+        _project_bare_lower_stomach_y(0.95)
 
     kd_s = KDTree(n_u)
     for ui_s, pt_s in enumerate(ru):
@@ -3646,9 +4210,11 @@ def polish_pelvis_affine_diffeo(
             not_sidewall_pel
             * (1.0 - smootherstep((np.abs(ru[:, 0]) - 0.106) / 0.024))
             * smootherstep((ru[:, 2] - 0.915) / 0.022)
-            * (1.0 - smootherstep((ru[:, 2] - 1.122) / 0.018))
+            * (1.0 - smootherstep((ru[:, 2] - (1.040 if adipose_gate > 0.20 else 1.122)) / 0.016))
             * smootherstep((-pu[:, 1] - 0.052) / 0.028)
         )
+        if adipose_gate > 0.20:
+            w_iso_pub_u = w_iso_pub_u * (1.0 - smootherstep((pu[:, 2] - 1.016) / 0.014))
         iso_idx = np.flatnonzero(w_iso_pub_u > 0.01)
         if len(iso_idx):
             # Fit low-order smooth cylindrical arch y_quad(ru_x, ru_z) = y0(ru_z) + c2(ru_z) * ru_x^2 so horizontal smoothing never flattens belly roundness!
@@ -5364,16 +5930,7 @@ def polish_muscular_relief_to_donor(
             if np.sum(fp_z) >= 8:
                 yg_pec[:, zi_p] = np.interp(xg_pec, xg_pec[fp_z], yg_pec[fp_z, zi_p])
         if np.all(np.isfinite(yg_pec)):
-            # De-spike ONLY isolated Meshy nipple tip cones (`> 1.2mm` local 2-ring protrusion inside `|X|=0.095..0.148m, Z=1.44..1.495m`)
-            # WITHOUT smoothing or chopping the surrounding square outer-lower pectoral slab!
-            xx_p, zz_p = np.meshgrid(xg_pec, zg_pec, indexing="ij")
-            in_nip_box = (xx_p >= 0.095) & (xx_p <= 0.148) & (zz_p >= 1.440) & (zz_p <= 1.495)
-            yg_med_p = yg_pec.copy()
-            for _ in range(4):
-                yg_med_p[1:-1, 1:-1] = 0.25 * (yg_med_p[:-2, 1:-1] + yg_med_p[2:, 1:-1] + yg_med_p[1:-1, :-2] + yg_med_p[1:-1, 2:])
-            nip_spike = in_nip_box & (yg_pec < yg_med_p - 0.0012)
-            yg_pec[nip_spike] = yg_med_p[nip_spike] - 0.0012
-
+            # Preserve 100% of Donor chest & nipple relief (`zero nip_spike de-spiking!`):
             yg_z_sm = yg_pec.copy()
             for _ in range(8):
                 yg_z_sm[:, 1:-1] = 0.25 * yg_z_sm[:, :-2] + 0.50 * yg_z_sm[:, 1:-1] + 0.25 * yg_z_sm[:, 2:]

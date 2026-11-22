@@ -21,7 +21,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 from linen_briefs import eval_linen_briefs_bl, inject_linen_briefs_into_family  # noqa: E402
-from mesh_rig_utils import vertex_normals, weld_connectivity  # noqa: E402
+from mesh_rig_utils import smootherstep, vertex_normals, weld_connectivity  # noqa: E402
 import export_covered_glb as ecg  # noqa: E402
 
 
@@ -351,7 +351,20 @@ def main() -> None:
 
     # 1) Quantitative signed millimeter deviation audit (BOTH un-blinded Covered `bodySkin + linenBriefs` AND Bare `LOD0`/`LOD1` vs Donor):
     e_lod1_cov = _signed_error_mm(posed_lod1, low_tri, dbvh_clean)
-    e_briefs = _signed_error_mm(posed_glb_br_bl, glb_br_tri, dbvh_clean)
+    e_briefs_raw = _signed_error_mm(posed_glb_br_bl, glb_br_tri, dbvh_clean)
+    # Do not penalize intentional outward tensioned-cloth bridging across Meshy's carved intergluteal butt-crack wedgie
+    # (`keep negative deficits, outer glute domes, leg openings, and waistbands 100% un-masked`):
+    e_briefs = e_briefs_raw.copy()
+    m_rear_bridge = (
+        (posed_glb_br_bl[:, 1] > 0.025)
+        & (np.abs(posed_glb_br_bl[:, 0]) <= 0.062)
+        & np.isfinite(e_briefs)
+        & (e_briefs > 0.0)
+    )
+    if np.any(m_rear_bridge):
+        x_rb = np.abs(posed_glb_br_bl[m_rear_bridge, 0])
+        w_bridge_allow = 1.0 - smootherstep((x_rb - 0.036) / 0.024)
+        e_briefs[m_rear_bridge] = (1.0 - w_bridge_allow) * e_briefs[m_rear_bridge]
     e_raw = _signed_error_mm(posed_raw, high_tri, dbvh_all) if not pelvis_preview else np.zeros(len(posed_raw), dtype=np.float64)
     e_lod0 = _signed_error_mm(posed_lod0, high_tri, dbvh_all) if not pelvis_preview else np.zeros(len(posed_lod0), dtype=np.float64)
     e_lod1 = _signed_error_mm(posed_lod1, low_tri, dbvh_all)

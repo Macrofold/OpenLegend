@@ -34,13 +34,16 @@ from linen_briefs import (
     _eval_brief_level_set_bl,
     clear_briefs_against_dense_body,
     eval_linen_briefs_bl,
+    extract_clean_donor_linen_masks,
     fit_linen_briefs_to_donor_posed,
     inject_linen_briefs_into_family,
     unpose_donor_briefs_to_rest,
 )
 from mesh_rig_utils import blender_to_gltf, gltf_to_blender, self_intersections, smootherstep, vertex_normals, weld_connectivity
 
-REPO_ART_SCRIPTS = Path(__file__).resolve().parent.parent
+REPO_ART_SCRIPTS = Path(
+    "/Users/mike/Documents/Projects/OpenLegend/.worktrees/metahuman-foundation-poc/scripts/art"
+)
 if str(REPO_ART_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(REPO_ART_SCRIPTS))
 
@@ -54,6 +57,41 @@ _ART_SPEC.loader.exec_module(ol_art_tool)
 WITNESS_PACKAGE_JSON = Path(
     "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-full-transfer/study/runtime/export-witness/package/family.json"
 )
+
+
+def _canonical_body_nipple_uv_centers(fam: dict | None) -> tuple[list[tuple[float, float]], set[int]]:
+    """Return shared canonical pectoral nipple UV centers `[(u_pos, v_pos), (u_neg, v_neg)]` and sourceVertexIndices."""
+    if fam is None or "meshes" not in fam or "bodySkin" not in fam["meshes"]:
+        return [], set()
+    bs_m = fam["meshes"]["bodySkin"]
+    bs_ref = gltf_to_blender(np.asarray(bs_m["positions"], dtype=np.float64).reshape(-1, 3))
+    bs_s = np.asarray(bs_m["sourceVertexIndices"], dtype=np.int64)
+    buv_m = np.asarray(bs_m["uvs"], dtype=np.float64).reshape(-1, 2)
+    btri_m = bs_s[np.asarray(bs_m["renderTriangles"], dtype=np.int64).reshape(-1, 3)]
+    l_conn = weld_connectivity(bs_ref, btri_m, decimals=5)
+    l_weld, _, _, l_deg = l_conn
+    cand_p = np.flatnonzero(
+        (bs_ref[:, 0] >= 0.095)
+        & (bs_ref[:, 0] <= 0.132)
+        & (bs_ref[:, 2] >= 1.445)
+        & (bs_ref[:, 2] <= 1.482)
+        & (bs_ref[:, 1] < -0.082)
+    )
+    if not len(cand_p):
+        return [], set()
+    ref_seed = np.array([0.1088, -0.0988, 1.4624], dtype=np.float64)
+    val7 = [int(v) for v in cand_p if int(l_deg[int(l_weld[int(v)])]) == 7]
+    pool_p = np.asarray(val7 if val7 else cand_p, dtype=np.int64)
+    sv_pos = int(pool_p[int(np.argmin(np.linalg.norm(bs_ref[pool_p] - ref_seed[None, :], axis=1)))])
+    mir_pt = np.array([-bs_ref[sv_pos, 0], bs_ref[sv_pos, 1], bs_ref[sv_pos, 2]], dtype=np.float64)
+    sv_neg = int(np.argmin(np.linalg.norm(bs_ref - mir_pt[None, :], axis=1)))
+    uv_out: list[tuple[float, float]] = []
+    for sv_c in (sv_pos, sv_neg):
+        rows_c = np.flatnonzero(bs_s == sv_c)
+        if len(rows_c):
+            uv_c = buv_m[rows_c].mean(axis=0)
+            uv_out.append((float(uv_c[0]), float(uv_c[1])))
+    return uv_out, {sv_pos, sv_neg}
 
 
 def _box_blur_rgb(arr: np.ndarray, radius: int, passes: int = 2) -> np.ndarray:
@@ -204,19 +242,37 @@ def _bake_mikkt_lod0_to_lod1_body_normals(
     don_vn = None
     don_concav = None
     w_donor_map = None
+    nip_uv_list, _ = _canonical_body_nipple_uv_centers(fam)
+    w_nip_uv_map = np.zeros((h_b, w_b), dtype=np.float64)
+    if nip_uv_list:
+        gx_n, gy_n = np.meshgrid(np.arange(w_b, dtype=np.float64) + 0.5, np.arange(h_b, dtype=np.float64) + 0.5)
+        for u_np, v_np in nip_uv_list:
+            cx_np = (u_np - 0.5) * 2.0 * w_b
+            cy_np = v_np * h_b
+            r_np_px = np.hypot(gx_n - cx_np, gy_n - cy_np)
+            w_nip_uv_map = np.maximum(w_nip_uv_map, 1.0 - smootherstep((r_np_px - 10.0) / 8.0))
+
     if use_donor:
-        excl_d_raw = np.zeros(len(donor_tri), dtype=bool)
+        web_holes = np.zeros(len(donor_tri), dtype=bool)
         if donor_bridged_axilla_faces is not None:
-            excl_d_raw |= donor_bridged_axilla_faces
+            web_holes |= donor_bridged_axilla_faces
         if donor_bridged_thigh_faces is not None:
-            excl_d_raw |= donor_bridged_thigh_faces
-        if donor_linen_faces is not None and len(donor_linen_faces) == len(donor_tri):
-            excl_d_raw |= np.asarray(donor_linen_faces, dtype=bool)
-        excl_d = excl_d_raw.copy()
-        if np.any(excl_d):
+            web_holes |= donor_bridged_thigh_faces
+        web_holes_dil = web_holes.copy()
+        if np.any(web_holes_dil):
             for _ in range(6):
-                bv = np.unique(donor_tri[excl_d].ravel())
-                excl_d |= np.any(np.isin(donor_tri, bv), axis=1)
+                bv = np.unique(donor_tri[web_holes_dil].ravel())
+                web_holes_dil |= np.any(np.isin(donor_tri, bv), axis=1)
+        # Keep clean cloth boundary WITHOUT upward dilation onto overhanging bare belly skin:
+        clean_lf_ex = np.zeros(len(donor_tri), dtype=bool)
+        if donor_linen_faces is not None and len(donor_linen_faces) == len(donor_tri):
+            clean_lf_ex, _, _ = extract_clean_donor_linen_masks(
+                donor_xyz,
+                donor_tri,
+                np.asarray(donor_linen_faces, dtype=bool),
+                donor_bridged_thigh_faces,
+            )
+        excl_d = web_holes_dil | clean_lf_ex
         dcz = donor_xyz[donor_tri].mean(axis=1)[:, 2]
         keep_df = (~excl_d) & (dcz >= 0.055) & (dcz <= 1.795)
         if np.sum(keep_df) >= 500:
@@ -288,31 +344,34 @@ def _bake_mikkt_lod0_to_lod1_body_normals(
             # so `M100-F000` lower erector columns & `M000-F000` lumbar spinous processes stay 100% crisp right into the rear waistband:
             z_dwb_back = 1.242 - 0.016 * (1.0 - smootherstep((np.abs(pp_flat[:, 0]) - 0.026) / 0.022))
             z_dwb = (1.0 - s_post_wb) * z_dwb_front + s_post_wb * z_dwb_back
+            # On `adipose_gate > 0.20`, NEVER suppress anterior sub-apron overhang crease normals (`keep posterior sacral waistband fade only`):
+            wb_ant_allow = s_post_wb if adipose_gate > 0.20 else np.ones_like(s_post_wb)
             dwb_ex = np.maximum(
-                (1.0 - smootherstep((np.abs(pr_flat[:, 0]) - 0.215) / 0.028))
+                wb_ant_allow
+                * (1.0 - smootherstep((np.abs(pr_flat[:, 0]) - 0.215) / 0.028))
                 * smootherstep((pp_flat[:, 2] - z_d_lo) / 0.022)
                 * (1.0 - smootherstep((pp_flat[:, 2] - z_dwb) / 0.024)),
                 flank_taper_ex,
             )
             dwb_seam_band = np.maximum(
-                (1.0 - smootherstep((np.abs(pr_flat[:, 0]) - 0.215) / 0.028))
+                wb_ant_allow
+                * (1.0 - smootherstep((np.abs(pr_flat[:, 0]) - 0.215) / 0.028))
                 * smootherstep((pp_flat[:, 2] - (0.855 if adipose_gate > 0.20 else 1.135)) / 0.026)
                 * (1.0 - smootherstep((pp_flat[:, 2] - z_dwb_back) / 0.024)),
                 flank_taper_ex,
-            ) * (1.0 - (0.0 if adipose_gate > 0.20 else brief_ex))
+            ) * (1.0 - brief_ex)
             dwb_seam_map = np.zeros((h_b, w_b), dtype=np.float64)
             dwb_seam_map[cov_b] = dwb_seam_band
             hand_ex = smootherstep((np.abs(pr_flat[:, 0]) - 0.395) / 0.035) * (1.0 - smootherstep((pr_flat[:, 2] - 1.335) / 0.050))
             hand_ex_map = np.zeros((h_b, w_b), dtype=np.float64)
             hand_ex_map[cov_b] = hand_ex
-            # Exclude the hidden axillary pressed-arm contact zone & smoothly feather 3D distance around any `excl_d` hole rim
-            # (`preventing `dbvh` queries on `adipose_gate > 0.20` from ever hitting or dropping out across the cut rim of
-            # `donor_bridged_axilla_faces` while keeping the visible upper back 100% free of any vertical `|X|` step!):
+            # Exclude ONLY the hidden axillary/thigh cut-webbing hole rims (`web_holes_dil`, NEVER `clean_lf_ex` so bare overhanging
+            # stomach skin keeps 100% Donor normal/AO correspondence right down to the waistband crease seam!):
             hole_guard_fade = np.ones(len(pp_flat), dtype=np.float64)
             ax_hole_relax = np.zeros(len(pp_flat), dtype=np.float64)
-            if adipose_gate > 0.20 and np.any(excl_d):
+            if adipose_gate > 0.20 and np.any(web_holes_dil):
                 excl_v_mask = np.zeros(len(donor_xyz), dtype=bool)
-                excl_v_mask[np.unique(donor_tri[excl_d].ravel())] = True
+                excl_v_mask[np.unique(donor_tri[web_holes_dil].ravel())] = True
                 rim_pts = donor_xyz[excl_v_mask].astype(np.float64)
                 if len(rim_pts) > 0:
                     rim_sym = np.column_stack([np.abs(rim_pts[:, 0]), rim_pts[:, 1], rim_pts[:, 2]])
@@ -384,19 +443,28 @@ def _bake_mikkt_lod0_to_lod1_body_normals(
                     z_nav_nrm = float(zs_hfn[int(np.argmax(ys_hfn - ys_hfe))])
             r_navel = np.hypot(pp_flat[:, 0] / 0.032, (pp_flat[:, 2] - z_nav_nrm) / 0.030)
             w_navel_keep = (1.0 - smootherstep((r_navel - 0.72) / 0.50)) * smootherstep((-pp_flat[:, 1] - 0.14) / 0.04)
-            dwb_seam_band = dwb_seam_band * (1.0 - w_navel_keep)
+            w_subapron_keep = (
+                float(np.clip(adipose_gate, 0.0, 1.0))
+                * (1.0 - smootherstep((np.abs(pp_flat[:, 0]) - 0.165) / 0.026))
+                * smootherstep((pp_flat[:, 2] - 1.015) / 0.014)
+                * (1.0 - smootherstep((pp_flat[:, 2] - 1.095) / 0.025))
+                * smootherstep((-pp_flat[:, 1] - 0.135) / 0.035)
+                * (1.0 - brief_ex)
+            )
+            w_nip_flat = w_nip_uv_map[cov_b]
+            dwb_seam_band = dwb_seam_band * (1.0 - np.maximum(w_navel_keep, w_subapron_keep))
             dwb_seam_map[cov_b] = dwb_seam_band
-            ad_nrm_atten = ((1.0 - s_post_nrm) * 0.85 + s_post_nrm * 0.10) * (1.0 - w_navel_keep)
-            # On `adipose_gate > 0.20`, `LOD0` (`high_fit_bl`) carries the sculpted 3D umbilical pit at `Z ~ 1.180 m` (`whereas
-            # `donor_xyz` has smooth belly skin `26 mm` above its `1.154 m` pit`), so keep `LOD0` normals inside `w_navel_keep`!
-            ad_navel_lod0_only = 1.0 - float(np.clip(adipose_gate, 0.0, 1.0)) * w_navel_keep
+            ad_nrm_atten = ((1.0 - s_post_nrm) * 0.85 + s_post_nrm * 0.10) * (1.0 - w_navel_keep) * (1.0 - 0.80 * w_subapron_keep)
+            # On `adipose_gate > 0.20` and inside the canonical nipple UV halo `w_nip_flat`, keep sculpted `LOD0` (`high_fit_bl`) normals
+            # so 3D umbilical cavity & canonical papilla relief align 1:1 with UV landmarks without raw Donor double-ghosting:
+            ad_lod0_only = (1.0 - float(np.clip(adipose_gate, 0.0, 1.0)) * w_navel_keep) * (1.0 - w_nip_flat)
             w_d_flat = (
                 np.clip(1.0 - ad_nrm_atten * adipose_gate, 0.0, 1.0)
-                * ad_navel_lod0_only
+                * ad_lod0_only
                 * hole_guard_fade
                 * smootherstep((pr_flat[:, 2] - 0.082) / 0.026)
                 * collar_3d_fade
-                * (1.0 - np.maximum(brief_ex, dwb_ex * (1.0 - w_navel_keep)))
+                * (1.0 - np.maximum(brief_ex, dwb_ex * (1.0 - np.maximum(w_navel_keep, w_subapron_keep))))
                 * (1.0 - hand_ex)
                 * (1.0 - ax_ex)
                 * (1.0 - med_thigh_ex)
@@ -405,6 +473,8 @@ def _bake_mikkt_lod0_to_lod1_body_normals(
             w_donor_map[cov_b] = w_d_flat
             w_navel_map = np.zeros((h_b, w_b), dtype=np.float64)
             w_navel_map[cov_b] = w_navel_keep
+            w_subapron_map = np.zeros((h_b, w_b), dtype=np.float64)
+            w_subapron_map[cov_b] = w_subapron_keep
             w_post_map = np.zeros((h_b, w_b), dtype=np.float64)
             s_post_medial = (
                 s_post_nrm
@@ -494,14 +564,15 @@ def _bake_mikkt_lod0_to_lod1_body_normals(
                     sym_signs = (1.0, -1.0) if (adipose_gate > 0.20 and abs(p_p[0]) > 2.0e-3) else (1.0,)
                     w_nv_px = float(w_navel_map[py_i, px_i]) if "w_navel_map" in locals() and w_navel_map is not None else 0.0
                     w_po_px = float(w_post_map[py_i, px_i]) if "w_post_map" in locals() and w_post_map is not None else 0.0
-                    in_ad_pec = (
-                        adipose_gate > 0.20
-                        and abs(p_p[0]) <= 0.178
-                        and 1.335 <= p_p[2] <= 1.540
-                        and p_p[1] < -0.120
+                    w_ad_pec = (
+                        float(np.clip(adipose_gate, 0.0, 1.0))
+                        * float(1.0 - smootherstep(np.array([(abs(float(p_p[0])) - 0.165) / 0.030]))[0])
+                        * float(smootherstep(np.array([(float(p_p[2]) - 1.320) / 0.035]))[0])
+                        * float(1.0 - smootherstep(np.array([(float(p_p[2]) - 1.545) / 0.035]))[0])
+                        * float(smootherstep(np.array([(-float(p_p[1]) - 0.110) / 0.030]))[0])
                     )
-                    ray_half = 0.022 if (w_nv_px > 0.10 or w_po_px > 0.25) else (0.016 if in_ad_pec else 0.007)
-                    cos_min = 0.22 if w_nv_px > 0.10 else (0.52 if (w_po_px > 0.25 or in_ad_pec) else 0.72)
+                    ray_half = 0.022 if (w_nv_px > 0.10 or w_po_px > 0.25) else (0.007 + 0.009 * w_ad_pec)
+                    cos_min = 0.22 if w_nv_px > 0.10 else ((0.52 if w_po_px > 0.25 else 0.72) - 0.20 * w_ad_pec)
                     for sx_q in sym_signs:
                         pq_m = np.array([sx_q * p_p[0], p_p[1], p_p[2]], dtype=np.float64)
                         nq_m = np.array([sx_q * n_p_approx[0], n_p_approx[1], n_p_approx[2]], dtype=np.float64)
@@ -549,16 +620,25 @@ def _bake_mikkt_lod0_to_lod1_body_normals(
                 nb_l2 = float(np.linalg.norm(n_boost))
                 if nb_l2 > 1e-8:
                     n_h = n_boost / nb_l2
-        if adipose_gate > 0.20:
-            p_np = p_posed_buf[py_i, px_i] if p_posed_buf is not None else p_buf[py_i, px_i]
-            if p_np[1] < -0.145 and 1.442 <= p_np[2] <= 1.508 and 0.102 <= abs(p_np[0]) <= 0.165:
-                r_np_d = float(np.hypot((abs(p_np[0]) - 0.132) / 0.015, (p_np[2] - 1.474) / 0.014))
-                if r_np_d < 1.8:
-                    w_np_b = float(adipose_gate) * float(np.exp(-0.85 * (r_np_d ** 2)))
-                    n_np_b = n_l + (1.0 + 0.85 * w_np_b) * (n_h - n_l)
-                    nnp_l = float(np.linalg.norm(n_np_b))
-                    if nnp_l > 1e-8:
-                        n_h = n_np_b / nnp_l
+        if adipose_gate > 0.20 and "w_subapron_map" in locals() and w_subapron_map is not None:
+            w_sa_c = float(w_subapron_map[py_i, px_i])
+            if w_sa_c > 0.04:
+                # Preserve crisp downward-facing overhang-crease self-shadowing (`where normal tilts downward into the sub-apron fold`):
+                down_tilt = max(0.0, -float(n_h[2]) - 0.18) / 0.82
+                sa_ao = 1.0 - 0.30 * float(adipose_gate) * w_sa_c * down_tilt
+                ao_b[py_i, px_i] = min(float(ao_b[py_i, px_i]), sa_ao)
+                n_sa_b = n_l + (1.0 + 0.55 * w_sa_c) * (n_h - n_l)
+                nsa_l = float(np.linalg.norm(n_sa_b))
+                if nsa_l > 1e-8:
+                    n_h = n_sa_b / nsa_l
+        w_np_uv = float(w_nip_uv_map[py_i, px_i])
+        if w_np_uv > 0.04:
+            n_np_b = n_l + (1.0 + 0.55 * w_np_uv) * (n_h - n_l)
+            nnp_l = float(np.linalg.norm(n_np_b))
+            if nnp_l > 1e-8:
+                n_h = n_np_b / nnp_l
+            pap_slope = float(np.linalg.norm(n_h - n_l))
+            ao_b[py_i, px_i] = min(float(ao_b[py_i, px_i]), 1.0 - 0.14 * w_np_uv * min(pap_slope / 0.30, 1.0))
 
         tx = float(np.clip(n_h @ t_l, -0.90, 0.90))
         ty = float(np.clip(n_h @ b_l, -0.90, 0.90))
@@ -798,15 +878,19 @@ def _seamlessly_feather_collar_uvs_and_linen_material(
         macro_5 = _box_blur_rgb(full_orig, radius=5, passes=2)
         macro_1 = _box_blur_rgb(full_orig, radius=1, passes=1)
         bs_ref_bl = gltf_to_blender(np.asarray(fam["meshes"]["bodySkin"]["positions"], dtype=np.float64).reshape(-1, 3))
+        _, nip_sv_set = _canonical_body_nipple_uv_centers(fam)
         keep_5 = np.zeros((h_n, w_n), dtype=np.float32)
         keep_5[:, :half_w] = 1.0
         for rv_i, (u_c, v_c) in enumerate(buv):
-            pt_c = bs_ref_bl[int(bs_src[rv_i])]
+            sv_i = int(bs_src[rv_i])
+            pt_c = bs_ref_bl[sv_i]
             is_navel_uv = (abs(pt_c[0]) < 0.032) and (1.175 <= pt_c[2] <= 1.255) and (pt_c[1] < -0.085)
-            if (abs(pt_c[0]) > 0.495 and pt_c[2] < 1.30) or (pt_c[2] < 0.085) or is_navel_uv:
+            is_nipple_uv = sv_i in nip_sv_set
+            if (abs(pt_c[0]) > 0.495 and pt_c[2] < 1.30) or (pt_c[2] < 0.085) or is_navel_uv or is_nipple_uv:
                 px_c = int(np.clip(u_c * w_n, half_w, w_n - 1))
                 py_c = int(np.clip(v_c * h_n, 0, h_n - 1))
-                keep_5[max(0, py_c - 14) : min(h_n, py_c + 15), max(half_w, px_c - 14) : min(w_n, px_c + 15)] = 1.0
+                r_kp = 16 if is_nipple_uv else 14
+                keep_5[max(0, py_c - r_kp) : min(h_n, py_c + r_kp + 1), max(half_w, px_c - r_kp) : min(w_n, px_c + r_kp + 1)] = 1.0
         k_rgb = _box_blur_rgb(np.repeat(keep_5[:, :, None], 3, axis=2), radius=10, passes=2)
         full_macro = k_rgb * macro_5 + (1.0 - k_rgb) * macro_1
         # Suppress UV-island gutter boundary steps (`where witness normal map drops to neutral [0.5,0.5,1.0] outside islands`):
@@ -1098,46 +1182,33 @@ def _seamlessly_feather_collar_uvs_and_linen_material(
             pc[:, half_wc:, :3] = np.clip(pc[:, half_wc:, :3] * sulcus_ao_map[:, :, None], 0.0, 1.0)
         if "head_nape_ao" in locals() and head_nape_ao is not None and head_nape_ao.shape == (h_c, half_wc):
             pc[:, :half_wc, :3] = np.clip(pc[:, :half_wc, :3] * head_nape_ao[:, :, None], 0.0, 1.0)
-        # On `adipose_gate > 0.20` (`M050-F100`, where Meshy's raw donor sculpted only `0.55 mm` on the papilla), render subtle
-        # physiological warm rose-umber epidermal areola + nipple papilla shading at Donor's lower-outer pectoral apex (`±146 mm, 1.458 m`)
-        # matching `ref-c21-M050-F100.png`:
-        if adipose_gate > 0.20 and body_obj is not None and posed_low_fit_bl is not None and fam is not None:
-            b_me_c = body_obj.data
-            b_me_c.calc_loop_triangles()
-            b_uv_c = b_me_c.uv_layers["UVMap"].data
-            bs_src_c = np.asarray(fam["meshes"]["bodySkin"]["sourceVertexIndices"], dtype=np.int64)
-            for lt_c in b_me_c.loop_triangles:
-                pts_3 = np.array([posed_low_fit_bl[int(bs_src_c[int(b_me_c.loops[li].vertex_index)])] for li in lt_c.loops], dtype=np.float64)
-                if np.max(pts_3[:, 1]) > -0.130 or np.max(pts_3[:, 2]) < 1.446 or np.min(pts_3[:, 2]) > 1.504 or np.max(np.abs(pts_3[:, 0])) < 0.104:
-                    continue
-                uvs_3 = np.array([[float(b_uv_c[li].uv[0]) * w_c, float(b_uv_c[li].uv[1]) * h_c] for li in lt_c.loops], dtype=np.float64)
-                x0_t = max(half_wc, int(np.floor(np.min(uvs_3[:, 0]))) - 1)
-                x1_t = min(w_c - 1, int(np.ceil(np.max(uvs_3[:, 0]))) + 1)
-                y0_t = max(0, int(np.floor(np.min(uvs_3[:, 1]))) - 1)
-                y1_t = min(h_c - 1, int(np.ceil(np.max(uvs_3[:, 1]))) + 1)
-                d_det = (uvs_3[1, 1] - uvs_3[2, 1]) * (uvs_3[0, 0] - uvs_3[2, 0]) + (uvs_3[2, 0] - uvs_3[1, 0]) * (uvs_3[0, 1] - uvs_3[2, 1])
-                if abs(d_det) < 1e-6:
-                    continue
-                for py_t in range(y0_t, y1_t + 1):
-                    cy_f = float(py_t) + 0.5
-                    for px_t in range(x0_t, x1_t + 1):
-                        cx_f = float(px_t) + 0.5
-                        w0_t = ((uvs_3[1, 1] - uvs_3[2, 1]) * (cx_f - uvs_3[2, 0]) + (uvs_3[2, 0] - uvs_3[1, 0]) * (cy_f - uvs_3[2, 1])) / d_det
-                        w1_t = ((uvs_3[2, 1] - uvs_3[0, 1]) * (cx_f - uvs_3[2, 0]) + (uvs_3[0, 0] - uvs_3[2, 0]) * (cy_f - uvs_3[2, 1])) / d_det
-                        w2_t = 1.0 - w0_t - w1_t
-                        if w0_t >= -0.02 and w1_t >= -0.02 and w2_t >= -0.02:
-                            p_px = w0_t * pts_3[0] + w1_t * pts_3[1] + w2_t * pts_3[2]
-                            r_ar = float(np.hypot((abs(p_px[0]) - 0.132) / 0.0130, (p_px[2] - 1.474) / 0.0118))
-                            if r_ar < 1.85:
-                                w_ar = float(adipose_gate) * float(np.exp(-1.35 * (r_ar ** 2)))
-                                r_pp = float(np.hypot((abs(p_px[0]) - 0.132) / 0.0046, (p_px[2] - 1.474) / 0.0042))
-                                w_pp = float(adipose_gate) * float(np.exp(-1.50 * (r_pp ** 2)))
-                                mul_rgb = (
-                                    1.0
-                                    - w_ar * np.array([0.13, 0.21, 0.24], dtype=np.float32)
-                                    - w_pp * np.array([0.11, 0.16, 0.18], dtype=np.float32)
-                                )
-                                pc[py_t, px_t, :3] = np.clip(pc[py_t, px_t, :3] * mul_rgb, 0.0, 1.0)
+        # Render shared, build-independent natural warm rose-umber areola + papilla pigment at the canonical `skin-color` UV nipple
+        # centers (`so 3D papilla relief, normal map, and areola color stay 0.00 mm locked across all 5 builds and every slider blend`):
+        nip_uv_col, _ = _canonical_body_nipple_uv_centers(fam)
+        for u_nc, v_nc in nip_uv_col:
+            cx_nc = u_nc * float(w_c)
+            cy_nc = v_nc * float(h_c)
+            x0_nc = max(half_wc, int(np.floor(cx_nc - 22.0)))
+            x1_nc = min(w_c - 1, int(np.ceil(cx_nc + 22.0)))
+            y0_nc = max(0, int(np.floor(cy_nc - 22.0)))
+            y1_nc = min(h_c - 1, int(np.ceil(cy_nc + 22.0)))
+            if x1_nc < x0_nc or y1_nc < y0_nc:
+                continue
+            gx_c, gy_c = np.meshgrid(
+                np.arange(x0_nc, x1_nc + 1, dtype=np.float64) + 0.5,
+                np.arange(y0_nc, y1_nc + 1, dtype=np.float64) + 0.5,
+            )
+            r_px = np.hypot(gx_c - cx_nc, gy_c - cy_nc)
+            w_ar = (1.0 - smootherstep((r_px - 8.5) / 8.0)).astype(np.float32)
+            w_pp = np.exp(-0.5 * ((r_px / 3.8) ** 2)).astype(np.float32)
+            mul_rgb = (
+                1.0
+                - w_ar[:, :, None] * np.array([0.17, 0.28, 0.32], dtype=np.float32)[None, None, :]
+                - w_pp[:, :, None] * np.array([0.16, 0.23, 0.25], dtype=np.float32)[None, None, :]
+            )
+            pc[y0_nc : y1_nc + 1, x0_nc : x1_nc + 1, :3] = np.clip(
+                pc[y0_nc : y1_nc + 1, x0_nc : x1_nc + 1, :3] * mul_rgb, 0.0, 1.0
+            )
 
         # Add subtle epidermal melanin/hemoglobin micro-grain (`±0.0075`) across `bodySkin` matching `headSkin` texture richness:
         rng_skin = np.random.default_rng(20261117)

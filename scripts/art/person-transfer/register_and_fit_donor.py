@@ -4841,6 +4841,9 @@ def main() -> None:
         donor_linen_faces=masks.get("donorLinenFaces"),
         donor_linen_rim_faces=masks.get("donorLinenRimFaces"),
         sex=args.sex,
+        donor_rgb=donor_rgb,
+        coordinate_id=args.coordinate_id,
+        study_dir=args.donor_glb.resolve().parent.parent.parent,
     )
 
     sub_head_fit = np.vstack([rest_head_fit, np.zeros((len(sub_head["midpoints"]), 3), dtype=np.float64)])
