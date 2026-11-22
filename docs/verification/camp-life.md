@@ -156,6 +156,12 @@ September 28, 2026, local macOS arm64, Node 22.23.2, PostgreSQL 14 on loopback. 
 
 ## Fire care
 
+### Stand-alone ambient burn and restart — November 21, 2026
+
+An authenticated player walked past a lit campfire on frozen Rust source `5ce62f48e4eda986a66d6ef9e1498c05fe6b4322`. Ordinary saves persisted the final position and part-used fuel. A cold process resumed both, consumed the remaining fuel at the installed game rate and showed one authored burnout event in the player’s permitted Events view. A nearby unlit fire kept its fuel. The PostgreSQL rows retained the exact results and both processes closed cleanly. An earlier attempt reached burnout and exposed duplicate completion of an occurrence already finished by the receiving owner. The repaired run is `native-ambient-fire-8` under `native-runtime-foundations/nsc04-first-reply-20261121.LsAlK7Y8/`. The executable SHA-256 was `82f45f0a36e6b14d2a23b141f2d1e389152f4120da8b56e947043199aa6ab2f0`.
+
+This local check covers fires already installed and lit. The actions that put down a hearth, light it, add fuel or cook over it still need their full Rust callers. No timing comparison ran.
+
 **Native domain scenario** (`executeCommand` and `advanceWorld` on a fresh bundled world). All checks passed:
 
 - **Refusals:** lighting a burning fire (`already-lit`), fuelling a full fire (`fire-full`), lighting a fire with no fuel (`no-fuel`) and lighting without tinder (`missing-material`). Choosing a knife as fuel is refused (“Knife is not fuel.”).

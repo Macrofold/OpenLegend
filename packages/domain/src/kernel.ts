@@ -6435,7 +6435,8 @@ function* integrateEndpoint(
       entity.heat.fuelSeconds = Math.max(0, entity.heat.fuelSeconds - rateSeconds);
       if (entity.heat.fuelSeconds === 0 && entity.heat.lit) {
         entity.heat.lit = false;
-        emit(world, events, 'fire-out', 'The campfire ran out of fuel.', entity);
+        const burnOut = selectedOccurrenceRules(world).fireOut;
+        emit(world, events, burnOut.eventType, burnOut.message, entity);
       }
     }
     if ((++cooperativeWork & 31) === 0) yield;

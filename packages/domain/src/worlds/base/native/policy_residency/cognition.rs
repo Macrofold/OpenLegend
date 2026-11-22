@@ -10,6 +10,7 @@ heap_record!(OccurrenceRules {
     sound_event,
     encounter_event,
     contact_event,
+    fire_out,
     speech_importance,
     sound_importance,
     received_urgency,
@@ -28,6 +29,10 @@ heap_record!(OccurrenceRules {
     importance_policy,
     significant_reason,
     response
+});
+heap_record!(FireOutRule {
+    event_type,
+    message
 });
 heap_record!(ResponseRules {
     offers,

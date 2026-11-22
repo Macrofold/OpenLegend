@@ -21,6 +21,7 @@ use imported::{install_entities, take_window, take_work};
 /// Borrowed immutable meanings needed by physical admission, before root
 /// content and geometry join the final InstalledWorld allocation.
 pub(crate) struct PhysicalDefinitions<'a> {
+    pub fire_out: Option<&'a crate::worlds::base_cognition::FireOutRule>,
     pub senses: &'a IndexMap<String, super::VerifiedDefinition<crate::reception::SenseDefinition>>,
     pub default_senses: &'a [String],
     pub response_profiles: &'a IndexMap<
@@ -648,30 +649,54 @@ fn validate_entity(
     ) {
         return Err(InstallError::CurrentFormat);
     }
-    if entity.hearth.is_some()
-        || entity.practice_target.is_some()
-        || entity.threat.is_some()
-        || entity.assembly.is_some()
-        || entity.inventory_revision.is_some()
-        || entity.item.is_some()
-        || entity.container.is_some()
-        || entity.declared_owner.is_some()
-        || entity.retirement.is_some()
-        || entity.replenisher.is_some()
-        || entity.heat.is_some()
-        || entity
-            .mechanism_fields
-            .as_ref()
-            .is_some_and(|f| !f.is_empty())
-        || entity.spatial.flight.is_some()
-        || entity.spatial.local_pose.is_some()
-        || entity.status_effects.as_ref().is_some_and(|statuses| {
-            statuses
-                .values()
-                .any(|status| status.contribution.is_some())
-        })
-    {
-        return Err(InstallError::CurrentFormat);
+    let pending_family = [
+        (entity.hearth.is_some(), "placed hearth"),
+        (entity.practice_target.is_some(), "practice target"),
+        (entity.threat.is_some(), "territorial response"),
+        (entity.assembly.is_some(), "assembly"),
+        (
+            entity.inventory_revision.is_some()
+                || entity.item.is_some()
+                || entity.container.is_some()
+                || entity.declared_owner.is_some(),
+            "live inventory",
+        ),
+        (entity.retirement.is_some(), "retired entity"),
+        (entity.replenisher.is_some(), "replenishment source"),
+        (
+            entity
+                .mechanism_fields
+                .as_ref()
+                .is_some_and(|fields| !fields.is_empty()),
+            "mechanism fields",
+        ),
+        (
+            entity.spatial.flight.is_some() || entity.spatial.local_pose.is_some(),
+            "non-ground physical placement",
+        ),
+        (
+            entity.status_effects.as_ref().is_some_and(|statuses| {
+                statuses
+                    .values()
+                    .any(|status| status.contribution.is_some())
+            }),
+            "status contribution",
+        ),
+    ];
+    if let Some((_, family)) = pending_family.into_iter().find(|(present, _)| *present) {
+        return Err(InstallError::UnsupportedFamily(family));
+    }
+    if let Some(heat) = entity.heat {
+        let rules = installed
+            .fire_out
+            .ok_or(InstallError::UnsupportedFamily("ambient fire"))?;
+        if !heat.fuel_seconds.is_finite()
+            || heat.fuel_seconds < 0.0
+            || !crate::values::is_safe_record_id(&rules.event_type)
+            || rules.message.trim_is_empty()
+        {
+            return Err(InstallError::CurrentFormat);
+        }
     }
     if entity.actor.is_none() {
         validate_plain_entity(entity)?;

@@ -287,6 +287,7 @@ fn assemble_selected_core(
             attributes: &meanings.attributes,
             status_policy: &meanings.status_policy,
             body_policy: meanings.body_policy.as_ref().map(VerifiedDefinition::value),
+            fire_out: occurrence_rules.value().fire_out.as_ref(),
             maximum_candidates,
             maximum_path_points,
             epsilon: spatial.epsilon,

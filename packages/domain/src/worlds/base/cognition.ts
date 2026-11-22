@@ -5,6 +5,8 @@ import type { WorldEvent } from '../../types.js';
 import { freeze } from 'immer';
 import { BASE_RESPONSE_RULES } from './response-rules.js';
 
+const fireOut = { eventType: 'fire-out', message: 'The campfire ran out of fuel.' };
+
 export const BASE_OCCURRENCE_RULES = freeze(
   {
     id: 'wilderness:occurrences',
@@ -15,6 +17,7 @@ export const BASE_OCCURRENCE_RULES = freeze(
     soundEvent: 'sound',
     encounterEvent: 'encounter',
     contactEvent: 'contact',
+    fireOut,
     speechImportance: 7,
     soundImportance: 3,
     receivedUrgency: 4,
@@ -25,7 +28,7 @@ export const BASE_OCCURRENCE_RULES = freeze(
       'shot-released',
       'projectile-contact',
       'struck',
-      'fire-out',
+      fireOut.eventType,
       'fire-lit',
       'fire-extinguished',
       'rested',

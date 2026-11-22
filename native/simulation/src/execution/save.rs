@@ -138,6 +138,7 @@ struct EntityRows<'a> {
     intents_before: Option<&'a Vec<crate::plans::PendingIntent>>,
     animal: bool,
     resource: bool,
+    heat: bool,
     episode: bool,
     episode_before: Option<&'a Option<crate::native_response::NativeResponseEpisode>>,
     attributes: IndexMap<&'a str, bool>,
@@ -589,7 +590,7 @@ impl PhysicalJournal {
         participation::encode_exposures(self, state, ledger, output, budget)?;
         for change in &self.undo {
             match change {
-                Undo::ExitExposure { .. } => {},
+                Undo::ExitExposure { .. } => {}
                 Undo::CoachingPresence { .. } => coaching = true,
                 Undo::AddedEntity(before) => {
                     let rows = selected
@@ -640,7 +641,8 @@ impl PhysicalJournal {
                 _ => {
                     let handle = match change {
                         Undo::Placement { entity, .. }
-                        | Undo::RestoreActor { entity, .. } | Undo::Participation { entity, .. }
+                        | Undo::RestoreActor { entity, .. }
+                        | Undo::Participation { entity, .. }
                         | Undo::Contact { entity, .. }
                         | Undo::AgencyPlaces { entity, .. }
                         | Undo::AgencyPlan { entity, .. }
@@ -658,6 +660,7 @@ impl PhysicalJournal {
                         | Undo::Contacts { entity, .. }
                         | Undo::Heading { entity, .. }
                         | Undo::Health { entity, .. }
+                        | Undo::Heat { entity, .. }
                         | Undo::Action { entity, .. }
                         | Undo::ActionPath { entity, .. }
                         | Undo::ActionRoute { entity, .. }
@@ -714,6 +717,7 @@ impl PhysicalJournal {
                             rows.geometry_heading.get_or_insert(*before);
                         }
                         Undo::Health { .. } => rows.actor = true,
+                        Undo::Heat { .. } => rows.heat = true,
                         Undo::Action { .. } => {
                             rows.actor = true;
                             rows.action = true;
@@ -791,7 +795,9 @@ impl PhysicalJournal {
                                 rows.attributes.entry(id.as_str()).or_insert(true);
                             }
                         }
-                        Undo::RestoreActor { .. } => { rows.actor = true; }
+                        Undo::RestoreActor { .. } => {
+                            rows.actor = true;
+                        }
                         Undo::Practice { key, .. } => {
                             rows.practice.entry(key.as_str()).or_insert(true);
                         }
@@ -1054,6 +1060,18 @@ impl PhysicalJournal {
                     &parent,
                     "resource",
                     entity.resource.as_ref(),
+                    budget,
+                )?;
+            }
+            if rows.heat {
+                one(
+                    ledger,
+                    output,
+                    "sim_heat",
+                    &["world", "entities", id, "heat"],
+                    &parent,
+                    "heat",
+                    entity.heat.as_ref(),
                     budget,
                 )?;
             }

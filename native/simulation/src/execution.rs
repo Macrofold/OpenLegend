@@ -33,6 +33,7 @@ mod agency;
 mod attributes;
 mod body;
 mod conditions;
+mod heat;
 mod participation;
 mod practice;
 mod rates;
@@ -1175,6 +1176,7 @@ enum UndoKey {
     Contacts(usize, u64),
     Placement(usize, u64),
     Heading(usize, u64),
+    Heat(usize, u64),
     Health(usize, u64),
     Action(usize, u64),
     ActionPath(usize, u64),
@@ -1259,6 +1261,10 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    Heat {
+        entity: EntityHandle,
+        before: crate::state::Heat,
+    },
     RestoreActor {
         entity: EntityHandle,
         controller: String,
@@ -2156,6 +2162,13 @@ impl PhysicalJournal {
                         .ok_or(ExecutionError::Invariant)?
                         .spatial
                         .heading = before;
+                }
+                Undo::Heat { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?
+                        .heat = Some(before);
                 }
                 Undo::RestoreActor {
                     entity,

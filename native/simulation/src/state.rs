@@ -1233,7 +1233,7 @@ pub struct Remains {
     pub harvested: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Heat {
     pub fuel_seconds: f64,

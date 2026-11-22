@@ -14,6 +14,8 @@ use crate::movement::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
 use crate::state::EntityHandle;
 use crate::status::{StatusIntegrationCursor, StatusIntegrationStep, StatusRateInterval};
 use std::{mem::size_of, sync::Arc};
+mod heat;
+use heat::HeatCursor;
 
 pub(crate) enum EndpointAnswer {
     Occurrence(CompletedOccurrence),
@@ -43,6 +45,7 @@ enum Phase {
     Conditions,
     Work,
     Next,
+    Heat,
     Done,
 }
 pub(crate) struct EndpointCursor {
@@ -54,6 +57,7 @@ pub(crate) struct EndpointCursor {
     body: Option<BodyRateCursor>,
     conditions: Option<ConditionReconcileCursor>,
     work: Option<MoveAdvanceCursor>,
+    heat: Option<HeatCursor>,
     phase: Phase,
     next: usize,
     binding: GeometryBinding,
@@ -70,9 +74,17 @@ fn occurrence(
     }
 }
 impl EndpointCursor {
-    pub(crate) fn complete_participation(&mut self, completed: &crate::participation::CompletedParticipation) -> Result<(), ExecutionError> {
-        if self.phase != Phase::Exits { return Err(ExecutionError::InvalidCheckpoint) }
-        self.exits.as_mut().ok_or(ExecutionError::Invariant)?.complete(completed)
+    pub(crate) fn complete_participation(
+        &mut self,
+        completed: &crate::participation::CompletedParticipation,
+    ) -> Result<(), ExecutionError> {
+        if self.phase != Phase::Exits {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        self.exits
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?
+            .complete(completed)
     }
     pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
         self.work.as_ref().and_then(|cursor| cursor.queries().ok())
@@ -94,11 +106,7 @@ impl EndpointCursor {
         {
             return Err(ExecutionError::Invariant);
         }
-        // These families have no converted endpoint owner yet. Installation
-        // and forecast also refuse them; never silently omit their elapsed work.
-        if !participants.heat_sources().is_empty() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
+        let heat = HeatCursor::capture(core, participants.heat_sources(), rate_seconds, budget)?;
         if rate_seconds > 0.0 {
             for handle in participants.actors() {
                 let Some(entity) = core.state.physical.entities.resolve(*handle) else {
@@ -158,9 +166,15 @@ impl EndpointCursor {
             None
         };
         let exits = if actions.is_some() {
-            let due = crate::participation::DueExits::prepare(&core.state.physical, core.state.installed.time_epsilon, budget)?;
+            let due = crate::participation::DueExits::prepare(
+                &core.state.physical,
+                core.state.installed.time_epsilon,
+                budget,
+            )?;
             due.current().is_some().then_some(due)
-        } else { None };
+        } else {
+            None
+        };
         Ok(Self {
             exits,
             work_after_exits: false,
@@ -170,6 +184,7 @@ impl EndpointCursor {
             body: None,
             conditions: None,
             work: None,
+            heat,
             phase: if rate_seconds > 0.0 {
                 Phase::Rates
             } else {
@@ -187,7 +202,12 @@ impl EndpointCursor {
         answer: Option<EndpointAnswer>,
     ) -> Result<EndpointStep<'a>, ExecutionError> {
         Ok(match self.progress(core, answer)? {
-            Progress::Participation => EndpointStep::Participation(self.exits.as_ref().and_then(|exits| exits.current()).ok_or(ExecutionError::Invariant)?),
+            Progress::Participation => EndpointStep::Participation(
+                self.exits
+                    .as_ref()
+                    .and_then(|exits| exits.current())
+                    .ok_or(ExecutionError::Invariant)?,
+            ),
             Progress::Occurrence(event) => EndpointStep::Occurrence(event),
             Progress::Personal => EndpointStep::Personal(if self.phase == Phase::Body {
                 self.body
@@ -236,7 +256,11 @@ impl EndpointCursor {
                         return Err(ExecutionError::UnfinishedOccurrence);
                     }
                     let Some(handle) = self.actors.get(self.next) else {
-                        self.phase = if self.exits.is_some() { Phase::Exits } else { Phase::Done };
+                        self.phase = if self.exits.is_some() {
+                            Phase::Exits
+                        } else {
+                            self.after_work()
+                        };
                         continue;
                     };
                     let entity = core.state.physical.entities.resolve(*handle);
@@ -304,7 +328,10 @@ impl EndpointCursor {
                     }
                 },
                 Phase::Work => {
-                    if self.exits.is_some() && !self.work_after_exits { self.phase = Phase::Next; continue; }
+                    if self.exits.is_some() && !self.work_after_exits {
+                        self.phase = Phase::Next;
+                        continue;
+                    }
                     if self.work.is_none() {
                         if answer.is_some() {
                             return Err(ExecutionError::UnfinishedOccurrence);
@@ -361,14 +388,41 @@ impl EndpointCursor {
                 Phase::Next => {
                     self.next += 1;
                     self.phase = if self.work_after_exits {
-                        if self.next == self.actors.len() { Phase::Done } else { Phase::Work }
-                    } else { Phase::Actor };
+                        if self.next == self.actors.len() {
+                            self.after_work()
+                        } else {
+                            Phase::Work
+                        }
+                    } else {
+                        Phase::Actor
+                    };
                 }
                 Phase::Exits => {
-                    if self.exits.as_ref().and_then(|exits| exits.current()).is_some() { return Ok(Progress::Participation); }
+                    if self
+                        .exits
+                        .as_ref()
+                        .and_then(|exits| exits.current())
+                        .is_some()
+                    {
+                        return Ok(Progress::Participation);
+                    }
                     self.work_after_exits = true;
                     self.next = 0;
-                    self.phase = if self.actors.is_empty() { Phase::Done } else { Phase::Work };
+                    self.phase = if self.actors.is_empty() {
+                        self.after_work()
+                    } else {
+                        Phase::Work
+                    };
+                }
+                Phase::Heat => {
+                    let heat = self.heat.as_mut().ok_or(ExecutionError::Invariant)?;
+                    if let Some(event) =
+                        heat.step(core, occurrence(answer.take())?, &self.budget)?
+                    {
+                        return Ok(Progress::Occurrence(event));
+                    }
+                    self.heat = None;
+                    self.phase = Phase::Done;
                 }
                 Phase::Done => {
                     if answer.is_some() {
@@ -377,6 +431,13 @@ impl EndpointCursor {
                     return Ok(Progress::Complete);
                 }
             }
+        }
+    }
+    fn after_work(&self) -> Phase {
+        if self.heat.is_some() {
+            Phase::Heat
+        } else {
+            Phase::Done
         }
     }
 }

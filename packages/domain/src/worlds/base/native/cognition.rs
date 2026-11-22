@@ -18,6 +18,8 @@ pub struct OccurrenceRules {
     pub sound_event: String,
     pub encounter_event: String,
     pub contact_event: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fire_out: Option<FireOutRule>,
     pub speech_importance: f64,
     pub sound_importance: f64,
     pub received_urgency: f64,
@@ -36,6 +38,12 @@ pub struct OccurrenceRules {
     pub importance_policy: String,
     pub significant_reason: String,
     pub response: ResponseRules,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FireOutRule {
+    pub event_type: String,
+    pub message: crate::text::JsText,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
