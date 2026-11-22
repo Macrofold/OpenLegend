@@ -1,6 +1,6 @@
 # Unreal Engine 5 playable-client migration
 
-[Feature specification](../projects/unreal-engine-5-migration-feature-spec.md) · [Guide for Mike](../unreal-engine-5-for-founders.md) · [Presentation constraints](../limits/interface.md#unreal-client-qualification) · [Rust host coverage](native-simulation-core-coverage.md#stand-alone-server-caller-inventory)
+[Feature specification](../projects/unreal-engine-5-migration-feature-spec.md) · [Guide for Mike](../unreal-engine-5-for-founders.md) · [Presentation constraints](../limits/interface.md#unreal-client-qualification) · [Full-game Rust conversion](../projects/rust-server-completion-feature-spec.md) · [Rust host coverage](native-simulation-core-coverage.md#full-server-conversion-inventory)
 
 **Current progress.** The migration is selected. The feature brief and introductory guide are ready for a separate technical design. All implementation and packaged-game qualification below are open. The branch is based on the native proof and references the art work by pinned revision. A read of either branch alone does not establish the combined result.
 

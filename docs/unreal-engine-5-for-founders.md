@@ -2,7 +2,7 @@
 
 **Unreal is the part of the game a player installs.** It draws the valley, plays the birdsong, shows the player's inventory and handles their mouse and keyboard. Open Legend’s server still runs the shared world. If someone builds a bridge, the server decides whether the bridge exists and who can cross it. Each player’s copy of Unreal draws the bridge from their own side of the river.
 
-That is our destination. Today the game still runs in a browser using PlayCanvas. Our stand-alone Rust server has already run a particular opening with a real browser client. TypeScript is still the default for the broader game. Moving to Unreal gives us a new way to experience that world. The server still needs its own work to cover the whole game. [Current server and evidence](architecture.md#stand-alone-rust-host)
+That is our destination. Today the game still runs in a browser using PlayCanvas. Rust is the chosen server for the whole game. It already runs a measured opening with a real browser client and can open and resume River Camp and Solo. TypeScript still launches by default while the team completes and checks the full Main experience and the remaining server features. [Current server and evidence](architecture.md#stand-alone-rust-host)
 
 ## What you and your players actually run
 
