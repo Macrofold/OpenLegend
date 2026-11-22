@@ -2,7 +2,7 @@
 //! journal. Bags move with their contents and keep their private inner records.
 use super::*;
 use crate::simulation::SimulationState;
-use crate::state::{EntitySpatial, SurfacePoint};
+use crate::state::{Action, EntitySpatial, SurfacePoint};
 use crate::work::WorkUnit;
 
 /// Check the selected lot and its current ancestor access. The caller owns
@@ -47,7 +47,12 @@ pub(crate) fn drop_item_problem<'a>(
     if actor.world_support().is_none() {
         return Ok(Some(&copy.support));
     }
-    if drop_work_bound(state, actor, entity, &mut visit)? {
+    let action = actor.actor.as_ref().and_then(|body| body.action.as_ref());
+    // Without a current action or a held lot, no descendant can prevent
+    // dropping this bag. Keep the same exact check for active work.
+    if (action.is_some() || !physical.holds.is_empty())
+        && drop_work_bound(state, action, entity, &mut visit)?
+    {
         return Ok(Some(&copy.needed));
     }
     Ok(None)
@@ -55,13 +60,12 @@ pub(crate) fn drop_item_problem<'a>(
 
 fn drop_work_bound(
     state: &SimulationState,
-    actor: &Entity,
+    action: Option<&Action>,
     item: &Entity,
     visit: &mut impl FnMut() -> Result<(), ExecutionError>,
 ) -> Result<bool, ExecutionError> {
     visit()?;
     let id = item.id.as_str();
-    let action = actor.actor.as_ref().and_then(|body| body.action.as_ref());
     if state.physical.holds.quantity(id) > 0
         || action.is_some_and(|action| {
             action.item_id.as_deref() == Some(id)
@@ -79,7 +83,7 @@ fn drop_work_bound(
         .inventory
         .children(&state.physical.entities, id, false)
     {
-        if drop_work_bound(state, actor, child, visit)? {
+        if drop_work_bound(state, action, child, visit)? {
             return Ok(true);
         }
     }

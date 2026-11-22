@@ -205,6 +205,10 @@ impl ItemHolds {
         self.rows.get(id)
     }
 
+    pub(crate) fn is_empty(&self) -> bool {
+        self.rows.is_empty()
+    }
+
     pub(crate) fn quantity(&self, item: &str) -> u64 {
         self.quantities.get(item).copied().unwrap_or_default()
     }
