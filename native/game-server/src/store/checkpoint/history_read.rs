@@ -2,94 +2,24 @@
 //! cursor. The caller owns the candidate's prospective SQL view and must
 //! discard that view after this selection.
 
-use super::provider::{self, Binding};
+use super::provider;
 use crate::store::read::{admitted_query, admitted_query_bounded};
 use crate::store::{DurableHead, MAX_SAFE_INTEGER, Store, StoreError, StoreResult, ordinal};
 use openlegend_simulation::encoding::{json_record, json_record_len};
-use openlegend_simulation::experience::parse_personal_fact_alias;
+use openlegend_simulation::experience::{
+    HistoryEditReadRequest as Question, HistoryEditReadResponse as Answer, HistoryPhase as Phase,
+    HistoryPredecessor as Predecessor, HistorySource as Source, HistoryTotals as Totals,
+    parse_personal_fact_alias,
+};
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::received::{parse_temporal_receipt_id, receipt_source_bucket};
 use openlegend_simulation::records::{InstalledRow, OwnerCoverage};
-use openlegend_simulation::runtime::{RuntimeProvider, RuntimeProviderInput};
-use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
+use openlegend_simulation::runtime::{RuntimePersonalHistory, RuntimeProviderInput};
+use serde::Serialize;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use tokio_postgres::Transaction;
 use tokio_postgres::types::ToSql;
-
-#[derive(Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-enum Phase {
-    Closure,
-    Records,
-    Verify,
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Source {
-    actor_id: String,
-    source_id: String,
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-struct Predecessor {
-    id: String,
-    revision: u64,
-}
-
-#[derive(Default, Clone, Copy, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Totals {
-    pages: u64,
-    page_bytes: u64,
-    source_bytes: u64,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Question {
-    binding: Binding,
-    actor_id: String,
-    phase: Phase,
-    sources: Vec<Source>,
-    resident_pages: Vec<String>,
-    resident_values: Vec<String>,
-    at: f64,
-    max_age_seconds: f64,
-    totals: Totals,
-    maximum_transfer_bytes: usize,
-    predecessors: Vec<Predecessor>,
-    restore_projection: Option<Box<RawValue>>,
-}
-
-pub(crate) struct PreparedCheckpointHistory {
-    input: Question,
-    _custody: ByteReservation,
-}
-
-impl PreparedCheckpointHistory {
-    pub(crate) fn projection(&self) -> &RawValue {
-        self.input
-            .restore_projection
-            .as_deref()
-            .expect("checked private restore projection")
-    }
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Answer<'a> {
-    binding: &'a Binding,
-    durable_revision: u64,
-    selection: Vec<Source>,
-    tables: BTreeMap<String, Vec<InstalledRow>>,
-    owners: Vec<OwnerCoverage>,
-    predecessors: Vec<Predecessor>,
-    totals: Totals,
-}
 
 #[derive(Serialize)]
 struct SqlSource<'a> {
@@ -98,31 +28,15 @@ struct SqlSource<'a> {
 }
 
 impl Store {
-    /// Decode the actual private provider question under an independent
-    /// allowance. No arbitrary serialized source can enter this preparation.
-    pub(crate) fn prepare_checkpoint_history(
-        &self,
-        provider: &RuntimeProvider,
-    ) -> StoreResult<PreparedCheckpointHistory> {
-        let (input, custody): (Question, _) = provider::prepare(self, provider, "history")?;
-        if input.restore_projection.is_none() {
-            return Err(StoreError::InvalidRecord);
-        }
-        Ok(PreparedCheckpointHistory {
-            input,
-            _custody: custody,
-        })
-    }
-
     /// Query the exact prospective rows under the stopped writer's savepoint.
     /// SQL candidate buckets never stand in for native evidence validation.
     pub(crate) async fn read_checkpoint_history(
         &self,
         tx: &Transaction<'_>,
         prospective: &DurableHead,
-        prepared: &PreparedCheckpointHistory,
+        prepared: &RuntimePersonalHistory,
     ) -> StoreResult<RuntimeProviderInput> {
-        self.read_history_at(tx, prospective, 0, &prepared.input)
+        self.read_history_at(tx, prospective, 0, prepared.request())
             .await
     }
 
@@ -131,21 +45,19 @@ impl Store {
     /// without letting an awaited SQL snapshot drift to a later accepted cut.
     pub(crate) async fn read_live_personal_history(
         self: &Arc<Self>,
-        provider: &RuntimeProvider,
+        request: RuntimePersonalHistory,
         durable: DurableHead,
         accepted_cut: u64,
     ) -> StoreResult<RuntimeProviderInput> {
         self.assert_write_admission()?;
-        let (request, custody): (Question, _) = provider::prepare(self, provider, "history")?;
-        if request.restore_projection.is_some() {
+        if request.projection().is_some() {
             return Err(StoreError::InvalidRecord);
         }
         let store = Arc::clone(self);
         self.read_simulation_cut(move |tx| {
             Box::pin(async move {
-                let _request_storage = custody;
                 store
-                    .read_history_at(tx, &durable, accepted_cut, &request)
+                    .read_history_at(tx, &durable, accepted_cut, request.request())
                     .await
             })
         })
@@ -174,7 +86,7 @@ impl Store {
             .reserve(4096)
             .map_err(|_| StoreError::Capacity)?;
         let mut answer = Answer {
-            binding: &request.binding,
+            binding: request.binding.clone(),
             durable_revision: prospective.revision,
             selection: Vec::new(),
             tables: BTreeMap::new(),
@@ -280,22 +192,14 @@ impl Store {
         if bytes > request.maximum_transfer_bytes {
             return Err(StoreError::Capacity);
         }
-        let mut output = self
-            .budget
-            .reserve(bytes.checked_mul(4).ok_or(StoreError::Capacity)?)
-            .map_err(|_| StoreError::Capacity)?;
-        let serialized = json_record(&answer).map_err(|_| StoreError::InvalidRecord)?;
-        output
-            .resize(serialized.capacity())
-            .map_err(|_| StoreError::Capacity)?;
-        Ok(RuntimeProviderInput::new(serialized, output))
+        RuntimeProviderInput::personal_history(answer, custody).map_err(|_| StoreError::Capacity)
     }
 
     async fn read_history_closure(
         &self,
         tx: &Transaction<'_>,
         request: &Question,
-        answer: &mut Answer<'_>,
+        answer: &mut Answer,
         custody: &mut ByteReservation,
         wire: &mut usize,
     ) -> StoreResult<()> {
@@ -463,7 +367,7 @@ impl Store {
         &self,
         tx: &Transaction<'_>,
         request: &Question,
-        answer: &mut Answer<'_>,
+        answer: &mut Answer,
         custody: &mut ByteReservation,
         wire: &mut usize,
     ) -> StoreResult<()> {

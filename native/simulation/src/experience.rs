@@ -97,7 +97,7 @@ mod restore;
 mod restore_metadata;
 pub(crate) use privacy_prepare::{
     ClosedPrivacyScope, HistoryEditAnswer, HistoryEditLimits, HistoryEditQuestion,
-    HistoryEditReadRequest, HistoryPreparationError, PreparedPrivacyEdit, PrivacyPreparationCursor,
+    HistoryPreparationError, PreparedPrivacyEdit, PrivacyPreparationCursor,
     PrivacyPreparationStep,
 };
 pub use restore::RestorePrivacyInput;
@@ -112,6 +112,10 @@ pub(crate) use invalidation::{
 mod privacy_mutation;
 pub(crate) use mutation::{ExperienceCheckpoint, ExperienceJournal};
 pub use privacy_header::{AssociationPrivacyFact, PersonalPrivacyHeader};
+pub use privacy_prepare::{
+    HistoryBinding, HistoryEditReadRequest, HistoryEditReadResponse, HistoryPhase,
+    HistoryPredecessor, HistorySource, HistoryTotals,
+};
 mod result;
 pub(crate) use result::{
     ActivityResultAcquisition, ResultAcquisitionError, acquire_activity_result,

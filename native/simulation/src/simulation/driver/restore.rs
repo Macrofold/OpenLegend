@@ -99,18 +99,18 @@ pub(super) fn poll_restore(
         RestoreStep::RetentionCollation(request) => collation_question(answer, request, budget, RestoreReply::RetentionCollation),
         RestoreStep::Complete(done) => Ok(Poll::Complete(done)),
         RestoreStep::Collation(request) => collation_question(answer, request, budget, RestoreReply::Collation),
-        RestoreStep::History(request) => projected_question(
-            core,
-            answer,
-            ProviderKind::History,
-            request
+        RestoreStep::History(request) => {
+            if answer.is_some() {
+                return Err(DriveError::StaleResponse);
+            }
+            let binding = request
                 .request()
-                .provider_binding(core.state.installed.geometry.spatial.revision),
-            request.request(),
-            settings,
-            budget,
-            RestoreReply::History,
-        ),
+                .provider_binding(core.state.installed.geometry.spatial.revision);
+            let projection = capture_projection(core, binding, settings, budget)?;
+            personal_history_question(
+                answer, binding, request, Some(Box::new(projection)), budget, RestoreReply::History,
+            )
+        }
         RestoreStep::Archives(request) => projected_question(
             core,
             answer,
@@ -129,21 +129,11 @@ fn projected_question<T: Serialize + ?Sized>(
     kind: ProviderKind,
     binding: GeometryBinding,
     request: &T,
-    (limits, floor): (crate::received::TemporalSaveLimits, u64),
+    settings: (crate::received::TemporalSaveLimits, u64),
     budget: &ByteBudget,
     route: RestoreReply,
 ) -> Result<Poll<CompletedRestore, RestoreReply>, DriveError> {
-    let projection = crate::simulation::restore::RestoreReadProjection::capture(
-        core,
-        crate::host::CandidateKey {
-            id: binding.candidate_id,
-            base_cut: binding.base_cut,
-            generation: binding.generation,
-        },
-        limits,
-        floor,
-        budget,
-    )?;
+    let projection = capture_projection(core, binding, settings, budget)?;
     question(
         answer,
         kind,
@@ -154,5 +144,24 @@ fn projected_question<T: Serialize + ?Sized>(
         },
         budget,
         route,
+    )
+}
+
+fn capture_projection(
+    core: &CoreMutation<'_>,
+    binding: GeometryBinding,
+    (limits, floor): (crate::received::TemporalSaveLimits, u64),
+    budget: &ByteBudget,
+) -> Result<crate::simulation::restore::RestoreReadProjection, DriveError> {
+    crate::simulation::restore::RestoreReadProjection::capture(
+        core,
+        crate::host::CandidateKey {
+            id: binding.candidate_id,
+            base_cut: binding.base_cut,
+            generation: binding.generation,
+        },
+        limits,
+        floor,
+        budget,
     )
 }

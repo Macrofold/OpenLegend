@@ -221,10 +221,10 @@ pub(crate) async fn edit(
                 let game = provider.clone();
                 let durable = durable.clone();
                 async move {
-                    if question.asks_personal_history()? {
+                    if let Some(history) = question.personal_history()? {
                         let answer = game
                             .store
-                            .read_live_personal_history(&question, durable, accepted_cut)
+                            .read_live_personal_history(history, durable, accepted_cut)
                             .await?;
                         Ok((question, answer))
                     } else {

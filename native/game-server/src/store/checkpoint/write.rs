@@ -39,15 +39,23 @@ impl Store {
         archives: Option<&RawValue>,
         consume: impl std::future::Future<Output = StoreResult<R>>,
     ) -> StoreResult<R> {
-        self.checkpoint_view(
-            tx,
-            prospective,
-            projection,
-            Some(decoder),
-            archives,
-            consume,
-        )
-        .await
+        self.checkpoint_view(tx, prospective, projection, Some(decoder), archives, consume)
+            .await
+    }
+
+    pub(crate) async fn with_checkpoint_recall_rows<R>(
+        &self,
+        tx: &Transaction<'_>,
+        prospective: &DurableHead,
+        changes: &ChangedRows,
+        decoder: &RuntimeRecallDecoder<'_>,
+        consume: impl std::future::Future<Output = StoreResult<R>>,
+    ) -> StoreResult<R> {
+        if durable_head(tx).await?.as_ref() != Some(prospective) {
+            return Err(StoreError::StaleCut);
+        }
+        self.checkpoint_view_rows(tx, prospective, changes, Some(decoder), None, consume)
+            .await
     }
 
     async fn checkpoint_view<R>(
@@ -68,7 +76,20 @@ impl Store {
             .map_err(|_| StoreError::Capacity)?;
         let changes: ChangedRows =
             serde_json::from_str(projection.get()).map_err(|_| StoreError::InvalidRecord)?;
-        self.validate_rows(&changes)?;
+        self.checkpoint_view_rows(tx, prospective, &changes, decoder, archives, consume)
+            .await
+    }
+
+    async fn checkpoint_view_rows<R>(
+        &self,
+        tx: &Transaction<'_>,
+        prospective: &DurableHead,
+        changes: &ChangedRows,
+        decoder: Option<&RuntimeRecallDecoder<'_>>,
+        archives: Option<&RawValue>,
+        consume: impl std::future::Future<Output = StoreResult<R>>,
+    ) -> StoreResult<R> {
+        self.validate_rows(changes)?;
         let refresh_dependencies = decoder.is_some()
             && changes
                 .writes
@@ -96,7 +117,7 @@ impl Store {
         let world = &prospective.world_id;
         tx.batch_execute("SAVEPOINT recovery_read").await?;
         let answer = async {
-            self.write_records(tx, world, revision, &changes).await?;
+            self.write_records(tx, world, revision, changes).await?;
             if let Some(archives) = archives {
                 self.apply_checkpoint_archive_baseline(tx, prospective, archives.get())
                     .await?;

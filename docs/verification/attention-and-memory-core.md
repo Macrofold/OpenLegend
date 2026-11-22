@@ -332,6 +332,14 @@ A walk became visible while a PostgreSQL lock held a recent-observation read. Fo
 
 The verified executable is `b6ab5b5469a8f6d935c36e18ae2d12c7039c3e0ee83f08c9dff47b4c118ecbc6`. The source manifest is `9e1f131970ee1bd35cde3fcab5c9ae9702ff4fb33d18275493dc48fb53dd8e11` over `9c88968fffd58feeb3df75034fe5e0b1b7859843`. The storage and definition artifacts match the preceding Recent observations case. The `receipt-edit-refusals-caller`, `receipt-edit-browser-regression` and `receipt-edit-recollection-regression` cases are retained alongside that evidence. The initial fixture expected a browse-cursor conflict for edit tokens. The creator endpoint used the existing stale-scope response. These local checks incurred $0 provider cost.
 
+#### Direct Rust history selection
+
+The creator’s receipt and Person editors now pass history selections and answers directly between Rust components. The same history reader runs against the prospective PostgreSQL records during [checkpoint recovery](checkpoints-and-recovery.md#running-world-load-and-original-receipt). The answer retains its own admitted records and the writer rechecks the original scope and affected sources before publication.
+
+The authenticated receipt caller corrected and forgot exact sources, rejected a foreign replacement and returned HTTP 409 for a held read after forgetting. Chromium’s creator Person editor saved exact Unicode wording, rejected stale and changed edit scopes, recovered the same edit after a forced PostgreSQL refusal, and forgot a source while preserving an independent commitment. The recovery caller preserved a current Forget during an older Load and saved a subsequent walk. All three processes released their tracked reservations at shutdown and their disposable databases were removed.
+
+The source tree is `512417899bdec32fef806f77448553969fbba00a` and executable SHA-256 is `85bb43c94a8c2469cbddbf962f8caaf28775b8f987289bd245840f2f1a438495`. The local archive `nsc04-typed-protected-history-20261122` has manifest `92aa6b13c18cd793eddc10d9a61728cda53517cb84c98923f651615694645d4b`. These are correctness checks with $0 external provider cost.
+
 ### Stand-alone person notes — November 22, 2026
 
 After a cold restart, Chromium opened Journal → People, searched a fullwidth learned name with ordinary ASCII, selected that person's private note and saved a new revision through **Save knowledge**. The authenticated caller matched the observer's Source label and exact note text, including an emoji and an unpaired UTF-16 unit. It found 52 permitted subjects across pages of 40 and 12. It refused old and different-query cursors, another actor's private notes, a fabricated subject, and a forged body reference. A valid contact and body pair opened a permitted current person. A retained note for an unrecognized subject remained editable without identifying a current body.

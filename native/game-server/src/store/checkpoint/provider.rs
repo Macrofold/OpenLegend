@@ -3,7 +3,9 @@
 
 use crate::store::read::admitted_query;
 use crate::store::{DurableHead, MAX_SAFE_INTEGER, Store, StoreError, StoreResult, durable_head};
-use openlegend_simulation::{host::ByteReservation, records::SqlCell, runtime::RuntimeProvider};
+use openlegend_simulation::{
+    experience::HistoryBinding, host::ByteReservation, records::SqlCell, runtime::RuntimeProvider,
+};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tokio_postgres::Transaction;
 
@@ -48,14 +50,55 @@ pub(super) fn prepare<T: DeserializeOwned>(
         .map_err(|_| StoreError::InvalidRecord)?
 }
 
-pub(super) async fn verify_header(
+/// The same SQL fence checks an encoded restore request or an admitted
+/// typed personal-history request without copying either set of identities.
+pub(super) struct HeaderRef<'a> {
+    world_id: &'a str,
+    generation: &'a str,
+    accepted_cut: u64,
+    identity_through: u64,
+    candidate_id: u64,
+    candidate_generation: u64,
+    request_serial: u64,
+}
+
+impl<'a> From<&'a Binding> for HeaderRef<'a> {
+    fn from(binding: &'a Binding) -> Self {
+        Self {
+            world_id: &binding.world_id,
+            generation: &binding.generation,
+            accepted_cut: binding.accepted_cut,
+            identity_through: binding.identity_through,
+            candidate_id: binding.candidate_id,
+            candidate_generation: binding.candidate_generation,
+            request_serial: binding.request_serial,
+        }
+    }
+}
+
+impl<'a> From<&'a HistoryBinding> for HeaderRef<'a> {
+    fn from(binding: &'a HistoryBinding) -> Self {
+        Self {
+            world_id: &binding.world_id,
+            generation: &binding.generation,
+            accepted_cut: binding.accepted_cut,
+            identity_through: binding.identity_through,
+            candidate_id: binding.candidate_id,
+            candidate_generation: binding.candidate_generation,
+            request_serial: binding.request_serial,
+        }
+    }
+}
+
+pub(super) async fn verify_header<'a>(
     store: &Store,
     tx: &Transaction<'_>,
     prospective: &DurableHead,
     accepted_cut: u64,
-    binding: &Binding,
+    binding: impl Into<HeaderRef<'a>>,
     at: Option<f64>,
 ) -> StoreResult<()> {
+    let binding = binding.into();
     if binding.world_id != prospective.world_id
         || binding.generation != prospective.generation
         || binding.accepted_cut != accepted_cut

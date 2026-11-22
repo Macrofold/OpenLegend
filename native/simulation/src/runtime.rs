@@ -70,7 +70,7 @@ pub use manufacture::RuntimeManufactureOffer;
 pub use crate::food_preparation::valid_inputs as valid_preparation_inputs;
 mod player_places;
 mod privacy;
-pub use privacy::RuntimePrivacyEdit;
+pub use privacy::{RuntimePersonalHistory, RuntimePrivacyEdit};
 mod private_history;
 mod person_editor;
 pub use person_editor::{PersonEditorCut, PersonMemoryEdit};
@@ -340,6 +340,7 @@ enum RuntimeAnswerBody {
     Collation(Box<crate::language::CollationAnswer>),
     LocalFormat(crate::geometry::GeometryBinding, Box<LocalFormat>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
+    PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
     AppraisalOutcomes(Box<crate::response::AppraisalCreatesAnswer>),
@@ -459,6 +460,21 @@ impl RuntimeProviderInput {
 
     /// Move the independently admitted selected PostgreSQL rows directly to
     /// the existing native NPC evidence validator.
+    /// Move the already funded selected rows into the existing private edit
+    /// validator. No native mutation may use them without its original ticket.
+    pub fn personal_history(
+        rows: crate::experience::HistoryEditReadResponse,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        let header = custody.split_off(size_of::<crate::experience::HistoryEditAnswer>())?;
+        Ok(Self {
+            body: RuntimeAnswerBody::PersonalHistory(Box::new(
+                crate::experience::HistoryEditAnswer::from_read(rows, custody),
+            )),
+            custody: header,
+        })
+    }
+
     pub fn npc_sources(
         binding: crate::geometry::GeometryBinding,
         read_serial: u64,
@@ -597,6 +613,12 @@ fn provider_response(
                         ));
                     }
                     ProviderResponse::words(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::PersonalHistory(answer) => {
+                    if question.personal_history().is_none() {
+                        return Err(failure("history rows require their original typed request"));
+                    }
+                    ProviderResponse::personal_history(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::NpcSources(answer) => {
                     if question.kind() != crate::simulation::ProviderKind::Sources {
@@ -1044,6 +1066,9 @@ impl RuntimeProvider {
         }
         if let Some(maintenance) = question.maintenance_envelope() {
             return RuntimeJson::encode(&maintenance, budget);
+        }
+        if let Some(history) = question.personal_history_envelope() {
+            return RuntimeJson::encode(&history, budget);
         }
         if let Some(sources) = question.npc_sources_envelope() {
             return RuntimeJson::encode(&sources, budget);

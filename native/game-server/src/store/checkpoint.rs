@@ -45,7 +45,6 @@ mod version_baseline;
 mod write;
 pub(super) use authority::{AcceptedPrivacy, validate_privacy};
 pub(crate) use authority::{RecoveryAuthority, read_recovery_authority};
-pub(crate) use history_read::PreparedCheckpointHistory;
 pub(crate) use positions::reconcile_history_positions;
 pub(crate) use recover::LoadReceipt;
 pub use recover::RecoveredCheckpoint;

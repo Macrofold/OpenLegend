@@ -114,9 +114,24 @@ impl RuntimePrivacyEdit<'_> {
     }
 }
 
+/// The active question and this independently held SQL reader share the
+/// admitted immutable request and optional prospective checkpoint rows.
+pub struct RuntimePersonalHistory(Arc<ProviderQuestion>);
+
+impl RuntimePersonalHistory {
+    pub fn request(&self) -> &crate::experience::HistoryEditReadRequest {
+        self.0.personal_history().expect("personal history question").0
+    }
+
+    pub fn projection(&self) -> Option<&crate::records::ChangedRows> {
+        self.0.personal_history().expect("personal history question").1
+    }
+}
+
 impl RuntimeProvider {
-    pub fn asks_personal_history(&self) -> Result<bool, RuntimeError> {
-        Ok(self.question()?.kind() == crate::simulation::ProviderKind::History)
+    pub fn personal_history(&self) -> Result<Option<RuntimePersonalHistory>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question.personal_history().is_some().then_some(RuntimePersonalHistory(question)))
     }
 }
 

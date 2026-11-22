@@ -706,6 +706,19 @@ impl Store {
         {
             return Ok(answer);
         }
+        if let Some(prepared) = provider.personal_history().map_err(runtime)? {
+            let projection = prepared.projection().ok_or(StoreError::InvalidRecord)?;
+            let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
+            return self
+                .with_checkpoint_recall_rows(
+                    tx,
+                    candidate,
+                    projection,
+                    &decoder,
+                    self.read_checkpoint_history(tx, candidate, &prepared),
+                )
+                .await;
+        }
         #[derive(Deserialize)]
         struct Request<'a> {
             kind: &'a str,
@@ -716,7 +729,6 @@ impl Store {
             phase: Option<&'a str>,
         }
         enum Selection {
-            History,
             Archives,
             Support,
             Members,
@@ -728,7 +740,6 @@ impl Store {
                 let request: Request =
                     serde_json::from_str(text).map_err(|_| StoreError::InvalidRecord)?;
                 Ok::<_, StoreError>(match (request.kind, request.value.phase) {
-                    ("history", _) => Selection::History,
                     ("restore-archives", _) => Selection::Archives,
                     ("support-membership", _) => Selection::Support,
                     ("restore-retention", Some("membership")) => Selection::Members,
@@ -739,19 +750,6 @@ impl Store {
             })
             .map_err(runtime)??;
         match selected {
-            Selection::History => {
-                let prepared = self.prepare_checkpoint_history(provider)?;
-                let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
-                self.with_checkpoint_recall_view(
-                    tx,
-                    candidate,
-                    prepared.projection(),
-                    &decoder,
-                    None,
-                    self.read_checkpoint_history(tx, candidate, &prepared),
-                )
-                .await
-            }
             Selection::Archives => {
                 self.answer_checkpoint_archives(tx, candidate, provider)
                     .await

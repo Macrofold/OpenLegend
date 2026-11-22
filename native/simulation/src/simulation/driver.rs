@@ -151,6 +151,10 @@ enum QuestionBody {
     ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
     AppraisalOutcomes(Box<crate::response::AppraisalCreatesRequest>),
     NpcSources(Arc<crate::capture::NpcSourcesRequest>),
+    PersonalHistory {
+        request: Arc<crate::experience::HistoryEditQuestion>,
+        projection: Option<Box<super::restore::RestoreReadProjection>>,
+    },
     ActivityLearningFormat(Arc<crate::activity::LearningFormatRequest>),
 }
 
@@ -366,6 +370,41 @@ impl ProviderQuestion {
         })
     }
 
+    pub(crate) fn personal_history(
+        &self,
+    ) -> Option<(&crate::experience::HistoryEditReadRequest, Option<&crate::records::ChangedRows>)> {
+        match &self.body {
+            QuestionBody::PersonalHistory { request, projection } => {
+                Some((request.request(), projection.as_ref().map(|view| &view.changes)))
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn personal_history_envelope(
+        &self,
+    ) -> Option<impl Serialize + '_> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct HistoryRead<'a> {
+            #[serde(flatten)]
+            request: &'a crate::experience::HistoryEditReadRequest,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            restore_projection: Option<&'a crate::records::ChangedRows>,
+        }
+        #[derive(Serialize)]
+        struct Envelope<'a> {
+            kind: ProviderKind,
+            binding: GeometryBinding,
+            value: HistoryRead<'a>,
+        }
+        self.personal_history().map(|(request, restore_projection)| Envelope {
+            kind: self.kind,
+            binding: self.binding,
+            value: HistoryRead { request, restore_projection },
+        })
+    }
+
     pub(crate) fn npc_sources(&self) -> Option<&crate::capture::NpcSourcesRequest> {
         match &self.body {
             QuestionBody::NpcSources(request) => Some(request),
@@ -557,6 +596,7 @@ enum AnswerBody {
     Collation(Box<CollationAnswer>),
     LocalFormat(Box<LocalFormat>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
+    PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
     AppraisalOutcomes(Box<crate::response::AppraisalCreatesAnswer>),
@@ -736,6 +776,22 @@ impl ProviderResponse {
             kind: ProviderKind::Sources,
             binding,
             body: AnswerBody::NpcSources(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn personal_history(
+        binding: GeometryBinding,
+        answer: Box<crate::experience::HistoryEditAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.provider_binding(binding.geometry_revision) {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::History,
+            binding,
+            body: AnswerBody::PersonalHistory(answer),
             _reservation: reservation,
         })
     }
@@ -2018,6 +2074,9 @@ impl OperationDriver {
                     AnswerBody::NpcSources(value) => {
                         (Some(Answer::Sources(*value)), Some(_reservation), None)
                     }
+                    AnswerBody::PersonalHistory(value) => {
+                        (Some(Answer::History(*value)), Some(_reservation), None)
+                    }
                     AnswerBody::AppraisalOutcomes(value) => {
                         (Some(Answer::AppraisalOutcomes(*value)), Some(_reservation), None)
                     }
@@ -2290,6 +2349,28 @@ fn privacy_reply(
         }
     })
 }
+fn personal_history_question<V, R>(
+    answer: &Option<Answer>,
+    binding: GeometryBinding,
+    request: Arc<crate::experience::HistoryEditQuestion>,
+    projection: Option<Box<super::restore::RestoreReadProjection>>,
+    budget: &ByteBudget,
+    route: R,
+) -> Result<Poll<V, R>, DriveError> {
+    if answer.is_some() {
+        return Err(DriveError::StaleResponse);
+    }
+    Ok(Poll::Question(
+        ProviderQuestion::prepare_bound(
+            ProviderKind::History,
+            binding,
+            QuestionBody::PersonalHistory { request, projection },
+            budget,
+        )?,
+        route,
+    ))
+}
+
 fn poll_forget(
     cursor: &mut crate::experience::RecallEditCursor,
     core: &mut CoreMutation<'_>,
@@ -2302,13 +2383,13 @@ fn poll_forget(
     match cursor.step(core, supplied, budget)? {
         Step::Complete(done) => Ok(Poll::Complete(done)),
         Step::Collation(request) => collation_question(answer, request, budget, ForgetReply::Collation),
-        Step::History(request) => question(
+        Step::History(request) => personal_history_question(
             answer,
-            ProviderKind::History,
             request
                 .request()
                 .provider_binding(core.state.installed.geometry.spatial.revision),
-            request.request(),
+            request,
+            None,
             budget,
             ForgetReply::History,
         ),

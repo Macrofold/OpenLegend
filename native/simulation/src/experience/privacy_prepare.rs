@@ -22,22 +22,22 @@ pub(crate) struct HistoryEditLimits {
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct HistoryBinding {
-    world_id: String,
-    generation: String,
+pub struct HistoryBinding {
+    pub world_id: String,
+    pub generation: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    accepted_cut: u64,
+    pub accepted_cut: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    identity_through: u64,
+    pub identity_through: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    candidate_id: u64,
+    pub candidate_id: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    candidate_generation: u64,
+    pub candidate_generation: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    request_serial: u64,
+    pub request_serial: u64,
 }
 impl HistoryBinding {
-    fn provider_binding(&self, geometry_revision: u64) -> crate::geometry::GeometryBinding {
+    pub(crate) fn provider_binding(&self, geometry_revision: u64) -> crate::geometry::GeometryBinding {
         crate::geometry::GeometryBinding::new(
             CandidateKey {
                 id: self.candidate_id,
@@ -51,41 +51,41 @@ impl HistoryBinding {
 }
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum HistoryPhase {
+pub enum HistoryPhase {
     Closure,
     Records,
     Verify,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct HistorySource {
-    actor_id: String,
-    source_id: String,
+pub struct HistorySource {
+    pub actor_id: String,
+    pub source_id: String,
 }
 #[derive(Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct HistoryTotals {
+pub struct HistoryTotals {
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    pages: u64,
+    pub pages: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    page_bytes: u64,
+    pub page_bytes: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    source_bytes: u64,
+    pub source_bytes: u64,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct HistoryEditReadRequest {
-    actor_id: String,
-    binding: HistoryBinding,
-    phase: HistoryPhase,
-    sources: Vec<HistorySource>,
-    resident_pages: Vec<String>,
-    resident_values: Vec<String>,
-    at: f64,
-    max_age_seconds: f64,
-    totals: HistoryTotals,
-    maximum_transfer_bytes: usize,
-    predecessors: Vec<HistoryPredecessor>,
+pub struct HistoryEditReadRequest {
+    pub actor_id: String,
+    pub binding: HistoryBinding,
+    pub phase: HistoryPhase,
+    pub sources: Vec<HistorySource>,
+    pub resident_pages: Vec<String>,
+    pub resident_values: Vec<String>,
+    pub at: f64,
+    pub max_age_seconds: f64,
+    pub totals: HistoryTotals,
+    pub maximum_transfer_bytes: usize,
+    pub predecessors: Vec<HistoryPredecessor>,
 }
 impl HistoryEditReadRequest {
     pub(crate) fn provider_binding(
@@ -106,22 +106,22 @@ impl HistoryEditQuestion {
 }
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct HistoryPredecessor {
-    id: String,
+pub struct HistoryPredecessor {
+    pub id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    revision: u64,
+    pub revision: u64,
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct HistoryEditReadResponse {
-    binding: HistoryBinding,
+pub struct HistoryEditReadResponse {
+    pub binding: HistoryBinding,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    durable_revision: u64,
-    selection: Vec<HistorySource>,
-    tables: BTreeMap<String, Vec<InstalledRow>>,
-    owners: Vec<OwnerCoverage>,
-    predecessors: Vec<HistoryPredecessor>,
-    totals: HistoryTotals,
+    pub durable_revision: u64,
+    pub selection: Vec<HistorySource>,
+    pub tables: BTreeMap<String, Vec<InstalledRow>>,
+    pub owners: Vec<OwnerCoverage>,
+    pub predecessors: Vec<HistoryPredecessor>,
+    pub totals: HistoryTotals,
 }
 pub(crate) struct HistoryEditAnswer {
     value: HistoryEditReadResponse,
@@ -145,6 +145,10 @@ impl From<crate::host::CapacityError> for HistoryPreparationError {
     }
 }
 impl HistoryEditAnswer {
+    pub(crate) fn from_read(value: HistoryEditReadResponse, storage: ByteReservation) -> Self {
+        Self { value, _storage: storage }
+    }
+
     pub(crate) fn provider_binding(
         &self,
         geometry_revision: u64,
