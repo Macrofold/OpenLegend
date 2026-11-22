@@ -16,6 +16,8 @@ mod bindings;
 mod held_sources;
 mod history;
 pub use history::RuntimeNpcHistoryWindow;
+mod knowledge;
+pub use knowledge::RuntimeNpcSubjectNote;
 mod origin;
 mod personal;
 mod perspectives;
@@ -53,6 +55,7 @@ pub struct RuntimeNpcRead {
     history: crate::experience::CapturedHistoryCuts,
     pub(super) historical_scope: Arc<crate::capture::NpcHistoricalScope>,
     reference_facts: crate::capture::NpcReferenceFacts,
+    required_notes: Option<Box<knowledge::RequiredNotes>>,
     preparation: Option<PreparedNpcRead>,
     action_catalogue: Option<RuntimeNpcActionCatalogue>,
     intent_ids: Vec<String>,
@@ -349,6 +352,13 @@ impl NativeWorldSession {
         if !ticket.current.historical_scope.still_permitted(state) {
             return Ok(Err("native-response-current-history"));
         }
+        if !ticket
+            .current
+            .required_notes_current(state, &self.budget)
+            .map_err(failure)?
+        {
+            return Ok(Err("native-response-private-note"));
+        }
         if let Some(inspection) = &ticket.original.activity_inspection
             && !inspection.decision_current(state, actor_id, &self.budget)?
         {
@@ -605,6 +615,7 @@ impl NativeWorldSession {
             history,
             historical_scope,
             reference_facts,
+            required_notes: None,
             preparation: None,
             action_catalogue: None,
             intent_ids,

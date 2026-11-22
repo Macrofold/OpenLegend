@@ -5,7 +5,7 @@ use crate::host::{ByteBudget, ByteReservation};
 use crate::reception::{KnowledgeSubject, ObserverSubject};
 use crate::simulation::SimulationState;
 use crate::text::JsText;
-use crate::worlds::InstalledPersonalNameReader;
+use crate::worlds::{InstalledObserverIdentity, InstalledPersonalNameReader};
 use serde::Serialize;
 use std::mem::size_of;
 #[derive(Serialize)]
@@ -43,9 +43,38 @@ impl NpcSubjectFact {
     }
 
     /// A captured personal document can stay editable after recognition ends.
-    pub(super) fn has_notepad_text(&self) -> bool {
+    pub(crate) fn has_notepad_text(&self) -> bool {
         self.note_characters > 0
     }
+
+    pub(crate) fn knowledge_subject(&self) -> KnowledgeSubject {
+        knowledge_subject(&self.subject)
+    }
+
+    pub(crate) fn note_name_current(&self, names: &InstalledPersonalNameReader<'_>) -> bool {
+        self.preferred_name.as_ref() == preferred_name(names.observer_individual(&self.subject))
+    }
+}
+
+fn knowledge_subject(subject: &ObserverSubject) -> KnowledgeSubject {
+    match subject {
+        ObserverSubject::Entity { entity_id } => KnowledgeSubject::Entity {
+            entity_id: entity_id.clone(),
+        },
+        ObserverSubject::Individual { individual_id } => KnowledgeSubject::Individual {
+            individual_id: individual_id.clone(),
+        },
+    }
+}
+
+fn preferred_name(identity: Option<&InstalledObserverIdentity>) -> Option<&JsText> {
+    identity.and_then(|identity| {
+        identity
+            .nickname
+            .as_ref()
+            .filter(|name| !name.is_empty())
+            .or_else(|| (!identity.given_name.is_empty()).then_some(&identity.given_name))
+    })
 }
 
 pub(crate) fn subject_fact(
@@ -63,13 +92,7 @@ pub(crate) fn subject_fact(
         }
     };
     let label = names.subject_label(&subject)?;
-    let preferred = identity.and_then(|identity| {
-        identity
-            .nickname
-            .as_ref()
-            .filter(|name| !name.is_empty())
-            .or_else(|| (!identity.given_name.is_empty()).then_some(&identity.given_name))
-    });
+    let preferred = preferred_name(identity);
     let current_communication = match &subject {
         ObserverSubject::Entity { entity_id } => {
             names
@@ -99,14 +122,7 @@ pub(crate) fn subject_fact(
             .and_then(|n| n.checked_add(128))
             .ok_or(ExecutionError::Capacity)?,
     )?;
-    let knowledge = match &subject {
-        ObserverSubject::Entity { entity_id } => KnowledgeSubject::Entity {
-            entity_id: entity_id.clone(),
-        },
-        ObserverSubject::Individual { individual_id } => KnowledgeSubject::Individual {
-            individual_id: individual_id.clone(),
-        },
-    };
+    let knowledge = knowledge_subject(&subject);
     let note = state
         .reception
         .actor_knowledge

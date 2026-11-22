@@ -155,7 +155,7 @@ pub(in crate::npc) async fn prepare(
     }
     let current = game
         .world
-        .capture_npc_recall(game.clone(), actor, consumer.as_str())
+        .capture_npc_recall(game.clone(), actor, consumer.as_str(), false)
         .await
         .map_err(CallFailure::World)?;
     let self_facts = current.current_self().map_err(packet_failure)?;
@@ -262,6 +262,7 @@ pub(in crate::npc) async fn prepare(
             })
             .collect(),
         entities,
+        knowledge: Vec::new(),
         attention: Vec::new(),
         presented: Vec::new(),
     }

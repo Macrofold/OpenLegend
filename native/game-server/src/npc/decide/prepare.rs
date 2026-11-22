@@ -15,7 +15,7 @@ use openlegend_simulation::{
     experience::{PersonalSourceKind, PersonalSourceRef},
     host::{ByteBudget, ByteReservation, CapacityError},
     narration::{NameArticle, name_phrase, native_text},
-    reception::{AttributeDisplay, AttributeKnowledge, KnowledgeDocument},
+    reception::{AttributeDisplay, AttributeKnowledge, KnowledgeDocument, KnowledgeOrigin},
     records::SqlCell,
     runtime::{
         NpcActivityFacts, RuntimeError, RuntimeNpcBindingInput, RuntimeNpcConsumer,
@@ -53,6 +53,7 @@ pub(super) struct Projection {
     reference_key: String,
     refs: Vec<String>,
     physical: Vec<String>,
+    knowledge: Vec<String>,
     attention: Vec<String>,
     speaks: bool,
     expressions: bool,
@@ -122,7 +123,7 @@ impl Projection {
                 &ResponseReferences {
                     entity,
                     action: &aliases,
-                    knowledge: &[],
+                    knowledge: &self.knowledge,
                     identity: &[],
                     physical,
                     attention: &self.attention,
@@ -464,6 +465,42 @@ fn project(
             })
         })
         .transpose()?;
+    let mut knowledge = Vec::new();
+    let mut knowledge_aliases = Vec::new();
+    let mut knowledge_text = Vec::new();
+    for note in read.required_notes() {
+        let id = alias(&reference_key, "notepad", note.ordinal);
+        let provenance = match note.origin {
+            KnowledgeOrigin::AuthoredStarting => "authored starting understanding",
+            KnowledgeOrigin::ActorEdit => "actor-edited understanding",
+        };
+        let mut caption = format!("Notepad {id} about {}", prompt_text(note.label));
+        if let Some(reference) = note
+            .recognized_entity
+            .and_then(|entity| canonical.get(entity))
+        {
+            // The current body already has its own permission and alias.
+            // An existing note's edit token never issues physical authority.
+            write!(caption, " (ID:{reference})").map_err(invalid)?;
+        }
+        write!(
+            caption,
+            "; revision {}; {provenance}. {}/{} characters.\n{}",
+            note.revision,
+            note.text.character_count(),
+            note.maximum,
+            prompt_text(note.text),
+        )
+        .map_err(invalid)?;
+        knowledge_text.push(caption);
+        if decision {
+            knowledge_aliases.push(id.clone());
+        }
+        knowledge.push(NpcAliasOrdinal {
+            alias: id,
+            ordinal: note.ordinal,
+        });
+    }
     let (mut fields, speaks, expressions, preview_player) = if decision {
         for (ordinal, offer) in read.decision_offers().map_err(packet_failure)?.enumerate() {
             let id = format!("a{ordinal}");
@@ -495,7 +532,7 @@ fn project(
             "surroundings":surroundings,"receivedSituation":{"measuredAt":now,"bodies":scene},
             "activityRequests":activity_requests(game,read.activity_facts().map_err(packet_failure)?,&canonical)?,
             "possessions":[],"notepad":null,
-            "knowledge":[],"references":descriptions,"situationQueries":true,
+            "knowledge":knowledge_text,"references":descriptions,"situationQueries":true,
         });
         (fields, speaks, expressions, preview_player)
     } else {
@@ -504,7 +541,7 @@ fn project(
             .and_then(|goals| goals.first())
             .and_then(|goal| goal["objective"].as_str())
             .unwrap_or_default();
-        let fields = json!({
+        let mut fields = json!({
             "stimulus":stimulus,"goal":goal,
             "includedContext":{
                 "identity":identity,"notepad":null,
@@ -513,6 +550,9 @@ fn project(
                 "experience":experience,
             },
         });
+        if !knowledge_text.is_empty() {
+            fields["includedContext"]["knowledge"] = json!(knowledge_text);
+        }
         (fields, false, false, None)
     };
     if let Some(notepad) = notepad {
@@ -539,6 +579,7 @@ fn project(
             .map_or_else(Vec::new, |trigger| trigger.causes.clone()),
         evidence,
         entities,
+        knowledge,
         attention,
         presented,
     };
@@ -550,6 +591,7 @@ fn project(
             reference_key,
             refs,
             physical,
+            knowledge: knowledge_aliases,
             attention: attention_aliases,
             speaks,
             expressions,

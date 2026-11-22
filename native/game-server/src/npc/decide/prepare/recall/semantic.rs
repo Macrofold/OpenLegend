@@ -141,7 +141,7 @@ async fn query_vector(
     let consumer = consumer(work);
     let mut read = game
         .world
-        .capture_npc_recall(game.clone(), &work.actor, consumer.as_str())
+        .capture_npc_recall(game.clone(), &work.actor, consumer.as_str(), false)
         .await
         .map_err(CallFailure::World)?;
     let origin = read.decision_origin();

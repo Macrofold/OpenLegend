@@ -120,6 +120,7 @@ pub use npc::{
     RuntimeNpcPersonalSource, RuntimeNpcPersonalSources, RuntimeNpcPreparationStep,
     RuntimeNpcPresentedBody, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
     RuntimeNpcHistoricalPose, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
+    RuntimeNpcSubjectNote,
 };
 pub use player::{InspectedRecipeRecord, RuntimeWorldStorage};
 pub use player::{

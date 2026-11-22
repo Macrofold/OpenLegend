@@ -177,7 +177,7 @@ impl HostedWorld {
             game,
             move |session| input.current(session),
             move |session, read| session.begin_npc_suggestions(read, inspection),
-            NativeWorldSession::step_npc_preparation,
+            NativeWorldSession::step_npc_context_with_notes,
         )
         .await
     }
@@ -189,13 +189,19 @@ impl HostedWorld {
         game: Arc<CurrentServer>,
         actor: &str,
         consumer: &'static str,
+        include_notes: bool,
     ) -> Result<RuntimeNpcRead, WorldError> {
         let input = NpcReadInput::new(&self.host, actor, consumer)?;
+        let step: ActorPreparationStep<RuntimeNpcRead> = if include_notes {
+            NativeWorldSession::step_npc_context_with_notes
+        } else {
+            NativeWorldSession::step_npc_preparation
+        };
         self.prepare_actor_read(
             game,
             move |session| input.current(session),
             NativeWorldSession::begin_npc_recall,
-            NativeWorldSession::step_npc_preparation,
+            step,
         )
         .await
     }

@@ -242,7 +242,7 @@ impl Collected {
         let budget = game.host.budget();
         let mut fresh = game
             .world
-            .capture_npc_recall(game.clone(), &work.actor, consumer(work).as_str())
+            .capture_npc_recall(game.clone(), &work.actor, consumer(work).as_str(), true)
             .await
             .map_err(|error| CallFailure::World(error).at("recall-current-context"))?;
         let through = self.through.max(fresh.accepted_cut());
@@ -410,6 +410,16 @@ impl Collected {
         } else {
             0
         };
+        let notes = read
+            .required_notes()
+            .try_fold(0usize, |bytes, note| {
+                let text = note
+                    .label
+                    .storage_bytes()
+                    .checked_add(note.text.storage_bytes())?;
+                bytes.checked_add(text.checked_mul(12)?)?.checked_add(1024)
+            })
+            .ok_or_else(|| capacity(CapacityError))?;
         let plans = [
             read.remaining_plan(false).map_err(packet_failure)?,
             read.remaining_plan(true).map_err(packet_failure)?,
@@ -440,6 +450,7 @@ impl Collected {
             .and_then(|bytes| bytes.checked_add(attention))
             .and_then(|bytes| bytes.checked_add(bodies))
             .and_then(|bytes| bytes.checked_add(offers))
+            .and_then(|bytes| bytes.checked_add(notes))
             .and_then(|bytes| bytes.checked_add(own.projection_bytes()?))
             .and_then(|n| {
                 n.checked_add(
