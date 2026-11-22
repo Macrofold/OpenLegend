@@ -4,12 +4,10 @@ A player makes a rude gesture at a friend across a crowded square. The friend ca
 
 This is the **desired behavior** for the journey from a personally received change to attention, immediate response, deliberate choice and later recollection. Its rules apply indoors and outdoors, to private bodily changes as well as public events, and to authored or improvised activities. The examples use the bundled world. Another world can supply different senses, outward signs, bodily responses and meanings. A world can even have an entity that detects sound and retreats without language or autobiographical memory.
 
-| Read                                                          | What it settles                                                                                                                                                                                                                |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Who gets a decision](who-gets-a-decision.md)                 | What information enters, what can happen without thought, when an NPC gets an opportunity to think, how simultaneous events and competing witnesses are treated, and how free-form goals and structured sensitivities coexist. |
-| [What a witness can remember](what-a-witness-can-remember.md) | Current sight, precise recent detail, lasting first-person accounts, exact words and references, summary, correction and forgetting.                                                                                           |
-| [Scenarios and acceptance](scenarios-and-acceptance.md)       | Worked outcomes for 50 witnesses, outdoor movement, conversation, promises, arbitrary tasks and unexpected events. Covers meaningful failures, playtesting and the distinction between useful reactions and affordable ones.   |
-| [56 medieval witness decisions](medieval-examples.md)         | Seven sets of eight player situations, each with the witness’s evidence, the response available without a model, and the specific reason a model decision could be needed.                                                     |
+- [Who gets a decision](who-gets-a-decision.md) covers what each witness receives, which responses need a model, and how individual choices work in a crowd.
+- [What a witness can remember](what-a-witness-can-remember.md) covers observation, exact words and identity, later summaries and forgetting.
+- [Scenarios and acceptance](scenarios-and-acceptance.md) follows a jester and fifty witnesses and explains how to assess missed reactions, cost and playability.
+- [56 medieval examples](medieval-examples.md) pair each witness's evidence with their available response and the condition for a model decision.
 
 ## Inputs and outputs
 
@@ -19,16 +17,14 @@ The outputs can coexist: a physical effect, an observable sign of attention, an 
 
 ## Design decisions and remaining questions
 
-| Item                                                                 | Status                      | Disposition and criterion                                                                                                                                                                                                                                    |
-| -------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Who thinks in a crowd                                                | Specified                   | Use the individual reasons in [decision eligibility](who-gets-a-decision.md#when-a-witness-has-a-decision). Neither a shared occurrence score nor a quota of audience members chooses individuals.                                                           |
-| Helping strangers, public requests and overheard personal references | Specified                   | Unassigned witnesses may choose to help when they recognize an open need they can affect. Public requests distinguish individual answers, volunteers and general help. A recognized name can draw attention; personally relevant words can warrant a choice. |
-| Personal sensitivities and arbitrary meaning                         | Specified                   | Explicitly supported triggers can produce an immediate personal response. Free text remains first-class. Unanticipated meaning can emerge on an independently justified turn or during eligible discovery. A subtle association may go unnoticed.            |
-| Detail and memory                                                    | Specified                   | Keep exact ordered evidence where detail was actually retained; concise optional recollection never fills gaps. Keep an identified person's reference wherever a retained fact concerns that person.                                                         |
-| Reducing the exact history of subjects already followed in detail    | Conditional experiment only | The default preserves admitted samples. A narrower rule must show what a witness can still react to and recount and what players would lose. A lower record count alone cannot adopt it.                                                                     |
-| How lively and economical this feels                                 | Needs play evidence         | Compare crowded and quiet cases, count justified and missed reactions, and assess the visible experience. No target percentage of people who must react, paid-call count per minute or proven crowd capacity is assumed.                                     |
+The witness, decision and memory rules above are specified. Two questions depend on play evidence.
 
-No product decision is pending for the specified journeys. Specific authored triggers, activities, expressive animations and world tuning can be added independently. An example supplies no unsupported ability or mandatory new art asset.
+| Question                                                           | Status                 | What would settle it                                                                                                                                           |
+| ------------------------------------------------------------------ | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Could witnesses who follow someone closely keep less route detail? | Conditional experiment | Preserve the admitted samples by default. Compare what a bystander and a deliberate follower can still notice, act on and recount.                             |
+| Do quiet and crowded scenes feel lively at an affordable cost?     | Needs play evidence    | Count warranted and missed reactions and actual requests. Let players watch the scene and question its witnesses. No fixed fraction of the crowd has to react. |
+
+Examples apply where the world supports the activity. They require no particular new ability or art asset.
 
 ## Maintained records
 

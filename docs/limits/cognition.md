@@ -168,7 +168,7 @@ Original recommendation: **Replace**.
 
 **Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
-An experience normally qualifies to trigger spontaneous thinking when its importance is at least 6, or its event type is explicitly configured as significant.
+An experience normally qualifies to trigger spontaneous thinking when its importance is at least 6, or its event type is explicitly configured as significant. The [specified rule for ordinary witnesses](#cg19--ordinary-witnesses-and-personal-reactions) also requires an individual reason for an immediate paid decision.
 
 **Reason / tradeoff:** Review whether this importance cutoff misses meaningful situations before changing how often characters think.
 
@@ -856,8 +856,6 @@ Where NST is installed, its first accepted nonempty speech prefix creates a prog
 
 ## CG19 — Ordinary witnesses and personal reactions
 
-Under the [witness decision rules](../features/noticing-and-remembering/who-gets-a-decision.md#when-a-witness-has-a-decision), no prior assignment is required for a witness who recognizes an open need and a feasible way to help. A volunteer request has no first-responder quota; individual answers remain independent where requested. Hearing one's name alone can draw attention without buying a thought. These are evidence-based eligibility conditions within the ordinary spending and capacity limits.
-
-**Specified target · Restrictiveness: Medium.** An event's importance alone offers zero immediate paid decisions to ordinary bystanders. Any number of witnesses may independently qualify through a real personal reason. Discovery retains its separate free-interval allowance. There is no audience quota, per-event lottery, universal debounce, mandatory vector search before deciding to think, or required count of authored personal conditions. Provider, spending, evidence and resource protections still apply to genuine work.
+**Specified target · Restrictiveness: Medium.** An event's importance alone offers zero immediate paid decisions to ordinary bystanders. Any number of witnesses can qualify independently, including unassigned helpers, eligible participants in public requests and listeners who overhear words about themselves. The [witness decision rules](../features/noticing-and-remembering/who-gets-a-decision.md#when-a-witness-has-a-decision) define what each must receive and what choice remains. Discovery retains its separate free-interval allowance. There is no audience quota, per-event lottery, universal debounce, mandatory vector search before deciding to think, or required count of authored personal conditions. Provider, spending, evidence and resource protections still apply to genuine work.
 
 **Reason and tradeoff:** Interpreting every occurrence against every witness's biography can make crowded play expensive and distract characters from their chosen work. A quiet event significant only through an unstated association may be missed. An explicit sensitivity can react to personally recognized categories, with no promise to react to every approximate resemblance. [Feature and acceptance](../features/noticing-and-remembering/README.md) · [Integrated qualification](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording).
