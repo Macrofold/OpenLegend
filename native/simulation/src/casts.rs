@@ -269,6 +269,15 @@ pub(crate) fn check_line(
     let body = crate::status::effective_body_profile(actor, budget)?;
     let mut origin = cast.stance.point();
     origin.y += body.interaction_height;
+    // Each cast caller funds one exact row in these fresh query lists.
+    queries
+        .sight
+        .try_reserve_exact(1)
+        .map_err(|_| ExecutionError::Capacity)?;
+    queries
+        .standing
+        .try_reserve_exact(1)
+        .map_err(|_| ExecutionError::Capacity)?;
     queries.sight = vec![SightRay {
         from: origin,
         to: cast.endpoint,
@@ -285,6 +294,35 @@ pub(crate) fn check_storage(actor: &Entity, cast: &CastSource) -> usize {
         + std::mem::size_of::<StandingQuery>()
         + actor.ordinary_body_profile().id.len()
         + cast.stance.surface_id.len()
+}
+
+/// Build the ordinary surface route only when the caster must approach. Its
+/// strings and body profile are funded by the caller before this copy.
+pub(crate) fn approach(
+    actor: &Entity,
+    source: &Source<'_>,
+) -> Result<crate::geometry::RouteQuery, ExecutionError> {
+    Ok(crate::geometry::RouteQuery::Surface {
+        from: actor
+            .supported_position()
+            .ok_or(ExecutionError::InvalidPosition)?,
+        to: source.cast.stance.clone(),
+        body: actor.body_profile().into_owned(),
+    })
+}
+
+pub(crate) fn approach_storage(actor: &Entity, source: &Source<'_>) -> usize {
+    let surface = match &actor.placement {
+        Some(Placement::World {
+            support_surface_id: Some(surface),
+            ..
+        }) => surface.len(),
+        _ => 0,
+    };
+    std::mem::size_of::<crate::geometry::RouteQuery>()
+        + surface
+        + source.cast.stance.surface_id.len()
+        + actor.ordinary_body_profile().id.len()
 }
 
 pub(crate) fn validate_saved_work(

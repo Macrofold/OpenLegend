@@ -194,25 +194,9 @@ impl CommandCursor {
             self.phase = Phase::Prepared;
             return self.drive(core, None);
         }
-        let Some(crate::state::Placement::World {
-            support_surface_id: Some(surface),
-            ..
-        }) = &actor.placement
-        else {
-            return Err(ExecutionError::InvalidPosition);
-        };
-        self.reserve(
-            size_of::<RouteQuery>()
-                + surface.len()
-                + source.cast.stance.surface_id.len()
-                + actor.ordinary_body_profile().id.len(),
-        )?;
-        let from = actor
-            .supported_position()
-            .ok_or(ExecutionError::InvalidPosition)?;
-        let to = source.cast.stance.clone();
-        let body = actor.body_profile().into_owned();
-        self.question(core, Phase::Route)?.routes = vec![RouteQuery::Surface { from, to, body }];
+        self.reserve(casts::approach_storage(actor, &source))?;
+        let query = casts::approach(actor, &source)?;
+        self.question(core, Phase::Route)?.routes = vec![query];
         Ok(Progress::Geometry)
     }
 

@@ -6,7 +6,7 @@ use crate::capture::{
     PlayerSelfFacts,
 };
 pub use crate::commands::player::RuntimePlayerCommand;
-use crate::geometry::{GeometryAnswers, GeometryBinding};
+use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, RoutePlan};
 use crate::host::{CapacityError, PublicationLease};
 use crate::simulation::AcceptedActorRead;
 pub use crate::simulation::{InteractionMode, PlayerInteractionFacts};
@@ -113,6 +113,92 @@ pub struct RuntimeFishOffer<'a> {
     pub paused: bool,
     pub sequence: u64,
     pub tools: &'a [RuntimeFishTool<'a>],
+    state: &'a crate::simulation::SimulationState,
+    actor: &'a str,
+    source: crate::casts::Source<'a>,
+    binding: GeometryBinding,
+    budget: &'a ByteBudget,
+}
+
+impl RuntimeFishOffer<'_> {
+    /// Check the selected cast's one dry stance, working line, and any needed
+    /// approach through the same provider as the command. No query or fact
+    /// escapes the current accepted read. The caller keeps local geometry
+    /// inside this callback and the finished answer funds its own backing.
+    pub fn geometry_problem(
+        &self,
+        answer: impl FnOnce(
+            &GeometryQueries,
+        ) -> Result<(GeometryAnswers, ByteReservation), RuntimeError>,
+    ) -> Result<Option<&str>, RuntimeError> {
+        let source = &self.source;
+        let actor = self
+            .state
+            .physical
+            .entities
+            .get(self.actor)
+            .ok_or_else(|| failure("cast actor unavailable"))?;
+        let ordinary = self.state.installed.ordinary_actions.value();
+        if !actor.actively_participates() {
+            return Ok(Some(&ordinary.inactive.message));
+        }
+        if self
+            .state
+            .installed
+            .capabilities
+            .capability_blocked(Some(actor), "actions")
+            .map_err(failure)?
+        {
+            return Ok(Some(&ordinary.actions_restricted.message));
+        }
+        if !actor
+            .actor
+            .as_ref()
+            .is_some_and(|actor| actor.alive && !actor.incapacitated)
+        {
+            return Ok(Some(&ordinary.not_alive.message));
+        }
+        if !matches!(
+            actor.placement,
+            Some(crate::state::Placement::World {
+                support_surface_id: Some(_),
+                ..
+            })
+        ) {
+            return Ok(Some(&ordinary.unsupported_airborne.message));
+        }
+        let blocked = crate::casts::messages().blocked_line;
+        if !source.cast.line_is_possible(&source.rules.definition) {
+            return Ok(Some(blocked));
+        }
+        let moving = !crate::casts::at_stance(actor, source);
+        let bytes = crate::casts::check_storage(actor, source.cast)
+            + if moving {
+                crate::casts::approach_storage(actor, source)
+            } else {
+                0
+            };
+        let _query = self.budget.reserve(bytes)?;
+        let mut request = GeometryQueries::new(self.binding);
+        crate::casts::check_line(&mut request, actor, source.cast, self.budget).map_err(failure)?;
+        if moving {
+            request.routes = vec![crate::casts::approach(actor, source).map_err(failure)?];
+        }
+        let (answer, _funding) = answer(&request)?;
+        request.validate_answers(&answer).map_err(failure)?;
+        if answer.sight != [true] || answer.standing != [true] {
+            return Ok(Some(blocked));
+        }
+        Ok(match answer.routes.first() {
+            Some(RoutePlan::NoRoute { .. } | RoutePlan::InvalidEndpoint { .. }) => {
+                Some(ordinary.no_route.message.as_str())
+            }
+            Some(RoutePlan::BudgetExceeded { .. }) => {
+                Some(ordinary.budget_exceeded.message.as_str())
+            }
+            _ => None,
+        })
+    }
 }
 
 pub struct RuntimeFishTool<'a> {
@@ -120,12 +206,13 @@ pub struct RuntimeFishTool<'a> {
     pub name: &'a crate::text::JsText,
 }
 
-fn fish_offer<T>(
-    state: &crate::simulation::SimulationState,
-    actor: &str,
-    name: &crate::text::JsText,
-    source: crate::casts::Source<'_>,
-    budget: &ByteBudget,
+fn fish_offer<'a, T>(
+    state: &'a crate::simulation::SimulationState,
+    actor: &'a str,
+    name: &'a crate::text::JsText,
+    source: crate::casts::Source<'a>,
+    binding: GeometryBinding,
+    budget: &'a ByteBudget,
     consume: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
 ) -> Result<T, RuntimeError> {
     let mut _custody = budget.reserve(0)?;
@@ -184,6 +271,11 @@ fn fish_offer<T>(
         paused: state.physical.header.paused,
         sequence: state.physical.header.sequence,
         tools: &tools,
+        state,
+        actor,
+        source,
+        binding,
+        budget,
     }))
 }
 impl RuntimePlayerPublication {
@@ -355,7 +447,24 @@ impl NativeWorldSession {
                 let state = &simulation.state;
                 if let Some(source) = crate::casts::source(state, id) {
                     let encode = encode.take().expect("one selected source");
-                    result = Some(fish_offer(state, actor, name, source, &self.budget, encode));
+                    let binding = GeometryBinding::new(
+                        CandidateKey {
+                            id: 0,
+                            base_cut: state.accepted_cut,
+                            generation: self.session.operational_generation(),
+                        },
+                        state.installed.geometry.spatial.revision,
+                        0,
+                    );
+                    result = Some(fish_offer(
+                        state,
+                        actor,
+                        name,
+                        source,
+                        binding,
+                        &self.budget,
+                        encode,
+                    ));
                     return true;
                 }
                 let Some((definition, quantity)) = observed.subtype.as_ref().zip(observed.quantity)

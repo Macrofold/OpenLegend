@@ -70,7 +70,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
         return refusal(
             StatusCode::BAD_REQUEST,
             "unsupported-action-context",
-            "Choose a visible person to open a conversation.",
+            "Choose something you can see to find its actions.",
         );
     };
     let linked = Arc::new(target);
@@ -117,10 +117,17 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                                     Some("Take control of your character to act here.")
                                 } else if offer.paused {
                                     Some("Resume the world to act.")
+                                } else if !offer.tools.is_empty() && !offer.exhausted {
+                                    offer.geometry_problem(|queries| {
+                                        game.spatial
+                                            .compute(queries, budget)
+                                            .map(|answer| answer.into_parts())
+                                            .map_err(RuntimeError::application_refused)
+                                    })?
                                 } else {
                                     None
                                 };
-                                fishing(&for_menu, offer, available, budget)
+                                fishing(&for_menu, &offer, available, budget)
                             }
                         },
                     )?;
@@ -276,8 +283,8 @@ fn gathering(
 
 fn fishing(
     selected: &str,
-    offer: RuntimeFishOffer<'_>,
-    unavailable: Option<&'static str>,
+    offer: &RuntimeFishOffer<'_>,
+    unavailable: Option<&str>,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     let _workspace = budget.reserve(2048)?;
