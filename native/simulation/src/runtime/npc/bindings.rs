@@ -38,6 +38,64 @@ pub struct RuntimeNpcBindingRequest {
     _custody: ByteReservation,
 }
 
+impl RuntimeNpcBindingRequest {
+    /// The references from the first prompt are the only anchors. Resolve
+    /// them back to the same life in the originating read before measuring.
+    pub fn received_separation(
+        &self,
+        original: &RuntimeNpcRead,
+        current: &RuntimeNpcRead,
+        first: &str,
+        second: &str,
+    ) -> super::RuntimeNpcSeparationEvidence {
+        let resolve = |reference| {
+            let selected = self
+                .request
+                .selection
+                .entities
+                .iter()
+                .find(|row| row.alias == reference)?;
+            match selected.source {
+                NpcEntityOrdinal::Body { ordinal } => {
+                    let anchor = current.read.perception.bodies.get(ordinal)?;
+                    original.read.perception.bodies.iter().position(|body| {
+                        body.source_id == anchor.source_id
+                            && body.physical_life == anchor.physical_life
+                            && body.lease_id == anchor.lease_id
+                    })
+                }
+                NpcEntityOrdinal::ReceivedBody { ordinal } => Some(ordinal),
+                _ => None,
+            }
+        };
+        match resolve(first).zip(resolve(second)) {
+            Some((first, second)) => original.query_separation(first, second),
+            None => super::RuntimeNpcSeparationEvidence::UNAVAILABLE,
+        }
+    }
+
+    /// Attach a reference actually sent in the query answer to the original
+    /// held facet. The final dispatch checks its availability again.
+    pub fn bind_query_facet(&mut self, alias: &str, ordinal: usize) -> Result<(), RuntimeError> {
+        let current = &mut self.request.selection.current;
+        if current.iter().any(|reference| reference.ordinal == ordinal) {
+            return Ok(());
+        }
+        let bytes = self
+            ._custody
+            .bytes()
+            .checked_add(size_of::<NpcAliasOrdinal>() + alias.len())
+            .ok_or(CapacityError)?;
+        self._custody.resize(bytes)?;
+        current.try_reserve_exact(1).map_err(|_| CapacityError)?;
+        current.push(NpcAliasOrdinal {
+            alias: alias.into(),
+            ordinal,
+        });
+        Ok(())
+    }
+}
+
 impl RuntimeNpcBindingInput {
     /// The producer funded these buffers before building them. Transfer
     /// their actual backing independently through queued/cancelled binding.
@@ -125,6 +183,11 @@ pub struct RuntimeNpcResponseTicket {
     attempt_candidates: Arc<Vec<crate::response::ResponseAttemptCandidate>>,
     phase: Arc<AtomicU8>,
     _custody: Arc<ByteReservation>,
+    // The stand-alone query continuation moves this selection out of the
+    // first ticket. It keeps request aliases and original source ordinals
+    // together without cloning the permitted reads or rebuilding them anew.
+    query_selection: Option<(NpcBindingSelection, ByteReservation)>,
+    pub(super) checks_query_evidence: bool,
 }
 
 /// An ordered response from the stand-alone host, with the memory that owns
@@ -159,6 +222,24 @@ fn response_failure(error: ResponseEnvelopeError) -> RuntimeError {
 }
 
 impl RuntimeNpcResponseTicket {
+    pub(super) fn into_query(
+        self,
+    ) -> Result<(RuntimeNpcRead, RuntimeNpcRead, RuntimeNpcBindingRequest), RuntimeError> {
+        let (selection, custody) = self
+            .query_selection
+            .ok_or_else(|| failure("NPC query selection is unavailable"))?;
+        Ok((
+            self.original,
+            self.current,
+            RuntimeNpcBindingRequest {
+                request: BindingRequest {
+                    decision_id: self.decision_id,
+                    selection,
+                },
+                _custody: custody,
+            },
+        ))
+    }
     pub fn actor_id(&self) -> &str {
         &self.current.read.perception.actor_id
     }
@@ -607,7 +688,7 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(request, &self.budget)?;
         let request: BindingRequest = serde_json::from_slice(request).map_err(failure)?;
-        self.bind_npc_response_selected(original, current, request, trigger, action_read)
+        self.bind_npc_response_selected(original, current, request, trigger, action_read, None)
     }
 
     pub fn bind_npc_response_direct(
@@ -619,7 +700,7 @@ impl NativeWorldSession {
     ) -> Result<RuntimeNpcResponseTicket, RuntimeError> {
         self.require_active()?;
         let RuntimeNpcBindingRequest { request, _custody } = request;
-        self.bind_npc_response_selected(original, current, request, trigger, None)
+        self.bind_npc_response_selected(original, current, request, trigger, None, Some(_custody))
     }
 
     fn bind_npc_response_selected(
@@ -629,6 +710,7 @@ impl NativeWorldSession {
         request: BindingRequest,
         trigger: Option<&RuntimeNpcTrigger>,
         mut action_read: Option<&mut Option<RuntimeNpcRead>>,
+        selection_storage: Option<ByteReservation>,
     ) -> Result<RuntimeNpcResponseTicket, RuntimeError> {
         if !crate::values::is_safe_record_id(&request.decision_id)
             || request.decision_id.encode_utf16().count() > 100
@@ -800,6 +882,12 @@ impl NativeWorldSession {
                 .ok_or_else(|| failure("current NPC read was released"))?
                 .action_catalogue = Some(catalogue);
         }
+        let checks_query_evidence = first.query_expanded && selection_storage.is_some();
+        let query_selection = selection_storage
+            .filter(|_| {
+                request.selection.purpose == NpcBindingPurpose::Decision && !first.query_expanded
+            })
+            .map(|storage| (request.selection, storage));
         Ok(RuntimeNpcResponseTicket {
             // The checked Some owners cannot change while the caller holds
             // these two exclusive slots in the same serialized writer job.
@@ -815,6 +903,8 @@ impl NativeWorldSession {
             attempt_candidates: Arc::new(attempt_candidates),
             phase: Arc::new(AtomicU8::new(FRESH)),
             _custody: Arc::new(custody),
+            query_selection,
+            checks_query_evidence,
         })
     }
 }

@@ -89,7 +89,7 @@ const BODY_VALUE_KINDS: [&str; 9] = [
 #[derive(Clone, Copy)]
 pub(crate) enum ActorReadPurpose {
     PlayerView,
-    NpcDecision { bridge: bool },
+    NpcDecision { bridge: bool, query_origin: bool },
 }
 
 /// Unported agreement consumers must not replace personally received terms
@@ -173,9 +173,16 @@ pub(crate) struct CapturedActorPerception {
     pub bodies: Vec<CapturedBodyBinding>,
     pub evidence: CapturedEvidenceCut,
     pub geometry: Option<CapturedGeometryRange>,
+    pub query_bodies: Vec<Option<CapturedQueryBody>>,
     player: Option<CapturedPlayerPerception>,
     npc_current: Option<npc_current::NpcCurrentCapture>,
     _reservation: ByteReservation,
+}
+pub(crate) struct CapturedQueryBody {
+    pub measure: crate::reception::received_separation::Body,
+    /// Exact positions of body, location and optional motion in the held
+    /// evidence cut. Keeping ordinals avoids copying their owned payloads.
+    pub facets: [Option<usize>; 3],
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -284,6 +291,13 @@ pub(crate) fn capture_actor_perception(
     let count = scope
         .as_ref()
         .map_or(0, |scope| scope.state().current.len());
+    let query_bodies = matches!(
+        purpose,
+        ActorReadPurpose::NpcDecision {
+            query_origin: true,
+            ..
+        }
+    ) && state.installed.attention.value().scene.maximum_queries != 0;
     if let Some(scope) = &scope {
         for id in scope.state().current.keys() {
             let body = scope.native_body(id)?;
@@ -347,12 +361,25 @@ pub(crate) fn capture_actor_perception(
                 .ok_or(ExecutionError::Capacity)?,
         )
         .and_then(|n| n.checked_add(maximum_fields.checked_mul(size_of::<OwnedCurrentFacet>())?))
+        .and_then(|n| {
+            n.checked_add(if query_bodies {
+                count.checked_mul(size_of::<Option<CapturedQueryBody>>())?
+            } else {
+                0
+            })
+        })
         .ok_or(ExecutionError::Capacity)?;
     let mut reservation = budget.reserve(bytes)?;
     let mut bodies = Vec::new();
     bodies
         .try_reserve_exact(count)
         .map_err(|_| ExecutionError::Capacity)?;
+    let mut query_geometry = Vec::new();
+    if query_bodies {
+        query_geometry
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+    }
     let mut current = Vec::new();
     current
         .try_reserve_exact(maximum_fields)
@@ -372,10 +399,32 @@ pub(crate) fn capture_actor_perception(
                     current.push(field);
                 }
             }
-            if let Some(motion) =
-                scope.capture_motion(id, state.physical.header.sim_time, budget)?
-            {
+            let now = state.physical.header.sim_time;
+            let motion = scope.capture_motion(id, now, budget)?;
+            let measured = if query_bodies {
+                scope.scene_query_body(body, now, motion.as_ref().map(OwnedCurrentFacet::facet))?
+            } else {
+                None
+            };
+            let motion_index = motion.as_ref().map(|_| current.len());
+            if let Some(motion) = motion {
                 current.push(motion);
+            }
+            if query_bodies {
+                query_geometry.push(measured.and_then(|measured| {
+                    let field_index = |id: &str| {
+                        current[first..]
+                            .iter()
+                            .position(|field| field.facet().confirmation.id == id)
+                            .map(|index| first + index)
+                    };
+                    let body_index = field_index(&body.field.id)?;
+                    let location_index = field_index(measured.location_id)?;
+                    Some(CapturedQueryBody {
+                        measure: measured.geometry,
+                        facets: [Some(body_index), Some(location_index), motion_index],
+                    })
+                }));
             }
             // A verified current body must have its actual permitted body
             // field among these captures. No neutral/canonical substitute.
@@ -458,7 +507,7 @@ pub(crate) fn capture_actor_perception(
         .and_then(|owner| owner.visual_confirmation.as_ref())
         .map(|confirmation| confirmation.through);
     let (npc_current, current, _current_backing) =
-        if let ActorReadPurpose::NpcDecision { bridge } = purpose {
+        if let ActorReadPurpose::NpcDecision { bridge, .. } = purpose {
             let prepared = npc_current::prepare(
                 state,
                 actor_id,
@@ -588,6 +637,7 @@ pub(crate) fn capture_actor_perception(
         bodies,
         evidence,
         geometry,
+        query_bodies: query_geometry,
         npc_current,
         player,
         _reservation: reservation,

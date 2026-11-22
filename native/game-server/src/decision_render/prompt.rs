@@ -31,6 +31,17 @@ impl PreparedPrompt {
         std::str::from_utf8(&self.bytes).expect("decision formatting emits UTF-8")
     }
 
+    /// Append the selected read-only answer directly to the independently
+    /// admitted provider prompt buffer.
+    pub(crate) fn append_received_evidence(
+        &mut self,
+        evidence: &impl serde::Serialize,
+    ) -> Result<(), RenderError> {
+        self.section()?;
+        self.text("Requested received evidence: ")?;
+        write_json_record(evidence, &mut *self).map_err(|_| self.failure())
+    }
+
     fn text(&mut self, text: &str) -> Result<(), RenderError> {
         self.write_all(text.as_bytes()).map_err(|_| self.failure())
     }

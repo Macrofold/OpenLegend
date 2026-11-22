@@ -50,6 +50,35 @@ impl NpcReadInput {
 }
 
 impl HostedWorld {
+    /// Reopen the actual earlier read after the first model chooses questions.
+    /// The separate final attempt checks the scope again when it sends.
+    pub(crate) async fn reopen_npc_for_queries(
+        self: &Arc<Self>,
+        ticket: RuntimeNpcResponseTicket,
+        permit: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
+    ) -> Result<
+        (
+            RuntimeNpcRead,
+            RuntimeNpcRead,
+            RuntimeNpcBindingRequest,
+            openlegend_simulation::attention::SceneAttentionPolicy,
+        ),
+        WorldError,
+    > {
+        let _turn = self.enter().await?;
+        self.call(move |session| {
+            let reopen = || session.open_npc_response_direct(ticket);
+            Ok(match permit {
+                Some((authority, scope)) => authority
+                    .current(&scope, Capability::Play, true, |_, _| reopen())
+                    .map_err(WorldError::Access)
+                    .and_then(|read| read.map_err(WorldError::Simulation)),
+                None => reopen().map_err(WorldError::Simulation),
+            })
+        })
+        .await?
+    }
+
     pub(crate) async fn capture_reply_preview(
         self: &Arc<Self>,
         authority: Arc<Authority>,

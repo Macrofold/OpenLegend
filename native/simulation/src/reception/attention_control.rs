@@ -13,6 +13,7 @@ use std::mem::size_of;
 mod candidates;
 mod read;
 mod relations;
+pub(crate) use relations::measurement as received_separation;
 mod response;
 mod selection;
 mod timing;

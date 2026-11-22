@@ -64,11 +64,19 @@ pub(super) struct NativeOffer {
 }
 
 impl Projection {
+    pub(super) fn reference_scope(&self) -> Result<&str, CallFailure> {
+        self.refs
+            .first()
+            .map(String::as_str)
+            .ok_or(CallFailure::Invalid)
+    }
+
     pub(super) fn render_response(
         &self,
         game: &CurrentServer,
         selected: &[&NativeOffer],
         include_actions: bool,
+        queries: bool,
     ) -> Result<(PreparedPrompt, BoundSchema), CallFailure> {
         let budget = game.host.budget();
         let offered = selected
@@ -92,7 +100,7 @@ impl Projection {
             .response_schema(
                 self.speaks,
                 self.expressions,
-                true,
+                queries,
                 &ResponseReferences {
                     entity: &self.refs,
                     action: &aliases,
@@ -167,7 +175,7 @@ pub(super) async fn finish(
     })
 }
 
-fn binding_failure(error: WorldError) -> CallFailure {
+pub(super) fn binding_failure(error: WorldError) -> CallFailure {
     if let WorldError::Simulation(inner) = &error
         && let Some(reason) = inner.stale_reason()
     {
@@ -541,7 +549,7 @@ fn personal_time(entry: &PersonalSource) -> f64 {
     at.unwrap_or(f64::NAN)
 }
 
-fn alias(key: &str, kind: &str, index: usize) -> String {
+pub(super) fn alias(key: &str, kind: &str, index: usize) -> String {
     // The per-request key stays private even if a caller repeats its own
     // command ID. An unseen native body cannot be guessed from an ordinal.
     let digest = sha256_hex(format!("{key}:{kind}:{index}").as_bytes());
@@ -556,7 +564,7 @@ fn capacity(error: CapacityError) -> CallFailure {
     packet_failure(error.into())
 }
 
-fn packet_failure(error: RuntimeError) -> CallFailure {
+pub(super) fn packet_failure(error: RuntimeError) -> CallFailure {
     CallFailure::World(WorldError::Simulation(error)).at("context-preparation")
 }
 

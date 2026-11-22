@@ -81,7 +81,8 @@ pub use npc::{
     RuntimeNpcDecisionOrigin, RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings,
     RuntimeNpcObservedBody, RuntimeNpcOffer, RuntimeNpcOperations, RuntimeNpcPersonalSource,
     RuntimeNpcPersonalSources, RuntimeNpcPreparationStep, RuntimeNpcPresentedBody,
-    RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
+    RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket, RuntimeNpcSeparation,
+    RuntimeNpcSeparationEvidence,
 };
 pub use player::{
     InteractionMode, PlayerInteractionFacts, RuntimePlayerCommand, RuntimePlayerInputState,

@@ -3,17 +3,17 @@
 use super::*;
 use crate::spatial::{BodyPiece, Extent};
 #[derive(Clone, Copy)]
-pub(super) struct Span {
+pub(crate) struct Span {
     pub from: f64,
     pub through: f64,
 }
 #[derive(Clone, Copy)]
-pub(super) struct PointSample {
+pub(crate) struct PointSample {
     pub span: Span,
     pub point: Option<(Point, f64)>,
 }
 #[derive(Clone, Copy)]
-pub(super) struct Body {
+pub(crate) struct Body {
     pub position: Point,
     pub extent: Extent,
     pub span: Span,
@@ -78,12 +78,13 @@ impl Body {
         })
     }
 }
-pub(super) struct Separation {
+pub(crate) struct Separation {
+    pub at: f64,
     pub lower: f64,
     pub upper: f64,
     pub decrease: Option<f64>,
 }
-pub(super) fn body(first: &Body, second: &Body) -> Option<Separation> {
+pub(crate) fn body(first: &Body, second: &Body) -> Option<Separation> {
     let at = first.span.through.min(second.span.through);
     let (a, ea) = first.point(at, true)?;
     let (b, eb) = second.point(at, true)?;
@@ -119,12 +120,13 @@ pub(super) fn body(first: &Body, second: &Body) -> Option<Separation> {
         break;
     }
     Some(Separation {
+        at,
         lower: (distance - error).max(0.0),
         upper: (distance + error).max(0.0),
         decrease,
     })
 }
-pub(super) fn boundary(
+pub(crate) fn boundary(
     anchor: &Body,
     boundary: &ObservedBoundary,
     from: f64,
@@ -169,6 +171,7 @@ pub(super) fn boundary(
             .and_then(|t| anchor.point(t, false))
     };
     Some(Separation {
+        at,
         lower: (d - error).max(0.0),
         upper: d + error,
         decrease: before.map(|(point, e)| distance(point) - e - boundary.error_radius - d - error),

@@ -388,6 +388,7 @@ fn matches_schema(schema: &Value, value: &impl SchemaValue) -> bool {
         matches!(
             key.as_str(),
             "$schema"
+                | "description"
                 | "type"
                 | "anyOf"
                 | "const"

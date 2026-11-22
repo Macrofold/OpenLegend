@@ -199,6 +199,13 @@ impl<'a> CurrentBodyReadScope<'a> {
         let Some(body) = self.native_body(id)? else {
             return Ok(None);
         };
+        self.location_for_body(id, body)
+    }
+    fn location_for_body(
+        &self,
+        id: &str,
+        body: CurrentNativeFacet<'a>,
+    ) -> Result<Option<CurrentNativeFacet<'a>>, ReceivedError> {
         let location = self.native(
             id,
             "location",

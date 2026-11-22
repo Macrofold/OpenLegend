@@ -25,6 +25,7 @@ use std::sync::Arc;
 use tokio::{sync::watch, time::Instant};
 
 pub(super) mod prepare;
+mod query;
 
 pub(super) struct Models {
     pub(super) judgment: Model,
@@ -155,7 +156,7 @@ pub(super) async fn run(
                     )
                 })?;
             }
-            let prepared = tokio::select! {
+            let mut prepared = tokio::select! {
                 biased;
                 _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
                 prepared = tokio::time::timeout_at(work.deadline,prepare::finish(game, &work, collected)) => {
@@ -319,108 +320,107 @@ pub(super) async fn run(
             .ok_or(CallFailure::Invalid.at("route"))?;
             let (response, schema) = prepared
                 .context
-                .render_response(game, &selected, include_actions)
+                .render_response(game, &selected, include_actions, true)
                 .map_err(|error| error.at("generation-preparation"))?;
-            let schema = Arc::new(schema);
-            let allowance = model.amount_micro_usd.to_string();
-            let id = format!("{}:attempt:0:generate", work.job.job.id);
-            let instructions_bytes = game
-                .cognition
-                .response_instructions
-                .len()
-                .saturating_add(game.cognition.query_instructions.len())
-                .saturating_add(1);
-            let _instructions_custody = budget
-                .reserve(instructions_bytes)
-                .map_err(|_| CallFailure::Invalid)?;
-            let instructions = format!(
-                "{} {}",
-                game.cognition.response_instructions, game.cognition.query_instructions
-            );
-            let preview = if model.macrofold.is_some() && prepared.addressed {
-                work.permit
-                    .as_ref()
-                    .zip(prepared.context.preview_player.as_ref())
-                    .and_then(|((authority, scope), player)| {
-                        super::preview::PreviewAttempt::new(
-                            authority.clone(),
-                            scope.clone(),
-                            work.job.clone(),
-                            work.cancellation.clone(),
-                            schema.clone(),
-                            player,
-                            budget,
-                        )
-                    })
+            let reply_player = if prepared.addressed {
+                prepared.context.preview_player.as_ref()
             } else {
                 None
             };
-            let generation = provider::Generation {
-                schema_name: "npc_response",
-                schema: schema.value(),
-                instructions: &instructions,
-                prompt: response.as_str(),
-                effort: model.effort,
-                max_output_tokens: model.output_tokens,
-                stream: preview.is_some(),
-            };
-            let request = provider::generation_request(
-                &model.destination,
-                &model.requested,
-                model.route(&allowance, work.deadline),
-                generation,
-                &id,
-                budget,
-            )?;
-            let macrofold = model.macrofold.as_ref().map(|value| value.billing);
-            let parse_budget = budget.clone();
-            let mut call = side(
+            let parsed = generate(
+                game,
+                dispatch,
                 &work,
                 model,
                 models.ceiling_micro_usd,
-                id,
-                request,
-                InferenceClass::OpenAi,
                 "generate",
                 level,
-                response.as_str(),
-                prepared.through,
-            )?;
-            call.preview = preview;
-            let parsed = dispatch
-                .submit(
-                    call,
-                    CallAuthority {
-                        source: prepared.ticket.clone(),
-                        speaker: work.permit.clone(),
-                    },
-                    work.cancellation.clone(),
-                    decode_provider(macrofold, parse_budget.clone(), move |value| {
-                        if macrofold.is_some() {
-                            match provider::macrofold_text(value)
-                                .map_err(|_| CallFailure::Invalid)?
-                            {
-                                provider::TextResult::Refused => Err(CallFailure::Invalid),
-                                provider::TextResult::Complete(text) => {
-                                    provider::generation_output(text, &schema, &parse_budget)
-                                        .map_err(generation_failure)
-                                }
-                            }
-                        } else {
-                            direct_output(value, &schema, &parse_budget)
-                        }
-                    }),
-                )
-                .await
-                .map_err(|error| error.at("generate"))?;
+                GenerationView {
+                    ticket: &prepared.ticket,
+                    prompt: &response,
+                    reply_player,
+                    through: prepared.through,
+                    queries: true,
+                },
+                schema,
+            )
+            .await?;
+            drop(response);
             ensure_running(&work)?;
-            let payload = effects(parsed, &prepared.frame)
+            let (value, custody, ticket) = match query::Draft::read(parsed)? {
+                query::Draft::Decision(value, custody) => (value, custody, prepared.ticket),
+                query::Draft::Questions(questions, held) => {
+                    let prior = Arc::try_unwrap(prepared.ticket)
+                        .map_err(|_| CallFailure::Stale("native-response-ticket-retained"))?;
+                    let (original, current, mut binding, policy) = game
+                        .world
+                        .reopen_npc_for_queries(prior, work.permit.clone())
+                        .await
+                        .map_err(prepare::binding_failure)?;
+                    prepared.context.fields["situationQueries"] = false.into();
+                    let (mut response, schema) = prepared
+                        .context
+                        .render_response(game, &selected, include_actions, false)
+                        .map_err(|error| error.at("situation-query-preparation"))?;
+                    {
+                        let answers = query::answer(
+                            &questions,
+                            &binding,
+                            &original,
+                            &current,
+                            &policy,
+                            budget,
+                            prepared.context.reference_scope()?,
+                        )?;
+                        response
+                            .append_received_evidence(&answers)
+                            .map_err(generation_failure)?;
+                        answers.bind(&mut binding)?;
+                    }
+                    drop(questions);
+                    drop(held);
+                    ensure_running(&work)?;
+                    let origin = work.automatic.as_ref().map(|trigger| trigger.read.clone());
+                    let ticket = Arc::new(
+                        game.world
+                            .bind_npc(original, current, binding, origin)
+                            .await
+                            .map_err(prepare::binding_failure)?,
+                    );
+                    let parsed = generate(
+                        game,
+                        dispatch,
+                        &work,
+                        model,
+                        models.ceiling_micro_usd,
+                        "generate-query-answer",
+                        level,
+                        GenerationView {
+                            ticket: &ticket,
+                            prompt: &response,
+                            reply_player,
+                            through: prepared.through,
+                            queries: false,
+                        },
+                        schema,
+                    )
+                    .await?;
+                    match query::Draft::read(parsed)? {
+                        query::Draft::Decision(value, custody) => (value, custody, ticket),
+                        query::Draft::Questions(..) => {
+                            return Err(CallFailure::Invalid.at("generate-query-answer"));
+                        }
+                    }
+                }
+            };
+            ensure_running(&work)?;
+            let payload = effects(value, custody, &prepared.frame)
                 .map_err(|error| error.at("response-validation"))?;
             super::apply::apply(
                 saves,
                 game,
                 &work.job,
-                prepared.ticket,
+                ticket,
                 payload,
                 work.permit,
                 work.cancellation,
@@ -432,6 +432,127 @@ pub(super) async fn run(
         },
         CallFailure::profile_outcome
     )
+}
+
+/// A later, separately funded answer uses the same generation and provider
+/// envelope owners as the first draft. The caller supplies the exact ticket.
+struct GenerationView<'a> {
+    ticket: &'a Arc<openlegend_simulation::runtime::RuntimeNpcResponseTicket>,
+    prompt: &'a crate::decision_render::PreparedPrompt,
+    reply_player: Option<&'a String>,
+    through: u64,
+    queries: bool,
+}
+
+async fn generate(
+    game: &CurrentServer,
+    dispatch: &Arc<DecisionDispatch>,
+    work: &Work,
+    model: &Model,
+    ceiling: u64,
+    stage: &'static str,
+    level: i32,
+    view: GenerationView<'_>,
+    schema: BoundSchema,
+) -> Result<provider::GenerationOutput, CallFailure> {
+    let budget = game.host.budget();
+    let schema = Arc::new(schema);
+    let allowance = model.amount_micro_usd.to_string();
+    let id = format!("{}:attempt:0:{stage}", work.job.job.id);
+    let instructions_bytes = if view.queries {
+        game.cognition
+            .response_instructions
+            .len()
+            .saturating_add(game.cognition.query_instructions.len())
+            .saturating_add(1)
+    } else {
+        0
+    };
+    let _instructions_custody = budget
+        .reserve(instructions_bytes)
+        .map_err(|_| CallFailure::Invalid)?;
+    let instructions = if view.queries {
+        std::borrow::Cow::Owned(format!(
+            "{} {}",
+            game.cognition.response_instructions, game.cognition.query_instructions
+        ))
+    } else {
+        std::borrow::Cow::Borrowed(game.cognition.response_instructions.as_str())
+    };
+    let preview = if model.macrofold.is_some() && view.reply_player.is_some() {
+        work.permit
+            .as_ref()
+            .zip(view.reply_player)
+            .and_then(|((authority, scope), player)| {
+                super::preview::PreviewAttempt::new(
+                    authority.clone(),
+                    scope.clone(),
+                    work.job.clone(),
+                    work.cancellation.clone(),
+                    schema.clone(),
+                    player,
+                    budget,
+                )
+            })
+    } else {
+        None
+    };
+    let generation = provider::Generation {
+        schema_name: "npc_response",
+        schema: schema.value(),
+        instructions: &instructions,
+        prompt: view.prompt.as_str(),
+        effort: model.effort,
+        max_output_tokens: model.output_tokens,
+        stream: preview.is_some(),
+    };
+    let request = provider::generation_request(
+        &model.destination,
+        &model.requested,
+        model.route(&allowance, work.deadline),
+        generation,
+        &id,
+        budget,
+    )?;
+    let macrofold = model.macrofold.as_ref().map(|value| value.billing);
+    let parse_budget = budget.clone();
+    let mut call = side(
+        work,
+        model,
+        ceiling,
+        id,
+        request,
+        InferenceClass::OpenAi,
+        stage,
+        level,
+        view.prompt.as_str(),
+        view.through,
+    )?;
+    call.preview = preview;
+    dispatch
+        .submit(
+            call,
+            CallAuthority {
+                source: view.ticket.clone(),
+                speaker: work.permit.clone(),
+            },
+            work.cancellation.clone(),
+            decode_provider(macrofold, parse_budget.clone(), move |value| {
+                if macrofold.is_some() {
+                    match provider::macrofold_text(value).map_err(|_| CallFailure::Invalid)? {
+                        provider::TextResult::Refused => Err(CallFailure::Invalid),
+                        provider::TextResult::Complete(text) => {
+                            provider::generation_output(text, &schema, &parse_budget)
+                                .map_err(generation_failure)
+                        }
+                    }
+                } else {
+                    direct_output(value, &schema, &parse_budget)
+                }
+            }),
+        )
+        .await
+        .map_err(|error| error.at(stage))
 }
 
 async fn stopped(watch: &mut watch::Receiver<bool>) {
@@ -741,23 +862,13 @@ fn record<const N: usize>(fields: [(&str, SqlCell); N]) -> SqlCell {
 }
 
 fn effects(
-    parsed: provider::GenerationOutput,
+    value: SqlCell,
+    mut custody: openlegend_simulation::host::ByteReservation,
     frame: &prepare::ReceivedFrame,
 ) -> Result<RuntimeNpcOperations, CallFailure> {
-    let (value, mut custody) = parsed.into_parts();
     let SqlCell::Object(mut response) = value else {
         return Err(CallFailure::Invalid);
     };
-    if response
-        .shift_remove("queries")
-        .as_ref()
-        .and_then(SqlCell::as_array)
-        .is_some_and(|queries| !queries.is_empty())
-    {
-        return Err(CallFailure::Stale(
-            "situation-query-continuation-unavailable",
-        ));
-    }
     let Some(SqlCell::Array(operations)) = response.get_mut("operations") else {
         return Err(CallFailure::Invalid);
     };

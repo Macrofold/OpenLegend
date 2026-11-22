@@ -389,6 +389,7 @@ impl Simulation {
         }
         let purpose = ActorReadPurpose::NpcDecision {
             bridge: selection.is_none(),
+            query_origin: matches!(selection, Some(RuntimeNpcSelfSelection::Frame)),
         };
         let Some(selection) = selection else {
             return self.capture_actor_encoded(actor_id, purpose, required_appraisals, budget);
@@ -488,7 +489,7 @@ impl Simulation {
             };
         let (own, prepared) = with_actor_self(state, actor_id, purpose, budget, prepare)?;
         let perception = capture_actor_perception(state, actor_id, purpose, budget)?;
-        let appraisals = if let ActorReadPurpose::NpcDecision { bridge } = purpose {
+        let appraisals = if let ActorReadPurpose::NpcDecision { bridge, .. } = purpose {
             Some(crate::appraisals::capture_actor_appraisals(
                 state,
                 actor_id,

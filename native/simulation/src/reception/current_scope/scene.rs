@@ -33,6 +33,10 @@ pub(crate) struct LocationGeometrySample {
     pub sample: GeometrySample,
     pub location: ObservedLocation,
 }
+pub(crate) struct SceneQueryBody<'a> {
+    pub geometry: crate::reception::received_separation::Body,
+    pub location_id: &'a str,
+}
 #[derive(Clone, Serialize)]
 pub(crate) struct BodyMotion {
     pub earlier: LocationGeometrySample,
@@ -286,6 +290,40 @@ fn geometry_sample(
     location: CurrentNativeFacet<'_>,
     now: f64,
 ) -> Result<GeometrySample, ReceivedError> {
+    let clocks = scene_clocks(scope, input, location, now)?;
+    let observer = received_observation_header(scope.lookup(), input.original_source)?
+        .observer
+        .clone();
+    Ok(GeometrySample {
+        value_measured_from: clocks.value_measured_from,
+        value_measured_through: clocks.value_measured_through,
+        value_supported_from: clocks.value_supported_from,
+        value_supported_through: clocks.value_supported_through,
+        fact: ObservationFactKey {
+            source: EvidenceSource {
+                family: EvidenceFamily::NativeExposure,
+                id: input.original_source.id.clone(),
+                revision: SourceRevision::Number(input.original_source.revision),
+                observer,
+            },
+            ordinal: input.field.original_ordinal,
+        },
+    })
+}
+
+struct SceneClocks {
+    value_measured_from: f64,
+    value_measured_through: f64,
+    value_supported_from: f64,
+    value_supported_through: f64,
+}
+
+fn scene_clocks(
+    scope: &CurrentBodyReadScope<'_>,
+    input: CurrentNativeFacet<'_>,
+    location: CurrentNativeFacet<'_>,
+    now: f64,
+) -> Result<SceneClocks, ReceivedError> {
     let times = match effective_current_check(scope.owner, input.grant, input.metadata, false)? {
         Some(check) => current_partition_with_check(input.metadata, check, false)?
             .times
@@ -309,10 +347,7 @@ fn geometry_sample(
             }
             _ => false,
         });
-    let observer = received_observation_header(scope.lookup(), input.original_source)?
-        .observer
-        .clone();
-    Ok(GeometrySample {
+    Ok(SceneClocks {
         value_measured_from: times.value_measured_from,
         value_measured_through: times.value_measured_through,
         value_supported_from: times
@@ -325,16 +360,73 @@ fn geometry_sample(
                 .value_measured_through
                 .max(point_times.confirmed_through)
         },
-        fact: ObservationFactKey {
-            source: EvidenceSource {
-                family: EvidenceFamily::NativeExposure,
-                id: input.original_source.id.clone(),
-                revision: SourceRevision::Number(input.original_source.revision),
-                observer,
-            },
-            ordinal: input.field.original_ordinal,
-        },
     })
+}
+
+impl<'a> CurrentBodyReadScope<'a> {
+    /// Retain only the measured coordinates and time ranges needed to answer
+    /// a later query against this exact accepted read. No private transform or
+    /// cloned proof enters this scalar summary.
+    pub(crate) fn scene_query_body(
+        &self,
+        body: CurrentNativeFacet<'a>,
+        now: f64,
+        motion: Option<&CapturedCurrentFacet>,
+    ) -> Result<Option<SceneQueryBody<'a>>, ReceivedError> {
+        use crate::reception::received_separation::{Body, PointSample, Span};
+        let Some(location) = self.location_for_body(&body.grant.subject_id, body)? else {
+            return Ok(None);
+        };
+        let Some((details, pose)) = received_body_parts(self.lookup(), &body.field.value) else {
+            return Ok(None);
+        };
+        let Some(value) = location_value(self, location) else {
+            return Ok(None);
+        };
+        let position = match self.value(&location.field.value.reference) {
+            Some(ReceivedValueFragment::BodyPose(value)) => value.pose.position,
+            _ => pose.position,
+        };
+        let span = |clock: SceneClocks| Span {
+            from: clock.value_supported_from,
+            through: clock.value_supported_through,
+        };
+        let point = |location: &ObservedLocation| match location {
+            ObservedLocation::Point {
+                point,
+                error_radius,
+            } => Some((point.position(), *error_radius)),
+            _ => None,
+        };
+        let measured = |sample: &ReceivedLocationSample| PointSample {
+            span: Span {
+                from: sample.measured_from,
+                through: sample.confirmed_through,
+            },
+            point: point(&sample.location),
+        };
+        Ok(Some(SceneQueryBody {
+            geometry: Body {
+                position,
+                extent: crate::spatial::Extent {
+                    radius: details.radius,
+                    height: details.height,
+                },
+                span: span(scene_clocks(self, body, location, now)?),
+                location: Some(PointSample {
+                    span: span(scene_clocks(self, location, location, now)?),
+                    point: point(value.as_ref()),
+                }),
+                motion: motion.and_then(|facet| match &facet.value {
+                    SensoryFacet::ObservedMotion { earlier, later, .. } => {
+                        Some((measured(earlier), measured(later)))
+                    }
+                    _ => None,
+                }),
+            },
+            location_id: &location.field.id,
+        }))
+    }
 }
 fn motion_sample(input: &ReceivedLocationSample) -> LocationGeometrySample {
     LocationGeometrySample {

@@ -86,6 +86,7 @@ pub(crate) use attention_control::{
     capture_attention_read, evaluate_attention_relations, next_attention_work_at,
     prune_withdrawn_attention, set_attention_focus, update_attention,
 };
+pub(crate) use attention_control::received_separation;
 mod cohort;
 pub(crate) use cohort::{
     CurrentCohort, ReceivingMutation, attended_event_participants, reconcile_current_cohort,

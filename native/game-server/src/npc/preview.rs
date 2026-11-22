@@ -212,11 +212,18 @@ enum Step {
     #[default]
     Object,
     Key,
-    Colon(bool),
-    Value(bool),
+    Colon(RootValue),
+    Value(RootValue),
     Comma,
     FirstOperation,
     Ended,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RootValue {
+    Operations,
+    Queries,
+    Other,
 }
 
 #[derive(Default)]
@@ -224,6 +231,7 @@ struct Prefix {
     step: Step,
     at: usize,
     fields_seen: u64,
+    decision_confirmed: bool,
 }
 
 impl Prefix {
@@ -282,7 +290,11 @@ impl Prefix {
                         return Err(CallFailure::Invalid);
                     }
                     self.fields_seen |= bit;
-                    Step::Colon(decoded == "operations")
+                    Step::Colon(match decoded.as_ref() {
+                        "operations" => RootValue::Operations,
+                        "queries" => RootValue::Queries,
+                        _ => RootValue::Other,
+                    })
                 }
                 Step::Key => return Err(CallFailure::Invalid),
                 Step::Colon(field) if byte == b':' => {
@@ -290,17 +302,35 @@ impl Prefix {
                     Step::Value(field)
                 }
                 Step::Colon(_) => return Err(CallFailure::Invalid),
-                Step::Value(true) if byte == b'[' => {
+                Step::Value(RootValue::Operations)
+                    if fields.contains_key("queries") && !self.decision_confirmed =>
+                {
+                    // Reordered provider output must settle before disclosure.
+                    // Only an explicit no-query answer permits an early quote.
+                    Step::Ended
+                }
+                Step::Value(RootValue::Operations) if byte == b'[' => {
                     self.at += 1;
                     Step::FirstOperation
                 }
-                Step::Value(true) => return Err(CallFailure::Invalid),
-                Step::Value(false) => {
-                    let Some((_, consumed)) = json_prefix(rest)? else {
+                Step::Value(RootValue::Operations) => return Err(CallFailure::Invalid),
+                Step::Value(field) => {
+                    let Some((raw, consumed)) = json_prefix(rest)? else {
                         return Ok(None);
                     };
                     self.at += consumed;
-                    Step::Comma
+                    if field == RootValue::Queries {
+                        self.decision_confirmed = raw.get() == "null"
+                            || raw.get().starts_with('[')
+                                && raw.get()[1..raw.get().len() - 1].trim().is_empty();
+                        if !self.decision_confirmed {
+                            Step::Ended
+                        } else {
+                            Step::Comma
+                        }
+                    } else {
+                        Step::Comma
+                    }
                 }
                 Step::Comma if byte == b',' => {
                     self.at += 1;

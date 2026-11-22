@@ -7,7 +7,7 @@ use crate::reception::{
     LocationGeometrySample, ReceivedSceneBody, ReceivedSceneRead, current_received_geometry,
 };
 use crate::state::Point;
-mod measurement;
+pub(crate) mod measurement;
 use measurement::{Body, PointSample, Span};
 
 struct Anchor {

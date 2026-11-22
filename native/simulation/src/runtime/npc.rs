@@ -18,6 +18,7 @@ mod origin;
 mod personal;
 mod perspectives;
 mod presentation;
+mod queries;
 pub use crate::appraisals::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
 pub(super) use bindings::ActiveNpcResponse;
 pub use bindings::{
@@ -29,6 +30,7 @@ pub(crate) use held_sources::HeldSourceProof;
 pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};
 pub use personal::{RuntimeNpcPersonalSource, RuntimeNpcPersonalSources};
 pub use presentation::{RuntimeNpcObservedBody, RuntimeNpcPresentedBody};
+pub use queries::{RuntimeNpcSeparation, RuntimeNpcSeparationEvidence};
 
 /// A brief dispatch gate, never retained while SQL or a provider is awaited.
 /// Historical disclosure and current response semantics are separate routes.
@@ -166,6 +168,45 @@ impl NativeWorldSession {
         &self,
         ticket: &mut Option<RuntimeNpcResponseTicket>,
     ) -> Result<(RuntimeNpcRead, RuntimeNpcRead), RuntimeError> {
+        let owned = self.take_npc_response_for_query(ticket)?;
+        Ok((owned.original, owned.current))
+    }
+
+    /// Recover the funded selection alongside the exact captured reads.
+    /// A second binding must recheck the permissions of this same evidence.
+    pub fn open_npc_response_direct(
+        &self,
+        ticket: RuntimeNpcResponseTicket,
+    ) -> Result<
+        (
+            RuntimeNpcRead,
+            RuntimeNpcRead,
+            RuntimeNpcBindingRequest,
+            crate::attention::SceneAttentionPolicy,
+        ),
+        RuntimeError,
+    > {
+        self.npc_response_publication(&ticket)?.map_err(stale)?;
+        let policy = self
+            .session
+            .accepted()
+            .map_err(failure)?
+            .state
+            .installed
+            .attention
+            .value()
+            .scene
+            .clone();
+        let (first, current, request) = self
+            .take_npc_response_for_query(&mut Some(ticket))?
+            .into_query()?;
+        Ok((first, current, request, policy))
+    }
+
+    fn take_npc_response_for_query(
+        &self,
+        ticket: &mut Option<RuntimeNpcResponseTicket>,
+    ) -> Result<RuntimeNpcResponseTicket, RuntimeError> {
         self.require_active()?;
         let checked = ticket
             .as_ref()
@@ -184,7 +225,7 @@ impl NativeWorldSession {
             .take()
             .ok_or_else(|| failure("NPC response was released"))?;
         owned.original.query_expanded = true;
-        Ok((owned.original, owned.current))
+        Ok(owned)
     }
 
     pub fn npc_history_publication(
@@ -301,6 +342,27 @@ impl NativeWorldSession {
             .any(|source| !source.scope.still_permitted(state))
         {
             return Ok(Err("native-response-additional-history"));
+        }
+        if ticket.checks_query_evidence {
+            let cut = &ticket.original.read.perception.evidence;
+            let law = state.installed.account_law();
+            if ticket
+                .bindings
+                .situation
+                .current_references
+                .values()
+                .any(|&ordinal| {
+                    !crate::experience::evidence_cut_member_eligible(
+                        &state.experience,
+                        &state.physical.entities,
+                        cut,
+                        crate::experience::EvidenceCutMember::Current(ordinal),
+                        &law,
+                    )
+                })
+            {
+                return Ok(Err("native-response-query-evidence"));
+            }
         }
         if !npc_consumer_current(
             state,
