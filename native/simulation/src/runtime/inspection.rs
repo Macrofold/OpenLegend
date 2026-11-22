@@ -16,6 +16,7 @@ pub struct RuntimeWorldInspection<'a> {
 pub enum RuntimeDefinitionKind {
     Item,
     Attribute,
+    BodyPolicy,
 }
 
 pub struct RuntimeDefinitionInspection<'a> {
@@ -45,6 +46,15 @@ impl NativeWorldSession {
                 Some(RuntimeDefinitionInspection {
                     name: attribute.value().name.as_str().into(),
                     payload: attribute.source(),
+                })
+            }
+            RuntimeDefinitionKind::BodyPolicy => {
+                if id != "current" {
+                    return None;
+                }
+                Some(RuntimeDefinitionInspection {
+                    name: "Body policy".into(),
+                    payload: installed.body_policy.as_ref()?.source(),
                 })
             }
         });

@@ -26,10 +26,11 @@ const CONTEXT: &str = "ol_context";
 const INSPECT: &str = "ol_inspect";
 const ITEM_DEFINITION: &str = "item-definition";
 const ATTRIBUTE: &str = "attribute";
+const BODY_POLICY: &str = "body-policy";
 const RESULT_BYTES: usize = 64 * 1024;
 const CONTEXT_DESCRIPTION: &str =
     "Inspect the current world profile, installed revision, policy and available read tools.";
-const INSPECT_DESCRIPTION: &str = "Read an exact installed item or attribute definition. No live bodies, inventory, memory or authoring data.";
+const INSPECT_DESCRIPTION: &str = "Read an exact installed item, attribute or body policy definition. No live bodies, inventory, memory or authoring data.";
 
 #[derive(Clone)]
 pub(super) struct WorldTools {
@@ -254,6 +255,7 @@ fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Fa
             let kind = match input.kind.as_str() {
                 ITEM_DEFINITION => RuntimeDefinitionKind::Item,
                 ATTRIBUTE => RuntimeDefinitionKind::Attribute,
+                BODY_POLICY => RuntimeDefinitionKind::BodyPolicy,
                 _ => return Err(Failure::Unavailable),
             };
             Ok(Selection::Inspect(input, kind))
@@ -293,7 +295,7 @@ impl Selection {
                     controlled_actor_id: None,
                     manifest_revision: read.manifest_revision,
                     policy: raw(read.policy)?,
-                    definition_kinds: &[ITEM_DEFINITION, ATTRIBUTE],
+                    definition_kinds: &[ITEM_DEFINITION, ATTRIBUTE, BODY_POLICY],
                     tools: [
                         Description {
                             name: CONTEXT,
