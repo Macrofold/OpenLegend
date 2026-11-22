@@ -16,7 +16,7 @@ Scope/dependencies: Before external test; R06 and R17. Original decision status:
 
 ### D9 — Minimum client devices
 
-Exact browser/device qualification remains open; a later mobile/tablet or native expansion requires its own selected scope
+The installed [UE5 player](../../projects/unreal-engine-5-migration-feature-spec.md#decisions-and-delegation) needs a minimum supported PC, frame-time/resolution target and accessibility/input promise. The browser tools retain their device qualification. Mobile/tablet player support remains conditional.
 
 Scope/dependencies: Before performance promises; R01; [DG35 decision](../../projects/completed/platform-and-offline-decision-brief.md). Original decision status: **open**.
 
