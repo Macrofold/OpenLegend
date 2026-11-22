@@ -10,6 +10,26 @@ use crate::received::{
 };
 use crate::worlds::RecognitionPrivacyPreparation;
 
+pub(crate) struct RecollectionWording {
+    pub(crate) text: Option<crate::text::JsText>,
+    // None is an unchanged field. Some(None) removes existing content.
+    pub(crate) content: Option<Option<crate::text::JsText>>,
+}
+
+impl RecollectionWording {
+    pub(super) fn bytes(&self) -> usize {
+        self.text
+            .as_ref()
+            .map_or(0, crate::text::JsText::storage_bytes)
+            .saturating_add(
+                self.content
+                    .as_ref()
+                    .and_then(Option::as_ref)
+                    .map_or(0, crate::text::JsText::storage_bytes),
+            )
+    }
+}
+
 pub(crate) enum PrivacyEditMode {
     Forget,
     ForgetSource {
@@ -25,7 +45,7 @@ pub(crate) enum PrivacyEditMode {
         kind: PersonalSourceKind,
         revision: String,
         importance: f64,
-        text: crate::text::JsText,
+        wording: RecollectionWording,
     },
     InvalidateProse,
     Correct {
@@ -81,9 +101,9 @@ impl PrivacyEditMode {
     pub(super) fn retained_bytes(&self) -> usize {
         match self {
             Self::Forget | Self::InvalidateProse => 0,
-            Self::Rewrite { revision, text, .. } => {
-                revision.capacity().saturating_add(text.storage_bytes())
-            }
+            Self::Rewrite {
+                revision, wording, ..
+            } => revision.capacity().saturating_add(wording.bytes()),
             Self::Correct { event_id } => event_id.capacity(),
             Self::ForgetSource { revision, .. } | Self::Rank { revision, .. } => {
                 revision.capacity()

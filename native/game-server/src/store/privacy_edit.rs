@@ -284,17 +284,9 @@ impl PrivacyProjection<'_> {
               &super::recall::semantic::query_key(world, actor)?],
         ).await?;
         if let Some(principal) = &self.edit.principal {
-            tx.execute(
-                "WITH revoked AS MATERIALIZED (
-                   SELECT narration_id FROM story_event_sources WHERE world_id=$1 AND owner_id=$2 AND event_id=ANY($3::text[])
-                   UNION SELECT narration_id FROM story_context_sources WHERE world_id=$1 AND owner_id=$2 AND event_id=ANY($3::text[])
-                 ), banners AS (DELETE FROM story_banners WHERE world_id=$1 AND owner_id=$2 AND id IN (SELECT narration_id FROM revoked)),
-                 narration AS (DELETE FROM story_narrations WHERE world_id=$1 AND owner_id=$2 AND id IN (SELECT narration_id FROM revoked)),
-                 jobs AS (DELETE FROM story_jobs WHERE world_id=$1 AND owner_id=$2 AND id IN (SELECT narration_id FROM revoked)),
-                 events AS (DELETE FROM story_event_sources WHERE world_id=$1 AND owner_id=$2 AND narration_id IN (SELECT narration_id FROM revoked))
-                 DELETE FROM story_context_sources WHERE world_id=$1 AND owner_id=$2 AND narration_id IN (SELECT narration_id FROM revoked)",
-                &[&world,principal,&forgotten],
-            ).await?;
+            self.store
+                .revoke_story_sources(tx, world, principal, &forgotten)
+                .await?;
         }
         Ok(())
     }

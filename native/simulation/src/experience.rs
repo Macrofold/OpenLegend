@@ -82,6 +82,7 @@ mod privacy_prepare;
 mod privacy_run;
 pub(crate) use privacy_run::{
     CompletedPrivacyEdit, PrivacyEditAnswer, PrivacyEditCursor, PrivacyEditMode, PrivacyEditStep,
+    RecollectionWording,
 };
 mod ranking_edit;
 mod recall_edit;

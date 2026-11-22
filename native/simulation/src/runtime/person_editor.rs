@@ -16,7 +16,7 @@ impl NativeWorldSession {
     pub fn inspect_person_editor<T>(
         &self,
         actor: &str,
-        read: impl FnOnce(&crate::text::JsText, PersonEditorCut<'_>) -> T,
+        read: impl FnOnce(&crate::text::JsText, PersonEditorCut<'_>, &str) -> T,
     ) -> Result<Option<T>, RuntimeError> {
         let state = &self.session.publication_read().map_err(failure)?.state;
         let Some(entity) = state
@@ -43,6 +43,7 @@ impl NativeWorldSession {
                     .cloned(),
                 life: body.physical_life.unwrap_or(0),
             },
+            &state.installed.occurrence_rules.value().speech_event,
         )))
     }
 }
@@ -53,18 +54,37 @@ pub enum PersonMemoryEdit {
     Update {
         importance: f64,
         text: Option<crate::text::JsText>,
+        content: Option<Option<crate::text::JsText>>,
     },
     Forget,
 }
 impl PersonMemoryEdit {
     pub fn withdraws_source(&self) -> bool {
-        matches!(self, Self::Forget | Self::Update { text: Some(_), .. })
+        matches!(
+            self,
+            Self::Forget
+                | Self::Update { text: Some(_), .. }
+                | Self::Update {
+                    content: Some(_),
+                    ..
+                }
+        )
     }
 
     pub fn valid(&self, kind: crate::experience::PersonalSourceKind) -> bool {
         match self {
-            Self::Update { importance, text } => {
+            Self::Update {
+                importance,
+                text,
+                content,
+            } => {
                 (0.0..=10.0).contains(importance)
+                    && (content.is_none()
+                        || kind == crate::experience::PersonalSourceKind::Awareness)
+                    && content
+                        .as_ref()
+                        .and_then(Option::as_ref)
+                        .is_none_or(|text| text.character_count() <= 20_000)
                     && text.as_ref().is_none_or(|text| {
                         text.character_count()
                             <= if kind == crate::experience::PersonalSourceKind::Memory {
@@ -90,14 +110,13 @@ impl NativeWorldSession {
         edit: PersonMemoryEdit,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
-        if reference.kind == crate::experience::PersonalSourceKind::Awareness
-            || !reference.validate()
+        if !reference.validate()
             || !crate::values::is_safe_record_id(&reference.id)
             || !edit.valid(reference.kind)
         {
             return Err(failure("invalid memory edit"));
         }
-        if self.inspect_person_editor(actor, |_, current| current == *expected)? != Some(true) {
+        if self.inspect_person_editor(actor, |_, current, _| current == *expected)? != Some(true) {
             return Err(stale("person-editor-cut"));
         }
         use crate::experience::PrivacyEditMode;
@@ -105,6 +124,7 @@ impl NativeWorldSession {
             PersonMemoryEdit::Update {
                 importance,
                 text: None,
+                content: None,
             } => PrivacyEditMode::Rank {
                 kind: reference.kind,
                 revision: reference.revision,
@@ -112,12 +132,13 @@ impl NativeWorldSession {
             },
             PersonMemoryEdit::Update {
                 importance,
-                text: Some(text),
+                text,
+                content,
             } => PrivacyEditMode::Rewrite {
                 kind: reference.kind,
                 revision: reference.revision,
                 importance,
-                text,
+                wording: crate::experience::RecollectionWording { text, content },
             },
             PersonMemoryEdit::Forget => PrivacyEditMode::ForgetSource {
                 kind: reference.kind,

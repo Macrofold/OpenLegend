@@ -1,7 +1,7 @@
 //! The ordinary append SQL row records a permitted acquired account. Its
 //! revision and participant columns follow history-append.ts.
 
-use super::super::{StoreError, StoreResult, sql_ordinal};
+use super::super::{Store, StoreError, StoreResult, read::admitted_query, sql_ordinal};
 use crate::language::canonical::{KeyOrder, write_canonical};
 use indexmap::IndexMap;
 use openlegend_simulation::{
@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize, Serializer};
 use serde_json::value::RawValue;
 use sha2::{Digest, Sha256};
 use std::{borrow::Cow, io};
+use tokio_postgres::Transaction;
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -394,6 +395,106 @@ impl io::Write for HashWriter {
         Ok(bytes.len())
     }
     fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+impl Store {
+    /// Replace only an existing observer's historical view of the selected event.
+    /// Preserve the original occurrence and every other observer in the same save.
+    pub(crate) async fn replace_awareness_perspective(
+        &self,
+        tx: &Transaction<'_>,
+        world: &str,
+        actor: &str,
+        event: &str,
+        body: &str,
+        account_revision: &str,
+    ) -> StoreResult<()> {
+        let (_read, rows) = admitted_query(
+            tx,
+            "SELECT p.payload,e.payload FROM history_perspectives p
+             JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id
+             WHERE p.world_id=$1 AND p.event_id=$2 AND p.actor_id=$3",
+            &[&world, &event, &actor],
+            &self.budget,
+        )
+        .await?;
+        let Some(row) = rows.first() else {
+            return Ok(());
+        };
+        #[derive(Deserialize)]
+        struct Prior<'a> {
+            id: &'a str,
+            time: f64,
+            order: i64,
+            #[serde(rename = "type")]
+            event_type: &'a str,
+        }
+        let mut custody = self.budget.reserve(0).map_err(|_| StoreError::Capacity)?;
+        let prior: &str = row.try_get(0)?;
+        let original: &str = row.try_get(1)?;
+        reserve(
+            &mut custody,
+            body.len()
+                .checked_add(prior.len())
+                .ok_or(StoreError::Capacity)?,
+        )?;
+        let prior: Prior<'_> =
+            serde_json::from_str(prior).map_err(|_| StoreError::InvalidRecord)?;
+        let awareness: AwarenessEvidence<'_> =
+            serde_json::from_str(body).map_err(|_| StoreError::InvalidRecord)?;
+        if prior.id != event || awareness.event_id != event || awareness.actor_id != actor {
+            return Err(StoreError::InvalidRecord);
+        }
+        // Draft edits cannot move the event or change any participant.
+        let payload = json_record(&StoredSource {
+            id: event,
+            revision: revision(&digest(original.as_bytes()), &awareness)?,
+            time: prior.time,
+            order: prior.order,
+            event_type: prior.event_type,
+            account: AccountRef::Awareness {
+                revision: account_revision.to_owned(),
+            },
+        })
+        .map_err(|_| StoreError::InvalidRecord)?;
+        let updated = tx
+            .execute(
+                "UPDATE history_perspectives SET payload=$4,temporal_life=NULL,temporal_epoch=NULL,
+             temporal_batch_order=NULL,temporal_entry_index=NULL
+             WHERE world_id=$1 AND event_id=$2 AND actor_id=$3",
+                &[&world, &event, &actor, &payload],
+            )
+            .await?;
+        if updated != 1 {
+            return Err(StoreError::StaleCut);
+        }
+        Ok(())
+    }
+
+    /// Drop direct and optional Journal citations to a changed personal event.
+    pub(crate) async fn revoke_story_sources(
+        &self,
+        tx: &Transaction<'_>,
+        world: &str,
+        principal: &str,
+        sources: &[&str],
+    ) -> StoreResult<()> {
+        if sources.is_empty() {
+            return Ok(());
+        }
+        tx.execute(
+                "WITH revoked AS MATERIALIZED (
+                   SELECT narration_id FROM story_event_sources WHERE world_id=$1 AND owner_id=$2 AND event_id=ANY($3::text[])
+                   UNION SELECT narration_id FROM story_context_sources WHERE world_id=$1 AND owner_id=$2 AND event_id=ANY($3::text[])
+                 ), banners AS (DELETE FROM story_banners WHERE world_id=$1 AND owner_id=$2 AND id IN (SELECT narration_id FROM revoked)),
+                 narration AS (DELETE FROM story_narrations WHERE world_id=$1 AND owner_id=$2 AND id IN (SELECT narration_id FROM revoked)),
+                 jobs AS (DELETE FROM story_jobs WHERE world_id=$1 AND owner_id=$2 AND id IN (SELECT narration_id FROM revoked)),
+                 events AS (DELETE FROM story_event_sources WHERE world_id=$1 AND owner_id=$2 AND narration_id IN (SELECT narration_id FROM revoked))
+                 DELETE FROM story_context_sources WHERE world_id=$1 AND owner_id=$2 AND narration_id IN (SELECT narration_id FROM revoked)",
+                &[&world,&principal,&sources],
+            ).await?;
         Ok(())
     }
 }

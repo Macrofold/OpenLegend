@@ -7,7 +7,8 @@ use crate::{
 };
 use openlegend_simulation::{
     encoding::{json_record, json_tree_allocation_bound, sha256_hex},
-    experience::{PersonalSourceKind, PersonalSourceRef},
+    experience::{PersonalSourceKind, PersonalSourceRef, acquired_speech},
+    narration::{NativeText, native_text},
     runtime::{PersonEditorCut, PersonMemoryEdit, RuntimeDirectOutput, RuntimeError},
     text::JsText,
     values::is_safe_record_id,
@@ -40,6 +41,8 @@ struct SaveChange {
     importance: Option<f64>,
     summary: Option<JsText>,
     text: Option<JsText>,
+    #[serde(default, deserialize_with = "content_change")]
+    content: Option<Option<JsText>>,
 }
 
 #[derive(Deserialize)]
@@ -49,18 +52,33 @@ enum SaveOperation {
     Forget,
 }
 
+fn content_change<'de, D: serde::Deserializer<'de>>(
+    decoder: D,
+) -> Result<Option<Option<JsText>>, D::Error> {
+    Option::<JsText>::deserialize(decoder).map(Some)
+}
+
 impl SaveChange {
     fn into_edit(self, kind: PersonalSourceKind) -> Option<PersonMemoryEdit> {
         let wording = match kind {
-            PersonalSourceKind::Memory if self.text.is_none() => self.summary,
-            PersonalSourceKind::Summary if self.summary.is_none() => self.text,
+            PersonalSourceKind::Memory if self.text.is_none() && self.content.is_none() => {
+                self.summary
+            }
+            PersonalSourceKind::Summary if self.summary.is_none() && self.content.is_none() => {
+                self.text
+            }
+            PersonalSourceKind::Awareness if self.summary.is_none() => self.text,
             _ => return None,
         };
-        match (self.operation, self.importance, wording) {
-            (SaveOperation::Update, Some(importance), text) => {
-                Some(PersonMemoryEdit::Update { importance, text })
+        match (self.operation, self.importance, wording, self.content) {
+            (SaveOperation::Update, Some(importance), text, content) => {
+                Some(PersonMemoryEdit::Update {
+                    importance,
+                    text,
+                    content,
+                })
             }
-            (SaveOperation::Forget, None, None) => Some(PersonMemoryEdit::Forget),
+            (SaveOperation::Forget, None, None, None) => Some(PersonMemoryEdit::Forget),
             _ => None,
         }
     }
@@ -76,6 +94,8 @@ struct Memory<'a> {
     tags: Vec<String>,
     source: &'static str,
     label: &'static str,
+    #[serde(rename = "eventType", skip_serializing_if = "Option::is_none")]
+    event_type: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -90,10 +110,29 @@ struct Page<'a> {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct BodyView<'a> {
     ok: bool,
     hash: &'a str,
     json: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    wording_editable: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    content: Option<JsText>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AwarenessView<'a> {
+    at: f64,
+    text: NativeText,
+    content: Option<NativeText>,
+    event_type: Option<String>,
+    #[serde(borrow)]
+    speech: Option<&'a serde_json::value::RawValue>,
+    modality: String,
+    recognized: bool,
+    entity_ids: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -148,6 +187,7 @@ async fn actor(
 fn editable_id(id: &str) -> Option<(PersonalSourceKind, &str)> {
     let (tag, id) = id.split_once(':')?;
     let kind = match tag {
+        "awareness" => PersonalSourceKind::Awareness,
         "memory" => PersonalSourceKind::Memory,
         "summary" => PersonalSourceKind::Summary,
         _ => return None,
@@ -235,10 +275,7 @@ async fn read_cut(
             }
             let position: MemoryPosition =
                 serde_json::from_str(json).map_err(|_| WorldError::ProjectionChanged)?;
-            if position.kind == PersonalSourceKind::Awareness
-                || !position.at.is_finite()
-                || !is_safe_record_id(&position.id)
-            {
+            if !position.at.is_finite() || !is_safe_record_id(&position.id) {
                 return Err(WorldError::ProjectionChanged);
             }
             Ok(position)
@@ -263,22 +300,36 @@ async fn read_cut(
                 return Err(WorldError::ProjectionChanged);
             };
             session
-                .inspect_person_editor(actor, |name, cut| {
+                .inspect_person_editor(actor, |name, cut, speech_event| {
                     history.sources().with_personal_sources(|sources| {
                         if exact.is_some() {
                             let (_, reference, payload) =
                                 sources.next().ok_or(WorldError::ProjectionChanged)?;
-                            return wire::encode(
-                                &BodyView {
-                                    ok: true,
-                                    hash: &reference.revision,
-                                    json: payload,
-                                },
-                                b"",
-                                b"",
-                                budget,
-                            )
-                            .map_err(WorldError::Wire);
+                            let mut view = BodyView {
+                                ok: true,
+                                hash: &reference.revision,
+                                json: payload,
+                                wording_editable: None,
+                                content: None,
+                            };
+                            let _details = if reference.kind == PersonalSourceKind::Awareness {
+                                let size = json_tree_allocation_bound(payload)
+                                    .ok_or(StoreError::Capacity)?;
+                                let custody =
+                                    budget.reserve(size).map_err(|_| StoreError::Capacity)?;
+                                let body: AwarenessView<'_> = serde_json::from_str(payload)
+                                    .map_err(|_| StoreError::InvalidRecord)?;
+                                view.wording_editable = Some(!acquired_speech(
+                                    body.event_type.as_deref(),
+                                    body.speech.is_some(),
+                                    speech_event,
+                                ));
+                                view.content = body.content.as_ref().map(native_text);
+                                Some(custody)
+                            } else {
+                                None
+                            };
+                            return wire::encode(&view, b"", b"", budget).map_err(WorldError::Wire);
                         }
                         let mut held = budget
                             .reserve(4096 + count * std::mem::size_of::<Memory<'_>>())
@@ -325,6 +376,25 @@ async fn read_cut(
 }
 
 fn memory<'a>(reference: &'a PersonalSourceRef, payload: &str) -> Result<Memory<'a>, StoreError> {
+    if reference.kind == PersonalSourceKind::Awareness {
+        let body: AwarenessView<'_> =
+            serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
+        let event_type = body.event_type.unwrap_or_else(|| body.modality.clone());
+        let tags = std::iter::once(body.modality)
+            .chain(body.recognized.then(|| "recognized".to_owned()))
+            .chain(body.entity_ids)
+            .collect();
+        return Ok(Memory {
+            id: format!("awareness:{}", reference.id),
+            hash: &reference.revision,
+            time: body.at,
+            text: native_text(&body.text),
+            tags,
+            source: "awareness",
+            label: "Raw",
+            event_type: Some(event_type),
+        });
+    }
     if reference.kind == PersonalSourceKind::Summary {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
@@ -348,6 +418,7 @@ fn memory<'a>(reference: &'a PersonalSourceRef, payload: &str) -> Result<Memory<
                 .collect(),
             source: "summary",
             label: "Consolidated",
+            event_type: None,
         });
     }
     #[derive(Deserialize)]
@@ -377,6 +448,7 @@ fn memory<'a>(reference: &'a PersonalSourceRef, payload: &str) -> Result<Memory<
         tags,
         source: "memory",
         label: "Raw",
+        event_type: None,
     })
 }
 
@@ -416,7 +488,7 @@ pub(super) async fn save(State(state): State<PlayerRoutes>, request: Request) ->
         return refusal(
             StatusCode::BAD_REQUEST,
             "invalid-memory",
-            "Use an importance from 0 to 10 and up to 32,768 characters of memory text.",
+            "Use an importance from 0 to 10 and shorter memory text.",
         );
     }
     let actor = match actor(&state, &scope, input.actor_id).await {

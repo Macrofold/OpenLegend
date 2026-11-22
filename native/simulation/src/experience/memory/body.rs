@@ -27,6 +27,10 @@ impl MemoryBody {
             })
             .transpose()
     }
+    pub(in super::super) fn remove(&mut self, key: &str) {
+        self.fields.shift_remove(key);
+    }
+
     pub(in super::super) fn contains(&self, key: &str) -> bool {
         self.fields.contains_key(key)
     }

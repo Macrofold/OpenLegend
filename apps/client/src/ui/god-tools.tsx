@@ -510,6 +510,8 @@ function MemoryEditor({
     changeImportance(value: string): void;
     summary: string;
     changeSummary(value: string): void;
+    wordingEditable: boolean;
+    content?: { text: string; change(value: string): void };
     forgetting: boolean;
     toggleForget(): void;
   };
@@ -569,11 +571,23 @@ function MemoryEditor({
                 Memory text
                 <textarea
                   rows={4}
-                  disabled={edit.forgetting}
+                  disabled={edit.forgetting || !edit.wordingEditable}
                   value={edit.summary}
                   onChange={(event) => edit.changeSummary(event.target.value)}
                 />
               </label>
+              {!edit.wordingEditable && <p className="ol-caption">Speech wording is fixed.</p>}
+              {edit.content && (
+                <label>
+                  Remembered detail
+                  <textarea
+                    rows={3}
+                    disabled={edit.forgetting || !edit.wordingEditable}
+                    value={edit.content.text}
+                    onChange={(event) => edit.content?.change(event.target.value)}
+                  />
+                </label>
+              )}
               <Button variant={edit.forgetting ? 'quiet' : 'danger'} onPress={edit.toggleForget}>
                 {edit.forgetting ? 'Keep memory' : 'Forget memory'}
               </Button>
@@ -619,10 +633,17 @@ export function PersonMemoryEditor({
   const [previous, setPrevious] = useState('');
   const [summary, setSummary] = useState('');
   const [previousSummary, setPreviousSummary] = useState('');
+  const [wordingEditable, setWordingEditable] = useState(true);
+  const [content, setContent] = useState('');
+  const [previousContent, setPreviousContent] = useState('');
   const [forgetting, setForgetting] = useState(false);
   const [refreshAt, setRefreshAt] = useState<Date | null>(null);
   const dirty =
-    !!selected?.json && (forgetting || importance !== previous || summary !== previousSummary);
+    !!selected?.json &&
+    (forgetting ||
+      importance !== previous ||
+      summary !== previousSummary ||
+      content !== previousContent);
   const valid =
     forgetting || (!!importance.trim() && Number(importance) >= 0 && Number(importance) <= 10);
   const load = useCallback(
@@ -682,22 +703,31 @@ export function PersonMemoryEditor({
     setError('');
     if (!entry) return;
     try {
-      const result = await post<{ ok: boolean; message?: string; hash?: string; json?: string }>(
-        '/api/god/editor/person/memory',
-        { actorId, entryId: id },
-      );
+      const result = await post<{
+        ok: boolean;
+        message?: string;
+        hash?: string;
+        json?: string;
+        wordingEditable?: boolean;
+        content?: string;
+      }>('/api/god/editor/person/memory', { actorId, entryId: id });
       if (generation.current !== attempt) return;
       if (!result.ok || !result.json || result.hash !== entry.hash)
         throw new Error(result.message || 'This memory changed. Refresh and try again.');
       const record = JSON.parse(result.json) as {
         importance: number;
         summary?: string;
-        text?: string;
+        text?: unknown;
       };
       setSelected({ ...entry, json: JSON.stringify(record, null, 2) });
       setPrevious(String(record.importance));
       setImportance(String(record.importance));
-      const wording = record.summary ?? record.text ?? '';
+      const wording =
+        record.summary ?? (typeof record.text === 'string' ? record.text : entry.text);
+      setWordingEditable(result.wordingEditable ?? true);
+      const detail = result.content ?? '';
+      setContent(detail);
+      setPreviousContent(detail);
       setPreviousSummary(wording);
       setSummary(wording);
       setForgetting(false);
@@ -726,6 +756,8 @@ export function PersonMemoryEditor({
               importance: Number(importance),
               ...(summary !== previousSummary &&
                 (selected.source === 'memory' ? { summary } : { text: summary })),
+              ...(selected.source === 'awareness' &&
+                content !== previousContent && { content: content || null }),
             },
         cut: {
           generation: loaded.generation,
@@ -781,6 +813,7 @@ export function PersonMemoryEditor({
       onDiscard={() => {
         setImportance(previous);
         setSummary(previousSummary);
+        setContent(previousContent);
         setForgetting(false);
         setError('');
       }}
@@ -811,6 +844,10 @@ export function PersonMemoryEditor({
                   changeImportance: setImportance,
                   summary,
                   changeSummary: setSummary,
+                  wordingEditable,
+                  ...(selected?.source === 'awareness' && {
+                    content: { text: content, change: setContent },
+                  }),
                   forgetting,
                   toggleForget: () => setForgetting((previous) => !previous),
                 }}

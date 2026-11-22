@@ -20,9 +20,25 @@ struct PreparedReplacement {
     id: String,
     previous: String,
     record: String,
-    placement: Placement,
+    placement: EditorPlacement,
     hard_bytes: i64,
     _custody: ByteReservation,
+}
+
+enum EditorPlacement {
+    Retained(Placement),
+    Awareness(Box<AccountRow>, Option<String>),
+}
+
+impl EditorPlacement {
+    fn retained_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Retained(row) => row.retained_bytes(),
+            Self::Awareness(row, principal) => row
+                .resident_bytes()?
+                .checked_add(principal.as_ref().map_or(0, String::capacity)),
+        }
+    }
 }
 
 pub(crate) struct PreparedMemoryEdit {
@@ -143,18 +159,44 @@ impl Store {
                         .ok_or(StoreError::Capacity)?,
                 )
                 .map_err(|_| StoreError::Capacity)?;
-            let placement = compile_placement(
-                progress.world_id,
-                kind,
-                AccountImage {
-                    record: &row.id,
-                    actor,
-                    id,
-                    revision: next,
-                    payload: &row.payload,
-                },
-                &decoder,
-            )?;
+            let placement = if kind == PersonalSourceKind::Awareness {
+                let account = decoder
+                    .with_awareness(&row.payload, next, |awareness, learning, place| {
+                        AccountRow::prepare(
+                            progress.world_id,
+                            &row.id,
+                            row.payload.len(),
+                            actor,
+                            id,
+                            next,
+                            awareness,
+                            learning,
+                            place,
+                        )
+                    })
+                    .map_err(|error| match error {
+                        ExperienceError::Capacity => StoreError::Capacity,
+                        _ => StoreError::InvalidRecord,
+                    })??;
+                let principal = product
+                    .retain_history()
+                    .story_principal(actor)
+                    .map(str::to_owned);
+                EditorPlacement::Awareness(Box::new(account), principal)
+            } else {
+                EditorPlacement::Retained(compile_placement(
+                    progress.world_id,
+                    kind,
+                    AccountImage {
+                        record: &row.id,
+                        actor,
+                        id,
+                        revision: next,
+                        payload: &row.payload,
+                    },
+                    &decoder,
+                )?)
+            };
             custody
                 .resize(
                     placement
@@ -264,14 +306,55 @@ impl PrefixProjection for EditorProjection<'_> {
         let Some(row) = &self.prepared.replacement else {
             return Ok(());
         };
-        self.store
-            .insert_retained_accounts(
-                tx,
-                &row.world,
-                source_kind(row.kind),
-                row.hard_bytes,
-                std::slice::from_ref(&row.placement),
-            )
-            .await
+        match &row.placement {
+            EditorPlacement::Retained(placement) => {
+                self.store
+                    .insert_retained_accounts(
+                        tx,
+                        &row.world,
+                        source_kind(row.kind),
+                        row.hard_bytes,
+                        std::slice::from_ref(placement),
+                    )
+                    .await
+            }
+            EditorPlacement::Awareness(account, principal) => {
+                let [saved] = save
+                    .changes
+                    .writes
+                    .get(row.kind.table())
+                    .map_or(&[][..], Vec::as_slice)
+                else {
+                    return Err(StoreError::StaleCut);
+                };
+                if saved.id != row.record {
+                    return Err(StoreError::StaleCut);
+                }
+                self.store
+                    .write_awareness_rows(
+                        tx,
+                        &row.world,
+                        row.hard_bytes,
+                        std::slice::from_ref(account.as_ref()),
+                    )
+                    .await?;
+                self.store
+                    .replace_awareness_perspective(
+                        tx,
+                        &row.world,
+                        &row.actor,
+                        &row.id,
+                        &saved.payload,
+                        &account.revision,
+                    )
+                    .await?;
+                if let Some(principal) = principal {
+                    self.store
+                        .revoke_story_sources(tx, &row.world, principal, &[&row.id])
+                        .await?;
+                }
+                Ok(())
+            }
+        }
     }
 }

@@ -4,7 +4,8 @@ use super::*;
 
 const PAGE: usize = 100;
 const SELECT: &str = "SELECT r.at,r.id,r.source_kind,r.revision FROM recall_sources r
-    WHERE r.world_id=$1 AND r.actor_id=$2 AND r.source_kind IN ('memory','summary') AND r.at<=$3
+    WHERE r.world_id=$1 AND r.actor_id=$2 AND r.retention_class='memory' AND r.at<=$3
+      AND (r.source_kind<>'awareness' OR r.at<$3 OR r.sequence<=$10)
       AND ($4::double precision IS NULL OR (r.at,r.id,r.source_kind)<($4,$5,$6))
       AND ($7::text IS NULL OR (r.id,r.source_kind)=($7,$8))
     ORDER BY r.at DESC,r.id DESC,r.source_kind DESC LIMIT $9";
@@ -40,6 +41,7 @@ impl Store {
                         &exact.as_ref().map(|(_, id)| id.as_str()),
                         &exact.as_ref().map(|(kind, _)| source_kind(*kind)),
                         &(count as i64),
+                        &sql_ordinal(cut.identity_through)?,
                     ],
                     &budget,
                 )

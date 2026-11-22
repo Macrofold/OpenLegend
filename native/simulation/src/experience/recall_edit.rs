@@ -143,7 +143,7 @@ struct MemoryRewrite {
     kind: PersonalSourceKind,
     revision: String,
     importance: f64,
-    text: crate::text::JsText,
+    wording: RecollectionWording,
 }
 pub(crate) enum RecallAdmission {
     Live(Option<crate::runtime::HeldSourceProof>),
@@ -154,6 +154,7 @@ enum Disposition {
     Accepted,
     Refused,
     NotRetained,
+    FixedSpeech,
 }
 fn ranking_outcome(ok: bool, code: &str, message: &str) -> Outcome {
     Outcome {
@@ -319,6 +320,9 @@ impl RecallEditCursor {
             outcome: match disposition {
                 Disposition::Accepted => success,
                 Disposition::Refused => refused,
+                Disposition::FixedSpeech => {
+                    ranking_outcome(false, "fixed-speech", "Speech wording is fixed.")
+                }
                 Disposition::NotRetained => {
                     self.unavailable.take().ok_or(ExecutionError::Invariant)?
                 }
@@ -393,22 +397,23 @@ impl RecallEditCursor {
             if let Some(PrivacyEditMode::Rewrite {
                 kind,
                 revision,
-                text,
+                wording,
                 ..
             }) = self.mode.as_ref()
             {
-                let changed = super::ranking_edit::prose_changed(
+                use super::ranking_edit::ProseStatus;
+                let changed = super::ranking_edit::prose_status(
                     core,
                     &self.actor,
                     *kind,
                     &self.source,
                     revision,
-                    text,
+                    wording,
                     budget,
                 );
                 match changed {
-                    Ok(Some(true)) => (),
-                    Ok(Some(false)) => {
+                    Ok(ProseStatus::Changed) => (),
+                    Ok(ProseStatus::Unchanged) => {
                         let Some(PrivacyEditMode::Rewrite {
                             kind,
                             revision,
@@ -424,10 +429,13 @@ impl RecallEditCursor {
                             importance,
                         });
                     }
-                    Ok(None) => {
+                    Ok(status @ (ProseStatus::Stale | ProseStatus::FixedSpeech)) => {
                         self.abort(core)?;
                         return Ok(RecallEditStep::Complete(self.complete(
-                            Disposition::NotRetained,
+                            match status {
+                                ProseStatus::FixedSpeech => Disposition::FixedSpeech,
+                                _ => Disposition::NotRetained,
+                            },
                             None,
                             None,
                         )?));
@@ -574,13 +582,13 @@ impl RecallEditCursor {
                     kind,
                     revision,
                     importance,
-                    text,
+                    wording,
                 } => {
                     self.rewrite = Some(MemoryRewrite {
                         kind,
                         revision,
                         importance,
-                        text,
+                        wording,
                     });
                     PrivacyEditMode::InvalidateProse
                 }
@@ -630,7 +638,7 @@ impl RecallEditCursor {
                 &self.source,
                 &rewrite.revision,
                 rewrite.importance,
-                Some(&rewrite.text),
+                Some(&rewrite.wording),
                 budget,
             ) {
                 Ok(true) => (),

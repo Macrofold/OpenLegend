@@ -206,3 +206,8 @@ pub struct Awareness {
     )]
     pub source_receipt: Option<TemporalReceiptLocator>,
 }
+
+/// An acquired utterance keeps its original wording even in creator mode.
+pub fn acquired_speech(event_type: Option<&str>, has_speech: bool, speech_event: &str) -> bool {
+    event_type == Some(speech_event) || has_speech
+}
