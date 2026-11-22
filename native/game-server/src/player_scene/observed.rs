@@ -187,7 +187,6 @@ pub fn prepare_contacts(
     budget: &ByteBudget,
 ) -> Result<PreparedContacts, SceneError> {
     if read.trade_terms != "none"
-        || read.finite_weather_cue != "absent"
         || !references.matches_reader(read.world_id, read.actor_id)
     {
         return Err(SceneError::Capture);

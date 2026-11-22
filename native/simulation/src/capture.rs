@@ -663,9 +663,7 @@ pub(crate) fn capture_actor_perception(
             Ok::<_, ExecutionError>(CapturedPlayerPerception {
                 trade_terms: "none",
                 current_place_label: nearest.map(|place| place.label.clone()),
-                // Accepted read construction refuses live finiteRain before
-                // creating Simulation; keep that distinct family explicit.
-                finite_weather_cue: "absent",
+                weather: player.actor.world_position().and_then(|point| state.local_weather(point)),
             })
         })
         .transpose()?;

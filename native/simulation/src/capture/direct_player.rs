@@ -392,7 +392,7 @@ pub struct PlayerPerception<'a> {
     pub sight_confirmed_through: Option<f64>,
     pub current_place_label: Option<&'a JsText>,
     pub trade_terms: &'static str,
-    pub finite_weather_cue: &'static str,
+    pub weather: Option<&'a crate::weather::LocalWeather>,
 }
 
 /// An observed subject and the original permitted facets supporting its
@@ -456,7 +456,7 @@ impl<'a> PlayerPerception<'a> {
             sight_confirmed_through: read.sight_confirmed_through,
             current_place_label: player.current_place_label.as_ref(),
             trade_terms: player.trade_terms,
-            finite_weather_cue: player.finite_weather_cue,
+            weather: player.weather.as_ref(),
         })
     }
 

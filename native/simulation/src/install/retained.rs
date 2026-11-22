@@ -109,6 +109,7 @@ pub(crate) struct RetainedDefinitions {
     pub construction_profile: Option<RetainedOne>,
     pub contents_exposure_profiles: Option<RetainedMap>,
     pub daily_rain_definitions: Option<RetainedMap>,
+    pub daily_rain: Option<crate::weather::DailyRain>,
     pub participation_policy: Option<RetainedOne>,
     pub participation_read: Option<ParticipationReadPolicy>,
     pub native_strikes: Option<RetainedMap>,
@@ -434,8 +435,10 @@ pub(crate) fn install_retained(
     profile: (&str, u64),
     family_pins: &[crate::values::DefinitionPin],
     maximum_extent: f64,
+    clock_offset: f64,
+    finite_rain: Option<&crate::weather::FiniteRainInput>,
     budget: &crate::host::ByteBudget,
-) -> Result<RetainedDefinitions, InstallError> {
+) -> Result<(RetainedDefinitions, Option<crate::weather::FiniteRain>), InstallError> {
     let mut r = Reader {
         import,
         children,
@@ -623,14 +626,20 @@ pub(crate) fn install_retained(
         "config_assembly_families",
         input.assembly_families,
     )?;
-    let (construction_seed_families, _construction_families_preparation) =
+    let (construction_seed_families, _construction_families_preparation, finite_rain) =
         if let Some((rows, input)) = &assembly {
             let (_canonical_storage, canonical) = canonical_entries(rows, input, budget)?;
-            crate::construction_seed::prepare_families(&canonical, budget)?
+            let (families, preparation) = crate::construction_seed::prepare_families(&canonical, budget)?;
+            let cue = finite_rain.map(|cue| cue.verify(&canonical, budget)).transpose()?;
+            (families, preparation, cue)
         } else {
+            if finite_rain.is_some() {
+                return Err(InstallError::DefinitionBody);
+            }
             (
                 IndexMap::new(),
                 budget.reserve(0).map_err(|_| InstallError::Capacity)?,
+                None,
             )
         };
     let assembly_families = assembly.map(|(rows, _)| rows);
@@ -777,6 +786,23 @@ pub(crate) fn install_retained(
         items.get_index_mut(index).and_then(|(_, item)| item.recipe_record.as_mut())
             .ok_or(InstallError::DefinitionBody)?.available = available;
     }
+    let construction_profile = r.one(
+        "constructionProfile",
+        "config_construction_profile",
+        input.construction_profile,
+    )?;
+    let (daily_rain_definitions, daily_rain) = {
+        let rows = r.verified_map(
+            "dailyRainDefinitions", "config_daily_rain_definitions", input.daily_rain_definitions,
+        )?;
+        let canonical = rows.as_ref().map(|(rows, input)| canonical_entries(rows, input, budget))
+            .transpose()?;
+        let selected = crate::weather::install_daily(
+            construction_profile.as_ref().map(RetainedOne::payload),
+            canonical.as_ref().map(|(_, canonical)| canonical), clock_offset, budget,
+        )?;
+        (rows.map(|(rows, _)| rows), selected)
+    };
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
@@ -797,17 +823,10 @@ pub(crate) fn install_retained(
         hearths,
         assembly_families,
         construction_seed_families,
-        construction_profile: r.one(
-            "constructionProfile",
-            "config_construction_profile",
-            input.construction_profile,
-        )?,
+        construction_profile,
         contents_exposure_profiles,
-        daily_rain_definitions: r.map(
-            "dailyRainDefinitions",
-            "config_daily_rain_definitions",
-            input.daily_rain_definitions,
-        )?,
+        daily_rain_definitions,
+        daily_rain,
         participation_policy,
         participation_read,
         native_strikes,
@@ -840,7 +859,7 @@ pub(crate) fn install_retained(
             .map_err(|_| InstallError::Capacity)?,
     );
     installed.places_read.finish_install();
-    Ok(installed)
+    Ok((installed, finite_rain))
 }
 
 /// Read each exact installed definition once, alongside its canonical pin.

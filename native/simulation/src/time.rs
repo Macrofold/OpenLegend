@@ -1,5 +1,6 @@
 //! One ordered native advance lane. Participant membership is preparation over
 //! canonical components; it contains no cloned world or new mutation authority.
+pub(crate) mod local_clock;
 mod participants;
 pub(crate) use participants::{NativeParticipants, ParticipantPreparation};
 mod travel;

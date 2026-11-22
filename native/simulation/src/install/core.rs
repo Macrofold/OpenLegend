@@ -310,10 +310,21 @@ fn assemble_selected_core(
         budget,
     )?;
     content.fund(budget)?;
-    let retained = install_retained(
-        &mut import, &mut children, retained, &schema, &activity, (&content.profile.id, content.profile.version),
-        &meanings.manifest.recipe_families, spatial.max_extent, budget,
+    let has_finite_rain = child(&mut children, "finiteRain", false)?;
+    let finite_rain_row = rows::take_one_row(
+        &mut import, "sim_finite_rain", "[\"world\"]", "finiteRain", has_finite_rain,
     )?;
+    let _finite_rain_preparation = finite_rain_row.as_ref().map(|row| {
+        reserve_typed_parse::<crate::weather::FiniteRainInput>(&row.payload, 0, None, budget)
+    }).transpose()?;
+    let finite_rain_input = finite_rain_row.as_ref().map(|row| serde_json::from_str(&row.payload))
+        .transpose().map_err(|_| InstallError::CurrentFormat)?;
+    let (retained, finite_rain) = install_retained(
+        &mut import, &mut children, retained, &schema, &activity, (&content.profile.id, content.profile.version),
+        &meanings.manifest.recipe_families, spatial.max_extent,
+        meanings.status_policy.clock_offset_hours, finite_rain_input.as_ref(), budget,
+    )?;
+    drop((_finite_rain_preparation, finite_rain_input, finite_rain_row));
     physical.gifts.validate_definitions(&retained, budget)?;
     crate::flight::validate_corridors(
         &retained.flight_corridors,
@@ -580,6 +591,7 @@ fn assemble_selected_core(
         durable_revision: import.durable_revision(),
         installed,
         physical,
+        finite_rain,
         reception,
         experience: personal_install.experience,
         temporal,

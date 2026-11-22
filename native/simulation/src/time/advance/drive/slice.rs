@@ -137,7 +137,8 @@ impl AdvanceCursor {
             !steering.routes.is_empty(),
             budget,
         )?;
-        let mut seconds = sensed.seconds;
+        let weather = core.state.weather_at(now);
+        let mut seconds = sensed.seconds.min(weather.seconds_to_edge);
         // Only a stored absolute deadline owns an exact landing. A relative
         // duration keeps Source's subtraction residue; zeroing it early changes
         // shared-boundary work and later sampling chronology.

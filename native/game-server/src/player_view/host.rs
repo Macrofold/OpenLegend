@@ -137,7 +137,6 @@ impl ViewHostInput {
         read: &RuntimePlayerRead,
         policy: &PlayerViewPolicy,
         references: &PlayerReferences<'_>,
-        own: &PreparedSelf,
     ) -> Result<(ViewHostFacts, Option<NarrationBanner>), ViewError> {
         let input = read.view_source().map_err(runtime)?;
         let control = read.control_facts().map_err(runtime)?;
@@ -206,7 +205,7 @@ impl ViewHostInput {
                 narrator: None,
             },
             paused_stop: self.paused_stop,
-            weather: policy.world.weather_at(control.at, own.player.position),
+            weather: read.perception().map_err(runtime)?.weather.cloned(),
             maintenance: self.maintenance,
             presentation_release: None,
             presentation_release_revision,

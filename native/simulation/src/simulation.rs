@@ -154,6 +154,7 @@ pub(crate) struct SimulationState {
     pub durable_revision: u64,
     pub installed: Arc<InstalledWorld>,
     pub physical: PhysicalState,
+    pub(crate) finite_rain: Option<crate::weather::FiniteRain>,
     pub reception: ReceptionState,
     pub experience: ExperienceState,
     pub temporal: TemporalState,

@@ -268,5 +268,6 @@ pub(super) struct OwnPlayerView<'a> {
 pub(super) struct CapturedPlayerPerception {
     pub trade_terms: &'static str,
     pub current_place_label: Option<crate::text::JsText>,
-    pub finite_weather_cue: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub weather: Option<crate::weather::LocalWeather>,
 }

@@ -150,19 +150,9 @@ fn condition_transition(
     }
     let matches = read.evaluate_metered(bindings, condition, meters)?.matches;
     let after = match condition {
-        StatusCondition::Daily { daily_window } => {
-            let hour = read.local_hour();
-            let edge = |at: f64| {
-                let gap = at - hour;
-                let seconds = (if gap < 0.0 { gap + 24.0 } else { gap }) * 3600.0;
-                if seconds <= 0.0 {
-                    86400.0
-                } else {
-                    epsilon.max(seconds)
-                }
-            };
-            edge(daily_window.start).min(edge(daily_window.end))
-        }
+        StatusCondition::Daily { daily_window } => crate::time::local_clock::daily_boundary(
+            read.local_hour(), daily_window.start, daily_window.end, epsilon,
+        ),
         _ => f64::INFINITY,
     };
     Ok(Transition { matches, after })

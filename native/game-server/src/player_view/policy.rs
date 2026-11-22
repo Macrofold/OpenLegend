@@ -47,59 +47,12 @@ pub(crate) struct PublicWorld {
     pub invention_policy: Arc<RawValue>,
     pub construction_revision: Option<String>,
     pub milestones: Vec<MilestoneLabel>,
-    pub daily_rain: Option<DailyRain>,
 }
 
 #[derive(Deserialize)]
 pub(crate) struct MilestoneLabel {
     pub id: String,
     pub label: String,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct DailyRain {
-    min_x: f64,
-    max_x: f64,
-    min_z: f64,
-    max_z: f64,
-    start: f64,
-    end: f64,
-    raining: Arc<str>,
-    dry: Arc<str>,
-    intensity: f64,
-}
-
-#[derive(PartialEq, Serialize)]
-pub(crate) struct WeatherView {
-    label: Arc<str>,
-    intensity: f64,
-}
-
-impl PublicWorld {
-    pub(crate) fn weather_at(
-        &self,
-        at: f64,
-        point: openlegend_simulation::state::Point,
-    ) -> Option<WeatherView> {
-        let rain = self.daily_rain.as_ref()?;
-        let hour = (at / 3600.0 + self.offset_hours) % 24.0;
-        let hour = if hour < 0.0 { hour + 24.0 } else { hour };
-        // The installed daily vertical-rain family uses its actual local
-        // window and bounds. A finite cue is refused by the accepted capture.
-        let wet = rain.intensity > 0.0
-            && (rain.start..rain.end).contains(&hour)
-            && (rain.min_x..=rain.max_x).contains(&point.x)
-            && (rain.min_z..=rain.max_z).contains(&point.z);
-        Some(WeatherView {
-            label: if wet {
-                rain.raining.clone()
-            } else {
-                rain.dry.clone()
-            },
-            intensity: if wet { rain.intensity } else { 0.0 },
-        })
-    }
 }
 
 #[derive(Deserialize, Serialize)]

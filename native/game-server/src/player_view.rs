@@ -30,7 +30,8 @@ pub(crate) mod profile;
 pub(crate) use host::{ViewHostInput, capture_host, checkpoint_context};
 pub(crate) use patch::{PreviousView, ViewSelection};
 pub use policy::PlayerViewPolicy;
-use policy::{CartographyPolicy, Daylight, MapPolicy, PublicWorld, WeatherView};
+use openlegend_simulation::weather::LocalWeather;
+use policy::{CartographyPolicy, Daylight, MapPolicy, PublicWorld};
 
 const EVENT_WINDOW: usize = 512;
 
@@ -248,7 +249,7 @@ pub struct ViewHostFacts {
     pub inventory: InventoryReadRevision,
     pub history: HistoryViewFacts,
     pub paused_stop: Option<PausedStop>,
-    pub weather: Option<WeatherView>,
+    pub weather: Option<LocalWeather>,
     pub maintenance: Option<Arc<crate::operator_maintenance::Window>>,
     pub presentation_release: Option<Arc<RawValue>>,
     pub presentation_release_revision: Option<u64>,
@@ -407,7 +408,7 @@ pub(crate) async fn prepare_view(
             }
             let scoped = references.scoped(&scope).map_err(ViewError::Encoding)?;
             let (mut host, narrator) =
-                host.assemble(revision, save_failed, &read, &policy, &scoped, &own)?;
+                host.assemble(revision, save_failed, &read, &policy, &scoped)?;
             if let Some(mut banner) = narrator {
                 if banner
                     .select(&mut read, &scope.actor_id, &scoped, &budget)
@@ -725,7 +726,7 @@ struct CalendarView<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     daylight: Option<&'a Daylight>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    weather: Option<&'a WeatherView>,
+    weather: Option<&'a LocalWeather>,
 }
 #[derive(Serialize)]
 struct MapView<'a> {

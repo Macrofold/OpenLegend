@@ -1213,8 +1213,7 @@ impl StatusRead<'_> {
     }
 
     pub fn local_hour(&self) -> f64 {
-        let hour = (self.sim_time / 3600.0 + self.policy.clock_offset_hours) % 24.0;
-        if hour < 0.0 { hour + 24.0 } else { hour }
+        crate::time::local_clock::local_hour(self.sim_time, self.policy.clock_offset_hours)
     }
 
     /// The existing closed condition language, with the original left-to-right
@@ -1283,12 +1282,9 @@ impl StatusRead<'_> {
                 }
             }
             StatusCondition::Daily { daily_window } => {
-                let hour = self.local_hour();
-                if daily_window.start < daily_window.end {
-                    hour >= daily_window.start && hour < daily_window.end
-                } else {
-                    hour >= daily_window.start || hour < daily_window.end
-                }
+                crate::time::local_clock::in_daily_window(
+                    self.local_hour(), daily_window.start, daily_window.end,
+                )
             }
             StatusCondition::Has { has_attribute } => self
                 .value(

@@ -1,7 +1,6 @@
 import {
   commandDescriptions,
   nativeActionIcon,
-  selectedDailyRain,
   selectedEventPresentation,
   selectedPlayerControlCanUseInactive,
   selectedPlayerViewRules,
@@ -22,7 +21,6 @@ export function rustGameServerViewPolicy(world: WorldState) {
   const map = world.map;
   const art = presentation?.mapArt;
   const daylight = presentation?.daylight;
-  const rain = selectedDailyRain(world);
   return {
     scene: rustGameServerScenePolicy(world),
     events: {
@@ -44,17 +42,6 @@ export function rustGameServerViewPolicy(world: WorldState) {
       offsetHours: status.clockOffsetHours,
       baseRatio: (world.timePolicy ?? BASE_TIME_POLICY).normalGameSecondsPerSecond,
       milestones: selectedPlaytestMilestoneRules(world),
-      dailyRain: rain && {
-        minX: rain.region.bounds.minX,
-        maxX: rain.region.bounds.maxX,
-        minZ: rain.region.bounds.minZ,
-        maxZ: rain.region.bounds.maxZ,
-        start: rain.windowLocalHours.start,
-        end: rain.windowLocalHours.end,
-        raining: rain.labels.raining,
-        dry: rain.labels.dry,
-        intensity: rain.intensity,
-      },
       daylight: daylight && {
         startHour: status.namedTimes[daylight.startTime],
         endHour: status.namedTimes[daylight.endTime],

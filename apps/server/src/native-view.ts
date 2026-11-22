@@ -11,8 +11,6 @@ import {
   supportsStrikeBody,
   perceptionGuideFrom,
   acousticReach,
-  localWeatherAt,
-  selectedDailyRain,
   receivedEventEvidence,
   projectEventEvidence,
   ACTIVITY_DISPLAY_BYTES,
@@ -359,7 +357,6 @@ export interface NativePlayerViewDefinitions {
   readonly strikeSupported: boolean;
   readonly presentation: WorldState['presentation'];
   readonly knowledgePolicy: WorldState['knowledgePolicy'];
-  readonly dailyRain: ReturnType<typeof selectedDailyRain>;
   readonly acoustics: WorldState['moduleManifest']['acoustics'];
   readonly eventPresentation: ReturnType<typeof selectedEventPresentation>;
   readonly workBatchRevision: GameView['player']['workBatchRevision'];
@@ -387,7 +384,6 @@ export function nativePlayerViewDefinitions(
     | 'nativeStrikes'
     | 'knowledgePolicy'
     | 'constructionProfile'
-    | 'dailyRainDefinitions'
     | 'workBatchPolicy'
     | 'inventionPolicy'
   > &
@@ -482,7 +478,6 @@ export function nativePlayerViewDefinitions(
         strikeSupported: nativeCommandSupported(definitions, 'strike'),
         presentation: definitions.presentation,
         knowledgePolicy: definitions.knowledgePolicy,
-        dailyRain: selectedDailyRain(definitions),
         acoustics: definitions.moduleManifest.acoustics,
         eventPresentation: selectedEventPresentation(definitions),
         workBatchRevision: revision,
@@ -793,7 +788,7 @@ export interface NativePlayerActorPerception extends NativeActorPerception {
   readonly player: {
     readonly tradeTerms: 'none';
     readonly currentPlaceLabel: string | null;
-    readonly finiteWeatherCue: 'absent';
+    readonly weather?: { readonly label: string; readonly intensity: number };
   };
 }
 
@@ -811,8 +806,6 @@ export function nativePlayerWorldView(
   } & Pick<GameView['clock'], 'speed' | 'baseRatio' | 'paused' | 'pauseReason'>,
 ) {
   assertPlayerControlCut(self, controls);
-  if (perception.player.finiteWeatherCue !== 'absent')
-    throw new Error('Native player world display requires its admitted physical families.');
   const senses = self.player.senses;
   const policy = definitions.acoustics;
   const guide = perceptionGuideFrom({
@@ -856,13 +849,7 @@ export function nativePlayerWorldView(
       {
         ...operational,
         preparingNavigation: controls.preparingNavigation,
-        weather: localWeatherAt(
-          definitions.dailyRain,
-          undefined,
-          self.at,
-          definitions.statusPolicy.clockOffsetHours,
-          self.position,
-        ),
+        weather: perception.player.weather,
       },
     ),
   };

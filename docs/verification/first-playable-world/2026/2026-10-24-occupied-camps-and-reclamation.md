@@ -433,6 +433,31 @@ change refuses. Owned databases `9f258c8a8418455fbca444dbb8e8292c` and
 pass. Contrasting profiles, wider daily/cue/geometry boundaries, full Main exposure
 cost and combined lifecycle qualification remain open. No provider calls occur.
 
+### Stand-alone weather clock and player state — November 22, 2026
+
+The Rust clock and player state use the same installed daily rule and saved
+finite cue. In the local signed-in caller, Source started its authored shower
+through `/api/god/construction-shower`. Retrying returned the original receipt.
+The two players kept their distinct weather views when the stopped world opened
+in Rust at the same paused time. After Resume, the player outside the cue walked
+while their view still showed Dry weather. The state stream sent a Rain update
+after 16:00, and PostgreSQL saved the new position. At 18:00 the outside
+player saw Dry weather while the inside player stayed in Rain until the finite
+cue expired. The original cue and receipt stayed exact and no weather history
+rows were added. With no selected daily rule both hosts omitted the weather field
+while the cue was active. A wrong saved family pin refused startup before the
+listener opened and left the original receipt intact.
+
+Evidence at `~/.codex/verification/OpenLegend/native-runtime-foundations/nsc04-rust-weather-20261122`
+includes the disposable Source inputs, Rust tree `14c9edcc3a53`, executable SHA-256
+`894347171e30`, release definition manifest `24071664d633`, and results
+`start-r5-sse`, `end-r1`, `omitted-r1` and `bad-cue-r2`. All nine disposable
+PostgreSQL databases were removed, and successful Rust shutdowns released all
+tracked allocation. Locked game-server build, TypeScript types, formatting and
+network boundaries passed. This is local correctness evidence for clock and view
+continuation with Main's exact rain definition in a small scene. Material wetting,
+covered drying and their inspections remain the separate exposure journey.
+
 ### Open basket runtime and known manufacture
 
 `open-basket-native-current` passes native family compilation with an exact installed
