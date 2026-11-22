@@ -187,6 +187,9 @@ impl GameClock {
             if let Some(inputs) = &self.inputs {
                 inputs.exclude()?;
             }
+            if !next.paused {
+                self.saves.resume_semantic_index();
+            }
         }
         self.saves.signal_view();
         Ok(())

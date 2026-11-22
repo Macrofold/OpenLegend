@@ -8,6 +8,7 @@ pub(crate) mod preview;
 mod retry;
 pub(crate) use retry::ChatRetryRequest;
 pub(crate) mod schedule;
+pub(crate) mod semantic_index;
 mod settings;
 mod slots;
 mod speech;
@@ -45,6 +46,7 @@ pub(crate) struct Director {
     saves: Arc<LiveSaves>,
     authority: Arc<Authority>,
     models: Option<settings::ConfiguredModels>,
+    embedding: Option<Arc<semantic_index::EmbeddingModel>>,
     summary_model: Option<settings::SummaryModel>,
     dispatch: Arc<DecisionDispatch>,
     slots: Arc<Slots>,
@@ -145,7 +147,11 @@ impl Director {
         authority: Arc<Authority>,
         limit_usd: f64,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
-        let (maximum, models) = settings::from_env(limit_usd)?;
+        let (maximum, mut models) = settings::from_env(limit_usd)?;
+        let embedding = settings::embedding_model(models.as_ref(), limit_usd)?.map(Arc::new);
+        if let Some(models) = &mut models {
+            models.routes.embedding = embedding.clone();
+        }
         let summary_model = settings::summary_model(
             models.as_ref(),
             limit_usd,
@@ -158,6 +164,7 @@ impl Director {
             saves,
             authority,
             models,
+            embedding,
             summary_model,
             dispatch,
             slots: Arc::new(Slots::new(budget, maximum)),
@@ -215,6 +222,10 @@ impl Director {
     ) -> Result<Option<crate::narrator::NarratorModel>, Box<dyn std::error::Error + Send + Sync>>
     {
         settings::narrator_model(self.models.as_ref(), budget_usd)
+    }
+
+    pub(crate) fn embedding_model(&self) -> Option<Arc<semantic_index::EmbeddingModel>> {
+        self.embedding.clone()
     }
 
     /// The selected context catalogue opens a draft only. It uses the actual

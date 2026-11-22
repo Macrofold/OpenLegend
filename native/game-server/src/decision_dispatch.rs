@@ -31,7 +31,7 @@ use tokio::{sync::watch, time::Instant};
 mod previews;
 pub(crate) use previews::{PreviewTerminal, ReplyPreview, ReplyPreviews, ReplyReceipt};
 mod response;
-pub(crate) use response::decode_provider;
+pub(crate) use response::{decode_embeddings, decode_provider};
 
 pub(crate) struct PreparedCall {
     pub request: PreparedProviderRequest,
@@ -148,6 +148,16 @@ impl From<NetworkError> for CallFailure {
 /// One bounded synchronous authorization of the outgoing request. The
 /// caller owns the exact sources and cannot defer the transport callback.
 pub(crate) trait ProviderDisclosure: Send + Sync + 'static {
+    /// A specialized source claim can join the existing spending transaction.
+    /// Ordinary provider calls use the same unmodified reservation owner.
+    fn reserve<'a>(
+        &'a self,
+        store: &'a crate::store::Store,
+        request: AttemptRequest,
+    ) -> impl std::future::Future<Output = Result<AttemptAdmission, CommitError>> + Send + 'a {
+        store.reserve_model(request)
+    }
+
     /// A durable consumer may need to check a saved grant after reserving
     /// spending. The guard ends when the synchronous transport start returns.
     fn grant_for_send(
@@ -287,10 +297,8 @@ impl DecisionDispatch {
         let operation = self.network.admit(deadline, 32768)?;
         let provider = allowance.provider;
         let digest = hex_bytes(&request.digest);
-        let attempt = match self
-            .game
-            .store
-            .reserve_model(allowance)
+        let attempt = match permit
+            .reserve(&self.game.store, allowance)
             .await
             .map_err(CallFailure::Commit)?
         {

@@ -363,7 +363,7 @@ pub(crate) async fn apply(
         .ok_or(StoreError::StaleCut)?;
     if matches!(finish.outcome, ConsolidationOutcome::Published) {
         saves.signal_view();
-        saves.lexical_waker().notify_one();
+        saves.signal_recall_change();
     }
     Ok(finish.outcome)
 }

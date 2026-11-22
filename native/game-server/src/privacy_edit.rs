@@ -190,7 +190,7 @@ pub(crate) async fn edit(
         .ok_or(AccessError::Changed)?;
     if candidate.result.outcome.ok {
         saves.signal_view();
-        saves.lexical_waker().notify_one();
+        saves.signal_recall_change();
         candidate.result.revision = Some(saves.publication_revision());
     }
     Ok(candidate.result)

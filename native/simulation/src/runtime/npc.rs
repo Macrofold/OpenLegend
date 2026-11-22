@@ -195,6 +195,53 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let request: NpcPublicationRequest = serde_json::from_slice(input).map_err(failure)?;
+        match self.npc_history_permitted(read, &request.consumer, &request.perspectives)? {
+            Ok(()) => Ok(Ok(RuntimeNpcPublication {
+                _lease: self.session.fence().begin_publication().map_err(failure)?,
+            })),
+            Err(reason) => Ok(Err(reason)),
+        }
+    }
+
+    /// The paid retrieval query contains only the admitted historical trigger
+    /// and this actor's own context. It does not transfer any physical catalogue.
+    pub fn npc_memory_query_publication(
+        &self,
+        read: &RuntimeNpcRead,
+        consumer: RuntimeNpcConsumer,
+    ) -> Result<Option<super::RuntimeMaintenancePublication>, RuntimeError> {
+        self.require_active()?;
+        if self
+            .npc_history_permitted(read, consumer.as_str(), &[])?
+            .is_err()
+        {
+            return Ok(None);
+        }
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let actor = &read.read.perception.actor_id;
+        if read
+            .sources
+            .iter()
+            .any(|source| !source.scope.still_permitted(state))
+            || !read
+                .current_self()?
+                .prompt()
+                .is_some_and(|own| own.memory_query_current(state, actor))
+        {
+            return Ok(None);
+        }
+        let storage = self
+            .budget
+            .reserve(std::mem::size_of::<super::RuntimeMaintenancePublication>())?;
+        super::RuntimeMaintenancePublication::admit(self.session.fence(), storage).map(Some)
+    }
+
+    fn npc_history_permitted(
+        &self,
+        read: &RuntimeNpcRead,
+        consumer: &str,
+        perspectives: &[crate::capture::NpcPerspectiveOrdinal],
+    ) -> Result<Result<(), &'static str>, RuntimeError> {
         let simulation = self.session.accepted().map_err(failure)?;
         if read.candidate_key.is_some() {
             return Ok(Err("native-history-uses-candidate"));
@@ -206,7 +253,7 @@ impl NativeWorldSession {
             &simulation.state,
             &read.read.perception.actor_id,
             &read.perspectives,
-            &request.perspectives,
+            perspectives,
             &self.budget,
         )
         .map_err(failure)?
@@ -216,16 +263,14 @@ impl NativeWorldSession {
         if !npc_consumer_current(
             &simulation.state,
             &read.read.perception.actor_id,
-            &request.consumer,
+            consumer,
             None,
         )
         .map_err(failure)?
         {
             return Ok(Err("native-history-consumer"));
         }
-        Ok(Ok(RuntimeNpcPublication {
-            _lease: self.session.fence().begin_publication().map_err(failure)?,
-        }))
+        Ok(Ok(()))
     }
 
     pub fn npc_response_publication(

@@ -167,6 +167,14 @@ impl Store {
         &self,
         request: AttemptRequest,
     ) -> Result<AttemptAdmission, CommitError> {
+        self.reserve_claimed_model(request, None).await
+    }
+
+    pub(crate) async fn reserve_claimed_model(
+        &self,
+        request: AttemptRequest,
+        claim: Option<std::sync::Arc<super::recall::semantic::SemanticClaim>>,
+    ) -> Result<AttemptAdmission, CommitError> {
         let amount = sql_microusd(request.amount).map_err(CommitError::RolledBack)?;
         let ceiling = sql_microusd(request.ceiling).map_err(CommitError::RolledBack)?;
         if amount <= 0
@@ -184,6 +192,11 @@ impl Store {
             }
             if exposure(tx, &request.actor).await?.checked_add(amount).is_none_or(|sum| sum > ceiling) {
                 return Ok(AttemptAdmission::Exhausted);
+            }
+            if let Some(claim) = claim
+                && (claim.scope.actor != request.actor || !claim.take(tx, &request.id).await?)
+            {
+                return Ok(AttemptAdmission::Existing);
             }
             tx.execute(
                 "INSERT INTO attempts(id,provider,status,reserved,created_at) VALUES($1,$2,'reserved',$3,$4)",

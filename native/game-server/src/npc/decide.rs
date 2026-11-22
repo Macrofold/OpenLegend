@@ -31,6 +31,7 @@ pub(super) struct Models {
     pub(super) fast: Option<Model>,
     pub(super) complex: Option<Model>,
     pub(super) ceiling_micro_usd: u64,
+    pub(super) embedding: Option<Arc<super::semantic_index::EmbeddingModel>>,
 }
 
 pub(super) struct Model {
@@ -110,7 +111,7 @@ pub(super) async fn run(
             let mut collected = tokio::select! {
                 biased;
                 _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
-                prepared = tokio::time::timeout_at(work.deadline,prepare::collect(game, &work)) => {
+                prepared = tokio::time::timeout_at(work.deadline,prepare::collect(game, dispatch, models.embedding.as_deref(), &work)) => {
                     prepared.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("preparation"))?
                 }
             };

@@ -22,6 +22,7 @@ pub(crate) use follow::{ActiveRun, ObservedRun};
 const REQUEST_BYTES: usize = 500_000;
 const DIRECT_REPLY_BYTES: usize = 500_000;
 const MACROFOLD_REPLY_BYTES: usize = 1_000_000;
+const EMBEDDING_REPLY_BYTES: usize = 2_000_000;
 const DIAGNOSTIC_BYTES: usize = 8192;
 const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
@@ -30,6 +31,7 @@ pub(crate) enum ProviderRoute {
     Macrofold,
     Jev,
     OpenAi,
+    Embedding,
 }
 
 impl ProviderRoute {
@@ -37,6 +39,7 @@ impl ProviderRoute {
         match self {
             Self::Macrofold => MACROFOLD_REPLY_BYTES,
             Self::Jev | Self::OpenAi => DIRECT_REPLY_BYTES,
+            Self::Embedding => EMBEDDING_REPLY_BYTES,
         }
     }
 }
@@ -60,6 +63,7 @@ impl ProviderDestination {
             (Some(base), _) => base,
             (None, ProviderRoute::Jev) => "https://api.typesafe.ai/v1/systemone",
             (None, ProviderRoute::OpenAi) => "https://api.openai.com/v1/responses",
+            (None, ProviderRoute::Embedding) => "https://api.openai.com/v1/embeddings",
             (None, ProviderRoute::Macrofold) => return Err(NetworkError::Destination),
         };
         let mut url = Url::parse(configured).map_err(|_| NetworkError::Destination)?;
@@ -164,12 +168,18 @@ impl ProviderDestination {
         let digest = Sha256::digest(&bytes).into();
         let mut request = self.request(Method::POST, url);
         if let Some(operation_id) = operation_id {
-            if self.route != ProviderRoute::Macrofold {
-                return Err(NetworkError::Destination);
-            }
-            let value = header::HeaderValue::from_str(operation_id)
+            let hashed;
+            let (header, identity) = match self.route {
+                ProviderRoute::Macrofold => ("idempotency-key", operation_id),
+                ProviderRoute::Embedding => {
+                    hashed = openlegend_simulation::encoding::sha256_hex(operation_id.as_bytes());
+                    ("x-client-request-id", hashed.as_str())
+                }
+                _ => return Err(NetworkError::Destination),
+            };
+            let value = header::HeaderValue::from_str(identity)
                 .map_err(|_| NetworkError::Destination)?;
-            request.headers_mut().insert("idempotency-key", value);
+            request.headers_mut().insert(header, value);
         }
         *request.body_mut() = Some(bytes.into());
         Ok(PreparedProviderRequest {

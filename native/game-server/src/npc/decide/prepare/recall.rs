@@ -7,10 +7,13 @@ use super::{
     personal_description, personal_evidence, project, project_markers,
 };
 use crate::{
+    decision_dispatch::DecisionDispatch,
     decision_render::{BoundAttention, RenderError},
+    npc::semantic_index::EmbeddingModel,
     store::RecallScope,
     world::NpcBinding,
 };
+mod semantic;
 use openlegend_simulation::capture::{NpcPersonalSelection, NpcSourceSelection};
 use std::{
     collections::{HashMap, HashSet},
@@ -41,6 +44,8 @@ pub(in crate::npc::decide) struct RecallReview {
 
 pub(in crate::npc::decide) async fn collect(
     game: &Arc<CurrentServer>,
+    dispatch: &Arc<DecisionDispatch>,
+    embedding: Option<&EmbeddingModel>,
     work: &Work,
 ) -> Result<Collected, CallFailure> {
     ensure_running(work)?;
@@ -73,6 +78,13 @@ pub(in crate::npc::decide) async fn collect(
         .recall_references(scope)
         .await
         .map_err(|error| CallFailure::World(crate::world::WorldError::Storage(error)))?;
+    let semantic = match embedding.filter(|_| references.fills_direct_limit) {
+        Some(model) => semantic::rank(game, dispatch, model, work, &origin).await?,
+        None => None,
+    };
+    let ranked = semantic
+        .as_ref()
+        .map_or(&[][..], |(rows, _)| rows.as_slice());
     let mut selected = Vec::new();
     let mut included = HashSet::new();
     let _selection = budget
@@ -80,6 +92,7 @@ pub(in crate::npc::decide) async fn collect(
             references
                 .required
                 .iter()
+                .chain(ranked)
                 .chain(&references.optional)
                 .chain(&work.source)
                 .try_fold(1024usize, |bytes, reference| {
@@ -91,6 +104,7 @@ pub(in crate::npc::decide) async fn collect(
                 .ok_or_else(|| capacity(CapacityError))?,
         )
         .map_err(capacity)?;
+    let mut optional_count = 0;
     for (reference, required) in work
         .source
         .iter()
@@ -101,6 +115,7 @@ pub(in crate::npc::decide) async fn collect(
                 .iter()
                 .map(|reference| (reference, true)),
         )
+        .chain(ranked.iter().map(|reference| (reference, false)))
         .chain(
             references
                 .optional
@@ -108,12 +123,15 @@ pub(in crate::npc::decide) async fn collect(
                 .map(|reference| (reference, false)),
         )
     {
-        if included.insert((
-            reference.kind,
-            reference.id.as_str(),
-            reference.revision.as_str(),
-        )) {
+        if (required || optional_count < 300)
+            && included.insert((
+                reference.kind,
+                reference.id.as_str(),
+                reference.revision.as_str(),
+            ))
+        {
             selected.push((reference, required));
+            optional_count += usize::from(!required);
         }
     }
     let mut required = Vec::new();

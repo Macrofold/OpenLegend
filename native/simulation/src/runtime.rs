@@ -34,7 +34,7 @@ pub use maintenance::{
     RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
     RuntimeConsolidationReading, RuntimeConsolidationReadings, RuntimeConsolidationTicket,
     RuntimeDreamReview, RuntimeHourlyReview, RuntimeMaintenancePublication, RuntimeMaintenanceRead,
-    RuntimePreparedDream, RuntimeReflectionTicket,
+    RuntimeMemoryIndex, RuntimePreparedDream, RuntimeReflectionTicket,
 };
 mod npc;
 mod npc_intake;

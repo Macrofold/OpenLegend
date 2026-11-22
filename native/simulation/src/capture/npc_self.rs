@@ -7,6 +7,7 @@ use crate::host::{ByteBudget, ByteReservation};
 use crate::plans::{PendingIntent, PlanMode};
 use crate::reception::{AttributeDisplay, AttributeKnowledge, AttributeView, KnowledgeDocument};
 use crate::records::SqlCell;
+use crate::simulation::SimulationState;
 use crate::state::{CharacterTrait, Goal, Named, Point};
 use crate::text::JsText;
 use crate::values::AttributeValue;
@@ -99,6 +100,37 @@ impl RuntimeNpcSelf {
 }
 
 impl RuntimeNpcSelfPrompt {
+    /// Memory search uses the first goal and this actor's private documents.
+    /// Compare only those inputs, without preparing another physical view.
+    pub(crate) fn memory_query_current(&self, state: &SimulationState, actor_id: &str) -> bool {
+        let Some(actor) = state
+            .physical
+            .entities
+            .get(actor_id)
+            .and_then(|entity| entity.actor.as_ref())
+        else {
+            return false;
+        };
+        let Some(mind) = state
+            .minds
+            .minds
+            .as_ref()
+            .and_then(|minds| minds.get(actor_id))
+        else {
+            return false;
+        };
+        actor.agency.goals.first().map(|goal| &goal.objective)
+            == self.goals.first().map(|goal| &goal.objective)
+            && mind.documents.len() == self.documents.len()
+            && mind
+                .documents
+                .iter()
+                .zip(&self.documents)
+                .all(|(current, captured)| {
+                    current.id == captured.id && current.text == captured.text
+                })
+    }
+
     /// Part of the independent provider prompt budget. Allow for displayed
     /// UTF-16 escapes, text copies and provider JSON field carriers rather
     /// than lending the captured fact's backing to the rendered request.

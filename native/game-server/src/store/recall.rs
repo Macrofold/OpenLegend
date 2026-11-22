@@ -25,6 +25,7 @@ mod checkpoint_accounts;
 pub(crate) mod consolidation;
 pub(crate) mod maintenance_scan;
 mod recovery;
+pub(crate) mod semantic;
 
 const TABLE: &str = "mind_awareness";
 const BATCH: usize = 100;

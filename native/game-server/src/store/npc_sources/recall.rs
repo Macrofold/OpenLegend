@@ -4,9 +4,11 @@
 use super::{
     Kind, PersonalSourceRef, Store, StoreError, StoreResult, admitted_query, durable_head,
 };
+use crate::store::recall::semantic::{SemanticQuery, SemanticScope};
 use crate::store::sql_ordinal;
 use openlegend_simulation::host::ByteReservation;
 use std::mem::size_of;
+use std::sync::Arc;
 
 // The same finite optional set and required overflow witness as
 // MemoryRepository.recallCandidates, readRequired and readSelection.
@@ -24,6 +26,7 @@ pub(crate) struct RecallScope<'a> {
 pub(crate) struct RecallReferences {
     pub(crate) required: Vec<PersonalSourceRef>,
     pub(crate) optional: Vec<PersonalSourceRef>,
+    pub(crate) fills_direct_limit: bool,
     _custody: ByteReservation,
 }
 
@@ -58,10 +61,64 @@ const SELECTION: &str = "
       SELECT o.*,false FROM optional_rows o
       WHERE NOT EXISTS (SELECT 1 FROM required_keys k WHERE k.id=o.id AND k.source_kind=o.source_kind)
     )
-    SELECT id,source_kind,revision,required FROM selected
+    SELECT id,source_kind,revision,required,(SELECT count(*)=$6 FROM optional_rows) FROM selected
     ORDER BY required DESC,importance DESC,at DESC,id,source_kind";
 
 impl Store {
+    pub(crate) async fn semantic_query_needed(
+        &self,
+        scope: Arc<SemanticScope>,
+        at: f64,
+        identity: u64,
+    ) -> StoreResult<bool> {
+        let identity = sql_ordinal(identity)?;
+        self.read_operational(move |tx| Box::pin(async move {
+            let head = durable_head(tx).await?.ok_or(StoreError::StaleCut)?;
+            if head.world_id != scope.world || head.generation != scope.generation {
+                return Err(StoreError::StaleCut);
+            }
+            Ok(tx.query_opt(
+                "SELECT 1 FROM recall_sources WHERE world_id=$1 AND actor_id=$2 AND eligible=1 AND at<=$3 \
+                 AND (source_kind<>'awareness' OR at<$3 OR sequence<=$4) OFFSET $5 LIMIT 1",
+                &[&scope.world,&scope.actor,&at,&identity,&OPTIONAL_LIMIT],
+            ).await?.is_some())
+        })).await
+    }
+
+    /// Rank only current eligible source versions inside this actor and read
+    /// cut. Returns IDs only; the native reader still grants each body.
+    pub(crate) async fn semantic_recall(
+        &self,
+        scope: Arc<SemanticScope>,
+        at: f64,
+        identity: u64,
+        query: Arc<SemanticQuery>,
+    ) -> StoreResult<(Vec<PersonalSourceRef>, ByteReservation)> {
+        let identity = sql_ordinal(identity)?;
+        let budget = self.budget.clone();
+        self.read_operational(move |tx| Box::pin(async move {
+            let head = durable_head(tx).await?.ok_or(StoreError::StaleCut)?;
+            if head.world_id != scope.world || head.generation != scope.generation {
+                return Err(StoreError::StaleCut);
+            }
+            let (_wire, rows) = admitted_query(tx,
+                "SELECT r.id,r.source_kind,r.revision FROM memory_vectors v \
+                 JOIN recall_sources r ON r.world_id=v.world_id AND r.actor_id=v.actor_id AND r.id=v.source_id AND r.revision=v.source_revision \
+                 WHERE v.world_id=$1 AND v.actor_id=$2 AND v.generation=$3 AND v.model=$4 AND v.dimensions=$5 \
+                 AND r.eligible=1 AND r.at<=$6 AND (r.source_kind<>'awareness' OR r.at<$6 OR r.sequence<=$7) \
+                 ORDER BY v.embedding OPERATOR(public.<=>) $8::text::public.vector,r.id,r.source_kind LIMIT $9",
+                &[&scope.world,&scope.actor,&scope.generation,&scope.model,&scope.dimensions,&at,&identity,&query.encoded,&OPTIONAL_LIMIT], &budget,
+            ).await?;
+            let bytes = rows.iter().try_fold(0usize, |bytes, row| {
+                let id: &str = row.try_get(0)?;
+                let revision: &str = row.try_get(2)?;
+                bytes.checked_add(size_of::<PersonalSourceRef>() + id.len() + revision.len()).ok_or(StoreError::Capacity)
+            })?;
+            let storage = budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+            Ok((rows.iter().map(decode_reference).collect::<Result<_, _>>()?, storage))
+        })).await
+    }
+
     /// Read only finite recall metadata from one actor's durable SQL snapshot.
     /// The funded result can survive the snapshot and identifies candidates for
     /// native reacquisition. Explicit live causes use their existing exact-source
@@ -137,6 +194,7 @@ impl Store {
                 let mut result = RecallReferences {
                     required: Vec::new(),
                     optional: Vec::new(),
+                    fills_direct_limit: rows.first().map_or(Ok(false), |row| row.try_get(4))?,
                     _custody: budget.reserve(bytes).map_err(|_| StoreError::Capacity)?,
                 };
                 result
@@ -148,20 +206,7 @@ impl Store {
                     .try_reserve_exact(rows.len() - required_count)
                     .map_err(|_| StoreError::Capacity)?;
                 for row in rows {
-                    let kind = match row.try_get::<_, &str>(1)? {
-                        "awareness" => Kind::Awareness,
-                        "memory" => Kind::Memory,
-                        "summary" => Kind::Summary,
-                        _ => return Err(StoreError::InvalidRecord),
-                    };
-                    let reference = PersonalSourceRef {
-                        kind,
-                        id: row.try_get(0)?,
-                        revision: row.try_get(2)?,
-                    };
-                    if !reference.validate() {
-                        return Err(StoreError::InvalidRecord);
-                    }
+                    let reference = decode_reference(&row)?;
                     if row.try_get(3)? {
                         result.required.push(reference);
                     } else {
@@ -173,4 +218,22 @@ impl Store {
         })
         .await
     }
+}
+
+fn decode_reference(row: &tokio_postgres::Row) -> StoreResult<PersonalSourceRef> {
+    let kind = match row.try_get::<_, &str>(1)? {
+        "awareness" => Kind::Awareness,
+        "memory" => Kind::Memory,
+        "summary" => Kind::Summary,
+        _ => return Err(StoreError::InvalidRecord),
+    };
+    let reference = PersonalSourceRef {
+        kind,
+        id: row.try_get(0)?,
+        revision: row.try_get(2)?,
+    };
+    if !reference.validate() {
+        return Err(StoreError::InvalidRecord);
+    }
+    Ok(reference)
 }

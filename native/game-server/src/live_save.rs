@@ -90,6 +90,7 @@ pub struct LiveSaves {
     intake: RwLock<()>,
     wake: Notify,
     lexical_wake: Arc<Notify>,
+    semantic_wake: Arc<Notify>,
     story_wake: Arc<Notify>,
     publications: watch::Sender<u64>,
     schedule: Option<Arc<ScheduleInbox>>,
@@ -121,6 +122,7 @@ impl LiveSaves {
             intake: RwLock::new(()),
             wake: Notify::new(),
             lexical_wake: Arc::new(Notify::new()),
+            semantic_wake: Arc::new(Notify::new()),
             story_wake: Arc::new(Notify::new()),
             publications,
             schedule: None,
@@ -136,9 +138,18 @@ impl LiveSaves {
         self.lexical_wake.clone()
     }
 
-    /// Wake recall indexing when a new source has been durably accepted.
+    pub(crate) fn semantic_waker(&self) -> Arc<Notify> {
+        self.semantic_wake.clone()
+    }
+
+    /// The two indexes recover independently from the same durable source change.
     pub(crate) fn signal_recall_change(&self) {
         self.lexical_wake.notify_one();
+        self.semantic_wake.notify_one();
+    }
+
+    pub(crate) fn resume_semantic_index(&self) {
+        self.semantic_wake.notify_one();
     }
 
     pub(crate) fn story_waker(&self) -> Arc<Notify> {
@@ -531,7 +542,7 @@ impl LiveSaves {
                 drop(pending);
                 if flight.prepared.recall.is_some() || !flight.prepared.activity_memories.is_empty()
                 {
-                    self.lexical_wake.notify_one();
+                    self.signal_recall_change();
                 }
                 if flight.story_enqueued {
                     self.story_wake.notify_one();

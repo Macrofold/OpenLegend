@@ -266,9 +266,12 @@ impl PrivacyProjection<'_> {
              ), discarded_vector_cache AS (
                DELETE FROM memory_vector_cache r WHERE r.world_id=$1 AND r.actor_id=$2
                  AND (r.source_id=ANY($3::text[]) OR r.source_id IN (SELECT id FROM removed))
+             ), discarded_query AS (
+               DELETE FROM meta WHERE key=$9
              ) DELETE FROM history_perspectives r WHERE r.world_id=$1 AND r.actor_id=$2
                AND (r.event_id=ANY($8::text[]) OR r.event_id IN (SELECT id FROM removed WHERE source_kind='awareness'))",
-            &[&world,&actor,&sources,&awareness,&memories,&summaries,&rows.generation,&forgotten],
+            &[&world,&actor,&sources,&awareness,&memories,&summaries,&rows.generation,&forgotten,
+              &super::recall::semantic::query_key(world, actor)?],
         ).await?;
         if let Some(principal) = &self.edit.principal {
             tx.execute(

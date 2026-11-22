@@ -95,6 +95,106 @@ struct FundedJson {
     _custody: ByteReservation,
 }
 
+pub(crate) fn decode_embeddings(
+    body: FundedReply,
+    http: &HttpEvidence,
+    count: usize,
+    dimensions: usize,
+    input_price: Option<(&str, &[String], f64)>,
+    budget: &ByteBudget,
+) -> ProviderObservation<crate::store::recall::semantic::Embeddings> {
+    use crate::store::recall::semantic::Embeddings;
+    use std::mem::size_of;
+
+    let mut observed = ProviderObservation {
+        value: Err(CallFailure::Invalid),
+        provider_request_id: http.trace_id.clone(),
+        model: None,
+        usage: None,
+        charged_microusd: None,
+        completion_uncertain: true,
+    };
+    let Some(parsed) = std::str::from_utf8(&body.bytes)
+        .ok()
+        .and_then(|body| FundedJson::read(body, budget).ok())
+    else {
+        return observed;
+    };
+    let value = &parsed.value;
+    observed.model = value["model"]
+        .as_str()
+        .filter(|model| {
+            model.len() <= 128
+                && model
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || b"-._/:".contains(&byte))
+        })
+        .map(str::to_owned);
+    let tokens = value["usage"]["prompt_tokens"].as_u64();
+    if let Some(input_tokens) =
+        tokens.filter(|tokens| *tokens <= openlegend_simulation::identity::MAX_SAFE_INTEGER)
+    {
+        observed.usage = Some(ModelUsage {
+            input_tokens,
+            output_tokens: 0,
+        });
+        observed.charged_microusd = input_price
+            .filter(|(priced, aliases, _)| {
+                value["model"].as_str().is_none_or(|reported| {
+                    reported == *priced || aliases.iter().any(|alias| alias == reported)
+                })
+            })
+            .map(|(_, _, price)| (price * input_tokens as f64).ceil())
+            .filter(|amount| *amount <= openlegend_simulation::identity::MAX_SAFE_INTEGER as f64)
+            .map(|amount| amount as u64);
+    }
+    observed.completion_uncertain = observed.charged_microusd.is_none();
+    observed.value = (|| {
+        let rows = value["data"]
+            .as_array()
+            .filter(|rows| rows.len() == count)
+            .ok_or(CallFailure::Invalid)?;
+        let bytes = count
+            .checked_mul(size_of::<Vec<f64>>() + dimensions * size_of::<f64>())
+            .ok_or(CallFailure::Invalid)?;
+        let custody = budget.reserve(bytes).map_err(|_| CallFailure::Invalid)?;
+        let mut vectors = vec![Vec::new(); count];
+        for row in rows {
+            let index = row["index"]
+                .as_u64()
+                .and_then(|at| usize::try_from(at).ok())
+                .filter(|at| *at < count)
+                .ok_or(CallFailure::Invalid)?;
+            if !vectors[index].is_empty() {
+                return Err(CallFailure::Invalid);
+            }
+            let values = row["embedding"]
+                .as_array()
+                .filter(|values| values.len() == dimensions)
+                .ok_or(CallFailure::Invalid)?;
+            let mut vector = Vec::with_capacity(values.len());
+            let mut nonzero = false;
+            for value in values {
+                let value = value
+                    .as_f64()
+                    .filter(|value| (*value as f32).is_finite())
+                    .ok_or(CallFailure::Invalid)?;
+                nonzero |= value as f32 != 0.;
+                vector.push(value);
+            }
+            if !nonzero {
+                return Err(CallFailure::Invalid);
+            }
+            vectors[index] = vector;
+        }
+        Ok(Embeddings {
+            values: vectors,
+            _custody: custody,
+        })
+    })();
+    observed
+}
+
 impl FundedJson {
     fn read(text: &str, budget: &ByteBudget) -> Result<Self, CallFailure> {
         let bound = json_tree_allocation_bound(text).ok_or(CallFailure::Invalid)?;

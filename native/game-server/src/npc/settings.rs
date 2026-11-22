@@ -14,6 +14,79 @@ pub(super) struct ConfiguredModels {
     jev_only: bool,
 }
 
+pub(super) fn embedding_model(
+    models: Option<&ConfiguredModels>,
+    budget_usd: f64,
+) -> Result<Option<super::semantic_index::EmbeddingModel>, Error> {
+    if budget_usd == 0.0 || setting("AI_JEV_ONLY", "false")? == "true" {
+        return Ok(None);
+    }
+    let Some(key) = optional("OPENAI_EMBEDDING_API_KEY")?.or(optional("OPENAI_API_KEY")?) else {
+        return Ok(None);
+    };
+    let endpoint = optional("OPENAI_EMBEDDING_ENDPOINT")?;
+    let model = setting("EMBEDDING_MODEL", "text-embedding-3-small")?;
+    let dimensions = number("EMBEDDING_DIMENSIONS", 512.0, 64.0, 3072.0)?;
+    if dimensions.fract() != 0. || model.is_empty() || model.len() > 128 {
+        return Err("Invalid personal-memory embedding model configuration".into());
+    }
+    let amount = micro_usd(number("EMBEDDING_CALL_RESERVE_USD", 0.01, 0.000001, 1.0)?)?;
+    let ceiling = micro_usd(budget_usd)?;
+    let (input_usd_per_million, reported_aliases) = embedding_price(&model)?;
+    let interactive = models.map_or_else(
+        || interactive_allowance(judgment_allowance(false)?, micro_usd(0.25)?),
+        |models| Ok(models.interactive),
+    )?;
+    Ok(Some(super::semantic_index::EmbeddingModel {
+        destination: ProviderDestination::new(ProviderRoute::Embedding, endpoint.as_deref(), &key)?,
+        input_usd_per_million,
+        reported_aliases,
+        model,
+        dimensions: dimensions as usize,
+        amount,
+        ceiling,
+        background_ceiling: ceiling.saturating_sub(interactive),
+        timeout: Duration::from_secs_f64(number("AI_TIMEOUT_SECONDS", 15.0, 5.0, 120.0)?),
+    }))
+}
+
+fn embedding_price(model: &str) -> Result<(Option<f64>, std::sync::Arc<[String]>), Error> {
+    #[derive(serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct CatalogueEntry {
+        model: String,
+        prices: Prices,
+        #[serde(default)]
+        reported_aliases: Vec<String>,
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Prices {
+        input_usd_per_million: f64,
+    }
+    let catalogue: Vec<CatalogueEntry> = optional("OPENAI_MODEL_PRICES_JSON")?
+        .map(|raw| serde_json::from_str(&raw))
+        .transpose()?
+        .unwrap_or_default();
+    let mut entries = catalogue.into_iter().filter(|entry| entry.model == model);
+    if let Some(entry) = entries.next() {
+        if entries.next().is_some() || !(0.0..=1000.0).contains(&entry.prices.input_usd_per_million) {
+            return Err("OPENAI_MODEL_PRICES_JSON must give one valid input rate for the embedding model".into());
+        }
+        return Ok((
+            Some(entry.prices.input_usd_per_million),
+            entry.reported_aliases.into(),
+        ));
+    }
+    // The existing default catalogue has a separate embedding entry.
+    let price = if setting("OPENAI_MODEL", "gpt-5.6-luna")? == model {
+        Some(number("LLM_INPUT_USD_PER_MILLION", 0.2, 0.0, 1000.0)?)
+    } else {
+        (model == "text-embedding-3-small").then_some(0.02)
+    };
+    Ok((price, Vec::<String>::new().into()))
+}
+
 impl ConfiguredModels {
     pub(super) fn interactive_allowance(&self) -> Option<(u64, u64)> {
         (!self.jev_only && self.routes.fast.is_some() && self.routes.ceiling_micro_usd > 0)
@@ -135,6 +208,7 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
                 fast,
                 complex,
                 ceiling_micro_usd,
+                embedding: None,
             },
             interactive,
             jev_only,

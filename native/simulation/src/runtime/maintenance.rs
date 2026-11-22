@@ -2,6 +2,7 @@
 //! owner checks current due state again under its ordinary native checkpoint.
 use super::*;
 mod consolidation;
+mod index;
 mod reflection;
 pub(super) mod witness;
 pub use consolidation::{
@@ -9,6 +10,7 @@ pub use consolidation::{
     RuntimeConsolidationReading, RuntimeConsolidationReadings, RuntimeConsolidationTicket,
     RuntimePreparedDream,
 };
+pub use index::RuntimeMemoryIndex;
 pub use reflection::RuntimeReflectionTicket;
 pub struct RuntimeMaintenanceRead {
     pub(crate) read: Arc<crate::capture::maintenance::MaintenanceCapture>,
@@ -37,6 +39,14 @@ pub struct RuntimeMaintenancePublication {
     _storage: ByteReservation,
 }
 impl RuntimeMaintenancePublication {
+    pub(super) fn admit(
+        fence: Arc<CandidateFence>,
+        storage: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        let lease = fence.begin_publication().map_err(failure)?;
+        Ok(Self { _lease: lease, fence, _storage: storage })
+    }
+
     pub fn is_current(&self) -> bool {
         self.fence.phase() == crate::host::CandidatePhase::Publishing
             && !self.fence.stop_requested()

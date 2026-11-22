@@ -74,6 +74,7 @@ struct PreparedGame {
     schedule: Arc<crate::npc::schedule::ScheduleInbox>,
     checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
     journal: JournalLaunch,
+    embedding: Option<Arc<crate::npc::semantic_index::EmbeddingModel>>,
     end_http: watch::Sender<bool>,
     requests_released: watch::Receiver<()>,
 }
@@ -193,6 +194,7 @@ impl PreparedGame {
             authority.clone(),
             limit_usd,
         )?);
+        let embedding = decisions.embedding_model();
         let batch_ms = setting("NARRATION_BATCH_MS", "750")?.parse::<u64>()?;
         if batch_ms > 10_000 {
             return Err("NARRATION_BATCH_MS must be between 0 and 10000".into());
@@ -271,6 +273,7 @@ impl PreparedGame {
             schedule,
             checkpoints,
             journal,
+            embedding,
             end_http,
             requests_released,
             game,
@@ -286,6 +289,7 @@ impl PreparedGame {
             schedule,
             checkpoints,
             journal,
+            embedding,
             end_http,
             mut requests_released,
             game,
@@ -304,6 +308,7 @@ impl PreparedGame {
             schedule,
             checkpoints,
             journal,
+            embedding,
             end_http,
             game.clone(),
         )
@@ -340,6 +345,7 @@ async fn run(
     schedule: Arc<crate::npc::schedule::ScheduleInbox>,
     checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
     journal: JournalLaunch,
+    embedding: Option<Arc<crate::npc::semantic_index::EmbeddingModel>>,
     end_http: watch::Sender<bool>,
     game: Arc<CurrentServer>,
 ) -> Result<(), LaunchError> {
@@ -354,6 +360,13 @@ async fn run(
             .clone()
             .run_maintenance(schedule, end_http.subscribe()),
     );
+    let semantic = tokio::spawn(crate::npc::semantic_index::run(
+        game.clone(),
+        decisions.provider_dispatch(),
+        embedding,
+        saves.semantic_waker(),
+        end_http.subscribe(),
+    ));
     let narration = tokio::spawn(crate::narrator::run(
         game.clone(),
         saves.clone(),
@@ -401,11 +414,13 @@ async fn run(
     let stop_decisions = async move {
         // Let the scheduler acknowledge its in-flight PostgreSQL write and
         // register the corresponding task before draining decision owners.
-        let (scheduled, maintained, narrated) = tokio::join!(scheduler, maintenance, narration);
+        let (scheduled, maintained, narrated, indexed) =
+            tokio::join!(scheduler, maintenance, narration, semantic);
         let settled = decisions.stop().await;
         scheduled?;
         maintained?;
         narrated??;
+        indexed?;
         settled?;
         Ok::<_, LaunchError>(())
     };
