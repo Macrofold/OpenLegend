@@ -2,7 +2,7 @@
 //! the authenticated server. The generic knowledge owner remains the writer.
 use super::*;
 use crate::knowledge::KnowledgeEdit;
-use crate::reception::KnowledgeSubject;
+use crate::reception::{KnowledgeSubject, ObserverSubject};
 use crate::text::JsText;
 
 #[derive(Deserialize)]
@@ -17,29 +17,54 @@ struct KnowledgeInput {
 }
 
 impl NativeWorldSession {
-    /// The authenticated player's general pad needs no observed subject or
-    /// retained place. It still uses the ordinary revisioned note writer.
-    pub fn begin_general_knowledge_edit(
+    /// Bind the authenticated player's own note against current recognition or
+    /// a retained private document before entering the ordinary revisioned writer.
+    pub fn begin_owner_knowledge_edit(
         &mut self,
         account: &str,
         actor: &str,
+        subject: Option<ObserverSubject>,
         expected_revision: i64,
         text: JsText,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
-        self.session
-            .accepted()
-            .map_err(failure)?
+        let accepted = self.session.accepted().map_err(failure)?;
+        accepted
             .require_player_read(account, actor)
             .map_err(failure)?;
+        let state = &accepted.state;
+        let mut permitted = true;
+        if let Some(person) = &subject {
+            let names = crate::worlds::InstalledPersonalNameReader::prepare(
+                &state.physical,
+                &state.reception,
+                &state.installed,
+                &state.experience,
+                actor,
+            )
+            .map_err(failure)?;
+            let retained = match person {
+                ObserverSubject::Entity { entity_id } => {
+                    names.can_remember_subject(entity_id).map_err(failure)?
+                }
+                ObserverSubject::Individual { .. } => names
+                    .observer_individual(person)
+                    .is_some_and(|identity| identity.seed_only != Some(true)),
+            };
+            permitted = person.validate()
+                && (retained
+                    || super::private_notes::person_notepad(state, actor, person, &self.budget)?
+                        .is_some());
+        }
         self.session
             .begin_knowledge_edit(
                 actor.into(),
                 KnowledgeEdit {
-                    subject_id: None,
+                    subject_id: subject.map(super::private_notes::person_note_subject),
                     expected_revision,
                     text,
                 },
+                permitted,
             )
             .map_err(failure)
     }
@@ -66,6 +91,7 @@ impl NativeWorldSession {
                     expected_revision: input.expected_revision as i64,
                     text: input.text,
                 },
+                true,
             )
             .map_err(failure)
     }

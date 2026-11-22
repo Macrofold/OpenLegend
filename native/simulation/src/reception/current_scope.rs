@@ -436,6 +436,21 @@ impl<'a> CurrentBodyReadScope<'a> {
         Ok(received_body_parts(self.lookup(), &body.field.value)
             .and_then(|(details, _)| details.label.as_ref()))
     }
+    pub(crate) fn body_position(
+        &self,
+        id: &str,
+    ) -> Result<Option<crate::state::Point>, ReceivedError> {
+        let Some(body) = self.native_body(id)? else {
+            return Ok(None);
+        };
+        if let Some(location) = self.location_for_body(id, body)?
+            && let Some(ReceivedValueFragment::BodyPose(value)) =
+                self.value(&location.field.value.reference)
+        {
+            return Ok(Some(value.pose.position));
+        }
+        Ok(received_body_parts(self.lookup(), &body.field.value).map(|(_, pose)| pose.position))
+    }
     pub(crate) fn capture(
         &self,
         id: &str,

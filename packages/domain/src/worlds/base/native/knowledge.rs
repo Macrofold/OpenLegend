@@ -609,6 +609,53 @@ impl<'a> PersonalNameReader<'a> {
         }
         Ok(self.current_body_grant(id)?.is_some())
     }
+    pub(crate) fn note_subject_recognized(
+        &self,
+        subject: &ObserverSubject,
+        in_view: bool,
+    ) -> Result<bool, ReceivedError> {
+        match subject {
+            ObserverSubject::Entity { entity_id } => self.can_remember_subject(entity_id),
+            ObserverSubject::Individual { .. } => {
+                Ok(self.observer_individual(subject).is_some_and(|identity| {
+                    identity.seed_only != Some(true)
+                        && (in_view
+                            || identity.voice.as_ref().is_some_and(|voice| {
+                                voice.authored.is_some() || voice.samples.len() >= 2
+                            })
+                            || identity.sight.as_ref().is_some_and(|sight| {
+                                sight.authored.is_some() || !sight.samples.is_empty()
+                            }))
+                }))
+            }
+        }
+    }
+
+    /// Visit only the observer's accepted current body owners. The consumer
+    /// must still acquire this body's current receiving grant before using it.
+    pub(crate) fn current_body_sources(&self) -> impl Iterator<Item = &'a str> + '_ {
+        self.scope
+            .iter()
+            .flat_map(|scope| scope.state().current.keys().map(String::as_str))
+    }
+
+    pub(crate) fn current_body_position(
+        &self,
+        id: &str,
+    ) -> Result<Option<crate::state::Point>, ReceivedError> {
+        match &self.scope {
+            Some(scope) => scope.body_position(id),
+            None => Ok(None),
+        }
+    }
+
+    pub(crate) fn retained_note_people(&self) -> impl Iterator<Item = &'a str> + '_ {
+        self.identities()
+            .into_iter()
+            .flat_map(|identities| identities.values())
+            .filter(|identity| identity.seed_only != Some(true))
+            .filter_map(|identity| identity.individual_id.as_deref())
+    }
     /// Speech audience preparation needs its own fresh sight witness. Broad
     /// receiving instead selects its eligible relation before presentation.
     pub(crate) fn outward_body_name(

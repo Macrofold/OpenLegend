@@ -939,10 +939,11 @@ impl Session {
         &mut self,
         actor: String,
         edit: crate::knowledge::KnowledgeEdit,
+        permitted: bool,
     ) -> Result<CandidateKey, SessionError> {
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
-            let cursor = crate::knowledge::KnowledgeEditCursor::new(actor, edit, &self.budget)?;
+            let cursor = crate::knowledge::KnowledgeEditCursor::new(actor, edit, permitted, &self.budget)?;
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,
                 journal: &mut journal,

@@ -8,11 +8,13 @@ use crate::{
 use openlegend_simulation::{
     appraisals::RuntimePrivateFeeling,
     encoding::json_record,
+    reception::ObserverSubject,
     runtime::{RuntimeDirectOutput, RuntimeError, RuntimeMindFile, RuntimePrivateNotes},
     text::JsText,
     values::is_safe_record_id,
 };
 use std::borrow::Cow;
+pub(super) mod subjects;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -23,12 +25,12 @@ struct NotesRequest {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct GeneralEdit {
+struct OwnerEdit {
     actor_id: String,
     world_id: String,
     generation: String,
-    #[serde(rename = "subjectId")]
-    _general_subject: (),
+    #[serde(deserialize_with = "Option::deserialize")]
+    subject_id: Option<ObserverSubject>,
     expected_revision: i64,
     text: JsText,
 }
@@ -122,7 +124,7 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
         Ok(selected) => Arc::new(selected),
         Err(error) => return access_failure(error),
     };
-    let (request, _input): (GeneralEdit, _) = match read_json(
+    let (request, _input): (OwnerEdit, _) = match read_json(
         &parts.headers,
         body,
         state.game.host.budget(),
@@ -157,7 +159,7 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
 async fn execute_edit(
     state: &PlayerRoutes,
     selected: Arc<AuthorizedScope>,
-    request: GeneralEdit,
+    request: OwnerEdit,
 ) -> Result<Option<StagedEdit>, WorldError> {
     let admitted = state.saves.enter_ordinary().await;
     state.saves.check_admission(tokio::time::Instant::now())?;
@@ -183,9 +185,10 @@ async fn execute_edit(
                 }
                 begin_authority.current(&begin_scope, Capability::Play, true, |scope, _| {
                     Ok(ApplicationStart::Candidate(
-                        session.begin_general_knowledge_edit(
+                        session.begin_owner_knowledge_edit(
                             &scope.account_id,
                             &scope.actor_id,
+                            request.subject_id,
                             request.expected_revision,
                             request.text,
                         )?,

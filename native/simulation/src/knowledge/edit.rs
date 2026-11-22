@@ -29,6 +29,7 @@ impl CompletedKnowledgeEdit {
 pub(crate) struct KnowledgeEditCursor {
     actor_id: String,
     edit: KnowledgeEdit,
+    permitted: bool,
     done: bool,
     _storage: ByteReservation,
 }
@@ -36,6 +37,7 @@ impl KnowledgeEditCursor {
     pub(crate) fn new(
         actor_id: String,
         edit: KnowledgeEdit,
+        permitted: bool,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let storage = budget.reserve(
@@ -52,6 +54,7 @@ impl KnowledgeEditCursor {
         Ok(Self {
             actor_id,
             edit,
+            permitted,
             done: false,
             _storage: storage,
         })
@@ -70,7 +73,11 @@ impl KnowledgeEditCursor {
             core,
             &self.actor_id,
             &self.edit,
-            self.edit.subject_id.as_slice(),
+            if self.permitted {
+                self.edit.subject_id.as_slice()
+            } else {
+                &[]
+            },
             &[],
             budget,
         );
@@ -190,14 +197,19 @@ pub(crate) fn edit_knowledge(
             KnowledgeSubject::Entity { entity_id } => {
                 current.is_some() || core.state.physical.entities.get(entity_id).is_some()
             }
-            KnowledgeSubject::Individual { individual_id } => core
-                .state
-                .reception
-                .observer_identities
-                .as_ref()
-                .and_then(|root| root.get(actor_id))
-                .and_then(|identities| identities.get(individual_id))
-                .is_some_and(|identity| identity.individual_id.as_ref() == Some(individual_id)),
+            KnowledgeSubject::Individual { individual_id } => {
+                current.is_some()
+                    || core
+                        .state
+                        .reception
+                        .observer_identities
+                        .as_ref()
+                        .and_then(|root| root.get(actor_id))
+                        .and_then(|identities| identities.get(individual_id))
+                        .is_some_and(|identity| {
+                            identity.individual_id.as_ref() == Some(individual_id)
+                        })
+            }
         };
         if !valid_subject(subject) || !permitted_subjects.contains(subject) || !exists {
             return result(

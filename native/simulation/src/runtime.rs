@@ -56,7 +56,7 @@ mod privacy;
 pub use privacy::RuntimePrivacyEdit;
 mod private_history;
 mod private_notes;
-pub use private_notes::{RuntimeMindFile, RuntimePrivateNotes};
+pub use private_notes::{RuntimeMindFile, RuntimePersonPage, RuntimePersonPosition, RuntimePersonRead, RuntimePrivateNotes};
 mod reply_preview;
 pub use private_history::{
     RuntimePlayerTranscriptRead, RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead,

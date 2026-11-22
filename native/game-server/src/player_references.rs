@@ -23,6 +23,7 @@ pub struct ReferenceIssuer {
 
 const RECENT_CURSOR: &[u8] = b"openlegend-private-recent-cursor";
 const RECENT_EDIT: &[u8] = b"openlegend-private-recent-edit";
+const PEOPLE_CURSOR: &[u8] = b"openlegend-private-people-cursor";
 
 #[derive(serde::Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -89,6 +90,14 @@ impl ReferenceIssuer {
         self.open_private(RECENT_EDIT, token)
     }
 
+    pub(crate) fn seal_people_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(PEOPLE_CURSOR, value)
+    }
+
+    pub(crate) fn open_people_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(PEOPLE_CURSOR, token)
+    }
+
     fn seal_private(&self, purpose: &[u8], value: &impl Serialize) -> Option<String> {
         let mut nonce = [0; aead::NONCE_LEN];
         getrandom::fill(&mut nonce).ok()?;
@@ -151,6 +160,19 @@ impl ReferenceIssuer {
         selected: &str,
         budget: &ByteBudget,
     ) -> Result<Option<ResolvedContact>, RuntimeError> {
+        self.resolve_contact_body(session, scope, selected, None, budget)
+    }
+
+    /// The person overlay receives both the contact's current observation
+    /// lease and the physical-life reference issued in that same view.
+    pub(crate) fn resolve_contact_body(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        expected_body: Option<&str>,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedContact>, RuntimeError> {
         if !selected.starts_with("contact-") {
             return Ok(None);
         }
@@ -166,6 +188,17 @@ impl ReferenceIssuer {
                 body.lease_id,
             ) {
                 Ok(current) if current == selected => {
+                    if let Some(expected) = expected_body {
+                        match scoped.body(body.source_id, body.physical_life.unwrap_or(0)) {
+                            Ok(actual) if actual == expected => (),
+                            Ok(_) => return true,
+                            Err(error) => {
+                                selected_source =
+                                    Some(Err(RuntimeError::application_refused(error)));
+                                return true;
+                            }
+                        }
+                    }
                     selected_source = Some(
                         budget
                             .reserve(body.source_id.len())

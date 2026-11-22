@@ -5,7 +5,7 @@ use indexmap::IndexMap;
 use libloading::Library;
 use openlegend_simulation::{
     host::{ByteBudget, ByteReservation},
-    text::JsText,
+    text::{JsText, TextRef},
 };
 use std::ffi::{c_char, c_void};
 use std::fmt::Write as _;
@@ -50,6 +50,22 @@ impl LexicalVector {
 }
 
 impl LanguageProvider {
+    /// Normalize an already permitted Notes label with the same Unicode data
+    /// used for its query. The returned units and reservation stay together.
+    pub(crate) fn normalize_mind_label(
+        &self,
+        input: TextRef<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(Vec<u16>, ByteReservation), LanguageError> {
+        let _input = budget
+            .reserve(input.storage_bytes() * 2)
+            .map_err(|_| LanguageError::Capacity)?;
+        let units: Vec<u16> = match input {
+            TextRef::Unicode(text) => text.encode_utf16().collect(),
+            TextRef::Text(text) => text.units().collect(),
+        };
+        self.normalized_lower(&units, budget)
+    }
     /// Mind filenames follow the current engine's 1–64-letter/number path
     /// grammar with spaces, underscores and hyphens, and an exact .md suffix.
     pub(crate) fn valid_mind_path(&self, path: &JsText) -> bool {

@@ -13,6 +13,10 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::mem::size_of;
 
+mod subjects;
+pub use subjects::{RuntimePersonPage, RuntimePersonPosition, RuntimePersonRead};
+pub(super) use subjects::{person_note_subject, person_notepad};
+
 const NOTE_PAGE: usize = 40;
 
 #[derive(Serialize)]

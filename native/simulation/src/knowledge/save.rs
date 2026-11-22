@@ -92,7 +92,13 @@ fn columns(
 ) -> Result<(Vec<crate::records::SqlCell>, ByteReservation), RecordEncodingError> {
     use crate::records::SqlCell;
     let error = || RecordEncodingError("Knowledge SQL projection exceeds its byte allowance.");
-    let size = crate::encoding::json_record_len(&document.subject_id).map_err(|_| error())?;
+    let size = document
+        .subject_id
+        .as_ref()
+        .map(crate::encoding::json_record_len)
+        .transpose()
+        .map_err(|_| error())?
+        .unwrap_or(0);
     let mut guard = budget
         .reserve(
             size.checked_mul(2)
@@ -101,16 +107,13 @@ fn columns(
                 .ok_or_else(error)?,
         )
         .map_err(|_| error())?;
-    let json = crate::encoding::json_record(&document.subject_id).map_err(|_| error())?;
-    guard
-        .resize(
-            guard
-                .bytes()
-                .checked_add(crate::experience::encoded_body_bound(&json).map_err(|_| error())?)
-                .ok_or_else(error)?,
-        )
-        .map_err(|_| error())?;
-    let subject: SqlCell = serde_json::from_str(&json).map_err(|_| error())?;
+    // The indexed subject column is TEXT. Source's pg driver supplies the
+    // JSON string for a typed subject object; the canonical payload still
+    // contains the typed subject and general notes retain SQL NULL.
+    let subject = match &document.subject_id {
+        Some(subject) => SqlCell::from(crate::encoding::json_record(subject).map_err(|_| error())?),
+        None => SqlCell::Null,
+    };
     let kind = match document.subject_id {
         None => SqlCell::Null,
         Some(KnowledgeSubject::Entity { .. }) => SqlCell::from("entity"),
@@ -125,7 +128,6 @@ fn columns(
         (document.text.utf8_len() as u64).into(),
         kind,
     ];
-    drop(json);
     guard
         .resize(extra.heap_bytes().ok_or_else(error)?)
         .map_err(|_| error())?;
