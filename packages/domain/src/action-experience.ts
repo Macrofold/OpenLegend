@@ -6,6 +6,7 @@ import {
 } from './world-composition.js';
 import { appendTemporalReceipt } from './temporal-evidence.js';
 import activityResultCopy from './activity-result-copy.json' with { type: 'json' };
+import activityLearningCopy from './activity-learning-copy.json' with { type: 'json' };
 import { hasMemory } from './living.js';
 import {
   accountResultEvidence,
@@ -557,8 +558,7 @@ export function renderActivity(
 ): string {
   return projectActivity(view, header).text;
 }
-export const ACTIVITY_SYNTAX =
-  'Each action says what to do and with what. When brackets appear, they contain smaller actions in order; semicolons separate them. Results say what actually happened.';
+export const ACTIVITY_SYNTAX = activityLearningCopy.syntax;
 
 export function occurrenceFor(
   world: WorldState,

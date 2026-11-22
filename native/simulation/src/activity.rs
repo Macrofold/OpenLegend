@@ -22,9 +22,10 @@ mod install;
 mod learning;
 mod residency;
 pub(crate) use learning::LearningLanguage;
+pub use learning::{LearningHistoryRequest, LearningJudgment};
 pub(crate) use learning::{
     CompletedActivityLearning, LearningFormatAnswer, LearningFormatRequest, LearningHistoryAnswer,
-    LearningHistoryRequest, LearningJudgment, LearningPreparationAnswer, LearningPreparationCursor,
+    LearningPreparationAnswer, LearningPreparationCursor,
     LearningPreparationStep, LearningPublicationAnswer, LearningPublicationCursor,
     LearningPublicationRequest, LearningPublicationStep, PreparedActivityLearning,
     learning_signatures,
@@ -275,7 +276,7 @@ pub enum ActivityError {
 
 /// Operational display bounds are supplied from the existing activity owner at
 /// installation. No world tuning or replacement allowance is chosen here.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct ActivityDisplayLimits {
     pub text: usize,
     pub detail_entries: usize,

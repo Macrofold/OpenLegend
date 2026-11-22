@@ -2,7 +2,7 @@
 //! This selects storage bodies only. Native applies the original observer,
 //! chronology, eligibility and current privacy checks before any disclosure.
 
-use super::read::admitted_query;
+use super::read::{admitted_query, retain_pending_row as retain};
 use super::schema::Table;
 use super::{Store, StoreError, StoreResult, durable_head};
 use openlegend_simulation::encoding::{json_record, sha256_hex};
@@ -499,27 +499,6 @@ fn copy_row(row: &InstalledRow, custody: &mut ByteReservation) -> StoreResult<In
             .ok_or(StoreError::Capacity)?,
     )?;
     Ok(row.clone())
-}
-
-fn retain(row: &ChangedRow, custody: &mut ByteReservation) -> StoreResult<InstalledRow> {
-    if row.write_columns.is_some() {
-        return Err(StoreError::StaleCut);
-    }
-    grow(
-        custody,
-        row.installed_bytes()
-            .ok_or(StoreError::Capacity)?
-            .checked_add(size_of::<InstalledRow>() + 192)
-            .ok_or(StoreError::Capacity)?,
-    )?;
-    Ok(InstalledRow {
-        id: row.id.clone(),
-        parent: row.parent.clone(),
-        slot: row.slot.clone(),
-        position: row.position,
-        payload: row.payload.clone(),
-        extra: row.extra.clone(),
-    })
 }
 
 fn grow(custody: &mut ByteReservation, bytes: usize) -> StoreResult<()> {

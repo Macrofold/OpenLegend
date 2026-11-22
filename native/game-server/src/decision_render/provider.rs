@@ -9,6 +9,7 @@ use crate::{
 use openlegend_simulation::{
     host::{ByteBudget, ByteReservation},
     records::SqlCell,
+    text::JsText,
 };
 use serde::Serialize;
 use serde_json::Value;
@@ -18,6 +19,7 @@ use std::collections::BTreeMap;
 #[serde(untagged)]
 pub(crate) enum JudgmentState<'a> {
     Prompt(&'a str),
+    ExactPrompt(&'a JsText),
     Structured(&'a Value),
 }
 

@@ -1,6 +1,7 @@
 //! Direct PostgreSQL ownership. One session owns the writer lock. Independently
 //! admitted readers use fixed read-only snapshots on separate connections.
 
+pub(crate) mod activity_learning;
 mod archives;
 pub(crate) mod assets;
 mod attempts;

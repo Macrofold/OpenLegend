@@ -20,11 +20,13 @@ pub(crate) use cursor::{
     PreparedActivityLearning,
 };
 pub(crate) use format::{LearningFormatAnswer, LearningFormatRequest};
-pub(crate) use history::{LearningHistoryAnswer, LearningHistoryRequest};
+pub(crate) use history::LearningHistoryAnswer;
+pub use history::LearningHistoryRequest;
 pub(super) use library::{LearningLibrary, install_library};
+pub use publication::LearningJudgment;
 pub(crate) use publication::{
-    CompletedActivityLearning, LearningJudgment, LearningPublicationAnswer,
-    LearningPublicationCursor, LearningPublicationRequest, LearningPublicationStep,
+    CompletedActivityLearning, LearningPublicationAnswer, LearningPublicationCursor,
+    LearningPublicationRequest, LearningPublicationStep,
 };
 pub(crate) use read::learning_signatures;
 

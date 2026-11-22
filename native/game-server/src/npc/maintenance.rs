@@ -7,6 +7,7 @@ use super::{
     slots::{Admission, DecisionSlot, SlotPriority},
 };
 use crate::{
+    decision_dispatch::CallFailure,
     recall_maintenance::{DailySelection, ReviewFollowUp, review_protected_day},
     store::StoreError,
     world::WorldError,
@@ -21,6 +22,7 @@ use std::{sync::Arc, time::Duration};
 use tokio::{sync::watch, time::Instant};
 mod daily;
 mod hourly;
+mod learning;
 
 const INSPECTION_INTERVAL: Duration = Duration::from_secs(1);
 const READ_BACKOFF: Duration = Duration::from_secs(60);
@@ -32,6 +34,7 @@ struct DueActor {
     next_real: Instant,
     dirty: bool,
     next_hourly: f64,
+    next_learning: Option<Instant>,
     paid: Option<tokio::task::Id>,
     custody: ByteReservation,
 }
@@ -45,6 +48,7 @@ impl DueActor {
             next_real: Instant::now(),
             dirty: true,
             next_hourly: 0.,
+            next_learning: None,
             paid: None,
             custody,
         }
@@ -54,9 +58,16 @@ impl DueActor {
 enum PaidWork {
     Hourly(hourly::Selected),
     Daily(DailySelection),
+    Learning,
 }
 
-type PaidResult = (String, bool, Result<f64, WorldError>);
+enum PaidKind {
+    Hourly,
+    Daily,
+    Learning,
+}
+
+type PaidResult = (String, PaidKind, Result<f64, CallFailure>);
 
 impl Director {
     pub(crate) async fn run_maintenance(
@@ -121,13 +132,39 @@ impl Director {
                         && actor.paid.is_none()
                         && (actor.dirty
                             || actor.next_game <= clock.at
+                            || actor.next_learning.is_some_and(|time| time <= now)
                             || self.summary_model.is_some() && actor.next_hourly <= clock.at)
                 });
                 if let Some(index) = selected {
                     let (actor, mut work) = due.shift_remove_index(index).expect("selected actor");
                     let inspect_daily = work.dirty || work.next_game <= clock.at;
+                    let inspect_learning =
+                        work.next_learning.map_or(work.dirty, |time| time <= now);
                     work.dirty = false;
                     work.next_real = now + INSPECTION_INTERVAL;
+                    if inspect_learning {
+                        match self
+                            .start_learning(&actor, &mut work, &mut paid, stop.clone())
+                            .await
+                        {
+                            Ok(true) => {
+                                work.dirty = inspect_daily;
+                                due.insert(actor, work);
+                                continue;
+                            }
+                            Ok(false) => (),
+                            Err(WorldError::Host(HostError::Cancelled)) if *stop.borrow() => {
+                                continue;
+                            }
+                            Err(error) if error.is_admission_refusal() => {
+                                work.next_learning = Some(now + INSPECTION_INTERVAL);
+                            }
+                            Err(error) => {
+                                eprintln!("Activity learning selection deferred: {error}");
+                                work.next_learning = Some(now + READ_BACKOFF);
+                            }
+                        }
+                    }
                     let daily = if inspect_daily {
                         self.inspect_maintenance(&actor, &mut work, &mut paid, stop.clone())
                             .await
@@ -135,11 +172,12 @@ impl Director {
                         Ok(true)
                     };
                     match daily {
-                        Ok(false) if self.summary_model.is_none() => {
+                        Ok(false)
+                            if self.summary_model.is_none() && work.next_learning.is_none() =>
+                        {
                             continue;
                         }
-                        Ok(false) => (),
-                        Ok(true) => (),
+                        Ok(_) => (),
                         Err(WorldError::Host(HostError::Cancelled)) if *stop.borrow() => continue,
                         Err(error)
                             if error.is_admission_refusal()
@@ -194,6 +232,37 @@ impl Director {
                 _ = tokio::time::sleep(INSPECTION_INTERVAL), if reload || !due.is_empty() => (),
             }
         }
+    }
+
+    async fn start_learning(
+        self: &Arc<Self>,
+        actor: &str,
+        work: &mut DueActor,
+        tasks: &mut tokio::task::JoinSet<PaidResult>,
+        service_stop: watch::Receiver<bool>,
+    ) -> Result<bool, WorldError> {
+        let id = actor.to_owned();
+        let Some(generation) = self
+            .game
+            .world
+            .capture(move |world| world.activity_learning_due(&id))
+            .await?
+        else {
+            work.next_learning = None;
+            return Ok(false);
+        };
+        let slot_id = format!("activity-learning:{actor}");
+        let Admission::Accepted(slot) =
+            self.slots
+                .select(actor, &slot_id, None, &generation, SlotPriority::Ordinary)?
+        else {
+            work.next_learning = Some(Instant::now() + INSPECTION_INTERVAL);
+            return Ok(false);
+        };
+        work.next_learning = Some(Instant::now() + READ_BACKOFF);
+        work.paid =
+            Some(self.start_inference(actor, tasks, slot, PaidWork::Learning, service_stop));
+        Ok(true)
     }
 
     async fn inspect_maintenance(
@@ -328,31 +397,36 @@ impl Director {
         tasks
             .spawn(async move {
                 let stopped = slot.resident.stop.subscribe();
-                let daily = matches!(&work, PaidWork::Daily(_));
-                let future = async {
-                    let model = director.summary_model.as_ref().expect("admitted route");
+                let kind = match &work {
+                    PaidWork::Hourly(_) => PaidKind::Hourly,
+                    PaidWork::Daily(_) => PaidKind::Daily,
+                    PaidWork::Learning => PaidKind::Learning,
+                };
+                let learner = actor.clone();
+                let future = async move {
                     match work {
-                        PaidWork::Hourly(plan) => {
-                            hourly::run(
-                                &director.game,
-                                &director.saves,
-                                &director.dispatch,
-                                model,
-                                plan,
-                                stopped,
-                            )
-                            .await
-                        }
-                        PaidWork::Daily(plan) => {
-                            daily::run(
-                                &director.game,
-                                &director.saves,
-                                &director.dispatch,
-                                model,
-                                plan,
-                                stopped,
-                            )
-                            .await
+                        PaidWork::Hourly(plan) => hourly::run(
+                            &director.game,
+                            &director.saves,
+                            &director.dispatch,
+                            director.summary_model.as_ref().expect("admitted route"),
+                            plan,
+                            stopped,
+                        )
+                        .await
+                        .map_err(CallFailure::World),
+                        PaidWork::Daily(plan) => daily::run(
+                            &director.game,
+                            &director.saves,
+                            &director.dispatch,
+                            director.summary_model.as_ref().expect("admitted route"),
+                            plan,
+                            stopped,
+                        )
+                        .await
+                        .map_err(CallFailure::World),
+                        PaidWork::Learning => {
+                            learning::run(director, learner, stopped).await.map(|()| 0.)
                         }
                     }
                 };
@@ -364,7 +438,7 @@ impl Director {
                         future.await
                     }
                 };
-                (actor, daily, result)
+                (actor, kind, result)
             })
             .id()
     }
@@ -374,7 +448,7 @@ fn finish_paid(
     joined: Result<(tokio::task::Id, PaidResult), tokio::task::JoinError>,
     due: &mut IndexMap<String, DueActor>,
 ) {
-    let (actor, daily, result) = match joined {
+    let (actor, kind, result) = match joined {
         Ok((_, outcome)) => outcome,
         Err(error) => {
             eprintln!("A memory maintenance worker stopped unexpectedly");
@@ -391,18 +465,23 @@ fn finish_paid(
     };
     work.paid = None;
     match result {
-        Ok(next) if daily => work.next_game = next,
-        Ok(next) => work.next_hourly = next,
-        Err(error)
-            if error.is_admission_refusal()
-                || matches!(error, WorldError::Storage(StoreError::StaleCut)) =>
-        {
-            ()
-        }
-        Err(error) => {
-            eprintln!("Memory maintenance deferred: {error}");
-            work.next_real = Instant::now() + READ_BACKOFF;
-            work.dirty = true;
-        }
+        Ok(next) => match kind {
+            PaidKind::Daily => work.next_game = next,
+            PaidKind::Hourly => work.next_hourly = next,
+            PaidKind::Learning => work.dirty = true,
+        },
+        Err(error) => match error.cause().1 {
+            CallFailure::Cancelled
+            | CallFailure::Admission
+            | CallFailure::Existing
+            | CallFailure::Stale(_) => (),
+            CallFailure::World(WorldError::Storage(StoreError::StaleCut)) => (),
+            CallFailure::World(error) if error.is_admission_refusal() => (),
+            _ => {
+                eprintln!("Memory maintenance deferred: {error}");
+                work.next_real = Instant::now() + READ_BACKOFF;
+                work.dirty = true;
+            }
+        },
     }
 }

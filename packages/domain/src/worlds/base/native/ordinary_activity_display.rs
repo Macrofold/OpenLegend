@@ -13,6 +13,7 @@ use std::sync::OnceLock;
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct DisplayWords<'a> {
+    stable_learned_purpose: &'a str,
     chosen_purpose: &'a str,
     #[serde(borrow)]
     r#move: MoveWords<'a>,
@@ -167,6 +168,39 @@ fn tenth(value: f64) -> String {
     let ticks = floor as u64 + u64::from(round_up);
     let sign = if value < 0.0 { "-" } else { "" };
     format!("{sign}{}.{}", ticks / 10, ticks % 10)
+}
+
+/// Learning uses the same installed names as a current activity display.
+/// Only the world's designated shared purpose survives template normalization.
+pub(crate) fn shared_name(
+    profile: (&str, u64),
+    kind: &str,
+    purpose: Option<&JsText>,
+    operation: Option<&str>,
+    effect: Option<(&str, Option<&str>, Option<&str>)>,
+) -> Option<JsText> {
+    if profile != ("grounded-wilderness", 1) {
+        return None;
+    }
+    let words = words()?;
+    if let ("status-effect", Some((label, activate, deactivate))) = (kind, effect) {
+        let (name, prefix) = if operation == Some("activate") {
+            (activate, words.status.activate_prefix)
+        } else {
+            (deactivate, words.status.deactivate_prefix)
+        };
+        return Some(name.map(JsText::from).unwrap_or_else(|| prepend(prefix, &label.into())));
+    }
+    let fallback = match kind {
+        "move" => words.r#move.name,
+        "say" => words.say.name,
+        "follow" => words.follow_name,
+        "strike" => words.strike.name,
+        "status-effect" => words.status.name,
+        _ => return None,
+    };
+    Some(purpose.filter(|text| *text == words.stable_learned_purpose).cloned()
+        .unwrap_or_else(|| fallback.into()))
 }
 
 pub fn format(

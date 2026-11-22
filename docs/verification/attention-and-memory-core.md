@@ -83,7 +83,7 @@ A disposable actor with $1.80 of settled application charges and a $2 ceiling ha
 
 The schema-64 listener used the frozen `7b4a87552` component closure plus the daily scheduling and typed formatter changes. Its SHA-256 was `92eb211e756f3597b84a12ed2e6b15708d7d20d9d1a6174994fb2a99c6140472` and the generated storage artifact was `da87ef2ad9cd7caef1efe0da3a3d202fd7a4c01db98f75d5144ca69c5b7ea78a`. The earlier positive publication stopped at the missing formatter. Its preserved result and the completed `typed-*` cases are under `nsc04-daily-dream-20261121.zL2sPj4i` in the verification workspace. These checks cover local correctness with controlled responses.
 
-Richer hourly evidence projection, cross-partition/backlog and fresh sleep episode cases, learning, intentional reflection and active-work comparisons remain under [NSC04-R2](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
+Richer hourly evidence projection, cross-partition/backlog and fresh sleep episode cases, intentional reflection and active-work comparisons remain under [NSC04-R2](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
 
 ### Stand-alone semantic recall — November 21, 2026
 
@@ -102,6 +102,16 @@ A separate stopped-recovery journey creates a real Rust checkpoint while the ini
 ### Stand-alone correction of an acquired source — November 21, 2026
 
 On frozen source `5ce62f48e4eda986a66d6ef9e1498c05fe6b4322`, an authenticated player spoke twice through the real conversation path. The NPC acquired the later utterance. The creator correction route refused a fabricated replacement with no database write, then bound the earlier memory to the later acquired event. PostgreSQL preserved the exact correction through a cold restart. Both controlled replies and the in-game walk also persisted. The operator keeps the same private world authority and protected save as forgetting. The recent-receipt reference variant remains open. This was a local correctness check with no provider charge. The executable SHA-256 was `82f45f0a36e6b14d2a23b141f2d1e389152f4120da8b56e947043199aa6ab2f0`; the `native-memory-correction` case is retained under `native-runtime-foundations/nsc04-first-reply-20261121.LsAlK7Y8/`.
+
+### Scheduled activity learning on the Rust listener — November 21, 2026
+
+Source's actual plan and action owners produced two recorded speech steps for one NPC. The running Rust scheduler read that NPC's own history, sent the exact same learning request as Source and kept the other NPC's private activity out of the request. The text included an emoji and an unpaired UTF-16 code unit. The assessment cursor was durable before HTTPS began. An authenticated player moved, received an ordinary durable receipt, and recovered the same command result while the provider was held. The approved method, bindings and two supporting attempts matched Source through PostgreSQL and cold reopen.
+
+Withdrawal during a held PostgreSQL admission settled with zero transport and no charge. Withdrawal after HTTPS began settled the original receipt and saved no method. Shutdown with HTTPS held left one uncertain attempt and saved no method. The disposable ledger retained its 21,044-microdollar reservation. Restart started no replacement call. An unconnected action advanced its cursor without inference. A forced method insert failure left the method and acquisition absent. A stopped restore recovered the current method and the player resumed movement. Changing the saved method body under its old signature prevented startup. Restoring the original bytes reopened the same world.
+
+The initial executable `1483fd026b0935d3eaa3b36956ecdef3fc0b941378d099847ac0e4e23dc6c8ec` saved the expected method but cold startup refused its nonempty method table. Current open and recovery prepare the canonical method signature with the pinned language provider. The native installer verifies the exact original row and its structure. A later listener reported 216,250 transient bytes while its storage owner was still held for live recovery. The delivery replay measured shutdown after that owner was released. All three reservation counters were zero.
+
+The schema-65 delivery executable `96fa44fa9650c27b3cbb725d0c170737b14c1563ded92c3ccdccd504c0915c83` used storage artifact `082b94fb7a4bfe5602052bcb78e4898e458f153acdd89c13e26325503972ba2b`. The source manifest is `74f1dbe6889c1291a00aee3f677407b2f2f3a41ea2d725e24d8fb4481641b8ab` on the frozen `5cf23b15e` line. The same build repeated the hourly summary and daily interpretation journeys after the change to their shared scheduler. The raw inputs, failed runs and delivery cases are retained under `native-runtime-foundations/nsc04-activity-learning-20261121/`. The controlled transport incurred $0 provider cost. Learned activity inspection and execution, larger learning histories and the full-game measurement remain open.
 
 ## Performance evidence and remaining limits
 

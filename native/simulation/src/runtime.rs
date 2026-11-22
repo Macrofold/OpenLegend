@@ -62,7 +62,9 @@ pub use crate::capture::{
     NpcSourceRows, NpcSourceSelection,
 };
 pub use navigation::RuntimeNavigationRead;
-pub use read_cut::{RuntimeKnownPlaceRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead};
+pub use read_cut::{
+    RuntimeActivityHistoryRead, RuntimeKnownPlaceRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead,
+};
 mod restore;
 pub use restore::{RuntimeRestoreMembership, RuntimeRestorePlacement};
 mod retained_values;
@@ -272,6 +274,8 @@ enum RuntimeAnswerBody {
     Geometry(Box<crate::geometry::GeometryAnswers>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
+    ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
+    ActivityLearningFormat(Box<crate::activity::LearningFormatAnswer>),
 }
 impl RuntimeProviderInput {
     /// The caller already admitted and owns this String's backing. Its actual
@@ -317,6 +321,26 @@ impl RuntimeProviderInput {
                     .map_err(failure)?,
             )),
             custody: wrapper,
+        })
+    }
+
+    /// Move the actual scoped PostgreSQL rows and their custody into the
+    /// existing activity learner, which still validates their identities.
+    pub fn activity_history(
+        binding: crate::geometry::GeometryBinding,
+        rows: Vec<crate::records::InstalledRow>,
+        storage: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        if !budget.owns(&storage) {
+            return Err(failure("activity history belongs to another native budget"));
+        }
+        let custody = budget.reserve(size_of::<crate::activity::LearningHistoryAnswer>())?;
+        Ok(Self {
+            body: RuntimeAnswerBody::ActivityHistory(Box::new(
+                crate::activity::LearningHistoryAnswer::provided(binding, rows, storage),
+            )),
+            custody,
         })
     }
 
@@ -386,6 +410,18 @@ fn provider_response(
                         return Err(failure("mind format answer requires its typed request"));
                     }
                     ProviderResponse::maintenance(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::ActivityHistory(answer) => {
+                    if question.learning_history().is_none() {
+                        return Err(failure("activity history requires its typed request"));
+                    }
+                    ProviderResponse::learning_history(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::ActivityLearningFormat(answer) => {
+                    if question.learning_format().is_none() {
+                        return Err(failure("activity captions require their typed request"));
+                    }
+                    ProviderResponse::learning_format(question.binding(), answer, input.custody)
                 }
             }
             .map_err(failure)
@@ -652,6 +688,24 @@ impl RuntimeProvider {
             .map(|ask| format(ask.binding(), ask.publication())))
     }
 
+    /// Format the exact already-acquired activity evidence without bridge
+    /// encoding. The existing learner still owns effects and claim validation.
+    pub fn format_activity_learning(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<Option<RuntimeProviderInput>, RuntimeError> {
+        let question = self.question()?;
+        let Some(request) = question.learning_format() else {
+            return Ok(None);
+        };
+        let custody = budget.reserve(size_of::<crate::activity::LearningFormatAnswer>())?;
+        let answer = request.format(budget).map_err(failure)?;
+        Ok(Some(RuntimeProviderInput {
+            body: RuntimeAnswerBody::ActivityLearningFormat(Box::new(answer)),
+            custody,
+        }))
+    }
+
     pub fn json(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let question = self.question()?;
         if let Some(geometry) = question.geometry_envelope() {
@@ -659,6 +713,12 @@ impl RuntimeProvider {
         }
         if let Some(maintenance) = question.maintenance_envelope() {
             return RuntimeJson::encode(&maintenance, budget);
+        }
+        if let Some(history) = question.learning_history_envelope() {
+            return RuntimeJson::encode(&history, budget);
+        }
+        if let Some(learning) = question.learning_format_envelope() {
+            return RuntimeJson::encode(&learning, budget);
         }
         // Other provider families already own an encoded body. Copy only this
         // selected output; JavaScript buffers can never alias canonical bytes.

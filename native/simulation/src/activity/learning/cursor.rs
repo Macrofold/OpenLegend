@@ -28,7 +28,7 @@ pub(crate) enum LearningPreparationAnswer {
 }
 pub(crate) enum LearningPreparationStep<'a> {
     History(&'a LearningHistoryRequest),
-    Format(&'a LearningFormatRequest),
+    Format(&'a Arc<LearningFormatRequest>),
     Canonical(&'a CanonicalJsonRequest),
     Complete(Arc<PreparedActivityLearning>),
     Context(LearningReadContext),
@@ -66,6 +66,48 @@ pub(crate) struct PreparedActivityLearning {
     pub(super) capacity_blocked: bool,
     _storage: ByteReservation,
 }
+impl PreparedActivityLearning {
+    pub(crate) fn actor_id(&self) -> &str {
+        &self.history.actor
+    }
+    pub(crate) fn accepted_cut(&self) -> u64 {
+        self.history.accepted_cut
+    }
+    pub(crate) fn capacity_blocked(&self) -> bool {
+        self.capacity_blocked
+    }
+    pub(crate) fn offered(&self) -> impl ExactSizeIterator<Item = (&str, &JsText)> {
+        self.candidates
+            .iter()
+            .map(|candidate| (candidate.signature(), &candidate.description))
+    }
+
+    /// The dispatch claim rechecks the saved rows. A recorded result can still
+    /// age out between that claim and first send without changing privacy.
+    pub(crate) fn source_results_current(
+        &self,
+        state: &crate::simulation::SimulationState,
+        budget: &ByteBudget,
+    ) -> Result<bool, ExecutionError> {
+        for &index in self
+            .candidates
+            .iter()
+            .flat_map(|candidate| &candidate.indices)
+        {
+            let row = self
+                .history
+                .rows
+                .get(index)
+                .ok_or(ExecutionError::Invariant)?;
+            if let Some(evidence) = &row.entry.result_evidence
+                && !evidence.recent_eligible(state, &self.history.actor, budget)?
+            {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+}
 impl Serialize for PreparedActivityLearning {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeStruct;
@@ -90,7 +132,7 @@ pub(crate) struct LearningPreparationCursor {
     context_only: bool,
     history_cursor: Option<LearningHistoryCursor>,
     history: Option<LearningHistory>,
-    format: Option<LearningFormatRequest>,
+    format: Option<Arc<LearningFormatRequest>>,
     canonical: Option<CanonicalJsonRequest>,
     names: Option<LearningTexts>,
     manifest: String,
@@ -403,27 +445,15 @@ impl LearningPreparationCursor {
                                 .checked_mul(size_of::<Option<super::format::NameRead<'_>>>())
                                 .ok_or(ExecutionError::Capacity)?,
                         )?;
-                        #[derive(Serialize)]
-                        struct Input<'a> {
-                            kind: &'static str,
-                            entries: Vec<Option<super::format::NameRead<'a>>>,
-                        }
-                        let input = Input {
-                            kind: "names",
-                            entries: history
-                                .rows
-                                .iter()
-                                .map(|r| super::format::name_read(&r.entry, core.state))
-                                .collect(),
-                        };
-                        self.format = Some(LearningFormatRequest::new(
+                        let entries = history
+                            .rows
+                            .iter()
+                            .map(|r| super::format::name_read(&r.entry, core.state))
+                            .collect();
+                        self.format = Some(LearningFormatRequest::names(
                             binding,
-                            (
-                                &core.state.installed.content.profile.id,
-                                core.state.installed.content.profile.version,
-                            ),
-                            &input,
-                            history.rows.len(),
+                            core.state,
+                            entries,
                             &self.budget,
                         )?);
                     }
@@ -600,28 +630,15 @@ impl LearningPreparationCursor {
                                     .collect(),
                             })
                             .collect::<Vec<_>>();
-                        #[derive(Serialize)]
-                        struct Input<'a> {
-                            kind: &'static str,
-                            entries: Vec<DescriptionRead<'a>>,
-                        }
-                        let input = Input {
-                            kind: "descriptions",
-                            entries,
-                        };
                         let binding = GeometryBinding::new(
                             self.key,
                             core.state.installed.geometry.spatial.revision,
                             core.journal.next_provider_serial()?,
                         );
-                        self.format = Some(LearningFormatRequest::new(
+                        self.format = Some(LearningFormatRequest::descriptions(
                             binding,
-                            (
-                                &core.state.installed.content.profile.id,
-                                core.state.installed.content.profile.version,
-                            ),
-                            &input,
-                            self.candidates.len(),
+                            core.state,
+                            entries,
                             &self.budget,
                         )?);
                     }

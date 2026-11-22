@@ -41,6 +41,59 @@ impl RuntimeProvider {
     pub fn asks_npc_sources(&self) -> Result<bool, RuntimeError> {
         Ok(self.question()?.kind() == crate::simulation::ProviderKind::Sources)
     }
+
+    pub fn asks_activity_history(&self) -> Result<bool, RuntimeError> {
+        Ok(self.question()?.learning_history().is_some())
+    }
+}
+
+/// Borrowed operation scope for acquiring exact activity rows. Only the
+/// matching candidate may consume the answer; this read grants no disclosure.
+pub struct RuntimeActivityHistoryRead<'a> {
+    pub request: &'a crate::activity::LearningHistoryRequest,
+    pub durable_revision: u64,
+    pub in_flight_through: Option<u64>,
+    save: &'a crate::records::save::SaveJournal,
+}
+
+impl RuntimeActivityHistoryRead<'_> {
+    pub fn pending_rows(
+        &self,
+    ) -> (
+        Option<&crate::records::ChangedRows>,
+        &crate::records::ChangedRows,
+    ) {
+        self.save.pending_read_rows()
+    }
+}
+
+impl NativeWorldSession {
+    /// Attach the active learning question to the same pending save prefix as
+    /// its accepted world cut. The caller copies only matching activity rows.
+    pub fn with_activity_history_read<T>(
+        &self,
+        ticket: &RuntimeProvider,
+        prepare: impl FnOnce(RuntimeActivityHistoryRead<'_>) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        self.require_active()?;
+        let question = ticket.question()?;
+        let Some(request) = question.learning_history() else {
+            return Ok(None);
+        };
+        if request.accepted_cut != request.binding.base_cut {
+            return Err(failure("activity history lost its accepted cut"));
+        }
+        let (metadata, save) = self
+            .session
+            .source_versions_read(request.binding, &request.world_id, &request.generation)
+            .map_err(failure)?;
+        Ok(Some(prepare(RuntimeActivityHistoryRead {
+            request,
+            durable_revision: metadata.durable_revision,
+            in_flight_through: metadata.in_flight_through,
+            save,
+        })))
+    }
 }
 
 /// Accepted evidence rows for one genuine read origin. The privacy and

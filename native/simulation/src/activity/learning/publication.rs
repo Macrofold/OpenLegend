@@ -17,9 +17,9 @@ use crate::records::SqlCell;
 use serde::Deserialize;
 use std::{mem::size_of, sync::Arc};
 
-#[derive(Deserialize)]
+#[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum LearningJudgment {
+pub enum LearningJudgment {
     Retain,
     Decline,
     Uncertain,
@@ -29,6 +29,8 @@ pub(crate) enum LearningJudgment {
 pub(crate) struct LearningPublicationRequest {
     pub judgments: Vec<LearningJudgment>,
     pub dispatched: bool,
+    #[serde(skip)]
+    pub protected: bool,
 }
 pub(crate) enum LearningPublicationAnswer {
     History(LearningHistoryAnswer),
@@ -37,12 +39,13 @@ pub(crate) enum LearningPublicationAnswer {
 }
 pub(crate) enum LearningPublicationStep<'a> {
     History(&'a LearningHistoryRequest),
-    Format(&'a LearningFormatRequest),
+    Format(&'a Arc<LearningFormatRequest>),
     Canonical(&'a CanonicalJsonRequest),
     Complete(CompletedActivityLearning),
 }
 pub(crate) struct CompletedActivityLearning {
     pub outcome: Outcome,
+    pub protected: bool,
     _storage: ByteReservation,
 }
 pub(crate) struct LearningPublicationCursor {
@@ -204,6 +207,7 @@ impl LearningPublicationCursor {
                 self.done = true;
                 Ok(LearningPublicationStep::Complete(Self::completion(
                     published,
+                    self.request.protected,
                     &self.budget,
                 )?))
             }
@@ -213,11 +217,13 @@ impl LearningPublicationCursor {
         self.done = true;
         Ok(LearningPublicationStep::Complete(Self::completion(
             ok,
+            self.request.protected,
             &self.budget,
         )?))
     }
     fn completion(
         ok: bool,
+        protected: bool,
         budget: &ByteBudget,
     ) -> Result<CompletedActivityLearning, ExecutionError> {
         let storage =
@@ -236,6 +242,7 @@ impl LearningPublicationCursor {
                 plan_id: None,
                 action_id: None,
             },
+            protected,
             _storage: storage,
         })
     }

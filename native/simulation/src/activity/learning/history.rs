@@ -9,20 +9,26 @@ use crate::records::InstalledRow;
 use crate::simulation::SimulationState;
 use std::mem::size_of;
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct LearningHistoryRequest {
+pub struct LearningHistoryRequest {
     pub binding: GeometryBinding,
-    world_id: String,
-    generation: String,
-    accepted_cut: u64,
-    actor_id: String,
-    after: i64,
+    pub world_id: String,
+    pub generation: String,
+    pub accepted_cut: u64,
+    pub actor_id: String,
+    pub after: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
-    ids: Option<Vec<String>>,
-    maximum_rows: usize,
-    maximum_bytes: usize,
+    pub ids: Option<Vec<String>>,
+    pub maximum_rows: usize,
+    pub maximum_bytes: usize,
 }
+crate::host::retained_size::heap_record!(LearningHistoryRequest {
+    world_id,
+    generation,
+    actor_id,
+    ids
+});
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct LearningHistoryAnswer {
@@ -32,6 +38,18 @@ pub(crate) struct LearningHistoryAnswer {
     storage: Option<ByteReservation>,
 }
 impl LearningHistoryAnswer {
+    pub(crate) fn provided(
+        binding: GeometryBinding,
+        rows: Vec<InstalledRow>,
+        storage: ByteReservation,
+    ) -> Self {
+        Self {
+            binding,
+            rows,
+            storage: Some(storage),
+        }
+    }
+
     pub(crate) fn decode(
         text: &str,
         budget: &ByteBudget,

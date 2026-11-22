@@ -5,12 +5,13 @@ use super::schema::{SqlType, Table};
 use super::{
     DurableHead, Session, Store, StoreError, StoreResult, durable_head, ordinal, sql_ordinal,
 };
-use crate::language::{LanguageError, LanguageProvider};
+use crate::language::{LanguageError, LanguageProvider, canonical::write_canonical};
+use openlegend_simulation::encoding::{json_record, json_tree_allocation_bound, sha256_hex};
 use openlegend_simulation::events::OriginalOccurrenceInput;
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use openlegend_simulation::records::{
-    CurrentRecords, EntityOrdering, EntityOrderingEntry, InstalledRow, NormalizedIntent,
-    OwnerCoverage, SqlCell,
+    ActivityMethodSignature, CurrentRecords, EntityOrdering, EntityOrderingEntry, InstalledRow,
+    NormalizedIntent, OwnerCoverage, SqlCell,
 };
 use openlegend_simulation::text::JsText;
 use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
@@ -33,15 +34,24 @@ pub struct CurrentOpening {
 }
 
 impl CurrentOpening {
-    pub(crate) fn has_intentions(&self) -> bool {
+    pub(crate) fn needs_language(&self) -> bool {
         !self.records.tables["sim_intentions"].is_empty()
+            || !self.records.tables["activity_methods"].is_empty()
     }
 
-    /// After reading the exact saved rows, independently prepare each
-    /// normalized description with the release's pinned language provider.
-    /// Keep the preparation charged to the opening until the native importer
-    /// consumes each row's identity and checks its exact saved text.
-    pub(crate) fn prepare_intentions(
+    /// Prepare each saved intention and learned-method signature with the
+    /// pinned language provider at opening or recovery. The native importer
+    /// consumes these funded results against their original row identities.
+    pub(crate) fn prepare_language(
+        &mut self,
+        language: &LanguageProvider,
+        budget: &ByteBudget,
+    ) -> StoreResult<()> {
+        self.prepare_intentions(language, budget)?;
+        self.prepare_activity_methods(language, budget)
+    }
+
+    fn prepare_intentions(
         &mut self,
         language: &LanguageProvider,
         budget: &ByteBudget,
@@ -104,6 +114,67 @@ impl CurrentOpening {
             });
         }
         self.records.normalized_intents = intentions;
+        Ok(())
+    }
+
+    fn prepare_activity_methods(
+        &mut self,
+        language: &LanguageProvider,
+        budget: &ByteBudget,
+    ) -> StoreResult<()> {
+        #[derive(Deserialize, Serialize)]
+        struct SignatureInput<'a> {
+            #[serde(borrow)]
+            root: &'a RawValue,
+            #[serde(borrow)]
+            roles: &'a RawValue,
+            #[serde(borrow)]
+            manifest: &'a RawValue,
+            executable: bool,
+        }
+        let rows = &self.records.tables["activity_methods"];
+        grow(
+            &mut self.custody,
+            rows.len()
+                .checked_mul(size_of::<ActivityMethodSignature>())
+                .ok_or(StoreError::Capacity)?,
+        )?;
+        let mut signatures = Vec::new();
+        signatures
+            .try_reserve_exact(rows.len())
+            .map_err(|_| StoreError::Capacity)?;
+        for row in rows {
+            let bytes = json_tree_allocation_bound(&row.payload)
+                .and_then(|bytes| bytes.checked_add(row.payload.len().checked_mul(8)?))
+                .and_then(|bytes| bytes.checked_add(row.id.len() + 512))
+                .ok_or(StoreError::Capacity)?;
+            let mut scratch = budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+            let input: SignatureInput<'_> =
+                serde_json::from_str(&row.payload).map_err(|_| StoreError::InvalidRecord)?;
+            let input = json_record(&input).map_err(|_| StoreError::InvalidRecord)?;
+            let mut canonical = Vec::with_capacity(input.len());
+            write_canonical(&input, &|a, b| language.compare_utf8(a, b), &mut canonical)
+                .map_err(|_| StoreError::InvalidRecord)?;
+            let signature = String::from_utf8(canonical).map_err(|_| StoreError::InvalidRecord)?;
+            drop(input);
+            let prepared = ActivityMethodSignature {
+                row_id: row.id.clone(),
+                payload_sha256: sha256_hex(row.payload.as_bytes()),
+                signature,
+            };
+            scratch
+                .resize(
+                    prepared.row_id.capacity()
+                        + prepared.payload_sha256.capacity()
+                        + prepared.signature.capacity(),
+                )
+                .map_err(|_| StoreError::Capacity)?;
+            self.custody
+                .merge(scratch)
+                .map_err(|_| StoreError::Capacity)?;
+            signatures.push(prepared);
+        }
+        self.records.activity_method_signatures = signatures;
         Ok(())
     }
 }
@@ -243,10 +314,14 @@ impl Store {
     /// current world with those rows cannot use the ungranted stock path.
     pub(crate) async fn has_construction_grants(&self, world: &str) -> StoreResult<bool> {
         let reader = self.reader.lock().await;
-        Ok(reader.client.query_one(
-            "SELECT EXISTS(SELECT 1 FROM auth_construction_grants WHERE world_id=$1)",
-            &[&world],
-        ).await?.try_get(0)?)
+        Ok(reader
+            .client
+            .query_one(
+                "SELECT EXISTS(SELECT 1 FROM auth_construction_grants WHERE world_id=$1)",
+                &[&world],
+            )
+            .await?
+            .try_get(0)?)
     }
 
     /// Classify an installation with no current header in the same snapshot
@@ -261,7 +336,10 @@ impl Store {
             return Ok(StoreError::DamagedInstallation);
         }
         let registered: bool = transaction
-            .query_one("SELECT EXISTS(SELECT 1 FROM creation_target_registration)", &[])
+            .query_one(
+                "SELECT EXISTS(SELECT 1 FROM creation_target_registration)",
+                &[],
+            )
             .await?
             .try_get(0)?;
         Ok(if registered {
@@ -475,10 +553,6 @@ impl Store {
                 .ok_or(StoreError::InvalidRecord)
         });
         let entity_ordering = entity_ordering(ids, tables["sim_entities"].len(), custody)?;
-        // Activity method signatures still need their separate preparation.
-        if !tables["activity_methods"].is_empty() {
-            return Err(StoreError::InvalidRecord);
-        }
         Ok(CurrentRecords {
             world_id: head.world_id,
             database_schema: self.schema.version.clone(),
@@ -639,6 +713,32 @@ pub(super) async fn admitted_query(
     budget: &ByteBudget,
 ) -> StoreResult<(ByteReservation, Vec<Row>)> {
     admitted_query_bounded(transaction, selection, params, budget, None).await
+}
+
+/// Copy a whole pending row under the reader's own admission. A column-only
+/// update cannot provide an independently usable canonical row.
+pub(super) fn retain_pending_row(
+    row: &openlegend_simulation::records::ChangedRow,
+    custody: &mut ByteReservation,
+) -> StoreResult<InstalledRow> {
+    if row.write_columns.is_some() {
+        return Err(StoreError::StaleCut);
+    }
+    grow(
+        custody,
+        row.installed_bytes()
+            .ok_or(StoreError::Capacity)?
+            .checked_add(size_of::<InstalledRow>() + 192)
+            .ok_or(StoreError::Capacity)?,
+    )?;
+    Ok(InstalledRow {
+        id: row.id.clone(),
+        parent: row.parent.clone(),
+        slot: row.slot.clone(),
+        position: row.position,
+        payload: row.payload.clone(),
+        extra: row.extra.clone(),
+    })
 }
 
 pub(super) async fn admitted_query_bounded(

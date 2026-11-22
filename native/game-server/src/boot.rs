@@ -309,11 +309,11 @@ impl StartupStorage {
     > {
         let budget = self.host.budget();
         let (definitions, definition_custody) = read_definitions(release, &self.manifest, budget)?;
-        let language = (require_language || opening.has_intentions())
+        let language = (require_language || opening.needs_language())
             .then(|| LanguageProvider::open(&release.join("language"), budget).map(Arc::new))
             .transpose()?;
         if let Some(language) = &language {
-            opening.prepare_intentions(language, budget)?;
+            opening.prepare_language(language, budget)?;
         }
         let receipt = RuntimeActivation {
             world_id: opening.records.world_id.clone(),
@@ -506,6 +506,14 @@ impl CurrentServer {
             let store = Arc::clone(&self.store);
             let answer = self
                 .read_for_operation(async move { store.read_npc_sources(prepared).await })
+                .await?;
+            return Ok((question, answer));
+        }
+        if question.asks_activity_history()? {
+            let (question, prepared) = self.world.prepare_activity_history(question).await?;
+            let store = self.store.clone();
+            let answer = self
+                .read_for_operation(async move { store.read_activity_history(prepared).await })
                 .await?;
             return Ok((question, answer));
         }

@@ -8,8 +8,7 @@ use crate::{
         invites::{Claim, ClaimOutcome, EnrollmentProjection, InviteError, Role, invite_hash},
     },
     boot::CurrentServer,
-    embodiment::ParticipationSave,
-    live_save::LiveSaves,
+    live_save::{LiveSaves, ProtectedGameplaySave},
     oidc::LoginCompletion,
     store::{CommitError, StoreError},
     world::{ProtectedCommit, WorldError},
@@ -112,7 +111,7 @@ fn location(outcome: ClaimOutcome) -> &'static str {
 }
 
 struct PreparedEnrollment {
-    save: Option<ParticipationSave>,
+    save: Option<ProtectedGameplaySave>,
     _custody: ByteReservation,
 }
 
@@ -167,7 +166,7 @@ impl Enrollment {
                     let save = prepared
                         .outcome()
                         .ok
-                        .then(|| ParticipationSave::prepare(&prepared, &project, budget))
+                        .then(|| ProtectedGameplaySave::prepare(&prepared, &project, budget))
                         .transpose()?;
                     Ok(PreparedEnrollment {
                         save,

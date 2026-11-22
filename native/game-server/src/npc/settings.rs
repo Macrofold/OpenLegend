@@ -88,6 +88,10 @@ fn embedding_price(model: &str) -> Result<(Option<f64>, std::sync::Arc<[String]>
 }
 
 impl ConfiguredModels {
+    pub(super) fn background_ceiling(&self) -> u64 {
+        self.routes.ceiling_micro_usd.saturating_sub(self.interactive)
+    }
+
     pub(super) fn interactive_allowance(&self) -> Option<(u64, u64)> {
         (!self.jev_only && self.routes.fast.is_some() && self.routes.ceiling_micro_usd > 0)
             .then_some((self.interactive, self.routes.ceiling_micro_usd))

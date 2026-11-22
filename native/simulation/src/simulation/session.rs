@@ -927,6 +927,9 @@ impl Session {
             crate::capture::maintenance::MaintenanceAdmission,
         )>,
     ) -> Result<CandidateKey, SessionError> {
+        if request.protected && !self.save_barrier_complete() {
+            return Err(FenceError::NotReady.into());
+        }
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
             let mut core = CoreMutation {
@@ -1234,6 +1237,7 @@ impl Session {
                                 | CompletedOperation::HostControl(_)
                         )
                         || matches!(&result, CompletedOperation::Participation(done) if done.outcome.ok)
+                        || matches!(&result, CompletedOperation::ActivityLearning(done) if done.protected && done.outcome.ok)
                         || matches!(&result, CompletedOperation::Response(done) if done.protected())
                         || matches!(&result, CompletedOperation::Consolidation(done) if done.protected);
                     let source_versions = preparing.driver.take_source_versions();

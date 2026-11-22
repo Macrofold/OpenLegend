@@ -365,7 +365,7 @@ impl Store {
             &current_privacy.0
         };
         let (mut opening, history) = slot.into_opening(self, replacement.clone())?;
-        opening.prepare_intentions(language, &self.budget)?;
+        opening.prepare_language(language, &self.budget)?;
         self.recovery_asset_binding(tx, &replacement.world_id, &slot_id, &opening)
             .await?;
         reconcile_history_positions(

@@ -140,6 +140,8 @@ enum QuestionBody {
     Json(String),
     Geometry(Box<GeometryQueries>),
     Maintenance(crate::cognition::format::MaintenanceFormatRequest),
+    ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
+    ActivityLearningFormat(Arc<crate::activity::LearningFormatRequest>),
 }
 
 #[derive(Serialize)]
@@ -161,14 +163,14 @@ impl ProviderQuestion {
     pub(crate) fn json(&self) -> Option<&str> {
         match &self.body {
             QuestionBody::Json(json) => Some(json),
-            QuestionBody::Geometry(_) | QuestionBody::Maintenance(_) => None,
+            _ => None,
         }
     }
 
     pub(crate) fn geometry(&self) -> Option<&GeometryQueries> {
         match &self.body {
             QuestionBody::Geometry(queries) => Some(queries),
-            QuestionBody::Json(_) | QuestionBody::Maintenance(_) => None,
+            _ => None,
         }
     }
 
@@ -195,6 +197,54 @@ impl ProviderQuestion {
             binding: self.binding,
             value,
         })
+    }
+
+    pub(crate) fn learning_history(&self) -> Option<&crate::activity::LearningHistoryRequest> {
+        match &self.body {
+            QuestionBody::ActivityHistory(ask) => Some(ask),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn learning_history_envelope(
+        &self,
+    ) -> Option<QuestionEnvelope<'_, crate::activity::LearningHistoryRequest>> {
+        self.learning_history().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    pub(crate) fn learning_format(&self) -> Option<&crate::activity::LearningFormatRequest> {
+        match &self.body {
+            QuestionBody::ActivityLearningFormat(ask) => Some(ask),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn learning_format_envelope(
+        &self,
+    ) -> Option<QuestionEnvelope<'_, crate::activity::LearningFormatRequest>> {
+        self.learning_format().map(|value| QuestionEnvelope { kind: self.kind, binding: self.binding, value })
+    }
+
+    fn prepare_learning_history(
+        value: &crate::activity::LearningHistoryRequest,
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, DriveError> {
+        use crate::host::retained_size::HeapBytes;
+        let bytes = value.heap_bytes()
+            .and_then(|bytes| bytes.checked_add(size_of::<crate::activity::LearningHistoryRequest>()))
+            .ok_or(DriveError::Capacity)?;
+        let reservation = budget.reserve(bytes).map_err(|_| DriveError::Capacity)?;
+        Ok(Arc::new(Self {
+            kind: ProviderKind::ActivityHistory,
+            binding: value.binding,
+            body: QuestionBody::ActivityHistory(Box::new(value.clone())),
+            _reservation: reservation,
+            backing: Self::reserve_backing(budget)?,
+        }))
     }
 
     pub(crate) fn backing(&self) -> &Arc<ByteReservation> {
@@ -272,6 +322,8 @@ enum AnswerBody {
     Geometry(Box<GeometryAnswers>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
+    ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
+    ActivityLearningFormat(Box<crate::activity::LearningFormatAnswer>),
 }
 
 /// The host funds construction before moving the incoming allocation here.
@@ -331,6 +383,34 @@ impl ProviderResponse {
             body: AnswerBody::NpcSources(answer),
             _reservation: reservation,
         })
+    }
+
+    pub(crate) fn learning_history(
+        binding: GeometryBinding,
+        answer: Box<crate::activity::LearningHistoryAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::ActivityHistory,
+            binding,
+            body: AnswerBody::ActivityHistory(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn learning_format(
+        binding: GeometryBinding,
+        answer: Box<crate::activity::LearningFormatAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self { kind: ProviderKind::ActivityLearningFormat, binding,
+            body: AnswerBody::ActivityLearningFormat(answer), _reservation: reservation })
     }
 
     pub(crate) fn maintenance(
@@ -1507,6 +1587,12 @@ impl OperationDriver {
                     }
                     AnswerBody::NpcSources(value) => {
                         (Some(Answer::Sources(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::ActivityHistory(value) => {
+                        (Some(Answer::ActivityHistory(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::ActivityLearningFormat(value) => {
+                        (Some(Answer::ActivityLearningFormat(*value)), Some(_reservation), None)
                     }
                     AnswerBody::Maintenance(value) => {
                         (Some(Answer::MaintenanceFormat(*value)), Some(_reservation), None)

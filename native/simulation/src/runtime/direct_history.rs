@@ -38,7 +38,7 @@ impl RuntimePreparedProducts<'_> {
     /// Prepare the same scoped eligibility and recall inputs as an ordinary
     /// save, from the private participation candidate and its protected prefix.
     /// The callback may retain only its funded derived products through commit.
-    pub fn prepare_participation_save<T>(
+    pub fn prepare_protected_gameplay_save<T>(
         &self,
         budget: &ByteBudget,
         prepare: impl FnOnce(RuntimeHistory, Option<RuntimeHistoryCuts>, RuntimeRecallRead<'_>) -> T,
@@ -46,15 +46,16 @@ impl RuntimePreparedProducts<'_> {
         if !matches!(
             self.operation,
             crate::simulation::CompletedOperation::Participation(_)
+                | crate::simulation::CompletedOperation::ActivityLearning(_)
         ) || !self.outcome().ok
         {
             return Err(failure(
-                "participation save requires its completed candidate",
+                "protected gameplay save requires its completed candidate",
             ));
         }
         let prefix = self
             .protected_save
-            .ok_or_else(|| failure("participation save requires a protected prefix"))?;
+            .ok_or_else(|| failure("protected gameplay save requires its prefix"))?;
         let history = self.retain_history();
         let eligibility = capture_history_cuts(
             self.state,

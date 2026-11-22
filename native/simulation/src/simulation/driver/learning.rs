@@ -35,6 +35,41 @@ fn response(
         }
     })
 }
+
+fn history<T>(
+    answer: &Option<Answer>,
+    request: &LearningHistoryRequest,
+    budget: &ByteBudget,
+) -> Result<Poll<T, LearningReply>, DriveError> {
+    if answer.is_some() {
+        return Err(DriveError::StaleResponse);
+    }
+    Ok(Poll::Question(
+        ProviderQuestion::prepare_learning_history(request, budget)?,
+        LearningReply::History,
+    ))
+}
+
+fn format<T>(
+    answer: &Option<Answer>,
+    request: &Arc<LearningFormatRequest>,
+    budget: &ByteBudget,
+) -> Result<Poll<T, LearningReply>, DriveError> {
+    if answer.is_some() {
+        return Err(DriveError::StaleResponse);
+    }
+    let backing = ProviderQuestion::reserve_backing(budget)?;
+    Ok(Poll::Question(
+        Arc::new(ProviderQuestion {
+            kind: ProviderKind::ActivityLearningFormat,
+            binding: request.binding,
+            body: QuestionBody::ActivityLearningFormat(request.clone()),
+            _reservation: budget.reserve(0).map_err(|_| DriveError::Capacity)?,
+            backing,
+        }),
+        LearningReply::Format,
+    ))
+}
 pub(super) fn prepare(
     cursor: &mut LearningPreparationCursor,
     core: &mut CoreMutation<'_>,
@@ -44,22 +79,8 @@ pub(super) fn prepare(
 ) -> Result<Poll<Arc<PreparedActivityLearning>, LearningReply>, DriveError> {
     let supplied = response(answer, route)?;
     match cursor.step(core, supplied)? {
-        LearningPreparationStep::History(q) => question(
-            answer,
-            ProviderKind::ActivityHistory,
-            q.binding,
-            q,
-            budget,
-            LearningReply::History,
-        ),
-        LearningPreparationStep::Format(q) => question(
-            answer,
-            ProviderKind::ActivityLearningFormat,
-            q.binding,
-            q,
-            budget,
-            LearningReply::Format,
-        ),
+        LearningPreparationStep::History(q) => history(answer, q, budget),
+        LearningPreparationStep::Format(q) => format(answer, q, budget),
         LearningPreparationStep::Canonical(q) => question(
             answer,
             ProviderKind::Digest,
@@ -85,22 +106,8 @@ pub(super) fn publish(
         LearningPreparationAnswer::Canonical(a) => LearningPublicationAnswer::Canonical(a),
     });
     match cursor.step(core, supplied)? {
-        LearningPublicationStep::History(q) => question(
-            answer,
-            ProviderKind::ActivityHistory,
-            q.binding,
-            q,
-            budget,
-            LearningReply::History,
-        ),
-        LearningPublicationStep::Format(q) => question(
-            answer,
-            ProviderKind::ActivityLearningFormat,
-            q.binding,
-            q,
-            budget,
-            LearningReply::Format,
-        ),
+        LearningPublicationStep::History(q) => history(answer, q, budget),
+        LearningPublicationStep::Format(q) => format(answer, q, budget),
         LearningPublicationStep::Canonical(q) => question(
             answer,
             ProviderKind::Digest,

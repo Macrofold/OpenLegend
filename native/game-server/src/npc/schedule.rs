@@ -109,6 +109,7 @@ impl ScheduleInbox {
                 | "mind_memories"
                 | "mind_summaries"
                 | "mind_privacy_revisions"
+                | "activity_learning"
         );
         if !self.ordinary && !changes_review {
             return Ok(());

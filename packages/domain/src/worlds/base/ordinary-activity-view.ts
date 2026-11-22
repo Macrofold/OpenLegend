@@ -39,7 +39,10 @@ export function sharedOrdinaryActivityName(input: OrdinaryActivityNameInput): st
     ...input,
     command: {
       ...input.command,
-      purpose: input.command.purpose === 'Hunt once' ? 'Hunt once' : undefined,
+      purpose:
+        input.command.purpose === display.stableLearnedPurpose
+          ? display.stableLearnedPurpose
+          : undefined,
     },
   });
 }

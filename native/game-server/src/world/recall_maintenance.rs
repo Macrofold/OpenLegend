@@ -2,13 +2,31 @@
 
 use super::{HostedWorld, NpcDisclosure, NpcDisclosureTurn, WorldError};
 use openlegend_simulation::runtime::{
-    NativeWorldSession, RuntimeConsolidationTicket, RuntimeError, RuntimeMaintenancePublication,
-    RuntimeMemoryIndex, RuntimeNpcConsumer, RuntimeNpcRead,
+    NativeWorldSession, RuntimeActivityLearning, RuntimeConsolidationTicket, RuntimeError,
+    RuntimeMaintenancePublication, RuntimeMaintenanceRead, RuntimeMemoryIndex, RuntimeNpcConsumer,
+    RuntimeNpcRead,
 };
 use openlegend_world_host::pool::HostError;
 use std::sync::{TryLockError, atomic::Ordering};
 
 impl NpcDisclosureTurn<'_> {
+    pub(crate) fn disclose_activity_learning(
+        self,
+        read: &RuntimeActivityLearning,
+        admission: &RuntimeMaintenanceRead,
+        start: impl FnOnce(),
+    ) -> Result<Result<(), NpcDisclosure>, WorldError> {
+        self.world.disclose_personal(
+            read.actor_id()?,
+            [
+                "activity-learning-source-changed",
+                "activity-learning-lease-closed",
+            ],
+            |world| world.activity_learning_publication(read, admission),
+            start,
+        )
+    }
+
     pub(crate) fn disclose_consolidation(
         self,
         ticket: &RuntimeConsolidationTicket,

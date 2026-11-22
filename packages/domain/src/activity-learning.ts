@@ -1,4 +1,5 @@
 import { recentResultEligible, resultEvidenceId } from './result-evidence.js';
+import learningCopy from './activity-learning-copy.json' with { type: 'json' };
 import { isNativeInputField } from './native-inputs.js';
 import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
 import { entityGet } from './entity-collection.js';
@@ -80,13 +81,13 @@ export function activityLearningDescription(
       ? { name: entry.parentName, facts: [], children: [entry.view] }
       : entry.view,
   );
-  return `${renderActivity({ name: commonPurpose ? purpose : name, facts: [], children }, 'What happened')}. These attempts are evidence, not a guarantee of future success.${incomplete ? ' Some required supporting history is unavailable; this idea cannot be executed.' : ''}`;
+  return `${renderActivity({ name: commonPurpose ? purpose : name, facts: [], children }, 'What happened')}${learningCopy.evidence}${incomplete ? learningCopy.incomplete : ''}`;
 }
 export function activityLearningFailureDescription(
   views: readonly ActivityOccurrence['view'][],
 ): string {
   return views.length
-    ? ` Other observed attempts, not required steps: ${views.map((view) => renderActivity(view)).join('; ')}.`
+    ? `${learningCopy.otherAttempts}${views.map((view) => renderActivity(view)).join('; ')}.`
     : '';
 }
 

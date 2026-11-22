@@ -55,6 +55,9 @@ pub(crate) fn answer(
     budget: &ByteBudget,
     language: Option<&LanguageProvider>,
 ) -> Result<Option<RuntimeProviderInput>, WorldError> {
+    if let Some(answer) = request.format_activity_learning(budget)? {
+        return Ok(Some(answer));
+    }
     if let Some(answer) = request.with_maintenance_format(|binding, publication| {
         format_maintenance(
             binding,
