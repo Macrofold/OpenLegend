@@ -88,6 +88,7 @@ pub enum OrdinaryAction {
         description: JsText,
         supply: JsText,
         selected_tool: JsText,
+        tool_description: Option<JsText>,
     },
     Production {
         name: JsText,
@@ -355,13 +356,24 @@ pub fn format(
             ));
             purpose.unwrap_or_else(|| copy.name.as_str().into())
         }
-        OrdinaryAction::Fish { description, supply, selected_tool } => {
+        OrdinaryAction::Fish {
+            description,
+            supply,
+            selected_tool,
+            tool_description,
+        } => {
             #[derive(Deserialize)]
             struct CastCopy<'a> { label: &'a str, approach: &'a str }
             static COPY: OnceLock<CastCopy<'static>> = OnceLock::new();
             let copy = COPY.get_or_init(|| serde_json::from_str(include_str!("../cast-copy.json"))
                 .expect("base cast activity wording"));
             tool = Some(selected_tool);
+            if let Some(description) = tool_description {
+                facts.push(ActivityFact {
+                    critical: false,
+                    ..fact("description", description)
+                });
+            }
             facts.push(fact("cast", description));
             facts.push(fact("supply", supply));
             facts.push(fact("approach", copy.approach.into()));

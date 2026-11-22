@@ -230,11 +230,17 @@ impl CommandCursor {
         } else {
             &terms.exhausted_text
         };
+        // An installed item's description can exceed the activity fact limit.
+        // This optional explanation must not make its otherwise valid cast fail.
+        let tool_description = tool.description.as_ref().filter(|value| {
+            !value.is_empty() && value.units_len() <= core.state.activity.display.text
+        });
         let mut storage = self.budget.reserve(
             4096 + terms.description.storage_bytes()
                 + supply.storage_bytes()
                 + source.entity.name.storage_bytes()
                 + tool.named.name.storage_bytes()
+                + tool_description.map_or(0, crate::text::JsText::storage_bytes)
                 + envelope
                     .purpose
                     .heap_bytes()
@@ -251,6 +257,7 @@ impl CommandCursor {
                 description: terms.description.clone(),
                 supply: supply.clone(),
                 selected_tool: tool.named.name.clone(),
+                tool_description: tool_description.cloned(),
             },
             envelope.purpose.clone(),
             envelope

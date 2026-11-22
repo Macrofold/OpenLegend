@@ -136,6 +136,14 @@ An immediate cast at game second zero also exposed a clock failure. The clock ne
 
 The broader tool-custody and shared final-fish cases still need stand-alone caller evidence. These local checks establish correctness for their cases. CPU and latency comparisons remain part of the full-server qualification.
 
+### Authored fishing tool descriptions
+
+The cast record includes optional wording from the exact selected tool's installed definition. The tool description is authored independently of the rules for the cast. A description longer than the existing action fact allowance stays on the item and does not stop the cast.
+
+The authenticated Chrome session used the actual cast option for the held River line and received the same complete cast record and history wording as Source. Listing the cast left stock unchanged. Repeating the command returned the original receipt and produced one fish and one stock debit. The player cooked it and recovered the original cast receipt and food after restarting. A separate authenticated case used a legitimately installed tool with a 575-character description. It caught and cooked a fish, saved one cast and recovered the original receipt. The optional description exceeded the 500-unit action fact bound and was absent from that record.
+
+The frozen source was `875c02aeb0fe8e0a91dd423c80ce238e90ffacf2`. The local verification executable SHA-256 was `9a05b5e6e148ace64f0644137841e4c0fffa72ca215e9761d5c801a888ca0054`. Both disposable databases were dropped and all Rust reservations returned to zero. Raw results are `cast-chrome-r1` and `cast-long-r1` under `native-runtime-foundations/nsc04-activity-inspection-20261122/`.
+
 ### NPC choice on the Rust listener
 
 An actual player request used the ordinary NPC scheduling and decision path. A controlled HTTPS provider selected an offered cast while the player kept walking. The NPC earned one raw fish, stock went from four to three, and cold reconnect recovered the same receipt and one completed cast. Cancelling a separate held choice produced no cast and left stock and randomness unchanged. A hidden reach behind a real wooden barrier and a missing tool each produced no fishing option in the actual provider request. Both cases retained the player's movement and recovered the cancellation after restart. No paid model ran.
