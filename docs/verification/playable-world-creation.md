@@ -46,6 +46,14 @@ An authorized Source client checked an empty Rust destination. The approved revi
 
 Changed review content and foreign credentials were refused. The receipt lookup remained empty, the browser stayed on the waiting screen, and PostgreSQL contained no world after the check. The fixture used source `4626df0dc73cf819ddd47eb386320f93b0835094` and executable SHA-256 `1ce678b00eeee6c558aea4b0202a26bb6e3f2d3322fcfc9dc546071a3ae4d22d`. Raw evidence is in `creation-operating-settings-with-embedding/real-settings.json`. It used placeholder credentials and made no provider calls.
 
+### Artwork during reviewed activation — November 22, 2026
+
+A reviewed custom opening selected the deployment's installed private artwork. The existing Source creation client opened an empty Rust destination using an independent PostgreSQL database with the same catalog. Rust checked the exact release and the mapped account's permission. Start committed the new world, account grant, two asset pins and one activation receipt in the same transaction. The authenticated view kept that release through cold reopening. Resolving and replaying the original Start returned the same receipt.
+
+A second database used the same reviewed opening. The catalog operator withdrew the release after Check and before Start. The next Check refused it and Start left no world, account grant, asset binding, pin or receipt. Both databases were removed. The locked build, TypeScript and network boundary checks passed. Results `64bd6aff5358` and `eb51c86d90ca` in `nsc04-opening-artwork-20261122` use source `4ac970762ed2` and executable `a8e17df40a13`.
+
+The separate authored Main package contains 163 entities and one construction grant for the starting player with 14 eligible resource sources. Its build exporter still refuses construction-grant packaging. [NSC04-R3](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server) owns passing that exact permission through native validation and the first commit.
+
 ## October 14 main world and solo testing ground
 
 This separately authorized correction was implemented in `/Users/mzw/Documents/ChatGPT/OpenLegend` on local `main`, starting at `efabdcb3f9825378fbc20ce9c36a6e3d04b3d7a7`, with refreshed `origin/main` at `1cf678802d62652d8dd466776d4b95a9d0d19166` in `https://github.com/Macrofold/OpenLegend.git`. No branch or checkout changed. Main already contains `codex/rivals-and-contested-ground` at `15de70bca8df9acd3e8588f9cfda05de5efb44e0`, recorded by integrated commit `33810803e`; no second merge was needed. [OC06](../maintainers/parallel-batch-07-playable-world-creation.md#oc01--construct-the-selected-fresh-opening) owns this correction. Older whole-project acceptance and costs below retain their historical scope.

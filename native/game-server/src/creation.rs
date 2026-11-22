@@ -25,12 +25,17 @@ use serde::Serialize;
 use serde_json::{Value, value::RawValue};
 use std::{collections::BTreeMap, future::Future, path::PathBuf, pin::Pin, sync::Arc};
 
+pub(crate) struct ValidatedOpening {
+    pub(crate) session: NativeWorldSession,
+    pub(crate) artwork: Option<crate::store::assets::AssetRevision>,
+}
+
 pub(crate) type OpeningValidator = Arc<
     dyn Fn(
             CurrentOpening,
             String,
             String,
-        ) -> Pin<Box<dyn Future<Output = StoreResult<NativeWorldSession>> + Send>>
+        ) -> Pin<Box<dyn Future<Output = StoreResult<ValidatedOpening>> + Send>>
         + Send
         + Sync,
 >;

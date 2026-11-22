@@ -131,6 +131,24 @@ pub(crate) fn valid_digest(value: &str) -> bool {
 }
 
 impl Store {
+    /// Initial publication retains artwork only for the destination's exact
+    /// mapped account and available release. The activation and the pins both
+    /// roll back if the catalog closure has changed.
+    pub(super) async fn stage_initial_artwork(
+        tx: &Transaction<'_>,
+        world: &str,
+        selected: Option<&AssetRevision>,
+        account: &str,
+    ) -> StoreResult<()> {
+        if let Some(release) = selected {
+            permitted_asset(tx, account, release, None)
+                .await?
+                .ok_or(StoreError::InvalidRecord)?;
+            bind_world_assets(tx, world, release, account).await?;
+        }
+        Ok(())
+    }
+
     /// Check the canonical saved world's matching catalog binding and its
     /// current retained file/revision pins before admitting a game writer.
     /// A known, retained release may still be withheld from a particular

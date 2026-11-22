@@ -215,10 +215,14 @@ impl Store {
                 let account = &input.account.account_id;
                 let actor = &input.actor;
                 let native = (input.validate)(opening, account.clone(), actor.clone()).await?;
-                if native.saved_presentation_release().0.is_some() {
-                    return Err(StoreError::DerivedProjectionRequired);
-                }
-                let decoder = native.opening_recall_decoder().map_err(|error| {
+                Store::stage_initial_artwork(
+                    tx,
+                    &head.world_id,
+                    native.artwork.as_ref(),
+                    account,
+                )
+                .await?;
+                let decoder = native.session.opening_recall_decoder().map_err(|error| {
                     eprintln!("OpenLegend refused the opening recall preparation: {error}");
                     StoreError::InvalidRecord
                 })?;

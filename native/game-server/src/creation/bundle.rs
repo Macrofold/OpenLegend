@@ -159,7 +159,17 @@ impl Bundle {
         validate: OpeningValidator,
     ) -> Result<(), CreationError> {
         let FirstInstallation { opening, .. } = self.prepare(&store).await?;
-        validate(opening, account, self.reviewed.actor_id.clone()).await?;
+        let artwork = validate(opening, account.clone(), self.reviewed.actor_id.clone())
+            .await?
+            .artwork;
+        if let Some(artwork) = artwork
+            && store
+                .permit_installed_asset(&account, &artwork, None)
+                .await?
+                .is_none()
+        {
+            return Err(CreationError::Forbidden);
+        }
         Ok(())
     }
 }

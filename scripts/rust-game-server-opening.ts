@@ -60,7 +60,6 @@ try {
       account !== approved.controlAccountId ||
       account !== approved.creatorAccountIdAtDestination ||
       Object.keys(world.authorship.playerAccountIds).length !== 1 ||
-      current.state.presentationRelease ||
       (
         await database
           .prepare(
@@ -69,9 +68,7 @@ try {
           .get()
       )?.initial
     )
-      throw new Error(
-        'This opening needs destination asset or construction provisioning outside the first Rust activation slice.',
-      );
+      throw new Error('This opening needs destination construction or camp asset provisioning.');
     const grant = await database
       .prepare('SELECT account_id FROM auth_grants WHERE world_id=? AND actor_id=?')
       .get(world.id, actorId);

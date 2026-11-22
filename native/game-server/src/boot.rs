@@ -296,17 +296,34 @@ impl StartupStorage {
         opening: CurrentOpening,
         account: String,
         actor: String,
-    ) -> StoreResult<NativeWorldSession> {
+    ) -> StoreResult<crate::creation::ValidatedOpening> {
         use crate::world::WorldError;
         use openlegend_world_host::pool::HostError;
         let startup = self.clone();
         let release = release.to_owned();
         let validation = self
             .host
-            .compute(move || -> Result<NativeWorldSession, BootError> {
+            .compute(move || -> Result<crate::creation::ValidatedOpening, BootError> {
                 let (session, _, _) = startup.install(&release, opening, true)?;
                 session.check_initial_player(&account, &actor)?;
                 session.check_current_work()?;
+                let (selected, revision) = session.saved_presentation_release();
+                let artwork = if let Some(selected) = selected {
+                    let assets = InstalledAssets::load(
+                        &release.join("assets.json"),
+                        &startup.manifest.assets_sha256,
+                        None,
+                        startup.manifest.asset_max_object_bytes,
+                        startup.host.budget(),
+                    )?;
+                    let selected = crate::store::assets::AssetRevision::from_current(selected)?;
+                    if revision != Some(1) || assets.release() != &selected {
+                        return Err(StoreError::InvalidRecord.into());
+                    }
+                    Some(selected)
+                } else {
+                    None
+                };
                 session.with_geometry(|map| {
                     SpatialProvider::from_release(
                         map,
@@ -314,7 +331,7 @@ impl StartupStorage {
                         startup.host.budget(),
                     )
                 })??;
-                Ok(session)
+                Ok(crate::creation::ValidatedOpening { session, artwork })
             })
             .await
             .map_err(|error| match error {
