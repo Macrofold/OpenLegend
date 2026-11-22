@@ -2373,6 +2373,15 @@ export class AssetRepository {
     await this.applyRecoveredAuthority(snapshot, verifiedCurrentGeneration);
   }
 
+  async requireCompletedWorldArtworkRestore(): Promise<void> {
+    const staged = await this.stagedWorldArtwork();
+    if (staged?.status === 'pending')
+      throw new AssetAccessError(
+        'unavailable',
+        'Resume the exact interrupted world restore before opening artwork access.',
+      );
+  }
+
   /** The stopped Rust writer already installed exact gameplay and pinned files
    * under quarantine. Verify that receipt and head before making the existing
    * catalogue authority visible. This transaction never writes gameplay. */
@@ -2623,14 +2632,7 @@ export class AssetRepository {
       JSON.parse(row['payload']);
     }
     await this.db.transaction(async () => {
-      if (pendingWorldPackage === undefined) {
-        const staged = await this.stagedWorldArtwork();
-        if (staged?.status === 'pending')
-          throw new AssetAccessError(
-            'unavailable',
-            'Resume the exact interrupted world restore before opening artwork access.',
-          );
-      }
+      if (pendingWorldPackage === undefined) await this.requireCompletedWorldArtworkRestore();
       const existing = await this.db
         .prepare("SELECT generation FROM asset_authority WHERE id='current'")
         .get();

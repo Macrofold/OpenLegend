@@ -1065,6 +1065,7 @@ export class SqlGameRepository implements GameRepository {
   private async initialize() {
     await this.db.transaction(async () => {
       await assertGameSchema(this.db);
+      await this.assets.requireCompletedWorldArtworkRestore();
       await initializeGameSchema(this.db, {
         verifyMemoryLayout: () => MemoryRepository.assertSearchSchema(this.db),
         // An awaiting target must refuse retained files before ordinary startup cleanup.
