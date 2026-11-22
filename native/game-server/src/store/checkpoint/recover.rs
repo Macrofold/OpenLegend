@@ -7,12 +7,14 @@ use super::pre_load::{self, BeforeLoad};
 use super::{AdministrativeCheckpoint, read_recovery_authority, reconcile_history_positions};
 use crate::authority::{RequestScope, assert_saved_grant};
 use crate::command_epoch::RequestIdentity;
-use crate::language::LanguageProvider;
+use crate::language::{LanguageError, LanguageProvider};
+use crate::operation_format;
 use crate::store::assets::AssetRevision;
 use crate::store::read::admitted_query;
 use crate::store::{
     CommitError, DurableHead, Store, StoreError, StoreResult, durable_head, sql_ordinal,
 };
+use crate::world::WorldError;
 use openlegend_simulation::encoding::json_record;
 use openlegend_simulation::host::{ByteReservation, CandidateKey};
 use openlegend_simulation::runtime::{
@@ -20,6 +22,7 @@ use openlegend_simulation::runtime::{
     RuntimeInstallDefinitions, RuntimeInstallSources, RuntimeJson, RuntimeProvider,
     RuntimeProviderInput,
 };
+use openlegend_world_host::pool::HostError;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::Arc;
@@ -442,7 +445,9 @@ impl Store {
             if matches!(source, ReplacementAuthority::DamagedBackup) {
                 return Err(StoreError::InvalidRecord);
             }
-            let (ledger, custody) = self.current_recovery_privacy(tx, &expected.world_id).await?;
+            let (ledger, custody) = self
+                .current_recovery_privacy(tx, &expected.world_id)
+                .await?;
             (ledger, Some(custody))
         };
         let (mut opening, history) = slot.into_opening(self, replacement.clone())?;
@@ -689,6 +694,18 @@ impl Store {
         provider: &RuntimeProvider,
         language: &LanguageProvider,
     ) -> StoreResult<RuntimeProviderInput> {
+        if let Some(answer) =
+            operation_format::answer_collation(provider, &self.budget, Some(language)).map_err(
+                |error| match error {
+                    WorldError::Host(HostError::Capacity)
+                    | WorldError::Language(LanguageError::Capacity) => StoreError::Capacity,
+                    WorldError::Simulation(error) => runtime(error),
+                    _ => StoreError::InvalidRecord,
+                },
+            )?
+        {
+            return Ok(answer);
+        }
         #[derive(Deserialize)]
         struct Request<'a> {
             kind: &'a str,
@@ -700,7 +717,6 @@ impl Store {
         }
         enum Selection {
             History,
-            Collation,
             Archives,
             Support,
             Members,
@@ -713,7 +729,6 @@ impl Store {
                     serde_json::from_str(text).map_err(|_| StoreError::InvalidRecord)?;
                 Ok::<_, StoreError>(match (request.kind, request.value.phase) {
                     ("history", _) => Selection::History,
-                    ("collation", _) => Selection::Collation,
                     ("restore-archives", _) => Selection::Archives,
                     ("support-membership", _) => Selection::Support,
                     ("restore-retention", Some("membership")) => Selection::Members,
@@ -736,11 +751,6 @@ impl Store {
                     self.read_checkpoint_history(tx, candidate, &prepared),
                 )
                 .await
-            }
-            Selection::Collation => {
-                crate::operation_format::answer(provider, &self.budget, Some(language))
-                    .map_err(|_| StoreError::InvalidRecord)?
-                    .ok_or(StoreError::InvalidRecord)
             }
             Selection::Archives => {
                 self.answer_checkpoint_archives(tx, candidate, provider)

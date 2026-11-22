@@ -58,33 +58,8 @@ pub(crate) fn answer(
     })? {
         return answer.map(Some);
     }
-    if let Some(answer) = request.with_collation(|binding, strings| {
-        let language = language.ok_or(WorldError::ProviderKind)?;
-        let bytes = strings.iter().try_fold(
-            // Vector headers, order, equal groups and stable sort scratch.
-            strings
-                .len()
-                .checked_mul(size_of::<Vec<u16>>() + 6 * size_of::<u32>())
-                .and_then(|bytes| bytes.checked_add(512))
-                .ok_or(HostError::Capacity)?,
-            // UTF-16 allocation growth, including the minimum short buffer.
-            |bytes, text| {
-                text.len()
-                    .checked_mul(4)
-                    .and_then(|n| n.checked_add(8))
-                    .and_then(|n| bytes.checked_add(n))
-                    .ok_or(HostError::Capacity)
-            },
-        )?;
-        let custody = budget.reserve(bytes).map_err(HostError::from)?;
-        let (order, groups) = language
-            .collate_selected(strings)
-            .map_err(WorldError::Language)?;
-        Ok::<_, WorldError>(RuntimeProviderInput::collation(
-            binding, order, groups, custody,
-        )?)
-    })? {
-        return answer.map(Some);
+    if let Some(answer) = answer_collation(request, budget, language)? {
+        return Ok(Some(answer));
     }
     if let Some(answer) =
         request.with_maintenance_format(|binding, publication, retained_bytes| {
@@ -105,6 +80,44 @@ pub(crate) fn answer(
         return answer.map(Some);
     }
     Ok(None)
+}
+
+/// Sort the selected strings with the installed locale and fund both the
+/// working conversion and the bound answer. Gameplay and checkpoint recovery
+/// use the same pending request and ownership checks.
+pub(crate) fn answer_collation(
+    request: &RuntimeProvider,
+    budget: &ByteBudget,
+    language: Option<&LanguageProvider>,
+) -> Result<Option<RuntimeProviderInput>, WorldError> {
+    request
+        .with_collation(|binding, strings| {
+            let language = language.ok_or(WorldError::ProviderKind)?;
+            let bytes = strings.iter().try_fold(
+                // Vector headers, order, equal groups and stable sort scratch.
+                strings
+                    .len()
+                    .checked_mul(size_of::<Vec<u16>>() + 6 * size_of::<u32>())
+                    .and_then(|bytes| bytes.checked_add(512))
+                    .ok_or(HostError::Capacity)?,
+                // UTF-16 allocation growth, including the minimum short buffer.
+                |bytes, text| {
+                    text.len()
+                        .checked_mul(4)
+                        .and_then(|n| n.checked_add(8))
+                        .and_then(|n| bytes.checked_add(n))
+                        .ok_or(HostError::Capacity)
+                },
+            )?;
+            let custody = budget.reserve(bytes).map_err(HostError::from)?;
+            let (order, groups) = language
+                .collate_selected(strings)
+                .map_err(WorldError::Language)?;
+            Ok::<_, WorldError>(RuntimeProviderInput::collation(
+                binding, order, groups, custody,
+            )?)
+        })?
+        .transpose()
 }
 
 fn typed_digest(
