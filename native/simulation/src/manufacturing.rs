@@ -65,33 +65,42 @@ struct Dependency {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Candidate {
-    family: Family,
+pub(crate) struct Candidate<'a> {
+    pub family: Family,
     name: JsText,
     description: JsText,
-    inputs: Vec<Input>,
+    pub inputs: Vec<Input>,
     output: NamedOutput,
-    parameters: EmptyParameters,
+    #[serde(borrow)]
+    pub parameters: &'a RawValue,
 }
 
-#[derive(Deserialize)]
+#[derive(PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Family {
-    id: String,
+pub(crate) struct Family {
+    pub id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     version: u64,
 }
 
-#[derive(Deserialize)]
+#[derive(PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct NamedOutput {
     name: JsText,
     description: JsText,
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct EmptyParameters {}
+impl Candidate<'_> {
+    /// Compare authored choices while letting the selected world read its
+    /// own parameter shape. Object formatting does not grant recipe authority.
+    pub(crate) fn same_choices(&self, other: &Self) -> bool {
+        self.family == other.family
+            && self.name == other.name
+            && self.description == other.description
+            && self.inputs == other.inputs
+            && self.output == other.output
+    }
+}
 
 pub(crate) struct InstalledMethod {
     pub pin: DefinitionPin,
@@ -243,8 +252,7 @@ impl Definition<'_> {
         let Some(family) = origin.family_pin.filter(|_| origin.kind == "family") else {
             return Ok(None);
         };
-        let Some(rules) = crate::worlds::base_line_manufacture::selected(profile, &family.id)
-        else {
+        let Some(rules) = crate::worlds::base_manufacture::selected(profile, &family.id) else {
             return Ok(None);
         };
         let provenance: Provenance<'_> = serde_json::from_str(self.provenance.get())
@@ -255,9 +263,11 @@ impl Definition<'_> {
         // The exact dependencies and generic recipe body came through the
         // approved installed release. This family still verifies the result
         // fields that can affect a live manufacture or the resulting tool.
-        let candidate: Candidate =
+        let candidate: Candidate<'_> =
             serde_json::from_str(&self.digest).map_err(|_| InstallError::DefinitionBody)?;
-        let _empty = candidate.parameters;
+        if !rules.supports(&candidate)? {
+            return Ok(None);
+        }
         if self.id != key
             || !is_safe_record_id(key)
             || self.version != 1
@@ -286,17 +296,22 @@ impl Definition<'_> {
         struct ItemProducer<'a> {
             recipe_id: &'a str,
         }
-        let producer: ItemProducer<'_> = serde_json::from_str(
-            item_rows
-                .get(&output.definition.id)
-                .ok_or(InstallError::DefinitionPin)?,
-        )
-        .map_err(|_| InstallError::DefinitionBody)?;
+        let output_body = item_rows
+            .get(&output.definition.id)
+            .ok_or(InstallError::DefinitionPin)?;
+        let producer: ItemProducer<'_> =
+            serde_json::from_str(output_body).map_err(|_| InstallError::DefinitionBody)?;
         if producer.recipe_id != self.id
             || meaning.pin.version != 1
             || meaning.description.as_ref() != Some(&candidate.output.description)
             || !crate::narration::valid_name_parts(&candidate.output.name, None, None)
-            || !rules.validates(self.work_seconds, &self.inputs, |id| items.get(id), meaning)
+            || !rules.validates(
+                self.work_seconds,
+                &candidate,
+                |id| items.get(id),
+                meaning,
+                output_body,
+            )?
         {
             return Err(InstallError::DefinitionBody);
         }

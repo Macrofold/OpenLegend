@@ -7,6 +7,7 @@ import { worldPlacement } from '../../spatial-state.js';
 import { starterGroundAt } from './landscape.js';
 import type { Entity, RecipeCandidate, WorldState } from '../../types.js';
 import { BASE_SLING_ART, bindBaseItemArt } from './presentation.js';
+import fieldSlingMethod from './field-sling-method.json' with { type: 'json' };
 
 /** One authored source for positions, stock and readable clues. New starts only.
  * docs/worlds/base/rewarding-expeditions.md */
@@ -16,20 +17,7 @@ export const EXPEDITION_LOCATIONS = {
   workshop: { x: 8, z: 33 },
 } as const;
 
-export const FIELD_SLING_METHOD: RecipeCandidate = {
-  family: { id: 'base:swing', version: 1 },
-  name: 'Field sling',
-  description: 'An authored field method: bind a flexible fiber pouch between two lengths of cord.',
-  inputs: [
-    { definitionId: 'cord', quantity: 2, role: 'binding' },
-    { definitionId: 'prepared_fiber', quantity: 1, role: 'pouch' },
-  ],
-  output: {
-    name: 'Field sling',
-    description: 'A flexible pouch and two cords for launching a small stone.',
-  },
-  parameters: { workSeconds: 180, damage: 14, range: 6, accuracy: 0.75 },
-};
+export const FIELD_SLING_METHOD: RecipeCandidate = fieldSlingMethod;
 
 export function installExpeditions(world: WorldState): void {
   const { recipe } = installRecipe(world, FIELD_SLING_METHOD, {
