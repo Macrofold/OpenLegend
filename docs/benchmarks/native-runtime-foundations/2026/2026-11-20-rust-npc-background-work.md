@@ -156,6 +156,34 @@ These checks qualify the selected path locally. The overlapping-update check at 
 
 The release built from `b8d017d8baf375905cc472f95c02c8bdec441d11` (`c1998bb7b77da05f595ac98c8f72c32c672bd4ef241e767763e442fd155c0fbe`) passed the real held-generation case and the expanded own-facts case. The provider saw the expected private notepad, completed goal and pending intention with their exact text before and after restart. The reply settled once, and the refused dependent move left the successful speech intact. A same-cut diagnostic on the previous slice found byte-identical canonical receipt input through the typed and JSON round trips. The actual saved digest replayed exactly after restart. These are local correctness checks.
 
+### Direct first-person reply facts on the managed worker
+
+Campaign `2d5cfbe1-2735-448a-8eb4-9c63fb3f9a29` compared the JSON handoff at `30fe2a4bf` with the typed handoff at `fc1e5006d`. The shutdown fix was in both builds. The change passed private notes and selected first-person reply facts directly between Rust components. Provider HTTPS and PostgreSQL still use their existing formats. The measured change excludes later typed captures, scene questions, learning and Journal work.
+
+The standard 16 GiB worker ran three interleaved 180-second repetitions per arm after warmup, each on a fresh PostgreSQL database. The seed-73 opening had one player, ten human NPCs, ten deer, five hares and 1,246 scenery records. It used the 2 GiB transient profile, one simulation worker, the normal clock at 60 game seconds per wall second, one-second saves and controlled HTTPS responses. All six runs completed 34 scheduled walks across warmup and measurement, two applied and saved replies, and a cold reopen that found the original receipt. Every server exited cleanly. Fixture provider charges were zero. The collected record contains 83 verified files and the exact source, executable and input digests.
+
+Values are median / average / p95. There are three samples per arm for whole-window metrics, so their p95 is the largest run. The three latency rows use 96 in-window walks per arm. The fixture records the accepted action on the player stream. First position change and rendering latency were unavailable in this comparison.
+
+| Metric                                                   |                   JSON control |                          Typed |
+| -------------------------------------------------------- | -----------------------------: | -----------------------------: |
+| Server CPU, % of one logical core                        |          42.40 / 42.74 / 43.46 |          42.45 / 42.14 / 44.70 |
+| Exclusive PostgreSQL CPU, % of one logical core          |             6.01 / 6.15 / 6.45 |             5.93 / 6.15 / 6.61 |
+| Achieved game speed, % of intended rate                  | 100.0001 / 100.0000 / 100.0003 | 100.0021 / 100.0101 / 100.0277 |
+| Command response, ms                                     |               6.6 / 6.8 / 12.8 |                6.2 / 6.3 / 8.9 |
+| First accepted action on the player stream, ms           |            61.5 / 62.8 / 104.2 |             58.5 / 58.9 / 87.3 |
+| Command to first confirmed durable receipt, ms           |         611.5 / 615.9 / 1070.8 |         628.7 / 617.6 / 1089.2 |
+| Server plus PostgreSQL, CPU ms per completed game second |          8.142 / 8.147 / 8.246 |          8.061 / 8.048 / 8.551 |
+| Concurrent server and PostgreSQL memory peak, MiB        |          521.2 / 519.3 / 543.4 |          521.5 / 524.5 / 540.5 |
+| Cold reopen to usable view, ms                           |              990 / 1004 / 1047 |             1025 / 1001 / 1066 |
+
+Both arms offered 10,800 game seconds per run. Completed time ranged from 10,799.956 to 10,800.031 in the control and 10,800.043 to 10,802.994 in the candidate. The difference includes stream sampling around window boundaries. The live clock's internal elapsed-time debt was unavailable. The client consumed a median 0.83% of one logical core in each arm and the fixture harness 1.33% in each, recorded separately from the server and PostgreSQL. Server CPU already includes its Rust workers. Receipt checks poll every 100 ms, so that latency includes the wait to observe the commit. The comparison excludes administrative rewind.
+
+Median committed transactions were 9,172 versus 9,310. Median PostgreSQL rows returned/inserted/updated/deleted were 1,597,459/26,021/71,615/9,244 versus 1,100,677/26,129/72,027/9,776. These are database-level counters and include fixture reads. Median WAL growth was 98.4 versus 98.0 MiB and median database growth 32.9 versus 30.6 MiB. Statement counts and prepared bytes were unavailable. Whole-process transient/resident/pending-save peak medians were 134.9/173.1/7.13 MiB versus 131.6/175.5/7.13 MiB. All three current reservation counters returned to zero after shutdown in every run.
+
+**Disposition.** Keep the direct typed handoff for exact text and clearer ownership. The isolated performance result is inconclusive. Median combined CPU per game second fell about 1%, and complete-run CPU ranges overlapped. Automatic NPC jobs varied from 171–209 in the control and 153–239 in the candidate, while both arms completed the fixed player workload. The observed stream tail improvement does not by itself establish a durable change in movement latency.
+
+The controller reported cleanup, and EC2 confirmed the retained worker stopped. The campaign settled at an estimated $0.578122. The continuing shared estimate is $95.152524 including separately accounted earlier work. An older $1.325803 remains reserved separately from actual usage. These are task-ledger estimates.
+
 ### Personal recall, current offers and browser commands
 
 The Rust listener reads selected personal bodies directly from their stored payloads and renders current work, feelings and activity choices from typed captured facts. It also moves automatic queue inputs and authorized walk/cancel inputs as Rust values. Command learning and receipt signatures still use their original ordered and canonical bytes. The bridge keeps its actual byte-format callers.
