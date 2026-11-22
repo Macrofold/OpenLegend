@@ -211,9 +211,15 @@ pub(super) fn publish(
     attempt: &Attempt,
     expected: [u8; 32],
     contract: &CheckpointFormat,
-) -> StoreResult<()> {
+    admit_artwork: bool,
+    budget: &ByteBudget,
+) -> StoreResult<RetainedArtwork> {
     let mut scratch = Vec::new();
     let mut identity = Sha256::new();
+    let mut artwork = RetainedArtwork {
+        values: Vec::new(),
+        custody: budget.reserve(0).map_err(|_| StoreError::Capacity)?,
+    };
     for id in &attempt.saves {
         let from = source.join("saves").join(id);
         let destination = directory.join(id);
@@ -225,13 +231,33 @@ pub(super) fn publish(
             {
                 return Err(StoreError::InvalidRecord);
             }
-            transfer_slot(&from, None, &metadata, contract, &mut scratch)?;
+            artwork.retain(
+                id,
+                transfer_slot(
+                    &from,
+                    None,
+                    &metadata,
+                    contract,
+                    &mut scratch,
+                    admit_artwork,
+                )?,
+            )?;
             verify_slot(&destination, &prior, contract, &mut scratch)?;
             continue;
         }
         let stage = directory.join(format!(".restore-pending-{}-{id}", attempt.id));
         private_directory(&stage).map_err(io_error)?;
-        transfer_slot(&from, Some(&stage), &metadata, contract, &mut scratch)?;
+        artwork.retain(
+            id,
+            transfer_slot(
+                &from,
+                Some(&stage),
+                &metadata,
+                contract,
+                &mut scratch,
+                admit_artwork,
+            )?,
+        )?;
         let mut meta = private_file(&stage.join("metadata.json")).map_err(io_error)?;
         meta.write_all(&raw).map_err(io_error)?;
         meta.sync_all().map_err(io_error)?;
@@ -250,8 +276,31 @@ pub(super) fn publish(
             .map_err(io_error)?;
     }
     (Into::<[u8; 32]>::into(identity.finalize()) == expected)
-        .then_some(())
+        .then_some(artwork)
         .ok_or(StoreError::InvalidRecord)
+}
+
+pub(super) struct RetainedArtwork {
+    pub values: Vec<(String, AssetRevision)>,
+    custody: openlegend_simulation::host::ByteReservation,
+}
+
+impl RetainedArtwork {
+    fn retain(&mut self, id: &str, selected: Option<(AssetRevision, usize)>) -> StoreResult<()> {
+        let Some((selected, source_bytes)) = selected else {
+            return Ok(());
+        };
+        let retained = self
+            .custody
+            .bytes()
+            .checked_add(id.len() + source_bytes * 4 + 2 * size_of::<(String, AssetRevision)>())
+            .ok_or(StoreError::Capacity)?;
+        self.custody
+            .resize(retained)
+            .map_err(|_| StoreError::Capacity)?;
+        self.values.push((id.to_owned(), selected));
+        Ok(())
+    }
 }
 
 /// Retained slots participate in the same identity as the current checkpoint
@@ -261,6 +310,7 @@ pub(super) fn retained_identity(
     manifest: &Manifest,
     contract: &CheckpointFormat,
     verify: bool,
+    admit_artwork: bool,
 ) -> StoreResult<[u8; 32]> {
     let mut identity = Sha256::new();
     let mut scratch = Vec::new();
@@ -269,7 +319,14 @@ pub(super) fn retained_identity(
         let (metadata, _) =
             retained_metadata(&path, id, &manifest.world_id, contract, &mut identity)?;
         if verify {
-            transfer_slot(&path, None, &metadata, contract, &mut scratch)?;
+            transfer_slot(
+                &path,
+                None,
+                &metadata,
+                contract,
+                &mut scratch,
+                admit_artwork,
+            )?;
         }
     }
     Ok(identity.finalize().into())
@@ -369,7 +426,8 @@ fn transfer_slot(
     metadata: &Metadata,
     contract: &CheckpointFormat,
     scratch: &mut Vec<u8>,
-) -> StoreResult<()> {
+    admit_artwork: bool,
+) -> StoreResult<Option<(AssetRevision, usize)>> {
     use crate::store::checkpoint::Line;
     use serde_json::value::RawValue;
 
@@ -379,6 +437,7 @@ fn transfer_slot(
         .map_err(io_error)?
         .map(|file| BufWriter::with_capacity(FILE_BUFFER, file));
     let mut header = true;
+    let mut selected = None;
     stream_slot(path, metadata, contract, scratch, |bytes| {
         // The shared checksum verifies the original bytes including the header.
         if !std::mem::take(&mut header) {
@@ -394,10 +453,13 @@ fn transfer_slot(
                     serde_json::from_str(row.get()).map_err(|_| StoreError::InvalidRecord)?;
                 let payload: std::borrow::Cow<'_, str> = serde_json::from_str(row.payload.get())
                     .map_err(|_| StoreError::InvalidRecord)?;
-                let keys: std::collections::BTreeMap<&str, &RawValue> =
+                let fields: std::collections::BTreeMap<&str, &RawValue> =
                     serde_json::from_str(&payload).map_err(|_| StoreError::InvalidRecord)?;
-                if keys.contains_key("presentationRelease") {
-                    return Err(StoreError::InvalidRecord.into());
+                if let Some(release) = fields.get("presentationRelease") {
+                    if !admit_artwork || selected.is_some() {
+                        return Err(StoreError::InvalidRecord.into());
+                    }
+                    selected = Some((AssetRevision::from_current(release)?, release.get().len()));
                 }
             }
         }
@@ -411,5 +473,5 @@ fn transfer_slot(
         writer.flush().map_err(io_error)?;
         writer.get_ref().sync_all().map_err(io_error)?;
     }
-    Ok(())
+    Ok(selected)
 }

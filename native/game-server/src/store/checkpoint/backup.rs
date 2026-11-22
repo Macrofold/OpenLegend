@@ -23,6 +23,7 @@ use tokio::time::Instant;
 use tokio_postgres::IsolationLevel;
 use uuid::Uuid;
 mod restore;
+pub(crate) use restore::ArtworkOperator;
 pub use restore::RestoredBackup;
 
 #[derive(Deserialize)]
@@ -98,6 +99,7 @@ pub(in crate::store) async fn write_operational_backup(
     if !Store::current_schema(&tx, schema).await? {
         return Err(StoreError::InitializationRequired.into());
     }
+    restore::require_completed_artwork_restore(&tx).await?;
     let head = durable_head(&tx)
         .await?
         .ok_or(StoreError::OpeningRequired)?;

@@ -24,6 +24,7 @@ use uuid::Uuid;
 mod archives;
 mod authority;
 mod backup;
+pub(crate) use backup::ArtworkOperator;
 pub use backup::RestoredBackup;
 pub(super) use backup::write_operational_backup;
 mod capture;

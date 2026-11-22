@@ -4,6 +4,7 @@
 
 use super::*;
 use crate::command_epoch::RequestIdentity;
+use crate::store::assets::AssetRevision;
 use crate::store::{CommitError, CurrentOpening, DurableHead, StoreResult, sql_ordinal};
 use openlegend_simulation::encoding::{json_record, json_record_len, sha256_hex};
 use openlegend_simulation::records::SqlCell;
@@ -13,8 +14,10 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio_postgres::Transaction;
 
+mod artwork;
 mod files;
 mod operations;
+pub(crate) use artwork::{ArtworkOperator, require_completed_artwork_restore};
 
 const DIRECTORY_OWNER: &str = "integration:save-directory-owner";
 const ATTEMPT_PREFIX: &str = "integration:restore-attempt:";
@@ -27,6 +30,8 @@ pub struct RestoredBackup {
     pub generation: String,
     pub revision: u64,
     pub retained_checkpoints: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub artwork: Option<artwork::BackupArtwork>,
 }
 
 impl Store {
@@ -36,6 +41,7 @@ impl Store {
         self: &Arc<Self>,
         source: &Path,
         data: &Path,
+        artwork_operator: Option<ArtworkOperator>,
         validate: impl FnOnce(CurrentOpening) -> F + Send + 'static,
     ) -> Result<RestoredBackup, CommitError>
     where
@@ -71,7 +77,7 @@ impl Store {
             if !manifest.saves.is_empty() {
                 require_directory(&source.join("saves"))?;
             }
-            let retained = files::retained_identity(&source, &manifest, contract, false)?;
+            let retained = files::retained_identity(&source, &manifest, contract, false, false)?;
             let directory = files::directory(&data, &source)?;
             Ok((source, Arc::new(manifest), retained, directory, workspace))
         })
@@ -96,7 +102,8 @@ impl Store {
             hex_bytes(&retained),
         ))
         .map_err(|_| CommitError::RolledBack(StoreError::InvalidRecord))?;
-        let receipt_key = format!("{BACKUP_RECEIPT_PREFIX}{}", sha256_hex(identity.as_bytes()));
+        let package_id = sha256_hex(identity.as_bytes());
+        let receipt_key = format!("{BACKUP_RECEIPT_PREFIX}{package_id}");
 
         let existing = self
             .read_restore_state(&receipt_key)
@@ -122,11 +129,20 @@ impl Store {
                     receipt.world_id == head.world_id && receipt.revision <= head.revision
                 })
                 .ok_or(CommitError::RolledBack(StoreError::StaleCut))?;
+            artwork::assert_replay(receipt.artwork.as_ref(), artwork_operator.as_ref())
+                .map_err(CommitError::RolledBack)?;
             let store = self.clone();
             return local(move || {
                 let contract = &store.schema.checkpoint;
                 input.verify(contract)?;
-                if files::retained_identity(&source, &manifest, contract, true)? != retained {
+                if files::retained_identity(
+                    &source,
+                    &manifest,
+                    contract,
+                    true,
+                    artwork_operator.is_some(),
+                )? != retained
+                {
                     return Err(StoreError::InvalidRecord);
                 }
                 Ok(receipt)
@@ -144,7 +160,7 @@ impl Store {
             .into_opening(self, head.clone())
             .map_err(CommitError::RolledBack)?;
         opening
-            .pause_operational_restore(&self.budget)
+            .pause_operational_restore(&self.budget, artwork_operator.is_some())
             .map_err(CommitError::RolledBack)?;
 
         let owner = existing.owner.unwrap_or_else(Uuid::new_v4);
@@ -179,6 +195,7 @@ impl Store {
         let target = directory.clone();
         let store = self.clone();
         let pending = attempt.clone();
+        let admit_artwork = artwork_operator.is_some();
         let copy = local(move || {
             files::publish(
                 &source,
@@ -186,12 +203,14 @@ impl Store {
                 &pending,
                 retained,
                 &store.schema.checkpoint,
+                admit_artwork,
+                &store.budget,
             )
         })
         .await;
         let result = match copy {
             Err(error) => Err(CommitError::RolledBack(error)),
-            Ok(()) => {
+            Ok(retained_artwork) => {
                 let writer = self.clone();
                 self.operational(move |tx| {
                     Box::pin(async move {
@@ -203,11 +222,20 @@ impl Store {
                         writer
                             .stage_opening_records(tx, &opening, &history, false)
                             .await?;
-                        operations::stage(&writer, tx, input).await?;
+                        operations::stage(&writer, tx, input, admit_artwork).await?;
                         writer
                             .check_imported_recovery_pointer(tx, &manifest)
                             .await?;
                         let session = validate(opening).await?;
+                        let artwork = artwork::quarantine(
+                            tx,
+                            &head,
+                            package_id,
+                            &session,
+                            artwork_operator,
+                            &retained_artwork.values,
+                        )
+                        .await?;
                         let decoder = session
                             .operational_recall_decoder(
                                 &head.world_id,
@@ -255,6 +283,7 @@ impl Store {
                             generation: head.generation,
                             revision: head.revision,
                             retained_checkpoints: manifest.saves.len(),
+                            artwork,
                         };
                         let receipt =
                             json_record(&report).map_err(|_| StoreError::InvalidRecord)?;
@@ -481,7 +510,11 @@ impl Manifest {
 }
 
 impl CurrentOpening {
-    fn pause_operational_restore(&mut self, budget: &ByteBudget) -> StoreResult<()> {
+    fn pause_operational_restore(
+        &mut self,
+        budget: &ByteBudget,
+        admit_artwork: bool,
+    ) -> StoreResult<()> {
         for (table, field) in [
             ("world_settings", "paused"),
             ("data_world", "manuallyPaused"),
@@ -506,7 +539,10 @@ impl CurrentOpening {
             if !matches!(payload.get(field), Some(SqlCell::Bool(_))) {
                 return Err(StoreError::InvalidRecord);
             }
-            if table == "data_world" && payload.contains_key("presentationRelease") {
+            if !admit_artwork
+                && table == "data_world"
+                && payload.contains_key("presentationRelease")
+            {
                 eprintln!(
                     "Restore requires independent current artwork authority; no artwork has been installed."
                 );

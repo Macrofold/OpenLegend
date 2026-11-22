@@ -154,6 +154,7 @@ pub async fn recover_checkpoint(
         &budget,
     )?;
     let store = open_store(release, &manifest, database, &budget, false).await?;
+    store.require_completed_artwork_restore().await?;
     let recovered = store
         .recover_checkpoint(
             directory,
@@ -459,6 +460,7 @@ impl CurrentServer {
             host,
             store,
         } = startup.as_ref();
+        store.require_completed_artwork_restore().await?;
         let budget = host.budget();
         // These are finite trusted build products. Retain their independent
         // construction charge across deserialization and cold adoption.

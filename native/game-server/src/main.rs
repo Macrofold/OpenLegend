@@ -65,12 +65,19 @@ async fn run(
         }
         Some("restore-world") => {
             let source = arguments.next().map(PathBuf::from).ok_or(USAGE)?;
+            // Used by the authenticated asset recovery tool. This stages a
+            // quarantined install and never authorizes artwork delivery.
+            let artwork = match arguments.next() {
+                None => None,
+                Some(option) if option == "--artwork-operator" => Some(text(arguments.next())?),
+                _ => return Err(USAGE.into()),
+            };
             if arguments.next().is_some() {
                 return Err(USAGE.into());
             }
             let data = std::env::var_os("OPEN_LEGEND_DATA_DIR")
                 .map_or_else(|| PathBuf::from(".data"), PathBuf::from);
-            let result = restore_world(&release, database, &data, &source).await?;
+            let result = restore_world(&release, database, &data, &source, artwork).await?;
             write_report(&result)
         }
         Some("recover-checkpoint") => {

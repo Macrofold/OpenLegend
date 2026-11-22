@@ -59,6 +59,8 @@ const { values, positionals } = parseArgs({
     expected: { type: 'string' },
     selection: { type: 'string' },
     'source-root': { type: 'string' },
+    'server-release': { type: 'string' },
+    'server-directory': { type: 'string' },
     all: { type: 'boolean' },
     help: { type: 'boolean' },
     port: { type: 'string' },
@@ -245,6 +247,7 @@ async function run(): Promise<void> {
   recovery-create --operation CHECKPOINT --output /outside/repository/checkpoint-work [--source-config FROZEN_ENV_CONFIG]
   recovery-verify --manifest LOCATOR.json --output /outside/repository/verified-restore
   recovery-restore-catalog --source-root /outside/repository/verified-restore
+  recovery-restore-world --source-root /outside/repository/verified-restore/metadata/world --server-directory /path/to/server-binary-directory --server-release /path/to/release
   recovery-reconcile --output /outside/repository/current-authority-work
   recovery-restore-objects --source-root /outside/repository/verified-restore --quarantine-domain recovery-ID --output /outside/repository/restored-locations.json
 All commands accept --config FILE; pulls/viewers accept --index FILE.
@@ -732,6 +735,7 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
       [
         'recovery-verify',
         'recovery-restore-catalog',
+        'recovery-restore-world',
         'recovery-reconcile',
         'recovery-restore-objects',
       ].includes(command)
@@ -740,6 +744,21 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
     );
     const additionalStorages: S3AssetStorage[] = [];
     try {
+      if (command === 'recovery-restore-world') {
+        const { readConfig } = await import('../apps/server/src/config.js');
+        const { restoreRustWorld } = await import('./assets/restore-rust-world.js');
+        const config = readConfig();
+        const result = await restoreRustWorld(storage, {
+          serverDirectory: await realpath(required('server-directory')),
+          release: await realpath(required('server-release')),
+          backup: await realpath(required('source-root')),
+          databaseUrl: config.databaseUrl,
+          dataDirectory: config.dataDirectory,
+          domain: authorityDomain,
+        });
+        console.log(JSON.stringify(result));
+        return;
+      }
       if (command === 'recovery-verify') {
         const locator = JSON.parse(
           await readAssetManifestText(resolve(required('manifest')), 128 * 1024),

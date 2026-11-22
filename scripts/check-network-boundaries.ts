@@ -12,7 +12,7 @@ import {
   generatedNetworkArtifacts,
   inboundOwners,
   localDependencies,
-  localCompilerCommands,
+  localBinaryCommands,
   localGitCommands,
   localNodeEntries,
   localProcessOwners,
@@ -700,15 +700,16 @@ export function inspectNetworkSource(
             globalReference(program.expression) &&
             program.name.text === 'execPath';
           let allowed = false;
-          const compilerProfiles = localCompilerCommands[path];
+          const binaryProfiles = localBinaryCommands[path];
           const programs = program && stringAt(program);
-          if (compilerProfiles && command === 'spawnSync' && programs?.length && values?.length) {
+          if (binaryProfiles && programs?.length && values?.length) {
             allowed = programs.every((program) =>
               values.every(
                 (args) =>
                   !incompleteArgv.has(args) &&
-                  compilerProfiles.some(
+                  binaryProfiles.some(
                     (profile) =>
+                      (profile.kind ?? 'spawnSync') === command &&
                       profile.program === program &&
                       profile.args.length === args.length &&
                       profile.args.every((expected, index) =>
@@ -816,7 +817,7 @@ export function inspectNetworkSource(
           if (!allowed)
             report(
               node,
-              'Local subprocesses require a proven reviewed Git command, closed offline compiler invocation or exact local Node entry; remote or unresolved work uses the bounded adapter.',
+              'Local subprocesses require a reviewed Git command, closed binary invocation or exact local Node entry; remote or unresolved work uses the bounded adapter.',
             );
         }
       }

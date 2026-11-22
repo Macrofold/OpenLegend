@@ -57,6 +57,8 @@ export const localProcessOwners: Readonly<Record<string, string>> = {
     'Closed offline Rust/NAPI compiler commands and checked-in artifact identity reader; no dependency acquisition.',
   'scripts/assets/migration.ts': 'Local Git object inspection; no fetch/clone/pull.',
   'scripts/assets/inventory.ts': 'Local Git index inspection; no remote operation.',
+  'scripts/assets/restore-rust-world.ts':
+    'One local stopped Rust restore command; cloud permission reads remain in the existing recovery adapter.',
   'scripts/decision-benchmark/escalation-load.ts':
     'Offline fixture load and local Git revision; external fetch is replaced by a throwing fixture.',
 };
@@ -96,17 +98,25 @@ export const localNodeEntries: Readonly<
   'scripts/native-build.mjs': { kind: 'spawnSync', entry: './native-build-info.mjs' },
 };
 
-/** Complete argv, including the offline flags, is closed. The one data slot is
- * Cargo's target after --filter-platform; it cannot introduce command flags. */
-export const localCompilerCommands: Readonly<
+/** Complete argv is closed and data is confined to the named local inputs.
+ * By default the runner is spawnSync for the existing offline compiler calls. */
+export const localBinaryCommands: Readonly<
   Record<
     string,
     readonly {
       readonly program: string;
+      readonly kind?: 'execFile';
       readonly args: readonly (string | null)[];
     }[]
   >
 > = {
+  'scripts/assets/restore-rust-world.ts': [
+    {
+      program: 'openlegend-game-server',
+      kind: 'execFile',
+      args: ['restore-world', null, null, '--artwork-operator', null],
+    },
+  ],
   'scripts/native-build.mjs': [
     { program: 'rustc', args: ['-vV'] },
     {

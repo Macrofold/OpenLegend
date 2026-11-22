@@ -165,6 +165,7 @@ pub(super) async fn stage(
     store: &Arc<Store>,
     tx: &Transaction<'_>,
     mut input: Operations,
+    admit_artwork: bool,
 ) -> StoreResult<()> {
     let mut catalogue = None::<(usize, BTreeSet<String>, String)>;
     let mut schema_seen = false;
@@ -179,7 +180,7 @@ pub(super) async fn stage(
         input = reader;
         let Some(page) = page else { break };
         let name = &store.schema.checkpoint.backup.tables[page.table];
-        if name.starts_with("asset_") {
+        if !admit_artwork && name.starts_with("asset_") {
             eprintln!(
                 "Restore requires independent current artwork authority; no artwork has been installed."
             );
@@ -245,6 +246,7 @@ pub(super) async fn stage(
                 if key == DIRECTORY_OWNER
                     || key.starts_with(ATTEMPT_PREFIX)
                     || key.starts_with(BACKUP_RECEIPT_PREFIX)
+                    || key == artwork::ARTWORK_RESTORE
                 {
                     continue;
                 }
