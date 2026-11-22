@@ -1,7 +1,7 @@
 //! The authorized browser handler passes its already-decoded command input.
 
 use super::outings_input::PlayerTravelIntent;
-pub use crate::execution::OwnedMove;
+pub use crate::execution::{OwnedArrangement, OwnedMove};
 use super::{CommandEncoding, CommandHeaders, NativeCommand, SpeechTargetRole, StatusOperation};
 use crate::encoding::json_record;
 use crate::gathering::{GatheringMode, ToolChoice};
@@ -448,7 +448,7 @@ fn bind_transfer(
         return Err(serde::ser::Error::custom("Invalid item move."));
     }
     let input = Binding {
-        actor_id: actor, selection, human_initiated: true, id, kind: "transfer-item",
+        actor_id: actor, selection, human_initiated: true, id, kind: selection.arrangement.command_type(),
     };
     let encoding = CommandEncoding::from_ordered(
         &input, 10 + usize::from(selection.expected_contents_revision.is_some()),

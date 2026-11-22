@@ -2,14 +2,33 @@
 //! original source, destination and their net packing changes before editing.
 use super::drop::inventory_work_bound;
 use super::packing::PackingChange;
-use super::pickup::DirectRelocation;
+use super::pickup::{DirectRelocation, compatible_lots};
 use super::*;
 use crate::text::JsText;
 use crate::work::WorkUnit;
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum OwnedArrangement {
+    Move,
+    Split,
+    Merge,
+}
+
+impl OwnedArrangement {
+    pub fn command_type(self) -> &'static str {
+        match self {
+            Self::Move => "transfer-item",
+            Self::Split => "split-item",
+            Self::Merge => "merge-item",
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OwnedMove<I> {
+    #[serde(skip)]
+    pub arrangement: OwnedArrangement,
     pub item_id: I,
     pub target_id: I,
     pub quantity: u64,
@@ -23,6 +42,7 @@ pub struct OwnedMove<I> {
 impl<I> OwnedMove<I> {
     pub(crate) fn map_ids<'a, N>(&'a self, mut convert: impl FnMut(&'a I) -> N) -> OwnedMove<N> {
         OwnedMove {
+            arrangement: self.arrangement,
             item_id: convert(&self.item_id),
             target_id: convert(&self.target_id),
             quantity: self.quantity,
@@ -48,6 +68,30 @@ pub(crate) enum OwnedMoveError {
         _custody: ByteReservation,
     },
     FilledOpenBag,
+    SplitParent,
+    MergeQuantity,
+    MergeMismatch,
+}
+
+pub(crate) fn can_split_stock(item: &Entity, definition: &crate::install::ItemDefinitionRead) -> bool {
+    partitionable_stock(item, definition)
+        && item.item.as_ref().is_some_and(|lot| lot.material_contribution_ids.is_none())
+}
+
+/// Merge discovery and execution share this comparison. The caller has
+/// already checked that the source can split and that both lots are available.
+pub(crate) fn same_container_merge(
+    source: &Entity,
+    target: &Entity,
+    definition: &crate::install::ItemDefinitionRead,
+) -> bool {
+    source.id != target.id
+        && matches!(source.placement, Some(Placement::Contained { .. }))
+        && crate::install::inventory_parent(source) == crate::install::inventory_parent(target)
+        && compatible_lots(source, target, definition)
+        && source.item.as_ref().zip(target.item.as_ref()).is_some_and(|(source, target)| {
+            source.quantity <= MAX_SAFE_INTEGER - target.quantity
+        })
 }
 
 impl CoreMutation<'_> {
@@ -90,13 +134,28 @@ impl CoreMutation<'_> {
         };
         let actor_handle = entities.handle(actor).ok_or(ExecutionError::Invariant)?;
         source_path.push(actor_handle);
-        let destination = if request.target_id == actor {
+        let source = crate::install::inventory_parent(item).ok_or(ExecutionError::Invariant)?;
+        let merge_target = if request.arrangement == OwnedArrangement::Merge {
+            let Some(target) = crate::install::owned_item_ancestry(
+                physical, actor, request.target_id, |_| {},
+            )? else {
+                return Ok(Err(Refuse::Unavailable));
+            };
+            if crate::install::inventory_parent(target) != Some(source) {
+                return Ok(Err(Refuse::MergeMismatch));
+            }
+            Some(target)
+        } else {
+            None
+        };
+        let destination_id = if merge_target.is_some() { source } else { request.target_id };
+        let destination = if destination_id == actor {
             body
         } else {
             let Some(destination) = crate::install::owned_item_ancestry(
                 physical,
                 actor,
-                request.target_id,
+                destination_id,
                 |parent| destination_path.extend(entities.handle(&parent.id)),
             )?
             .filter(|bag| crate::install::inventory_bag_access(bag, actor)) else {
@@ -112,13 +171,17 @@ impl CoreMutation<'_> {
         };
         destination_path.push(actor_handle);
         let action = body.actor.as_ref().and_then(|body| body.action.as_ref());
-        if (action.is_some() || !physical.holds.is_empty())
-            && inventory_work_bound(state, action, item, &mut || {
+        if action.is_some() || !physical.holds.is_empty() {
+            let mut visit = || {
                 self.journal.meters.charge(&[(WorkUnit::Candidates, 1)])?;
                 Ok(())
-            })?
-        {
-            return Ok(Err(Refuse::Busy));
+            };
+            if inventory_work_bound(state, action, item, &mut visit)?
+                || merge_target.map(|target| inventory_work_bound(state, action, target, &mut visit))
+                    .transpose()?.unwrap_or(false)
+            {
+                return Ok(Err(Refuse::Busy));
+            }
         }
         let lot = item.item.as_ref().ok_or(ExecutionError::Invariant)?;
         let placement = item.placement.as_ref().ok_or(ExecutionError::Invariant)?;
@@ -128,12 +191,16 @@ impl CoreMutation<'_> {
             }
             Placement::World { .. } => return Err(ExecutionError::Invariant),
         };
+        let target_revision = merge_target.map_or_else(
+            || Ok(destination.inventory_revision.unwrap_or_default()),
+            |target| target.item.as_ref().map(|lot| lot.revision).ok_or(ExecutionError::Invariant),
+        )?;
         if lot.revision != request.expected_revision
             || placement_revision != request.placement_revision
             || request
                 .expected_contents_revision
                 .is_some_and(|rev| item.inventory_revision.unwrap_or_default() != rev)
-            || destination.inventory_revision.unwrap_or_default() != request.target_revision
+            || target_revision != request.target_revision
         {
             return Ok(Err(Refuse::Stale));
         }
@@ -147,15 +214,45 @@ impl CoreMutation<'_> {
         let quantity = request.quantity;
         if quantity == 0
             || quantity > lot.quantity
-            || (quantity < lot.quantity
-                && (!partitionable_stock(item, definition)
-                    || lot.material_contribution_ids.is_some()))
+            || (quantity < lot.quantity && !can_split_stock(item, definition))
         {
             return Ok(Err(Refuse::Quantity));
         }
-        let source = crate::install::inventory_parent(item).ok_or(ExecutionError::Invariant)?;
+        match request.arrangement {
+            OwnedArrangement::Move => {}
+            OwnedArrangement::Split if source != destination.id => return Ok(Err(Refuse::SplitParent)),
+            OwnedArrangement::Split if quantity == lot.quantity => return Ok(Err(Refuse::Quantity)),
+            OwnedArrangement::Merge if quantity != lot.quantity => return Ok(Err(Refuse::MergeQuantity)),
+            OwnedArrangement::Merge
+                if !can_split_stock(item, definition)
+                    || !same_container_merge(item, merge_target.ok_or(ExecutionError::Invariant)?, definition) =>
+            {
+                return Ok(Err(Refuse::MergeMismatch));
+            }
+            OwnedArrangement::Split | OwnedArrangement::Merge => {}
+        }
         if source == destination.id {
-            return Ok(Ok(item.id.clone()));
+            if request.arrangement == OwnedArrangement::Move {
+                return Ok(Ok(item.id.clone()));
+            }
+            // The total packed load stays the same. The direct lot edit owns
+            // its contents revision; refresh ancestors and packing summaries.
+            let _source = self.journal.budget.reserve(source.len())?;
+            let source = source.to_owned();
+            let before = lot.quantity;
+            let installed = state.installed.clone();
+            let edited = if request.arrangement == OwnedArrangement::Split {
+                let definition = installed.retained.items.get(&lot.definition_pin.id)
+                    .ok_or(ExecutionError::Invariant)?;
+                self.split_direct_lot(&source, Some(actor), request.item_id, before, quantity, definition, cause)?
+            } else {
+                self.merge_direct_lots(&source, actor, request.item_id, request.target_id, quantity, cause)?;
+                request.target_id.to_owned()
+            };
+            for (index, handle) in source_path.into_iter().enumerate() {
+                self.publish_packing(handle, PackingChange::Add(0), index == 0 && request.arrangement == OwnedArrangement::Split)?;
+            }
+            return Ok(Ok(edited));
         }
         let destination_bag = destination
             .item

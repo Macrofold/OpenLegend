@@ -16,6 +16,9 @@ struct Copy {
     depth: JsText,
     no_packing_load: JsText,
     filled_open_bag: JsText,
+    split_parent: JsText,
+    merge_quantity: JsText,
+    merge_mismatch: JsText,
     success: JsText,
     narration: JsText,
 }
@@ -56,6 +59,9 @@ impl CommandCursor {
                     OwnedMoveError::NoPackingLoad => ("item-unavailable", &COPY.no_packing_load),
                     OwnedMoveError::Material { message, .. } => ("item-unavailable", message),
                     OwnedMoveError::FilledOpenBag => ("item-unavailable", &COPY.filled_open_bag),
+                    OwnedMoveError::SplitParent => ("stale", &COPY.split_parent),
+                    OwnedMoveError::MergeQuantity => ("stale", &COPY.merge_quantity),
+                    OwnedMoveError::MergeMismatch => ("item-unavailable", &COPY.merge_mismatch),
                 };
                 self.reserve(message.storage_bytes() + code.len())?;
                 let mut result = outcome(false, code, "");

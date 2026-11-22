@@ -81,7 +81,70 @@ pub struct InventorySlot<'a> {
     definition: &'a ItemDefinitionRead,
 }
 
+pub struct MergeInventory<'a> {
+    item: &'a Entity,
+    definition: &'a ItemDefinitionRead,
+    free: bool,
+}
+
+pub struct SplitOffer<'a> {
+    pub parent: InventoryCrumb<'a>,
+    pub reason: Option<&'a str>,
+    pub in_use: bool,
+}
+
 impl<'a> DirectInventory<'a> {
+    fn can_handle(&self) -> bool {
+        self.state.installed.retained.item_handling_read.can_handle(&self.actor.spatial.body.id)
+    }
+
+    fn lot_in_use(&self, lot: &Entity) -> Result<bool, RuntimeError> {
+        let action = self.actor.actor.as_ref().and_then(|actor| actor.action.as_ref());
+        if action.is_none() && self.state.physical.holds.is_empty() {
+            return Ok(false);
+        }
+        crate::execution::inventory_work_bound(self.state, action, lot, &mut || Ok(())).map_err(failure)
+    }
+
+    /// Select the source once from this permitted container, without reading
+    /// its display or scanning its siblings. An unavailable ID discloses no facts.
+    pub fn merge_source(&self, id: &str) -> Result<Option<MergeInventory<'a>>, RuntimeError> {
+        let parent = self.breadcrumbs.last().ok_or_else(|| failure("inventory root unavailable"))?;
+        let entities = &self.state.physical.entities;
+        let Some(item) = entities.get(id).filter(|item| self.state.inventory.has_direct_item(entities, parent.id, item)) else {
+            return Ok(None);
+        };
+        let definition = self.definition(item)?;
+        let free = self.can_handle() && definition.portable
+            && crate::execution::can_split_stock(item, definition) && !self.lot_in_use(item)?;
+        Ok(Some(MergeInventory { item, definition, free }))
+    }
+
+    /// Test one row in the requested inventory window, before preparing its
+    /// name or action offers. This uses the same compatibility law as execution.
+    pub fn merge_matches(&self, source: &MergeInventory<'_>, index: usize) -> Result<bool, RuntimeError> {
+        if !source.free {
+            return Ok(false);
+        }
+        let target = self.child(index)?;
+        Ok(crate::execution::same_container_merge(source.item, target, source.definition)
+            && !self.lot_in_use(target)?)
+    }
+
+    /// Offer a split only on a displayed exact lot. The command will check
+    /// its quantity, custody and work bindings again on the next candidate.
+    pub fn split_offer(&self, slot: &InventorySlot<'a>) -> Result<Option<SplitOffer<'a>>, RuntimeError> {
+        if slot.item.quantity <= 1 || !slot.definition.portable || !self.can_handle()
+            || !crate::execution::can_split_stock(slot.entity, slot.definition)
+        {
+            return Ok(None);
+        }
+        let parent = *self.breadcrumbs.last().ok_or_else(|| failure("inventory root unavailable"))?;
+        let reason = self.action_problem.map(|problem| problem.message.as_str());
+        let in_use = reason.is_none() && self.lot_in_use(slot.entity)?;
+        Ok(Some(SplitOffer { parent, reason, in_use }))
+    }
+
     /// Recheck the one retained deliberate read against live custody. The
     /// borrowed record is usable only inside the current disclosure callback.
     pub fn inspected_recipe(

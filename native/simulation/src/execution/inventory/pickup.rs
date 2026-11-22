@@ -193,40 +193,44 @@ impl CoreMutation<'_> {
             .reserve(item.len() + merge.map_or(0, |target| target.id.len()) + 32)?;
         let receiver = merge.map(|target| target.id.clone());
         let moving = if quantity < before {
-            let split = self.create_direct_stock(source, definition, quantity, Some(item))?;
-            self.transfer_activity_sources(item, &split, before, quantity)?;
-            self.debit_inventory_lot(
-                source,
-                item,
-                quantity,
-                LotDebit {
-                    cause,
-                    custodian: source_owner,
-                    target: Some((LineageKind::Split, &split)),
-                },
-            )?;
-            split
+            self.split_direct_lot(source, source_owner, item, before, quantity, definition, cause)?
         } else {
             item.to_owned()
         };
         self.move_contained_lot(source, destination, &moving)?;
         if let Some(receiver) = receiver {
-            self.transfer_activity_sources(&moving, &receiver, quantity, quantity)?;
-            self.grow_direct_lot(destination, &receiver, quantity, false)?;
-            self.debit_inventory_lot(
-                destination,
-                &moving,
-                quantity,
-                LotDebit {
-                    cause,
-                    custodian: Some(actor),
-                    target: Some((LineageKind::Merge, &receiver)),
-                },
-            )?;
+            self.merge_direct_lots(destination, actor, &moving, &receiver, quantity, cause)?;
             Ok(Some(receiver))
         } else {
             Ok(Some(moving))
         }
+    }
+
+    /// Split an admitted direct lot. The caller owns access, amount and any
+    /// ancestor updates. The new lot gets its own identity and the same origin.
+    pub(super) fn split_direct_lot(
+        &mut self, parent: &str, custodian: Option<&str>, item: &str, before: u64,
+        quantity: u64, definition: &crate::install::ItemDefinitionRead, cause: &str,
+    ) -> Result<String, ExecutionError> {
+        let split = self.create_direct_stock(parent, definition, quantity, Some(item))?;
+        self.transfer_activity_sources(item, &split, before, quantity)?;
+        self.debit_inventory_lot(parent, item, quantity, LotDebit {
+            cause, custodian, target: Some((LineageKind::Split, &split)),
+        })?;
+        Ok(split)
+    }
+
+    /// Merge two admitted direct lots. Ancestor packing and revisions stay
+    /// with the caller that owns the entire arrangement.
+    pub(super) fn merge_direct_lots(
+        &mut self, parent: &str, custodian: &str, source: &str, target: &str,
+        quantity: u64, cause: &str,
+    ) -> Result<(), ExecutionError> {
+        self.transfer_activity_sources(source, target, quantity, quantity)?;
+        self.grow_direct_lot(parent, target, quantity, false)?;
+        self.debit_inventory_lot(parent, source, quantity, LotDebit {
+            cause, custodian: Some(custodian), target: Some((LineageKind::Merge, target)),
+        })
     }
 
     pub(super) fn transfer_activity_sources(

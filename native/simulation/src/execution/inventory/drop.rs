@@ -59,7 +59,7 @@ pub(crate) fn drop_item_problem<'a>(
     Ok(None)
 }
 
-pub(super) fn inventory_work_bound(
+pub(crate) fn inventory_work_bound(
     state: &SimulationState,
     action: Option<&Action>,
     item: &Entity,

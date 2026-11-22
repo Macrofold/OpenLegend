@@ -14,7 +14,7 @@ use crate::{
 };
 use axum::body::Bytes;
 use openlegend_simulation::{
-    commands::{OwnedMove, SpeechTargetRole, StatusOperation},
+    commands::{OwnedArrangement, OwnedMove, SpeechTargetRole, StatusOperation},
     encoding::{json_record, sha256_hex},
     gathering::GatheringMode,
     host::{ByteBudget, ByteReservation},
@@ -324,6 +324,10 @@ enum CommandKind {
     Drop,
     #[serde(rename = "transfer-item")]
     TransferItem,
+    #[serde(rename = "split-item")]
+    SplitItem,
+    #[serde(rename = "merge-item")]
+    MergeItem,
     Cook,
     Craft,
     Eat,
@@ -337,6 +341,17 @@ enum CommandKind {
     #[serde(rename = "learn-record")]
     LearnRecord,
     Handover,
+}
+
+impl CommandKind {
+    fn arrangement(self) -> Option<OwnedArrangement> {
+        match self {
+            Self::TransferItem => Some(OwnedArrangement::Move),
+            Self::SplitItem => Some(OwnedArrangement::Split),
+            Self::MergeItem => Some(OwnedArrangement::Merge),
+            _ => None,
+        }
+    }
 }
 
 struct PreparedRequest {
@@ -789,7 +804,7 @@ impl PlayerCommands {
                             let target = match target_ref.filter(|_| {
                                 // Arranging private belongings binds the exact owned
                                 // destination in the same native candidate, not a world contact.
-                                !own_status && !matches!(raw.kind, CommandKind::Say | CommandKind::TransferItem)
+                                !own_status && !matches!(raw.kind, CommandKind::Say) && raw.kind.arrangement().is_none()
                             }) {
                                 None => None,
                                 Some(contact) => {
@@ -949,24 +964,25 @@ impl CommandRequest {
                 })
         }
         let command = &self.command;
+        let arrangement = command.kind.arrangement().is_some();
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
             || Uuid::parse_str(&self.command_epoch).is_err()
-            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing | CommandKind::LearnRecord | CommandKind::TransferItem)
+            || (!arrangement && !matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing | CommandKind::LearnRecord)
                 && command.expected_revision.is_some())
             || (!matches!(command.kind, CommandKind::Outing)
                 && (command.outing_operation.is_some() || command.outing_mode.is_some()
                     || command.outing_id.is_some() || command.destination_id.is_some()
                     || command.purpose.is_some()))
-            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::LearnRecord | CommandKind::TransferItem)
+            || (!arrangement && !matches!(command.kind, CommandKind::Unequip | CommandKind::LearnRecord)
                 && command.placement_revision.is_some())
-            || (!matches!(command.kind, CommandKind::TransferItem)
+            || (!arrangement
                 && (command.target_revision.is_some() || command.expected_contents_revision.is_some()))
             || (!matches!(command.kind, CommandKind::LearnRecord) && command.record_pin.is_some())
             || (!matches!(command.kind, CommandKind::InspectItem)
                 && (command.container_id.is_some() || command.after.is_some() || command.expected_scope.is_some()))
             || command.quantity.is_some_and(|quantity| {
-                !matches!(command.kind, CommandKind::Pickup | CommandKind::Drop | CommandKind::TransferItem)
+                (!arrangement && !matches!(command.kind, CommandKind::Pickup | CommandKind::Drop))
                     || quantity == 0 || quantity > openlegend_simulation::identity::MAX_SAFE_INTEGER
             })
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
@@ -1197,7 +1213,7 @@ impl CommandRequest {
                     && command.expected_revision.is_some()
                     && command.placement_revision.is_some()
                     && command.record_pin.as_ref().is_some_and(|pin| pin.is_valid()) => Ok(()),
-            CommandKind::TransferItem
+            CommandKind::TransferItem | CommandKind::SplitItem | CommandKind::MergeItem
                 if command.position.is_none()
                     && command.known_place.is_none()
                     && command.expected_action_id.is_none()
@@ -1423,7 +1439,8 @@ impl PreparedRequest {
                 preparation_digest: input.preparation_digest.as_deref().ok_or(StoreError::InvalidRecord)?,
                 inputs: input.inputs.as_ref().ok_or(StoreError::InvalidRecord)?,
             }),
-            CommandKind::TransferItem => Ok(RuntimePlayerCommand::TransferItem(OwnedMove {
+            CommandKind::TransferItem | CommandKind::SplitItem | CommandKind::MergeItem => Ok(RuntimePlayerCommand::TransferItem(OwnedMove {
+                arrangement: input.kind.arrangement().ok_or(StoreError::InvalidRecord)?,
                 item_id: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 target_id: input.target_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 quantity: input.quantity.ok_or(StoreError::InvalidRecord)?,

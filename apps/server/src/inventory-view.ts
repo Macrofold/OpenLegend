@@ -1,4 +1,8 @@
-import { BASE_EQUIPMENT_COPY, currentObservedBodyGrants } from '@open-legend/domain';
+import {
+  BASE_EQUIPMENT_COPY,
+  BASE_ITEM_MOVE_COPY,
+  currentObservedBodyGrants,
+} from '@open-legend/domain';
 import {
   offerRecipientProblem,
   itemContainerCapacity,
@@ -1241,7 +1245,7 @@ export function inventoryItemChoices(
     actions.push(
       action(
         `split-${item.id}`,
-        'Split lot',
+        BASE_ITEM_MOVE_COPY.splitLabel,
         {
           type: 'split-item',
           itemId: item.id,

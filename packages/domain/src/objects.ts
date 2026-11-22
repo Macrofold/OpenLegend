@@ -1868,7 +1868,7 @@ export function mergeLots(
     parentOf(source) !== parentOf(target) ||
     !mergeCompatible(world, sourceId, targetId)
   )
-    throw new Error('These lots are not equivalent free objects in the same container.');
+    throw new Error(itemMoveCopy.mergeMismatch);
   const quantity = source.item.quantity,
     total = checked(target.item.quantity + quantity);
   bump(target.item.revision);

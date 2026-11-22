@@ -77,6 +77,8 @@ pub(super) fn learn_action<'a>(
         command: ItemCommand {
             kind: "learn-record",
             item_id: item.id,
+            target_id: None,
+            target_revision: None,
             expected_revision: Some(item.revision),
             placement_revision: Some(item.placement_revision),
             quantity: None,
@@ -195,6 +197,7 @@ impl PlayerScenePolicy {
             };
             items.push(Item {
                 lot: item.lot,
+                individual: item.lot.individual,
                 art: self.observed.item_art.get(item.lot.definition_id),
                 category: item.category,
                 description: item.description.unwrap_or(&blank),

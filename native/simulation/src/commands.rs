@@ -39,7 +39,7 @@ pub(crate) use native_movement::{
     begin_territorial_move,
 };
 pub(crate) mod player;
-pub use player::OwnedMove;
+pub use player::{OwnedArrangement, OwnedMove};
 mod state;
 pub(crate) use state::*;
 mod display;
@@ -980,7 +980,7 @@ impl NativeCommand {
             Self::Cook { .. } => "cook",
             Self::Craft { .. } => "craft",
             Self::Eat { .. } => "eat",
-            Self::TransferItem { .. } => "transfer-item",
+            Self::TransferItem { selection, .. } => selection.arrangement.command_type(),
             Self::Equipment { request, .. } => match request {
                 crate::execution::EquipmentRequest::Equip => "equip",
                 crate::execution::EquipmentRequest::Unequip { .. } => "unequip",

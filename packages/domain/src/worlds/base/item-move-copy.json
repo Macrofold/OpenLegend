@@ -8,6 +8,10 @@
   "depth": "A bag cannot contain itself or exceed the nesting limit.",
   "noPackingLoad": "This item has no admitted packing load for a bag.",
   "filledOpenBag": "Keep an open basket with exposed materials directly carried or on supported ground.",
+  "splitLabel": "Split lot",
+  "splitParent": "Split into the current container.",
+  "mergeQuantity": "Merge the complete selected lot.",
+  "mergeMismatch": "These lots are not equivalent free objects in the same container.",
   "success": "Possessions updated.",
   "narration": "arranged some belongings."
 }

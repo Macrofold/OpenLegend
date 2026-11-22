@@ -422,6 +422,8 @@ pub struct OwnedItem<'a> {
     pub quantity: u64,
     pub available_quantity: u64,
     pub equipped: bool,
+    #[serde(skip)]
+    pub individual: bool,
     #[serde(flatten)]
     pub named: &'a Named,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -901,6 +903,7 @@ pub(crate) fn project_owned<'a>(
         quantity: lot.quantity,
         available_quantity: lot.quantity.saturating_sub(held),
         equipped,
+        individual: lot.individuality == Individuality::Individual,
         named: &definition.named,
         icon: definition.icon.as_deref().filter(|icon| !icon.is_empty()),
         container: definition

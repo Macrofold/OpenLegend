@@ -3765,9 +3765,9 @@ function executeCommandNative(
           if (world.itemDefinitions[item.definitionId]?.portable !== true)
             return reject('not-portable', itemMoveCopy.notPortable);
           if (command.type === 'split-item' && destination.id !== item.ownerId)
-            return reject('stale', 'Split into the current container.');
+            return reject('stale', itemMoveCopy.splitParent);
           if (command.type === 'merge-item' && command.quantity !== item.quantity)
-            return reject('stale', 'Merge the complete selected lot.');
+            return reject('stale', itemMoveCopy.mergeQuantity);
           const resultId =
             command.type === 'split-item'
               ? splitLot(world, item.id, command.quantity, command.id)
@@ -4384,11 +4384,7 @@ function executeCommandNative(
         const read = prepareRecipeLearning(world, command);
         if (!('recipe' in read)) return reject(read.code, read.message);
         const learned = learnRecipe(world, actor.id, read.recipe.id, 'record', command.id);
-        if (learned === 'capacity')
-          return reject(
-            'knowledge-capacity',
-            recordCopy.capacity,
-          );
+        if (learned === 'capacity') return reject('knowledge-capacity', recordCopy.capacity);
         emit(
           world,
           events,

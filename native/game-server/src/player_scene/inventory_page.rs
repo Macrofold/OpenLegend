@@ -63,7 +63,12 @@ impl InventoryPageRequest {
         self.container_id
             .as_deref()
             .is_none_or(openlegend_simulation::values::is_safe_record_id)
-            && self.merge_source_id.is_none()
+            && self.merge_source_id.as_deref().is_none_or(|id| {
+                openlegend_simulation::values::is_safe_record_id(id)
+                    && matches!(self.sort, Sort::Native)
+                    && matches!(self.filter, Filter::All)
+                    && self.container_id.as_deref().is_none_or(|id| !id.starts_with("contact-"))
+            })
             && self
                 .query
                 .as_ref()
@@ -98,6 +103,20 @@ struct EquipmentCopy {
     held_at: String,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ArrangementCopy {
+    split_label: String,
+    busy: String,
+}
+
+static ARRANGEMENT_COPY: LazyLock<ArrangementCopy> = LazyLock::new(|| {
+    serde_json::from_str(include_str!(
+        "../../../../packages/domain/src/worlds/base/item-move-copy.json"
+    ))
+    .expect("authored item arrangement language")
+});
+
 static COPY: LazyLock<EquipmentCopy> = LazyLock::new(|| {
     serde_json::from_str(include_str!(
         "../../../../packages/domain/src/worlds/base/equipment-copy.json"
@@ -121,6 +140,7 @@ fn collation_ranks(language: &LanguageProvider, names: &[JsText]) -> Result<Vec<
 struct Item<'a> {
     #[serde(flatten)]
     lot: OwnedItem<'a>,
+    individual: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     art: Option<&'a PublicArt>,
     category: &'static str,
@@ -206,6 +226,10 @@ struct ItemCommand<'a> {
     kind: &'static str,
     item_id: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
+    target_id: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    target_revision: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     expected_revision: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     placement_revision: Option<u64>,
@@ -265,7 +289,7 @@ impl PlayerScenePolicy {
             })
             .collect::<Vec<_>>();
         let query = JsText::from(input.query.as_deref().map_or("", js_trim)).lowercase();
-        let key = json_record(&(scope, path_cut, &query, &input.sort, &input.filter))
+        let key = json_record(&(scope, path_cut, &query, &input.sort, &input.filter, &input.merge_source_id))
             .map_err(|_| Capacity)?;
         let cut = sha256_hex(key.as_bytes());
         let after: usize = if let Some(cursor) = input.cursor.as_deref() {
@@ -281,6 +305,9 @@ impl PlayerScenePolicy {
         if after > count {
             return Err(Stale);
         }
+        let merge = input.merge_source_id.as_deref().map(|id| {
+            inventory.merge_source(id).map_err(Read)?.ok_or(Stale)
+        }).transpose()?;
         let order_funding = match input.sort {
             Sort::Native => 0,
             Sort::QuantityDesc => count.checked_mul(4 * size_of::<usize>()).ok_or(Capacity)?,
@@ -353,8 +380,13 @@ impl PlayerScenePolicy {
             }
             checked += 1;
             let index = order.as_ref().map_or(position, |order| order[position]);
+            if let Some(source) = &merge
+                && !inventory.merge_matches(source, index).map_err(Read)?
+            {
+                continue;
+            }
             let slot = inventory.slot(index).map_err(Read)?;
-            let _query_work = if query.is_empty() {
+            let _query_work = if merge.is_some() || query.is_empty() {
                 None
             } else {
                 Some(
@@ -365,7 +397,7 @@ impl PlayerScenePolicy {
             };
             if (matches!(input.filter, Filter::Equipped) && !slot.item.equipped)
                 || (matches!(input.filter, Filter::Containers) && slot.item.container.is_none())
-                || (!query.is_empty()
+                || (merge.is_none() && !query.is_empty()
                     && !slot
                         .item
                         .named
@@ -378,6 +410,7 @@ impl PlayerScenePolicy {
             {
                 continue;
             }
+            let split = if merge.is_none() { inventory.split_offer(&slot).map_err(Read)? } else { None };
             let entry = inventory.describe(slot).map_err(Read)?;
             custody
                 .resize(
@@ -419,6 +452,8 @@ impl PlayerScenePolicy {
                         command: ItemCommand {
                             kind,
                             item_id: item.id,
+                            target_id: None,
+                            target_revision: None,
                             expected_revision: item.equipped.then_some(item.revision),
                             placement_revision: item.equipped.then_some(item.placement_revision),
                             quantity: None,
@@ -451,6 +486,8 @@ impl PlayerScenePolicy {
                     command: ItemCommand {
                         kind: "eat",
                         item_id: item.id,
+                        target_id: None,
+                        target_revision: None,
                         expected_revision: None,
                         placement_revision: None,
                         quantity: None,
@@ -480,9 +517,37 @@ impl PlayerScenePolicy {
                     command: ItemCommand {
                         kind: "drop",
                         item_id: item.id,
+                        target_id: None,
+                        target_revision: None,
                         expected_revision: None,
                         placement_revision: None,
                         quantity: Some(item.quantity),
+                        record_pin: None,
+                    },
+                });
+            }
+            if let Some(split) = split {
+                custody.resize(
+                    custody.bytes().checked_add(item.id.len() + 6).ok_or(Capacity)?,
+                ).map_err(|_| Capacity)?;
+                let reason = if controlling {
+                    split.reason.or_else(|| split.in_use.then_some(ARRANGEMENT_COPY.busy.as_str()))
+                } else {
+                    Some(COPY.control_required.as_str())
+                };
+                actions.push(Action {
+                    id: format!("split-{}", item.id),
+                    label: &ARRANGEMENT_COPY.split_label,
+                    enabled: reason.is_none(),
+                    reason,
+                    command: ItemCommand {
+                        kind: "split-item",
+                        item_id: item.id,
+                        target_id: Some(split.parent.id),
+                        target_revision: Some(split.parent.revision),
+                        expected_revision: Some(item.revision),
+                        placement_revision: Some(item.placement_revision),
+                        quantity: Some(1),
                         record_pin: None,
                     },
                 });
@@ -560,6 +625,7 @@ impl PlayerScenePolicy {
             };
             items.push(Item {
                 lot: *item,
+                individual: item.individual,
                 art: self.observed.item_art.get(item.definition_id),
                 category: entry.category,
                 description: entry.description.unwrap_or(&blank),
