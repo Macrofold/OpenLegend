@@ -457,7 +457,7 @@ impl PlayerCommands {
         contact: &str,
         items: &[openlegend_simulation::handover::GiftSelection],
     ) -> Result<Option<Arc<openlegend_simulation::handover::TradeEvidence>>, WorldError> {
-        use openlegend_simulation::handover::{ReceivedTradeTerm, TradeEvidence};
+        use openlegend_simulation::handover::TradeEvidence;
         use openlegend_world_host::pool::HostError;
 
         let references = self.references.clone();
@@ -491,14 +491,13 @@ impl PlayerCommands {
             Err(StoreError::StaleCut) => return Ok(None),
             Err(error) => return Err(error.into()),
         };
-        let terms = body.lots.into_iter().map(|row| ReceivedTradeTerm { source: row.source, lot: row.lot });
         let proof = TradeEvidence::admit(
             &cut.world,
             &cut.actor,
             &person.id,
             &cut.generation,
             cut.privacy_revision,
-            terms,
+            body.terms,
             body.custody,
         ).map_err(HostError::from)?;
         Ok(Some(Arc::new(proof)))

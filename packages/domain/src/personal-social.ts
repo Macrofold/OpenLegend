@@ -399,12 +399,12 @@ export function rememberedTradeLotReferences(
   actorId: string,
   otherId: string,
   itemIds: readonly string[],
-): ReadonlyMap<string, KnownTradeLot> {
+): ReadonlyMap<string, OfferLot> {
   const disclosed = rememberedTradeDisclosureIndex(world, actorId, otherId);
-  const selected = new Map<string, KnownTradeLot>();
+  const selected = new Map<string, OfferLot>();
   for (const id of itemIds) {
     const entry = disclosed.get(id);
-    if (entry) selected.set(id, entry);
+    if (entry) selected.set(id, entry.lot);
   }
   return selected;
 }

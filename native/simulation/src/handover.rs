@@ -567,55 +567,40 @@ pub struct TradeEvidence {
 }
 
 impl TradeEvidence {
-    /// Move the already admitted query bodies into command custody. The
-    /// reservation covers both vectors during the move, then retains only the
-    /// command's own scoped identities and selected terms.
+    /// Move the admitted command terms and their reservation from the exact
+    /// read. Reserve only the added scope and shared command owner here.
     pub fn admit(
         world: &str,
         actor: &str,
         counterpart: &str,
         generation: &str,
         privacy_revision: u64,
-        terms: impl ExactSizeIterator<Item = ReceivedTradeTerm>,
+        terms: Vec<ReceivedTradeTerm>,
         mut custody: crate::host::ByteReservation,
     ) -> Result<Self, crate::host::CapacityError> {
         use crate::host::CapacityError;
 
-        let fixed = [world.len(), actor.len(), counterpart.len(), generation.len()]
-            .into_iter()
-            .try_fold(256usize, usize::checked_add)
-            .and_then(|bytes| {
-                bytes.checked_add(terms.len().checked_mul(std::mem::size_of::<ReceivedTradeTerm>())?)
-            })
-            .ok_or(CapacityError)?;
+        let fixed = [
+            world.len(),
+            actor.len(),
+            counterpart.len(),
+            generation.len(),
+        ]
+        .into_iter()
+        .try_fold(256usize, usize::checked_add)
+        .ok_or(CapacityError)?;
         custody.resize(custody.bytes().checked_add(fixed).ok_or(CapacityError)?)?;
-        let mut prepared = Vec::with_capacity(terms.len());
-        let mut retained = fixed;
-        for term in terms {
-            retained = [
-                term.source.id.capacity(),
-                term.source.revision.capacity(),
-                term.lot.item_id.capacity(),
-                term.lot.definition_pin.id.capacity(),
-                term.lot.definition_pin.digest.capacity(),
-            ]
-            .into_iter()
-            .try_fold(retained, usize::checked_add)
-            .ok_or(CapacityError)?;
-            prepared.push(term);
-        }
         let world = world.to_owned();
         let actor = actor.to_owned();
         let counterpart = counterpart.to_owned();
         let generation = generation.to_owned();
-        custody.resize(retained)?;
         Ok(Self {
             world,
             actor,
             counterpart,
             generation,
             privacy_revision,
-            terms: prepared,
+            terms,
             _custody: custody,
         })
     }

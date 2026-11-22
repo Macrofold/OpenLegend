@@ -5,7 +5,7 @@ use super::MemoryBrowseCut;
 use crate::store::{Store, StoreError, StoreResult, durable_head, ordinal, read::admitted_query};
 use openlegend_simulation::{
     experience::{PersonalSourceKind, PersonalSourceRef},
-    handover::GiftLot,
+    handover::{GiftLot, ReceivedTradeTerm},
     host::{ByteBudget, ByteReservation},
     text::JsText,
     values::is_safe_record_id,
@@ -57,7 +57,6 @@ pub(crate) struct RememberedTradeLot {
     pub lot: GiftLot,
     pub name: JsText,
     pub description: JsText,
-    pub disclosed_at: f64,
 }
 
 pub(crate) struct TradeDisclosureEntry {
@@ -73,7 +72,7 @@ pub(crate) struct TradeDisclosurePage {
 }
 
 pub(crate) struct TradeDisclosureReferences {
-    pub lots: Vec<RememberedTradeLot>,
+    pub terms: Vec<ReceivedTradeTerm>,
     pub custody: ByteReservation,
 }
 
@@ -88,22 +87,23 @@ async fn require_cut(tx: &Transaction<'_>, cut: &MemoryBrowseCut) -> StoreResult
     Ok(())
 }
 
-fn decode_lot(row: &Row, custody: &mut ByteReservation) -> StoreResult<RememberedTradeLot> {
+fn decode_term(
+    row: &Row,
+    display_bytes: usize,
+    custody: &mut ByteReservation,
+) -> StoreResult<ReceivedTradeTerm> {
     let id: &str = row.try_get("source_id")?;
     let revision: &str = row.try_get("account_revision")?;
     let item_id: &str = row.try_get("item_id")?;
     let lot: &str = row.try_get("lot")?;
-    let name: &str = row.try_get("name")?;
-    let description: &str = row.try_get("description")?;
-    let disclosed_at: f64 = row.try_get("disclosed_at")?;
-    if !disclosed_at.is_finite() || !is_safe_record_id(id) || !is_safe_record_id(item_id) {
+    if !is_safe_record_id(id) || !is_safe_record_id(item_id) {
         return Err(StoreError::InvalidRecord);
     }
-    let text_bytes = [id, revision, name, description]
-        .into_iter()
-        .try_fold(custody.bytes(), |bytes, value| {
-            bytes.checked_add(value.len())
-        })
+    let text_bytes = custody
+        .bytes()
+        .checked_add(display_bytes)
+        .and_then(|bytes| bytes.checked_add(id.len()))
+        .and_then(|bytes| bytes.checked_add(revision.len()))
         .ok_or(StoreError::Capacity)?;
     // A current lot pin contains three owned strings and scalar fields. Fund
     // its data and escaped-string decode workspace before reading its body.
@@ -133,12 +133,25 @@ fn decode_lot(row: &Row, custody: &mut ByteReservation) -> StoreResult<Remembere
         return Err(StoreError::Capacity);
     }
     custody.resize(retained).map_err(|_| StoreError::Capacity)?;
+    Ok(ReceivedTradeTerm { source, lot })
+}
+
+fn decode_lot(row: &Row, custody: &mut ByteReservation) -> StoreResult<RememberedTradeLot> {
+    let name: &str = row.try_get("name")?;
+    let description: &str = row.try_get("description")?;
+    if !row.try_get::<_, f64>("disclosed_at")?.is_finite() {
+        return Err(StoreError::InvalidRecord);
+    }
+    let display_bytes = name
+        .len()
+        .checked_add(description.len())
+        .ok_or(StoreError::Capacity)?;
+    let ReceivedTradeTerm { source, lot } = decode_term(row, display_bytes, custody)?;
     Ok(RememberedTradeLot {
         source,
         lot,
         name: name.into(),
         description: description.into(),
-        disclosed_at,
     })
 }
 
@@ -258,8 +271,8 @@ impl Store {
         }
         if items.is_empty() {
             return Ok(TradeDisclosureReferences {
-                lots: Vec::new(),
-                custody: reserve_rows::<RememberedTradeLot>(&self.budget, 0)?,
+                terms: Vec::new(),
+                custody: reserve_rows::<ReceivedTradeTerm>(&self.budget, 0)?,
             });
         }
         let owner = Arc::clone(self);
@@ -297,18 +310,18 @@ impl Store {
                 if rows.len() > items.len() {
                     return Err(StoreError::InvalidRecord);
                 }
-                let mut custody = reserve_rows::<RememberedTradeLot>(&owner.budget, rows.len())?;
-                let mut lots = Vec::with_capacity(rows.len());
+                let mut custody = reserve_rows::<ReceivedTradeTerm>(&owner.budget, rows.len())?;
+                let mut terms: Vec<ReceivedTradeTerm> = Vec::with_capacity(rows.len());
                 for row in &rows {
-                    let lot = decode_lot(row, &mut custody)?;
-                    if !unique.contains(&lot.lot.item_id)
-                        || lots.iter().any(|prior: &RememberedTradeLot| prior.lot.item_id == lot.lot.item_id)
+                    let term = decode_term(row, 0, &mut custody)?;
+                    if !unique.contains(&term.lot.item_id)
+                        || terms.iter().any(|prior| prior.lot.item_id == term.lot.item_id)
                     {
                         return Err(StoreError::InvalidRecord);
                     }
-                    lots.push(lot);
+                    terms.push(term);
                 }
-                Ok(TradeDisclosureReferences { lots, custody })
+                Ok(TradeDisclosureReferences { terms, custody })
             })
         }).await
     }

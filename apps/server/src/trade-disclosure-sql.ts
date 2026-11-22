@@ -66,12 +66,9 @@ export function tradeDisclosurePageSql(before: boolean): string {
         JOIN latest_sources l ON l.item_id=c.item_id ORDER BY c.position DESC,c.ordinal DESC`;
 }
 
-/** Look up the exact disclosed terms for the submitted IDs, independent of
- * the page window. Admission rechecks the original receipt before mutation. */
-export const tradeDisclosureReferencesSql = `SELECT q.item_id,e.lot::text AS lot,a.source_id,a.account_revision,
-        d.terms->'descriptions'->s.side->(e.ordinality-1)::int->>'name' AS name,
-        d.terms->'descriptions'->s.side->(e.ordinality-1)::int->>'description' AS description,
-        (d.terms->>'createdAt')::double precision AS disclosed_at
+/** Select only the lot and original receipt needed to admit a submitted
+ * command. The independent page supplies its own display fields. */
+export const tradeDisclosureReferencesSql = `SELECT q.item_id,e.lot::text AS lot,a.source_id,a.account_revision
         FROM jsonb_to_recordset(?::jsonb) q(item_id TEXT,keys JSONB,incoming JSONB,outgoing JSONB)
         CROSS JOIN LATERAL (
           SELECT a.payload,a.actor_id,a.agreement_key,a.source_id,a.account_revision FROM mind_awareness a
@@ -81,5 +78,5 @@ export const tradeDisclosureReferencesSql = `SELECT q.item_id,e.lot::text AS lot
         ) a
         CROSS JOIN LATERAL (SELECT ${tradeTerms('a')} AS terms) d
         CROSS JOIN LATERAL (SELECT CASE WHEN d.terms->>'offererId'=a.actor_id THEN 'requested' ELSE 'offered' END AS side) s
-        CROSS JOIN LATERAL jsonb_array_elements(d.terms->s.side) WITH ORDINALITY e(lot,ordinality)
+        CROSS JOIN LATERAL jsonb_array_elements(d.terms->s.side) e(lot)
         WHERE e.lot->>'itemId'=q.item_id`;

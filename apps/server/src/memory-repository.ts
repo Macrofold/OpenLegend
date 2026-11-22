@@ -157,6 +157,7 @@ import {
   isOfferLot,
   STOCK_TRANSFER_LIMITS,
   type KnownTradeLot,
+  type OfferLot,
 } from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase, SavedWorld } from './store.js';
@@ -725,10 +726,15 @@ const tradeParties = (actorId: string, personId: string) => ({
   incoming: { family: itemOfferFamily, offererId: personId, recipientId: actorId },
   outgoing: { family: itemOfferFamily, offererId: actorId, recipientId: personId },
 });
-function retainedTradeLot(row: Record<string, unknown>): KnownTradeLot {
+function retainedOfferLot(row: Record<string, unknown>): OfferLot {
   const lot: unknown = JSON.parse(String(row['lot']));
+  if (!isOfferLot(lot) || lot.itemId !== row['item_id'])
+    throw new Error('Invalid retained trade terms.');
+  return lot;
+}
+function retainedTradeLot(row: Record<string, unknown>): KnownTradeLot {
+  const lot = retainedOfferLot(row);
   if (
-    !isOfferLot(lot) ||
     typeof row['name'] !== 'string' ||
     typeof row['description'] !== 'string' ||
     typeof row['disclosed_at'] !== 'number' ||
@@ -3032,7 +3038,7 @@ export class MemoryRepository {
     scope: MemoryScope,
     personId: string,
     itemIds: readonly string[],
-  ): Promise<ReadonlyMap<string, KnownTradeLot>> {
+  ): Promise<ReadonlyMap<string, OfferLot>> {
     const ids = [...new Set(itemIds)];
     if (ids.length > STOCK_TRANSFER_LIMITS.movedLots) throw new MemoryPreparationError();
     if (!ids.length) return new Map();
@@ -3047,7 +3053,7 @@ export class MemoryRepository {
       const rows = await this.db
         .prepare(tradeDisclosureReferencesSql)
         .all(JSON.stringify(requests), ...this.params(scope));
-      return new Map(rows.map((row) => [String(row['item_id']), retainedTradeLot(row)]));
+      return new Map(rows.map((row) => [String(row['item_id']), retainedOfferLot(row)]));
     });
   }
 

@@ -1,4 +1,4 @@
-import type { KnownTradeLot } from '@open-legend/domain';
+import type { OfferLot } from '@open-legend/domain';
 import type { TradeDisclosuresPage } from '@open-legend/protocol';
 import { z } from 'zod';
 import { scopeKey, type RequestScope } from './authority.js';
@@ -102,7 +102,7 @@ export async function retainedTradeDisclosureReferences(
   scope: RequestScope,
   personId: string,
   itemIds: readonly string[],
-): Promise<ReadonlyMap<string, KnownTradeLot>> {
+): Promise<ReadonlyMap<string, OfferLot>> {
   service.assertScope(scope);
   const found = await retainedNativeTradeDisclosureReferences(
     service,
@@ -121,7 +121,7 @@ export async function retainedNativeTradeDisclosureReferences(
   actorId: string,
   personId: string,
   itemIds: readonly string[],
-): Promise<ReadonlyMap<string, KnownTradeLot>> {
+): Promise<ReadonlyMap<string, OfferLot>> {
   const prepared = await prepare(service, actorId);
   const found = await service.store.memories!.tradeDisclosureReferences(
     prepared.scope,

@@ -87,7 +87,7 @@ export interface KnownTradeLot {
 export interface TradeDisclosureContext {
   actorId: string;
   personId: string;
-  lots: ReadonlyMap<string, KnownTradeLot>;
+  lots: ReadonlyMap<string, OfferLot>;
 }
 /** Pending consent only. Events and ordinary command receipts retain outcomes.
  * docs/worlds/base/social.md#offering-and-accepting-possessions */
@@ -554,7 +554,7 @@ export function prepareItemOffer(
   for (const selection of command.requested) {
     // Check personal disclosure before inspecting another person's current stock.
     const disclosed =
-      known.get(selection.itemId)?.lot ?? previous.find((lot) => lot.itemId === selection.itemId);
+      known.get(selection.itemId) ?? previous.find((lot) => lot.itemId === selection.itemId);
     if (
       !disclosed ||
       selection.quantity > disclosed.quantity ||
