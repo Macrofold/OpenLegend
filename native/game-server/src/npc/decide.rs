@@ -318,6 +318,30 @@ pub(super) async fn run(
                 models.complex.as_ref()
             }
             .ok_or(CallFailure::Invalid.at("route"))?;
+            let query_origin = prepared.ticket.received_query_origin();
+            let questions_offered = query_origin.is_some();
+            prepared.context.fields["situationQueries"] = questions_offered.into();
+            let regions = query_origin
+                .map(|(original, limits)| {
+                    // The opaque region aliases have the same lifetime as this
+                    // decision's original evidence, not the later live scene.
+                    query::Regions::offer(
+                        original,
+                        limits,
+                        prepared.context.reference_scope(),
+                        &prepared.frame,
+                        &prepared.context.fields["receivedSituation"],
+                        budget,
+                    )
+                })
+                .transpose()
+                .map_err(|error| error.at("generation-preparation"))?
+                .flatten();
+            if let Some(regions) = &regions {
+                regions
+                    .present(&mut prepared.context.fields["receivedSituation"])
+                    .map_err(|error| error.at("generation-preparation"))?;
+            }
             let (response, schema) = prepared
                 .context
                 .render_response(game, &selected, include_actions, None)
@@ -340,7 +364,7 @@ pub(super) async fn run(
                     prompt: &response,
                     reply_player,
                     through: prepared.through,
-                    queries: true,
+                    queries: questions_offered,
                 },
                 schema,
             )
@@ -368,6 +392,7 @@ pub(super) async fn run(
                             budget,
                             prepared.context.reference_scope(),
                             &prepared.frame,
+                            regions.as_ref(),
                         )?;
                         let (mut response, schema) = prepared
                             .context

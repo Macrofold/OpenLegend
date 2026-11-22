@@ -399,6 +399,17 @@ fn response_failure(error: ResponseEnvelopeError) -> RuntimeError {
 }
 
 impl RuntimeNpcResponseTicket {
+    /// Exact original scene and installed limits for the first query offer.
+    /// This borrows the owned evidence and performs no new acquisition.
+    pub fn received_query_origin(
+        &self,
+    ) -> Option<(&RuntimeNpcRead, crate::attention::SceneRegionLimits)> {
+        Some((
+            &self.original,
+            self.original.read.perception.query_regions?,
+        ))
+    }
+
     pub(super) fn into_query(
         self,
     ) -> Result<(RuntimeNpcRead, RuntimeNpcRead, RuntimeNpcBindingRequest), RuntimeError> {

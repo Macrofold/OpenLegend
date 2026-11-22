@@ -108,7 +108,10 @@ impl Projection {
             .response_schema(
                 self.speaks,
                 self.expressions,
-                expansion.is_none(),
+                fields
+                    .get("situationQueries")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false),
                 &ResponseReferences {
                     entity,
                     action: &aliases,

@@ -8,8 +8,12 @@ use std::mem::size_of;
 /// query. Its workspace and tree backing are owned until the batch returns.
 pub(crate) struct ReceivedIndex {
     root: Option<Node>,
+    count: usize,
     _storage: ByteReservation,
 }
+#[derive(Clone, Copy)]
+pub(crate) struct RegionPath(usize);
+
 impl ReceivedIndex {
     pub(crate) fn build(
         bounds: impl ExactSizeIterator<Item = Option<Bounds>>,
@@ -32,10 +36,47 @@ impl ReceivedIndex {
                 .enumerate()
                 .filter_map(|(id, bounds)| bounds.map(|bounds| Entry { id, bounds })),
         );
+        let count = entries.len();
         Ok(Self {
             root: Node::build(entries),
+            count,
             _storage: storage,
         })
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.count
+    }
+
+    /// A disjoint, complete cover of received membership. It refines left
+    /// first like Source's tree. A row never discloses its members.
+    pub(crate) fn cover(
+        &self,
+        mut splits: usize,
+        mut region: impl FnMut(RegionPath, &Bounds, usize),
+    ) {
+        if let Some(root) = &self.root {
+            root.cover(RegionPath(1), self.count, &mut splits, &mut region);
+        }
+    }
+
+    /// A path names a subtree, not an overlapping world-space box. Only
+    /// issued paths from this exact tree can reach this method.
+    pub(crate) fn region(
+        &self,
+        path: RegionPath,
+        remaining: &mut u64,
+        hit: &mut impl FnMut(usize),
+    ) -> bool {
+        let mut node = self.root.as_ref().expect("an issued region has a root");
+        let depth = usize::BITS - path.0.leading_zeros() - 1;
+        for step in (0..depth).rev() {
+            let Members::Branch(children) = &node.members else {
+                unreachable!("issued path only descends through branches")
+            };
+            node = &children[(path.0 >> step) & 1];
+        }
+        node.query(&|_| true, remaining, hit)
     }
 
     /// Return whether the bounded traversal completed. A hit names the
@@ -115,6 +156,25 @@ impl Node {
             ]))
         };
         Some(Self { bounds, members })
+    }
+
+    fn cover(
+        &self,
+        path: RegionPath,
+        count: usize,
+        splits: &mut usize,
+        region: &mut impl FnMut(RegionPath, &Bounds, usize),
+    ) {
+        if let Members::Branch(children) = &self.members
+            && *splits > 0
+        {
+            *splits -= 1;
+            let left = count / 2;
+            children[0].cover(RegionPath(path.0 << 1), left, splits, region);
+            children[1].cover(RegionPath((path.0 << 1) | 1), count - left, splits, region);
+        } else {
+            region(path, &self.bounds, count);
+        }
     }
 
     pub(super) fn visit(

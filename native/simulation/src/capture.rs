@@ -180,6 +180,7 @@ pub(crate) struct CapturedActorPerception {
     pub evidence: CapturedEvidenceCut,
     pub geometry: Option<CapturedGeometryRange>,
     pub query_bodies: Vec<Option<CapturedQueryBody>>,
+    pub query_regions: Option<crate::attention::SceneRegionLimits>,
     player: Option<CapturedPlayerPerception>,
     npc_current: Option<npc_current::NpcCurrentCapture>,
     _reservation: ByteReservation,
@@ -325,13 +326,16 @@ pub(crate) fn capture_actor_perception(
     let count = scope
         .as_ref()
         .map_or(0, |scope| scope.state().current.len());
-    let query_bodies = matches!(
+    let query_policy = matches!(
         purpose,
         ActorReadPurpose::NpcDecision {
             query_origin: true,
             ..
         }
-    ) && state.installed.attention.value().scene.maximum_queries != 0;
+    )
+    .then(|| &state.installed.attention.value().scene)
+    .filter(|policy| policy.maximum_queries != 0);
+    let query_bodies = query_policy.is_some();
     if let Some(scope) = &scope {
         for id in scope.state().current.keys() {
             let body = scope.native_body(id)?;
@@ -673,6 +677,14 @@ pub(crate) fn capture_actor_perception(
         evidence,
         geometry,
         query_bodies: query_geometry,
+        query_regions: query_policy.map(|policy| crate::attention::SceneRegionLimits {
+            max_rows: policy
+                .max_rows
+                .saturating_sub(policy.static_rows)
+                .saturating_sub(policy.discovery_rows),
+            node_visits: policy.node_visits,
+            max_bytes: policy.max_bytes,
+        }),
         npc_current,
         player,
         _reservation: reservation,

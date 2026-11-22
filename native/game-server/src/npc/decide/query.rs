@@ -14,9 +14,11 @@ use serde::Serialize;
 use serde::ser::SerializeSeq;
 use std::mem::size_of;
 
+mod bodies;
 mod boundaries;
-mod nearby;
-use nearby::{Nearby, NearbyRead};
+mod regions;
+use bodies::{BodyPage, BodyQueryRead};
+pub(super) use regions::Regions;
 
 pub(super) enum Draft {
     Decision(SqlCell, ByteReservation),
@@ -66,7 +68,7 @@ struct Answer<'a> {
 #[serde(untagged)]
 enum QueryResult<'a> {
     Separation(Separation),
-    Nearby(Nearby<'a>),
+    Bodies(BodyPage<'a>),
     Boundaries(boundaries::Boundaries),
 }
 
@@ -95,13 +97,20 @@ impl Separation {
     }
 
     fn bind(&self, binding: &mut RuntimeNpcBindingRequest) -> Result<(), CallFailure> {
-        for (ordinal, alias) in &self.support {
-            binding
-                .bind_query_facet(alias, *ordinal)
-                .map_err(super::prepare::packet_failure)?;
-        }
-        Ok(())
+        bind_support(&self.support, binding)
     }
+}
+
+fn bind_support(
+    support: &[(usize, String)],
+    binding: &mut RuntimeNpcBindingRequest,
+) -> Result<(), CallFailure> {
+    for (ordinal, alias) in support {
+        binding
+            .bind_query_facet(alias, *ordinal)
+            .map_err(super::prepare::packet_failure)?;
+    }
+    Ok(())
 }
 
 fn support<const N: usize>(facets: [Option<usize>; N], scope: &str) -> Vec<(usize, String)> {
@@ -125,7 +134,7 @@ impl Answers<'_> {
         for answer in &self.results {
             match &answer.result {
                 QueryResult::Separation(result) => result.bind(binding)?,
-                QueryResult::Nearby(result) => result.bind(binding)?,
+                QueryResult::Bodies(result) => result.bind(binding)?,
                 QueryResult::Boundaries(result) => result.bind(binding)?,
             }
         }
@@ -136,7 +145,7 @@ impl Answers<'_> {
         self.results
             .iter()
             .filter_map(|answer| match &answer.result {
-                QueryResult::Nearby(result) => Some(result.added_references()),
+                QueryResult::Bodies(result) => Some(result.added_references()),
                 _ => None,
             })
             .flatten()
@@ -195,6 +204,7 @@ pub(super) fn answer<'a>(
     budget: &ByteBudget,
     reference_scope: &str,
     frame: &super::prepare::ReceivedFrame,
+    regions: Option<&Regions>,
 ) -> Result<Answers<'a>, CallFailure> {
     if questions.len() as u64 > policy.maximum_queries {
         return Err(CallFailure::Invalid);
@@ -212,7 +222,15 @@ pub(super) fn answer<'a>(
     };
     let maximum = usize::try_from(policy.expansion_bytes).map_err(|_| CallFailure::Invalid)?;
     let mut remaining = policy.query_visits;
-    let mut nearby = NearbyRead::new(original, current, binding, budget, reference_scope, frame);
+    let mut bodies = BodyQueryRead::new(
+        original,
+        current,
+        binding,
+        budget,
+        reference_scope,
+        frame,
+        regions,
+    );
     let encoded_size = |answers: &Answers<'_>| {
         openlegend_simulation::encoding::json_record_len(answers).map_err(|_| CallFailure::Invalid)
     };
@@ -229,8 +247,8 @@ pub(super) fn answer<'a>(
                 binding.received_separation(original, current, field("first")?, field("second")?),
                 reference_scope,
             )),
-            "near" => QueryResult::Nearby(
-                nearby.answer(
+            "near" => QueryResult::Bodies(
+                bodies.near(
                     field("anchor")?,
                     fields
                         .get("radius")
@@ -239,6 +257,7 @@ pub(super) fn answer<'a>(
                     &mut remaining,
                 )?,
             ),
+            "expand" => QueryResult::Bodies(bodies.expand(field("region")?, &mut remaining)?),
             "boundaries" => QueryResult::Boundaries(boundaries::answer(
                 binding.received_anchor(original, current, field("anchor")?),
                 original,
@@ -254,7 +273,7 @@ pub(super) fn answer<'a>(
         let mut excess = encoded_size(&answers)?.saturating_sub(maximum);
         if excess != 0 {
             excess = match answers.results.last_mut().map(|answer| &mut answer.result) {
-                Some(QueryResult::Nearby(last)) => last.trim(excess)?,
+                Some(QueryResult::Bodies(last)) => last.trim(excess)?,
                 Some(QueryResult::Boundaries(last)) => last.trim(excess)?,
                 _ => excess,
             };

@@ -80,11 +80,7 @@ impl Boundaries {
     }
 
     pub(super) fn bind(&self, binding: &mut RuntimeNpcBindingRequest) -> Result<(), CallFailure> {
-        for (ordinal, alias) in &self.support {
-            binding
-                .bind_query_facet(alias, *ordinal)
-                .map_err(prepare::packet_failure)?;
-        }
+        super::bind_support(&self.support, binding)?;
         for row in self.facts.iter().flatten() {
             let observation = &row.observation;
             binding

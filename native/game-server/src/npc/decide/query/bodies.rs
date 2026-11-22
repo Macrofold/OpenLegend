@@ -1,7 +1,12 @@
 //! Range queries over the original accepted scene. The index can narrow only
 //! the actor's received extents and never reaches the live physical world.
-use super::{CallFailure, RuntimeNpcBindingRequest, RuntimeNpcRead, Separation, support};
-use crate::{npc::decide::prepare, spatial::index::ReceivedIndex};
+use super::{
+    CallFailure, RuntimeNpcBindingRequest, RuntimeNpcRead, Separation, regions::Regions, support,
+};
+use crate::{
+    npc::decide::prepare,
+    spatial::index::{ReceivedIndex, RegionPath},
+};
 use openlegend_simulation::{
     host::{ByteBudget, ByteReservation, CapacityError},
     state::{Bounds, Point},
@@ -10,17 +15,18 @@ use openlegend_simulation::{
 use serde::Serialize;
 use std::mem::size_of;
 
-pub(super) struct NearbyRead<'a, 'request> {
+pub(super) struct BodyQueryRead<'a, 'request> {
     original: &'a RuntimeNpcRead,
     current: &'request RuntimeNpcRead,
     binding: &'request RuntimeNpcBindingRequest,
     budget: &'request ByteBudget,
     scope: &'request str,
+    regions: Option<&'request Regions>,
     index: Option<ReceivedIndex>,
     frame: &'request prepare::ReceivedFrame,
 }
 
-impl<'a, 'request> NearbyRead<'a, 'request> {
+impl<'a, 'request> BodyQueryRead<'a, 'request> {
     pub(super) fn new(
         original: &'a RuntimeNpcRead,
         current: &'request RuntimeNpcRead,
@@ -28,6 +34,7 @@ impl<'a, 'request> NearbyRead<'a, 'request> {
         budget: &'request ByteBudget,
         scope: &'request str,
         frame: &'request prepare::ReceivedFrame,
+        regions: Option<&'request Regions>,
     ) -> Self {
         Self {
             original,
@@ -35,27 +42,56 @@ impl<'a, 'request> NearbyRead<'a, 'request> {
             binding,
             budget,
             scope,
+            regions,
             index: None,
             frame,
         }
     }
 
-    pub(super) fn answer(
+    pub(super) fn near(
         &mut self,
         alias: &str,
         radius: f64,
         remaining: &mut u64,
-    ) -> Result<Nearby<'a>, CallFailure> {
-        let Some((anchor, bounds)) = self
+    ) -> Result<BodyPage<'a>, CallFailure> {
+        let area = self
             .binding
             .received_anchor(self.original, self.current, alias)
-            .and_then(|ordinal| {
-                self.original
-                    .received_query_bound(ordinal)
-                    .map(|bounds| (ordinal, bounds))
-            })
-        else {
-            return Ok(Nearby {
+            .and_then(|anchor| {
+                let bounds = self.original.received_query_bound(anchor)?;
+                let expand = |point: Point, pad| Point {
+                    x: point.x + pad,
+                    y: point.y + pad,
+                    z: point.z + pad,
+                };
+                let window = Bounds {
+                    min: expand(bounds.min, -radius),
+                    max: expand(bounds.max, radius),
+                };
+                Some(Area::Near { anchor, window })
+            });
+        self.answer(area, remaining)
+    }
+
+    pub(super) fn expand(
+        &mut self,
+        alias: &str,
+        remaining: &mut u64,
+    ) -> Result<BodyPage<'a>, CallFailure> {
+        let area = self
+            .regions
+            .and_then(|regions| regions.resolve(alias))
+            .map(Area::Region);
+        self.answer(area, remaining)
+    }
+
+    fn answer(
+        &mut self,
+        area: Option<Area>,
+        remaining: &mut u64,
+    ) -> Result<BodyPage<'a>, CallFailure> {
+        let Some(area) = area else {
+            return Ok(BodyPage {
                 status: "unavailable",
                 bodies: None,
                 support: Vec::new(),
@@ -63,27 +99,16 @@ impl<'a, 'request> NearbyRead<'a, 'request> {
             });
         };
         let mut hits = Vec::new();
-        let complete = if *remaining != 0 {
-            let index = if let Some(index) = self.index.as_ref() {
-                index
-            } else {
-                self.index.insert(
+        let (complete, _hits) = if *remaining != 0 {
+            let index = match (self.regions, self.index.as_ref()) {
+                (Some(regions), _) => &regions.index,
+                (None, Some(index)) => index,
+                (None, None) => self.index.insert(
                     ReceivedIndex::build(self.original.received_query_bounds(), self.budget)
                         .map_err(capacity)?,
-                )
+                ),
             };
-            let expand = |point: Point, pad| Point {
-                x: point.x + pad,
-                y: point.y + pad,
-                z: point.z + pad,
-            };
-            let window = Bounds {
-                min: expand(bounds.min, -radius),
-                max: expand(bounds.max, radius),
-            };
-            let count = self
-                .original
-                .received_query_bounds()
+            let count = index
                 .len()
                 .min(usize::try_from(*remaining).map_err(|_| capacity(CapacityError))?);
             let _hits = self
@@ -96,16 +121,22 @@ impl<'a, 'request> NearbyRead<'a, 'request> {
                 .map_err(capacity)?;
             hits.try_reserve_exact(count)
                 .map_err(|_| capacity(CapacityError))?;
-            let complete = index.query(&window, remaining, &mut |ordinal| {
-                if ordinal != anchor {
-                    hits.push(ordinal);
+            let complete = match area {
+                Area::Near { anchor, ref window } => {
+                    index.query(window, remaining, &mut |ordinal| {
+                        if ordinal != anchor {
+                            hits.push(ordinal);
+                        }
+                    })
                 }
-            });
+                Area::Region(path) => {
+                    index.region(path, remaining, &mut |ordinal| hits.push(ordinal))
+                }
+            };
             (complete, Some(_hits))
         } else {
             (false, None)
         };
-        let (complete, _hits) = complete;
         // Each retained row has at most six independently encoded facet
         // handles. Names and the observations themselves stay borrowed.
         let proof_bytes = 6 * (size_of::<(usize, String)>() + 24) + 256;
@@ -113,24 +144,30 @@ impl<'a, 'request> NearbyRead<'a, 'request> {
             .budget
             .reserve(
                 hits.len()
-                    .checked_mul(size_of::<NearbyBody<'_>>() + proof_bytes)
+                    .checked_mul(size_of::<BodyRow<'_>>() + proof_bytes)
                     .and_then(|bytes| bytes.checked_add(proof_bytes))
                     .ok_or_else(|| capacity(CapacityError))?,
             )
             .map_err(capacity)?;
+        let anchor = match area {
+            Area::Near { anchor, .. } => Some(anchor),
+            Area::Region(_) => None,
+        };
         let bodies = hits
             .into_iter()
             .map(|ordinal| self.body(anchor, ordinal))
             .collect::<Result<Vec<_>, _>>()?;
-        Ok(Nearby {
+        Ok(BodyPage {
             status: if complete { "complete" } else { "partial" },
             bodies: Some(bodies),
-            support: support(self.original.received_query_facets(anchor), self.scope),
+            support: anchor.map_or_else(Vec::new, |anchor| {
+                support(self.original.received_query_facets(anchor), self.scope)
+            }),
             _custody: custody,
         })
     }
 
-    fn body(&self, anchor: usize, ordinal: usize) -> Result<NearbyBody<'a>, CallFailure> {
+    fn body(&self, anchor: Option<usize>, ordinal: usize) -> Result<BodyRow<'a>, CallFailure> {
         let subject = self
             .original
             .presented_body(ordinal)
@@ -142,14 +179,21 @@ impl<'a, 'request> NearbyRead<'a, 'request> {
         let reference = old_alias
             .map(str::to_owned)
             .unwrap_or_else(|| prepare::alias(self.scope, "scene-body", ordinal));
-        Ok(NearbyBody {
+        Ok(BodyRow {
             reference,
             ordinal,
             added: old_alias.is_none(),
-            separation: Separation::prepare(
-                self.original.received_near_pair(anchor, ordinal),
-                self.scope,
-            ),
+            separation: anchor.map(|anchor| {
+                Separation::prepare(
+                    self.original.received_near_pair(anchor, ordinal),
+                    self.scope,
+                )
+            }),
+            support: if anchor.is_none() {
+                support(self.original.received_query_facets(ordinal), self.scope)
+            } else {
+                Vec::new()
+            },
             facts: BodyFacts {
                 label: &subject.name.name,
                 relative: prepare::relative_body(
@@ -179,11 +223,16 @@ impl<'a, 'request> NearbyRead<'a, 'request> {
     }
 }
 
+enum Area {
+    Near { anchor: usize, window: Bounds },
+    Region(RegionPath),
+}
+
 #[derive(Serialize)]
-pub(super) struct Nearby<'a> {
+pub(super) struct BodyPage<'a> {
     status: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
-    bodies: Option<Vec<NearbyBody<'a>>>,
+    bodies: Option<Vec<BodyRow<'a>>>,
     #[serde(
         skip_serializing_if = "Vec::is_empty",
         serialize_with = "super::citations"
@@ -193,7 +242,7 @@ pub(super) struct Nearby<'a> {
     _custody: ByteReservation,
 }
 
-impl Nearby<'_> {
+impl BodyPage<'_> {
     /// Count each discarded body once. Each removal frees its encoded row
     /// and the array comma if a preceding body remains.
     pub(super) fn trim(&mut self, excess: usize) -> Result<usize, CallFailure> {
@@ -211,13 +260,12 @@ impl Nearby<'_> {
     }
 
     pub(super) fn bind(&self, binding: &mut RuntimeNpcBindingRequest) -> Result<(), CallFailure> {
-        for (ordinal, alias) in &self.support {
-            binding
-                .bind_query_facet(alias, *ordinal)
-                .map_err(prepare::packet_failure)?;
-        }
+        super::bind_support(&self.support, binding)?;
         for body in self.bodies.iter().flatten() {
-            body.separation.bind(binding)?;
+            if let Some(separation) = &body.separation {
+                separation.bind(binding)?;
+            }
+            super::bind_support(&body.support, binding)?;
             if body.added {
                 binding
                     .bind_query_body(&body.reference, body.ordinal)
@@ -229,9 +277,15 @@ impl Nearby<'_> {
 }
 
 #[derive(Serialize)]
-pub(super) struct NearbyBody<'a> {
+pub(super) struct BodyRow<'a> {
     reference: String,
-    separation: Separation,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    separation: Option<Separation>,
+    #[serde(
+        skip_serializing_if = "Vec::is_empty",
+        serialize_with = "super::citations"
+    )]
+    support: Vec<(usize, String)>,
     facts: BodyFacts<'a>,
     #[serde(skip)]
     ordinal: usize,

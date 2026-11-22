@@ -122,6 +122,14 @@ impl SemanticAttentionPolicy {
     }
 }
 
+/// Only the installed bounds needed to publish a received region cover.
+#[derive(Clone, Copy)]
+pub struct SceneRegionLimits {
+    pub max_rows: u64,
+    pub node_visits: u64,
+    pub max_bytes: u64,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SceneAttentionPolicy {
