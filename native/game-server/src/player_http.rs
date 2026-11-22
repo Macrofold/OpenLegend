@@ -129,7 +129,7 @@ pub(crate) fn router(
         .route("/api/operations", axum::routing::get(operations::state))
         .route("/api/invites/create", post(operations::access::create))
         .route("/api/invites/revoke", post(operations::access::revoke))
-        .route("/api/access", post(operations::access::remove))
+        .route("/api/access", post(operations::access::update_grant))
         .route("/api/saves/list", post(checkpoint::list))
         .route("/api/saves/delete", post(checkpoint::delete))
         .route("/api/saves/settings", post(checkpoint::settings))

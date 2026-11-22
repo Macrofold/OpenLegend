@@ -5,6 +5,7 @@ use super::{
     exact_integer, granted_actor, now_ms,
 };
 use crate::store::{CommitError, StoreError, StoreResult, sql_ordinal};
+use openlegend_simulation::identity::MAX_SAFE_INTEGER;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tokio_postgres::{Row, Transaction};
@@ -24,7 +25,7 @@ impl From<AccessError> for AccessUpdateError {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct RemoveAccess {
+pub(crate) struct UpdateGrant {
     pub account_id: String,
     pub expected_revision: u64,
     pub capabilities: Vec<Capability>,
@@ -42,6 +43,10 @@ pub(super) struct GrantRecord {
 }
 
 impl GrantRecord {
+    fn capabilities_fit(actor: Option<&str>, capabilities: &[Capability]) -> bool {
+        actor.is_some() || !capabilities.contains(&Capability::Play)
+    }
+
     pub(super) fn read(world: &str, row: &Row) -> StoreResult<Self> {
         let account: &str = row.try_get(0)?;
         let actor: &str = row.try_get(1)?;
@@ -55,15 +60,14 @@ impl GrantRecord {
         }
         let capabilities: Vec<Capability> =
             serde_json::from_str(capabilities).map_err(|_| StoreError::InvalidRecord)?;
-        if capabilities.len() > 6
-            || (granted_actor(actor).is_none() && capabilities.contains(&Capability::Play))
-        {
+        let actor_id = granted_actor(actor);
+        if capabilities.len() > 6 || !Self::capabilities_fit(actor_id, &capabilities) {
             return Err(StoreError::InvalidRecord);
         }
         Ok(Self {
             world_id: world.into(),
             account_id: account.into(),
-            actor_id: granted_actor(actor).map(str::to_owned),
+            actor_id: actor_id.map(str::to_owned),
             revision,
             capabilities,
         })
@@ -184,12 +188,12 @@ impl Authority {
         })
     }
 
-    /// Fence the affected account before waiting on SQL. Existing control and
-    /// grant revisions advance together without erasing character ownership.
-    pub(crate) async fn remove_access(
+    /// Fence the affected account before waiting on SQL. Removing Play also
+    /// releases that control generation in the same grant and audit commit.
+    pub(crate) async fn set_capabilities(
         &self,
         authorized: &AuthorizedScope,
-        request: RemoveAccess,
+        request: UpdateGrant,
         signal: impl Fn(),
     ) -> Result<(), AccessUpdateError> {
         let _change = self.changes.lock().await;
@@ -206,25 +210,34 @@ impl Authority {
                  greatest(octet_length(account_id),octet_length(actor_id),octet_length(capabilities))<=$3",
                 &[&scope.world_id, &request.account_id, &limit],
             ).await?;
-            let Some(row) = row else { return Ok(false) };
+            let Some(row) = row else { return Ok(Err(AccessUpdateError::Conflict)) };
             let old = GrantRecord::read(&scope.world_id, &row)?;
-            if old.revision != request.expected_revision {
-                return Ok(false);
+            if old.revision != request.expected_revision || old.revision == MAX_SAFE_INTEGER {
+                return Ok(Err(AccessUpdateError::Conflict));
             }
-            let after = GrantRecord {
-                revision: old.revision.checked_add(1).ok_or(StoreError::Capacity)?,
-                capabilities: Vec::new(),
-                ..old.clone()
-            };
+            let mut capabilities = Vec::with_capacity(request.capabilities.len());
+            for capability in request.capabilities {
+                if !capabilities.contains(&capability) {
+                    capabilities.push(capability);
+                }
+            }
+            if !GrantRecord::capabilities_fit(old.actor_id.as_deref(), &capabilities) {
+                return Ok(Err(AccessError::Forbidden.into()));
+            }
+            let after = GrantRecord { revision: old.revision + 1, capabilities, ..old.clone() };
             let revision = sql_ordinal(after.revision)?;
-            if old.capabilities.contains(&Capability::Play) {
+            let expected = sql_ordinal(old.revision)?;
+            if old.capabilities.contains(&Capability::Play) && !after.capabilities.contains(&Capability::Play) {
                 let actor = old.actor_id.as_ref().ok_or(StoreError::InvalidRecord)?;
                 let control = tx.query_opt(
                     "SELECT generation FROM auth_controls WHERE world_id=$1 AND actor_id=$2",
                     &[&scope.world_id, actor],
                 ).await?;
                 let generation = control.map_or(Ok(0), |row| exact_integer(row.try_get(0)?))?;
-                let generation = sql_ordinal(generation.checked_add(1).ok_or(StoreError::Capacity)?)?;
+                if generation == MAX_SAFE_INTEGER {
+                    return Ok(Err(AccessUpdateError::Conflict));
+                }
+                let generation = sql_ordinal(generation + 1)?;
                 tx.execute(
                     "INSERT INTO auth_controls VALUES($1,$2,$3,$4,'','') ON CONFLICT(world_id,actor_id) \
                      DO UPDATE SET generation=excluded.generation,account_id=excluded.account_id,\
@@ -232,18 +245,21 @@ impl Authority {
                     &[&scope.world_id, actor, &generation, &old.account_id],
                 ).await?;
             }
-            tx.execute(
-                "UPDATE auth_grants SET revision=$3,capabilities='[]' WHERE world_id=$1 AND account_id=$2",
-                &[&scope.world_id, &old.account_id, &revision],
-            ).await?;
+            let permissions = serde_json::to_string(&after.capabilities)
+                .map_err(|_| StoreError::InvalidRecord)?;
+            if tx.execute(
+                "UPDATE auth_grants SET revision=$3,capabilities=$4 WHERE world_id=$1 AND account_id=$2 AND revision=$5",
+                &[&scope.world_id, &old.account_id, &revision, &permissions, &expected],
+            ).await? != 1 {
+                return Err(StoreError::StaleCut);
+            }
             audit(tx, &scope.world_id, &old.account_id, &scope.account_id,
                   &serde_json::json!({ "type":"capabilities", "before":old, "after":after }),
                   now_ms()).await?;
-            Ok(true)
+            Ok(Ok(()))
         })).await;
         match result {
-            Ok(true) => Ok(()),
-            Ok(false) => Err(AccessUpdateError::Conflict),
+            Ok(result) => result,
             Err(CommitError::RolledBack(StoreError::StaleCut)) => Err(AccessError::Changed.into()),
             Err(error) => {
                 fence.uncertain = matches!(error, CommitError::Unknown(_));

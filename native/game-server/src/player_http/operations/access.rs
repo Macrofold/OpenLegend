@@ -7,7 +7,7 @@ use super::super::{
 use crate::{
     access_http::refusal,
     authority::{
-        AccessUpdateError, Capability, RemoveAccess,
+        AccessUpdateError, Capability, UpdateGrant,
         invites::{AccessRoster, GrantView, InviteError, InviteView, NewInvite},
         now_ms,
     },
@@ -180,7 +180,7 @@ pub(in crate::player_http) async fn revoke(
     }
 }
 
-pub(in crate::player_http) async fn remove(
+pub(in crate::player_http) async fn update_grant(
     State(state): State<PlayerRoutes>,
     request: Request,
 ) -> Response {
@@ -192,12 +192,12 @@ pub(in crate::player_http) async fn remove(
         Ok(scope) => scope,
         Err(error) => return access_failure(error),
     };
-    let (request, custody): (RemoveAccess, _) =
+    let (request, custody): (UpdateGrant, _) =
         match json(&parts.headers, body, state.game.host.budget()).await {
             Ok(value) => value,
             Err(error) => return error,
         };
-    if !request.capabilities.is_empty()
+    if request.capabilities.len() > 5
         || !is_safe_record_id(&request.account_id)
         || request.account_id.encode_utf16().count() > 100
         || request.expected_revision > openlegend_simulation::identity::MAX_SAFE_INTEGER
@@ -211,7 +211,7 @@ pub(in crate::player_http) async fn remove(
         let _custody = custody;
         state
             .authority
-            .remove_access(&authorized, request, || state.saves.signal_view())
+            .set_capabilities(&authorized, request, || state.saves.signal_view())
             .await
     })
     .await

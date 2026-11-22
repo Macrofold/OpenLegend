@@ -19,7 +19,7 @@ mod control;
 pub(crate) mod invites;
 mod managed_access;
 pub use control::{ControlChange, ControlOperation, ControlRequest};
-pub(crate) use managed_access::{AccessUpdateError, RemoveAccess, assert_saved_grant};
+pub(crate) use managed_access::{AccessUpdateError, UpdateGrant, assert_saved_grant};
 
 pub(crate) const LOCAL_ISSUER: &str = "https://local.openlegend.invalid";
 pub(crate) const LOCAL_SUBJECT: &str = "local-player";
