@@ -10,9 +10,9 @@ use crate::{
     world::WorldError,
 };
 use openlegend_simulation::{
-    encoding::{json_record, json_record_len, json_tree_allocation_bound},
+    encoding::{json_record_len, json_tree_allocation_bound},
     geometry::GeometryBinding,
-    host::ByteBudget,
+    host::{ByteBudget, ByteReservation},
     records::SqlCell,
     runtime::{LocalFormat, RuntimeProvider, RuntimeProviderInput},
 };
@@ -86,14 +86,17 @@ pub(crate) fn answer(
     })? {
         return answer.map(Some);
     }
-    if let Some(answer) = request.with_maintenance_format(|binding, publication| {
-        format_maintenance(
-            binding,
-            publication,
-            budget,
-            language.ok_or(WorldError::ProviderKind)?,
-        )
-    })? {
+    if let Some(answer) =
+        request.with_maintenance_format(|binding, publication, retained_bytes| {
+            format_maintenance(
+                binding,
+                publication,
+                retained_bytes,
+                budget,
+                language.ok_or(WorldError::ProviderKind)?,
+            )
+        })?
+    {
         return answer.map(Some);
     }
     if let Some(answer) = request.with_digest(|binding, value, retained_bytes| {
@@ -112,6 +115,22 @@ fn typed_digest(
     language: Option<&LanguageProvider>,
 ) -> Result<RuntimeProviderInput, WorldError> {
     let language = language.ok_or(WorldError::ProviderKind)?;
+    let (canonical, custody) = canonical_cell(value, retained_bytes, budget, language)?;
+    Ok(RuntimeProviderInput::local_format(
+        binding,
+        LocalFormat::Digest(canonical),
+        custody,
+    )?)
+}
+
+/// Prepare the canonical bytes needed by a signature or an exact stored
+/// publication. The caller owns the returned output and its allowance.
+fn canonical_cell(
+    value: &SqlCell,
+    retained_bytes: usize,
+    budget: &ByteBudget,
+    language: &LanguageProvider,
+) -> Result<(String, ByteReservation), WorldError> {
     // The size pass may enumerate dynamic keys. Both its scratch and the
     // sorting arrays borrow from the already funded cell, without copying it.
     let scratch = retained_bytes.checked_add(512).ok_or(HostError::Capacity)?;
@@ -124,11 +143,7 @@ fn typed_digest(
     write_canonical_cell(value, &|a, b| language.compare_utf8(a, b), &mut encoded)
         .map_err(WorldError::Language)?;
     let canonical = String::from_utf8(encoded).map_err(|_| WorldError::ProviderKind)?;
-    Ok(RuntimeProviderInput::local_format(
-        binding,
-        LocalFormat::Digest(canonical),
-        custody,
-    )?)
+    Ok((canonical, custody))
 }
 
 fn format_workspace(input: &str) -> Result<usize, WorldError> {
@@ -170,6 +185,7 @@ fn canonical_answer(
 fn format_maintenance(
     binding: GeometryBinding,
     publication: &SqlCell,
+    retained_bytes: usize,
     budget: &ByteBudget,
     language: &LanguageProvider,
 ) -> Result<RuntimeProviderInput, WorldError> {
@@ -181,17 +197,13 @@ fn format_maintenance(
         .get("thoughts")
         .and_then(SqlCell::as_array)
         .ok_or(WorldError::ProviderKind)?;
-    let bytes = json_record_len(publication).map_err(|_| WorldError::ProviderKind)?;
-    let custody = budget
-        .reserve(
-            bytes
-                .checked_mul(2)
-                .and_then(|n| n.checked_add(files.len().checked_mul(size_of::<u64>() + 1)?))
-                .and_then(|n| n.checked_add(thoughts.len().checked_mul(size_of::<u64>())?))
-                .and_then(|n| n.checked_add(512))
-                .ok_or(HostError::Capacity)?,
-        )
-        .map_err(HostError::from)?;
+    let reserve = files
+        .len()
+        .checked_mul(size_of::<u64>() + size_of::<bool>())
+        .and_then(|n| n.checked_add(thoughts.len().checked_mul(size_of::<u64>())?))
+        .and_then(|n| n.checked_add(512))
+        .ok_or(HostError::Capacity)?;
+    let mut custody = budget.reserve(reserve).map_err(HostError::from)?;
     let mut valid_paths = Vec::with_capacity(files.len());
     let mut file_words = Vec::with_capacity(files.len());
     for file in files {
@@ -219,19 +231,9 @@ fn format_maintenance(
                 .map_err(WorldError::Language)?,
         );
     }
-    let _encoding = budget
-        .reserve(bytes.checked_mul(2).ok_or(HostError::Capacity)?)
-        .map_err(HostError::from)?;
-    let input = json_record(publication).map_err(|_| WorldError::ProviderKind)?;
-    let _sort = budget
-        .reserve(json_tree_allocation_bound(&input).ok_or(HostError::Capacity)?)
-        .map_err(HostError::from)?;
-    // Canonical text is retained by the publication itself for exact
-    // duplicate checks. The provider's typed carrier never encodes an envelope.
-    let mut canonical = Vec::with_capacity(input.len());
-    write_canonical(&input, &|a, b| language.compare_utf8(a, b), &mut canonical)
-        .map_err(WorldError::Language)?;
-    let canonical = String::from_utf8(canonical).map_err(|_| WorldError::ProviderKind)?;
+    let (canonical, encoded_custody) =
+        canonical_cell(publication, retained_bytes, budget, language)?;
+    custody.merge(encoded_custody).map_err(HostError::from)?;
     Ok(RuntimeProviderInput::maintenance_format(
         binding,
         canonical,

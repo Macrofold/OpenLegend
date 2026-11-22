@@ -947,12 +947,12 @@ impl RuntimeProvider {
     /// can only return separately funded text facts for this exact question.
     pub fn with_maintenance_format<T>(
         &self,
-        format: impl FnOnce(crate::geometry::GeometryBinding, &crate::records::SqlCell) -> T,
+        format: impl FnOnce(crate::geometry::GeometryBinding, &crate::records::SqlCell, usize) -> T,
     ) -> Result<Option<T>, RuntimeError> {
         let question = self.question()?;
         Ok(question
             .maintenance()
-            .map(|ask| format(ask.binding(), ask.publication())))
+            .map(|ask| format(ask.binding(), ask.publication(), ask.publication_bytes())))
     }
 
     /// Format the exact already-acquired activity evidence without bridge

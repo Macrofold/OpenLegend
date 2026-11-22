@@ -98,6 +98,10 @@ impl MaintenanceFormatRequest {
         self.canonical.value()
     }
 
+    pub(crate) fn publication_bytes(&self) -> usize {
+        self.canonical.input().bytes()
+    }
+
     pub(crate) fn finish(
         &mut self,
         mut answer: MaintenanceFormatAnswer,
