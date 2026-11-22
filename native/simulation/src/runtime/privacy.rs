@@ -34,6 +34,33 @@ impl NativeWorldSession {
                         .is_some_and(|body| actor == owner || body.controller != "player")
             }))
     }
+
+    /// A disclosed receipt can select an edit only for the same accepted
+    /// world, receiving actor and privacy revision. The edit cursor still
+    /// proves the addressed receipt and its permitted correction source.
+    pub fn recent_receipt_edit_current(
+        &self,
+        world: &str,
+        generation: &str,
+        actor: &str,
+        life: u64,
+        privacy_revision: u64,
+    ) -> Result<bool, RuntimeError> {
+        let state = &self.session.accepted().map_err(failure)?.state;
+        Ok(state.physical.header.id == world
+            && state.generation == generation
+            && state
+                .physical
+                .entities
+                .get(actor)
+                .and_then(|entity| entity.actor.as_ref())
+                .is_some_and(|actor| actor.physical_life.unwrap_or(0) == life)
+            && state
+                .experience
+                .actor(actor)
+                .map_or(0, |experience| experience.privacy.revision())
+                == privacy_revision)
+    }
     /// Application authority and retained-source admission remain with the
     /// existing creator service. Native owns the actual protected-obligation
     /// check, scoped erasure, transition, rollback and accepted save products.
@@ -59,20 +86,18 @@ impl NativeWorldSession {
             None => crate::experience::PrivacyEditMode::Forget,
         };
         self.session
-            .begin_recall_edit(
-                actor_id,
-                source_id,
-                edit,
-                held,
-                self.history_edit_limits,
-            )
+            .begin_recall_edit(actor_id, source_id, edit, held, self.history_edit_limits)
             .map_err(failure)
     }
     pub fn begin_correct(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let input: CorrectInput = serde_json::from_slice(input).map_err(failure)?;
-        self.begin_recall_edit_direct(&input.actor_id, &input.source_id, Some(input.correction_event_id))
+        self.begin_recall_edit_direct(
+            &input.actor_id,
+            &input.source_id,
+            Some(input.correction_event_id),
+        )
     }
 }
 

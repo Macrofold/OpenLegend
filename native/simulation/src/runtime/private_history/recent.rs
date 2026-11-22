@@ -17,6 +17,7 @@ pub struct RuntimeRecentBrowse {
     pub generation: String,
     pub privacy: u64,
     pub life: u64,
+    pub recall_editable: bool,
     pub receipts: Vec<NpcReceiptSelection>,
     pub has_more: bool,
     pub incomplete: bool,
@@ -198,6 +199,7 @@ impl NativeWorldSession {
             generation: scope.generation.clone(),
             privacy: scope.privacy_revision,
             life: scope.physical_life,
+            recall_editable: self.may_edit_recall(owner, actor)?,
             receipts: Vec::with_capacity(maximum),
             has_more: false,
             incomplete: read.recording_gap.is_some()

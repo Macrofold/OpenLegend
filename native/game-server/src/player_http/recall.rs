@@ -72,11 +72,12 @@ pub(super) async fn recollections(State(state): State<PlayerRoutes>, request: Re
     {
         return changed();
     }
-    if parts.uri.path() == "/api/memories" && request.actor_id != selected.scope.actor_id {
+    let creator_route = parts.uri.path() == "/api/god/memories";
+    if !creator_route && request.actor_id != selected.scope.actor_id {
         return access_failure(AccessError::Forbidden);
     }
     if request.recent {
-        return recent::page(&state, &selected, &request).await;
+        return recent::page(&state, &selected, &request, creator_route).await;
     }
     for _ in 0..2 {
         let search = match terms(&state, request.query.as_deref()) {

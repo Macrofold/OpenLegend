@@ -5,14 +5,16 @@ use crate::{
     authority::{AccessError, Authority, AuthorizedScope},
     boot::CurrentServer,
     live_save::LiveSaves,
+    player_references::{RecentEditReference, ReferenceIssuer},
     store::{PreparedPrivacyEdit, StoreError},
     world::{ProtectedCommit, WorldError},
 };
 use openlegend_simulation::{
     commands::Outcome,
     encoding::json_record_len,
-    host::ByteReservation,
-    runtime::{RuntimeDirectOutput, RuntimeError},
+    host::{ByteBudget, ByteReservation},
+    received::TemporalReceiptLocator,
+    runtime::{NativeWorldSession, RuntimeDirectOutput, RuntimeError},
     values::is_safe_record_id,
 };
 use serde::{Deserialize, Serialize};
@@ -22,8 +24,20 @@ use std::{mem::size_of, sync::Arc};
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct RecallEditRequest {
     pub actor_id: String,
-    pub source_id: String,
-    #[serde(default, deserialize_with = "openlegend_simulation::values::deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_option"
+    )]
+    source_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_option"
+    )]
+    receipt_reference: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_option"
+    )]
     pub correction_event_id: Option<String>,
 }
 
@@ -40,6 +54,64 @@ pub(crate) struct RecallEditOutcome {
 struct PreparedEdit {
     result: RecallEditOutcome,
     projection: Option<PreparedPrivacyEdit>,
+}
+
+struct BoundSource {
+    id: String,
+    receipt: Option<RecentEditReference<String, TemporalReceiptLocator>>,
+    _custody: Option<ByteReservation>,
+}
+
+impl BoundSource {
+    fn bind(
+        source_id: Option<String>,
+        token: Option<String>,
+        actor: &str,
+        issuer: &ReferenceIssuer,
+        scope: &AuthorizedScope,
+        budget: &ByteBudget,
+    ) -> Result<Self, WorldError> {
+        match (source_id, token) {
+            (Some(id), None) if is_safe_record_id(&id) => Ok(Self {
+                id,
+                receipt: None,
+                _custody: None,
+            }),
+            (None, Some(token)) if token.len() <= 2048 => {
+                let custody = budget
+                    .reserve(2048 + token.len() * 3)
+                    .map_err(|_| StoreError::Capacity)?;
+                let receipt = issuer
+                    .open_recent_edit(&token)
+                    .ok_or(AccessError::Changed)?;
+                if receipt.scope != scope.scope.key().map_err(|_| StoreError::InvalidRecord)?
+                    || receipt.world != scope.scope.world_id
+                    || receipt.receipt.actor_id != actor
+                {
+                    return Err(AccessError::Changed.into());
+                }
+                Ok(Self {
+                    id: receipt.receipt.id(),
+                    receipt: Some(receipt),
+                    _custody: Some(custody),
+                })
+            }
+            _ => Err(StoreError::InvalidRecord.into()),
+        }
+    }
+
+    fn current(&self, world: &NativeWorldSession) -> Result<bool, RuntimeError> {
+        let Some(proof) = &self.receipt else {
+            return Ok(true);
+        };
+        world.recent_receipt_edit_current(
+            &proof.world,
+            &proof.generation,
+            &proof.receipt.actor_id,
+            proof.life,
+            proof.privacy_revision,
+        )
+    }
 }
 
 fn operator(
@@ -59,24 +131,44 @@ pub(crate) async fn edit(
     saves: &Arc<LiveSaves>,
     authority: Arc<Authority>,
     scope: Arc<AuthorizedScope>,
+    issuer: &ReferenceIssuer,
     request: RecallEditRequest,
 ) -> Result<RecallEditOutcome, WorldError> {
     if !is_safe_record_id(&request.actor_id)
-        || !is_safe_record_id(&request.source_id)
-        || request.correction_event_id.as_deref().is_some_and(|id| !is_safe_record_id(id))
+        || request
+            .correction_event_id
+            .as_deref()
+            .is_some_and(|id| !is_safe_record_id(id))
     {
         return Err(StoreError::InvalidRecord.into());
     }
     let owner = operator(&authority, &scope, &request.actor_id)?;
+    let source = Arc::new(BoundSource::bind(
+        request.source_id,
+        request.receipt_reference,
+        &request.actor_id,
+        issuer,
+        &scope,
+        game.host.budget(),
+    )?);
     let target = request.actor_id.clone();
     let copied = target.clone();
     let checked_owner = owner.clone();
-    if !game
+    let checked_source = source.clone();
+    let (editable, current) = game
         .world
-        .capture(move |world| world.may_edit_recall(&checked_owner, &copied))
-        .await?
-    {
+        .capture(move |world| {
+            Ok((
+                world.may_edit_recall(&checked_owner, &copied)?,
+                checked_source.current(world)?,
+            ))
+        })
+        .await?;
+    if !editable {
         return Err(AccessError::Forbidden.into());
+    }
+    if !current {
+        return Err(AccessError::Changed.into());
     }
     let _withdrawal = game.world.begin_source_edit(&target)?;
     let _barrier = saves.enter_protected().await?;
@@ -116,7 +208,14 @@ pub(crate) async fn edit(
                 if !world.may_edit_recall(&owner, &request.actor_id)? {
                     return Err(RuntimeError::application_refused(AccessError::Forbidden));
                 }
-                world.begin_recall_edit_direct(&request.actor_id, &request.source_id, request.correction_event_id)
+                if !source.current(world)? {
+                    return Err(RuntimeError::application_refused(AccessError::Changed));
+                }
+                world.begin_recall_edit_direct(
+                    &request.actor_id,
+                    &source.id,
+                    request.correction_event_id,
+                )
             },
             move |question| {
                 let game = provider.clone();
@@ -141,7 +240,7 @@ pub(crate) async fn edit(
                 let bytes = json_record_len(outcome)
                     .map_err(RuntimeError::application_refused)?
                     .checked_mul(3)
-                        .and_then(|bytes| bytes.checked_add(size_of::<RecallEditOutcome>()))
+                    .and_then(|bytes| bytes.checked_add(size_of::<RecallEditOutcome>()))
                     .ok_or_else(|| RuntimeError::application_refused(StoreError::Capacity))?;
                 let custody = budget.reserve(bytes)?;
                 let projection = if outcome.ok {

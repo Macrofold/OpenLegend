@@ -2,6 +2,7 @@
 //! resolves selected coordinates against the exact accepted prefix before
 //! the native reader grants the permitted receipt bodies.
 use super::*;
+use crate::player_references::RecentEditReference;
 use openlegend_simulation::{
     received::{TemporalChange, TemporalReceipt},
     runtime::{RuntimeRecentBrowse, RuntimeRecentPosition, RuntimeRecentReceipt},
@@ -26,6 +27,8 @@ struct Observation {
     fidelity: &'static str,
     time: f64,
     text: JsText,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    edit_reference: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -39,6 +42,7 @@ pub(super) async fn page(
     state: &PlayerRoutes,
     selected: &Arc<AuthorizedScope>,
     request: &RequestPage,
+    creator_route: bool,
 ) -> Response {
     let query = js_trim(request.query.as_deref().unwrap_or(""));
     if query.encode_utf16().count() > 200 {
@@ -60,8 +64,28 @@ pub(super) async fn page(
             None => return changed(),
         },
     };
+    // Final disclosure checks the same exact grant revision. This earlier
+    // capability check avoids entering the authority lock again while encoding.
+    let can_edit = creator_route
+        && state
+            .authority
+            .current_recall_operator(
+                selected,
+                request.actor_id != selected.scope.actor_id,
+                |_| (),
+            )
+            .is_ok();
     for _ in 0..2 {
-        match publish(state, selected, &request.actor_id, cursor.as_ref(), &query).await {
+        match publish(
+            state,
+            selected,
+            &request.actor_id,
+            cursor.as_ref(),
+            &query,
+            can_edit,
+        )
+        .await
+        {
             Ok(PlayerDisclosure::Published(bytes)) => return json_response(StatusCode::OK, bytes),
             Ok(PlayerDisclosure::Busy | PlayerDisclosure::Changed)
             | Err(WorldError::Storage(StoreError::StaleCut)) => (),
@@ -86,6 +110,7 @@ async fn publish(
     actor: &str,
     before: Option<&Cursor<String>>,
     query: &JsText,
+    can_edit: bool,
 ) -> Result<PlayerDisclosure, WorldError> {
     let world = &state.game.world;
     let (selected, cut, storage) = world
@@ -130,6 +155,7 @@ async fn publish(
                         &fence,
                         before.map(|value| value.before),
                         query,
+                        (can_edit && cut.recall_editable).then_some(key.as_str()),
                         budget,
                     )
                 })?
@@ -146,6 +172,7 @@ fn format_page(
     fence: &str,
     before: Option<RuntimeRecentPosition>,
     query: &JsText,
+    editor_scope: Option<&str>,
     budget: &ByteBudget,
 ) -> Result<Bytes, WorldError> {
     const PAGE_SIZE: usize = 20;
@@ -224,6 +251,20 @@ fn format_page(
             fidelity: "exact",
             time: receipt.at,
             text,
+            edit_reference: editor_scope
+                .map(|scope| {
+                    issuer
+                        .seal_recent_edit(&RecentEditReference {
+                            scope,
+                            world: cut.world_id.as_str(),
+                            generation: cut.generation.as_str(),
+                            life: cut.life,
+                            privacy_revision: cut.privacy,
+                            receipt: &receipt.locator,
+                        })
+                        .ok_or(StoreError::InvalidRecord)
+                })
+                .transpose()?,
         });
         oldest_match = Some(position);
     }

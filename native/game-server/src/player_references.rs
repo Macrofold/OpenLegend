@@ -6,6 +6,7 @@ use openlegend_simulation::{
     capture::ContextActionWitness,
     encoding::{append_hex, json_record, sha256_hex, write_json_record},
     host::{ByteBudget, ByteReservation},
+    received::TemporalReceiptLocator,
     reception::{EvidenceSource, ObserverSubject},
     runtime::{NativeWorldSession, RuntimeError},
 };
@@ -20,7 +21,19 @@ pub struct ReferenceIssuer {
     private_cursor: aead::LessSafeKey,
 }
 
-const PRIVATE_CURSOR: &[u8] = b"openlegend-private-recent-cursor";
+const RECENT_CURSOR: &[u8] = b"openlegend-private-recent-cursor";
+const RECENT_EDIT: &[u8] = b"openlegend-private-recent-edit";
+
+#[derive(serde::Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RecentEditReference<Text, Receipt> {
+    pub(crate) scope: Text,
+    pub(crate) world: Text,
+    pub(crate) generation: Text,
+    pub(crate) life: u64,
+    pub(crate) privacy_revision: u64,
+    pub(crate) receipt: Receipt,
+}
 
 pub(crate) struct ResolvedContact {
     pub(crate) id: String,
@@ -53,13 +66,37 @@ impl ReferenceIssuer {
     /// positions never leave the server in plaintext. The caller owns the
     /// current grant and query checks, and funds this short encoded token.
     pub(crate) fn seal_recent_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(RECENT_CURSOR, value)
+    }
+
+    pub(crate) fn open_recent_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(RECENT_CURSOR, token)
+    }
+
+    /// A previously disclosed receipt is only a candidate for a creator's
+    /// protected edit. Scope and native source ownership are checked again.
+    pub(crate) fn seal_recent_edit(
+        &self,
+        reference: &RecentEditReference<&str, &TemporalReceiptLocator>,
+    ) -> Option<String> {
+        self.seal_private(RECENT_EDIT, reference)
+    }
+
+    pub(crate) fn open_recent_edit(
+        &self,
+        token: &str,
+    ) -> Option<RecentEditReference<String, TemporalReceiptLocator>> {
+        self.open_private(RECENT_EDIT, token)
+    }
+
+    fn seal_private(&self, purpose: &[u8], value: &impl Serialize) -> Option<String> {
         let mut nonce = [0; aead::NONCE_LEN];
         getrandom::fill(&mut nonce).ok()?;
         let mut body = json_record(value).ok()?.into_bytes();
         self.private_cursor
             .seal_in_place_append_tag(
                 aead::Nonce::assume_unique_for_key(nonce),
-                aead::Aad::from(PRIVATE_CURSOR),
+                aead::Aad::from(purpose),
                 &mut body,
             )
             .ok()?;
@@ -69,7 +106,7 @@ impl ReferenceIssuer {
         Some(result)
     }
 
-    pub(crate) fn open_recent_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+    fn open_private<T: DeserializeOwned>(&self, purpose: &[u8], token: &str) -> Option<T> {
         if token.len() > 2048 || token.len() % 2 != 0 {
             return None;
         }
@@ -83,7 +120,7 @@ impl ReferenceIssuer {
         let nonce = aead::Nonce::try_assume_unique_for_key(prefix).ok()?;
         let clear = self
             .private_cursor
-            .open_in_place(nonce, aead::Aad::from(PRIVATE_CURSOR), body)
+            .open_in_place(nonce, aead::Aad::from(purpose), body)
             .ok()?;
         serde_json::from_slice(clear).ok()
     }

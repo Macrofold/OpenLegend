@@ -192,6 +192,7 @@ async fn edit_recall(State(state): State<PlayerRoutes>, request: Request) -> Res
         &state.saves,
         state.authority.clone(),
         authorized.clone(),
+        &state.references,
         input,
     )
     .await
