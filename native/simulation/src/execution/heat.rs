@@ -16,12 +16,34 @@ impl PhysicalMutation<'_> {
         };
         let fuel_seconds = (before.fuel_seconds - seconds).max(0.0);
         let extinguished = before.lit && fuel_seconds == 0.0;
-        if fuel_seconds == before.fuel_seconds && !extinguished {
-            return Ok(false);
+        self.set_heat(
+            handle,
+            crate::state::Heat {
+                fuel_seconds,
+                lit: before.lit && !extinguished,
+            },
+        )?;
+        Ok(extinguished)
+    }
+
+    pub(crate) fn set_heat(
+        &mut self,
+        handle: EntityHandle,
+        after: crate::state::Heat,
+    ) -> Result<(), ExecutionError> {
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let before = entity.heat.ok_or(ExecutionError::MissingEntity)?;
+        if before == after {
+            return Ok(());
         }
+        let outward_change = before.lit != after.lit;
         self.journal.reserve(
             size_of::<Undo>() * 2
-                + if extinguished {
+                + if outward_change {
                     entity.id.len() * 2 + size_of::<PhysicalChange>() * 2
                 } else {
                     0
@@ -37,7 +59,7 @@ impl PhysicalMutation<'_> {
                 },
             )?;
         }
-        if extinguished {
+        if outward_change {
             self.journal.change(PhysicalChange::Behavior {
                 entity_id: entity.id.clone(),
                 outward_change: true,
@@ -47,10 +69,7 @@ impl PhysicalMutation<'_> {
             .entities
             .resolve_mut(handle)
             .ok_or(ExecutionError::MissingEntity)?
-            .heat = Some(crate::state::Heat {
-            fuel_seconds,
-            lit: before.lit && !extinguished,
-        });
-        Ok(extinguished)
+            .heat = Some(after);
+        Ok(())
     }
 }

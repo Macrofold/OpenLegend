@@ -41,7 +41,7 @@ mod foraging;
 mod heat;
 mod inventory;
 pub(crate) use inventory::partitionable_stock;
-pub(crate) use inventory::OwnedDebits;
+pub(crate) use inventory::{OwnedDebits, can_debit_lot};
 mod participation;
 pub(crate) use inventory::{EquipmentDecision, EquipmentRequest, equipment_fits};
 mod practice;

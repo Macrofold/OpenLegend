@@ -20,20 +20,18 @@ pub(crate) struct OwnedDebits {
     affected: Vec<ContentsPlan>,
 }
 
-impl CoreMutation<'_> {
-    pub(super) fn can_debit_lot(&self, entity: &Entity, quantity: u64) -> bool {
+pub(crate) fn can_debit_lot(state: &crate::simulation::SimulationState, entity: &Entity, quantity: u64) -> bool {
         entity.item.as_ref().is_some_and(|lot| {
             quantity > 0
                 && quantity <= lot.quantity
                 && lot.assembly_claim.is_none()
                 && lot.material_contribution_ids.is_none()
                 && (quantity < lot.quantity
-                    || (!self.state.inventory.has_children(&entity.id)
+                    || (!state.inventory.has_children(&entity.id)
                         && entity.attributes.as_ref().is_none_or(|attributes| {
                             attributes.is_empty()
                                 || (entity.container.is_none()
-                                    && self
-                                        .state
+                                    && state
                                         .installed
                                         .retained
                                         .items
@@ -55,6 +53,7 @@ impl CoreMutation<'_> {
         })
     }
 
+impl CoreMutation<'_> {
     /// Validate the complete group against the current inventory before
     /// changing any lot. Only affected ancestor chains are summarized.
     pub(crate) fn plan_owned_debits(
@@ -72,7 +71,7 @@ impl CoreMutation<'_> {
             let Some(entity) = physical.entities.get(id) else {
                 return Ok(None);
             };
-            if !self.can_debit_lot(entity, *quantity) {
+            if !can_debit_lot(self.state, entity, *quantity) {
                 return Ok(None);
             }
             let Some(parent) = crate::install::inventory_parent(entity) else {

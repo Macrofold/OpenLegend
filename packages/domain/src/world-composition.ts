@@ -47,6 +47,8 @@ import {
 } from './worlds/base/action-views.js';
 import type { Command } from './types.js';
 import {
+  activityHostForCommand,
+  activityHostPin,
   activityHostRequests,
   activityRequestDescriptors,
   trustedActivityHost,
@@ -62,6 +64,7 @@ import { BASE_OUTING, BASE_COMBAT_HELP } from './worlds/base/outing-policy.js';
 import type { RecipeFamilyDescriptor } from './invention-families.js';
 import { BASE_CANOPY_ACTIVITY_HOST } from './worlds/base/canopies.js';
 import { BASE_FIRE_ACTIVITY_HOST } from './worlds/base/fire-activity.js';
+import { BASE_FIRE_CARE } from './worlds/base/fire-rules.js';
 import { BASE_CAMP_ACTIVITY_HOST } from './worlds/base/camp-activity.js';
 import { BASE_OUTING_HOST } from './worlds/base/outing.js';
 import { BASE_NATIVE_ACTIVITY_HOSTS } from './worlds/base/native-activities.js';
@@ -546,6 +549,10 @@ export function selectedNativeLawDefinitions(
     socialDefaults: BASE_SOCIAL_POLICY,
     speechAction: BASE_SPEECH_ACTION,
     ordinaryActions: BASE_ORDINARY_ACTION_RULES,
+    fireCare:
+      activityHostForCommand(world, 'tend-fire') === BASE_FIRE_ACTIVITY_HOST
+        ? { ...BASE_FIRE_CARE, host: activityHostPin(BASE_FIRE_ACTIVITY_HOST) }
+        : null,
     observationRules: BASE_OBSERVATION_RULES,
     eventAppraisalRules: BASE_EVENT_APPRAISAL_RULES,
     promises: { ...BASE_PROMISE_RULES, definitions: nativePromiseDefinitions(world) },

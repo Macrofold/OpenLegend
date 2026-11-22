@@ -68,6 +68,7 @@ struct PreparationAction<'a> {
 enum FoodAction<'a> {
     Cooking(PreparationAction<'a>),
     Eating(EatAction<'a>),
+    Fire(super::fire::FireAction<'a>),
 }
 
 #[derive(Serialize)]
@@ -200,6 +201,18 @@ pub(super) fn render<'a>(
         }
     }
     let has_cooking = !actions.is_empty();
+    if let Some((fire, heat)) = menu.fire.as_ref().zip(menu.heat.first()) {
+        for choice in &fire.choices {
+            actions.push(FoodAction::Fire(super::fire::render_choice(
+                choice, fire, &heat.target, &heat.name, blocker, &mut custody,
+            )?));
+        }
+        return if has_cooking {
+            resource_menu_categories(menu.sequence, &actions, &[CATEGORY, fire.category], budget)
+        } else {
+            resource_menu(menu.sequence, &actions, fire.category, budget)
+        };
+    }
     if let Some((item_id, (name, offer))) = selected_item.zip(menu.eating) {
         custody.resize(custody.bytes().checked_add(512 + 4 * (item_id.len() + name.storage_bytes() + offer.label.len()))
             .ok_or(CapacityError)?)?;

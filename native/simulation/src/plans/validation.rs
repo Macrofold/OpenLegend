@@ -97,6 +97,7 @@ pub(crate) fn valid_command(
                     .is_none_or(|v| acoustics.volume(v).is_some())
         }
         NativeCommand::Outing { .. }
+        | NativeCommand::TendFire { .. }
         | NativeCommand::Feed { .. }
         | NativeCommand::Gather { .. }
         | NativeCommand::Equipment { .. }

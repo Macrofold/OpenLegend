@@ -113,11 +113,16 @@ pub struct RuntimePreparation<'a> {
     pub inputs: Option<&'a IndexMap<String, String>>,
 }
 
+mod fire;
+pub use fire::{RuntimeFireChoice, RuntimeFireMenu};
+pub use crate::fire_care::{FireOperation, VisibleFuel};
+
 pub struct RuntimeFoodMenu<'a> {
     pub sequence: u64,
     pub paused: bool,
     pub heat: &'a [RuntimeHeatContact],
     pub preparations: &'a [RuntimePreparation<'a>],
+    pub fire: Option<RuntimeFireMenu<'a>>,
     pub eating: Option<(&'a crate::text::JsText, crate::consumption::EatingOffer<'a>)>,
 }
 
@@ -596,6 +601,7 @@ impl NativeWorldSession {
         actor: &str,
         item: Option<&str>,
         mut contact: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> Result<Option<String>, RuntimeError>,
+        compute: impl FnOnce(&GeometryQueries) -> Result<(GeometryAnswers, ByteReservation), RuntimeError>,
         use_menu: impl FnOnce(RuntimeFoodMenu<'_>) -> Result<T, RuntimeError>,
     ) -> Result<Option<T>, RuntimeError> {
         self.require_active()?;
@@ -624,17 +630,20 @@ impl NativeWorldSession {
         } else {
             None
         };
-        if !installed.retained.preparations.values().any(|recipe| {
+        let has_preparation = installed.retained.preparations.values().any(|recipe| {
             selected.is_none_or(|lot| recipe.definition.inputs.iter().any(|input| input.definition_id == lot.definition_id))
-        }) {
+        });
+        let fire_rule = installed.fire_care.as_ref().filter(|_| item.is_none());
+        if !has_preparation && fire_rule.is_none() {
             let Some(eating) = eating else { return Ok(None) };
             simulation.require_player_owner(account, actor).map_err(failure)?;
             return use_menu(RuntimeFoodMenu {
                 sequence: state.physical.header.sequence, paused: state.physical.header.paused,
-                preparations: &[], heat: &[], eating: Some(eating),
+                preparations: &[], heat: &[], eating: Some(eating), fire: None,
             }).map(Some);
         }
         let mut heat = Vec::new();
+        let mut selected_fire = None;
         let mut storage = self.budget.reserve(0)?;
         let mut error = None;
         simulation.visit_accepted_player_contacts(account, actor, &self.budget, |body| {
@@ -649,12 +658,18 @@ impl NativeWorldSession {
             let name = &body.name.name;
             // Reference issuance and allocation both happen in this closure.
             let next = (|| -> Result<bool, RuntimeError> {
+                // The exact selected contact is also the disclosure cut for
+                // its coarse fuel label. An old/lost body cannot read live heat.
+                let current_fire = fire_rule.and_then(|_| crate::fire_care::target(
+                    &state.physical, body.source_id,
+                )).filter(|fire| fire.physical_life() == body.physical_life);
                 let Some(target) = contact(body)? else {
                     return Ok(false);
                 };
                 storage.resize(storage.bytes().checked_add(
                     4 * std::mem::size_of::<RuntimeHeatContact>() + target.len() + name.storage_bytes()
                 ).ok_or(crate::host::CapacityError)?)?;
+                selected_fire = current_fire;
                 heat.push(RuntimeHeatContact { target, name: name.clone(), lit });
                 Ok(item.is_none())
             })();
@@ -672,13 +687,28 @@ impl NativeWorldSession {
         if heat.is_empty() && item.is_none() {
             return Ok(None);
         }
-        let choices = crate::food_preparation::choices(state, actor, item, &self.budget)
-            .map_err(failure)?;
+        let fire = if let Some((fire, rule)) = selected_fire.zip(fire_rule) {
+            let binding = GeometryBinding::new(
+                CandidateKey { id: 0, base_cut: state.accepted_cut, generation: self.session.operational_generation() },
+                installed.geometry.spatial.revision, 0,
+            );
+            let sight = crate::reception::SightBatch::prepare(
+                &state.physical, installed, actor, &[&fire.id], binding, &self.budget,
+            ).map_err(failure)?;
+            let (answer, _storage) = compute(sight.queries())?;
+            if sight.finish(answer).map_err(failure)?.seen(&fire.id) == Some(true) {
+                Some(fire::choices(state, rule.value(), actor, fire, &self.budget)?)
+            } else { None }
+        } else { None };
+        let choices = has_preparation.then(|| crate::food_preparation::choices(
+            state, actor, item, &self.budget,
+        )).transpose().map_err(failure)?;
+        let choices = choices.as_ref().map_or(&[][..], |choices| choices.rows.as_slice());
         let _rows = self.budget.reserve(
-            choices.rows.len().checked_mul(std::mem::size_of::<RuntimePreparation<'_>>())
+            choices.len().checked_mul(std::mem::size_of::<RuntimePreparation<'_>>())
                 .ok_or(crate::host::CapacityError)?,
         )?;
-        let rows: Vec<_> = choices.rows.iter().map(|choice| RuntimePreparation {
+        let rows: Vec<_> = choices.iter().map(|choice| RuntimePreparation {
             pin: &choice.recipe.pin,
             name: &choice.recipe.definition.name,
             description: &choice.recipe.definition.description,
@@ -689,6 +719,7 @@ impl NativeWorldSession {
             paused: state.physical.header.paused,
             heat: &heat,
             preparations: &rows,
+            fire,
             eating,
         }).map(Some)
     }

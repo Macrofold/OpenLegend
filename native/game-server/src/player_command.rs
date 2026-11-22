@@ -24,6 +24,7 @@ use openlegend_simulation::{
     text::JsText,
     values::deserialize_present_option,
     worlds::base_observed::SpeechVolume,
+    runtime::FireOperation,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
@@ -77,6 +78,8 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     item_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    fire_operation: Option<FireOperation>,
     #[serde(
         default,
         deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
@@ -228,6 +231,8 @@ enum CommandKind {
     Cancel,
     Gather,
     Fish,
+    #[serde(rename = "tend-fire")]
+    TendFire,
     Pickup,
     Cook,
     Craft,
@@ -669,6 +674,7 @@ impl CommandRequest {
                 && (command.expected_revision.is_some() || command.placement_revision.is_some()))
             || command.quantity.is_some_and(|quantity| !matches!(command.kind, CommandKind::Pickup) || quantity == 0)
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
+            || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
             || (!matches!(command.kind, CommandKind::Say)
                 && (command.text.is_some() || command.volume.is_some()))
             || (!matches!(command.kind, CommandKind::StatusEffect)
@@ -764,6 +770,13 @@ impl CommandRequest {
                         .is_some_and(openlegend_simulation::values::is_safe_record_id)
                     && command.effect_operation.is_some()
                     && command.facing_heading.is_none_or(f64::is_finite) => Ok(()),
+            CommandKind::TendFire
+                if command.position.is_none() && command.known_place.is_none()
+                    && command.expected_action_id.is_none() && command.gathering_mode.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.fire_operation.is_some_and(|operation| command.item_id.as_deref()
+                        .is_none_or(|item| operation == FireOperation::Fuel && id(item)))
+                => Ok(()),
             CommandKind::Cook
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -890,6 +903,11 @@ impl PreparedRequest {
                 definition: input.definition_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 operation: input.effect_operation.ok_or(StoreError::InvalidRecord)?,
                 facing: input.facing_heading,
+            }),
+            CommandKind::TendFire => Ok(RuntimePlayerCommand::TendFire {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                operation: input.fire_operation.ok_or(StoreError::InvalidRecord)?,
+                item: input.item_id.as_deref(),
             }),
             CommandKind::Cook => Ok(RuntimePlayerCommand::Cook {
                 heat: target.ok_or(StoreError::InvalidRecord)?,

@@ -12,6 +12,7 @@ pub mod body;
 pub mod capture;
 mod casts;
 mod food_preparation;
+mod fire_care;
 pub mod cognition;
 pub mod commands;
 pub mod conditions;

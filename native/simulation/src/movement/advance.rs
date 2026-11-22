@@ -25,6 +25,7 @@ use crate::state::{Action, Entity, NavigationPending, Placement, Point, SurfaceP
 use std::mem::size_of;
 mod casting;
 mod preparing_food;
+mod fire;
 mod manufacture;
 mod feeding;
 mod pickup;
@@ -603,7 +604,7 @@ impl MoveAdvanceCursor {
                         self.fail(&rules.not_applicable.message)?;
                         continue;
                     }
-                    if action.is_picking_up() && action.stage == "working" {
+                    if (action.is_picking_up() || action.is_tending_fire()) && action.stage == "working" {
                         if action.remaining_seconds > self.seconds + installed.time_epsilon {
                             core.physical().advance_timed_work(
                                 &self.actor_id,
@@ -675,7 +676,7 @@ impl MoveAdvanceCursor {
                         self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
                         self.physical_life,
                     )?;
-                    if action.feeding.is_none() && !action.is_gathering() && !action.is_picking_up() && !action.is_cooking() && action.destination.is_none() {
+                    if action.feeding.is_none() && !action.is_gathering() && !action.is_picking_up() && !action.is_cooking() && !action.is_tending_fire() && action.destination.is_none() {
                         self.fail(&rules.movement_missing_destination)?;
                         continue;
                     }
@@ -689,7 +690,7 @@ impl MoveAdvanceCursor {
                     let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
                     let (entity, action) =
                         bound(core, &self.actor_id, action_id, self.physical_life)?;
-                    if action.feeding.is_some() || action.is_gathering() || action.is_picking_up() {
+                    if action.feeding.is_some() || action.is_gathering() || action.is_picking_up() || action.is_tending_fire() {
                         return self.begin_feed_check(core);
                     }
                     if action.is_cooking() {

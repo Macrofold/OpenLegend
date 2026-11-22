@@ -68,6 +68,8 @@ pub(super) struct ItemDefinitionFields {
     #[serde(default)]
     properties: Vec<crate::text::JsText>,
     ammunition: Option<serde::de::IgnoredAny>,
+    ranged_weapon: Option<serde::de::IgnoredAny>,
+    melee: Option<serde::de::IgnoredAny>,
     nutrition: Option<f64>,
     fishing_tool: Option<FishingTool>,
     gathering_tool: Option<GatheringTool>,
@@ -135,6 +137,7 @@ pub(crate) struct ItemDefinitionRead {
     pub properties: Vec<crate::text::JsText>,
     pub category: &'static str,
     pub(crate) nutrition: Option<f64>,
+    plain_material: bool,
     gathering_tool: Option<GatheringTool>,
     fishing_tool: Option<FishingTool>,
     pub portable: bool,
@@ -228,6 +231,10 @@ impl ItemDefinitionRead {
             properties: value.properties,
             category,
             nutrition: value.nutrition,
+            plain_material: value.portable && value.container.is_none()
+                && value.ranged_weapon.is_none() && value.melee.is_none()
+                && value.gathering_tool.is_none() && value.ammunition.is_none()
+                && value.nutrition.is_none_or(|value| value == 0.0),
             gathering_tool: value.gathering_tool,
             fishing_tool: value.fishing_tool,
             portable: value.portable,
@@ -239,6 +246,9 @@ impl ItemDefinitionRead {
             material,
         })
     }
+
+    pub(crate) fn has_no_container(&self) -> bool { self.container.is_none() }
+    pub(crate) fn can_consume_as_plain_material(&self) -> bool { self.plain_material }
 
     pub(crate) fn gathering_yield(&self, resource: &str) -> Option<u64> {
         self.gathering_tool

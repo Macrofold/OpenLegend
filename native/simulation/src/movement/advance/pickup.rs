@@ -37,24 +37,7 @@ impl MoveAdvanceCursor {
             return self.drive(core, None);
         };
         if action.stage == "approaching" {
-            let replans = action.replans;
-            let allowance = self.budget.reserve("working".len())?;
-            core.physical().replace_action_route(
-                &self.actor_id,
-                id,
-                crate::state::FundedActionRoute::from_storage(
-                    ActionRouteWrite {
-                        path: Vec::new(),
-                        navigation: None,
-                        stage: "working".into(),
-                        replans,
-                    },
-                    allowance,
-                    &self.budget,
-                )?,
-            )?;
-            self.phase = Phase::Done;
-            return Ok(Progress::Complete);
+            return self.start_contact_work(core);
         }
         let policy = &installed.retained.item_handling_read;
         let requested = action.quantity;

@@ -25,6 +25,7 @@ use crate::work::{MeterToken, WorkUnit};
 mod discovery;
 mod casting;
 mod preparing_food;
+mod fire;
 mod manufacture;
 mod equipment;
 mod eating;
@@ -83,6 +84,7 @@ enum Phase {
     CastSight,
     CastLine,
     CookSight,
+    FireSight,
     CookReach,
     ContactReach,
     ContactRoute,
@@ -329,6 +331,10 @@ impl CommandCursor {
         }
         if matches!(self.command, NativeCommand::Craft { .. }) {
             self.prepare_craft_view(core)?;
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::TendFire { .. }) {
+            self.prepare_fire_view(core)?;
             return Ok(false);
         }
         if matches!(self.command, NativeCommand::Cook { .. }) {
@@ -682,6 +688,9 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                             return self.drive(core, None);
+                        }
+                        if matches!(self.phase, Phase::FireSight) {
+                            return self.fire_sight(core, answer);
                         }
                         if matches!(self.phase, Phase::CookSight) {
                             return self.cook_sight(core, answer);
@@ -1049,6 +1058,9 @@ impl CommandCursor {
                             if self.prepare_cast(core)? {
                                 return Ok(Progress::Geometry);
                             }
+                        }
+                        NativeCommand::TendFire { .. } => {
+                            if self.prepare_fire(core)? { return Ok(Progress::Geometry); }
                         }
                         NativeCommand::Craft { .. } => self.prepare_craft(core)?,
                         NativeCommand::Cook { .. } => {
@@ -1568,6 +1580,9 @@ impl CommandCursor {
                         }
                         if matches!(self.command, NativeCommand::Cook { .. }) {
                             return self.cook_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::TendFire { .. }) {
+                            return self.fire_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::Craft { .. }) {
                             return self.craft_started(core, &actor_id);
@@ -2171,6 +2186,7 @@ impl CommandCursor {
                 | Phase::GatherSight
                 | Phase::CastSight
                 | Phase::CastLine
+                | Phase::FireSight
                 | Phase::CookSight
                 | Phase::CookReach
                 | Phase::ContactReach

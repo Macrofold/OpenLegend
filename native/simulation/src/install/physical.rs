@@ -95,6 +95,8 @@ pub(crate) struct NativeDefinitionInputs {
     pub occurrence_rules: DefinitionInput,
     pub speech_action: DefinitionInput,
     pub ordinary_actions: DefinitionInput,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub fire_care: Option<DefinitionInput>,
     pub observation_rules: DefinitionInput,
     pub event_appraisal_rules: DefinitionInput,
     pub promises: DefinitionInput,
@@ -1109,6 +1111,9 @@ pub(super) fn validate_physical_item_references(
         validate_resource_foraging(entity, state, installed)?;
         if entity.actor.as_ref().and_then(|actor| actor.action.as_ref()).is_some_and(|action| {
             action.is_cooking() && !crate::food_preparation::valid_saved(action, state, retained)
+                || action.is_tending_fire() && !crate::fire_care::valid_saved(
+                    action, state, installed.fire_care.as_ref().map(|rule| rule.value()),
+                )
         }) {
             return Err(InstallError::CurrentFormat);
         }

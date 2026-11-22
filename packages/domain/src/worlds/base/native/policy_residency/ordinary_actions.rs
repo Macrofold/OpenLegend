@@ -43,6 +43,7 @@ heap_record!(OrdinaryActionRules {
     not_alive,
     unsupported_airborne,
     unsupported_controller,
+    unsupported_capability,
     experience_capacity,
     idempotency_conflict,
     unsupported_navigation,

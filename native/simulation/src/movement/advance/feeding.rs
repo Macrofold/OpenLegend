@@ -15,6 +15,25 @@ enum MealDebit {
 }
 
 impl MoveAdvanceCursor {
+    pub(super) fn start_contact_work(
+        &mut self, core: &mut CoreMutation<'_>,
+    ) -> Result<Progress, ExecutionError> {
+        let id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
+        let (_, action) = bound(core, &self.actor_id, id, self.physical_life)?;
+        let replans = action.replans;
+        let allowance = self.budget.reserve("working".len())?;
+        core.physical().replace_action_route(
+            &self.actor_id, id,
+            crate::state::FundedActionRoute::from_storage(
+                ActionRouteWrite {
+                    path: Vec::new(), navigation: None, stage: "working".into(), replans,
+                }, allowance, &self.budget,
+            )?,
+        )?;
+        self.phase = Phase::Done;
+        Ok(Progress::Complete)
+    }
+
     fn meal_target<'a>(
         &self,
         core: &'a CoreMutation<'_>,
@@ -37,7 +56,7 @@ impl MoveAdvanceCursor {
         }
         let Some(target) = target.filter(|target| target.actively_participates()) else {
             let installed = core.state.installed.clone();
-            let reason = if action.is_picking_up() {
+            let reason = if action.is_picking_up() || action.is_tending_fire() {
                 &installed.ordinary_actions.value().out_of_reach.message
             } else {
                 &feeding_terms().out_of_reach
@@ -45,7 +64,7 @@ impl MoveAdvanceCursor {
             self.fail(reason)?;
             return self.drive(core, None);
         };
-        let reach = interaction_reach(core, gathering);
+        let reach = interaction_reach(core, gathering || action.is_tending_fire());
         if let Some(ray) = crate::geometry::interaction_reach(actor, target, reach, &self.budget)? {
             let storage = self
                 .budget
@@ -70,7 +89,7 @@ impl MoveAdvanceCursor {
         let gathering = action.is_gathering();
         if !in_reach && action.stage == "working" {
             let installed = core.state.installed.clone();
-            let message = if action.is_picking_up() {
+            let message = if action.is_picking_up() || action.is_tending_fire() {
                 &installed.ordinary_actions.value().out_of_reach.message
             } else if gathering {
                 &crate::worlds::base_gathering::copy().out_of_reach
@@ -98,7 +117,7 @@ impl MoveAdvanceCursor {
             let (route, allowance) = feeding::approach(
                 actor,
                 target,
-                interaction_reach(core, gathering),
+                interaction_reach(core, gathering || action.is_tending_fire()),
                 &self.budget,
             )?;
             let _container = self.budget.reserve(size_of::<GeometryQueries>())?;
@@ -159,6 +178,10 @@ impl MoveAdvanceCursor {
             .map_err(|_| ExecutionError::Invariant)?;
         let installed = core.state.installed.clone();
         let (actor, action, target) = self.meal_target(core)?;
+        if action.is_tending_fire() {
+            let visible = target.is_some_and(|fire| sight.seen(&fire.id) == Some(true));
+            return self.finish_fire_sight(core, visible);
+        }
         if action.is_picking_up() {
             let visible = target.is_some_and(|pile| sight.seen(&pile.id) == Some(true));
             return self.finish_pickup_sight(core, visible);
@@ -346,9 +369,9 @@ impl MoveAdvanceCursor {
     }
 }
 
-fn interaction_reach(core: &CoreMutation<'_>, gathering: bool) -> f64 {
+fn interaction_reach(core: &CoreMutation<'_>, use_movement_reach: bool) -> f64 {
     let installed = &core.state.installed;
-    if gathering {
+    if use_movement_reach {
         installed.movement.interaction_radius()
     } else {
         installed.retained.item_handling_read.reach

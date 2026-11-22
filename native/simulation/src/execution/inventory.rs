@@ -9,7 +9,7 @@ mod equipment;
 mod debit;
 mod pickup;
 pub(crate) use pickup::partitionable_stock;
-pub(crate) use debit::OwnedDebits;
+pub(crate) use debit::{OwnedDebits, can_debit_lot};
 pub(crate) use equipment::{EquipmentDecision, EquipmentRequest, equipment_fits};
 
 struct LotDebit<'a> {
@@ -515,7 +515,7 @@ impl CoreMutation<'_> {
         {
             return Ok(false);
         }
-        if !self.can_debit_lot(entity, 1) {
+        if !can_debit_lot(self.state, entity, 1) {
             return Ok(false);
         }
         self.debit_inventory_lot(pile_id, item_id, 1, LotDebit::consume(cause, None))?;

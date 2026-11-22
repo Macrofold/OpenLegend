@@ -156,6 +156,7 @@ impl ActivityDisplayCursor {
                 | NativeCommand::Gather { .. }
                 | NativeCommand::Fish { .. }
                 | NativeCommand::Pickup { .. }
+                | NativeCommand::TendFire { .. }
                 | NativeCommand::Craft { .. }
                 | NativeCommand::Cook { .. }
                 | NativeCommand::Equipment { .. }
@@ -407,6 +408,7 @@ impl ActivityDisplayCursor {
             | NativeCommand::Gather { .. }
             | NativeCommand::Fish { .. }
             | NativeCommand::Pickup { .. }
+            | NativeCommand::TendFire { .. }
             | NativeCommand::Cook { .. }
             | NativeCommand::Craft { .. }
             | NativeCommand::Eat { .. }

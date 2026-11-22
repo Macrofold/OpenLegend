@@ -51,6 +51,10 @@ export const BASE_ORDINARY_ACTION_RULES = {
     code: 'idempotency-conflict',
     message: 'This command ID was already used with another body.',
   },
+  unsupportedCapability: {
+    code: 'unsupported-capability',
+    message: 'This world does not install that action.',
+  },
   unsupportedNavigation: {
     code: 'unsupported-navigation',
     message: 'Only a short direct probe is supported without vision.',

@@ -160,7 +160,15 @@ September 28, 2026, local macOS arm64, Node 22.23.2, PostgreSQL 14 on loopback. 
 
 An authenticated player walked past a lit campfire on frozen Rust source `5ce62f48e4eda986a66d6ef9e1498c05fe6b4322`. Ordinary saves persisted the final position and part-used fuel. A cold process resumed both, consumed the remaining fuel at the installed game rate and showed one authored burnout event in the player’s permitted Events view. A nearby unlit fire kept its fuel. The PostgreSQL rows retained the exact results and both processes closed cleanly. An earlier attempt reached burnout and exposed duplicate completion of an occurrence already finished by the receiving owner. The repaired run is `native-ambient-fire-8` under `native-runtime-foundations/nsc04-first-reply-20261121.LsAlK7Y8/`. The executable SHA-256 was `82f45f0a36e6b14d2a23b141f2d1e389152f4120da8b56e947043199aa6ab2f0`.
 
-This local check covers fires already installed and lit. The actions that put down a hearth, light it, add fuel or cook over it still need their full Rust callers. No timing comparison ran.
+This local check covers fires already installed and lit. [Ordinary fire care](#stand-alone-rust-ordinary-fire-care) covers selected fuel, lighting and putting out a fire. [Cooking](river-meal.md#stand-alone-rust-cooking) has its own caller evidence. Placing a new hearth and composed tending remain separate. No timing comparison ran.
+
+### Stand-alone Rust ordinary fire care
+
+The same player used the real fire menu to add a carried Supple branch to a cold fire. The action took the installed approach and work, used exactly one branch and saved one full unit of fuel. The menu and command refused lighting before fuel was laid and refused an unsuitable spear as fuel. Cancelling active lighting kept the tinder and cold fire intact. A second lighting action survived a stop and cold reopen, consumed one bundle, kept the drill and produced one witnessed lighting event. The player cooked the fish, put out the fire and reopened the same unburnt amount and earlier receipt.
+
+A separate two-account check used current browser authentication and ordinary actions. One character spent their fish and began cooking. The other could see the fire but could not put it out until the first cook completed. Both the menu and command applied the guard. An installation without the fire-care host still offered cooking and refused a direct fire-care request without using a branch or changing heat.
+
+Source and Rust checks used disposable PostgreSQL databases. The pinned Rust tree was `6b7353422ae2` and its executable hash was `cefbbf9cecf9`. The records are in `nsc04-fire-care-20261122`. No speed comparison ran.
 
 **Native domain scenario** (`executeCommand` and `advanceWorld` on a fresh bundled world). All checks passed:
 

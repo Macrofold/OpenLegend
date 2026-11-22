@@ -2117,7 +2117,10 @@ function prepareNativeOperation(
   if (!isActivityCommand(command, activityCommandSyntax(world)) && command.type !== 'learn-record')
     return reject('invalid-plan', 'Only supported native physical work can be queued.');
   if (!nativeCommandSupported(world, command.type))
-    return reject('unsupported-capability', 'This world does not install that action.');
+    return reject(
+      ordinaryRules.unsupportedCapability.code,
+      ordinaryRules.unsupportedCapability.message,
+    );
   const problem = nativeActorProblem(world, command);
   if (problem) return problem;
   const consumption = resolveConsumptionStock(
@@ -3213,7 +3216,10 @@ function executeCommandNative(
       ? { world: original, events: [], outcome: { ...receipt.outcome, code: 'duplicate' } }
       : reject(ordinaryRules.idempotencyConflict.code, ordinaryRules.idempotencyConflict.message);
   if (!nativeCommandSupported(original, command.type))
-    return reject('unsupported-capability', 'This world does not install that action.');
+    return reject(
+      ordinaryRules.unsupportedCapability.code,
+      ordinaryRules.unsupportedCapability.message,
+    );
   if (command.type === 'eat' && command.sourceId) {
     if (!isActivityCommand(command, activityCommandSyntax(original)))
       return reject('invalid-command', 'Choose an exact item or a supported selected stock scope.');

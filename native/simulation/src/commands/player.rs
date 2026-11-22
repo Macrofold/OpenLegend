@@ -35,6 +35,7 @@ pub enum RuntimePlayerCommand<'a> {
         preparation_digest: &'a str,
         inputs: &'a IndexMap<String, String>,
     },
+    TendFire { target: &'a str, operation: crate::fire_care::FireOperation, item: Option<&'a str> },
     Pickup { target: &'a str, item: &'a str, quantity: Option<u64> },
     Eat(&'a str),
     Equip(&'a str),
@@ -49,6 +50,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } | Self::Pickup { target, item: tool, .. } => target.len() + tool.len(),
             Self::Craft { recipe } => recipe.len(),
+            Self::TendFire { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
             Self::Status { target, definition, .. } => target.len() + definition.len(),
             Self::Cook { heat, preparation_id, preparation_digest, inputs, .. } => {
@@ -72,6 +74,9 @@ impl RuntimePlayerCommand<'_> {
                 version: preparation_version,
                 digest: preparation_digest.into(),
             }, inputs);
+        }
+        if let Self::TendFire { target, operation, item } = self {
+            return bind_fire(id, actor, target, operation, item);
         }
         if let Self::Status { target, definition, operation, facing } = self {
             return bind_status(id, actor, target, definition, operation, facing);
@@ -158,7 +163,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
-            Self::Cook { .. } | Self::Status { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => ("eat", None, None, None, Some(item), None),
@@ -279,7 +284,7 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
-            Self::Cook { .. } | Self::Status { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },
@@ -449,4 +454,39 @@ fn bind_food_preparation(
         },
         signature,
     ))
+}
+
+
+fn bind_fire(
+    id: &str, actor: &str, target: &str,
+    operation: crate::fire_care::FireOperation, item: Option<&str>,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Input<'a> {
+        actor_id: &'a str,
+        human_initiated: bool,
+        id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        item_id: Option<&'a str>,
+        operation: crate::fire_care::FireOperation,
+        target_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid() || !crate::values::is_safe_record_id(target) || !operation.admits_item(item) {
+        return Err(serde::de::Error::custom("Invalid fire-care binding."));
+    }
+    let input = Input {
+        actor_id: actor, human_initiated: true, id, item_id: item,
+        operation, target_id: target, kind: "tend-fire",
+    };
+    let encoding = CommandEncoding::from_ordered(&input, 6 + usize::from(item.is_some()))?;
+    Ok((NativeCommand::TendFire {
+        envelope: headers.envelope(encoding),
+        target_id: target.into(),
+        operation,
+        item_id: item.map(str::to_owned),
+    }, json_record(&input)?))
 }

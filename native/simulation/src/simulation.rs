@@ -71,6 +71,7 @@ pub(crate) struct InstalledWorld {
     pub social: crate::install::SocialSettings,
     pub speech_action: VerifiedDefinition<crate::worlds::InstalledSpeechAction>,
     pub ordinary_actions: VerifiedDefinition<crate::worlds::InstalledOrdinaryActionRules>,
+    pub fire_care: Option<VerifiedDefinition<crate::fire_care::FireCare>>,
     pub promises: VerifiedDefinition<crate::worlds::InstalledPromiseRules>,
     pub event_appraisal_rules: VerifiedDefinition<crate::worlds::InstalledEventAppraisalRules>,
     pub observation_rules: VerifiedDefinition<crate::worlds::InstalledObservationRules>,

@@ -751,7 +751,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub fire_operation: Option<UnconvertedField>,
+    pub fire_operation: Option<crate::fire_care::FireOperation>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -842,6 +842,7 @@ impl Action {
             || self.is_casting()
             || self.is_cooking()
             || self.is_picking_up()
+            || self.is_tending_fire()
     }
 
     pub(crate) fn owns_ground_route(&self) -> bool {
@@ -862,6 +863,10 @@ impl Action {
 
     pub(crate) fn is_cooking(&self) -> bool {
         self.kind == "cook" && self.food_preparation.is_some()
+    }
+
+    pub(crate) fn is_tending_fire(&self) -> bool {
+        self.kind == "tend-fire" && self.fire_operation.is_some() && self.target_id.is_some()
     }
 
     pub(crate) fn is_picking_up(&self) -> bool {
@@ -912,11 +917,11 @@ impl Action {
             || self.transferred.is_some()
             || self.quantity.is_some_and(|n| n == 0 || !self.is_picking_up())
             || self.recipe_id.is_some() != self.is_manufacturing()
-            || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting() || self.is_picking_up()))
+            || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting() || self.is_picking_up() || self.is_tending_fire()))
             || self.weapon_item_id.is_some()
             || self.ammo_item_id.is_some()
             || self.heat_id.is_some() != self.is_cooking()
-            || self.fire_operation.is_some()
+            || self.fire_operation.is_some() != self.is_tending_fire()
             || self.fire_guard.is_some()
     }
     // Same minimal owned record as kernel.ts's temporary action. Installation
@@ -1028,6 +1033,16 @@ impl Action {
         action.remaining_seconds = seconds;
         action.total_seconds = seconds;
         action.consumed = consumed;
+        action
+    }
+
+    pub(crate) fn tend_fire(id: String, fire: String, operation: crate::fire_care::FireOperation, item: Option<String>, seconds: f64) -> Self {
+        let mut action = Self::native_action(id, "tend-fire", "working");
+        action.target_id = Some(fire);
+        action.fire_operation = Some(operation);
+        action.item_id = item;
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
         action
     }
 

@@ -214,6 +214,12 @@ pub(crate) enum NativeCommand {
         definition: crate::values::DefinitionPin,
         inputs: indexmap::IndexMap<String, String>,
     },
+    TendFire {
+        envelope: CommandEnvelope,
+        target_id: String,
+        operation: crate::fire_care::FireOperation,
+        item_id: Option<String>,
+    },
     Pickup { envelope: CommandEnvelope, target_id: String, item_id: String, quantity: Option<u64> },
     Eat { envelope: CommandEnvelope, item_id: String },
     Equipment {
@@ -284,6 +290,33 @@ macro_rules! optional {
 }
 optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String);
 
+fn fire_care_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Input {
+        #[serde(rename = "type")]
+        _kind: String,
+        #[serde(flatten)]
+        headers: CommandHeaders,
+        target_id: String,
+        operation: crate::fire_care::FireOperation,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        item_id: Option<String>,
+    }
+    let input: Input = serde_json::from_str(raw)?;
+    if !input.headers.valid() || !is_safe_record_id(&input.target_id)
+        || !input.operation.admits_item(input.item_id.as_deref())
+    {
+        return Err(serde::de::Error::custom("Invalid fire-care binding."));
+    }
+    Ok(NativeCommand::TendFire {
+        envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
+        target_id: input.target_id,
+        operation: input.operation,
+        item_id: input.item_id,
+    })
+}
+
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let raw = Box::<serde_json::value::RawValue>::deserialize(deserializer)?;
@@ -295,6 +328,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         let tag: Tag = serde_json::from_str(raw.get()).map_err(serde::de::Error::custom)?;
         if tag.kind == crate::worlds::base_outings::travel_command_type() {
             return outings_input::decode(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if tag.kind == "tend-fire" {
+            return fire_care_input(raw.get()).map_err(serde::de::Error::custom);
         }
         let input: CommandInput =
             serde_json::from_str(raw.get()).map_err(serde::de::Error::custom)?;
@@ -640,6 +676,7 @@ impl NativeCommand {
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
             | Self::Pickup { envelope, .. }
+            | Self::TendFire { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
             | Self::Eat { envelope, .. }
@@ -668,6 +705,7 @@ impl NativeCommand {
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
             | Self::Pickup { envelope, .. }
+            | Self::TendFire { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
             | Self::Eat { envelope, .. }
@@ -690,6 +728,7 @@ impl NativeCommand {
             Self::Gather { .. } => "gather",
             Self::Fish { .. } => "fish",
             Self::Pickup { .. } => "pickup",
+            Self::TendFire { .. } => "tend-fire",
             Self::Cook { .. } => "cook",
             Self::Craft { .. } => "craft",
             Self::Eat { .. } => "eat",

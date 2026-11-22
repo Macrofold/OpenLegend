@@ -172,6 +172,7 @@ fn assemble_selected_core(
         occurrence_rules,
         speech_action,
         ordinary_actions,
+        fire_care,
         observation_rules,
         event_appraisal_rules,
         promises,
@@ -253,6 +254,11 @@ fn assemble_selected_core(
     let speech_action = selected::<crate::worlds::InstalledSpeechAction>(speech_action, budget)?;
     let ordinary_actions =
         selected::<crate::worlds::InstalledOrdinaryActionRules>(ordinary_actions, budget)?;
+    let fire_care = fire_care.map(|input| selected::<crate::fire_care::FireCare>(input, budget)).transpose()?;
+    if fire_care.as_ref().is_some_and(|rule| !rule.value().valid()
+        || !meanings.manifest.activity_hosts.contains(&rule.value().host)) {
+        return Err(InstallError::DefinitionBody.into());
+    }
     let promises = selected::<crate::worlds::InstalledPromiseRules>(promises, budget)?;
     let observation_rules =
         selected::<crate::worlds::InstalledObservationRules>(observation_rules, budget)?;
@@ -363,6 +369,7 @@ fn assemble_selected_core(
         social,
         speech_action,
         ordinary_actions,
+        fire_care,
         promises,
         observation_rules,
         event_appraisal_rules,

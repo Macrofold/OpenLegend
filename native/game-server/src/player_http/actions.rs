@@ -13,6 +13,7 @@ mod preparation;
 mod pickup;
 mod manufacture;
 mod status;
+mod fire;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -136,6 +137,8 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                             &scope.actor_id,
                             Some(item),
                             |body| preparation::heat_contact(&references, body, for_menu.as_deref()),
+                            |queries| game.spatial.compute(queries, budget).map(|answer| answer.into_parts())
+                                .map_err(RuntimeError::application_refused),
                             |menu| preparation::render(menu, controls, Some(item), budget),
                         );
                     }
@@ -192,6 +195,8 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                         &scope.actor_id,
                         None,
                         |body| preparation::heat_contact(&references, body, Some(selected)),
+                        |queries| game.spatial.compute(queries, budget).map(|answer| answer.into_parts())
+                            .map_err(RuntimeError::application_refused),
                         |menu| preparation::render(menu, controls, None, budget),
                     )
                 },
