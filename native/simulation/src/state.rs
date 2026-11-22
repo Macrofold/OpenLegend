@@ -17,6 +17,8 @@ pub(crate) use inventory::{
 mod recorded_surface_point;
 pub use recorded_surface_point::RecordedSurfacePoint;
 mod residency;
+mod root_removal;
+pub(crate) use root_removal::RemovedPhysicalRoot;
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::values::{
     AttributeState, DefinitionPin, StatusInstance, WorkInvocation, deserialize_present_option,
@@ -839,6 +841,7 @@ impl Action {
             || self.is_gathering()
             || self.is_casting()
             || self.is_cooking()
+            || self.is_picking_up()
     }
 
     pub(crate) fn owns_ground_route(&self) -> bool {
@@ -859,6 +862,10 @@ impl Action {
 
     pub(crate) fn is_cooking(&self) -> bool {
         self.kind == "cook" && self.food_preparation.is_some()
+    }
+
+    pub(crate) fn is_picking_up(&self) -> bool {
+        self.kind == "pickup" && self.target_id.is_some() && self.item_id.is_some()
     }
 
     pub(crate) fn is_casting(&self) -> bool {
@@ -905,7 +912,7 @@ impl Action {
             || self.transferred.is_some()
             || self.quantity.is_some()
             || self.recipe_id.is_some() != self.is_manufacturing()
-            || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting()))
+            || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting() || self.is_picking_up()))
             || self.weapon_item_id.is_some()
             || self.ammo_item_id.is_some()
             || self.heat_id.is_some() != self.is_cooking()
@@ -1021,6 +1028,15 @@ impl Action {
         action.remaining_seconds = seconds;
         action.total_seconds = seconds;
         action.consumed = consumed;
+        action
+    }
+
+    pub(crate) fn pickup(id: String, pile: String, item: String, seconds: f64) -> Self {
+        let mut action = Self::native_action(id, "pickup", "working");
+        action.target_id = Some(pile);
+        action.item_id = Some(item);
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
         action
     }
 

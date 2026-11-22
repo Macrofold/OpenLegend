@@ -30,6 +30,7 @@ impl CommandExposure {
             NativeCommand::Feed { envelope, .. }
             | NativeCommand::Gather { envelope, .. }
             | NativeCommand::Fish { envelope, .. }
+            | NativeCommand::Pickup { envelope, .. }
             | NativeCommand::Cook { envelope, .. }
             | NativeCommand::Craft { envelope, .. }
             | NativeCommand::Move { envelope, .. }

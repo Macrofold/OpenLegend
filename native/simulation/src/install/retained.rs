@@ -145,6 +145,9 @@ pub(crate) struct ItemHandlingReadPolicy {
     enabled: bool,
     actor_body_profiles: Vec<String>,
     pub reach: f64,
+    pub pickup_seconds: f64,
+    pub pickup_label: String,
+    pub pickup_narration: String,
     pub object_body: crate::state::BodyProfile,
     #[serde(default)]
     packing_loads: Vec<PackingLoad>,
@@ -442,8 +445,14 @@ pub(crate) fn install_retained(
         None,
         budget,
     )?;
-    let item_handling_read =
+    let item_handling_read: ItemHandlingReadPolicy =
         serde_json::from_str(item_handling.payload()).map_err(|_| InstallError::CurrentFormat)?;
+    if !(0.0..=3600.0).contains(&item_handling_read.pickup_seconds)
+        || [&item_handling_read.pickup_label, &item_handling_read.pickup_narration]
+            .into_iter().any(|text| text.trim().is_empty())
+    {
+        return Err(InstallError::CurrentFormat);
+    }
     let participation_policy = r.one(
         "participationPolicy",
         "config_participation",

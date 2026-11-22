@@ -216,6 +216,7 @@ enum CommandKind {
     Cancel,
     Gather,
     Fish,
+    Pickup,
     Cook,
     Craft,
     Eat,
@@ -540,13 +541,17 @@ impl PlayerCommands {
                             let target = match target_ref.filter(|_| !matches!(raw.kind, CommandKind::Say)) {
                                 None => None,
                                 Some(contact) => {
-                                    let Some(target) = begin_references.resolve_contact(
-                                        world,
-                                        &begin_scope.scope,
-                                        contact,
-                                        &begin_budget,
-                                    )?
-                                    else {
+                                    let selected = if matches!(raw.kind, CommandKind::Pickup) {
+                                        let item = raw.item_id.as_deref().ok_or(StoreError::InvalidRecord)?;
+                                        begin_references.resolve_ground_item(
+                                            world, &begin_scope.scope, contact, item, &begin_budget,
+                                        )?
+                                    } else {
+                                        begin_references.resolve_contact(
+                                            world, &begin_scope.scope, contact, &begin_budget,
+                                        )?
+                                    };
+                                    let Some(target) = selected else {
                                         return Ok(ApplicationStart::Existing(
                                             ResultOwner::Refused(
                                                 "stale-contact",
@@ -697,7 +702,7 @@ impl CommandRequest {
                     Err(AccessError::Forbidden.into())
                 }
             }
-            CommandKind::Fish
+            CommandKind::Fish | CommandKind::Pickup
                 if command.position.is_none()
                     && command.known_place.is_none()
                     && command.expected_action_id.is_none()
@@ -824,6 +829,10 @@ impl PreparedRequest {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 tool: input.item_id.as_deref(),
                 mode: input.gathering_mode,
+            }),
+            CommandKind::Pickup => Ok(RuntimePlayerCommand::Pickup {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
             }),
             CommandKind::Fish => Ok(RuntimePlayerCommand::Fish {
                 target: target.ok_or(StoreError::InvalidRecord)?,

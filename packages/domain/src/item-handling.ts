@@ -2,7 +2,6 @@ import { validateContentsExposureDefinitions } from './contents-exposure.js';
 import { entityDelete, entityGet, entityOwn, entitySet } from './entity-collection.js';
 import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { subjectNarration, narrationTemplate } from './narration.js';
-import { BASE_PICKUP_NARRATION } from './worlds/base/item-handling.js';
 import { namePhrase } from '@open-legend/language';
 import { validateItemOffers } from './handover.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
@@ -47,6 +46,8 @@ export interface ItemHandlingPolicy {
   defaultPortable: boolean;
   reach: number;
   pickupSeconds: number;
+  pickupLabel: string;
+  pickupNarration: string;
   actorBodyProfiles: string[];
   objectBody: BodyProfile;
 }
@@ -204,7 +205,11 @@ export function pickUpItems(
     'items-picked-up',
     // Render the observed source before an empty pile disappears; later history must
     // not guess its identity from a now-missing object. No current reference is revived.
-    narrationTemplate(BASE_PICKUP_NARRATION, { actor, items: { name: description }, source: pile }),
+    narrationTemplate(world.itemHandling.pickupNarration, {
+      actor,
+      items: { name: description },
+      source: pile,
+    }),
     actor,
     pile.id,
     { targetMustBeVisible: true },
@@ -443,6 +448,9 @@ export function validateItemHandling(world: WorldState): void {
     !Number.isFinite(policy.pickupSeconds) ||
     policy.pickupSeconds < 0 ||
     policy.pickupSeconds > 3600 ||
+    [policy.pickupLabel, policy.pickupNarration].some(
+      (text) => typeof text !== 'string' || !text.trim(),
+    ) ||
     !Array.isArray(policy.actorBodyProfiles) ||
     policy.actorBodyProfiles.some((id) => !isSafeRecordId(id))
   )

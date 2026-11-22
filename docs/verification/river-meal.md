@@ -170,6 +170,14 @@ Raw fish, an unavailable item and a forged quantity override left stock unchange
 
 The frozen source was `2fbff45da34e3f4984bb923d8b619e583e392b3c` and the executable SHA-256 was `895b678ac6d8cf317eb39deba0fef1daed26d53be965afbe35d2f1ae08ba37cc`. These local gameplay checks used ordinary saves and disposable PostgreSQL. Two earlier runs caught menu failures. The server first checked for an idle world while it already held the view's publication lock. After that was repaired, the browser's ordinary quantity field still triggered a bad-request response. The menu now accepts the browser's display hints and uses the selected item's current native record to decide whether the player can eat it. The failed and passing records are retained under `nsc04-eating-20261122`. Repeated meals and NPC selection have separate callers.
 
+## Stand-alone Rust ground pickup
+
+The player selected **Pick Up** on a visible pile in **In view**. The command approached the pile, finished its installed collection time and moved the exact raw fish into the player's inventory. The fish kept its identity. The last stack left the pile empty, so the server removed the pile from sight and PostgreSQL. The player cooked the same fish and returned to the cooked meal after restarting. Reload recovered the original pickup result alongside the saved world.
+
+A separate caller cancelled during approach and left the item and pile where they started. Another reopened a saved approach, continued it on the ordinary clock and saved one pickup. Missing stock and a forged contact produced no transfer. The ordinary case retried the same command and recovered its first result. For a reopened control session, the receipt route recovered the observed request independently of the retired pile.
+
+Source passed the same three gameplay cases. The Rust source tree was `06758ff96442fff06717d9b5198daf10868d8480` and executable SHA-256 was `fb18a50989b377287dac612e16f373ab50836aa4647906c125b31a00c7cbd4ad`. All Rust shutdowns returned resident, transient and pending-save reservations to zero. An earlier Rust attempt refused the command because pickup had no action-started event branch. That failure and the repaired local gameplay results are retained under `nsc04-pickup-20261122`. This scope covers a whole selected unmerged lot from a bare ground pile. Partial quantities, compatible lot merges, picking up every stack and taking from other container kinds have separate callers.
+
 ## Maintained records
 
 - Scope/status: [AV05](../maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking).

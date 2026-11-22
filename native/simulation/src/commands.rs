@@ -214,6 +214,7 @@ pub(crate) enum NativeCommand {
         definition: crate::values::DefinitionPin,
         inputs: indexmap::IndexMap<String, String>,
     },
+    Pickup { envelope: CommandEnvelope, target_id: String, item_id: String },
     Eat { envelope: CommandEnvelope, item_id: String },
     Equipment {
         envelope: CommandEnvelope,
@@ -311,7 +312,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
         if (input.kind != "gather" && input.gathering_mode.is_some())
-            || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "eat" | "equip" | "unequip") && input.item_id.is_some())
+            || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "pickup" | "eat" | "equip" | "unequip") && input.item_id.is_some())
             || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
             || (input.kind != "craft" && input.recipe_id.is_some())
             || (input.kind != "cook" && (input.heat_id.is_some() || input.preparation_id.is_some()
@@ -550,6 +551,22 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     auto_equip: input.auto_equip,
                 })
             }
+            "pickup" if input.destination.is_none()
+                && input.expected_action_id.is_none()
+                && input.definition_id.is_none()
+                && input.distance.is_none()
+                && input.text.is_none()
+                && input.target_role.is_none()
+                && input.self_introduction.is_none()
+                && input.volume.is_none() =>
+            {
+                let invalid = || D::Error::custom("Pickup requires an exact item and pile.");
+                Ok(Self::Pickup {
+                    envelope,
+                    target_id: input.target_id.filter(|id| is_safe_record_id(id)).ok_or_else(invalid)?,
+                    item_id: input.item_id.filter(|id| is_safe_record_id(id)).ok_or_else(invalid)?,
+                })
+            }
             "eat" if !extras_for_move && input.destination.is_none() => Ok(Self::Eat {
                 envelope,
                 item_id: input.item_id.filter(|id| is_safe_record_id(id))
@@ -620,6 +637,7 @@ impl NativeCommand {
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
+            | Self::Pickup { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
             | Self::Eat { envelope, .. }
@@ -647,6 +665,7 @@ impl NativeCommand {
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
+            | Self::Pickup { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
             | Self::Eat { envelope, .. }
@@ -668,6 +687,7 @@ impl NativeCommand {
             Self::Feed { .. } => "feed",
             Self::Gather { .. } => "gather",
             Self::Fish { .. } => "fish",
+            Self::Pickup { .. } => "pickup",
             Self::Cook { .. } => "cook",
             Self::Craft { .. } => "craft",
             Self::Eat { .. } => "eat",

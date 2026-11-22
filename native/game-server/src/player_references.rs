@@ -183,6 +183,37 @@ impl ReferenceIssuer {
         expected_body: Option<&str>,
         budget: &ByteBudget,
     ) -> Result<Option<ResolvedContact>, RuntimeError> {
+        self.resolve_contact_matching(session, scope, selected, expected_body, |_| true, budget)
+    }
+
+    /// A portable lot is a permitted item in this view only when the
+    /// selected current contact's detailed pile observation shows it.
+    pub(crate) fn resolve_ground_item(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        item: &str,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedContact>, RuntimeError> {
+        self.resolve_contact_matching(session, scope, selected, None, |body| {
+            body.facets().any(|facet| match &facet.value {
+                openlegend_simulation::reception::SensoryFacet::PileContents { items } =>
+                    items.iter().any(|witness| witness.id == item && witness.portable),
+                _ => false,
+            })
+        }, budget)
+    }
+
+    fn resolve_contact_matching(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        expected_body: Option<&str>,
+        matches: impl Fn(&openlegend_simulation::capture::PlayerObservedBody<'_>) -> bool,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedContact>, RuntimeError> {
         if !selected.starts_with("contact-") {
             return Ok(None);
         }
@@ -198,6 +229,9 @@ impl ReferenceIssuer {
                 body.lease_id,
             ) {
                 Ok(current) if current == selected => {
+                    if !matches(&body) {
+                        return true;
+                    }
                     if let Some(expected) = expected_body {
                         match scoped.body(body.source_id, body.physical_life.unwrap_or(0)) {
                             Ok(actual) if actual == expected => (),

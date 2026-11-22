@@ -324,6 +324,26 @@ impl PhysicalMutation<'_> {
         }
         Ok(handle)
     }
+    /// The caller must first account for any owned children and supply an
+    /// observation before the empty root leaves physical membership.
+    pub(super) fn remove_physical_root(&mut self, id: &str) -> Result<(), ExecutionError> {
+        let before = self.state.entities.get(id)
+            .and_then(Entity::world_position)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let retained = self.state.entities.physical_root_removal_bound(id)
+            .ok_or(ExecutionError::Invariant)?;
+        self.journal.reserve(heap_sum([
+            retained, id.len(), size_of::<crate::state::RemovedPhysicalRoot>(), size_of::<Undo>(),
+        ]).ok_or(ExecutionError::Capacity)?)?;
+        let removed = self.state.entities.remove_physical_root(id)?;
+        self.journal.undo.push(Undo::RemovedPhysicalRoot(Box::new(removed)));
+        self.state.entities.settle_store_memory(&mut self.journal.reservation, false)?;
+        self.state.bodies.refresh(&self.state.entities, id)?;
+        self.journal.change(PhysicalChange::Membership {
+            entity_id: id.into(), before: Some(before), after: None,
+        })
+    }
+
     pub(crate) fn membership_changed(&mut self, id: &str) -> Result<(), ExecutionError> {
         let handle = self
             .state

@@ -28,6 +28,7 @@ mod preparing_food;
 mod manufacture;
 mod equipment;
 mod eating;
+mod pickup;
 mod feeding;
 mod gathering;
 mod natural_contact;
@@ -316,6 +317,10 @@ impl CommandCursor {
         }
         if matches!(self.command, NativeCommand::Gather { .. }) {
             self.prepare_gathering_view(core)?;
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::Pickup { .. }) {
+            self.prepare_pickup_view(core)?;
             return Ok(false);
         }
         if matches!(self.command, NativeCommand::Fish { .. }) {
@@ -1035,6 +1040,11 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::Pickup { .. } => {
+                            if self.prepare_pickup(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
                         NativeCommand::Fish { .. } => {
                             if self.prepare_cast(core)? {
                                 return Ok(Progress::Geometry);
@@ -1092,6 +1102,9 @@ impl CommandCursor {
                 }
                 Phase::FeedApproach => {
                     self.prepare_interaction_route(core)?;
+                    if matches!(self.phase, Phase::Done) {
+                        continue;
+                    }
                     return Ok(Progress::Geometry);
                 }
                 Phase::Route => {
@@ -1546,6 +1559,9 @@ impl CommandCursor {
                         }
                         if matches!(self.command, NativeCommand::Gather { .. }) {
                             return self.gathering_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::Pickup { .. }) {
+                            return self.pickup_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::Fish { .. }) {
                             return self.cast_started(core, &actor_id);

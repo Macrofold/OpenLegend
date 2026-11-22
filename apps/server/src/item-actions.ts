@@ -12,7 +12,7 @@ export function pickupActions(
     id: `pickup-${item.id}`,
     label:
       items.length === 1
-        ? 'Pick Up'
+        ? world.itemHandling.pickupLabel
         : `${world.itemDefinitions[item.definitionId]!.name} × ${item.quantity}`,
     description: `Pick up ${item.quantity} ${world.itemDefinitions[item.definitionId]!.name}`,
     command: { type: 'pickup' as const, targetId: pile.id, itemId: item.id } as CommandInput,

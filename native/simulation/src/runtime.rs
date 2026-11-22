@@ -100,7 +100,7 @@ pub use npc::{
 pub use player::{
     InteractionMode, PlayerInteractionFacts, RuntimePlayerCommand, RuntimePlayerInputState,
     RuntimePlayerPublication, RuntimePlayerRead, RuntimeGatherOffer,
-    RuntimeFishOffer, RuntimeFishTool, RuntimeResourceOffer, RuntimeHeatContact, RuntimeFoodMenu, RuntimePreparation,
+    RuntimeFishOffer, RuntimeFishTool, RuntimePickupOffer, RuntimeResourceOffer, RuntimeHeatContact, RuntimeFoodMenu, RuntimePreparation,
 };
 pub use reply_preview::{
     RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,

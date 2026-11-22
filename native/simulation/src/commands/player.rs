@@ -29,6 +29,7 @@ pub enum RuntimePlayerCommand<'a> {
         preparation_digest: &'a str,
         inputs: &'a IndexMap<String, String>,
     },
+    Pickup { target: &'a str, item: &'a str },
     Eat(&'a str),
     Equip(&'a str),
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
@@ -40,7 +41,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Move(point) => point.surface_id.len(),
             Self::Cancel(action) => action.map_or(0, str::len),
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
-            Self::Fish { target, tool } => target.len() + tool.len(),
+            Self::Fish { target, tool } | Self::Pickup { target, item: tool } => target.len() + tool.len(),
             Self::Craft { recipe } => recipe.len(),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
             Self::Cook { heat, preparation_id, preparation_digest, inputs, .. } => {
@@ -139,6 +140,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Move(point) => ("move", Some(point), None, None, None, None),
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
             Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
+            Self::Pickup { target, item } => ("pickup", None, None, Some(target), Some(item), None),
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
@@ -253,6 +255,9 @@ impl RuntimePlayerCommand<'_> {
                 target_role,
                 self_introduction: None,
                 volume: volume.map(|volume| volume.id().to_owned()),
+            },
+            Self::Pickup { target, item } => NativeCommand::Pickup {
+                envelope, target_id: target.into(), item_id: item.into(),
             },
             Self::Fish { target, tool } => NativeCommand::Fish {
                 envelope,

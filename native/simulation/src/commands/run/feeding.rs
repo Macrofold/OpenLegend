@@ -64,7 +64,8 @@ impl CommandCursor {
     ) -> Result<(), ExecutionError> {
         let installed = &core.state.installed;
         let (target_id, reach) = match &self.command {
-            NativeCommand::Feed { target_id, .. } => (target_id, installed.retained.item_handling_read.reach),
+            NativeCommand::Feed { target_id, .. } | NativeCommand::Pickup { target_id, .. } =>
+                (target_id, installed.retained.item_handling_read.reach),
             NativeCommand::Gather { target_id, .. } => (target_id, installed.movement.interaction_radius()),
             _ => return Err(ExecutionError::Invariant),
         };
@@ -77,6 +78,12 @@ impl CommandCursor {
             .entities
             .get(target_id)
             .ok_or(ExecutionError::MissingEntity)?;
+        if matches!(self.command, NativeCommand::Pickup { .. })
+            && installed.capabilities.capability_blocked(Some(actor), "locomotion")?
+        {
+            self.refuse(&installed.ordinary_actions.value().actions_restricted);
+            return Ok(());
+        }
         let (route, storage) = feeding::approach(
             actor,
             target,

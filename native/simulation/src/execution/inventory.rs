@@ -7,6 +7,7 @@ use crate::state::{Entity, ItemLot, ItemRetirement, LineageKind, ObjectLineage};
 use crate::values::DefinitionPin;
 mod equipment;
 mod debit;
+mod pickup;
 pub(crate) use debit::OwnedDebits;
 pub(crate) use equipment::{EquipmentDecision, EquipmentRequest, equipment_fits};
 
@@ -20,6 +21,12 @@ enum ItemEdit {
         placement: Placement,
         item: Option<(u64, crate::state::Individuality)>,
         toggled: bool,
+    },
+    Move {
+        destination: EntityHandle,
+        detached: RemovedInventoryChild,
+        old_placement: Option<Placement>,
+        item_before: u64,
     },
     Retired {
         before: ItemLot,
@@ -61,7 +68,7 @@ impl InventoryUndo {
     }
 
     pub(super) fn changed_placement(&self) -> bool {
-        matches!(self.edit, ItemEdit::Retired { .. } | ItemEdit::Equipment { .. })
+        matches!(self.edit, ItemEdit::Retired { .. } | ItemEdit::Equipment { .. } | ItemEdit::Move { .. })
     }
 
     pub(super) fn changed_contents(&self) -> impl Iterator<Item = (EntityHandle, bool)> + '_ {
@@ -141,6 +148,18 @@ impl InventoryUndo {
                     lot.individuality = individuality;
                 }
                 state.entities.settle_operational_memory(self.child, funding, true)?;
+            }
+            ItemEdit::Move { destination, detached, old_placement, item_before } => {
+                if let Some(placement) = old_placement {
+                    let destination = state.entities.resolve(destination).ok_or(ExecutionError::Invariant)?;
+                    inventory.undo_add_item(&destination.id, self.child)?;
+                    let child = state.entities.resolve_mut(self.child).ok_or(ExecutionError::Invariant)?;
+                    child.placement = Some(placement);
+                    child.item.as_mut().ok_or(ExecutionError::Invariant)?.revision = item_before;
+                    state.entities.settle_operational_memory(self.child, funding, true)?;
+                }
+                let source = state.entities.resolve(self.parent).ok_or(ExecutionError::Invariant)?;
+                inventory.restore_loose_item(&source.id, self.child, detached)?;
             }
             ItemEdit::Retired {
                 before,

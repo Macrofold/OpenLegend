@@ -14,6 +14,8 @@ impl HeapBytes for RetainedOne {
 heap_record!(RetainedMap { rows });
 heap_record!(ItemHandlingReadPolicy {
     actor_body_profiles,
+    pickup_label,
+    pickup_narration,
     object_body,
     packing_loads
 });

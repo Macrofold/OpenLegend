@@ -10,6 +10,7 @@ use openlegend_simulation::{
 };
 use std::sync::LazyLock;
 mod preparation;
+mod pickup;
 mod manufacture;
 
 #[derive(Deserialize)]
@@ -145,6 +146,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                             RuntimeResourceOffer::Gather(offer) => {
                                 gathering(selected, offer, budget)
                             }
+                            RuntimeResourceOffer::Pickup(offer) => pickup::render(selected, offer, controls, budget),
                             RuntimeResourceOffer::Fish(offer) => {
                                 let available = if !controls {
                                     Some("Take control of your character to act here.")
@@ -240,7 +242,7 @@ struct ResourceAction<'a> {
 fn resource_menu<T: Serialize>(
     revision: u64,
     actions: &[T],
-    category: &'static str,
+    category: &str,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     resource_menu_categories(revision, actions, &[category], budget)
@@ -249,14 +251,14 @@ fn resource_menu<T: Serialize>(
 fn resource_menu_categories<T: Serialize>(
     revision: u64,
     actions: &[T],
-    categories: &[&'static str],
+    categories: &[&str],
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     #[derive(Serialize)]
     struct Catalogue<'a, T> {
         revision: u64,
         actions: &'a [T],
-        categories: &'a [&'static str],
+        categories: &'a [&'a str],
     }
     #[derive(Serialize)]
     struct Menu<'a, T> {

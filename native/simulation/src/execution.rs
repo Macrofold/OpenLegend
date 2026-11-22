@@ -1372,6 +1372,7 @@ enum Undo {
         before: u64,
     },
     AddedEntity(crate::state::EntityInsertion),
+    RemovedPhysicalRoot(Box<crate::state::RemovedPhysicalRoot>),
     Inventory(Box<inventory::InventoryUndo>),
     BodyRevision {
         entity: EntityHandle,
@@ -1959,6 +1960,10 @@ impl PhysicalJournal {
                 }
                 Undo::Inventory(before) => {
                     before.restore(state, inventory, membership, &mut self.reservation)?;
+                }
+                Undo::RemovedPhysicalRoot(before) => {
+                    let id = state.entities.restore_physical_root(*before, &mut self.reservation)?;
+                    state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::AddedEntity(before) => {
                     let (id, renumbered) = state

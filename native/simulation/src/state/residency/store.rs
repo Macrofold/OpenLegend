@@ -32,6 +32,27 @@ impl EntityStoreMemory {
     ) -> Option<usize> {
         heap_sum([tree_node_bound::<String, String>()?, slot_order, key, id])
     }
+    pub(in super::super) fn member_bytes(
+        id: usize,
+        slot_order: usize,
+        order_key: usize,
+        order_id: usize,
+    ) -> Option<usize> {
+        Self::id_member_bytes(id)?.checked_add(Self::order_member_bytes(slot_order, order_key, order_id)?)
+    }
+    pub(in super::super) fn remove_member(
+        &mut self,
+        id: usize,
+        slot_order: usize,
+        order_key: usize,
+        order_id: usize,
+    ) -> Option<()> {
+        let ids = self.ids.checked_sub(Self::id_member_bytes(id)?)?;
+        let order = self.order.checked_sub(Self::order_member_bytes(slot_order, order_key, order_id)?)?;
+        self.ids = ids;
+        self.order = order;
+        Some(())
+    }
     pub(in super::super) fn add_member(
         &mut self,
         id: usize,

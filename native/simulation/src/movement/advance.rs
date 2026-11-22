@@ -27,6 +27,7 @@ mod casting;
 mod preparing_food;
 mod manufacture;
 mod feeding;
+mod pickup;
 mod gathering;
 
 pub(crate) enum MoveAdvanceAnswer {
@@ -59,6 +60,7 @@ enum Phase {
     Arrival,
     FeedReach,
     FeedSight,
+    PickupRetire,
     CastLine,
     CookReach,
     Finish,
@@ -595,6 +597,25 @@ impl MoveAdvanceCursor {
                         )?));
                         return self.drive(core, None);
                     }
+                    if action.is_picking_up() && !installed.retained.item_handling_read
+                        .can_handle(&entity.spatial.body.id)
+                    {
+                        self.fail(&rules.not_applicable.message)?;
+                        continue;
+                    }
+                    if action.is_picking_up() && action.stage == "working" {
+                        if action.remaining_seconds > self.seconds + installed.time_epsilon {
+                            core.physical().advance_timed_work(
+                                &self.actor_id,
+                                self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
+                                self.seconds,
+                                installed.time_epsilon,
+                            )?;
+                            self.phase = Phase::Done;
+                            continue;
+                        }
+                        return self.begin_feed_check(core);
+                    }
                     if (action.feeding.is_some() || action.is_gathering()) && action.stage == "working" {
                         return self.begin_feed_check(core);
                     }
@@ -654,7 +675,7 @@ impl MoveAdvanceCursor {
                         self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
                         self.physical_life,
                     )?;
-                    if action.feeding.is_none() && !action.is_gathering() && !action.is_cooking() && action.destination.is_none() {
+                    if action.feeding.is_none() && !action.is_gathering() && !action.is_picking_up() && !action.is_cooking() && action.destination.is_none() {
                         self.fail(&rules.movement_missing_destination)?;
                         continue;
                     }
@@ -668,7 +689,7 @@ impl MoveAdvanceCursor {
                     let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
                     let (entity, action) =
                         bound(core, &self.actor_id, action_id, self.physical_life)?;
-                    if action.feeding.is_some() || action.is_gathering() {
+                    if action.feeding.is_some() || action.is_gathering() || action.is_picking_up() {
                         return self.begin_feed_check(core);
                     }
                     if action.is_cooking() {
@@ -836,6 +857,7 @@ impl MoveAdvanceCursor {
                         )?));
                     }
                 }
+                Phase::PickupRetire => self.retire_pickup_source(core)?,
                 Phase::Finish => {
                     self.reserve(
                         rules

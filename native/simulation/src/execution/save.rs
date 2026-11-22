@@ -681,6 +681,25 @@ impl PhysicalJournal {
             match change {
                 Undo::ExitExposure { .. } => {}
                 Undo::CoachingPresence { .. } => coaching = true,
+                Undo::RemovedPhysicalRoot(before) => {
+                    // The transfer revised direct contents before taking the
+                    // empty root out. Only the final deletion is published.
+                    selected.shift_remove(&(before.handle.slot, before.handle.generation));
+                    let id = before.entity.id.as_str();
+                    let parent = ["world", "entities", id];
+                    let _identity = budget.reserve(
+                        crate::encoding::json_record_len(&parent).map_err(|_| error())?
+                    ).map_err(|_| error())?;
+                    let key = crate::encoding::json_record(&parent).map_err(|_| error())?;
+                    output.delete("sim_entities", &key, false)?;
+                    for (table, field) in [("sim_placements", "placement"), ("sim_entity_geometry", "spatial")] {
+                        one::<()>(
+                            ledger, output, table, &["world", "entities", id, field],
+                            &parent, field, None, budget,
+                        )?;
+                        observe(output, table, &parent, false, 0, budget)?;
+                    }
+                }
                 Undo::AddedEntity(before) => {
                     let rows = selected
                         .entry((before.handle.slot, before.handle.generation))

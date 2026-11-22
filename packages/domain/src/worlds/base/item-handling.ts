@@ -9,9 +9,8 @@ export const BASE_ITEM_HANDLING: ItemHandlingPolicy = {
   generatedPackingLoad: 1,
   reach: 1.6,
   pickupSeconds: 1,
+  pickupLabel: 'Pick Up',
+  pickupNarration: '{actor.subject} picked up {items.name} from {source.name:definite}.',
   actorBodyProfiles: ['person'],
   objectBody: BASE_BODY_PROFILES.object,
 };
-
-export const BASE_PICKUP_NARRATION =
-  '{actor.subject} picked up {items.name} from {source.name:definite}.';

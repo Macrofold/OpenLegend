@@ -36,7 +36,13 @@ impl MoveAdvanceCursor {
             return self.drive(core, None);
         }
         let Some(target) = target.filter(|target| target.actively_participates()) else {
-            self.fail(&feeding_terms().out_of_reach)?;
+            let installed = core.state.installed.clone();
+            let reason = if action.is_picking_up() {
+                &installed.ordinary_actions.value().out_of_reach.message
+            } else {
+                &feeding_terms().out_of_reach
+            };
+            self.fail(reason)?;
             return self.drive(core, None);
         };
         let reach = interaction_reach(core, gathering);
@@ -63,7 +69,10 @@ impl MoveAdvanceCursor {
         let target = target.ok_or(ExecutionError::Invariant)?;
         let gathering = action.is_gathering();
         if !in_reach && action.stage == "working" {
-            let message = if gathering {
+            let installed = core.state.installed.clone();
+            let message = if action.is_picking_up() {
+                &installed.ordinary_actions.value().out_of_reach.message
+            } else if gathering {
                 &crate::worlds::base_gathering::copy().out_of_reach
             } else {
                 &feeding_terms().out_of_reach
@@ -150,6 +159,10 @@ impl MoveAdvanceCursor {
             .map_err(|_| ExecutionError::Invariant)?;
         let installed = core.state.installed.clone();
         let (actor, action, target) = self.meal_target(core)?;
+        if action.is_picking_up() {
+            let visible = target.is_some_and(|pile| sight.seen(&pile.id) == Some(true));
+            return self.finish_pickup_sight(core, visible);
+        }
         let binding = action.feeding.as_ref().ok_or(ExecutionError::Invariant)?;
         let item = match &binding.source {
             FoodStock::Item { item_id, .. } => Some(item_id.as_str()),
