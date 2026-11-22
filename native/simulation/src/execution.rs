@@ -36,6 +36,7 @@ mod conditions;
 mod contact;
 use contact::ContactPhase;
 mod flight;
+mod foraging;
 mod heat;
 mod inventory;
 mod participation;
@@ -3738,6 +3739,7 @@ impl PhysicalMutation<'_> {
             )?;
         }
         self.record_territorial_travel(cursor.actor, cursor.travelled)?;
+        self.record_foraging_travel(&id, cursor.travelled)?;
         Ok(result)
     }
 }

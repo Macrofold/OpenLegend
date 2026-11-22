@@ -14,7 +14,7 @@ mod foraging;
 pub(crate) use foraging::FoodSourceKind;
 pub use foraging::{
     AnchorFood, EmptyFoodSource, FoodStock, ForagingContinuation, ForagingMode, ForagingWork,
-    ForagingWorkKind, ResourceFeeding,
+    ForagingWorkKind, ObservedForagingTarget, ResourceFeeding,
 };
 mod validation;
 pub(crate) use validation::validate_native_response;

@@ -1,7 +1,7 @@
-//! Exact saved continuation for finite resource foraging. Hunting, pack and
-//! regrouping state remain unsupported. The owning installed profile supplies
-//! the fictional rules independently of these current facts.
+//! Saved continuation for finite foraging. Installed world profiles supply
+//! the laws independently of these observations and outstanding work.
 
+use super::{NavigationBody, NavigationWait};
 use crate::host::retained_size::{HeapBytes, heap_record};
 use crate::state::SurfacePoint;
 use crate::values::{
@@ -16,6 +16,12 @@ pub struct ForagingContinuation {
     pub profile: DefinitionPin,
     pub home: SurfacePoint,
     pub anchors: Vec<SurfacePoint>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub pack_id: Option<String>,
     pub mode: ForagingMode,
     pub review_at: f64,
     #[serde(
@@ -37,6 +43,18 @@ pub struct ForagingContinuation {
         skip_serializing_if = "Option::is_none"
     )]
     pub work: Option<ForagingWork>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub reconsider_at: Option<f64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub proposal: Option<Box<ForagingProposal>>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -45,6 +63,10 @@ pub enum ForagingMode {
     Routine,
     Resting,
     Feeding,
+    Regrouping,
+    Stalking,
+    Pursuing,
+    Searching,
     Blocked,
 }
 
@@ -81,6 +103,42 @@ pub struct ForagingWork {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub target_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub target_life: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub observed: Option<ObservedForagingTarget>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub search_index: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub lost_at: Option<f64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub route_target: Option<SurfacePoint>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -88,6 +146,45 @@ pub struct ForagingWork {
 pub enum ForagingWorkKind {
     Routine,
     Food,
+    Hunt,
+    Regroup,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ObservedForagingTarget {
+    pub point: SurfacePoint,
+    pub at: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ForagingProposal {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub generation: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub geometry_revision: u64,
+    pub at: f64,
+    pub origin: SurfacePoint,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub movement_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub wait: Option<NavigationWait>,
+    pub body: NavigationBody,
+    pub candidates: Vec<ForagingCandidate>,
+    pub basis: String,
+    pub separations: IndexMap<String, f64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ForagingCandidate {
+    pub id: String,
+    pub point: SurfacePoint,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -154,14 +251,19 @@ impl HeapBytes for FoodStock {
 
 impl ForagingContinuation {
     pub(crate) fn active(&self, actor: &crate::state::ActorState) -> bool {
-        self.mode == ForagingMode::Feeding
-            && actor.controller == "native"
+        actor.controller == "native"
             && actor.alive
             && self.work.as_ref().is_some_and(|work| {
-                actor
-                    .action
-                    .as_ref()
-                    .is_some_and(|action| action.id == work.action_id)
+                (work.kind == ForagingWorkKind::Hunt
+                    && matches!(
+                        self.mode,
+                        ForagingMode::Stalking | ForagingMode::Pursuing | ForagingMode::Searching
+                    ))
+                    || (self.mode == ForagingMode::Feeding
+                        && actor
+                            .action
+                            .as_ref()
+                            .is_some_and(|action| action.id == work.action_id))
             })
     }
 
@@ -175,7 +277,9 @@ impl ForagingContinuation {
             && point(&self.home)
             && (2..=4).contains(&self.anchors.len())
             && self.anchors.iter().all(point)
+            && self.pack_id.as_deref().is_none_or(is_safe_record_id)
             && time(self.review_at)
+            && self.reconsider_at.is_none_or(time)
             && self.destination.as_ref().is_none_or(point)
             && self
                 .empty_sources
@@ -201,6 +305,52 @@ impl ForagingContinuation {
                     && time(work.travelled_metres)
                     && point(&work.last_point)
                     && work.source_id.as_deref().is_none_or(is_safe_record_id)
+                    && work
+                        .target_id
+                        .as_deref()
+                        .is_none_or(|id| is_safe_record_id(id) && work.target_life.is_some())
+                    && work.observed.as_ref().is_none_or(|observed| {
+                        point(&observed.point) && time(observed.at) && observed.at <= through
+                    })
+                    && work.lost_at.is_none_or(|at| time(at) && at <= through)
+                    && work.search_index.is_none_or(|index| index <= 3)
+                    && work.route_target.as_ref().is_none_or(point)
+                    && (!matches!(
+                        work.kind,
+                        ForagingWorkKind::Hunt | ForagingWorkKind::Regroup
+                    ) || work.target_id.is_some() && work.observed.is_some())
+            })
+            && self.proposal.as_ref().is_none_or(|proposal| {
+                time(proposal.at)
+                    && proposal.at <= through
+                    && point(&proposal.origin)
+                    && proposal
+                        .movement_id
+                        .as_deref()
+                        .is_none_or(is_safe_record_id)
+                    && proposal.body.radius.is_finite()
+                    && proposal.body.radius > 0.0
+                    && proposal.body.height.is_finite()
+                    && proposal.body.height > 0.0
+                    && time(proposal.body.max_slope)
+                    && !proposal.basis.is_empty()
+                    && proposal.candidates.len() <= 6
+                    && proposal.candidates.len() == proposal.separations.len()
+                    && proposal
+                        .candidates
+                        .iter()
+                        .enumerate()
+                        .all(|(index, candidate)| {
+                            is_safe_record_id(&candidate.id)
+                                && point(&candidate.point)
+                                && proposal
+                                    .separations
+                                    .get(&candidate.id)
+                                    .is_some_and(|value| time(*value))
+                                && !proposal.candidates[..index]
+                                    .iter()
+                                    .any(|other| other.id == candidate.id)
+                        })
             })
     }
 }
@@ -209,18 +359,32 @@ heap_record!(ForagingContinuation {
     profile,
     home,
     anchors,
+    pack_id,
     destination,
     empty_sources,
     anchor_food,
-    work
+    work,
+    proposal
 });
 heap_record!(EmptyFoodSource {});
 heap_record!(AnchorFood { source_id, food });
 heap_record!(ForagingWork {
     action_id,
     last_point,
-    source_id
+    source_id,
+    target_id,
+    observed,
+    route_target
 });
+heap_record!(ObservedForagingTarget { point });
+heap_record!(ForagingProposal {
+    origin,
+    movement_id,
+    candidates,
+    basis,
+    separations
+});
+heap_record!(ForagingCandidate { id, point });
 heap_record!(ResourceFeeding {
     profile,
     food,

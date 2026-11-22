@@ -1140,6 +1140,39 @@ fn validate_resource_foraging(
         .get(&saved.profile.id)
         .filter(|definition| definition.pin == saved.profile)
         .ok_or(InstallError::DefinitionPin)?;
+    use crate::native_response::{ForagingMode, ForagingWorkKind};
+    if saved.proposal.is_some()
+        || profile.profile.hunt.is_some()
+        || saved
+            .work
+            .as_ref()
+            .is_some_and(|work| work.kind == ForagingWorkKind::Hunt)
+        || matches!(
+            saved.mode,
+            ForagingMode::Stalking | ForagingMode::Pursuing | ForagingMode::Searching
+        )
+    {
+        return Err(InstallError::UnsupportedFamily("pack hunting"));
+    }
+    if let Some(work) = saved
+        .work
+        .as_ref()
+        .filter(|work| work.kind == ForagingWorkKind::Regroup)
+    {
+        let policy = profile
+            .profile
+            .regroup
+            .as_ref()
+            .ok_or(InstallError::CurrentFormat)?;
+        if saved.pack_id.is_none()
+            || work.ends_at > work.started_at + policy.leg_game_seconds
+            || work.travelled_metres > policy.leg_metres + installed.spatial.epsilon
+        {
+            return Err(InstallError::CurrentFormat);
+        }
+    } else if saved.mode == ForagingMode::Regrouping {
+        return Err(InstallError::CurrentFormat);
+    }
     let actor = entity.actor.as_ref().ok_or(InstallError::CurrentFormat)?;
     let meter = &profile.profile.fullness.attribute_id;
     let installed_meter = installed

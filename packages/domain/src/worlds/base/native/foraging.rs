@@ -9,6 +9,10 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use std::sync::LazyLock;
 
+#[path = "foraging/pack.rs"]
+pub(crate) mod pack;
+use pack::{Hunt, Regroup};
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ResourceFeedingTerms {
@@ -53,6 +57,16 @@ pub(crate) struct ResourceForagingProfile {
     pub fullness: Fullness,
     pub diet: Vec<ResourceDiet>,
     pub routine: Routine,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option"
+    )]
+    pub hunt: Option<Hunt>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option"
+    )]
+    pub regroup: Option<Regroup>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -143,6 +157,11 @@ impl ResourceForagingProfile {
                 })
             || !self.routine.choice_game_seconds.is_finite()
             || self.routine.choice_game_seconds <= 0.0
+            || self.hunt.as_ref().is_some_and(|hunt| !hunt.valid())
+            || self
+                .regroup
+                .as_ref()
+                .is_some_and(|regroup| !regroup.valid())
             || self.diet.is_empty()
             || self.diet.iter().enumerate().any(|(index, meal)| {
                 !is_safe_record_id(&meal.definition_id)
@@ -357,7 +376,12 @@ pub(crate) fn perceive_food<'a>(
     Ok(chosen.map(|(id, item_id, _, _)| (id, item_id)))
 }
 
-heap_record!(ResourceForagingProfile { id, fullness, diet });
+heap_record!(ResourceForagingProfile {
+    id,
+    fullness,
+    diet,
+    hunt
+});
 heap_record!(Fullness { attribute_id });
 heap_record!(ResourceDiet {
     definition_id,

@@ -1255,7 +1255,11 @@ impl AdvanceCursor {
                             (operation, mode)
                         }
                         NativeIntention::Forage(intention) => {
+                            self.command_foraging = !matches!(&intention, ForageIntention::Stop);
                             let operation = match intention {
+                                ForageIntention::Stop => {
+                                    begin_native_stop(core, &actor, self.candidate, budget)?
+                                }
                                 ForageIntention::Feed(target, item, _allowance) => {
                                     begin_native_feed(
                                         core,
@@ -1276,7 +1280,6 @@ impl AdvanceCursor {
                                     )?
                                 }
                             };
-                            self.command_foraging = true;
                             (operation, LocomotionMode::Travel)
                         }
                         NativeIntention::Territorial(intention) => {

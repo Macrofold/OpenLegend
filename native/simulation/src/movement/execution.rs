@@ -116,6 +116,12 @@ impl MotionOperation {
             .entities
             .get(actor_id)
             .ok_or(ExecutionError::MissingEntity)?;
+        let distance_budget = crate::native_controller::foraging::remaining_pack_travel(
+            &core.state.installed,
+            entity,
+            action_id,
+        )?
+        .map_or(distance_budget, |limit| distance_budget.min(limit));
         if entity.spatial.local_pose.is_some() {
             return Err(ExecutionError::UnsupportedFamily);
         }
