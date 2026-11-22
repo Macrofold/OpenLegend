@@ -152,6 +152,7 @@ impl ActivityDisplayCursor {
         if matches!(
             command,
             NativeCommand::Outing { .. }
+            | NativeCommand::Handover { .. }
                 | NativeCommand::Feed { .. }
                 | NativeCommand::Gather { .. }
                 | NativeCommand::Fish { .. }
@@ -418,7 +419,8 @@ impl ActivityDisplayCursor {
             | NativeCommand::Cancel { .. }
             | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::InspectInventory { .. }
-            | NativeCommand::InspectActivities { .. } => {
+            | NativeCommand::InspectActivities { .. }
+            | NativeCommand::Handover { .. } => {
                 return Err(ExecutionError::UnsupportedFamily);
             }
         };

@@ -46,6 +46,7 @@ mod person_editor;
 mod preview;
 mod recall;
 mod save_access;
+mod trade;
 mod view;
 
 const REQUEST_LIMIT: usize = 4096;
@@ -150,6 +151,7 @@ pub(crate) fn router(
         .route("/api/known-places", post(known_places::list))
         .route("/api/inventory/bindings", post(inventory::bindings))
         .route("/api/inventory", post(inventory::page))
+        .route("/api/trade", post(trade::read))
         .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))
         .route("/api/memories", post(recall::recollections))

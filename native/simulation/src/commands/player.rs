@@ -17,6 +17,7 @@ pub enum RuntimePlayerCommand<'a> {
     Cancel(Option<&'a str>),
     Gather { target: &'a str, tool: Option<&'a str>, mode: Option<GatheringMode> },
     Fish { target: &'a str, tool: &'a str },
+    Handover { target: &'a str, gift: &'a crate::handover::GiftIntent },
     Craft { recipe: &'a str },
     Say {
         text: &'a JsText,
@@ -54,6 +55,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } | Self::Pickup { target, item: tool, .. } => target.len() + tool.len(),
             Self::Craft { recipe } => recipe.len(),
+            Self::Handover { target, gift } => target.len() + gift.retained_text_bytes(),
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
             Self::TendFire { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
@@ -92,6 +94,9 @@ impl RuntimePlayerCommand<'_> {
         }
         if let Self::Status { target, definition, operation, facing } = self {
             return bind_status(id, actor, target, definition, operation, facing);
+        }
+        if let Self::Handover { target, gift } = self {
+            return bind_gift(id, actor, target, gift);
         }
         if let Self::InspectItem { item, container, expected_revision } = self {
             return bind_inspection(id, actor, item, container, expected_revision);
@@ -178,7 +183,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } | Self::Handover { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => ("eat", None, None, None, Some(item), None),
@@ -299,7 +304,7 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::Follow { .. } | Self::Handover { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },
@@ -316,6 +321,38 @@ impl RuntimePlayerCommand<'_> {
         };
         Ok((command, signature))
     }
+}
+
+fn bind_gift(
+    id: &str,
+    actor: &str,
+    target: &str,
+    gift: &crate::handover::GiftIntent,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Binding<'a> {
+        actor_id: &'a str,
+        #[serde(flatten)]
+        gift: &'a crate::handover::GiftIntent,
+        human_initiated: bool,
+        id: &'a str,
+        target_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid() || !crate::values::is_safe_record_id(target) || !gift.valid() {
+        return Err(serde::ser::Error::custom("Invalid handover binding."));
+    }
+    let input = Binding { actor_id: actor, gift, human_initiated: true, id, target_id: target, kind: "handover" };
+    let encoding = CommandEncoding::from_ordered(&input, 6 + usize::from(gift.offered_items.is_some()) * 2
+        + usize::from(gift.offer_id.is_some()) * 2)?;
+    Ok((NativeCommand::Handover {
+        envelope: headers.envelope(encoding),
+        target_id: target.to_owned(),
+        gift: gift.clone(),
+    }, json_record(&input)?))
 }
 
 fn bind_follow(

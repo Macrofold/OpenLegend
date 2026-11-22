@@ -36,6 +36,7 @@ mod inspect_item;
 mod feeding;
 mod gathering;
 mod natural_contact;
+mod handover;
 
 pub(crate) struct NativeMovementInput {
     pub binding: crate::native_response::NativeLocomotion,
@@ -93,6 +94,13 @@ enum Phase {
     HearthRoutes,
     HearthNavigation,
     CookReach,
+    GiftSight,
+    GiftSightBack,
+    GiftReach,
+    GiftHearing,
+    GiftHearingBack,
+    GiftApply,
+    GiftPrivate,
     ContactReach,
     ContactRoute,
     FeedApproach,
@@ -167,6 +175,9 @@ pub(crate) struct CommandCursor {
     personal: Option<PersonalTask>,
     event: Option<String>,
     after_event: Phase,
+    gift_notice: Option<handover::GiftNotice>,
+    gift_sound: Option<crate::reception::SoundBatch>,
+    gift_counterpart_notice: bool,
     pending_release: Option<String>,
     sight: Option<crate::reception::SightBatch>,
     status_was_active: bool,
@@ -251,6 +262,9 @@ impl CommandCursor {
             personal: None,
             event: None,
             after_event: Phase::Tail,
+            gift_notice: None,
+            gift_sound: None,
+            gift_counterpart_notice: false,
             pending_release: None,
             sight: None,
             status_was_active: false,
@@ -271,6 +285,7 @@ impl CommandCursor {
         self.sight
             .as_ref()
             .map(|sight| sight.queries())
+            .or_else(|| self.gift_sound.as_ref().map(|sound| sound.queries()))
             .or_else(|| self.contact_route.as_ref().map(|route| route.queries()))
             .or_else(|| self.follow.as_ref().and_then(|cursor| cursor.queries()))
             .or(self.queries.as_ref())
@@ -712,6 +727,12 @@ impl CommandCursor {
                             }
                             return self.drive(core, None);
                         }
+                        if matches!(self.phase, Phase::GiftSight | Phase::GiftSightBack) {
+                            return self.accept_gift_sight(core, answer);
+                        }
+                        if matches!(self.phase, Phase::GiftHearing | Phase::GiftHearingBack) {
+                            return self.accept_gift_hearing(core, answer);
+                        }
                         if matches!(self.phase, Phase::FireSight) {
                             return self.fire_sight(core, answer);
                         }
@@ -782,6 +803,9 @@ impl CommandCursor {
                             Phase::HearthGeometry => return self.hearth_geometry(core, answer),
                             Phase::HearthRoutes => return self.hearth_routes(core, answer),
                             Phase::HearthNavigation => return self.hearth_navigation(core, answer),
+                            Phase::GiftReach => return self.accept_gift_reach(
+                                core, answer.sight.pop().ok_or(ExecutionError::Invariant)?,
+                            ),
                             Phase::CastLine => return self.cast_line(core, answer),
                             Phase::CookReach => return self.cook_reach(
                                 core, answer.sight.pop().ok_or(ExecutionError::Invariant)?,
@@ -964,7 +988,7 @@ impl CommandCursor {
                         && matches!(
                             self.command,
                             NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
-                                | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
+                                | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. } | NativeCommand::Handover { .. }
                         )
                     {
                         self.reserve(128)?;
@@ -997,6 +1021,11 @@ impl CommandCursor {
                         continue;
                     }
                     match &self.command {
+                        NativeCommand::Handover { .. } => {
+                            if self.start_gift(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
                         NativeCommand::InspectInventory { selected: Some(_), .. } => {
                             if let Some(event) = self.inspect_item(core, &actor_id)? {
                                 return Ok(Progress::Occurrence(event));
@@ -2208,6 +2237,12 @@ impl CommandCursor {
                     )?);
                     self.phase = Phase::Conditions;
                 }
+                Phase::GiftApply => {
+                    if let Some(event) = self.apply_gift(core)? { return Ok(Progress::Occurrence(event)); }
+                }
+                Phase::GiftPrivate => {
+                    if let Some(event) = self.gift_private_event(core)? { return Ok(Progress::Occurrence(event)); }
+                }
                 Phase::Conditions => return Err(ExecutionError::UnfinishedOccurrence),
                 Phase::Done => {
                     let result = self.outcome.take().ok_or(ExecutionError::Invariant)?;
@@ -2237,6 +2272,11 @@ impl CommandCursor {
                 Phase::Support
                 | Phase::Probe
                 | Phase::FeedReach
+                | Phase::GiftSight
+                | Phase::GiftSightBack
+                | Phase::GiftReach
+                | Phase::GiftHearing
+                | Phase::GiftHearingBack
                 | Phase::GatherSight
                 | Phase::CastSight
                 | Phase::CastLine

@@ -74,7 +74,6 @@ impl CoreMutation<'_> {
         item: &str,
         requested: Option<u64>,
     ) -> Result<Option<String>, ExecutionError> {
-        let installed = self.state.installed.clone();
         let entities = &self.state.physical.entities;
         let body = entities.get(actor).ok_or(ExecutionError::MissingActor)?;
         let Some(ground) = pickup_pile(self.state, body, pile) else {
@@ -86,20 +85,49 @@ impl CoreMutation<'_> {
         if !selected.admits_quantity(requested) {
             return Ok(None);
         }
-        let before = selected.lot.quantity;
-        let quantity = requested.unwrap_or(before);
+        let quantity = requested.unwrap_or(selected.lot.quantity);
+        let result = self.transfer_direct_loose_lot(pile, actor, item, quantity, "pickup")?;
+        if result.is_some() && self.state.inventory.has_children(pile) {
+            self.journal.physical.change(PhysicalChange::ObservationParameters {
+                entity_id: pile.into(), request_detail: true,
+            })?;
+        }
+        Ok(result)
+    }
+
+    /// A caller must prove access, availability, allowed source/container and
+    /// handling before it enters this single direct custody operation. Split,
+    /// merge, exact lineage, revisions and inverse storage belong here.
+    pub(crate) fn transfer_direct_loose_lot(
+        &mut self, source: &str, actor: &str, item: &str, quantity: u64, cause: &'static str,
+    ) -> Result<Option<String>, ExecutionError> {
+        let installed = self.state.installed.clone();
+        let entities = &self.state.physical.entities;
+        let body = entities.get(actor).ok_or(ExecutionError::MissingActor)?;
+        let selected = entities.get(item).ok_or(ExecutionError::MissingEntity)?;
+        let selected_lot = selected.item.as_ref().ok_or(ExecutionError::Invariant)?;
+        let before = selected_lot.quantity;
+        if quantity == 0 || quantity > before || source == actor || !self.state.inventory.has_direct_item(entities, source, selected) {
+            return Err(ExecutionError::Invariant);
+        }
+        let owned_source = entities.get(source).is_some_and(|entity| entity.actor.is_some());
         let definition = installed
             .retained
             .items
-            .get(&selected.lot.definition_pin.id)
+            .get(&selected_lot.definition_pin.id)
             .ok_or(ExecutionError::Invariant)?;
-        let merge = if partitionable_stock(selected.entity, definition) {
+        let held = self.state.physical.holds.quantity(item);
+        if quantity > before.saturating_sub(held) {
+            return Ok(None);
+        }
+        let merge = if held == 0 && partitionable_stock(selected, definition) {
             let bound = body.actor.as_ref().and_then(|body| body.action.as_ref());
             self.state
                 .inventory
                 .children(entities, actor, false)
                 .find(|target| {
-                    compatible_lots(selected.entity, target, definition)
+                    compatible_lots(selected, target, definition)
+                        && self.state.physical.holds.quantity(&target.id) == 0
                         && bound.is_none_or(|action| {
                             action.item_id.as_deref() != Some(&target.id)
                                 && action.food_preparation.as_ref().is_none_or(|meal| {
@@ -122,15 +150,15 @@ impl CoreMutation<'_> {
             .reserve(item.len() + merge.map_or(0, |target| target.id.len()) + 32)?;
         let receiver = merge.map(|target| target.id.clone());
         let moving = if quantity < before {
-            let split = self.create_direct_stock(pile, definition, quantity, Some(item))?;
+            let split = self.create_direct_stock(source, definition, quantity, Some(item))?;
             self.transfer_activity_sources(item, &split, before, quantity)?;
             self.debit_inventory_lot(
-                pile,
+                source,
                 item,
                 quantity,
                 LotDebit {
-                    cause: "pickup",
-                    custodian: None,
+                    cause,
+                    custodian: owned_source.then_some(source),
                     target: Some((LineageKind::Split, &split)),
                 },
             )?;
@@ -138,15 +166,7 @@ impl CoreMutation<'_> {
         } else {
             item.to_owned()
         };
-        self.relocate_ground_lot(actor, pile, &moving)?;
-        if self.state.inventory.has_children(pile) {
-            self.journal
-                .physical
-                .change(PhysicalChange::ObservationParameters {
-                    entity_id: pile.into(),
-                    request_detail: true,
-                })?;
-        }
+        self.relocate_direct_loose_lot(actor, source, &moving)?;
         if let Some(receiver) = receiver {
             self.transfer_activity_sources(&moving, &receiver, quantity, quantity)?;
             self.grow_direct_lot(actor, &receiver, quantity, false)?;
@@ -155,7 +175,7 @@ impl CoreMutation<'_> {
                 &moving,
                 quantity,
                 LotDebit {
-                    cause: "pickup",
+                    cause,
                     custodian: Some(actor),
                     target: Some((LineageKind::Merge, &receiver)),
                 },
@@ -179,7 +199,7 @@ impl CoreMutation<'_> {
             .map_err(ExecutionError::Activity)
     }
 
-    fn relocate_ground_lot(
+    fn relocate_direct_loose_lot(
         &mut self,
         actor: &str,
         pile: &str,
@@ -196,24 +216,21 @@ impl CoreMutation<'_> {
         let body = entities
             .resolve(destination)
             .ok_or(ExecutionError::Invariant)?;
-        let Some(pile_body) = pickup_pile(self.state, body, pile) else {
-            return Err(ExecutionError::Invariant);
-        };
-        let Some(selected) = pickup_lot(self.state, pile_body, item) else {
-            return Err(ExecutionError::Invariant);
-        };
+        let pile_body = entities.resolve(source).ok_or(ExecutionError::Invariant)?;
+        let selected = entities.resolve(child).ok_or(ExecutionError::Invariant)?;
+        let selected_lot = selected.item.as_ref().ok_or(ExecutionError::Invariant)?;
         if !self
             .state
             .inventory
-            .has_direct_item(entities, pile, selected.entity)
+            .has_direct_item(entities, pile, selected)
         {
             return Err(ExecutionError::Invariant);
         }
-        let Some(Placement::Contained { revision, .. }) = &selected.entity.placement else {
+        let Some(Placement::Contained { revision, .. }) = &selected.placement else {
             return Err(ExecutionError::Invariant);
         };
         let next_placement = next_revision(*revision)?;
-        let item_before = selected.lot.revision;
+        let item_before = selected_lot.revision;
         let next_item = next_revision(item_before)?;
         let source_before = pile_body.inventory_revision;
         let source_after = next_revision(source_before.unwrap_or_default())?;

@@ -130,6 +130,7 @@ impl InstalledWorld {
 /// All physical and arithmetic mutation targets, once. This owner does not
 /// derive Clone and does not expose a bridge-visible writable-world getter.
 pub(crate) struct PhysicalState {
+    pub gifts: crate::handover::GiftState,
     pub participation: crate::participation::ParticipationState,
     pub coaching: crate::install::ClosedCoachingState,
     pub header: WorldHeader,

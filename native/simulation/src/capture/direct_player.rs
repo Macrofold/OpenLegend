@@ -386,6 +386,7 @@ pub struct PlayerObservedBody<'a> {
     pub attention_preference: Option<bool>,
     pub communication_id: Option<&'a str>,
     pub trade_eligible: bool,
+    pub gift_heads: &'a [crate::handover::GiftHead],
     current: &'a [Arc<CapturedCurrentFacet>],
 }
 
@@ -398,6 +399,10 @@ impl<'a> PlayerObservedBody<'a> {
             .checked_add(self.name.heap_bytes()?.checked_mul(2)?)?
             .checked_add(self.known_name.map_or(0, JsText::storage_bytes))?
             .checked_add(self.nickname.map_or(0, JsText::storage_bytes))?;
+        let header = self.gift_heads.iter().try_fold(header, |bytes, gift| {
+            bytes.checked_add(std::mem::size_of::<crate::handover::GiftHead>())?
+                .checked_add(gift.id.len())
+        })?;
         self.facets().try_fold(header, |bytes, facet| {
             bytes.checked_add(facet.value.heap_bytes()?.checked_mul(2)?)
         })
@@ -457,6 +462,7 @@ impl<'a> PlayerPerception<'a> {
                 attention_preference: player.attention_preference,
                 communication_id: player.communication_id.as_deref(),
                 trade_eligible: player.trade_eligible,
+                gift_heads: &player.gift_heads,
                 current,
             })
         })

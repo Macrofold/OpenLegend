@@ -92,7 +92,7 @@ struct TradeSummary {
     person_id: String,
     person_name: JsText,
     labels: TradeLabels,
-    offers: [(); 0],
+    offers: Vec<openlegend_simulation::handover::GiftHead>,
     revision: String,
 }
 
@@ -425,13 +425,11 @@ fn trade_summary(
     references: &PlayerReferences<'_>,
     reader: &str,
 ) -> Result<TradeSummary, SceneError> {
-    // Capture already verified no positive held terms. Issuing this empty
-    // offer summary never reads the other person's stock or supplements it.
-    let disclose = references.personal_source(&("trade-disclosures", row.source_id, [(); 0]))?;
+    let disclose = references.personal_source(&("trade-disclosures", row.source_id, row.gift_heads))?;
     let revision = references.personal_source(&(
         "trade-reader",
         row.source_id,
-        [(); 0],
+        row.gift_heads,
         [(); 0],
         reader,
         disclose,
@@ -443,7 +441,7 @@ fn trade_summary(
         labels: TradeLabels {
             title: policy.trade_title.clone(),
         },
-        offers: [],
+        offers: row.gift_heads.to_vec(),
         revision,
     })
 }

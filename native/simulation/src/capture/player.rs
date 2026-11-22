@@ -39,11 +39,17 @@ pub(super) struct CapturedPlayerBody {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(super) communication_id: Option<String>,
     pub(super) trade_eligible: bool,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub(super) gift_heads: Vec<crate::handover::GiftHead>,
 }
 impl CapturedPlayerBody {
     pub(super) fn heap_bytes(&self) -> Option<usize> {
         self.communication_id
             .heap_bytes()?
+            .checked_add(self.gift_heads.iter().try_fold(
+                self.gift_heads.capacity().checked_mul(std::mem::size_of::<crate::handover::GiftHead>())?,
+                |bytes, gift| bytes.checked_add(gift.id.capacity()),
+            )?)?
             .checked_add(
                 self.context
                     .encounter
@@ -61,6 +67,7 @@ impl CapturedPlayerBody {
 pub(super) struct PlayerReadScope<'a> {
     state: &'a SimulationState,
     pub(super) actor: &'a crate::state::Entity,
+    gifts: crate::handover::ReceivedGifts,
     attention: BTreeMap<&'a str, bool>,
     _reservation: ByteReservation,
 }
@@ -85,17 +92,7 @@ impl<'a> PlayerReadScope<'a> {
         {
             return Err(ExecutionError::UnsupportedFamily);
         }
-        // Source trade knowledge is acquired awareness, not the live offer map.
-        // Complete coverage proves the empty supported branch. Never turn a
-        // cold/partial collection or unconverted agreement into an empty menu.
-        if let Some(collection) = state
-            .experience
-            .optional_collection(actor_id, PersonalSourceKind::Awareness)?
-        {
-            if collection.may_have_current_trade_terms()? {
-                require_supported_known_agreement_read(state, actor_id)?;
-            }
-        }
+        let gifts = crate::handover::ReceivedGifts::from_player(state, actor_id, budget)?;
         let attention = state
             .reception
             .perception_evidence
@@ -130,6 +127,7 @@ impl<'a> PlayerReadScope<'a> {
             state,
             actor,
             attention: selected,
+            gifts,
             _reservation: reservation,
         })
     }
@@ -188,6 +186,10 @@ impl<'a> PlayerReadScope<'a> {
                 0
             })
             .ok_or(ExecutionError::Capacity)?;
+        let bytes = self.gifts.with_party(id).try_fold(bytes, |bytes, gift| {
+            bytes.checked_add(std::mem::size_of::<crate::handover::GiftHead>())?
+                .checked_add(gift.offer.id.len())
+        }).ok_or(ExecutionError::Capacity)?;
         let mut reservation = budget.reserve(bytes)?;
         let captured = CapturedPlayerBody {
             context: ContextActionWitness {
@@ -209,7 +211,11 @@ impl<'a> PlayerReadScope<'a> {
             },
             attention_preference: self.attention.get(id).copied(),
             communication_id: communication.map(str::to_owned),
-            trade_eligible: other.is_some_and(|actor| actor.alive)
+            gift_heads: self.gifts.with_party(id).map(|gift| crate::handover::GiftHead {
+                id: gift.offer.id.clone(), revision: gift.offer.revision,
+            }).collect(),
+            trade_eligible: self.state.administration.authorship.player_account_ids.contains_key(id)
+                && other.is_some_and(|actor| actor.alive)
                 && self
                     .state
                     .installed

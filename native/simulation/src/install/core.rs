@@ -310,6 +310,7 @@ fn assemble_selected_core(
         &mut import, &mut children, retained, &schema, &activity, (&content.profile.id, content.profile.version),
         &meanings.manifest.recipe_families, spatial.max_extent, budget,
     )?;
+    physical.gifts.validate_definitions(&retained, budget)?;
     crate::flight::validate_corridors(
         &retained.flight_corridors,
         maximum_candidates,

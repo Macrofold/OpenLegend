@@ -138,6 +138,20 @@ struct CommandInput {
     effect_operation: Option<StatusOperation>,
     #[serde(rename = "facing", default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     facing_heading: Option<f64>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    handover_operation: Option<openlegend_simulation::handover::GiftOperation>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    offered_items: Option<[openlegend_simulation::handover::GiftSelection; 1]>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    requested_items: Option<[(); 0]>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    offer_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    expected_offer_revision: Option<u64>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -257,6 +271,7 @@ enum CommandKind {
     Unequip,
     #[serde(rename = "inspect-inventory")]
     InspectItem,
+    Handover,
 }
 
 struct PreparedRequest {
@@ -264,6 +279,7 @@ struct PreparedRequest {
     fingerprint: String,
     recovery_fingerprint: String,
     request: CommandRequest,
+    gift: Option<openlegend_simulation::handover::GiftIntent>,
     epoch: u64,
     _custody: ByteReservation,
 }
@@ -708,7 +724,19 @@ impl CommandRequest {
         {
             return Err(AccessError::Forbidden.into());
         }
+        if !matches!(command.kind, CommandKind::Handover)
+            && (command.handover_operation.is_some() || command.offered_items.is_some()
+                || command.requested_items.is_some() || command.offer_id.is_some()
+                || command.expected_offer_revision.is_some())
+        {
+            return Err(AccessError::Forbidden.into());
+        }
         match command.kind {
+            CommandKind::Handover
+                if command.position.is_none() && command.known_place.is_none()
+                    && command.gathering_mode.is_none() && command.expected_action_id.is_none()
+                    && command.item_id.is_none() && command.target_id.as_deref().is_some_and(id)
+                    && command.gift().is_some_and(|gift| gift.valid()) => Ok(()),
             CommandKind::InspectItem
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -898,9 +926,22 @@ impl CommandRequest {
             id: format!("gameplay:{}:{}:{id}", scope.account_id, self.command_epoch),
             fingerprint,
             recovery_fingerprint,
+            gift: self.command.gift(),
             request: self,
             epoch,
             _custody: custody,
+        })
+    }
+}
+
+impl CommandInput {
+    fn gift(&self) -> Option<openlegend_simulation::handover::GiftIntent> {
+        Some(openlegend_simulation::handover::GiftIntent {
+            handover_operation: self.handover_operation?,
+            offered_items: self.offered_items.clone(),
+            requested_items: self.requested_items,
+            offer_id: self.offer_id.clone(),
+            expected_offer_revision: self.expected_offer_revision,
         })
     }
 }
@@ -914,6 +955,10 @@ impl PreparedRequest {
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
         match input.kind {
+            CommandKind::Handover => Ok(RuntimePlayerCommand::Handover {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                gift: self.gift.as_ref().ok_or(StoreError::InvalidRecord)?,
+            }),
             CommandKind::InspectItem => Ok(RuntimePlayerCommand::InspectItem {
                 item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 container: input.container_id.as_deref().ok_or(StoreError::InvalidRecord)?,

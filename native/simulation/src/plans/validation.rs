@@ -83,6 +83,7 @@ pub(crate) fn valid_command(
                     .is_none_or(|v| world.acoustics.value().volume(v).is_some())
         }
         NativeCommand::Outing { .. }
+        | NativeCommand::Handover { .. }
         | NativeCommand::TendFire { .. }
         | NativeCommand::Feed { .. }
         | NativeCommand::Gather { .. }

@@ -701,7 +701,9 @@ impl PhysicalJournal {
                 }
                 Undo::ItemHoldAdded { id, .. } => { claims.insert(id.as_str(), None); }
                 Undo::ItemHoldEnded { key, hold, .. } => { claims.insert(key.as_str(), Some(&**hold)); }
-                Undo::ExitExposure { .. } => {}
+                // Pending consent is an inline setting in the canonical
+                // world row, written by the parent settings encoder.
+                Undo::ExitExposure { .. } | Undo::Gift(_) => {}
                 Undo::CoachingPresence { .. } => coaching = true,
                 Undo::RemovedPhysicalRoot(before) => {
                     // The transfer revised direct contents before taking the

@@ -231,11 +231,11 @@ export function offerRecipientProblem(
   recipient: Entity | undefined,
 ): { code: string; message: string } | null {
   if (!recipient || recipient.id === offerer.id || !seesEntity(world, offerer, recipient))
-    return { code: 'not-visible', message: 'Choose a person you can currently see.' };
+    return { code: 'not-visible', message: BASE_HANDOVER.copy.choosePerson };
   if (!able(recipient) || !canHandleItems(world, recipient) || !canHandleItems(world, offerer))
-    return { code: 'unavailable', message: 'That person cannot take items now.' };
+    return { code: 'unavailable', message: BASE_HANDOVER.copy.cannotTake };
   if (!canReachEntity(world, offerer, recipient, world.itemHandling.reach))
-    return { code: 'out-of-reach', message: "Move within arm's reach of that person." };
+    return { code: 'out-of-reach', message: BASE_HANDOVER.copy.offerReach };
   return null;
 }
 function grantedContainer(world: WorldState, itemId: string): boolean {
@@ -417,7 +417,7 @@ function notice(
     if (!delivered || (ended && !previous)) continue;
     const snapshot = itemOfferSnapshot(world, offer, id, ended ? type : undefined);
     const text = automatic
-      ? `${type === 'offer-expired' ? 'The stated offer deadline has passed.' : 'Your previously offered terms are no longer available.'} ${describeItemOffer(world, snapshot)}`
+      ? `${type === 'offer-expired' ? BASE_HANDOVER.copy.deadline : BASE_HANDOVER.copy.lapsed} ${describeItemOffer(world, snapshot)}`
       : BASE_HANDOVER.text.participantEvent(source!.id, verb, describeItemOffer(world, snapshot));
     const data = {
       offerId: offer.id,
@@ -503,25 +503,25 @@ export function prepareItemOffer(
     if (prior.revision !== command.expectedOfferRevision)
       return outcome(false, 'stale-offer', BASE_HANDOVER.text.changed);
     if (world.simTime >= prior.expiresAt)
-      return outcome(false, 'expired', 'That offer has expired.');
+      return outcome(false, 'expired', BASE_HANDOVER.copy.expired);
   }
   const items: ItemInstance[] = [];
   for (const selection of command.offered) {
     const item = itemFor(world, selection.itemId),
       definition = item && world.itemDefinitions[item.definitionId];
     if (!item || !definition || !accessiblePossession(world, actor.id, item.id))
-      return outcome(false, 'item-unavailable', 'Choose your accessible possessions.');
+      return outcome(false, 'item-unavailable', BASE_HANDOVER.copy.ownPossessions);
     if (!matchingSelection(world, item, selection))
-      return outcome(false, 'stale', 'An item changed. Review the current offer.');
+      return outcome(false, 'stale', BASE_HANDOVER.copy.reviewItem);
     if (definition.portable !== true)
-      return outcome(false, 'not-portable', 'This object cannot be handed over.');
+      return outcome(false, 'not-portable', BASE_HANDOVER.copy.notPortable);
     if (selection.quantity > availableItemQuantity(world, item.id))
-      return outcome(false, 'quantity', 'You do not have that many free to offer.');
+      return outcome(false, 'quantity', BASE_HANDOVER.copy.quantity);
     if (
       selection.quantity !== item.quantity &&
       (item.individuality === 'individual' || entityGet(world.entities, item.id)?.container)
     )
-      return outcome(false, 'whole-object', 'Offer the whole object.');
+      return outcome(false, 'whole-object', BASE_HANDOVER.copy.wholeObject);
     const busy = inventoryWorkReason(world, actor.id, item.id);
     if (busy) return outcome(false, 'in-use', busy);
     if (grantedContainer(world, item.id))
@@ -594,7 +594,7 @@ export function prepareItemOffer(
     if (promised(id) || ancestors.some((entity) => promised(entity.id)) || promisedDescendant(id))
       return requested.some((lot) => lot.itemId === id)
         ? outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable)
-        : outcome(false, 'already-offered', 'These items are already being offered.');
+        : outcome(false, 'already-offered', BASE_HANDOVER.copy.alreadyOffered);
   }
   const admission = socialOfferAdmissionProblem(
     world,
@@ -662,19 +662,20 @@ export function itemOfferReplyProblem(
   if (!offer || !own) {
     const known = rememberedOfferExit(world, actor.id, command);
     if (known) return;
-    return outcome(false, 'no-offer', 'These offer terms are no longer available.');
+    return outcome(false, 'no-offer', BASE_HANDOVER.copy.unavailable);
   }
   if (offer.revision !== command.expectedOfferRevision)
     return outcome(false, 'stale-offer', BASE_HANDOVER.text.changed);
   if (command.operation !== 'accept') return;
-  if (world.simTime >= offer.expiresAt) return outcome(false, 'expired', 'That offer has expired.');
+  if (world.simTime >= offer.expiresAt)
+    return outcome(false, 'expired', BASE_HANDOVER.copy.expired);
   const other = entityGet(world.entities, offer.offererId);
   if (!other || !seesEntity(world, actor, other) || !seesEntity(world, other, actor))
-    return outcome(false, 'not-visible', 'You and the offerer must be able to see each other.');
+    return outcome(false, 'not-visible', BASE_HANDOVER.copy.mutualSight);
   if (!canHandleItems(world, actor))
     return outcome(false, 'unavailable', 'You cannot take items now.');
   if (!canReachEntity(world, actor, other, world.itemHandling.reach))
-    return outcome(false, 'out-of-reach', "Move within arm's reach of the offerer to take it.");
+    return outcome(false, 'out-of-reach', BASE_HANDOVER.copy.acceptReach);
   if (!able(actor) || !offerStillHeld(world, offer))
     return outcome(
       false,
@@ -800,11 +801,9 @@ export function executeHandover(
     return outcome(
       true,
       'offered',
-      'Offered ' +
-        describeItemOffer(world, offer) +
-        '. Nothing moves unless they accept within ' +
-        world.socialOfferPolicy!.pendingSeconds / 60 +
-        ' game minutes; you can withdraw it.',
+      BASE_HANDOVER.copy.proposed
+        .replace('{terms}', () => describeItemOffer(world, offer))
+        .replace('{minutes}', String(world.socialOfferPolicy!.pendingSeconds / 60)),
     );
   }
   const problem = itemOfferReplyProblem(world, actor, command, batch.permissions);
@@ -847,7 +846,7 @@ export function executeHandover(
     return outcome(
       true,
       withdrawn ? 'withdrawn' : 'declined',
-      withdrawn ? 'Offer withdrawn; nothing moved.' : 'Offer declined; nothing moved.',
+      withdrawn ? BASE_HANDOVER.copy.withdrawn : BASE_HANDOVER.copy.declined,
     );
   }
   const carrying = carryingOffer(world, offer);
@@ -918,7 +917,7 @@ export function executeHandover(
       'accepted-offer',
       offer.requested.length
         ? BASE_HANDOVER.text.exchanged(describeItemOffer(world, offer))
-        : 'Took ' + describeItemOffer(world, offer) + '.',
+        : BASE_HANDOVER.copy.accepted.replace('{terms}', () => describeItemOffer(world, offer)),
     ),
     itemId,
   };

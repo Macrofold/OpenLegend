@@ -32,6 +32,8 @@ pub(crate) use base_outings::{
     OutingStatus as InstalledOutingStatus, inspect as inspect_selected_outing,
 };
 
+#[path = "../../../packages/domain/src/worlds/base/native/handover.rs"]
+pub(crate) mod base_handover;
 #[path = "../../../packages/domain/src/worlds/base/native/observed.rs"]
 pub mod base_observed;
 

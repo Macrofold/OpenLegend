@@ -185,6 +185,11 @@ pub(crate) enum NativeCommand {
         envelope: CommandEnvelope,
         parameters: OutingParameters,
     },
+    Handover {
+        envelope: CommandEnvelope,
+        target_id: String,
+        gift: crate::handover::GiftIntent,
+    },
     Move {
         envelope: CommandEnvelope,
         destination: RecordedSurfacePoint,
@@ -431,6 +436,27 @@ fn hearth_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     })
 }
 
+fn gift_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Input {
+        #[serde(rename = "type")]
+        _kind: String,
+        #[serde(flatten)] headers: CommandHeaders,
+        target_id: String,
+        #[serde(flatten)] gift: crate::handover::GiftIntent,
+    }
+    let input: Input = serde_json::from_str(raw)?;
+    if !input.headers.valid() || !is_safe_record_id(&input.target_id) || !input.gift.valid() {
+        return Err(serde::de::Error::custom("Invalid handover binding."));
+    }
+    Ok(NativeCommand::Handover {
+        envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
+        target_id: input.target_id,
+        gift: input.gift,
+    })
+}
+
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let raw = Box::<serde_json::value::RawValue>::deserialize(deserializer)?;
@@ -448,6 +474,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         }
         if tag.kind == "follow" {
             return follow_input(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if tag.kind == "handover" {
+            return gift_input(raw.get()).map_err(serde::de::Error::custom);
         }
         if tag.kind == "tend-fire" {
             return fire_care_input(raw.get()).map_err(serde::de::Error::custom);
@@ -769,6 +798,7 @@ impl NativeCommand {
     fn envelope_mut(&mut self) -> &mut CommandEnvelope {
         match self {
             Self::Outing { envelope, .. }
+            | Self::Handover { envelope, .. }
             | Self::Move { envelope, .. }
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
@@ -799,6 +829,7 @@ impl NativeCommand {
     pub(crate) fn envelope(&self) -> &CommandEnvelope {
         match self {
             Self::Outing { envelope, .. }
+            | Self::Handover { envelope, .. }
             | Self::Move { envelope, .. }
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
@@ -824,6 +855,7 @@ impl NativeCommand {
         match self {
             Self::Outing { .. } => crate::worlds::base_outings::travel_command_type(),
             Self::Move { .. } => "move",
+            Self::Handover { .. } => "handover",
             Self::Feed { .. } => "feed",
             Self::Gather { .. } => "gather",
             Self::Fish { .. } => "fish",

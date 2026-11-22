@@ -46,6 +46,7 @@ enum Phase {
     Work,
     Next,
     Heat,
+    Gifts,
     Done,
 }
 pub(crate) struct EndpointCursor {
@@ -58,6 +59,7 @@ pub(crate) struct EndpointCursor {
     conditions: Option<ConditionReconcileCursor>,
     work: Option<MoveAdvanceCursor>,
     heat: Option<HeatCursor>,
+    gifts: super::gifts::DueGifts,
     phase: Phase,
     next: usize,
     binding: GeometryBinding,
@@ -185,6 +187,7 @@ impl EndpointCursor {
             conditions: None,
             work: None,
             heat,
+            gifts: super::gifts::DueGifts::default(),
             phase: if rate_seconds > 0.0 {
                 Phase::Rates
             } else {
@@ -422,6 +425,12 @@ impl EndpointCursor {
                         return Ok(Progress::Occurrence(event));
                     }
                     self.heat = None;
+                    self.phase = Phase::Gifts;
+                }
+                Phase::Gifts => {
+                    if let Some(event) = self.gifts.step(core, occurrence(answer.take())?, &self.budget)? {
+                        return Ok(Progress::Occurrence(event));
+                    }
                     self.phase = Phase::Done;
                 }
                 Phase::Done => {
@@ -437,7 +446,7 @@ impl EndpointCursor {
         if self.heat.is_some() {
             Phase::Heat
         } else {
-            Phase::Done
+            Phase::Gifts
         }
     }
 }

@@ -41,6 +41,7 @@ mod foraging;
 mod heat;
 mod hearth;
 mod inventory;
+pub(crate) mod gift;
 mod item_holds;
 pub(crate) use inventory::partitionable_stock;
 pub(crate) use inventory::{OwnedDebits, can_debit_lot, can_debit_lot_after_hold};
@@ -1296,6 +1297,7 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    Gift(crate::handover::GiftUndo),
     InventoryAvailability(inventory::ContentsBefore),
     ItemHoldAdded { id: String, ordinal: u64, parent_present: bool },
     ItemHoldEnded {
@@ -1887,6 +1889,7 @@ impl PhysicalJournal {
                 Undo::AgencyIntents { entity, before } => {
                     drop(state.entities.swap_funded_intents(entity, before)?);
                 }
+                Undo::Gift(undo) => undo.revert(&mut state.gifts)?,
                 Undo::CoachingPresence { before } => {
                     state.coaching.present = before;
                 }

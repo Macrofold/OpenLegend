@@ -111,3 +111,23 @@ Focused existing kernel/catalogue checks passed again (**2 files, 23 tests**); e
 Pending proposals still live in one world-settings collection. Rebuilding its derived index after membership changes, whole-collection persistence and global expiry/reconciliation remain proportional to pending offers; [BW20](../maintainers/base-world.md#bw20--consent-aware-handover) owns that follow-through. Own inventory is still materialized before the compact six-lot choices, although preparation now happens once per inventory revision rather than once per person. The refreshed 100-person view still takes hundreds of milliseconds; [PF09](../maintainers/performance.md#pf09--population-work-follows-relevance) retains full-application profiling and capacity qualification. These measurements do not close those gates or broaden the exact one-lot-per-side family.
 
 The deferred currency, pricing scripts, credit, promises, institutional exchange and BW21 standing-reservation scope remains explicitly open under its existing owners. No old-format reader, migration or compatibility fixture was added.
+
+## Ordinary loose gifts on the stand-alone Rust server
+
+November 22, 2026. Two separately signed-in players joined the full 163-entity Main opening. The donor walked within 1.05 metres, opened the real Trade panel, selected one of two Prepared fibers and clicked Offer. The recipient opened Trade, saw the exact lot and amount, and clicked Accept. The donor kept one fiber. PostgreSQL placed one split lot in the recipient’s inventory, and repeating the acceptance request returned the original result. The same result was recovered through the authenticated command receipt after a cold reopen and resumed play.
+
+A separate run stopped the server while the exact terms were in the committed world. Both accounts came back in fresh tabs, the recipient saw the same pending lot, and a contact copied from the other account received 409. The recipient then accepted and recovered the original result after another cold reopen. Additional Withdraw and Decline commands cleared their proposals with unchanged stock.
+
+
+Offer contents come from each player's originally acquired private observations. The server checks the current account and visible contact, original offer revision and the actual stock. The world writer moves the original or split lot only after acceptance. Generic witnesses receive no exact terms. A donor trying to accept their own offer received `no-offer`. The recipient submitting a different revision received `stale-offer`.
+
+The first caller with the correct opening reached both private occurrences, then the save writer refused because the new offer undo entry lacked a save owner. The physical delta now leaves that entry with the existing world settings row. The rerun through authenticated HTTP and the independent browser clicks both passed, with normal persistence and cold recovery of the completed result. The Rust game process had no Node on its runtime path. Browser code and local model fixtures ran outside it.
+
+A disposable opening with a 12-game-second deadline expired at game second 147. The normal clock gave each party one private expiry receipt at that instant. The ordinary save removed the pending offer, both panels cleared, the stock stayed with the donor, and a late acceptance returned `no-offer`.
+
+
+In a preceding pending-world run, a local PostgreSQL statement timed out during a recognition write. A quiet retry kept saving and still stalled when reusing tabs that had remained open across shutdown. Both accounts returned successfully using fresh tabs. Automatic return through those old tabs remains unverified.
+
+The candidate uses the same current item custody and memory owners as the other supported commands. The selected branch is a single loose lot offered between two nearby active assigned players. It uses the same free-stock check as hearth work. NPC gift decisions, reciprocal terms, container transfers, remote ending, automatic notification after an unrelated stock change, and material-use offers have separate consumers and remain open. Evidence is functional and contains no speed comparison.
+
+The connected check used source tree `680935bcd33ce05e6561f71453951b9cde34ecbd` over `cc452df1f` and executable SHA-256 `5198d03937f3b16cae42b61f4ab23322295085430a5b2f474a0556b9894b3729`. Expiry used reviewed source tree `4af6995a45225d70200bdac26bedd2e4c25deab9` and executable SHA-256 `916ede12d75978fa97a896ee273840d5527d496d3120c79267d688e268a2763d`. The locked Rust build, production browser build, TypeScript and network checks passed. The completed and failed caller records remain in `nsc04-ordinary-gift-20261122`.

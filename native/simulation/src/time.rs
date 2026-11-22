@@ -12,6 +12,7 @@ pub(crate) use motion::{next_animal_review, private_motion_seconds};
 mod actions;
 pub(crate) use actions::SliceActions;
 mod endpoint;
+mod gifts;
 pub(crate) use endpoint::{EndpointAnswer, EndpointCursor, EndpointStep};
 mod input;
 mod movement;

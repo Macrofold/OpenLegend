@@ -298,7 +298,8 @@ function ItemTradeDetails({
     !!draft?.give.length &&
     [...draft.give, ...draft.receive].every(validLot) &&
     draft.give.length + draft.receive.length <= trade.maximumLots &&
-    (!draft.constructionUse || draft.give.length === 1);
+    (!draft.constructionUse || draft.give.length === 1) &&
+    (!trade.giftOnly || (!draft.prior && !draft.receive.length && !draft.constructionUse));
   function draftFrom(value?: ItemTradeView['offers'][number]): TradeDraft {
     return {
       give:
@@ -665,7 +666,7 @@ function ItemTradeDetails({
               </Button>
             </section>
           )}
-          {draft && (
+          {draft && !trade.giftOnly && (
             <details
               className="ol-trade-request-details"
               open={requestsOpen}
@@ -792,7 +793,7 @@ function ItemTradeDetails({
                     {action.reason && <p className="ol-caption">{action.reason}</p>}
                   </div>
                 ))}
-                {offer && (
+                {offer && !trade.giftOnly && (
                   <Button variant="quiet" disabled={blocked} onPress={() => begin(offer)}>
                     {labels.counter}
                   </Button>

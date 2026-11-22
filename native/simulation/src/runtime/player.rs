@@ -487,6 +487,60 @@ impl NativeWorldSession {
             .map_err(failure)
     }
 
+    /// Visit one currently permitted counterpart and its originally received
+    /// gift terms. The same synchronous lease also protects the player's
+    /// own direct stock. The callback encodes or funds any retained result.
+    pub fn with_player_gift_trade<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        mut matches: impl FnMut(&crate::capture::PlayerObservedBody<'_>) -> bool,
+        consume: impl FnOnce(crate::handover::GiftRead<'_>, &ByteBudget) -> Result<T, RuntimeError>,
+    ) -> Result<Option<T>, RuntimeError> {
+        use crate::handover::{GiftRead, GiftReadLot, ReceivedGifts};
+        self.require_active()?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        let state = &simulation.state;
+        let mut consume = Some(consume);
+        let mut result = None;
+        simulation.visit_accepted_player_contacts(account, actor, &self.budget, |body| {
+            if !body.trade_eligible || !matches(&body) {
+                return false;
+            }
+            result = Some((|| {
+                let gifts = ReceivedGifts::from_player(state, actor, &self.budget).map_err(failure)?;
+                let count = state.inventory.direct_item_count(actor);
+                let bytes = count.checked_mul(size_of::<GiftReadLot>())
+                    .and_then(|bytes| bytes.checked_add(body.gift_heads.len().checked_mul(size_of::<&crate::handover::GiftDisclosure>())?))
+                    .ok_or(CapacityError)?;
+                let _storage = self.budget.reserve(bytes)?;
+                let mut owned = Vec::with_capacity(count);
+                for entity in state.inventory.children(&state.physical.entities, actor, false) {
+                    let Some(lot) = &entity.item else { continue; };
+                    let Some(definition) = state.installed.retained.items.get(&lot.definition_pin.id) else { continue; };
+                    let whole = !crate::execution::partitionable_stock(entity, definition);
+                    let held = state.physical.holds.quantity(&entity.id);
+                    let item = crate::install::project_owned(
+                        &state.installed.retained, actor, entity, false, held,
+                    ).map_err(failure)?;
+                    if crate::handover::usable_lot(state, actor, &entity.id, item.available_quantity).is_err() {
+                        continue;
+                    }
+                    owned.push(GiftReadLot { item, description: definition.description.as_ref(), whole });
+                }
+                let other = body.source_id;
+                let all = gifts.with_party(other).collect::<Vec<_>>();
+                consume.take().expect("one accepted gift selection")(
+                    GiftRead { counterpart: body, owned: &owned, offers: &all },
+                    &self.budget,
+                )
+            })());
+            true
+        }).map_err(failure)?;
+        result.transpose()
+    }
+
     /// Match a signed current contact without reading remembered people.
     /// The callback owns the custody of anything it retains from the read.
     pub fn with_player_contacts(

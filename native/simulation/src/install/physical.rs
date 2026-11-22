@@ -228,6 +228,7 @@ pub(crate) struct PhysicalInstallation {
     pub children: WorldChildren,
 }
 pub(crate) struct PhysicalRoot {
+    pub gifts: Option<IndexMap<String, crate::handover::GiftOffer>>,
     pub header: WorldHeader,
     pub identity: IdentityState,
     pub content: InstalledContent,
@@ -379,13 +380,7 @@ pub(crate) fn read_physical_root(
         remove_optional::<Ordinal>(&mut root, "assemblyGeometryRevision")?.map(|n| n.0);
     let story_policy_revision =
         remove_optional::<Ordinal>(&mut root, "storyPolicyRevision")?.map(|n| n.0);
-    // This optional live map has no selected command/clock owner yet. A real
-    // pending offer must be refused, rather than vanish into static metadata.
-    if let Some(offers) = root.shift_remove("itemOffers") {
-        if !empty_marker(&offers, false) {
-            return Err(InstallError::CurrentFormat);
-        }
-    }
+    let gifts = remove_optional(&mut root, "itemOffers")?;
     let mut fields = IndexMap::new();
     for &(field, array) in ROOT_CHILDREN {
         let presence = match root.shift_remove(field) {
@@ -433,6 +428,7 @@ pub(crate) fn read_physical_root(
         events: present("events", true)?,
     };
     Ok(PhysicalRoot {
+        gifts,
         header,
         identity,
         content,
@@ -452,6 +448,7 @@ pub(crate) fn install_physical(
     budget: &crate::host::ByteBudget,
 ) -> Result<PhysicalInstallation, InstallError> {
     let PhysicalRoot {
+        gifts,
         header,
         identity,
         content,
@@ -574,6 +571,7 @@ pub(crate) fn install_physical(
     let holds = crate::item_holds::install(reservations, &entities, budget)?;
     Ok(PhysicalInstallation {
         state: PhysicalState {
+            gifts: crate::handover::GiftState::install(gifts, &entities, header.sim_time, budget)?,
             holds,
             participation,
             coaching,

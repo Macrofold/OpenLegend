@@ -71,7 +71,8 @@ impl CommandExposure {
                 &envelope.actor_id
             }
             NativeCommand::Say { .. } | NativeCommand::WithdrawAttempt { .. }
-            | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. } => return Ok(None),
+            | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
+            | NativeCommand::Handover { .. } => return Ok(None),
             NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. } => {
                 return Err(ExecutionError::UnsupportedFamily);

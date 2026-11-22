@@ -657,6 +657,8 @@ export interface ItemTradeSummary {
 }
 export interface ItemTradeView {
   maximumLots: number;
+  /** The selected server can offer, accept, decline and withdraw ordinary gifts. */
+  giftOnly?: true;
   scope: string;
   personId: string;
   personName: string;

@@ -136,6 +136,7 @@ pub(crate) fn encode_root_changes(
     };
     const CREATED_FIELDS: &[&str] = &[
         "nativeInterval",
+        "itemOffers",
         "archivedEventCount",
         "workState",
         "pendingNativeIntegration",
@@ -173,6 +174,7 @@ pub(crate) fn encode_root_changes(
     )
     .and_then(|n| n.checked_add(map_storage::<String, SqlCell>(2)?))
     .and_then(|n| n.checked_add("remainingSeconds".len() + "endsAt".len()))
+    .and_then(|n| n.checked_add(state.physical.gifts.storage_bytes()?))
     .ok_or_else(error)?;
     header_reservation
         .resize(bound.checked_add(extra).ok_or_else(error)?)
@@ -212,6 +214,7 @@ pub(crate) fn encode_root_changes(
         state.physical.participation.is_present(),
     );
     marker(&mut body, "outings", state.outings.is_present());
+    optional(&mut body, "itemOffers", (!state.physical.gifts.is_empty()).then_some(&state.physical.gifts))?;
     marker(
         &mut body,
         "objectLineage",
