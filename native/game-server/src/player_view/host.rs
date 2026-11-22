@@ -3,7 +3,9 @@
 
 use super::*;
 use crate::{
-    authority::Authority, player_command::PlayerCommands, player_references::PlayerReferences,
+    authority::{Authority, RequestScope},
+    player_command::PlayerCommands,
+    player_references::PlayerReferences,
     presence::Presence,
 };
 use openlegend_simulation::encoding::{json_record, sha256_hex};
@@ -16,6 +18,21 @@ pub(crate) struct ViewHostInput {
     telemetry: ViewTelemetry,
     narrator: Option<NarrationBanner>,
     custody: ByteReservation,
+}
+
+pub(crate) fn checkpoint_context(
+    scope: &RequestScope,
+    key: &str,
+) -> Result<CheckpointContext, ViewError> {
+    let mut fields = serde_json::to_value(scope.recovery_fields()).map_err(ViewError::Encoding)?;
+    let fields = fields.as_object_mut().ok_or(ViewError::Changed)?;
+    fields.shift_remove("timelineId");
+    Ok(CheckpointContext {
+        scope: key.to_owned(),
+        recovery_scope: sha256_hex(json_record(fields).map_err(ViewError::Encoding)?.as_bytes()),
+        timeline: scope.timeline_id.clone(),
+        can_load: false,
+    })
 }
 
 /// Read the live operation owners before projection. The application must
@@ -51,16 +68,7 @@ pub(crate) async fn capture_host(
             .as_bytes(),
     );
     let checkpoint = if access.can_save {
-        let mut fields = serde_json::to_value(&private).map_err(ViewError::Encoding)?;
-        let fields = fields.as_object_mut().ok_or(ViewError::Changed)?;
-        fields.shift_remove("timelineId");
-        Some(CheckpointContext {
-            scope: key.clone(),
-            recovery_scope: sha256_hex(
-                json_record(fields).map_err(ViewError::Encoding)?.as_bytes(),
-            ),
-            timeline: scope.timeline_id.clone(),
-        })
+        Some(checkpoint_context(scope, &key)?)
     } else {
         None
     };

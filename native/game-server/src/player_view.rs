@@ -27,7 +27,7 @@ mod host;
 mod patch;
 mod policy;
 pub(crate) mod profile;
-pub(crate) use host::{ViewHostInput, capture_host};
+pub(crate) use host::{ViewHostInput, capture_host, checkpoint_context};
 pub(crate) use patch::{PreviousView, ViewSelection};
 pub use policy::PlayerViewPolicy;
 use policy::{CartographyPolicy, Daylight, MapPolicy, PublicWorld, WeatherView};
@@ -111,6 +111,7 @@ pub struct CheckpointContext {
     pub scope: String,
     pub recovery_scope: String,
     pub timeline: String,
+    pub can_load: bool,
 }
 
 #[derive(Serialize, PartialEq)]
@@ -274,7 +275,7 @@ struct ViewOwned {
 
 #[derive(Clone, Copy, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-enum PauseReason {
+pub(crate) enum PauseReason {
     Away,
     Manual,
     Storage,
@@ -433,15 +434,10 @@ pub(crate) async fn prepare_view(
             if paused {
                 own.pause_action();
             }
-            let pause_reason = if matches!(host.persistence.status, PersistenceStatus::Error) {
-                Some(PauseReason::Storage)
-            } else if !paused {
-                None
-            } else if actual.manually_paused {
-                Some(PauseReason::Manual)
-            } else {
-                Some(PauseReason::Away)
-            };
+            let pause_reason = pause_reason(
+                actual,
+                matches!(host.persistence.status, PersistenceStatus::Error),
+            );
             let control = read.control_facts().map_err(runtime)?;
             let (day, hour) = clock_parts(actual.at, policy.world.offset_hours);
             let clock = ClockView {
@@ -482,10 +478,24 @@ pub(crate) async fn prepare_view(
 fn runtime(error: RuntimeError) -> ViewError {
     ViewError::World(error.into())
 }
-fn clock_parts(seconds: f64, offset: f64) -> (i64, f64) {
+pub(crate) fn clock_parts(seconds: f64, offset: f64) -> (i64, f64) {
     let local = seconds + offset * 3600.0;
     let in_day = ((local % 86400.0) + 86400.0) % 86400.0;
     (((local / 86400.0).floor() as i64) + 1, in_day / 3600.0)
+}
+pub(crate) fn pause_reason(
+    actual: openlegend_simulation::runtime::RuntimeClock,
+    storage_failed: bool,
+) -> Option<PauseReason> {
+    if storage_failed {
+        Some(PauseReason::Storage)
+    } else if !actual.paused {
+        None
+    } else if actual.manually_paused {
+        Some(PauseReason::Manual)
+    } else {
+        Some(PauseReason::Away)
+    }
 }
 fn history(policy: &PublicWorld, seconds: f64) -> Option<String> {
     policy.history_template.as_ref().map(|template| {

@@ -5,7 +5,7 @@ use super::{PlayerRoutes, access_failure, busy, json, json_response, refusal, sc
 use crate::authority::{AccessError, AuthorizedScope, Capability};
 use crate::store::{
     CommitError, StoreError,
-    checkpoint::{CaptureError, CheckpointCursor, CheckpointSettings},
+    checkpoint::{CaptureError, CheckpointCursor, CheckpointSettings, CreationReceipt},
 };
 use crate::world::WorldError;
 use axum::extract::{Request, State};
@@ -34,6 +34,38 @@ struct CatalogRequest {
 #[serde(deny_unknown_fields)]
 struct CheckpointId {
     id: Uuid,
+}
+
+#[derive(Deserialize)]
+#[serde(
+    tag = "operation",
+    rename_all = "kebab-case",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+enum ReceiptRequest {
+    Create {
+        request_id: Uuid,
+        label: String,
+        timeline: String,
+    },
+}
+
+#[derive(Serialize)]
+struct ReceiptResponse {
+    ok: bool,
+    scope: String,
+    status: CreationReceipt,
+    message: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    result: Option<ResultMessage>,
+}
+
+#[derive(Serialize)]
+struct ResultMessage {
+    ok: bool,
+    code: &'static str,
+    message: &'static str,
 }
 
 #[derive(Serialize)]
@@ -171,6 +203,54 @@ pub(super) async fn delete(State(state): State<PlayerRoutes>, request: Request) 
             ok: true,
             message: "Save deleted.",
             autosaves: None,
+        })
+    })
+}
+
+pub(super) async fn receipt(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    let call = match operation::<ReceiptRequest>(&state, request).await {
+        Ok(call) => call,
+        Err(error) => return error,
+    };
+    let ReceiptRequest::Create {
+        request_id,
+        label,
+        timeline,
+    } = call.input;
+    let label = label.trim();
+    if timeline.is_empty()
+        || timeline.len() > 200
+        || label.is_empty()
+        || label.encode_utf16().count() > 80
+    {
+        return invalid_request();
+    }
+    let observed = state
+        .checkpoints
+        .creation_receipt(request_id, label.to_owned())
+        .await;
+    publish(&state, &call.authorized, || {
+        let status = observed.map_err(|error| failure(&error))?;
+        let scope = call.authorized.scope.key().map_err(|_| busy())?;
+        let message = match status {
+            CreationReceipt::Resolved => "The original checkpoint was created.",
+            CreationReceipt::Pending => {
+                "The original checkpoint is still being created. Nothing was resubmitted."
+            }
+            CreationReceipt::Unknown => {
+                "The original checkpoint has no confirmed published result. Nothing was resubmitted."
+            }
+        };
+        Ok(ReceiptResponse {
+            ok: true,
+            scope,
+            status,
+            message,
+            result: matches!(status, CreationReceipt::Resolved).then_some(ResultMessage {
+                ok: true,
+                code: "saved",
+                message,
+            }),
         })
     })
 }

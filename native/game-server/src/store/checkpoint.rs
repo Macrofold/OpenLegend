@@ -43,6 +43,7 @@ pub(crate) use history_read::PreparedCheckpointHistory;
 pub(crate) use positions::reconcile_history_positions;
 pub use recover::RecoveredCheckpoint;
 pub(crate) use schedule::CheckpointSchedule;
+pub(crate) use schedule::CreationReceipt;
 pub(crate) use schedule::Settings as CheckpointSettings;
 
 const METADATA: usize = 16 * 1024;

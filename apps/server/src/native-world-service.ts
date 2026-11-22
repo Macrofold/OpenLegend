@@ -4618,6 +4618,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 scope: scopeKey(scope),
                 recoveryScope: checkpointRecoveryScopeKey(scope),
                 timeline: this.timelineId,
+                canLoad: true,
               },
             }
           : {}),

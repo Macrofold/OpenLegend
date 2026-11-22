@@ -59,6 +59,14 @@ pub(crate) struct Failure {
 
 const DAMAGED_FAILURE: Uuid = Uuid::from_u128(0x00000000_0000_4000_8000_00000000dead);
 
+#[derive(Clone, Copy, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum CreationReceipt {
+    Pending,
+    Resolved,
+    Unknown,
+}
+
 impl Failure {
     pub(super) fn new(kind: MetadataKind, message: String) -> Self {
         Self {
@@ -104,6 +112,53 @@ impl Failure {
 }
 
 impl CheckpointSchedule {
+    /// Inspect a retained creation without starting another capture. A
+    /// resolved file has the requested identity and its original digest.
+    pub(crate) async fn creation_receipt(
+        &self,
+        id: Uuid,
+        label: String,
+    ) -> Result<CreationReceipt, CaptureError> {
+        {
+            let queue = self.manual.lock().map_err(|_| CaptureError::Format)?;
+            if let Some(prior) = queue
+                .running
+                .as_ref()
+                .into_iter()
+                .chain(&queue.waiting)
+                .find(|request| request.id == id)
+            {
+                return if prior.label == label {
+                    Ok(CreationReceipt::Pending)
+                } else {
+                    Err(CaptureError::Conflict)
+                };
+            }
+        }
+        let store = self.store.clone();
+        let root = self.directory.clone();
+        let world = self.world.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            let _custody = store
+                .budget
+                .reserve(super::super::FILE_BUFFER)
+                .map_err(|_| StoreError::Capacity)?;
+            catalog::verify_repeated_manual(
+                &root,
+                &world,
+                &id.to_string(),
+                &label,
+                &store.schema.checkpoint,
+            )
+        })
+        .await
+        .map_err(|_| CaptureError::Format)??;
+        Ok(if result {
+            CreationReceipt::Resolved
+        } else {
+            CreationReceipt::Unknown
+        })
+    }
     /// Read only one page of checkpoint summaries, with independent custody
     /// through HTTP serialization. No payload is opened for content hashing.
     pub(crate) async fn catalog(

@@ -37,6 +37,7 @@ mod dialogue;
 mod event_history;
 mod history;
 mod known_places;
+mod operations;
 mod preview;
 mod view;
 
@@ -114,6 +115,8 @@ pub(crate) fn router(
         .route("/api/control", post(manual_clock))
         .route("/api/input", post(update_input))
         .route("/api/saves/create", post(checkpoint::create))
+        .route("/api/saves/receipt", post(checkpoint::receipt))
+        .route("/api/operations", axum::routing::get(operations::state))
         .route("/api/saves/list", post(checkpoint::list))
         .route("/api/saves/delete", post(checkpoint::delete))
         .route("/api/saves/settings", post(checkpoint::settings))

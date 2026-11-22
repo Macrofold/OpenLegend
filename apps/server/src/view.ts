@@ -1003,6 +1003,7 @@ export async function projectView(
           scope: scopeKey(scope),
           recoveryScope: checkpointRecoveryScopeKey(scope),
           timeline: service.timelineId,
+          canLoad: true,
         }
       : undefined,
     access: {

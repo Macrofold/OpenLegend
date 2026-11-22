@@ -165,6 +165,7 @@ export class OperationsRoutes {
             scope: scopeKey(scope),
             recoveryScope: checkpointRecoveryScopeKey(scope),
             timeline: this.service.timelineId,
+            canLoad: true,
           }
         : undefined,
       mode: this.config.authentication.mode,

@@ -28,4 +28,6 @@ export interface CheckpointContext {
   scope: string;
   recoveryScope: string;
   timeline: string;
+  /** The current server admits a live administrative checkpoint load. */
+  canLoad: boolean;
 }

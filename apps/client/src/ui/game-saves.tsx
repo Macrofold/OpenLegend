@@ -393,13 +393,14 @@ export function GameSavesPanel({
     <div className="ol-checkpoints">
       <Section title="Checkpoints">
         <p>
-          Keep named points in this world’s history. Loading a checkpoint replaces the current world
-          and starts it paused.
+          Keep named points in this world’s history.
+          {context.canLoad &&
+            ' Loading a checkpoint replaces the current world and starts it paused.'}
         </p>
         <p className="ol-setting-scope">Whole world · save permission required</p>
         <p className="ol-caption">
           “Saved” in the game’s status display reports the last ordinary save. A checkpoint is a
-          separate point you can deliberately load later.
+          separate recovery point.
         </p>
         {failure && (
           <div className="ol-notice" role="alert">
@@ -546,18 +547,20 @@ export function GameSavesPanel({
               </p>
             )}
             <div className="ol-save-actions">
-              <Button
-                size="sm"
-                disabled={busy || unresolved || !save.compatible}
-                aria-label={`Load ${save.label}`}
-                onPress={(event) => {
-                  confirmTrigger.current =
-                    event.target instanceof HTMLElement ? event.target : null;
-                  setConfirm({ save, action: 'load' });
-                }}
-              >
-                Load
-              </Button>
+              {context.canLoad && (
+                <Button
+                  size="sm"
+                  disabled={busy || unresolved || !save.compatible}
+                  aria-label={`Load ${save.label}`}
+                  onPress={(event) => {
+                    confirmTrigger.current =
+                      event.target instanceof HTMLElement ? event.target : null;
+                    setConfirm({ save, action: 'load' });
+                  }}
+                >
+                  Load
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="quiet"

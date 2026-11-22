@@ -16,6 +16,7 @@ use tokio::sync::{Mutex, watch};
 use uuid::Uuid;
 
 mod operator;
+pub(crate) use operator::CreationReceipt;
 
 const RETRY: Duration = Duration::from_secs(30);
 

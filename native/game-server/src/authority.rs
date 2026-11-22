@@ -522,6 +522,16 @@ impl Authority {
         })?
     }
 
+    pub(crate) fn current_checkpoint_operator<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        publish: impl FnOnce(&RequestScope, &[Capability], bool) -> T,
+    ) -> Result<T, AccessError> {
+        self.with_current(authorized, Capability::Save, false, |scope, grant, _| {
+            publish(scope, &grant.capabilities, self.local)
+        })
+    }
+
     pub(crate) fn view_access(
         &self,
         authorized: &AuthorizedScope,
