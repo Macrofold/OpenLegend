@@ -17,6 +17,33 @@ struct KnowledgeInput {
 }
 
 impl NativeWorldSession {
+    /// The authenticated player's general pad needs no observed subject or
+    /// retained place. It still uses the ordinary revisioned note writer.
+    pub fn begin_general_knowledge_edit(
+        &mut self,
+        account: &str,
+        actor: &str,
+        expected_revision: i64,
+        text: JsText,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        self.session
+            .accepted()
+            .map_err(failure)?
+            .require_player_read(account, actor)
+            .map_err(failure)?;
+        self.session
+            .begin_knowledge_edit(
+                actor.into(),
+                KnowledgeEdit {
+                    subject_id: None,
+                    expected_revision,
+                    text,
+                },
+            )
+            .map_err(failure)
+    }
+
     pub fn begin_knowledge_edit(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;

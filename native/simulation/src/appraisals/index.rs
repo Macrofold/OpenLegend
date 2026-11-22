@@ -78,6 +78,12 @@ impl AppraisalIndex {
     pub(super) fn active(&self) -> impl Iterator<Item = &str> {
         self.active.iter().map(|key| key.0.as_str())
     }
+    pub(super) fn active_after(&self, after: &str) -> impl Iterator<Item = &str> {
+        use std::ops::Bound::{Excluded, Unbounded};
+        self.active
+            .range((Excluded(Key(after.into())), Unbounded))
+            .map(|key| key.0.as_str())
+    }
     pub(super) fn active_len(&self) -> usize {
         self.active.len()
     }

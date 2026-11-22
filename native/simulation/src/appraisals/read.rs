@@ -8,6 +8,9 @@ use crate::worlds::{InstalledPersonalName, InstalledPersonalNameReader};
 use serde::ser::{SerializeSeq, SerializeStruct};
 use std::collections::BTreeSet;
 
+pub(crate) const ACTIVE_PAGE: usize = 24;
+const ACTIVE_SCAN: usize = 200;
+
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct AppraisalScope {
@@ -149,6 +152,68 @@ fn view<'a>(
             _ => None,
         },
     }))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuntimePrivateFeeling<'a> {
+    id: &'a str,
+    revision: u64,
+    label: &'a str,
+    subject: Option<crate::text::TextRef<'a>>,
+    value: Option<f64>,
+    lifetime: &'static str,
+    coverage: &'a str,
+}
+
+/// Page current active records through the same indexed selection and decay
+/// calculation as the requesting character's cognition preparation.
+pub(crate) fn private_appraisal_page<'a, 'names>(
+    state: &'a SimulationState,
+    actor: &str,
+    after: &str,
+    names: &'names InstalledPersonalNameReader<'a>,
+) -> Result<(Vec<RuntimePrivateFeeling<'names>>, Option<&'a str>), ExecutionError> {
+    let Some(owner) = state.appraisals.owners.get(actor) else {
+        return if state.appraisals.owner_coverage.complete {
+            Ok((Vec::new(), None))
+        } else {
+            Err(ExecutionError::UnsupportedFamily)
+        };
+    };
+    if !owner.active_complete {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    let mut values = Vec::with_capacity(owner.index.active_len().min(ACTIVE_PAGE));
+    let mut cursor = None;
+    for (scanned, id) in owner.index.active_after(after).enumerate() {
+        if values.len() == ACTIVE_PAGE || scanned == ACTIVE_SCAN {
+            return Ok((values, cursor));
+        }
+        cursor = Some(id);
+        let record = owner.records.get(id).ok_or(ExecutionError::Invariant)?;
+        let Some(feeling) = view(&state.appraisals, &record.value, state.physical.header.sim_time)?
+        else {
+            continue;
+        };
+        let selected = feeling.view;
+        values.push(RuntimePrivateFeeling {
+            id: selected.id,
+            revision: selected.revision,
+            label: selected.feeling,
+            subject: selected
+                .target_id
+                .map(|target| names.observer_name(target).map(|name| name.name))
+                .transpose()?,
+            value: match selected.value {
+                AppraisalValue::Scaled { value } => Some(value),
+                AppraisalValue::Qualitative => None,
+            },
+            lifetime: selected.lifetime,
+            coverage: selected.coverage,
+        });
+    }
+    Ok((values, None))
 }
 
 pub struct RuntimeNpcFeeling {
@@ -389,7 +454,7 @@ fn select_views<'a>(
         return Err(ExecutionError::UnsupportedFamily);
     }
     let active_maximum = if include_hot {
-        owner.map_or(0, |owner| owner.index.active_len().min(24))
+        owner.map_or(0, |owner| owner.index.active_len().min(ACTIVE_PAGE))
     } else {
         0
     };
@@ -447,8 +512,8 @@ fn select_views<'a>(
     let now = state.physical.header.sim_time;
     let mut hot_count = 0;
     if let Some(owner) = owner {
-        for id in owner.index.active().take(if include_hot { 200 } else { 0 }) {
-            if selected.len() >= 24 {
+        for id in owner.index.active().take(if include_hot { ACTIVE_SCAN } else { 0 }) {
+            if selected.len() >= ACTIVE_PAGE {
                 break;
             }
             let record = owner.records.get(id).ok_or(ExecutionError::Invariant)?;

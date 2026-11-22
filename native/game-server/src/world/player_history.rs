@@ -117,7 +117,7 @@ impl HostedWorld {
             authority,
             &selected.scope,
             selected.read.actor_id(),
-            |session| {
+            |session, _| {
                 Ok(self
                     .with_current_player_history(session, selected, |_| publish(self.host.budget()))?
                     .map_or(PlayerDisclosure::Changed, PlayerDisclosure::Published))
@@ -132,10 +132,10 @@ impl HostedWorld {
         authority: &Authority,
         scope: &AuthorizedScope,
         actor: &str,
-        read: impl FnOnce(&NativeWorldSession) -> Result<T, WorldError>,
+        read: impl FnOnce(&NativeWorldSession, bool) -> Result<T, WorldError>,
     ) -> Result<T, WorldError> {
         authority
-            .current_private_view(scope, actor != scope.scope.actor_id, |permit, _| {
+            .current_private_view(scope, actor != scope.scope.actor_id, |permit, controlling| {
                 let session = match self.session.try_lock() {
                     Ok(session) => session,
                     Err(std::sync::TryLockError::WouldBlock) => return Err(HostError::Busy.into()),
@@ -147,9 +147,27 @@ impl HostedWorld {
                 {
                     return Err(AccessError::Forbidden.into());
                 }
-                read(&session)
+                read(&session, controlling)
             })
             .map_err(WorldError::Access)?
+    }
+
+    /// The note projection is resident. Enter the ordinary bounded aperture
+    /// and keep the recognized owner, pending privacy edits and encoded
+    /// response in the same synchronous read.
+    pub(crate) async fn disclose_private_notes(
+        &self,
+        authority: &Authority,
+        scope: &AuthorizedScope,
+        actor: &str,
+        publish: impl FnOnce(&NativeWorldSession, &ByteBudget, bool) -> Result<Bytes, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
+        let _turn = self.enter().await?;
+        self.with_private_reader(authority, scope, actor, |session, controlling| {
+            Ok(self
+                .with_unedited_history(actor, || publish(session, self.host.budget(), controlling))?
+                .map_or(PlayerDisclosure::Changed, PlayerDisclosure::Published))
+        })
     }
 
     /// Select the original durable history revision under current player

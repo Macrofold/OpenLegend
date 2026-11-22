@@ -37,6 +37,7 @@ mod dialogue;
 mod event_history;
 mod history;
 mod inventory;
+mod notes;
 mod known_places;
 mod operations;
 mod preview;
@@ -141,6 +142,8 @@ pub(crate) fn router(
         .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))
         .route("/api/memories", post(recall::recollections))
+        .route("/api/mind", post(notes::get))
+        .route("/api/knowledge", post(notes::edit))
         .route("/api/narration/regenerate", post(history::regenerate))
         .route(
             "/api/world-events",
@@ -392,7 +395,7 @@ async fn presence_report(State(state): State<PlayerRoutes>, request: Request) ->
         Err(error) => return access_failure(error),
     };
     let (input, _custody): (PresenceReport, _) =
-        match read_json(&parts.headers, body, state.game.host.budget(), true).await {
+        match read_json(&parts.headers, body, state.game.host.budget(), true, REQUEST_LIMIT).await {
             Ok(input) => input,
             Err(error) => return error,
         };
@@ -561,7 +564,7 @@ async fn json<T: DeserializeOwned>(
     body: Body,
     budget: &ByteBudget,
 ) -> Result<(T, ByteReservation), Response> {
-    read_json(headers, body, budget, false).await
+    read_json(headers, body, budget, false, REQUEST_LIMIT).await
 }
 
 async fn read_json<T: DeserializeOwned>(
@@ -569,6 +572,7 @@ async fn read_json<T: DeserializeOwned>(
     body: Body,
     budget: &ByteBudget,
     presence: bool,
+    limit: usize,
 ) -> Result<(T, ByteReservation), Response> {
     if !headers
         .get(header::CONTENT_TYPE)
@@ -583,8 +587,8 @@ async fn read_json<T: DeserializeOwned>(
             "Send a JSON request.",
         ));
     }
-    let mut custody = budget.reserve(8 * REQUEST_LIMIT).map_err(|_| busy())?;
-    let body = tokio::time::timeout(REQUEST_TIMEOUT, to_bytes(body, REQUEST_LIMIT))
+    let mut custody = budget.reserve(8 * limit).map_err(|_| busy())?;
+    let body = tokio::time::timeout(REQUEST_TIMEOUT, to_bytes(body, limit))
         .await
         .map_err(|_| busy())?
         .map_err(|_| {

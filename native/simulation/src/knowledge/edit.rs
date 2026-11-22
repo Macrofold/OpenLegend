@@ -23,8 +23,9 @@ impl CompletedKnowledgeEdit {
     }
 }
 
-/// A direct player edit uses the same writer as responses/reflection. Its
-/// supplied subject has already passed the server's retained-place selection.
+/// A direct player edit uses the same writer as responses and reflection.
+/// The general pad needs no subject. A supplied place has already passed
+/// the server's exact retained-place selection.
 pub(crate) struct KnowledgeEditCursor {
     actor_id: String,
     edit: KnowledgeEdit,
@@ -64,17 +65,12 @@ impl KnowledgeEditCursor {
             return Err(ExecutionError::Invariant);
         }
         self.done = true;
-        let subject = self
-            .edit
-            .subject_id
-            .as_ref()
-            .ok_or(ExecutionError::Invariant)?;
         let checkpoint = core.journal.checkpoint(core.state)?;
         let result = edit_knowledge(
             core,
             &self.actor_id,
             &self.edit,
-            std::slice::from_ref(subject),
+            self.edit.subject_id.as_slice(),
             &[],
             budget,
         );

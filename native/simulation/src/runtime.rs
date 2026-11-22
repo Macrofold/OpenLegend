@@ -54,6 +54,8 @@ mod player_places;
 mod privacy;
 pub use privacy::RuntimePrivacyEdit;
 mod private_history;
+mod private_notes;
+pub use private_notes::{RuntimeMindFile, RuntimePrivateNotes};
 mod reply_preview;
 pub use private_history::{
     RuntimePlayerTranscriptRead, RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead,
