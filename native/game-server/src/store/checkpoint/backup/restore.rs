@@ -16,8 +16,10 @@ use tokio_postgres::Transaction;
 
 mod artwork;
 mod files;
+mod occupied;
 mod operations;
 pub(crate) use artwork::{ArtworkOperator, require_completed_artwork_restore};
+pub(crate) use occupied::DamagedReplacement;
 
 const DIRECTORY_OWNER: &str = "integration:save-directory-owner";
 const ATTEMPT_PREFIX: &str = "integration:restore-attempt:";
@@ -42,6 +44,7 @@ impl Store {
         source: &Path,
         data: &Path,
         artwork_operator: Option<ArtworkOperator>,
+        replacement: Option<DamagedReplacement>,
         validate: impl FnOnce(CurrentOpening) -> F + Send + 'static,
     ) -> Result<RestoredBackup, CommitError>
     where
@@ -122,6 +125,23 @@ impl Store {
                 .await
                 .map_err(CommitError::RolledBack)?;
         }
+        if let Some(replacement) = replacement {
+            return self
+                .replace_damaged_from_backup(
+                    occupied::Package {
+                        source,
+                        manifest,
+                        retained,
+                        directory,
+                        checkpoint,
+                        operations: input,
+                        id: package_id,
+                    },
+                    existing,
+                    replacement,
+                )
+                .await;
+        }
         if let Some(head) = existing.head {
             let receipt = existing
                 .receipt
@@ -163,32 +183,13 @@ impl Store {
             .pause_operational_restore(&self.budget, artwork_operator.is_some())
             .map_err(CommitError::RolledBack)?;
 
-        let owner = existing.owner.unwrap_or_else(Uuid::new_v4);
-        let must_bind = existing.owner.is_none();
-        let writer = self.clone();
-        self.operational(move |tx| {
-            Box::pin(async move {
-                writer
-                    .require_empty_restore_target(tx, existing.owner)
-                    .await?;
-                if must_bind {
-                    let encoded = json_record(&owner).map_err(|_| StoreError::InvalidRecord)?;
-                    tx.execute(
-                        "INSERT INTO meta(key,value) VALUES($1,$2)",
-                        &[&DIRECTORY_OWNER, &encoded],
-                    )
-                    .await?;
-                }
-                Ok(())
-            })
-        })
-        .await?;
+        let owner = self.bind_restore_directory(existing.owner, None).await?;
 
         let target = directory.clone();
         let selection = manifest.clone();
         let attempt = local(move || {
             files::write_owner(&target, owner)?;
-            files::begin(&target, &selection, owner).map(Arc::new)
+            files::begin(&target, &selection, owner, None).map(Arc::new)
         })
         .await
         .map_err(CommitError::RolledBack)?;
@@ -222,7 +223,12 @@ impl Store {
                         writer
                             .stage_opening_records(tx, &opening, &history, false)
                             .await?;
-                        operations::stage(&writer, tx, input, admit_artwork).await?;
+                        operations::stage(
+                            &writer,
+                            tx,
+                            input,
+                            operations::Import::Empty { admit_artwork },
+                        ).await?;
                         writer
                             .check_imported_recovery_pointer(tx, &manifest)
                             .await?;
@@ -299,7 +305,51 @@ impl Store {
             }
         };
 
-        match &result {
+        self.finish_restore_files(&directory, owner, None, &result)
+            .await;
+        result
+    }
+
+    async fn bind_restore_directory(
+        self: &Arc<Self>,
+        current: Option<Uuid>,
+        expected: Option<DurableHead>,
+    ) -> Result<Uuid, CommitError> {
+        let owner_id = current.unwrap_or_else(Uuid::new_v4);
+        let writer = self.clone();
+        self.operational(move |tx| {
+            Box::pin(async move {
+                if let Some(expected) = expected {
+                    if durable_head(tx).await?.as_ref() != Some(&expected)
+                        || owner(tx).await? != current
+                    {
+                        return Err(StoreError::StaleCut);
+                    }
+                } else {
+                    writer.require_empty_restore_target(tx, current).await?;
+                }
+                if current.is_none() {
+                    let encoded = json_record(&owner_id).map_err(|_| StoreError::InvalidRecord)?;
+                    tx.execute(
+                        "INSERT INTO meta(key,value) VALUES($1,$2)",
+                        &[&DIRECTORY_OWNER, &encoded],
+                    )
+                    .await?;
+                }
+                Ok(owner_id)
+            })
+        })
+        .await
+    }
+
+    async fn finish_restore_files(
+        self: &Arc<Self>,
+        directory: &Path,
+        owner: Uuid,
+        rollback_head: Option<DurableHead>,
+        result: &Result<RestoredBackup, CommitError>,
+    ) {
+        match result {
             Err(CommitError::Unknown(_)) => {
                 eprintln!(
                     "Restore commit is uncertain. Keep the source and target unchanged and retry to reconcile the saved attempt."
@@ -307,22 +357,25 @@ impl Store {
             }
             outcome => {
                 let existing = RestoreState {
-                    head: outcome.as_ref().ok().map(|saved| DurableHead {
-                        world_id: saved.world_id.clone(),
-                        generation: saved.generation.clone(),
-                        revision: saved.revision,
-                    }),
+                    head: outcome
+                        .as_ref()
+                        .ok()
+                        .map(|saved| DurableHead {
+                            world_id: saved.world_id.clone(),
+                            generation: saved.generation.clone(),
+                            revision: saved.revision,
+                        })
+                        .or(rollback_head),
                     owner: Some(owner),
                     receipt: None,
                 };
-                if let Err(error) = self.reconcile_restore_files(&directory, &existing).await {
+                if let Err(error) = self.reconcile_restore_files(directory, &existing).await {
                     // A completed DB install stays completed. Retain ambiguous
                     // ownership/files and tell the operator what to inspect.
                     eprintln!("Restore attempt files were kept for inspection: {error}");
                 }
             }
         }
-        result
     }
 
     async fn require_empty_restore_target(
@@ -441,6 +494,11 @@ impl Store {
             } else {
                 false
             };
+            let protected = if !installed && attempt.starting_revision.is_some() {
+                self.pre_load_file(&attempt.world_id).await?
+            } else {
+                None
+            };
             let target = directory.to_owned();
             let store = self.clone();
             let head = state.head.clone();
@@ -451,6 +509,7 @@ impl Store {
                     owner,
                     installed,
                     head.as_ref(),
+                    protected.as_deref(),
                     &store.schema.checkpoint,
                 )
             })

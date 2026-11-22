@@ -36,7 +36,7 @@ pub struct RecoveredCheckpoint {
 
 #[derive(Deserialize, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Receipt {
+pub(super) struct Receipt {
     save_id: String,
     world_id: String,
     generation: String,
@@ -61,7 +61,7 @@ pub(crate) enum LoadReceipt {
 }
 
 impl Receipt {
-    fn head(&self) -> DurableHead {
+    pub(super) fn head(&self) -> DurableHead {
         DurableHead {
             world_id: self.world_id.clone(),
             generation: self.generation.clone(),
@@ -78,6 +78,18 @@ impl Receipt {
             accepted_cut: self.accepted_cut,
         }
     }
+
+    pub(super) fn verify_stopped(&self, head: &DurableHead, source: &str) -> StoreResult<()> {
+        if self.operator.is_some()
+            || self.save_id != source
+            || self.world_id != head.world_id
+            || self.generation != head.generation
+            || self.revision > head.revision
+        {
+            return Err(StoreError::StaleCut);
+        }
+        Ok(())
+    }
 }
 
 struct FinalPlacement {
@@ -89,10 +101,40 @@ struct FinalPlacement {
     _storage: ByteReservation,
 }
 
-struct Adoption {
+pub(super) struct Adoption {
     session: NativeWorldSession,
     key: CandidateKey,
     receipt: Receipt,
+}
+
+pub(super) enum ReplacementAuthority {
+    RetainedCheckpoint,
+    DamagedBackup,
+}
+
+impl Adoption {
+    pub(super) fn activate(
+        mut self,
+        operation_id: &str,
+    ) -> Result<RecoveredCheckpoint, CommitError> {
+        let actual = &self.receipt;
+        self.session
+            .fence()
+            .settle(self.key, true)
+            .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
+        self.session
+            .activate_restored(
+                self.key,
+                RuntimeActivation {
+                    world_id: actual.world_id.clone(),
+                    generation: actual.generation.clone(),
+                    revision: actual.revision,
+                    accepted_cut: actual.accepted_cut,
+                },
+            )
+            .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
+        Ok(self.receipt.report(operation_id))
+    }
 }
 
 impl Store {
@@ -220,6 +262,7 @@ impl Store {
                 installed_release,
                 operator,
                 before_load.as_ref(),
+                ReplacementAuthority::RetainedCheckpoint,
             )
             .await;
         let mut adoption = match prepared {
@@ -253,29 +296,12 @@ impl Store {
                 _ => return Err(error),
             }
         }
-        let actual = &adoption.receipt;
-        adoption
-            .session
-            .fence()
-            .settle(adoption.key, true)
-            .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
-        adoption
-            .session
-            .activate_restored(
-                adoption.key,
-                RuntimeActivation {
-                    world_id: actual.world_id.clone(),
-                    generation: actual.generation.clone(),
-                    revision: actual.revision,
-                    accepted_cut: actual.accepted_cut,
-                },
-            )
-            .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
+        let result = adoption.activate(operation_id)?;
         if let Some(point) = before_load {
             self.retain_pre_load(directory, &expected.world_id, point.file_id())
                 .await;
         }
-        Ok(adoption.receipt.report(operation_id))
+        Ok(result)
     }
 
     /// Read only the existing operation receipt; this never restores a slot.
@@ -306,7 +332,7 @@ impl Store {
         })
     }
 
-    async fn read_recovery_witness(
+    pub(super) async fn read_recovery_witness(
         &self,
         key: &str,
     ) -> StoreResult<(Option<DurableHead>, Option<Receipt>)> {
@@ -325,7 +351,7 @@ impl Store {
     }
 
     #[allow(clippy::too_many_arguments)]
-    async fn stage_recovery(
+    pub(super) async fn stage_recovery(
         &self,
         tx: &Transaction<'_>,
         expected: &DurableHead,
@@ -341,18 +367,19 @@ impl Store {
         installed_release: &AssetRevision,
         operator: Option<&RequestScope>,
         before_load: Option<&BeforeLoad>,
+        source: ReplacementAuthority,
     ) -> StoreResult<Adoption> {
         if slot.revision > expected.revision {
             return Err(StoreError::StaleCut);
         }
         let slot_id = slot.id.clone();
-        let authority = read_recovery_authority(
-            tx,
-            expected,
-            floor.or_else(|| (slot.revision == expected.revision).then_some(&slot)),
-            &self.budget,
-        )
-        .await?;
+        let floor = match source {
+            ReplacementAuthority::RetainedCheckpoint => {
+                floor.or_else(|| (slot.revision == expected.revision).then_some(&slot))
+            }
+            ReplacementAuthority::DamagedBackup => floor,
+        };
+        let authority = read_recovery_authority(tx, expected, floor, &self.budget).await?;
         if let Some(operator) = operator {
             if operator.timeline_id != authority.timeline {
                 return Err(StoreError::StaleCut);
@@ -363,6 +390,9 @@ impl Store {
         let privacy = if let Some(ledger) = &authority.ledger {
             ledger
         } else {
+            if matches!(source, ReplacementAuthority::DamagedBackup) {
+                return Err(StoreError::InvalidRecord);
+            }
             current_privacy = self
                 .current_recovery_privacy(tx, &expected.world_id)
                 .await?;
@@ -421,7 +451,10 @@ impl Store {
                 .await?;
         }
         let materials = if session.has_bound_material_gather().map_err(runtime)? {
-            Some(self.construction_materials_in(tx, &replacement.world_id, None).await?)
+            Some(
+                self.construction_materials_in(tx, &replacement.world_id, None)
+                    .await?,
+            )
         } else {
             None
         };

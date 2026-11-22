@@ -161,11 +161,17 @@ impl Operations {
     }
 }
 
+#[derive(Clone, Copy)]
+pub(super) enum Import<'a> {
+    Empty { admit_artwork: bool },
+    Existing { world: &'a str },
+}
+
 pub(super) async fn stage(
     store: &Arc<Store>,
     tx: &Transaction<'_>,
     mut input: Operations,
-    admit_artwork: bool,
+    import: Import<'_>,
 ) -> StoreResult<()> {
     let mut catalogue = None::<(usize, BTreeSet<String>, String)>;
     let mut schema_seen = false;
@@ -180,7 +186,21 @@ pub(super) async fn stage(
         input = reader;
         let Some(page) = page else { break };
         let name = &store.schema.checkpoint.backup.tables[page.table];
-        if !admit_artwork && name.starts_with("asset_") {
+        if matches!(import, Import::Existing { .. })
+            && !matches!(
+                name.as_str(),
+                "meta" | "gameplay_receipts" | "memory_vector_cache"
+            )
+        {
+            continue;
+        }
+        if matches!(
+            import,
+            Import::Empty {
+                admit_artwork: false
+            }
+        ) && name.starts_with("asset_")
+        {
             eprintln!(
                 "Restore requires independent current artwork authority; no artwork has been installed."
             );
@@ -203,11 +223,16 @@ pub(super) async fn stage(
             if columns.is_empty() {
                 return Err(StoreError::Schema);
             }
+            let conflict = if matches!(import, Import::Existing { .. }) {
+                " ON CONFLICT DO NOTHING"
+            } else {
+                ""
+            };
             catalogue = Some((
                 page.table,
                 columns,
                 format!(
-                    "INSERT INTO {name} SELECT * FROM json_populate_recordset(NULL::{name},$1::text::json)"
+                    "INSERT INTO {name} SELECT * FROM json_populate_recordset(NULL::{name},$1::text::json){conflict}"
                 ),
             ));
         }
@@ -243,6 +268,9 @@ pub(super) async fn stage(
                     schema_seen = true;
                     continue;
                 }
+                if matches!(import, Import::Existing { .. }) {
+                    continue;
+                }
                 if key == DIRECTORY_OWNER
                     || key.starts_with(ATTEMPT_PREFIX)
                     || key.starts_with(BACKUP_RECEIPT_PREFIX)
@@ -251,6 +279,13 @@ pub(super) async fn stage(
                     continue;
                 }
                 if key.starts_with("integration:full-restore-asset-authority:") {
+                    return Err(StoreError::InvalidRecord);
+                }
+            } else if let Import::Existing { world } = import {
+                let selected = fields
+                    .get("world_id")
+                    .and_then(|id| serde_json::from_str::<&str>(id.get()).ok());
+                if selected != Some(world) {
                     return Err(StoreError::InvalidRecord);
                 }
             }
@@ -263,7 +298,7 @@ pub(super) async fn stage(
         if expected != 0 {
             body.push(']');
             let written = tx.execute_typed(insert, &[(&body, Type::TEXT)]).await?;
-            if written != expected {
+            if matches!(import, Import::Empty { .. }) && written != expected {
                 return Err(StoreError::InvalidRecord);
             }
         }

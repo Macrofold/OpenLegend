@@ -109,7 +109,7 @@ pub(super) async fn quarantine(
     Ok(Some(artwork))
 }
 
-async fn require_pins(
+pub(super) async fn require_pins(
     tx: &Transaction<'_>,
     world: &str,
     kind: &str,

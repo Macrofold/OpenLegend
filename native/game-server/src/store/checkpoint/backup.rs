@@ -23,8 +23,8 @@ use tokio::time::Instant;
 use tokio_postgres::IsolationLevel;
 use uuid::Uuid;
 mod restore;
-pub(crate) use restore::ArtworkOperator;
 pub use restore::RestoredBackup;
+pub(crate) use restore::{ArtworkOperator, DamagedReplacement};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

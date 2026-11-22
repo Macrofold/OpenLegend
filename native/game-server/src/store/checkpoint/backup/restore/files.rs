@@ -23,7 +23,7 @@ pub(super) struct Attempt {
     pub id: Uuid,
     directory_owner: Uuid,
     pub world_id: String,
-    starting_revision: Option<u64>,
+    pub(super) starting_revision: Option<u64>,
     saves: Vec<String>,
     preexisting: BTreeSet<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -176,6 +176,7 @@ pub(super) fn begin(
     directory: &Path,
     manifest: &Manifest,
     directory_owner: Uuid,
+    starting_revision: Option<u64>,
 ) -> StoreResult<Attempt> {
     let mut preexisting = BTreeSet::new();
     for id in &manifest.saves {
@@ -188,7 +189,7 @@ pub(super) fn begin(
         id: Uuid::new_v4(),
         directory_owner,
         world_id: manifest.world_id.clone(),
-        starting_revision: None,
+        starting_revision,
         saves: manifest.saves.iter().cloned().collect(),
         preexisting,
         recovery_id: None,
@@ -355,6 +356,7 @@ pub(super) fn reconcile(
     database_owner: Uuid,
     installed: bool,
     head: Option<&DurableHead>,
+    protected: Option<&str>,
     contract: &CheckpointFormat,
 ) -> StoreResult<()> {
     let file_owner: Option<DirectoryOwner> = read_json(&directory.join(OWNER), 1024)?;
@@ -364,13 +366,16 @@ pub(super) fn reconcile(
         return Err(StoreError::InvalidRecord);
     }
     if !installed {
-        if head.is_some() || attempt.starting_revision.is_some() || attempt.recovery_id.is_some() {
+        if head.map(|head| head.revision) != attempt.starting_revision
+            || head.is_some_and(|head| head.world_id != attempt.world_id)
+            || attempt.recovery_id.is_some()
+        {
             return Err(StoreError::StaleCut);
         }
         verify_world(directory, &attempt.world_id, contract)?;
         let mut scratch = Vec::new();
         for id in &attempt.saves {
-            if attempt.preexisting.contains(id) {
+            if attempt.preexisting.contains(id) || protected == Some(id.as_str()) {
                 continue;
             }
             let stage = directory.join(format!(".restore-pending-{}-{id}", attempt.id));
