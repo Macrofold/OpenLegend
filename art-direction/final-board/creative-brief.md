@@ -4,7 +4,7 @@
 
 Confirmed favorites, with creative interpretation kept distinct from your stated preferences. This is the final curated reference set for this discussion, not a finalized renderer, asset budget or production specification.
 
-For the installed UE5 player, use the [updated creative brief](https://github.com/Macrofold/OpenLegend/blob/d8e39b132611a10641704c3fc87b0f9409901532/art-direction/final-board/creative-brief.md) and [migration art requirements](../../docs/projects/unreal-engine-5-migration-feature-spec.md#landscapes-weather-and-the-visible-world). The pixel treatments below belong to the earlier browser baseline.
+For the installed UE5 player, use the [updated creative brief](https://github.com/Macrofold/OpenLegend/blob/d8e39b132611a10641704c3fc87b0f9409901532/art-direction/final-board/creative-brief.md) and [migration art requirements](../../docs/features/unreal-player/landscapes-and-building.md). The pixel treatments below belong to the earlier browser baseline.
 
 ## Shared direction
 

@@ -1,6 +1,6 @@
 # Art-direction decisions
 
-**For the UE5 migration**, use the [selected grounded plain-3D direction](https://github.com/Macrofold/OpenLegend/blob/d8e39b132611a10641704c3fc87b0f9409901532/art-direction/decisions.md) and [migration brief](../docs/projects/unreal-engine-5-migration-feature-spec.md#landscapes-weather-and-the-visible-world). The October 16 section below records this branch’s earlier browser art direction and is retained for its original work.
+**For the UE5 migration**, use the [selected grounded plain-3D direction](https://github.com/Macrofold/OpenLegend/blob/d8e39b132611a10641704c3fc87b0f9409901532/art-direction/decisions.md) and [playable landscape requirements](../docs/features/unreal-player/landscapes-and-building.md). The October 16 section below records this branch’s earlier browser art direction and is retained for its original work.
 
 ## Current visual requirements — October 16, 2026
 

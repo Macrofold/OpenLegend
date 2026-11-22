@@ -45,7 +45,7 @@ The first internal milestone is a real install, join, encounter and recovered se
 
 ## Decisions and needs design
 
-Stable D identifiers match the project work. “Selected” is a product decision. “Needs design” leaves only the named choice open. “Needs evidence” requires an actual result. Pending decisions grant no rights, spending or release authority. An unanswered gate blocks its dependent promise, while the defined behavior above still applies.
+Stable D identifiers match the project work. “Selected” is a product decision. “Needs design” leaves only the named choice open. “Needs evidence” requires an actual result. Pending decisions grant no rights, spending or release authority. Optional console, mobile, Linux, streamed or browser-native play, a self-contained offline world and a live player-voice channel have no delivery commitment under this feature. Reopen any of those only for a stated audience need with its own access, cost and acceptance criteria. An unanswered gate blocks its dependent promise, while the defined behavior above still applies.
 
 | ID | Selected behavior | Status, outstanding choice, owner and consequence |
 | --- | --- | --- |
