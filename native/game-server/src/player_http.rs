@@ -265,7 +265,13 @@ async fn control(State(state): State<PlayerRoutes>, request: Request) -> Respons
             "Your tab is paused; your character is leaving the world.",
         ),
         Ok(EmbodimentChange::Refused { message, _custody }) => {
-            match state.authority.current(&authorized, Capability::Play, false, |_, _| {
+            // The finished control fence evicted its cached authority. Read
+            // the same submitted scope before encoding the refusal.
+            let current = match read_scope(&state.authority, &parts.headers).await {
+                Ok(current) => current,
+                Err(error) => return access_failure(error),
+            };
+            match state.authority.current(&current, Capability::Play, false, |_, _| {
                 control_response(&state, false, "participation", &message)
             }) {
                 Ok(response) => response,
