@@ -169,13 +169,12 @@ export function learnRecipe(
     touchNativeEvidence(world, 'temporal', actorId);
     touchNativeEvidence(world, 'received');
     const received = prepared.experience!.temporal!;
-    const temporal = world.experience!.temporal;
-    if (!temporal) world.experience!.temporal = cloneValue(received);
-    else {
-      // Re-enter the caller's mutable owner; a finalized nested draft is frozen.
-      // Only this actor belongs to this admission.
-      temporal.actors[actorId] = cloneValue(received.actors[actorId]!);
-    }
+    const temporal = (world.experience!.temporal ??= { ...received, actors: {} });
+    const { pages, ...owner } = received.actors[actorId]!;
+    // Copy the writable containers, preserving the exact history pages and their
+    // append proof through the nested admission. Correction replaces edited pages.
+    // docs/save-and-load.md#continuation-and-identity
+    temporal.actors[actorId] = { ...cloneValue(owner), pages: [...pages] };
     const capsule = received.actors[actorId]!.supports![temporalReceiptId(record.sourceReceipt!)]!;
     const incoming = prepared.receivedValues;
     if (!incoming) throw new Error('The admitted knowledge has no received value source.');

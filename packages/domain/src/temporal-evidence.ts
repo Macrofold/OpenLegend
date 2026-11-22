@@ -2671,7 +2671,7 @@ export function invalidateTemporalFacets(
   const removedBlocks = new Set<string>(),
     replacements: ReceivedChargeDirectory[] = [],
     individualCandidates = new Set<string>();
-  for (const page of actor.pages) {
+  for (const [index, page] of actor.pages.entries()) {
     const receipts = temporalPageReceipts(page),
       retained: TemporalReceipt[] = [];
     let pageChanged = false;
@@ -2693,9 +2693,11 @@ export function invalidateTemporalFacets(
           // Restore starts a new actor epoch while retained pages keep their
           // original address. Release the exact block that is being rewritten.
           removedBlocks.add(recentBlockKey(batch, batch.batchOrder));
-      replaceTemporalPageReceipts(page, retained, world);
-      refreshTemporalPage(page, world);
-      const directory = temporalPageMetadata(page, { world }).chargeDirectory;
+      const replacement = { ...page };
+      replaceTemporalPageReceipts(replacement, retained, world);
+      refreshTemporalPage(replacement, world);
+      actor.pages[index] = replacement;
+      const directory = temporalPageMetadata(replacement, { world }).chargeDirectory;
       if (directory.entries.length) replacements.push(directory);
     }
   }

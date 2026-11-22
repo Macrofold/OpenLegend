@@ -1934,14 +1934,13 @@ export class WorldRecords {
     }
     for (const rows of groups.get('mind_learned_capabilities')?.values() ?? []) {
       const actorId = String(rows[0]?.['actor_id']);
-      const sources = new Map<string, string>();
-      for (const entry of state.world.knowledge[actorId] ?? [])
-        sources.set(entry.recipeId, entry.source);
+      const knowledge = state.world.knowledge[actorId];
       let bytes = 0,
         count = 0;
       for (const row of rows) {
-        const source = sources.get(String(row['slot']));
-        if (source !== undefined && source !== 'authored') {
+        // The row identity names the recipe; its slot indexes the assembled list.
+        const record = knowledge?.[Number(row['slot'])];
+        if (record && record.source !== 'authored') {
           bytes += Buffer.byteLength(String(row['payload']));
           count++;
         }
