@@ -55,6 +55,7 @@ mod audience;
 pub(crate) use audience::*;
 mod event;
 pub(crate) use event::*;
+pub(crate) mod combat_observation;
 mod capture;
 pub(crate) mod retained_size;
 pub use capture::*;

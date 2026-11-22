@@ -61,6 +61,7 @@ enum PublicationPhase {
     Receiving,
     People,
     PublishPeople,
+    Combat,
     PublishObjects,
     Objects,
     Finish,
@@ -328,7 +329,56 @@ impl ObserverReceptionCursor {
                             std::mem::take(&mut received.people),
                         )?;
                     }
-                    self.require_closed_combat(core)?;
+                    self.require_supported_encounter_context(core)?;
+                    self.phase = PublicationPhase::Combat;
+                }
+                PublicationPhase::Combat => {
+                    let observer = &self.received.as_ref().ok_or_else(invalid)?.observer;
+                    if let Some(cue) = crate::reception::combat_observation::next_attack_cue(
+                        core,
+                        observer,
+                        &mut self.index,
+                        budget,
+                    )? {
+                        // A cue is a new personally acquired occurrence, so the
+                        // earlier visual account prefix must become available first.
+                        self.batch
+                            .as_ref()
+                            .ok_or_else(invalid)?
+                            .flush(core, budget)?;
+                        let (staged, _custody) = cue.stage(core)?;
+                        let reservation = self.reservation.as_mut().ok_or_else(invalid)?;
+                        reservation.resize(
+                            reservation
+                                .bytes()
+                                .checked_add(size_of::<CompletedEvent>() + staged.id.len())
+                                .ok_or(ExecutionError::Capacity)?,
+                        )?;
+                        self.events
+                            .try_reserve_exact(1)
+                            .map_err(|_| ExecutionError::Capacity)?;
+                        let expected = ExpectedEvent {
+                            id: staged.id.clone(),
+                            order: staged.order,
+                            sequence: staged.sequence,
+                        };
+                        let begun = begin_staged_occurrence(core, staged, budget)?;
+                        let binding = GeometryBinding::new(
+                            self.candidate,
+                            core.state.installed.geometry.spatial.revision,
+                            core.journal.next_provider_serial()?,
+                        );
+                        self.event = Some(EventCursor::prepare(
+                            core,
+                            begun,
+                            binding,
+                            crate::events::EventAccountPlacement::Immediate,
+                            budget,
+                        )?);
+                        self.expected = Some(expected);
+                        return Ok(Progress::Event);
+                    }
+                    self.index = 0;
                     self.phase = PublicationPhase::PublishObjects;
                 }
                 PublicationPhase::PublishObjects => {
@@ -367,7 +417,10 @@ impl ObserverReceptionCursor {
             }
         }
     }
-    fn require_closed_combat(&self, core: &CoreMutation<'_>) -> Result<(), ExecutionError> {
+    fn require_supported_encounter_context(
+        &self,
+        core: &CoreMutation<'_>,
+    ) -> Result<(), ExecutionError> {
         let id = &self
             .received
             .as_ref()
@@ -391,27 +444,6 @@ impl ObserverReceptionCursor {
                 .any(|plan| plan.activity.is_some())
         {
             return Err(ExecutionError::UnsupportedFamily);
-        }
-        for source in core
-            .state
-            .reception
-            .visible_people
-            .as_ref()
-            .and_then(|r| r.get(id))
-            .into_iter()
-            .flatten()
-        {
-            if core
-                .state
-                .physical
-                .entities
-                .get(source)
-                .and_then(|e| e.actor.as_ref())
-                .and_then(|a| a.action.as_ref())
-                .is_some_and(|a| a.has_unconverted_fields())
-            {
-                return Err(ExecutionError::UnsupportedFamily);
-            }
         }
         Ok(())
     }

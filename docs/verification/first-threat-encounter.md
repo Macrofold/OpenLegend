@@ -173,6 +173,16 @@ All four Rust runs reopened before and after the strike outcome, walked through 
 
 The Rust source was `23f01aa39526` and executable was `8ffc4571ed6f`. Results in `nsc04-hunt-contact-20261122` are `ee115ed809d6` for visible preparation, `b83a4ac8d947` for interrupted grazing, `f832542dedaa` for unseen contact and `99baeb4c04ad` for the unchanged profile. The live Source visible and grazing results are `14f9115dd0f8` and `5218a2c822ae`. These are correctness checks. They leave the separate human combat encounter record and broader opening qualification open.
 
+## Human witnesses to attack preparation — November 22, 2026
+
+Two local worlds gave a signed-in player the same wolf, deer and active strike. An added screen in the second world hid the deer from the player while leaving the wolf visible. Source and Rust both recorded one personally received warning at game second 30 when the player saw both participants, and zero directed warnings behind the screen. Rust’s real player view said “A wolf is preparing to strike a deer.” and included the permitted target reference. Behind the screen it said “A wolf was active.” and supplied only the wolf’s reference.
+
+Ordinary PostgreSQL saves kept the warning and the same active action. The action retained one receipt for the observer’s physical life and recognition association. A cold reopen preserved that receipt while the strike was still preparing. Neither contact, continued movement nor a second cold reopen generated another warning. The recovered walk receipt and one actual impact also matched the earlier accepted outcomes. Both databases were dropped.
+
+A third Rust run used a longer authored preparation to let the player walk behind cover and back. The known wolf disappeared from the current player view and its old sight episode ended. The returning player saw the same attack in a new sight episode. The original private warning and recognition receipt stayed singular through two cold reopens and one impact at the original game second 360. The replay used the ordinary foreground heartbeat to keep the clock running while the tab waited.
+
+The Rust executable `be87400d8cec` used source tree `cff408c6ebd2` over `bb093e291b49`. Evidence in `nsc04-hunt-contact-20261122` is `dce5fbffd3a4`, `6d958ec95062` and `f71966842a66` for Rust, and `12c166e2efdd` and `8777d905e0bd` for Source. This qualifies the direct natural-strike warning through the current personally received sight path. The richer combat pair, own offense and deliberate Speak controls remain in [NSC04-R4](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server). The [pose-based cue extension](../worlds/base/combat.md#accepted-visual-cue-extension) keeps its own delivery gate.
+
 ## Stand-alone Rust pack hunting and search
 
 The live Source and Rust clocks used one player, one wolf and one deer with the installed Main rules. The wolf chose the same first stalking destination, `(25.3, 0, 14)`, around the quarry at `(30, 0, 14)`. Rust saved the active movement, actual distance and original 1,800-game-second deadline. It reopened the same movement and delivered one 18-point impact. Source also delivered one 18-point impact after the authored 120-second windup. The servers began their windups at different game times because the route became available at different times.

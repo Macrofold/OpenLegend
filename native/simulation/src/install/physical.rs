@@ -851,6 +851,11 @@ fn validate_entity(
         }
         if actor.action.as_ref().is_some_and(|a| {
             a.has_unconverted_fields()
+                || a.attack_observers.as_ref().is_some_and(|receipts| {
+                    installed.body_policy.and_then(|body| body.combat.as_ref())
+                        .and_then(|combat| combat.encounters.as_ref()).is_none()
+                    || !crate::reception::combat_observation::valid_observers(receipts)
+                })
                 || (a.strike_motion.is_some() && !a.is_natural_contact())
                 || (a.target_life.is_some() && !a.is_natural_contact())
                 || (!a.has_ground_motion() && !a.is_natural_contact() && a.kind != "status-effect")

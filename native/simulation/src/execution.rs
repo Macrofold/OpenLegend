@@ -31,6 +31,7 @@ use std::sync::Arc;
 mod action_storage;
 mod agency;
 mod attributes;
+mod combat_observation;
 mod body;
 mod conditions;
 mod contact;
@@ -1200,6 +1201,7 @@ enum UndoKey {
     CombatReady(usize, u64),
     ContactPhase(usize, u64),
     StrikeMotion(usize, u64),
+    AttackObservers(usize, u64),
     Action(usize, u64),
     ActionPath(usize, u64),
     ActionRoute(usize, u64),
@@ -1423,6 +1425,11 @@ enum Undo {
         entity: EntityHandle,
         action_id: String,
         before: ContactPhase,
+    },
+    AttackObservers {
+        entity: EntityHandle,
+        action_id: String,
+        before: Option<crate::state::FundedAttackObservers>,
     },
     StrikeMotion {
         entity: EntityHandle,
@@ -2202,6 +2209,9 @@ impl PhysicalJournal {
                         .filter(|action| action.id == action_id)
                         .ok_or(ExecutionError::Invariant)?;
                     before.restore(action);
+                }
+                Undo::AttackObservers { entity, action_id, before } => {
+                    drop(state.entities.swap_attack_observers(entity, &action_id, before, &self.budget)?);
                 }
                 Undo::StrikeMotion {
                     entity,

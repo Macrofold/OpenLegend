@@ -4,6 +4,7 @@ use super::*;
 use crate::execution::{ActionRouteWrite, ExecutionError};
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation};
+use crate::reception::combat_observation::AttackObservers;
 
 impl HeapBytes for Yield {
     fn heap_bytes(&self) -> Option<usize> {
@@ -44,6 +45,7 @@ impl HeapBytes for Action {
         heap_sum([
             self.native_locomotion.heap_bytes()?,
             self.strike_motion.heap_bytes()?,
+            self.attack_observers.heap_bytes()?,
             self.feeding.heap_bytes()?,
             self.gathering.heap_bytes()?,
             self.fishing.heap_bytes()?,
@@ -82,6 +84,7 @@ pub(crate) struct ActionStorage {
     base: crate::host::ResidentReservation,
     route: ActionRouteStorage,
     strike_motion: Option<crate::host::ResidentReservation>,
+    attack_observers: Option<crate::host::ResidentReservation>,
 }
 pub(crate) struct ActionRouteStorage {
     path: crate::host::ResidentReservation,
@@ -150,6 +153,15 @@ impl ActionStorage {
                     .map_err(ExecutionError::from)
             })
             .transpose()?;
+        let attack_observers = value
+            .attack_observers
+            .as_ref()
+            .map(|observers| {
+                budget
+                    .adopt_record(storage.split_off(heap(observers)?)?)
+                    .map_err(ExecutionError::from)
+            })
+            .transpose()?;
         Ok(Self {
             route: ActionRouteStorage {
                 path: budget.adopt_record(storage.split_off(path)?)?,
@@ -158,11 +170,16 @@ impl ActionStorage {
             },
             base: budget.adopt_record(storage)?,
             strike_motion,
+            attack_observers,
         })
     }
     pub(crate) fn is_funded_by(&self, budget: &ByteBudget) -> bool {
         budget.resident().owns(&self.base)
             && self.route.is_funded_by(budget)
+            && self
+                .attack_observers
+                .as_ref()
+                .is_none_or(|storage| budget.resident().owns(storage))
             && self
                 .strike_motion
                 .as_ref()
@@ -171,6 +188,9 @@ impl ActionStorage {
     pub(crate) fn retain(&self, budget: &ByteBudget) -> Result<(), ExecutionError> {
         budget.retain_record(&self.base)?;
         if let Some(storage) = &self.strike_motion {
+            budget.retain_record(storage)?;
+        }
+        if let Some(storage) = &self.attack_observers {
             budget.retain_record(storage)?;
         }
         self.route.retain(budget)
@@ -236,6 +256,29 @@ pub(crate) struct FundedActionNavigation {
     pub storage: crate::host::ResidentReservation,
 }
 
+pub(crate) struct FundedAttackObservers {
+    value: AttackObservers,
+    storage: crate::host::ResidentReservation,
+}
+
+impl FundedAttackObservers {
+    pub(crate) fn from_storage(
+        value: AttackObservers,
+        mut storage: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let bytes = heap(&value)?;
+        if storage.bytes() < bytes {
+            return Err(ExecutionError::Capacity);
+        }
+        storage.resize(bytes)?;
+        Ok(Self {
+            value,
+            storage: budget.adopt_record(storage)?,
+        })
+    }
+}
+
 pub(crate) struct FundedStrikeMotion {
     pub value: Box<crate::contact::StrikeMotion>,
     storage: crate::host::ResidentReservation,
@@ -299,6 +342,7 @@ impl EntityStore {
                             heap(&action.navigation)?,
                             action.stage.capacity(),
                             heap(&action.strike_motion)?,
+                            heap(&action.attack_observers)?,
                         ])
                         .ok_or(ExecutionError::Capacity)?,
                     )
@@ -306,6 +350,15 @@ impl EntityStore {
                 slot.action_storage = Some(ActionStorage {
                     base: budget.reserve_record(other)?,
                     route,
+                    attack_observers: action
+                        .attack_observers
+                        .as_ref()
+                        .map(|observers| {
+                            budget
+                                .reserve_record(heap(observers)?)
+                                .map_err(ExecutionError::from)
+                        })
+                        .transpose()?,
                     strike_motion: action
                         .strike_motion
                         .as_ref()
@@ -362,6 +415,58 @@ impl EntityStore {
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
         self.action_storage(handle)?.route.retain(budget)
+    }
+
+    pub(crate) fn retain_attack_observers(
+        &self,
+        handle: EntityHandle,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        if let Some(storage) = &self.action_storage(handle)?.attack_observers {
+            budget.retain_record(storage)?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn swap_attack_observers(
+        &mut self,
+        handle: EntityHandle,
+        action_id: &str,
+        next: Option<FundedAttackObservers>,
+        budget: &ByteBudget,
+    ) -> Result<Option<FundedAttackObservers>, ExecutionError> {
+        let slot = self
+            .slots
+            .get_mut(handle.slot)
+            .filter(|slot| slot.generation == handle.generation)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let action = slot
+            .entity
+            .as_mut()
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.action.as_mut())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?;
+        let storage = &mut slot
+            .action_storage
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?
+            .attack_observers;
+        if action.attack_observers.is_some() != storage.is_some()
+            || next
+                .as_ref()
+                .is_some_and(|body| !budget.resident().owns(&body.storage))
+        {
+            return Err(ExecutionError::Invariant);
+        }
+        let (next, custody) = next
+            .map(|body| (Some(body.value), Some(body.storage)))
+            .unwrap_or_default();
+        let before = std::mem::replace(&mut action.attack_observers, next);
+        let before_storage = std::mem::replace(storage, custody);
+        Ok(before
+            .zip(before_storage)
+            .map(|(value, storage)| FundedAttackObservers { value, storage }))
     }
 
     pub(crate) fn retain_strike_motion(

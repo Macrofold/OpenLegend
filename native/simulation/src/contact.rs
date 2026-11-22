@@ -47,7 +47,6 @@ pub(crate) fn stage_preparation(
         })
         .and_then(|definition| definition.profile.hunt.as_ref());
     if hunt.is_some_and(|hunt| action.definition_id.as_deref() == Some(&hunt.strike_id)) {
-        use crate::narration::{Narration, NarrationPart, PersonRole};
         use crate::reception::EventScalar;
         let target = action
             .target_id
@@ -68,22 +67,9 @@ pub(crate) fn stage_preparation(
         )?;
         let event = EventEmissionIntent {
             event_type: event_type.clone(),
-            text: EmissionText::Narration(Narration {
-                parts: vec![
-                    NarrationPart::Participant {
-                        entity_id: source.into(),
-                        role: PersonRole::Subject,
-                        article: None,
-                    },
-                    NarrationPart::Literal(format!(" {} ", cue.preparing_strike).into()),
-                    NarrationPart::Participant {
-                        entity_id: target.into(),
-                        role: PersonRole::Object,
-                        article: None,
-                    },
-                    NarrationPart::Literal(".".into()),
-                ],
-            }),
+            text: EmissionText::Narration(crate::reception::combat_observation::preparation_narration(
+                source, target, &cue.preparing_strike,
+            )),
             audience: AudienceSelection::Physical,
             source_id: Some(source.into()),
             target_id: Some(target.into()),

@@ -1,0 +1,306 @@
+//! A private combat cue consumes the observer's completed visual reception.
+//! The action keeps only the receipt that prevents repeating the same evidence.
+use super::{EventScalar, ObserverLife};
+use crate::contact::StrikePhase;
+use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope, WorldEvent};
+use crate::execution::{CoreMutation, ExecutionError, StagedOccurrence};
+use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
+use crate::host::{ByteBudget, ByteReservation};
+use crate::narration::{Narration, NarrationPart, PersonRole};
+use crate::state::{Action, Entity, FundedAttackObservers};
+use indexmap::IndexMap;
+use serde::{Deserialize, Serialize};
+
+pub(crate) const ATTACK_CUE_EVENT: &str = "attack-cue";
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AttackObservationReceipt {
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
+    life: u64,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    episode: Option<String>,
+}
+
+impl HeapBytes for AttackObservationReceipt {
+    fn heap_bytes(&self) -> Option<usize> {
+        self.episode.heap_bytes()
+    }
+}
+
+pub(crate) type AttackObservers = IndexMap<String, AttackObservationReceipt>;
+
+pub(crate) struct PreparedAttackCue {
+    source: crate::state::EntityHandle,
+    action: String,
+    receipts: FundedAttackObservers,
+    event: EventEmissionIntent,
+    storage: ByteReservation,
+}
+
+impl PreparedAttackCue {
+    pub(crate) fn stage(
+        self,
+        core: &mut CoreMutation<'_>,
+    ) -> Result<(StagedOccurrence, ByteReservation), ExecutionError> {
+        core.physical()
+            .replace_attack_observers(self.source, &self.action, self.receipts)?;
+        Ok((core.stage_event(self.event)?, self.storage))
+    }
+}
+
+pub(crate) fn valid_observers(observers: &AttackObservers) -> bool {
+    use crate::values::is_safe_record_id;
+    observers.iter().all(|(observer, receipt)| {
+        is_safe_record_id(observer) && receipt.episode.as_deref().is_none_or(is_safe_record_id)
+    })
+}
+
+fn windup(body: &Entity) -> Option<&Action> {
+    let actor = body.actor.as_ref()?;
+    let action = actor.action.as_ref()?;
+    (actor.alive
+        && body.actively_participates()
+        && action.is_natural_contact()
+        && action.stage == "working"
+        && action.strike_phase == Some(StrikePhase::Windup))
+    .then_some(action)
+}
+
+pub(crate) fn preparation_narration(source: &str, target: &str, wording: &str) -> Narration {
+    Narration {
+        parts: vec![
+            NarrationPart::Participant {
+                entity_id: source.into(),
+                role: PersonRole::Subject,
+                article: None,
+            },
+            NarrationPart::Literal(format!(" {wording} ").into()),
+            NarrationPart::Participant {
+                entity_id: target.into(),
+                role: PersonRole::Object,
+                article: None,
+            },
+            NarrationPart::Literal(".".into()),
+        ],
+    }
+}
+
+/// The snapshot is the current accepted people list for this visual receiving
+/// turn, including unchanged observations whose support is still valid.
+pub(crate) fn next_attack_cue(
+    core: &CoreMutation<'_>,
+    observer: &ObserverLife,
+    index: &mut usize,
+    budget: &ByteBudget,
+) -> Result<Option<PreparedAttackCue>, ExecutionError> {
+    let combat = core
+        .state
+        .installed
+        .body_policy
+        .as_ref()
+        .and_then(|body| body.value().combat.as_ref());
+    let policy = combat.and_then(|combat| {
+        combat
+            .encounters
+            .as_ref()
+            .filter(|policy| policy.visible_preparation)
+            .map(|policy| (combat, policy))
+    });
+    let reception = &core.state.reception;
+    let Some(people) = reception
+        .visible_people
+        .as_ref()
+        .and_then(|owners| owners.get(&observer.actor_id))
+    else {
+        return Ok(None);
+    };
+    let state = &core.state.physical;
+    while let Some(source_id) = people.get(*index) {
+        *index += 1;
+        let Some(source) = state.entities.get(source_id) else {
+            continue;
+        };
+        if source
+            .actor
+            .as_ref()
+            .and_then(|actor| actor.action.as_ref())
+            .is_some_and(Action::has_unconverted_fields)
+        {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        let Some((action, (combat, policy))) = windup(source).zip(policy) else {
+            continue;
+        };
+        let Some(target_id) = action.target_id.as_deref() else {
+            continue;
+        };
+        let directed = target_id == observer.actor_id;
+        if !directed && !people.iter().any(|id| id == target_id) {
+            continue;
+        }
+        let Some(target_life) = state
+            .entities
+            .get(target_id)
+            .and_then(Entity::physical_life)
+        else {
+            continue;
+        };
+        if Some(target_life) != action.target_life
+            || (directed && target_life != observer.physical_life)
+        {
+            continue;
+        }
+        let previous = action.attack_observers.as_ref();
+        if previous
+            .and_then(|observers| observers.get(&observer.actor_id))
+            .is_some_and(|prior| {
+                prior.life == observer.physical_life
+                    && crate::worlds::base_knowledge::subject_reference_current(
+                        reception,
+                        &observer.actor_id,
+                        source_id,
+                        Some(&prior.episode),
+                    )
+            })
+        {
+            continue;
+        }
+        let episode = reception
+            .perception_episodes
+            .as_ref()
+            .and_then(|owners| owners.get(&observer.actor_id))
+            .and_then(|episodes| episodes.get(source_id));
+        let storage = budget.reserve(
+            heap_sum([
+                action
+                    .attack_observers
+                    .heap_bytes()
+                    .ok_or(ExecutionError::Capacity)?,
+                map_storage::<String, AttackObservationReceipt>(
+                    previous
+                        .map_or(0, IndexMap::capacity)
+                        .saturating_mul(2)
+                        .max(4),
+                )
+                .ok_or(ExecutionError::Capacity)?,
+                observer.actor_id.len(),
+                episode.map_or(0, String::len),
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut receipts = previous.cloned().unwrap_or_default();
+        receipts
+            .try_reserve(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        receipts.insert(
+            observer.actor_id.clone(),
+            AttackObservationReceipt {
+                life: observer.physical_life,
+                episode: episode.cloned(),
+            },
+        );
+        let receipts = FundedAttackObservers::from_storage(receipts, storage, budget)?;
+        let source_life = source.physical_life().ok_or(ExecutionError::Invariant)?;
+        let event_storage = budget.reserve(
+            1024 + 3 * (source_id.len() + target_id.len())
+                + 2 * action.id.len()
+                + observer.actor_id.len()
+                + 2 * policy.preparing_strike.len(),
+        )?;
+        let action_id = action.id.clone();
+        let event = EventEmissionIntent {
+            event_type: ATTACK_CUE_EVENT.to_owned(),
+            text: EmissionText::Narration(preparation_narration(
+                source_id,
+                target_id,
+                &policy.preparing_strike,
+            )),
+            audience: AudienceSelection::Explicit(vec![observer.actor_id.clone()]),
+            origin: None,
+            source_id: Some(source_id.clone()),
+            target_id: Some(target_id.to_owned()),
+            scope: EventScope::Private,
+            exposure: None,
+            data: Some(IndexMap::from([
+                (
+                    "actionId".into(),
+                    EventScalar::Text(action_id.clone().into()),
+                ),
+                ("sourceLife".into(), EventScalar::Number(source_life as f64)),
+                ("targetLife".into(), EventScalar::Number(target_life as f64)),
+                ("semanticTrigger".into(), EventScalar::Boolean(true)),
+                (
+                    "importance".into(),
+                    EventScalar::Number(combat.impact_attention.importance),
+                ),
+                (
+                    "urgency".into(),
+                    EventScalar::Number(combat.impact_attention.urgency),
+                ),
+            ])),
+        };
+        let source = state
+            .entities
+            .handle(source_id)
+            .ok_or(ExecutionError::MissingActor)?;
+        return Ok(Some(PreparedAttackCue {
+            source,
+            action: action_id,
+            receipts,
+            event,
+            storage: event_storage,
+        }));
+    }
+    Ok(None)
+}
+
+/// The event cursor accepts the newly granted private scope only with the exact
+/// working action receipt; other event producers cannot use this as authority.
+pub(crate) fn current_attack_cue(core: &CoreMutation<'_>, event: &WorldEvent) -> bool {
+    if event.scope != Some(EventScope::Private) || event.event_type != ATTACK_CUE_EVENT {
+        return false;
+    }
+    let [observer] = event.audience.as_slice() else {
+        return false;
+    };
+    let state = &core.state.physical;
+    let Some(source) = event
+        .actor_id
+        .as_deref()
+        .and_then(|id| state.entities.get(id))
+    else {
+        return false;
+    };
+    let Some(action) = windup(source) else {
+        return false;
+    };
+    let receipt = action
+        .attack_observers
+        .as_ref()
+        .and_then(|receipts| receipts.get(observer));
+    let field = |key| event.data.as_ref().and_then(|data| data.get(key));
+    let cause_matches = matches!(field("actionId"),
+        Some(EventScalar::Text(value)) if value.as_unicode() == Some(action.id.as_str()));
+    let binds_life = |key, life: Option<u64>| matches!((field(key), life), (Some(EventScalar::Number(value)), Some(life)) if *value == life as f64);
+    let exposed = core
+        .state
+        .reception
+        .visible_people
+        .as_ref()
+        .and_then(|people| people.get(observer));
+    cause_matches
+        && action.target_id == event.target_id
+        && binds_life("sourceLife", source.physical_life())
+        && binds_life("targetLife", action.target_life)
+        && exposed.is_some_and(|people| {
+            people.iter().any(|id| id == &source.id)
+                && event
+                    .target_id
+                    .as_ref()
+                    .is_some_and(|target| target == observer || people.contains(target))
+        })
+        && receipt.is_some_and(|receipt| {
+            state.entities.get(observer).and_then(Entity::physical_life) == Some(receipt.life)
+        })
+}

@@ -23,7 +23,8 @@ use crate::values::{
     deserialize_safe_integer,
 };
 pub(crate) use action_storage::{
-    FundedAction, FundedActionNavigation, FundedActionPath, FundedActionRoute, FundedStrikeMotion,
+    FundedAction, FundedActionNavigation, FundedActionPath, FundedActionRoute, FundedAttackObservers,
+    FundedStrikeMotion,
 };
 pub(crate) use agency::AgencyOrder;
 pub(crate) use goal_storage::FundedGoals;
@@ -520,7 +521,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub attack_observers: Option<UnconvertedField>,
+    pub(crate) attack_observers: Option<crate::reception::combat_observation::AttackObservers>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -864,7 +865,7 @@ impl Action {
             || (!self.is_natural_contact()
                 && (self.strike_phase.is_some() || self.strike_outcome.is_some()))
             || self.gathering.is_some() != (self.kind == "gather")
-            || self.attack_observers.is_some()
+            || (self.attack_observers.is_some() && !self.is_natural_contact())
             || self.cooperation.is_some()
             || self.combat_help_id.is_some()
             || self.evasion.is_some()

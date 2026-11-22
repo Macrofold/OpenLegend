@@ -107,6 +107,7 @@ pub(crate) fn require_supported_event(
         .contains(&event.event_type)
         && event.event_type != installed.ordinary_actions.value().action_started_event
         && contact != Some(ContactCue::Attempt)
+        && !crate::reception::combat_observation::current_attack_cue(core, event)
     {
         return Err(ExecutionError::UnsupportedFamily);
     }
