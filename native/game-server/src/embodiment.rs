@@ -4,7 +4,7 @@
 use crate::{
     authority::{
         AccessError, Authority, AuthorizedScope, Capability, ControlChange, ControlOperation,
-        ControlRequest, DepartureControl, now_ms,
+        ControlRequest, DepartureControl, PendingExit, now_ms,
     },
     boot::CurrentServer,
     live_save::{LiveSaves, ProtectedGameplaySave},
@@ -16,7 +16,7 @@ use openlegend_simulation::{
     commands::Outcome,
     host::ByteReservation,
     records::SaveRows,
-    runtime::{RuntimeDirectOutput, RuntimeError, RuntimeParticipation},
+    runtime::{NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimeParticipation},
     text::JsText,
 };
 use std::{sync::Arc, time::Duration};
@@ -97,6 +97,7 @@ pub(crate) async fn change(
         control,
         presence: reserved_presence,
         exit,
+        owner: presence.clone(),
     };
     let candidate = apply(
         game,
@@ -133,34 +134,114 @@ pub(crate) async fn reconcile(
         let Some(control) = presence.fence_departure()? else {
             break;
         };
-        let scope = control.scope.clone();
+        let scope = control.page().cloned().expect("due page departure");
         if !control.selected().await? {
             presence.departure_finished(&scope)?;
             continue;
         }
-        let exit = Exit::new(grace);
-        let operation = RuntimeParticipation::BeginExit(exit.id.clone());
-        let host = HostParticipation::Loss {
-            control,
-            presence: presence.clone(),
-            exit,
-        };
-        let candidate = apply(
-            game,
-            saves,
-            scope.scope.account_id.clone(),
-            scope.scope.actor_id.clone(),
-            operation,
-            host,
-        )
-        .await?;
+        let candidate = begin_absence(game, saves, presence, control, Exit::new(grace)).await?;
         if !candidate.outcome.ok {
             // Gameplay already denies an otherwise current loss, e.g. a
             // body that ceased participating before this transport closed.
             presence.departure_finished(&scope)?;
         }
     }
+    while presence.elapsed_exit_due()? {
+        let _barrier = saves.enter_protected().await?;
+        if !presence.elapsed_exit_due()? {
+            return Ok(());
+        }
+        let next = presence.next_elapsed_exit().await?;
+        let Some(pending) = next else {
+            presence.elapsed_exit_checked(None)?;
+            return Ok(());
+        };
+        if pending.deadline > now_ms() {
+            presence.elapsed_exit_checked(Some(pending.deadline))?;
+            return Ok(());
+        }
+        let operation = RuntimeParticipation::Depart(pending.id.clone());
+        let candidate = apply(
+            game,
+            saves,
+            pending.account.clone(),
+            pending.actor.clone(),
+            operation,
+            HostParticipation::Elapsed(pending),
+        )
+        .await?;
+        if !candidate.outcome.ok {
+            return Err(StoreError::InvalidRecord.into());
+        }
+    }
     Ok(())
+}
+
+/// A stopped game's lack of sockets does not start a physical departure.
+/// Before ordinary time can resume, reconcile the saved bodies once against
+/// the currently verified controllers. The accepted writer owns each effect.
+pub(crate) async fn reconcile_restored(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    presence: &Arc<Presence>,
+    grace: Duration,
+) -> Result<(), WorldError> {
+    if !presence.restored_due()? {
+        return Ok(());
+    }
+    let _barrier = saves.enter_protected().await?;
+    if !presence.restored_due()?
+        || !presence.visible()?
+        || game
+            .world
+            .capture(NativeWorldSession::clock)
+            .await?
+            .manually_paused
+    {
+        return Ok(());
+    }
+    let restored = game
+        .world
+        .capture(NativeWorldSession::restored_players)
+        .await?;
+    for (actor, account) in restored.players {
+        let Some(control) = presence.fence_unattended(actor, account)? else {
+            continue;
+        };
+        let exit = control
+            .previous_attempt()
+            .await?
+            .map(|(id, deadline)| Exit { id, deadline })
+            .unwrap_or_else(|| Exit::new(grace));
+        let candidate = begin_absence(game, saves, presence, control, exit).await?;
+        if !candidate.outcome.ok {
+            return Err(StoreError::InvalidRecord.into());
+        }
+    }
+    presence.restored_checked()?;
+    Ok(())
+}
+
+async fn begin_absence(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    presence: &Arc<Presence>,
+    control: DepartureControl,
+    exit: Exit,
+) -> Result<PreparedControl, WorldError> {
+    let operation = if control.page().is_some() {
+        RuntimeParticipation::BeginExit(exit.id.clone())
+    } else {
+        RuntimeParticipation::ReconcileExit(exit.id.clone())
+    };
+    let account = control.account().to_owned();
+    let actor = control.actor().to_owned();
+    let host = HostParticipation::Loss {
+        control,
+        presence: presence.clone(),
+        exit,
+    };
+    apply(game, saves, account, actor, operation, host).await
 }
 
 struct Exit {
@@ -186,12 +267,14 @@ enum HostParticipation {
         control: ControlChange,
         presence: ControlPresence,
         exit: Option<Exit>,
+        owner: Arc<Presence>,
     },
     Loss {
         control: DepartureControl,
         presence: Arc<Presence>,
         exit: Exit,
     },
+    Elapsed(PendingExit),
 }
 
 impl HostParticipation {
@@ -204,18 +287,36 @@ impl HostParticipation {
                     .await
             }
             Self::Loss { control, exit, .. } => control.write(tx, exit.fields()).await,
+            Self::Elapsed(attempt) => attempt.validate(tx).await,
         }
     }
 
     fn confirmed(self) -> Result<(), AccessError> {
         match self {
             Self::Browser {
-                control, presence, ..
-            } => presence.confirmed(control),
+                control,
+                presence,
+                exit,
+                owner,
+            } => {
+                presence.confirmed(control)?;
+                if let Some(exit) = exit {
+                    owner.installed_exit(exit.deadline)?;
+                }
+            }
             Self::Loss {
-                control, presence, ..
-            } => presence.departure_finished(&control.scope),
+                control,
+                presence,
+                exit,
+            } => {
+                if let Some(scope) = control.page() {
+                    presence.departure_finished(scope)?;
+                }
+                presence.installed_exit(exit.deadline)?;
+            }
+            Self::Elapsed(_) => {}
         }
+        Ok(())
     }
 }
 

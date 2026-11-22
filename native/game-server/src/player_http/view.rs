@@ -372,16 +372,29 @@ async fn events(
         })
     };
     let authority = &views.routes.authority;
-    let controlling = match authority.current(&first.scope, Capability::Play, false, |_, controlling| controlling) {
-        Ok(controlling) => controlling,
-        Err(error) => return access_failure(error),
-    };
+    let controlling =
+        match authority.current(&first.scope, Capability::Play, false, |_, controlling| {
+            controlling
+        }) {
+            Ok(controlling) => controlling,
+            Err(error) => return access_failure(error),
+        };
     let presence = if controlling {
-        let background = match views.routes.game.store.player_background(&first.scope.scope).await {
+        let background = match views
+            .routes
+            .game
+            .store
+            .player_background(&first.scope.scope)
+            .await
+        {
             Ok(background) => background,
             Err(error) => return failed(error.into()),
         };
-        match views.routes.presence.connect(first.scope.clone(), background) {
+        match views
+            .routes
+            .presence
+            .connect(first.scope.clone(), background)
+        {
             Ok(presence) => presence,
             Err(error) => return access_failure(error),
         }

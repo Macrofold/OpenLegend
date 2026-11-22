@@ -124,7 +124,12 @@ impl GameClock {
         self.clock_with_presence().await.map(|_| ())
     }
 
-    pub(crate) fn with_inputs(mut self, presence: Arc<Presence>, inputs: Arc<WorldInputs>, exit_grace: Duration) -> Self {
+    pub(crate) fn with_inputs(
+        mut self,
+        presence: Arc<Presence>,
+        inputs: Arc<WorldInputs>,
+        exit_grace: Duration,
+    ) -> Self {
         self.presence = Some(presence);
         self.exit_grace = exit_grace;
         self.inputs = Some(inputs);
@@ -133,12 +138,18 @@ impl GameClock {
 
     async fn clock_with_presence(&self) -> Result<(RuntimeClock, bool), WorldError> {
         if let Some(presence) = &self.presence {
-            crate::embodiment::reconcile(&self.game, &self.saves, presence, self.exit_grace).await?;
+            crate::embodiment::reconcile(&self.game, &self.saves, presence, self.exit_grace)
+                .await?;
         }
         let current = self.game.world.capture(NativeWorldSession::clock).await?;
         let Some(presence) = &self.presence else {
             return Ok((current, false));
         };
+        if !current.manually_paused && presence.restored_due()? && presence.visible()? {
+            crate::embodiment::reconcile_restored(
+                &self.game, &self.saves, presence, self.exit_grace,
+            ).await?;
+        }
         let should_pause = |clock: RuntimeClock| {
             Ok::<_, WorldError>(
                 clock.manually_paused || !(presence.visible()? || clock.exit_exposure_active),
@@ -268,6 +279,11 @@ impl GameClock {
     /// Reconcile the loaded hot state before accepting connections. Startup
     /// now contributes to the same ordinary store queue as later gameplay.
     pub async fn initialize(&self) -> Result<(), WorldError> {
+        if let Some(presence) = &self.presence
+            && !self.game.world.capture(NativeWorldSession::has_simulated_departure).await?
+        {
+            presence.enable_elapsed_exit()?;
+        }
         let game = self.game.clone();
         let prepare = self.saves.clone();
         let accept = self.saves.clone();
@@ -571,7 +587,9 @@ impl GameClock {
             let now = Instant::now();
             let elapsed = now.saturating_duration_since(previous);
             let (clock, changed) = match self.clock_with_presence().await {
-                Err(WorldError::Storage(StoreError::WriterUnavailable)) => {
+                Err(WorldError::Storage(StoreError::WriterUnavailable)
+                    | WorldError::Access(AccessError::Busy | AccessError::Changed)
+                    | WorldError::Commit(CommitError::RolledBack(StoreError::StaleCut | StoreError::Timeout | StoreError::Capacity))) => {
                     more = false;
                     continue;
                 }

@@ -114,6 +114,7 @@ impl Authority {
                     ..scope.clone()
                 },
                 key: authorized.key,
+                expires_at: before.expires_at,
             });
             Some(ReturningControl {
                 scope,
@@ -310,12 +311,76 @@ impl ControlChange {
     }
 }
 
-/// An internal loss notification is not a credential. It may retire only
-/// the saved controller whose exact generation and connection were observed.
+pub(crate) struct PendingExit {
+    world: String,
+    pub(crate) actor: String,
+    pub(crate) account: String,
+    pub(crate) id: String,
+    pub(crate) deadline: i64,
+    _custody: ByteReservation,
+}
+
+impl Authority {
+    /// Used only by a world with no installed game-time exit rule, at a known
+    /// due time or on startup. Inactive departures keep their saved attempt.
+    pub(crate) async fn next_elapsed_exit(&self) -> StoreResult<Option<PendingExit>> {
+        let custody = self
+            .budget
+            .reserve(8192)
+            .map_err(|_| StoreError::Capacity)?;
+        let world = self.world_id.clone();
+        self.store.read_simulation_cut(move |tx| Box::pin(async move {
+            let row = tx.query_opt(
+                "SELECT e.actor_id,g.account_id,e.payload::jsonb->>'id', \
+                    (e.payload::jsonb->>'deadline')::bigint \
+                 FROM auth_exits e \
+                 JOIN auth_grants g ON g.world_id=e.world_id AND g.actor_id=e.actor_id \
+                 JOIN sim_entities n ON n.world_id=e.world_id AND n.entity_id=e.actor_id \
+                 JOIN sim_actors a ON a.world_id=n.world_id AND a.parent_id=n.id \
+                 WHERE e.world_id=$1 AND a.payload::jsonb #>> '{participation,phase}'='exiting' \
+                 AND octet_length(e.actor_id)+octet_length(g.account_id)+octet_length(e.payload)<=$2 \
+                 ORDER BY (e.payload::jsonb->>'deadline')::bigint, n.position LIMIT 1",
+                &[&world, &ACCESS_COLUMN_BYTES],
+            ).await?;
+            row.map(|row| Ok(PendingExit {
+                world,
+                actor: row.try_get(0)?,
+                account: row.try_get(1)?,
+                id: row.try_get(2)?,
+                deadline: row.try_get(3)?,
+                _custody: custody,
+            })).transpose()
+        })).await
+    }
+}
+
+impl PendingExit {
+    pub(crate) async fn validate(&self, tx: &Transaction<'_>) -> StoreResult<()> {
+        let present = tx
+            .query_opt(
+                "SELECT 1 FROM auth_exits WHERE world_id=$1 AND actor_id=$2 \
+             AND payload::jsonb->>'id'=$3 AND (payload::jsonb->>'deadline')::bigint=$4",
+                &[&self.world, &self.actor, &self.id, &self.deadline],
+            )
+            .await?;
+        if present.is_none() || now_ms() < self.deadline {
+            return Err(StoreError::StaleCut);
+        }
+        Ok(())
+    }
+}
+
+/// Internal absence may retire a saved controlling generation without
+/// treating the discarded page or a revoked session as a credential.
 pub(crate) struct DepartureControl {
     owner: Arc<Authority>,
-    pub(crate) scope: Arc<AuthorizedScope>,
+    subject: Departing,
     _custody: ByteReservation,
+}
+
+enum Departing {
+    Page(Arc<AuthorizedScope>),
+    Restored { actor: String, account: String },
 }
 
 impl Authority {
@@ -330,25 +395,64 @@ impl Authority {
         {
             return Err(AccessError::Changed);
         }
+        self.fence_absent(Departing::Page(scope))
+    }
+
+    pub(crate) fn fence_restored_departure(
+        self: &Arc<Self>,
+        actor: String,
+        account: String,
+    ) -> Result<DepartureControl, AccessError> {
+        self.fence_absent(Departing::Restored { actor, account })
+    }
+
+    fn fence_absent(self: &Arc<Self>, subject: Departing) -> Result<DepartureControl, AccessError> {
         let custody = self.budget.reserve(8192).map_err(|_| AccessError::Busy)?;
+        let actor = match &subject {
+            Departing::Page(scope) => &scope.scope.actor_id,
+            Departing::Restored { actor, .. } => actor,
+        };
         let mut cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
-        if !cache.changing_control.insert(scope.scope.actor_id.clone()) {
+        if !cache.changing_control.insert(actor.clone()) {
             return Err(AccessError::Busy);
         }
         Ok(DepartureControl {
             owner: self.clone(),
-            scope,
+            subject,
             _custody: custody,
         })
     }
 }
 
 impl DepartureControl {
+    pub(crate) fn page(&self) -> Option<&Arc<AuthorizedScope>> {
+        match &self.subject {
+            Departing::Page(scope) => Some(scope),
+            Departing::Restored { .. } => None,
+        }
+    }
+
+    pub(crate) fn actor(&self) -> &str {
+        match &self.subject {
+            Departing::Page(scope) => &scope.scope.actor_id,
+            Departing::Restored { actor, .. } => actor,
+        }
+    }
+
+    pub(crate) fn account(&self) -> &str {
+        match &self.subject {
+            Departing::Page(scope) => &scope.scope.account_id,
+            Departing::Restored { account, .. } => account,
+        }
+    }
+
     /// An old page can survive a concurrent access edit or replacement. Skip
     /// that page before preparing physical work; repeat the exact match at write.
     pub(crate) async fn selected(&self) -> StoreResult<bool> {
-        let scope = self.scope.clone();
-        self.owner.store.read_operational(move |tx| {
+        let Some(scope) = self.page().cloned() else {
+            return Ok(true);
+        };
+        self.owner.store.read_simulation_cut(move |tx| {
             Box::pin(async move {
                 let value = &scope.scope;
                 Ok(tx.query_opt(
@@ -361,29 +465,64 @@ impl DepartureControl {
         }).await
     }
 
+    /// Reuse a real operational attempt after a paused-world recovery. Only
+    /// restored bodies inspect this record, under the protected save barrier.
+    pub(crate) async fn previous_attempt(&self) -> StoreResult<Option<(String, i64)>> {
+        let world = self.owner.world_id.clone();
+        let actor = self.actor().to_owned();
+        self.owner
+            .store
+            .read_simulation_cut(move |tx| {
+                Box::pin(async move {
+                    let row = tx
+                        .query_opt(
+                            "SELECT payload::jsonb->>'id',(payload::jsonb->>'deadline')::bigint \
+                 FROM auth_exits WHERE world_id=$1 AND actor_id=$2 AND octet_length(payload)<=$3",
+                            &[&world, &actor, &ACCESS_COLUMN_BYTES],
+                        )
+                        .await?;
+                    row.map(|row| Ok((row.try_get(0)?, row.try_get(1)?)))
+                        .transpose()
+                })
+            })
+            .await
+    }
+
     pub(crate) async fn write(
         &self,
         tx: &Transaction<'_>,
         attempt: (&str, i64),
     ) -> StoreResult<()> {
-        let value = &self.scope.scope;
-        let updated = tx.execute(
-            "UPDATE auth_controls SET generation=generation+1,session_id='',connection_id='' \
-             WHERE world_id=$1 AND actor_id=$2 AND generation=$3 AND account_id=$4 AND session_id=$5 AND connection_id=$6",
-            &[&value.world_id, &value.actor_id, &(value.control_generation as i64),
-              &value.account_id, &value.session_id, &value.connection_id],
-        ).await?;
-        if updated != 1 {
-            return Err(StoreError::StaleCut);
+        let world = &self.owner.world_id;
+        match &self.subject {
+            Departing::Page(scope) => {
+                let value = &scope.scope;
+                let updated = tx.execute(
+                    "UPDATE auth_controls SET generation=generation+1,session_id='',connection_id='' \
+                     WHERE world_id=$1 AND actor_id=$2 AND generation=$3 AND account_id=$4 AND session_id=$5 AND connection_id=$6",
+                    &[world, &value.actor_id, &(value.control_generation as i64),
+                      &value.account_id, &value.session_id, &value.connection_id],
+                ).await?;
+                if updated != 1 {
+                    return Err(StoreError::StaleCut);
+                }
+            }
+            Departing::Restored { actor, account } => {
+                tx.execute(
+                    "UPDATE auth_controls SET generation=generation+1,session_id='',connection_id='' \
+                     WHERE world_id=$1 AND actor_id=$2 AND account_id=$3 AND generation<$4 AND session_id<>''",
+                    &[world, actor, account, &(MAX_SAFE_INTEGER as i64)],
+                ).await?;
+            }
         }
-        apply_exit(tx, &value.world_id, &value.actor_id, Some(attempt)).await
+        apply_exit(tx, world, self.actor(), Some(attempt)).await
     }
 }
 
 impl Drop for DepartureControl {
     fn drop(&mut self) {
         if let Ok(mut cache) = self.owner.cache.lock() {
-            invalidate_control(&mut cache, &self.scope.scope.actor_id);
+            invalidate_control(&mut cache, self.actor());
         }
     }
 }

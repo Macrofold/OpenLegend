@@ -57,20 +57,27 @@ impl Store {
     /// A newly selected controlling transport needs one saved background
     /// setting. The caller rechecks current authority before retaining it.
     pub(crate) async fn player_background(&self, scope: &RequestScope) -> StoreResult<bool> {
-        let funding = self.budget.reserve(2048 + scope.account_id.len())
+        let funding = self
+            .budget
+            .reserve(2048 + scope.account_id.len())
             .map_err(|_| StoreError::Capacity)?;
         let account = scope.account_id.clone();
-        self.read_operational(move |tx| Box::pin(async move {
-            let _funding = funding;
-            let row = tx.query_opt(
-                "SELECT pause_when_hidden FROM player_profiles WHERE id=$1",
-                &[&account],
-            ).await?;
-            match row {
-                Some(row) => Ok(row.try_get::<_, i64>(0)? == 0),
-                None => Ok(false),
-            }
-        })).await
+        self.read_operational(move |tx| {
+            Box::pin(async move {
+                let _funding = funding;
+                let row = tx
+                    .query_opt(
+                        "SELECT pause_when_hidden FROM player_profiles WHERE id=$1",
+                        &[&account],
+                    )
+                    .await?;
+                match row {
+                    Some(row) => Ok(row.try_get::<_, i64>(0)? == 0),
+                    None => Ok(false),
+                }
+            })
+        })
+        .await
     }
 
     /// Fetch a fresh scoped profile for login, reconnect or opening Settings.

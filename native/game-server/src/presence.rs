@@ -3,7 +3,7 @@
 
 use crate::authority::{
     AccessError, Authority, AuthorizedScope, Capability, ControlChange, ControlOperation,
-    ControlRequest, DepartureControl,
+    ControlRequest, DepartureControl, PendingExit, now_ms,
 };
 use indexmap::IndexMap;
 use openlegend_simulation::host::{ByteBudget, ByteReservation, map_storage};
@@ -26,13 +26,20 @@ struct State {
     pages: IndexMap<(String, String), Page>,
     custody: ByteReservation,
     next_check: Option<Instant>,
+    elapsed_exit: ElapsedExit,
+    awaiting_restored: bool,
+}
+
+enum ElapsedExit {
+    Disabled,
+    Due(i64),
+    Idle,
 }
 
 struct Page {
     scope: Arc<AuthorizedScope>,
     order: Option<u64>,
     visible: bool,
-    admitted: bool,
     abandoned: bool,
     streams: usize,
     background: bool,
@@ -43,7 +50,9 @@ struct Page {
 
 pub(crate) struct StreamPresence {
     owner: Arc<Presence>,
-    page: Arc<AuthorizedScope>,
+    tab: (String, String),
+    generation: u64,
+    _custody: ByteReservation,
 }
 
 pub(crate) struct ControlPresence {
@@ -66,6 +75,8 @@ impl Presence {
                 pages: IndexMap::new(),
                 custody,
                 next_check: None,
+                elapsed_exit: ElapsedExit::Disabled,
+                awaiting_restored: true,
             }),
             capacity,
             budget,
@@ -76,9 +87,9 @@ impl Presence {
         let state = self.state.lock().map_err(|_| AccessError::Availability)?;
         let now = Instant::now();
         Ok(state.pages.values().any(|page| {
-            self.current(page, now)
-                && (page.visible && now.saturating_duration_since(page.at) <= LIVE
-                    || page.streams > 0 && page.background)
+            (page.visible && now.saturating_duration_since(page.at) < LIVE
+                || page.streams > 0 && page.background)
+                && self.current(page, now)
         }))
     }
 
@@ -120,7 +131,7 @@ impl Presence {
                 false
             } else {
                 let now = Instant::now();
-                self.admit_page(&mut state, now)?;
+                self.admit_page(&mut state)?;
                 let custody = self.budget.reserve(8192).map_err(|_| AccessError::Busy)?;
                 state.pages.insert(
                     key,
@@ -128,7 +139,6 @@ impl Presence {
                         scope: scope.clone(),
                         order: None,
                         visible: false,
-                        admitted: false,
                         abandoned: false,
                         streams: 0,
                         background: false,
@@ -177,14 +187,9 @@ impl Presence {
                 .is_ok()
     }
 
-    fn admit_page(&self, state: &mut State, now: Instant) -> Result<(), AccessError> {
+    fn admit_page(&self, state: &mut State) -> Result<(), AccessError> {
         if state.pages.len() >= self.capacity {
-            state.pages.retain(|_, page| {
-                page.pending_return || page.admitted || page.streams > 0 || page.live(now)
-            });
-            if state.pages.len() >= self.capacity {
-                return Err(AccessError::Busy);
-            }
+            return Err(AccessError::Busy);
         }
         if state.pages.len() == state.pages.capacity() {
             let limit = state.pages.len().saturating_mul(2).saturating_add(4);
@@ -226,31 +231,37 @@ impl Presence {
                         page.order = order;
                     }
                     page.scope = authorized.clone();
-                    page.admitted = true;
                     page.abandoned = !shown && page.streams == 0;
                     page.visible = shown;
                     page.at = now;
-                    Self::schedule(&mut state, if shown { now + LIVE } else { now });
+                    let next = if page.abandoned {
+                        now
+                    } else {
+                        page.check_at(now, now_ms())
+                    };
+                    Self::schedule(&mut state, next);
                     return Ok(transition);
                 }
-                self.admit_page(&mut state, now)?;
+                self.admit_page(&mut state)?;
                 let custody = self.budget.reserve(8192).map_err(|_| AccessError::Busy)?;
-                state.pages.insert(
-                    key,
-                    Page {
-                        scope: authorized.clone(),
-                        order,
-                        visible: shown,
-                        admitted: true,
-                        abandoned: !shown,
-                        streams: 0,
-                        background: false,
-                        pending_return: false,
-                        at: now,
-                        _custody: custody,
-                    },
-                );
-                Self::schedule(&mut state, if shown { now + LIVE } else { now });
+                let page = Page {
+                    scope: authorized.clone(),
+                    order,
+                    visible: shown,
+                    abandoned: !shown,
+                    streams: 0,
+                    background: false,
+                    pending_return: false,
+                    at: now,
+                    _custody: custody,
+                };
+                let next = if page.abandoned {
+                    now
+                } else {
+                    page.check_at(now, now_ms())
+                };
+                state.pages.insert(key, page);
+                Self::schedule(&mut state, next);
                 Ok(true)
             })?
     }
@@ -270,15 +281,16 @@ impl Presence {
                 }
                 let now = Instant::now();
                 let key = page_key(&authorized);
+                let bytes = std::mem::size_of::<StreamPresence>() + 2 * (key.0.len() + key.1.len());
+                let funding = self.budget.reserve(bytes).map_err(|_| AccessError::Busy)?;
                 if !state.pages.contains_key(&key) {
-                    self.admit_page(&mut state, now)?;
+                    self.admit_page(&mut state)?;
                     state.pages.insert(
                         key.clone(),
                         Page {
                             scope: authorized.clone(),
                             order: None,
                             visible: false,
-                            admitted: true,
                             abandoned: false,
                             streams: 0,
                             background,
@@ -292,13 +304,16 @@ impl Presence {
                 if page.scope.scope.control_generation != authorized.scope.control_generation {
                     return Err(AccessError::Changed);
                 }
-                page.admitted = true;
                 page.abandoned = false;
                 page.background = background;
                 page.streams = page.streams.checked_add(1).ok_or(AccessError::Busy)?;
+                let expiration = page.check_at(now, now_ms());
+                Self::schedule(&mut state, expiration);
                 Ok(Some(StreamPresence {
                     owner: self.clone(),
-                    page: authorized.clone(),
+                    tab: key,
+                    generation: authorized.scope.control_generation,
+                    _custody: funding,
                 }))
             })?
     }
@@ -340,21 +355,20 @@ impl Presence {
     }
 
     fn lost_page(state: &mut State, now: Instant) -> Option<&Page> {
+        let wall_now = now_ms();
         let mut next = None;
         let mut candidate = None;
         for page in state.pages.values() {
-            if page.pending_return || !page.admitted {
+            if page.pending_return {
                 continue;
             }
-            if !page.live(now) {
+            if !page.live(now) || page.scope.expires_at <= wall_now {
                 candidate = Some(page);
                 next = Some(now);
                 break;
             }
-            if page.streams == 0 {
-                let deadline = page.at + LIVE;
-                next = Some(next.map_or(deadline, |prior: Instant| prior.min(deadline)));
-            }
+            let deadline = page.check_at(now, wall_now);
+            next = Some(next.map_or(deadline, |prior: Instant| prior.min(deadline)));
         }
         state.next_check = next;
         candidate
@@ -372,12 +386,91 @@ impl Presence {
         Ok(())
     }
 
+    pub(crate) fn restored_due(&self) -> Result<bool, AccessError> {
+        Ok(self
+            .state
+            .lock()
+            .map_err(|_| AccessError::Availability)?
+            .awaiting_restored)
+    }
+
+    pub(crate) fn restored_checked(&self) -> Result<(), AccessError> {
+        self.state
+            .lock()
+            .map_err(|_| AccessError::Availability)?
+            .awaiting_restored = false;
+        Ok(())
+    }
+
+    pub(crate) fn fence_unattended(
+        &self,
+        actor: String,
+        account: String,
+    ) -> Result<Option<DepartureControl>, AccessError> {
+        let state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        let now = Instant::now();
+        // Reserving a selected tab while it loads is enough to avoid
+        // replacing it, but only verified heartbeat/transport counts here.
+        let present = state.pages.values().any(|page| {
+            page.scope.scope.actor_id == actor
+                && (page.visible || page.streams > 0)
+                && self.current(page, now)
+        });
+        if present {
+            return Ok(None);
+        }
+        self.authority
+            .fence_restored_departure(actor, account)
+            .map(Some)
+    }
+
+    pub(crate) fn enable_elapsed_exit(&self) -> Result<(), AccessError> {
+        self.elapsed_exit_checked(Some(i64::MIN))
+    }
+
+    pub(crate) fn elapsed_exit_due(&self) -> Result<bool, AccessError> {
+        let state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        Ok(matches!(state.elapsed_exit, ElapsedExit::Due(deadline) if deadline <= now_ms()))
+    }
+
+    pub(crate) async fn next_elapsed_exit(&self) -> crate::store::StoreResult<Option<PendingExit>> {
+        self.authority.next_elapsed_exit().await
+    }
+
+    pub(crate) fn elapsed_exit_checked(&self, deadline: Option<i64>) -> Result<(), AccessError> {
+        let mut state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        state.elapsed_exit = deadline.map_or(ElapsedExit::Idle, ElapsedExit::Due);
+        Ok(())
+    }
+
+    pub(crate) fn installed_exit(&self, deadline: i64) -> Result<(), AccessError> {
+        let mut state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        match state.elapsed_exit {
+            ElapsedExit::Disabled => {}
+            ElapsedExit::Due(prior) => state.elapsed_exit = ElapsedExit::Due(prior.min(deadline)),
+            ElapsedExit::Idle => state.elapsed_exit = ElapsedExit::Due(deadline),
+        }
+        Ok(())
+    }
+
     fn schedule(state: &mut State, at: Instant) {
         state.next_check = Some(state.next_check.map_or(at, |prior| prior.min(at)));
     }
 }
 
 impl Page {
+    fn check_at(&self, now: Instant, wall_now: i64) -> Instant {
+        let remaining = self.scope.expires_at.saturating_sub(wall_now).max(0) as u64;
+        let expires = now
+            .checked_add(Duration::from_millis(remaining))
+            .unwrap_or(now + LIVE);
+        if self.streams > 0 {
+            expires
+        } else {
+            expires.min(self.at + LIVE)
+        }
+    }
+
     fn live(&self, now: Instant) -> bool {
         !self.abandoned && (self.streams > 0 || now.saturating_duration_since(self.at) < LIVE)
     }
@@ -386,8 +479,8 @@ impl Page {
 impl Drop for StreamPresence {
     fn drop(&mut self) {
         if let Ok(mut state) = self.owner.state.lock()
-            && let Some(page) = state.pages.get_mut(&page_key(&self.page))
-            && page.scope.scope.control_generation == self.page.scope.control_generation
+            && let Some(page) = state.pages.get_mut(&self.tab)
+            && page.scope.scope.control_generation == self.generation
             && page.streams > 0
         {
             page.streams -= 1;
@@ -417,7 +510,9 @@ impl ControlPresence {
             .state
             .lock()
             .map_err(|_| AccessError::Availability)?;
-        if let Some(scope) = change.confirmed()? {
+        let verified = change.confirmed()?;
+        let abandoned = verified.is_none();
+        if let Some(scope) = verified.or_else(|| self.returning.take()) {
             let page = state
                 .pages
                 .get_mut(&page_key(&scope))
@@ -425,13 +520,16 @@ impl ControlPresence {
             page.scope = scope.clone();
             page.order = None;
             page.visible = false;
-            page.admitted = true;
-            page.abandoned = false;
+            page.abandoned = abandoned;
             page.streams = 0;
             page.background = false;
             page.pending_return = false;
             page.at = Instant::now();
-            let due = page.at + LIVE;
+            let due = if abandoned {
+                page.at
+            } else {
+                page.check_at(page.at, now_ms())
+            };
             Presence::schedule(&mut state, due);
             self.returning = None;
             let actor = &scope.scope.actor_id;

@@ -14,6 +14,13 @@ pub struct InvitationActors {
     _custody: ByteReservation,
 }
 
+/// Owned after-startup roster of current human bodies that still need a
+/// verified return or departure. It exposes only the saved bindings to the host.
+pub struct RuntimeRestoredPlayers {
+    pub players: Vec<(String, String)>,
+    _custody: ByteReservation,
+}
+
 pub enum RuntimeParticipation {
     Return,
     BeginExit(String),
@@ -22,6 +29,57 @@ pub enum RuntimeParticipation {
 }
 
 impl NativeWorldSession {
+    /// Read the installed distinction between physical game-time exposure
+    /// and application-owned elapsed departure. Only startup needs this fact.
+    pub fn has_simulated_departure(&self) -> Result<bool, RuntimeError> {
+        let current = self.session.accepted().map_err(failure)?;
+        Ok(current
+            .state
+            .installed
+            .retained
+            .participation_read
+            .as_ref()
+            .and_then(|policy| policy.exit_exposure_seconds)
+            .is_some())
+    }
+
+    pub fn restored_players(&self) -> Result<RuntimeRestoredPlayers, RuntimeError> {
+        let current = self.session.accepted().map_err(failure)?;
+        let players = || {
+            let entities = &current.state.physical.entities;
+            let owners = &current.state.administration.authorship.player_account_ids;
+            entities.ordered_ids().filter_map(move |id| {
+                let account = owners.get(id)?;
+                let actor = entities.get(id)?.actor.as_ref()?;
+                (actor.controller == "player"
+                    && actor
+                        .participation
+                        .as_ref()
+                        .is_none_or(|phase| phase.phase == "active"))
+                .then_some((id, account))
+            })
+        };
+        let (count, bytes) = players()
+            .try_fold((0_usize, 0_usize), |(count, bytes), (actor, account)| {
+                Some((
+                    count.checked_add(1)?,
+                    bytes
+                        .checked_add(actor.len())?
+                        .checked_add(account.len())?
+                        .checked_add(std::mem::size_of::<(String, String)>())?,
+                ))
+            })
+            .ok_or_else(|| failure("restored-player custody"))?;
+        let custody = self.budget.reserve(bytes)?;
+        let mut rows = Vec::new();
+        rows.try_reserve_exact(count).map_err(failure)?;
+        rows.extend(players().map(|(actor, account)| (actor.to_owned(), account.clone())));
+        Ok(RuntimeRestoredPlayers {
+            players: rows,
+            _custody: custody,
+        })
+    }
+
     /// The operator roster needs only living unowned bodies and their names.
     /// This owned read keeps its allocation through the scoped SQL exclusion.
     pub fn invitation_actors(&self) -> Result<InvitationActors, RuntimeError> {

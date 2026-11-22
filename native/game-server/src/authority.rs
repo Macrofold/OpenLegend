@@ -18,7 +18,7 @@ use uuid::Uuid;
 mod control;
 pub(crate) mod invites;
 mod managed_access;
-pub(crate) use control::DepartureControl;
+pub(crate) use control::{DepartureControl, PendingExit};
 pub use control::{ControlChange, ControlOperation, ControlRequest};
 pub(crate) use managed_access::{AccessUpdateError, UpdateGrant, assert_saved_grant};
 
@@ -498,7 +498,11 @@ impl Authority {
             connection_id: connection,
             audience,
         };
-        Ok(AuthorizedScope { scope, key })
+        Ok(AuthorizedScope {
+            scope,
+            key,
+            expires_at: access.expires_at,
+        })
     }
 
     /// Reauthorize immediately before the synchronous acceptance/disclosure
@@ -897,4 +901,5 @@ impl Drop for AccessChange<'_> {
 pub struct AuthorizedScope {
     pub scope: RequestScope,
     key: TokenHash,
+    pub(crate) expires_at: i64,
 }
