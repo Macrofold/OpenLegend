@@ -276,3 +276,171 @@ pub(crate) fn assign_subject_name(
         budget,
     )
 }
+
+/// Save a label for the subject present in the observer's current person view.
+/// Recognition evidence and the person's given name keep their existing owners.
+pub(crate) fn assign_nickname(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    contact: &str,
+    expected_revision: i64,
+    nickname: &JsText,
+    budget: &ByteBudget,
+) -> Result<CompletedNameEdit, ExecutionError> {
+    let names = PersonalNameReader::prepare(
+        &core.state.physical,
+        &core.state.reception,
+        &core.state.installed,
+        &core.state.experience,
+        observer,
+    )?;
+    let _subject = budget.reserve(256 + observer.len() + contact.len())?;
+    let subject = names.current_body_subject(contact)?;
+    let Some(subject) = subject.filter(|_| {
+        contact != observer
+            && core
+                .state
+                .physical
+                .entities
+                .get(contact)
+                .is_some_and(|entity| entity.actor.is_some())
+    }) else {
+        return result(
+            false,
+            "unpermitted-subject",
+            "This person is unavailable.",
+            budget,
+        );
+    };
+    let current = names.observer_individual(&subject);
+    let entity = match &subject {
+        ObserverSubject::Entity { entity_id } => Some(entity_id.as_str()),
+        ObserverSubject::Individual { .. } => None,
+    };
+    let recognized = match current {
+        Some(identity) => identity.seed_only != Some(true),
+        None => match entity {
+            Some(id) => names.can_remember_subject(id)?,
+            None => false,
+        },
+    };
+    if !recognized {
+        return result(
+            false,
+            "recognition-unavailable",
+            "This person is no longer recognized.",
+            budget,
+        );
+    }
+    let revision = current.map_or(0, |identity| identity.revision);
+    if u64::try_from(expected_revision) != Ok(revision) {
+        return result(
+            false,
+            "stale-identity",
+            "The name changed. Read it again before editing.",
+            budget,
+        );
+    }
+    let _text = budget.reserve(nickname.storage_bytes() + 128)?;
+    let nickname = nickname.trimmed();
+    let limit = core.state.installed.name_rules.value().nickname_characters;
+    if nickname.character_count() as u64 > limit {
+        return result(
+            false,
+            "invalid-nickname",
+            &format!("Keep the nickname within {limit} characters."),
+            budget,
+        );
+    }
+    if current
+        .and_then(|identity| identity.nickname.as_ref())
+        .map_or_else(|| nickname.is_empty(), |previous| previous == &nickname)
+    {
+        return result(
+            true,
+            "nickname-unchanged",
+            "Your nickname is already current.",
+            budget,
+        );
+    }
+    if exhausted(core, observer, revision) {
+        return result(
+            false,
+            "identity-exhausted",
+            "This name cannot be edited further.",
+            budget,
+        );
+    }
+    let mut bytes = current
+        .map_or(Some(0), HeapBytes::heap_bytes)
+        .ok_or(ExecutionError::Capacity)?;
+    let key_bytes = current
+        .and_then(|identity| identity.individual_id.as_ref())
+        .map_or(observer.len() + 64, String::len);
+    bytes = crate::host::retained_size::heap_sum([
+        bytes,
+        key_bytes,
+        key_bytes,
+        entity.map_or(0, str::len),
+        entity
+            .and_then(|id| names.episode(id))
+            .map_or(0, String::len),
+    ])
+    .ok_or(ExecutionError::Capacity)?;
+    let _candidate = budget.reserve(bytes)?;
+    let mut next = current.cloned().unwrap_or_else(|| ObserverIdentity {
+        retained: None,
+        familiarity: None,
+        individual_id: None,
+        canonical_id: None,
+        seed_only: None,
+        voice: None,
+        sight: None,
+        name_evidence_ids: None,
+        given_name: JsText::default(),
+        nickname: None,
+        revision: 0,
+        encounter_id: None,
+        authored: false,
+    });
+    if let Some(id) = entity {
+        next.canonical_id = Some(id.to_owned());
+        if next.encounter_id.is_none() {
+            next.encounter_id = names.episode(id).cloned();
+        }
+    }
+    drop(names);
+    let key = match &next.individual_id {
+        Some(id) => id.clone(),
+        None => allocate_individual(&mut core.state.physical, &core.state.reception, observer)?,
+    };
+    if next.individual_id.is_none() {
+        next.individual_id = Some(key.clone());
+    }
+    let cleared = nickname.is_empty();
+    next.nickname = (!cleared).then_some(nickname);
+    next.revision += 1;
+    if !commit_observer_identity(core, observer, &key, next, budget)? {
+        return result(
+            false,
+            "knowledge-capacity",
+            "Personal knowledge is full; the previous name was retained.",
+            budget,
+        );
+    }
+    core.journal.recognition.advance_revision(
+        &mut core.state.reception,
+        observer,
+        &mut core.journal.cognition,
+    )?;
+    result(
+        true,
+        "nickname-edited",
+        if cleared {
+            "Your nickname was cleared."
+        } else {
+            "Your nickname was saved."
+        },
+        budget,
+    )
+}

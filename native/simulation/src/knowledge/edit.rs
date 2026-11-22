@@ -23,13 +23,23 @@ impl CompletedKnowledgeEdit {
     }
 }
 
-/// A direct player edit uses the same writer as responses and reflection.
-/// The general pad needs no subject. A supplied place has already passed
-/// the server's exact retained-place selection.
+enum PrivateEdit {
+    Note {
+        edit: KnowledgeEdit,
+        permitted: bool,
+    },
+    Nickname {
+        contact: String,
+        revision: i64,
+        nickname: JsText,
+    },
+}
+
+/// Dispatch a direct personal edit to its existing knowledge or names writer.
+/// The server has already resolved any supplied contact or place for this turn.
 pub(crate) struct KnowledgeEditCursor {
     actor_id: String,
-    edit: KnowledgeEdit,
-    permitted: bool,
+    edit: PrivateEdit,
     done: bool,
     _storage: ByteReservation,
 }
@@ -53,8 +63,34 @@ impl KnowledgeEditCursor {
         )?;
         Ok(Self {
             actor_id,
-            edit,
-            permitted,
+            edit: PrivateEdit::Note { edit, permitted },
+            done: false,
+            _storage: storage,
+        })
+    }
+    pub(crate) fn nickname(
+        actor_id: String,
+        contact: String,
+        revision: i64,
+        nickname: JsText,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let storage = budget.reserve(
+            heap_sum([
+                size_of::<Self>(),
+                actor_id.capacity(),
+                contact.capacity(),
+                nickname.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok(Self {
+            actor_id,
+            edit: PrivateEdit::Nickname {
+                contact,
+                revision,
+                nickname,
+            },
             done: false,
             _storage: storage,
         })
@@ -69,18 +105,36 @@ impl KnowledgeEditCursor {
         }
         self.done = true;
         let checkpoint = core.journal.checkpoint(core.state)?;
-        let result = edit_knowledge(
-            core,
-            &self.actor_id,
-            &self.edit,
-            if self.permitted {
-                self.edit.subject_id.as_slice()
-            } else {
-                &[]
-            },
-            &[],
-            budget,
-        );
+        let result = match &self.edit {
+            PrivateEdit::Note { edit, permitted } => edit_knowledge(
+                core,
+                &self.actor_id,
+                edit,
+                if *permitted {
+                    edit.subject_id.as_slice()
+                } else {
+                    &[]
+                },
+                &[],
+                budget,
+            ),
+            PrivateEdit::Nickname {
+                contact,
+                revision,
+                nickname,
+            } => crate::worlds::base_knowledge::assign_nickname(
+                core,
+                &self.actor_id,
+                contact,
+                *revision,
+                nickname,
+                budget,
+            )
+            .map(|edit| {
+                let (outcome, storage) = edit.into_parts();
+                CompletedKnowledgeEdit { outcome, storage }
+            }),
+        };
         match result {
             Ok(result) => {
                 // Source's owner editor discards refused edits, including the

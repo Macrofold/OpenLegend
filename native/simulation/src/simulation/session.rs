@@ -941,9 +941,17 @@ impl Session {
         edit: crate::knowledge::KnowledgeEdit,
         permitted: bool,
     ) -> Result<CandidateKey, SessionError> {
+        let cursor =
+            crate::knowledge::KnowledgeEditCursor::new(actor, edit, permitted, &self.budget)?;
+        self.begin_personal_edit(cursor)
+    }
+
+    pub(crate) fn begin_personal_edit(
+        &mut self,
+        cursor: crate::knowledge::KnowledgeEditCursor,
+    ) -> Result<CandidateKey, SessionError> {
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
-            let cursor = crate::knowledge::KnowledgeEditCursor::new(actor, edit, permitted, &self.budget)?;
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,
                 journal: &mut journal,
@@ -1309,8 +1317,7 @@ impl Session {
                         if done.privacy_change().is_some())
                         || matches!(
                             &result,
-                            CompletedOperation::Restore(_)
-                                | CompletedOperation::HostControl(_)
+                            CompletedOperation::Restore(_) | CompletedOperation::HostControl(_)
                         )
                         || matches!(&result, CompletedOperation::Participation(done) if done.outcome.ok)
                         || matches!(&result, CompletedOperation::ActivityLearning(done) if done.protected && done.outcome.ok)

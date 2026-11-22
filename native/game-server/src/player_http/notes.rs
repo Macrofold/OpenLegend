@@ -8,12 +8,16 @@ use crate::{
 use openlegend_simulation::{
     appraisals::RuntimePrivateFeeling,
     encoding::json_record,
+    host::CandidateKey,
     reception::ObserverSubject,
-    runtime::{RuntimeDirectOutput, RuntimeError, RuntimeMindFile, RuntimePrivateNotes},
+    runtime::{
+        NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimeMindFile, RuntimePrivateNotes,
+    },
     text::JsText,
     values::is_safe_record_id,
 };
 use std::borrow::Cow;
+pub(super) mod nickname;
 pub(super) mod subjects;
 
 #[derive(Deserialize)]
@@ -140,7 +144,31 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
         return access_failure(AccessError::Forbidden);
     }
     let actor = request.actor_id.clone();
-    match execute_edit(&state, selected.clone(), request).await {
+    let OwnerEdit {
+        world_id,
+        generation,
+        subject_id,
+        expected_revision,
+        text,
+        ..
+    } = request;
+    let edited = execute_edit(
+        &state,
+        selected.clone(),
+        world_id,
+        generation,
+        move |session, scope| {
+            Ok(session.begin_owner_knowledge_edit(
+                &scope.account_id,
+                &scope.actor_id,
+                subject_id,
+                expected_revision,
+                text,
+            )?)
+        },
+    )
+    .await;
+    match edited {
         Ok(Some(result)) => page(&state, &selected, &actor, None, Some(&result.outcome)).await,
         Ok(None) => refusal(
             StatusCode::SERVICE_UNAVAILABLE,
@@ -159,7 +187,14 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
 async fn execute_edit(
     state: &PlayerRoutes,
     selected: Arc<AuthorizedScope>,
-    request: OwnerEdit,
+    world_id: String,
+    generation: String,
+    begin: impl FnOnce(
+        &mut NativeWorldSession,
+        &crate::authority::RequestScope,
+    ) -> Result<CandidateKey, WorldError>
+    + Send
+    + 'static,
 ) -> Result<Option<StagedEdit>, WorldError> {
     let admitted = state.saves.enter_ordinary().await;
     state.saves.check_admission(tokio::time::Instant::now())?;
@@ -178,21 +213,11 @@ async fn execute_edit(
             openlegend_simulation::profile::sites::TURN_OTHER,
             move |session| {
                 let progress = session.accepted_progress()?;
-                if progress.world_id != request.world_id
-                    || progress.generation != request.generation
-                {
+                if progress.world_id != world_id || progress.generation != generation {
                     return Err(WorldError::ProjectionChanged);
                 }
                 begin_authority.current(&begin_scope, Capability::Play, true, |scope, _| {
-                    Ok(ApplicationStart::Candidate(
-                        session.begin_owner_knowledge_edit(
-                            &scope.account_id,
-                            &scope.actor_id,
-                            request.subject_id,
-                            request.expected_revision,
-                            request.text,
-                        )?,
-                    ))
+                    Ok(ApplicationStart::Candidate(begin(session, scope)?))
                 })?
             },
             {
@@ -204,7 +229,7 @@ async fn execute_edit(
             },
             move |output, budget| {
                 let RuntimeDirectOutput::Prepared(product) = output else {
-                    unreachable!("private note editing cannot preview")
+                    unreachable!("private editing cannot preview")
                 };
                 let outcome = product.outcome();
                 let storage =

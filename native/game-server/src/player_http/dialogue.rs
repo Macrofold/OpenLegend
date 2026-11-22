@@ -216,10 +216,3 @@ pub(super) async fn availability(
         Err(error) => access_failure(error),
     }
 }
-
-fn reply(state: &PlayerRoutes, code: StatusCode, value: &impl Serialize) -> Response {
-    match wire::encode(value, b"", b"", state.game.host.budget()) {
-        Ok(bytes) => json_response(code, bytes),
-        Err(_) => busy(),
-    }
-}

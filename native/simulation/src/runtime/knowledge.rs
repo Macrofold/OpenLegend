@@ -17,6 +17,33 @@ struct KnowledgeInput {
 }
 
 impl NativeWorldSession {
+    /// The authenticated caller has resolved the current person body reference.
+    /// Retain the installed name owner's accepted change through ordinary saving.
+    pub fn begin_owner_nickname(
+        &mut self,
+        account: &str,
+        actor: &str,
+        contact: String,
+        expected_revision: i64,
+        nickname: JsText,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        self.session
+            .accepted()
+            .map_err(failure)?
+            .require_player_read(account, actor)
+            .map_err(failure)?;
+        let cursor = crate::knowledge::KnowledgeEditCursor::nickname(
+            actor.into(),
+            contact,
+            expected_revision,
+            nickname,
+            &self.budget,
+        )
+        .map_err(failure)?;
+        self.session.begin_personal_edit(cursor).map_err(failure)
+    }
+
     /// Bind the authenticated player's own note against current recognition or
     /// a retained private document before entering the ordinary revisioned writer.
     pub fn begin_owner_knowledge_edit(
