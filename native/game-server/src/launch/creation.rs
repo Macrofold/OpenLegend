@@ -53,8 +53,14 @@ pub(super) async fn serve(
     let validate: OpeningValidator = {
         let startup = startup.clone();
         let release = release.to_owned();
-        Arc::new(move |_, opening, account, actor| {
-            startup.validate_creation_opening(&release, opening, account, actor)
+        Arc::new(move |opening, account, actor| {
+            let startup = startup.clone();
+            let release = release.clone();
+            Box::pin(async move {
+                startup
+                    .validate_creation_opening(&release, opening, account, actor)
+                    .await
+            })
         })
     };
     let target = CreationTarget::new(

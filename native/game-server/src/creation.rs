@@ -26,7 +26,13 @@ use serde_json::{Value, value::RawValue};
 use std::{collections::BTreeMap, future::Future, path::PathBuf, pin::Pin, sync::Arc};
 
 pub(crate) type OpeningValidator = Arc<
-    dyn Fn(&Store, CurrentOpening, &str, &str) -> StoreResult<NativeWorldSession> + Send + Sync,
+    dyn Fn(
+            CurrentOpening,
+            String,
+            String,
+        ) -> Pin<Box<dyn Future<Output = StoreResult<NativeWorldSession>> + Send>>
+        + Send
+        + Sync,
 >;
 pub(crate) type Adoption =
     Arc<dyn Fn(ActivationReceipt) -> Pin<Box<dyn Future<Output = bool> + Send>> + Send + Sync>;

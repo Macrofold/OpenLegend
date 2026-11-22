@@ -159,10 +159,7 @@ impl Bundle {
         validate: OpeningValidator,
     ) -> Result<(), CreationError> {
         let FirstInstallation { opening, .. } = self.prepare(&store).await?;
-        let actor = self.reviewed.actor_id.clone();
-        tokio::task::spawn_blocking(move || validate(&store, opening, &account, &actor).map(drop))
-            .await
-            .map_err(|_| CreationError::Unavailable)??;
+        validate(opening, account, self.reviewed.actor_id.clone()).await?;
         Ok(())
     }
 }

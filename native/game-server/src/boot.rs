@@ -219,23 +219,41 @@ impl StartupStorage {
         })
     }
 
-    pub(crate) fn validate_creation_opening(
-        &self,
+    /// Use the same bounded worker as ordinary cold installation. Native
+    /// action and entity decoding need the host's compute stack in debug.
+    pub(crate) async fn validate_creation_opening(
+        self: &Arc<Self>,
         release: &Path,
         opening: CurrentOpening,
-        account: &str,
-        actor: &str,
+        account: String,
+        actor: String,
     ) -> StoreResult<NativeWorldSession> {
-        let validate = || -> Result<NativeWorldSession, BootError> {
-            let (session, _, _) = self.install(release, opening, true)?;
-            session.check_initial_player(account, actor)?;
-            session.check_current_work()?;
-            session.with_geometry(|map| {
-                SpatialProvider::from_release(map, &release.join("navigation"), self.host.budget())
-            })??;
-            Ok(session)
-        };
-        validate().map_err(|error| match error.downcast_ref::<openlegend_simulation::host::CapacityError>() {
+        use crate::world::WorldError;
+        use openlegend_world_host::pool::HostError;
+        let startup = self.clone();
+        let release = release.to_owned();
+        let validation = self
+            .host
+            .compute(move || -> Result<NativeWorldSession, BootError> {
+                let (session, _, _) = startup.install(&release, opening, true)?;
+                session.check_initial_player(&account, &actor)?;
+                session.check_current_work()?;
+                session.with_geometry(|map| {
+                    SpatialProvider::from_release(
+                        map,
+                        &release.join("navigation"),
+                        startup.host.budget(),
+                    )
+                })??;
+                Ok(session)
+            })
+            .await
+            .map_err(|error| match error {
+                WorldError::Host(HostError::Capacity | HostError::Busy) => StoreError::Capacity,
+                WorldError::Host(HostError::Cancelled) => StoreError::Cancelled,
+                _ => StoreError::WriterUnavailable,
+            })?;
+        validation.map_err(|error| match error.downcast_ref::<openlegend_simulation::host::CapacityError>() {
             Some(_) => StoreError::Capacity,
             None if matches!(error.downcast_ref::<RuntimeError>(), Some(error) if error.is_capacity()) => StoreError::Capacity,
             None => {
@@ -345,20 +363,20 @@ impl CurrentServer {
         database: Config,
         workers: usize,
     ) -> Result<Self, BootError> {
-        let storage = StartupStorage::open(release, database, workers, false).await?;
+        let storage = Arc::new(StartupStorage::open(release, database, workers, false).await?);
         Self::from_storage(release, navigation, &storage).await
     }
 
     pub(crate) async fn from_storage(
         release: &Path,
         navigation: Option<&Path>,
-        startup: &StartupStorage,
+        startup: &Arc<StartupStorage>,
     ) -> Result<Self, BootError> {
         let StartupStorage {
             manifest,
             host,
             store,
-        } = startup;
+        } = startup.as_ref();
         let budget = host.budget();
         // These are finite trusted build products. Retain their independent
         // construction charge across deserialization and cold adoption.
@@ -382,8 +400,12 @@ impl CurrentServer {
             })
             .transpose()?;
         let opening = store.current_opening().await?;
-        let (session, receipt, language) =
-            startup.install(release, opening, navigation.is_some())?;
+        let install = startup.clone();
+        let release_dir = release.to_owned();
+        let require_language = navigation.is_some();
+        let (session, receipt, language) = host
+            .compute(move || install.install(&release_dir, opening, require_language))
+            .await??;
         let revision = receipt.revision;
         let (retained_release, asset_revision) = session.saved_presentation_release();
         if let Some(retained_release) = retained_release {

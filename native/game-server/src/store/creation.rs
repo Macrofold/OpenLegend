@@ -214,15 +214,7 @@ impl Store {
                     })?;
                 let account = &input.account.account_id;
                 let actor = &input.actor;
-                let validate = input.validate.clone();
-                let sql_owner = store.clone();
-                let validation_account = account.clone();
-                let validation_actor = actor.clone();
-                let native = tokio::task::spawn_blocking(move || {
-                    validate(&sql_owner, opening, &validation_account, &validation_actor)
-                })
-                .await
-                .map_err(|_| StoreError::InvalidRecord)??;
+                let native = (input.validate)(opening, account.clone(), actor.clone()).await?;
                 if native.saved_presentation_release().0.is_some() {
                     return Err(StoreError::DerivedProjectionRequired);
                 }

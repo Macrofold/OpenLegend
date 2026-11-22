@@ -752,7 +752,10 @@ pub enum RuntimeStep {
 /// One resident writer, parked between finite compute calls. The private
 /// session owns every canonical mutation, rollback and accepted save suffix.
 pub struct NativeWorldSession {
-    session: Session,
+    // Session already admits its resident size. Carry only its owning pointer
+    // across HTTP and SQL futures, which have smaller poll stacks than the
+    // compute worker that builds the session.
+    session: Box<Session>,
     budget: ByteBudget,
     world_work_limit: crate::work::WorkDemand,
     prepared_output: Option<CandidateKey>,
@@ -903,14 +906,14 @@ impl NativeWorldSession {
         let held_receipts = npc::HeldReceiptRegistry::new(generation, &budget).map_err(failure)?;
         let navigation = navigation::PreparedNavigationCache::new(&budget)?;
         Ok(Self {
-            session: Session::new(
+            session: Box::new(Session::new(
                 installed,
                 generation,
                 budget.clone(),
                 pending_save_budget,
                 temporal_save_limits,
             )
-            .map_err(failure)?,
+            .map_err(failure)?),
             budget,
             world_work_limit,
             prepared_output: None,
