@@ -198,6 +198,11 @@ pub(crate) enum NativeCommand {
         target_id: String,
         tool: crate::gathering::ToolChoice,
     },
+    Equipment {
+        envelope: CommandEnvelope,
+        item_id: String,
+        request: crate::execution::EquipmentRequest,
+    },
     Say {
         envelope: CommandEnvelope,
         text: crate::text::JsText,
@@ -259,7 +264,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -289,7 +294,8 @@ impl<'de> Deserialize<'de> for NativeCommand {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
         if (input.kind != "gather" && input.gathering_mode.is_some())
-            || (!matches!(input.kind.as_str(), "gather" | "feed") && input.item_id.is_some())
+            || (!matches!(input.kind.as_str(), "gather" | "feed" | "equip" | "unequip") && input.item_id.is_some())
+            || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
         {
             return Err(D::Error::custom("Unexpected item selection."));
         }
@@ -481,6 +487,22 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     auto_equip: input.auto_equip,
                 })
             }
+            "equip" | "unequip" if !extras_for_move && input.destination.is_none() => {
+                let invalid = || D::Error::custom("Invalid selected equipment binding.");
+                let request = if input.kind == "equip" {
+                    crate::execution::EquipmentRequest::Equip
+                } else {
+                    crate::execution::EquipmentRequest::Unequip {
+                        item_revision: input.expected_revision.filter(|value| *value <= crate::identity::MAX_SAFE_INTEGER).ok_or_else(invalid)?,
+                        placement_revision: input.placement_revision.filter(|value| *value <= crate::identity::MAX_SAFE_INTEGER).ok_or_else(invalid)?,
+                    }
+                };
+                Ok(Self::Equipment {
+                    envelope,
+                    item_id: input.item_id.filter(|id| crate::values::is_safe_record_id(id)).ok_or_else(invalid)?,
+                    request,
+                })
+            }
             "inspect-inventory"
                 if !discovery_extras
                     && !discovery_fields
@@ -529,6 +551,7 @@ impl NativeCommand {
             | Self::Move { envelope, .. }
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
+            | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
@@ -551,6 +574,7 @@ impl NativeCommand {
             | Self::Move { envelope, .. }
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
+            | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
@@ -567,6 +591,10 @@ impl NativeCommand {
             Self::Move { .. } => "move",
             Self::Feed { .. } => "feed",
             Self::Gather { .. } => "gather",
+            Self::Equipment { request, .. } => match request {
+                crate::execution::EquipmentRequest::Equip => "equip",
+                crate::execution::EquipmentRequest::Unequip { .. } => "unequip",
+            },
             Self::Say { .. } => "say",
             Self::StatusEffect { .. } => "status-effect",
             Self::Cancel { .. } => "cancel",

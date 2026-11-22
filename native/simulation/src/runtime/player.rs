@@ -347,6 +347,46 @@ impl NativeWorldSession {
         Ok(consume(&items, &self.budget))
     }
 
+    /// Borrow only this player's direct items under the current publication
+    /// lease. This is an on-demand screen read, independent of stream updates.
+    pub fn with_player_direct_inventory<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        consume: impl FnOnce(crate::install::DirectInventory<'_>, &ByteBudget) -> T,
+    ) -> Result<T, RuntimeError> {
+        self.require_active()?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        simulation.require_player_read(account, actor).map_err(failure)?;
+        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        let state = &simulation.state;
+        let entities = &state.physical.entities;
+        let definitions = &state.installed.retained;
+        let entity = entities.get(actor).ok_or_else(|| failure("inventory owner unavailable"))?;
+        let body = entity.actor.as_ref().ok_or_else(|| failure("inventory owner unavailable"))?;
+        let can_act = !state.physical.header.paused && body.alive && !body.incapacitated
+            && body.action.is_none() && entity.actively_participates() && entity.supported_position().is_some()
+            && !state.installed.capabilities.capability_blocked(Some(entity), "actions").map_err(failure)?;
+        let count = state.inventory.direct_item_count(actor);
+        let _custody = self.budget.reserve(
+            count.checked_mul(size_of::<crate::install::InventoryDetail<'_>>()).ok_or(CapacityError)?,
+        )?;
+        let mut items = Vec::with_capacity(count);
+        for entry in state.inventory.children(entities, actor, false) {
+            let item = crate::install::project_owned(definitions, actor, entry, crate::install::accessible_bag(entry, actor)).map_err(failure)?;
+            let definition = definitions.items.get(item.definition_id).ok_or_else(|| failure("inventory definition unavailable"))?;
+            items.push(crate::install::InventoryDetail {
+                item, category: definition.category, description: definition.description.as_ref(), properties: &definition.properties,
+                equipment_ports: definition.equipment_ports(),
+                equipment_fits: crate::execution::equipment_fits(state, entity, entry),
+            });
+        }
+        Ok(consume(crate::install::DirectInventory {
+            id: actor, name: &entity.name, revision: entity.inventory_revision.unwrap_or_default(), can_act,
+            body_ports: body.body.as_ref().map_or(&[], |body| body.equipment_ports.as_slice()), items: &items,
+        }, &self.budget))
+    }
+
     pub fn read_player(
         &mut self,
         account: &str,

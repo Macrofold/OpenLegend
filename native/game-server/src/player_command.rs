@@ -75,6 +75,18 @@ struct CommandInput {
     item_id: Option<String>,
     #[serde(
         default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    expected_revision: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    placement_revision: Option<u64>,
+    #[serde(
+        default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
@@ -183,6 +195,8 @@ enum CommandKind {
     Move,
     Cancel,
     Gather,
+    Equip,
+    Unequip,
 }
 
 struct PreparedRequest {
@@ -548,6 +562,8 @@ impl CommandRequest {
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
             || Uuid::parse_str(&self.command_epoch).is_err()
+            || (!matches!(command.kind, CommandKind::Unequip)
+                && (command.expected_revision.is_some() || command.placement_revision.is_some()))
         {
             return Err(AccessError::Forbidden.into());
         }
@@ -598,6 +614,15 @@ impl CommandRequest {
                     Err(AccessError::Forbidden.into())
                 }
             }
+            CommandKind::Equip | CommandKind::Unequip
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.target_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.item_id.as_deref().is_some_and(id)
+                    && (matches!(command.kind, CommandKind::Equip)
+                        || command.expected_revision.is_some() && command.placement_revision.is_some()) => Ok(()),
             _ => Err(AccessError::Forbidden.into()),
         }
     }
@@ -672,6 +697,14 @@ impl PreparedRequest {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 tool: input.item_id.as_deref(),
                 mode: input.gathering_mode,
+            }),
+            CommandKind::Equip => Ok(RuntimePlayerCommand::Equip(
+                input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+            )),
+            CommandKind::Unequip => Ok(RuntimePlayerCommand::Unequip {
+                item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                expected_revision: input.expected_revision.ok_or(StoreError::InvalidRecord)?,
+                placement_revision: input.placement_revision.ok_or(StoreError::InvalidRecord)?,
             }),
         }
     }

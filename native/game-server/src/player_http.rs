@@ -136,6 +136,7 @@ pub(crate) fn router(
         .route("/api/assets/selection-result", post(assets::selection::receipt))
         .route("/api/known-places", post(known_places::list))
         .route("/api/inventory/bindings", post(inventory::bindings))
+        .route("/api/inventory", post(inventory::page))
         .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))
         .route("/api/narration/regenerate", post(history::regenerate))

@@ -2,6 +2,8 @@ import { entityGet } from '../../entity-collection.js';
 import type { ContactDefenseProfile } from '../../contact-defense.js';
 import type { Entity, WorldState } from '../../types.js';
 import { equipmentConflicts, isEquipped } from '../../equipment.js';
+import equipmentCopy from './equipment-copy.json' with { type: 'json' };
+export { equipmentCopy as BASE_EQUIPMENT_COPY };
 
 export const BASE_GUARD_PROFILE: ContactDefenseProfile = {
   reduction: 0.5,
@@ -91,7 +93,7 @@ export function equipmentEquipOutcome(
     .map((id) => world.itemDefinitions[entityGet(world.entities, id)!.item!.definitionPin.id]!.name)
     .join(', ');
   return {
-    message: `Equipped ${name}.${stowed ? ` Put away ${stowed}; the same items remain carried.` : ''}`,
-    narration: `equipped ${name}${stowed ? ` and put away ${stowed}` : ''}.`,
+    message: `${equipmentCopy.equipped}${name}.${stowed ? `${equipmentCopy.stowed}${stowed}${equipmentCopy.stowedResult}` : ''}`,
+    narration: `${equipmentCopy.equippedEvent}${name}${stowed ? `${equipmentCopy.stowedEvent}${stowed}` : ''}.`,
   };
 }

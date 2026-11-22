@@ -208,7 +208,11 @@ import {
   assemblyPhaseSeconds,
 } from './assemblies.js';
 import type { ConstructionPermission } from './assembly-types.js';
-import { equipmentEquipOutcome, BASE_GUARD_TEXT } from './worlds/base/shield-defense.js';
+import {
+  equipmentEquipOutcome,
+  BASE_EQUIPMENT_COPY,
+  BASE_GUARD_TEXT,
+} from './worlds/base/shield-defense.js';
 import { atomicObjects } from './item-handling.js';
 import { equippedItem, equipmentConflicts, equipmentProblem, isEquipped } from './equipment.js';
 import {
@@ -2593,7 +2597,7 @@ function prepareNativeOperation(
         !accessiblePossession(world, actor.id, item.id) ||
         !world.itemDefinitions[item.definitionId]?.equipment
       )
-        return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
+        return reject('not-equippable', BASE_EQUIPMENT_COPY.unavailable);
       if (itemHasReservations(world, item.id, availability) || (!replacing && component.action))
         return reject('not-equippable', 'Choose a free tool in this inventory.');
       const problem = equipmentProblem(world, actor.id, item.id, undefined, availability);
@@ -3801,7 +3805,7 @@ function executeCommandNative(
           equipped.revision !== command.expectedRevision ||
           equipped.placementRevision !== command.placementRevision
         )
-          return reject('stale', 'The selected equipment changed. Refresh before releasing it.');
+          return reject('stale', BASE_EQUIPMENT_COPY.stale);
         try {
           unequipLot(world, actor.id, command.itemId);
         } catch (error) {
@@ -3811,7 +3815,7 @@ function executeCommandNative(
             error instanceof Error ? error.message : 'Equipment unavailable.',
           );
         }
-        result = outcome(true, 'unequipped', 'Equipment released.');
+        result = outcome(true, 'unequipped', BASE_EQUIPMENT_COPY.released);
         break;
       }
       case 'transfer-stock': {
@@ -3974,7 +3978,7 @@ function executeCommandNative(
       }
       case 'equip': {
         const item = itemFor(world, command.itemId);
-        if (!item) return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
+        if (!item) return reject('not-equippable', BASE_EQUIPMENT_COPY.unavailable);
         let equippedId: string;
         const stowed = equipmentConflicts(world, actor.id, item.id);
         try {

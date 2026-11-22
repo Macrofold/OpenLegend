@@ -65,6 +65,10 @@ pub(super) struct ItemDefinitionFields {
     pub icon: Option<String>,
     pub gather_label: Option<crate::text::JsText>,
     description: Option<crate::text::JsText>,
+    #[serde(default)]
+    properties: Vec<crate::text::JsText>,
+    ammunition: Option<serde::de::IgnoredAny>,
+    fishing_tool: Option<serde::de::IgnoredAny>,
     gathering_tool: Option<GatheringTool>,
     #[serde(default)]
     pub portable: bool,
@@ -120,6 +124,8 @@ pub(crate) struct ItemDefinitionRead {
     pub icon: Option<String>,
     pub gather_label: Option<crate::text::JsText>,
     pub description: Option<crate::text::JsText>,
+    pub properties: Vec<crate::text::JsText>,
+    pub category: &'static str,
     gathering_tool: Option<GatheringTool>,
     pub portable: bool,
     packing_load: Option<u64>,
@@ -189,6 +195,15 @@ impl ItemDefinitionRead {
             let rule = family.inventory.get(role.role.as_str()).ok_or(InstallError::DefinitionBody)?;
             serde_json::from_str::<ItemMaterialRule>(rule.get()).map_err(|_| InstallError::DefinitionBody)
         }).transpose()?;
+        let category = if value.equipment.is_some() || value.fishing_tool.is_some() {
+            "equipment"
+        } else if value.ammunition.is_some() {
+            "ammunition"
+        } else if value.properties.iter().any(|value| value == "food") {
+            "food"
+        } else {
+            "material"
+        };
         Ok(Self {
             pin,
             named: Named {
@@ -199,6 +214,8 @@ impl ItemDefinitionRead {
             icon: value.icon,
             gather_label: value.gather_label,
             description: value.description,
+            properties: value.properties,
+            category,
             gathering_tool: value.gathering_tool,
             portable: value.portable,
             packing_load: value.packing_load,
@@ -223,6 +240,10 @@ impl ItemDefinitionRead {
             .is_some_and(|gear| gear.uses.contains(&EquipmentUse::Gather))
     }
 
+    pub(crate) fn equipment_ports(&self) -> Option<&[String]> {
+        self.equipment.as_ref().map(|gear| gear.ports.as_slice())
+    }
+
     pub(crate) fn is_container(&self) -> bool {
         self.container.is_some()
     }
@@ -234,6 +255,7 @@ heap_record!(ItemDefinitionRead {
     icon,
     gather_label,
     description,
+    properties,
     gathering_tool,
     material,
     equipment
@@ -311,7 +333,95 @@ pub struct OwnedContainer {
     pub capacity: u64,
 }
 
+pub struct InventoryDetail<'a> {
+    pub item: OwnedItem<'a>,
+    pub category: &'static str,
+    pub description: Option<&'a crate::text::JsText>,
+    pub properties: &'a [crate::text::JsText],
+    pub equipment_ports: Option<&'a [String]>,
+    pub equipment_fits: bool,
+}
+
+pub struct DirectInventory<'a> {
+    pub id: &'a str,
+    pub name: &'a crate::text::JsText,
+    pub revision: u64,
+    pub can_act: bool,
+    pub body_ports: &'a [crate::state::EquipmentPort],
+    pub items: &'a [InventoryDetail<'a>],
+}
+
+/// Both the native attachment owner and the explicit inventory preview use
+/// one installed port-intersection rule.
+pub fn equipment_ports_conflict(left: &[String], right: &[String]) -> bool {
+    left.iter().any(|port| right.contains(port))
+}
+
 impl Inventory {
+    /// Reserve resident backing for one new attachment in an existing child's
+    /// collection. Detaching retains backing so an aborted edit can reinsert.
+    pub(crate) fn reserve_attachment(
+        &mut self,
+        parent: &str,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let equipped = &mut self
+            .children
+            .get_mut(parent)
+            .ok_or(ExecutionError::Invariant)?
+            .equipped;
+        if equipped.len() == equipped.capacity() {
+            let before = equipped.capacity();
+            let next = before.checked_add(1).ok_or(ExecutionError::Capacity)?;
+            let mut admitted = budget.reserve(
+                next.checked_mul(size_of::<EntityHandle>()).ok_or(ExecutionError::Capacity)?,
+            )?;
+            let mut replacement = Vec::new();
+            replacement
+                .try_reserve_exact(next)
+                .map_err(|_| ExecutionError::Capacity)?;
+            admitted.resize(replacement.capacity() * size_of::<EntityHandle>())?;
+            let growth = admitted.split_off((replacement.capacity() - before) * size_of::<EntityHandle>())?;
+            budget.fund_backing(&mut self._custody, growth)?;
+            replacement.extend_from_slice(equipped);
+            *equipped = replacement;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn attachment_count(&self, parent: &str) -> usize {
+        self.children.get(parent).map_or(0, |kids| kids.equipped.len())
+    }
+
+    pub(crate) fn direct_item_count(&self, parent: &str) -> usize {
+        self.children.get(parent).map_or(0, |kids| kids.items.len())
+    }
+
+    pub(crate) fn set_attachment(
+        &mut self,
+        entities: &EntityStore,
+        parent: &str,
+        child: EntityHandle,
+        attached: bool,
+    ) -> Result<(), ExecutionError> {
+        let equipped = &mut self
+            .children
+            .get_mut(parent)
+            .ok_or(ExecutionError::Invariant)?
+            .equipped;
+        let id = &entities.resolve(child).ok_or(ExecutionError::Invariant)?.id;
+        let position = equipped.binary_search_by(|handle| {
+            let existing = entities.resolve(*handle).map_or("", |body| body.id.as_str());
+            crate::encoding::js_string_cmp(existing, id)
+        });
+        match (position, attached) {
+            (Err(i), true) if equipped.len() < equipped.capacity() => equipped.insert(i, child),
+            (Ok(i), false) => { equipped.remove(i); }
+            _ => return Err(ExecutionError::Invariant),
+        }
+        Ok(())
+    }
+
     /// Add a validated contained lot to the already installed direct-contents
     /// index. Only this parent's list can grow. The existing entity owner keeps
     /// the lot itself. Insertion reserves backing before changing membership.
@@ -611,7 +721,7 @@ pub(crate) fn owned_by<'a>(
     Err(ExecutionError::Invariant)
 }
 
-fn accessible_bag(entity: &Entity, actor: &str) -> bool {
+pub(crate) fn accessible_bag(entity: &Entity, actor: &str) -> bool {
     entity.container.as_ref().is_some_and(|bag| {
         bag.access
             .as_ref()
@@ -619,7 +729,7 @@ fn accessible_bag(entity: &Entity, actor: &str) -> bool {
     })
 }
 
-fn project_owned<'a>(
+pub(crate) fn project_owned<'a>(
     definitions: &'a RetainedDefinitions,
     actor: &str,
     entity: &'a Entity,

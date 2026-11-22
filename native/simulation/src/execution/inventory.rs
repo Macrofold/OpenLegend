@@ -5,12 +5,19 @@ use crate::administration::ObjectMembership;
 use crate::install::{Inventory, RemovedInventoryChild};
 use crate::state::{Entity, ItemLot, ItemRetirement, LineageKind, ObjectLineage};
 use crate::values::DefinitionPin;
+mod equipment;
+pub(crate) use equipment::{EquipmentDecision, EquipmentRequest, equipment_fits};
 
 enum ItemEdit {
     Inserted,
     Quantity {
         before: u64,
         revision: u64,
+    },
+    Equipment {
+        placement: Placement,
+        item: Option<(u64, crate::state::Individuality)>,
+        toggled: bool,
     },
     Retired {
         before: ItemLot,
@@ -31,7 +38,7 @@ pub(super) struct InventoryUndo {
 
 impl InventoryUndo {
     pub(super) fn edited_item(&self) -> bool {
-        !matches!(self.edit, ItemEdit::Inserted)
+        !matches!(self.edit, ItemEdit::Inserted | ItemEdit::Equipment { item: None, .. })
     }
 
     pub(super) fn changed_membership(&self) -> bool {
@@ -40,6 +47,10 @@ impl InventoryUndo {
 
     pub(super) fn retired(&self) -> bool {
         matches!(self.edit, ItemEdit::Retired { .. })
+    }
+
+    pub(super) fn changed_placement(&self) -> bool {
+        matches!(self.edit, ItemEdit::Retired { .. } | ItemEdit::Equipment { .. })
     }
 
     pub(super) fn restore(
@@ -75,6 +86,31 @@ impl InventoryUndo {
                     .ok_or(ExecutionError::Invariant)?;
                 lot.quantity = before;
                 lot.revision = revision;
+            }
+            ItemEdit::Equipment { placement, item, toggled } => {
+                let parent = state
+                    .entities
+                    .resolve(self.parent)
+                    .ok_or(ExecutionError::Invariant)?;
+                if toggled {
+                    inventory.set_attachment(
+                        &state.entities,
+                        &parent.id,
+                        self.child,
+                        matches!(placement, Placement::Attached { .. }),
+                    )?;
+                }
+                let entity = state
+                    .entities
+                    .resolve_mut(self.child)
+                    .ok_or(ExecutionError::Invariant)?;
+                entity.placement = Some(placement);
+                if let Some((revision, individuality)) = item {
+                    let lot = entity.item.as_mut().ok_or(ExecutionError::Invariant)?;
+                    lot.revision = revision;
+                    lot.individuality = individuality;
+                }
+                state.entities.settle_operational_memory(self.child, funding, true)?;
             }
             ItemEdit::Retired {
                 before,

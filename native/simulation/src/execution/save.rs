@@ -685,14 +685,14 @@ impl PhysicalJournal {
                         .or_default()
                         .root = true;
                     object_membership |= before.changed_membership();
-                    if before.edited_item() {
+                    if before.edited_item() || before.changed_placement() {
                         let rows = selected
                             .entry((before.child.slot, before.child.generation))
                             .or_default();
-                        rows.item = true;
+                        rows.item |= before.edited_item();
+                        rows.placement |= before.changed_placement();
                         if before.retired() {
                             rows.retirement = true;
-                            rows.placement = true;
                             rows.root = true;
                         }
                     }

@@ -1,4 +1,4 @@
-import { currentObservedBodyGrants } from '@open-legend/domain';
+import { BASE_EQUIPMENT_COPY, currentObservedBodyGrants } from '@open-legend/domain';
 import {
   offerRecipientProblem,
   itemContainerCapacity,
@@ -1193,7 +1193,13 @@ export function inventoryItemChoices(
     const command: CommandInput = { type: 'equip', itemId: item.id };
     const availability = preview(command);
     actions.push(
-      action(`equip-${item.id}`, 'Equip', command, availability.ok, availability.message),
+      action(
+        `equip-${item.id}`,
+        BASE_EQUIPMENT_COPY.equipLabel,
+        command,
+        availability.ok,
+        availability.message,
+      ),
     );
   }
   if (
@@ -1244,7 +1250,7 @@ export function inventoryItemChoices(
     actions.push(
       action(
         `unequip-${item.id}`,
-        'Unequip',
+        BASE_EQUIPMENT_COPY.unequipLabel,
         {
           type: 'unequip',
           itemId: item.id,
@@ -1252,7 +1258,7 @@ export function inventoryItemChoices(
           placementRevision: item.placementRevision!,
         },
         !actor.action,
-        'Finish current work first.',
+        BASE_EQUIPMENT_COPY.busy,
       ),
     );
   return {
@@ -1372,7 +1378,7 @@ export function inventoryItemSummary(
     );
     characteristics.push({
       id: 'held-placement',
-      label: 'Worn or held at',
+      label: BASE_EQUIPMENT_COPY.heldAt,
       value: ports.every((label) => label !== undefined)
         ? ports.join(' + ')
         : 'This body cannot hold this equipment',

@@ -63,7 +63,8 @@ impl CommandExposure {
                 }
                 &envelope.actor_id
             }
-            NativeCommand::Say { .. } | NativeCommand::WithdrawAttempt { .. } => return Ok(None),
+            NativeCommand::Say { .. } | NativeCommand::WithdrawAttempt { .. }
+            | NativeCommand::Equipment { .. } => return Ok(None),
             NativeCommand::Follow { .. }
             | NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. } => {

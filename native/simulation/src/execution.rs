@@ -38,6 +38,7 @@ use contact::ContactPhase;
 mod heat;
 mod inventory;
 mod participation;
+pub(crate) use inventory::{EquipmentDecision, EquipmentRequest, equipment_fits};
 mod practice;
 mod rates;
 mod restore;

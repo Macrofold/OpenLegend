@@ -23,6 +23,7 @@ use crate::narration::{Narration, NarrationPart, PersonRole};
 use crate::state::{Action, NavigationPending, SurfacePoint};
 use crate::work::{MeterToken, WorkUnit};
 mod discovery;
+mod equipment;
 mod feeding;
 mod gathering;
 mod natural_contact;
@@ -876,6 +877,7 @@ impl CommandCursor {
                         && matches!(
                             self.command,
                             NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
+                                | NativeCommand::Equipment { .. }
                         )
                     {
                         self.reserve(128)?;
@@ -985,6 +987,11 @@ impl CommandCursor {
                         NativeCommand::Gather { .. } => {
                             if self.prepare_gathering(core)? {
                                 return Ok(Progress::Geometry);
+                            }
+                        }
+                        NativeCommand::Equipment { .. } => {
+                            if let Some(event) = self.apply_equipment(core, &actor_id)? {
+                                return Ok(Progress::Occurrence(event));
                             }
                         }
                         NativeCommand::Strike { .. } => {

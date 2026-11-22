@@ -1,0 +1,18 @@
+{
+  "equipped": "Equipped ",
+  "stowed": " Put away ",
+  "stowedResult": "; the same items remain carried.",
+  "equippedEvent": "equipped ",
+  "stowedEvent": " and put away ",
+  "unavailable": "Choose a tool in this actor’s inventory.",
+  "busy": "Finish current work first.",
+  "controlRequired": "Current character control is required.",
+  "incompatible": "This body cannot hold this equipment.",
+  "singleLot": "Choose an individual item to equip it.",
+  "heldAt": "Worn or held at",
+  "stale": "The selected equipment changed. Refresh before releasing it.",
+  "released": "Equipment released.",
+  "equipLabel": "Equip",
+  "unequipLabel": "Unequip",
+  "unequipActivity": "Put away equipment"
+}

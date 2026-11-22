@@ -45,6 +45,7 @@ pub(super) fn start_record(
         NativeCommand::Gather {
             target_id, tool, ..
         } => [Some(target_id), tool.item_id.as_deref()],
+        NativeCommand::Equipment { item_id, .. } => [Some(item_id), None],
         _ => [None, None],
     };
     let object_bytes = fields

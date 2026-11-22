@@ -10,6 +10,8 @@ use std::{error::Error, fmt};
 pub(crate) mod delta;
 mod observed;
 mod self_view;
+mod inventory_page;
+pub(crate) use inventory_page::{InventoryPageError, InventoryPageRequest};
 pub(crate) use observed::EntityFields;
 pub use observed::{ObservedEntity, ObservedPolicy, PreparedContacts, prepare_contacts};
 pub use self_view::{Marker, OwnPolicy, PlayerBodyView, PreparedSelf, prepare_self};

@@ -308,6 +308,7 @@ export {
   guardWorkLabel,
   guardChoiceLabel,
   BASE_GUARD_TEXT,
+  BASE_EQUIPMENT_COPY,
   equipmentChangeDescription,
 } from './worlds/base/shield-defense.js';
 

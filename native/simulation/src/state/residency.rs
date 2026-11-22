@@ -108,6 +108,17 @@ impl FundedForaging {
         Ok(Self { value, storage })
     }
 }
+impl HeapBytes for Placement {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::World { support_surface_id, .. } => support_surface_id.heap_bytes(),
+            Self::Contained { parent_entity_id, .. } => parent_entity_id.heap_bytes(),
+            Self::Attached { parent_entity_id, port_id, slot, .. } =>
+                heap_sum([parent_entity_id.capacity(), port_id.capacity(), slot.heap_bytes()?]),
+        }
+    }
+}
+
 fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
     entity
         .actor
@@ -129,6 +140,10 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
             heap_sum([
                 bytes,
                 entity.item.heap_bytes()?,
+                match &entity.placement {
+                    Some(Placement::World { .. }) => 0,
+                    placement => placement.heap_bytes()?,
+                },
                 entity.container.heap_bytes()?,
                 entity.declared_owner.heap_bytes()?,
                 entity.retirement.heap_bytes()?,

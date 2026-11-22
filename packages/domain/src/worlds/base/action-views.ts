@@ -25,7 +25,11 @@ import { rangedPolicy, rangedApproachRange, shotPreparationSeconds } from '../..
 import { fireCareFacts, fireFuelDescription } from './fire.js';
 import { attributeDefinition } from '../../world-modules.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
-import { guardDescription, equipmentChangeDescription } from './shield-defense.js';
+import {
+  BASE_EQUIPMENT_COPY,
+  guardDescription,
+  equipmentChangeDescription,
+} from './shield-defense.js';
 import { evasionDescription } from './combat-views.js';
 import gatheringCopy from './gathering-copy.json' with { type: 'json' };
 
@@ -194,7 +198,7 @@ function activityView(
     fish: BASE_FOOD_ACTION_WORDING.fishingLabel,
     'tend-fire': 'Tend a fire',
     eat: 'Eat',
-    equip: 'Equip',
+    equip: BASE_EQUIPMENT_COPY.equipLabel,
     guard: 'Guard with shield',
     evade: bodyPolicy(world)?.evasion?.label,
     gather: gatheringCopy.name,
@@ -204,7 +208,7 @@ function activityView(
     'transfer-item': 'Move an item',
     'split-item': 'Separate part of a stack',
     'merge-item': 'Combine stacks',
-    unequip: 'Put away equipment',
+    unequip: BASE_EQUIPMENT_COPY.unequipActivity,
     replenish: 'Replenish',
     recover: 'Recover',
     'treat-scar': 'Treat a scar',
