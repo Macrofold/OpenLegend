@@ -164,13 +164,16 @@ impl Views {
         tab: &Tab,
         encode_http: bool,
     ) -> Result<(ViewAttempt, Option<Bytes>), ViewError> {
+        // A fresh HTTP state read binds this tab again on each attempt. A
+        // retained stream still owns its original requested scope.
+        let retry_access = |error: &ViewError| encode_http && stale_view_scope(error);
         let mut refusal = ViewError::Changed;
         for _ in 0..2 {
-            if refusal.busy() {
+            if refusal.busy() || retry_access(&refusal) {
                 tokio::time::sleep(VIEW_CADENCE).await;
             }
             let attempt = match self.prepare(tab).await {
-                Err(error) if error.changed() || error.busy() => {
+                Err(error) if error.changed() || error.busy() || retry_access(&error) => {
                     refusal = error;
                     continue;
                 }
@@ -205,7 +208,7 @@ impl Views {
                 Ok(PlayerDisclosure::Published(bytes)) => return Ok((attempt, Some(bytes))),
                 Err(error) => {
                     let error = ViewError::World(error);
-                    if !error.busy() {
+                    if !error.busy() && !retry_access(&error) {
                         return Err(error);
                     }
                     refusal = error;
@@ -224,8 +227,20 @@ async fn state_view(State(views): State<Arc<Views>>, headers: HeaderMap) -> Resp
     match views.first(&tab, true).await {
         Ok((_, Some(bytes))) => json_response(StatusCode::OK, bytes),
         Ok((_, None)) => busy(),
+        Err(error) if stale_view_scope(&error) => refusal(
+            StatusCode::CONFLICT,
+            "loading",
+            "Your current view is changing. Please wait.",
+        ),
         Err(error) => unavailable(error),
     }
+}
+
+fn stale_view_scope(error: &ViewError) -> bool {
+    matches!(
+        error,
+        ViewError::World(WorldError::Access(AccessError::Changed))
+    )
 }
 
 async fn display_scope<'a>(

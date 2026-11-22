@@ -220,6 +220,14 @@ The driver dropped an explicit replacement’s HTTP connection while a PostgreSQ
 
 The baseline tree is `dc795c35418f` with executable `a76bbb9b0824`. The candidate tree is `e358fa37953c` with executable `35897cee66c2`. The results are `c2131e61f319` and `aa80fda1108d` under `nsc04-opening-artwork-20261122/first-heartbeat-23f17997f`. An earlier probe queried the activity view for a prepared statement while it was waiting for the table lock. The final probe checks the exact pending lock. No provider call or performance measurement was part of these checks. Silent disconnect and the connected-background policy have separate qualification.
 
+## Fresh game state during tab control changes — November 22, 2026
+
+A signed-in state request started when control was at generation 1. The fixture held the real PostgreSQL view read while another tab took control and committed generation 2. The old response returned HTTP 403 `stale-scope` even though the original account still had permission to see the character. A fresh browser request now discards any state prepared under the superseded control and checks again. It discloses only the current view and correctly says that the original tab is no longer controlling.
+
+A second check held the replacement's actual PostgreSQL receipt write. While control was changing, the original build reported `stale-scope`. The repaired server returned temporary loading and sent no view. The browser can try a fresh state request using its existing loading path. A stream using the original scope and an old heartbeat both refused. A separate permitted read was held while a manager removed that account's Play grant. It and later reads returned forbidden without disclosing a view.
+
+In Chromium, the same signed-in tab also reopened its saved world after restarting Rust. It resumed ordinary control, showed the scene, recovered the original pile-inspection receipt and opened the same contents without refreshing its account access. The local records `qualified-baseline-r2`, `qualified-candidate` and `same-cookie-candidate` are under `nsc04-cold-state-20261122`. They used baseline executable `4ad6d79449a2a…` and candidate `040d7066f2d0…` from native tree `56c578c4264f…`, with the same production browser bundle and selected opening. The locked native build, formatting, TypeScript and network checks passed. All owned HTTP listeners and databases were cleaned up. No speed comparison was run.
+
 ## Stand-alone Rust departure after connection loss — November 22, 2026
 
 The real signed-in HTTP and event-stream callers reproduced the gap in three ways. After a silent foreground heartbeat expired, after closing the last controlling stream and after logout, Source saved one departure attempt and the installed fade. The historical Rust executable left the body active without an attempt. Logout in both implementations refused further requests with the old session.
