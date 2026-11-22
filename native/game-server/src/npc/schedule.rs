@@ -47,7 +47,12 @@ pub(crate) struct ScheduleWake(Mutex<Option<(Wake, Wake)>>);
 #[derive(Default)]
 pub(super) struct Wake {
     pub(super) all: bool,
-    pub(super) actors: IndexMap<String, ByteReservation>,
+    pub(super) actors: IndexMap<String, ActorWake>,
+}
+
+pub(super) struct ActorWake {
+    pub(super) custody: ByteReservation,
+    pub(super) reflection: bool,
 }
 
 impl ScheduleInbox {
@@ -147,6 +152,10 @@ impl ScheduleInbox {
         if self.ordinary {
             self.queued.lock().expect("NPC wake queue").merge(wake);
         }
+        self.notify_maintenance(maintenance);
+    }
+
+    fn notify_maintenance(&self, maintenance: Wake) {
         if maintenance.all || !maintenance.actors.is_empty() {
             self.maintenance
                 .lock()
@@ -174,14 +183,25 @@ impl Wake {
         if !self.actors.contains_key(actor) {
             let held = budget.reserve(512 + actor.len())?;
             self.actors.try_reserve(1).map_err(|_| CapacityError)?;
-            self.actors.insert(actor.to_owned(), held);
+            self.actors.insert(
+                actor.to_owned(),
+                ActorWake {
+                    custody: held,
+                    reflection: false,
+                },
+            );
         }
         Ok(())
     }
 
     fn merge(&mut self, next: Self) {
         self.all |= next.all;
-        self.actors.extend(next.actors);
+        for (actor, wake) in next.actors {
+            self.actors
+                .entry(actor)
+                .and_modify(|held| held.reflection |= wake.reflection)
+                .or_insert(wake);
+        }
     }
 }
 
@@ -335,7 +355,11 @@ impl Director {
             .await?;
         let wake = inbox.take();
         let complete = wake.all;
-        queue.dirty.extend(wake.actors);
+        queue.dirty.extend(
+            wake.actors
+                .into_iter()
+                .map(|(actor, wake)| (actor, wake.custody)),
+        );
         if queue.generation != generation || complete || queue.world.is_empty() {
             let population = self
                 .game
@@ -450,7 +474,7 @@ impl Director {
         });
         if let Some(work) = work {
             let actor = work.observed.actor_id.clone();
-            if let Some(wake) = self.inspect_work(work, policy).await? {
+            if let Some(wake) = self.inspect_work(work, policy, inbox).await? {
                 queue.acknowledge(&actor, wake);
             }
         }
@@ -461,6 +485,7 @@ impl Director {
         self: &Arc<Self>,
         work: &ResidentWork,
         policy: &SchedulingPolicy,
+        inbox: &ScheduleInbox,
     ) -> Result<Option<WakeTimes>, WorldError> {
         let observed = &work.observed;
         self.game
@@ -545,7 +570,7 @@ impl Director {
                     cursor.skipped_opportunity = Some(proposal.opportunity);
                 }
                 store
-                    .accept_thought(world, generation, actor, prior, cursor, None)
+                    .accept_thought(world, generation, actor, prior, cursor, None, None)
                     .await
                     .map_err(WorldError::Commit)?;
             }
@@ -611,6 +636,23 @@ impl Director {
                 .max(sequence)
                 .min(durably_known),
         );
+        let cue = proposal
+            .reflection_cue
+            .filter(|_| {
+                self.models
+                    .as_ref()
+                    .is_some_and(|models| models.routes.fast.is_some())
+            })
+            .map(|index| sources.references[index].clone());
+        let mut reflection_wake = Wake::default();
+        if cue.is_some() && self.reflection_model.is_some() {
+            reflection_wake.insert(&actor, &inbox.budget)?;
+            reflection_wake
+                .actors
+                .get_mut(&actor)
+                .expect("inserted actor wake")
+                .reflection = true;
+        }
         store
             .accept_thought(
                 world,
@@ -619,9 +661,11 @@ impl Director {
                 prior,
                 cursor,
                 Some(job.clone()),
+                cue,
             )
             .await
             .map_err(WorldError::Commit)?;
+        inbox.notify_maintenance(reflection_wake);
         if proposal.discovery.is_some() {
             wake.discovery_at = policy.next_discovery_check(at);
         }

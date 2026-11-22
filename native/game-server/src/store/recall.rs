@@ -564,7 +564,7 @@ impl AccountRow {
     }
 }
 
-fn source_kind(kind: PersonalSourceKind) -> &'static str {
+pub(super) fn source_kind(kind: PersonalSourceKind) -> &'static str {
     match kind {
         PersonalSourceKind::Awareness => "awareness",
         PersonalSourceKind::Memory => "memory",

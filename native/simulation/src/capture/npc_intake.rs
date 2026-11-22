@@ -1065,6 +1065,11 @@ fn prepare(
                 actor,
                 unseen: &unseen,
                 events: &events,
+                reflection_events: state
+                    .installed
+                    .cognition
+                    .reflection
+                    .then_some(state.installed.cognition.significant_event_types.as_slice()),
                 stimuli: &stimuli,
                 actions_blocked,
                 protection_labels: &protection_labels,

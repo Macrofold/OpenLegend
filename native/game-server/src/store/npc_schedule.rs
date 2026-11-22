@@ -7,6 +7,7 @@ use super::{
 };
 use openlegend_simulation::{
     encoding::{json_record, json_tree_allocation_bound},
+    experience::PersonalSourceRef,
     host::ByteReservation,
 };
 use serde::{Deserialize, Serialize};
@@ -198,6 +199,7 @@ impl Store {
         prior: ThoughtRead,
         cursor: ThoughtCursor,
         job: Option<Arc<AdmittedJob>>,
+        reflection_cue: Option<PersonalSourceRef>,
     ) -> Result<(), CommitError> {
         let store = self.clone();
         self.operational(move |tx|Box::pin(async move {
@@ -213,6 +215,9 @@ impl Store {
             if let Some(job)=job.as_ref() {
                 if job.job.request.npc_id!=actor || job.job.kind!="thought" || cursor.attempted_job_id.as_deref()!=Some(job.job.id.as_str()) {return Err(StoreError::InvalidRecord);}
                 store.write_conversation_job(tx,job).await?;
+            }
+            if let Some(cue) = reflection_cue {
+                super::reflection::queue_cue(tx, &world, &generation, &actor, cue).await?;
             }
             Ok(())
         })).await

@@ -50,6 +50,7 @@ impl NpcScheduleFacts {
 
 pub struct ScheduleEvidence {
     pub kind: PersonalSourceKind,
+    pub reflection_cue: bool,
     value: EvidenceValue,
 }
 
@@ -171,6 +172,7 @@ pub(super) struct Inputs<'a> {
     pub(super) actor: &'a crate::state::ActorState,
     pub(super) unseen: &'a crate::experience::intake::UnseenIntake<'a>,
     pub(super) events: &'a [EventMetadata<'a>],
+    pub(super) reflection_events: Option<&'a [String]>,
     pub(super) stimuli: &'a [Stimulus<'a>],
     pub(super) actions_blocked: bool,
     pub(super) protection_labels: &'a [&'a str],
@@ -270,8 +272,20 @@ pub(super) fn capture(
             serde_json::from_str(record.value.get()).map_err(|_| ExecutionError::Invariant)?;
         admit(value.heap_bytes())?;
         drop(scratch);
+        let reflection_cue = input.reflection_events.is_some_and(|kinds| {
+            let event_type = value.event_type.as_deref().or_else(|| {
+                let event_id = value.event_id.as_deref().or(value.id.as_deref())?;
+                input
+                    .events
+                    .iter()
+                    .find(|event| event.id == event_id)
+                    .map(|event| event.kind)
+            });
+            event_type.is_some_and(|event_type| kinds.iter().any(|kind| kind == event_type))
+        });
         selected.push(ScheduleEvidence {
             kind: record.kind,
+            reflection_cue,
             value,
         });
     }

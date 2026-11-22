@@ -62,7 +62,7 @@ enum PaidWork {
     Hourly(hourly::Selected),
     Daily(DailySelection),
     Learning,
-    Reflection(Arc<crate::store::reflection::ReflectionScope>),
+    Reflection(reflection::Selected),
 }
 
 enum PaidKind {
@@ -92,18 +92,18 @@ impl Director {
                 finish_paid(joined, &mut due);
             }
             let wake = inbox.take_maintenance();
-            for (actor, custody) in wake.actors {
+            for (actor, wake) in wake.actors {
                 due.entry(actor)
                     .and_modify(|owner: &mut DueActor| {
                         owner.dirty = true;
                         if owner.next_hourly == f64::INFINITY {
                             owner.next_hourly = 0.;
                         }
-                        if owner.next_reflection == f64::INFINITY {
+                        if wake.reflection || owner.next_reflection == f64::INFINITY {
                             owner.next_reflection = 0.;
                         }
                     })
-                    .or_insert_with(|| DueActor::new(custody));
+                    .or_insert_with(|| DueActor::new(wake.custody));
             }
             reload |= wake.all;
             if reload {
@@ -430,18 +430,19 @@ impl Director {
         tasks: &mut tokio::task::JoinSet<PaidResult>,
         service_stop: watch::Receiver<bool>,
     ) -> Result<(), WorldError> {
-        let (scope, tomorrow) = match reflection::plan(self, actor).await? {
-            reflection::Plan::Wait(at) => {
-                work.next_reflection = at;
-                return Ok(());
-            }
-            reflection::Plan::Ready(scope, tomorrow) => (scope, tomorrow),
-        };
+        let (selected, tomorrow) =
+            match reflection::plan(self, actor, work.next_reflection == 0.).await? {
+                reflection::Plan::Wait(at) => {
+                    work.next_reflection = at;
+                    return Ok(());
+                }
+                reflection::Plan::Ready(selected, tomorrow) => (selected, tomorrow),
+            };
         let Admission::Accepted(slot) = self.slots.select(
             actor,
-            &scope.attempt,
+            &selected.scope.attempt,
             None,
-            &scope.generation,
+            &selected.scope.generation,
             SlotPriority::Ordinary,
         )?
         else {
@@ -452,7 +453,7 @@ impl Director {
             actor,
             tasks,
             slot,
-            PaidWork::Reflection(scope),
+            PaidWork::Reflection(selected),
             service_stop,
         ));
         Ok(())
@@ -503,8 +504,10 @@ impl Director {
                         PaidWork::Learning => {
                             learning::run(director, learner, stopped).await.map(|()| 0.)
                         }
-                        PaidWork::Reflection(scope) => {
-                            reflection::run(director, scope, stopped).await.map(|()| 0.)
+                        PaidWork::Reflection(selected) => {
+                            reflection::run(director, selected, stopped)
+                                .await
+                                .map(|()| 0.)
                         }
                     }
                 };

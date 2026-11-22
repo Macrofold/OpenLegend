@@ -15,7 +15,7 @@ use crate::{
     },
     store::{
         AttemptAdmission, AttemptRequest, InferenceClass, ModelReceipt, ModelUsage, StoreError,
-        reflection::ReflectionScope,
+        reflection::{ReflectionCue, ReflectionScope},
     },
     world::{NpcDisclosure, NpcDisclosureTurn, ProtectedCommit, WorldError},
 };
@@ -43,10 +43,19 @@ use worktree::Worktree;
 
 pub(super) enum Plan {
     Wait(f64),
-    Ready(Arc<ReflectionScope>, f64),
+    Ready(Selected, f64),
 }
 
-pub(super) async fn plan(director: &Director, actor: &str) -> Result<Plan, WorldError> {
+pub(super) struct Selected {
+    pub(super) scope: Arc<ReflectionScope>,
+    cue: Option<ReflectionCue>,
+}
+
+pub(super) async fn plan(
+    director: &Director,
+    actor: &str,
+    inspect_cue: bool,
+) -> Result<Plan, WorldError> {
     let Some(model) = &director.reflection_model else {
         return Ok(Plan::Wait(f64::INFINITY));
     };
@@ -68,8 +77,12 @@ pub(super) async fn plan(director: &Director, actor: &str) -> Result<Plan, World
         return Ok(Plan::Wait(tomorrow));
     }
     let due = window.last_reflection_at + policy.minimum_interval_seconds;
-    if window.at < due || !window.idle {
-        return Ok(Plan::Wait(due.max(window.at)));
+    if !window.idle {
+        // An accepted change to the actor will wake the same due entry.
+        return Ok(Plan::Wait(f64::INFINITY));
+    }
+    if window.at < due && !inspect_cue {
+        return Ok(Plan::Wait(due));
     }
     director
         .game
@@ -86,12 +99,13 @@ pub(super) async fn plan(director: &Director, actor: &str) -> Result<Plan, World
         model.destination.workspace_scope(),
     )?);
     use crate::store::reflection::ReflectionDue;
-    match store.reflection_due(scope.clone()).await? {
+    let cue = match store.reflection_due(scope.clone()).await? {
         ReflectionDue::NoEvidence => return Ok(Plan::Wait(f64::INFINITY)),
         ReflectionDue::AlreadyAttempted => return Ok(Plan::Wait(tomorrow)),
-        ReflectionDue::Ready => (),
-    }
-    Ok(Plan::Ready(scope, tomorrow))
+        ReflectionDue::Ready(None) if window.at < due => return Ok(Plan::Wait(due)),
+        ReflectionDue::Ready(cue) => cue,
+    };
+    Ok(Plan::Ready(Selected { scope, cue }, tomorrow))
 }
 
 #[derive(Deserialize)]
@@ -260,9 +274,10 @@ pub(super) fn start_private(
 
 pub(super) async fn run(
     director: Arc<Director>,
-    scope: Arc<ReflectionScope>,
+    selected: Selected,
     stopped: watch::Receiver<bool>,
 ) -> Result<(), CallFailure> {
+    let Selected { scope, cue } = selected;
     let game = &director.game;
     let store = &game.store;
     let budget = game.host.budget();
@@ -277,6 +292,7 @@ pub(super) async fn run(
         &scope.actor,
         &scope.attempt,
         &game.cognition.reflection.stimulus,
+        cue.as_ref().map(|cue| &cue.source),
     )
     .await?;
     if prepared
@@ -355,18 +371,22 @@ pub(super) async fn run(
     drop(body);
     drop(request_scratch);
     let attempt = match store
-        .reserve_model(AttemptRequest {
-            id: scope.attempt.clone(),
-            actor: scope.actor.clone(),
-            job: scope.attempt.clone(),
-            provider: InferenceClass::OpenAi,
-            category: "generation",
-            stage: "reflection-worktree",
-            level: Some(5),
-            background: true,
-            amount: model.amount,
-            ceiling: model.ceiling,
-        })
+        .reserve_reflection_model(
+            AttemptRequest {
+                id: scope.attempt.clone(),
+                actor: scope.actor.clone(),
+                job: scope.attempt.clone(),
+                provider: InferenceClass::OpenAi,
+                category: "generation",
+                stage: "reflection-worktree",
+                level: Some(5),
+                background: true,
+                amount: model.amount,
+                ceiling: model.ceiling,
+            },
+            scope.clone(),
+            cue,
+        )
         .await
         .map_err(CallFailure::Commit)?
     {

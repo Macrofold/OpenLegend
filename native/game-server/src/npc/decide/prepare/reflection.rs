@@ -12,6 +12,7 @@ use openlegend_simulation::{
         NpcBindingPurpose, NpcEntityAlias, NpcEntityOrdinal, NpcPersonalEvidence,
         NpcPersonalSelection, NpcSourceSelection, NpcSubjectAlias, NpcSubjectOrdinal,
     },
+    experience::PersonalSourceRef,
     host::ByteReservation,
     narration::NameArticle,
     runtime::{
@@ -36,6 +37,7 @@ pub(in crate::npc) async fn prepare(
     actor: &str,
     job: &str,
     reason: &str,
+    cue: Option<&PersonalSourceRef>,
 ) -> Result<PreparedReflection, CallFailure> {
     let budget = game.host.budget();
     let actor_storage = budget.reserve(actor.len() * 2).map_err(capacity)?;
@@ -69,11 +71,18 @@ pub(in crate::npc) async fn prepare(
         })
         .await
         .map_err(|error| CallFailure::World(WorldError::Storage(error)))?;
+    let exclusive_cue = cue.filter(|source| !references.required.contains(source));
     let recent = references
         .optional
         .iter()
+        .filter(|source| Some(*source) != cue)
         .take(game.cognition.recent_recall);
-    let selection = references.required.iter().chain(recent);
+    let selection = references
+        .required
+        .iter()
+        .chain(exclusive_cue)
+        .chain(recent);
+    let required = references.required.len() + usize::from(exclusive_cue.is_some());
     let selection_bytes = selection
         .clone()
         .try_fold(0usize, |bytes, reference| {
@@ -109,7 +118,7 @@ pub(in crate::npc) async fn prepare(
     if history
         .unavailable_personal
         .iter()
-        .any(|index| *index < references.required.len())
+        .any(|index| *index < required)
     {
         return Err(CallFailure::Stale("reflection-required-evidence-withdrawn"));
     }
@@ -174,10 +183,14 @@ pub(in crate::npc) async fn prepare(
     let mut evidence = Vec::with_capacity(indices.len());
     let mut aliases = Vec::with_capacity(indices.len());
     let mut remembered = Vec::with_capacity(indices.len());
+    let mut cue_handle = None;
     for &ordinal in &indices {
         let account = &history.personal[ordinal];
         let (text, at) = personal_description(account)?;
         let handle = alias(&key, "evidence", ordinal);
+        if cue == Some(&account.reference) {
+            cue_handle = Some(handle.clone());
+        }
         remembered.push(
             json!({"reference":handle,"text":text,"at":at,"acquisition":account.value.modality}),
         );
@@ -189,7 +202,7 @@ pub(in crate::npc) async fn prepare(
         });
     }
     let name = name_phrase(&self_prompt.observer_name, NameArticle::None, false);
-    let context = json!({
+    let mut context = json!({
         "stimulus": reason,
         "identity": identity(self_prompt, &prompt_text(&name), &self_alias),
         "aboutMe": about_me(game, self_prompt)?,
@@ -199,6 +212,11 @@ pub(in crate::npc) async fn prepare(
         "subjects": people,
         "experience": remembered,
     });
+    if cue.is_some() {
+        context["trigger"] = cue_handle
+            .ok_or(CallFailure::Stale("reflection-cue-withdrawn"))?
+            .into();
+    }
     let request = RuntimeNpcBindingInput {
         decision_id: job.to_owned(),
         consumer,

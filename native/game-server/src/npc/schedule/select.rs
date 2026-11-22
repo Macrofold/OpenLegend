@@ -27,6 +27,7 @@ pub(super) struct Proposal {
     pub(super) skipped: bool,
     pub(super) text: JsText,
     pub(super) evidence: Option<String>,
+    pub(super) reflection_cue: Option<usize>,
     pub(super) causes: Vec<usize>,
     pub(super) review_key: Option<String>,
     pub(super) discovery: Option<u64>,
@@ -201,6 +202,7 @@ impl Inspection {
             fingerprint,
             semantic_revision,
             evidence: unseen.first().map(|item| item.event().to_owned()),
+            reflection_cue: unseen.iter().position(|item| item.reflection_cue),
             causes: (0..causes.len()).collect(),
             attempt: available && !blocks,
             skipped: available

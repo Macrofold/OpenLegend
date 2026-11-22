@@ -1,10 +1,20 @@
 //! The existing durable spending ledger admits one provider attempt. A lost
 //! response keeps its obligation and never authorizes another submission.
 
-use super::{CommitError, Store, StoreError, StoreResult};
+use super::{
+    CommitError, Store, StoreError, StoreResult,
+    recall::semantic::SemanticClaim,
+    reflection::{ReflectionCue, ReflectionScope},
+};
 use crate::authority::now_ms;
 use openlegend_simulation::{encoding::json_record, identity::MAX_SAFE_INTEGER};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+
+enum AttemptClaim {
+    Semantic(Arc<SemanticClaim>),
+    Reflection(Arc<ReflectionScope>, ReflectionCue),
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -167,13 +177,32 @@ impl Store {
         &self,
         request: AttemptRequest,
     ) -> Result<AttemptAdmission, CommitError> {
-        self.reserve_claimed_model(request, None).await
+        self.reserve_for_model(request, None).await
     }
 
     pub(crate) async fn reserve_claimed_model(
         &self,
         request: AttemptRequest,
-        claim: Option<std::sync::Arc<super::recall::semantic::SemanticClaim>>,
+        claim: Option<Arc<SemanticClaim>>,
+    ) -> Result<AttemptAdmission, CommitError> {
+        self.reserve_for_model(request, claim.map(AttemptClaim::Semantic))
+            .await
+    }
+
+    pub(crate) async fn reserve_reflection_model(
+        &self,
+        request: AttemptRequest,
+        scope: Arc<ReflectionScope>,
+        cue: Option<ReflectionCue>,
+    ) -> Result<AttemptAdmission, CommitError> {
+        self.reserve_for_model(request, cue.map(|cue| AttemptClaim::Reflection(scope, cue)))
+            .await
+    }
+
+    async fn reserve_for_model(
+        &self,
+        request: AttemptRequest,
+        claim: Option<AttemptClaim>,
     ) -> Result<AttemptAdmission, CommitError> {
         let amount = sql_microusd(request.amount).map_err(CommitError::RolledBack)?;
         let ceiling = sql_microusd(request.ceiling).map_err(CommitError::RolledBack)?;
@@ -193,9 +222,14 @@ impl Store {
             if exposure(tx, &request.actor).await?.checked_add(amount).is_none_or(|sum| sum > ceiling) {
                 return Ok(AttemptAdmission::Exhausted);
             }
-            if let Some(claim) = claim
-                && (claim.scope.actor != request.actor || !claim.take(tx, &request.id).await?)
-            {
+            let claimed = match claim {
+                Some(AttemptClaim::Semantic(claim)) =>
+                    claim.scope.actor == request.actor && claim.take(tx, &request.id).await?,
+                Some(AttemptClaim::Reflection(scope, cue)) =>
+                    scope.actor == request.actor && scope.attempt == request.id && scope.take_cue(tx, &cue).await?,
+                None => true,
+            };
+            if !claimed {
                 return Ok(AttemptAdmission::Existing);
             }
             tx.execute(

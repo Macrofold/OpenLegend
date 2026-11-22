@@ -1,9 +1,13 @@
 //! Durable app-owned bookkeeping for one resident's remote Worktree. Accepted
 //! mind files, obligations and interpretations remain native world records.
 
-use super::{CommitError, Store, StoreError, StoreResult, durable_head, read::admitted_query};
+use super::{
+    CommitError, Store, StoreError, StoreResult, durable_head, read::admitted_query,
+    recall::source_kind,
+};
 use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
+    experience::PersonalSourceRef,
     host::ByteReservation,
 };
 use serde::{Deserialize, Serialize};
@@ -39,9 +43,51 @@ pub(crate) struct ReadWorkspaceBinding {
 }
 
 pub(crate) enum ReflectionDue {
-    Ready,
+    Ready(Option<ReflectionCue>),
     NoEvidence,
     AlreadyAttempted,
+}
+
+/// One coalesced opportunity contains only an actor's exact source revision.
+/// A later source read provides the permitted words and binds disclosure.
+pub(crate) struct ReflectionCue {
+    pub source: PersonalSourceRef,
+    stored: String,
+    _custody: ByteReservation,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct StoredCue {
+    generation: String,
+    source: PersonalSourceRef,
+}
+
+fn cue_key(world: &str, actor: &str) -> StoreResult<String> {
+    let scope = json_record(&[world, actor]).map_err(|_| StoreError::InvalidRecord)?;
+    // Stopped and live recovery both clear this world's reflection queue.
+    Ok(format!("integration:reflection-queue:{world}:{scope}"))
+}
+
+/// Store the cue with its admitted thought and existing actor-scoped cursor.
+pub(super) async fn queue_cue(
+    tx: &tokio_postgres::Transaction<'_>,
+    world: &str,
+    generation: &str,
+    actor: &str,
+    source: PersonalSourceRef,
+) -> StoreResult<()> {
+    let key = cue_key(world, actor)?;
+    let value = json_record(&StoredCue {
+        generation: generation.to_owned(),
+        source,
+    })
+    .map_err(|_| StoreError::InvalidRecord)?;
+    tx.execute(
+        "INSERT INTO meta(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        &[&key, &value],
+    ).await?;
+    Ok(())
 }
 
 impl ReflectionScope {
@@ -101,6 +147,24 @@ impl ReflectionScope {
         }
         Ok(())
     }
+
+    /// Consume only the opportunity selected for this attempt. A newer cue
+    /// stays queued. Failure rolls back with the same spending reservation.
+    pub(super) async fn take_cue(
+        &self,
+        tx: &tokio_postgres::Transaction<'_>,
+        cue: &ReflectionCue,
+    ) -> StoreResult<bool> {
+        self.assert_current(tx).await?;
+        let key = cue_key(&self.world, &self.actor)?;
+        Ok(tx
+            .execute(
+                "DELETE FROM meta WHERE key=$1 AND value=$2",
+                &[&key, &cue.stored],
+            )
+            .await?
+            == 1)
+    }
 }
 
 impl Store {
@@ -110,20 +174,37 @@ impl Store {
         self: &Arc<Self>,
         scope: Arc<ReflectionScope>,
     ) -> StoreResult<ReflectionDue> {
+        let budget = self.budget.clone();
         self.read_simulation_cut(move |tx| Box::pin(async move {
             scope.assert_current(tx).await?;
+            let queue = cue_key(&scope.world, &scope.actor)?;
+            let _row_storage = budget.reserve(8192).map_err(|_| StoreError::Capacity)?;
             let row = tx.query_one(
                 "SELECT EXISTS(SELECT 1 FROM recall_sources WHERE world_id=$1 AND actor_id=$2 AND eligible=1),
                         EXISTS(SELECT 1 FROM attempts WHERE id=$3)
                         OR EXISTS(SELECT 1 FROM attempts a JOIN attempt_scopes s ON s.attempt_id=a.id
                            JOIN cognition_attempt_links l ON l.attempt_id=a.id
-                           WHERE s.actor_id=$2 AND a.status IN ('reserved','uncertain') AND l.stage='reflection-worktree')",
-                &[&scope.world, &scope.actor, &scope.attempt],
+                           WHERE s.actor_id=$2 AND a.status IN ('reserved','uncertain') AND l.stage='reflection-worktree'),
+                        (SELECT CASE WHEN octet_length(value)<=4096 THEN value END FROM meta WHERE key=$4)",
+                &[&scope.world, &scope.actor, &scope.attempt, &queue],
             ).await?;
             if row.try_get(1)? {
                 Ok(ReflectionDue::AlreadyAttempted)
             } else if row.try_get(0)? {
-                Ok(ReflectionDue::Ready)
+                let cue = if let Some(raw) = row.try_get::<_, Option<&str>>(2)? {
+                    let held = budget.reserve(512 + raw.len() * 8).map_err(|_| StoreError::Capacity)?;
+                    let value: StoredCue = serde_json::from_str(raw).map_err(|_| StoreError::InvalidRecord)?;
+                    if !value.source.validate() { return Err(StoreError::InvalidRecord); }
+                    // Ignore an old cue whose source is already gone. It cannot mask a
+                    // later ordinary opportunity. Preparation still owns the final check.
+                    let eligible = value.generation == scope.generation
+                        && tx.query_opt(
+                            "SELECT 1 FROM recall_sources WHERE world_id=$1 AND actor_id=$2 AND source_kind=$3 AND id=$4 AND revision=$5 AND eligible=1",
+                            &[&scope.world, &scope.actor, &source_kind(value.source.kind), &value.source.id, &value.source.revision],
+                        ).await?.is_some();
+                    eligible.then(|| ReflectionCue { source: value.source, stored: raw.to_owned(), _custody: held })
+                } else { None };
+                Ok(ReflectionDue::Ready(cue))
             } else {
                 Ok(ReflectionDue::NoEvidence)
             }
