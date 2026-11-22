@@ -472,7 +472,7 @@ In a **closed narrow view**, camera controls and the **Actions** button share a 
 
 **Reason / tradeoff:** The measured software GPU queued roughly 14–16 stale frames. Two slots retain CPU/GPU overlap while reducing delayed camera feedback; fewer intermediate images can be submitted on a slow device. No scene content, visual quality, native simulation or input update is removed. This replaces the scene's previously unrestricted submission. Rejection frees its own admission slot; context loss clears membership and requests redraw. Engine fence polls themselves are not cancellable; late completions cannot restart a disposed scene or release a newer slot. Reassess the bound/poll cadence if measured supported hardware throughput, input response or engine API changes warrant it. This evidence does not establish optimality across GPUs.
 
-[Renderer owner](../../apps/client/src/scene.ts) · [Measured correction and lifecycle limits](../verification/game-interaction-redesign.md#bounded-graphics-submission).
+[Renderer owner](../../apps/client/src/scene.ts) · [Measured correction and lifecycle limits](../verification/game-interaction-redesign.md#bounded-graphics-submission) · [Cold browser evidence](../verification/multiplayer-entry-maintenance.md#cold-scene-with-pending-graphics--november-22-2026).
 
 ## RF02 — First scene scheduling
 
