@@ -176,7 +176,25 @@ impl DecisionPolicy {
         include_actions: bool,
         budget: &ByteBudget,
     ) -> Result<PreparedPrompt, RenderError> {
-        prompt::render(self, fields, actions, include_actions, budget)
+        prompt::render(self, fields, actions, include_actions, 0, budget)
+    }
+
+    /// The same fixed bytes held for query-enabled provider instructions also
+    /// reduce the room available to this shape of generation prompt.
+    pub(crate) fn query_instruction_bytes(&self) -> usize {
+        self.query_instructions.len().saturating_add(1)
+    }
+
+    pub(crate) fn generation_prompt(
+        &self,
+        fields: &Map<String, Value>,
+        actions: &[OfferedAction<'_>],
+        include_actions: bool,
+        queries: bool,
+        budget: &ByteBudget,
+    ) -> Result<PreparedPrompt, RenderError> {
+        let additional = if queries { self.query_instruction_bytes() } else { 0 };
+        prompt::render(self, fields, actions, include_actions, additional, budget)
     }
 
     fn text(&self, fragment: &str) -> Result<&str, RenderError> {

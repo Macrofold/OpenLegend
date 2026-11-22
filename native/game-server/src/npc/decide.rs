@@ -327,8 +327,39 @@ pub(super) async fn run(
                 models.complex.as_ref()
             }
             .ok_or(CallFailure::Invalid.at("route"))?;
-            let query_origin = prepared.ticket.received_query_origin();
+            // The route already rendered required context with query support
+            // and without these optional additions. Reuse its exact byte count.
+            let mut offered = selected
+                .into_iter()
+                .map(|offer| OfferedAction {
+                    id: &offer.id,
+                    description: &offer.caption,
+                })
+                .collect::<Vec<_>>();
+            let mut scene_bytes = prepared.route.remaining();
+            let query_bytes = game.cognition.query_instruction_bytes();
+            let query_origin = prepared.ticket.received_query_origin()
+                .filter(|_| query_bytes <= scene_bytes);
             let questions_offered = query_origin.is_some();
+            if questions_offered {
+                scene_bytes -= query_bytes;
+            }
+            let include_actions = if include_actions {
+                match game
+                    .cognition
+                    .fit_prompt_actions(&mut offered, scene_bytes)
+                    .map_err(generation_failure)
+                    .map_err(|error| error.at("generation-prompt"))?
+                {
+                    Some(remaining) => {
+                        scene_bytes = remaining;
+                        true
+                    }
+                    None => false,
+                }
+            } else {
+                false
+            };
             prepared.context.fields["situationQueries"] = questions_offered.into();
             let regions = query_origin
                 .map(|(original, limits)| {
@@ -340,6 +371,7 @@ pub(super) async fn run(
                         prepared.context.reference_scope(),
                         &prepared.frame,
                         &prepared.context.fields["receivedSituation"],
+                        scene_bytes,
                         budget,
                     )
                 })
@@ -353,7 +385,7 @@ pub(super) async fn run(
             }
             let (response, schema) = prepared
                 .context
-                .render_response(game, &selected, include_actions, None)
+                .render_response(game, &offered, include_actions, None)
                 .map_err(|error| error.at("generation-preparation"))?;
             let reply_player = if prepared.addressed {
                 prepared.context.preview_player.as_ref()
@@ -427,7 +459,7 @@ pub(super) async fn run(
                         )?;
                         let (mut response, schema) = prepared
                             .context
-                            .render_response(game, &selected, include_actions, Some(&answers))
+                            .render_response(game, &offered, include_actions, Some(&answers))
                             .map_err(|error| error.at("situation-query-preparation"))?;
                         response.append_received_evidence(&answers).map_err(generation_failure)?;
                         answers.bind(&mut binding)?;
@@ -519,14 +551,14 @@ async fn generate(
         game.cognition
             .response_instructions
             .len()
-            .saturating_add(game.cognition.query_instructions.len())
-            .saturating_add(1)
+            .saturating_add(game.cognition.query_instruction_bytes())
     } else {
         0
     };
     let _instructions_custody = budget
         .reserve(instructions_bytes)
-        .map_err(|_| CallFailure::Invalid)?;
+        .map_err(response_capacity)
+        .map_err(|error| error.at("generation-instructions"))?;
     let instructions = if view.queries {
         std::borrow::Cow::Owned(format!(
             "{} {}",
@@ -876,10 +908,10 @@ fn response_capacity(error: CapacityError) -> CallFailure {
 }
 
 fn generation_failure(error: RenderError) -> CallFailure {
-    if matches!(error, RenderError::Capacity) {
-        response_capacity(CapacityError)
-    } else {
-        CallFailure::Invalid
+    match error {
+        RenderError::Capacity => response_capacity(CapacityError),
+        RenderError::ContextLimit => CallFailure::ContextLimit,
+        _ => CallFailure::Invalid,
     }
 }
 

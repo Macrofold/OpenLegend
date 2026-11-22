@@ -79,27 +79,25 @@ impl Projection {
     pub(super) fn render_response(
         &self,
         game: &CurrentServer,
-        selected: &[&NativeOffer],
+        offered: &[OfferedAction<'_>],
         include_actions: bool,
         expansion: Option<&super::query::Answers<'_>>,
     ) -> Result<(PreparedPrompt, BoundSchema), CallFailure> {
         let budget = game.host.budget();
-        let offered = selected
+        let aliases = offered
             .iter()
-            .map(|offer| OfferedAction {
-                id: &offer.id,
-                description: &offer.caption,
-            })
-            .collect::<Vec<_>>();
-        let aliases = selected
-            .iter()
-            .map(|offer| offer.id.clone())
+            .map(|offer| offer.id.to_owned())
             .collect::<Vec<_>>();
         let fields = self.fields.as_object().ok_or(CallFailure::Invalid)?;
+        let queries = fields
+            .get("situationQueries")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
         let prompt = game
             .cognition
-            .prompt(fields, &offered, include_actions, budget)
-            .map_err(invalid)?;
+            .generation_prompt(fields, offered, include_actions, queries, budget)
+            .map_err(super::generation_failure)
+            .map_err(|error| error.at("generation-prompt"))?;
         let extended = expansion
             .filter(|answers| answers.added_references().next().is_some())
             .map(|answers| answers.extend_references(&self.refs, &self.physical, budget))
@@ -120,10 +118,7 @@ impl Projection {
             .response_schema(
                 self.speaks,
                 self.expressions,
-                fields
-                    .get("situationQueries")
-                    .and_then(Value::as_bool)
-                    .unwrap_or(false),
+                queries,
                 &ResponseReferences {
                     entity,
                     action: &aliases,
@@ -136,7 +131,8 @@ impl Projection {
                 },
                 budget,
             )
-            .map_err(invalid)?;
+            .map_err(super::generation_failure)
+            .map_err(|error| error.at("generation-schema"))?;
         Ok((prompt, schema))
     }
 }
@@ -215,7 +211,8 @@ pub(super) async fn finish(
             false,
             budget,
         )
-        .map_err(invalid)?;
+        .map_err(super::generation_failure)
+        .map_err(|error| error.at("routing-prompt"))?;
     ensure_running(work)?;
     let request = binding.fund(&mut projection).map_err(packet_failure)?;
     let origin = work.automatic.as_ref().map(|trigger| trigger.read.clone());

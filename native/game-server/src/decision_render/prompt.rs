@@ -6,6 +6,46 @@ use openlegend_simulation::{
 use serde_json::{Map, Value};
 use std::io::{self, Write};
 
+const SECTION_BREAK: &str = "\n\n";
+const ACTION_BULLET: &str = "- ";
+const ACTION_SEPARATOR: &str = ": ";
+
+impl DecisionPolicy {
+    /// Fit the optional shortlist without rendering the required context again.
+    /// Return the bytes still available for optional scene hints.
+    pub(crate) fn fit_prompt_actions(
+        &self,
+        actions: &mut Vec<OfferedAction<'_>>,
+        bytes: usize,
+    ) -> Result<Option<usize>, RenderError> {
+        let fixed = SECTION_BREAK.len()
+            + self.text("actions")?.len()
+            + self.text("unlistedActions")?.len();
+        let Some(mut remaining) = bytes.checked_sub(fixed) else {
+            actions.clear();
+            return Ok(None);
+        };
+        let mut kept = 0;
+        actions.retain(|action| {
+            let line = ACTION_BULLET.len()
+                + action.id.len()
+                + ACTION_SEPARATOR.len()
+                + action.description.len()
+                + usize::from(kept != 0);
+            let Some(after) = remaining.checked_sub(line) else {
+                return false;
+            };
+            remaining = after;
+            kept += 1;
+            true
+        });
+        if actions.is_empty() {
+            return Ok(remaining.checked_sub(self.text("noActions")?.len()));
+        }
+        Ok(Some(remaining))
+    }
+}
+
 /// The encoded prompt owns its buffer independently of the retained read and
 /// provider body. No entire prompt or section JSON is built just to size it.
 pub(crate) struct PreparedPrompt {
@@ -29,6 +69,10 @@ impl PreparedPrompt {
 
     pub(crate) fn as_str(&self) -> &str {
         std::str::from_utf8(&self.bytes).expect("decision formatting emits UTF-8")
+    }
+
+    pub(crate) fn remaining(&self) -> usize {
+        self.limit - self.bytes.len()
     }
 
     /// Append the selected read-only answer directly to the independently
@@ -56,7 +100,7 @@ impl PreparedPrompt {
 
     fn section(&mut self) -> Result<(), RenderError> {
         if self.sections > 0 {
-            self.text("\n\n")?;
+            self.text(SECTION_BREAK)?;
         }
         self.sections += 1;
         Ok(())
@@ -131,11 +175,13 @@ pub(super) fn render(
     fields: &Map<String, Value>,
     actions: &[OfferedAction<'_>],
     include_actions: bool,
+    additional_instructions: usize,
     budget: &ByteBudget,
 ) -> Result<PreparedPrompt, RenderError> {
     let limit = policy
         .context_bytes
         .checked_sub(policy.response_instructions.len())
+        .and_then(|remaining| remaining.checked_sub(additional_instructions))
         .ok_or(RenderError::ContextLimit)?;
     let mut out = PreparedPrompt::new(limit, budget)?;
     let field = |key| fields.get(key).unwrap_or(&Value::Null);
@@ -311,9 +357,9 @@ pub(super) fn render(
             if index > 0 {
                 out.text("\n")?;
             }
-            out.text("- ")?;
+            out.text(ACTION_BULLET)?;
             out.text(action.id)?;
-            out.text(": ")?;
+            out.text(ACTION_SEPARATOR)?;
             out.text(action.description)?;
         }
         text!("unlistedActions");

@@ -48,6 +48,7 @@ impl Regions {
         scope: &str,
         frame: &prepare::ReceivedFrame,
         situation: &Value,
+        prompt_bytes: usize,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, CallFailure> {
         let bounds = original.received_query_bounds();
@@ -56,14 +57,16 @@ impl Regions {
         }
         let at = original.decision_origin().at;
         let maximum = usize::try_from(limits.max_bytes).map_err(|_| CallFailure::Invalid)?;
-        // Leave space for the new member names, timestamp and delimiters.
-        // Measure the existing situation once and resize whole regions only.
-        let bytes = encoded_len(situation)?
-            .checked_add(encoded_len(&at)? + r#","broad":,"broadMeasuredAt":"#.len())
-            .ok_or_else(capacity)?;
-        if bytes >= maximum {
+        // The addition must fit both the scene allowance and the complete
+        // model input. Account for the member names, timestamp and delimiters.
+        let overhead = encoded_len(&at)? + r#","broad":,"broadMeasuredAt":"#.len();
+        if prompt_bytes <= overhead {
             return Ok(None);
         }
+        let remaining = prompt_bytes.min(maximum.saturating_sub(encoded_len(situation)?));
+        let Some(row_bytes) = remaining.checked_sub(overhead).filter(|bytes| *bytes != 0) else {
+            return Ok(None);
+        };
         let index =
             ReceivedIndex::build(bounds, budget).map_err(super::super::response_capacity)?;
         let visits = (limits.node_visits - 1) / 2;
@@ -93,7 +96,7 @@ impl Regions {
                     detail: "unexpanded",
                 });
             });
-            if encoded_len(&rows)? <= maximum - bytes {
+            if encoded_len(&rows)? <= row_bytes {
                 break;
             }
             limit = rows.len() / 2;

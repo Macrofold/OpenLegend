@@ -883,6 +883,11 @@ impl Director {
                 "The reply could not be used.",
                 "invalid-output",
             ),
+            CallFailure::ContextLimit => (
+                SpeechReplyStatus::Failed,
+                "The necessary information was too large for this AI request.",
+                "context-exceeded",
+            ),
             CallFailure::DecodeBusy => (
                 SpeechReplyStatus::Failed,
                 "The reply could not be processed in time.",

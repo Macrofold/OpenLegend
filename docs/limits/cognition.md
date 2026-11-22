@@ -108,7 +108,7 @@ Original recommendation: **Review**.
 
 **Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
-The current immediate-decision workflow limits assembled model input to 100,000 bytes.
+The current immediate-decision workflow limits assembled model input to 100,000 bytes. The Rust listener counts the actual UTF-8 prompt and installed system instructions together. Optional action descriptions and broad scene hints fit within that allowance. A query-enabled reply also needs room for its query instructions.
 
 **Reason / tradeoff:** Keep a finite input allowance, but size it for the selected model and include instructions and response-format overhead consistently.
 
