@@ -180,6 +180,7 @@ impl HistoryReads {
                     data,
                     inventory,
                     ordinal,
+                    retainable: !receipt.facets.is_empty(),
                     encoded,
                     _custody: storage,
                 });
@@ -270,12 +271,24 @@ struct HistoryRow {
     #[serde(skip)]
     ordinal: usize,
     #[serde(skip)]
+    retainable: bool,
+    #[serde(skip)]
     encoded: usize,
     #[serde(skip)]
     _custody: ByteReservation,
 }
 
 impl HistoryPage {
+    /// A full emitted record can be offered for an interpretation. A missed or
+    /// ended observation without any facets contributes no remembered fact.
+    pub(super) fn retention_sources(&self) -> impl Iterator<Item = &str> {
+        self.entries
+            .iter()
+            .flatten()
+            .filter(|row| row.retainable)
+            .filter_map(|row| row.data["reference"].as_str())
+    }
+
     /// Keep the newest complete rows rather than emit an older partial quote.
     pub(super) fn trim(&mut self, mut excess: usize) -> usize {
         let Some(rows) = &mut self.entries else {

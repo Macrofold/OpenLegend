@@ -20,7 +20,7 @@ use serde::{Serialize, Serializer};
 use std::collections::HashSet;
 use tokio_postgres::Transaction;
 
-pub(crate) mod activity_results;
+pub(crate) mod memory_appends;
 pub(crate) mod browse;
 mod checkpoint_accounts;
 pub(crate) mod consolidation;

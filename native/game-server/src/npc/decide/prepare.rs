@@ -103,6 +103,13 @@ impl Projection {
             (self.refs.as_slice(), self.physical.as_slice()),
             |([entity, physical], _)| (entity.as_slice(), physical.as_slice()),
         );
+        let history = expansion
+            .map(|answers| answers.retainable_history(budget))
+            .transpose()?
+            .flatten();
+        let retention = history
+            .as_ref()
+            .map_or(&[][..], |(aliases, _)| aliases.as_slice());
         let schema = game
             .cognition
             .response_schema(
@@ -119,7 +126,7 @@ impl Projection {
                     identity: &[],
                     physical,
                     attention: &self.attention,
-                    retention: &[],
+                    retention,
                     appraisal: None,
                 },
                 budget,

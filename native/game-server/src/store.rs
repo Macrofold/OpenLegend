@@ -52,7 +52,7 @@ pub(crate) use npc_sources::{PreparedNpcSources, PreparedSourceCut, RecallScope}
 pub(crate) use privacy_edit::PreparedPrivacyEdit;
 pub use read::{AdmittedReceipt, CurrentOpening, GameplayReceipt};
 pub use recall::PreparedRecall;
-pub(crate) use recall::activity_results::PreparedActivityMemories;
+pub(crate) use recall::memory_appends::PreparedMemoryAppends;
 pub(crate) use recall::consolidation::PreparedConsolidation;
 pub use schema::StorageSchema;
 pub(crate) use source_versions::PreparedSourceVersions;

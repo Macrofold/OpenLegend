@@ -376,6 +376,35 @@ pub(super) fn compile_placement(
     image: AccountImage<'_>,
     decoder: &RuntimeRecallDecoder<'_>,
 ) -> StoreResult<Placement> {
+    let data: Body = serde_json::from_str(image.payload).map_err(|_| StoreError::InvalidRecord)?;
+    compile_account(world, kind, image, data, Some(decoder))
+}
+
+/// A new native remembered interpretation carries exact provenance but
+/// acquires no direct observation, recognition or new place.
+pub(super) fn compile_impression(world: &str, image: AccountImage<'_>) -> StoreResult<Placement> {
+    let data: Body =
+        serde_json::from_str(image.payload).map_err(|_| StoreError::DerivedProjectionRequired)?;
+    if data.kind.as_deref() != Some("impression")
+        || data.source.as_deref() != Some("inferred")
+        || data.impression.is_none()
+        || data.manifest.is_some()
+        || data.evidence.is_some()
+        || data.observations.originals().next().is_some()
+        || data.observations.recognition.is_some()
+    {
+        return Err(StoreError::DerivedProjectionRequired);
+    }
+    compile_account(world, PersonalSourceKind::Memory, image, data, None)
+}
+
+fn compile_account(
+    world: &str,
+    kind: PersonalSourceKind,
+    image: AccountImage<'_>,
+    data: Body,
+    decoder: Option<&RuntimeRecallDecoder<'_>>,
+) -> StoreResult<Placement> {
     let AccountImage {
         record,
         id,
@@ -383,7 +412,6 @@ pub(super) fn compile_placement(
         revision,
         payload,
     } = image;
-    let data: Body = serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
     let summary = kind == PersonalSourceKind::Summary;
     if data.id != id || (!summary && data.actor_id.as_deref() != Some(actor)) {
         return Err(StoreError::InvalidRecord);
@@ -441,6 +469,7 @@ pub(super) fn compile_placement(
             }
         }
         decoder
+            .ok_or(StoreError::DerivedProjectionRequired)?
             .with_manifest_dependencies(manifest.observations.get(), |links| {
                 for (source, ordinal, aliases) in links {
                     builder.native(&source, &manifest.coverage_key, ordinal, &aliases)?;
@@ -453,57 +482,61 @@ pub(super) fn compile_placement(
     } else if summary {
         return Err(StoreError::InvalidRecord);
     }
-    let observations = data
-        .observations
-        .originals()
-        .chain(
-            data.evidence
-                .iter()
-                .flat_map(OriginalObservations::originals),
-        )
-        .chain(&manifest_observations)
-        .collect::<Vec<_>>();
-    let recognition = data
-        .evidence
-        .as_ref()
-        .and_then(|evidence| evidence.recognition.as_ref())
-        .map_or(&[][..], |recognition| {
-            recognition.learning_support.as_slice()
-        });
-    if !summary {
-        for observation in &observations {
-            let origin = EvidenceSource {
-                family: openlegend_simulation::reception::EvidenceFamily::NativeExposure,
-                id: observation.id.clone(),
-                revision: SourceRevision::Number(observation.revision),
-                observer: observation.observer.clone(),
-            };
-            builder.native(&origin, "native-origin", None, &[id.to_owned()])?;
+    let places = if let Some(decoder) = decoder {
+        let observations = data
+            .observations
+            .originals()
+            .chain(
+                data.evidence
+                    .iter()
+                    .flat_map(OriginalObservations::originals),
+            )
+            .chain(&manifest_observations)
+            .collect::<Vec<_>>();
+        let recognition = data
+            .evidence
+            .as_ref()
+            .and_then(|evidence| evidence.recognition.as_ref())
+            .map_or(&[][..], |recognition| {
+                recognition.learning_support.as_slice()
+            });
+        if !summary {
+            for observation in &observations {
+                let origin = EvidenceSource {
+                    family: openlegend_simulation::reception::EvidenceFamily::NativeExposure,
+                    id: observation.id.clone(),
+                    revision: SourceRevision::Number(observation.revision),
+                    observer: observation.observer.clone(),
+                };
+                builder.native(&origin, "native-origin", None, &[id.to_owned()])?;
+            }
         }
-    }
-    let owner = PersonalSourceRef {
-        kind,
-        id: id.to_owned(),
-        revision: revision.to_owned(),
-    };
-    let places = decoder
-        .with_retained_observations(&observations, recognition, &owner, |learning, places| {
-            for learned in learning {
-                match learned {
-                    PersonalLearningSource::Personal { kind, id } => {
-                        builder.learning.push((*kind, id.clone()))
-                    }
-                    PersonalLearningSource::Evidence(source) => {
-                        builder.native(source, "recognition", None, &[])?
+        let owner = PersonalSourceRef {
+            kind,
+            id: id.to_owned(),
+            revision: revision.to_owned(),
+        };
+        decoder
+            .with_retained_observations(&observations, recognition, &owner, |learning, places| {
+                for learned in learning {
+                    match learned {
+                        PersonalLearningSource::Personal { kind, id } => {
+                            builder.learning.push((*kind, id.clone()))
+                        }
+                        PersonalLearningSource::Evidence(source) => {
+                            builder.native(source, "recognition", None, &[])?
+                        }
                     }
                 }
-            }
-            places
-                .iter()
-                .map(|place| place_row(world, actor, kind_name, id, revision, place))
-                .collect::<StoreResult<Vec<_>>>()
-        })
-        .map_err(experience_error)??;
+                places
+                    .iter()
+                    .map(|place| place_row(world, actor, kind_name, id, revision, place))
+                    .collect::<StoreResult<Vec<_>>>()
+            })
+            .map_err(experience_error)??
+    } else {
+        Vec::new()
+    };
     let mut spans = Vec::new();
     if let Some(impression) = data.impression {
         for dependency in impression.dependencies {

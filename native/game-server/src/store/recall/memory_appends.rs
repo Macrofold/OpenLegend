@@ -1,6 +1,7 @@
-//! Ordinary activity results and plan-control memories are acquired by the installed world.
-//! Reuse their exact saved text and chronology when placing recall indexes.
+//! Stage the derived indexes for each supported ordinary memory append.
+//! The retained placement and canonical row share one PostgreSQL prefix.
 
+use super::checkpoint_accounts::{AccountImage, Placement, compile_impression};
 use super::*;
 use openlegend_simulation::{
     experience::{AwarenessRetentionClass, ExperienceRetention},
@@ -12,20 +13,25 @@ use std::sync::Arc;
 
 pub(crate) const TABLE: &str = "mind_memories";
 
-pub(crate) struct PreparedActivityMemories {
+pub(crate) struct PreparedMemoryAppends {
     world: String,
     generation: String,
     through: u64,
     revision_column: usize,
     rows: Vec<Memory>,
+    impressions: Vec<Placement>,
     _custody: ByteReservation,
 }
 
 struct Memory {
     record_id: String,
+    revision: String,
+    activity: Option<ActivityMemory>,
+}
+
+struct ActivityMemory {
     actor: String,
     id: String,
-    revision: String,
     source: String,
 }
 
@@ -55,14 +61,14 @@ struct ResultBody {
 }
 
 impl Store {
-    /// Compile the actual finished action's new memory source once while the
-    /// candidate can still refuse. The ordinary save prefix borrows this
-    /// independently retained product through its database acknowledgement.
-    pub(crate) fn prepare_activity_memories(
+    /// Prepare the canonical insert's exact recall text and dependencies while
+    /// the world candidate can still refuse. The ordinary save keeps this
+    /// independently funded placement through its database acknowledgement.
+    pub(crate) fn prepare_memory_appends(
         &self,
         changes: &openlegend_simulation::records::ChangedRows,
         history: &openlegend_simulation::runtime::RuntimeHistory,
-    ) -> StoreResult<Option<Arc<PreparedActivityMemories>>> {
+    ) -> StoreResult<Option<Arc<PreparedMemoryAppends>>> {
         let Some(rows) = changes.writes.get(TABLE).filter(|rows| !rows.is_empty()) else {
             return Ok(None);
         };
@@ -99,6 +105,7 @@ impl Store {
             .reserve(encoded_bound)
             .map_err(|_| StoreError::Capacity)?;
         let mut prepared = Vec::new();
+        let mut impressions = Vec::new();
         prepared
             .try_reserve_exact(rows.len())
             .map_err(|_| StoreError::Capacity)?;
@@ -106,8 +113,6 @@ impl Store {
             if !row.create {
                 return Err(StoreError::DerivedProjectionRequired);
             }
-            let body: ResultBody = serde_json::from_str(&row.payload)
-                .map_err(|_| StoreError::DerivedProjectionRequired)?;
             let field = |at: usize| {
                 row.extra
                     .get(at)
@@ -115,6 +120,28 @@ impl Store {
                     .ok_or(StoreError::InvalidRecord)
             };
             let revision = field(revision_column)?;
+            let Ok(body) = serde_json::from_str::<ResultBody>(&row.payload) else {
+                let placement = compile_impression(
+                    history.world_id(),
+                    AccountImage {
+                        record: &row.id,
+                        actor: field(actor_column)?,
+                        id: field(id_column)?,
+                        revision,
+                        payload: &row.payload,
+                    },
+                )?;
+                impressions
+                    .try_reserve(1)
+                    .map_err(|_| StoreError::Capacity)?;
+                impressions.push(placement);
+                prepared.push(Memory {
+                    record_id: row.id.clone(),
+                    revision: revision.to_owned(),
+                    activity: None,
+                });
+                continue;
+            };
             let work_result = match &body.activity_id {
                 Some(activity) => !activity.is_empty(),
                 // A plan report has no particular physical activity or
@@ -161,10 +188,12 @@ impl Store {
             .map_err(|_| StoreError::InvalidRecord)?;
             prepared.push(Memory {
                 record_id: row.id.clone(),
-                actor: body.actor_id,
-                id: body.id,
                 revision: revision.to_owned(),
-                source,
+                activity: Some(ActivityMemory {
+                    actor: body.actor_id,
+                    id: body.id,
+                    source,
+                }),
             });
         }
         let retained_bound = prepared
@@ -175,17 +204,31 @@ impl Store {
                     bytes
                         .checked_add(std::mem::size_of::<Memory>())?
                         .checked_add(row.record_id.capacity())?
-                        .checked_add(row.actor.capacity())?
-                        .checked_add(row.id.capacity())?
                         .checked_add(row.revision.capacity())?
-                        .checked_add(row.source.capacity())
+                        .checked_add(row.activity.as_ref().map_or(Some(0), |activity| {
+                            activity
+                                .actor
+                                .capacity()
+                                .checked_add(activity.id.capacity())?
+                                .checked_add(activity.source.capacity())
+                        })?)
                 },
             )
+            .and_then(|bytes| {
+                impressions.iter().try_fold(
+                    bytes.checked_add(
+                        impressions
+                            .capacity()
+                            .checked_mul(std::mem::size_of::<Placement>())?,
+                    )?,
+                    |total, row| total.checked_add(row.retained_bytes()?),
+                )
+            })
             .ok_or(StoreError::Capacity)?;
         custody
             .resize(retained_bound)
             .map_err(|_| StoreError::Capacity)?;
-        Ok(Some(Arc::new(PreparedActivityMemories {
+        Ok(Some(Arc::new(PreparedMemoryAppends {
             world: history.world_id().to_owned(),
             generation: history.generation().to_owned(),
             through: history
@@ -194,15 +237,16 @@ impl Store {
                 .ok_or(StoreError::StaleCut)?,
             revision_column,
             rows: prepared,
+            impressions,
             _custody: custody,
         })))
     }
 
-    pub(crate) async fn write_activity_memories(
+    pub(crate) async fn write_memory_appends(
         &self,
         transaction: &Transaction<'_>,
         save: &SaveRows,
-        prepared: &[Arc<PreparedActivityMemories>],
+        prepared: &[Arc<PreparedMemoryAppends>],
         hard_bytes: i64,
     ) -> StoreResult<()> {
         let Some(rows) = save.changes.writes.get(TABLE) else {
@@ -242,8 +286,12 @@ impl Store {
         }
         for candidate in prepared {
             for batch in candidate.rows.chunks(BATCH) {
-                let bytes = batch
-                    .iter()
+                let activities = batch.iter().filter_map(|row| row.activity.as_ref());
+                if activities.clone().next().is_none() {
+                    continue;
+                }
+                let bytes = activities
+                    .clone()
                     .try_fold(8192usize, |bytes, row| {
                         bytes
                             .checked_add(row.source.len().checked_mul(3)?)?
@@ -256,18 +304,28 @@ impl Store {
                     .budget
                     .reserve(bytes)
                     .map_err(|_| StoreError::Capacity)?;
-                let body = array(batch.iter().map(|row| row.source.as_str()));
+                let body = array(activities.clone().map(|row| row.source.as_str()));
                 transaction
                     .query_opt(&self.schema.recall.insert, &[&body, &hard_bytes])
                     .await?;
-                let actors: Vec<_> = batch.iter().map(|row| row.actor.as_str()).collect();
-                let ids: Vec<_> = batch.iter().map(|row| row.id.as_str()).collect();
+                let actors: Vec<_> = activities.clone().map(|row| row.actor.as_str()).collect();
+                let ids: Vec<_> = activities.map(|row| row.id.as_str()).collect();
                 transaction
                     .execute(
                         &self.schema.recall.reconcile,
                         &[&save.world_id, &actors, &ids, &"memory"],
                     )
                     .await?;
+            }
+            for batch in candidate.impressions.chunks(BATCH) {
+                self.insert_retained_accounts(
+                    transaction,
+                    &save.world_id,
+                    "memory",
+                    hard_bytes,
+                    batch,
+                )
+                .await?;
             }
         }
         Ok(())

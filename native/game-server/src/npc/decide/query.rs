@@ -157,6 +157,44 @@ impl Answers<'_> {
             .flatten()
     }
 
+    /// Offer only fully disclosed history rows that survived the answer byte
+    /// limit. A spatial citation holds its exact proof for freshness but does
+    /// not let the model choose undelivered receipt values for retention.
+    pub(super) fn retainable_history(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<Option<(Vec<String>, ByteReservation)>, CallFailure> {
+        let mut sources = self
+            .results
+            .iter()
+            .filter_map(|answer| match &answer.result {
+                QueryResult::History(result) => Some(result.retention_sources()),
+                _ => None,
+            })
+            .flatten();
+        let Some(first) = sources.next() else {
+            return Ok(None);
+        };
+        let mut aliases = Vec::<String>::new();
+        let mut custody = budget.reserve(0).map_err(super::response_capacity)?;
+        for source in std::iter::once(first).chain(sources) {
+            if aliases.iter().any(|prior| prior == source) {
+                continue;
+            }
+            custody
+                .resize(
+                    custody
+                        .bytes()
+                        .checked_add(size_of::<String>() + source.len())
+                        .ok_or_else(capacity)?,
+                )
+                .map_err(super::response_capacity)?;
+            aliases.try_reserve_exact(1).map_err(|_| capacity())?;
+            aliases.push(source.to_owned());
+        }
+        Ok(Some((aliases, custody)))
+    }
+
     pub(super) fn extend_references(
         &self,
         entities: &[String],
