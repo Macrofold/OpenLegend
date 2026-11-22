@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                      | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG27 product preparation and the initial-offer comparison procedure exist; offer adoption, technical delivery, payments, fulfillment and paid validation remain open. | 2026-10-17   |
+| In progress | DG27 product preparation and the initial-offer comparison procedure exist; offer adoption, technical delivery, payments, fulfillment and paid validation remain open. | 2026-11-15   |
 
 ## Ownership and first useful delivery
 
@@ -11,6 +11,8 @@ The [customer and supporter offers feature specification](../projects/customer-a
 Use the [initial-offer decision brief](../projects/initial-commercial-offer-decision-brief.md) to compare the managed-world candidate with its strongest feasible browser alternative for the actual [first-playable experience](../worlds/base/playable-openings.md#first-playable-game-target). The existing owner-paid lifecycle design is reusable preparation, not evidence that subscriptions have won the comparison. Actual offer selection does not require building several billing systems. [Player validation](first-playable-validation.md) supplies game/audience evidence without substituting for commercial readiness.
 
 The [Enshrouded hosting study](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md) adds a documented in-game rental/partner precedent and dated provider offers for CO01. The [hosted worlds and rule profiles idea](../game-ideas/hosted-worlds-and-rule-profiles.md) captures the proposed integrated membership experience. This is comparison evidence, not adopted pricing, observed OpenLegend demand, measured costs or a change to the first-playable delivery order.
+
+The [Pax Dei business study](../../archive/02-research/game-inspiration/dossiers/pax-dei/03-business-marketing.md) supports CO01/CO05's existing distinction between publicity, enjoyable participation, continuing paid demand and sustainable costs. Its audience figures and pricing are comparison evidence, not proposed OpenLegend values.
 
 For an adopted owner-paid offer, a guest does not need a second hosting subscription for access already funded by the host. The accepted free recurring invention tier, larger paid allowances, platform membership with a fixed creator allocation and standalone premium-world entry remain product directions. They need not all launch together. Optional supporter recognition can follow independently. Creator distribution and payouts belong to DG28; a separately funded grant/governance program belongs to DG30.
 

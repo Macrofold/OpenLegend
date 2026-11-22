@@ -1,5 +1,7 @@
 # Full research progress and resume ledger
 
+**November 14–15, 2026 scoped completion:** the [Pax Dei record](research-progress-pax-dei-2026-11-14.md) owns G192's full dossier, supplementary testimony and focused design integration. Earlier counts, unrelated research queues and whole-library gates retain their recorded scope.
+
 **November 7, 2026 scoped completion:** the [Chrono Trigger / Expedition 33 record](research-progress-chrono-trigger-expedition-33-2026-11-06.md) records a full new G187 dossier and the complete G77 expansion, including R15, preserved prior evidence and focused STORY/PACING incorporation. Older G77 completion/access records below retain their dates; this addition does not close unrelated whole-library gates.
 
 **October 20, 2026 scoped addition:** the [tactical RPG ledger](research-progress-tactical-rpgs-2026-10-20.md) owns G181–G184 and the focused G121 refresh. This earlier ledger retains its existing subjects and whole-library gates.

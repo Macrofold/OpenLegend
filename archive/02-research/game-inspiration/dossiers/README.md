@@ -6,6 +6,10 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Pax Dei — November 2026 addition
+
+[Pax Dei — G192](pax-dei.md) studies persistent construction, shared encounters, ordinary play, reception, production, economics and marketing. Its [application map](pax-dei/05-openlegend-lessons.md#10-continue-through-existing-owners) routes the findings to existing design and work owners; the [scoped record](../research-progress-pax-dei-2026-11-14.md) preserves completion and evidence limits.
+
 ## Fable and Fable II — November 2026 research
 
 [Fable — G189](fable.md) distinguishes the original, The Lost Chapters and Anniversary. [Fable II — G190](fable-ii.md) studies its separate combat, dog, family, economy, world and expansion rules. The [series and combat-feel comparison](../essays/fable-series-and-combat-feel.md) diagnoses “spongey” combat, evaluates the supplied reboot criticism against dated evidence, and connects the findings to existing Open Legend work. The [scoped record](../research-progress-fable-2026-11-14.md) owns completion and evidence limits.
