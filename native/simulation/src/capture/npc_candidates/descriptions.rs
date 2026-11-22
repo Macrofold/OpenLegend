@@ -31,11 +31,15 @@ pub(super) struct DescriptionContext {
 }
 impl DescriptionContext {
     pub(super) fn observed_name(&self, ordinal: usize) -> Option<&JsText> {
+        self.named_body(ordinal).map(|named| &named.name)
+    }
+
+    pub(super) fn named_body(&self, ordinal: usize) -> Option<&Named> {
         let index = self
             .bodies
             .binary_search_by_key(&ordinal, |body| body.ordinal)
             .ok()?;
-        Some(&self.bodies[index].name.name)
+        Some(&self.bodies[index].name)
     }
 
     pub(super) fn prepare(
@@ -302,7 +306,7 @@ impl NpcDescriptionsRequest {
                     id: offer.id.clone(),
                     meaning: offer.meaning.clone(),
                     transition: offer.transition,
-                    has_command: offer.command.is_some(),
+                    has_command: offer.command.has_command(),
                     temporary: offer.temporary.clone(),
                     next_at: offer.next_at,
                 })

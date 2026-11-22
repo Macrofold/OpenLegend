@@ -139,7 +139,7 @@ impl NpcCandidateCursor {
         let NpcOfferMeaning::Cook { body } = offer.meaning else {
             return Ok(());
         };
-        let Some(NativeCommand::Cook { definition, .. }) = &offer.command else {
+        let Some(NativeCommand::Cook { definition, .. }) = offer.command.command() else {
             return Err(ExecutionError::Invariant);
         };
         let recipe = &core

@@ -124,7 +124,8 @@ pub(crate) fn require_supported_known_agreement_read(
         let header = record.header();
         header.agreement_body
             && (header.personal_agreement
-                || header
+                && !header.event_type.as_deref().is_some_and(crate::handover::item_agreement_event)
+                || !header.personal_agreement && header
                     .event_type
                     .as_deref()
                     .is_some_and(|event| law.agreement_event(event)))

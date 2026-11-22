@@ -16,7 +16,7 @@ pub(crate) fn capture_attempt_candidates(
     let count = candidates
         .offers()
         .iter()
-        .filter(|offer| offer.command.is_some())
+        .filter(|offer| offer.command.command().is_some())
         .count();
     let mut storage = budget.reserve(
         count
@@ -28,7 +28,7 @@ pub(crate) fn capture_attempt_candidates(
     let mut seen = indexmap::IndexSet::with_capacity(count);
     let mut result = Vec::with_capacity(count);
     for offer in candidates.offers() {
-        let Some(command) = &offer.command else {
+        let Some(command) = offer.command.command() else {
             continue;
         };
         let description = offer

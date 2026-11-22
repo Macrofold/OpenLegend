@@ -56,7 +56,12 @@ export const BASE_HANDOVER = {
       `Give ${give} to receive ${receive}. Availability is checked when agreeing.`,
     giftDescription: (give: string, person: string, minutes: number) =>
       `Offer ${give} to ${person}. Nothing moves unless they accept within ${minutes} game minutes; I keep it meanwhile and can withdraw it.`,
-    replyDuringWork: 'Replying does not interrupt unrelated work.',
+    replyGift: (accept: boolean, person: string, terms: string) =>
+      (accept ? copy.replyAcceptGift : copy.replyDeclineGift).replace(
+        /\{(person|terms)\}/g,
+        (_slot, key) => (key === 'person' ? person : terms),
+      ),
+    replyDuringWork: copy.replyDuringWork,
     draftChanged: copy.draftChanged,
     terms: (give: string, receive?: string) =>
       receive ? `${give}${copy.reciprocalSeparator}${receive}` : give,
@@ -77,7 +82,6 @@ export const BASE_HANDOVER = {
               ? `offered ${terms} to someone nearby.`
               : `${verb} an offer of ${terms}.`,
           ),
-    decision:
-      'Choose freely using the exact items, your current needs, possessions and goals. Declining is a valid choice. No item moves before acceptance.',
+    decision: copy.decision,
   },
 } as const;

@@ -56,5 +56,9 @@
   "withdraw": "Withdraw",
   "counter": "Counteroffer",
   "unknown": "No item has been disclosed. They can offer an item first.",
+  "replyAcceptGift": "Accept {person}'s gift of {terms}. Receive it into my possession now.",
+  "replyDeclineGift": "Decline {person}'s offer of {terms}. Close this proposal; receive nothing and transfer nothing.",
+  "replyDuringWork": "Replying does not interrupt unrelated work.",
+  "decision": "Choose freely using the exact items, your current needs, possessions and goals. Declining is a valid choice. No item moves before acceptance.",
   "draftChanged": "The offer changed or ended. Keep your draft and review the current terms, or submit a new offer."
 }

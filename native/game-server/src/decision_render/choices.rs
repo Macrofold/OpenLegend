@@ -65,6 +65,9 @@ impl DecisionPolicy {
         offer: &NpcDescriptionOffer,
     ) -> Result<String, WorldError> {
         use NpcOfferMeaning as Meaning;
+        if matches!(offer.meaning, Meaning::GiftReply { .. }) {
+            return Ok(String::new());
+        }
         let words = &self.choices;
         let body = match offer.meaning {
             Meaning::Follow { body }
@@ -138,7 +141,8 @@ impl DecisionPolicy {
                 &[("name", &name(target.name, NameArticle::Definite)?)],
             ),
             // Their core actions supplied an installed activity description.
-            Meaning::Fish { .. } | Meaning::Cook { .. } | Meaning::FireCare { .. } => String::new(),
+            Meaning::Fish { .. } | Meaning::Cook { .. } | Meaning::FireCare { .. }
+            | Meaning::GiftReply { .. } => String::new(),
         };
         if let Some(temporary) = &offer.temporary {
             let next = offer.next_at.map(number_text).transpose()?;

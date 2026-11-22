@@ -160,7 +160,7 @@ impl NpcCandidateCursor {
         };
         let Some(NativeCommand::TendFire {
             operation, item_id, ..
-        }) = &offer.command
+        }) = offer.command.command()
         else {
             return Err(ExecutionError::Invariant);
         };

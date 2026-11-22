@@ -77,6 +77,9 @@ pub enum NpcOfferMeaning {
     FireCare {
         body: usize,
     },
+    GiftReply {
+        body: usize,
+    },
     Probe {
         probe: usize,
     },
@@ -96,7 +99,7 @@ pub(crate) struct PreparedNpcOffer {
     // A host deciding how to describe this offer needs only its presence.
     // Selection binds the original command in the held Rust catalogue.
     #[serde(rename = "hasCommand", serialize_with = "serialize_command_presence")]
-    pub command: Option<NativeCommand>,
+    pub command: PreparedNpcInstruction,
     pub transition: WorkTransitionMode,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub temporary: Option<Outcome>,
@@ -106,14 +109,40 @@ pub(crate) struct PreparedNpcOffer {
     pub(super) _storage: ByteReservation,
 }
 
+pub(crate) enum PreparedNpcInstruction {
+    Continue,
+    Command(NativeCommand),
+    GiftReply(crate::handover::GiftReply),
+}
+
+impl PreparedNpcInstruction {
+    pub(crate) fn command(&self) -> Option<&NativeCommand> {
+        match self {
+            Self::Command(command) => Some(command),
+            Self::Continue | Self::GiftReply(_) => None,
+        }
+    }
+
+    pub(crate) fn gift_reply(&self) -> Option<&crate::handover::GiftReply> {
+        match self {
+            Self::GiftReply(reply) => Some(reply),
+            Self::Continue | Self::Command(_) => None,
+        }
+    }
+
+    pub(crate) fn has_command(&self) -> bool {
+        !matches!(self, Self::Continue)
+    }
+}
+
 fn serialize_command_presence<S>(
-    command: &Option<NativeCommand>,
+    command: &PreparedNpcInstruction,
     serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
-    serializer.serialize_bool(command.is_some())
+    serializer.serialize_bool(command.has_command())
 }
 
 pub(crate) struct PreparedNpcCandidates {

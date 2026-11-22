@@ -10,6 +10,62 @@ use crate::{
     worlds::base_handover::GIFT_COPY as copy,
 };
 
+impl NativeCommand {
+    /// Construct the exact, actor-owned direct reply after the menu alias is
+    /// resolved. The command still goes through the ordinary consent writer.
+    pub(crate) fn gift_reply(
+        actor: &str,
+        id: String,
+        reply: &crate::handover::GiftReply,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Input<'a> {
+            id: &'a str,
+            actor_id: &'a str,
+            #[serde(rename = "type")]
+            kind: &'static str,
+            target_id: &'a str,
+            #[serde(flatten)]
+            gift: &'a crate::handover::GiftIntent,
+        }
+        let _scratch = budget.reserve(
+            [id.len(), actor.len(), reply.offerer.len(), reply.id.len()]
+                .into_iter()
+                .try_fold(512usize, |n, len| n.checked_add(len.checked_mul(12)?))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let gift = crate::handover::GiftIntent {
+            handover_operation: if reply.accept { GiftOperation::Accept } else { GiftOperation::Decline },
+            offered_items: None,
+            requested_items: None,
+            offer_id: Some(reply.id.clone()),
+            expected_offer_revision: Some(reply.revision),
+        };
+        let encoding = CommandEncoding::from_ordered(&Input {
+            id: &id,
+            actor_id: actor,
+            kind: "handover",
+            target_id: &reply.offerer,
+            gift: &gift,
+        }, 7).map_err(|_| ExecutionError::Invariant)?;
+        Ok(Self::Handover {
+            envelope: CommandHeaders {
+                id,
+                actor_id: actor.to_owned(),
+                cooperation: None,
+                combat_help_id: None,
+                human_initiated: None,
+                purpose: None,
+                chosen_purpose: None,
+            }.envelope(encoding),
+            target_id: reply.offerer.clone(),
+            gift,
+        })
+    }
+}
+
 pub(super) struct GiftNotice {
     offer: GiftOffer,
     kind: &'static str,
@@ -94,15 +150,7 @@ impl CommandCursor {
             self.gift_refusal("not-visible", copy.choose_person)?;
             return Ok(false);
         };
-        let ready = gift_participant(core.state, owner)?
-            && gift_participant(core.state, target)?
-            && (!gift.handover_operation.proposes()
-                || core
-                    .state
-                    .administration
-                    .authorship
-                    .player_account_ids
-                    .contains_key(target_id));
+        let ready = gift_participant(core.state, owner)? && gift_participant(core.state, target)?;
         if !ready {
             if let GiftOperation::Withdraw | GiftOperation::Decline = gift.handover_operation {
                 self.phase = Phase::GiftApply;

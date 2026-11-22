@@ -39,6 +39,7 @@ mod cooking;
 use cooking::CookingChoices;
 mod fire;
 use fire::FuelChoices;
+mod gifts;
 
 struct Target {
     body: usize,
@@ -364,7 +365,7 @@ impl NpcCandidateCursor {
             description: None,
             id,
             meaning,
-            command: Some(command),
+            command: PreparedNpcInstruction::Command(command),
             transition,
             temporary: None,
             next_at: None,
@@ -446,6 +447,11 @@ impl NpcCandidateCursor {
                             .ok_or(ExecutionError::Capacity)?,
                     )?;
                     for (offer, description) in self.offers.iter_mut().zip(answer.descriptions) {
+                        // Gift terms are already exact. The format adapter
+                        // only supplies a placeholder for this issued row.
+                        if offer.command.gift_reply().is_some() {
+                            continue;
+                        }
                         if let Some(prepared) = offer.description.as_mut() {
                             casting::append_offer_details(
                                 prepared,

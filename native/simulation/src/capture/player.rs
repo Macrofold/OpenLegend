@@ -214,14 +214,8 @@ impl<'a> PlayerReadScope<'a> {
             gift_heads: self.gifts.with_party(id).map(|gift| crate::handover::GiftHead {
                 id: gift.offer.id.clone(), revision: gift.offer.revision,
             }).collect(),
-            trade_eligible: self.state.administration.authorship.player_account_ids.contains_key(id)
-                && other.is_some_and(|actor| actor.alive)
-                && self
-                    .state
-                    .installed
-                    .retained
-                    .item_handling_read
-                    .can_handle(&target.spatial.body.id),
+            trade_eligible: self.state.installed.retained.social_offer_read.is_some()
+                && crate::handover::gift_participant(self.state, target)?,
         };
         reservation.resize(captured.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
         Ok((captured, reservation))

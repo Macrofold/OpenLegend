@@ -34,6 +34,10 @@ pub(crate) struct GiftCopy {
     pub proposed: &'static str,
     pub accepted: &'static str,
     pub no_transfer: &'static str,
+    pub reply_accept_gift: &'static str,
+    pub reply_decline_gift: &'static str,
+    pub reply_during_work: &'static str,
+    pub decision: &'static str,
 }
 pub(crate) static GIFT_COPY: LazyLock<GiftCopy> = LazyLock::new(|| {
     serde_json::from_str(include_str!("../handover-copy.json")).expect("bundled gift wording")

@@ -339,6 +339,23 @@ impl NativeWorldSession {
         &self,
         ticket: &RuntimeNpcResponseTicket,
     ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
+        self.npc_response_authority(ticket, true)
+    }
+
+    /// Applying an answer checks the selected gift at the consent writer.
+    /// An unused choice's deadline cannot discard independent effects.
+    pub fn npc_response_application(
+        &self,
+        ticket: &RuntimeNpcResponseTicket,
+    ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
+        self.npc_response_authority(ticket, false)
+    }
+
+    fn npc_response_authority(
+        &self,
+        ticket: &RuntimeNpcResponseTicket,
+        disclosure: bool,
+    ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
         use crate::response::ResponseValidityRoute;
         self.require_active()?;
         if !self.npc_host_current(&ticket.original) || !self.npc_host_current(&ticket.current) {
@@ -378,6 +395,14 @@ impl NativeWorldSession {
             .any(|source| !source.scope.still_permitted(state))
         {
             return Ok(Err("native-response-additional-history"));
+        }
+        if disclosure && !crate::handover::GiftReply::choices_current(
+            state,
+            actor_id,
+            ticket.bindings.actions.values().filter_map(|choice| choice.gift_reply.as_ref()),
+            &self.budget,
+        ).map_err(failure)? {
+            return Ok(Err("native-response-gift-terms"));
         }
         if ticket.checks_query_evidence {
             let cut = &ticket.original.read.perception.evidence;
@@ -939,7 +964,7 @@ impl RuntimeNpcRead {
             .iter()
             .map(|offer| RuntimeNpcOffer {
                 description: offer.description.as_ref(),
-                no_intervention: offer.command.is_none(),
+                no_intervention: !offer.command.has_command(),
                 transition: match offer.transition {
                     WorkTransitionMode::Continue => "continue",
                     WorkTransitionMode::Enqueue => "enqueue",

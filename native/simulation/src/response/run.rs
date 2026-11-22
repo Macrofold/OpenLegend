@@ -826,7 +826,19 @@ impl ResponseCursor {
             .response
             .operation(self.index)
             .ok_or(ExecutionError::Invariant)?;
-        let mut bytes = op.data.heap_bytes().ok_or(ExecutionError::Capacity)?;
+        let gift_bytes = if op.kind == ResponseKind::Act {
+            op.text("actionId")
+                .and_then(JsText::as_unicode)
+                .and_then(|id| self.bindings.input.actions.get(id))
+                .and_then(|choice| choice.gift_reply.as_ref())
+                .map_or(Some(0), HeapBytes::heap_bytes)
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        let mut bytes = op.data.heap_bytes()
+            .and_then(|n| n.checked_add(gift_bytes))
+            .ok_or(ExecutionError::Capacity)?;
         let mut add = |raw: &SqlCell| -> Result<(), ExecutionError> {
             bytes = bytes
                 .checked_add(raw.heap_bytes().ok_or(ExecutionError::Capacity)?)

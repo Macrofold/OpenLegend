@@ -73,7 +73,7 @@ pub(super) async fn apply(
                     authority.current(scope, Capability::Play, true, |_, _| ())?;
                 }
                 let witness = ticket.as_ref().expect("response ticket is present");
-                match session.npc_response_publication(witness)? {
+                match session.npc_response_application(witness)? {
                     Ok(lease) => drop(lease),
                     Err(reason) => return Ok(ApplicationStart::Existing(Applied::Stale(reason))),
                 }

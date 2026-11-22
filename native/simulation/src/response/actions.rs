@@ -203,6 +203,13 @@ pub(super) fn target_gate(
             )?));
         }
     }
+    let immediate_gift = (op.kind == ResponseKind::Act
+        && data.get("kind").and_then(SqlCell::as_str) == Some("known"))
+        .then(|| op.text("actionId"))
+        .flatten()
+        .and_then(JsText::as_unicode)
+        .and_then(|id| input.actions.get(id))
+        .and_then(|choice| choice.gift_reply.as_ref());
     let mut commands = Vec::<&SqlCell>::new();
     let count = if op.kind == ResponseKind::Plan {
         data.get("steps")
@@ -241,6 +248,7 @@ pub(super) fn target_gate(
         commands
             .iter()
             .flat_map(|command| raw_targets(command, actor))
+            .chain(immediate_gift.map(|reply| reply.offerer.as_str()))
             .chain(if op.kind == ResponseKind::Act {
                 direct.and_then(SqlCell::as_str)
             } else {
@@ -495,6 +503,21 @@ pub(super) fn prepare(
                     budget,
                 );
             };
+            if let Some(reply) = &choice.gift_reply {
+                if !reply.source_current(core.state, actor) {
+                    return result(
+                        false,
+                        "stale-gift-evidence",
+                        crate::worlds::base_handover::GIFT_COPY.unavailable,
+                        budget,
+                    );
+                }
+                // This direct reply leaves current work alone. The consent
+                // writer still checks reach, recipient, latest terms and stock.
+                return Ok(ActionIntent::Command(NativeCommand::gift_reply(
+                    actor, id, reply, budget,
+                )?));
+            }
             if !choice.expected_work.current(core.state, actor)
                 || (choice.transition != WorkTransitionMode::Continue
                     && transition(mode) != choice.transition)

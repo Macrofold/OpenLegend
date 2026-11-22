@@ -155,7 +155,7 @@ impl NpcCandidateCursor {
         };
         let Some(NativeCommand::Fish {
             target_id, item_id, ..
-        }) = &offer.command
+        }) = offer.command.command()
         else {
             return Err(ExecutionError::Invariant);
         };

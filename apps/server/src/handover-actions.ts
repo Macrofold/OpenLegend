@@ -157,7 +157,9 @@ export function handoverOptions(
         shortLabel: label + ' ' + what,
         description:
           operation === 'accept'
-            ? BASE_HANDOVER.text.acceptDescription(receive, give) +
+            ? (give
+                ? BASE_HANDOVER.text.acceptDescription(receive, give)
+                : BASE_HANDOVER.text.replyGift(true, personLabel, receive)) +
               ' ' +
               offer.offered
                 .map((lot) => world.itemDefinitions[lot.definitionPin.id]?.description ?? '')
@@ -172,7 +174,9 @@ export function handoverOptions(
               BASE_HANDOVER.text.replyDuringWork +
               ' ' +
               BASE_HANDOVER.text.decision
-            : BASE_HANDOVER.text.declineDescription(personLabel, what, give),
+            : give
+              ? BASE_HANDOVER.text.declineDescription(personLabel, what, give)
+              : BASE_HANDOVER.text.replyGift(false, personLabel, receive),
         command: {
           type: 'handover',
           handoverOperation: operation,

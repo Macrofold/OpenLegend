@@ -119,6 +119,7 @@ impl NpcCandidateCursor {
             }
             Enumerate::Continue => {
                 self.stage = Enumerate::Follow(0, 0);
+                self.offer_gift_replies(core, actor_entity)?;
                 let plan_pending = actor.agency.plan.as_ref().is_some_and(|plan| {
                     plan.status == crate::plans::PlanStatus::Active
                         && (plan.activity.is_some()
@@ -142,7 +143,7 @@ impl NpcCandidateCursor {
                         action_type,
                         plan_pending,
                     },
-                    command: None,
+                    command: PreparedNpcInstruction::Continue,
                     transition: WorkTransitionMode::Continue,
                     temporary: None,
                     next_at: None,

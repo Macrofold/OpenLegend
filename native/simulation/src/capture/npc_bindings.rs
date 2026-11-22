@@ -638,6 +638,7 @@ impl NpcBindingMaps {
                     selected.alias.clone(),
                     ResponseActionChoice {
                         invocation: Some(SqlCell::Object(command)),
+                        gift_reply: None,
                         purpose: None,
                         transition: crate::commands::WorkTransitionMode::Continue,
                         expected_work: candidates.work.clone(),

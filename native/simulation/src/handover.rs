@@ -967,10 +967,94 @@ pub struct GiftDisclosure {
     pub cause: Option<String>,
 }
 
+/// The item consent writer owns these events; other personal agreements still
+/// need their own semantic reader before an NPC can use their terms.
+pub(crate) fn item_agreement_event(kind: &str) -> bool {
+    matches!(
+        kind,
+        "item-offered"
+            | "offer-accepted"
+            | "offer-declined"
+            | "offer-withdrawn"
+            | "offer-own-ending"
+            | "offer-expired"
+            | "offer-lapsed"
+    )
+}
+
+struct ReceivedGift {
+    disclosure: GiftDisclosure,
+    original: Arc<crate::experience::PersonalSourceRecord>,
+}
+
+impl ReceivedGift {
+    fn body_bytes(&self) -> Option<usize> {
+        self.disclosure.body_bytes()?
+            .checked_add(size_of::<Arc<crate::experience::PersonalSourceRecord>>())
+    }
+}
+
+/// An issued direct reply retains the exact received terms and offerer.
+/// The model sees its choice alias and wording without either private ID.
+#[derive(Clone)]
+pub(crate) struct GiftReply {
+    pub offerer: String,
+    pub id: String,
+    pub revision: u64,
+    pub accept: bool,
+    reference: crate::experience::PersonalSourceRef,
+}
+
+crate::host::retained_size::heap_record!(GiftReply { offerer, id, reference });
+
+impl GiftReply {
+    fn matches(&self, received: &ReceivedGifts) -> bool {
+        received.pending.get(&self.id).is_some_and(|record| {
+            record.disclosure.offer.revision == self.revision
+                && record.original.header().reference == self.reference
+        })
+    }
+
+    /// Recheck all actually disclosed replies against one current personal
+    /// read. Objective consent state cannot reveal an unobserved ending.
+    pub(crate) fn choices_current<'a>(
+        state: &crate::simulation::SimulationState,
+        actor: &str,
+        mut choices: impl Iterator<Item = &'a Self>,
+        budget: &ByteBudget,
+    ) -> Result<bool, ExecutionError> {
+        let Some(first) = choices.next() else { return Ok(true); };
+        let received = ReceivedGifts::from_player(state, actor, budget)?;
+        Ok(first.matches(&received) && choices.all(|choice| choice.matches(&received)))
+    }
+
+    /// Reuse the exact personal source fence after the provider wait. The
+    /// consent writer itself rechecks the latest received and actual terms.
+    pub(crate) fn source_current(
+        &self,
+        state: &crate::simulation::SimulationState,
+        actor: &str,
+    ) -> bool {
+        let Some(person) = state.experience.actor(actor) else {
+            return false;
+        };
+        state.experience
+            .optional_collection(actor, self.reference.kind)
+            .ok()
+            .flatten()
+            .and_then(|collection| collection.resident_record(&self.reference.id))
+            .is_some_and(|record| {
+                let original = record.header();
+                original.reference == self.reference
+                    && original.event_id.as_deref().is_some_and(|event| !person.privacy.revoked(event))
+            })
+    }
+}
+
 /// Personally acquired terms from one accepted cut. The caller may borrow
 /// their snapshots until this selection's separately admitted custody ends.
 pub(crate) struct ReceivedGifts {
-    pending: IndexMap<String, GiftDisclosure>,
+    pending: IndexMap<String, ReceivedGift>,
     _custody: crate::host::ByteReservation,
 }
 
@@ -1082,9 +1166,11 @@ impl ReceivedGifts {
                     _ => return Err(ExecutionError::Invariant),
                 };
                 if state_matches {
+                    let gift = ReceivedGift { disclosure: gift, original: Arc::clone(record) };
                     retained.resize(gift.body_bytes().ok_or(ExecutionError::Capacity)?)?;
+                    let id = gift.disclosure.offer.id.clone();
                     custody.merge(retained)?;
-                    if let Some(removed) = pending.insert(gift.offer.id.clone(), gift) {
+                    if let Some(removed) = pending.insert(id, gift) {
                         let released = removed.body_bytes().ok_or(ExecutionError::Capacity)?;
                         drop(removed);
                         custody.resize(
@@ -1118,13 +1204,12 @@ impl ReceivedGifts {
     pub(crate) fn find(&self, id: &str, revision: u64) -> Option<&GiftDisclosure> {
         self.pending
             .get(id)
+            .map(|record| &record.disclosure)
             .filter(|value| value.offer.revision == revision)
     }
 
     pub(crate) fn contains_revision(&self, id: &str, revision: u64) -> bool {
-        self.pending
-            .get(id)
-            .is_some_and(|value| value.offer.revision == revision)
+        self.find(id, revision).is_some()
     }
 
     pub(crate) fn with_party<'a>(
@@ -1133,7 +1218,47 @@ impl ReceivedGifts {
     ) -> impl Iterator<Item = &'a GiftDisclosure> {
         self.pending
             .values()
+            .map(|record| &record.disclosure)
             .filter(move |gift| gift.offer.party(other))
+    }
+
+    /// The ordinary NPC menu grants replies only to the actual recipient of
+    /// loose one-way gifts. It never consults private physical consent state.
+    pub(crate) fn npc_incoming<'a>(
+        &'a self,
+        actor: &'a str,
+    ) -> impl Iterator<Item = (&'a GiftDisclosure, &'a crate::experience::PersonalSourceRef)> {
+        self.pending.values().filter_map(move |record| {
+            let gift = &record.disclosure;
+            (gift.offer.recipient_id == actor
+                && gift.offer.requested.is_empty()
+                && gift.offer.offered.iter().all(GiftLot::is_loose_stock))
+            .then_some((gift, &record.original.header().reference))
+        })
+    }
+}
+
+impl GiftReply {
+    /// Hold exact issued terms without duplicating their descriptions or stock.
+    pub(crate) fn prepare(
+        gift: &GiftDisclosure,
+        reference: &crate::experience::PersonalSourceRef,
+        accept: bool,
+        budget: &ByteBudget,
+    ) -> Result<(Self, crate::host::ByteReservation), ExecutionError> {
+        let bytes = reference
+            .heap_bytes()
+            .and_then(|n| n.checked_add(gift.offer.id.len()))
+            .and_then(|n| n.checked_add(gift.offer.offerer_id.len()))
+            .ok_or(ExecutionError::Capacity)?;
+        let custody = budget.reserve(bytes)?;
+        Ok((Self {
+            offerer: gift.offer.offerer_id.clone(),
+            id: gift.offer.id.clone(),
+            revision: gift.offer.revision,
+            accept,
+            reference: reference.clone(),
+        }, custody))
     }
 }
 
