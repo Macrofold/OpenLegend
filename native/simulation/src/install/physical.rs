@@ -651,7 +651,6 @@ fn validate_entity(
     }
     let pending_family = [
         (entity.hearth.is_some(), "placed hearth"),
-        (entity.practice_target.is_some(), "practice target"),
         (entity.assembly.is_some(), "assembly"),
         (entity.replenisher.is_some(), "replenishment source"),
         (
@@ -676,6 +675,32 @@ fn validate_entity(
     ];
     if let Some((_, family)) = pending_family.into_iter().find(|(present, _)| *present) {
         return Err(InstallError::UnsupportedFamily(family));
+    }
+    if let Some(target) = &entity.practice_target {
+        let installed_practice =
+            installed
+                .attributes
+                .get(&target.attribute_id)
+                .is_some_and(|definition| {
+                    definition.value().implementation == "finite-practice-v1"
+                        && definition.value().practice.is_some()
+                });
+        let supported = matches!(
+            &entity.placement,
+            Some(crate::state::Placement::World {
+                support_surface_id: Some(_),
+                ..
+            })
+        );
+        if entity.actor.is_some()
+            || entity.animal.is_some()
+            || entity.remains.is_some()
+            || entity.resource.is_some()
+            || !supported
+            || !installed_practice
+        {
+            return Err(InstallError::CurrentFormat);
+        }
     }
     if let Some(heat) = entity.heat {
         let rules = installed

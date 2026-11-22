@@ -16,6 +16,7 @@ heap_record!(CharacterTrait {
     description
 });
 heap_record!(IndividualRecognition { attribute_id });
+heap_record!(PracticeTarget { attribute_id });
 pub(super) fn bytes(entity: &Entity) -> Option<usize> {
     let actor = entity.actor.as_ref().map_or(Some(0), |actor| {
         heap_sum([
@@ -41,6 +42,7 @@ pub(super) fn bytes(entity: &Entity) -> Option<usize> {
         entity.icon.heap_bytes()?,
         entity.description.heap_bytes()?,
         entity.appearance.heap_bytes()?,
+        entity.practice_target.heap_bytes()?,
         entity.spatial.body.heap_bytes()?,
         entity.spatial.inactive_body.heap_bytes()?,
         entity

@@ -1304,6 +1304,12 @@ pub struct Replenisher {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PracticeTarget {
+    pub attribute_id: String,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Entity {
     #[serde(
         default,
@@ -1316,7 +1322,7 @@ pub struct Entity {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub practice_target: Option<UnconvertedField>,
+    pub practice_target: Option<PracticeTarget>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
