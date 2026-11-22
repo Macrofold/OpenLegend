@@ -49,6 +49,7 @@ heap_record!(RetainedDefinitions {
     foraging,
     supply_opportunities,
     food_preparations,
+    preparations,
     cast_definitions,
     casts,
     invention_policy,

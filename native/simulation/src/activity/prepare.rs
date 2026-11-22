@@ -49,9 +49,15 @@ pub(super) fn start_record(
         NativeCommand::Equipment { item_id, .. } => [Some(item_id), None],
         _ => [None, None],
     };
-    let object_bytes = fields
-        .iter()
-        .flatten()
+    let cooking = match command {
+        NativeCommand::Cook { heat_id, inputs, .. } => Some((heat_id, inputs)),
+        _ => None,
+    };
+    let objects_count = 2 + cooking.map_or(0, |(_, inputs)| inputs.len() + 1);
+    let selected_objects = || fields.iter().flatten().copied()
+        .chain(cooking.into_iter().map(|(heat, _)| heat.as_str()))
+        .chain(cooking.into_iter().flat_map(|(_, inputs)| inputs.values().map(String::as_str)));
+    let object_bytes = selected_objects()
         .try_fold(0_usize, |n, id| {
             let Some(entity) = entities.get(id) else {
                 return Some(n);
@@ -77,7 +83,7 @@ pub(super) fn start_record(
                 .ok_or(ActivityError::Capacity)?,
             view.heap_bytes().ok_or(ActivityError::Capacity)?,
             object_bytes,
-            map_storage::<String, ActivityObject>(2).ok_or(ActivityError::Capacity)?,
+            map_storage::<String, ActivityObject>(objects_count).ok_or(ActivityError::Capacity)?,
             map_storage::<String, ActivityRecord>(1).ok_or(ActivityError::Capacity)?,
             actor_id.len() * 4,
             id.len() * 6,
@@ -91,7 +97,7 @@ pub(super) fn start_record(
         .ok_or(ActivityError::Capacity)?,
     )?;
     let mut objects = IndexMap::new();
-    for id in fields.into_iter().flatten() {
+    for id in selected_objects() {
         if let Some(entity) = entities.get(id) {
             let pin = entity.item.as_ref().map(|item| &item.definition_pin);
             objects.insert(

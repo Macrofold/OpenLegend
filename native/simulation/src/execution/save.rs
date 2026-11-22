@@ -128,6 +128,7 @@ struct EntityRows<'a> {
     root: bool,
     placement: bool,
     item: bool,
+    container: bool,
     retirement: bool,
     geometry_heading: Option<f64>,
     geometry_lifecycle: Option<(Option<f64>, Option<f64>)>,
@@ -298,6 +299,12 @@ fn write_created_entity(
         } else {
             write_item(ledger, entity, true, output, budget)?;
         }
+        if let Some(container) = &entity.container {
+            created(
+                output, "sim_containers", &["world", "entities", id, "container"],
+                &parent, "container", 0, container, &[], budget,
+            )?;
+        }
         if let Some(attributes) = &entity.attributes {
             for (ordinal, field, value) in OrderedMapRows::new(attributes, budget)?.iter() {
                 created(
@@ -393,7 +400,7 @@ fn observe_entity_children(
         ("sim_remains", entity.remains.is_some()),
         ("sim_assemblies", false),
         ("sim_items", entity.item.is_some()),
-        ("sim_containers", false),
+        ("sim_containers", entity.container.is_some()),
         ("sim_declared_owners", false),
         ("sim_object_retirements", entity.retirement.is_some()),
         ("sim_territorial_threat", false),
@@ -636,7 +643,7 @@ impl PhysicalJournal {
             (self.undo.len(), 0usize),
             |(maximum, details), undo| match undo {
                 Undo::Inventory(before) if before.edited_item() => {
-                    Some((maximum.checked_add(1)?, details))
+                    Some((maximum.checked_add(1 + before.changed_contents().count())?, details))
                 }
                 Undo::Episode(episode) => {
                     Some((maximum, details.checked_add(episode.attributes.len())?))
@@ -685,6 +692,11 @@ impl PhysicalJournal {
                         .entry((before.parent.slot, before.parent.generation))
                         .or_default()
                         .root = true;
+                    for (handle, container) in before.changed_contents() {
+                        let rows = selected.entry((handle.slot, handle.generation)).or_default();
+                        rows.root = true;
+                        rows.container |= container;
+                    }
                     object_membership |= before.changed_membership();
                     if before.edited_item() || before.changed_placement() {
                         let rows = selected
@@ -694,6 +706,7 @@ impl PhysicalJournal {
                         rows.placement |= before.changed_placement();
                         if before.retired() {
                             rows.retirement = true;
+                            rows.container |= before.retired_container();
                             rows.root = true;
                         }
                     }
@@ -1027,6 +1040,15 @@ impl PhysicalJournal {
                 if entity.item.is_none() {
                     observe(output, "sim_items", &parent, false, 0, budget)?;
                 }
+            }
+            if rows.container {
+                one(
+                    ledger, output, "sim_containers",
+                    &["world", "entities", id, "container"], &parent, "container",
+                    entity.container.as_ref(), budget,
+                )?;
+                let present = entity.container.is_some();
+                observe(output, "sim_containers", &parent, present, u64::from(present), budget)?;
             }
             if rows.retirement {
                 one(

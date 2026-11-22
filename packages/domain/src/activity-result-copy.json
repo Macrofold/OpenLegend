@@ -3,5 +3,8 @@
   "producedPrefix": "produced: ",
   "quantity": "quantity",
   "material": "material",
-  "unknownMaterial": "items"
+  "unknownMaterial": "items",
+  "ingredientHistory": "ingredient history",
+  "mixedIngredientHistory": "This stack contains mixed sources; individual units cannot be traced exactly",
+  "reachedWorkingDistance": "Reached the required working distance."
 }

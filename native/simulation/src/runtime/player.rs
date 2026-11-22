@@ -97,6 +97,27 @@ pub struct RuntimeGatherOffer<'a> {
     pub sequence: u64,
 }
 
+/// Only the permitted heat contacts passed by the current scope are offered.
+pub struct RuntimeHeatContact {
+    pub target: String,
+    pub name: crate::text::JsText,
+    pub lit: bool,
+}
+
+pub struct RuntimePreparation<'a> {
+    pub pin: &'a crate::values::DefinitionPin,
+    pub name: &'a crate::text::JsText,
+    pub description: &'a crate::text::JsText,
+    pub inputs: Option<&'a IndexMap<String, String>>,
+}
+
+pub struct RuntimeFoodMenu<'a> {
+    pub sequence: u64,
+    pub paused: bool,
+    pub heat: &'a [RuntimeHeatContact],
+    pub preparations: &'a [RuntimePreparation<'a>],
+}
+
 pub enum RuntimeResourceOffer<'a> {
     Gather(RuntimeGatherOffer<'a>),
     Fish(RuntimeFishOffer<'a>),
@@ -490,6 +511,88 @@ impl NativeWorldSession {
             })
             .map_err(failure)?;
         result.transpose()
+    }
+
+    /// Select the exact owned roles once and reuse them across received fires.
+    /// The borrower must produce any menu bytes under the same disclosure lease.
+    pub fn with_player_food_menu<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        item: Option<&str>,
+        mut contact: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> Result<Option<String>, RuntimeError>,
+        use_menu: impl FnOnce(RuntimeFoodMenu<'_>) -> Result<T, RuntimeError>,
+    ) -> Result<Option<T>, RuntimeError> {
+        self.require_active()?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        let state = &simulation.state;
+        if state.installed.retained.preparations.is_empty() {
+            return Ok(None);
+        }
+        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        if let Some(item) = item {
+            if crate::install::owned_by(&state.physical.entities, &state.installed.retained, actor, item)
+                .map_err(failure)?.is_none()
+            {
+                return Ok(None);
+            }
+        }
+        let mut heat = Vec::new();
+        let mut storage = self.budget.reserve(0)?;
+        let mut error = None;
+        simulation.visit_accepted_player_contacts(account, actor, &self.budget, |body| {
+            let Some(crate::reception::SensoryFacet::Body { body: observed }) =
+                body.body_facet().map(|facet| &facet.value)
+            else {
+                return false;
+            };
+            let Some(lit) = observed.heat_lit else {
+                return false;
+            };
+            let name = &body.name.name;
+            // Reference issuance and allocation both happen in this closure.
+            let next = (|| -> Result<bool, RuntimeError> {
+                let Some(target) = contact(body)? else {
+                    return Ok(false);
+                };
+                storage.resize(storage.bytes().checked_add(
+                    4 * std::mem::size_of::<RuntimeHeatContact>() + target.len() + name.storage_bytes()
+                ).ok_or(crate::host::CapacityError)?)?;
+                heat.push(RuntimeHeatContact { target, name: name.clone(), lit });
+                Ok(item.is_none())
+            })();
+            match next {
+                Ok(done) => done,
+                Err(problem) => {
+                    error = Some(problem);
+                    true
+                }
+            }
+        }).map_err(failure)?;
+        if let Some(error) = error {
+            return Err(error);
+        }
+        if heat.is_empty() && item.is_none() {
+            return Ok(None);
+        }
+        let choices = crate::food_preparation::choices(state, actor, item, &self.budget)
+            .map_err(failure)?;
+        let _rows = self.budget.reserve(
+            choices.rows.len().checked_mul(std::mem::size_of::<RuntimePreparation<'_>>())
+                .ok_or(crate::host::CapacityError)?,
+        )?;
+        let rows: Vec<_> = choices.rows.iter().map(|choice| RuntimePreparation {
+            pin: &choice.recipe.pin,
+            name: &choice.recipe.definition.name,
+            description: &choice.recipe.definition.description,
+            inputs: choice.inputs.as_ref(),
+        }).collect();
+        use_menu(RuntimeFoodMenu {
+            sequence: state.physical.header.sequence,
+            paused: state.physical.header.paused,
+            heat: &heat,
+            preparations: &rows,
+        }).map(Some)
     }
 
     /// Inspect the authoritative actor, recipient and payer in one accepted

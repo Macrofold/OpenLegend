@@ -1107,6 +1107,11 @@ pub(super) fn validate_physical_item_references(
             }
         }
         validate_resource_foraging(entity, state, installed)?;
+        if entity.actor.as_ref().and_then(|actor| actor.action.as_ref()).is_some_and(|action| {
+            action.is_cooking() && !crate::food_preparation::valid_saved(action, state, retained)
+        }) {
+            return Err(InstallError::CurrentFormat);
+        }
         for yielded in entity.remains.iter().flat_map(|r| r.yields.iter()).chain(
             entity
                 .actor

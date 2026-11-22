@@ -135,7 +135,7 @@ pub(crate) struct ItemDefinitionRead {
     gathering_tool: Option<GatheringTool>,
     fishing_tool: Option<FishingTool>,
     pub portable: bool,
-    packing_load: Option<u64>,
+    pub(super) packing_load: Option<u64>,
     container: Option<ContainerDefinition>,
     equipment: Option<Equipment>,
     pub tracks_material_origins: bool,
@@ -317,6 +317,7 @@ pub(crate) enum RemovedInventoryChild {
         position: usize,
         parent: String,
         items: Vec<EntityHandle>,
+        equipped: Vec<EntityHandle>,
         storage: ResidentReservation,
     },
 }
@@ -564,14 +565,12 @@ impl Inventory {
             kids.items.remove(at);
             return Ok(RemovedInventoryChild::Member(at));
         }
-        if kids.equipped.capacity() != 0 {
-            return Err(ExecutionError::Invariant);
-        }
         let (key, kids) = self
             .children
             .get_key_value(parent)
             .ok_or(ExecutionError::Invariant)?;
-        let bytes = key.capacity() + kids.items.capacity() * size_of::<EntityHandle>();
+        let bytes = key.capacity()
+            + (kids.items.capacity() + kids.equipped.capacity()) * size_of::<EntityHandle>();
         let storage = self._custody.split_off(bytes)?;
         let (position, parent, kids) = self
             .children
@@ -581,6 +580,7 @@ impl Inventory {
             position,
             parent,
             items: kids.items,
+            equipped: kids.equipped,
             storage,
         })
     }
@@ -604,6 +604,7 @@ impl Inventory {
                 position,
                 parent,
                 items,
+                equipped,
                 storage,
             } => {
                 self._custody.merge(storage)?;
@@ -612,7 +613,7 @@ impl Inventory {
                     parent,
                     Children {
                         items,
-                        equipped: Vec::new(),
+                        equipped,
                     },
                 );
             }
@@ -643,7 +644,8 @@ impl Inventory {
             .get_key_value(parent)
             .filter(|(_, kids)| kids.items.len() == 1)
             .map_or(0, |(key, kids)| {
-                key.capacity() + kids.items.capacity() * size_of::<EntityHandle>()
+                key.capacity()
+                    + (kids.items.capacity() + kids.equipped.capacity()) * size_of::<EntityHandle>()
             })
     }
 
@@ -1044,7 +1046,7 @@ fn grow(storage: &mut ByteReservation, extra: usize) -> Result<(), InstallError>
     storage.resize(bytes).map_err(|_| InstallError::Capacity)
 }
 
-fn parent_id(entity: &Entity) -> Option<&str> {
+pub(crate) fn parent_id(entity: &Entity) -> Option<&str> {
     match &entity.placement {
         Some(
             Placement::Contained {

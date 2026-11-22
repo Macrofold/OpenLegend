@@ -114,6 +114,7 @@ pub(crate) struct RetainedDefinitions {
     pub foraging: crate::worlds::base_foraging::InstalledForaging,
     pub supply_opportunities: Option<RetainedMap>,
     pub food_preparations: RetainedMap,
+    pub preparations: IndexMap<String, crate::food_preparation::InstalledPreparation>,
     pub cast_definitions: RetainedMap,
     pub casts: IndexMap<String, crate::casts::InstalledCast>,
     pub invention_policy: RetainedOne,
@@ -125,6 +126,13 @@ pub(crate) struct RetainedDefinitions {
     pub flight_corridors: crate::flight::Corridors,
     pub places: RetainedMap,
     pub places_read: crate::reception::InstalledPlaces,
+}
+
+impl RetainedDefinitions {
+    pub(crate) fn packing_load_for(&self, pin: &crate::values::DefinitionPin) -> Option<u64> {
+        self.items.get(&pin.id)?.packing_load
+            .or_else(|| self.item_handling_read.packing_load(pin))
+    }
 }
 
 /// Derived once from the same validated immutable definition body. Read-only
@@ -399,6 +407,7 @@ pub(crate) fn install_retained(
     children: &mut WorldChildren,
     input: RetainedDefinitionInputs,
     schema: &RecordSchema,
+    activity: &crate::activity::ActivityLimits,
     budget: &crate::host::ByteBudget,
 ) -> Result<RetainedDefinitions, InstallError> {
     let mut r = Reader {
@@ -580,6 +589,11 @@ pub(crate) fn install_retained(
         assembly_families.as_ref(),
         budget,
     )?;
+    let (food_preparations, preparation_input) = r
+        .verified_map("foodPreparations", "config_food_preparations", Some(input.food_preparations))?
+        .ok_or(InstallError::ParentPresence)?;
+    let (preparations, _preparation_storage) =
+        prepare_food(&food_preparations, &preparation_input, &items, activity, budget)?;
     let gathering_policy = r.one(
         "gatheringPolicy",
         "config_gathering",
@@ -690,13 +704,8 @@ pub(crate) fn install_retained(
             "config_supply_opportunities",
             input.supply_opportunities,
         )?,
-        food_preparations: r
-            .map(
-                "foodPreparations",
-                "config_food_preparations",
-                Some(input.food_preparations),
-            )?
-            .ok_or(InstallError::ParentPresence)?,
+        food_preparations,
+        preparations,
         cast_definitions,
         casts,
         invention_policy,
@@ -733,6 +742,45 @@ fn canonical_entries<'a>(
     ).ok_or(InstallError::Capacity)?).map_err(|_| InstallError::Capacity)?;
     let canonical = serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionBody)?;
     Ok((storage, canonical))
+}
+
+fn prepare_food(
+    definitions: &RetainedMap,
+    input: &CanonicalInput,
+    items: &IndexMap<String, ItemDefinitionRead>,
+    limits: &crate::activity::ActivityLimits,
+    budget: &crate::host::ByteBudget,
+) -> Result<
+    (
+        IndexMap<String, crate::food_preparation::InstalledPreparation>,
+        crate::host::ByteReservation,
+    ),
+    InstallError,
+> {
+    use crate::food_preparation::{Definition, InstalledPreparation};
+    let (_canonical_storage, canonical) = canonical_entries(definitions, input, budget)?;
+    let mut storage = budget.reserve(
+        map_storage::<String, InstalledPreparation>(definitions.len())
+            .ok_or(InstallError::Capacity)?,
+    ).map_err(|_| InstallError::Capacity)?;
+    let mut preparations = IndexMap::new();
+    preparations.try_reserve(definitions.len()).map_err(|_| InstallError::Capacity)?;
+    for (id, body) in definitions.entries() {
+        let array_entry = size_of::<crate::food_preparation::Ingredient>()
+            .max(size_of::<crate::state::Yield>());
+        let mut prepared = super::reserve_typed_parse::<Definition>(body, array_entry, None, budget)?;
+        let definition: Definition =
+            serde_json::from_str(body).map_err(|_| InstallError::DefinitionBody)?;
+        let exact = canonical.get(id).ok_or(InstallError::DefinitionBody)?.get();
+        let value = definition.install(id, exact, items, limits, budget)?;
+        prepared.resize(
+            id.len().checked_add(value.heap_bytes().ok_or(InstallError::Capacity)?)
+                .ok_or(InstallError::Capacity)?
+        ).map_err(|_| InstallError::Capacity)?;
+        storage.merge(prepared).map_err(|_| InstallError::Capacity)?;
+        preparations.insert(id.to_owned(), value);
+    }
+    Ok((preparations, storage))
 }
 
 fn prepare_items(

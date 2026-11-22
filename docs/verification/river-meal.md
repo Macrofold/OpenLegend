@@ -142,6 +142,16 @@ An actual player request used the ordinary NPC scheduling and decision path. A c
 
 The first candidate reached the provider with the correct choice and failed before applying it. The existing server reserved 4,096 bytes for the known action's response, and the runtime required 4,434 for the actual records. The shared response builder now sizes and funds those records before forming them. The checked source was `8164f2024c7779d425724bac240d4bc07a99e21f`, executable `bb62b469162b…`. Background save, exact retry, cold continuation, the affected type and network checks, and cleanup passed. These controlled responses establish correct choice and execution. Model quality and comparative CPU have separate evidence requirements.
 
+## Stand-alone Rust cooking
+
+The authenticated fire and selected-item menus offer the current exact recipe. The player can walk to the chosen heat, spend the ingredients when work starts and receive the installed products. Refusing a changed recipe, another item's ID or an unrecognized fire leaves stock unchanged. Retrying the same accepted command preserves its outcome and produces one completed occurrence. Source and Rust use the same current-format recipe pin and product definitions.
+
+Disposable loopback PostgreSQL cases confirmed a cooked meat result after ordinary approach, cancellation after the debit, and continuation of a working NPC action saved in the current Source format. The approach matched Source's observed distance, direction, recipe facts and reached-work record. Loss of heat retained the debit and recorded a blocked occurrence without a cooked event or product. A different installed recipe assigned two roles to one nested lot and produced two outputs, including an empty bag. Source and Rust both saved the decreased input bag load and reopened the new container.
+
+A real browser selected the fish recipe and displayed the exact cooked item in Inventory. The result retained its private material link to the ordinary Source cast used to prepare the fixture. The stand-alone cast has separate evidence above. The Rust run used source tree `74ef96147cc39c5c79a3ff13ddfbe2c821156757` and executable SHA-256 `c4a54ecb8fe07f50e13b284912735756b289902d979b686c1f169ce93923de3e`. Raw caller results are retained in the task's `nsc04-cooking-20261122` evidence directory.
+
+These are local gameplay checks with the stand-alone executable, ordinary saves and a disposable database for each case. They establish the caught-item and cooking junction, including the preserved private ingredient source. Tool manufacture, eating the result and an NPC independently choosing to cook remain separate callers.
+
 ## Maintained records
 
 - Scope/status: [AV05](../maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking).

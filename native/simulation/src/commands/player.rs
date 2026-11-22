@@ -4,6 +4,8 @@ use super::{CommandEncoding, CommandHeaders, NativeCommand};
 use crate::encoding::json_record;
 use crate::gathering::{GatheringMode, ToolChoice};
 use crate::state::SurfacePoint;
+use crate::values::DefinitionPin;
+use indexmap::IndexMap;
 use serde::Serialize;
 
 #[derive(Clone, Copy)]
@@ -12,6 +14,13 @@ pub enum RuntimePlayerCommand<'a> {
     Cancel(Option<&'a str>),
     Gather { target: &'a str, tool: Option<&'a str>, mode: Option<GatheringMode> },
     Fish { target: &'a str, tool: &'a str },
+    Cook {
+        heat: &'a str,
+        preparation_id: &'a str,
+        preparation_version: u64,
+        preparation_digest: &'a str,
+        inputs: &'a IndexMap<String, String>,
+    },
     Equip(&'a str),
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
 }
@@ -23,6 +32,10 @@ impl RuntimePlayerCommand<'_> {
             Self::Cancel(action) => action.map_or(0, str::len),
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } => target.len() + tool.len(),
+            Self::Cook { heat, preparation_id, preparation_digest, inputs, .. } => {
+                heat.len() + preparation_id.len() + preparation_digest.len()
+                    + inputs.iter().map(|(role, item)| role.len() + item.len()).sum::<usize>()
+            }
             Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
         }
     }
@@ -32,6 +45,15 @@ impl RuntimePlayerCommand<'_> {
         id: &str,
         actor: &str,
     ) -> Result<(NativeCommand, String), serde_json::Error> {
+        if let Self::Cook {
+            heat, preparation_id, preparation_version, preparation_digest, inputs
+        } = self {
+            return bind_food_preparation(id, actor, heat, DefinitionPin {
+                id: preparation_id.into(),
+                version: preparation_version,
+                digest: preparation_digest.into(),
+            }, inputs);
+        }
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Operation<'a> {
@@ -91,6 +113,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
             Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
+            Self::Cook { .. } => unreachable!("food preparation uses its own typed wire fields"),
             Self::Equip(item) => ("equip", None, None, None, Some(item), None),
             Self::Unequip { item, .. } => ("unequip", None, None, None, Some(item), None),
         };
@@ -180,6 +203,7 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
+            Self::Cook { .. } => unreachable!("food preparation uses its own typed wire fields"),
             Self::Equip(item) => NativeCommand::Equipment {
                 envelope,
                 item_id: item.into(),
@@ -193,4 +217,95 @@ impl RuntimePlayerCommand<'_> {
         };
         Ok((command, signature))
     }
+}
+
+fn bind_food_preparation(
+    id: &str,
+    actor: &str,
+    heat: &str,
+    definition: DefinitionPin,
+    inputs: &IndexMap<String, String>,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Operation<'a> {
+        id: &'a str,
+        actor_id: &'a str,
+        human_initiated: bool,
+        #[serde(rename = "type")]
+        kind: &'static str,
+        preparation_id: &'a str,
+        preparation_version: u64,
+        preparation_digest: &'a str,
+        #[serde(serialize_with = "crate::encoding::serialize_js_map")]
+        inputs: &'a IndexMap<String, String>,
+        heat_id: &'a str,
+    }
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Signature<'a> {
+        actor_id: &'a str,
+        heat_id: &'a str,
+        human_initiated: bool,
+        id: &'a str,
+        inputs: std::collections::BTreeMap<&'a str, &'a str>,
+        preparation_digest: &'a str,
+        preparation_id: &'a str,
+        preparation_version: u64,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let headers = CommandHeaders {
+        id: id.to_owned(),
+        actor_id: actor.to_owned(),
+        cooperation: None,
+        combat_help_id: None,
+        human_initiated: Some(true),
+        purpose: None,
+        chosen_purpose: None,
+    };
+    if !headers.valid()
+        || !definition.is_valid()
+        || !crate::values::is_safe_record_id(heat)
+        || !crate::food_preparation::valid_inputs(inputs)
+    {
+        return Err(serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Invalid exact food preparation binding.",
+        )));
+    }
+    let encoding = CommandEncoding::from_ordered(
+        &Operation {
+            id,
+            actor_id: actor,
+            human_initiated: true,
+            kind: "cook",
+            preparation_id: &definition.id,
+            preparation_version: definition.version,
+            preparation_digest: &definition.digest,
+            inputs,
+            heat_id: heat,
+        },
+        9,
+    )?;
+    let signature = json_record(&Signature {
+        actor_id: actor,
+        heat_id: heat,
+        human_initiated: true,
+        id,
+        inputs: inputs.iter().map(|(role, lot)| (role.as_str(), lot.as_str())).collect(),
+        preparation_digest: &definition.digest,
+        preparation_id: &definition.id,
+        preparation_version: definition.version,
+        kind: "cook",
+    })?;
+    Ok((
+        NativeCommand::Cook {
+            envelope: headers.envelope(encoding),
+            heat_id: heat.into(),
+            definition,
+            inputs: inputs.clone(),
+        },
+        signature,
+    ))
 }

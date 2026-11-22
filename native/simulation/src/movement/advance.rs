@@ -24,6 +24,7 @@ use crate::native_response::{NavigationWait, profile_key};
 use crate::state::{Action, Entity, NavigationPending, Placement, Point, SurfacePoint};
 use std::mem::size_of;
 mod casting;
+mod preparing_food;
 mod feeding;
 mod gathering;
 
@@ -58,6 +59,7 @@ enum Phase {
     FeedReach,
     FeedSight,
     CastLine,
+    CookReach,
     Finish,
     Clear,
     Stopped,
@@ -79,6 +81,7 @@ pub(crate) struct MoveAdvanceCursor {
     pending: Option<PendingActionFinish>,
     gathered_item: Option<crate::commands::ActivityOutput>,
     cast_result: Option<Outcome>,
+    production_result: Option<Outcome>,
     event: Option<String>,
     after_event: Phase,
     budget: ByteBudget,
@@ -159,6 +162,7 @@ impl MoveAdvanceCursor {
             pending: None,
             gathered_item: None,
             cast_result: None,
+            production_result: None,
             event: None,
             after_event: Phase::Done,
             budget: budget.clone(),
@@ -336,6 +340,9 @@ impl MoveAdvanceCursor {
                 let (_, action) = bound(core, &self.actor_id, action_id, self.physical_life)?;
                 if self.phase == Phase::FeedReach {
                     return self.feed_reach_answer(core, answer.sight.pop() == Some(true));
+                }
+                if self.phase == Phase::CookReach {
+                    return self.cook_reach_answer(core, answer.sight.pop() == Some(true));
                 }
                 if self.phase == Phase::CastLine {
                     return self.finish_cast_line(core, answer);
@@ -590,6 +597,9 @@ impl MoveAdvanceCursor {
                     if (action.feeding.is_some() || action.is_gathering()) && action.stage == "working" {
                         return self.begin_feed_check(core);
                     }
+                    if action.is_cooking() && action.stage == "working" {
+                        return self.check_cook(core);
+                    }
                     if action.is_casting() && action.stage == "working" {
                         return self.advance_cast(core);
                     }
@@ -640,7 +650,7 @@ impl MoveAdvanceCursor {
                         self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
                         self.physical_life,
                     )?;
-                    if action.feeding.is_none() && !action.is_gathering() && action.destination.is_none() {
+                    if action.feeding.is_none() && !action.is_gathering() && !action.is_cooking() && action.destination.is_none() {
                         self.fail(&rules.movement_missing_destination)?;
                         continue;
                     }
@@ -656,6 +666,9 @@ impl MoveAdvanceCursor {
                         bound(core, &self.actor_id, action_id, self.physical_life)?;
                     if action.feeding.is_some() || action.is_gathering() {
                         return self.begin_feed_check(core);
+                    }
+                    if action.is_cooking() {
+                        return self.check_cook(core);
                     }
                     let tolerance = if action.is_casting() {
                         let Some(source) = action.target_id.as_deref().and_then(|id| crate::casts::source(core.state, id)) else {
@@ -840,6 +853,8 @@ impl MoveAdvanceCursor {
                             plan_id: None,
                             action_id: None,
                         }
+                    } else if let Some(result) = self.production_result.take() {
+                        result
                     } else if let Some(result) = self.cast_result.take() {
                         result
                     } else if let Some(output) = self.gathered_item.take() {
@@ -935,7 +950,8 @@ impl MoveAdvanceCursor {
                 | Phase::ContactMotion
                 | Phase::FeedReach
                 | Phase::FeedSight
-                | Phase::CastLine => {
+                | Phase::CastLine
+                | Phase::CookReach => {
                     return Err(ExecutionError::Invariant);
                 }
             }

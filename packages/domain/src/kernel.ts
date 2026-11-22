@@ -249,6 +249,8 @@ import {
   preparationPin,
   cookingClaims,
 } from './food-preparation.js';
+import preparationCopy from './food-preparation-messages.json' with { type: 'json' };
+import activityResultCopy from './activity-result-copy.json' with { type: 'json' };
 import {
   castDefinition,
   castGeometryProblem,
@@ -1261,12 +1263,7 @@ function workMaterials(
       action.foodPreparation!.inputs,
       availability,
     );
-    if (!claims)
-      return outcome(
-        false,
-        'missing-material',
-        'The exact selected ingredients are no longer available.',
-      );
+    if (!claims) return outcome(false, 'missing-material', preparationCopy.ingredientsMissing);
     if (!entityGet(world.entities, action.heatId ?? '')?.heat?.lit)
       return outcome(false, 'no-heat', 'The selected preparation requires a lit heat source.');
     return claims;
@@ -1473,7 +1470,7 @@ function startWork(
     return outcome(false, 'missing-material', 'The required materials are no longer available.');
   const experience = occurrenceFor(world, actor.id, action.id);
   if (experience?.view.children?.[0])
-    experience.view.children[0].result = 'Reached the required working distance.';
+    experience.view.children[0].result = activityResultCopy.reachedWorkingDistance;
   if (experience && ['strike', 'hunt', 'practice-shot'].includes(action.type))
     (experience.view.children ??= []).push({
       name: ['hunt', 'practice-shot'].includes(action.type) ? 'Shoot once' : 'Attack once',
@@ -2771,10 +2768,9 @@ function prepareNativeOperation(
     case 'cook': {
       const definition = preparationDefinition(world, command);
       const heat = entityOwn(world.entities, command.heatId);
-      if (!definition)
-        return reject('stale-preparation', 'Choose a current installed food preparation.');
+      if (!definition) return reject('stale-preparation', preparationCopy.stale);
       if (!heat?.heat?.lit || !visible(world, actor, heat))
-        return reject('no-heat', 'A visible lit heat source is needed.');
+        return reject('no-heat', preparationCopy.heatNeeded);
       action = temporary('cook', definition.workSeconds);
       action.heatId = heat.id;
       action.foodPreparation = {
@@ -4633,7 +4629,9 @@ function executeCommandNative(
                   ? subjectNarration(actor, gatheringCopy.started)
                   : subjectNarration(
                       actor,
-                      `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+                      action.type === 'cook'
+                        ? preparationCopy.started
+                        : `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
                     ),
         actor,
         action.targetId,
@@ -5185,7 +5183,7 @@ function completeAction(
       }
       for (const output of definition.outputs) produce(output.definitionId, output.quantity);
       if (outputs.length === 1) outputItemId = outputs[0]!.itemId;
-      completion = `${definition.name} completed.`;
+      completion = `${definition.name}${preparationCopy.completedSuffix}`;
       emit(
         world,
         events,
@@ -5904,7 +5902,9 @@ function advanceAction(
       events,
       action.type === 'pickup' && !entityGet(world.entities, action.targetId ?? '')
         ? 'the pile is no longer available.'
-        : 'the target moved out of reach.',
+        : action.type === 'cook'
+          ? preparationCopy.outOfReach
+          : 'the target moved out of reach.',
     );
     return;
   }
@@ -5957,7 +5957,7 @@ function advanceAction(
       !preparationForBinding(world, action.foodPreparation) ||
       !entityGet(world.entities, action.heatId ?? '')?.heat?.lit)
   ) {
-    failAction(world, actor, events, 'the selected preparation changed or its heat went out.');
+    failAction(world, actor, events, preparationCopy.interrupted);
     return;
   }
   if (action.type === 'replenish') {

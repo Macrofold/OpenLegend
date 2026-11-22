@@ -49,6 +49,8 @@ impl HeapBytes for Action {
             self.feeding.heap_bytes()?,
             self.gathering.heap_bytes()?,
             self.fishing.heap_bytes()?,
+            self.food_preparation.heap_bytes()?,
+            self.heat_id.heap_bytes()?,
             self.item_id.heap_bytes()?,
             self.id.capacity(),
             self.kind.capacity(),

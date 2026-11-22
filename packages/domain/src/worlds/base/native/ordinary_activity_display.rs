@@ -89,6 +89,10 @@ pub enum OrdinaryAction {
         supply: JsText,
         selected_tool: JsText,
     },
+    FoodPreparation {
+        name: JsText,
+        details: Vec<ActivityFact>,
+    },
 }
 
 pub struct GatherRead {
@@ -362,6 +366,10 @@ pub fn format(
             facts.push(fact("supply", supply));
             facts.push(fact("approach", copy.approach.into()));
             purpose.unwrap_or_else(|| copy.label.into())
+        }
+        OrdinaryAction::FoodPreparation { name, details } => {
+            facts.extend(details);
+            purpose.unwrap_or(name)
         }
     };
     Some(ActivityView {

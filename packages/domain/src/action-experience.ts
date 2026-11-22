@@ -826,10 +826,13 @@ function recordConsumedSources(
     });
   }
   if (ambiguous) entry.incomplete = true;
-  if (ambiguous && !entry.view.facts.some((fact) => fact.name === 'ingredient history'))
+  if (
+    ambiguous &&
+    !entry.view.facts.some((fact) => fact.name === activityResultCopy.ingredientHistory)
+  )
     entry.view.facts.push({
-      name: 'ingredient history',
-      value: 'This stack contains mixed sources; individual units cannot be traced exactly',
+      name: activityResultCopy.ingredientHistory,
+      value: activityResultCopy.mixedIngredientHistory,
       critical: true,
     });
 }

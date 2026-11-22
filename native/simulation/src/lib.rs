@@ -11,6 +11,7 @@ pub mod attention;
 pub mod body;
 pub mod capture;
 mod casts;
+mod food_preparation;
 pub mod cognition;
 pub mod commands;
 pub mod conditions;

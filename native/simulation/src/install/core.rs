@@ -296,7 +296,7 @@ fn assemble_selected_core(
         budget,
     )?;
     content.fund(budget)?;
-    let retained = install_retained(&mut import, &mut children, retained, &schema, budget)?;
+    let retained = install_retained(&mut import, &mut children, retained, &schema, &activity, budget)?;
     crate::flight::validate_corridors(
         &retained.flight_corridors,
         maximum_candidates,

@@ -144,7 +144,7 @@ enum ActivityUndo {
     },
     ItemSources {
         key: String,
-        before: Option<Vec<ActivityItemSource>>,
+        before: Option<(usize, Vec<ActivityItemSource>)>,
     },
     Learning {
         key: String,

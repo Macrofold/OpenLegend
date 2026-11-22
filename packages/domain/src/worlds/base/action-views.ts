@@ -33,6 +33,7 @@ import {
 import { evasionDescription } from './combat-views.js';
 import gatheringCopy from './gathering-copy.json' with { type: 'json' };
 import castCopy from './cast-copy.json' with { type: 'json' };
+import preparationCopy from '../../food-preparation-messages.json' with { type: 'json' };
 
 export const BASE_FOOD_ACTION_WORDING = {
   cookingDescription:
@@ -388,7 +389,7 @@ function activityView(
       view.name = command.purpose ?? preparation.name;
       view.facts.push({
         name: 'cost',
-        value: `Uses the selected ingredients at work start; ${preparation.workSeconds} game seconds; requires a lit fire throughout; spent ingredients are not returned on interruption`,
+        value: `${preparationCopy.costPrefix}${preparation.workSeconds}${preparationCopy.costSuffix}`,
         critical: true,
       });
       const products = preparation.outputs.map((output) => ({
@@ -398,7 +399,7 @@ function activityView(
       view.facts.push({
         name: 'output',
         value: products,
-        sentence: `On completion: ${products.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
+        sentence: `${preparationCopy.outputPrefix}${products.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
         critical: true,
       });
       const ingredients = preparation.inputs.map((input) => {
@@ -420,10 +421,10 @@ function activityView(
         view.facts.push({
           name: at ? `more ingredients ${at / ACTIVITY_LIMITS.detailEntries + 1}` : 'ingredients',
           value: portions,
-          sentence: `Ingredients: ${portions
+          sentence: `${preparationCopy.ingredientsPrefix}${portions
             .map((portion) => {
               const carried = portion['selected carried quantity'];
-              return `${portion.role}: ${portion['required quantity']} ${portion.material} (${typeof carried === 'number' ? `${carried} in the selected carried stack` : carried})`;
+              return `${portion.role}: ${portion['required quantity']} ${portion.material} (${typeof carried === 'number' ? `${carried}${preparationCopy.carriedSuffix}` : carried})`;
             })
             .join('; ')}`,
           critical: true,
@@ -521,7 +522,7 @@ function activityView(
       name: 'fire',
       value: perceived
         ? target.heat?.lit
-          ? 'Lit now; it must stay lit until cooking ends'
+          ? preparationCopy.fireCondition
           : 'Not lit now; cooking cannot start'
         : 'The fire condition is not currently known',
       critical: true,

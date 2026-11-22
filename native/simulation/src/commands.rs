@@ -204,6 +204,12 @@ pub(crate) enum NativeCommand {
         target_id: String,
         item_id: String,
     },
+    Cook {
+        envelope: CommandEnvelope,
+        heat_id: String,
+        definition: crate::values::DefinitionPin,
+        inputs: indexmap::IndexMap<String, String>,
+    },
     Equipment {
         envelope: CommandEnvelope,
         item_id: String,
@@ -270,7 +276,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -302,6 +308,8 @@ impl<'de> Deserialize<'de> for NativeCommand {
         if (input.kind != "gather" && input.gathering_mode.is_some())
             || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "equip" | "unequip") && input.item_id.is_some())
             || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
+            || (input.kind != "cook" && (input.heat_id.is_some() || input.preparation_id.is_some()
+                || input.preparation_version.is_some() || input.preparation_digest.is_some() || input.inputs.is_some()))
         {
             return Err(D::Error::custom("Unexpected item selection."));
         }
@@ -444,6 +452,24 @@ impl<'de> Deserialize<'de> for NativeCommand {
                         .ok_or_else(|| D::Error::custom("A cast requires a selected tool."))?,
                 })
             }
+            "cook"
+                if !extras_for_say && input.target_id.is_none() && input.text.is_none()
+                    && input.target_role.is_none() && input.self_introduction.is_none()
+                    && input.volume.is_none() =>
+            {
+                let missing = || D::Error::custom("Cooking requires an exact recipe, heat source and ingredients.");
+                let definition = crate::values::DefinitionPin {
+                    id: input.preparation_id.ok_or_else(missing)?,
+                    version: input.preparation_version.ok_or_else(missing)?,
+                    digest: input.preparation_digest.ok_or_else(missing)?,
+                };
+                let heat_id = input.heat_id.filter(|id| is_safe_record_id(id)).ok_or_else(missing)?;
+                let inputs = input.inputs.filter(crate::food_preparation::valid_inputs).ok_or_else(missing)?;
+                if !definition.is_valid() {
+                    return Err(missing());
+                }
+                Ok(Self::Cook { envelope, heat_id, definition, inputs })
+            }
             "say" if !extras_for_say => Ok(Self::Say {
                 envelope,
                 text: input
@@ -574,6 +600,7 @@ impl NativeCommand {
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
+            | Self::Cook { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
@@ -598,6 +625,7 @@ impl NativeCommand {
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
+            | Self::Cook { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
@@ -616,6 +644,7 @@ impl NativeCommand {
             Self::Feed { .. } => "feed",
             Self::Gather { .. } => "gather",
             Self::Fish { .. } => "fish",
+            Self::Cook { .. } => "cook",
             Self::Equipment { request, .. } => match request {
                 crate::execution::EquipmentRequest::Equip => "equip",
                 crate::execution::EquipmentRequest::Unequip { .. } => "unequip",

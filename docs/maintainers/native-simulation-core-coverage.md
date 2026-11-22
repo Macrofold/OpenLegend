@@ -370,7 +370,7 @@ Source: `packages/domain/src/types.ts`; 60 declared fields. `?` retains source o
 
 Nested bindings that need particular care: `follow` contains observed last-seen position/episode/deadline and cannot read a hidden live target; `navigation.request` is source/action-bound; `strikeMotion`, ranged release and recovery can outlive ordinary cancellation; construction/material/recipe pins name historical meaning. They are not interchangeable generic timers.
 
-The [finite cast checks](../verification/river-meal.md#stand-alone-rust-casts) cover `Action.fishing` and `itemId` with exact source, installed rules, tool and output pins, the selected stance, ordinary approach and earned work. The shared stock and item owners commit a catch together. The player command, permitted NPC choice and saved action have caller evidence. The complete meal still needs its connected journey.
+The [finite cast checks](../verification/river-meal.md#stand-alone-rust-casts) cover `Action.fishing` and `itemId` with exact source, installed rules, tool and output pins, the selected stance, ordinary approach and earned work. The shared stock and item owners commit a catch together. The player command, permitted NPC choice and saved action have caller evidence. [Stand-alone cooking](../verification/river-meal.md#stand-alone-rust-cooking) covers `Action.foodPreparation`, `heatId` and `consumed` with exact authored ingredient and product pins. The authenticated fire and carried-item menus, ordinary player command, nested inventory, elapsed work, activity history and PostgreSQL reopen have caller evidence. Tool manufacture, consuming a cooked item and permitted NPC cooking choice remain open.
 
 ### Responses, agency and experience
 

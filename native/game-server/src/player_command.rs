@@ -91,6 +91,18 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     gathering_mode: Option<GatheringMode>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    preparation_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    preparation_version: Option<u64>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    preparation_digest: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    inputs: Option<indexmap::IndexMap<String, String>>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -196,6 +208,7 @@ enum CommandKind {
     Cancel,
     Gather,
     Fish,
+    Cook,
     Equip,
     Unequip,
 }
@@ -565,6 +578,11 @@ impl CommandRequest {
             || Uuid::parse_str(&self.command_epoch).is_err()
             || (!matches!(command.kind, CommandKind::Unequip)
                 && (command.expected_revision.is_some() || command.placement_revision.is_some()))
+            || (!matches!(command.kind, CommandKind::Cook)
+                && (command.preparation_id.is_some()
+                    || command.preparation_version.is_some()
+                    || command.preparation_digest.is_some()
+                    || command.inputs.is_some()))
         {
             return Err(AccessError::Forbidden.into());
         }
@@ -622,6 +640,22 @@ impl CommandRequest {
                     && command.target_id.as_deref().is_some_and(id)
                     && command.item_id.as_deref().is_some_and(id)
                     && command.gathering_mode.is_none() =>
+            {
+                Ok(())
+            }
+            CommandKind::Cook
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.item_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.preparation_id.as_deref().is_some_and(openlegend_simulation::values::is_safe_record_id)
+                    && command.preparation_version.is_some_and(|version| version > 0)
+                    && command.preparation_digest.as_deref().is_some_and(|digest| {
+                        !digest.is_empty() && digest.encode_utf16().count() <= 128
+                    })
+                    && command.inputs.as_ref().is_some_and(openlegend_simulation::runtime::valid_preparation_inputs) =>
             {
                 Ok(())
             }
@@ -712,6 +746,13 @@ impl PreparedRequest {
             CommandKind::Fish => Ok(RuntimePlayerCommand::Fish {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 tool: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+            }),
+            CommandKind::Cook => Ok(RuntimePlayerCommand::Cook {
+                heat: target.ok_or(StoreError::InvalidRecord)?,
+                preparation_id: input.preparation_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                preparation_version: input.preparation_version.ok_or(StoreError::InvalidRecord)?,
+                preparation_digest: input.preparation_digest.as_deref().ok_or(StoreError::InvalidRecord)?,
+                inputs: input.inputs.as_ref().ok_or(StoreError::InvalidRecord)?,
             }),
             CommandKind::Equip => Ok(RuntimePlayerCommand::Equip(
                 input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,

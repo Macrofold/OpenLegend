@@ -50,6 +50,7 @@ mod npc_labels;
 mod participation;
 pub use participation::{InvitationActor, InvitationActors, RuntimeParticipation};
 mod player;
+pub use crate::food_preparation::valid_inputs as valid_preparation_inputs;
 mod player_places;
 mod privacy;
 pub use privacy::RuntimePrivacyEdit;
@@ -94,7 +95,7 @@ pub use npc::{
 pub use player::{
     InteractionMode, PlayerInteractionFacts, RuntimePlayerCommand, RuntimePlayerInputState,
     RuntimePlayerPublication, RuntimePlayerRead, RuntimeGatherOffer,
-    RuntimeFishOffer, RuntimeFishTool, RuntimeResourceOffer,
+    RuntimeFishOffer, RuntimeFishTool, RuntimeResourceOffer, RuntimeHeatContact, RuntimeFoodMenu, RuntimePreparation,
 };
 pub use reply_preview::{
     RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,

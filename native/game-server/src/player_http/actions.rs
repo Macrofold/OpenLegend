@@ -9,6 +9,7 @@ use openlegend_simulation::{
     text::JsText,
 };
 use std::sync::LazyLock;
+mod preparation;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -40,6 +41,7 @@ struct Position {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct MenuRequest {
     target_id: Option<String>,
+    item_id: Option<String>,
     position: Option<Position>,
 }
 
@@ -63,16 +65,17 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
     }) {
         return access_failure(AccessError::Changed);
     }
-    let Some(target) = input
+    let target = input
         .target_id
-        .filter(|id| crate::npc::valid_request_id(id))
-    else {
+        .filter(|id| crate::npc::valid_request_id(id));
+    let item = input.item_id.filter(|id| crate::npc::valid_request_id(id));
+    if target.is_none() && item.is_none() {
         return refusal(
             StatusCode::BAD_REQUEST,
             "unsupported-action-context",
             "Choose something you can see to find its actions.",
         );
-    };
+    }
     let linked = Arc::new(target);
     let for_menu = linked.clone();
     let game = state.game.clone();
@@ -93,6 +96,18 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                     let references = tokens
                         .scoped(scope)
                         .map_err(RuntimeError::application_refused)?;
+                    if let Some(item) = item.as_deref() {
+                        return session.with_player_food_menu(
+                            &scope.account_id,
+                            &scope.actor_id,
+                            Some(item),
+                            |body| preparation::heat_contact(&references, body, for_menu.as_deref()),
+                            |menu| preparation::render(menu, controls, Some(item), budget),
+                        );
+                    }
+                    let selected = for_menu.as_deref().ok_or_else(|| {
+                        RuntimeError::application_refused("missing selected menu target")
+                    })?;
                     let mut error = None;
                     let offered = session.with_player_resource_offer(
                         &scope.account_id,
@@ -102,7 +117,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                             body.physical_life.unwrap_or(0),
                             body.lease_id,
                         ) {
-                            Ok(reference) => reference == *for_menu,
+                            Ok(reference) => reference == selected,
                             Err(problem) => {
                                 error = Some(problem);
                                 false
@@ -110,7 +125,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                         },
                         |offer| match offer {
                             RuntimeResourceOffer::Gather(offer) => {
-                                gathering(&for_menu, offer, game.construction_grants, budget)
+                                gathering(selected, offer, game.construction_grants, budget)
                             }
                             RuntimeResourceOffer::Fish(offer) => {
                                 let available = if !controls {
@@ -127,14 +142,23 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                                 } else {
                                     None
                                 };
-                                fishing(&for_menu, &offer, available, budget)
+                                fishing(selected, &offer, available, budget)
                             }
                         },
                     )?;
                     if let Some(error) = error {
                         return Err(RuntimeError::application_refused(error));
                     }
-                    Ok(offered)
+                    if offered.is_some() {
+                        return Ok(offered);
+                    }
+                    session.with_player_food_menu(
+                        &scope.account_id,
+                        &scope.actor_id,
+                        None,
+                        |body| preparation::heat_contact(&references, body, Some(selected)),
+                        |menu| preparation::render(menu, controls, None, budget),
+                    )
                 },
             ))
         })
@@ -147,6 +171,9 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
         Err(error) => return failed(error),
     }
     let target = Arc::try_unwrap(linked).unwrap_or_else(|target| (*target).clone());
+    let Some(target) = target else {
+        return access_failure(AccessError::Changed);
+    };
     match state
         .decisions
         .contact_menu(access, state.references.clone(), target, custody)
@@ -192,22 +219,22 @@ struct ResourceAction<'a> {
     intent: ResourceIntent<'a>,
 }
 
-fn resource_menu(
+fn resource_menu<T: Serialize>(
     revision: u64,
-    actions: &[ResourceAction<'_>],
+    actions: &[T],
     category: &'static str,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     #[derive(Serialize)]
-    struct Catalogue<'a> {
+    struct Catalogue<'a, T> {
         revision: u64,
-        actions: &'a [ResourceAction<'a>],
+        actions: &'a [T],
         categories: [&'static str; 1],
     }
     #[derive(Serialize)]
-    struct Menu<'a> {
+    struct Menu<'a, T> {
         ok: bool,
-        catalogue: Catalogue<'a>,
+        catalogue: Catalogue<'a, T>,
     }
     wire::encode(
         &Menu {

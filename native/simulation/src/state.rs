@@ -665,7 +665,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub food_preparation: Option<UnconvertedField>,
+    pub food_preparation: Option<Box<crate::food_preparation::Binding>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -743,7 +743,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub heat_id: Option<UnconvertedField>,
+    pub heat_id: Option<String>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -838,6 +838,7 @@ impl Action {
             || (self.kind == "feed" && self.feeding.is_some())
             || self.is_gathering()
             || self.is_casting()
+            || self.is_cooking()
     }
 
     pub(crate) fn owns_ground_route(&self) -> bool {
@@ -850,6 +851,10 @@ impl Action {
 
     pub(crate) fn is_gathering(&self) -> bool {
         self.kind == "gather" && self.gathering.is_some()
+    }
+
+    pub(crate) fn is_cooking(&self) -> bool {
+        self.kind == "cook" && self.food_preparation.is_some()
     }
 
     pub(crate) fn is_casting(&self) -> bool {
@@ -889,7 +894,7 @@ impl Action {
             || self.scar_id.is_some()
             || self.recipe_pin.is_some()
             || self.manufacture_tools.is_some()
-            || self.food_preparation.is_some()
+            || self.food_preparation.is_some() != (self.kind == "cook")
             || self.fishing.is_some() != (self.kind == "fish")
             || self.guard.is_some()
             || self.follow.is_some()
@@ -899,7 +904,7 @@ impl Action {
             || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting()))
             || self.weapon_item_id.is_some()
             || self.ammo_item_id.is_some()
-            || self.heat_id.is_some()
+            || self.heat_id.is_some() != self.is_cooking()
             || self.fire_operation.is_some()
             || self.fire_guard.is_some()
     }
@@ -1001,6 +1006,20 @@ impl Action {
         action.remaining_seconds = seconds;
         action.total_seconds = seconds;
         action.feeding = Some(Box::new(feeding));
+        action
+    }
+
+    pub(crate) fn cook(
+        id: String,
+        heat_id: String,
+        seconds: f64,
+        binding: crate::food_preparation::Binding,
+    ) -> Self {
+        let mut action = Self::native_action(id, "cook", "working");
+        action.heat_id = Some(heat_id);
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
+        action.food_preparation = Some(Box::new(binding));
         action
     }
 

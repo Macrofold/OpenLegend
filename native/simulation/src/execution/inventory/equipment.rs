@@ -258,6 +258,7 @@ impl CoreMutation<'_> {
                     },
                     lineage: None,
                     prior_lineage_presence: false,
+                    extra_contents: Vec::new(),
                 })));
             entities.settle_operational_memory(
                 child,
