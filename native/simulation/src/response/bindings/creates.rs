@@ -12,7 +12,7 @@ pub(crate) struct AppraisalCreatesRequest {
     pub generation: String,
     pub actor_id: String,
     pub ids: Vec<String>,
-    maximum_transfer_bytes: usize,
+    pub maximum_transfer_bytes: usize,
     #[serde(skip)]
     storage: ByteReservation,
 }
@@ -25,6 +25,18 @@ pub(crate) struct AppraisalCreatesAnswer {
     _storage: Option<ByteReservation>,
 }
 impl AppraisalCreatesAnswer {
+    pub(crate) fn provided(
+        binding: GeometryBinding,
+        rows: Vec<InstalledRow>,
+        storage: ByteReservation,
+    ) -> Self {
+        Self {
+            binding,
+            rows,
+            _storage: Some(storage),
+        }
+    }
+
     pub(crate) fn decode(
         text: &str,
         budget: &ByteBudget,
@@ -61,6 +73,29 @@ impl AppraisalCreatesAnswer {
     }
 }
 impl AppraisalCreatesRequest {
+    /// The cursor keeps its own proof until acceptance. The provider owns only
+    /// the small selection and its exact request binding.
+    pub(crate) fn copy_for_provider(&self, budget: &ByteBudget) -> Result<Self, ExecutionError> {
+        let bytes = heap_sum([
+            size_of::<Self>(),
+            self.ids.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            self.world_id.len(),
+            self.generation.len(),
+            self.actor_id.len(),
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let storage = budget.reserve(bytes)?;
+        Ok(Self {
+            binding: self.binding,
+            world_id: self.world_id.clone(),
+            generation: self.generation.clone(),
+            actor_id: self.actor_id.clone(),
+            ids: self.ids.clone(),
+            maximum_transfer_bytes: self.maximum_transfer_bytes,
+            storage,
+        })
+    }
+
     pub(crate) fn prepare(
         state: &SimulationState,
         actor: &str,

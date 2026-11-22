@@ -2,8 +2,8 @@
 //! preparation. The caller retains its native evidence and response ticket.
 //! This code neither discovers facts nor confers permission to use a handle.
 
-use openlegend_simulation::host::ByteBudget;
-use serde::Deserialize;
+use openlegend_simulation::{host::ByteBudget, values::DefinitionPin};
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 
@@ -17,7 +17,7 @@ mod schema;
 pub(crate) use attention::BoundAttention;
 pub(crate) use prompt::PreparedPrompt;
 pub(crate) use scheduling::SchedulingPolicy;
-pub(crate) use schema::{BoundSchema, ResponseReferences};
+pub(crate) use schema::{BoundSchema, ResponseReferences, tree_bytes};
 
 #[derive(Debug)]
 pub(crate) enum RenderError {
@@ -53,6 +53,8 @@ impl std::error::Error for RenderError {}
 pub(crate) struct DecisionPolicy {
     pub(crate) instructions_version: String,
     pub(crate) response_instructions: String,
+    pub(crate) appraisal_policies: Vec<AppraisalPolicy>,
+    pub(crate) appraisal_source_limit: usize,
     pub(crate) reflection: ReflectionPolicy,
     pub(crate) query_instructions: String,
     context_bytes: usize,
@@ -75,6 +77,23 @@ pub(crate) struct DecisionPolicy {
     schemas: Vec<SchemaVariant>,
     choices: Value,
     pub(crate) scheduling: SchedulingPolicy,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct AppraisalPolicy {
+    pub(crate) ordinal: usize,
+    pub(crate) pin: DefinitionPin,
+    pub(crate) label: String,
+    pub(crate) value: AppraisalScale,
+    pub(crate) lifetime: String,
+}
+
+#[derive(Clone, Copy, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
+pub(crate) enum AppraisalScale {
+    Qualitative,
+    Scaled { min: f64, max: f64 },
 }
 
 #[derive(Deserialize)]
@@ -136,6 +155,18 @@ impl DecisionPolicy {
             })
             .map(|set| &set.questions)
             .ok_or(RenderError::Contract)
+    }
+
+    /// Borrow the same release schema used by ordinary reply validation.
+    pub(crate) fn appraisal_template(&self) -> Option<&Value> {
+        self.schemas
+            .first()?
+            .schema
+            .pointer("/properties/operations/items/anyOf")?
+            .as_array()?
+            .iter()
+            .filter_map(|operation| operation.pointer("/properties/appraise"))
+            .find(|field| field.get("anyOf").is_some())
     }
 
     pub(crate) fn prompt(

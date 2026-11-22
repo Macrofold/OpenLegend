@@ -258,6 +258,7 @@ impl Collected {
             source_data,
             &self.required,
             ProjectionPurpose::Recall,
+            None,
         )?;
         fresh.release_current_self();
         let rows = &source_data.ok_or(CallFailure::Invalid)?.personal;

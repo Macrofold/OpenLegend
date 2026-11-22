@@ -295,7 +295,7 @@ fn bound_bytes(
     }
 }
 
-pub(super) fn tree_bytes(value: &Value) -> usize {
+pub(crate) fn tree_bytes(value: &Value) -> usize {
     match value {
         Value::String(value) => 32usize.saturating_add(value.len()),
         Value::Array(items) => size_sum(64, items.iter().map(tree_bytes)),

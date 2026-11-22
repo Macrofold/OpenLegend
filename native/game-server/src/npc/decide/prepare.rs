@@ -31,6 +31,7 @@ use serde::Serialize;
 use serde_json::{Value, json};
 use std::{borrow::Cow, collections::HashMap, fmt::Write as _, sync::Arc};
 
+mod appraisal;
 mod recall;
 pub(in crate::npc) mod reflection;
 pub(super) use openlegend_simulation::runtime::RuntimeNpcDecisionFrame as ReceivedFrame;
@@ -55,6 +56,7 @@ pub(super) struct Projection {
     physical: Vec<String>,
     knowledge: Vec<String>,
     attention: Vec<String>,
+    appraisal_schema: Option<Value>,
     speaks: bool,
     expressions: bool,
     pub(super) preview_player: Option<String>,
@@ -128,7 +130,7 @@ impl Projection {
                     physical,
                     attention: &self.attention,
                     retention,
-                    appraisal: None,
+                    appraisal: self.appraisal_schema.as_ref(),
                 },
                 budget,
             )
@@ -196,6 +198,7 @@ pub(super) async fn finish(
         collected.sources.as_ref(),
         &collected.required,
         ProjectionPurpose::Decision,
+        Some((collected.original.as_ref().ok_or(CallFailure::Invalid)?, &mut projection)),
     )?;
     if let Some(page) = inspection {
         finish_activity_fields(&mut context, page);
@@ -298,6 +301,7 @@ fn project(
     selected: Option<&PersonalSources>,
     rows: &[usize],
     purpose: ProjectionPurpose,
+    appraisal_read: Option<(&RuntimeNpcRead, &mut ByteReservation)>,
 ) -> Result<(RuntimeNpcBindingInput, Projection, bool, bool), CallFailure> {
     let consumer = consumer(work);
     let decision = matches!(purpose, ProjectionPurpose::Decision);
@@ -353,10 +357,11 @@ fn project(
     let mut source_entries = Vec::with_capacity(rows.len());
     if let Some(selected) = selected {
         for &row in rows {
-            source_entries.push(selected.personal.get(row).ok_or(CallFailure::Invalid)?);
+            let source = selected.personal.get(row).ok_or(CallFailure::Invalid)?;
+            source_entries.push((row, source));
         }
     }
-    source_entries.sort_by(|a, b| {
+    source_entries.sort_by(|(_, a), (_, b)| {
         personal_time(a)
             .total_cmp(&personal_time(b))
             .then_with(|| a.value.sequence.cmp(&b.value.sequence))
@@ -367,11 +372,11 @@ fn project(
             .and_then(|trigger| trigger.evidence.as_deref())
     });
     let trigger_index = target_event.and_then(|event| {
-        source_entries.iter().position(|row| {
+        source_entries.iter().position(|(_, row)| {
             row.reference.id == event || row.value.event_id.as_deref() == Some(event)
         })
     });
-    let trigger = trigger_index.map(|index| source_entries[index]);
+    let trigger = trigger_index.map(|index| source_entries[index].1);
     if target_event.is_some() && trigger.is_none() {
         return Err(CallFailure::Stale("decision-heard-source"));
     }
@@ -394,7 +399,7 @@ fn project(
     let mut conversation = Vec::new();
     let mut recall = Vec::new();
     let mut rendered_trigger = None;
-    for (index, entry) in source_entries.into_iter().enumerate() {
+    for (index, &(_, entry)) in source_entries.iter().enumerate() {
         let value = &entry.value;
         let (display, at) = personal_description(entry)?;
         let event_time = display_time(at);
@@ -501,6 +506,19 @@ fn project(
             ordinal: note.ordinal,
         });
     }
+    let appraisal = appraisal_read
+        .map(|(original, custody)| {
+            appraisal::prepare(
+                &game.cognition,
+                appraisal::Input {
+                    current: read, original, sources: selected, rows: &source_entries,
+                    trigger: trigger_index, canonical: &canonical, refs: &refs, key: &reference_key,
+                },
+                &mut experience, custody,
+            )
+        })
+        .transpose()?
+        .flatten();
     let (mut fields, speaks, expressions, preview_player) = if decision {
         for (ordinal, offer) in read.decision_offers().map_err(packet_failure)?.enumerate() {
             let id = format!("a{ordinal}");
@@ -562,6 +580,13 @@ fn project(
             fields["includedContext"]["notepad"] = notepad;
         }
     }
+    let (appraisal_schema, appraisals) = match appraisal {
+        Some(offering) => {
+            fields["appraisals"] = offering.context;
+            (Some(offering.schema), Some(offering.selection))
+        }
+        None => (None, None),
+    };
     project_markers(&mut fields, &canonical, &refs);
     let evidence = if decision {
         personal_evidence(selected, rows.iter().copied())?
@@ -582,6 +607,7 @@ fn project(
         knowledge,
         attention,
         presented,
+        appraisals,
     };
     Ok((
         binding,
@@ -593,6 +619,7 @@ fn project(
             physical,
             knowledge: knowledge_aliases,
             attention: attention_aliases,
+            appraisal_schema,
             speaks,
             expressions,
             preview_player,
@@ -605,13 +632,13 @@ fn project(
 /// Only the exact causes of this decision determine the conversational
 /// shortcut. Recalled context can contain unrelated physical events.
 /// See docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence.
-fn speech_only(causes: &[PersonalSourceRef], entries: &[&PersonalSource]) -> bool {
+fn speech_only(causes: &[PersonalSourceRef], entries: &[(usize, &PersonalSource)]) -> bool {
     let mut heard = false;
     for cause in causes {
         if cause.kind != PersonalSourceKind::Awareness {
             return false;
         }
-        let Some(row) = entries.iter().find(|row| &row.reference == cause) else {
+        let Some((_, row)) = entries.iter().find(|(_, row)| &row.reference == cause) else {
             return false;
         };
         let value = &row.value;

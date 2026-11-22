@@ -136,17 +136,9 @@ impl NpcSourceAttribution {
             PersonalSourceKind::Memory => "memory",
             PersonalSourceKind::Summary => "summary",
         };
-        let coverage = match header.reference.kind {
-            PersonalSourceKind::Awareness => self
-                .reading_modality
-                .as_deref()
-                .ok_or(ExecutionError::InvalidCheckpoint)?,
-            PersonalSourceKind::Memory => header
-                .source
-                .as_deref()
-                .ok_or(ExecutionError::InvalidCheckpoint)?,
-            PersonalSourceKind::Summary => "inferred",
-        };
+        let (coverage, subjects) = self
+            .appraisal_facts(record)
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
         let occurrence = header.event_id.as_deref().unwrap_or(&header.reference.id);
         let kind = if trigger && header.reference.kind == PersonalSourceKind::Awareness {
             "perceived-event"
@@ -162,9 +154,7 @@ impl NpcSourceAttribution {
             header.reference.revision.len(),
             coverage.len(),
             decision.len(),
-            self.reading_entities
-                .heap_bytes()
-                .ok_or(ExecutionError::Capacity)?,
+            self.reading_entities.heap_bytes().ok_or(ExecutionError::Capacity)?,
         ])
         .ok_or(ExecutionError::Capacity)?;
         let storage = budget.reserve(bytes)?;
@@ -177,12 +167,25 @@ impl NpcSourceAttribution {
                 occurrence_id: occurrence.to_owned(),
                 source_version: header.reference.revision.clone(),
                 coverage: coverage.to_owned(),
-                subject_ids: self.reading_entities.clone(),
+                subject_ids: subjects.to_vec(),
                 recall_episode_id: Some(decision.to_owned()),
             },
             storage,
         ))
     }
+    pub(crate) fn appraisal_facts<'a>(
+        &'a self,
+        record: &'a super::CapturedPersonalRecord,
+    ) -> Option<(&'a str, &'a [String])> {
+        let header = record.header();
+        let coverage = match header.reference.kind {
+            PersonalSourceKind::Awareness => self.reading_modality.as_deref()?,
+            PersonalSourceKind::Memory => header.source.as_deref()?,
+            PersonalSourceKind::Summary => "inferred",
+        };
+        Some((coverage, &self.reading_entities))
+    }
+
     pub(crate) fn subject(&self, ordinal: usize) -> Option<&NpcSubjectFact> {
         self.subjects.get(ordinal)
     }

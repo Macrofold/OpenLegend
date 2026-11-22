@@ -149,6 +149,7 @@ enum QuestionBody {
     Collation(CollationProviderRequest),
     Maintenance(crate::cognition::format::MaintenanceFormatRequest),
     ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
+    AppraisalOutcomes(Box<crate::response::AppraisalCreatesRequest>),
     ActivityLearningFormat(Arc<crate::activity::LearningFormatRequest>),
 }
 
@@ -364,6 +365,36 @@ impl ProviderQuestion {
         })
     }
 
+    pub(crate) fn appraisal_outcomes(&self) -> Option<&crate::response::AppraisalCreatesRequest> {
+        match &self.body {
+            QuestionBody::AppraisalOutcomes(request) => Some(request),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn appraisal_outcomes_envelope(
+        &self,
+    ) -> Option<QuestionEnvelope<'_, crate::response::AppraisalCreatesRequest>> {
+        self.appraisal_outcomes().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    fn prepare_appraisal_outcomes(
+        request: &crate::response::AppraisalCreatesRequest,
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, DriveError> {
+        let request = request.copy_for_provider(budget)?;
+        Self::prepare_bound(
+            ProviderKind::AppraisalOutcomes,
+            request.binding,
+            QuestionBody::AppraisalOutcomes(Box::new(request)),
+            budget,
+        )
+    }
+
     pub(crate) fn learning_history(&self) -> Option<&crate::activity::LearningHistoryRequest> {
         match &self.body {
             QuestionBody::ActivityHistory(ask) => Some(ask),
@@ -510,6 +541,7 @@ enum AnswerBody {
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
+    AppraisalOutcomes(Box<crate::response::AppraisalCreatesAnswer>),
     ActivityLearningFormat(Box<crate::activity::LearningFormatAnswer>),
 }
 
@@ -686,6 +718,22 @@ impl ProviderResponse {
             kind: ProviderKind::Sources,
             binding,
             body: AnswerBody::NpcSources(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn appraisal_outcomes(
+        binding: GeometryBinding,
+        answer: Box<crate::response::AppraisalCreatesAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::AppraisalOutcomes,
+            binding,
+            body: AnswerBody::AppraisalOutcomes(answer),
             _reservation: reservation,
         })
     }
@@ -1937,6 +1985,9 @@ impl OperationDriver {
                     AnswerBody::NpcSources(value) => {
                         (Some(Answer::Sources(*value)), Some(_reservation), None)
                     }
+                    AnswerBody::AppraisalOutcomes(value) => {
+                        (Some(Answer::AppraisalOutcomes(*value)), Some(_reservation), None)
+                    }
                     AnswerBody::ActivityHistory(value) => {
                         (Some(Answer::ActivityHistory(*value)), Some(_reservation), None)
                     }
@@ -2713,6 +2764,21 @@ enum ResponseReply {
     Command(CommandReply),
     Event(EventReply),
 }
+fn appraisal_outcomes_question<T, R>(
+    answer: &Option<Answer>,
+    request: &crate::response::AppraisalCreatesRequest,
+    budget: &ByteBudget,
+    route: R,
+) -> Result<Poll<T, R>, DriveError> {
+    if answer.is_some() {
+        return Err(DriveError::StaleResponse);
+    }
+    Ok(Poll::Question(
+        ProviderQuestion::prepare_appraisal_outcomes(request, budget)?,
+        route,
+    ))
+}
+
 fn poll_response(
     cursor: &mut crate::response::ResponseCursor,
     core: &mut CoreMutation<'_>,
@@ -2770,14 +2836,7 @@ fn poll_response(
     loop {
         match cursor.step(core, supplied.take())? {
             ResponseStep::AppraisalCreates(q) => {
-                return question(
-                    answer,
-                    ProviderKind::AppraisalOutcomes,
-                    q.binding,
-                    q,
-                    budget,
-                    ResponseReply::AppraisalCreates,
-                );
+                return appraisal_outcomes_question(answer, q, budget, ResponseReply::AppraisalCreates);
             }
             ResponseStep::Sources(q) => {
                 return question(

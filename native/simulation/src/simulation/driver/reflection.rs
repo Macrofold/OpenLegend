@@ -59,14 +59,7 @@ pub(super) fn poll_reflection(
                 );
             }
             ReflectionStep::Creates(q) => {
-                return question(
-                    answer,
-                    ProviderKind::AppraisalOutcomes,
-                    q.binding,
-                    q,
-                    budget,
-                    ReflectionReply::Creates,
-                );
+                return appraisal_outcomes_question(answer, q, budget, ReflectionReply::Creates);
             }
             ReflectionStep::Event(child) => {
                 let child_route = match route.take() {

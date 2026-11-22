@@ -265,6 +265,7 @@ pub(in crate::npc) async fn prepare(
         knowledge: Vec::new(),
         attention: Vec::new(),
         presented: Vec::new(),
+        appraisals: None,
     }
     .fund_reflection(subject_bindings, &mut custody)
     .map_err(packet_failure)?;

@@ -2,6 +2,7 @@
 //! admitted readers use fixed read-only snapshots on separate connections.
 
 pub(crate) mod activity_learning;
+mod appraisal_outcomes;
 mod archives;
 pub(crate) mod assets;
 mod attempts;
@@ -37,6 +38,7 @@ mod view_profile;
 mod write;
 pub(crate) use view_cognition::AiDisplay;
 
+pub(crate) use appraisal_outcomes::PreparedAppraisalOutcomes;
 pub use history::OrdinaryProjection;
 pub(crate) use history::{ClaimedStory, OptionalStorySource, StoryOutput, StoryRevisions};
 pub(crate) use history::banner::NarrationBanner;

@@ -51,7 +51,17 @@ Existing controlled-client checks exercise the actual request preparation, share
 
 Three recorded browser journeys cover authorized inspection, the existing owner conversation, and a delayed NPC reply with readable failure and preservation of the player's newer unsent draft. Private HTTP checks cover permission revocation. The inspector distinguishes proposed from committed actions, immediate deferral from a resolved answer, and actual cost from uncertain reservations. Its reads perform no inference.
 
-Actual Medium calls previously exercised the same native feeling owner in an explicitly opted-in fixture: an apology reduced one frustration record from 0.50 to 0.20 without creating a duplicate. This establishes native integration for that submitted proposal, not current Low emotional quality. The saved result passed the current-format reader. Bundled feeling definitions remain disabled for decision-time appraisal; no universal hunger-to-frustration rule was installed.
+Actual Medium calls previously exercised the same native feeling owner in an explicitly opted-in fixture: an apology reduced one frustration record from 0.50 to 0.20 without creating a duplicate. This establishes native integration for that submitted proposal, not current Low emotional quality. The saved result passed the current-format reader. Bundled decision-time appraisal was disabled at the time of this trial. The current bundled world opts in fear and anger through its [authored definitions](../../packages/domain/src/worlds/base/appraisals.ts).
+
+## Ordinary appraisal on the stand-alone Rust server — November 22, 2026
+
+A signed-in player asked an NPC about a nearby sound. The ordinary reply supplied only that NPC’s permitted evidence, current feelings and installed options. The controlled HTTPS reply chose the authored fear definition at intensity 0.5. Rust saved one private feeling and recovered the same result on replay and cold reopening. A proposed cause absent from the supplied options was refused before application.
+
+After the first feeling was resolved, a new request on the cold server selected the same remembered occurrence. The exact prior-outcome lookup refused a second creation. The reply’s independent speech still applied, and the original resolved record stayed byte for byte. This lookup borrows the selected accepted save cut and accounts for matching pending writes and deletions. The separate case with an earlier outcome still in pending rows remains unverified. A confirmed ordinary save failure deliberately stops subsequent mutation, so an injected save error was unsuitable for that case.
+
+During a held valid reply, the ordinary clock and movement continued and PostgreSQL saved the walk before the model response arrived. The original reply then applied once. Forgetting its exact cause while another reply was held refused the response with no effects. Cancellation separately applied nothing. The original requests stayed recoverable without another provider attempt. The controlled calls incurred $0 in new and cumulative Jev cost. The checks establish behavior, including application after unrelated movement and refusal after withdrawal. They do not measure model quality or performance.
+
+The cases in local archive `nsc04-standalone-appraisal-20261122` use executable SHA-256 `6ffe8826624fa30587f82d280c0108cb9f8e1e692e8a7e5a23e9bc0d04c15868`. The archive preserves a failed cold fixture that tried a recipient reference from the previous session. Reconnecting and selecting the current permitted recipient completed that check. The locked Rust build, TypeScript and network checks passed. All disposable databases were removed.
 
 ## Live policy comparison
 

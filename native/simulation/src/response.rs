@@ -17,9 +17,9 @@ mod envelope;
 mod save;
 pub(crate) use envelope::{ActorResponse, ResponseEnvelopeError, ResponseKind, ResponseOperation};
 mod bindings;
-pub use bindings::ResponseConsumer;
+pub use bindings::{AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal, ResponseConsumer};
 pub(crate) use bindings::{
-    AppraisalCreatesAnswer, AppraisalCreatesRequest, AppraisalSelection,
+    AppraisalCreatesAnswer, AppraisalCreatesRequest,
     PreparedResponseAppraisals, ResponseActionChoice, ResponseAttemptBinding,
     ResponseAttemptCandidate, ResponseBindingInput, ResponseBindings, ResponseNativeGuard,
     ResponseObservation, ResponseReads, ResponseSemanticCause, ResponseSituation,

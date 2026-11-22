@@ -18,12 +18,17 @@ mod history;
 pub use history::RuntimeNpcHistoryWindow;
 mod knowledge;
 pub use knowledge::RuntimeNpcSubjectNote;
+mod appraisal_read;
 mod origin;
 mod personal;
 mod perspectives;
 mod presentation;
 mod queries;
 pub use crate::appraisals::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
+pub use appraisal_read::RuntimeNpcAppraisalRecord;
+pub use crate::response::{
+    AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal,
+};
 pub(super) use bindings::ActiveNpcResponse;
 pub use bindings::{
     RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcConsumer, RuntimeNpcOperations,

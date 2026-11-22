@@ -32,6 +32,7 @@ pub struct RuntimeNpcBindingInput {
     pub knowledge: Vec<NpcAliasOrdinal>,
     pub attention: Vec<NpcAliasOrdinal>,
     pub presented: Vec<usize>,
+    pub appraisals: Option<crate::response::AppraisalSelection>,
 }
 
 pub struct RuntimeNpcBindingRequest {
@@ -249,6 +250,7 @@ impl RuntimeNpcBindingInput {
             subjects.heap_bytes().ok_or(CapacityError)?,
             self.attention.heap_bytes().ok_or(CapacityError)?,
             self.presented.heap_bytes().ok_or(CapacityError)?,
+            self.appraisals.heap_bytes().ok_or(CapacityError)?,
         ])
         .ok_or(CapacityError)?;
         let custody = workspace.split_off(bytes)?;
@@ -279,7 +281,7 @@ impl RuntimeNpcBindingInput {
                     receipts: Vec::new(),
                     attention: self.attention,
                     presented: self.presented,
-                    appraisals: None,
+                    appraisals: self.appraisals,
                 },
             },
             _custody: custody,

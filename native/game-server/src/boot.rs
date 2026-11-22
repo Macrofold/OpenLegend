@@ -558,6 +558,14 @@ impl CurrentServer {
                 .await?;
             return Ok((question, answer));
         }
+        if question.asks_appraisal_outcomes()? {
+            let (question, prepared) = self.world.prepare_appraisal_outcomes(question).await?;
+            let store = self.store.clone();
+            let answer = self
+                .read_for_operation(async move { store.read_appraisal_outcomes(prepared).await })
+                .await?;
+            return Ok((question, answer));
+        }
         if question.asks_source_versions()? {
             let (question, prepared) = self.world.prepare_source_versions(question).await?;
             let store = Arc::clone(&self.store);

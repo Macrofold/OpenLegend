@@ -7,20 +7,20 @@ use crate::records::SqlCell;
 
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct PersonalOrdinal {
+pub struct PersonalOrdinal {
     pub inventory: usize,
     pub ordinal: usize,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct AppraisalSourceAlias {
+pub struct AppraisalSourceAlias {
     pub alias: String,
     pub inventory: usize,
     pub ordinal: usize,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct AppraisalSelection {
+pub struct AppraisalSelection {
     purpose: AppraisalPurpose,
     guard: AppraisalGuard,
     pub policies: Vec<NpcAliasOrdinal>,
@@ -35,7 +35,26 @@ enum AppraisalPurpose {
     Decision,
     Reflection,
 }
+crate::host::retained_size::heap_record!(AppraisalSourceAlias { alias });
+crate::host::retained_size::heap_record!(AppraisalSelection { policies, records, sources });
+
 impl AppraisalSelection {
+    pub fn decision(
+        policies: Vec<NpcAliasOrdinal>,
+        records: Vec<NpcAliasOrdinal>,
+        sources: Vec<AppraisalSourceAlias>,
+        trigger: Option<PersonalOrdinal>,
+    ) -> Self {
+        Self {
+            purpose: AppraisalPurpose::Decision,
+            guard: AppraisalGuard::All,
+            policies,
+            records,
+            sources,
+            trigger,
+        }
+    }
+
     pub(crate) fn reflection(&self) -> bool {
         matches!(self.purpose, AppraisalPurpose::Reflection)
     }

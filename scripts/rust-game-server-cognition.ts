@@ -1,5 +1,6 @@
 import {
   activityRequestDescriptors,
+  appraisalPin,
   decisionOfferDescription,
   formatObservedBodyHealth,
   itemOutputFamilies,
@@ -32,6 +33,7 @@ import {
 } from '../apps/server/src/macrofold-model.js';
 import { REFLECTION_DOWNTIME } from '../apps/server/src/reflection-publication.js';
 import { CONTEXT_BYTE_LIMIT } from '../apps/server/src/context.js';
+import { APPRAISAL_SOURCE_BINDINGS } from '../apps/server/src/memory-repository.js';
 import {
   attentionRequest,
   decisionActionAttentionRequest,
@@ -146,7 +148,20 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
   const namedTimes = namedClockTimes(world);
   const supported = selectedResponseExpressions(world, true);
   const unsupported = selectedResponseExpressions(world, false);
-  const appraises = world.moduleManifest.appraisals?.definitions.some((entry) => entry.decision);
+  const appraisalPolicies = (world.moduleManifest.appraisals?.definitions ?? []).flatMap(
+    (entry, ordinal) =>
+      entry.decision
+        ? [
+            {
+              ordinal,
+              pin: appraisalPin(entry),
+              label: entry.label,
+              value: entry.value,
+              lifetime: entry.lifetime.kind,
+            },
+          ]
+        : [],
+  );
   const attention = selectedAttentionPolicy(world);
   const maxQueries = attention.scene.maximumQueries;
   const recallAlias = '@rgs:recall-candidate';
@@ -164,7 +179,7 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
         [references.knowledge],
         namedTimes,
         requests,
-        appraises ? decisionAppraisalSchema : undefined,
+        appraisalPolicies.length ? decisionAppraisalSchema : undefined,
         [references.identity],
         [references.physical],
         {
@@ -190,6 +205,8 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
   return {
     instructionsVersion: COGNITION_VERSION,
     responseInstructions: RESPONSE_INSTRUCTIONS,
+    appraisalPolicies,
+    appraisalSourceLimit: APPRAISAL_SOURCE_BINDINGS,
     reflection: {
       instructions: REFLECTION_WORKSPACE_INSTRUCTIONS,
       workspaceGuidance: REFLECTION_WORKSPACE_GUIDANCE,

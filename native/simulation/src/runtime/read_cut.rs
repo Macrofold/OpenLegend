@@ -42,8 +42,58 @@ impl RuntimeProvider {
         Ok(self.question()?.kind() == crate::simulation::ProviderKind::Sources)
     }
 
+    pub fn asks_appraisal_outcomes(&self) -> Result<bool, RuntimeError> {
+        Ok(self.question()?.appraisal_outcomes().is_some())
+    }
+
     pub fn asks_activity_history(&self) -> Result<bool, RuntimeError> {
         Ok(self.question()?.learning_history().is_some())
+    }
+}
+
+/// Exact prior create identities and pending save rows for one appraisal
+/// operation. The SQL reader retains only the selected rows across its await.
+pub struct RuntimeAppraisalOutcomesRead<'a> {
+    pub binding: crate::geometry::GeometryBinding,
+    pub world_id: &'a str,
+    pub generation: &'a str,
+    pub actor_id: &'a str,
+    pub ids: &'a [String],
+    pub maximum_transfer_bytes: usize,
+    pub durable_revision: u64,
+    pub in_flight_through: Option<u64>,
+    pub detached: Option<&'a crate::records::ChangedRows>,
+    pub suffix: &'a crate::records::ChangedRows,
+}
+
+impl NativeWorldSession {
+    pub fn with_appraisal_outcomes_read<T>(
+        &self,
+        ticket: &RuntimeProvider,
+        prepare: impl FnOnce(RuntimeAppraisalOutcomesRead<'_>) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        self.require_active()?;
+        let question = ticket.question()?;
+        let Some(request) = question.appraisal_outcomes() else {
+            return Ok(None);
+        };
+        let (metadata, save) = self
+            .session
+            .source_versions_read(request.binding, &request.world_id, &request.generation)
+            .map_err(failure)?;
+        let (detached, suffix) = save.pending_read_rows();
+        Ok(Some(prepare(RuntimeAppraisalOutcomesRead {
+            binding: request.binding,
+            world_id: &request.world_id,
+            generation: &request.generation,
+            actor_id: &request.actor_id,
+            ids: &request.ids,
+            maximum_transfer_bytes: request.maximum_transfer_bytes,
+            durable_revision: metadata.durable_revision,
+            in_flight_through: metadata.in_flight_through,
+            detached,
+            suffix,
+        })))
     }
 }
 

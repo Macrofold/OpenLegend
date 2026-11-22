@@ -95,8 +95,8 @@ pub use crate::capture::{
 };
 pub use navigation::RuntimeNavigationRead;
 pub use read_cut::{
-    RuntimeActivityHistoryRead, RuntimeActivityRowsRead, RuntimeKnownPlaceRead, RuntimeNpcSourceRead,
-    RuntimeSourceVersionRead,
+    RuntimeActivityHistoryRead, RuntimeActivityRowsRead, RuntimeAppraisalOutcomesRead,
+    RuntimeKnownPlaceRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead,
 };
 mod restore;
 pub use restore::{
@@ -114,6 +114,7 @@ pub use crate::time::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput
 pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
+    AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal, RuntimeNpcAppraisalRecord,
     RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcBoundaryFact, RuntimeNpcConsumer,
     RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcFeeling, RuntimeNpcFeelingTarget,
     RuntimeNpcFeelings, RuntimeNpcHistoryWindow, RuntimeNpcObservedBody, RuntimeNpcOffer, RuntimeNpcOperations,
@@ -336,6 +337,7 @@ enum RuntimeAnswerBody {
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
+    AppraisalOutcomes(Box<crate::response::AppraisalCreatesAnswer>),
     ActivityLearningFormat(Box<crate::activity::LearningFormatAnswer>),
 }
 impl RuntimeProviderInput {
@@ -472,6 +474,26 @@ impl RuntimeProviderInput {
         })
     }
 
+    /// Transfer only the scoped, funded prior rows. The appraisal owner
+    /// validates their exact identities and current format before using them.
+    pub fn appraisal_outcomes(
+        binding: crate::geometry::GeometryBinding,
+        rows: Vec<crate::records::InstalledRow>,
+        storage: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        if !budget.owns(&storage) {
+            return Err(failure("prior appraisal rows belong to another native budget"));
+        }
+        let custody = budget.reserve(size_of::<crate::response::AppraisalCreatesAnswer>())?;
+        Ok(Self {
+            body: RuntimeAnswerBody::AppraisalOutcomes(Box::new(
+                crate::response::AppraisalCreatesAnswer::provided(binding, rows, storage),
+            )),
+            custody,
+        })
+    }
+
     /// Move the actual scoped PostgreSQL rows and their custody into the
     /// existing activity learner, which still validates their identities.
     pub fn activity_history(
@@ -584,6 +606,12 @@ fn provider_response(
                         return Err(failure("mind format answer requires its typed request"));
                     }
                     ProviderResponse::maintenance(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::AppraisalOutcomes(answer) => {
+                    if question.appraisal_outcomes().is_none() {
+                        return Err(failure("prior appraisal rows require their typed request"));
+                    }
+                    ProviderResponse::appraisal_outcomes(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::ActivityHistory(answer) => {
                     if question.learning_history().is_none() {
@@ -1011,6 +1039,9 @@ impl RuntimeProvider {
         }
         if let Some(maintenance) = question.maintenance_envelope() {
             return RuntimeJson::encode(&maintenance, budget);
+        }
+        if let Some(appraisals) = question.appraisal_outcomes_envelope() {
+            return RuntimeJson::encode(&appraisals, budget);
         }
         if let Some(history) = question.learning_history_envelope() {
             return RuntimeJson::encode(&history, budget);

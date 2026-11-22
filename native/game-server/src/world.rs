@@ -927,6 +927,21 @@ impl HostedWorld {
         Ok((question, prepared.ok_or(WorldError::ProviderKind)??))
     }
 
+    pub(crate) async fn prepare_appraisal_outcomes(
+        self: &Arc<Self>,
+        question: RuntimeProvider,
+    ) -> Result<(RuntimeProvider, crate::store::PreparedAppraisalOutcomes), WorldError> {
+        let store = self.store.clone();
+        let (question, prepared) = self
+            .call(move |session| {
+                let prepared = session
+                    .with_appraisal_outcomes_read(&question, |read| store.prepare_appraisal_outcomes(read))?;
+                Ok((question, prepared))
+            })
+            .await?;
+        Ok((question, prepared.ok_or(WorldError::ProviderKind)??))
+    }
+
     pub(crate) async fn prepare_source_versions(
         self: &Arc<Self>,
         question: RuntimeProvider,
