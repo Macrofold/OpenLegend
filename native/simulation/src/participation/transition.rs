@@ -91,11 +91,48 @@ pub(crate) enum ParticipationOperation {
     },
     Return,
     #[serde(skip_deserializing)]
-    Enroll {
-        account_id: String,
+    SettleDeparture {
         attempt_id: String,
+        assignment: AssignmentDeparture,
     },
 }
+
+pub(crate) enum AssignmentDeparture {
+    Invite(String),
+    RebindFrom,
+    RebindTo(String),
+}
+
+impl AssignmentDeparture {
+    fn account(&self) -> Option<&str> {
+        match self {
+            Self::Invite(account) | Self::RebindTo(account) => Some(account),
+            Self::RebindFrom => None,
+        }
+    }
+
+    fn permitted(&self, core: &CoreMutation<'_>, actor_id: &str) -> bool {
+        match self {
+            Self::Invite(_) => invitable_actor(core.state, actor_id).is_some(),
+            Self::RebindFrom => true,
+            Self::RebindTo(account) => {
+                core.state
+                    .physical
+                    .entities
+                    .get(actor_id)
+                    .is_some_and(|entity| entity.retirement.is_none())
+                    && core
+                        .state
+                        .administration
+                        .authorship
+                        .player_account_ids
+                        .get(actor_id)
+                        .is_none_or(|owner| owner == account)
+            }
+        }
+    }
+}
+
 pub(crate) enum ParticipationAnswer {
     Geometry(GeometryAnswers),
     Event(CompletedEvent),
@@ -140,8 +177,14 @@ enum Phase {
     Finalize,
     Done,
 }
+enum BindingStage {
+    Next(ParticipationRequest),
+    Prior(CompletedParticipation),
+}
+
 pub(crate) struct ParticipationCursor {
     request: ParticipationRequest,
+    binding: Option<Box<BindingStage>>,
     candidate: CandidateKey,
     finalize: bool,
     departed: bool,
@@ -171,12 +214,12 @@ impl ParticipationCursor {
             ParticipationOperation::BeginExit { attempt_id }
             | ParticipationOperation::ReconcileExit { attempt_id }
             | ParticipationOperation::Depart { attempt_id } => attempt_id.capacity(),
-            ParticipationOperation::Enroll {
-                account_id,
+            ParticipationOperation::SettleDeparture {
+                assignment,
                 attempt_id,
-            } => account_id
+            } => attempt_id
                 .capacity()
-                .checked_add(attempt_id.capacity())
+                .checked_add(assignment.account().map_or(0, str::len))
                 .ok_or(ExecutionError::Capacity)?,
             _ => 0,
         };
@@ -186,6 +229,7 @@ impl ParticipationCursor {
         )?;
         Ok(Self {
             request,
+            binding: None,
             candidate,
             finalize: true,
             departed: false,
@@ -203,6 +247,30 @@ impl ParticipationCursor {
             storage: Some(storage),
         })
     }
+    /// Rebinding settles both bodies in order inside the same protected journal.
+    pub(crate) fn follow_with(
+        &mut self,
+        request: ParticipationRequest,
+    ) -> Result<(), ExecutionError> {
+        let ParticipationOperation::SettleDeparture {
+            attempt_id,
+            assignment: AssignmentDeparture::RebindTo(account),
+        } = &request.operation
+        else {
+            return Err(ExecutionError::Invariant);
+        };
+        let bytes = heap_sum([
+            size_of::<BindingStage>(),
+            request.actor_id.capacity(),
+            attempt_id.capacity(),
+            account.capacity(),
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        self.reserve(bytes)?;
+        self.binding = Some(Box::new(BindingStage::Next(request)));
+        Ok(())
+    }
+
     pub(crate) fn due(
         core: &CoreMutation<'_>,
         actor_id: &str,
@@ -553,12 +621,14 @@ impl ParticipationCursor {
                         if state.is_some_and(|state| state.phase == "exiting"
                             && state.exit_attempt_id.as_ref() != Some(attempt_id)));
                     match &self.request.operation {
-                        ParticipationOperation::Enroll {
-                            account_id,
+                        ParticipationOperation::SettleDeparture {
+                            assignment,
                             attempt_id,
-                        } if !crate::values::is_safe_record_id(account_id)
+                        } if assignment
+                            .account()
+                            .is_some_and(|account| !crate::values::is_safe_record_id(account))
                             || !crate::values::is_safe_record_id(attempt_id)
-                            || invitable_actor(core.state, &self.request.actor_id).is_none()
+                            || !assignment.permitted(core, &self.request.actor_id)
                             || state.is_none_or(|state| state.phase == "active")
                                 && self.request.expected_revision
                                     == crate::identity::MAX_SAFE_INTEGER - 1 =>
@@ -682,18 +752,28 @@ impl ParticipationCursor {
                     // Eligibility and any required return-standing check have
                     // succeeded. Refusals and no-op returns never reach this.
                     self.materialize_edit(core)?;
-                    if let ParticipationOperation::Enroll { account_id, .. } =
+                    if let ParticipationOperation::SettleDeparture { assignment, .. } =
                         &self.request.operation
                     {
-                        // Control, authorship and absence commit in one protected
-                        // candidate. An already inactive body needs no second departure.
+                        // Both actors lose any inspected inventory. Only the new
+                        // actor needs to acquire or reuse permanent authorship.
+                        let account = assignment.account();
                         core.physical()
-                            .reconcile_actor_access(&self.request.actor_id, true)?;
-                        core.journal.restore_metadata.enroll_owner(
-                            core.state,
-                            &self.request.actor_id,
-                            account_id,
-                        )?;
+                            .reconcile_actor_access(&self.request.actor_id, account.is_some())?;
+                        if let Some(account) = account
+                            && !core
+                                .state
+                                .administration
+                                .authorship
+                                .player_account_ids
+                                .contains_key(&self.request.actor_id)
+                        {
+                            core.journal.restore_metadata.enroll_owner(
+                                core.state,
+                                &self.request.actor_id,
+                                account,
+                            )?;
+                        }
                         if core
                             .state
                             .physical
@@ -716,7 +796,7 @@ impl ParticipationCursor {
                         core.sync_sensory_changes()?;
                     }
                     match &self.request.operation {
-                        ParticipationOperation::Enroll { attempt_id, .. } => {
+                        ParticipationOperation::SettleDeparture { attempt_id, .. } => {
                             let active = core
                                 .state
                                 .physical
@@ -913,7 +993,7 @@ impl ParticipationCursor {
                     self.phase = if matches!(
                         self.request.operation,
                         ParticipationOperation::Depart { .. }
-                            | ParticipationOperation::Enroll { .. }
+                            | ParticipationOperation::SettleDeparture { .. }
                     ) {
                         Phase::DepartureStanding
                     } else {
@@ -1043,14 +1123,47 @@ impl ParticipationCursor {
                     self.phase = Phase::Done;
                 }
                 Phase::Done => {
-                    return Ok(ParticipationStep::Complete(CompletedParticipation {
+                    let mut done = CompletedParticipation {
                         actor_id: std::mem::take(&mut self.request.actor_id),
                         at: core.state.physical.header.sim_time,
                         deadline: !self.finalize,
                         outcome: self.outcome.take().ok_or_else(invalid)?,
                         events: std::mem::take(&mut self.events),
                         storage: self.storage.take().ok_or_else(invalid)?,
-                    }));
+                    };
+                    if done.outcome.ok
+                        && let Some(mut stage) = self.binding.take()
+                    {
+                        match *stage {
+                            BindingStage::Next(request) => {
+                                let mut next = Self::new(request, self.candidate, budget)?;
+                                *stage = BindingStage::Prior(done);
+                                next.binding = Some(stage);
+                                *self = next;
+                                continue;
+                            }
+                            BindingStage::Prior(mut prior) => {
+                                // Each actor reconciled their own events. The shared
+                                // publication now hands off the complete ordered batch.
+                                prior.storage.merge(done.storage)?;
+                                let bytes = done
+                                    .events
+                                    .len()
+                                    .checked_mul(size_of::<crate::events::WorldEvent>())
+                                    .and_then(|bytes| bytes.checked_add(prior.storage.bytes()))
+                                    .ok_or(ExecutionError::Capacity)?;
+                                prior.storage.resize(bytes)?;
+                                prior
+                                    .events
+                                    .try_reserve_exact(done.events.len())
+                                    .map_err(|_| ExecutionError::Capacity)?;
+                                prior.events.append(&mut done.events);
+                                done.storage = prior.storage;
+                                done.events = prior.events;
+                            }
+                        }
+                    }
+                    return Ok(ParticipationStep::Complete(done));
                 }
             }
         }

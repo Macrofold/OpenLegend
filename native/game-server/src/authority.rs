@@ -15,6 +15,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio_postgres::Row;
 use uuid::Uuid;
 
+pub(crate) mod binding;
 mod control;
 pub(crate) mod invites;
 mod managed_access;

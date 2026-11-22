@@ -21,6 +21,9 @@ use openlegend_simulation::{runtime::InvitationActor, values::is_safe_record_id}
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+mod binding;
+pub(in crate::player_http) use binding::change;
+
 #[derive(Serialize)]
 pub(super) struct AccessSection<'a> {
     grants: Vec<GrantView<'a>>,

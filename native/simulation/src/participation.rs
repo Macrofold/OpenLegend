@@ -11,8 +11,8 @@ mod install;
 mod transition;
 pub(crate) use due::{DueExits, next_exit_deadline};
 pub(crate) use transition::{
-    CompletedParticipation, ParticipationAnswer, ParticipationCursor, ParticipationError,
-    ParticipationOperation, ParticipationRequest, ParticipationStep,
+    AssignmentDeparture, CompletedParticipation, ParticipationAnswer, ParticipationCursor,
+    ParticipationError, ParticipationOperation, ParticipationRequest, ParticipationStep,
 };
 
 pub(crate) fn invitable_actor<'a>(

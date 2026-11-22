@@ -1150,13 +1150,24 @@ impl Session {
         &mut self,
         request: crate::participation::ParticipationRequest,
     ) -> Result<CandidateKey, SessionError> {
+        self.begin_participation_sequence(request, None)
+    }
+
+    pub(crate) fn begin_participation_sequence(
+        &mut self,
+        request: crate::participation::ParticipationRequest,
+        follow_up: Option<crate::participation::ParticipationRequest>,
+    ) -> Result<CandidateKey, SessionError> {
         if !self.save_barrier_complete() {
             return Err(FenceError::Busy.into());
         }
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
-            let cursor =
+            let mut cursor =
                 crate::participation::ParticipationCursor::new(request, key, &self.budget)?;
+            if let Some(follow_up) = follow_up {
+                cursor.follow_with(follow_up)?;
+            }
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,
                 journal: &mut journal,

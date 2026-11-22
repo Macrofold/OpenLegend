@@ -169,7 +169,9 @@ impl NativeWorldSession {
         account: String,
         attempt: String,
     ) -> Result<CandidateKey, RuntimeError> {
-        use crate::participation::{ParticipationOperation, ParticipationRequest, invitable_actor};
+        use crate::participation::{
+            AssignmentDeparture, ParticipationOperation, ParticipationRequest, invitable_actor,
+        };
         self.require_active()?;
         let current = self.session.accepted().map_err(failure)?;
         let expected_revision = invitable_actor(&current.state, &actor)
@@ -180,11 +182,54 @@ impl NativeWorldSession {
             .begin_participation(ParticipationRequest {
                 actor_id: actor,
                 expected_revision,
-                operation: ParticipationOperation::Enroll {
-                    account_id: account,
+                operation: ParticipationOperation::SettleDeparture {
                     attempt_id: attempt,
+                    assignment: AssignmentDeparture::Invite(account),
                 },
             })
+            .map_err(failure)
+    }
+
+    /// Both bodies settle under one protected candidate. Expected participation
+    /// revisions come from that candidate's exact accepted predecessor.
+    pub fn begin_account_rebinding(
+        &mut self,
+        account: String,
+        previous: String,
+        target: String,
+        attempt: String,
+    ) -> Result<CandidateKey, RuntimeError> {
+        use crate::participation::{
+            AssignmentDeparture, ParticipationOperation, ParticipationRequest,
+        };
+        self.require_active()?;
+        let current = self.session.accepted().map_err(failure)?;
+        current
+            .require_player_read(&account, &previous)
+            .map_err(failure)?;
+        let request = |actor: String, attempt_id, assignment| {
+            let expected_revision = current
+                .state
+                .physical
+                .entities
+                .get(&actor)
+                .and_then(|body| body.actor.as_ref())
+                .and_then(|actor| actor.participation.as_ref())
+                .map_or(0, |participation| participation.revision);
+            ParticipationRequest {
+                actor_id: actor,
+                expected_revision,
+                operation: ParticipationOperation::SettleDeparture {
+                    attempt_id,
+                    assignment,
+                },
+            }
+        };
+        let _attempt = self.budget.reserve(attempt.len())?;
+        let from = request(previous, attempt.clone(), AssignmentDeparture::RebindFrom);
+        let to = request(target, attempt, AssignmentDeparture::RebindTo(account));
+        self.session
+            .begin_participation_sequence(from, Some(to))
             .map_err(failure)
     }
 
