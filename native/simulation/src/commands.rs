@@ -231,7 +231,12 @@ pub(crate) enum NativeCommand {
         operation: crate::fire_care::FireOperation,
         item_id: Option<String>,
     },
-    Pickup { envelope: CommandEnvelope, target_id: String, item_id: String, quantity: Option<u64> },
+    Pickup {
+        envelope: CommandEnvelope,
+        target_id: String,
+        item_id: Option<String>,
+        quantity: Option<u64>,
+    },
     Drop { envelope: CommandEnvelope, item_id: String, quantity: u64 },
     Eat { envelope: CommandEnvelope, item_id: String },
     Equipment {
@@ -734,11 +739,16 @@ impl<'de> Deserialize<'de> for NativeCommand {
                 && input.self_introduction.is_none()
                 && input.volume.is_none() =>
             {
-                let invalid = || D::Error::custom("Pickup requires an exact item and pile.");
+                let invalid = || D::Error::custom("Pickup requires a pile and an exact item for a chosen quantity.");
+                if input.item_id.as_deref().is_some_and(|id| !is_safe_record_id(id))
+                    || input.quantity.is_some_and(|quantity| quantity == 0 || input.item_id.is_none())
+                {
+                    return Err(invalid());
+                }
                 Ok(Self::Pickup {
                     envelope,
                     target_id: input.target_id.filter(|id| is_safe_record_id(id)).ok_or_else(invalid)?,
-                    item_id: input.item_id.filter(|id| is_safe_record_id(id)).ok_or_else(invalid)?,
+                    item_id: input.item_id,
                     quantity: input.quantity,
                 })
             }

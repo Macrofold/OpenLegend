@@ -1,4 +1,4 @@
-//! Current, named ground lots for ordinary physical pickup. The caller owns
+//! Current direct ground stock for ordinary physical pickup. The caller owns
 //! the viewing/contact witness. These reads grant neither sight nor custody.
 use crate::install::ItemDefinitionRead;
 use crate::simulation::SimulationState;
@@ -56,7 +56,6 @@ fn portable_lot<'a>(
     (definition.portable
         && lot.quantity > 0
         && entity.retirement.is_none()
-        && lot.assembly_claim.is_none()
         && matches!(&entity.placement, Some(Placement::Contained { parent_entity_id, .. })
             if parent_entity_id == &pile.id))
     .then_some(GroundLot {
@@ -68,12 +67,13 @@ fn portable_lot<'a>(
 
 impl GroundLot<'_> {
     pub(crate) fn admits_quantity(&self, amount: Option<u64>) -> bool {
-        amount.is_none_or(|amount| {
-            amount == self.lot.quantity
-                || (amount > 0
-                    && amount < self.lot.quantity
-                    && crate::execution::partitionable_stock(self.entity, self.definition))
-        })
+        self.lot.assembly_claim.is_none()
+            && amount.is_none_or(|amount| {
+                amount == self.lot.quantity
+                    || (amount > 0
+                        && amount < self.lot.quantity
+                        && crate::execution::partitionable_stock(self.entity, self.definition))
+            })
     }
 
     pub(crate) fn partial_limit(&self) -> Option<u64> {
@@ -91,5 +91,31 @@ pub(crate) fn pickup_lot<'a>(
     item: &str,
 ) -> Option<GroundLot<'a>> {
     let entity = state.physical.entities.get(item)?;
-    portable_lot(state, pile, entity)
+    portable_lot(state, pile, entity).filter(|item| item.lot.assembly_claim.is_none())
+}
+
+/// Read direct portable members in custody order. Holds and assembly claims
+/// can block the whole transfer; they may not hide a member from selection.
+pub(crate) fn pickup_contents<'a>(
+    state: &'a SimulationState,
+    pile: &'a Entity,
+) -> impl Iterator<Item = GroundLot<'a>> {
+    state
+        .inventory
+        .children(&state.physical.entities, &pile.id, false)
+        .filter_map(|entity| portable_lot(state, pile, entity))
+}
+
+pub(crate) fn can_pick_up(
+    state: &SimulationState,
+    pile: &Entity,
+    item: Option<&str>,
+    quantity: Option<u64>,
+) -> bool {
+    match item {
+        Some(item) => {
+            pickup_lot(state, pile, item).is_some_and(|lot| lot.admits_quantity(quantity))
+        }
+        None => quantity.is_none() && pickup_contents(state, pile).next().is_some(),
+    }
 }

@@ -1,7 +1,7 @@
 //! Admit exact ground work through the same command, route and receipt owner
 //! as the other short actions that approach a physical target.
 use super::*;
-use crate::ground_items::{pickup_lot, pickup_pile};
+use crate::ground_items::{can_pick_up, pickup_lot, pickup_pile};
 use crate::host::retained_size::heap_sum;
 
 impl CommandCursor {
@@ -64,14 +64,14 @@ impl CommandCursor {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
         };
-        if !pickup_lot(state, pile, item_id).is_some_and(|lot| lot.admits_quantity(*quantity)) {
+        if !can_pick_up(state, pile, item_id.as_deref(), *quantity) {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
         }
         let policy = &state.installed.retained.item_handling_read;
-        let funded = self
-            .budget
-            .reserve(envelope.id.len() + target_id.len() + item_id.len() + 32)?;
+        let funded = self.budget.reserve(
+            envelope.id.len() + target_id.len() + item_id.as_deref().map_or(0, str::len) + 32,
+        )?;
         self.action = Some(Action::pickup(
             envelope.id.clone(),
             target_id.clone(),
@@ -111,12 +111,16 @@ impl CommandCursor {
             .get(&envelope.actor_id)
             .ok_or(ExecutionError::MissingActor)?;
         let pile = pickup_pile(state, actor, target_id).ok_or(ExecutionError::Invariant)?;
-        let item = pickup_lot(state, pile, item_id).ok_or(ExecutionError::Invariant)?;
+        let item = item_id
+            .as_deref()
+            .map(|id| pickup_lot(state, pile, id).ok_or(ExecutionError::Invariant))
+            .transpose()?;
         let label = &state.installed.retained.item_handling_read.pickup_label;
         let bytes = heap_sum([
             label.len(),
             pile.name.storage_bytes(),
-            item.definition.named.name.storage_bytes(),
+            item.as_ref()
+                .map_or(0, |lot| lot.definition.named.name.storage_bytes()),
         ])
         .ok_or(ExecutionError::Capacity)?;
         let (view, mut allowance) = {
@@ -125,7 +129,7 @@ impl CommandCursor {
                 ActivityView {
                     name: label.as_str().into(),
                     actor: None,
-                    tool: Some(item.definition.named.name.clone()),
+                    tool: item.map(|lot| lot.definition.named.name.clone()),
                     target: Some(pile.name.clone()),
                     facts: Vec::new(),
                     children: None,

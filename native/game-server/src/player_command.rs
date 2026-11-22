@@ -631,9 +631,8 @@ impl PlayerCommands {
                                 None => None,
                                 Some(contact) => {
                                     let selected = if matches!(raw.kind, CommandKind::Pickup) {
-                                        let item = raw.item_id.as_deref().ok_or(StoreError::InvalidRecord)?;
-                                        begin_references.resolve_ground_item(
-                                            world, &begin_scope.scope, contact, item, &begin_budget,
+                                        begin_references.resolve_ground_pickup(
+                                            world, &begin_scope.scope, contact, raw.item_id.as_deref(), &begin_budget,
                                         )?
                                     } else {
                                         begin_references.resolve_contact(
@@ -896,7 +895,9 @@ impl CommandRequest {
                     && command.known_place.is_none()
                     && command.expected_action_id.is_none()
                     && command.target_id.as_deref().is_some_and(id)
-                    && command.item_id.as_deref().is_some_and(id)
+                    && command.item_id.as_deref().is_none_or(id)
+                    && (command.item_id.is_some()
+                        || (matches!(command.kind, CommandKind::Pickup) && command.quantity.is_none()))
                     && command.gathering_mode.is_none() =>
             {
                 Ok(())
@@ -1104,7 +1105,7 @@ impl PreparedRequest {
             }),
             CommandKind::Pickup => Ok(RuntimePlayerCommand::Pickup {
                 target: target.ok_or(StoreError::InvalidRecord)?,
-                item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                item: input.item_id.as_deref(),
                 quantity: input.quantity,
             }),
             CommandKind::Drop => Ok(RuntimePlayerCommand::Drop {

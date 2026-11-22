@@ -31,8 +31,8 @@ export function pickupActions(
           {
             id: `pickup-all-${pile.id}`,
             pickupLimit: undefined,
-            label: 'Pick Up All',
-            description: 'Pick up all portable contents',
+            label: world.itemHandling.pickupAllLabel,
+            description: world.itemHandling.pickupAllDescription,
             command: { type: 'pickup', targetId: pile.id } as CommandInput,
           },
           ...one,

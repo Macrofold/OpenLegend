@@ -10,6 +10,8 @@ export const BASE_ITEM_HANDLING: ItemHandlingPolicy = {
   reach: 1.6,
   pickupSeconds: 1,
   pickupLabel: 'Pick Up',
+  pickupAllLabel: 'Pick Up All',
+  pickupAllDescription: 'Pick up all portable contents',
   pickupNarration: '{actor.subject} picked up {items.name} from {source.name:definite}.',
   drop: {
     pileName: 'Items on the ground',

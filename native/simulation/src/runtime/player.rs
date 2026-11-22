@@ -137,6 +137,8 @@ pub enum RuntimeResourceOffer<'a> {
 
 pub struct RuntimePickupOffer<'a> {
     pub label: &'a str,
+    pub all_label: &'a str,
+    pub all_description: &'a str,
     pub reason: Option<&'a str>,
     pub items: &'a [RuntimePickupLot<'a>],
     pub sequence: u64,
@@ -175,7 +177,12 @@ fn render_pickup<T>(
     let reason = crate::consumption::action_problem(&state.installed, actor, state.physical.header.paused)
         .map_err(failure)?.map(|blocked| blocked.message.as_str());
     encode(RuntimeResourceOffer::Pickup(RuntimePickupOffer {
-        label: &policy.pickup_label, reason, items: &items, sequence: state.physical.header.sequence,
+        label: &policy.pickup_label,
+        all_label: &policy.pickup_all_label,
+        all_description: &policy.pickup_all_description,
+        reason,
+        items: &items,
+        sequence: state.physical.header.sequence,
     }))
 }
 

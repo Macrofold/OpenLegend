@@ -748,7 +748,7 @@ function nativeActionCatalogue(
       add(
         option.id,
         option.label,
-        'Pick Up',
+        world.itemHandling.pickupLabel,
         option.command,
         ['take', 'collect', option.description],
         target.id,

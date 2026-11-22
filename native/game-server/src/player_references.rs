@@ -186,20 +186,21 @@ impl ReferenceIssuer {
         self.resolve_contact_matching(session, scope, selected, expected_body, |_| true, budget)
     }
 
-    /// A portable lot is a permitted item in this view only when the
-    /// selected current contact's detailed pile observation shows it.
-    pub(crate) fn resolve_ground_item(
+    /// Pickup requires current detail about the selected pile. A named lot
+    /// must appear in the observation, and a whole-pile command needs at
+    /// least one observed portable lot. Execution selects the current stock.
+    pub(crate) fn resolve_ground_pickup(
         &self,
         session: &NativeWorldSession,
         scope: &RequestScope,
         selected: &str,
-        item: &str,
+        item: Option<&str>,
         budget: &ByteBudget,
     ) -> Result<Option<ResolvedContact>, RuntimeError> {
         self.resolve_contact_matching(session, scope, selected, None, |body| {
             body.facets().any(|facet| match &facet.value {
                 openlegend_simulation::reception::SensoryFacet::PileContents { items } =>
-                    items.iter().any(|witness| witness.id == item && witness.portable),
+                    items.iter().any(|witness| witness.portable && item.is_none_or(|id| witness.id == id)),
                 _ => false,
             })
         }, budget)

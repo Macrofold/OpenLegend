@@ -148,6 +148,8 @@ pub(crate) struct ItemHandlingReadPolicy {
     pub reach: f64,
     pub pickup_seconds: f64,
     pub pickup_label: String,
+    pub pickup_all_label: String,
+    pub pickup_all_description: String,
     pub pickup_narration: String,
     pub drop: ItemDropPolicy,
     pub object_body: crate::state::BodyProfile,
@@ -467,7 +469,8 @@ pub(crate) fn install_retained(
     if !(0.0..=3600.0).contains(&item_handling_read.pickup_seconds)
         || !(drop.same_pile_distance > 0.0 && drop.same_pile_distance <= item_handling_read.reach)
         || drop.pile_name.trim_is_empty()
-        || [&item_handling_read.pickup_label, &item_handling_read.pickup_narration]
+        || [&item_handling_read.pickup_label, &item_handling_read.pickup_all_label,
+            &item_handling_read.pickup_all_description, &item_handling_read.pickup_narration]
             .into_iter().any(|text| text.trim().is_empty())
         || [&drop.label, &drop.narration, &drop.success, &drop.unavailable,
             &drop.quantity, &drop.needed, &drop.support]

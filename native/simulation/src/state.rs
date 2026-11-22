@@ -896,7 +896,9 @@ impl Action {
     }
 
     pub(crate) fn is_picking_up(&self) -> bool {
-        self.kind == "pickup" && self.target_id.is_some() && self.item_id.is_some()
+        self.kind == "pickup"
+            && self.target_id.is_some()
+            && (self.item_id.is_some() || self.quantity.is_none())
     }
 
     pub(crate) fn is_casting(&self) -> bool {
@@ -1073,10 +1075,16 @@ impl Action {
         action
     }
 
-    pub(crate) fn pickup(id: String, pile: String, item: String, quantity: Option<u64>, seconds: f64) -> Self {
+    pub(crate) fn pickup(
+        id: String,
+        pile: String,
+        item: Option<String>,
+        quantity: Option<u64>,
+        seconds: f64,
+    ) -> Self {
         let mut action = Self::native_action(id, "pickup", "working");
         action.target_id = Some(pile);
-        action.item_id = Some(item);
+        action.item_id = item;
         action.quantity = quantity;
         action.remaining_seconds = seconds;
         action.total_seconds = seconds;

@@ -3,6 +3,19 @@ import { validContributionTerms } from '@open-legend/domain';
 import { compactCommandInput, cooperationProposalInput } from './cooperation-input.js';
 import type { CommandInput } from '@open-legend/protocol';
 
+/** Keep a supplied quantity intact so the pickup owner can reject it without a named stack. */
+export function pickupCommandFields(
+  input: Pick<CommandInput, 'itemId' | 'quantity'>,
+  targetId: string,
+) {
+  return {
+    type: 'pickup' as const,
+    targetId,
+    ...(input.itemId === undefined ? {} : { itemId: input.itemId }),
+    ...(input.quantity === undefined ? {} : { quantity: input.quantity }),
+  };
+}
+
 export function domainCommand(input: CommandInput, actorId: string, id: string): Command {
   const base = {
     actorId,
@@ -57,13 +70,7 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         ...(input.targetId ? { targetId: input.targetId } : {}),
       };
     case 'pickup':
-      return {
-        ...base,
-        type: 'pickup',
-        targetId: input.targetId!,
-        ...(input.itemId ? { itemId: input.itemId } : {}),
-        ...(input.itemId && input.quantity ? { quantity: input.quantity } : {}),
-      };
+      return { ...base, ...pickupCommandFields(input, input.targetId!) };
     case 'drop':
       return { ...base, type: 'drop', itemId: input.itemId!, quantity: input.quantity! };
     case 'transfer-item':

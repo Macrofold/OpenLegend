@@ -47,6 +47,8 @@ export interface ItemHandlingPolicy {
   reach: number;
   pickupSeconds: number;
   pickupLabel: string;
+  pickupAllLabel: string;
+  pickupAllDescription: string;
   pickupNarration: string;
   drop: ItemDropPolicy;
   actorBodyProfiles: string[];
@@ -466,9 +468,12 @@ export function validateItemHandling(world: WorldState): void {
     !Number.isFinite(policy.pickupSeconds) ||
     policy.pickupSeconds < 0 ||
     policy.pickupSeconds > 3600 ||
-    [policy.pickupLabel, policy.pickupNarration].some(
-      (text) => typeof text !== 'string' || !text.trim(),
-    ) ||
+    [
+      policy.pickupLabel,
+      policy.pickupAllLabel,
+      policy.pickupAllDescription,
+      policy.pickupNarration,
+    ].some((text) => typeof text !== 'string' || !text.trim()) ||
     !policy.drop ||
     !Number.isFinite(policy.drop.samePileDistance) ||
     policy.drop.samePileDistance <= 0 ||

@@ -15,6 +15,8 @@ heap_record!(RetainedMap { rows });
 heap_record!(ItemHandlingReadPolicy {
     actor_body_profiles,
     pickup_label,
+    pickup_all_label,
+    pickup_all_description,
     pickup_narration,
     drop,
     object_body,

@@ -1,3 +1,4 @@
+import { pickupCommandFields } from './domain-command.js';
 import { SOURCE_EDIT_PREPARATION_CAPACITY } from './history-edit.js';
 import { worldControlOutcome, worldSpeedRefusal } from './world-control-outcome.js';
 import type { DecisionRefusalReporter } from './decision-failure.js';
@@ -7786,13 +7787,7 @@ export class WorldService {
         break;
       case 'pickup':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a pile.' };
-        command = {
-          ...envelope,
-          type: 'pickup',
-          targetId: input.targetId,
-          ...(input.itemId ? { itemId: input.itemId } : {}),
-          ...(input.itemId && input.quantity ? { quantity: input.quantity } : {}),
-        };
+        command = { ...envelope, ...pickupCommandFields(input, input.targetId) };
         break;
       case 'transfer-item':
       case 'split-item':

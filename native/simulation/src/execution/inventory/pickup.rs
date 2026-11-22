@@ -1,7 +1,6 @@
 //! Whole-lot pickup keeps both the item identity and any nested contents.
 //! Reach, visibility and the work timer are owned by the ordinary action.
 use super::*;
-use crate::ground_items::{pickup_lot, pickup_pile};
 use indexmap::IndexMap;
 
 /// Current homogeneous lot split and merge share the same physical-state
@@ -67,32 +66,49 @@ pub(super) fn compatible_lots(
 /// A pickup owns its current ground and receiving lots in one candidate.
 /// Split creates a real identity first, then both portions use the same move.
 impl CoreMutation<'_> {
-    pub(crate) fn take_ground_lot(
+    /// Transfer the selection just read by the completing action. A group can
+    /// change merge destinations as it moves stock, so every member succeeds
+    /// together. The last receiving identity is the result for a single lot.
+    pub(crate) fn take_ground_items(
         &mut self,
         actor: &str,
         pile: &str,
-        item: &str,
-        requested: Option<u64>,
+        selected: &[(String, u64)],
     ) -> Result<Option<String>, ExecutionError> {
-        let entities = &self.state.physical.entities;
-        let body = entities.get(actor).ok_or(ExecutionError::MissingActor)?;
-        let Some(ground) = pickup_pile(self.state, body, pile) else {
-            return Ok(None);
-        };
-        let Some(selected) = pickup_lot(self.state, ground, item) else {
-            return Ok(None);
-        };
-        if !selected.admits_quantity(requested) {
-            return Ok(None);
+        let scope = (selected.len() > 1)
+            .then(|| self.journal.checkpoint(self.state))
+            .transpose()?;
+        let result = self.move_ground_items(actor, pile, selected);
+        if let Some(scope) = scope {
+            if matches!(&result, Ok(Some(_))) {
+                self.journal.keep(self.state, scope)?;
+            } else {
+                self.journal.rollback_to(self.state, scope)?;
+            }
         }
-        let quantity = requested.unwrap_or(selected.lot.quantity);
-        let result = self.transfer_direct_loose_lot(pile, actor, item, quantity, "pickup")?;
-        if result.is_some() && self.state.inventory.has_children(pile) {
+        result
+    }
+
+    fn move_ground_items(
+        &mut self,
+        actor: &str,
+        pile: &str,
+        selected: &[(String, u64)],
+    ) -> Result<Option<String>, ExecutionError> {
+        let mut received = None;
+        for (item, quantity) in selected {
+            let Some(item) = self.transfer_direct_loose_lot(pile, actor, item, *quantity, "pickup")?
+            else {
+                return Ok(None);
+            };
+            received = Some(item);
+        }
+        if received.is_some() && self.state.inventory.has_children(pile) {
             self.journal.physical.change(PhysicalChange::ObservationParameters {
                 entity_id: pile.into(), request_detail: true,
             })?;
         }
-        Ok(result)
+        Ok(received)
     }
 
     /// A caller must prove access, availability, allowed source/container and
