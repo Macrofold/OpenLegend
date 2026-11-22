@@ -197,6 +197,12 @@ The corrected Source caller spoke the exact text through the real command endpoi
 
 Raw local evidence is in `/tmp/openlegend-promises.qxReBqJ1/trigger-final-full/result.json` (SHA-256 `9d0a424a6b48ee04a4473fb95a7d53afd028ce826c639db4fd2f21c930e5128d`). The actual signed-in Journal paging also passed in the earlier `trigger-fixed-full` browser run, which failed only its diagnostic count assertion. TypeScript and formatting checks passed, all disposable databases were removed, and there was no external provider charge.
 
+#### Two residents hear the same speech
+
+An ordinary speech command produced one event and two distinct listeners’ exact accounts. The Source selector offered the older routine accounts for review. While the Rust listener waited for that resident’s controlled hourly reply, the authorized creator corrected and then forgot their original speech account. PostgreSQL recorded the correction for that resident alone. The changed evidence prevented the held reply from publishing. The server preserved both routine originals, settled the single attempt and saved an authenticated walk.
+
+After cold reopening, the other resident’s exact record and revision were unchanged. Their authorized recollections search returned the original speech. The edited resident’s search withheld it. The check reused the executable and storage artifact above. Raw evidence is `shared-event-final/result.json` under `/tmp/openlegend-learn-source.NmHjsj/` with fixture SHA-256 `d69adf0b21051fcbd3d6f754017efb4f410ecabdcf1472050a8d94912ee338ac`. No model fee or performance measurement was incurred.
+
 ### Stand-alone recent observations — November 22, 2026
 
 The existing Journal → Memories → Recent observations control displayed and searched received facts after a cold restart. The authenticated route returned two disjoint chronological pages of nine and eight observations and matched Source's speech description for text with an emoji and an unpaired UTF-16 code unit. The owned route denied another actor. The creator's inspected NPC page contained that NPC's private observation and excluded the player's speech. Continuations are encrypted and bound to the tab, actor, timeline, life, privacy revision and search. The caller refused modified tokens, a continuation used with a different search and a continuation issued before forgetting. An empty bounded search can lead to older retained observations.
