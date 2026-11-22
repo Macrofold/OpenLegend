@@ -60,6 +60,7 @@ struct PlayerRoutes {
     capacity: Arc<Semaphore>,
     grace: Duration,
     checkpoints: Arc<CheckpointSchedule>,
+    loads: Arc<crate::launch::checkpoint_load::LoadInbox>,
     // Declared last so the clone releases its world owners before this signal.
     _request_owner: tokio::sync::watch::Sender<()>,
 }
@@ -82,6 +83,7 @@ pub(crate) fn router(
     stop: tokio::sync::watch::Receiver<bool>,
     request_owner: tokio::sync::watch::Sender<()>,
     checkpoints: Arc<CheckpointSchedule>,
+    loads: Arc<crate::launch::checkpoint_load::LoadInbox>,
 ) -> Result<Router, getrandom::Error> {
     let commands = Arc::new(PlayerCommands::new(
         game.clone(),
@@ -103,6 +105,7 @@ pub(crate) fn router(
         capacity: Arc::new(Semaphore::new(capacity)),
         grace,
         checkpoints,
+        loads,
         _request_owner: request_owner,
     };
     let streams = Arc::new(Semaphore::new(streams));
@@ -116,6 +119,7 @@ pub(crate) fn router(
         .route("/api/control", post(manual_clock))
         .route("/api/input", post(update_input))
         .route("/api/saves/create", post(checkpoint::create))
+        .route("/api/saves/load", post(checkpoint::load))
         .route("/api/saves/receipt", post(checkpoint::receipt))
         .route("/api/operations", axum::routing::get(operations::state))
         .route("/api/invites/create", post(operations::access::create))

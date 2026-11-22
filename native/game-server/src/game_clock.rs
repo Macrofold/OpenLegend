@@ -117,7 +117,32 @@ impl GameClock {
         scope: Arc<AuthorizedScope>,
         setting: Option<bool>,
     ) -> Result<bool, WorldError> {
-        authority.current(&scope, Capability::Play, true, |_, _| ())?;
+        self.set_manual_pause(setting, move || {
+            Ok(authority.current(&scope, Capability::Play, true, |_, _| ())?)
+        })
+        .await
+    }
+
+    /// World recovery uses the same durable pause and elapsed-time reset as
+    /// the player's control, with the operator's save permission instead.
+    pub(crate) async fn pause_for_recovery(
+        &self,
+        authority: Arc<Authority>,
+        scope: Arc<AuthorizedScope>,
+    ) -> Result<(), WorldError> {
+        self.set_manual_pause(Some(true), move || {
+            Ok(authority.current(&scope, Capability::Save, false, |_, _| ())?)
+        })
+        .await?;
+        Ok(())
+    }
+
+    async fn set_manual_pause(
+        &self,
+        setting: Option<bool>,
+        validate: impl Fn() -> Result<(), WorldError> + Send + 'static,
+    ) -> Result<bool, WorldError> {
+        validate()?;
         let _protected = self.saves.enter_protected().await?;
         let previous = self.game.world.capture(NativeWorldSession::clock).await?;
         let visible = match &self.presence {
@@ -135,12 +160,10 @@ impl GameClock {
                 manually_paused: manual,
                 ..previous
             };
-            self.persist_control(active, previous.paused || paused, move || {
-                Ok(authority.current(&scope, Capability::Play, true, |_, _| ())?)
-            })
-            .await?;
+            self.persist_control(active, previous.paused || paused, validate)
+                .await?;
         } else {
-            authority.current(&scope, Capability::Play, true, |_, _| ())?;
+            validate()?;
         }
         Ok(true)
     }

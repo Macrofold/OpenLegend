@@ -31,7 +31,7 @@ pub(crate) fn checkpoint_context(
         scope: key.to_owned(),
         recovery_scope: sha256_hex(json_record(fields).map_err(ViewError::Encoding)?.as_bytes()),
         timeline: scope.timeline_id.clone(),
-        can_load: false,
+        can_load: true,
     })
 }
 

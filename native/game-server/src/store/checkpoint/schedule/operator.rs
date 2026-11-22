@@ -168,13 +168,24 @@ impl CheckpointSchedule {
         let store = self.store.clone();
         let world = self.world.clone();
         let root = self.directory.clone();
+        let (protected, damaged_pointer) = match self.store.pre_load_file(&self.world).await {
+            Ok(pointer) => (pointer, false),
+            Err(StoreError::InvalidRecord) => (None, true),
+            Err(error) => return Err(error.into()),
+        };
         let (mut catalog, custody) = tokio::task::spawn_blocking(move || {
             let custody = store
                 .budget
                 .reserve(catalog::LIST_WORKSPACE)
                 .map_err(|_| StoreError::Capacity)?;
             Ok::<_, CaptureError>((
-                catalog::list(&root, &world, before.as_ref(), &store.schema.checkpoint)?,
+                catalog::list(
+                    &root,
+                    &world,
+                    before.as_ref(),
+                    &store.schema.checkpoint,
+                    protected.as_deref(),
+                )?,
                 custody,
             ))
         })
@@ -208,7 +219,7 @@ impl CheckpointSchedule {
             pending_manual,
             last_completed_at: catalog.last_automatic.take(),
             failure: failure.filter(|failure| failure.acknowledged_at.is_none()),
-            unavailable_saves: catalog.unavailable,
+            unavailable_saves: catalog.unavailable + usize::from(damaged_pointer),
             storage_bytes: catalog.bytes,
             settings,
             settings_error,
@@ -220,6 +231,32 @@ impl CheckpointSchedule {
             next: catalog.next,
             _custody: custody,
         })
+    }
+
+    pub(crate) async fn delete_pre_load(
+        &self,
+        authorize: impl Fn() -> Result<(), WorldError> + Send + Sync + 'static,
+    ) -> Result<(), CaptureError> {
+        let _slot = self.slot.lock().await;
+        let scope = &self.world;
+        let id = self.store.pre_load_file(scope).await?;
+        let writer = self.store.writer.lock().await;
+        self.store.assert_write_admission()?;
+        authorize()?;
+        writer
+            .client
+            .execute(
+                "DELETE FROM game_saves WHERE world_id=$1 AND id=$2",
+                &[&scope, &super::super::pre_load::ID],
+            )
+            .await?;
+        drop(writer);
+        if let Some(id) = id {
+            self.store
+                .remove_pre_load_file(&self.directory, scope, &id)
+                .await?;
+        }
+        Ok(())
     }
 
     /// A delete joins an already running publication and competes for the

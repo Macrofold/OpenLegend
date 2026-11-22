@@ -31,8 +31,7 @@ pub(crate) struct CheckpointCursor {
 
 impl CheckpointCursor {
     pub(crate) fn valid(&self) -> bool {
-        self.id.len() == 36
-            && uuid::Uuid::parse_str(&self.id).is_ok()
+        valid_id(&self.id)
             && chrono::DateTime::parse_from_rfc3339(&self.created_at).is_ok()
             && self
                 .sequence
@@ -46,6 +45,10 @@ impl CheckpointCursor {
             sequence: point.sequence,
         }
     }
+}
+
+pub(crate) fn valid_id(id: &str) -> bool {
+    id == super::pre_load::ID || (id.len() == 36 && uuid::Uuid::parse_str(id).is_ok())
 }
 
 #[derive(Serialize)]
@@ -73,6 +76,7 @@ pub(super) fn list(
     world: &str,
     before: Option<&CheckpointCursor>,
     contract: &CheckpointFormat,
+    protected: Option<&str>,
 ) -> Result<Catalog, CaptureError> {
     let mut result = Catalog::default();
     let entries = match fs::read_dir(root) {
@@ -82,6 +86,7 @@ pub(super) fn list(
     };
     let mut points = Vec::with_capacity(PAGE + 2);
     let mut last = None::<CheckpointCursor>;
+    let mut found_protected = false;
     for entry in entries {
         let entry = entry?;
         if !entry.file_type()?.is_dir() {
@@ -100,16 +105,22 @@ pub(super) fn list(
         if id.len() != 36 || uuid::Uuid::parse_str(id).is_err() {
             continue;
         }
-        let Some(point) = read_manifest(&directory) else {
+        let Some(mut point) = read_manifest(&directory) else {
             result.unavailable += 1;
             continue;
         };
-        if point.world_id != world || point.kind == Some(MetadataKind::Recovery) {
+        if point.world_id != world
+            || (point.kind == Some(MetadataKind::Recovery) && protected != Some(id))
+        {
             continue;
         }
         if !point.valid(id, world, contract) || !has_body(&directory, &point, contract) {
             result.unavailable += 1;
             continue;
+        }
+        if point.kind == Some(MetadataKind::Recovery) {
+            found_protected = true;
+            point.id = super::pre_load::ID.to_owned();
         }
         if point.kind == Some(MetadataKind::Auto)
             && last.as_ref().is_none_or(|prior| {
@@ -135,6 +146,7 @@ pub(super) fn list(
         result.next = points.last().map(CheckpointCursor::of);
     }
     result.last_automatic = last.map(|point| point.created_at);
+    result.unavailable += usize::from(protected.is_some() && !found_protected);
     result.saves = points
         .into_iter()
         .map(|point| CheckpointSummary {
@@ -212,6 +224,18 @@ impl Store {
         world: &str,
         retention: usize,
     ) -> Result<(), CaptureError> {
+        self.rotate_checkpoints(root, world, retention, MetadataKind::Auto, None)
+            .await
+    }
+
+    pub(super) async fn rotate_checkpoints(
+        self: &Arc<Self>,
+        root: PathBuf,
+        world: &str,
+        retention: usize,
+        kind: MetadataKind,
+        protected: Option<String>,
+    ) -> Result<(), CaptureError> {
         let storage = Arc::clone(self);
         let world_id = world.to_owned();
         let (deleted, operation) = tokio::task::spawn_blocking(move || {
@@ -219,7 +243,14 @@ impl Store {
                 .budget
                 .reserve(FILE_BUFFER)
                 .map_err(|_| StoreError::Capacity)?;
-            rotate_files(&root, &world_id, retention, &storage.schema.checkpoint)
+            rotate_files(
+                &root,
+                &world_id,
+                retention,
+                &storage.schema.checkpoint,
+                kind,
+                protected.as_deref(),
+            )
         })
         .await
         .map_err(|_| CaptureError::Format)??;
@@ -238,11 +269,13 @@ fn rotate_files(
     world: &str,
     retention: usize,
     contract: &CheckpointFormat,
+    kind: MetadataKind,
+    protected: Option<&str>,
 ) -> Result<(Vec<String>, Result<(), CaptureError>), CaptureError> {
     let mut points = Vec::new();
     for entry in fs::read_dir(root)? {
         if let Some(point) = metadata(entry?, world, contract)
-            && point.kind == Some(MetadataKind::Auto)
+            && point.kind == Some(kind)
         {
             points.push(point);
         }
@@ -261,7 +294,7 @@ fn rotate_files(
     let mut deleted = Vec::new();
     let removed = (|| {
         for (index, point) in points.into_iter().enumerate() {
-            if !supported.contains(&index) {
+            if !supported.contains(&index) && protected != Some(&point.id) {
                 fs::remove_dir_all(root.join(&point.id))?;
                 deleted.push(point.id);
             }

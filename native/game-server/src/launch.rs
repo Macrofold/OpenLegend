@@ -1,7 +1,12 @@
 //! The listener, accepted clock and ordinary writer share one installed world.
 //! Stopping ingress leaves the final accepted prefix with its save owner.
 
-use crate::{access_http, authority::Authority, boot::CurrentServer, game_clock::GameClock};
+use crate::{
+    access_http,
+    authority::Authority,
+    boot::{CurrentServer, StartupStorage},
+    game_clock::GameClock,
+};
 use crate::{live_save::LiveSaves, oidc::Oidc};
 use axum::{
     Router,
@@ -22,7 +27,9 @@ use tower_http::services::{ServeDir, ServeFile};
 
 type LaunchError = Box<dyn Error + Send + Sync>;
 
+pub(crate) mod checkpoint_load;
 mod creation;
+use checkpoint_load::{LoadInbox, LoadRequest};
 
 struct JournalLaunch {
     authority: Arc<Authority>,
@@ -73,6 +80,7 @@ struct PreparedGame {
     decisions: Arc<crate::npc::Director>,
     schedule: Arc<crate::npc::schedule::ScheduleInbox>,
     checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
+    loads: Arc<LoadInbox>,
     journal: JournalLaunch,
     embedding: Option<Arc<crate::npc::semantic_index::EmbeddingModel>>,
     end_http: watch::Sender<bool>,
@@ -99,12 +107,72 @@ pub async fn serve(release: &Path, database: DatabaseConfig) -> Result<(), Launc
         }
         _ => return Err("Unsupported OPEN_LEGEND_STARTUP_MODE".into()),
     }
-    let game = Arc::new(
-        CurrentServer::open_game(release, &release.join("navigation"), database, 1).await?,
-    );
-    let game = PreparedGame::open(game, browser, &settings, bound.port()).await?;
+    let startup = Arc::new(StartupStorage::open(release, database, 1, false).await?);
+    let game =
+        CurrentServer::from_storage(release, Some(&release.join("navigation")), &startup).await?;
+    let loads = Arc::new(LoadInbox::default());
+    let game = PreparedGame::open(
+        Arc::new(game),
+        browser.clone(),
+        &settings,
+        bound.port(),
+        loads,
+    )
+    .await?;
     println!("OpenLegend listening on {bound}");
-    game.serve(listen, None).await
+    serve_with_recovery(game, listen, None, release, browser, &settings, startup).await
+}
+
+async fn serve_with_recovery(
+    mut game: PreparedGame,
+    listen: TcpListener,
+    extra: Option<Router>,
+    release: &Path,
+    browser: PathBuf,
+    settings: &ListenerSettings,
+    startup: Arc<StartupStorage>,
+) -> Result<(), LaunchError> {
+    let port = listen.local_addr()?.port();
+    let directory = PathBuf::from(setting("OPEN_LEGEND_DATA_DIR", ".data")?).join("saves");
+    let socket = listen.into_std()?;
+    let loads = game.loads.clone();
+    loop {
+        let listener = TcpListener::from_std(socket.try_clone()?)?;
+        let Some(request) = game.serve(listener, extra.clone()).await? else {
+            return Ok(());
+        };
+        let outcome = startup
+            .recover_live_checkpoint(
+                release,
+                &directory,
+                &request.slot,
+                request.id,
+                &request.authorized.scope,
+            )
+            .await;
+        let refused = match outcome {
+            Ok(()) => false,
+            Err(crate::store::CommitError::RolledBack(error)) => {
+                eprintln!("Live checkpoint load refused: {error}");
+                true
+            }
+            Err(error) => return Err(error.into()),
+        };
+        let current =
+            CurrentServer::from_storage(release, Some(&release.join("navigation")), &startup)
+                .await?;
+        game = PreparedGame::open(
+            Arc::new(current),
+            browser.clone(),
+            settings,
+            port,
+            loads.clone(),
+        )
+        .await?;
+        loads
+            .finish(request, refused)
+            .map_err(|_| "Cannot settle the checkpoint request")?;
+    }
 }
 
 impl PreparedGame {
@@ -113,6 +181,7 @@ impl PreparedGame {
         browser: PathBuf,
         settings: &ListenerSettings,
         port: u16,
+        loads: Arc<LoadInbox>,
     ) -> Result<Self, LaunchError> {
         let local = settings.local;
         let custody = game.host.budget().clone();
@@ -222,6 +291,7 @@ impl PreparedGame {
             http_stop.clone(),
             request_owner,
             checkpoints.clone(),
+            loads.clone(),
         )
         .map_err(|_| "Could not establish per-process player reference keys")?;
         let game_routes = Router::new()
@@ -269,6 +339,7 @@ impl PreparedGame {
             decisions,
             schedule,
             checkpoints,
+            loads,
             journal,
             embedding,
             end_http,
@@ -277,7 +348,11 @@ impl PreparedGame {
         })
     }
 
-    async fn serve(self, listen: TcpListener, extra: Option<Router>) -> Result<(), LaunchError> {
+    async fn serve(
+        self,
+        listen: TcpListener,
+        extra: Option<Router>,
+    ) -> Result<Option<LoadRequest>, LaunchError> {
         let Self {
             routes,
             clock,
@@ -285,6 +360,7 @@ impl PreparedGame {
             decisions,
             schedule,
             checkpoints,
+            loads,
             journal,
             embedding,
             end_http,
@@ -304,6 +380,7 @@ impl PreparedGame {
             decisions,
             schedule,
             checkpoints,
+            loads,
             journal,
             embedding,
             end_http,
@@ -314,10 +391,14 @@ impl PreparedGame {
         // service and response body. Wait for their player owners as well.
         let _ = requests_released.changed().await;
         game.world.drain_operations().await;
-        let close = Arc::try_unwrap(game)
-            .map_err(|_| "The listener left a running world owner")?
-            .close()
-            .await;
+        let game = Arc::try_unwrap(game).map_err(|_| "The listener left a running world owner")?;
+        if matches!(run, Ok(Some(_))) {
+            // The host and its one Store remain with the listener supervisor.
+            game.world.stop().await?;
+            drop(game);
+        } else {
+            game.close().await?;
+        }
         println!(
             "OpenLegend native memory {}",
             serde_json::json!({
@@ -329,7 +410,7 @@ impl PreparedGame {
                 "pendingSavePeakBytes": custody.pending_save_peak(),
             })
         );
-        run.and(close)
+        run
     }
 }
 
@@ -341,11 +422,12 @@ async fn run(
     decisions: Arc<crate::npc::Director>,
     schedule: Arc<crate::npc::schedule::ScheduleInbox>,
     checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
+    loads: Arc<LoadInbox>,
     journal: JournalLaunch,
     embedding: Option<Arc<crate::npc::semantic_index::EmbeddingModel>>,
     end_http: watch::Sender<bool>,
     game: Arc<CurrentServer>,
-) -> Result<(), LaunchError> {
+) -> Result<Option<LoadRequest>, LaunchError> {
     let http_stop = end_http.subscribe();
     let scheduler = tokio::spawn(
         decisions
@@ -364,6 +446,7 @@ async fn run(
         saves.semantic_waker(),
         end_http.subscribe(),
     ));
+    let recovery_authority = journal.authority.clone();
     let narration = tokio::spawn(crate::narrator::run(
         game.clone(),
         saves.clone(),
@@ -392,18 +475,39 @@ async fn run(
     };
     let clock_work = clock.run(clock_stop);
     let save_work = saves.run(save_stop);
-    tokio::pin!(http, clock_work, save_work, checkpoint_work);
+    let loading = async {
+        loop {
+            let request = loads
+                .next()
+                .await
+                .map_err(|_| "Cannot admit a checkpoint request")?;
+            match clock
+                .pause_for_recovery(recovery_authority.clone(), request.authorized.clone())
+                .await
+            {
+                Ok(()) => return Ok::<_, LaunchError>(Some(request)),
+                Err(error) => {
+                    eprintln!("Could not pause for checkpoint load: {error}");
+                    loads
+                        .finish(request, true)
+                        .map_err(|_| "Cannot settle the checkpoint request")?;
+                }
+            }
+        }
+    };
+    tokio::pin!(http, clock_work, save_work, checkpoint_work, loading);
     let mut http_result = None;
     let mut clock_result = None;
     let mut save_result = None;
     let mut decision_result = None;
     let mut checkpoints_stopped = false;
     let signal = tokio::select! {
-        result = &mut http => { http_result = Some(result); Ok(()) }
-        result = &mut clock_work => { clock_result = Some(result); Ok(()) }
-        result = &mut save_work => { save_result = Some(result); Ok(()) }
-        _ = &mut checkpoint_work => { checkpoints_stopped = true; Ok(()) }
-        result = shutdown_signal() => result,
+        result = &mut http => { http_result = Some(result); Ok(None) }
+        result = &mut clock_work => { clock_result = Some(result); Ok(None) }
+        result = &mut save_work => { save_result = Some(result); Ok(None) }
+        _ = &mut checkpoint_work => { checkpoints_stopped = true; Ok(None) }
+        result = shutdown_signal() => result.map(|_| None).map_err(Into::into),
+        request = &mut loading => request,
     };
     let _ = end_http.send(true);
     let _ = end_clock.send(true);
@@ -451,12 +555,12 @@ async fn run(
         save_result = Some(save_work.await);
     }
     lexical.await?;
-    signal?;
+    let load = signal?;
     decision_result.expect("joined decision owner")?;
     save_result.expect("joined save owner")?;
     clock_result.ok_or("The save owner stopped before the clock")??;
     http_result.ok_or("The save owner stopped before ingress")??;
-    Ok(())
+    Ok(load)
 }
 
 async fn stopped(mut receiver: watch::Receiver<bool>) {

@@ -275,7 +275,7 @@ impl CheckpointSchedule {
             Ok(false) => self
                 .store
                 .capture_local_checkpoint(
-                    &self.saves,
+                    Some(&self.saves),
                     self.directory.clone(),
                     &self.world,
                     id,
@@ -337,7 +337,7 @@ impl CheckpointSchedule {
             let result = self
                 .store
                 .capture_local_checkpoint(
-                    &self.saves,
+                    Some(&self.saves),
                     self.directory.clone(),
                     &self.world,
                     id,

@@ -3,9 +3,13 @@
 
 use super::{PlayerRoutes, access_failure, busy, json, json_response, refusal, scope, wire};
 use crate::authority::{AccessError, AuthorizedScope, Capability};
+use crate::launch::checkpoint_load::{LoadRequest, LoadState};
 use crate::store::{
     CommitError, StoreError,
-    checkpoint::{CaptureError, CheckpointCursor, CheckpointSettings, CreationReceipt},
+    checkpoint::{
+        CaptureError, CheckpointCursor, CheckpointSettings, CreationReceipt, LoadReceipt,
+        valid_checkpoint_id,
+    },
 };
 use crate::world::WorldError;
 use axum::extract::{Request, State};
@@ -37,6 +41,19 @@ struct CheckpointId {
 }
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DeleteCheckpoint {
+    id: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct LoadCheckpoint {
+    id: String,
+    request_id: Uuid,
+}
+
+#[derive(Deserialize)]
 #[serde(
     tag = "operation",
     rename_all = "kebab-case",
@@ -46,6 +63,12 @@ struct CheckpointId {
 enum ReceiptRequest {
     Create {
         request_id: Uuid,
+        label: String,
+        timeline: String,
+    },
+    Load {
+        request_id: Uuid,
+        save_id: String,
         label: String,
         timeline: String,
     },
@@ -191,12 +214,18 @@ pub(super) async fn create(State(state): State<PlayerRoutes>, request: Request) 
 }
 
 pub(super) async fn delete(State(state): State<PlayerRoutes>, request: Request) -> Response {
-    let call = match operation::<CheckpointId>(&state, request).await {
+    let call = match operation::<DeleteCheckpoint>(&state, request).await {
         Ok(call) => call,
         Err(error) => return error,
     };
     let allowed = authorizer(&state, call.authorized.clone(), call.custody);
-    let result = state.checkpoints.delete(call.input.id, allowed).await;
+    let result = if call.input.id == "before-load" {
+        state.checkpoints.delete_pre_load(allowed).await
+    } else if let Ok(id) = Uuid::parse_str(&call.input.id) {
+        state.checkpoints.delete(id, allowed).await
+    } else {
+        return invalid_request();
+    };
     publish(&state, &call.authorized, || {
         result.map_err(|error| failure(&error))?;
         Ok(Saved::<()> {
@@ -212,11 +241,29 @@ pub(super) async fn receipt(State(state): State<PlayerRoutes>, request: Request)
         Ok(call) => call,
         Err(error) => return error,
     };
-    let ReceiptRequest::Create {
-        request_id,
-        label,
-        timeline,
-    } = call.input;
+    let (request_id, label, timeline) = match call.input {
+        ReceiptRequest::Create {
+            request_id,
+            label,
+            timeline,
+        } => (request_id, label, timeline),
+        ReceiptRequest::Load {
+            request_id,
+            save_id,
+            label,
+            timeline,
+        } => {
+            return load_receipt(
+                &state,
+                &call.authorized,
+                request_id,
+                &save_id,
+                &label,
+                &timeline,
+            )
+            .await;
+        }
+    };
     let label = label.trim();
     if timeline.is_empty()
         || timeline.len() > 200
@@ -251,6 +298,142 @@ pub(super) async fn receipt(State(state): State<PlayerRoutes>, request: Request)
                 code: "saved",
                 message,
             }),
+        })
+    })
+}
+
+const LOADED: &str = "The checkpoint was loaded. The world opened paused.";
+const REFUSED_LOAD: &str = "The checkpoint could not be loaded. The previous world was kept.";
+const LOAD_PENDING: &str = "The original load is still in progress. Nothing was resubmitted.";
+const LOAD_CONFLICT: &str = "The saved checkpoint does not match the original load request.";
+
+pub(super) async fn load(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    let call = match operation::<LoadCheckpoint>(&state, request).await {
+        Ok(call) => call,
+        Err(response) => return response,
+    };
+    if !valid_checkpoint_id(&call.input.id) {
+        return invalid_request();
+    }
+    let observed = state
+        .game
+        .store
+        .load_receipt(
+            &call.authorized.scope,
+            call.input.request_id,
+            &call.input.id,
+            None,
+        )
+        .await;
+    match state.authority.current(
+        &call.authorized,
+        Capability::Save,
+        false,
+        |_, _| match observed {
+            Ok(LoadReceipt::Completed) => {
+                let result = ResultMessage {
+                    ok: true,
+                    code: "loaded",
+                    message: LOADED,
+                };
+                match wire::encode(&result, b"", b"", state.game.host.budget()) {
+                    Ok(bytes) => json_response(StatusCode::OK, bytes),
+                    Err(_) => busy(),
+                }
+            }
+            Ok(LoadReceipt::Conflict) => {
+                refusal(StatusCode::CONFLICT, "idempotency-conflict", LOAD_CONFLICT)
+            }
+            Ok(LoadReceipt::Missing) => match state.loads.submit(LoadRequest {
+                id: call.input.request_id,
+                slot: call.input.id,
+                authorized: call.authorized.clone(),
+                custody: call.custody,
+            }) {
+                Ok(LoadState::Pending) => refusal(StatusCode::ACCEPTED, "pending", LOAD_PENDING),
+                Ok(LoadState::Refused) => refusal(StatusCode::CONFLICT, "loading", REFUSED_LOAD),
+                Ok(LoadState::Conflict) => {
+                    refusal(StatusCode::CONFLICT, "idempotency-conflict", LOAD_CONFLICT)
+                }
+                Ok(LoadState::Missing) => unreachable!("the load was admitted or refused"),
+                Err(()) => refusal(
+                    StatusCode::CONFLICT,
+                    "deferred",
+                    "Another checkpoint is loading. Try again after it finishes.",
+                ),
+            },
+            Err(error) => failure(&CaptureError::from(error)),
+        },
+    ) {
+        Ok(response) => response,
+        Err(error) => access_failure(error),
+    }
+}
+
+async fn load_receipt(
+    state: &PlayerRoutes,
+    authorized: &AuthorizedScope,
+    request_id: Uuid,
+    slot: &str,
+    label: &str,
+    timeline: &str,
+) -> Response {
+    if !valid_checkpoint_id(slot)
+        || timeline.is_empty()
+        || timeline.len() > 200
+        || label.is_empty()
+        || label.encode_utf16().count() > 80
+    {
+        return invalid_request();
+    }
+    let observed = state
+        .game
+        .store
+        .load_receipt(&authorized.scope, request_id, slot, Some(timeline))
+        .await;
+    publish(state, authorized, || {
+        let prior = observed.map_err(|error| failure(&CaptureError::from(error)))?;
+        let conflict = || refusal(StatusCode::CONFLICT, "idempotency-conflict", LOAD_CONFLICT);
+        let (status, message, result) = match prior {
+            LoadReceipt::Completed => (
+                CreationReceipt::Resolved,
+                LOADED,
+                Some(ResultMessage {
+                    ok: true,
+                    code: "loaded",
+                    message: LOADED,
+                }),
+            ),
+            LoadReceipt::Conflict => return Err(conflict()),
+            LoadReceipt::Missing => match state
+                .loads
+                .status(&authorized.scope, request_id, slot, timeline)
+                .map_err(|_| busy())?
+            {
+                LoadState::Pending => (CreationReceipt::Pending, LOAD_PENDING, None),
+                LoadState::Refused => (
+                    CreationReceipt::Resolved,
+                    REFUSED_LOAD,
+                    Some(ResultMessage {
+                        ok: false,
+                        code: "loading",
+                        message: REFUSED_LOAD,
+                    }),
+                ),
+                LoadState::Missing => (
+                    CreationReceipt::Unknown,
+                    "The original load has no confirmed installation record. Nothing was loaded again.",
+                    None,
+                ),
+                LoadState::Conflict => return Err(conflict()),
+            },
+        };
+        Ok(ReceiptResponse {
+            ok: true,
+            scope: authorized.scope.key().map_err(|_| busy())?,
+            status,
+            message,
+            result,
         })
     })
 }

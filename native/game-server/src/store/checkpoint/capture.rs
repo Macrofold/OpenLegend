@@ -73,7 +73,7 @@ impl Store {
     /// under the barrier, then let new gameplay and ordinary saves proceed.
     pub(super) async fn capture_local_checkpoint(
         self: &Arc<Self>,
-        saves: &Arc<LiveSaves>,
+        saves: Option<&Arc<LiveSaves>>,
         root: PathBuf,
         world: &str,
         id: String,
@@ -96,10 +96,13 @@ impl Store {
             self.checkpoint_connection.1.clone(),
         )
         .await?;
-        let barrier = if kind == MetadataKind::Auto {
-            saves.try_enter_protected().await?
-        } else {
-            saves.enter_protected().await?
+        // Recovery runs after the old listener, clock and final save have
+        // joined. Running-world callers always pass the accepted-save owner.
+        let barrier = match saves {
+            Some(saves) if kind == MetadataKind::Auto => Some(saves.try_enter_protected().await?),
+            Some(saves) => Some(saves.enter_protected().await?),
+            None if kind == MetadataKind::Recovery => None,
+            None => return Err(CaptureError::Format),
         };
         validate()?;
         let (expected, sequence) = self.claim_checkpoint(world, &id, highest).await?;

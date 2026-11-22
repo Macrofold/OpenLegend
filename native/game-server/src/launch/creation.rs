@@ -2,7 +2,7 @@
 //! receipt. Waiting and live entry share one bound socket and database writer.
 use super::{
     DatabaseConfig, LaunchError, ListenerSettings, PreparedGame, ai_budget_limit, build_cache,
-    setting, shutdown_signal,
+    checkpoint_load::LoadInbox, serve_with_recovery, setting, shutdown_signal,
 };
 use crate::{
     access_http::{BrowserOrigin, guard_origin},
@@ -83,11 +83,13 @@ pub(super) async fn serve(
     )
     .await?;
     let (publish, mut prepared) = oneshot::channel();
+    let settings = Arc::new(settings);
     let activate: Adoption = {
+        let startup = startup.clone();
         let publish = Arc::new(Mutex::new(Some(publish)));
         let release = Arc::new(release.to_owned());
         let browser = Arc::new(browser.clone());
-        let settings = Arc::new(settings);
+        let settings = settings.clone();
         Arc::new(move |receipt: ActivationReceipt| {
             let startup = startup.clone();
             let publish = publish.clone();
@@ -123,6 +125,7 @@ pub(super) async fn serve(
                         browser.as_ref().clone(),
                         &settings,
                         bound.port(),
+                        Arc::new(LoadInbox::default()),
                     )
                     .await
                 }
@@ -147,12 +150,21 @@ pub(super) async fn serve(
     {
         let game = prepared.await?;
         println!("OpenLegend listening on {bound}");
-        return game.serve(listen, Some(routes)).await;
+        return serve_with_recovery(
+            game,
+            listen,
+            Some(routes),
+            release,
+            browser,
+            &settings,
+            startup,
+        )
+        .await;
     }
     let waiting = guard_origin(
         Router::new()
             .route_service("/", ServeFile::new(browser.join("index.html")))
-            .fallback_service(ServeDir::new(browser).append_index_html_on_directories(false))
+            .fallback_service(ServeDir::new(&browser).append_index_html_on_directories(false))
             .layer(middleware::from_fn(build_cache))
             .merge(target.waiting_router(activate)),
         origin,
@@ -180,8 +192,16 @@ pub(super) async fn serve(
     waiting_http.await?;
     match opened {
         Some(game) => {
-            game.serve(TcpListener::from_std(socket)?, Some(routes))
-                .await
+            serve_with_recovery(
+                game,
+                TcpListener::from_std(socket)?,
+                Some(routes),
+                release,
+                browser,
+                &settings,
+                startup,
+            )
+            .await
         }
         None => Ok(()),
     }

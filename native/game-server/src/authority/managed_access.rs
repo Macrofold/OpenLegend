@@ -89,6 +89,16 @@ pub(super) async fn audit(
 }
 
 pub(super) async fn assert_manager(tx: &Transaction<'_>, scope: &RequestScope) -> StoreResult<()> {
+    assert_saved_grant(tx, scope, "manage-access").await
+}
+
+/// Recheck the exact operational session and grant in the same transaction
+/// as an authority change, after the old in-memory scope stops serving.
+pub(crate) async fn assert_saved_grant(
+    tx: &Transaction<'_>,
+    scope: &RequestScope,
+    capability: &str,
+) -> StoreResult<()> {
     let session = sql_ordinal(scope.session_revision)?;
     let grant = sql_ordinal(scope.grant_revision)?;
     let actor = if scope.actor_id.is_empty() {
@@ -101,7 +111,7 @@ pub(super) async fn assert_manager(tx: &Transaction<'_>, scope: &RequestScope) -
             "SELECT EXISTS(SELECT 1 FROM auth_sessions s JOIN auth_grants g ON \
              g.account_id=s.account_id WHERE s.id=$1 AND s.account_id=$2 AND \
              s.revision=$3 AND s.expires_at>$4 AND g.world_id=$5 AND g.actor_id=$6 \
-             AND g.revision=$7 AND g.capabilities::jsonb ? 'manage-access')",
+             AND g.revision=$7 AND g.capabilities::jsonb ? $8)",
             &[
                 &scope.session_id,
                 &scope.account_id,
@@ -110,6 +120,7 @@ pub(super) async fn assert_manager(tx: &Transaction<'_>, scope: &RequestScope) -
                 &scope.world_id,
                 &actor,
                 &grant,
+                &capability,
             ],
         )
         .await?

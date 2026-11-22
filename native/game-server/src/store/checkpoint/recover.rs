@@ -3,7 +3,9 @@
 //! is durable. Ordinary readers never see the prospective checkpoint.
 
 use super::authority::{AcceptedPrivacy, validate_privacy};
+use super::pre_load::{self, BeforeLoad};
 use super::{AdministrativeCheckpoint, read_recovery_authority, reconcile_history_positions};
+use crate::authority::{RequestScope, assert_saved_grant};
 use crate::command_epoch::RequestIdentity;
 use crate::language::LanguageProvider;
 use crate::store::read::admitted_query;
@@ -40,6 +42,21 @@ struct Receipt {
     timeline: String,
     revision: u64,
     accepted_cut: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    operator: Option<Operator>,
+}
+
+#[derive(Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Operator {
+    account_id: String,
+    timeline: String,
+}
+
+pub(crate) enum LoadReceipt {
+    Completed,
+    Missing,
+    Conflict,
 }
 
 impl Receipt {
@@ -78,8 +95,9 @@ struct Adoption {
 }
 
 impl Store {
-    /// Check and replace the requested retained slot under the database's
-    /// unique stopped writer. A former live world is never resumed on an error.
+    /// Check and replace a retained slot under the database's unique writer.
+    /// The live listener must be fully drained. A browser restore additionally
+    /// captures the preceding cut and rechecks the operator before commit.
     #[allow(clippy::too_many_arguments)]
     pub async fn recover_checkpoint(
         self: &Arc<Self>,
@@ -90,6 +108,7 @@ impl Store {
         definitions: RuntimeInstallDefinitions,
         definition_custody: ByteReservation,
         language: Arc<LanguageProvider>,
+        operator: Option<&RequestScope>,
     ) -> Result<RecoveredCheckpoint, CommitError> {
         if Uuid::parse_str(operation_id).is_err() {
             return Err(CommitError::RolledBack(StoreError::InvalidRecord));
@@ -110,12 +129,16 @@ impl Store {
             }
             return Ok(prior.report(operation_id));
         }
+        let file_id = if slot_id == pre_load::ID {
+            self.pre_load_file(&expected.world_id)
+                .await
+                .map_err(CommitError::RolledBack)?
+                .ok_or(CommitError::RolledBack(StoreError::InvalidRecord))?
+        } else {
+            slot_id.to_owned()
+        };
         let slot = self
-            .retained_checkpoint(
-                directory.to_owned(),
-                slot_id.to_owned(),
-                expected.world_id.clone(),
-            )
+            .retained_checkpoint(directory.to_owned(), file_id, expected.world_id.clone())
             .await
             .map_err(CommitError::RolledBack)?;
         let floor = match floor_slot_id {
@@ -129,6 +152,21 @@ impl Store {
                 .map_err(CommitError::RolledBack)?,
             ),
             _ => None,
+        };
+        let before_load = if let Some(operator) = operator {
+            if operator.world_id != expected.world_id {
+                return Err(CommitError::RolledBack(StoreError::StaleCut));
+            }
+            Some(
+                self.capture_pre_load(directory, &operator.world_id)
+                    .await
+                    .map_err(|error| {
+                        eprintln!("Could not protect the world before checkpoint load: {error}");
+                        CommitError::RolledBack(StoreError::InvalidRecord)
+                    })?,
+            )
+        } else {
+            None
         };
         self.assert_write_admission()
             .map_err(CommitError::RolledBack)?;
@@ -171,16 +209,29 @@ impl Store {
                 replacement,
                 &timeline,
                 &key,
+                slot_id,
                 slot,
                 floor.as_ref(),
                 definitions,
                 definition_custody,
                 &language,
+                operator,
+                before_load.as_ref(),
             )
             .await;
         let mut adoption = match prepared {
             Ok(adoption) => adoption,
-            Err(error) => return Err(self.rollback(tx, error).await),
+            Err(error) => {
+                let error = self.rollback(tx, error).await;
+                drop(writer);
+                if matches!(error, CommitError::RolledBack(_))
+                    && let Some(point) = before_load
+                {
+                    self.discard_pre_load(directory, &expected.world_id, point)
+                        .await;
+                }
+                return Err(error);
+            }
         };
         let commit = self.commit(tx).await;
         drop(writer);
@@ -217,7 +268,39 @@ impl Store {
                 },
             )
             .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
+        if let Some(point) = before_load {
+            self.retain_pre_load(directory, &expected.world_id, point.file_id())
+                .await;
+        }
         Ok(adoption.receipt.report(operation_id))
+    }
+
+    /// Read only the existing operation receipt; this never restores a slot.
+    /// A completed browser receipt belongs to its original account and input.
+    pub(crate) async fn load_receipt(
+        &self,
+        scope: &RequestScope,
+        operation: Uuid,
+        slot: &str,
+        original_timeline: Option<&str>,
+    ) -> StoreResult<LoadReceipt> {
+        let key = format!("integration:load-request:{operation}");
+        let (_, prior) = self.read_recovery_witness(&key).await?;
+        Ok(match prior {
+            None => LoadReceipt::Missing,
+            Some(prior)
+                if prior.world_id == scope.world_id
+                    && prior.save_id == slot
+                    && prior.operator.as_ref().is_some_and(|operator| {
+                        operator.account_id == scope.account_id
+                            && original_timeline
+                                .is_none_or(|timeline| timeline == operator.timeline)
+                    }) =>
+            {
+                LoadReceipt::Completed
+            }
+            Some(_) => LoadReceipt::Conflict,
+        })
     }
 
     async fn read_recovery_witness(
@@ -246,11 +329,14 @@ impl Store {
         replacement: DurableHead,
         timeline: &str,
         request_key: &str,
+        requested_slot: &str,
         slot: AdministrativeCheckpoint,
         floor: Option<&AdministrativeCheckpoint>,
         definitions: RuntimeInstallDefinitions,
         definition_custody: ByteReservation,
         language: &LanguageProvider,
+        operator: Option<&RequestScope>,
+        before_load: Option<&BeforeLoad>,
     ) -> StoreResult<Adoption> {
         if slot.revision > expected.revision {
             return Err(StoreError::StaleCut);
@@ -263,6 +349,12 @@ impl Store {
             &self.budget,
         )
         .await?;
+        if let Some(operator) = operator {
+            if operator.timeline_id != authority.timeline {
+                return Err(StoreError::StaleCut);
+            }
+            assert_saved_grant(tx, operator, "save").await?;
+        }
         let current_privacy;
         let privacy = if let Some(ledger) = &authority.ledger {
             ledger
@@ -389,12 +481,16 @@ impl Store {
                         initial_archives,
                         final_archives,
                         receipt: Receipt {
-                            save_id: slot_id.clone(),
+                            save_id: requested_slot.to_owned(),
                             world_id: placement.world_id.to_owned(),
                             generation: placement.generation.to_owned(),
                             timeline: timeline.to_owned(),
                             revision: placement.revision,
                             accepted_cut: placement.accepted_cut,
+                            operator: operator.map(|operator| Operator {
+                                account_id: operator.account_id.clone(),
+                                timeline: operator.timeline_id.clone(),
+                            }),
                         },
                         _storage: storage,
                     })
@@ -465,6 +561,14 @@ impl Store {
                 .await?;
             self.finish_checkpoint_operations(tx, &replacement, timeline, decoder.hard_bytes)
                 .await?;
+        }
+        // Session expiry can change while preparing the isolated candidate.
+        // Only this last check can authorize the operation receipt and pointer.
+        if let Some(operator) = operator {
+            assert_saved_grant(tx, operator, "save").await?;
+        }
+        if let Some(before_load) = before_load {
+            before_load.install(tx).await?;
         }
         let encoded = json_record(&output.receipt).map_err(|_| StoreError::InvalidRecord)?;
         tx.execute(

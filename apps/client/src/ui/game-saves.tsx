@@ -21,7 +21,7 @@ import type {
   GameSaveCatalog,
   GameSaveSummary,
 } from '@open-legend/protocol';
-import { loadGameSave, post } from '../api';
+import { getOperations, loadGameSave, post } from '../api';
 import { Button, Section } from '../design-system/components';
 import './lifecycle.css';
 
@@ -302,6 +302,13 @@ export function GameSavesPanel({
     mutationActive.current = true;
     setChecking(true);
     try {
+      // The operations screen opens no stream. A load may have replaced its
+      // scope while its first response was lost. Read the current permission
+      // before asking about this same retained request.
+      const current = request.operation === 'load' ? (await getOperations()).checkpoint : context;
+      if (!current || current.recoveryScope !== context.recoveryScope)
+        throw new Error('Checkpoint access changed. Refresh before checking the original result.');
+      if (!alive.current) return;
       const result = await post<RequestRecoveryResult>('/api/saves/receipt', request);
       if (
         !alive.current ||
@@ -313,10 +320,14 @@ export function GameSavesPanel({
         setMessage(result.message);
         return;
       }
-      if (result.scope !== context.scope)
+      if (result.scope !== current.scope)
         throw new Error('Checkpoint access changed. Refresh before checking the original result.');
       if (result.status === 'resolved') {
         settle(result.result, request);
+        if (request.operation === 'load' && result.result.ok) {
+          window.location.reload();
+          return;
+        }
         await refresh();
       } else setMessage(result.message);
     } catch (error) {

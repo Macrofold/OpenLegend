@@ -132,6 +132,7 @@ pub async fn recover_checkpoint(
             definitions,
             custody,
             language,
+            None,
         )
         .await?;
     drop(store);
@@ -194,6 +195,33 @@ pub(crate) struct StartupStorage {
 }
 
 impl StartupStorage {
+    /// A drained listener retains the same Store writer and content release
+    /// while installing a current, operator-authorized replacement cut.
+    pub(crate) async fn recover_live_checkpoint(
+        &self,
+        release: &Path,
+        directory: &Path,
+        slot: &str,
+        operation: uuid::Uuid,
+        scope: &crate::authority::RequestScope,
+    ) -> Result<(), crate::store::CommitError> {
+        let (definitions, custody, language) = (|| -> Result<_, BootError> {
+            let budget = self.host.budget();
+            let (definitions, custody) = read_definitions(release, &self.manifest, budget)?;
+            let language = Arc::new(LanguageProvider::open(&release.join("language"), budget)?);
+            Ok((definitions, custody, language))
+        })()
+        .map_err(|error| {
+            eprintln!("Cannot read installed definitions for checkpoint load: {error}");
+            crate::store::CommitError::RolledBack(StoreError::InvalidRecord)
+        })?;
+        self.store.recover_checkpoint(
+            directory, slot, None, &operation.to_string(), definitions, custody, language,
+            Some(scope),
+        ).await?;
+        Ok(())
+    }
+
     /// Keep this Store and its exclusive database writer when entry becomes
     /// available. The empty target carries no live world or scheduled gameplay.
     pub(crate) async fn open(
@@ -345,17 +373,6 @@ impl CurrentServer {
     /// startup operation before exposing any player view.
     pub async fn open(release: &Path, database: Config, workers: usize) -> Result<Self, BootError> {
         Self::open_current(release, None, database, workers).await
-    }
-
-    /// A live listener must use the checked navigation release, including when
-    /// no route was needed to cold-open the selected world.
-    pub async fn open_game(
-        release: &Path,
-        navigation: &Path,
-        database: Config,
-        workers: usize,
-    ) -> Result<Self, BootError> {
-        Self::open_current(release, Some(navigation), database, workers).await
     }
 
     async fn open_current(
