@@ -14,8 +14,10 @@ use serde::Deserialize;
 use std::sync::LazyLock;
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Copy {
     carried: &'static str,
+    in_carried: &'static str,
     equipped: &'static str,
     inspect: &'static str,
     properties: &'static str,
@@ -57,24 +59,34 @@ impl CommandCursor {
             return Err(ExecutionError::Invariant);
         };
         let state = &core.state;
-        let owner = state
+        if state.physical.entities.get(actor).is_none() {
+            return Err(ExecutionError::MissingActor);
+        }
+        let definition_set = &state.installed.retained;
+        let item = state
             .physical
             .entities
-            .get(actor)
-            .ok_or(ExecutionError::MissingActor)?;
-        let definition_set = &state.installed.retained;
-        let item = (selected.container_id == actor
-            && selected.expected_revision == owner.inventory_revision.unwrap_or(0))
-        .then(|| state.physical.entities.get(&selected.item_id))
-        .flatten()
-        .filter(|entity| crate::install::inventory_parent(entity) == Some(actor));
-        let item = if let Some(item) = item {
+            .get(&selected.container_id)
+            .filter(|parent| {
+                parent.inventory_revision.unwrap_or_default() == selected.expected_revision
+            })
+            .and_then(|parent| {
+                state
+                    .physical
+                    .entities
+                    .get(&selected.item_id)
+                    .filter(|item| {
+                        crate::install::inventory_parent(item) == Some(parent.id.as_str())
+                    })
+                    .map(|item| (parent, item))
+            });
+        let item = if let Some((parent, item)) = item {
             crate::install::owned_by(&state.physical, definition_set, actor, &item.id)?
-                .map(|read| (item, read))
+                .map(|read| (parent, item, read))
         } else {
             None
         };
-        let Some((body, lot)) = item else {
+        let Some((parent, body, lot)) = item else {
             self.reserve(COPY.changed.len() + 64)?;
             self.outcome = Some(outcome(false, "inspection-unavailable", COPY.changed));
             self.phase = Phase::Done;
@@ -103,6 +115,16 @@ impl CommandCursor {
         if facts.place_report.is_some() || facts.recipe_record.is_some() {
             return Err(ExecutionError::UnsupportedFamily);
         }
+        let bag_name = if parent.id == actor {
+            None
+        } else {
+            let definition = parent
+                .item
+                .as_ref()
+                .and_then(|item| definition_set.items.get(&item.definition_pin.id))
+                .ok_or(ExecutionError::Invariant)?;
+            Some(&definition.named.name)
+        };
         let mut workspace = self.budget.reserve(
             heap_sum([
                 8192,
@@ -110,6 +132,8 @@ impl CommandCursor {
                 body.id.len() * 4,
                 definition.pin.id.len() * 4,
                 definition.named.name.storage_bytes(),
+                bag_name.map_or(0, JsText::storage_bytes),
+                COPY.in_carried.len(),
                 definition
                     .description
                     .heap_bytes()
@@ -130,13 +154,22 @@ impl CommandCursor {
             .and_then(|bytes| bytes.checked_mul(6))
             .ok_or(ExecutionError::Capacity)?,
         )?;
+        let location = if let Some(bag) = bag_name {
+            let (prefix, suffix) = COPY
+                .in_carried
+                .split_once("{container}")
+                .ok_or(ExecutionError::Invariant)?;
+            JsText::concat(&[&prefix.into(), bag, &suffix.into()])
+        } else {
+            COPY.carried.into()
+        };
         let mut description = JsText::from(format!("{} × ", lot.quantity));
         description.push_text(&lot.named.name);
         if lot.equipped {
             description.push_str(COPY.equipped);
         } else {
             description.push_str(", ");
-            description.push_str(COPY.carried);
+            description.push_text(&location);
         }
         description.push_str(". ");
         let mut has_fact = false;
@@ -187,7 +220,7 @@ impl CommandCursor {
         let mut text = JsText::from(COPY.inspect);
         text.push_text(&lot.named.name);
         text.push_str(" (");
-        text.push_str(COPY.carried);
+        text.push_text(&location);
         text.push_str("). ");
         text.push_text(&description);
         let introduction_key = if item.individuality == Individuality::Individual {
@@ -222,9 +255,7 @@ impl CommandCursor {
                 description,
                 introduction_key,
                 inscription: facts.inscription,
-                observed_location: Some(ObservedItemLocation::Possession {
-                    label: COPY.carried.into(),
-                }),
+                observed_location: Some(ObservedItemLocation::Possession { label: location }),
                 mechanism_fields: facts.mechanism_fields,
             }),
         };

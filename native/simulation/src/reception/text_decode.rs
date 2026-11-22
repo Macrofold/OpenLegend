@@ -41,6 +41,30 @@ impl<'de> Deserialize<'de> for EncounterExposure {
     }
 }
 
+impl<'de> Deserialize<'de> for ObservedItemLocation {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<RawValue>::deserialize(de)?;
+        let parse = || -> Result<Self, String> {
+            let mut fields = RawFields::parse(raw.get())?;
+            let kind: String = fields.take("kind")?;
+            let result = match kind.as_str() {
+                "world" => Self::World {
+                    point: fields.take("point")?,
+                    label: fields.take("label")?,
+                    container_id: fields.take("containerId")?,
+                },
+                "possession" => Self::Possession {
+                    label: fields.take("label")?,
+                },
+                _ => return Err("Unknown inspected item location kind.".into()),
+            };
+            fields.finish()?;
+            Ok(result)
+        };
+        parse().map_err(serde::de::Error::custom)
+    }
+}
+
 impl<'de> Deserialize<'de> for EventScalar {
     fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
         let raw = Box::<RawValue>::deserialize(de)?;

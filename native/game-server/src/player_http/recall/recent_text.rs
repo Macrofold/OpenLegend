@@ -247,7 +247,7 @@ pub(super) fn described<'a>(
                                 | ObservedItemLocation::Possession { label },
                             ) = observed_location
                             {
-                                parts.insert(label.as_str().into());
+                                parts.insert(label.clone());
                             }
                             continue;
                         }

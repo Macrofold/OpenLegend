@@ -1,5 +1,6 @@
 {
   "carried": "in my carried possessions",
+  "inCarried": "in my carried {container}",
   "equipped": ", equipped",
   "inspect": "I inspected ",
   "properties": "Properties: ",

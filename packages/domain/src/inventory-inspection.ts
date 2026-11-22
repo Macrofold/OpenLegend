@@ -80,7 +80,10 @@ function observedOwnerLocation(
       label:
         ownerId === actorId
           ? inspectionCopy.carried
-          : `in my carried ${observerName(world, actorId, ownerId).name}`,
+          : inspectionCopy.inCarried.replace(
+              '{container}',
+              () => observerName(world, actorId, ownerId).name,
+            ),
     };
   }
   if (root.actor && !root.remains) {

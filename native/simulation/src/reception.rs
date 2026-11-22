@@ -519,7 +519,7 @@ pub struct ReceivedFeatures {
     pub quality: f64,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(
     tag = "kind",
     rename_all = "kebab-case",
@@ -529,11 +529,11 @@ pub struct ReceivedFeatures {
 pub enum ObservedItemLocation {
     World {
         point: crate::state::SurfacePoint,
-        label: String,
+        label: crate::text::JsText,
         container_id: String,
     },
     Possession {
-        label: String,
+        label: crate::text::JsText,
     },
 }
 
@@ -1510,9 +1510,6 @@ impl AttributeView {
 
 impl EncounterExposure {
     pub fn validate(&self) -> bool {
-        let text = |text: &str, max| {
-            !crate::encoding::js_trim(text).is_empty() && text.encode_utf16().count() <= max
-        };
         let js_text =
             |text: &crate::text::JsText, max| !text.trim_is_empty() && text.units_len() <= max;
         let (id, valid_text, fields) = match self {
@@ -1590,10 +1587,10 @@ impl EncounterExposure {
                             } => {
                                 finite_point(&point.point())
                                     && is_safe_record_id(&point.surface_id)
-                                    && text(label, 160)
+                                    && js_text(label, 160)
                                     && is_safe_record_id(container_id)
                             }
-                            ObservedItemLocation::Possession { label } => text(label, 160),
+                            ObservedItemLocation::Possession { label } => js_text(label, 160),
                         })
             }
         }
