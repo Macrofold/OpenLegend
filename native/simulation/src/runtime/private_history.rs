@@ -40,6 +40,16 @@ pub struct RuntimePlayerTranscriptRead {
     durable_revision: u64,
 }
 
+pub struct RuntimePersonalBrowseCut<'a> {
+    pub world: &'a str,
+    pub generation: &'a str,
+    pub actor: &'a str,
+    pub durable_revision: u64,
+    pub privacy_revision: u64,
+    pub at: f64,
+    pub identity_through: u64,
+}
+
 impl RuntimePlayerTranscriptRead {
     pub fn durable_head(&self) -> (&str, &str, u64) {
         (
@@ -76,6 +86,36 @@ impl RuntimeRecordedEventRoles<'_> {
     }
 }
 impl RuntimePrivateHistoryRead {
+    pub fn actor_id(&self) -> &str {
+        &self.scope.actor_id
+    }
+
+    /// Borrow only the exact bodies admitted by the personal history cursor.
+    pub fn with_personal_sources<'a, T>(
+        &'a self,
+        consume: impl FnOnce(
+            &mut dyn Iterator<Item = (usize, &'a crate::experience::PersonalSourceRef, &'a str)>,
+        ) -> T,
+    ) -> Result<T, RuntimeError> {
+        let sources = self
+            .sources
+            .as_ref()
+            .ok_or_else(|| failure("history sources unavailable"))?;
+        if !matches!(self.purpose, HistoryPurpose::Personal)
+            || !sources.unavailable_personal.is_empty()
+        {
+            return Err(failure("selected recollection is unavailable"));
+        }
+        Ok(consume(&mut sources.personal.iter().filter_map(|source| {
+            let current = source.current_record()?;
+            Some((
+                source.selection,
+                &current.header().reference,
+                current.payload(),
+            ))
+        })))
+    }
+
     pub fn receipt_liveness(&self) -> Weak<AtomicBool> {
         Arc::downgrade(&self.receipt_payload)
     }
@@ -124,6 +164,52 @@ impl RuntimePrivateHistoryRead {
     }
 }
 impl NativeWorldSession {
+    /// Run application preparation against the same accepted owner and
+    /// durable prefix as this private recollection selection.
+    pub fn read_personal_browse<T>(
+        &mut self,
+        account: &str,
+        owner: &str,
+        actor: &str,
+        capture: impl FnOnce(RuntimePersonalBrowseCut<'_>) -> T,
+    ) -> Result<Option<(RuntimePrivateHistoryRead, T)>, RuntimeError> {
+        if !self.private_history_permitted(account, owner, actor)? {
+            return Ok(None);
+        }
+        let read = self.read_history(actor, "personal")?;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let scope = &read.scope;
+        let prepared = capture(RuntimePersonalBrowseCut {
+            world: &scope.world_id,
+            generation: &scope.generation,
+            actor: &scope.actor_id,
+            durable_revision: state.durable_revision,
+            privacy_revision: scope.privacy_revision,
+            at: scope.at,
+            identity_through: scope.identity_through,
+        });
+        Ok(Some((read, prepared)))
+    }
+
+    /// The application's current tab and inspection grant are checked
+    /// separately. The engine owns embodiment and private-body eligibility.
+    pub fn private_history_permitted(
+        &self,
+        account: &str,
+        owner: &str,
+        actor: &str,
+    ) -> Result<bool, RuntimeError> {
+        let accepted = self.session.accepted().map_err(failure)?;
+        Ok(accepted.require_player_read(account, owner).is_ok()
+            && accepted
+                .state
+                .physical
+                .entities
+                .get(actor)
+                .and_then(|entity| entity.actor.as_ref())
+                .is_some_and(|body| owner == actor || body.controller != "player"))
+    }
+
     /// The Journal may render only the installed selection against its saved
     /// source cut. The actual transfer stays inside the returned disclosure
     /// lease, whose currentness is independent of unrelated clock advances.
@@ -372,6 +458,19 @@ impl NativeWorldSession {
         read: &mut RuntimePrivateHistoryRead,
         input: &[u8],
     ) -> Result<CandidateKey, RuntimeError> {
+        let _decode = decode_preparation(input, &self.budget)?;
+        let selection: crate::capture::NpcSourceSelection =
+            serde_json::from_slice(input).map_err(failure)?;
+        self.begin_history_sources_direct(read, selection)
+    }
+
+    /// Bind already admitted application selections. Canonical body
+    /// hydration, evidence eligibility and release stay with this cursor.
+    pub fn begin_history_sources_direct(
+        &mut self,
+        read: &mut RuntimePrivateHistoryRead,
+        selection: crate::capture::NpcSourceSelection,
+    ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         if read.candidate.is_some()
             || read.sources.is_some()
@@ -380,9 +479,6 @@ impl NativeWorldSession {
         {
             return Err(failure("history sources already selected or active"));
         }
-        let _decode = decode_preparation(input, &self.budget)?;
-        let selection: crate::capture::NpcSourceSelection =
-            serde_json::from_slice(input).map_err(failure)?;
         if selection.consolidation_job.is_some()
             || match read.purpose {
                 HistoryPurpose::Recent => !selection.personal.is_empty(),
@@ -607,6 +703,26 @@ impl NativeWorldSession {
             || !self.history_current(read)?
         {
             return Ok(None);
+        }
+        if matches!(read.purpose, HistoryPurpose::Personal)
+            && let Some(sources) = read
+                .sources
+                .as_ref()
+                .filter(|sources| !sources.personal.is_empty())
+        {
+            let scope = &read.scope;
+            let state = &self.session.publication_read().map_err(failure)?.state;
+            if !state.experience.personal_references_current(
+                &scope.generation,
+                &scope.actor_id,
+                scope.privacy_revision,
+                sources
+                    .personal
+                    .iter()
+                    .map(|source| &source.record.header().reference),
+            ) {
+                return Ok(None);
+            }
         }
         // Source capture custody remains with the retained read/header. This
         // object owns only the real final synchronous disclosure fence.

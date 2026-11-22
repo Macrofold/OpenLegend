@@ -1606,28 +1606,45 @@ impl ExperienceState {
     }
 
     pub fn capture_current(&self, captured: &CapturedPersonalSources) -> bool {
-        if self.generation != captured.generation {
+        self.personal_references_current(
+            &captured.generation,
+            &captured.actor_id,
+            captured.privacy_revision,
+            captured.records.iter().map(|record| &record.header.reference),
+        )
+    }
+
+    /// A detached reader may keep old residency. Exact resident replacements
+    /// and an explicit privacy edit still revoke its disclosure.
+    pub(crate) fn personal_references_current<'a>(
+        &self,
+        generation: &str,
+        actor_id: &str,
+        privacy_revision: u64,
+        references: impl IntoIterator<Item = &'a PersonalSourceRef>,
+    ) -> bool {
+        if self.generation != generation {
             return false;
         }
-        let Some(actor) = self.actors.get(&captured.actor_id) else {
+        let Some(actor) = self.actors.get(actor_id) else {
             return false;
         };
-        if actor.privacy.revision() != captured.privacy_revision {
+        if actor.privacy.revision() != privacy_revision {
             return false;
         }
         // Ordinary expiry/residency release does not revoke a previously captured
         // source. Explicit edits advance privacy/source fences before removal;
         // a still-resident replacement must also retain this exact body revision.
-        captured.records.iter().all(|record| {
+        references.into_iter().all(|reference| {
             actor
-                .collection(record.header.reference.kind)
+                .collection(reference.kind)
                 .is_ok_and(|collection| {
                     collection
                         .lookup
-                        .get(&record.header.reference.id)
+                        .get(&reference.id)
                         .and_then(|position| collection.by_ordinal.get(position))
                         .is_none_or(|current| {
-                            current.header.reference.revision == record.header.reference.revision
+                            current.header.reference.revision == reference.revision
                         })
                 })
         })

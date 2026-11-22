@@ -40,6 +40,7 @@ mod inventory;
 mod known_places;
 mod operations;
 mod preview;
+mod recall;
 mod save_access;
 mod view;
 
@@ -139,6 +140,7 @@ pub(crate) fn router(
         .route("/api/inventory", post(inventory::page))
         .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))
+        .route("/api/memories", post(recall::recollections))
         .route("/api/narration/regenerate", post(history::regenerate))
         .route(
             "/api/world-events",
@@ -155,6 +157,7 @@ pub(crate) fn router(
         );
     let operations = if god_mode {
         operations
+            .route("/api/god/memories", post(recall::recollections))
             .route("/api/god/forget-memory", post(edit_recall))
             .route("/api/god/correct-memory", post(edit_recall))
     } else {

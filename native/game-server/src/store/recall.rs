@@ -21,6 +21,7 @@ use std::collections::HashSet;
 use tokio_postgres::Transaction;
 
 pub(crate) mod activity_results;
+pub(crate) mod browse;
 mod checkpoint_accounts;
 pub(crate) mod consolidation;
 pub(crate) mod maintenance_scan;

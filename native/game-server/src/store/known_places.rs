@@ -18,6 +18,7 @@ mod view;
 pub(super) use support::place_capsule_key;
 use support::{PendingSupports, SqlSupports};
 pub(crate) use view::{KnownPlaceViewPage, PlaceViewRequest, PlaceViewSearch};
+pub(super) use view::source_text;
 
 /// Own the exact read inputs independently of the active provider or save
 /// acknowledgement. The native preparation remains the final owner of place

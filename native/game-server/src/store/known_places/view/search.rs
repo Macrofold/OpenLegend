@@ -121,30 +121,16 @@ impl PlaceViewSearch {
         text: &JsText,
         budget: &openlegend_simulation::host::ByteBudget,
     ) -> StoreResult<bool> {
-        let complete = (1_u16 << self.words.len()) - 1;
-        let mut seen = 0_u16;
-        for cell in [label, text] {
-            self.language
-                .search_words(cell, budget, |word| {
-                    for (at, prefix) in self.words.iter().enumerate() {
-                        if word.starts_with(prefix) {
-                            seen |= 1 << at;
-                        }
-                    }
-                })
-                .map_err(|error| match error {
-                    crate::language::LanguageError::Capacity => StoreError::Capacity,
-                    _ => StoreError::InvalidRecord,
-                })?;
-            if seen == complete {
-                return Ok(true);
-            }
-        }
-        Ok(false)
+        self.language
+            .matches_word_prefixes(&self.words, [label, text], budget)
+            .map_err(|error| match error {
+                crate::language::LanguageError::Capacity => StoreError::Capacity,
+                _ => StoreError::InvalidRecord,
+            })
     }
 }
 
-pub(super) fn source_text(kind: &str, body: &str) -> StoreResult<JsText> {
+pub(in crate::store) fn source_text(kind: &str, body: &str) -> StoreResult<JsText> {
     match kind {
         "awareness" => {
             #[derive(Deserialize)]

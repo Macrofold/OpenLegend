@@ -242,6 +242,31 @@ impl LanguageProvider {
         Ok(())
     }
 
+    /// Match every admitted prefix against the same words as literal
+    /// history search. A separate label can contribute its own words.
+    pub(crate) fn matches_word_prefixes<'a>(
+        &self,
+        prefixes: &[String],
+        text: impl IntoIterator<Item = &'a JsText>,
+        budget: &ByteBudget,
+    ) -> Result<bool, LanguageError> {
+        let complete = (1_u16 << prefixes.len()) - 1;
+        let mut seen = 0_u16;
+        for value in text {
+            self.search_words(value, budget, |word| {
+                for (index, prefix) in prefixes.iter().enumerate() {
+                    if word.starts_with(prefix) {
+                        seen |= 1 << index;
+                    }
+                }
+            })?;
+            if seen == complete {
+                break;
+            }
+        }
+        Ok(seen == complete)
+    }
+
     fn normalized_lower(
         &self,
         input: &[u16],

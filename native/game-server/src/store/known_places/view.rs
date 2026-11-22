@@ -18,6 +18,7 @@ const PAGE: usize = 20;
 const PLACE_SEARCH_SCAN: usize = 2_000;
 
 mod search;
+pub(in crate::store) use search::source_text;
 
 pub(super) struct HistoricalFilter {
     pub(super) forgotten_count: usize,

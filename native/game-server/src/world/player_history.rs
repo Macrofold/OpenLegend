@@ -1,6 +1,7 @@
 //! One authorized tab's private history capture and final checked handoff.
 
 use super::*;
+use crate::store::recall::browse::{MemoryBrowseCut, MemoryPage};
 use crate::store::{KnownPlaceViewPage, PreparedKnownPlaceRead};
 use axum::body::Bytes;
 use openlegend_simulation::received::TemporalReceiptLocator;
@@ -12,6 +13,145 @@ pub(crate) struct PlayerHistoryRead {
 }
 
 impl HostedWorld {
+    /// Capture this tab's private recollection read before the SQL wait.
+    /// A god inspector keeps the same exact actor and grant at disclosure.
+    pub(crate) async fn capture_recollections(
+        self: &Arc<Self>,
+        authority: Arc<Authority>,
+        scope: Arc<AuthorizedScope>,
+        actor: String,
+    ) -> Result<(PlayerHistoryRead, Arc<MemoryBrowseCut>), WorldError> {
+        let _turn = self.enter().await?;
+        let budget = self.host.budget().clone();
+        self.call(move |session| {
+            let result = authority.current_private_view(
+                &scope,
+                actor != scope.scope.actor_id,
+                |permit, _| {
+                    let (read, cut) = session
+                        .read_personal_browse(
+                            &permit.account_id,
+                            &permit.actor_id,
+                            &actor,
+                            |cut| {
+                                let custody = budget.reserve(
+                                    512 + cut.world.len() + cut.actor.len() + cut.generation.len(),
+                                )?;
+                                Ok::<_, openlegend_simulation::host::CapacityError>(
+                                    MemoryBrowseCut {
+                                        world: cut.world.to_owned(),
+                                        generation: cut.generation.to_owned(),
+                                        actor: cut.actor.to_owned(),
+                                        revision: cut.durable_revision,
+                                        privacy_revision: cut.privacy_revision,
+                                        at: cut.at,
+                                        identity_through: cut.identity_through,
+                                        _custody: custody,
+                                    },
+                                )
+                            },
+                        )?
+                        .ok_or(AccessError::Forbidden)?;
+                    let cut = cut.map_err(HostError::from)?;
+                    Ok::<_, WorldError>((read, Arc::new(cut)))
+                },
+            );
+            Ok(result
+                .map_err(WorldError::from)
+                .and_then(|result| result)
+                .map(|(read, cut)| (PlayerHistoryRead { scope, read }, cut)))
+        })
+        .await?
+    }
+
+    /// Give only the selected exact references to the real native history
+    /// preparation. Its application bridge takes ownership of the scoped
+    /// source overlay before asking PostgreSQL for the required bodies.
+    pub(crate) async fn admit_recollections(
+        self: &Arc<Self>,
+        game: Arc<crate::boot::CurrentServer>,
+        selected: PlayerHistoryRead,
+        page: MemoryPage,
+    ) -> Result<PlayerHistoryRead, WorldError> {
+        self.prepare_actor_read(
+            game,
+            |_| Ok(selected),
+            move |session, selected| {
+                let _storage = page.custody;
+                session.begin_history_sources_direct(
+                    &mut selected.read,
+                    openlegend_simulation::capture::NpcSourceSelection {
+                        receipts: Vec::new(),
+                        personal: page
+                            .references
+                            .into_iter()
+                            .map(
+                                |reference| openlegend_simulation::capture::NpcPersonalSelection {
+                                    reference,
+                                    through: None,
+                                },
+                            )
+                            .collect(),
+                        consolidation_job: None,
+                    },
+                )
+            },
+            |session, selected, key, answer| {
+                session.step_history_sources(&mut selected.read, key, answer)
+            },
+        )
+        .await
+    }
+
+    /// A requested HTTP page can wait for the bounded world turn after its
+    /// store read, without repeating that read or locking authority while it
+    /// waits. The callback checks the original sources and encodes synchronously.
+    pub(crate) async fn disclose_recollections(
+        &self,
+        authority: &Authority,
+        selected: &PlayerHistoryRead,
+        publish: impl FnOnce(&ByteBudget) -> Result<Bytes, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
+        let _turn = self.enter().await?;
+        self.with_private_reader(
+            authority,
+            &selected.scope,
+            selected.read.actor_id(),
+            |session| {
+                Ok(self
+                    .with_current_player_history(session, selected, |_| publish(self.host.budget()))?
+                    .map_or(PlayerDisclosure::Changed, PlayerDisclosure::Published))
+            },
+        )
+    }
+
+    /// The caller owns a world turn. Keep the same session and app grant
+    /// throughout the native private read and actual response preparation.
+    fn with_private_reader<T>(
+        &self,
+        authority: &Authority,
+        scope: &AuthorizedScope,
+        actor: &str,
+        read: impl FnOnce(&NativeWorldSession) -> Result<T, WorldError>,
+    ) -> Result<T, WorldError> {
+        authority
+            .current_private_view(scope, actor != scope.scope.actor_id, |permit, _| {
+                let session = match self.session.try_lock() {
+                    Ok(session) => session,
+                    Err(std::sync::TryLockError::WouldBlock) => return Err(HostError::Busy.into()),
+                    Err(std::sync::TryLockError::Poisoned(_)) => {
+                        return Err(HostError::Poisoned.into());
+                    }
+                };
+                if !session.private_history_permitted(&permit.account_id, &permit.actor_id, actor)?
+                {
+                    return Err(AccessError::Forbidden.into());
+                }
+                read(&session)
+            })
+            .map_err(WorldError::Access)?
+    }
+
     /// Select the original durable history revision under current player
     /// authority, then release the world turn before SQL reads its accounts.
     pub(crate) async fn capture_transcript(
@@ -156,36 +296,49 @@ impl HostedWorld {
         publish: impl FnOnce(&NativeWorldSession, &ByteBudget) -> Result<Bytes, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
         authority
-            .current_view(&selected.scope, |_, _| {
-                if self.closing.load(Ordering::Acquire) {
-                    return Err(HostError::Closed.into());
-                }
-                let Ok(_turn) = self.turn.try_lock() else {
-                    return Ok(PlayerDisclosure::Busy);
-                };
-                let _turn = super::held_turn(
-                    _turn,
-                    #[cfg(feature = "profile-campaign")]
-                    openlegend_simulation::profile::sites::TURN_VIEW,
-                );
-                let session = match self.session.try_lock() {
-                    Ok(session) => session,
-                    Err(std::sync::TryLockError::WouldBlock) => return Ok(PlayerDisclosure::Busy),
-                    Err(std::sync::TryLockError::Poisoned(_)) => {
-                        return Err(HostError::Poisoned.into());
+            .current_private_view(
+                &selected.scope,
+                selected.read.actor_id() != selected.scope.scope.actor_id,
+                |permit, _| {
+                    if self.closing.load(Ordering::Acquire) {
+                        return Err(HostError::Closed.into());
                     }
-                };
-                if let Some(preview_cut) = preview_cut
-                    && session.accepted_progress()?.through_cut != preview_cut
-                {
-                    return Ok(PlayerDisclosure::Changed);
-                }
-                Ok(self
-                    .with_current_player_history(&session, selected, |session| {
-                        publish(session, self.host.budget())
-                    })?
-                    .map_or(PlayerDisclosure::Changed, PlayerDisclosure::Published))
-            })
+                    let Ok(_turn) = self.turn.try_lock() else {
+                        return Ok(PlayerDisclosure::Busy);
+                    };
+                    let _turn = super::held_turn(
+                        _turn,
+                        #[cfg(feature = "profile-campaign")]
+                        openlegend_simulation::profile::sites::TURN_VIEW,
+                    );
+                    let session = match self.session.try_lock() {
+                        Ok(session) => session,
+                        Err(std::sync::TryLockError::WouldBlock) => {
+                            return Ok(PlayerDisclosure::Busy);
+                        }
+                        Err(std::sync::TryLockError::Poisoned(_)) => {
+                            return Err(HostError::Poisoned.into());
+                        }
+                    };
+                    if !session.private_history_permitted(
+                        &permit.account_id,
+                        &permit.actor_id,
+                        selected.read.actor_id(),
+                    )? {
+                        return Err(AccessError::Forbidden.into());
+                    }
+                    if let Some(preview_cut) = preview_cut
+                        && session.accepted_progress()?.through_cut != preview_cut
+                    {
+                        return Ok(PlayerDisclosure::Changed);
+                    }
+                    Ok(self
+                        .with_current_player_history(&session, selected, |session| {
+                            publish(session, self.host.budget())
+                        })?
+                        .map_or(PlayerDisclosure::Changed, PlayerDisclosure::Published))
+                },
+            )
             .map_err(WorldError::Access)?
     }
 
@@ -197,7 +350,7 @@ impl HostedWorld {
         selected: &PlayerHistoryRead,
         consume: impl FnOnce(&NativeWorldSession) -> Result<T, WorldError>,
     ) -> Result<Option<T>, WorldError> {
-        self.with_unedited_history(&selected.scope.scope.actor_id, || {
+        self.with_unedited_history(selected.read.actor_id(), || {
             let Some(_lease) = session.history_publication(&selected.read)? else {
                 return Ok(None);
             };
@@ -229,5 +382,11 @@ impl HostedWorld {
             return Ok(None);
         }
         consume().map(Some)
+    }
+}
+
+impl PlayerHistoryRead {
+    pub(crate) fn sources(&self) -> &RuntimePrivateHistoryRead {
+        &self.read
     }
 }

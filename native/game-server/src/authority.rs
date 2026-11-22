@@ -643,8 +643,20 @@ impl Authority {
         authorized: &AuthorizedScope,
         publish: impl FnOnce(&RequestScope, bool) -> T,
     ) -> Result<T, AccessError> {
+        self.current_private_view(authorized, false, publish)
+    }
+
+    pub(crate) fn current_private_view<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        inspect_other: bool,
+        publish: impl FnOnce(&RequestScope, bool) -> T,
+    ) -> Result<T, AccessError> {
         let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
-        let (_, controlling) = self.selected(&cache, authorized, Capability::Play, false)?;
+        let (grant, controlling) = self.selected(&cache, authorized, Capability::Play, false)?;
+        if inspect_other && !grant.capabilities.contains(&Capability::Inspect) {
+            return Err(AccessError::Forbidden);
+        }
         let generation = cache
             .tokens
             .get(&authorized.key)
