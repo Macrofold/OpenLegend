@@ -105,6 +105,14 @@ In a separate 131-account run, the first database batch saved 127 summaries befo
 
 The unchanged Rust executable used tree `faaf348ad0c0e8d9df7392edbf58bbaf9c72169c` and SHA-256 `681d02dd699cfb372aa7f5fac3ff2262892f8fc48be971a3aecada33412d235a`. The `lifecycle-follow-through` folder under `nsc04-combined-memory-20261122` retains both cases and the earlier wake fixtures that expected a different sleep record, read an intermediate elapsed value or searched for wording that had remained unpublished. All five disposable databases were removed and all four final listener shutdowns released their tracked reservations. The controlled provider incurred no charge. These checks establish saved behavior and recovery.
 
+#### Protected history and fully reserved background allowance
+
+A resident fell asleep through the ordinary clock while their only old hourly account was protected. The Source selector found no hourly batch for that resident. Rust let a second resident summarize four eligible accounts and kept the first resident's exact old record. The first resident started no model request. The signed-in player walked and the ordinary save committed the move while this fixture was running.
+
+In a separate daily review, the prepared fixture ledger had `$1.225` in previous application charges. The scheduled request reserved the last `$0.25` of its `$1.475` background allowance. The one response settled, published two summaries and an imagined dream, and completed the review. Exact protected text and the unrelated resident's history stayed intact. The controlled provider cost $0. The test did not need a second reservation at publication.
+
+Both callers used Rust executable `26d85caf07175…`. Archive `nsc04-memory-limits-20261122`, manifest `643e1f92976d…`, retains both checks, an earlier correctly refused second database writer and an earlier fixture with an unrelated daily assertion. All four named databases were removed. Both passing listeners released every tracked reservation at shutdown.
+
 #### Conversation during a separate Source review
 
 The same authored small opening reached hourly and daily review under the normal TypeScript clock. The controlled HTTPS requests selected the same permitted routine accounts as Rust and excluded each protected account. The original Source run sent the daily request, then canceled it when the player spoke to the other NPC. The durable job recorded transport started, no response received and no applied effects. The foreground caller had been canceling the shared maintenance owner, including reviews owned by a different NPC.
