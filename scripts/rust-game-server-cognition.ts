@@ -17,11 +17,20 @@ import {
   JUDGMENT_STATE_QUESTION_CHARACTERS,
 } from '../packages/ai/src/index.js';
 import {
+  boundReflectionJsonSchema,
   boundResponseSchema,
   COGNITION_VERSION,
   decisionAppraisalSchema,
+  REFLECTION_WORKSPACE_GUIDANCE,
+  REFLECTION_WORKSPACE_INSTRUCTIONS,
   RESPONSE_INSTRUCTIONS,
 } from '../apps/server/src/cognition-contracts.js';
+import { COGNITION_PERMISSIONS } from '../apps/server/src/macrofold-provisioning.js';
+import {
+  DEFAULT_MACROFOLD_MODEL,
+  macrofoldModelParameters,
+} from '../apps/server/src/macrofold-model.js';
+import { REFLECTION_DOWNTIME } from '../apps/server/src/reflection-publication.js';
 import { CONTEXT_BYTE_LIMIT } from '../apps/server/src/context.js';
 import {
   attentionRequest,
@@ -181,6 +190,15 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
   return {
     instructionsVersion: COGNITION_VERSION,
     responseInstructions: RESPONSE_INSTRUCTIONS,
+    reflection: {
+      instructions: REFLECTION_WORKSPACE_INSTRUCTIONS,
+      workspaceGuidance: REFLECTION_WORKSPACE_GUIDANCE,
+      defaultModel: DEFAULT_MACROFOLD_MODEL,
+      modelParameters: macrofoldModelParameters('medium'),
+      ...REFLECTION_DOWNTIME,
+      permissions: COGNITION_PERMISSIONS,
+      schema: boundReflectionJsonSchema([references.identity], [references.retention]),
+    },
     queryInstructions: SITUATION_QUERY_INSTRUCTIONS,
     contextBytes: CONTEXT_BYTE_LIMIT,
     text: decisionPromptText,

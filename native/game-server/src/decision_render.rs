@@ -53,6 +53,7 @@ impl std::error::Error for RenderError {}
 pub(crate) struct DecisionPolicy {
     pub(crate) instructions_version: String,
     pub(crate) response_instructions: String,
+    pub(crate) reflection: ReflectionPolicy,
     pub(crate) query_instructions: String,
     context_bytes: usize,
     text: HashMap<String, String>,
@@ -74,6 +75,20 @@ pub(crate) struct DecisionPolicy {
     schemas: Vec<SchemaVariant>,
     choices: Value,
     pub(crate) scheduling: SchedulingPolicy,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ReflectionPolicy {
+    pub(crate) instructions: String,
+    pub(crate) workspace_guidance: String,
+    pub(crate) default_model: String,
+    pub(crate) model_parameters: Value,
+    pub(crate) day_seconds: f64,
+    pub(crate) minimum_interval_seconds: f64,
+    pub(crate) stimulus: String,
+    pub(crate) permissions: Value,
+    schema: Value,
 }
 
 #[derive(Deserialize)]

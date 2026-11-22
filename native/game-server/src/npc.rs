@@ -49,6 +49,7 @@ pub(crate) struct Director {
     models: Option<settings::ConfiguredModels>,
     embedding: Option<Arc<semantic_index::EmbeddingModel>>,
     summary_model: Option<settings::SummaryModel>,
+    reflection_model: Option<settings::ReflectionModel>,
     dispatch: Arc<DecisionDispatch>,
     slots: Arc<Slots>,
     tasks: Mutex<Option<tokio::task::JoinSet<()>>>,
@@ -158,6 +159,8 @@ impl Director {
             limit_usd,
             game.store.schema.recall.maintenance.output_tokens,
         )?;
+        let reflection_model =
+            settings::reflection_model(models.as_ref(), &game.cognition.reflection.default_model)?;
         let budget = game.host.budget().clone();
         let dispatch = Arc::new(DecisionDispatch::new(game.clone(), maximum)?);
         Ok(Self {
@@ -167,6 +170,7 @@ impl Director {
             models,
             embedding,
             summary_model,
+            reflection_model,
             dispatch,
             slots: Arc::new(Slots::new(budget, maximum)),
             tasks: Mutex::new(Some(tokio::task::JoinSet::new())),

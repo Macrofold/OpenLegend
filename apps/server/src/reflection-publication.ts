@@ -1,4 +1,5 @@
 import {
+  EXPERIENCE_LIMITS,
   entityGet,
   publishInnerWorld,
   subjectKey,
@@ -144,6 +145,12 @@ export function prepareReflectionPublication(
   };
 }
 
+export const REFLECTION_DOWNTIME = {
+  daySeconds: EXPERIENCE_LIMITS.reviewDaySeconds,
+  minimumIntervalSeconds: 3600,
+  stimulus: 'Safe idle time to reconsider remembered experience',
+};
+
 /** Existing downtime cadence; caller separately owns safety and model admission. */
 export function reflectionTimeDue(
   world: WorldState,
@@ -151,7 +158,7 @@ export function reflectionTimeDue(
   hasMemories: boolean,
 ): boolean {
   const mind = world.minds?.[actorId];
-  const at = mind?.lastReflectionAt ?? -86400;
+  const at = mind?.lastReflectionAt ?? -REFLECTION_DOWNTIME.daySeconds;
   return reflectionTimeDueFromRead(
     world.simTime,
     at,
@@ -169,8 +176,10 @@ export function reflectionTimeDueFromRead(
     hasMemories &&
     !hasAction &&
     !(
-      lastReflectionAt > 0 && Math.floor(lastReflectionAt / 86400) === Math.floor(simTime / 86400)
+      lastReflectionAt > 0 &&
+      Math.floor(lastReflectionAt / REFLECTION_DOWNTIME.daySeconds) ===
+        Math.floor(simTime / REFLECTION_DOWNTIME.daySeconds)
     ) &&
-    simTime - lastReflectionAt >= 3600
+    simTime - lastReflectionAt >= REFLECTION_DOWNTIME.minimumIntervalSeconds
   );
 }

@@ -228,6 +228,10 @@ impl DecisionDispatch {
         &self.previews
     }
 
+    pub(crate) fn network(&self) -> &NetworkOwner {
+        &self.network
+    }
+
     /// The admitted decoder inspects precisely one response for this phase.
     /// It runs off the writer lane and returns a usable value and independent
     /// charge facts even if one of those observations fails.

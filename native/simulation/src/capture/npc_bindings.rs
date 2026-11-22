@@ -82,7 +82,7 @@ pub struct NpcEntityAlias {
     rename_all_fields = "camelCase",
     deny_unknown_fields
 )]
-pub(crate) enum NpcSubjectOrdinal {
+pub enum NpcSubjectOrdinal {
     Myself,
     MindRecord {
         ordinal: usize,
@@ -125,9 +125,14 @@ pub(crate) enum NpcSubjectOrdinal {
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct NpcSubjectAlias {
+pub struct NpcSubjectAlias {
     pub alias: String,
     pub source: NpcSubjectOrdinal,
+}
+impl HeapBytes for NpcSubjectAlias {
+    fn heap_bytes(&self) -> Option<usize> {
+        Some(self.alias.capacity())
+    }
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -806,10 +811,7 @@ impl NpcBindingMaps {
         for selected in &selection.identities {
             let fact = read.subject(&selected.source).ok_or_else(invalid)?;
             let interpretation = matches!(selected.source, NpcSubjectOrdinal::MindRecord { .. });
-            if !interpretation
-                && matches!(fact.subject, ObserverSubject::Individual { .. })
-                && (!fact.identity_present || fact.seed_only)
-            {
+            if !interpretation && !fact.interpretation_identity() {
                 return Err(invalid());
             }
             reserve(

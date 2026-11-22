@@ -23,6 +23,16 @@ pub struct RuntimeNpcObservedBody<'a> {
 }
 
 impl RuntimeNpcRead {
+    /// The already selected body may supply an acquired interpretation
+    /// subject independently of its current physical reference.
+    pub fn has_interpretation_subject(&self, ordinal: usize) -> bool {
+        self.reference_facts
+            .bodies
+            .get(ordinal)
+            .and_then(|body| body.subject.as_ref())
+            .is_some_and(|identity| identity.interpretation_identity())
+    }
+
     pub fn selected_body_ordinals(&self) -> Result<&[usize], RuntimeError> {
         self.preparation
             .as_ref()

@@ -23,6 +23,7 @@ use tokio::{sync::watch, time::Instant};
 mod daily;
 mod hourly;
 mod learning;
+mod reflection;
 
 const INSPECTION_INTERVAL: Duration = Duration::from_secs(1);
 const READ_BACKOFF: Duration = Duration::from_secs(60);
@@ -35,6 +36,7 @@ struct DueActor {
     dirty: bool,
     next_hourly: f64,
     next_learning: Option<Instant>,
+    next_reflection: f64,
     paid: Option<tokio::task::Id>,
     custody: ByteReservation,
 }
@@ -49,6 +51,7 @@ impl DueActor {
             dirty: true,
             next_hourly: 0.,
             next_learning: None,
+            next_reflection: 0.,
             paid: None,
             custody,
         }
@@ -59,12 +62,14 @@ enum PaidWork {
     Hourly(hourly::Selected),
     Daily(DailySelection),
     Learning,
+    Reflection(Arc<crate::store::reflection::ReflectionScope>),
 }
 
 enum PaidKind {
     Hourly,
     Daily,
     Learning,
+    Reflection,
 }
 
 type PaidResult = (String, PaidKind, Result<f64, CallFailure>);
@@ -94,6 +99,9 @@ impl Director {
                         if owner.next_hourly == f64::INFINITY {
                             owner.next_hourly = 0.;
                         }
+                        if owner.next_reflection == f64::INFINITY {
+                            owner.next_reflection = 0.;
+                        }
                     })
                     .or_insert_with(|| DueActor::new(custody));
             }
@@ -109,6 +117,7 @@ impl Director {
                     for owner in due.values_mut() {
                         owner.dirty = true;
                         owner.next_hourly = 0.;
+                        owner.next_reflection = 0.;
                     }
                     for actor in population.actors {
                         if !due.contains_key(&actor) {
@@ -133,6 +142,7 @@ impl Director {
                         && (actor.dirty
                             || actor.next_game <= clock.at
                             || actor.next_learning.is_some_and(|time| time <= now)
+                            || self.reflection_model.is_some() && actor.next_reflection <= clock.at
                             || self.summary_model.is_some() && actor.next_hourly <= clock.at)
                 });
                 if let Some(index) = selected {
@@ -173,7 +183,9 @@ impl Director {
                     };
                     match daily {
                         Ok(false)
-                            if self.summary_model.is_none() && work.next_learning.is_none() =>
+                            if self.summary_model.is_none()
+                                && self.reflection_model.is_none()
+                                && work.next_learning.is_none() =>
                         {
                             continue;
                         }
@@ -214,6 +226,33 @@ impl Director {
                             }
                             Err(error) => {
                                 eprintln!("Hourly memory selection deferred: {error}");
+                                work.next_real = now + READ_BACKOFF;
+                            }
+                        }
+                    }
+                    if self.reflection_model.is_some()
+                        && work.paid.is_none()
+                        && work.next_reflection <= clock.at
+                    {
+                        match self
+                            .start_reflection(&actor, &mut work, &mut paid, stop.clone())
+                            .await
+                        {
+                            Ok(()) => (),
+                            Err(WorldError::Host(HostError::Cancelled)) if *stop.borrow() => {
+                                continue;
+                            }
+                            Err(error)
+                                if error.is_admission_refusal()
+                                    || matches!(
+                                        error,
+                                        WorldError::Storage(StoreError::StaleCut)
+                                    ) =>
+                            {
+                                ()
+                            }
+                            Err(error) => {
+                                eprintln!("Reflection selection deferred: {error}");
                                 work.next_real = now + READ_BACKOFF;
                             }
                         }
@@ -384,6 +423,41 @@ impl Director {
         Ok(())
     }
 
+    async fn start_reflection(
+        self: &Arc<Self>,
+        actor: &str,
+        work: &mut DueActor,
+        tasks: &mut tokio::task::JoinSet<PaidResult>,
+        service_stop: watch::Receiver<bool>,
+    ) -> Result<(), WorldError> {
+        let (scope, tomorrow) = match reflection::plan(self, actor).await? {
+            reflection::Plan::Wait(at) => {
+                work.next_reflection = at;
+                return Ok(());
+            }
+            reflection::Plan::Ready(scope, tomorrow) => (scope, tomorrow),
+        };
+        let Admission::Accepted(slot) = self.slots.select(
+            actor,
+            &scope.attempt,
+            None,
+            &scope.generation,
+            SlotPriority::Ordinary,
+        )?
+        else {
+            return Ok(());
+        };
+        work.next_reflection = tomorrow;
+        work.paid = Some(self.start_inference(
+            actor,
+            tasks,
+            slot,
+            PaidWork::Reflection(scope),
+            service_stop,
+        ));
+        Ok(())
+    }
+
     fn start_inference(
         self: &Arc<Self>,
         actor: &str,
@@ -401,6 +475,7 @@ impl Director {
                     PaidWork::Hourly(_) => PaidKind::Hourly,
                     PaidWork::Daily(_) => PaidKind::Daily,
                     PaidWork::Learning => PaidKind::Learning,
+                    PaidWork::Reflection(_) => PaidKind::Reflection,
                 };
                 let learner = actor.clone();
                 let future = async move {
@@ -427,6 +502,9 @@ impl Director {
                         .map_err(CallFailure::World),
                         PaidWork::Learning => {
                             learning::run(director, learner, stopped).await.map(|()| 0.)
+                        }
+                        PaidWork::Reflection(scope) => {
+                            reflection::run(director, scope, stopped).await.map(|()| 0.)
                         }
                     }
                 };
@@ -469,6 +547,7 @@ fn finish_paid(
             PaidKind::Daily => work.next_game = next,
             PaidKind::Hourly => work.next_hourly = next,
             PaidKind::Learning => work.dirty = true,
+            PaidKind::Reflection => (),
         },
         Err(error) => match error.cause().1 {
             CallFailure::Cancelled

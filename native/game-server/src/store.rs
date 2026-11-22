@@ -26,6 +26,7 @@ mod privacy_edit;
 mod read;
 pub(crate) mod recall;
 mod received;
+pub(crate) mod reflection;
 mod schema;
 mod source_versions;
 mod view_cognition;

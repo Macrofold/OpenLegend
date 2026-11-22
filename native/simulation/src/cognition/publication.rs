@@ -26,6 +26,7 @@ pub(crate) struct ReflectionInput {
     pub bindings: Arc<ResponseBindings>,
     pub permitted_subjects: Vec<crate::reception::ObserverSubject>,
     pub publication: SqlCell,
+    pub protected: bool,
     pub storage: ByteReservation,
 }
 #[derive(Deserialize)]
@@ -67,6 +68,7 @@ enum Progress {
 pub(crate) struct CompletedReflection {
     pub outcome: Outcome,
     pub events: Vec<WorldEvent>,
+    pub protected: bool,
     _storage: ByteReservation,
 }
 pub(crate) struct ReflectionCursor {
@@ -202,6 +204,7 @@ impl ReflectionCursor {
         Ok(Progress::Complete(CompletedReflection {
             outcome,
             events: std::mem::take(&mut self.events),
+            protected: self.input.protected,
             _storage: storage,
         }))
     }

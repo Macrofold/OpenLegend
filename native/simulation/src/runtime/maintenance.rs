@@ -11,7 +11,10 @@ pub use consolidation::{
     RuntimePreparedDream,
 };
 pub use index::RuntimeMemoryIndex;
-pub use reflection::RuntimeReflectionTicket;
+pub use reflection::{
+    RuntimeReflectionBinding, RuntimeReflectionEvidenceAlias, RuntimeReflectionFile,
+    RuntimeReflectionFiles, RuntimeReflectionOpportunity, RuntimeReflectionTicket,
+};
 pub struct RuntimeMaintenanceRead {
     pub(crate) read: Arc<crate::capture::maintenance::MaintenanceCapture>,
 }
@@ -53,6 +56,10 @@ impl RuntimeMaintenancePublication {
     }
 }
 impl RuntimeMaintenanceRead {
+    pub fn inner_revision(&self) -> Option<u64> {
+        self.read.inner_revision
+    }
+
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let packet = self
             .read

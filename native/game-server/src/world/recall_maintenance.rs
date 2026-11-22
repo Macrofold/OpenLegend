@@ -4,12 +4,29 @@ use super::{HostedWorld, NpcDisclosure, NpcDisclosureTurn, WorldError};
 use openlegend_simulation::runtime::{
     NativeWorldSession, RuntimeActivityLearning, RuntimeConsolidationTicket, RuntimeError,
     RuntimeMaintenancePublication, RuntimeMaintenanceRead, RuntimeMemoryIndex, RuntimeNpcConsumer,
-    RuntimeNpcRead,
+    RuntimeNpcRead, RuntimeReflectionTicket,
 };
 use openlegend_world_host::pool::HostError;
 use std::sync::{TryLockError, atomic::Ordering};
 
 impl NpcDisclosureTurn<'_> {
+    pub(crate) fn disclose_reflection(
+        self,
+        ticket: &RuntimeReflectionTicket,
+        workspace_revision: Option<u64>,
+        start: impl FnOnce(),
+    ) -> Result<Result<(), NpcDisclosure>, WorldError> {
+        self.world.disclose_personal(
+            ticket.actor_id(),
+            ["reflection-source-changed", "reflection-lease-closed"],
+            |world| match workspace_revision {
+                Some(revision) => world.reflection_workspace_publication(ticket, revision),
+                None => world.reflection_publication(ticket),
+            },
+            start,
+        )
+    }
+
     pub(crate) fn disclose_activity_learning(
         self,
         read: &RuntimeActivityLearning,

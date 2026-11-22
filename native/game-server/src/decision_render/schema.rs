@@ -88,6 +88,36 @@ impl BoundSchema {
 }
 
 impl DecisionPolicy {
+    pub(crate) fn reflection_schema(
+        &self,
+        subjects: &[String],
+        evidence: &[String],
+        budget: &ByteBudget,
+    ) -> Result<BoundSchema, RenderError> {
+        let references = ResponseReferences {
+            entity: &[],
+            action: &[],
+            knowledge: &[],
+            identity: subjects,
+            physical: &[],
+            attention: &[],
+            retention: evidence,
+            appraisal: None,
+        };
+        let template = &self.reflection.schema;
+        let custody = budget
+            .reserve(bound_bytes(template, &references, self))
+            .map_err(|_| RenderError::Capacity)?;
+        let mut value = template.clone();
+        if !bind_references(&mut value, &references, self) {
+            return Err(RenderError::Contract);
+        }
+        Ok(BoundSchema {
+            value,
+            _custody: custody,
+        })
+    }
+
     pub(crate) fn response_schema(
         &self,
         speech: bool,

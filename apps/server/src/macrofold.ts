@@ -13,7 +13,7 @@ import { ActorWorkspaceFiles } from './workspace.js';
 import { COGNITION_PERMISSIONS } from './macrofold-provisioning.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { macrofoldModelParameters, cognitionOutputTokens } from './macrofold-model.js';
-import { LEVEL_LIMITS } from './cognition-contracts.js';
+import { LEVEL_LIMITS, REFLECTION_WORKSPACE_GUIDANCE } from './cognition-contracts.js';
 import {
   ModelTargetPreparation,
   ModelTargetPreparationError,
@@ -1698,8 +1698,7 @@ export class MacrofoldBackend implements AiClient {
             workspace: {
               directory: 'mind',
               files: files.map((file) => `mind/${file.path}`),
-              guidance:
-                'Use relative paths. List mind directly if needed; / and . are not valid tool paths. identity.md is read-only.',
+              guidance: REFLECTION_WORKSPACE_GUIDANCE,
             },
           };
           if (allocation) this.api.reserve(jsonCaptureBytes(prompt));

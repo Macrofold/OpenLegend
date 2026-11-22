@@ -3,7 +3,7 @@
 use super::*;
 use crate::capture::{
     NpcBindingPurpose,
-    maintenance::{MaintenanceAdmission, MaintenancePurpose},
+    maintenance::{MaintenanceAdmission, MaintenancePurpose, available},
 };
 use crate::host::retained_size::{HeapBytes, map_storage};
 use crate::records::SqlCell;
@@ -14,22 +14,43 @@ use std::sync::atomic::AtomicBool;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Binding {
+pub struct RuntimeReflectionBinding {
     #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
-    expected_revision: u64,
-    evidence_aliases: Vec<EvidenceAlias>,
+    pub expected_revision: u64,
+    pub evidence_aliases: Vec<RuntimeReflectionEvidenceAlias>,
     #[serde(
         default,
         deserialize_with = "crate::values::deserialize_present_option"
     )]
-    dream_episode: Option<String>,
+    pub dream_episode: Option<String>,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct EvidenceAlias {
-    alias: String,
-    inventory: usize,
-    ordinal: usize,
+pub struct RuntimeReflectionEvidenceAlias {
+    pub alias: String,
+    pub inventory: usize,
+    pub ordinal: usize,
+}
+
+pub struct RuntimeReflectionFile {
+    pub id: String,
+    pub text: crate::text::JsText,
+}
+
+pub struct RuntimeReflectionFiles {
+    pub revision: u64,
+    pub files: Vec<RuntimeReflectionFile>,
+    _storage: ByteReservation,
+}
+
+pub struct RuntimeReflectionOpportunity {
+    pub world_id: String,
+    pub generation: String,
+    pub accepted_cut: u64,
+    pub at: f64,
+    pub last_reflection_at: f64,
+    pub idle: bool,
+    _storage: ByteReservation,
 }
 pub struct RuntimeReflectionTicket {
     npc: RuntimeNpcResponseTicket,
@@ -41,11 +62,64 @@ pub struct RuntimeReflectionTicket {
     _storage: ByteReservation,
 }
 impl RuntimeReflectionTicket {
+    pub fn actor_id(&self) -> &str {
+        self.bindings.actor_id()
+    }
+
     pub fn receipt_liveness(&self) -> [Weak<AtomicBool>; 2] {
         self.npc.receipt_liveness()
     }
 }
 impl NativeWorldSession {
+    /// Read only installed eligibility and the committed reflection time.
+    /// The scheduler separately selects the same cut's indexed memory facts.
+    pub fn reflection_opportunity(
+        &self,
+        actor: &str,
+    ) -> Result<Option<RuntimeReflectionOpportunity>, RuntimeError> {
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let Some(mind) = state
+            .minds
+            .minds
+            .as_ref()
+            .and_then(|minds| minds.get(actor))
+        else {
+            return Ok(None);
+        };
+        if !state.installed.cognition.reflection
+            || !state
+                .minds
+                .inner_worlds
+                .as_ref()
+                .is_some_and(|worlds| worlds.contains_key(actor))
+        {
+            return Ok(None);
+        }
+        let world = &state.physical.header.id;
+        let generation = &state.generation;
+        let storage = self
+            .budget
+            .reserve(size_of::<RuntimeReflectionOpportunity>() + world.len() + generation.len())?;
+        let idle = state
+            .physical
+            .entities
+            .get(actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .is_some_and(|actor| actor.action.is_none());
+        Ok(Some(RuntimeReflectionOpportunity {
+            world_id: world.clone(),
+            generation: generation.clone(),
+            accepted_cut: state.accepted_cut,
+            at: state.physical.header.sim_time,
+            last_reflection_at: mind.last_reflection_at,
+            idle: idle
+                && !state.physical.header.paused
+                && available(state, actor, MaintenancePurpose::Reflection).map_err(failure)?,
+            _storage: storage,
+        }))
+    }
+
     pub fn reflection_sources_current(
         &self,
         ticket: &RuntimeReflectionTicket,
@@ -88,6 +162,87 @@ impl NativeWorldSession {
             _storage: storage,
         }))
     }
+
+    /// Seed only a worktree backed by the exact observed private revision.
+    /// A later check must hold the disclosure lease when each upload begins.
+    pub fn reflection_workspace_files(
+        &self,
+        ticket: &RuntimeReflectionTicket,
+    ) -> Result<RuntimeReflectionFiles, RuntimeError> {
+        self.require_active()?;
+        let state = &self.session.publication_read().map_err(failure)?.state;
+        let revision = ticket
+            .workspace
+            .inner_revision
+            .ok_or_else(|| failure("reflection workspace unavailable"))?;
+        let actor = ticket.actor_id();
+        if !ticket.workspace.scope_current(state)
+            || !ticket
+                .body
+                .current(state, &ticket.admission)
+                .map_err(failure)?
+            || !self.reflection_sources_current(ticket)?
+            || state
+                .minds
+                .inner_worlds
+                .as_ref()
+                .and_then(|worlds| worlds.get(actor))
+                .map(|world| world.revision)
+                != Some(revision)
+        {
+            return Err(failure("reflection workspace changed"));
+        }
+        let documents = state
+            .minds
+            .minds
+            .as_ref()
+            .and_then(|minds| minds.get(actor))
+            .ok_or_else(|| failure("reflection workspace unavailable"))?;
+        let bytes = documents
+            .documents
+            .iter()
+            .try_fold(size_of::<RuntimeReflectionFiles>(), |bytes, document| {
+                bytes
+                    .checked_add(size_of::<RuntimeReflectionFile>() + document.id.len())?
+                    .checked_add(document.text.storage_bytes())
+            })
+            .ok_or_else(|| failure("capacity"))?;
+        let storage = self.budget.reserve(bytes)?;
+        Ok(RuntimeReflectionFiles {
+            revision,
+            files: documents
+                .documents
+                .iter()
+                .map(|document| RuntimeReflectionFile {
+                    id: document.id.clone(),
+                    text: document.text.clone(),
+                })
+                .collect(),
+            _storage: storage,
+        })
+    }
+
+    /// Check the already prepared private file bytes at the actual upload.
+    /// The Run has its own check over the selected personal evidence.
+    pub fn reflection_workspace_publication(
+        &self,
+        ticket: &RuntimeReflectionTicket,
+        revision: u64,
+    ) -> Result<Option<RuntimeMaintenancePublication>, RuntimeError> {
+        let state = &self.session.publication_read().map_err(failure)?.state;
+        if ticket.workspace.inner_revision != Some(revision)
+            || state
+                .minds
+                .inner_worlds
+                .as_ref()
+                .and_then(|worlds| worlds.get(ticket.actor_id()))
+                .map(|world| world.revision)
+                != Some(revision)
+        {
+            return Ok(None);
+        }
+        self.reflection_publication(ticket)
+    }
     pub fn begin_reflection(
         &mut self,
         owner: &mut Option<RuntimeReflectionTicket>,
@@ -106,6 +261,30 @@ impl NativeWorldSession {
         *owner = None;
         Ok(key)
     }
+
+    /// Apply the already admitted transport result through the same native
+    /// interpretation owner, with the PostgreSQL writer as its barrier.
+    pub fn begin_protected_reflection(
+        &mut self,
+        ticket: &RuntimeReflectionTicket,
+        proposal: SqlCell,
+        storage: ByteReservation,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        if !self.budget.owns(&storage) {
+            return Err(failure(
+                "reflection proposal belongs to another native budget",
+            ));
+        }
+        let input = ticket.prepare_value(
+            &self.session.accepted().map_err(failure)?.state,
+            proposal,
+            storage,
+            &self.budget,
+            true,
+        )?;
+        self.session.begin_reflection(input).map_err(failure)
+    }
     pub fn bind_reflection(
         &self,
         body: &RuntimeMaintenanceRead,
@@ -113,9 +292,21 @@ impl NativeWorldSession {
         owner: &mut Option<RuntimeNpcResponseTicket>,
         input: &[u8],
     ) -> Result<RuntimeReflectionTicket, RuntimeError> {
-        self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
-        let input: Binding = serde_json::from_slice(input).map_err(failure)?;
+        let input: RuntimeReflectionBinding = serde_json::from_slice(input).map_err(failure)?;
+        self.bind_reflection_direct(body, workspace, owner, input)
+    }
+
+    /// Resolve the offered evidence aliases against their genuine captured
+    /// ordinals. The original NPC ticket stays owned on refusal.
+    pub fn bind_reflection_direct(
+        &self,
+        body: &RuntimeMaintenanceRead,
+        workspace: &RuntimeMaintenanceRead,
+        owner: &mut Option<RuntimeNpcResponseTicket>,
+        input: RuntimeReflectionBinding,
+    ) -> Result<RuntimeReflectionTicket, RuntimeError> {
+        self.require_active()?;
         let state = &self.session.accepted().map_err(failure)?.state;
         let npc = owner
             .as_ref()
@@ -213,10 +404,21 @@ impl RuntimeReflectionTicket {
         budget: &ByteBudget,
     ) -> Result<crate::cognition::publication::ReflectionInput, RuntimeError> {
         let source = std::str::from_utf8(proposal).map_err(failure)?;
-        let mut storage = budget
+        let storage = budget
             .reserve(crate::experience::encoded_body_bound(source).map_err(failure)?)
             .map_err(failure)?;
         let raw: SqlCell = serde_json::from_slice(proposal).map_err(failure)?;
+        self.prepare_value(state, raw, storage, budget, false)
+    }
+
+    fn prepare_value(
+        &self,
+        state: &crate::simulation::SimulationState,
+        raw: SqlCell,
+        mut storage: ByteReservation,
+        budget: &ByteBudget,
+        protected: bool,
+    ) -> Result<crate::cognition::publication::ReflectionInput, RuntimeError> {
         let SqlCell::Object(mut raw) = raw else {
             return Err(failure("reflection proposal must be an object"));
         };
@@ -368,6 +570,7 @@ impl RuntimeReflectionTicket {
             bindings: Arc::clone(&self.bindings),
             permitted_subjects: subjects,
             publication,
+            protected,
             storage,
         })
     }

@@ -36,7 +36,7 @@ pub(crate) mod npc_self;
 mod npc_subject;
 pub use npc_bindings::{
     NpcActionOrdinal, NpcAliasOrdinal, NpcBindingPurpose, NpcCatalogueSource, NpcEntityAlias,
-    NpcEntityOrdinal, NpcPersonalEvidence,
+    NpcEntityOrdinal, NpcPersonalEvidence, NpcSubjectAlias, NpcSubjectOrdinal,
 };
 pub(crate) use npc_bindings::{
     NpcBindingMaps, NpcBindingRead, NpcBindingSelection, NpcPerspectiveOrdinal,

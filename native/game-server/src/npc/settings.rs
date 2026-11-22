@@ -226,6 +226,59 @@ pub(super) struct SummaryModel {
     pub timeout: Duration,
 }
 
+pub(super) struct ReflectionModel {
+    pub(super) destination: ProviderDestination,
+    pub(super) model: String,
+    pub(super) worker: String,
+    pub(super) harness: String,
+    pub(super) billing: BillingMode,
+    pub(super) connection: Option<String>,
+    pub(super) memory_mib: Option<u64>,
+    pub(super) amount: u64,
+    pub(super) ceiling: u64,
+    pub(super) timeout: Duration,
+}
+
+pub(super) fn reflection_model(
+    models: Option<&ConfiguredModels>,
+    default_model: &str,
+) -> Result<Option<ReflectionModel>, Error> {
+    let Some(models) = models.filter(|models| !models.jev_only) else {
+        return Ok(None);
+    };
+    let Some(fast) = &models.routes.fast else {
+        return Ok(None);
+    };
+    let Some(catalogue) = &fast.macrofold else {
+        return Ok(None);
+    };
+    let Some(worker) = optional("MACROFOLD_WORKER_ID")? else {
+        return Ok(None);
+    };
+    let ceiling = models.background_ceiling();
+    if ceiling < fast.amount_micro_usd {
+        return Ok(None);
+    }
+    let memory_mib = optional("MACROFOLD_RUN_MEMORY_MIB")?
+        .map(|value| value.parse::<u64>())
+        .transpose()?;
+    if memory_mib.is_some_and(|size| !(128..=1_048_576).contains(&size)) {
+        return Err("MACROFOLD_RUN_MEMORY_MIB is outside the supported range".into());
+    }
+    Ok(Some(ReflectionModel {
+        destination: fast.destination.clone(),
+        model: setting("MACROFOLD_MODEL", default_model)?,
+        worker,
+        harness: setting("MACROFOLD_HARNESS", "opencode")?,
+        billing: catalogue.billing,
+        connection: catalogue.connection.clone(),
+        memory_mib,
+        amount: fast.amount_micro_usd,
+        ceiling,
+        timeout: Duration::from_secs_f64(number("MACROFOLD_TIMEOUT_SECONDS", 300., 5., 300.)?),
+    }))
+}
+
 pub(super) fn summary_model(
     models: Option<&ConfiguredModels>,
     budget_usd: f64,

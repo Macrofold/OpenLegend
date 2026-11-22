@@ -31,6 +31,7 @@ use serde_json::{Value, json};
 use std::{borrow::Cow, collections::HashMap, fmt::Write as _, sync::Arc};
 
 mod recall;
+pub(in crate::npc) mod reflection;
 pub(super) use openlegend_simulation::runtime::RuntimeNpcDecisionFrame as ReceivedFrame;
 pub(super) use recall::{Collected, RecallReview, collect};
 

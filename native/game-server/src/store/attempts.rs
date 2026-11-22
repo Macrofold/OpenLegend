@@ -60,7 +60,7 @@ struct PriorReceipt {
 
 /// Receipt fields are observed facts. No raw provider error or payload can
 /// enter this type. An estimated amount remains distinct from paid admission.
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ModelReceipt {
     pub request_id: String,
@@ -93,7 +93,7 @@ pub(crate) struct ModelReceipt {
     pub estimated_cost_usd: Option<f64>,
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ModelUsage {
     pub input_tokens: u64,

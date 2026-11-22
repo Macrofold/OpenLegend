@@ -33,6 +33,11 @@ pub(crate) struct NpcSubjectFact {
     _storage: ByteReservation,
 }
 impl NpcSubjectFact {
+    pub(crate) fn interpretation_identity(&self) -> bool {
+        !matches!(self.subject, ObserverSubject::Individual { .. })
+            || self.identity_present && !self.seed_only
+    }
+
     pub(crate) fn label(&self) -> &JsText {
         &self.label
     }

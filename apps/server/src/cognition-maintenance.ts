@@ -5,7 +5,7 @@ import type {
   MaintenanceInspection,
 } from './maintenance-host.js';
 import type { HttpPublication } from '@open-legend/network';
-import { reflectionTimeDueFromRead } from './reflection-publication.js';
+import { REFLECTION_DOWNTIME, reflectionTimeDueFromRead } from './reflection-publication.js';
 import {
   recordMapChangesBetween,
   nativeThinkingTimeChanges,
@@ -487,7 +487,7 @@ export class CognitionMaintenance {
             if (this.host.config.jevOnly) continue;
             const future = [
               (Math.floor(actor.simTime / 3600) + 1) * 3600,
-              actor.lastReflectionAt + 3600,
+              actor.lastReflectionAt + REFLECTION_DOWNTIME.minimumIntervalSeconds,
               ...(dream ? [actor.simTime + dream.afterSeconds - dream.elapsedSeconds] : []),
               await this.host.earliestRawDeadline(actorId, actor.simTime),
             ].filter((at) => at > actor.simTime);
@@ -527,7 +527,7 @@ export class CognitionMaintenance {
               await this.enqueue(
                 actorId,
                 'native-downtime',
-                'Safe idle time to reconsider remembered experience',
+                REFLECTION_DOWNTIME.stimulus,
                 generation,
               );
             // A due opportunity stays queued across operator reconfiguration.

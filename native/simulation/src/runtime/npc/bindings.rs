@@ -103,22 +103,44 @@ impl RuntimeNpcBindingInput {
         self,
         workspace: &mut ByteReservation,
     ) -> Result<RuntimeNpcBindingRequest, RuntimeError> {
+        self.fund_selected(Vec::new(), workspace)
+    }
+
+    /// Use the same captured interpretation subjects shown in the private
+    /// reflection. Binding does not grant action or a new encounter reference.
+    pub fn fund_reflection(
+        self,
+        subjects: Vec<crate::capture::NpcSubjectAlias>,
+        workspace: &mut ByteReservation,
+    ) -> Result<RuntimeNpcBindingRequest, RuntimeError> {
+        if self.purpose != NpcBindingPurpose::Reflection {
+            return Err(failure("interpretation subjects require a reflection read"));
+        }
+        self.fund_selected(subjects, workspace)
+    }
+
+    fn fund_selected(
+        self,
+        subjects: Vec<crate::capture::NpcSubjectAlias>,
+        workspace: &mut ByteReservation,
+    ) -> Result<RuntimeNpcBindingRequest, RuntimeError> {
         let bytes = heap_sum([
             self.decision_id.capacity(),
             self.actions.heap_bytes().ok_or(CapacityError)?,
             self.semantic_causes.heap_bytes().ok_or(CapacityError)?,
             self.evidence.heap_bytes().ok_or(CapacityError)?,
             self.entities.heap_bytes().ok_or(CapacityError)?,
+            subjects.heap_bytes().ok_or(CapacityError)?,
             self.attention.heap_bytes().ok_or(CapacityError)?,
             self.presented.heap_bytes().ok_or(CapacityError)?,
         ])
         .ok_or(CapacityError)?;
         let custody = workspace.split_off(bytes)?;
         use crate::response::ResponseValidityRoute;
-        let validity = if self.purpose == NpcBindingPurpose::Recall {
-            ResponseValidityRoute::PreparedResponse
-        } else {
-            ResponseValidityRoute::Decision
+        let validity = match self.purpose {
+            NpcBindingPurpose::Recall => ResponseValidityRoute::PreparedResponse,
+            NpcBindingPurpose::Reflection => ResponseValidityRoute::Source,
+            NpcBindingPurpose::Decision => ResponseValidityRoute::Decision,
         };
         Ok(RuntimeNpcBindingRequest {
             request: BindingRequest {
@@ -134,7 +156,7 @@ impl RuntimeNpcBindingInput {
                     intents: Vec::new(),
                     evidence: self.evidence,
                     entities: self.entities,
-                    identities: Vec::new(),
+                    identities: subjects,
                     knowledge: Vec::new(),
                     observations: Vec::new(),
                     current: Vec::new(),
@@ -741,7 +763,10 @@ impl NativeWorldSession {
             || first.candidate_key.is_some()
             || fresh.candidate_key.is_some()
             || matches!(&fresh.preparation, Some(PreparedNpcRead::Recall(_)))
-                && request.selection.purpose != NpcBindingPurpose::Recall
+                && !matches!(
+                    request.selection.purpose,
+                    NpcBindingPurpose::Recall | NpcBindingPurpose::Reflection
+                )
         {
             return Err(failure("NPC response capture is unavailable"));
         }
