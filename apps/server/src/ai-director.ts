@@ -3043,11 +3043,10 @@ export class AiDirector {
     );
     this.holdPreparedSources(run, prepared);
     run.validateJudgmentSource = () => prepared.validateConversation();
-    // An ordinary reception update can move the broad private read fence
-    // while leaving the rendered conversation's exact sources current.
-    // Reuse the rendered request's validation under the existing bounded
-    // dispatch retry. Privacy and non-reception changes still refuse.
-    if (run.job.kind === 'chat')
+    // Ordinary reception can advance the broad private fence while the
+    // rendered chat or thought still has the same exact evidence. Revalidate
+    // this request under the existing bounded dispatch check.
+    if (run.job.kind === 'chat' || (run.job.kind === 'thought' && !run.job.decision))
       run.revalidateJudgmentSource = () => prepared.validateConversation(false);
     this.current(run);
     const validity = run.job.decision ? decisionValidity(this.service.world, actorId) : undefined;

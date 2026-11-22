@@ -664,13 +664,14 @@ function itemOfferViews(world: WorldState, actorId: string): OutingView[] {
     .filter((known) => known.status === 'pending' && known.expiresAt > world.simTime)
     .map((known) => {
       const incoming = known.recipientId === actorId,
-        otherId = incoming ? known.offererId : known.recipientId;
+        otherId = incoming ? known.offererId : known.recipientId,
+        terms = describeItemOffer(world, known);
       return {
         id: known.id,
         revision: known.revision,
         kind: 'item-offer',
         status: 'pending',
-        destination: describeItemOffer(world, known),
+        destination: terms,
         companion: observerDescription(world, actorId, otherId, 'definite'),
         distance: null,
         deadline: known.expiresAt,
@@ -678,23 +679,26 @@ function itemOfferViews(world: WorldState, actorId: string): OutingView[] {
         description:
           'Last known offer. No possessions move until a separately admitted acceptance. Current availability is checked when you attempt it.',
         choices: (incoming ? (['accept', 'decline'] as const) : (['withdraw'] as const)).map(
-          (operation) => ({
-            id: JSON.stringify(['known-offer', known.id, known.revision, operation]),
-            label:
+          (operation) => {
+            const label =
               operation === 'accept'
                 ? 'Accept these offered terms'
                 : operation === 'decline'
                   ? 'Decline these offered terms'
-                  : 'Withdraw my offer',
-            description: describeItemOffer(world, known),
-            command: {
-              type: 'handover',
-              handoverOperation: operation,
-              targetId: otherId,
-              offerId: known.id,
-              expectedOfferRevision: known.revision,
-            },
-          }),
+                  : 'Withdraw my offer';
+            return {
+              id: JSON.stringify(['known-offer', known.id, known.revision, operation]),
+              label,
+              description: `${label}. ${terms}`,
+              command: {
+                type: 'handover',
+                handoverOperation: operation,
+                targetId: otherId,
+                offerId: known.id,
+                expectedOfferRevision: known.revision,
+              },
+            };
+          },
         ),
       };
     });
