@@ -95,6 +95,15 @@ impl NativeWorldSession {
         browse: &RuntimeRecentBrowse,
         prepare: impl FnOnce(RuntimeRecentSourceRead<'_>) -> T,
     ) -> Result<T, RuntimeError> {
+        self.with_selected_recent_read(read, &browse.receipts, prepare)
+    }
+
+    pub(super) fn with_selected_recent_read<T>(
+        &self,
+        read: &RuntimePrivateHistoryRead,
+        receipts: &[NpcReceiptSelection],
+        prepare: impl FnOnce(RuntimeRecentSourceRead<'_>) -> T,
+    ) -> Result<T, RuntimeError> {
         let (metadata, save) = self.session.accepted_save_read().map_err(failure)?;
         let scope = &read.scope;
         if !matches!(read.purpose, HistoryPurpose::Recent)
@@ -103,7 +112,7 @@ impl NativeWorldSession {
             return Err(failure("recent read lost its accepted cut"));
         }
         let (detached, suffix) = save.pending_read_rows();
-        let temporal = (!browse.receipts.is_empty())
+        let temporal = (!receipts.is_empty())
             .then(|| {
                 self.session.npc_source_temporal(
                     &scope.actor_id,
@@ -120,7 +129,7 @@ impl NativeWorldSession {
             actor: &scope.actor_id,
             durable_revision: metadata.durable_revision,
             in_flight_through: metadata.in_flight_through,
-            receipts: &browse.receipts,
+            receipts,
             detached,
             suffix,
             temporal: temporal.as_ref().map(|rows| rows.changes()),
@@ -136,6 +145,15 @@ impl NativeWorldSession {
         browse: &mut RuntimeRecentBrowse,
         rows: NpcSourceRows,
     ) -> Result<bool, RuntimeError> {
+        self.admit_selected_recent_rows(read, std::mem::take(&mut browse.receipts), rows)
+    }
+
+    pub(super) fn admit_selected_recent_rows(
+        &self,
+        read: &mut RuntimePrivateHistoryRead,
+        receipts: Vec<NpcReceiptSelection>,
+        rows: NpcSourceRows,
+    ) -> Result<bool, RuntimeError> {
         let state = &self.session.accepted().map_err(failure)?.state;
         if !matches!(read.purpose, HistoryPurpose::Recent)
             || read.sources.is_some()
@@ -145,7 +163,7 @@ impl NativeWorldSession {
         }
         let current = NpcPersonalScope::capture(state, read.actor_id()).map_err(failure)?;
         let selection = crate::capture::NpcSourceSelection {
-            receipts: std::mem::take(&mut browse.receipts),
+            receipts,
             personal: Vec::new(),
             consolidation_job: None,
         };

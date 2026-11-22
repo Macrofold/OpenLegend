@@ -5,6 +5,8 @@ use crate::host::PublicationLease;
 use std::mem::size_of;
 use std::sync::atomic::AtomicBool;
 
+mod activity_inspection;
+pub use activity_inspection::RuntimeActivityInspection;
 mod recent;
 pub use recent::{
     RuntimeRecentBrowse, RuntimeRecentPosition, RuntimeRecentReceipt, RuntimeRecentSourceRead,

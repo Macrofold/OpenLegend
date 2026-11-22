@@ -1,6 +1,8 @@
 //! One authorized tab's private history capture and final checked handoff.
 
 use super::*;
+
+mod activity;
 use crate::store::recall::browse::{MemoryBrowseCut, MemoryPage};
 use crate::store::{KnownPlaceViewPage, PreparedKnownPlaceRead, PreparedSourceCut};
 use axum::body::Bytes;

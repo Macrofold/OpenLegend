@@ -31,6 +31,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
 pub(crate) mod actions;
+mod activity_history;
 pub(crate) mod assets;
 mod checkpoint;
 mod dialogue;
@@ -151,6 +152,7 @@ pub(crate) fn router(
         .route("/api/mind", post(notes::get))
         .route("/api/mind/subjects", post(notes::subjects::read))
         .route("/api/knowledge", post(notes::edit))
+        .route("/api/activity-history", post(activity_history::read))
         .route("/api/nickname", post(notes::nickname::edit))
         .route("/api/narration/regenerate", post(history::regenerate))
         .route(
@@ -170,6 +172,7 @@ pub(crate) fn router(
         operations
             .route("/api/god/memories", post(recall::recollections))
             .route("/api/god/mind", post(notes::get))
+            .route("/api/god/activity-history", post(activity_history::read))
             .route("/api/god/mind/subjects", post(notes::subjects::read))
             .route("/api/god/forget-memory", post(edit_recall))
             .route("/api/god/correct-memory", post(edit_recall))

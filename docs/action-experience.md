@@ -125,6 +125,8 @@ consume a second unit.
 
 Own action history and personally learned activities are available through explicit cognition inspection and the existing private-mind UI, with separate history/method pages. The private panel reports whether learning is pending, including its need for safe idle time, storage and an authorized model budget. The server rechecks actor/account/timeline scope around asynchronous reads. Creator inspection cannot access another player’s private character records. Ordinary public views never publish private action history or other actors' acquisitions.
 
+The stand-alone Rust server reads the selected actor's canonical occurrences at the original accepted save boundary and resolves recent results through their exact receipt addresses. It checks current privacy and account permission again when sending the page. Only compatible methods with surviving personal support are eligible. [Owner and creator checks](verification/attention-and-memory-core.md#stand-alone-rust-action-and-learned-activity-history--november-22-2026)
+
 ## Storage and extension boundary
 
 Occurrences, methods, acquisitions and learning cursors use the existing PostgreSQL record repository and saved-world transaction. Cold completed history is paged independently of the small native plan window. Current-format manual saves include active control frames, actual output bindings and private evidence. Incompatible development saves are explicitly rejected under the unchanged [development save policy](../AGENTS.md#development-save-policy); no migration or automatic reset was added.

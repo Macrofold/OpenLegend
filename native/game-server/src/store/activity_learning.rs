@@ -4,11 +4,10 @@
 use super::read::{admitted_query, retain_pending_row};
 use super::{Store, StoreError, StoreResult, durable_head};
 use openlegend_simulation::{
-    activity::LearningHistoryRequest,
     encoding::{json_record, json_record_len},
     host::ByteReservation,
     records::{ChangedRows, InstalledRow, SqlCell},
-    runtime::{RuntimeActivityHistoryRead, RuntimeProviderInput},
+    runtime::{RuntimeActivityHistoryRead, RuntimeActivityRowsRead, RuntimeProviderInput},
 };
 use serde::Serialize;
 use std::{collections::BTreeMap, mem::size_of, sync::Arc};
@@ -17,7 +16,18 @@ const TABLE: &str = "activity_occurrences";
 type Overlay = BTreeMap<String, Option<InstalledRow>>;
 
 pub(crate) struct PreparedActivityHistory {
-    request: LearningHistoryRequest,
+    binding: openlegend_simulation::geometry::GeometryBinding,
+    rows: PreparedActivityRows,
+}
+
+pub(crate) struct PreparedActivityRows {
+    world_id: String,
+    generation: String,
+    actor_id: String,
+    after: i64,
+    ids: Option<Vec<String>>,
+    maximum_rows: usize,
+    maximum_bytes: usize,
     revision: u64,
     in_flight: Option<u64>,
     detached: Overlay,
@@ -32,22 +42,32 @@ impl Store {
         &self,
         read: RuntimeActivityHistoryRead<'_>,
     ) -> StoreResult<PreparedActivityHistory> {
-        let request = read.request;
-        let (detached, suffix) = read.pending_rows();
-        if detached.is_some() != read.in_flight_through.is_some() {
+        Ok(PreparedActivityHistory {
+            binding: read.request.binding,
+            rows: self.prepare_activity_rows(read.rows())?,
+        })
+    }
+
+    /// Retain only this reader's selected occurrence writes and deletion
+    /// masks. The caller must copy them before the accepted turn ends.
+    pub(crate) fn prepare_activity_rows(
+        &self,
+        request: RuntimeActivityRowsRead<'_>,
+    ) -> StoreResult<PreparedActivityRows> {
+        if request.detached.is_some() != request.in_flight_through.is_some() {
             return Err(StoreError::StaleCut);
         }
         let mut custody = self
             .budget
             .reserve(
-                size_of::<PreparedActivityHistory>()
+                size_of::<PreparedActivityRows>()
                     + 4096
                     + 8 * (request.world_id.len()
                         + request.generation.len()
                         + request.actor_id.len())
                     + request
                         .ids
-                        .iter()
+                        .into_iter()
                         .flatten()
                         .map(|id| size_of::<String>() + id.len())
                         .sum::<usize>(),
@@ -71,18 +91,24 @@ impl Store {
             "world",
             "actionExperience",
             "occurrences",
-            request.actor_id.as_str(),
+            request.actor_id,
         ])
         .map_err(|_| StoreError::InvalidRecord)?;
-        let detached = detached
-            .map(|changes| retain_overlay(changes, request, &parent, fields, &mut custody))
+        let detached = request.detached
+            .map(|changes| retain_overlay(changes, &request, &parent, fields, &mut custody))
             .transpose()?
             .unwrap_or_default();
-        let suffix = retain_overlay(suffix, request, &parent, fields, &mut custody)?;
-        Ok(PreparedActivityHistory {
-            request: request.clone(),
-            revision: read.durable_revision,
-            in_flight: read.in_flight_through,
+        let suffix = retain_overlay(request.suffix, &request, &parent, fields, &mut custody)?;
+        Ok(PreparedActivityRows {
+            world_id: request.world_id.to_owned(),
+            generation: request.generation.to_owned(),
+            actor_id: request.actor_id.to_owned(),
+            after: request.after,
+            ids: request.ids.map(<[String]>::to_vec),
+            maximum_rows: request.maximum_rows,
+            maximum_bytes: request.maximum_bytes,
+            revision: request.durable_revision,
+            in_flight: request.in_flight_through,
             detached,
             suffix,
             custody,
@@ -93,29 +119,30 @@ impl Store {
         self: &Arc<Self>,
         prepared: PreparedActivityHistory,
     ) -> StoreResult<RuntimeProviderInput> {
+        let (rows, admission) = self.read_activity_rows(prepared.rows).await?;
+        RuntimeProviderInput::activity_history(prepared.binding, rows, admission, &self.budget)
+            .map_err(|_| StoreError::Capacity)
+    }
+
+    pub(crate) async fn read_activity_rows(
+        self: &Arc<Self>,
+        mut prepared: PreparedActivityRows,
+    ) -> StoreResult<(Vec<InstalledRow>, ByteReservation)> {
         let store = self.clone();
         self.read_simulation_cut(move |tx| {
             Box::pin(async move {
-                let binding = prepared.request.binding;
                 let (rows, mut admission) = {
-                    let PreparedActivityHistory {
-                        request,
-                        revision,
-                        in_flight,
-                        mut detached,
-                        mut suffix,
-                        custody,
-                    } = prepared;
                     let head = durable_head(tx).await?.ok_or(StoreError::StaleCut)?;
-                    if head.world_id != request.world_id || head.generation != request.generation {
+                    if head.world_id != prepared.world_id || head.generation != prepared.generation {
                         return Err(StoreError::StaleCut);
                     }
-                    match head.revision.checked_sub(revision) {
-                        Some(0) => detached.append(&mut suffix),
-                        Some(1) if in_flight.is_some() => detached = suffix,
+                    let mut detached = prepared.detached;
+                    match head.revision.checked_sub(prepared.revision) {
+                        Some(0) => detached.append(&mut prepared.suffix),
+                        Some(1) if prepared.in_flight.is_some() => detached = prepared.suffix,
                         _ => return Err(StoreError::StaleCut),
                     }
-                    let mut admission = custody;
+                    let mut admission = prepared.custody;
                     grow(&mut admission, detached.len() * 128 + 2048)?;
                     let masked = detached.keys().map(String::as_str).collect::<Vec<_>>();
                     #[derive(Serialize)]
@@ -157,15 +184,15 @@ impl Store {
                    SELECT id,position,sum(bytes) OVER (ORDER BY position,id) AS bytes FROM page
                  ) SELECT id FROM bounded WHERE bytes<=$8 ORDER BY position,id",
                         &[
-                            &request.world_id,
-                            &request.actor_id,
-                            &request.ids,
-                            &request.after,
+                            &prepared.world_id,
+                            &prepared.actor_id,
+                            &prepared.ids,
+                            &prepared.after,
                             &masked,
                             &positions,
-                            &i64::try_from(request.maximum_rows)
+                            &i64::try_from(prepared.maximum_rows)
                                 .map_err(|_| StoreError::Capacity)?,
-                            &i64::try_from(request.maximum_bytes)
+                            &i64::try_from(prepared.maximum_bytes)
                                 .map_err(|_| StoreError::Capacity)?,
                         ],
                         &store.budget,
@@ -200,7 +227,7 @@ impl Store {
                                 tx,
                                 table,
                                 "world_id=$1 AND actor_id=$2 AND id=ANY($3)",
-                                &[&request.world_id, &request.actor_id, &durable_ids],
+                                &[&prepared.world_id, &prepared.actor_id, &durable_ids],
                                 &mut admission,
                             )
                             .await?
@@ -231,8 +258,7 @@ impl Store {
                 admission
                     .resize(retained)
                     .map_err(|_| StoreError::Capacity)?;
-                RuntimeProviderInput::activity_history(binding, rows, admission, &store.budget)
-                    .map_err(|_| StoreError::Capacity)
+                Ok((rows, admission))
             })
         })
         .await
@@ -241,7 +267,7 @@ impl Store {
 
 fn retain_overlay(
     changes: &ChangedRows,
-    request: &LearningHistoryRequest,
+    request: &RuntimeActivityRowsRead<'_>,
     parent: &str,
     [actor, source]: [usize; 2],
     custody: &mut ByteReservation,

@@ -30,5 +30,6 @@ pub(crate) use publication::{
 };
 pub use read::RuntimeInspectedSkill;
 pub(crate) use read::{inspected_activities, learning_signatures};
+pub(super) use read::visit_current;
 
 pub(super) use models::{LearningAcquisition, LearningMethod};

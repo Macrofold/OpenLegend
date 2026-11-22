@@ -56,6 +56,22 @@ pub struct RuntimeActivityHistoryRead<'a> {
     save: &'a crate::records::save::SaveJournal,
 }
 
+/// Bounded actor-specific read of canonical occurrence rows. Both the
+/// learner and explicit inspection use the same pending/durable selection.
+pub struct RuntimeActivityRowsRead<'a> {
+    pub world_id: &'a str,
+    pub generation: &'a str,
+    pub actor_id: &'a str,
+    pub after: i64,
+    pub ids: Option<&'a [String]>,
+    pub maximum_rows: usize,
+    pub maximum_bytes: usize,
+    pub durable_revision: u64,
+    pub in_flight_through: Option<u64>,
+    pub detached: Option<&'a crate::records::ChangedRows>,
+    pub suffix: &'a crate::records::ChangedRows,
+}
+
 impl RuntimeActivityHistoryRead<'_> {
     pub fn pending_rows(
         &self,
@@ -64,6 +80,23 @@ impl RuntimeActivityHistoryRead<'_> {
         &crate::records::ChangedRows,
     ) {
         self.save.pending_read_rows()
+    }
+
+    pub fn rows(&self) -> RuntimeActivityRowsRead<'_> {
+        let (detached, suffix) = self.pending_rows();
+        RuntimeActivityRowsRead {
+            world_id: &self.request.world_id,
+            generation: &self.request.generation,
+            actor_id: &self.request.actor_id,
+            after: self.request.after,
+            ids: self.request.ids.as_deref(),
+            maximum_rows: self.request.maximum_rows,
+            maximum_bytes: self.request.maximum_bytes,
+            durable_revision: self.durable_revision,
+            in_flight_through: self.in_flight_through,
+            detached,
+            suffix,
+        }
     }
 }
 

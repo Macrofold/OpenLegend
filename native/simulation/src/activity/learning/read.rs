@@ -78,7 +78,7 @@ pub(crate) fn inspected_activities(
     Ok((skills, storage))
 }
 
-fn visit_current<'a>(
+pub(in crate::activity) fn visit_current<'a>(
     state: &'a SimulationState,
     actor: &str,
     budget: &ByteBudget,

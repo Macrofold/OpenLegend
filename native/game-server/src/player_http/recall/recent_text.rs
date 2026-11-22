@@ -98,7 +98,7 @@ fn speech_description(value: &PerceivedSpeech) -> JsText {
 
 /// Old internal routing annotations do not identify a person in history.
 /// Walk code units only when an annotation is present so quoted text stays exact.
-fn historical_account(text: &JsText) -> JsText {
+pub(in crate::player_http) fn historical_account(text: &JsText) -> JsText {
     const MARKER: [u16; 4] = [40, 73, 68, 58];
     let marker: JsText = "(ID:".into();
     if text.find_from(&marker, 0).is_none() {

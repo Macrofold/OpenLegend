@@ -64,7 +64,8 @@ pub use private_notes::{
 };
 mod reply_preview;
 pub use private_history::{
-    RuntimePlayerTranscriptRead, RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead,
+    RuntimeActivityInspection, RuntimePlayerTranscriptRead, RuntimePrivateHistoryPublication,
+    RuntimePrivateHistoryRead,
     RuntimeRecentBrowse, RuntimeRecentPosition, RuntimeRecentReceipt, RuntimeRecentSourceRead,
     RuntimeRecordedEventRoles,
 };
@@ -76,7 +77,8 @@ pub use crate::capture::{
 };
 pub use navigation::RuntimeNavigationRead;
 pub use read_cut::{
-    RuntimeActivityHistoryRead, RuntimeKnownPlaceRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead,
+    RuntimeActivityHistoryRead, RuntimeActivityRowsRead, RuntimeKnownPlaceRead, RuntimeNpcSourceRead,
+    RuntimeSourceVersionRead,
 };
 mod restore;
 pub use restore::{

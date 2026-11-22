@@ -31,6 +31,9 @@ pub(crate) use learning::{
     LearningPublicationRequest, LearningPublicationStep, PreparedActivityLearning,
     learning_signatures,
 };
+mod inspection;
+pub(crate) use inspection::{ActivityInspection, INSPECTION_ROWS, ordinal as activity_ordinal};
+pub use inspection::RuntimeActivityPage;
 mod retained_size;
 pub use fields::ActivityFields;
 pub(crate) use install::install_activity;
