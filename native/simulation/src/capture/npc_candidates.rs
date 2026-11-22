@@ -60,7 +60,7 @@ enum Enumerate {
     ActivityMethodsNext,
     Inventory,
     Continue,
-    GiftProposal(usize, usize),
+    GiftProposal(usize, usize, usize),
     Follow(usize, usize),
     Status(usize, usize),
     Probe(usize),
@@ -589,10 +589,10 @@ impl NpcCandidateCursor {
                         self.describe_cooking(core, &mut offer)?;
                         self.describe_fire(core, &mut offer)?;
                         if let Some(proposals) = self.gift_proposals.as_mut()
-                            && matches!(
-                                offer.command.handover(),
-                                Some(crate::handover::NpcHandover::Offer { .. })
-                            )
+                            && offer
+                                .command
+                                .handover()
+                                .is_some_and(|choice| choice.offered_lot().is_some())
                         {
                             proposals.completed += 1;
                         }

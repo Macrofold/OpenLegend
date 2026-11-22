@@ -22,28 +22,41 @@ impl NativeCommand {
     ) -> Result<Self, ExecutionError> {
         use crate::handover::NpcHandover;
         let target = choice.target();
+        let prior_bytes = match choice {
+            NpcHandover::Counter { terms, .. } => terms
+                .requested
+                .iter()
+                .try_fold(terms.source.id.len(), |bytes, lot| {
+                    bytes.checked_add(
+                        size_of::<crate::handover::GiftSelection>() + lot.item_id.len(),
+                    )
+                })
+                .ok_or(ExecutionError::Capacity)?,
+            _ => 0,
+        };
         let _scratch = budget.reserve(
             [
                 id.len(),
                 actor.len(),
                 target.len(),
                 choice.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                prior_bytes,
             ]
             .into_iter()
             .try_fold(1024usize, |n, len| n.checked_add(len.checked_mul(12)?))
             .ok_or(ExecutionError::Capacity)?,
         )?;
         let gift = match choice {
-            NpcHandover::Reply(reply) => crate::handover::GiftIntent {
-                handover_operation: if reply.accept {
+            NpcHandover::Reply { source, accept } => crate::handover::GiftIntent {
+                handover_operation: if *accept {
                     GiftOperation::Accept
                 } else {
                     GiftOperation::Decline
                 },
                 offered_items: None,
                 requested_items: None,
-                offer_id: Some(reply.id.clone()),
-                expected_offer_revision: Some(reply.revision),
+                offer_id: Some(source.id.clone()),
+                expected_offer_revision: Some(source.revision),
             },
             NpcHandover::Offer { lot, .. } => crate::handover::GiftIntent {
                 handover_operation: GiftOperation::Offer,
@@ -51,6 +64,13 @@ impl NativeCommand {
                 requested_items: Some(Vec::new()),
                 offer_id: None,
                 expected_offer_revision: None,
+            },
+            NpcHandover::Counter { terms, lot } => crate::handover::GiftIntent {
+                handover_operation: GiftOperation::Counter,
+                offered_items: Some(vec![lot.selection()]),
+                requested_items: Some(terms.requested.clone()),
+                offer_id: Some(terms.source.id.clone()),
+                expected_offer_revision: Some(terms.source.revision),
             },
         };
         #[derive(Serialize)]
@@ -72,7 +92,11 @@ impl NativeCommand {
                 target_id: target,
                 gift: &gift,
             },
-            7,
+            if gift.handover_operation == GiftOperation::Counter {
+                9
+            } else {
+                7
+            },
         )
         .map_err(|_| ExecutionError::Invariant)?;
         Ok(Self::Handover {

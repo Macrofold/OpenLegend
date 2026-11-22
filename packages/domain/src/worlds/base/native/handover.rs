@@ -10,6 +10,7 @@ pub(crate) struct GiftCopy {
     pub resident_proposal_lots: usize,
     pub resident_proposals: usize,
     pub gift_description: &'static str,
+    pub counter_description: &'static str,
     pub changed: &'static str,
     pub reciprocal_separator: &'static str,
     pub reciprocal_unavailable: &'static str,

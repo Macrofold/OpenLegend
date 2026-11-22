@@ -504,13 +504,12 @@ pub(super) fn prepare(
                 );
             };
             if let Some(handover) = &choice.handover {
-                use crate::handover::NpcHandover;
-                let current = match handover {
-                    NpcHandover::Reply(reply) => reply.source_current(core.state, actor),
-                    NpcHandover::Offer { lot, .. } => {
+                let current = handover
+                    .source()
+                    .is_none_or(|source| source.source_current(core.state, actor))
+                    && handover.offered_lot().is_none_or(|lot| {
                         crate::handover::trade_lot_current(core.state, actor, lot, true)
-                    }
-                };
+                    });
                 if !current {
                     return result(
                         false,

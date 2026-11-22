@@ -1108,39 +1108,61 @@ impl ReceivedGift {
     }
 }
 
-/// An issued direct reply retains the exact received terms and offerer.
-/// The model sees its choice alias and wording without either private ID.
+/// Replies and counters bind the exact agreement the actor received.
+/// The provider selects an alias without either private source ID.
 #[derive(Clone)]
-pub(crate) struct GiftReply {
+pub(crate) struct GiftSource {
     pub offerer: String,
     pub id: String,
     pub revision: u64,
-    pub accept: bool,
     reference: crate::experience::PersonalSourceRef,
 }
 
-crate::host::retained_size::heap_record!(GiftReply { offerer, id, reference });
+crate::host::retained_size::heap_record!(GiftSource {
+    offerer,
+    id,
+    reference
+});
 
 /// Handover selected from a held NPC catalogue always runs as one immediate
 /// command. The provider can select the alias without supplying new terms.
 #[derive(Clone)]
 pub(crate) enum NpcHandover {
-    Reply(GiftReply),
-    Offer { recipient: String, lot: GiftLot },
+    Reply {
+        source: GiftSource,
+        accept: bool,
+    },
+    Offer {
+        recipient: String,
+        lot: GiftLot,
+    },
+    Counter {
+        terms: Arc<CounterTerms>,
+        lot: GiftLot,
+    },
 }
 
 impl NpcHandover {
     pub(crate) fn target(&self) -> &str {
         match self {
-            Self::Reply(reply) => &reply.offerer,
+            Self::Reply { source, .. } => &source.offerer,
             Self::Offer { recipient, .. } => recipient,
+            Self::Counter { terms, .. } => &terms.source.offerer,
         }
     }
 
-    pub(crate) fn reply(&self) -> Option<&GiftReply> {
+    pub(crate) fn source(&self) -> Option<&GiftSource> {
         match self {
-            Self::Reply(reply) => Some(reply),
+            Self::Reply { source, .. } => Some(source),
             Self::Offer { .. } => None,
+            Self::Counter { terms, .. } => Some(&terms.source),
+        }
+    }
+
+    pub(crate) fn offered_lot(&self) -> Option<&GiftLot> {
+        match self {
+            Self::Reply { .. } => None,
+            Self::Offer { lot, .. } | Self::Counter { lot, .. } => Some(lot),
         }
     }
 }
@@ -1148,15 +1170,57 @@ impl NpcHandover {
 impl HeapBytes for NpcHandover {
     fn heap_bytes(&self) -> Option<usize> {
         match self {
-            Self::Reply(reply) => reply.heap_bytes(),
+            Self::Reply { source, .. } => source.heap_bytes(),
             Self::Offer { recipient, lot } => {
                 recipient.heap_bytes()?.checked_add(lot.heap_bytes()?)
             }
+            // The shared prior terms carry their own reservation.
+            Self::Counter { lot, .. } => lot.heap_bytes(),
         }
     }
 }
 
-impl GiftReply {
+/// One immutable, funded set of requested items from a received offer. All
+/// choices for this prior revision can share it. The ordinary writer still
+/// revalidates the prior revision, stock and reach.
+pub(crate) struct CounterTerms {
+    pub(crate) source: GiftSource,
+    pub(crate) requested: Vec<GiftSelection>,
+    _custody: crate::host::ByteReservation,
+}
+
+impl CounterTerms {
+    pub(crate) fn prepare(
+        gift: &GiftDisclosure,
+        reference: &crate::experience::PersonalSourceRef,
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, ExecutionError> {
+        let bytes = gift
+            .offer
+            .offered
+            .len()
+            .checked_mul(size_of::<GiftSelection>())
+            .and_then(|bytes| bytes.checked_add(size_of::<Self>() + 2 * size_of::<usize>()))
+            .and_then(|bytes| {
+                gift.offer
+                    .offered
+                    .iter()
+                    .try_fold(bytes, |bytes, lot| bytes.checked_add(lot.item_id.len()))
+            })
+            .ok_or(ExecutionError::Capacity)?;
+        let mut custody = budget.reserve(bytes)?;
+        let (source, source_custody) = GiftSource::prepare(gift, reference, budget)?;
+        custody.merge(source_custody)?;
+        let requested = gift.offer.offered.iter().map(GiftLot::selection).collect();
+        Ok(Arc::new(Self {
+            source,
+            requested,
+            _custody: custody,
+        }))
+    }
+}
+
+impl GiftSource {
     fn matches(&self, received: &ReceivedGifts) -> bool {
         received.pending.get(&self.id).is_some_and(|record| {
             record.disclosure.offer.revision == self.revision
@@ -1164,7 +1228,7 @@ impl GiftReply {
         })
     }
 
-    /// Recheck all actually disclosed replies against one current personal
+    /// Recheck all disclosed received terms against one current personal
     /// read. Objective consent state cannot reveal an unobserved ending.
     pub(crate) fn choices_current<'a>(
         state: &crate::simulation::SimulationState,
@@ -1384,12 +1448,11 @@ impl ReceivedGifts {
     }
 }
 
-impl GiftReply {
-    /// Hold exact issued terms without duplicating their descriptions or stock.
+impl GiftSource {
+    /// Hold the exact received source without copying descriptions or stock.
     pub(crate) fn prepare(
         gift: &GiftDisclosure,
         reference: &crate::experience::PersonalSourceRef,
-        accept: bool,
         budget: &ByteBudget,
     ) -> Result<(Self, crate::host::ByteReservation), ExecutionError> {
         let bytes = reference
@@ -1398,13 +1461,15 @@ impl GiftReply {
             .and_then(|n| n.checked_add(gift.offer.offerer_id.len()))
             .ok_or(ExecutionError::Capacity)?;
         let custody = budget.reserve(bytes)?;
-        Ok((Self {
-            offerer: gift.offer.offerer_id.clone(),
-            id: gift.offer.id.clone(),
-            revision: gift.offer.revision,
-            accept,
-            reference: reference.clone(),
-        }, custody))
+        Ok((
+            Self {
+                offerer: gift.offer.offerer_id.clone(),
+                id: gift.offer.id.clone(),
+                revision: gift.offer.revision,
+                reference: reference.clone(),
+            },
+            custody,
+        ))
     }
 }
 

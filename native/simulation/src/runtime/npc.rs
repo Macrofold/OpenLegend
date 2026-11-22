@@ -397,14 +397,14 @@ impl NativeWorldSession {
             return Ok(Err("native-response-additional-history"));
         }
         if disclosure
-            && !crate::handover::GiftReply::choices_current(
+            && !crate::handover::GiftSource::choices_current(
                 state,
                 actor_id,
                 ticket.bindings.actions.values().filter_map(|choice| {
                     choice
                         .handover
                         .as_ref()
-                        .and_then(crate::handover::NpcHandover::reply)
+                        .and_then(crate::handover::NpcHandover::source)
                 }),
                 &self.budget,
             )

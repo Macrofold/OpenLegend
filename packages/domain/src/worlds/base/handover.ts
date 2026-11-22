@@ -62,7 +62,9 @@ export const BASE_HANDOVER = {
       ),
     withdrawDescription: (terms: string) => `Withdraw my offer of ${terms}; nothing moves.`,
     counterDescription: (give: string, receive: string) =>
-      `Counteroffer: give ${give} to receive ${receive}. This replaces the earlier terms; they must accept the new revision.`,
+      copy.counterDescription.replace(/\{(give|receive)\}/g, (_slot, key) =>
+        key === 'give' ? give : receive,
+      ),
     exchangeDescription: (give: string, receive: string) =>
       `Give ${give} to receive ${receive}. Availability is checked when agreeing.`,
     giftDescription: (give: string, person: string, minutes: number) =>

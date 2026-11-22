@@ -1,24 +1,28 @@
-//! The recipient may answer an actual received offer without stopping
-//! current work. Preparing a reply never probes objective stock or ending state.
+//! Immediate Handover choices use current carried stock and exact received
+//! terms. Reply choices retain what the actor knows, including missed endings.
 use super::*;
 use crate::{
     execution::gift::{append_gift_exchange, append_gift_lots},
-    handover::{GiftDisclosure, GiftReply, NpcHandover, ReceivedGifts, gift_participant},
+    handover::{
+        CounterTerms, GiftDisclosure, GiftLot, GiftSource, NpcHandover, ProposalWindow,
+        ReceivedGifts, gift_participant,
+    },
     narration::{NameArticle, name_phrase},
     text::JsText,
     worlds::base_handover::GIFT_COPY,
 };
+use std::sync::Arc;
 
 impl NpcCandidateCursor {
     pub(super) fn offer_gift_replies(
         &mut self,
         core: &CoreMutation<'_>,
         actor: &crate::state::Entity,
-    ) -> Result<(), ExecutionError> {
+    ) -> Result<Option<ReceivedGifts>, ExecutionError> {
         if core.state.installed.retained.social_offer_read.is_none()
             || !gift_participant(core.state, actor)?
         {
-            return Ok(());
+            return Ok(None);
         }
         let received = ReceivedGifts::from_player(core.state, &actor.id, &self.budget)?;
         for (gift, reference) in received.npc_incoming(&actor.id) {
@@ -40,8 +44,7 @@ impl NpcCandidateCursor {
             )?;
             let person = name_phrase(person, NameArticle::Definite, false);
             for accept in [true, false] {
-                let (reply, mut custody) =
-                    GiftReply::prepare(gift, reference, accept, &self.budget)?;
+                let (source, mut custody) = GiftSource::prepare(gift, reference, &self.budget)?;
                 let (id, id_custody) = self.id(&[
                     if accept {
                         "accept-gift:"
@@ -58,7 +61,10 @@ impl NpcCandidateCursor {
                     description: Some(description),
                     id,
                     meaning: NpcOfferMeaning::Handover { body },
-                    command: PreparedNpcInstruction::Handover(NpcHandover::Reply(reply)),
+                    command: PreparedNpcInstruction::Handover(NpcHandover::Reply {
+                        source,
+                        accept,
+                    }),
                     transition: WorkTransitionMode::Continue,
                     temporary: None,
                     next_at: None,
@@ -66,7 +72,7 @@ impl NpcCandidateCursor {
                 })?;
             }
         }
-        Ok(())
+        Ok(Some(received))
     }
 }
 
@@ -141,16 +147,35 @@ fn describe_gift(
 /// reuses the same exact carried lots, and the normal command previews each
 /// offer before it can enter the model's catalogue.
 pub(super) struct GiftProposals {
-    recipients: Vec<usize>,
-    lots: Vec<crate::handover::GiftLot>,
+    recipients: Vec<ProposalRecipient>,
+    lots: Vec<ProposalLot>,
+    received: Option<ReceivedGifts>,
+    counters: Vec<CounterOption>,
     pub(super) completed: usize,
     _storage: ByteReservation,
+}
+
+struct ProposalRecipient {
+    target: usize,
+    fresh_allowed: bool,
+}
+
+struct ProposalLot {
+    lot: GiftLot,
+    fresh_allowed: bool,
+}
+
+struct CounterOption {
+    target: usize,
+    terms: Arc<CounterTerms>,
+    receive: JsText,
 }
 
 impl NpcCandidateCursor {
     pub(super) fn begin_gift_reach(
         &mut self,
         core: &mut CoreMutation<'_>,
+        received: ReceivedGifts,
     ) -> Result<(), ExecutionError> {
         let state = &*core.state;
         let Some(policy) = state.installed.retained.social_offer_read.as_ref() else {
@@ -161,7 +186,7 @@ impl NpcCandidateCursor {
             .entities
             .get(&self.actor)
             .ok_or(ExecutionError::MissingActor)?;
-        if !state.inventory.has_children(&self.actor) || !gift_participant(state, actor)? {
+        if !state.inventory.has_children(&self.actor) {
             return Ok(());
         }
         let Some(point) = actor.world_position() else {
@@ -170,7 +195,7 @@ impl NpcCandidateCursor {
         let mut from = point;
         from.y += crate::status::effective_body_profile(actor, &self.budget)?.interaction_height;
         let reach = state.installed.retained.item_handling_read.reach;
-        let window = crate::handover::ProposalWindow::new(state, &self.actor, None, policy);
+        let window = ProposalWindow::new(state, &self.actor, None, policy);
         let possible = |target: &Target| {
             let mut to = target.observed;
             to.y += target.interaction_height;
@@ -187,7 +212,7 @@ impl NpcCandidateCursor {
         }
         let storage = self.budget.reserve(
             capacity
-                .checked_mul(size_of::<usize>())
+                .checked_mul(size_of::<ProposalRecipient>())
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let query_storage = self.budget.reserve(
@@ -209,9 +234,16 @@ impl NpcCandidateCursor {
                 .get(&target.id)
                 .ok_or(ExecutionError::Invariant)?;
             if gift_participant(state, person)? {
-                recipients.push(index);
+                let fresh_allowed = window.recipient_problem(&target.id, policy).is_none();
+                recipients.push(ProposalRecipient {
+                    target: index,
+                    fresh_allowed,
+                });
                 rays.push(ray);
-                any_open |= window.recipient_problem(&target.id, policy).is_none();
+                any_open |= fresh_allowed
+                    || received
+                        .npc_incoming(&self.actor)
+                        .any(|(gift, _)| gift.offer.offerer_id == target.id);
             }
         }
         if !any_open {
@@ -222,6 +254,8 @@ impl NpcCandidateCursor {
         self.gift_proposals = Some(GiftProposals {
             recipients,
             lots: Vec::new(),
+            received: Some(received),
+            counters: Vec::new(),
             completed: 0,
             _storage: storage,
         });
@@ -255,13 +289,17 @@ impl NpcCandidateCursor {
             let point = self.targets[index].observed;
             (point.x - from.x).hypot(point.z - from.z)
         };
-        prepared
-            .recipients
-            .sort_unstable_by(|a, b| distance(*a).total_cmp(&distance(*b)).then_with(|| a.cmp(b)));
+        prepared.recipients.sort_unstable_by(|a, b| {
+            distance(a.target)
+                .total_cmp(&distance(b.target))
+                .then_with(|| a.target.cmp(&b.target))
+        });
         prepared
             .recipients
             .truncate(GIFT_COPY.nearest_proposal_recipients);
-        prepared.recipients.sort_unstable();
+        prepared
+            .recipients
+            .sort_unstable_by_key(|subject| subject.target);
         let state = &*core.state;
         let policy = state
             .installed
@@ -269,17 +307,25 @@ impl NpcCandidateCursor {
             .social_offer_read
             .as_ref()
             .ok_or(ExecutionError::Invariant)?;
-        let window = crate::handover::ProposalWindow::new(state, &self.actor, None, policy);
-        prepared.recipients.retain(|index| {
-            window
-                .recipient_problem(&self.targets[*index].id, policy)
-                .is_none()
+        let window = ProposalWindow::new(state, &self.actor, None, policy);
+        let received = prepared.received.take().ok_or(ExecutionError::Invariant)?;
+        let mut has_counter = false;
+        prepared.recipients.retain(|subject| {
+            let id = &self.targets[subject.target].id;
+            let can_counter = received
+                .npc_incoming(&self.actor)
+                .any(|(gift, _)| &gift.offer.offerer_id == id);
+            has_counter |= can_counter;
+            subject.fresh_allowed || can_counter
         });
         if !prepared.recipients.is_empty() {
-            prepared.prepare_stock(state, &self.actor, &window, &self.budget)?;
+            prepared.prepare_stock(state, &self.actor, &window, has_counter, &self.budget)?;
         }
         if !prepared.lots.is_empty() {
-            self.stage = Enumerate::GiftProposal(0, 0);
+            if has_counter {
+                prepared.prepare_counters(&received, &self.actor, &self.targets, &self.budget)?;
+            }
+            self.stage = Enumerate::GiftProposal(0, 0, 0);
             self.gift_proposals = Some(prepared);
         }
         Ok(())
@@ -290,6 +336,7 @@ impl NpcCandidateCursor {
         core: &mut CoreMutation<'_>,
         target_index: usize,
         lot_index: usize,
+        counter_index: usize,
         preparation_id: &str,
     ) -> Result<(), ExecutionError> {
         let prepared = self
@@ -303,43 +350,96 @@ impl NpcCandidateCursor {
             self.gift_proposals = None;
             return Ok(());
         }
-        let target = &self.targets[prepared.recipients[target_index]];
-        let lot = &prepared.lots[lot_index];
-        self.stage = if lot_index + 1 == prepared.lots.len() {
-            Enumerate::GiftProposal(target_index + 1, 0)
+        let recipient = &prepared.recipients[target_index];
+        let target = &self.targets[recipient.target];
+        let stock = &prepared.lots[lot_index];
+        let lot = &stock.lot;
+        let counter = prepared
+            .counters
+            .iter()
+            .filter(|option| option.target == recipient.target)
+            .nth(counter_index);
+        self.stage = if counter.is_some() {
+            Enumerate::GiftProposal(target_index, lot_index, counter_index + 1)
+        } else if lot_index + 1 == prepared.lots.len() {
+            Enumerate::GiftProposal(target_index + 1, 0, 0)
         } else {
-            Enumerate::GiftProposal(target_index, lot_index + 1)
+            Enumerate::GiftProposal(target_index, lot_index + 1, 0)
         };
-        let definition = core
-            .state
+
+        let state = &*core.state;
+        let policy = state
+            .installed
+            .retained
+            .social_offer_read
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?;
+        if counter.is_none() && !(recipient.fresh_allowed && stock.fresh_allowed) {
+            return Ok(());
+        }
+        let definition = state
             .installed
             .retained
             .items
             .get(&lot.definition_pin.id)
             .ok_or(ExecutionError::Invariant)?;
-        let named = self
-            .description_context
-            .as_ref()
-            .and_then(|read| read.named_body(target.body))
-            .ok_or(ExecutionError::Invariant)?;
-        let minutes = core
-            .state
-            .installed
-            .retained
-            .social_offer_read
-            .as_ref()
-            .ok_or(ExecutionError::Invariant)?
-            .pending_seconds
-            / 60.0;
+        let _numbers = self.budget.reserve(64)?;
+        let quantity = lot.quantity.to_string();
         let mut custody = self.budget.reserve(
             lot.heap_bytes()
                 .and_then(|bytes| bytes.checked_add(target.id.len()))
                 .ok_or(ExecutionError::Capacity)?,
         )?;
-        let handover = NpcHandover::Offer {
-            recipient: target.id.clone(),
-            lot: lot.clone(),
+        let (handover, id, description) = if let Some(counter) = counter {
+            let source = &counter.terms.source;
+            let revision = source.revision.to_string();
+            (
+                NpcHandover::Counter {
+                    terms: Arc::clone(&counter.terms),
+                    lot: lot.clone(),
+                },
+                self.id(&[
+                    "counter:",
+                    &source.id,
+                    ":",
+                    &revision,
+                    ":",
+                    &lot.item_id,
+                    ":",
+                    &quantity,
+                ])?,
+                describe_proposal(
+                    &quantity,
+                    &definition.named.name,
+                    ProposalCopy::Counter(&counter.receive),
+                    &self.budget,
+                )?,
+            )
+        } else {
+            let named = self
+                .description_context
+                .as_ref()
+                .and_then(|read| read.named_body(target.body))
+                .ok_or(ExecutionError::Invariant)?;
+            (
+                NpcHandover::Offer {
+                    recipient: target.id.clone(),
+                    lot: lot.clone(),
+                },
+                self.id(&["offer:", &lot.item_id, ":", &quantity, ":", &target.id])?,
+                describe_proposal(
+                    &quantity,
+                    &definition.named.name,
+                    ProposalCopy::Gift {
+                        named,
+                        minutes: policy.pending_seconds / 60.0,
+                    },
+                    &self.budget,
+                )?,
+            )
         };
+        custody.merge(id.1)?;
+        custody.merge(description.1)?;
         let command = NativeCommand::npc_handover(
             &self.actor,
             preparation_id.to_owned(),
@@ -349,26 +449,13 @@ impl NpcCandidateCursor {
         let command_custody = self
             .budget
             .reserve(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
-        let _quantity = self.budget.reserve(32)?;
-        let quantity = lot.quantity.to_string();
-        let (id, id_custody) =
-            self.id(&["offer:", &lot.item_id, ":", &quantity, ":", &target.id])?;
-        custody.merge(id_custody)?;
-        let (description, description_custody) = describe_proposal(
-            &quantity,
-            &definition.named.name,
-            named,
-            minutes,
-            &self.budget,
-        )?;
-        custody.merge(description_custody)?;
         self.preview_offer(
             core,
             command,
             command_custody,
             PreparedNpcOffer {
-                description: Some(description),
-                id,
+                description: Some(description.0),
+                id: id.0,
                 meaning: NpcOfferMeaning::Handover { body: target.body },
                 command: PreparedNpcInstruction::Handover(handover),
                 transition: WorkTransitionMode::Continue,
@@ -381,11 +468,76 @@ impl NpcCandidateCursor {
 }
 
 impl GiftProposals {
+    fn prepare_counters(
+        &mut self,
+        received: &ReceivedGifts,
+        actor: &str,
+        targets: &[Target],
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let recipients = &self.recipients;
+        let eligible = || {
+            received
+                .npc_incoming(actor)
+                .filter_map(|(gift, reference)| {
+                    let target = recipients
+                        .iter()
+                        .find(|subject| targets[subject.target].id == gift.offer.offerer_id)?
+                        .target;
+                    (gift.offer.offered.len() < crate::handover::trade_lot_limit())
+                        .then_some((gift, reference, target))
+                })
+        };
+        let count = eligible().count();
+        let storage = budget.reserve(
+            count
+                .checked_mul(size_of::<CounterOption>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self._storage.merge(storage)?;
+        self.counters = Vec::with_capacity(count);
+        for (gift, reference, target) in eligible() {
+            let terms = CounterTerms::prepare(gift, reference, budget)?;
+            let names = gift
+                .descriptions
+                .offered
+                .iter()
+                .map(|description| &description.name);
+            let mut storage = budget.reserve(
+                casting::text_bound(names)?
+                    .checked_add(
+                        gift.offer
+                            .offered
+                            .len()
+                            .checked_mul(64)
+                            .ok_or(ExecutionError::Capacity)?,
+                    )
+                    .and_then(|bytes| bytes.checked_mul(4))
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            let mut receive = JsText::default();
+            append_gift_lots(
+                &mut receive,
+                &gift.offer.offered,
+                &gift.descriptions.offered,
+            )?;
+            storage.resize(receive.storage_bytes())?;
+            self._storage.merge(storage)?;
+            self.counters.push(CounterOption {
+                target,
+                terms,
+                receive,
+            });
+        }
+        Ok(())
+    }
+
     fn prepare_stock(
         &mut self,
         state: &crate::simulation::SimulationState,
         actor: &str,
-        window: &crate::handover::ProposalWindow<'_>,
+        window: &ProposalWindow<'_>,
+        has_counter: bool,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
         use crate::handover::GiftSelection;
@@ -432,13 +584,14 @@ impl GiftProposals {
         }
         let count = best.len().checked_mul(2).ok_or(ExecutionError::Capacity)?;
         let allocation = count
-            .checked_mul(size_of::<crate::handover::GiftLot>())
+            .checked_mul(size_of::<ProposalLot>())
             .ok_or(ExecutionError::Capacity)?;
         let mut custody = budget.reserve(allocation)?;
         let mut lots = Vec::with_capacity(count);
         for (_, entity) in best {
             let item = entity.item.as_ref().ok_or(ExecutionError::Invariant)?;
-            if window.item_busy(state, &entity.id) {
+            let fresh_allowed = !window.item_busy(state, &entity.id);
+            if !fresh_allowed && !has_counter {
                 continue;
             }
             let definition = items
@@ -472,7 +625,7 @@ impl GiftProposals {
                 if let Ok(lot) = crate::handover::prepare_trade_lot(state, actor, &selection) {
                     backing.resize(lot.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
                     custody.merge(backing)?;
-                    lots.push(lot);
+                    lots.push(ProposalLot { lot, fresh_allowed });
                 }
             }
         }
@@ -482,36 +635,57 @@ impl GiftProposals {
     }
 }
 
+enum ProposalCopy<'a> {
+    Gift {
+        named: &'a crate::state::Named,
+        minutes: f64,
+    },
+    Counter(&'a JsText),
+}
+
 fn describe_proposal(
     quantity: &str,
     item: &JsText,
-    named: &crate::state::Named,
-    minutes: f64,
+    words: ProposalCopy<'_>,
     budget: &ByteBudget,
 ) -> Result<(JsText, ByteReservation), ExecutionError> {
-    let template = GIFT_COPY.gift_description;
+    let copy = &*GIFT_COPY;
+    let (template, extra) = match words {
+        ProposalCopy::Gift { named, .. } => (copy.gift_description, &named.name),
+        ProposalCopy::Counter(receive) => (copy.counter_description, receive),
+    };
     let mut custody = budget.reserve(
-        casting::text_bound([item, &named.name])?
+        casting::text_bound([item, extra])?
             .checked_mul(2)
             .and_then(|bytes| {
-                bytes.checked_add((template.len() + quantity.len() + 64).checked_mul(12)?)
+                bytes.checked_add(
+                    (template.len() + copy.decision.len() + quantity.len() + 64).checked_mul(12)?,
+                )
             })
             .ok_or(ExecutionError::Capacity)?,
     )?;
-    let person = name_phrase(named, NameArticle::Definite, false);
-    let result = fill_terms(template, |part, text| {
-        match part {
-            "person" => text.push_text(&person),
-            "give" => {
+    let mut result = fill_terms(template, |part, text| {
+        match (part, &words) {
+            ("person", ProposalCopy::Gift { named, .. }) => {
+                text.push_text(&name_phrase(named, NameArticle::Definite, false))
+            }
+            ("minutes", ProposalCopy::Gift { minutes, .. }) => {
+                text.push_str(ryu_js::Buffer::new().format(*minutes))
+            }
+            ("receive", ProposalCopy::Counter(receive)) => text.push_text(receive),
+            ("give", _) => {
                 text.push_str(quantity);
                 text.push_str(" ");
                 text.push_text(item);
             }
-            "minutes" => text.push_str(ryu_js::Buffer::new().format(minutes)),
             _ => return Err(ExecutionError::Invariant),
         }
         Ok(())
     })?;
+    if matches!(words, ProposalCopy::Counter(_)) {
+        result.push_str(" ");
+        result.push_str(copy.decision);
+    }
     custody.resize(result.storage_bytes())?;
     Ok((result, custody))
 }

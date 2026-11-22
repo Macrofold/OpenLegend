@@ -119,7 +119,7 @@ impl NpcCandidateCursor {
             }
             Enumerate::Continue => {
                 self.stage = Enumerate::Follow(0, 0);
-                self.offer_gift_replies(core, actor_entity)?;
+                let received = self.offer_gift_replies(core, actor_entity)?;
                 let plan_pending = actor.agency.plan.as_ref().is_some_and(|plan| {
                     plan.status == crate::plans::PlanStatus::Active
                         && (plan.activity.is_some()
@@ -149,10 +149,12 @@ impl NpcCandidateCursor {
                     next_at: None,
                     _storage: guard,
                 })?;
-                self.begin_gift_reach(core)?;
+                if let Some(received) = received {
+                    self.begin_gift_reach(core, received)?;
+                }
             }
-            Enumerate::GiftProposal(target, lot) => {
-                self.offer_gift(core, target, lot, preparation_id)?;
+            Enumerate::GiftProposal(target, lot, counter) => {
+                self.offer_gift(core, target, lot, counter, preparation_id)?;
             }
             Enumerate::Follow(index, count) => {
                 if index == self.targets.len()
