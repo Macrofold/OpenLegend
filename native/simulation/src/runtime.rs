@@ -59,6 +59,7 @@ pub use private_notes::{RuntimeMindFile, RuntimePrivateNotes};
 mod reply_preview;
 pub use private_history::{
     RuntimePlayerTranscriptRead, RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead,
+    RuntimeRecentBrowse, RuntimeRecentPosition, RuntimeRecentReceipt, RuntimeRecentSourceRead,
     RuntimeRecordedEventRoles,
 };
 mod navigation;

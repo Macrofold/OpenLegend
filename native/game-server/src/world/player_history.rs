@@ -2,10 +2,12 @@
 
 use super::*;
 use crate::store::recall::browse::{MemoryBrowseCut, MemoryPage};
-use crate::store::{KnownPlaceViewPage, PreparedKnownPlaceRead};
+use crate::store::{KnownPlaceViewPage, PreparedKnownPlaceRead, PreparedSourceCut};
 use axum::body::Bytes;
 use openlegend_simulation::received::TemporalReceiptLocator;
-use openlegend_simulation::runtime::{RuntimePlayerTranscriptRead, RuntimePrivateHistoryRead};
+use openlegend_simulation::runtime::{
+    RuntimePlayerTranscriptRead, RuntimePrivateHistoryRead, RuntimeRecentBrowse, RuntimeRecentPosition,
+};
 
 pub(crate) struct PlayerHistoryRead {
     scope: Arc<AuthorizedScope>,
@@ -13,6 +15,55 @@ pub(crate) struct PlayerHistoryRead {
 }
 
 impl HostedWorld {
+    /// Pin the accepted observer and bounded logical address window. The
+    /// existing source cursor resolves those addresses through the ordinary
+    /// reader and its pending-save overlay outside this selection.
+    pub(crate) async fn capture_recent_browse(
+        self: &Arc<Self>,
+        authority: Arc<Authority>,
+        scope: Arc<AuthorizedScope>,
+        actor: String,
+        before: Option<RuntimeRecentPosition>,
+    ) -> Result<(PlayerHistoryRead, RuntimeRecentBrowse, PreparedSourceCut), WorldError> {
+        let _turn = self.enter().await?;
+        let store = self.store.clone();
+        self.call(move |session| {
+            let result = authority.current_private_view(
+                &scope,
+                actor != scope.scope.actor_id,
+                |permit, _| {
+                    let (read, cut) = session
+                        .read_recent_browse(&permit.account_id, &permit.actor_id, &actor, before)?
+                        .ok_or(AccessError::Forbidden)?;
+                    let storage = session.with_recent_source_read(&read, &cut, |source| {
+                        store.prepare_recent_sources(source)
+                    })??;
+                    Ok::<_, WorldError>((read, cut, storage))
+                },
+            );
+            Ok(result
+                .map_err(WorldError::Access)
+                .and_then(|result| result)
+                .map(|(read, cut, storage)| (PlayerHistoryRead { scope, read }, cut, storage)))
+        })
+        .await?
+    }
+
+    pub(crate) async fn admit_recent_browse(
+        self: &Arc<Self>,
+        mut selected: PlayerHistoryRead,
+        mut cut: RuntimeRecentBrowse,
+        storage: PreparedSourceCut,
+    ) -> Result<(PlayerHistoryRead, RuntimeRecentBrowse), WorldError> {
+        let rows = self.store.read_source_rows(storage).await?;
+        self.capture(move |session| {
+            let current = rows.admit(|rows| {
+                session.admit_recent_source_rows(&mut selected.read, &mut cut, rows)
+            })?;
+            Ok(current.then_some((selected, cut)))
+        }).await?.ok_or(WorldError::ProjectionChanged)
+    }
+
     /// Capture this tab's private recollection read before the SQL wait.
     /// A god inspector keeps the same exact actor and grant at disclosure.
     pub(crate) async fn capture_recollections(
@@ -106,7 +157,7 @@ impl HostedWorld {
     /// A requested HTTP page can wait for the bounded world turn after its
     /// store read, without repeating that read or locking authority while it
     /// waits. The callback checks the original sources and encodes synchronously.
-    pub(crate) async fn disclose_recollections(
+    pub(crate) async fn disclose_private_history(
         &self,
         authority: &Authority,
         selected: &PlayerHistoryRead,

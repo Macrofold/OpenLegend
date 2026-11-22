@@ -14,6 +14,9 @@ use openlegend_simulation::{
     values::is_safe_record_id,
 };
 
+mod recent;
+mod recent_text;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct RequestPage {
@@ -73,11 +76,7 @@ pub(super) async fn recollections(State(state): State<PlayerRoutes>, request: Re
         return access_failure(AccessError::Forbidden);
     }
     if request.recent {
-        return refusal(
-            StatusCode::NOT_FOUND,
-            "history",
-            "Recent observations are unavailable.",
-        );
+        return recent::page(&state, &selected, &request).await;
     }
     for _ in 0..2 {
         let search = match terms(&state, request.query.as_deref()) {
@@ -156,7 +155,7 @@ async fn publish(
     let selected = world
         .admit_recollections(state.game.clone(), selected, page)
         .await?;
-    world.disclose_recollections(&state.authority, &selected, |budget| {
+    world.disclose_private_history(&state.authority, &selected, |budget| {
         selected.sources().with_personal_sources(|sources| {
             let mut text_custody = budget.reserve(4096).map_err(|_| StoreError::Capacity)?;
             let mut entries = Vec::with_capacity(expected);

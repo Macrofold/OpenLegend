@@ -502,6 +502,25 @@ impl Session {
         .map_err(SaveError::from)
         .map_err(SessionError::from)
     }
+
+    /// Borrow the exact ordinary save owners of an accepted read, before
+    /// releasing the simulation turn. A candidate is never part of the cut.
+    pub(crate) fn accepted_save_read(
+        &self,
+    ) -> Result<
+        (
+            crate::records::save::SaveReadMetadata,
+            &crate::records::save::SaveJournal,
+        ),
+        SessionError,
+    > {
+        let accepted = self.accepted()?;
+        let metadata = self.save.read_metadata()?;
+        if metadata.through_cut != accepted.state.accepted_cut {
+            return Err(ExecutionError::Invariant.into());
+        }
+        Ok((metadata, &self.save))
+    }
     /// Capture the actor's real unsaved page representation before any private
     /// writes. Pending non-temporal deltas/history already belong to the
     /// application's pre-Ready immutable publication owner and are not copied
@@ -512,7 +531,8 @@ impl Session {
         limits: TemporalSaveLimits,
         budget: &ByteBudget,
     ) -> Result<CapturedActorReadCut<'a>, SessionError> {
-        let state = &self.accepted()?.state;
+        let (save, _) = self.accepted_save_read()?;
+        let state = &self.simulation.state;
         // This is metadata for the actual scoped SQL reader, not a memory
         // capability grant. Source permits an empty history for any real actor.
         if !state
@@ -524,10 +544,6 @@ impl Session {
             && state.experience.actor(actor).is_none()
         {
             return Err(ExecutionError::MissingActor.into());
-        }
-        let save = self.save.read_metadata()?;
-        if save.through_cut != state.accepted_cut {
-            return Err(ExecutionError::Invariant.into());
         }
         let temporal = crate::received::preview_temporal_rows(
             &TemporalSaveCut {

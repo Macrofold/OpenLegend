@@ -45,7 +45,7 @@ pub(crate) use known_places::{KnownPlaceViewPage, PlaceViewRequest, PlaceViewSea
 pub use lexical::{PendingLexical, PreparedLexical};
 pub use metadata::MetadataProjection;
 pub(crate) use npc_schedule::ThoughtRead;
-pub(crate) use npc_sources::{PreparedNpcSources, RecallScope};
+pub(crate) use npc_sources::{PreparedNpcSources, PreparedSourceCut, RecallScope};
 pub(crate) use privacy_edit::PreparedPrivacyEdit;
 pub use read::{AdmittedReceipt, CurrentOpening, GameplayReceipt};
 pub use recall::PreparedRecall;

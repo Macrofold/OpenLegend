@@ -23,6 +23,16 @@ pub struct MaterializedBody<'a> {
     pose: &'a ObservedBodyPose,
 }
 
+impl<'a> MaterializedBody<'a> {
+    pub fn details(&self) -> &'a ObservedBodyDetails {
+        self.details
+    }
+
+    pub fn pose(&self) -> &'a ObservedBodyPose {
+        self.pose
+    }
+}
+
 #[derive(Serialize)]
 #[serde(untagged)]
 pub enum MaterializedTemporalValue<'a> {

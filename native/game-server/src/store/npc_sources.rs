@@ -11,8 +11,8 @@ use openlegend_simulation::geometry::GeometryBinding;
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::records::{ChangedRow, ChangedRows, InstalledRow, SqlCell};
 use openlegend_simulation::runtime::{
-    NpcArchivedSourceRow, NpcPersonalSourceRow, NpcSourceRows, RuntimeNpcSourceRead,
-    RuntimeProviderInput,
+    NpcArchivedSourceRow, NpcPersonalSourceRow, NpcReceiptSelection, NpcSourceRows,
+    RuntimeNpcSourceRead, RuntimeProviderInput, RuntimeRecentSourceRead,
 };
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
@@ -28,10 +28,14 @@ const KINDS: [Kind; 3] = [Kind::Awareness, Kind::Memory, Kind::Summary];
 
 pub(crate) struct PreparedNpcSources {
     binding: GeometryBinding,
+    serial: u64,
+    cut: PreparedSourceCut,
+}
+
+pub(crate) struct PreparedSourceCut {
     world: String,
     generation: String,
     actor: String,
-    serial: u64,
     revision: u64,
     in_flight_through: Option<u64>,
     maximum: usize,
@@ -41,11 +45,49 @@ pub(crate) struct PreparedNpcSources {
     custody: ByteReservation,
 }
 
+struct PendingSourceRows<'a> {
+    detached: Option<&'a ChangedRows>,
+    suffix: &'a ChangedRows,
+    temporal: Option<&'a ChangedRows>,
+}
+
+pub(crate) struct DetachedSourceRows {
+    rows: NpcSourceRows,
+    custody: ByteReservation,
+}
+
+impl DetachedSourceRows {
+    /// Bind decoded rows to their native reader before releasing transfer
+    /// custody. The new retained source reader funds its own bodies.
+    pub(crate) fn admit<T>(self, use_rows: impl FnOnce(NpcSourceRows) -> T) -> T {
+        let Self { rows, custody: _held } = self;
+        use_rows(rows)
+    }
+}
+
 struct Selection {
     personal: Vec<PersonalSourceRef>,
     parents: BTreeSet<String>,
     receipts: Vec<Coordinate>,
     consolidation_job: Option<String>,
+}
+
+impl Coordinate {
+    fn selected(actor: &str, receipts: &[NpcReceiptSelection]) -> StoreResult<Vec<Self>> {
+        receipts.iter().enumerate().map(|(ordinal, item)| {
+            let receipt = &item.locator;
+            if receipt.actor_id != actor {
+                return Err(StoreError::InvalidRecord);
+            }
+            Ok(Self {
+                ordinal,
+                life: receipt.physical_life,
+                epoch: receipt.epoch.clone(),
+                batch: receipt.batch_order,
+                entry: receipt.entry_index,
+            })
+        }).collect()
+    }
 }
 
 #[derive(Serialize)]
@@ -110,7 +152,7 @@ impl Store {
             .budget
             .reserve(bytes.checked_mul(4).ok_or(StoreError::Capacity)?)
             .map_err(|_| StoreError::Capacity)?;
-        let mut selection = Selection {
+        let selection = Selection {
             personal: request
                 .personal
                 .iter()
@@ -122,61 +164,103 @@ impl Store {
                 .filter_map(|item| item.through.as_ref())
                 .map(|parent| parent.id.clone())
                 .collect(),
-            receipts: Vec::with_capacity(request.receipts.len()),
+            receipts: Coordinate::selected(read.actor_id, &request.receipts)?,
             consolidation_job: request.consolidation_job.clone(),
         };
-        for (ordinal, item) in request.receipts.iter().enumerate() {
-            if item.locator.actor_id != read.actor_id {
-                return Err(StoreError::InvalidRecord);
-            }
-            selection.receipts.push(Coordinate {
-                ordinal,
-                life: item.locator.physical_life,
-                epoch: item.locator.epoch.clone(),
-                batch: item.locator.batch_order,
-                entry: item.locator.entry_index,
-            });
-        }
-        let mut prefix_overlay = pending::Rows::default();
-        let mut suffix_overlay = pending::Rows::default();
-        if let Some(detached) = detached {
-            prefix_overlay.merge(self, read.actor_id, &selection, detached, &mut custody)?;
-            if !selection.receipts.is_empty() {
-                prefix_overlay.values_from(self, detached, &mut custody)?;
-            }
-            prefix_overlay.archives(
-                read.actor_id,
-                &selection,
-                read.pending_versions(true),
-                &mut custody,
-            )?;
-        }
-        suffix_overlay.merge(self, read.actor_id, &selection, suffix, &mut custody)?;
-        if let Some(temporal) = read.temporal {
-            suffix_overlay.merge(self, read.actor_id, &selection, temporal, &mut custody)?;
-            suffix_overlay.values_from(self, suffix, &mut custody)?;
-            suffix_overlay.values_from(self, temporal, &mut custody)?;
-        }
-        suffix_overlay.archives(
+        let (mut prefix, mut pending) = self.source_overlays(
             read.actor_id,
             &selection,
-            read.pending_versions(false),
+            PendingSourceRows { detached, suffix, temporal: read.temporal },
             &mut custody,
         )?;
+        if detached.is_some() {
+            prefix.archives(read.actor_id, &selection, read.pending_versions(true), &mut custody)?;
+        }
+        pending.archives(read.actor_id, &selection, read.pending_versions(false), &mut custody)?;
         Ok(PreparedNpcSources {
             binding: read.binding,
+            serial: read.read_serial,
+            cut: PreparedSourceCut {
+                world: read.world_id.to_owned(),
+                generation: read.generation.to_owned(),
+                actor: read.actor_id.to_owned(),
+                revision: read.durable_revision,
+                in_flight_through: read.in_flight_through,
+                maximum: read.maximum_transfer_bytes,
+                selection,
+                detached: prefix,
+                suffix: pending,
+                custody,
+            },
+        })
+    }
+
+    /// Prepare only recent receipt rows from this actor's original accepted
+    /// prefix. The detached result survives acknowledgement and SQL waiting.
+    pub(crate) fn prepare_recent_sources(
+        &self,
+        read: RuntimeRecentSourceRead<'_>,
+    ) -> StoreResult<PreparedSourceCut> {
+        const SOURCE_WINDOW_BYTES: usize = 4 * 1024 * 1024;
+        if read.detached.is_some() != read.in_flight_through.is_some() {
+            return Err(StoreError::StaleCut);
+        }
+        let bytes = read.receipts.iter().try_fold(4096, |bytes: usize, receipt| {
+            bytes.checked_add(256 + receipt.locator.epoch.len())
+        }).and_then(|bytes| bytes.checked_add(read.world_id.len() + read.generation.len() + read.actor.len()))
+            .ok_or(StoreError::Capacity)?;
+        let mut custody = self.budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+        let selection = Selection {
+            personal: Vec::new(),
+            parents: BTreeSet::new(),
+            receipts: Coordinate::selected(read.actor, read.receipts)?,
+            consolidation_job: None,
+        };
+        let (detached, suffix) = self.source_overlays(
+            read.actor, &selection,
+            PendingSourceRows {
+                detached: read.detached,
+                suffix: read.suffix,
+                temporal: read.temporal,
+            },
+            &mut custody,
+        )?;
+        Ok(PreparedSourceCut {
             world: read.world_id.to_owned(),
             generation: read.generation.to_owned(),
-            actor: read.actor_id.to_owned(),
-            serial: read.read_serial,
+            actor: read.actor.to_owned(),
             revision: read.durable_revision,
             in_flight_through: read.in_flight_through,
-            maximum: read.maximum_transfer_bytes,
+            maximum: SOURCE_WINDOW_BYTES,
             selection,
-            detached: prefix_overlay,
-            suffix: suffix_overlay,
+            detached,
+            suffix,
             custody,
         })
+    }
+
+    fn source_overlays(
+        &self,
+        actor: &str,
+        selection: &Selection,
+        rows: PendingSourceRows<'_>,
+        custody: &mut ByteReservation,
+    ) -> StoreResult<(pending::Rows, pending::Rows)> {
+        let mut prefix = pending::Rows::default();
+        let mut suffix = pending::Rows::default();
+        if let Some(detached) = rows.detached {
+            prefix.merge(self, actor, selection, detached, custody)?;
+            if !selection.receipts.is_empty() {
+                prefix.values_from(self, detached, custody)?;
+            }
+        }
+        suffix.merge(self, actor, selection, rows.suffix, custody)?;
+        if let Some(temporal) = rows.temporal {
+            suffix.merge(self, actor, selection, temporal, custody)?;
+            suffix.values_from(self, rows.suffix, custody)?;
+            suffix.values_from(self, temporal, custody)?;
+        }
+        Ok((prefix, suffix))
     }
 
     /// Complete one indexed SQL snapshot and hand the admitted typed rows to
@@ -186,6 +270,20 @@ impl Store {
         self: &Arc<Self>,
         prepared: PreparedNpcSources,
     ) -> StoreResult<RuntimeProviderInput> {
+        let answer = self.read_source_rows(prepared.cut).await?;
+        RuntimeProviderInput::npc_sources(
+            prepared.binding,
+            prepared.serial,
+            answer.rows,
+            answer.custody,
+            &self.budget,
+        ).map_err(|_| StoreError::Capacity)
+    }
+
+    pub(crate) async fn read_source_rows(
+        self: &Arc<Self>,
+        prepared: PreparedSourceCut,
+    ) -> StoreResult<DetachedSourceRows> {
         let store = self.clone();
         self.read_simulation_cut(move |transaction| {
             Box::pin(async move {
@@ -232,14 +330,7 @@ impl Store {
                     parents,
                     duplicate_summary,
                 };
-                RuntimeProviderInput::npc_sources(
-                    prepared.binding,
-                    prepared.serial,
-                    rows,
-                    answer,
-                    &store.budget,
-                )
-                .map_err(|_| StoreError::Capacity)
+                Ok(DetachedSourceRows { rows, custody: answer })
             })
         })
         .await

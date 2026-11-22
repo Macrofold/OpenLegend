@@ -5,6 +5,11 @@ use crate::host::PublicationLease;
 use std::mem::size_of;
 use std::sync::atomic::AtomicBool;
 
+mod recent;
+pub use recent::{
+    RuntimeRecentBrowse, RuntimeRecentPosition, RuntimeRecentReceipt, RuntimeRecentSourceRead,
+};
+
 #[derive(Clone, Copy, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum HistoryPurpose {

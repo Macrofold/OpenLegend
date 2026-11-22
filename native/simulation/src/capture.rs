@@ -52,7 +52,7 @@ pub use npc_sources::{
     NpcSourceRows, NpcSourceSelection,
 };
 pub(crate) use npc_sources::{
-    NpcPersonalScope, NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest,
+    CapturedNpcReceipt, NpcPersonalScope, NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest,
     PreparedKnownPlaceSources, PreparedMovementTerms, PreparedNpcSources,
 };
 mod npc_selection;

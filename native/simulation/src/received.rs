@@ -426,7 +426,7 @@ impl ReceivedRecentDirectory {
         self.count
     }
 
-    pub fn directories(&self) -> impl Iterator<Item = &ReceivedChargeDirectory> {
+    pub fn directories(&self) -> impl DoubleEndedIterator<Item = &ReceivedChargeDirectory> {
         self.blocks.values().map(|block| &block.directory)
     }
 

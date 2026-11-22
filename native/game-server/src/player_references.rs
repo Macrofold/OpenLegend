@@ -9,15 +9,18 @@ use openlegend_simulation::{
     reception::{EvidenceSource, ObserverSubject},
     runtime::{NativeWorldSession, RuntimeError},
 };
-use ring::hmac;
-use serde::Serialize;
+use ring::{aead, hmac};
+use serde::{Serialize, de::DeserializeOwned};
 use std::io::{self, Write};
 
 pub struct ReferenceIssuer {
     body: hmac::Key,
     person: hmac::Key,
     historical: hmac::Key,
+    private_cursor: aead::LessSafeKey,
 }
+
+const PRIVATE_CURSOR: &[u8] = b"openlegend-private-recent-cursor";
 
 pub(crate) struct ResolvedContact {
     pub(crate) id: String,
@@ -33,11 +36,56 @@ pub struct PlayerReferences<'a> {
 
 impl ReferenceIssuer {
     pub fn new() -> Result<Self, getrandom::Error> {
+        let mut secret = [0; 32];
+        getrandom::fill(&mut secret)?;
         Ok(Self {
             body: random_key()?,
             person: random_key()?,
             historical: random_key()?,
+            private_cursor: aead::LessSafeKey::new(
+                aead::UnboundKey::new(&aead::AES_256_GCM, &secret)
+                    .expect("the private cursor key has the required fixed size"),
+            ),
         })
+    }
+
+    /// Opaque continuation for a bounded private history read. Internal
+    /// positions never leave the server in plaintext. The caller owns the
+    /// current grant and query checks, and funds this short encoded token.
+    pub(crate) fn seal_recent_cursor(&self, value: &impl Serialize) -> Option<String> {
+        let mut nonce = [0; aead::NONCE_LEN];
+        getrandom::fill(&mut nonce).ok()?;
+        let mut body = json_record(value).ok()?.into_bytes();
+        self.private_cursor
+            .seal_in_place_append_tag(
+                aead::Nonce::assume_unique_for_key(nonce),
+                aead::Aad::from(PRIVATE_CURSOR),
+                &mut body,
+            )
+            .ok()?;
+        let mut result = String::with_capacity(2 * (nonce.len() + body.len()));
+        append_hex(&mut result, &nonce);
+        append_hex(&mut result, &body);
+        Some(result)
+    }
+
+    pub(crate) fn open_recent_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        if token.len() > 2048 || token.len() % 2 != 0 {
+            return None;
+        }
+        let hex = |byte| char::from(byte).to_digit(16).map(|digit| digit as u8);
+        let mut decoded = token
+            .as_bytes()
+            .chunks_exact(2)
+            .map(|pair| Some((hex(pair[0])? << 4) | hex(pair[1])?))
+            .collect::<Option<Vec<_>>>()?;
+        let (prefix, body) = decoded.split_at_mut_checked(aead::NONCE_LEN)?;
+        let nonce = aead::Nonce::try_assume_unique_for_key(prefix).ok()?;
+        let clear = self
+            .private_cursor
+            .open_in_place(nonce, aead::Aad::from(PRIVATE_CURSOR), body)
+            .ok()?;
+        serde_json::from_slice(clear).ok()
     }
 
     /// Bind all references in one permitted view to one session, controller
