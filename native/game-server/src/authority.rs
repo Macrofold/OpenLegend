@@ -16,6 +16,7 @@ use tokio_postgres::Row;
 use uuid::Uuid;
 
 pub(crate) mod binding;
+pub(crate) mod bootstrap;
 mod control;
 pub(crate) mod invites;
 mod managed_access;

@@ -941,6 +941,7 @@ impl Session {
     pub(crate) fn begin_startup(
         &mut self,
         materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
+        owners: Option<&[crate::runtime::RestoreBinding]>,
     ) -> Result<CandidateKey, SessionError> {
         if self.accepted()?.state.accepted_cut != 0 {
             return Err(ExecutionError::InvalidCheckpoint.into());
@@ -952,7 +953,7 @@ impl Session {
                 state: &mut self.simulation.state,
                 journal: &mut journal,
             };
-            OperationDriver::startup(&mut core, &self.budget)
+            OperationDriver::startup(&mut core, owners, &self.budget)
         };
         self.install_driver(key, journal, driver, false)
     }
@@ -1407,6 +1408,7 @@ impl Session {
                             &result,
                             CompletedOperation::Restore(_) | CompletedOperation::HostControl(_)
                         )
+                        || matches!(&result, CompletedOperation::Startup(done) if done.protected)
                         || matches!(&result, CompletedOperation::Participation(done) if done.outcome.ok)
                         || matches!(&result, CompletedOperation::ActivityLearning(done) if done.protected && done.outcome.ok)
                         || matches!(&result, CompletedOperation::Reflection(done) if done.protected && done.outcome.ok)

@@ -188,25 +188,37 @@ impl MetadataJournal {
         actor: &str,
         account: &str,
     ) -> Result<(), ExecutionError> {
-        let previous = &state.administration.authorship.player_account_ids;
-        if previous.contains_key(actor) {
+        if state.administration.authorship.player_account_ids.contains_key(actor) {
             return Err(ExecutionError::Invariant);
         }
-        let count = previous
-            .len()
-            .checked_add(1)
-            .ok_or(ExecutionError::Capacity)?;
+        self.enroll_owners(state, std::iter::once((actor, account)))
+    }
+
+    /// Startup enrolls several actors in one funded authorship map. The
+    /// caller has already checked each exact body's current owner.
+    pub(crate) fn enroll_owners<'a>(
+        &mut self,
+        state: &mut SimulationState,
+        owners: impl Iterator<Item = (&'a str, &'a str)> + Clone,
+    ) -> Result<(), ExecutionError> {
+        let previous = &state.administration.authorship.player_account_ids;
+        let owners = owners.filter(|(actor, _)| !previous.contains_key(*actor));
+        let additional = owners.clone().count();
+        if additional == 0 {
+            return Ok(());
+        }
+        let count = previous.len().checked_add(additional).ok_or(ExecutionError::Capacity)?;
+        let entry_bytes = |bytes: usize, (actor, account): (&str, &str)| {
+            bytes.checked_add(actor.len())?.checked_add(account.len())
+        };
         let bytes = previous
             .iter()
+            .map(|(id, account)| (id.as_str(), account.as_str()))
             .try_fold(
-                map_storage::<String, String>(count)
-                    .and_then(|bytes| bytes.checked_add(actor.len()))
-                    .and_then(|bytes| bytes.checked_add(account.len()))
-                    .ok_or(ExecutionError::Capacity)?,
-                |bytes, (actor, account)| {
-                    bytes.checked_add(actor.len())?.checked_add(account.len())
-                },
+                map_storage::<String, String>(count).ok_or(ExecutionError::Capacity)?,
+                entry_bytes,
             )
+            .and_then(|bytes| owners.clone().try_fold(bytes, entry_bytes))
             .ok_or(ExecutionError::Capacity)?;
         let mut reservation = self.budget.reserve(bytes)?;
         let mut next = IndexMap::new();
@@ -217,7 +229,7 @@ impl MetadataJournal {
                 .iter()
                 .map(|(actor, account)| (actor.clone(), account.clone())),
         );
-        next.insert(actor.to_owned(), account.to_owned());
+        next.extend(owners.map(|(actor, account)| (actor.to_owned(), account.to_owned())));
         reservation.resize(next.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
         let resident = self.budget.adopt_record(reservation)?;
         self.replace_bindings(state, next, resident)

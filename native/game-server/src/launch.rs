@@ -119,6 +119,7 @@ pub async fn serve(release: &Path, database: DatabaseConfig) -> Result<(), Launc
         &settings,
         bound.port(),
         loads,
+        true,
     )
     .await?;
     println!("OpenLegend listening on {bound}");
@@ -180,6 +181,7 @@ async fn serve_with_recovery(
                 settings,
                 port,
                 loads.clone(),
+                false,
             )
             .await?;
             loads
@@ -216,6 +218,7 @@ impl PreparedGame {
         settings: &ListenerSettings,
         port: u16,
         loads: Arc<LoadInbox>,
+        configured_startup: bool,
     ) -> Result<Self, LaunchError> {
         let local = settings.local;
         let custody = game.host.budget().clone();
@@ -361,6 +364,7 @@ impl PreparedGame {
             )),
             None => game_routes,
         };
+        let mut configured = None;
         let routes = if local {
             access_http::local_router(authority, port, game_routes, Some(presence))
         } else {
@@ -373,6 +377,15 @@ impl PreparedGame {
                 settings.loopback_http,
                 custody.clone(),
             )?;
+            if configured_startup {
+                configured = crate::authority::bootstrap::ConfiguredAccounts::prepare(
+                    &game.store,
+                    game.world_id(),
+                    oidc.issuer(),
+                    &custody,
+                )
+                .await?;
+            }
             access_http::oidc_router(
                 authority,
                 oidc,
@@ -385,7 +398,7 @@ impl PreparedGame {
             )
         };
         let routes = routes.merge(mcp.unwrap_or_else(crate::mcp_http::disabled));
-        clock.initialize().await?;
+        clock.initialize(configured).await?;
         clock.maintenance().initialize(&clock).await?;
         Ok(Self {
             routes,

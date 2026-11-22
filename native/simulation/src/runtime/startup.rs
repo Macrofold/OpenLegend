@@ -65,6 +65,17 @@ impl NativeWorldSession {
         materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
-        self.session.begin_startup(materials).map_err(session_failure)
+        self.session.begin_startup(materials, None).map_err(session_failure)
+    }
+
+    /// Reconcile cold startup and new configured owners in a protected save.
+    /// The listener must commit the corresponding grants with these rows.
+    pub fn begin_configured_startup(
+        &mut self,
+        materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
+        owners: &[RestoreBinding],
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        self.session.begin_startup(materials, Some(owners)).map_err(session_failure)
     }
 }

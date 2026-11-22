@@ -2,7 +2,7 @@
 //! advancement and its accepted result. A refused candidate consumes no debt.
 
 use crate::{
-    authority::{AccessError, Authority, AuthorizedScope, Capability},
+    authority::{AccessError, Authority, AuthorizedScope, Capability, bootstrap::ConfiguredAccounts},
     boot::CurrentServer,
     command_epoch::RequestIdentity,
     live_save::{AcceptedSaveInput, LiveSaves, ProtectedGameplaySave},
@@ -416,45 +416,86 @@ impl GameClock {
         Ok(())
     }
 
-    /// Reconcile the loaded hot state before accepting connections. Startup
-    /// now contributes to the same ordinary store queue as later gameplay.
-    pub async fn initialize(&self) -> Result<(), WorldError> {
+    /// Reconcile the loaded hot state before accepting connections. When the
+    /// operator configured new account access, save it with the body ownership
+    /// before admission. Ordinary cold startup uses the background save queue.
+    pub(crate) async fn initialize(
+        &self,
+        configured: Option<Arc<ConfiguredAccounts>>,
+    ) -> Result<(), WorldError> {
         if let Some(presence) = &self.presence
             && !self.game.world.capture(NativeWorldSession::has_simulated_departure).await?
         {
             presence.enable_elapsed_exit()?;
         }
         let game = self.game.clone();
-        let prepare = self.saves.clone();
         let accept = self.saves.clone();
         let materials = if self.game.world.capture(NativeWorldSession::has_bound_material_gather).await? {
             Some(self.game.store.construction_materials(self.game.world_id(), None).await?)
         } else {
             None
         };
-        self.game
-            .world
-            .execute_and_publish(
-                #[cfg(feature = "profile-campaign")]
-                openlegend_simulation::profile::sites::TURN_CLOCK,
-                move |session| Ok(ApplicationStart::Candidate(session.begin_startup_with_materials(materials)?)),
-                move |question| {
-                    let game = game.clone();
-                    async move { game.answer_operation(question).await }
-                },
-                move |output, _| match output {
-                    RuntimeDirectOutput::Prepared(product) if product.outcome().ok => {
-                        prepare.stage(&product, None)
-                    }
-                    RuntimeDirectOutput::Prepared(product) => {
-                        Err(RuntimeError::application_refused(&product.outcome().code))
-                    }
-                    RuntimeDirectOutput::Preview(_) => unreachable!("startup cannot preview"),
-                },
-                |fence, key, _| Ok(fence.settle(key, true)?),
-                move |save| accept.accept(save),
-            )
-            .await?;
+        let answer = move |question| {
+            let game = game.clone();
+            async move { game.answer_operation(question).await }
+        };
+        if let Some(accounts) = configured {
+            let bindings = accounts.clone();
+            let store = self.game.store.clone();
+            let staging_store = store.clone();
+            let language = self.game.language().cloned();
+            self.game
+                .world
+                .execute_protected_then(
+                    move |session| session.begin_configured_startup(materials, &bindings.owners),
+                    answer,
+                    move |output, budget| {
+                        let RuntimeDirectOutput::Prepared(value) = output else {
+                            unreachable!("startup cannot preview")
+                        };
+                        if !value.outcome().ok {
+                            return Err(RuntimeError::application_refused(&value.outcome().code));
+                        }
+                        ProtectedGameplaySave::prepare(&value, &staging_store, budget)
+                    },
+                    || Ok(()),
+                    move |save, prefix| -> ProtectedCommit<'_> {
+                        Box::pin(async move {
+                            let projection = accounts.projection(save, &store, language.as_deref());
+                            let acknowledgement = store.commit_save(prefix, &[], &projection).await?;
+                            save.record_commit(&projection.gameplay);
+                            Ok(acknowledgement)
+                        })
+                    },
+                    move |save| {
+                        save.acknowledged(&accept);
+                        Ok(())
+                    },
+                )
+                .await?;
+        } else {
+            let prepare = self.saves.clone();
+            self.game
+                .world
+                .execute_and_publish(
+                    #[cfg(feature = "profile-campaign")]
+                    openlegend_simulation::profile::sites::TURN_CLOCK,
+                    move |session| Ok(ApplicationStart::Candidate(session.begin_startup_with_materials(materials)?)),
+                    answer,
+                    move |output, _| match output {
+                        RuntimeDirectOutput::Prepared(product) if product.outcome().ok => {
+                            prepare.stage(&product, None)
+                        }
+                        RuntimeDirectOutput::Prepared(product) => {
+                            Err(RuntimeError::application_refused(&product.outcome().code))
+                        }
+                        RuntimeDirectOutput::Preview(_) => unreachable!("startup cannot preview"),
+                    },
+                    |fence, key, _| Ok(fence.settle(key, true)?),
+                    move |save| accept.accept(save),
+                )
+                .await?;
+        }
         if let Some(presence) = &self.presence {
             crate::embodiment::reconcile_startup(
                 &self.game,

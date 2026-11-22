@@ -36,7 +36,7 @@ impl RuntimePreparedProducts<'_> {
     }
 
     /// Prepare the same scoped eligibility and recall inputs as an ordinary
-    /// save, from the private participation candidate and its protected prefix.
+    /// save, from the completed operation and its protected prefix.
     /// The callback may retain only its funded derived products through commit.
     pub fn prepare_protected_gameplay_save<T>(
         &self,
@@ -49,6 +49,7 @@ impl RuntimePreparedProducts<'_> {
                 | crate::simulation::CompletedOperation::ActivityLearning(_)
                 | crate::simulation::CompletedOperation::Reflection(_)
                 | crate::simulation::CompletedOperation::Advance(_)
+                | crate::simulation::CompletedOperation::Startup(_)
         ) || !self.outcome().ok
         {
             return Err(failure(

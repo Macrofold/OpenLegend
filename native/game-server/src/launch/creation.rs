@@ -126,6 +126,7 @@ pub(super) async fn serve(
                         &settings,
                         bound.port(),
                         Arc::new(LoadInbox::default()),
+                        false,
                     )
                     .await
                 }

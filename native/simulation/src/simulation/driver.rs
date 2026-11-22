@@ -1720,9 +1720,10 @@ impl OperationDriver {
     }
     pub(crate) fn startup(
         core: &mut CoreMutation<'_>,
+        owners: Option<&[crate::runtime::RestoreBinding]>,
         budget: &ByteBudget,
     ) -> Result<Self, DriveError> {
-        let cursor = super::startup::StartupCursor::new(budget)?;
+        let cursor = super::startup::StartupCursor::new(core, owners, budget)?;
         Self::new(core, OperationCursor::Startup(cursor), budget)
     }
     pub(crate) fn consolidation(

@@ -158,6 +158,10 @@ impl Oidc {
         &self.public_origin
     }
 
+    pub(crate) fn issuer(&self) -> &str {
+        self.issuer.as_str()
+    }
+
     async fn discover(&self) -> Result<Arc<Discovered>, OidcError> {
         let operation = self
             .network
