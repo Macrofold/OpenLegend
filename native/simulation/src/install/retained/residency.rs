@@ -51,6 +51,7 @@ heap_record!(RetainedDefinitions {
     invention_policy,
     story_policy,
     item_definitions,
+    item_icons,
     recipes,
     flight_routes,
     places,

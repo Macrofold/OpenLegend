@@ -53,15 +53,14 @@ pub(super) fn prepare_visual_source(
             state
                 .installed
                 .retained
-                .foraging
-                .food
+                .item_icons
                 .get(&stock.definition_id)
-                .map(|definition| (stock, definition))
+                .map(|icon| (stock, icon))
                 .ok_or_else(invalid)
         })
         .transpose()?;
     let icon = match resource {
-        Some((_, definition)) => &definition.definition.icon,
+        Some((_, icon)) => icon,
         None => &subject.icon,
     };
     let subtype = match resource {

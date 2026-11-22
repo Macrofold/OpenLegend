@@ -139,7 +139,13 @@ impl ForageChoice {
                 .entities
                 .resolve(subject)
                 .ok_or(ExecutionError::Invariant)?;
-            if target.resource.is_some() {
+            if target.resource.as_ref().is_some_and(|stock| {
+                installed
+                    .retained
+                    .foraging
+                    .food
+                    .contains_key(&stock.definition_id)
+            }) {
                 ids.push(id);
             }
         }

@@ -116,6 +116,7 @@ pub(crate) struct RetainedDefinitions {
     pub invention_policy: RetainedOne,
     pub story_policy: Option<RetainedOne>,
     pub item_definitions: RetainedMap,
+    pub item_icons: IndexMap<String, Option<String>>,
     pub recipes: RetainedMap,
     pub flight_routes: RetainedMap,
     pub places: RetainedMap,
@@ -554,6 +555,7 @@ pub(crate) fn install_retained(
         .ok_or(InstallError::ParentPresence)?;
     let (foraging, _foraging_preparation) =
         foraging::prepare(foraging_input.as_ref(), &item_input, budget)?;
+    let (item_icons, _icon_preparation) = prepare_item_icons(&item_definitions, budget)?;
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
@@ -625,6 +627,7 @@ pub(crate) fn install_retained(
         invention_policy,
         story_policy: r.one("storyPolicy", "config_story", input.story_policy)?,
         item_definitions,
+        item_icons,
         recipes: r
             .map("recipes", "definition_recipes", Some(input.recipes))?
             .ok_or(InstallError::ParentPresence)?,
@@ -645,4 +648,50 @@ pub(crate) fn install_retained(
     );
     installed.places_read.finish_install();
     Ok(installed)
+}
+
+/// Read the same immutable icon used by Source once at installation. Visible
+/// stock borrows these admitted facts instead of parsing an item definition
+/// per observer or treating every material as a food candidate.
+fn prepare_item_icons(
+    definitions: &RetainedMap,
+    budget: &crate::host::ByteBudget,
+) -> Result<
+    (
+        IndexMap<String, Option<String>>,
+        crate::host::ByteReservation,
+    ),
+    InstallError,
+> {
+    #[derive(Deserialize)]
+    struct Presentation {
+        icon: Option<String>,
+    }
+    let mut workspace = budget
+        .reserve(
+            map_storage::<String, Option<String>>(definitions.len())
+                .ok_or(InstallError::Capacity)?,
+        )
+        .map_err(|_| InstallError::Capacity)?;
+    let mut icons = IndexMap::new();
+    icons
+        .try_reserve(definitions.len())
+        .map_err(|_| InstallError::Capacity)?;
+    for (id, source) in definitions.entries() {
+        let mut preparation = super::reserve_typed_parse::<Presentation>(source, 0, None, budget)?;
+        let value: Presentation =
+            serde_json::from_str(source).map_err(|_| InstallError::DefinitionBody)?;
+        preparation
+            .resize(
+                id.len()
+                    .checked_add(value.icon.as_ref().map_or(0, String::capacity))
+                    .ok_or(InstallError::Capacity)?,
+            )
+            .map_err(|_| InstallError::Capacity)?;
+        workspace
+            .merge(preparation)
+            .map_err(|_| InstallError::Capacity)?;
+        icons.insert(id.to_owned(), value.icon);
+    }
+    Ok((icons, workspace))
 }

@@ -1034,17 +1034,23 @@ pub(super) fn validate_physical_item_references(
     for id in state.entities.ordered_ids() {
         let entity = state.entities.get(id).ok_or(InstallError::CurrentFormat)?;
         if let Some(stock) = entity.resource.as_ref() {
-            let definition = retained.foraging.food.get(&stock.definition_id);
+            if !retained.item_icons.contains_key(&stock.definition_id) {
+                return Err(InstallError::DefinitionPin);
+            }
             if entity.actor.is_some()
                 || entity.kind != "resource"
                 || stock.cast.is_some()
                 || !stock.work_seconds.is_finite()
                 || stock.work_seconds <= 0.0
                 || entity.supported_position().is_none()
-                || !definition.is_some_and(|food| food.definition.portable == Some(false))
+                || retained
+                    .foraging
+                    .food
+                    .get(&stock.definition_id)
+                    .is_some_and(|food| food.definition.portable != Some(false))
             {
                 return Err(InstallError::UnsupportedFamily(
-                    "resource stock other than exposed food",
+                    "resource stock placement or use",
                 ));
             }
         }
