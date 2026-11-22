@@ -21,6 +21,13 @@ use tower_http::services::{ServeDir, ServeFile};
 
 type LaunchError = Box<dyn Error + Send + Sync>;
 
+struct JournalLaunch {
+    authority: Arc<Authority>,
+    model: Option<crate::narrator::NarratorModel>,
+    world: String,
+    batch_ms: u64,
+}
+
 pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(), LaunchError> {
     #[cfg(feature = "profile-campaign")]
     let _profile = crate::profile::start_from_operator();
@@ -129,6 +136,16 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         authority.clone(),
         limit_usd,
     )?);
+    let batch_ms = setting("NARRATION_BATCH_MS", "750")?.parse::<u64>()?;
+    if batch_ms > 10_000 {
+        return Err("NARRATION_BATCH_MS must be between 0 and 10000".into());
+    }
+    let journal = JournalLaunch {
+        authority: authority.clone(),
+        model: decisions.narrator_model(limit_usd)?,
+        world: world_id.clone(),
+        batch_ms,
+    };
     let (end_http, http_stop) = watch::channel(false);
     let (request_owner, mut requests_released) = watch::channel(());
     let requests = crate::player_http::router(
@@ -190,6 +207,7 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         decisions,
         schedule,
         checkpoints,
+        journal,
         end_http,
         game.clone(),
     )
@@ -224,6 +242,7 @@ async fn run(
     decisions: Arc<crate::npc::Director>,
     schedule: Arc<crate::npc::schedule::ScheduleInbox>,
     checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
+    journal: JournalLaunch,
     end_http: watch::Sender<bool>,
     game: Arc<CurrentServer>,
 ) -> Result<(), LaunchError> {
@@ -238,6 +257,17 @@ async fn run(
             .clone()
             .run_maintenance(schedule, end_http.subscribe()),
     );
+    let narration = tokio::spawn(crate::narrator::run(
+        game.clone(),
+        saves.clone(),
+        decisions.provider_dispatch(),
+        journal.authority,
+        journal.model,
+        journal.world,
+        journal.batch_ms,
+        saves.story_waker(),
+        end_http.subscribe(),
+    ));
     let checkpoint_stop = end_http.subscribe();
     let checkpoint_work = checkpoints.run(checkpoint_stop);
     let (end_clock, clock_stop) = watch::channel(false);
@@ -274,10 +304,11 @@ async fn run(
     let stop_decisions = async move {
         // Let the scheduler acknowledge its in-flight PostgreSQL write and
         // register the corresponding task before draining decision owners.
-        let (scheduled, maintained) = tokio::join!(scheduler, maintenance);
+        let (scheduled, maintained, narrated) = tokio::join!(scheduler, maintenance, narration);
         let settled = decisions.stop().await;
         scheduled?;
         maintained?;
+        narrated??;
         settled?;
         Ok::<_, LaunchError>(())
     };

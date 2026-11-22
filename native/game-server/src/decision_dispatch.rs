@@ -30,6 +30,8 @@ use tokio::{sync::watch, time::Instant};
 
 mod previews;
 pub(crate) use previews::{PreviewTerminal, ReplyPreview, ReplyPreviews, ReplyReceipt};
+mod response;
+pub(crate) use response::decode_provider;
 
 pub(crate) struct PreparedCall {
     pub request: PreparedProviderRequest,
@@ -143,9 +145,28 @@ impl From<NetworkError> for CallFailure {
     }
 }
 
-impl CallAuthority {
-    /// No file, SQL, provider wait or encoder can escape this callback.
-    /// Distinguish world occupancy from a real withdrawal at the native gate.
+/// One bounded synchronous authorization of the outgoing request. The
+/// caller owns the exact sources and cannot defer the transport callback.
+pub(crate) trait ProviderDisclosure: Send + Sync + 'static {
+    /// A durable consumer may need to check a saved grant after reserving
+    /// spending. The guard ends when the synchronous transport start returns.
+    fn grant_for_send(
+        &self,
+    ) -> impl std::future::Future<
+        Output = Result<Option<tokio::sync::OwnedMutexGuard<()>>, CallFailure>,
+    > + Send {
+        async { Ok(None) }
+    }
+
+    fn start(
+        &self,
+        turn: NpcDisclosureTurn<'_>,
+        stopped: &watch::Receiver<bool>,
+        start: &mut dyn FnMut(),
+    ) -> Result<(), CallFailure>;
+}
+
+impl ProviderDisclosure for CallAuthority {
     fn start(
         &self,
         turn: NpcDisclosureTurn<'_>,
@@ -203,7 +224,7 @@ impl DecisionDispatch {
     pub(crate) async fn submit<T, Decode>(
         self: &Arc<Self>,
         call: PreparedCall,
-        permit: CallAuthority,
+        permit: impl ProviderDisclosure,
         stopped: watch::Receiver<bool>,
         decode: Decode,
     ) -> Result<T, CallFailure>
@@ -234,7 +255,7 @@ impl DecisionDispatch {
     async fn run<T, Decode>(
         &self,
         call: PreparedCall,
-        permit: CallAuthority,
+        permit: impl ProviderDisclosure,
         mut stopped: watch::Receiver<bool>,
         decode: Decode,
     ) -> Result<T, CallFailure>
@@ -320,6 +341,9 @@ impl DecisionDispatch {
             };
         let result = if intent.is_ok() {
             let transfer = async {
+                let grant = tokio::time::timeout_at(deadline, permit.grant_for_send())
+                    .await
+                    .map_err(|_| CallFailure::Transport(NetworkError::Deadline))??;
                 let turn = tokio::time::timeout_at(deadline, self.game.world.npc_disclosure_turn())
                     .await
                     .map_err(|_| CallFailure::Transport(NetworkError::Deadline))?
@@ -330,10 +354,12 @@ impl DecisionDispatch {
                 let stream = preview.is_some();
                 let exchange =
                     ProviderExchange::start(&operation, request, stream, timeout, move |start| {
-                        permit.start(turn, stop, &mut || {
+                        let admitted = permit.start(turn, stop, &mut || {
                             did_transmit.store(true, Ordering::Release);
                             start();
-                        })
+                        });
+                        drop(grant);
+                        admitted
                     })
                     .await?;
                 evidence = Some(exchange.evidence().clone());

@@ -32,6 +32,7 @@ mod write;
 pub(crate) use view_cognition::AiDisplay;
 
 pub use history::OrdinaryProjection;
+pub(crate) use history::{ClaimedStory, OptionalStorySource, StoryOutput, StoryRevisions};
 pub(crate) use history::banner::NarrationBanner;
 pub(crate) use history::events::{EventBoundary, EventEdge, EventFeed, EventSourceQuery};
 pub(crate) use history::transcript::{Transcript, TranscriptItem, TranscriptRequest};

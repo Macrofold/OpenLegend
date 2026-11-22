@@ -622,7 +622,8 @@ export class HistoryRepository {
       CREATE INDEX IF NOT EXISTS story_context_reverse ON story_context_sources(world_id,event_id);
       CREATE TABLE IF NOT EXISTS story_jobs (
         world_id TEXT NOT NULL,id TEXT NOT NULL,owner_id TEXT NOT NULL,state TEXT NOT NULL,
-        created_at BIGINT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(world_id,id,owner_id));
+        created_at BIGINT NOT NULL,payload TEXT NOT NULL,actor_id TEXT NOT NULL,
+        PRIMARY KEY(world_id,id,owner_id));
       CREATE INDEX IF NOT EXISTS story_queue ON story_jobs(world_id,state,created_at,id);
       CREATE INDEX IF NOT EXISTS story_owner_queue ON story_jobs(world_id,owner_id,state);
       CREATE TABLE IF NOT EXISTS story_milestones (
@@ -1046,9 +1047,19 @@ export class HistoryRepository {
     if (job.state === 'queued') this.queuedRevision++;
     await this.db
       .prepare(
-        'INSERT INTO story_jobs VALUES (?,?,?,?,?,?) ON CONFLICT(world_id,id,owner_id) DO UPDATE SET state=excluded.state,payload=excluded.payload',
+        `INSERT INTO story_jobs (world_id,id,owner_id,state,created_at,payload,actor_id)
+        VALUES (?,?,?,?,?,?,?) ON CONFLICT(world_id,id,owner_id)
+        DO UPDATE SET state=excluded.state,payload=excluded.payload,actor_id=excluded.actor_id`,
       )
-      .run(worldId, job.id, job.ownerId, job.state, job.createdAt, JSON.stringify(job));
+      .run(
+        worldId,
+        job.id,
+        job.ownerId,
+        job.state,
+        job.createdAt,
+        JSON.stringify(job),
+        job.actorId,
+      );
     if (job.state === 'cancelled' && !job.previousItem) {
       await this.db
         .prepare('DELETE FROM story_narrations WHERE world_id=? AND owner_id=? AND id=?')

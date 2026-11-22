@@ -121,10 +121,10 @@ impl Store {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct PolicyStamp {
-    mechanism: String,
-    version: u64,
+    pub(super) mechanism: String,
+    pub(super) version: u64,
     pub(super) policy_revision: u64,
-    policy_digest: String,
+    pub(super) policy_digest: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -132,9 +132,9 @@ pub(super) struct PolicyStamp {
 pub(super) struct Impact {
     #[serde(skip_serializing_if = "Option::is_none")]
     entity_id: Option<String>,
-    field: String,
-    delta: f64,
-    source_id: String,
+    pub(super) field: String,
+    pub(super) delta: f64,
+    pub(super) source_id: String,
 }
 
 pub(super) struct StoryCandidate<'a> {
@@ -155,14 +155,14 @@ pub(super) struct StoryCandidate<'a> {
 pub(super) struct StorySource {
     pub id: String,
     pub text: NativeText,
-    evidence: Box<RawValue>,
-    revision: String,
+    pub(super) evidence: Box<RawValue>,
+    pub(super) revision: String,
     pub time: f64,
     pub order: i64,
     #[serde(rename = "type")]
-    event_type: String,
+    pub(super) event_type: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    content: Option<Box<RawValue>>,
+    pub(super) content: Option<Box<RawValue>>,
 }
 
 struct Selection {

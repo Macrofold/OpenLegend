@@ -124,6 +124,72 @@ impl RuntimePrivateHistoryRead {
     }
 }
 impl NativeWorldSession {
+    /// The Journal may render only the installed selection against its saved
+    /// source cut. The actual transfer stays inside the returned disclosure
+    /// lease, whose currentness is independent of unrelated clock advances.
+    pub fn story_publication(
+        &self,
+        account: &str,
+        read: &RuntimePlayerTranscriptRead,
+        temporal: &[(&crate::received::TemporalReceiptLocator, f64)],
+        expires_at: Option<f64>,
+        selection: (&str, u64, u64, &str, f64),
+        exposures: &[crate::reception::EncounterExposure],
+    ) -> Result<Option<RuntimePrivateHistoryPublication>, RuntimeError> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Policy<'a> {
+            id: &'a str,
+            version: u64,
+            enabled: bool,
+            evaluator: &'a str,
+            delivery: Delivery,
+        }
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Delivery {
+            maximum_age: f64,
+        }
+        let (id, version, revision, digest, at) = selection;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let Some(policy) = state.installed.retained.story_policy.as_ref() else {
+            return Ok(None);
+        };
+        let exact = policy.payload();
+        if self.history_policy_revision != revision
+            || crate::encoding::sha256_hex(exact.as_bytes()) != digest
+        {
+            return Ok(None);
+        }
+        let selected: Policy<'_> = serde_json::from_str(exact).map_err(failure)?;
+        if !selected.enabled
+            || selected.evaluator == "silent_v1"
+            || selected.id != id
+            || selected.version != version
+            || state.physical.header.sim_time - at > selected.delivery.maximum_age
+        {
+            return Ok(None);
+        }
+        for exposure in exposures {
+            use crate::reception::EncounterExposure;
+            let alive = match exposure {
+                EncounterExposure::Place { .. } => state
+                    .installed
+                    .retained
+                    .places_read
+                    .current_observation(exposure, &state.physical),
+                // The captured closed inventory admits no current item or
+                // container access. Its future positive owner must supply this
+                // check before any recorded item can authorize publication.
+                EncounterExposure::InventoryItem { .. } => false,
+            };
+            if !alive {
+                return Ok(None);
+            }
+        }
+        self.transcript_publication(account, read, temporal, expires_at)
+    }
+
     /// Borrow current naming and body associations only within this
     /// historical read's synchronous disclosure lease.
     pub fn recorded_event_roles<'a>(

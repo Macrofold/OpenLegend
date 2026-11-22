@@ -206,7 +206,9 @@ impl Store {
             let summary = tx.query_one(
                 "SELECT greatest(
                    coalesce((SELECT max(position) FROM history_perspectives WHERE world_id=$1 AND actor_id=$2),0),
-                   coalesce((SELECT max(position) FROM story_narrations WHERE world_id=$1 AND owner_id=$3),0)),
+                   coalesce((SELECT max(n.position) FROM story_narrations n JOIN story_jobs j
+                     ON j.world_id=n.world_id AND j.owner_id=n.owner_id AND j.id=n.id
+                     WHERE n.world_id=$1 AND n.owner_id=$3 AND j.actor_id=$2),0)),
                  (SELECT CASE WHEN octet_length(value)<=64 THEN value END FROM meta WHERE key='integration:narrator-voice:'||$3),
                  EXISTS(SELECT 1 FROM meta WHERE key='integration:narrator-voice:'||$3 AND octet_length(value)>64)",
                 &[world, &actor, &account],
@@ -225,7 +227,9 @@ impl Store {
                     AND NOT EXISTS (
                       SELECT 1 FROM story_event_sources s JOIN story_narrations n
                       ON n.world_id=s.world_id AND n.id=s.narration_id AND n.owner_id=s.owner_id
-                      WHERE s.world_id=p.world_id AND s.event_id=p.event_id AND s.owner_id=$4)
+                      JOIN story_jobs j ON j.world_id=n.world_id AND j.owner_id=n.owner_id AND j.id=n.id
+                      WHERE s.world_id=p.world_id AND s.event_id=p.event_id AND s.owner_id=$4
+                        AND j.actor_id=p.actor_id)
                   ORDER BY p.position DESC,p.event_id DESC LIMIT $5)
                  SELECT p.event_id,p.position,p.payload,{} AS account FROM selected p
                  JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id
@@ -233,9 +237,11 @@ impl Store {
             );
             let (event_bytes, events) = admitted_query(tx, &selection, &[world,&actor,&boundary,&account,&offered], &store.budget).await?;
             let (story_bytes, stories) = admitted_query(tx,
-                "SELECT id,position,payload FROM story_narrations WHERE world_id=$1 AND owner_id=$2
-                 AND position<$3 ORDER BY position DESC,id DESC LIMIT $4",
-                &[world,&account,&boundary,&offered], &store.budget,
+                "SELECT n.id,n.position,n.payload FROM story_narrations n JOIN story_jobs j
+                 ON j.world_id=n.world_id AND j.owner_id=n.owner_id AND j.id=n.id
+                 WHERE n.world_id=$1 AND n.owner_id=$2 AND j.actor_id=$5
+                 AND n.position<$3 ORDER BY n.position DESC,n.id DESC LIMIT $4",
+                &[world,&account,&boundary,&offered,&actor], &store.budget,
             ).await?;
             Ok(TranscriptRows {actor,events,stories,watermark:ordinal(watermark)?,limit:page as usize,voice,_transfers:[event_bytes,story_bytes]})
         })).await

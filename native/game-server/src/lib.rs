@@ -16,6 +16,7 @@ mod lexical_maintenance;
 pub mod live_save;
 mod network;
 mod npc;
+mod narrator;
 pub mod oidc;
 mod operation_format;
 mod player_command;

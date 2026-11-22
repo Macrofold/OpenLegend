@@ -6,20 +6,17 @@ use crate::{
     authority::{Authority, AuthorizedScope},
     boot::CurrentServer,
     decision_dispatch::{
-        CallAuthority, CallFailure, DecisionDispatch, PreparedCall, ProviderObservation,
+        CallAuthority, CallFailure, DecisionDispatch, PreparedCall, decode_provider,
     },
     decision_render::{BoundSchema, OfferedAction, RenderError, provider},
     live_save::LiveSaves,
-    provider_transport::{
-        FundedReply, HttpEvidence, ProviderDestination,
-        macrofold::{self, BillingBinding, BillingMode},
-    },
-    store::{AdmittedJob, AttemptRequest, InferenceClass, ModelUsage},
+    provider_transport::{ProviderDestination, macrofold::BillingMode},
+    store::{AdmittedJob, AttemptRequest, InferenceClass},
 };
 use openlegend_simulation::{
-    encoding::{json_tree_allocation_bound, sha256_hex},
+    encoding::sha256_hex,
     experience::PersonalSourceRef,
-    host::{ByteBudget, ByteReservation, CapacityError},
+    host::{ByteBudget, CapacityError},
     records::SqlCell,
     runtime::{RuntimeError, RuntimeNpcOperations},
 };
@@ -212,7 +209,7 @@ pub(super) async fn run(
                         speaker: work.permit.clone(),
                     },
                     work.cancellation.clone(),
-                    decoder(
+                    decode_provider(
                         decision.macrofold.as_ref().map(|value| value.billing),
                         parse_budget.clone(),
                         move |parsed| {
@@ -359,7 +356,7 @@ pub(super) async fn run(
             };
             let generation = provider::Generation {
                 schema_name: "npc_response",
-                schema: &schema,
+                schema: schema.value(),
                 instructions: &instructions,
                 prompt: response.as_str(),
                 effort: model.effort,
@@ -397,7 +394,7 @@ pub(super) async fn run(
                         speaker: work.permit.clone(),
                     },
                     work.cancellation.clone(),
-                    decoder(macrofold, parse_budget.clone(), move |value| {
+                    decode_provider(macrofold, parse_budget.clone(), move |value| {
                         if macrofold.is_some() {
                             match provider::macrofold_text(value)
                                 .map_err(|_| CallFailure::Invalid)?
@@ -488,7 +485,7 @@ async fn finish_native(
     let mode = if choice.transition == "continue" {
         "enqueue"
     } else {
-        &choice.transition
+        choice.transition
     };
     let action = record([
         ("kind", "known".into()),
@@ -572,7 +569,7 @@ async fn recall_attention(
                 speaker: work.permit.clone(),
             },
             work.cancellation.clone(),
-            decoder(
+            decode_provider(
                 decision.macrofold.as_ref().map(|value| value.billing),
                 budget.clone(),
                 move |output| {
@@ -650,7 +647,7 @@ async fn action_attention(
                 speaker: work.permit.clone(),
             },
             work.cancellation.clone(),
-            decoder(
+            decode_provider(
                 decision.macrofold.as_ref().map(|value| value.billing),
                 budget.clone(),
                 move |output| {
@@ -712,114 +709,13 @@ fn side(
     })
 }
 
-fn decoder<T, F>(
-    billing: Option<BillingMode>,
-    budget: ByteBudget,
-    use_output: F,
-) -> impl FnOnce(FundedReply, &HttpEvidence) -> ProviderObservation<T>
-where
-    F: FnOnce(&Value) -> Result<T, CallFailure>,
-{
-    move |body, http| {
-        let mut observation = ProviderObservation {
-            value: Err(CallFailure::Invalid),
-            provider_request_id: http.trace_id.clone(),
-            model: None,
-            usage: None,
-            charged_microusd: None,
-            completion_uncertain: true,
-        };
-        if let Some(billing) = billing {
-            let binding = BillingBinding {
-                mode: billing,
-                deployment: None,
-            };
-            let result = if let Some(observed) = &body.observed {
-                observation.provider_request_id = Some(observed.run.id.clone());
-                macrofold::observed_terminal(
-                    &observed.run.id,
-                    &observed.status,
-                    &body.bytes,
-                    binding,
-                )
-                .ok()
-                .flatten()
-            } else {
-                macrofold::MacrofoldAdmission::read(&body.bytes)
-                    .ok()
-                    .and_then(|admission| {
-                        observation.provider_request_id = Some(admission.run_id.to_owned());
-                        admission.terminal(binding).ok().flatten()
-                    })
-            };
-            if let Some(result) = result {
-                observation.model = result.model_revision.map(str::to_owned);
-                observation.usage = result.usage.map(|usage| ModelUsage {
-                    input_tokens: usage.input_tokens,
-                    output_tokens: usage.output_tokens,
-                });
-                observation.charged_microusd = result.estimated_micro_usd;
-                observation.completion_uncertain = result.completion_uncertain;
-                if let Some(parsed) = result
-                    .output
-                    .and_then(|output| FundedJson::read(output.get(), &budget).ok())
-                {
-                    observation.value = use_output(&parsed.value);
-                }
-            }
-        } else if let Ok(text) = std::str::from_utf8(&body.bytes)
-            && let Ok(parsed) = FundedJson::read(text, &budget)
-        {
-            observation.model = parsed.value["model"].as_str().map(str::to_owned);
-            observation.provider_request_id = parsed.value["id"]
-                .as_str()
-                .map(str::to_owned)
-                .or(observation.provider_request_id);
-            observation.usage = parsed.value["usage"]["input_tokens"]
-                .as_u64()
-                .zip(parsed.value["usage"]["output_tokens"].as_u64())
-                .map(|(input_tokens, output_tokens)| ModelUsage {
-                    input_tokens,
-                    output_tokens,
-                });
-            observation.completion_uncertain = false;
-            observation.value = use_output(&parsed.value);
-        }
-        observation
-    }
-}
-
 fn direct_output(
     value: &Value,
     schema: &BoundSchema,
     budget: &ByteBudget,
 ) -> Result<provider::GenerationOutput, CallFailure> {
-    let parts = value["output"].as_array().ok_or(CallFailure::Invalid)?;
-    let pieces = || {
-        parts
-            .iter()
-            .filter(|item| item["type"] == "message")
-            .filter_map(|item| item["content"].as_array())
-            .flatten()
-    };
-    if pieces().any(|part| part["type"] == "refusal") {
-        return Err(CallFailure::Invalid);
-    }
-    let texts = || {
-        pieces()
-            .filter(|part| part["type"] == "output_text")
-            .filter_map(|part| part["text"].as_str())
-    };
-    let bytes = texts()
-        .try_fold(0usize, |length, text| length.checked_add(text.len()))
-        .filter(|bytes| *bytes <= 40_000)
-        .ok_or(CallFailure::Invalid)?;
-    let _custody = budget.reserve(bytes).map_err(|_| CallFailure::Invalid)?;
-    let mut joined = String::with_capacity(bytes);
-    for text in texts() {
-        joined.push_str(text);
-    }
-    provider::generation_output(&joined, schema, budget).map_err(generation_failure)
+    let text = provider::direct_text(value, budget).map_err(generation_failure)?;
+    provider::generation_output(&text.text, schema, budget).map_err(generation_failure)
 }
 
 fn response_capacity(error: CapacityError) -> CallFailure {
@@ -924,20 +820,4 @@ fn effects(
     }
     RuntimeNpcOperations::new(SqlCell::Object(response), custody)
         .map_err(|error| CallFailure::World(error.into()))
-}
-
-struct FundedJson {
-    value: Value,
-    _custody: ByteReservation,
-}
-
-impl FundedJson {
-    fn read(text: &str, budget: &ByteBudget) -> Result<Self, CallFailure> {
-        let bound = json_tree_allocation_bound(text).ok_or(CallFailure::Invalid)?;
-        let custody = budget.reserve(bound).map_err(|_| CallFailure::Invalid)?;
-        Ok(Self {
-            value: serde_json::from_str(text).map_err(|_| CallFailure::Invalid)?,
-            _custody: custody,
-        })
-    }
 }

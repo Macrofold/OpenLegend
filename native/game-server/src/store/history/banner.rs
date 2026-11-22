@@ -77,21 +77,27 @@ impl Store {
             .map_err(|_| StoreError::Capacity)?;
         let statement=format!(
             "WITH latest AS MATERIALIZED (
-               SELECT b.* FROM story_banners b WHERE b.world_id=$1 AND b.owner_id=$2
-               ORDER BY b.position DESC,b.id DESC LIMIT 1)
+               SELECT b.* FROM story_banners b JOIN story_jobs j
+               ON j.world_id=b.world_id AND j.owner_id=b.owner_id AND j.id=b.id
+               WHERE b.world_id=$1 AND b.owner_id=$2 AND j.actor_id=$3
+               ORDER BY b.position DESC,b.id DESC LIMIT 1),
+             sources AS MATERIALIZED (
+               SELECT src.event_id FROM latest b JOIN story_event_sources src
+               ON src.world_id=b.world_id AND src.owner_id=b.owner_id AND src.narration_id=b.id
+               UNION ALL
+               SELECT src.event_id FROM latest b JOIN story_context_sources src
+               ON src.world_id=b.world_id AND src.owner_id=b.owner_id AND src.narration_id=b.id)
              SELECT b.id,b.position,b.payload,
                COALESCE((SELECT payload::bigint FROM mind_privacy_revisions WHERE world_id=$1 AND id=$4),0),
                COALESCE((SELECT json_agg(json_build_object('receipt',p.payload::jsonb#>'{{account,receipt}}',
                  'receivedAt',(p.payload::jsonb#>>'{{account,receivedAt}}')::double precision))
-                 FROM story_event_sources src JOIN history_perspectives p
-                 ON p.world_id=src.world_id AND p.actor_id=$3 AND p.event_id=src.event_id
-                 WHERE src.world_id=b.world_id AND src.owner_id=b.owner_id AND src.narration_id=b.id
-                   AND p.payload::jsonb#>>'{{account,kind}}'='temporal'),'[]'::json)::text
+                 FROM sources src JOIN history_perspectives p
+                 ON p.world_id=b.world_id AND p.actor_id=$3 AND p.event_id=src.event_id
+                 WHERE p.payload::jsonb#>>'{{account,kind}}'='temporal'),'[]'::json)::text
              FROM latest b WHERE NOT EXISTS (
-               SELECT 1 FROM story_event_sources src
-               WHERE src.world_id=b.world_id AND src.owner_id=b.owner_id AND src.narration_id=b.id
-                 AND NOT EXISTS (SELECT 1 FROM history_perspectives p
-                   WHERE p.world_id=src.world_id AND p.actor_id=$3 AND p.event_id=src.event_id AND {}))",
+               SELECT 1 FROM sources src
+               WHERE NOT EXISTS (SELECT 1 FROM history_perspectives p
+                 WHERE p.world_id=b.world_id AND p.actor_id=$3 AND p.event_id=src.event_id AND {}))",
             self.schema.banner_account
         );
         let key = json_record(&["world", "experience", "privacyRevisions", actor])

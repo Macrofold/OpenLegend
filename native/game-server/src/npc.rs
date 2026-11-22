@@ -198,6 +198,18 @@ impl Director {
         self.dispatch.previews()
     }
 
+    pub(crate) fn provider_dispatch(&self) -> Arc<DecisionDispatch> {
+        self.dispatch.clone()
+    }
+
+    pub(crate) fn narrator_model(
+        &self,
+        budget_usd: f64,
+    ) -> Result<Option<crate::narrator::NarratorModel>, Box<dyn std::error::Error + Send + Sync>>
+    {
+        settings::narrator_model(self.models.as_ref(), budget_usd)
+    }
+
     /// The selected context catalogue opens a draft only. It uses the actual
     /// body/contact and display role, with no model or mutation admission.
     pub(crate) async fn contact_menu(

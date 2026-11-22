@@ -10,9 +10,12 @@ use std::cmp::Ordering;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio_postgres::Transaction;
 
+mod delivery;
+pub(crate) use delivery::{ClaimedStory, OptionalStorySource, StoryOutput, StoryRevisions};
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct StoryJob {
+pub(super) struct StoryJob {
     id: String,
     owner_id: String,
     actor_id: String,
@@ -22,9 +25,13 @@ struct StoryJob {
     created_at: i64,
     state: String,
     selection: PolicyStamp,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    previous_item: Option<TranscriptItem>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    reason: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct TranscriptItem {
     id: String,
@@ -37,6 +44,8 @@ struct TranscriptItem {
     status: String,
     revision: u64,
     voice: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    authored_fallback: Option<bool>,
 }
 
 impl Store {
@@ -46,7 +55,7 @@ impl Store {
         world: &str,
         mut candidates: Vec<StoryCandidate<'_>>,
         compare: &KeyOrder<'_>,
-    ) -> StoreResult<()> {
+    ) -> StoreResult<bool> {
         let mut failed = false;
         candidates.sort_by(|left, right| {
             right
@@ -63,11 +72,13 @@ impl Store {
         if failed {
             return Err(StoreError::InvalidRecord);
         }
+        let mut scheduled = false;
         for candidate in candidates {
-            self.schedule_story(transaction, world, candidate, compare)
+            scheduled |= self
+                .schedule_story(transaction, world, candidate, compare)
                 .await?;
         }
-        Ok(())
+        Ok(scheduled)
     }
 
     async fn schedule_story(
@@ -76,20 +87,20 @@ impl Store {
         world: &str,
         mut candidate: StoryCandidate<'_>,
         compare: &KeyOrder<'_>,
-    ) -> StoreResult<()> {
+    ) -> StoreResult<bool> {
         let owner = candidate.owner;
         let source = candidate.source;
         if let Some(milestone) = candidate.milestone.as_deref()
             && transaction.query_opt("SELECT 1 FROM story_milestones WHERE world_id=$1 AND owner_id=$2 AND milestone=$3",
                     &[&world,&owner,&milestone]).await?.is_some() {
-            return Ok(());
+            return Ok(false);
         }
         let id = format!("story:{owner}:{}", candidate.grouping);
         let prior = transaction.query_opt("SELECT state,octet_length(payload)::bigint FROM story_jobs WHERE world_id=$1 AND id=$2 AND owner_id=$3", &[&world,&id,&owner]).await?;
         let (prior, _prior) = if let Some(prior) = prior {
             let state: &str = prior.try_get(0)?;
             if state != "queued" {
-                return Ok(());
+                return Ok(false);
             }
             let bytes =
                 usize::try_from(prior.try_get::<_, i64>(1)?).map_err(|_| StoreError::Capacity)?;
@@ -129,9 +140,9 @@ impl Store {
                     .selection
                     .as_ref()
                     .is_none_or(|prior| prior.policy_revision != candidate.stamp.policy_revision)
-                || previous.sources.iter().any(|source| source.id == source.id)
+                || previous.sources.iter().any(|saved| saved.id == source.id)
             {
-                return Ok(());
+                return Ok(false);
             }
             (
                 Some((
@@ -147,7 +158,7 @@ impl Store {
                         SELECT 1 FROM story_delivery WHERE world_id=$1 AND owner_id=$2 AND $3::double precision-game_time<$4::double precision)",
                 &[&world,&owner,&source.time,&candidate.minimum_interval]).await?.try_get::<_,bool>(0)?;
             if blocked {
-                return Ok(());
+                return Ok(false);
             }
             (None, None)
         };
@@ -221,12 +232,15 @@ impl Store {
                 status: "pending".to_owned(),
                 revision,
                 voice: voice.clone(),
+                authored_fallback: None,
             },
             sources,
             voice,
             created_at,
             state: "queued".to_owned(),
             selection: candidate.stamp.clone(),
+            previous_item: None,
+            reason: None,
         };
         let job_payload = json_record(&job).map_err(|_| StoreError::InvalidRecord)?;
         let narration = json_record(&job.item).map_err(|_| StoreError::InvalidRecord)?;
@@ -236,8 +250,21 @@ impl Store {
                 &[&world, &owner, &id],
             )
             .await?;
-        transaction.execute("INSERT INTO story_jobs VALUES ($1,$2,$3,'queued',$4,$5) ON CONFLICT(world_id,id,owner_id)
-            DO UPDATE SET state=excluded.state,payload=excluded.payload", &[&world,&id,&owner,&created_at,&job_payload]).await?;
+        transaction
+            .execute(
+                "INSERT INTO story_jobs (world_id,id,owner_id,state,created_at,payload,actor_id)
+            VALUES ($1,$2,$3,'queued',$4,$5,$6) ON CONFLICT(world_id,id,owner_id)
+            DO UPDATE SET state=excluded.state,payload=excluded.payload,actor_id=excluded.actor_id",
+                &[
+                    &world,
+                    &id,
+                    &owner,
+                    &created_at,
+                    &job_payload,
+                    &candidate.actor,
+                ],
+            )
+            .await?;
         transaction.execute("INSERT INTO story_narrations VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT(world_id,owner_id,id)
             DO UPDATE SET position=excluded.position,revision=excluded.revision,payload=excluded.payload",
             &[&world,&id,&owner,&job.item.order,&sql_ordinal(revision)?,&narration]).await?;
@@ -260,6 +287,6 @@ impl Store {
                 )
                 .await?;
         }
-        Ok(())
+        Ok(true)
     }
 }

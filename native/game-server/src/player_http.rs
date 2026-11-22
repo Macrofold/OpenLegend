@@ -124,6 +124,7 @@ pub(crate) fn router(
         .route("/api/known-places", post(known_places::list))
         .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))
+        .route("/api/narration/regenerate", post(history::regenerate))
         .route(
             "/api/world-events",
             axum::routing::get(event_history::events),

@@ -34,6 +34,7 @@ pub(crate) const IO_YIELD: Duration = Duration::from_millis(8);
 mod npc;
 pub(crate) use npc::NpcBinding;
 mod player_history;
+pub(crate) mod narrator;
 pub(crate) use player_history::PlayerHistoryRead;
 
 #[derive(Debug)]

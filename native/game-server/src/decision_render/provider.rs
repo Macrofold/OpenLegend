@@ -129,7 +129,7 @@ pub(crate) fn judgment_request(
 
 pub(crate) struct Generation<'a> {
     pub schema_name: &'a str,
-    pub schema: &'a BoundSchema,
+    pub schema: &'a Value,
     pub instructions: &'a str,
     pub prompt: &'a str,
     pub effort: Option<&'a str>,
@@ -160,7 +160,7 @@ pub(crate) fn generation_request(
     let schema = JsonSchema {
         name: generation.schema_name,
         strict: true,
-        schema: generation.schema.value(),
+        schema: generation.schema,
     };
     let reasoning = generation.effort.map(|effort| Reasoning { effort });
     if let Some(route) = macrofold {
@@ -479,4 +479,44 @@ pub(crate) fn generation_output(
     let value = serde_json::from_str(text).map_err(|_| RenderError::InvalidResponse)?;
     schema.validate(&value)?;
     Ok(GenerationOutput { value, custody })
+}
+
+/// Assemble the bounded text from one direct OpenAI Responses output.
+pub(crate) fn direct_text(value: &Value, budget: &ByteBudget) -> Result<DirectText, RenderError> {
+    let parts = value["output"]
+        .as_array()
+        .ok_or(RenderError::InvalidResponse)?;
+    let pieces = || {
+        parts
+            .iter()
+            .filter(|item| item["type"] == "message")
+            .filter_map(|item| item["content"].as_array())
+            .flatten()
+    };
+    if pieces().any(|part| part["type"] == "refusal") {
+        return Err(RenderError::InvalidResponse);
+    }
+    let texts = || {
+        pieces()
+            .filter(|part| part["type"] == "output_text")
+            .filter_map(|part| part["text"].as_str())
+    };
+    let bytes = texts()
+        .try_fold(0usize, |length, text| length.checked_add(text.len()))
+        .filter(|bytes| *bytes <= 40_000)
+        .ok_or(RenderError::InvalidResponse)?;
+    let custody = budget.reserve(bytes).map_err(|_| RenderError::Capacity)?;
+    let mut joined = String::with_capacity(bytes);
+    for text in texts() {
+        joined.push_str(text);
+    }
+    Ok(DirectText {
+        text: joined,
+        _custody: custody,
+    })
+}
+
+pub(crate) struct DirectText {
+    pub(crate) text: String,
+    _custody: ByteReservation,
 }

@@ -15,6 +15,7 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fmt::Write as _;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
 
@@ -24,6 +25,7 @@ mod expiry;
 mod perspective;
 mod story;
 mod story_write;
+pub(crate) use story_write::{ClaimedStory, OptionalStorySource, StoryOutput, StoryRevisions};
 pub(crate) mod transcript;
 use perspective::Perspective;
 
@@ -38,6 +40,7 @@ pub struct OrdinaryProjection<'a> {
     jobs: &'a [Arc<AdmittedJob>],
     activity_memories: &'a [Arc<PreparedActivityMemories>],
     activity_memory_hard_bytes: i64,
+    story_enqueued: AtomicBool,
 }
 
 impl<'a> OrdinaryProjection<'a> {
@@ -51,12 +54,19 @@ impl<'a> OrdinaryProjection<'a> {
             jobs: &[],
             activity_memories: &[],
             activity_memory_hard_bytes: 0,
+            story_enqueued: AtomicBool::new(false),
         }
     }
 
     pub(crate) fn with_conversation_jobs(mut self, jobs: &'a [Arc<AdmittedJob>]) -> Self {
         self.jobs = jobs;
         self
+    }
+
+    /// The saver can publish this wake only after this same transaction is
+    /// confirmed and the accepted prefix is acknowledged.
+    pub(crate) fn story_enqueued(&self) -> bool {
+        self.story_enqueued.load(Ordering::Relaxed)
     }
 
     pub(crate) fn with_activity_memories(
@@ -175,9 +185,11 @@ impl PrefixProjection for OrdinaryProjection<'_> {
         if let Some(cuts) = self.eligibility {
             let language = self.language.ok_or(StoreError::DerivedProjectionRequired)?;
             let compare = |left: &str, right: &str| language.compare_utf8(left, right);
-            self.store
+            let story_enqueued = self
+                .store
                 .append_perspectives(transaction, rows, self.histories, cuts, &compare)
                 .await?;
+            self.story_enqueued.store(story_enqueued, Ordering::Relaxed);
         }
         Ok(())
     }
@@ -293,7 +305,7 @@ impl Store {
         histories: &[RuntimeHistory],
         cuts: &RuntimeHistoryCuts,
         compare: &KeyOrder<'_>,
-    ) -> StoreResult<()> {
+    ) -> StoreResult<bool> {
         if cuts.binding() != (&rows.world_id, &rows.generation, rows.through_cut) {
             return Err(StoreError::StaleCut);
         }
@@ -400,8 +412,7 @@ impl Store {
             Self::insert_perspectives(transaction, &rows.world_id, &prepared).await?;
         }
         self.append_stories(transaction, &rows.world_id, stories, compare)
-            .await?;
-        Ok(())
+            .await
     }
 
     async fn insert_perspectives(

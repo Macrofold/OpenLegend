@@ -65,6 +65,7 @@ struct Detached {
     native: RuntimeSave,
     prepared: PreparedPrefix,
     committed: Option<RuntimeSaveAcknowledgement>,
+    story_enqueued: bool,
 }
 
 struct PreparedPrefix {
@@ -89,6 +90,7 @@ pub struct LiveSaves {
     intake: RwLock<()>,
     wake: Notify,
     lexical_wake: Arc<Notify>,
+    story_wake: Arc<Notify>,
     publications: watch::Sender<u64>,
     schedule: Option<Arc<ScheduleInbox>>,
 }
@@ -119,6 +121,7 @@ impl LiveSaves {
             intake: RwLock::new(()),
             wake: Notify::new(),
             lexical_wake: Arc::new(Notify::new()),
+            story_wake: Arc::new(Notify::new()),
             publications,
             schedule: None,
         })
@@ -131,6 +134,10 @@ impl LiveSaves {
 
     pub(crate) fn lexical_waker(&self) -> Arc<Notify> {
         self.lexical_wake.clone()
+    }
+
+    pub(crate) fn story_waker(&self) -> Arc<Notify> {
+        self.story_wake.clone()
     }
 
     /// An ordinary applicant may hold this promise only through its mutation.
@@ -449,6 +456,7 @@ impl LiveSaves {
                         native,
                         prepared,
                         committed: None,
+                        story_enqueued: false,
                     });
                 }
                 let flight = detached.as_mut().expect("detached save");
@@ -488,6 +496,7 @@ impl LiveSaves {
                     };
                     flight.committed =
                         Some(ack.map_err(|error| self.latch_fault(WorldError::Commit(error)))?);
+                    flight.story_enqueued = projection.story_enqueued();
                 }
                 let ack = flight
                     .committed
@@ -518,6 +527,9 @@ impl LiveSaves {
                 if flight.prepared.recall.is_some() || !flight.prepared.activity_memories.is_empty()
                 {
                     self.lexical_wake.notify_one();
+                }
+                if flight.story_enqueued {
+                    self.story_wake.notify_one();
                 }
                 // Keep the successfully acknowledged prefix if its caller has another
                 // independent read. This writer no longer needs its reference.

@@ -2,7 +2,9 @@
 //! The authored world provides decision wording and allowed effects separately.
 
 use super::decide::{MacrofoldCatalog, Model, Models};
+use crate::narrator::{NarratorMacrofold, NarratorModel};
 use crate::provider_transport::{ProviderDestination, ProviderRoute, macrofold::BillingMode};
+use std::time::Duration;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 
@@ -145,7 +147,45 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
     ))
 }
 
-fn direct_language(token: &str) -> Result<(Option<Model>, Option<Model>, u64), Error> {
+pub(super) fn narrator_model(
+    models: Option<&ConfiguredModels>,
+    budget_usd: f64,
+) -> Result<Option<NarratorModel>, Error> {
+    if budget_usd == 0.0 || setting("AI_JEV_ONLY", "false")? == "true" {
+        return Ok(None);
+    }
+    let ceiling = micro_usd(budget_usd)?;
+    let timeout = Duration::from_secs_f64(number("AI_TIMEOUT_SECONDS", 35.0, 5.0, 120.0)?);
+    if let Some(fast) = models.and_then(|models| models.routes.fast.as_ref())
+        && let Some(route) = fast.macrofold.as_ref()
+    {
+        return Ok(Some(NarratorModel {
+            destination: fast.destination.clone(),
+            requested: fast.requested.clone(),
+            ceiling,
+            amount: fast.amount_micro_usd,
+            macrofold: Some(NarratorMacrofold {
+                billing: route.billing,
+                connection: route.connection.clone(),
+            }),
+            timeout,
+        }));
+    }
+    let Some(token) = optional("OPENAI_API_KEY")? else {
+        return Ok(None);
+    };
+    let (floor, input, output) = direct_prices()?;
+    Ok(Some(NarratorModel {
+        destination: ProviderDestination::new(ProviderRoute::OpenAi, None, &token)?,
+        requested: setting("COGNITION_MINI_MODEL", "gpt-5-mini")?,
+        ceiling,
+        amount: micro_usd(floor.max((26_000.0 * input + 1800.0 * output) / 1_000_000.0))?,
+        macrofold: None,
+        timeout,
+    }))
+}
+
+fn direct_prices() -> Result<(f64, f64, f64), Error> {
     let default = setting("OPENAI_MODEL", "gpt-5.6-luna")?;
     let names = [
         "LLM_INPUT_USD_PER_MILLION",
@@ -156,11 +196,17 @@ fn direct_language(token: &str) -> Result<(Option<Model>, Option<Model>, u64), E
     if default != "gpt-5.6-luna" && names.iter().any(|name| std::env::var_os(name).is_none()) {
         return Err("A custom OPENAI_MODEL requires explicit prices".into());
     }
-    let floor = number("LLM_CALL_RESERVE_USD", 0.08, 0.000001, 10.0)?.max(0.25);
+    let floor = number("LLM_CALL_RESERVE_USD", 0.08, 0.000001, 10.0)?;
     let input = number(names[0], 0.2, 0.0, 1000.0)?
         .max(number(names[2], 0.02, 0.0, 1000.0)?)
         .max(number(names[3], 0.25, 0.0, 1000.0)?);
     let output = number(names[1], 1.2, 0.0, 1000.0)?;
+    Ok((floor, input, output))
+}
+
+fn direct_language(token: &str) -> Result<(Option<Model>, Option<Model>, u64), Error> {
+    let (floor, input, output) = direct_prices()?;
+    let floor = floor.max(0.25);
     let reserve =
         |input_tokens| micro_usd(floor.max((input_tokens * input + 8192.0 * output) / 1_000_000.0));
     let model = |requested, output_tokens| -> Result<Model, Error> {

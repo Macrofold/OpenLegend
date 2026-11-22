@@ -13,6 +13,105 @@ struct Journal<'a> {
     voice: &'a crate::player_view::profile::Voice,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Regenerate {
+    id: String,
+    request_id: String,
+}
+
+#[derive(Serialize)]
+struct Regeneration {
+    ok: bool,
+    code: &'static str,
+    message: &'static str,
+}
+
+pub(super) async fn regenerate(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    let Ok(slot) = state.capacity.clone().try_acquire_owned() else {
+        return busy();
+    };
+    let (parts, body) = request.into_parts();
+    let selected = match scope(&state.authority, &parts.headers, None).await {
+        Ok(selected) => selected,
+        Err(error) => return access_failure(error),
+    };
+    let (input, custody): (Regenerate, _) =
+        match json(&parts.headers, body, state.game.host.budget()).await {
+            Ok(value) => value,
+            Err(error) => return error,
+        };
+    if !(1..=300).contains(&input.id.encode_utf16().count())
+        || !(1..=120).contains(&input.request_id.len())
+        || !input
+            .request_id
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, b'_' | b'.' | b':' | b'-'))
+    {
+        return refusal(
+            StatusCode::BAD_REQUEST,
+            "request",
+            "This request could not be read.",
+        );
+    }
+    // Retain the operational transaction through a disconnect. A new tab
+    // can submit the same request ID and recover the durable result.
+    let result = tokio::spawn(async move {
+        let _owners = (slot, custody);
+        let _intake = state.saves.enter_ordinary().await;
+        state
+            .authority
+            .current(&selected, Capability::Play, false, |_, _| ())?;
+        let fields = &selected.scope;
+        let ok = state
+            .game
+            .store
+            .regenerate_story(
+                fields.world_id.clone(),
+                fields.account_id.clone(),
+                fields.actor_id.clone(),
+                input.id,
+                input.request_id,
+            )
+            .await
+            .map_err(WorldError::Commit)?;
+        if ok {
+            state.saves.story_waker().notify_one();
+            state.saves.signal_view();
+        }
+        Ok::<_, WorldError>(state.authority.current(
+            &selected,
+            Capability::Play,
+            false,
+            |_, _| {
+                let report = if ok {
+                    Regeneration {
+                        ok,
+                        code: "queued",
+                        message: "Narration revision queued.",
+                    }
+                } else {
+                    Regeneration {
+                        ok,
+                        code: "unavailable",
+                        message: "Narration is unavailable or already in progress.",
+                    }
+                };
+                match wire::encode(&report, b"", b"", state.game.host.budget()) {
+                    Ok(bytes) => json_response(StatusCode::OK, bytes),
+                    Err(_) => busy(),
+                }
+            },
+        )?)
+    })
+    .await;
+    match result {
+        Ok(Ok(response)) => response,
+        Ok(Err(error)) => failed(error),
+        Err(_) => busy(),
+    }
+}
+
 pub(super) async fn journal(
     State(state): State<PlayerRoutes>,
     Query(request): Query<TranscriptRequest>,

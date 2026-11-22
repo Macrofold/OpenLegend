@@ -203,7 +203,7 @@ pub struct Authority {
     session_capacity: i64,
     budget: ByteBudget,
     cache: Mutex<Cache>,
-    changes: tokio::sync::Mutex<()>,
+    changes: Arc<tokio::sync::Mutex<()>>,
     local: bool,
 }
 
@@ -345,7 +345,7 @@ impl Authority {
                 revoking: HashSet::new(),
                 changing_control: HashSet::new(),
             }),
-            changes: tokio::sync::Mutex::new(()),
+            changes: Arc::new(tokio::sync::Mutex::new(())),
         }
     }
 
@@ -504,6 +504,50 @@ impl Authority {
         self.with_current(authorized, capability, controlling, |scope, _, controls| {
             use_scope(scope, controls)
         })
+    }
+
+    /// Recheck a retained account-to-character grant without requiring the
+    /// original browser session. The caller drops the authority lock after
+    /// the synchronous provider start. Grant edits share this lock.
+    pub(crate) async fn background_grant(
+        &self,
+        world: &str,
+        account: &str,
+        actor: &str,
+        revision: u64,
+    ) -> Result<tokio::sync::OwnedMutexGuard<()>, AccessError> {
+        if world != self.world_id || granted_actor(actor).is_none() {
+            return Err(AccessError::Changed);
+        }
+        let revision = i64::try_from(revision).map_err(|_| AccessError::Changed)?;
+        let bytes = world
+            .len()
+            .checked_add(account.len())
+            .and_then(|n| n.checked_add(actor.len()))
+            .and_then(|n| n.checked_add(512))
+            .ok_or(StoreError::Capacity)?;
+        let _query = self
+            .budget
+            .reserve(bytes)
+            .map_err(|_| StoreError::Capacity)?;
+        let (world, account, actor) = (world.to_owned(), account.to_owned(), actor.to_owned());
+        let lease = self.changes.clone().lock_owned().await;
+        let permitted: bool = self
+            .store
+            .read_operational(move |tx| {
+                Box::pin(async move {
+                    Ok(tx.query_one(
+                    "SELECT EXISTS (SELECT 1 FROM auth_grants WHERE world_id=$1 AND account_id=$2 \
+                     AND actor_id=$3 AND revision=$4 AND capabilities::jsonb ? 'play')",
+                    &[&world, &account, &actor, &revision],
+                ).await?.try_get(0)?)
+                })
+            })
+            .await?;
+        if !permitted {
+            return Err(AccessError::Changed);
+        }
+        Ok(lease)
     }
 
     /// Editing someone else's recall also needs the same currently held
