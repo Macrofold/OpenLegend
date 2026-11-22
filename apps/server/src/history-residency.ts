@@ -623,10 +623,13 @@ export function recordSavedTemporalPages(
 }
 /** A save may finish while newer native changes already exist. Remove only the
  * committed append prefix, retain every newer/edited batch, and
- * install the bounded canonical tail without altering any personal charge. */
+ * install the bounded canonical tail without altering any personal charge.
+ * A protected flush can reconcile all resident owners if ordinary residency
+ * work has yet to publish one or more acknowledged prefixes. */
 export function releaseSavedTemporalHistory(
   world: WorldState,
   durable: WorldState | undefined,
+  allActors = false,
 ): WorldState {
   if (!durable || durable.id !== world.id) return world;
   const saved = savedTemporalPlacement.get(durable);
@@ -636,7 +639,7 @@ export function releaseSavedTemporalHistory(
   if (!temporal) return world;
   const actors = { ...temporal.actors };
   let changed = false;
-  for (const actorId of saved.actors) {
+  for (const actorId of allActors ? Object.keys(temporal.actors) : saved.actors) {
     const actor = temporal.actors[actorId];
     if (!actor) continue;
     const pending: import('@open-legend/domain').TemporalPage[] = [];

@@ -2678,12 +2678,12 @@ export class WorldService {
     await this.saveRequestedProgress();
     await this.backgroundSave?.done;
     if (this.storageError) throw new Error(this.storageError);
-    // Normalize the acknowledged native prefix to exact physical pages before
-    // an editor adopts a complete durable predecessor. Hydrated edits then
-    // replace canonical page identities instead of native append containers.
+    // A protected flush can hold this lane across several save acknowledgements,
+    // deferring their ordinary residency turns. Reconcile every owner against the
+    // exact durable tails before an editor adopts the predecessor.
     if (this.store.releasedHistory) {
       const original = this.saved,
-        released = this.store.releasedHistory(original);
+        released = this.store.releasedHistory(original, { completeTemporalPlacement: true });
       if (released !== original) this.installWorld(released, original.world, undefined);
     }
     // Residency can change while a prefix saves; it is not a new gameplay cut.

@@ -469,7 +469,10 @@ export interface GameRepository extends WorldStore {
   ): Promise<import('./temporal-storage.js').PreparedMemoryRetention>;
   releaseHistory?(state: SavedWorld): SavedWorld;
   /** Same residency compaction as releaseHistory, without changing the durable baseline. */
-  releasedHistory?(state: SavedWorld): SavedWorld;
+  releasedHistory?(
+    state: SavedWorld,
+    options?: { completeTemporalPlacement?: boolean },
+  ): SavedWorld;
   prepareCommit?(
     expectedRevision: number,
     state: SavedWorld,
@@ -1097,11 +1100,20 @@ export class SqlGameRepository implements GameRepository {
     this.acceptedState = released;
     return released;
   }
-  releasedHistory(state: SavedWorld): SavedWorld {
+  releasedHistory(
+    state: SavedWorld,
+    options?: { completeTemporalPlacement?: boolean },
+  ): SavedWorld {
     const world = compactContributionHistory(
       compactAppraisalHistory(
         compactObjectHistory(
-          compactHistory(releaseSavedTemporalHistory(state.world, this.acceptedState?.world)),
+          compactHistory(
+            releaseSavedTemporalHistory(
+              state.world,
+              this.acceptedState?.world,
+              options?.completeTemporalPlacement,
+            ),
+          ),
         ),
       ),
     );
