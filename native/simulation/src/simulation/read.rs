@@ -269,11 +269,18 @@ impl Simulation {
         account_id: &str,
         actor_id: &str,
         event_window: usize,
+        direct: bool,
         budget: &ByteBudget,
     ) -> Result<crate::experience::CapturedPlayerEvents, ActorReadError> {
         self.require_player_read(account_id, actor_id)?;
-        crate::experience::capture_player_events(&self.state, actor_id, event_window, budget)
-            .map_err(|error| ActorReadError::Capture(error.into()))
+        crate::experience::capture_player_events(
+            &self.state,
+            actor_id,
+            event_window,
+            direct,
+            budget,
+        )
+        .map_err(|error| ActorReadError::Capture(error.into()))
     }
     pub(crate) fn player_events_still_permitted(
         &self,

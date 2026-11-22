@@ -6,17 +6,17 @@ use crate::player_references::PlayerReferences;
 use indexmap::IndexMap;
 use openlegend_simulation::{
     capture::PlayerPerception,
+    experience::{PlayerEventAccount, PlayerEventBody, PlayerEventRoles},
     host::{ByteBudget, ByteReservation, CapacityError},
     narration::{NativeText, native_text},
     reception::{
         EventScalar, ExperienceModality, ObserverSubject, PerceivedSound, PerceivedSpeech,
-        ReferenceRole, SensoryFacet,
+        ReceivedReference, ReferenceRole, SensoryFacet,
     },
     runtime::RuntimePlayerRead,
     text::JsText,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
 use std::{error::Error, fmt};
 
 mod speech;
@@ -96,38 +96,6 @@ struct Presentation {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct Read<'a> {
-    actor_id: &'a str,
-    world_id: &'a str,
-    at: f64,
-    #[serde(borrow)]
-    accounts: Vec<Account<'a>>,
-}
-
-#[derive(Deserialize)]
-struct Original<'a> {
-    id: &'a str,
-    sequence: u64,
-    at: f64,
-    order: Option<u64>,
-    #[serde(rename = "type")]
-    kind: &'a str,
-}
-
-#[derive(Deserialize)]
-struct Account<'a> {
-    #[serde(borrow)]
-    original: Original<'a>,
-    #[serde(borrow)]
-    evidence: Option<&'a RawValue>,
-    #[serde(borrow)]
-    values: Option<&'a RawValue>,
-    #[serde(borrow)]
-    roles: &'a RawValue,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
 struct Evidence {
     actor_id: String,
     event_type: String,
@@ -150,29 +118,41 @@ struct EventReference {
     role: ReferenceRole,
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct RoleFacts {
-    self_contact: bool,
-    actor_contact: Option<Contact>,
-    source_communication_id: Option<String>,
-    target_communication_id: Option<String>,
-    target_contact: Option<Contact>,
-}
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Contact {
-    id: String,
-    life: u64,
-    lease_id: String,
-}
-
 impl Evidence {
-    fn read(account: &Account<'_>, observer: &str) -> Result<Option<Self>, PlayerEventError> {
-        match (account.evidence, account.values) {
-            (Some(persisted), None) => Ok(Some(Self::persisted(persisted.get(), observer)?)),
-            (None, Some(captured)) => Self::facets(serde_json::from_str(captured.get())?, observer),
-            _ => Err(PlayerEventError::InvalidCapture),
+    fn read(body: PlayerEventBody<'_>, observer: &str) -> Result<Self, PlayerEventError> {
+        match body {
+            PlayerEventBody::Awareness(payload) => Self::persisted(payload, observer),
+            PlayerEventBody::Received { event, sound } => {
+                let SensoryFacet::Event {
+                    event_type,
+                    text,
+                    modality,
+                    data,
+                    references,
+                    source_subject,
+                    ..
+                } = event
+                else {
+                    return Err(PlayerEventError::InvalidCapture);
+                };
+                let heard = match sound {
+                    Some(SensoryFacet::Sound { sound, .. }) => Some(sound.clone()),
+                    Some(_) => return Err(PlayerEventError::InvalidCapture),
+                    None => None,
+                };
+                Ok(Self::received(
+                    observer,
+                    ObservedEvent {
+                        event_type: event_type.clone(),
+                        text: text.clone(),
+                        modality: *modality,
+                        data: data.clone(),
+                        references: references.clone(),
+                        source_subject: source_subject.clone(),
+                        heard,
+                    },
+                ))
+            }
         }
     }
 
@@ -208,20 +188,38 @@ impl Evidence {
         else {
             return Ok(None);
         };
-        let source_id = references
+        Ok(Some(Self::received(
+            observer,
+            ObservedEvent {
+                event_type,
+                text,
+                modality,
+                data,
+                references,
+                source_subject,
+                heard,
+            },
+        )))
+    }
+
+    fn received(observer: &str, event: ObservedEvent) -> Self {
+        let source_id = event
+            .references
             .iter()
             .find(|item| item.role == ReferenceRole::Actor)
             .map(|reference| reference.id.clone());
-        let target_id = references
+        let target_id = event
+            .references
             .iter()
             .find(|item| item.role == ReferenceRole::Target)
             .map(|reference| reference.id.clone());
-        Ok(Some(Self {
+        Self {
             actor_id: observer.to_owned(),
-            event_type,
-            text: NativeText::Literal(text),
-            modality,
-            references: references
+            event_type: event.event_type,
+            text: NativeText::Literal(event.text),
+            modality: event.modality,
+            references: event
+                .references
                 .into_iter()
                 .map(|reference| EventReference {
                     id: reference.id,
@@ -231,11 +229,11 @@ impl Evidence {
                 .collect(),
             source_id,
             target_id,
-            source_subject,
-            event_data: Some(data),
+            source_subject: event.source_subject,
+            event_data: Some(event.data),
             speech: None,
-            sound: heard,
-        }))
+            sound: event.heard,
+        }
     }
 
     fn kind(&self) -> &str {
@@ -270,6 +268,16 @@ impl Evidence {
                 _ => false,
             }
     }
+}
+
+struct ObservedEvent {
+    event_type: String,
+    text: JsText,
+    modality: ExperienceModality,
+    data: IndexMap<String, EventScalar>,
+    references: Vec<ReceivedReference>,
+    source_subject: Option<ObserverSubject>,
+    heard: Option<PerceivedSound>,
 }
 
 pub(crate) struct RetainedPlayerEvent {
@@ -356,26 +364,10 @@ impl RetainedPlayerEvent {
                     .is_some_and(|speech| speech.addressee.is_some()),
             )
             .map_err(|_| PlayerEventError::InvalidCapture)?;
-        let actor_contact = actor.actor_contact.map(|value| Contact {
-            id: value.id,
-            life: value.life,
-            lease_id: value.lease_id,
-        });
-        let target_contact = actor.target_contact.map(|value| Contact {
-            id: value.id,
-            life: value.life,
-            lease_id: value.lease_id,
-        });
         project_row(
             &self.id,
             self.time,
-            RoleFacts {
-                self_contact: actor.self_contact,
-                actor_contact,
-                target_contact,
-                source_communication_id: actor.source_communication_id,
-                target_communication_id: actor.target_communication_id,
-            },
+            &actor,
             evidence,
             self.rendered.clone(),
             policy,
@@ -423,14 +415,8 @@ struct LiveReference {
     communication_reference: Option<String>,
 }
 
-impl Contact {
-    fn issue(&self, issuer: &PlayerReferences<'_>) -> Result<String, serde_json::Error> {
-        issuer.contact(&self.id, self.life, &self.lease_id)
-    }
-}
-
 fn live_references(
-    facts: RoleFacts,
+    facts: &PlayerEventRoles,
     evidence: &Evidence,
     issuer: &PlayerReferences<'_>,
 ) -> Result<(LiveReference, LiveReference), PlayerEventError> {
@@ -441,21 +427,24 @@ fn live_references(
             } else {
                 facts
                     .actor_contact
-                    .map(|contact| contact.issue(issuer))
+                    .as_ref()
+                    .map(|contact| issuer.contact(&contact.id, contact.life, &contact.lease_id))
                     .transpose()?
             },
             communication_reference: facts
                 .source_communication_id
-                .filter(|id| *id != evidence.actor_id && Some(id) == evidence.source_id.as_ref())
-                .map(|id| issuer.person(&id))
+                .as_deref()
+                .filter(|id| *id != evidence.actor_id && Some(*id) == evidence.source_id.as_deref())
+                .map(|id| issuer.person(id))
                 .transpose()?,
         },
-        match facts.target_communication_id {
+        match facts.target_communication_id.as_deref() {
             Some(id) => LiveReference {
-                communication_reference: Some(issuer.person(&id)?),
+                communication_reference: Some(issuer.person(id)?),
                 contact_reference: facts
                     .target_contact
-                    .map(|contact| contact.issue(issuer))
+                    .as_ref()
+                    .map(|contact| issuer.contact(&contact.id, contact.life, &contact.lease_id))
                     .transpose()?,
             },
             None => LiveReference::default(),
@@ -688,41 +677,50 @@ impl PreparedPlayerEvents {
     }
 }
 
-/// Decode the already permitted captured accounts once, take the same bounded
-/// journal/conversation union, and own all selected output. No whole-world or
-/// raw occurrence audience enters this path. The caller owns the originating
-/// read and must retain it for final disclosure.
+/// Take the bounded journal/conversation union from one owned native read.
+/// The caller retains that read through final disclosure. Only awareness still
+/// stored in its canonical database form needs decoding.
 pub fn prepare(
     read: &RuntimePlayerRead,
     policy: &PlayerEventPolicy,
     issuer: &PlayerReferences<'_>,
     budget: &ByteBudget,
 ) -> Result<PreparedPlayerEvents, PlayerEventError> {
-    let payload = read.event_payload();
-    // Bounded carrier overhead plus the possible independently escaped text,
-    // structured speech spans, opaque handles and both permitted views.
-    let reserved = payload
-        .len()
-        .checked_mul(24)
-        .and_then(|n| n.checked_add(4096))
-        .ok_or(PlayerEventError::Capacity)?;
-    let custody = budget.reserve(reserved)?;
-    let mut input: Read<'_> = serde_json::from_str(payload)?;
+    let input = read
+        .events()
+        .map_err(|_| PlayerEventError::InvalidCapture)?;
+    let (world_id, actor_id, at) = input.scope();
     let perception: PlayerPerception<'_> = read
         .perception()
         .map_err(|_| PlayerEventError::InvalidCapture)?;
-    if input.actor_id != perception.actor_id
-        || input.world_id != perception.world_id
-        || input.at != perception.at
-    {
+    if actor_id != perception.actor_id || world_id != perception.world_id || at != perception.at {
         return Err(PlayerEventError::InvalidCapture);
     }
-    input.accounts.sort_by(|a, b| {
-        b.original
-            .order
-            .unwrap_or(b.original.sequence)
-            .cmp(&a.original.order.unwrap_or(a.original.sequence))
-    });
+    let records = input.accounts();
+    let base = records
+        .len()
+        .checked_mul(2 * size_of::<PlayerEventAccount<'_>>())
+        .and_then(|bytes| bytes.checked_add(4096))
+        .ok_or(PlayerEventError::Capacity)?;
+    // Bound growing output lists and their independently retained text,
+    // references and escaped handles. Awareness decoding uses the same
+    // allowance as its projection and only reads the selected record.
+    let row = size_of::<Evidence>()
+        + 2 * (size_of::<PublicEvent>() + size_of::<ConversationEvent>() + size_of::<String>());
+    let reserved = input
+        .accounts()
+        .try_fold(base, |bytes, account| {
+            let (id, _, _, _) = account.chronology();
+            let body = account
+                .selected_body_bytes()?
+                .checked_add(id.len())?
+                .checked_add(actor_id.len())?;
+            bytes.checked_add(row)?.checked_add(body.checked_mul(24)?)
+        })
+        .ok_or(PlayerEventError::Capacity)?;
+    let custody = budget.reserve(reserved)?;
+    let mut accounts: Vec<_> = records.collect();
+    accounts.sort_by_key(|account| std::cmp::Reverse(account.chronology().2));
     let mut prepared = PreparedPlayerEvents {
         journal: Vec::new(),
         conversation: Vec::new(),
@@ -730,14 +728,11 @@ pub fn prepare(
         _reply_custody: None,
         _custody: custody,
     };
-    for account in input.accounts {
-        let Some(evidence) = Evidence::read(&account, input.actor_id)? else {
-            continue;
-        };
-        if account.original.kind == "speech"
-            && evidence.speech.is_none()
-            && evidence.sound.is_none()
-        {
+    for account in accounts {
+        let (id, at, _, kind) = account.chronology();
+        let body = account.body().ok_or(PlayerEventError::InvalidCapture)?;
+        let evidence = Evidence::read(body, actor_id)?;
+        if kind == "speech" && evidence.speech.is_none() && evidence.sound.is_none() {
             return Err(PlayerEventError::InvalidCapture);
         }
         let journal = prepared.journal.len() < JOURNAL_ROWS
@@ -751,14 +746,20 @@ pub fn prepare(
         if conversation {
             prepared
                 .conversation
-                .push(conversation_row(&account.original, &evidence, &text));
+                .push(conversation_row(id, at, &evidence, &text));
         }
         if journal {
-            prepared
-                .journal
-                .push(public_row(&account, &evidence, text, policy, issuer)?);
+            prepared.journal.push(project_row(
+                id,
+                at,
+                account.roles(),
+                &evidence,
+                text,
+                policy,
+                issuer,
+            )?);
         }
-        prepared.event_ids.push(account.original.id.to_owned());
+        prepared.event_ids.push(id.to_owned());
         if prepared.journal.len() == JOURNAL_ROWS
             && prepared.conversation.len() == CONVERSATION_ROWS
         {
@@ -775,7 +776,8 @@ pub fn prepare(
 }
 
 fn conversation_row(
-    original: &Original<'_>,
+    id: &str,
+    at: f64,
     evidence: &Evidence,
     rendered: &JsText,
 ) -> ConversationEvent {
@@ -806,7 +808,7 @@ fn conversation_row(
         },
     };
     ConversationEvent {
-        id: original.id.to_owned(),
+        id: id.to_owned(),
         kind: if evidence.kind() == "speech" {
             "speech"
         } else {
@@ -822,33 +824,15 @@ fn conversation_row(
         speech: evidence.speech.as_ref().map(speech::wire_speech),
         speaker: speaker.cloned().unwrap_or_else(|| "Someone".into()),
         text,
-        time: original.at,
+        time: at,
         reply: None,
     }
-}
-
-fn public_row(
-    account: &Account<'_>,
-    evidence: &Evidence,
-    rendered: JsText,
-    policy: &PlayerEventPolicy,
-    issuer: &PlayerReferences<'_>,
-) -> Result<PublicEvent, PlayerEventError> {
-    project_row(
-        account.original.id,
-        account.original.at,
-        serde_json::from_str(account.roles.get())?,
-        evidence,
-        rendered,
-        policy,
-        issuer,
-    )
 }
 
 fn project_row(
     id: &str,
     at: f64,
-    roles: RoleFacts,
+    roles: &PlayerEventRoles,
     evidence: &Evidence,
     rendered: JsText,
     policy: &PlayerEventPolicy,

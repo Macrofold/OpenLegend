@@ -13,9 +13,11 @@ use crate::simulation::SimulationState;
 use serde::ser::{SerializeSeq, SerializeStruct, Serializer};
 use std::mem::size_of;
 mod roles;
-pub(crate) use roles::{RoleFacts, RoleReader};
+pub use roles::RoleFacts;
+pub(crate) use roles::RoleReader;
 mod fence;
 pub(crate) use fence::CapturedPlayerEvents;
+pub use fence::{PlayerEventAccount, PlayerEventBody, PlayerEventRead};
 
 enum Evidence<'a> {
     Awareness(AwarenessEvidence<'a>),
@@ -82,6 +84,26 @@ struct AwarenessEvidence<'a> {
     source_subject: Option<&'a serde_json::value::RawValue>,
     #[serde(borrow, skip_serializing_if = "Option::is_none")]
     source_body: Option<&'a serde_json::value::RawValue>,
+}
+impl AwarenessEvidence<'_> {
+    fn projection_bytes(&self) -> Option<usize> {
+        [
+            Some(self.actor_id),
+            Some(self.text),
+            Some(self.modality),
+            self.event_type,
+            self.event_data,
+            self.references,
+            self.source_id,
+            self.target_id,
+            self.speech,
+            self.sound,
+            self.source_subject,
+        ]
+        .into_iter()
+        .flatten()
+        .try_fold(0usize, |bytes, field| bytes.checked_add(field.get().len()))
+    }
 }
 struct Account<'a> {
     original: &'a crate::events::WorldEvent,
@@ -459,6 +481,7 @@ pub(crate) fn capture_player_events(
     state: &SimulationState,
     actor_id: &str,
     window: usize,
+    direct: bool,
     budget: &ByteBudget,
 ) -> Result<CapturedPlayerEvents, ExperienceError> {
     let actor = state
@@ -540,6 +563,29 @@ pub(crate) fn capture_player_events(
     for account in selected.values_mut() {
         account.roles = Some(roles.capture(&account.evidence, budget)?);
     }
+    let encoded = if direct {
+        None
+    } else {
+        Some(encode_player_events(
+            state, actor, &selected, privacy, budget,
+        )?)
+    };
+    let fence = fence::PlayerEventFence::capture(state, actor_id, selected, direct, budget)?;
+    Ok(CapturedPlayerEvents::new(
+        encoded,
+        fence,
+        state.physical.header.sim_time,
+    ))
+}
+
+/// Only the consuming addon needs the historical wire representation.
+fn encode_player_events(
+    state: &SimulationState,
+    actor: &crate::state::Entity,
+    selected: &IndexMap<&str, Account<'_>>,
+    privacy: Option<&ActorPrivacy>,
+    budget: &ByteBudget,
+) -> Result<(String, ByteReservation), ExperienceError> {
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
     struct Product<'a, 'b> {
@@ -564,7 +610,7 @@ pub(crate) fn capture_player_events(
         world_id: &state.physical.header.id,
         generation: &state.generation,
         accepted_cut: state.accepted_cut,
-        actor_id,
+        actor_id: &actor.id,
         physical_life: actor.actor.as_ref().and_then(|actor| actor.physical_life),
         at: state.physical.header.sim_time,
         privacy_revision: privacy.map_or(0, ActorPrivacy::revision),
@@ -577,7 +623,5 @@ pub(crate) fn capture_player_events(
         .map_err(|_| capacity())?;
     let json = crate::encoding::json_record(&product).map_err(|_| ExperienceError::Unavailable)?;
     output.resize(json.capacity()).map_err(|_| capacity())?;
-    drop(product);
-    let fence = fence::PlayerEventFence::capture(state, actor_id, selected, budget)?;
-    Ok(CapturedPlayerEvents::new(json, output, fence))
+    Ok((json, output))
 }

@@ -5,20 +5,25 @@ use crate::host::retained_size::HeapBytes;
 use crate::received::{ReceivedValueRecord, ReceivedValueReference};
 
 pub(crate) struct CapturedPlayerEvents {
-    json: String,
+    encoded: Option<(String, ByteReservation)>,
     fence: PlayerEventFence,
-    _output: ByteReservation,
+    at: f64,
 }
 impl CapturedPlayerEvents {
-    pub(super) fn new(json: String, output: ByteReservation, fence: PlayerEventFence) -> Self {
-        Self {
-            json,
-            fence,
-            _output: output,
-        }
+    pub(super) fn new(
+        encoded: Option<(String, ByteReservation)>,
+        fence: PlayerEventFence,
+        at: f64,
+    ) -> Self {
+        Self { encoded, fence, at }
     }
-    pub(crate) fn json(&self) -> &str {
-        &self.json
+    pub(crate) fn json(&self) -> Option<&str> {
+        self.encoded.as_ref().map(|(json, _)| json.as_str())
+    }
+    pub(crate) fn read(&self) -> Option<PlayerEventRead<'_>> {
+        self.encoded
+            .is_none()
+            .then_some(PlayerEventRead { capture: self })
     }
     pub(crate) fn still_permitted(
         &self,
@@ -30,6 +35,77 @@ impl CapturedPlayerEvents {
         self.fence.still_permitted(state, actor, ids, budget)
     }
 }
+
+/// The detached permitted event read owns the evidence and the current role
+/// facts. Callers still present selected IDs to the final disclosure check.
+pub struct PlayerEventRead<'a> {
+    capture: &'a CapturedPlayerEvents,
+}
+impl<'a> PlayerEventRead<'a> {
+    pub fn scope(&self) -> (&'a str, &'a str, f64) {
+        let fence = &self.capture.fence;
+        (&fence.world_id, &fence.actor_id, self.capture.at)
+    }
+
+    pub fn accounts(&self) -> impl ExactSizeIterator<Item = PlayerEventAccount<'a>> {
+        self.capture.fence.accounts.values().map(PlayerEventAccount)
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct PlayerEventAccount<'a>(&'a AccountSnapshot);
+
+pub enum PlayerEventBody<'a> {
+    Awareness(&'a str),
+    Received {
+        event: &'a SensoryFacet,
+        sound: Option<&'a SensoryFacet>,
+    },
+}
+
+impl<'a> PlayerEventAccount<'a> {
+    pub fn chronology(self) -> (&'a str, f64, u64, &'a str) {
+        let event = self.0.original.event();
+        (
+            &event.id,
+            event.at,
+            event.order.unwrap_or(event.sequence),
+            &event.event_type,
+        )
+    }
+
+    pub fn roles(self) -> &'a RoleFacts {
+        self.0
+            .roles
+            .as_ref()
+            .expect("only direct captures expose typed accounts")
+    }
+
+    pub fn body(self) -> Option<PlayerEventBody<'a>> {
+        let snapshot = &self.0.evidence;
+        match snapshot {
+            Snapshot::Awareness(source, ..) => Some(PlayerEventBody::Awareness(source.payload())),
+            _ => Some(PlayerEventBody::Received {
+                event: first_snapshot(snapshot, "event")?,
+                sound: first_snapshot(snapshot, "sound"),
+            }),
+        }
+    }
+
+    /// Size just the body fields consumed by the formatter, without encoding
+    /// them. Awareness is still stored in its canonical database format.
+    pub fn selected_body_bytes(self) -> Option<usize> {
+        Some(match &self.0.evidence {
+            Snapshot::Awareness(..) => self.0.projected_awareness_bytes,
+            evidence => first_snapshot(evidence, "event")
+                .map_or(Some(0), HeapBytes::heap_bytes)?
+                .checked_add(
+                    first_snapshot(evidence, "sound").map_or(Some(0), HeapBytes::heap_bytes)?,
+                )?,
+        })
+    }
+}
+
 enum Snapshot {
     Awareness(Arc<PersonalSourceRecord>, Arc<crate::host::SharedMemoryPin>),
     Temporal {
@@ -49,6 +125,8 @@ enum Snapshot {
 struct AccountSnapshot {
     original: Arc<crate::events::OriginalOccurrence>,
     evidence: Snapshot,
+    roles: Option<RoleFacts>,
+    projected_awareness_bytes: usize,
     _original_pin: Arc<crate::host::SharedMemoryPin>,
 }
 pub(super) struct PlayerEventFence {
@@ -64,6 +142,7 @@ impl PlayerEventFence {
         state: &SimulationState,
         actor_id: &str,
         accounts: IndexMap<&str, Account<'_>>,
+        direct: bool,
         budget: &ByteBudget,
     ) -> Result<Self, ExperienceError> {
         let bytes = map_storage::<String, AccountSnapshot>(accounts.len())
@@ -84,8 +163,13 @@ impl PlayerEventFence {
                     .original(id)
                     .map_err(|_| ExperienceError::Unavailable)?,
             );
+            let mut projected_awareness_bytes = 0;
             let evidence = match account.evidence {
                 Evidence::Awareness(value) => {
+                    if direct {
+                        projected_awareness_bytes =
+                            value.projection_bytes().ok_or_else(capacity)?;
+                    }
                     let source = value.source.ok_or(ExperienceError::Unavailable)?;
                     Snapshot::Awareness(Arc::clone(source), source.capture_pin(budget)?)
                 }
@@ -154,6 +238,8 @@ impl PlayerEventFence {
                 AccountSnapshot {
                     original,
                     evidence,
+                    roles: if direct { account.roles } else { None },
+                    projected_awareness_bytes,
                     _original_pin: original_pin,
                 },
             );

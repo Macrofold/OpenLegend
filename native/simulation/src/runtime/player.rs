@@ -969,7 +969,7 @@ impl NativeWorldSession {
         let simulation = self.session.accepted().map_err(failure)?;
         let (read, prepared) = capture(simulation, &self.budget).map_err(failure)?;
         let events = simulation
-            .read_player_events(account, actor, event_window, &self.budget)
+            .read_player_events(account, actor, event_window, app_view, &self.budget)
             .map_err(failure)?;
         let state = &simulation.state;
         let view_source = app_view
@@ -1184,8 +1184,10 @@ impl RuntimePlayerRead {
     /// Borrow this reader's independently funded accounts at its exact cut.
     /// The original evidence remains pinned until the read ends. Pass every
     /// selected event ID to `player_publication` for final current disclosure.
-    pub fn event_payload(&self) -> &str {
-        self.events.json()
+    pub fn events(&self) -> Result<crate::experience::PlayerEventRead<'_>, RuntimeError> {
+        self.events
+            .read()
+            .ok_or_else(|| failure("this player view has encoded events"))
     }
 
     /// Use the same completed cut as the encoded caller. Missing geometry is
@@ -1269,6 +1271,10 @@ impl RuntimePlayerRead {
         let (controls, _controls_custody) = controls
             .write_json(budget)
             .map_err(|error| session_failure(error.into()))?;
+        let events = self
+            .events
+            .json()
+            .ok_or_else(|| failure("this player read supplied events directly"))?;
         // Every member is already encoded by its semantic owner. Joining those
         // complete encodings avoids decoding a private graph just to re-encode it.
         let parts = [
@@ -1277,7 +1283,7 @@ impl RuntimePlayerRead {
             b",\"perception\":",
             perception.as_bytes(),
             b",\"events\":",
-            self.events.json().as_bytes(),
+            events.as_bytes(),
             b",\"controls\":",
             controls.as_bytes(),
             b"}",

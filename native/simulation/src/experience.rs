@@ -40,6 +40,9 @@ pub(crate) use history::{
     capture_history_input, history_account_eligible_at,
 };
 pub(crate) use player_events::{CapturedPlayerEvents, capture_player_events};
+pub use player_events::{
+    PlayerEventAccount, PlayerEventBody, PlayerEventRead, RoleFacts as PlayerEventRoles,
+};
 pub(crate) mod consolidation;
 mod header_input;
 pub(crate) mod manifest_dependencies;
