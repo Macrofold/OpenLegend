@@ -259,3 +259,34 @@ Median PostgreSQL transaction commits were 10,205 and 9,609. PostgreSQL's scan c
 Campaign `0e2fb442-ba5a-43eb-b7ad-0f24113efa51`, job `e127bc5a9ff0e262930d4b83a271a243`. Encoded `9f2a4e4201de` and typed `f16f09e3fe88` used source archives `06d565977387` and `584ecdd856be` and one shared driver `6dbf3eada67d`. In each arm’s repetition order, executable hashes are `36f702344fc8`, `c7ca0b81cc42`, `dd35396e5c75` and `be432334d027`, `d33f7d949278`, `c65bf05a6e13`. All 83 collected files match the manifest `fb1f5f5e1a10`; the completion receipt `dd0d88a9d985` reports clean database and process cleanup. See `workers/campaigns/0e2fb442-ba5a-43eb-b7ad-0f24113efa51/results/typed-npc-schedule/` in the local verification directory.
 
 The retained worker released generation 585, and EC2 confirmed it stopped. The cloud allocation charge rose by $0.499160 and released this campaign’s $0.589312 reservation. The allocation then accounted for $95.177025 charged and $1.325803 in other outstanding reservations. These are runner estimates and reservations.
+
+## Managed collation comparison — November 22, 2026
+
+The stand-alone server passed the same selected strings directly to its ICU sorting function. The encoded control was `2888ec7b3185`; the direct build was `22c7f77420e4`. The standard 16 GiB worker ran three interleaved repetitions per arm, with independent PostgreSQL databases. Each run used one player, ten human NPCs, ten deer, five hares and 1,246 scenery records. A 180-second steady window followed ten seconds of warmup. The 2 GiB profile, one clock worker, 60 game seconds per real second, one-second saves and controlled HTTPS responses were fixed. All six runs saved 34 walks and two conversations, completed both steering gestures, stopped cleanly and reopened their saved world.
+
+| Measure                                                  | Encoded median / mean / p95 |  Direct median / mean / p95 |
+| -------------------------------------------------------- | --------------------------: | --------------------------: |
+| Server CPU, % of one core                                |       52.84 / 53.17 / 54.17 |       52.20 / 52.66 / 54.19 |
+| Exclusive PostgreSQL CPU, % of one core                  |          7.66 / 7.60 / 7.68 |          7.49 / 7.47 / 7.51 |
+| Server + PostgreSQL CPU, % of one core                   |       60.29 / 60.77 / 61.85 |       59.70 / 60.13 / 61.68 |
+| Client CPU, % of one core                                |          0.98 / 0.98 / 0.99 |          0.97 / 0.98 / 1.00 |
+| Achieved game speed, % of intended                       |    100.03 / 100.02 / 100.03 |    100.03 / 100.01 / 100.03 |
+| Command response, ms                                     |        8.64 / 11.81 / 20.08 |         7.19 / 8.06 / 14.40 |
+| First stream frame with the accepted movement action, ms |      85.78 / 82.65 / 114.78 |       55.90 / 59.78 / 95.66 |
+| Durable receipt observed, ms                             |   627.51 / 618.50 / 1059.63 |   631.71 / 644.55 / 1082.35 |
+| Server + PostgreSQL CPU, ms per completed game second    |    10.045 / 10.126 / 10.306 |     9.948 / 10.020 / 10.277 |
+| Peak sampled concurrent server + PostgreSQL memory, MiB  |    583.94 / 578.68 / 585.96 |    577.11 / 576.63 / 578.43 |
+| Peak transient reservations, MiB                         |    134.68 / 135.46 / 137.73 |    134.75 / 134.83 / 138.70 |
+| Peak resident reservations, MiB                          |    183.35 / 183.09 / 184.73 |    182.36 / 182.78 / 184.95 |
+| Peak pending-save reservations, MiB                      |          7.12 / 7.20 / 7.38 |          7.13 / 7.28 / 7.59 |
+| Committed PostgreSQL transactions                        |      9,845 / 9,734 / 10,039 |       9,641 / 9,661 / 9,701 |
+| PostgreSQL tuples returned, millions                     |       1.274 / 1.308 / 1.618 |       1.111 / 1.145 / 1.218 |
+| Database growth, MB                                      |       40.04 / 39.83 / 42.10 |       38.48 / 38.59 / 41.35 |
+| WAL growth, MB                                           |    121.04 / 119.95 / 124.88 |    117.97 / 117.67 / 122.57 |
+| Separate cold latest-world first view, ms                | 1211.24 / 1207.70 / 1241.70 | 1181.29 / 1183.05 / 1213.67 |
+
+Latency summaries use 96 steady movement commands per arm. Other rows summarize three run-level values. The server CPU includes its native threads. The separately measured fixture harness used 1.56 / 1.53 / 1.58% of one core with the encoded build and 1.56 / 1.54 / 1.56% with the direct build. Median completed time was 10,803 game seconds in both arms against roughly 10,800 offered. The largest observed shortfall was 0.01 seconds encoded and 1.91 seconds direct. This fixture measures displayed progress. The owner’s internal debt, per-query SQL counts and prepared write bytes were unavailable in the clean window. The raw results retain database tuple inserts, updates, deletes and read counters. All reservation counters returned to zero at shutdown.
+
+**Disposition.** The combined CPU result is inconclusive. The three interleaved pairs changed CPU per completed game second by −3.47%, +2.31% and −1.90%. The first affected stream frame arrived earlier in the direct arm in all three pairs, with a pooled median about 30 ms lower. The direct arm also completed fewer background NPC jobs, with medians of 215 versus 244. These runs establish the observed latency and CPU for that workload. The background difference prevents attributing all of it to collation. Keep the direct transfer for its verified narrower boundary and exact sorting behavior.
+
+Campaign `ff6b57a3-4137-4e7a-9abb-995caa9ff26d`, run `7768df74c62534608d831040f350f932`, collected all 83 files and passed their manifest byte lengths and hashes. Manifest `44b80c199a79`, completion record `893bd3e6bbcb`. Encoded source archive `00ff0ababe9b` with executable hashes `f5a9005af68c`, `347c54436d7a`, and `d8b2ba00d958`. Direct source archive `029d1374ff8f` with executables `01e14ba0b8cf`, `44ee45b8b072`, and `f2730b47e604`. The local watcher hit a disk limit after admission. Collection recovered the completed immutable run, verified the worker stopped and settled its $0.536760 estimated use with zero campaign hold. Provider charges were $0. The [local collation checks](../../../verification/narration-and-chat-retry.md#direct-rust-collation--november-22-2026) cover permissions and matching text order.
