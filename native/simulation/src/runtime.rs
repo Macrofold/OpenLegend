@@ -113,6 +113,7 @@ enum Refusal {
     Capacity,
     Busy,
     Stale(&'static str),
+    ConstructionGatherNeedsAuthority,
     Other,
 }
 impl RuntimeError {
@@ -143,6 +144,12 @@ impl RuntimeError {
     /// The runtime or its application could not admit this work.
     pub fn is_busy(&self) -> bool {
         matches!(self.refusal, Refusal::Busy)
+    }
+
+    /// A potentially authorized lot is due. Retry this unpublished offer
+    /// through the protected application read and writer.
+    pub fn construction_gather_needs_authority(&self) -> bool {
+        matches!(self.refusal, Refusal::ConstructionGatherNeedsAuthority)
     }
 
     /// An exact live evidence comparison lost its authority.
@@ -210,6 +217,11 @@ fn session_failure(error: crate::simulation::SessionError) -> RuntimeError {
             refusal: Refusal::Busy,
             ..failure(error)
         };
+    }
+    if matches!(&error, SessionError::Drive(DriveError::Semantic(
+        AdvanceError::Execution(ExecutionError::ConstructionGatherNeedsAuthority)
+    ))) {
+        return RuntimeError { refusal: Refusal::ConstructionGatherNeedsAuthority, ..failure(error) };
     }
     let capacity = match &error {
         SessionError::Drive(DriveError::Capacity) => true,
@@ -1124,6 +1136,29 @@ impl NativeWorldSession {
         maximum_intervals: usize,
         inputs: Vec<AdmittedWorldInput>,
     ) -> Result<CandidateKey, RuntimeError> {
+        self.begin_advance_with_materials(seconds, maximum_intervals, inputs, Default::default())
+    }
+
+    /// Settle ordinary time until a tracked material requires its actual
+    /// authority. A provided snapshot enables a protected offer.
+    pub fn begin_authoritative_advance(
+        &mut self,
+        seconds: f64,
+        maximum_intervals: usize,
+        inputs: Vec<AdmittedWorldInput>,
+        materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
+    ) -> Result<CandidateKey, RuntimeError> {
+        let material_gather = crate::construction_gather::ConstructionGather::for_advance(materials);
+        self.begin_advance_with_materials(seconds, maximum_intervals, inputs, material_gather)
+    }
+
+    fn begin_advance_with_materials(
+        &mut self,
+        seconds: f64,
+        maximum_intervals: usize,
+        inputs: Vec<AdmittedWorldInput>,
+        material_gather: crate::construction_gather::ConstructionGather,
+    ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         self.navigation.prune_actions(
             &self.session.accepted().map_err(failure)?.state.physical,
@@ -1132,7 +1167,7 @@ impl NativeWorldSession {
         let (prepared, _transfer) = self.navigation.take(&self.budget)?;
         let (action_routes, _actions) = self.navigation.prepare_actions(&self.budget)?;
         self.session
-            .begin_advance(seconds, maximum_intervals, prepared, &action_routes, inputs)
+            .begin_advance(seconds, maximum_intervals, prepared, &action_routes, inputs, material_gather)
             .map_err(session_failure)
     }
     pub fn begin_command(
@@ -1343,6 +1378,7 @@ impl NativeWorldSession {
             progress,
             restore,
             consolidation_recall,
+            material_acquisitions: self.session.prepared_material_acquisitions(key).map_err(failure)?,
             state,
         })
     }
@@ -1517,6 +1553,7 @@ pub struct RuntimePreparedProducts<'a> {
     progress: crate::simulation::session::PreparedReadProgress<'a>,
     restore: Option<crate::simulation::session::PreparedRestoreFacts<'a>>,
     consolidation_recall: Option<RuntimeRecallDecoder<'a>>,
+    material_acquisitions: &'a [Arc<crate::construction_gather::GatheredMaterial>],
     state: &'a crate::simulation::SimulationState,
 }
 impl RuntimePreparedProducts<'_> {
@@ -1534,6 +1571,11 @@ impl RuntimePreparedProducts<'_> {
 
     pub fn protected_save(&self) -> Option<&crate::records::SaveRows> {
         self.protected_save
+    }
+
+    /// Borrow the exact lot facts while this private candidate still owns them.
+    pub fn material_acquisitions(&self) -> &[Arc<crate::construction_gather::GatheredMaterial>] {
+        self.material_acquisitions
     }
 
     /// The exact protected consolidation actor and its installed recall law.

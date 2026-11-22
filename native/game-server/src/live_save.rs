@@ -352,11 +352,7 @@ impl LiveSaves {
                 .map_err(|_| CapacityError)?;
             pending.queue_custody = growing;
         }
-        let wake = self
-            .schedule
-            .as_ref()
-            .map(|schedule| schedule.stage(products.changes()))
-            .transpose()?;
+        let wake = self.stage_schedule(products)?;
         Ok(Arc::new(AcceptedSaveInput {
             through: products.progress().through_cut,
             history,
@@ -390,13 +386,27 @@ impl LiveSaves {
             readers.accepted = Some(input.clone());
         }
         pending.queue.push_back((Instant::now(), input.clone()));
-        if let Some((schedule, wake)) = self.schedule.as_ref().zip(input.wake.as_ref()) {
-            schedule.accept(wake);
-        }
+        self.accept_schedule(input.wake.as_ref());
         if was_empty {
             self.wake.notify_one();
         }
         self.signal_view();
+    }
+
+    pub(crate) fn stage_schedule(
+        &self,
+        products: &RuntimePreparedProducts<'_>,
+    ) -> Result<Option<ScheduleWake>, RuntimeError> {
+        self.schedule
+            .as_ref()
+            .map(|schedule| schedule.stage(products.changes()))
+            .transpose()
+    }
+
+    pub(crate) fn accept_schedule(&self, wake: Option<&ScheduleWake>) {
+        if let Some((schedule, wake)) = self.schedule.as_ref().zip(wake) {
+            schedule.accept(wake);
+        }
     }
 
     /// Readers keep the actual accepted body independent of save ACK. A live

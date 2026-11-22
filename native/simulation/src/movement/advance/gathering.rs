@@ -78,6 +78,20 @@ impl MoveAdvanceCursor {
             })?;
             return self.drive(core, None);
         };
+        let definition_pin = &selected.definition.pin;
+        let permission = if selected.definition.tracks_material_origins {
+            match core.journal.material_gather.prepare(
+                &self.actor_id, target, definition_pin, action.material_permission.as_deref(), &self.budget,
+            )? {
+                Ok(permission) => permission,
+                Err(reason) => {
+                    self.fail(reason.message())?;
+                    return self.drive(core, None);
+                }
+            }
+        } else {
+            None
+        };
         self.reserve(
             8 * (target.len()
                 + selected.definition.pin.id.len()
@@ -102,6 +116,13 @@ impl MoveAdvanceCursor {
             return Err(ExecutionError::Invariant);
         }
         let item_id = core.produce_carried_stock(&self.actor_id, &definition, amount)?;
+        if let Some(permission) = permission {
+            let definition = &core.state.installed.retained.items[&definition].pin;
+            core.journal.material_gather.record(
+                permission, id, &self.actor_id, self.physical_life,
+                core.state.physical.header.sim_time, &target, definition, &item_id, amount, &self.budget,
+            )?;
+        }
         self.gathered_item = Some(ActivityOutput {
             port: definition.clone(),
             item_id,

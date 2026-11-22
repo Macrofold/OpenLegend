@@ -10,6 +10,7 @@ pub(crate) use attempts::{
 };
 pub(crate) mod checkpoint;
 pub(crate) mod creation;
+pub(crate) mod construction_gather;
 pub use checkpoint::RecoveredCheckpoint;
 pub(crate) use checkpoint::{
     AdministrativeCheckpoint, CheckpointHistory, RecoveryAuthority, read_recovery_authority,

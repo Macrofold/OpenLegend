@@ -671,7 +671,7 @@ impl CommandCursor {
                             };
                             if sight.seen(target_id) != Some(true) {
                                 self.refuse(&ordinary.out_of_reach);
-                            } else if self.prepare_gathering_reach(core)? {
+                            } else if self.bind_gathering_permission(core)? && self.prepare_gathering_reach(core)? {
                                 return Ok(Progress::Geometry);
                             }
                             return self.drive(core, None);

@@ -420,8 +420,13 @@ impl Store {
             self.rebuild_checkpoint_projections(tx, &replacement.world_id, &decoder)
                 .await?;
         }
+        let materials = if session.has_bound_material_gather().map_err(runtime)? {
+            Some(self.construction_materials_in(tx, &replacement.world_id, None).await?)
+        } else {
+            None
+        };
         let key = session
-            .begin_restore(restore_input.bytes())
+            .begin_restore_with_materials(restore_input.bytes(), materials)
             .map_err(runtime)?;
         drop(restore_input);
         let mut pending: Option<(RuntimeProvider, RuntimeProviderInput)> = None;

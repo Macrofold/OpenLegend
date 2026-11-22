@@ -233,6 +233,7 @@ impl RestoreReconcileCursor {
                     }
                     RestorePrivacyStep::Complete => {}
                 }
+                crate::construction_gather::reconcile(core, budget)?;
                 self.archives = Some(RestoreArchivesCursor::new(
                     core,
                     self.metadata.take().ok_or(ExecutionError::Invariant)?,

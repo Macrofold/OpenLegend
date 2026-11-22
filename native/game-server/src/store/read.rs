@@ -310,20 +310,6 @@ impl Store {
         durable_head(&reader.client).await
     }
 
-    /// Native installation has no writer for construction grants yet. A
-    /// current world with those rows cannot use the ungranted stock path.
-    pub(crate) async fn has_construction_grants(&self, world: &str) -> StoreResult<bool> {
-        let reader = self.reader.lock().await;
-        Ok(reader
-            .client
-            .query_one(
-                "SELECT EXISTS(SELECT 1 FROM auth_construction_grants WHERE world_id=$1)",
-                &[&world],
-            )
-            .await?
-            .try_get(0)?)
-    }
-
     /// Classify an installation with no current header in the same snapshot
     /// that observed its absence. The release shares the creation target's
     /// occupancy test, including cold records and operational receipts.

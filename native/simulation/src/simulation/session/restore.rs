@@ -40,11 +40,13 @@ impl Session {
         &mut self,
         input: super::super::restore::RestoreInput,
         limits: crate::experience::HistoryEditLimits,
+        materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
     ) -> Result<CandidateKey, SessionError> {
         if !self.save_barrier_complete() {
             return Err(FenceError::Busy.into());
         }
         let (key, mut journal) = self.begin()?;
+        journal.material_gather = crate::construction_gather::ConstructionGather::for_command(materials);
         let driver = (|| {
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,

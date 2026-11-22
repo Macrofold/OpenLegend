@@ -137,7 +137,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                         },
                         |offer| match offer {
                             RuntimeResourceOffer::Gather(offer) => {
-                                gathering(selected, offer, game.construction_grants, budget)
+                                gathering(selected, offer, budget)
                             }
                             RuntimeResourceOffer::Fish(offer) => {
                                 let available = if !controls {
@@ -284,7 +284,6 @@ static GATHER: LazyLock<GatherMenuCopy> = LazyLock::new(|| {
 fn gathering(
     selected: &str,
     offer: RuntimeGatherOffer<'_>,
-    construction_grants: bool,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     let _workspace = budget.reserve(
@@ -295,8 +294,6 @@ fn gathering(
         .label
         .cloned()
         .unwrap_or_else(|| JsText::concat(&[&GATHER.fallback_prefix, offer.name]));
-    let unavailable = construction_grants
-        .then(|| JsText::from(crate::player_command::CONSTRUCTION_GATHER_UNAVAILABLE));
     let action = ResourceAction {
         id: format!("gather-{selected}"),
         label,
@@ -304,10 +301,8 @@ fn gathering(
         description: &GATHER.menu_description,
         keywords: [offer.material, &GATHER.menu_keyword],
         target_id: selected,
-        enabled: offer.quantity != 0 && !construction_grants,
-        reason: unavailable
-            .as_ref()
-            .or_else(|| (offer.quantity == 0).then_some(&GATHER.menu_empty)),
+        enabled: offer.quantity != 0,
+        reason: (offer.quantity == 0).then_some(&GATHER.menu_empty),
         facts: None,
         intent: ResourceIntent::Command {
             command: ResourceCommand {

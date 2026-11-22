@@ -617,7 +617,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub material_permission: Option<UnconvertedField>,
+    pub material_permission: Option<Box<crate::construction_gather::MaterialPermissionBinding>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -890,7 +890,7 @@ impl Action {
             || self.hearth_work.is_some()
             || self.assembly_corner.is_some()
             || self.construction_grant.is_some()
-            || self.material_permission.is_some()
+            || (self.material_permission.is_some() && !self.is_gathering())
             || self.material_origin_ids.is_some()
             || self.material_contribution_ids.is_some()
             || self.requires_lethal_review.is_some()

@@ -267,6 +267,14 @@ impl NativeWorldSession {
     }
 
     pub fn begin_restore(&mut self, bytes: &[u8]) -> Result<CandidateKey, RuntimeError> {
+        self.begin_restore_with_materials(bytes, None)
+    }
+
+    pub fn begin_restore_with_materials(
+        &mut self,
+        bytes: &[u8],
+        materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
+    ) -> Result<CandidateKey, RuntimeError> {
         if self.active || !self.restore_installation || self.restoring.is_some() {
             return Err(failure("restore requires an unused inactive installation"));
         }
@@ -275,7 +283,7 @@ impl NativeWorldSession {
             serde_json::from_slice(bytes).map_err(failure)?;
         let key = self
             .session
-            .begin_restore(input, self.history_edit_limits)
+            .begin_restore(input, self.history_edit_limits, materials)
             .map_err(failure)?;
         self.restoring = Some(key);
         Ok(key)

@@ -57,9 +57,10 @@ impl ReceivedValues {
     }
 
     /// Prepare the resident map from the projected complete reference closure.
-    /// A private restore can borrow hydrated sources while their inverses still
-    /// belong to its pending transaction. Only its accepted cut may apply this
-    /// projection, after settlement has discarded those inverses.
+    /// Restore admits the exact privately prepared cut. Its current references
+    /// can include hydrated sources and values acquired during reconciliation.
+    /// This only borrows those bodies. Installation still waits for acceptance
+    /// and requires the settled journal before changing resident placement.
     pub(crate) fn prepare_residency(
         &self,
         references: &std::collections::BTreeSet<String>,
@@ -71,13 +72,7 @@ impl ReceivedValues {
                 "Received residency requires its complete current reference closure and allowance.",
             )
         };
-        if !self.undo.is_empty()
-            && (!restore_preparation
-                || self
-                    .undo
-                    .iter()
-                    .any(|entry| !matches!(entry, ReceivedValuesUndo::SourceLoaded(_))))
-        {
+        if !self.undo.is_empty() && !restore_preparation {
             return Err(error());
         }
         if references.iter().any(|id| !self.sources.contains_key(id)) {

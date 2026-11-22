@@ -207,6 +207,41 @@ impl CommandCursor {
         Ok(true)
     }
 
+    pub(super) fn bind_gathering_permission(
+        &mut self,
+        core: &CoreMutation<'_>,
+    ) -> Result<bool, ExecutionError> {
+        let NativeCommand::Gather { envelope, target_id, .. } = &self.command else {
+            return Err(ExecutionError::Invariant);
+        };
+        let target = source(core.state, target_id).ok_or(ExecutionError::MissingEntity)?;
+        if !target.definition.tracks_material_origins {
+            return Ok(true);
+        }
+        match core.journal.material_gather.prepare(
+            &envelope.actor_id, target_id, &target.definition.pin, None, &self.budget,
+        )? {
+            Ok(Some(fences)) => {
+                let action = self.action.as_mut().ok_or(ExecutionError::Invariant)?;
+                let storage = self.action_storage.as_mut().ok_or(ExecutionError::Invariant)?;
+                let extra = crate::host::retained_size::heap_sum([
+                    fences.custody.bytes(),
+                    size_of::<crate::construction_gather::MaterialPermissionBinding>(),
+                    target.definition.pin.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                ]).ok_or(ExecutionError::Capacity)?;
+                storage.resize(storage.bytes().checked_add(extra).ok_or(ExecutionError::Capacity)?)?;
+                action.material_permission = Some(Box::new(fences.into_binding(&target.definition.pin)));
+                Ok(true)
+            }
+            Ok(None) => Ok(true),
+            Err(reason) => {
+                self.outcome = Some(outcome(false, reason.code(), reason.message()));
+                self.phase = Phase::Done;
+                Ok(false)
+            }
+        }
+    }
+
     pub(super) fn prepare_gathering_reach(
         &mut self,
         core: &mut CoreMutation<'_>,

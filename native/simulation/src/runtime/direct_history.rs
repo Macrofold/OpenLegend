@@ -48,6 +48,7 @@ impl RuntimePreparedProducts<'_> {
             crate::simulation::CompletedOperation::Participation(_)
                 | crate::simulation::CompletedOperation::ActivityLearning(_)
                 | crate::simulation::CompletedOperation::Reflection(_)
+                | crate::simulation::CompletedOperation::Advance(_)
         ) || !self.outcome().ok
         {
             return Err(failure(

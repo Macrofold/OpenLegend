@@ -126,8 +126,6 @@ impl PlaceReference {
 }
 
 pub(crate) const KNOWN_PLACE_UNAVAILABLE: &str = "This remembered destination cannot be used now. Refresh Known places or inspect it again when you can.";
-pub(crate) const CONSTRUCTION_GATHER_UNAVAILABLE: &str =
-    "Gathering with construction permissions is unavailable on this server.";
 
 /// Own the single selected source and its independently admitted personal
 /// evidence after the SQL transaction and save can release their own pins.
@@ -380,24 +378,14 @@ impl PlayerCommands {
                         report(prior.as_ref(), &facts, scope, fresh_epoch, recovery, budget)
                     })?;
                 }
-                if matches!(facts.request.command.kind, CommandKind::Gather)
-                    && self.game.construction_grants
-                {
-                    return permits.current(&scope, Capability::Play, true, |scope, _| {
-                        report(
-                            Some(&ResultOwner::Refused(
-                                "construction-unavailable",
-                                CONSTRUCTION_GATHER_UNAVAILABLE,
-                            )),
-                            &facts,
-                            scope,
-                            true,
-                            false,
-                            budget,
-                        )
-                    })?;
-                }
                 self.saves.check_admission(tokio::time::Instant::now())?;
+                let materials = if matches!(facts.request.command.kind, CommandKind::Gather) {
+                    Some(self.game.store.construction_materials(
+                        world_id, Some(&scope.scope.actor_id),
+                    ).await?)
+                } else {
+                    None
+                };
                 let reference = facts.request.command.known_place.as_ref();
                 let remembered = reference.is_some();
                 let selected_place = match reference {
@@ -505,11 +493,12 @@ impl PlayerCommands {
                                 position,
                                 target.as_ref().map(|value| value.id.as_str()),
                             )?;
-                            Ok(ApplicationStart::Candidate(world.begin_player_command(
+                            Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
                                 &begin_facts.id,
                                 &begin_scope.scope.actor_id,
                                 command,
                                 false,
+                                materials,
                             )?))
                         },
                         move |question| {

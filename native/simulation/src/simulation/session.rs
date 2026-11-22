@@ -578,8 +578,13 @@ impl Session {
         prepared: Vec<(String, crate::native_refuge::PreparedRefugeNavigation)>,
         action_routes: &[(&str, &crate::time::PreparedActionNavigation)],
         inputs: Vec<AdmittedWorldInput>,
+        material_gather: crate::construction_gather::ConstructionGather,
     ) -> Result<CandidateKey, SessionError> {
+        if material_gather.protected && !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
         let (key, mut journal) = self.begin()?;
+        journal.material_gather = material_gather;
         let driver = (|| {
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,
@@ -613,6 +618,15 @@ impl Session {
         canonical: String,
         options: crate::commands::CommandOptions,
     ) -> Result<CandidateKey, SessionError> {
+        self.begin_command_with_materials(command, canonical, options, Default::default())
+    }
+    pub(crate) fn begin_command_with_materials(
+        &mut self,
+        command: crate::commands::NativeCommand,
+        canonical: String,
+        options: crate::commands::CommandOptions,
+        material_gather: crate::construction_gather::ConstructionGather,
+    ) -> Result<CandidateKey, SessionError> {
         let preview = options.preview;
         if preview
             && !matches!(
@@ -624,6 +638,7 @@ impl Session {
             return Err(ExecutionError::UnsupportedFamily.into());
         }
         let (key, mut journal) = self.begin()?;
+        journal.material_gather = material_gather;
         let driver = (|| {
             let binding = crate::geometry::GeometryBinding::new(
                 key,
@@ -870,11 +885,15 @@ impl Session {
     /// Existing current-format openings reconcile imported hot events before
     /// disclosure. A prepared creation is already initialized and never uses
     /// this path; subsequent live operations use only their new emitted events.
-    pub(crate) fn begin_startup(&mut self) -> Result<CandidateKey, SessionError> {
+    pub(crate) fn begin_startup(
+        &mut self,
+        materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
+    ) -> Result<CandidateKey, SessionError> {
         if self.accepted()?.state.accepted_cut != 0 {
             return Err(ExecutionError::InvalidCheckpoint.into());
         }
         let (key, mut journal) = self.begin()?;
+        journal.material_gather = crate::construction_gather::ConstructionGather::for_command(materials);
         let driver = {
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,
@@ -1313,7 +1332,9 @@ impl Session {
                     .map_err(PublicationError::from)?;
                     // A participation refusal carries only its outcome. It must
                     // not prepare a commit for a new control or account grant.
-                    let protected = matches!(&result, CompletedOperation::RecallEdit(done)
+                    let protected = (preparing.journal.material_gather.protected
+                        && matches!(&result, CompletedOperation::Advance(done) if done.outcome.ok))
+                        || matches!(&result, CompletedOperation::RecallEdit(done)
                         if done.privacy_change().is_some())
                         || matches!(
                             &result,
@@ -1530,6 +1551,19 @@ impl Session {
             state,
         ))
     }
+    pub(crate) fn prepared_material_acquisitions(
+        &self,
+        key: CandidateKey,
+    ) -> Result<&[Arc<crate::construction_gather::GatheredMaterial>], SessionError> {
+        let Some(Candidate::Prepared(prepared)) = self.candidate.as_ref() else {
+            return Err(FenceError::NotReady.into());
+        };
+        if prepared.key != key {
+            return Err(FenceError::Stale.into());
+        }
+        Ok(prepared.journal.material_gather.effects())
+    }
+
     pub(crate) fn pin_protected_prefix(
         &self,
         key: CandidateKey,

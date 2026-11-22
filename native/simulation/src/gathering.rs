@@ -202,6 +202,9 @@ pub(crate) fn validate_saved_work(
             || action.remaining_seconds < 0.0
             || !action.remaining_seconds.is_finite()
             || action.remaining_seconds > action.total_seconds
+            || action.material_permission.as_ref().is_some_and(|permission| {
+                !source.definition.tracks_material_origins || !permission.valid_for(&source.definition.pin)
+            })
             || bound_yield(state, id, &source, binding, action.item_id.as_deref())
                 .map_err(|_| InstallError::CurrentFormat)?
                 .is_none()

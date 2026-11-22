@@ -26,7 +26,7 @@ impl StartupCursor {
     pub(super) fn complete(
         &mut self,
         core: &mut crate::execution::CoreMutation<'_>,
-    ) -> Result<CompletedStartup, ExecutionError> {
+    ) -> Result<CompletedStartup, crate::time::AdvanceError> {
         let storage = self
             .storage
             .take()
@@ -37,6 +37,8 @@ impl StartupCursor {
         // Merely reopening must also keep the saved earned-value window and
         // mechanical remainder; actual semantic edits settle their own inputs.
         super::host_control::set_paused(core, true);
+        let budget = core.journal.byte_budget().clone();
+        crate::construction_gather::reconcile(core, &budget)?;
         Ok(CompletedStartup {
             outcome: crate::commands::Outcome {
                 ok: true,

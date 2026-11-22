@@ -15,6 +15,7 @@ mod food_preparation;
 pub mod cognition;
 pub mod commands;
 pub mod conditions;
+pub mod construction_gather;
 mod construction_seed;
 pub use construction_seed::InitialConstructionGrant;
 mod contact;

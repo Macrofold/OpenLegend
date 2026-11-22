@@ -316,6 +316,17 @@ impl NativeWorldSession {
         command: RuntimePlayerCommand<'_>,
         preview: bool,
     ) -> Result<CandidateKey, RuntimeError> {
+        self.begin_player_command_with_materials(id, actor, command, preview, None)
+    }
+
+    pub fn begin_player_command_with_materials(
+        &mut self,
+        id: &str,
+        actor: &str,
+        command: RuntimePlayerCommand<'_>,
+        preview: bool,
+        materials: Option<std::sync::Arc<crate::construction_gather::MaterialGrants>>,
+    ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         // Size the live input copies and both small escaped JSON records.
         let bytes = id
@@ -328,7 +339,7 @@ impl NativeWorldSession {
         let _workspace = self.budget.reserve(bytes)?;
         let (command, signature) = command.bind(id, actor).map_err(failure)?;
         self.session
-            .begin_command(
+            .begin_command_with_materials(
                 command,
                 signature,
                 crate::commands::CommandOptions {
@@ -337,6 +348,7 @@ impl NativeWorldSession {
                     native_movement: None,
                     durable_receipt: !preview,
                 },
+                crate::construction_gather::ConstructionGather::for_command(materials),
             )
             .map_err(session_failure)
     }

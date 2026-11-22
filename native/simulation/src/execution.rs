@@ -65,6 +65,7 @@ pub(crate) use temporal::{
 
 #[derive(Debug)]
 pub(crate) enum ExecutionError {
+    ConstructionGatherNeedsAuthority,
     Capacity,
     MissingEntity,
     MissingActor,
@@ -140,6 +141,7 @@ pub(crate) enum ActionFinish {
 }
 
 struct CandidateFrame {
+    material_gather: usize,
     outings: crate::outings::OutingCheckpoint,
     restore_metadata: usize,
     memory: crate::host::MemoryCheckpoint,
@@ -175,6 +177,7 @@ pub(crate) struct CandidateCheckpoint {
 /// token certifies semantic closure; Ready additionally needs complete encoded
 /// output, save/host admission and the actual current authority/input checks.
 pub(crate) struct CandidateJournal {
+    pub(crate) material_gather: crate::construction_gather::ConstructionGather,
     pub(crate) outings: crate::outings::OutingJournal,
     pub(crate) restore_metadata: crate::restore::MetadataJournal,
     pub knowledge: crate::knowledge::KnowledgeJournal,
@@ -458,6 +461,7 @@ impl CandidateJournal {
         let cognition = crate::cognition::CognitionJournal::new(budget)?;
         let root_cognition = cognition.checkpoint();
         Ok(Self {
+            material_gather: Default::default(),
             restore_metadata: crate::restore::MetadataJournal::new(budget)?,
             owner: Arc::new(()),
             base_cut: state.accepted_cut,
@@ -537,6 +541,7 @@ impl CandidateJournal {
             depth: self.frames.len(),
         };
         self.frames.push(CandidateFrame {
+            material_gather: self.material_gather.checkpoint(),
             outings: self.outings.checkpoint(&state.outings),
             restore_metadata: self.restore_metadata.checkpoint(),
             memory: self.memory.checkpoint()?,
@@ -600,6 +605,7 @@ impl CandidateJournal {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let frame = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.material_gather.rollback(frame.material_gather);
         self.restore_metadata
             .rollback_to(state, frame.restore_metadata)?;
         self.encounters.rollback_to(frame.encounters);

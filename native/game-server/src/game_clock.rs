@@ -2,16 +2,20 @@
 //! advancement and its accepted result. A refused candidate consumes no debt.
 
 use crate::{
-    authority::{Authority, AuthorizedScope, Capability},
+    authority::{AccessError, Authority, AuthorizedScope, Capability},
     boot::CurrentServer,
-    live_save::{AcceptedSaveInput, LiveSaves},
+    live_save::{AcceptedSaveInput, LiveSaves, ProtectedGameplaySave},
+    npc::schedule::ScheduleWake,
     presence::Presence,
-    store::{MetadataProjection, StoreError, checkpoint::CheckpointSchedule},
+    store::{CommitError, MetadataProjection, StoreError, checkpoint::CheckpointSchedule,
+        construction_gather::MaterialGatherProjection},
     world::{ApplicationStart, IO_YIELD, ProtectedCommit, WorldError},
     world_input::{InputSnapshot, WorldInputs},
 };
-use openlegend_simulation::runtime::{
-    NativeWorldSession, RuntimeClock, RuntimeDirectOutput, RuntimeError,
+use openlegend_simulation::{
+    construction_gather::{GatheredMaterial, MaterialGrants},
+    host::ByteReservation,
+    runtime::{NativeWorldSession, RuntimeClock, RuntimeDirectOutput, RuntimeError},
 };
 use openlegend_world_host::pool::HostError;
 use std::{
@@ -33,6 +37,43 @@ struct Advance {
     navigation_pending: bool,
     deferred_routes: bool,
     save: Option<Arc<AcceptedSaveInput>>,
+}
+
+struct ProtectedAdvance {
+    advance: Advance,
+    save: ProtectedGameplaySave,
+    acquisitions: Vec<Arc<GatheredMaterial>>,
+    wake: Option<ScheduleWake>,
+    _custody: ByteReservation,
+}
+
+fn begin_current_offer(
+    session: &mut NativeWorldSession,
+    clock: RuntimeClock,
+    seconds: f64,
+    inputs: Option<Arc<WorldInputs>>,
+    capture: Option<Arc<Mutex<Option<InputSnapshot>>>>,
+    materials: Option<Arc<MaterialGrants>>,
+) -> Result<openlegend_simulation::host::CandidateKey, RuntimeError> {
+    let current = session.clock()?;
+    if current.paused || current.speed != clock.speed || current.at != clock.at {
+        return Err(RuntimeError::application_busy("The accepted clock changed before the elapsed offer"));
+    }
+    match (inputs, capture) {
+        (Some(inputs), Some(capture)) => {
+            let mut held = capture.lock().map_err(|_| RuntimeError::application_refused(HostError::Poisoned))?;
+            let mut snapshot = inputs.snapshot(session).map_err(|error| match error {
+                AccessError::Busy | AccessError::Changed => RuntimeError::application_busy(error),
+                error => RuntimeError::application_refused(error),
+            })?;
+            let values = snapshot.take();
+            // No movement window is accepted with a rolled back offer.
+            let key = session.begin_authoritative_advance(seconds, 4096, values, materials)?;
+            *held = Some(snapshot);
+            Ok(key)
+        }
+        _ => session.begin_authoritative_advance(seconds, 4096, Vec::new(), materials),
+    }
 }
 
 struct CheckpointInterval<'a> {
@@ -224,12 +265,17 @@ impl GameClock {
         let game = self.game.clone();
         let prepare = self.saves.clone();
         let accept = self.saves.clone();
+        let materials = if self.game.world.capture(NativeWorldSession::has_bound_material_gather).await? {
+            Some(self.game.store.construction_materials(self.game.world_id(), None).await?)
+        } else {
+            None
+        };
         self.game
             .world
             .execute_and_publish(
                 #[cfg(feature = "profile-campaign")]
                 openlegend_simulation::profile::sites::TURN_CLOCK,
-                |session| Ok(ApplicationStart::Candidate(session.begin_startup()?)),
+                move |session| Ok(ApplicationStart::Candidate(session.begin_startup_with_materials(materials)?)),
                 move |question| {
                     let game = game.clone();
                     async move { game.answer_operation(question).await }
@@ -284,11 +330,11 @@ impl GameClock {
                                 let values = snapshot.take();
                                 // A refused begin drops the input proof before this world
                                 // turn ends. A running candidate retains it until settlement.
-                                let key = session.begin_advance_direct(seconds, 4096, values)?;
+                                let key = session.begin_authoritative_advance(seconds, 4096, values, None)?;
                                 *held = Some(snapshot);
                                 key
                             }
-                            _ => session.begin_advance_direct(seconds, 4096, Vec::new())?,
+                            _ => session.begin_authoritative_advance(seconds, 4096, Vec::new(), None)?,
                         };
                         Ok(ApplicationStart::Candidate(key))
                     },
@@ -369,6 +415,91 @@ impl GameClock {
             },
             WorldError::profile_outcome
         )
+    }
+
+    async fn advance_with_materials(
+        &self,
+        clock: RuntimeClock,
+        seconds: f64,
+    ) -> Result<Option<Advance>, WorldError> {
+        // The ordinary candidate already rolled back before we wait here.
+        // No earlier accepted time or input is lost when this attempt refuses.
+        let _protected = self.saves.enter_protected().await?;
+        let materials = self.game.store.construction_materials(self.game.world_id(), None).await?;
+        let game = self.game.clone();
+        let store = self.game.store.clone();
+        let language = self.game.language().cloned();
+        let staging_store = store.clone();
+        let staging_saves = self.saves.clone();
+        let inputs = self.inputs.clone();
+        let settlement = inputs.as_ref().map(|_| Arc::new(Mutex::new(None::<InputSnapshot>)));
+        let capture = settlement.clone();
+        let recheck = inputs.clone();
+        let result = self.game.world.execute_protected(
+            move |session| begin_current_offer(session, clock, seconds, inputs, capture, Some(materials)),
+            move |question| {
+                let game = game.clone();
+                async move { game.answer_operation(question).await }
+            },
+            move |output, budget| {
+                let RuntimeDirectOutput::Prepared(product) = output else {
+                    unreachable!("advance cannot preview")
+                };
+                let result = product.outcome();
+                if !result.ok {
+                    return Err(RuntimeError::application_refused(&result.code));
+                }
+                let bytes = product.material_acquisitions().len()
+                    .checked_mul(std::mem::size_of::<Arc<GatheredMaterial>>())
+                    .ok_or(openlegend_simulation::host::CapacityError)?;
+                let custody = budget.reserve(bytes)?;
+                Ok(ProtectedAdvance {
+                    advance: Advance {
+                        seconds: product.progress().at - clock.at,
+                        navigation_pending: result.code == "navigation-pending",
+                        deferred_routes: product.has_deferred_navigation(),
+                        save: None,
+                    },
+                    save: ProtectedGameplaySave::prepare(&product, &staging_store, budget)?,
+                    acquisitions: product.material_acquisitions().to_vec(),
+                    wake: staging_saves.stage_schedule(&product)?,
+                    _custody: custody,
+                })
+            },
+            move || {
+                if let (Some(inputs), Some(settlement)) = (recheck, settlement) {
+                    let held = settlement.lock().map_err(|_| HostError::Poisoned)?;
+                    let snapshot = held.as_ref().ok_or(HostError::Poisoned)?;
+                    inputs.accept_inputs(snapshot, || ())?;
+                }
+                Ok(())
+            },
+            move |candidate, prefix| -> ProtectedCommit<'_> {
+                Box::pin(async move {
+                    let projection = MaterialGatherProjection {
+                        store: &store,
+                        gameplay: candidate.save.projection(&store, language.as_deref()),
+                        acquisitions: &candidate.acquisitions,
+                    };
+                    let acknowledgement = store.commit_save(prefix, &[], &projection).await?;
+                    candidate.save.record_commit(&projection.gameplay);
+                    Ok(acknowledgement)
+                })
+            },
+        ).await;
+        match result {
+            Ok(Some(candidate)) => {
+                self.saves.accept_schedule(candidate.wake.as_ref());
+                candidate.save.acknowledged(&self.saves);
+                Ok(Some(candidate.advance))
+            }
+            Err(WorldError::Access(AccessError::Changed)
+                | WorldError::Commit(CommitError::RolledBack(StoreError::StaleCut))) => {
+                Err(WorldError::ClockChanged)
+            }
+            Ok(None) => Ok(None),
+            Err(error) => Err(error),
+        }
     }
 
     /// One loop offers time from a monotonic cursor and yields between
@@ -511,7 +642,22 @@ impl GameClock {
                 Err(WorldError::Storage(StoreError::WriterUnavailable)) => continue,
                 other => other?,
             }
-            let routes = match self.advance(clock, debt.min(MAX_GAME_OFFER)).await {
+            let offer = debt.min(MAX_GAME_OFFER);
+            let result = self.advance(clock, offer).await;
+            drop(_ordinary);
+            let result = match result {
+                Err(WorldError::Simulation(error)) if error.construction_gather_needs_authority() => {
+                    match self.advance_with_materials(clock, offer).await {
+                        Err(WorldError::Storage(StoreError::Capacity)
+                            | WorldError::Commit(CommitError::RolledBack(StoreError::Capacity))) => {
+                            Err(HostError::Capacity.into())
+                        }
+                        result => result,
+                    }
+                }
+                result => result,
+            };
+            let routes = match result {
                 Ok(Some(advance)) => {
                     debt = (debt - advance.seconds).max(0.0);
                     more = debt >= 1e-6 && advance.seconds > 0.0 && !advance.navigation_pending;

@@ -50,7 +50,21 @@ impl NativeWorldSession {
     }
 
     pub fn begin_startup(&mut self) -> Result<CandidateKey, RuntimeError> {
+        self.begin_startup_with_materials(None)
+    }
+
+    /// Reading this finite installation check grants no permission. Startup
+    /// and recovery fetch current authority only for saved bound work.
+    pub fn has_bound_material_gather(&self) -> Result<bool, RuntimeError> {
+        let simulation = self.session.accepted().map_err(failure)?;
+        Ok(crate::construction_gather::has_bound_work(&simulation.state))
+    }
+
+    pub fn begin_startup_with_materials(
+        &mut self,
+        materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
+    ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
-        self.session.begin_startup().map_err(failure)
+        self.session.begin_startup(materials).map_err(session_failure)
     }
 }
