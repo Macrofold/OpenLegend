@@ -3,11 +3,14 @@
 
 use super::{Access, REPLY_BYTES, RequestLease};
 use crate::world::HostedWorld;
+use indexmap::IndexMap;
 use openlegend_simulation::{
-    encoding::{json_record, json_record_len, json_tree_allocation_bound, sha256_hex},
+    encoding::{
+        json_record, json_record_len, json_tree_allocation_bound, sha256_hex, write_json_record,
+    },
     host::{ByteBudget, ByteReservation},
-    runtime::{RuntimeDefinitionKind, RuntimeWorldInspection},
-    text::TextRef,
+    runtime::{RuntimeDefinitionInspection, RuntimeDefinitionKind, RuntimeWorldInspection},
+    text::{JsText, TextRef},
 };
 use rmcp::{
     ErrorData, RoleServer, ServerHandler,
@@ -27,10 +30,11 @@ const INSPECT: &str = "ol_inspect";
 const ITEM_DEFINITION: &str = "item-definition";
 const ATTRIBUTE: &str = "attribute";
 const BODY_POLICY: &str = "body-policy";
+const RECIPE: &str = "recipe";
 const RESULT_BYTES: usize = 64 * 1024;
 const CONTEXT_DESCRIPTION: &str =
     "Inspect the current world profile, installed revision, policy and available read tools.";
-const INSPECT_DESCRIPTION: &str = "Read an exact installed item, attribute or body policy definition. No live bodies, inventory, memory or authoring data.";
+const INSPECT_DESCRIPTION: &str = "Read an exact installed item, attribute, body policy or recipe definition. No live bodies, inventory, memory or private authoring data.";
 
 #[derive(Clone)]
 pub(super) struct WorldTools {
@@ -256,6 +260,7 @@ fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Fa
                 ITEM_DEFINITION => RuntimeDefinitionKind::Item,
                 ATTRIBUTE => RuntimeDefinitionKind::Attribute,
                 BODY_POLICY => RuntimeDefinitionKind::BodyPolicy,
+                RECIPE => RuntimeDefinitionKind::Recipe,
                 _ => return Err(Failure::Unavailable),
             };
             Ok(Selection::Inspect(input, kind))
@@ -295,7 +300,7 @@ impl Selection {
                     controlled_actor_id: None,
                     manifest_revision: read.manifest_revision,
                     policy: raw(read.policy)?,
-                    definition_kinds: &[ITEM_DEFINITION, ATTRIBUTE, BODY_POLICY],
+                    definition_kinds: &[ITEM_DEFINITION, ATTRIBUTE, BODY_POLICY, RECIPE],
                     tools: [
                         Description {
                             name: CONTEXT,
@@ -312,40 +317,81 @@ impl Selection {
                 },
                 budget,
             ),
-            Self::Inspect(input, _) => {
-                let definition = read.definition.ok_or(Failure::Unavailable)?;
-                // Source inspection versions hash the authored field order.
-                // The definition's native pin may use canonical key order.
-                let version = sha256_hex(definition.payload.as_bytes());
-                if input
-                    .version
-                    .as_ref()
-                    .is_some_and(|expected| *expected != version)
-                {
-                    return Err(Failure::Stale);
+            Self::Inspect(input, _) => match read.definition.ok_or(Failure::Unavailable)? {
+                RuntimeDefinitionInspection::Complete { name, payload } => {
+                    definition_reply(snapshot, input, name, payload, budget)
                 }
-                let reference = DefinitionRef {
-                    kind: &input.kind,
-                    id: &input.id,
-                    version: &version,
-                };
-                result(
-                    snapshot,
-                    Definition {
-                        node: Node {
-                            reference: &reference,
-                            label: definition.name,
-                            layer: "definition",
-                            can_inspect: true,
-                        },
-                        reference: &reference,
-                        data: raw(definition.payload)?,
-                    },
-                    budget,
-                )
-            }
+                RuntimeDefinitionInspection::Recipe(source) => {
+                    recipe_reply(snapshot, input, source, budget)
+                }
+            },
         }
     }
+}
+
+/// Match Source's exact `recipe` inspection, including its public field order.
+/// Borrow nested values from the installed row and fund only this read's output.
+/// docs/world-agent-mcp.md#stand-alone-rust-read-scope
+fn recipe_reply(
+    snapshot: Snapshot<'_>,
+    input: &InspectInput,
+    source: &str,
+    budget: &ByteBudget,
+) -> Result<PreparedReply, Failure> {
+    let workspace = json_tree_allocation_bound(source).ok_or(Failure::Capacity)?;
+    let _workspace = budget.reserve(workspace).map_err(|_| Failure::Capacity)?;
+    let mut fields: IndexMap<String, &RawValue> =
+        serde_json::from_str(source).map_err(|_| Failure::Unavailable)?;
+    fields.shift_remove("provenance");
+    let name: JsText = serde_json::from_str(fields.get("name").ok_or(Failure::Unavailable)?.get())
+        .map_err(|_| Failure::Unavailable)?;
+    let bytes = json_record_len(&fields).map_err(|_| Failure::Unavailable)?;
+    if bytes > RESULT_BYTES {
+        return Err(Failure::Capacity);
+    }
+    let _payload = budget.reserve(bytes).map_err(|_| Failure::Capacity)?;
+    let mut output = Vec::with_capacity(bytes);
+    write_json_record(&fields, &mut output).map_err(|_| Failure::Unavailable)?;
+    let payload = std::str::from_utf8(&output).map_err(|_| Failure::Unavailable)?;
+    definition_reply(snapshot, input, (&name).into(), payload, budget)
+}
+
+fn definition_reply(
+    snapshot: Snapshot<'_>,
+    input: &InspectInput,
+    name: TextRef<'_>,
+    payload: &str,
+    budget: &ByteBudget,
+) -> Result<PreparedReply, Failure> {
+    // Source inspection versions hash the public fields in authored order.
+    // A native installation or manufacturing pin may hash different fields.
+    let version = sha256_hex(payload.as_bytes());
+    if input
+        .version
+        .as_ref()
+        .is_some_and(|expected| *expected != version)
+    {
+        return Err(Failure::Stale);
+    }
+    let reference = DefinitionRef {
+        kind: &input.kind,
+        id: &input.id,
+        version: &version,
+    };
+    result(
+        snapshot,
+        Definition {
+            node: Node {
+                reference: &reference,
+                label: name,
+                layer: "definition",
+                can_inspect: true,
+            },
+            reference: &reference,
+            data: raw(payload)?,
+        },
+        budget,
+    )
 }
 
 fn raw(text: &str) -> Result<&RawValue, Failure> {

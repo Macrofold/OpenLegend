@@ -17,11 +17,16 @@ pub enum RuntimeDefinitionKind {
     Item,
     Attribute,
     BodyPolicy,
+    Recipe,
 }
 
-pub struct RuntimeDefinitionInspection<'a> {
-    pub name: TextRef<'a>,
-    pub payload: &'a str,
+pub enum RuntimeDefinitionInspection<'a> {
+    Complete {
+        name: TextRef<'a>,
+        payload: &'a str,
+    },
+    /// The application must remove private authoring provenance before disclosure.
+    Recipe(&'a str),
 }
 
 impl NativeWorldSession {
@@ -37,13 +42,13 @@ impl NativeWorldSession {
         let current = self.session.accepted().map_err(failure)?;
         let installed = &current.state.installed;
         let definition = selected.and_then(|(kind, id)| match kind {
-            RuntimeDefinitionKind::Item => Some(RuntimeDefinitionInspection {
+            RuntimeDefinitionKind::Item => Some(RuntimeDefinitionInspection::Complete {
                 name: (&installed.retained.items.get(id)?.named.name).into(),
                 payload: installed.retained.item_definitions.get(id)?,
             }),
             RuntimeDefinitionKind::Attribute => {
                 let attribute = installed.attributes.get(id)?;
-                Some(RuntimeDefinitionInspection {
+                Some(RuntimeDefinitionInspection::Complete {
                     name: attribute.value().name.as_str().into(),
                     payload: attribute.source(),
                 })
@@ -52,11 +57,14 @@ impl NativeWorldSession {
                 if id != "current" {
                     return None;
                 }
-                Some(RuntimeDefinitionInspection {
+                Some(RuntimeDefinitionInspection::Complete {
                     name: "Body policy".into(),
                     payload: installed.body_policy.as_ref()?.source(),
                 })
             }
+            RuntimeDefinitionKind::Recipe => Some(RuntimeDefinitionInspection::Recipe(
+                installed.retained.recipes.get(id)?,
+            )),
         });
         Ok(inspect(RuntimeWorldInspection {
             progress: self.accepted_progress()?,
