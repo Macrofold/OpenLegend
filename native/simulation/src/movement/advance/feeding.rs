@@ -29,12 +29,17 @@ impl MoveAdvanceCursor {
         &mut self,
         core: &mut CoreMutation<'_>,
     ) -> Result<Progress, ExecutionError> {
-        let (actor, _, target) = self.meal_target(core)?;
+        let (actor, action, target) = self.meal_target(core)?;
+        let gathering = action.is_gathering();
+        if gathering && !self.current_gathering_binding(core, action)? {
+            self.fail(&crate::worlds::base_gathering::copy().unavailable)?;
+            return self.drive(core, None);
+        }
         let Some(target) = target.filter(|target| target.actively_participates()) else {
             self.fail(&feeding_terms().out_of_reach)?;
             return self.drive(core, None);
         };
-        let reach = core.state.installed.retained.item_handling_read.reach;
+        let reach = interaction_reach(core, gathering);
         if let Some(ray) = crate::geometry::interaction_reach(actor, target, reach, &self.budget)? {
             let storage = self
                 .budget
@@ -56,8 +61,14 @@ impl MoveAdvanceCursor {
     ) -> Result<Progress, ExecutionError> {
         let (actor, action, target) = self.meal_target(core)?;
         let target = target.ok_or(ExecutionError::Invariant)?;
+        let gathering = action.is_gathering();
         if !in_reach && action.stage == "working" {
-            self.fail(&feeding_terms().out_of_reach)?;
+            let message = if gathering {
+                &crate::worlds::base_gathering::copy().out_of_reach
+            } else {
+                &feeding_terms().out_of_reach
+            };
+            self.fail(message)?;
             return self.drive(core, None);
         }
         if !in_reach {
@@ -78,7 +89,7 @@ impl MoveAdvanceCursor {
             let (route, allowance) = feeding::approach(
                 actor,
                 target,
-                rules.retained.item_handling_read.reach,
+                interaction_reach(core, gathering),
                 &self.budget,
             )?;
             let _container = self.budget.reserve(size_of::<GeometryQueries>())?;
@@ -94,6 +105,9 @@ impl MoveAdvanceCursor {
             self.queries = Some((query, allowance));
             self.phase = Phase::Route;
             return Ok(Progress::Geometry);
+        }
+        if gathering {
+            return self.advance_gathering(core);
         }
         // Keep the same cut and physical-life binding while the engine's
         // ordinary detector determines whether the now-reachable food is known.
@@ -316,5 +330,14 @@ impl MoveAdvanceCursor {
         self.event = Some(event.id.clone());
         self.after_event = Phase::Finish;
         Ok(Progress::Occurrence(event))
+    }
+}
+
+fn interaction_reach(core: &CoreMutation<'_>, gathering: bool) -> f64 {
+    let installed = &core.state.installed;
+    if gathering {
+        installed.movement.interaction_radius()
+    } else {
+        installed.retained.item_handling_read.reach
     }
 }

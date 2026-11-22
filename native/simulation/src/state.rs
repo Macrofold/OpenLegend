@@ -511,7 +511,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub gathering: Option<UnconvertedField>,
+    pub gathering: Option<Box<crate::gathering::GatheringBinding>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -721,7 +721,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub item_id: Option<UnconvertedField>,
+    pub item_id: Option<String>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -830,7 +830,11 @@ pub struct Action {
 
 impl Action {
     pub(crate) fn has_ground_motion(&self) -> bool {
-        self.kind == "move" || (self.kind == "feed" && self.feeding.is_some())
+        self.kind == "move" || (self.kind == "feed" && self.feeding.is_some()) || self.is_gathering()
+    }
+
+    pub(crate) fn is_gathering(&self) -> bool {
+        self.kind == "gather" && self.gathering.is_some()
     }
 
     pub(crate) fn is_natural_contact(&self) -> bool {
@@ -841,7 +845,7 @@ impl Action {
         (self.feeding.is_some() != (self.kind == "feed"))
             || (!self.is_natural_contact()
                 && (self.strike_phase.is_some() || self.strike_outcome.is_some()))
-            || self.gathering.is_some()
+            || self.gathering.is_some() != (self.kind == "gather")
             || self.attack_observers.is_some()
             || self.cooperation.is_some()
             || self.combat_help_id.is_some()
@@ -874,7 +878,7 @@ impl Action {
             || self.transferred.is_some()
             || self.quantity.is_some()
             || self.recipe_id.is_some()
-            || self.item_id.is_some()
+            || (self.item_id.is_some() && !self.is_gathering())
             || self.weapon_item_id.is_some()
             || self.ammo_item_id.is_some()
             || self.heat_id.is_some()
@@ -979,6 +983,22 @@ impl Action {
         action.remaining_seconds = seconds;
         action.total_seconds = seconds;
         action.feeding = Some(Box::new(feeding));
+        action
+    }
+
+    pub(crate) fn gather(
+        id: String,
+        target_id: String,
+        item_id: Option<String>,
+        seconds: f64,
+        binding: crate::gathering::GatheringBinding,
+    ) -> Self {
+        let mut action = Self::native_action(id, "gather", "working");
+        action.target_id = Some(target_id);
+        action.item_id = item_id;
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
+        action.gathering = Some(Box::new(binding));
         action
     }
     pub(crate) fn movement(

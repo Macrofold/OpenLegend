@@ -28,6 +28,7 @@ impl CommandExposure {
             NativeCommand::Outing { .. } => return Err(ExecutionError::UnsupportedFamily),
             NativeCommand::StatusEffect { target_id, .. } => target_id,
             NativeCommand::Feed { envelope, .. }
+            | NativeCommand::Gather { envelope, .. }
             | NativeCommand::Move { envelope, .. }
             | NativeCommand::Strike { envelope, .. }
             | NativeCommand::Cancel { envelope, .. } => {
@@ -45,7 +46,7 @@ impl CommandExposure {
                     .outward_activity
                     .actions;
                 let exposes_action = matches!(command, NativeCommand::Strike { .. })
-                    || matches!(command, NativeCommand::Feed { .. })
+                    || matches!(command, NativeCommand::Feed { .. } | NativeCommand::Gather { .. })
                         && outward.iter().any(|kind| kind == command.kind());
                 if !exposes_action
                     && !entity

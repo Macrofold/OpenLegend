@@ -537,6 +537,7 @@ fn assemble_selected_core(
         learned_capabilities,
         appraisals,
     };
+    crate::gathering::validate_saved_work(&state)?;
     Ok(CoreInstallation {
         state,
         host_settings,

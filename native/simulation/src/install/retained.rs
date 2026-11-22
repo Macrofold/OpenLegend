@@ -97,6 +97,7 @@ pub(crate) struct RetainedDefinitions {
     pub item_handling: RetainedOne,
     pub item_handling_read: ItemHandlingReadPolicy,
     pub gathering_policy: Option<RetainedOne>,
+    pub bare_hand_gathering: Option<u64>,
     pub work_batch_policy: Option<RetainedOne>,
     pub social_offer_policy: Option<RetainedOne>,
     pub social_offer_read: Option<SocialOfferReadPolicy>,
@@ -132,6 +133,7 @@ pub(crate) struct ItemHandlingReadPolicy {
     enabled: bool,
     actor_body_profiles: Vec<String>,
     pub reach: f64,
+    pub object_body: crate::state::BodyProfile,
     #[serde(default)]
     packing_loads: Vec<PackingLoad>,
 }
@@ -565,18 +567,34 @@ pub(crate) fn install_retained(
         .ok_or(InstallError::ParentPresence)?;
     let (foraging, _foraging_preparation) =
         foraging::prepare(foraging_input.as_ref(), &item_input, budget)?;
-    let (items, _item_preparation) = prepare_items(&item_definitions, &item_input, budget)?;
+    let assembly_families = r.map("assemblyFamilies", "config_assembly_families", input.assembly_families)?;
+    let (items, _item_preparation) = prepare_items(&item_definitions, &item_input, assembly_families.as_ref(), budget)?;
+    let gathering_policy = r.one("gatheringPolicy", "config_gathering", input.gathering_policy)?;
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct GatheringRead {
+        #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
+        bare_hand_quantity: u64,
+    }
+    let bare_hand_gathering = match gathering_policy.as_ref().map(RetainedOne::payload) {
+        None | Some("null") => None,
+        Some(policy) => {
+            let policy: GatheringRead = serde_json::from_str(policy)
+                .map_err(|_| InstallError::DefinitionBody)?;
+            if policy.bare_hand_quantity == 0 {
+                return Err(InstallError::DefinitionBody);
+            }
+            Some(policy.bare_hand_quantity)
+        }
+    };
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
         knowledge_limits,
         item_handling,
         item_handling_read,
-        gathering_policy: r.one(
-            "gatheringPolicy",
-            "config_gathering",
-            input.gathering_policy,
-        )?,
+        gathering_policy,
+        bare_hand_gathering,
         work_batch_policy: r.one(
             "workBatchPolicy",
             "config_work_batches",
@@ -589,11 +607,7 @@ pub(crate) fn install_retained(
             "config_hearth_definitions",
             input.hearth_definitions,
         )?,
-        assembly_families: r.map(
-            "assemblyFamilies",
-            "config_assembly_families",
-            input.assembly_families,
-        )?,
+        assembly_families,
         construction_profile: r.one(
             "constructionProfile",
             "config_construction_profile",
@@ -665,6 +679,7 @@ pub(crate) fn install_retained(
 fn prepare_items(
     definitions: &RetainedMap,
     input: &CanonicalInput,
+    assembly: Option<&RetainedMap>,
     budget: &crate::host::ByteBudget,
 ) -> Result<
     (
@@ -712,7 +727,7 @@ fn prepare_items(
         let value: ItemDefinitionFields =
             serde_json::from_str(source).map_err(|_| InstallError::DefinitionBody)?;
         let exact = canonical.get(id).ok_or(InstallError::DefinitionBody)?.get();
-        let value = ItemDefinitionRead::from_verified(id, exact, value)?;
+        let value = ItemDefinitionRead::from_verified(id, exact, value, assembly, budget)?;
         preparation
             .resize(
                 id.len()

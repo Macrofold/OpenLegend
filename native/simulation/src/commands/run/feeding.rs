@@ -58,23 +58,20 @@ impl CommandCursor {
         }
     }
 
-    pub(super) fn prepare_feeding_route(
+    pub(super) fn prepare_interaction_route(
         &mut self,
         core: &mut CoreMutation<'_>,
     ) -> Result<(), ExecutionError> {
-        let NativeCommand::Feed {
-            envelope,
-            target_id,
-            ..
-        } = &self.command
-        else {
-            return Err(ExecutionError::Invariant);
-        };
         let installed = &core.state.installed;
+        let (target_id, reach) = match &self.command {
+            NativeCommand::Feed { target_id, .. } => (target_id, installed.retained.item_handling_read.reach),
+            NativeCommand::Gather { target_id, .. } => (target_id, installed.movement.interaction_radius()),
+            _ => return Err(ExecutionError::Invariant),
+        };
         let physical = &core.state.physical;
         let actor = physical
             .entities
-            .get(&envelope.actor_id)
+            .get(&self.command.envelope().actor_id)
             .ok_or(ExecutionError::MissingActor)?;
         let target = physical
             .entities
@@ -83,7 +80,7 @@ impl CommandCursor {
         let (route, storage) = feeding::approach(
             actor,
             target,
-            installed.retained.item_handling_read.reach,
+            reach,
             &self.budget,
         )?;
         self._reservation.merge(storage)?;

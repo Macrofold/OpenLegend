@@ -1,7 +1,8 @@
-//! The authorized browser handler passes its already-decoded movement input.
+//! The authorized browser handler passes its already-decoded command input.
 
 use super::{CommandEncoding, CommandHeaders, NativeCommand};
 use crate::encoding::json_record;
+use crate::gathering::{GatheringMode, ToolChoice};
 use crate::state::SurfacePoint;
 use serde::Serialize;
 
@@ -9,6 +10,7 @@ use serde::Serialize;
 pub enum RuntimePlayerCommand<'a> {
     Move(&'a SurfacePoint),
     Cancel(Option<&'a str>),
+    Gather { target: &'a str, tool: Option<&'a str>, mode: Option<GatheringMode> },
 }
 
 impl RuntimePlayerCommand<'_> {
@@ -16,6 +18,7 @@ impl RuntimePlayerCommand<'_> {
         match self {
             Self::Move(point) => point.surface_id.len(),
             Self::Cancel(action) => action.map_or(0, str::len),
+            Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
         }
     }
 
@@ -36,6 +39,12 @@ impl RuntimePlayerCommand<'_> {
             destination: Option<&'a SurfacePoint>,
             #[serde(skip_serializing_if = "Option::is_none")]
             expected_action_id: Option<&'a str>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            target_id: Option<&'a str>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            item_id: Option<&'a str>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            gathering_mode: Option<GatheringMode>,
         }
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
@@ -53,14 +62,21 @@ impl RuntimePlayerCommand<'_> {
             destination: Option<SignaturePoint<'a>>,
             #[serde(skip_serializing_if = "Option::is_none")]
             expected_action_id: Option<&'a str>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            gathering_mode: Option<GatheringMode>,
             human_initiated: bool,
             id: &'a str,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            item_id: Option<&'a str>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            target_id: Option<&'a str>,
             #[serde(rename = "type")]
             kind: &'a str,
         }
-        let (kind, destination, expected_action_id) = match self {
-            Self::Move(point) => ("move", Some(point), None),
-            Self::Cancel(action) => ("cancel", None, action),
+        let (kind, destination, expected_action_id, target_id, item_id, gathering_mode) = match self {
+            Self::Move(point) => ("move", Some(point), None, None, None, None),
+            Self::Cancel(action) => ("cancel", None, action, None, None, None),
+            Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
         };
         let headers = CommandHeaders {
             id: id.to_owned(),
@@ -91,8 +107,12 @@ impl RuntimePlayerCommand<'_> {
                 kind,
                 destination,
                 expected_action_id,
+                target_id,
+                item_id,
+                gathering_mode,
             },
-            4 + usize::from(destination.is_some() || expected_action_id.is_some()),
+            4 + [destination.is_some(), expected_action_id.is_some(), target_id.is_some(), item_id.is_some(), gathering_mode.is_some()]
+                .into_iter().filter(|value| *value).count(),
         )?;
         let signature = json_record(&Signature {
             actor_id: actor,
@@ -103,8 +123,11 @@ impl RuntimePlayerCommand<'_> {
                 z: point.z,
             }),
             expected_action_id,
+            gathering_mode,
             human_initiated: true,
             id,
+            item_id,
+            target_id,
             kind,
         })?;
         let envelope = headers.envelope(encoding);
@@ -116,6 +139,15 @@ impl RuntimePlayerCommand<'_> {
             Self::Cancel(action) => NativeCommand::Cancel {
                 envelope,
                 expected_action_id: action.map(str::to_owned),
+            },
+            Self::Gather { target, tool, mode } => NativeCommand::Gather {
+                envelope,
+                target_id: target.to_owned(),
+                tool: ToolChoice::new(mode, tool.map(str::to_owned)).ok_or_else(|| {
+                    serde_json::Error::io(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData, "Invalid selected gathering tool."
+                    ))
+                })?,
             },
         };
         Ok((command, signature))

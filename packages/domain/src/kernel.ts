@@ -32,6 +32,7 @@ import {
 } from './perception-evidence.js';
 import { beginSemanticWork } from './semantic-opportunities.js';
 import { BASE_SKILLED_TEXT } from './worlds/base/skilled-execution.js';
+import gatheringCopy from './worlds/base/gathering-copy.json' with { type: 'json' };
 import {
   localPoseBoundary,
   localPoseBlocksWork,
@@ -4624,10 +4625,12 @@ function executeCommandNative(
                 )
               : action.type === 'feed'
                 ? subjectNarration(actor, selectedFeedingTerms(world).started)
-                : subjectNarration(
-                    actor,
-                    `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
-                  ),
+                : action.type === 'gather'
+                  ? subjectNarration(actor, gatheringCopy.started)
+                  : subjectNarration(
+                      actor,
+                      `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+                    ),
         actor,
         action.targetId,
         { actionType: action.type },
@@ -4916,7 +4919,7 @@ function completeAction(
     case 'gather': {
       const target = entityGet(world.entities, action.targetId ?? '');
       if (!target?.resource || target.resource.quantity <= 0) {
-        failAction(world, actor, events, 'the resource is depleted.');
+        failAction(world, actor, events, gatheringCopy.depleted);
         return;
       }
       // Direct tool targeting binds one equipped lot; ordinary gathering uses carried tools.
@@ -4972,17 +4975,21 @@ function completeAction(
           events,
         ).status !== 'applied'
       ) {
-        failAction(world, actor, events, 'the resource is no longer available.');
+        failAction(world, actor, events, gatheringCopy.unavailable);
         return;
       }
       outputItemId = produce(target.resource.definitionId, quantity);
       emit(
         world,
         events,
-        'gathered',
+        gatheringCopy.gatheredEvent,
         subjectNarration(
           actor,
-          `gathered ${quantity} ${world.itemDefinitions[target.resource.definitionId]!.name.toLowerCase()}.`,
+          gatheringCopy.gathered
+            .replace('{quantity}', String(quantity))
+            .replace('{material}', () =>
+              world.itemDefinitions[target.resource!.definitionId]!.name.toLowerCase(),
+            ),
         ),
         actor,
         target.id,

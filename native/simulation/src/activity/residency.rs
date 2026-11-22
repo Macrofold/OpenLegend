@@ -1,6 +1,6 @@
 //! Body and sparse-directory custody is independent of the action undo journal.
 use super::*;
-use crate::host::retained_size::{HeapBytes, heap_sum, map_storage, tree_node_bound};
+use crate::host::retained_size::{heap_sum, map_storage, tree_node_bound, HeapBytes};
 use crate::host::{ByteBudget, ByteReservation};
 use std::{collections::BTreeMap, mem::size_of};
 
@@ -63,6 +63,13 @@ impl MetadataBefore {
         Ok(Self {
             backing: backing(state).ok_or(ActivityError::Capacity)?,
             strings: strings(state, actor, actions).ok_or(ActivityError::Capacity)?,
+        })
+    }
+
+    pub(super) fn capture_item(state: &ActivityState, key: &str) -> Result<Self, ActivityError> {
+        Ok(Self {
+            backing: backing(state).ok_or(ActivityError::Capacity)?,
+            strings: entry(state.items.get_key_value(key)).ok_or(ActivityError::Capacity)?,
         })
     }
 }
@@ -152,6 +159,25 @@ impl ActivityState {
         from: &mut ByteReservation,
     ) -> Result<(), ActivityError> {
         let after = MetadataBefore::capture(self, actor, actions)?;
+        self.transfer_metadata(before, after, from)
+    }
+
+    pub(super) fn settle_item_metadata(
+        &mut self,
+        before: MetadataBefore,
+        key: &str,
+        from: &mut ByteReservation,
+    ) -> Result<(), ActivityError> {
+        let after = MetadataBefore::capture_item(self, key)?;
+        self.transfer_metadata(before, after, from)
+    }
+
+    fn transfer_metadata(
+        &mut self,
+        before: MetadataBefore,
+        after: MetadataBefore,
+        from: &mut ByteReservation,
+    ) -> Result<(), ActivityError> {
         let bytes = self
             .metadata_bytes
             .checked_sub(before.backing)

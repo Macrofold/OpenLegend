@@ -25,15 +25,9 @@ impl Simulation {
         Body: FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
         Person: FnMut(&str) -> bool,
     {
-        self.require_player_read(account, actor)?;
-        let perception =
-            capture_actor_perception(&self.state, actor, ActorReadPurpose::PlayerView, budget)?;
-        for contact in crate::capture::PlayerPerception::new(&perception)?.bodies() {
-            if body(contact.ok_or(ExecutionError::Invariant)?) {
-                return Ok(());
-            }
+        if self.with_player_contacts(account, actor, budget, &mut body)? {
+            return Ok(());
         }
-        drop(perception);
         with_actor_self(
             &self.state,
             actor,
@@ -49,6 +43,37 @@ impl Simulation {
             },
         )?;
         Ok(())
+    }
+
+    pub(crate) fn with_player_contacts(
+        &self,
+        account: &str,
+        actor: &str,
+        budget: &ByteBudget,
+        matching: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+    ) -> Result<bool, ActorReadError> {
+        self.require_accepted_read()?;
+        self.visit_accepted_player_contacts(account, actor, budget, matching)
+    }
+
+    /// Borrow permitted contacts at the caller's already fenced accepted cut.
+    /// The saved account binding still applies inside a disclosure lease.
+    pub(crate) fn visit_accepted_player_contacts(
+        &self,
+        account: &str,
+        actor: &str,
+        budget: &ByteBudget,
+        mut matching: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+    ) -> Result<bool, ActorReadError> {
+        self.require_player_owner(account, actor)?;
+        let perception =
+            capture_actor_perception(&self.state, actor, ActorReadPurpose::PlayerView, budget)?;
+        for contact in crate::capture::PlayerPerception::new(&perception)?.bodies() {
+            if matching(contact.ok_or(ExecutionError::Invariant)?) {
+                return Ok(true);
+            }
+        }
+        Ok(false)
     }
 }
 

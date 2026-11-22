@@ -5,7 +5,9 @@ use crate::authority::RequestScope;
 use openlegend_simulation::{
     capture::ContextActionWitness,
     encoding::{append_hex, json_record, sha256_hex, write_json_record},
+    host::{ByteBudget, ByteReservation},
     reception::{EvidenceSource, ObserverSubject},
+    runtime::{NativeWorldSession, RuntimeError},
 };
 use ring::hmac;
 use serde::Serialize;
@@ -15,6 +17,11 @@ pub struct ReferenceIssuer {
     body: hmac::Key,
     person: hmac::Key,
     historical: hmac::Key,
+}
+
+pub(crate) struct ResolvedContact {
+    pub(crate) id: String,
+    _custody: ByteReservation,
 }
 
 pub struct PlayerReferences<'a> {
@@ -48,6 +55,51 @@ impl ReferenceIssuer {
             scope: key,
             history,
         })
+    }
+
+    /// Resolve only a current body reference issued for this view. The returned
+    /// private source ID funds its own lifetime in the owning turn.
+    pub(crate) fn resolve_contact(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedContact>, RuntimeError> {
+        if !selected.starts_with("contact-") {
+            return Ok(None);
+        }
+        let _workspace = budget.reserve(2048)?;
+        let scoped = self
+            .scoped(scope)
+            .map_err(RuntimeError::application_refused)?;
+        let mut selected_source = None;
+        session.with_player_contacts(&scope.account_id, &scope.actor_id, |body| {
+            match scoped.contact(
+                body.source_id,
+                body.physical_life.unwrap_or(0),
+                body.lease_id,
+            ) {
+                Ok(current) if current == selected => {
+                    selected_source = Some(
+                        budget
+                            .reserve(body.source_id.len())
+                            .map(|custody| ResolvedContact {
+                                id: body.source_id.to_owned(),
+                                _custody: custody,
+                            })
+                            .map_err(RuntimeError::from),
+                    );
+                    true
+                }
+                Ok(_) => false,
+                Err(error) => {
+                    selected_source = Some(Err(RuntimeError::application_refused(error)));
+                    true
+                }
+            }
+        })?;
+        selected_source.transpose()
     }
 }
 

@@ -3,7 +3,13 @@
 
 use super::*;
 use crate::commands::{ActivityOutput, CooperationBinding, NativeCommand, Outcome, PurposeBinding};
-use crate::host::retained_size::{HeapBytes, heap_record, heap_sum};
+use crate::host::retained_size::{heap_record, heap_sum, HeapBytes};
+
+heap_record!(ActivityItemSource {
+    actor_id,
+    occurrence_id,
+    port
+});
 
 impl HeapBytes for ActivityScalar {
     fn heap_bytes(&self) -> Option<usize> {
@@ -163,12 +169,25 @@ impl HeapBytes for NativeCommand {
                 envelope,
                 target_id,
                 item_id,
-            } => heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?, item_id.heap_bytes()?]),
+            } => heap_sum([
+                envelope.heap_bytes()?,
+                target_id.heap_bytes()?,
+                item_id.heap_bytes()?,
+            ]),
             Self::Follow {
                 envelope,
                 target_id,
                 ..
             } => heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?]),
+            Self::Gather {
+                envelope,
+                target_id,
+                tool,
+            } => heap_sum([
+                envelope.heap_bytes()?,
+                target_id.heap_bytes()?,
+                tool.heap_bytes()?,
+            ]),
             Self::Strike {
                 envelope,
                 target_id,

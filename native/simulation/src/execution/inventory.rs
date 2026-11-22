@@ -185,6 +185,117 @@ impl CoreMutation<'_> {
         Ok(())
     }
 
+    /// Ordinary stock production first reuses an eligible direct stack. A
+    /// source with independent provenance receives its own counted lot.
+    pub(crate) fn produce_carried_stock(&mut self, actor: &str, definition_id: &str, quantity: u64) -> Result<String, ExecutionError> {
+        let installed = self.state.installed.clone();
+        let definition = installed.retained.items.get(definition_id).ok_or(ExecutionError::Invariant)?;
+        let budget = self.journal.physical.budget.clone();
+        if quantity == 0 || quantity > MAX_SAFE_INTEGER || !definition.portable || definition.is_container() {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        if !definition.tracks_material_origins {
+            let store = &self.state.physical.entities;
+            let bound = store.get(actor).and_then(|entity| entity.actor.as_ref())
+                .and_then(|actor| actor.action.as_ref()).and_then(|action| action.item_id.as_deref());
+            let target = self.state.inventory.children(store, actor, false).find(|entity| {
+                entity.item.as_ref().is_some_and(|lot| {
+                    lot.definition_pin == definition.pin && lot.unit_pin == *crate::install::item_count_pin() &&
+                    lot.individuality == crate::state::Individuality::Homogeneous
+                    && lot.quantity <= MAX_SAFE_INTEGER - quantity
+                    && lot.material_origin_ids.is_none() && lot.material_contribution_ids.is_none() && lot.assembly_claim.is_none()
+                }) && bound != Some(entity.id.as_str()) && entity.container.is_none() && entity.declared_owner.is_none()
+                    && entity.mechanism_fields.is_none() && entity.attributes.as_ref().is_none_or(IndexMap::is_empty)
+                    && entity.status_effects.as_ref().is_none_or(IndexMap::is_empty)
+                    && matches!(&entity.placement, Some(Placement::Contained { .. }))
+            });
+            if let Some(target) = target {
+                let _workspace = budget.reserve(target.id.len())?;
+                let id = target.id.clone();
+                self.grow_direct_lot(actor, &id, quantity)?;
+                return Ok(id);
+            }
+        }
+        let body = &installed.retained.item_handling_read.object_body;
+        let material = definition.material.as_ref();
+        let mut bytes = heap_sum([
+            size_of::<Entity>(), 1024, actor.len(), body.id.len(),
+            definition.named.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            definition.pin.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            crate::install::item_count_pin().heap_bytes().ok_or(ExecutionError::Capacity)?,
+        ]).ok_or(ExecutionError::Capacity)?;
+        if let Some(material) = material {
+            let size = crate::host::retained_size::map_storage::<String, AttributeState>(material.initial_attributes.len()).ok_or(ExecutionError::Capacity)?;
+            bytes = bytes.checked_add(size).ok_or(ExecutionError::Capacity)?;
+            for id in &material.initial_attributes {
+                let schema = &installed.attributes.get(id).ok_or(ExecutionError::Invariant)?.value().schema;
+                bytes = bytes.checked_add(id.len() + match schema {
+                    crate::status::AttributeSchema::Category { initial, .. } => initial.len(),
+                    crate::status::AttributeSchema::Number { .. } => 0,
+                }).ok_or(ExecutionError::Capacity)?;
+            }
+        }
+        let prepared = budget.reserve(bytes)?;
+        let physical = &mut self.state.physical;
+        let issued = physical.identity.allocate_entity("item", |id| physical.entities.get(id).is_some())?;
+        let result = issued.id.clone();
+        let attributes = material.map(|material| -> Result<IndexMap<String, AttributeState>, ExecutionError> {
+            material.initial_attributes.iter().map(|id| {
+                let definition = installed.attributes.get(id).ok_or(ExecutionError::Invariant)?.value();
+                let value = match &definition.schema {
+                    crate::status::AttributeSchema::Number { initial, .. } => crate::values::AttributeValue::Number(*initial),
+                    crate::status::AttributeSchema::Category { initial, .. } => crate::values::AttributeValue::Category(initial.clone()),
+                };
+                Ok((id.clone(), AttributeState { value, revision: 0, concern_active: None }))
+            }).collect()
+        }).transpose()?;
+        let entity = Entity {
+            id: issued.id, kind: "item".into(), name: definition.named.name.clone(),
+            name_form: definition.named.name_form.clone(), indefinite_article: definition.named.indefinite_article.clone(),
+            item: Some(crate::state::ItemLot {
+                definition_pin: definition.pin.clone(), unit_pin: crate::install::item_count_pin().clone(),
+                quantity, revision: 0, material_origin_ids: definition.tracks_material_origins.then(|| vec![result.clone()]),
+                material_contribution_ids: None, assembly_claim: None,
+                individuality: if material.is_some_and(|rule| !rule.homogeneous) { crate::state::Individuality::Individual }
+                else { crate::state::Individuality::Homogeneous },
+            }),
+            attributes,
+            placement: Some(Placement::Contained { parent_entity_id: actor.into(), revision: 0 }),
+            spatial: crate::state::EntitySpatial {
+                body: body.clone(), heading: 0.0, inactive_body: None, soft_footprint: None, local_pose: None,
+                local_avoidance_ready_at: None, flight: None, fall_velocity: None,
+            },
+            hearth: None, practice_target: None, threat: None, assembly: None, inventory_revision: None,
+            container: None, declared_owner: None, retirement: None, sensory_progress: None, icon: None,
+            description: None, status_effects: None, mechanism_fields: None, appearance: None, actor: None,
+            animal: None, replenisher: None, resource: None, remains: None, heat: None,
+        };
+        self.insert_actor_lot(actor, entity, prepared)?;
+        Ok(result)
+    }
+
+    fn grow_direct_lot(&mut self, actor: &str, id: &str, quantity: u64) -> Result<(), ExecutionError> {
+        let entities = &mut self.state.physical.entities;
+        let parent = entities.handle(actor).ok_or(ExecutionError::MissingActor)?;
+        let child = entities.handle(id).ok_or(ExecutionError::MissingEntity)?;
+        let previous_contents = entities.resolve(parent).ok_or(ExecutionError::Invariant)?.inventory_revision;
+        let contents = next_revision(previous_contents.unwrap_or_default())?;
+        let lot = entities.resolve_mut(child).and_then(|entity| entity.item.as_mut()).ok_or(ExecutionError::Invariant)?;
+        let before = lot.quantity;
+        let revision = lot.revision;
+        let next_quantity = before.checked_add(quantity).filter(|value| *value <= MAX_SAFE_INTEGER).ok_or(ExecutionError::Capacity)?;
+        let next_revision = next_revision(revision)?;
+        self.journal.physical.reserve(size_of::<InventoryUndo>())?;
+        self.journal.physical.undo.push(Undo::Inventory(Box::new(InventoryUndo {
+            parent, child, previous_contents, previous_membership: self.state.administration.object_membership.revision,
+            edit: ItemEdit::Quantity { before, revision }, lineage: None, prior_lineage_presence: false,
+        })));
+        lot.quantity = next_quantity;
+        lot.revision = next_revision;
+        entities.resolve_mut(parent).ok_or(ExecutionError::Invariant)?.inventory_revision = Some(contents);
+        Ok(())
+    }
+
     /// Consume one currently bound loose unit from an exposed ground pile.
     /// The feeding owner supplies the sight, reach and access witness. This
     /// owner validates direct custody, exact lot revision and definition, then

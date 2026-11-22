@@ -27,6 +27,7 @@ import { attributeDefinition } from '../../world-modules.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
 import { guardDescription, equipmentChangeDescription } from './shield-defense.js';
 import { evasionDescription } from './combat-views.js';
+import gatheringCopy from './gathering-copy.json' with { type: 'json' };
 
 export const BASE_FOOD_ACTION_WORDING = {
   cookingDescription:
@@ -86,7 +87,9 @@ export function nativeActivityView(world: WorldState, command: Command): Activit
   return activityView(world, command);
 }
 function toolName(name: string, ordinal: number, count: number): string {
-  return count > 1 ? `${name}, item ${ordinal} among my same-named items` : name;
+  return count > 1
+    ? name + gatheringCopy.sameNamedToolSuffix.replace('{ordinal}', String(ordinal))
+    : name;
 }
 function activityView(
   world: WorldState,
@@ -194,7 +197,7 @@ function activityView(
     equip: 'Equip',
     guard: 'Guard with shield',
     evade: bodyPolicy(world)?.evasion?.label,
-    gather: 'Gather',
+    gather: gatheringCopy.name,
     craft: 'Make',
     pickup: 'Pick up',
     drop: 'Put down',
@@ -503,7 +506,7 @@ function activityView(
         critical: true,
       });
   }
-  if (['harvest', 'cook', 'gather', 'pickup', 'replenish', 'tend-fire'].includes(command.type))
+  if (['harvest', 'cook', 'pickup', 'replenish', 'tend-fire'].includes(command.type))
     view.facts.push({
       name: 'approach',
       value: `Move to within ${command.type === 'pickup' ? world.itemHandling.reach : BASE_ACTION_DEFAULTS.interactionRadius} m; the route length is not known`,
@@ -519,12 +522,27 @@ function activityView(
         : 'The fire condition is not currently known',
       critical: true,
     });
-  if (command.type === 'gather' && perceived && target.resource)
+  if (command.type === 'gather') {
     view.facts.push({
-      name: 'work',
-      value: `${target.resource.workSeconds} game seconds; ${target.resource.quantity} ${world.itemDefinitions[target.resource.definitionId]?.name ?? 'material'} remains here; actual yield depends on available material and tools`,
+      name: gatheringCopy.approachName,
+      value: gatheringCopy.approach.replace(
+        '{reach}',
+        String(BASE_ACTION_DEFAULTS.interactionRadius),
+      ),
       critical: true,
     });
+    if (perceived && target.resource) {
+      const { workSeconds, quantity, definitionId } = target.resource;
+      view.facts.push({
+        name: gatheringCopy.workName,
+        value: gatheringCopy.work
+          .replace('{seconds}', String(workSeconds))
+          .replace('{quantity}', String(quantity))
+          .replace('{material}', () => world.itemDefinitions[definitionId]?.name ?? 'material'),
+        critical: true,
+      });
+    }
+  }
   const recipe = command.type === 'craft' ? world.recipes[command.recipeId] : undefined;
   if (recipe) {
     if (recipe.retainedTools.length)

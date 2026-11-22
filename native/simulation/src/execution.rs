@@ -793,6 +793,7 @@ impl CoreMutation<'_> {
                     .ordinary_actions
                     .value()
                     .before_attempt_facts,
+                &self.state.installed.retained.items,
             )
             .map_err(ExecutionError::Activity)?;
         if let Some(personal) = pending {

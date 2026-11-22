@@ -83,7 +83,7 @@ pub use npc::{
 };
 pub use player::{
     InteractionMode, PlayerInteractionFacts, RuntimePlayerCommand, RuntimePlayerInputState,
-    RuntimePlayerPublication, RuntimePlayerRead,
+    RuntimePlayerPublication, RuntimePlayerRead, RuntimeGatherOffer,
 };
 pub use reply_preview::{
     RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,

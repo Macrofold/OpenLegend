@@ -75,6 +75,12 @@ pub(crate) use base_ordinary_actions::{
 #[path = "../../../packages/domain/src/worlds/base/native/foraging.rs"]
 pub(crate) mod base_foraging;
 
+#[path = "../../../packages/domain/src/worlds/base/native/gathering.rs"]
+pub(crate) mod base_gathering;
+
+#[path = "../../../packages/domain/src/worlds/base/native/ordinary_activity_display.rs"]
+pub mod activity_display;
+
 #[path = "../../../packages/domain/src/worlds/base/native/retained_size.rs"]
 mod base_retained_size;
 

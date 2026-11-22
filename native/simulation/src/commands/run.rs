@@ -24,6 +24,7 @@ use crate::state::{Action, NavigationPending, SurfacePoint};
 use crate::work::{MeterToken, WorkUnit};
 mod discovery;
 mod feeding;
+mod gathering;
 mod natural_contact;
 
 pub(crate) struct NativeMovementInput {
@@ -71,6 +72,7 @@ enum Phase {
     Standing,
     Route,
     FeedReach,
+    GatherSight,
     ContactReach,
     FeedApproach,
     Probe,
@@ -293,6 +295,10 @@ impl CommandCursor {
     }
     fn needs_display(&mut self, core: &mut CoreMutation<'_>) -> Result<bool, ExecutionError> {
         if self.options.native_controller || self.view.is_some() {
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::Gather { .. }) {
+            self.prepare_gathering_view(core)?;
             return Ok(false);
         }
         if self.display.is_none() {
@@ -543,6 +549,19 @@ impl CommandCursor {
                             Phase::DiscoverySight | Phase::DiscoveryReach | Phase::DiscoveryRoute
                         ) {
                             self.finish_discovery_geometry(core, answer)?;
+                            return self.drive(core, None);
+                        }
+                        if matches!(self.phase, Phase::GatherSight) {
+                            let sight = self.sight.take().ok_or(ExecutionError::Invariant)?
+                                .finish(answer).map_err(|_| ExecutionError::Invariant)?;
+                            let NativeCommand::Gather { target_id, .. } = &self.command else {
+                                return Err(ExecutionError::Invariant);
+                            };
+                            if sight.seen(target_id) != Some(true) {
+                                self.refuse(&ordinary.out_of_reach);
+                            } else if self.prepare_gathering_reach(core)? {
+                                return Ok(Progress::Geometry);
+                            }
                             return self.drive(core, None);
                         }
                         if matches!(self.phase, Phase::StatusSight) {
@@ -952,6 +971,11 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::Gather { .. } => {
+                            if self.prepare_gathering(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
                         NativeCommand::Strike { .. } => {
                             if self.prepare_natural_contact(core)? {
                                 return Ok(Progress::Geometry);
@@ -987,7 +1011,7 @@ impl CommandCursor {
                     return Ok(Progress::Geometry);
                 }
                 Phase::FeedApproach => {
-                    self.prepare_feeding_route(core)?;
+                    self.prepare_interaction_route(core)?;
                     return Ok(Progress::Geometry);
                 }
                 Phase::Route => {
@@ -1325,6 +1349,7 @@ impl CommandCursor {
                                 result,
                                 core.state.physical.header.sim_time,
                                 &ordinary.before_attempt_facts,
+                                &installed.retained.items,
                             )
                             .map_err(ExecutionError::Activity)?
                         {
@@ -1424,6 +1449,9 @@ impl CommandCursor {
                     if !native && !routine {
                         if matches!(self.command, NativeCommand::Feed { .. }) {
                             return self.feeding_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::Gather { .. }) {
+                            return self.gathering_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::Strike { .. }) {
                             return self.natural_contact_started(core, &actor_id);
@@ -1948,6 +1976,7 @@ impl CommandCursor {
                                 result,
                                 core.state.physical.header.sim_time,
                                 &ordinary.before_attempt_facts,
+                                &installed.retained.items,
                             )
                             .map_err(ExecutionError::Activity)?
                         {
@@ -2019,6 +2048,7 @@ impl CommandCursor {
                 Phase::Support
                 | Phase::Probe
                 | Phase::FeedReach
+                | Phase::GatherSight
                 | Phase::ContactReach
                 | Phase::StatusSight
                 | Phase::DiscoverySight

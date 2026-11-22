@@ -5,6 +5,7 @@ import {
   selectedOrdinaryActionRules,
 } from './world-composition.js';
 import { appendTemporalReceipt } from './temporal-evidence.js';
+import activityResultCopy from './activity-result-copy.json' with { type: 'json' };
 import { hasMemory } from './living.js';
 import {
   accountResultEvidence,
@@ -575,19 +576,25 @@ export function activityResultFacts(
   recorded?: readonly ActivityFact[],
 ): ActivityFact[] {
   if (recorded)
-    return recorded.filter((fact) => fact.name === 'produced' || fact.name === 'observed changes');
+    return recorded.filter(
+      (fact) => fact.name === activityResultCopy.produced || fact.name === 'observed changes',
+    );
   const produced = outputs.map((output) => ({
     quantity: output.quantity,
-    material: world.itemDefinitions[output.definitionId]?.name ?? 'items',
+    material:
+      world.itemDefinitions[output.definitionId]?.name ?? activityResultCopy.unknownMaterial,
   }));
   return produced.length
     ? [
         {
-          name: 'produced',
+          name: activityResultCopy.produced,
           // Each admitted label retains its own text bound; several valid outputs
           // must not fail because their combined sentence exceeds one label's limit.
-          value: produced,
-          sentence: `produced: ${produced.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
+          value: produced.map(({ quantity, material }) => ({
+            [activityResultCopy.quantity]: quantity,
+            [activityResultCopy.material]: material,
+          })),
+          sentence: `${activityResultCopy.producedPrefix}${produced.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
           critical: true,
         },
       ]

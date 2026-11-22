@@ -18,6 +18,7 @@ pub mod encoding;
 pub mod events;
 pub mod execution;
 pub mod experience;
+pub mod gathering;
 pub mod geometry;
 pub mod host;
 pub mod identity;

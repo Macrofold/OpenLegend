@@ -79,7 +79,7 @@ impl ActivityJournal {
         }
         let maximum = self.undo.len();
         let bytes = map_storage::<(&str, &str), bool>(maximum)
-            .and_then(|bytes| bytes.checked_add(4 * map_storage::<&str, bool>(maximum)?))
+            .and_then(|bytes| bytes.checked_add(5 * map_storage::<&str, bool>(maximum)?))
             .ok_or_else(error)?;
         let _selection = budget.reserve(bytes).map_err(|_| error())?;
         let mut records = IndexMap::with_capacity(maximum);
@@ -87,6 +87,7 @@ impl ActivityJournal {
         let mut current = IndexMap::with_capacity(maximum);
         let mut active = IndexMap::with_capacity(maximum);
         let mut learning = IndexMap::with_capacity(maximum);
+        let mut items = IndexMap::new();
         let mut header = false;
         for change in &self.undo {
             match change {
@@ -115,6 +116,9 @@ impl ActivityJournal {
                 }
                 ActivityUndo::Learning { key, before } => {
                     learning.entry(key.as_str()).or_insert(before.is_some());
+                }
+                ActivityUndo::ItemSources { key, before } => {
+                    items.entry(key.as_str()).or_insert(before.is_some());
                 }
                 ActivityUndo::Pending { .. }
                 | ActivityUndo::Loaded { .. }
@@ -268,6 +272,15 @@ impl ActivityJournal {
             "active",
             "activity_active",
             &active,
+            ledger,
+            output,
+            budget,
+        )?;
+        encode_map(
+            &state.items,
+            "items",
+            "activity_item_sources",
+            &items,
             ledger,
             output,
             budget,

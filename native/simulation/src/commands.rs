@@ -193,6 +193,11 @@ pub(crate) enum NativeCommand {
         target_id: String,
         item_id: Option<String>,
     },
+    Gather {
+        envelope: CommandEnvelope,
+        target_id: String,
+        tool: crate::gathering::ToolChoice,
+    },
     Say {
         envelope: CommandEnvelope,
         text: crate::text::JsText,
@@ -254,7 +259,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -283,7 +288,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         if !headers.valid() {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
-        if input.kind != "feed" && input.item_id.is_some() {
+        if (input.kind != "gather" && input.gathering_mode.is_some())
+            || (!matches!(input.kind.as_str(), "gather" | "feed") && input.item_id.is_some())
+        {
             return Err(D::Error::custom("Unexpected item selection."));
         }
         let discovery_fields = input.distance.is_some()
@@ -395,6 +402,19 @@ impl<'de> Deserialize<'de> for NativeCommand {
                         })?,
                     item_id: input.item_id,
                 })
+            }
+            "gather"
+                if !extras_for_say
+                    && input.text.is_none()
+                    && input.target_role.is_none()
+                    && input.self_introduction.is_none()
+                    && input.volume.is_none() =>
+            {
+                let target_id = input.target_id.filter(|id| is_safe_record_id(id))
+                    .ok_or_else(|| D::Error::custom("Gathering requires a selected source."))?;
+                let tool = crate::gathering::ToolChoice::new(input.gathering_mode, input.item_id)
+                    .ok_or_else(|| D::Error::custom("Invalid gathering tool selection."))?;
+                Ok(Self::Gather { envelope, target_id, tool })
             }
             "say" if !extras_for_say => Ok(Self::Say {
                 envelope,
@@ -508,6 +528,7 @@ impl NativeCommand {
             Self::Outing { envelope, .. }
             | Self::Move { envelope, .. }
             | Self::Feed { envelope, .. }
+            | Self::Gather { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
@@ -529,6 +550,7 @@ impl NativeCommand {
             Self::Outing { envelope, .. }
             | Self::Move { envelope, .. }
             | Self::Feed { envelope, .. }
+            | Self::Gather { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
@@ -544,6 +566,7 @@ impl NativeCommand {
             Self::Outing { .. } => crate::worlds::base_outings::travel_command_type(),
             Self::Move { .. } => "move",
             Self::Feed { .. } => "feed",
+            Self::Gather { .. } => "gather",
             Self::Say { .. } => "say",
             Self::StatusEffect { .. } => "status-effect",
             Self::Cancel { .. } => "cancel",

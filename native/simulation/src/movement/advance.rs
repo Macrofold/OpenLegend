@@ -24,6 +24,7 @@ use crate::native_response::{NavigationWait, profile_key};
 use crate::state::{Action, Entity, NavigationPending, Placement, Point, SurfacePoint};
 use std::mem::size_of;
 mod feeding;
+mod gathering;
 
 pub(crate) enum MoveAdvanceAnswer {
     Geometry(GeometryAnswers),
@@ -71,6 +72,7 @@ pub(crate) struct MoveAdvanceCursor {
     binding: GeometryBinding,
     failure: Option<String>,
     pending: Option<PendingActionFinish>,
+    gathered_item: Option<crate::commands::ActivityOutput>,
     event: Option<String>,
     after_event: Phase,
     budget: ByteBudget,
@@ -148,6 +150,7 @@ impl MoveAdvanceCursor {
             binding,
             failure: None,
             pending: None,
+            gathered_item: None,
             event: None,
             after_event: Phase::Done,
             budget: budget.clone(),
@@ -513,7 +516,7 @@ impl MoveAdvanceCursor {
                         )?));
                         return self.drive(core, None);
                     }
-                    if action.feeding.is_some() && action.stage == "working" {
+                    if (action.feeding.is_some() || action.is_gathering()) && action.stage == "working" {
                         return self.begin_feed_check(core);
                     }
                     if action.stage == "working" {
@@ -563,7 +566,7 @@ impl MoveAdvanceCursor {
                         self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
                         self.physical_life,
                     )?;
-                    if action.feeding.is_none() && action.destination.is_none() {
+                    if action.feeding.is_none() && !action.is_gathering() && action.destination.is_none() {
                         self.fail(&rules.movement_missing_destination)?;
                         continue;
                     }
@@ -577,7 +580,7 @@ impl MoveAdvanceCursor {
                     let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
                     let (entity, action) =
                         bound(core, &self.actor_id, action_id, self.physical_life)?;
-                    if action.feeding.is_some() {
+                    if action.feeding.is_some() || action.is_gathering() {
                         return self.begin_feed_check(core);
                     }
                     if in_reach(
@@ -749,6 +752,13 @@ impl MoveAdvanceCursor {
                             plan_id: None,
                             action_id: None,
                         }
+                    } else if let Some(output) = self.gathered_item.take() {
+                        let mut completed = rules.movement_completed.outcome(true);
+                        completed.message = crate::worlds::base_gathering::copy().completed.as_str().into();
+                        self.reserve(output.item_id.len() + size_of::<crate::commands::ActivityOutput>())?;
+                        completed.item_id = Some(output.item_id.clone());
+                        completed.outputs = Some(vec![output]);
+                        completed
                     } else if core
                         .state
                         .physical

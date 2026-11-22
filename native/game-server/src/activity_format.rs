@@ -6,9 +6,8 @@ use openlegend_simulation::{activity::ActivityView, state::Point, text::JsText};
 use serde::Deserialize;
 use serde_json::value::RawValue;
 
-#[path = "../../../packages/domain/src/worlds/base/native/ordinary_activity_display.rs"]
-mod authored;
 use authored::{EffectWords, ObservedActor, ObservedTarget, OrdinaryAction, StrikeRead};
+use openlegend_simulation::worlds::activity_display as authored;
 
 #[derive(Deserialize)]
 struct Profile<'a> {

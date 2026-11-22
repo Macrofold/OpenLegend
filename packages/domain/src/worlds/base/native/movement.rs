@@ -77,23 +77,18 @@ impl InstalledMovementPolicy {
     pub(crate) fn direct_probe_max_distance(&self) -> f64 {
         self.value.direct_probe_max_distance
     }
-    /// Idle actors can steer in the converted action closure. Weapon preparation
-    /// and recovery must join this world-owned rule when those families convert;
-    /// the engine must not treat every physical work slot as a steering lock.
-    pub(crate) fn steering_action_allowed(
-        &self,
-        entity: &Entity,
-    ) -> Result<bool, crate::execution::ExecutionError> {
-        use crate::execution::ExecutionError;
-        match entity
+    /// Ordinary work occupies the movement slot. Bound weapon execution and
+    /// committed strike recovery retain the player's independent retreat.
+    pub(crate) fn steering_action_allowed(&self, entity: &Entity) -> bool {
+        entity
             .actor
             .as_ref()
             .and_then(|actor| actor.action.as_ref())
-        {
-            None => Ok(true),
-            Some(action) if action.kind == "move" || action.kind == "status-effect" => Ok(false),
-            Some(_) => Err(ExecutionError::UnsupportedFamily),
-        }
+            .is_none_or(|action| {
+                action.attack_execution.is_some()
+                    || (action.kind == "strike"
+                        && action.strike_phase == Some(crate::contact::StrikePhase::Recovery))
+            })
     }
     /// The installed body's lifecycle and territorial rules supply their own
     /// speed factors. Native response routes keep their independent profiles.

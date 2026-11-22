@@ -188,6 +188,7 @@ impl PlanControlCursor {
                 result,
                 core.state.physical.header.sim_time,
                 &installed.ordinary_actions.value().before_attempt_facts,
+                &installed.retained.items,
             )
             .map_err(ExecutionError::Activity)?;
         if self.pending.is_some() {

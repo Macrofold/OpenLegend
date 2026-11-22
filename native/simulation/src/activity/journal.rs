@@ -6,10 +6,11 @@ mod event;
 mod hydration;
 mod learning;
 mod learning_save;
+mod production;
 mod save;
 use crate::commands::{NativeCommand, Outcome};
 use crate::experience::AcquiredActivityResult;
-use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
+use crate::host::retained_size::{heap_sum, map_storage, HeapBytes};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::state::EntityStore;
 use std::collections::{BTreeMap, BTreeSet};
@@ -140,6 +141,10 @@ enum ActivityUndo {
     Active {
         key: String,
         before: Option<(usize, ActivityReference)>,
+    },
+    ItemSources {
+        key: String,
+        before: Option<Vec<ActivityItemSource>>,
     },
     Learning {
         key: String,
@@ -714,6 +719,9 @@ impl ActivityJournal {
                     }
                     state.settle_component(metadata, old, new, &mut self.reservation)?;
                 }
+                ActivityUndo::ItemSources { key, before } => {
+                    self.restore_item_sources(state, &key, before)?;
+                }
                 ActivityUndo::Learning { key, before } => {
                     let metadata = super::residency::MetadataBefore::capture(state, None, &[])?;
                     let old = super::residency::learning_bytes(state, &key)?;
@@ -1003,7 +1011,7 @@ impl ActivityJournal {
         Ok(())
     }
     /// Complete the physical result before personal recording, in source order.
-    /// Output-producing families and cooperation are not in this command closure.
+    /// Preserve physical production and its personal result in the same cut.
     pub(crate) fn prepare_end(
         &mut self,
         state: &mut ActivityState,
@@ -1012,6 +1020,7 @@ impl ActivityJournal {
         result: Outcome,
         at: f64,
         prior_fact_names: &IndexMap<String, String>,
+        item_definitions: &IndexMap<String, crate::install::ItemDefinitionRead>,
     ) -> Result<Option<PendingActivityResult>, ActivityError> {
         let Some(owner) = state.collections.get(actor) else {
             return Ok(None);
@@ -1023,10 +1032,7 @@ impl ActivityJournal {
             return Ok(None);
         }
         let entry = &record.occurrence;
-        if entry.cooperation.is_some()
-            || result.outputs.as_ref().is_some_and(|o| !o.is_empty())
-            || !entry.outputs.is_empty()
-        {
+        if entry.cooperation.is_some() || !entry.outputs.is_empty() {
             return Err(ActivityError::UnsupportedFamily);
         }
         if !at.is_finite() || at < entry.at {
@@ -1053,6 +1059,9 @@ impl ActivityJournal {
                     .ok_or(ActivityError::Capacity)?,
         )?;
         let id = entry.id.clone();
+        let outputs = result.outputs.as_deref().unwrap_or_default();
+        let produced = self.produced_fact(outputs, item_definitions, &state.limits)?;
+        self.record_item_sources(state, actor, &id, outputs)?;
         let metadata = super::residency::MetadataBefore::capture(state, Some(actor), &[action_id])?;
         self.record_before(state, actor, &id)?;
         self.active_before(state, action_id)?;
@@ -1094,6 +1103,9 @@ impl ActivityJournal {
             {
                 fact.name = name.clone().into();
             }
+        }
+        if let Some(produced) = produced {
+            entry.view.facts.push(produced);
         }
         if let Some(outputs) = &result.outputs {
             entry.outputs = outputs.clone();

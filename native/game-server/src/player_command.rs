@@ -6,6 +6,7 @@ use crate::{
     boot::CurrentServer,
     command_epoch::{RETRY_MS, RequestIdentity},
     live_save::{AcceptedSaveInput, LiveSaves},
+    player_references::ReferenceIssuer,
     store::{AdmittedReceipt, GameplayReceipt, KnownPlaceViewPage, PlaceViewRequest, StoreError},
     wire,
     world::{ApplicationStart, PlayerHistoryRead, WorldError},
@@ -13,6 +14,7 @@ use crate::{
 use axum::body::Bytes;
 use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
+    gathering::GatheringMode,
     host::{ByteBudget, ByteReservation},
     reception::EncounterExposure,
     runtime::{NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimePlayerCommand},
@@ -40,7 +42,7 @@ pub(crate) struct CommandRequest {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct CommandInput {
     #[serde(rename = "type")]
-    kind: MoveOrCancel,
+    kind: CommandKind,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -59,6 +61,24 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     known_place: Option<PlaceReference>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    target_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    item_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    gathering_mode: Option<GatheringMode>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -80,6 +100,8 @@ impl PlaceReference {
 }
 
 pub(crate) const KNOWN_PLACE_UNAVAILABLE: &str = "This remembered destination cannot be used now. Refresh Known places or inspect it again when you can.";
+pub(crate) const CONSTRUCTION_GATHER_UNAVAILABLE: &str =
+    "Gathering with construction permissions is unavailable on this server.";
 
 /// Own the single selected source and its independently admitted personal
 /// evidence after the SQL transaction and save can release their own pins.
@@ -157,9 +179,10 @@ impl SelectedKnownPlace {
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
-enum MoveOrCancel {
+enum CommandKind {
     Move,
     Cancel,
+    Gather,
 }
 
 struct PreparedRequest {
@@ -175,6 +198,7 @@ pub(crate) struct PlayerCommands {
     game: Arc<CurrentServer>,
     saves: Arc<LiveSaves>,
     authority: Arc<Authority>,
+    references: Arc<ReferenceIssuer>,
     identity: Mutex<RequestIdentity>,
 }
 
@@ -199,12 +223,14 @@ impl PlayerCommands {
         game: Arc<CurrentServer>,
         saves: Arc<LiveSaves>,
         authority: Arc<Authority>,
+        references: Arc<ReferenceIssuer>,
         identity: RequestIdentity,
     ) -> Self {
         Self {
             game,
             saves,
             authority,
+            references,
             identity: Mutex::new(identity),
         }
     }
@@ -323,6 +349,23 @@ impl PlayerCommands {
                         report(prior.as_ref(), &facts, scope, fresh_epoch, recovery, budget)
                     })?;
                 }
+                if matches!(facts.request.command.kind, CommandKind::Gather)
+                    && self.game.construction_grants
+                {
+                    return permits.current(&scope, Capability::Play, true, |scope, _| {
+                        report(
+                            Some(&ResultOwner::Refused(
+                                "construction-unavailable",
+                                CONSTRUCTION_GATHER_UNAVAILABLE,
+                            )),
+                            &facts,
+                            scope,
+                            true,
+                            false,
+                            budget,
+                        )
+                    })?;
+                }
                 self.saves.check_admission(tokio::time::Instant::now())?;
                 let reference = facts.request.command.known_place.as_ref();
                 let remembered = reference.is_some();
@@ -341,6 +384,8 @@ impl PlayerCommands {
                 let begin_saves = self.saves.clone();
                 let begin_scope = scope.clone();
                 let begin_authority = permits.clone();
+                let begin_references = self.references.clone();
+                let begin_budget = self.game.host.budget().clone();
                 let accept = self.saves.clone();
                 let stage = self.saves.clone();
                 let game = self.game.clone();
@@ -371,7 +416,7 @@ impl PlayerCommands {
                             if clock.paused
                                 && !(matches!(
                                     begin_facts.request.command.kind,
-                                    MoveOrCancel::Cancel
+                                    CommandKind::Cancel
                                 ) && clock.manually_paused)
                             {
                                 return Ok(ApplicationStart::Existing(ResultOwner::Refused(
@@ -405,7 +450,30 @@ impl PlayerCommands {
                             } else {
                                 begin_facts.request.command.position.as_ref()
                             };
-                            let command = begin_facts.command(position)?;
+                            let target = match begin_facts.request.command.target_id.as_deref() {
+                                None => None,
+                                Some(contact) => {
+                                    let Some(target) = begin_references.resolve_contact(
+                                        world,
+                                        &begin_scope.scope,
+                                        contact,
+                                        &begin_budget,
+                                    )?
+                                    else {
+                                        return Ok(ApplicationStart::Existing(
+                                            ResultOwner::Refused(
+                                                "stale-contact",
+                                                "Choose a resource you can see now.",
+                                            ),
+                                        ));
+                                    };
+                                    Some(target)
+                                }
+                            };
+                            let command = begin_facts.command(
+                                position,
+                                target.as_ref().map(|value| value.id.as_str()),
+                            )?;
                             Ok(ApplicationStart::Candidate(world.begin_player_command(
                                 &begin_facts.id,
                                 &begin_scope.scope.actor_id,
@@ -484,8 +552,11 @@ impl CommandRequest {
             return Err(AccessError::Forbidden.into());
         }
         match command.kind {
-            MoveOrCancel::Move
+            CommandKind::Move
                 if command.expected_action_id.is_none()
+                    && command.target_id.is_none()
+                    && command.item_id.is_none()
+                    && command.gathering_mode.is_none()
                     && (command
                         .known_place
                         .as_ref()
@@ -499,12 +570,33 @@ impl CommandRequest {
             {
                 Ok(())
             }
-            MoveOrCancel::Cancel
+            CommandKind::Cancel
                 if command.position.is_none()
                     && command.known_place.is_none()
+                    && command.target_id.is_none()
+                    && command.item_id.is_none()
+                    && command.gathering_mode.is_none()
                     && command.expected_action_id.as_deref().is_none_or(id) =>
             {
                 Ok(())
+            }
+            CommandKind::Gather
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.item_id.as_deref().is_none_or(id) =>
+            {
+                let wants_tool = match command.gathering_mode {
+                    Some(GatheringMode::CarriedTool | GatheringMode::EquippedTool) => true,
+                    Some(GatheringMode::AvailableTools | GatheringMode::BareHands) => false,
+                    None => command.item_id.is_some(),
+                };
+                if wants_tool == command.item_id.is_some() {
+                    Ok(())
+                } else {
+                    Err(AccessError::Forbidden.into())
+                }
             }
             _ => Err(AccessError::Forbidden.into()),
         }
@@ -566,15 +658,21 @@ impl PreparedRequest {
     fn command<'a>(
         &'a self,
         destination: Option<&'a SurfacePoint>,
+        target: Option<&'a str>,
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
         match input.kind {
-            MoveOrCancel::Move => Ok(RuntimePlayerCommand::Move(
+            CommandKind::Move => Ok(RuntimePlayerCommand::Move(
                 destination.ok_or(StoreError::InvalidRecord)?,
             )),
-            MoveOrCancel::Cancel => Ok(RuntimePlayerCommand::Cancel(
+            CommandKind::Cancel => Ok(RuntimePlayerCommand::Cancel(
                 input.expected_action_id.as_deref(),
             )),
+            CommandKind::Gather => Ok(RuntimePlayerCommand::Gather {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                tool: input.item_id.as_deref(),
+                mode: input.gathering_mode,
+            }),
         }
     }
 }

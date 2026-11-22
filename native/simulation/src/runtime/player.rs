@@ -88,6 +88,14 @@ pub struct RuntimePlayerPublication {
     can_use_inventory: bool,
     _lease: PublicationLease,
 }
+
+pub struct RuntimeGatherOffer<'a> {
+    pub name: &'a crate::text::JsText,
+    pub material: &'a crate::text::JsText,
+    pub label: Option<&'a crate::text::JsText>,
+    pub quantity: u64,
+    pub sequence: u64,
+}
 impl RuntimePlayerPublication {
     pub fn can_use_inventory(&self) -> bool {
         self.can_use_inventory
@@ -207,6 +215,73 @@ impl NativeWorldSession {
             .map_err(failure)?
             .with_player_targets(account, actor, &self.budget, body, person)
             .map_err(failure)
+    }
+
+    /// Match a signed current contact without reading remembered people.
+    /// The callback owns the custody of anything it retains from the read.
+    pub fn with_player_contacts(
+        &self,
+        account: &str,
+        actor: &str,
+        body: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+    ) -> Result<bool, RuntimeError> {
+        self.require_active()?;
+        self.session
+            .accepted()
+            .map_err(failure)?
+            .with_player_contacts(account, actor, &self.budget, body)
+            .map_err(failure)
+    }
+
+    /// Select a currently observed gathering source and publish in the same
+    /// turn. The application compares its own opaque reference in `matches`.
+    pub fn with_player_gathering_offer<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        mut matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+        use_offer: impl FnOnce(RuntimeGatherOffer<'_>) -> Result<T, RuntimeError>,
+    ) -> Result<Option<T>, RuntimeError> {
+        self.require_active()?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        let sequence = simulation.state.physical.header.sequence;
+        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        let mut encode = Some(use_offer);
+        let mut result = None;
+        simulation
+            .visit_accepted_player_contacts(account, actor, &self.budget, |body| {
+                let Some(crate::reception::SensoryFacet::Body { body: observed }) =
+                    body.body_facet().map(|facet| &facet.value)
+                else {
+                    return false;
+                };
+                let Some((definition, quantity)) = observed.subtype.as_ref().zip(observed.quantity)
+                else {
+                    return false;
+                };
+                let retained = &simulation.state.installed.retained;
+                let Some(item) = retained.items.get(definition).filter(|item| item.portable) else {
+                    return false;
+                };
+                if retained.bare_hand_gathering.is_none() || observed.kind != "resource" {
+                    return false;
+                }
+                let name = &body.name.name;
+                if !matches(body) {
+                    return false;
+                }
+                let encode = encode.take().expect("one selected source");
+                result = Some(encode(RuntimeGatherOffer {
+                    name,
+                    material: &item.named.name,
+                    label: item.gather_label.as_ref(),
+                    quantity: quantity as u64,
+                    sequence,
+                }));
+                true
+            })
+            .map_err(failure)?;
+        result.transpose()
     }
 
     /// Inspect the authoritative actor, recipient and payer in one accepted

@@ -68,7 +68,7 @@ pub(crate) fn can_steer(
             .capability_blocked(Some(entity), "locomotion")?
         && entity.spatial.flight.is_none()
         && entity.spatial.fall_velocity.is_none()
-        && installed.movement.steering_action_allowed(entity)?)
+        && installed.movement.steering_action_allowed(entity))
 }
 pub(super) fn input_boundary(
     core: &CoreMutation<'_>,

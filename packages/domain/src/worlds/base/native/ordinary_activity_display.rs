@@ -1,7 +1,7 @@
 //! The Base world's wording for admitted ordinary actions. Already captured
 //! positions describe direct distance without granting routing or speech.
 
-use openlegend_simulation::{
+use crate::{
     activity::{ActivityDetail, ActivityFact, ActivityScalar, ActivityView},
     spatial::distance,
     state::Point,
@@ -56,7 +56,7 @@ struct AttackWords<'a> {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct EffectWords {
+pub struct EffectWords {
     label: JsText,
     activate: Option<JsText>,
     deactivate: Option<JsText>,
@@ -64,7 +64,7 @@ pub(crate) struct EffectWords {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct StrikeRead {
+pub struct StrikeRead {
     damage: f64,
     range: f64,
     approach_range: Option<f64>,
@@ -73,7 +73,7 @@ pub(crate) struct StrikeRead {
     accuracy: Option<f64>,
 }
 
-pub(crate) enum OrdinaryAction {
+pub enum OrdinaryAction {
     Move(Point),
     Say(JsText),
     Follow,
@@ -82,6 +82,15 @@ pub(crate) enum OrdinaryAction {
         effect: Option<EffectWords>,
     },
     Strike(Option<StrikeRead>),
+    Gather(GatherRead),
+}
+
+pub struct GatherRead {
+    pub(crate) reach: f64,
+    pub(crate) quantity: u64,
+    pub(crate) seconds: f64,
+    pub(crate) material: JsText,
+    pub(crate) tool: Option<(JsText, Option<JsText>)>,
 }
 
 #[derive(Deserialize)]
@@ -106,16 +115,16 @@ struct ObservedWords<'a> {
 }
 
 #[derive(Clone, Copy, Deserialize)]
-pub(crate) struct ObservedActor {
+pub struct ObservedActor {
     pub(crate) position: Point,
-    heading: f64,
+    pub(crate) heading: f64,
 }
 
 #[derive(Deserialize)]
-pub(crate) struct ObservedTarget {
-    name: JsText,
-    position: Point,
-    health: Option<openlegend_simulation::reception::AttributeView>,
+pub struct ObservedTarget {
+    pub(crate) name: JsText,
+    pub(crate) position: Point,
+    pub(crate) health: Option<crate::reception::AttributeView>,
 }
 
 #[derive(Deserialize)]
@@ -160,7 +169,7 @@ fn tenth(value: f64) -> String {
     format!("{sign}{}.{}", ticks / 10, ticks % 10)
 }
 
-pub(crate) fn format(
+pub fn format(
     profile: (&str, u64),
     action: OrdinaryAction,
     purpose: Option<JsText>,
@@ -196,6 +205,7 @@ pub(crate) fn format(
         }
         target.name
     });
+    let mut tool = None;
     let name = match action {
         OrdinaryAction::Move(destination) => {
             let movement = &words.r#move;
@@ -275,13 +285,40 @@ pub(crate) fn format(
             }
             purpose.unwrap_or_else(|| display.name.into())
         }
+        OrdinaryAction::Gather(read) => {
+            let copy = super::base_gathering::copy();
+            if let Some((name, description)) = read.tool {
+                tool = Some(name);
+                if let Some(description) = description {
+                    let mut row = fact("description", description);
+                    row.critical = false;
+                    facts.push(row);
+                }
+            }
+            facts.push(fact(
+                &copy.approach_name,
+                copy.approach
+                    .replace("{reach}", &number(read.reach)?)
+                    .into(),
+            ));
+            let template = copy
+                .work
+                .replace("{seconds}", &number(read.seconds)?)
+                .replace("{quantity}", &read.quantity.to_string());
+            let (before, after) = template.split_once("{material}")?;
+            facts.push(fact(
+                &copy.work_name,
+                JsText::concat(&[&before.into(), &read.material, &after.into()]),
+            ));
+            purpose.unwrap_or_else(|| copy.name.as_str().into())
+        }
     };
     Some(ActivityView {
         name,
         facts,
         actor: None,
         target,
-        tool: None,
+        tool,
         children: None,
         result: None,
     })
@@ -292,7 +329,7 @@ fn prepend(prefix: &str, label: &JsText) -> JsText {
 }
 
 fn number(value: f64) -> Option<String> {
-    openlegend_simulation::encoding::json_record(&(value + 0.0)).ok()
+    crate::encoding::json_record(&(value + 0.0)).ok()
 }
 
 fn attack_words() -> Option<&'static AttackWords<'static>> {
@@ -302,9 +339,8 @@ fn attack_words() -> Option<&'static AttackWords<'static>> {
         .as_ref()
 }
 
-fn health_phrase(health: &openlegend_simulation::reception::AttributeView) -> Option<JsText> {
-    let openlegend_simulation::values::AttributeValue::Number(value) = health.value.as_ref()?
-    else {
+fn health_phrase(health: &crate::reception::AttributeView) -> Option<JsText> {
+    let crate::values::AttributeValue::Number(value) = health.value.as_ref()? else {
         return None;
     };
     // Source's Number(toPrecision(4)) rounds to four significant digits.

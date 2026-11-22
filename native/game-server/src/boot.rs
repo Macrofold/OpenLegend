@@ -181,6 +181,7 @@ pub struct CurrentServer {
     language: Option<Arc<LanguageProvider>>,
     view: Arc<PlayerViewPolicy>,
     pub(crate) cognition: Arc<DecisionPolicy>,
+    pub(crate) construction_grants: bool,
     assets: Option<Arc<InstalledAssets>>,
     _cognition_custody: openlegend_simulation::host::ByteReservation,
     pub verified: VerifiedOpening,
@@ -407,6 +408,7 @@ impl CurrentServer {
             .compute(move || install.install(&release_dir, opening, require_language))
             .await??;
         let revision = receipt.revision;
+        let construction_grants = store.has_construction_grants(&receipt.world_id).await?;
         let (retained_release, asset_revision) = session.saved_presentation_release();
         if let Some(retained_release) = retained_release {
             if asset_revision.is_none_or(|revision| revision == 0) {
@@ -444,6 +446,7 @@ impl CurrentServer {
             language,
             view,
             cognition,
+            construction_grants,
             assets,
             _cognition_custody: cognition_custody,
             verified,

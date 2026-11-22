@@ -153,6 +153,7 @@ impl ActivityDisplayCursor {
             command,
             NativeCommand::Outing { .. }
                 | NativeCommand::Feed { .. }
+                | NativeCommand::Gather { .. }
                 | NativeCommand::Cancel { .. }
                 | NativeCommand::WithdrawAttempt { .. }
                 | NativeCommand::InspectInventory { .. }
@@ -397,6 +398,7 @@ impl ActivityDisplayCursor {
             NativeCommand::Strike { .. } => Command::Strike { purpose },
             NativeCommand::Outing { .. }
             | NativeCommand::Feed { .. }
+            | NativeCommand::Gather { .. }
             | NativeCommand::Cancel { .. }
             | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::InspectInventory { .. }

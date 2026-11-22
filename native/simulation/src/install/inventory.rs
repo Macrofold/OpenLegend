@@ -40,6 +40,10 @@ pub fn shortcut_limit() -> usize {
     LIMITS.shortcut_entries
 }
 
+pub(crate) fn item_count_pin() -> &'static DefinitionPin {
+    &LIMITS.count_pin
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(super) struct ContainerDefinition {
@@ -59,6 +63,9 @@ pub(super) struct ItemDefinitionFields {
     pub name_form: Option<String>,
     pub indefinite_article: Option<String>,
     pub icon: Option<String>,
+    pub gather_label: Option<crate::text::JsText>,
+    description: Option<crate::text::JsText>,
+    gathering_tool: Option<GatheringTool>,
     #[serde(default)]
     pub portable: bool,
     pub packing_load: Option<u64>,
@@ -66,7 +73,21 @@ pub(super) struct ItemDefinitionFields {
     equipment: Option<Equipment>,
     #[serde(default)]
     tracks_material_origins: bool,
-    assembly_material: Option<serde::de::IgnoredAny>,
+    assembly_material: Option<MaterialRole>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct MaterialRole {
+    family_id: String,
+    role: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ItemMaterialRule {
+    pub initial_attributes: Vec<String>,
+    pub homogeneous: bool,
 }
 
 #[derive(Deserialize)]
@@ -85,15 +106,27 @@ enum EquipmentUse {
     Guard,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct GatheringTool {
+    resource_id: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    quantity: u64,
+}
+
 pub(crate) struct ItemDefinitionRead {
     pub pin: DefinitionPin,
     pub named: Named,
     pub icon: Option<String>,
+    pub gather_label: Option<crate::text::JsText>,
+    pub description: Option<crate::text::JsText>,
+    gathering_tool: Option<GatheringTool>,
     pub portable: bool,
     packing_load: Option<u64>,
     container: Option<ContainerDefinition>,
     equipment: Option<Equipment>,
-    tracks_material_origins: bool,
+    pub tracks_material_origins: bool,
+    pub material: Option<ItemMaterialRule>,
 }
 
 impl ItemDefinitionRead {
@@ -101,6 +134,8 @@ impl ItemDefinitionRead {
         key: &str,
         canonical: &str,
         value: ItemDefinitionFields,
+        assembly: Option<&super::retained::RetainedMap>,
+        budget: &ByteBudget,
     ) -> Result<Self, InstallError> {
         let pin = DefinitionPin {
             id: value.id,
@@ -117,6 +152,10 @@ impl ItemDefinitionRead {
             || value
                 .packing_load
                 .is_some_and(|load| load > MAX_SAFE_INTEGER)
+            || value
+                .gathering_tool
+                .as_ref()
+                .is_some_and(|tool| !is_safe_record_id(&tool.resource_id) || tool.quantity == 0)
         {
             return Err(InstallError::DefinitionBody);
         }
@@ -136,6 +175,20 @@ impl ItemDefinitionRead {
                 return Err(InstallError::DefinitionBody);
             }
         }
+        let material = value.assembly_material.as_ref().map(|role| {
+            #[derive(Deserialize)]
+            struct Family<'a> {
+                #[serde(borrow)]
+                inventory: IndexMap<&'a str, &'a serde_json::value::RawValue>,
+            }
+            let payload = assembly.and_then(|families| families.get(&role.family_id))
+                .ok_or(InstallError::DefinitionBody)?;
+            let _workspace = budget.reserve(payload.len().checked_mul(2).ok_or(InstallError::Capacity)?)
+                .map_err(|_| InstallError::Capacity)?;
+            let family: Family<'_> = serde_json::from_str(payload).map_err(|_| InstallError::DefinitionBody)?;
+            let rule = family.inventory.get(role.role.as_str()).ok_or(InstallError::DefinitionBody)?;
+            serde_json::from_str::<ItemMaterialRule>(rule.get()).map_err(|_| InstallError::DefinitionBody)
+        }).transpose()?;
         Ok(Self {
             pin,
             named: Named {
@@ -144,13 +197,34 @@ impl ItemDefinitionRead {
                 indefinite_article: value.indefinite_article,
             },
             icon: value.icon,
+            gather_label: value.gather_label,
+            description: value.description,
+            gathering_tool: value.gathering_tool,
             portable: value.portable,
             packing_load: value.packing_load,
             container: value.container,
             equipment: value.equipment,
             tracks_material_origins: value.tracks_material_origins
                 || value.assembly_material.is_some(),
+            material,
         })
+    }
+
+    pub(crate) fn gathering_yield(&self, resource: &str) -> Option<u64> {
+        self.gathering_tool
+            .as_ref()
+            .filter(|tool| tool.resource_id == resource)
+            .map(|tool| tool.quantity)
+    }
+
+    pub(crate) fn equips_for_gathering(&self) -> bool {
+        self.equipment
+            .as_ref()
+            .is_some_and(|gear| gear.uses.contains(&EquipmentUse::Gather))
+    }
+
+    pub(crate) fn is_container(&self) -> bool {
+        self.container.is_some()
     }
 }
 
@@ -158,8 +232,14 @@ heap_record!(ItemDefinitionRead {
     pin,
     named,
     icon,
+    gather_label,
+    description,
+    gathering_tool,
+    material,
     equipment
 });
+heap_record!(GatheringTool { resource_id });
+heap_record!(ItemMaterialRule { initial_attributes });
 impl HeapBytes for Equipment {
     fn heap_bytes(&self) -> Option<usize> {
         self.ports.heap_bytes()?.checked_add(

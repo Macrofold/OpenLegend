@@ -2,8 +2,8 @@
 //! read-only availability and actual admission. Preparation never publishes it.
 use super::*;
 use crate::commands::NativeCommand;
+use crate::host::retained_size::{heap_sum, map_storage, HeapBytes};
 use crate::host::ByteReservation;
-use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::state::EntityStore;
 use std::mem::size_of;
 
@@ -42,6 +42,9 @@ pub(super) fn start_record(
         NativeCommand::Follow { target_id, .. } | NativeCommand::Strike { target_id, .. } => {
             [Some(target_id.as_str()), None]
         }
+        NativeCommand::Gather {
+            target_id, tool, ..
+        } => [Some(target_id), tool.item_id.as_deref()],
         _ => [None, None],
     };
     let object_bytes = fields
@@ -51,7 +54,14 @@ pub(super) fn start_record(
             let Some(entity) = entities.get(id) else {
                 return Some(n);
             };
-            n.checked_add(id.len())?.checked_add(entity.kind.len())
+            n.checked_add(id.len())?
+                .checked_add(entity.kind.len())?
+                .checked_add(
+                    entity
+                        .item
+                        .as_ref()
+                        .map_or(Some(0), |item| item.definition_pin.heap_bytes())?,
+                )
         })
         .ok_or(ActivityError::Capacity)?;
     // Reserve before cloning borrowed command/facts and object labels.
@@ -81,16 +91,14 @@ pub(super) fn start_record(
     let mut objects = IndexMap::new();
     for id in fields.into_iter().flatten() {
         if let Some(entity) = entities.get(id) {
-            if entity.item.is_some() {
-                return Err(ActivityError::UnsupportedFamily);
-            }
+            let pin = entity.item.as_ref().map(|item| &item.definition_pin);
             objects.insert(
                 id.to_owned(),
                 ActivityObject {
                     kind: entity.kind.clone(),
-                    definition_id: None,
-                    definition_version: None,
-                    definition_digest: None,
+                    definition_id: pin.map(|pin| pin.id.clone()),
+                    definition_version: pin.map(|pin| pin.version),
+                    definition_digest: pin.map(|pin| pin.digest.clone()),
                 },
             );
         }
