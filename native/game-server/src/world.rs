@@ -34,7 +34,7 @@ pub(crate) const IO_YIELD: Duration = Duration::from_millis(8);
 mod activity_learning;
 mod npc;
 mod recall_maintenance;
-pub(crate) use npc::{NpcBinding, NpcHistoryRows};
+pub(crate) use npc::NpcBinding;
 mod player_history;
 mod player_inventory;
 pub(crate) mod narrator;
@@ -563,7 +563,7 @@ impl HostedWorld {
         cut: u64,
         publish: impl FnOnce() -> T,
     ) -> Result<Option<T>, WorldError> {
-        self.reply_disclosure(|session| {
+        self.try_publication(|session| {
             let lease =
                 session.reply_preview_publication(&scope.account_id, &scope.actor_id, cut)?;
             Ok(lease
@@ -578,14 +578,16 @@ impl HostedWorld {
         source: Option<&openlegend_simulation::experience::PersonalSourceRef>,
         publish: impl FnOnce(bool) -> T,
     ) -> Result<Option<T>, WorldError> {
-        self.reply_disclosure(|session| {
+        self.try_publication(|session| {
             let (lease, allowed) =
                 session.reply_receipt_publication(&scope.account_id, &scope.actor_id, source)?;
             Ok(lease.is_current().then(|| publish(allowed)))
         })
     }
 
-    fn reply_disclosure<T>(
+    /// Borrow the accepted world for immediate publication or precommit validation.
+    /// A caller holding PostgreSQL can try this boundary without waiting for a world turn.
+    pub(crate) fn try_publication<T>(
         &self,
         select: impl FnOnce(&NativeWorldSession) -> Result<Option<T>, RuntimeError>,
     ) -> Result<Option<T>, WorldError> {

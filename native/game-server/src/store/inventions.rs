@@ -11,6 +11,8 @@ use openlegend_simulation::{
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 
+pub(crate) mod reuse;
+
 pub(crate) const PAGE_SIZE: usize = 50;
 
 #[derive(Deserialize, Serialize)]
@@ -98,7 +100,7 @@ pub(crate) struct InventionSearch {
 pub(crate) struct InventionMatch {
     pub recipe_id: String,
     pub digest: String,
-    version: u64,
+    pub version: u64,
     name: JsText,
     description: JsText,
     materials: JsText,

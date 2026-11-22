@@ -12,6 +12,8 @@ use crate::{
 use openlegend_simulation::text::JsText;
 use serde_json::value::RawValue;
 
+pub(super) mod reuse;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct HistoryRequest {
@@ -229,7 +231,7 @@ pub(super) async fn list(State(state): State<PlayerRoutes>, request: Request) ->
                     session.with_player_recipe_references(
                         &fields.account_id,
                         &fields.actor_id,
-                        |known| {
+                        |recipes| {
                             let jobs = &page.jobs;
                             let bound = jobs.iter().try_fold(0usize, |bytes, job| {
                                 let matches = job
@@ -262,7 +264,7 @@ pub(super) async fn list(State(state): State<PlayerRoutes>, request: Request) ->
                                             let mut matches =
                                                 Vec::with_capacity(search.matches.len());
                                             matches.extend(search.matches.iter().filter(|item| {
-                                                known(&item.recipe_id, Some(&item.digest))
+                                                recipes.known(&item.recipe_id, Some(&item.digest))
                                             }));
                                             SearchView {
                                                 status: &search.status,
@@ -299,7 +301,8 @@ pub(super) async fn list(State(state): State<PlayerRoutes>, request: Request) ->
                                         search,
                                         recipe_id,
                                         current_timeline,
-                                        installed: recipe_id.is_some_and(|id| known(id, None)),
+                                        installed: recipe_id
+                                            .is_some_and(|id| recipes.known(id, None)),
                                     }
                                 })
                                 .collect();

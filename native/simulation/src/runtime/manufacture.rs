@@ -14,43 +14,125 @@ pub struct RuntimeManufactureOffer<'a> {
     pub missing: Option<(u64, &'a JsText)>,
 }
 
+#[derive(serde::Deserialize)]
+pub struct RuntimeKnownRecipe<'a> {
+    pub version: u64,
+    #[serde(borrow)]
+    pub name: &'a serde_json::value::RawValue,
+    #[serde(borrow)]
+    pub digest: &'a serde_json::value::RawValue,
+}
+
+impl RuntimeKnownRecipe<'_> {
+    fn matches(&self, expected: &str) -> bool {
+        crate::encoding::sha256_hex(self.digest.get().as_bytes()) == expected
+    }
+}
+
+pub struct RuntimePlayerRecipeReferences<'a> {
+    state: &'a crate::simulation::SimulationState,
+    actor: &'a str,
+}
+
+impl RuntimePlayerRecipeReferences<'_> {
+    fn record(&self, id: &str) -> Option<&str> {
+        self.state.installed.retained.recipes.get(id).filter(|_| {
+            self.state
+                .learned_capabilities
+                .known_recipes(self.actor)
+                .iter()
+                .any(|known| known == id)
+        })
+    }
+
+    pub fn known(&self, id: &str, expected: Option<&str>) -> bool {
+        self.record(id).is_some_and(|recipe| {
+            expected.is_none_or(|expected| {
+                serde_json::from_str::<RuntimeKnownRecipe<'_>>(recipe)
+                    .is_ok_and(|record| record.matches(expected))
+            })
+        })
+    }
+
+    /// Check an explicit saved choice against the currently installed policy,
+    /// the character's present life, known technique, version and exact digest.
+    /// The caller copies any selected text under its own allocation allowance.
+    pub fn reusable(
+        &self,
+        reference: (&str, u64, &str),
+        origin: (&str, u64),
+        allow_paused: bool,
+    ) -> Result<(u64, RuntimeKnownRecipe<'_>), &'static str> {
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Policy {
+            revision: u64,
+            player_locked: bool,
+            agent_locked: bool,
+            last_player_lock: u64,
+            last_agent_lock: u64,
+        }
+        let retained = &self.state.installed.retained;
+        let policy: Policy = serde_json::from_str(retained.invention_policy.payload())
+            .map_err(|_| "invention-authority")?;
+        let (locked, last_lock) = match origin.0 {
+            "player" => (policy.player_locked, policy.last_player_lock),
+            "agent" => (policy.agent_locked, policy.last_agent_lock),
+            _ => return Err("invention-authority"),
+        };
+        if origin.1 == 0 || origin.1 > policy.revision {
+            return Err("invention-authority");
+        }
+        if locked {
+            return Err("invention-locked");
+        }
+        if origin.1 < last_lock {
+            return Err("invention-revoked");
+        }
+        let (id, version, digest) = reference;
+        let recipe = self
+            .record(id)
+            .and_then(|record| serde_json::from_str::<RuntimeKnownRecipe<'_>>(record).ok())
+            .filter(|recipe| recipe.version == version && recipe.matches(digest))
+            .ok_or("stale")?;
+        if self.state.physical.header.paused && !allow_paused {
+            return Err("paused");
+        }
+        let actor = self
+            .state
+            .physical
+            .entities
+            .get(self.actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .filter(|actor| actor.alive && !actor.incapacitated)
+            .ok_or("actor")?;
+        Ok((actor.physical_life.unwrap_or_default(), recipe))
+    }
+}
+
 impl NativeWorldSession {
-    /// Recheck recipe references for a bounded retained history at publication.
-    /// The callback borrows current installed rows and learns neither new
-    /// methods nor material availability. A digest comparison scans the
-    /// selected canonical row and borrows only its serialized `digest` member.
+    /// Recheck recipe references for a bounded retained history or explicit
+    /// reuse at publication. This borrows current installed rows without a
+    /// full player capture, material availability query or world mutation.
     pub fn with_player_recipe_references<T>(
         &self,
         account: &str,
         actor: &str,
-        publish: impl FnOnce(&dyn Fn(&str, Option<&str>) -> bool) -> T,
+        publish: impl FnOnce(RuntimePlayerRecipeReferences<'_>) -> T,
     ) -> Result<T, RuntimeError> {
         self.require_active()?;
         let simulation = self.session.accepted().map_err(failure)?;
         simulation
             .require_player_read(account, actor)
             .map_err(failure)?;
-        let _lease = self.session.fence().begin_publication().map_err(failure)?;
-        let state = &simulation.state;
-        let known = state.learned_capabilities.known_recipes(actor);
-        let recipes = &state.installed.retained.recipes;
-        #[derive(serde::Deserialize)]
-        struct Digest<'a> {
-            #[serde(borrow)]
-            digest: &'a serde_json::value::RawValue,
-        }
-        Ok(publish(&|id, expected| {
-            let Some(recipe) = recipes
-                .get(id)
-                .filter(|_| known.iter().any(|known| known == id))
-            else {
-                return false;
-            };
-            expected.is_none_or(|expected| {
-                serde_json::from_str::<Digest<'_>>(recipe).is_ok_and(|record| {
-                    crate::encoding::sha256_hex(record.digest.get().as_bytes()) == expected
-                })
-            })
+        let _lease = self
+            .session
+            .fence()
+            .begin_publication()
+            .map_err(fence_failure)?;
+        Ok(publish(RuntimePlayerRecipeReferences {
+            state: &simulation.state,
+            actor,
         }))
     }
 
