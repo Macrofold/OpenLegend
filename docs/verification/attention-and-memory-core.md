@@ -75,6 +75,10 @@ The schema-64 listener used frozen `7b4a87552` plus the hourly and shared provid
 
 Routine daily interpretation, richer hourly evidence projection and source/backlog cases, learning, reflection, semantic indexing and active-work comparisons remain under [NSC04-R2](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
 
+### Stand-alone correction of an acquired source — November 21, 2026
+
+On frozen source `5ce62f48e4eda986a66d6ef9e1498c05fe6b4322`, an authenticated player spoke twice through the real conversation path. The NPC acquired the later utterance. The creator correction route refused a fabricated replacement with no database write, then bound the earlier memory to the later acquired event. PostgreSQL preserved the exact correction through a cold restart. Both controlled replies and the in-game walk also persisted. The operator keeps the same private world authority and protected save as forgetting. The recent-receipt reference variant remains open. This was a local correctness check with no provider charge. The executable SHA-256 was `82f45f0a36e6b14d2a23b141f2d1e389152f4120da8b56e947043199aa6ab2f0`; the `native-memory-correction` case is retained under `native-runtime-foundations/nsc04-first-reply-20261121.LsAlK7Y8/`.
+
 ## Performance evidence and remaining limits
 
 Movement admission, saved random selection and bookkeeping share the existing command transaction, removing a second publication; one offered route needs no random-selection draft. Fully admitted ordinary automatic travel can also reuse its enclosing advance's working draft through that same command owner. No preparation is reused across changed inputs. The gather/JSON-restoration check passes in **10,678.633 ms**, including complete warm/restored world equality; climb–gather–return passes in **12,098.672 ms**. The former combined service-speed case exceeded the global 15-second watchdog at **16,891.353 ms**; its later diagnostics and independent-case registration are recorded below. Earlier native failures follow for attribution. Clock rate, game workload and assertions remain unchanged.

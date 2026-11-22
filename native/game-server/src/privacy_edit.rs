@@ -20,13 +20,15 @@ use std::{mem::size_of, sync::Arc};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct ForgetRequest {
+pub(crate) struct RecallEditRequest {
     pub actor_id: String,
     pub source_id: String,
+    #[serde(default, deserialize_with = "openlegend_simulation::values::deserialize_present_option")]
+    pub correction_event_id: Option<String>,
 }
 
 #[derive(Serialize)]
-pub(crate) struct ForgetOutcome {
+pub(crate) struct RecallEditOutcome {
     #[serde(flatten)]
     outcome: Outcome,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -36,7 +38,7 @@ pub(crate) struct ForgetOutcome {
 }
 
 struct PreparedEdit {
-    result: ForgetOutcome,
+    result: RecallEditOutcome,
     projection: Option<PreparedPrivacyEdit>,
 }
 
@@ -52,14 +54,17 @@ fn operator(
 
 /// The HTTP caller supplies authenticated creator scope and enables this
 /// operator action only when god mode is configured.
-pub(crate) async fn forget(
+pub(crate) async fn edit(
     game: &Arc<CurrentServer>,
     saves: &Arc<LiveSaves>,
     authority: Arc<Authority>,
     scope: Arc<AuthorizedScope>,
-    request: ForgetRequest,
-) -> Result<ForgetOutcome, WorldError> {
-    if !is_safe_record_id(&request.actor_id) || !is_safe_record_id(&request.source_id) {
+    request: RecallEditRequest,
+) -> Result<RecallEditOutcome, WorldError> {
+    if !is_safe_record_id(&request.actor_id)
+        || !is_safe_record_id(&request.source_id)
+        || request.correction_event_id.as_deref().is_some_and(|id| !is_safe_record_id(id))
+    {
         return Err(StoreError::InvalidRecord.into());
     }
     let owner = operator(&authority, &scope, &request.actor_id)?;
@@ -68,7 +73,7 @@ pub(crate) async fn forget(
     let checked_owner = owner.clone();
     if !game
         .world
-        .capture(move |world| world.may_forget_recall(&checked_owner, &copied))
+        .capture(move |world| world.may_edit_recall(&checked_owner, &copied))
         .await?
     {
         return Err(AccessError::Forbidden.into());
@@ -108,10 +113,10 @@ pub(crate) async fn forget(
                 {
                     return Err(RuntimeError::application_refused(StoreError::StaleCut));
                 }
-                if !world.may_forget_recall(&owner, &request.actor_id)? {
+                if !world.may_edit_recall(&owner, &request.actor_id)? {
                     return Err(RuntimeError::application_refused(AccessError::Forbidden));
                 }
-                world.begin_forget_direct(&request.actor_id, &request.source_id)
+                world.begin_recall_edit_direct(&request.actor_id, &request.source_id, request.correction_event_id)
             },
             move |question| {
                 let game = provider.clone();
@@ -136,7 +141,7 @@ pub(crate) async fn forget(
                 let bytes = json_record_len(outcome)
                     .map_err(RuntimeError::application_refused)?
                     .checked_mul(3)
-                    .and_then(|bytes| bytes.checked_add(size_of::<ForgetOutcome>()))
+                        .and_then(|bytes| bytes.checked_add(size_of::<RecallEditOutcome>()))
                     .ok_or_else(|| RuntimeError::application_refused(StoreError::Capacity))?;
                 let custody = budget.reserve(bytes)?;
                 let projection = if outcome.ok {
@@ -156,7 +161,7 @@ pub(crate) async fn forget(
                     None
                 };
                 Ok(PreparedEdit {
-                    result: ForgetOutcome {
+                    result: RecallEditOutcome {
                         outcome: outcome.clone(),
                         revision: None,
                         _custody: custody,

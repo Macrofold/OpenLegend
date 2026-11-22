@@ -19,7 +19,7 @@ struct CorrectInput {
 impl NativeWorldSession {
     /// The application has separately checked Creator and, for another
     /// actor, Inspect. No creator session inherits another player's mind.
-    pub fn may_forget_recall(&self, owner: &str, actor: &str) -> Result<bool, RuntimeError> {
+    pub fn may_edit_recall(&self, owner: &str, actor: &str) -> Result<bool, RuntimeError> {
         let accepted = self.session.accepted().map_err(failure)?;
         Ok(accepted
             .state
@@ -41,23 +41,28 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let input: ForgetInput = serde_json::from_slice(input).map_err(failure)?;
-        self.begin_forget_direct(&input.actor_id, &input.source_id)
+        self.begin_recall_edit_direct(&input.actor_id, &input.source_id, None)
     }
 
     /// Begin the same protected edit from trusted, already decoded application
     /// arguments. Storage and rollback stay with the semantic cursor.
-    pub fn begin_forget_direct(
+    pub fn begin_recall_edit_direct(
         &mut self,
         actor_id: &str,
         source_id: &str,
+        correction: Option<String>,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         let held = self.held_source_proof(actor_id, source_id)?;
+        let edit = match correction {
+            Some(event_id) => crate::experience::PrivacyEditMode::Correct { event_id },
+            None => crate::experience::PrivacyEditMode::Forget,
+        };
         self.session
             .begin_recall_edit(
                 actor_id,
                 source_id,
-                crate::experience::PrivacyEditMode::Forget,
+                edit,
                 held,
                 self.history_edit_limits,
             )
@@ -67,18 +72,7 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let input: CorrectInput = serde_json::from_slice(input).map_err(failure)?;
-        let held = self.held_source_proof(&input.actor_id, &input.source_id)?;
-        self.session
-            .begin_recall_edit(
-                &input.actor_id,
-                &input.source_id,
-                crate::experience::PrivacyEditMode::Correct {
-                    event_id: input.correction_event_id,
-                },
-                held,
-                self.history_edit_limits,
-            )
-            .map_err(failure)
+        self.begin_recall_edit_direct(&input.actor_id, &input.source_id, Some(input.correction_event_id))
     }
 }
 

@@ -139,14 +139,16 @@ pub(crate) fn router(
             axum::routing::get(dialogue::availability),
         );
     let operations = if god_mode {
-        operations.route("/api/god/forget-memory", post(forget_memory))
+        operations
+            .route("/api/god/forget-memory", post(edit_recall))
+            .route("/api/god/correct-memory", post(edit_recall))
     } else {
         operations
     };
     Ok(operations.with_state(state).merge(reads))
 }
 
-async fn forget_memory(State(state): State<PlayerRoutes>, request: Request) -> Response {
+async fn edit_recall(State(state): State<PlayerRoutes>, request: Request) -> Response {
     let Ok(_slot) = state.capacity.try_acquire() else {
         return busy();
     };
@@ -155,13 +157,16 @@ async fn forget_memory(State(state): State<PlayerRoutes>, request: Request) -> R
         Ok(scope) => Arc::new(scope),
         Err(error) => return access_failure(error),
     };
-    let (input, _custody): (crate::privacy_edit::ForgetRequest, _) =
+    let (input, _custody): (crate::privacy_edit::RecallEditRequest, _) =
         match json(&parts.headers, body, state.game.host.budget()).await {
             Ok(input) => input,
             Err(error) => return error,
         };
+    if input.correction_event_id.is_some() != (parts.uri.path() == "/api/god/correct-memory") {
+        return failed(StoreError::InvalidRecord.into());
+    }
     let needs_inspect = input.actor_id != authorized.scope.actor_id;
-    let result = match crate::privacy_edit::forget(
+    let result = match crate::privacy_edit::edit(
         &state.game,
         &state.saves,
         state.authority.clone(),
