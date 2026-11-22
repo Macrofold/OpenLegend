@@ -11,6 +11,7 @@ These established documents own supported behavior and explicitly labeled remain
 | World creation and reviewed invention            | [World Agent](../world-agent-runtime.md), [invention foundation](../invention-foundation.md)                    |
 | Saving and return                                | [Save/load](../save-and-load.md)                                                                                |
 | Survival, camps, conflict and people             | [Base-world rules](../worlds/base/README.md); engine mechanisms remain separate                                 |
+| Graphics, character detail and shading           | [Character detail and shading](graphics/character-detail-and-shading.md) (planned UE5 client targets)           |
 | Scale and belonging targets                      | [Product scalability](../product-scalability/README.md)                                                         |
 
 [Reusable verification workers](verification-workers.md) own remote development checks and rendered-measurement behavior.
