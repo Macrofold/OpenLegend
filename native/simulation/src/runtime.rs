@@ -111,12 +111,12 @@ pub use crate::time::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput
 pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
-    RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcConsumer, RuntimeNpcDecisionFrame,
-    RuntimeNpcDecisionOrigin, RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings,
-    RuntimeNpcObservedBody, RuntimeNpcOffer, RuntimeNpcOperations, RuntimeNpcPersonalSource,
-    RuntimeNpcPersonalSources, RuntimeNpcPreparationStep, RuntimeNpcPresentedBody,
-    RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket, RuntimeNpcSeparation,
-    RuntimeNpcSeparationEvidence,
+    RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcBoundaryFact, RuntimeNpcConsumer,
+    RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcFeeling, RuntimeNpcFeelingTarget,
+    RuntimeNpcFeelings, RuntimeNpcObservedBody, RuntimeNpcOffer, RuntimeNpcOperations,
+    RuntimeNpcPersonalSource, RuntimeNpcPersonalSources, RuntimeNpcPreparationStep,
+    RuntimeNpcPresentedBody, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
+    RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
 };
 pub use player::{
     RuntimeHearthCatalogue, RuntimeHearthShape,

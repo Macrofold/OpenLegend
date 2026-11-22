@@ -30,7 +30,7 @@ pub(crate) use held_sources::HeldSourceProof;
 pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};
 pub use personal::{RuntimeNpcPersonalSource, RuntimeNpcPersonalSources};
 pub use presentation::{RuntimeNpcObservedBody, RuntimeNpcPresentedBody};
-pub use queries::{RuntimeNpcSeparation, RuntimeNpcSeparationEvidence};
+pub use queries::{RuntimeNpcBoundaryFact, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence};
 
 /// A brief dispatch gate, never retained while SQL or a provider is awaited.
 /// Historical disclosure and current response semantics are separate routes.
@@ -363,21 +363,31 @@ impl NativeWorldSession {
         if ticket.checks_query_evidence {
             let cut = &ticket.original.read.perception.evidence;
             let law = state.installed.account_law();
-            if ticket
-                .bindings
-                .situation
+            use crate::experience::EvidenceCutMember;
+            let situation = &ticket.bindings.situation;
+            let current = situation
                 .current_references
                 .values()
-                .any(|&ordinal| {
-                    !crate::experience::evidence_cut_member_eligible(
-                        &state.experience,
-                        &state.physical.entities,
-                        cut,
-                        crate::experience::EvidenceCutMember::Current(ordinal),
-                        &law,
-                    )
-                })
-            {
+                .copied()
+                .map(EvidenceCutMember::Current);
+            let acquired = situation
+                .observation_references
+                .values()
+                .filter_map(|observation| match observation {
+                    crate::response::ResponseObservation::Acquired(ordinal) => {
+                        Some(EvidenceCutMember::Acquired(*ordinal))
+                    }
+                    crate::response::ResponseObservation::Personal(_) => None,
+                });
+            if current.chain(acquired).any(|member| {
+                !crate::experience::evidence_cut_member_eligible(
+                    &state.experience,
+                    &state.physical.entities,
+                    cut,
+                    member,
+                    &law,
+                )
+            }) {
                 return Ok(Err("native-response-query-evidence"));
             }
         }

@@ -14,6 +14,7 @@ use serde::Serialize;
 use serde::ser::SerializeSeq;
 use std::mem::size_of;
 
+mod boundaries;
 mod nearby;
 use nearby::{Nearby, NearbyRead};
 
@@ -66,6 +67,7 @@ struct Answer<'a> {
 enum QueryResult<'a> {
     Separation(Separation),
     Nearby(Nearby<'a>),
+    Boundaries(boundaries::Boundaries),
 }
 
 #[derive(Serialize)]
@@ -124,6 +126,7 @@ impl Answers<'_> {
             match &answer.result {
                 QueryResult::Separation(result) => result.bind(binding)?,
                 QueryResult::Nearby(result) => result.bind(binding)?,
+                QueryResult::Boundaries(result) => result.bind(binding)?,
             }
         }
         Ok(())
@@ -236,19 +239,25 @@ pub(super) fn answer<'a>(
                     &mut remaining,
                 )?,
             ),
+            "boundaries" => QueryResult::Boundaries(boundaries::answer(
+                binding.received_anchor(original, current, field("anchor")?),
+                original,
+                &mut remaining,
+                budget,
+                reference_scope,
+                frame,
+            )?),
             _ => return Err(CallFailure::Stale("situation-query-family-unavailable")),
         };
         answers.visited = policy.query_visits - remaining;
         answers.results.push(Answer { query, result });
         let mut excess = encoded_size(&answers)?.saturating_sub(maximum);
         if excess != 0 {
-            if let Some(Answer {
-                result: QueryResult::Nearby(last),
-                ..
-            }) = answers.results.last_mut()
-            {
-                excess = last.trim(excess)?;
-            }
+            excess = match answers.results.last_mut().map(|answer| &mut answer.result) {
+                Some(QueryResult::Nearby(last)) => last.trim(excess)?,
+                Some(QueryResult::Boundaries(last)) => last.trim(excess)?,
+                _ => excess,
+            };
             if excess != 0 {
                 answers.results.pop();
                 answers.coverage = "partial";
@@ -260,6 +269,26 @@ pub(super) fn answer<'a>(
         return Err(CallFailure::Invalid);
     }
     Ok(answers)
+}
+
+/// Fit only the disclosed rows. Dropping a row also drops its citations,
+/// and frees its exact encoded length plus the preceding comma if present.
+fn trim_rows<T: Serialize>(
+    status: &mut &'static str,
+    rows: &mut Vec<T>,
+    mut excess: usize,
+) -> Result<usize, CallFailure> {
+    excess = excess.saturating_sub(status.len() - "partial".len());
+    *status = "partial";
+    while excess != 0 {
+        let Some(row) = rows.pop() else {
+            break;
+        };
+        let bytes = openlegend_simulation::encoding::json_record_len(&row)
+            .map_err(|_| CallFailure::Invalid)?;
+        excess = excess.saturating_sub(bytes + usize::from(!rows.is_empty()));
+    }
+    Ok(excess)
 }
 
 fn capacity() -> CallFailure {

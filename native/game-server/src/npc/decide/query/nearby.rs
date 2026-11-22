@@ -196,21 +196,11 @@ pub(super) struct Nearby<'a> {
 impl Nearby<'_> {
     /// Count each discarded body once. Each removal frees its encoded row
     /// and the array comma if a preceding body remains.
-    pub(super) fn trim(&mut self, mut excess: usize) -> Result<usize, CallFailure> {
+    pub(super) fn trim(&mut self, excess: usize) -> Result<usize, CallFailure> {
         let Some(bodies) = &mut self.bodies else {
             return Ok(excess);
         };
-        excess = excess.saturating_sub(self.status.len() - "partial".len());
-        self.status = "partial";
-        while excess != 0 {
-            let Some(body) = bodies.pop() else {
-                break;
-            };
-            let bytes = openlegend_simulation::encoding::json_record_len(&body)
-                .map_err(|_| CallFailure::Invalid)?;
-            excess = excess.saturating_sub(bytes + usize::from(!bodies.is_empty()));
-        }
-        Ok(excess)
+        super::trim_rows(&mut self.status, bodies, excess)
     }
 
     pub(super) fn added_references(&self) -> impl Iterator<Item = &str> {

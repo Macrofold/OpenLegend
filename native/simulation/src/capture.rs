@@ -39,8 +39,9 @@ pub use npc_bindings::{
     NpcEntityOrdinal, NpcPersonalEvidence, NpcSubjectAlias, NpcSubjectOrdinal,
 };
 pub(crate) use npc_bindings::{
-    NpcBindingMaps, NpcBindingRead, NpcBindingSelection, NpcPerspectiveOrdinal,
-    npc_perspectives_current, prepare_ordinary_actions,
+    NpcBindingMaps, NpcBindingRead, NpcBindingSelection, NpcObservationAlias,
+    NpcObservationOrdinal, NpcPerspectiveOrdinal, npc_perspectives_current,
+    prepare_ordinary_actions,
 };
 pub(crate) use npc_references::NpcReferenceFacts;
 mod npc_history;
@@ -197,6 +198,8 @@ pub(crate) struct CapturedGeometryRange {
     complete: bool,
     visited: u64,
     supported_through: f64,
+    #[serde(skip)]
+    epsilon: f64,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -215,6 +218,32 @@ struct PerceptionProduct<'a> {
     npc_current: Option<&'a npc_current::NpcCurrentCapture>,
 }
 impl CapturedActorPerception {
+    /// Borrow the original geometry row range and the exact measurement rule
+    /// from this read. Other acquired observations are outside that range.
+    pub(crate) fn query_geometry(
+        &self,
+    ) -> Option<(
+        usize,
+        &[std::sync::Arc<crate::reception::ObservationContribution>],
+        bool,
+        f64,
+        f64,
+    )> {
+        let layout = self.geometry.as_ref()?;
+        let rows = self
+            .evidence
+            .cut()
+            .acquired
+            .get(layout.first..layout.first.checked_add(layout.count)?)?;
+        Some((
+            layout.first,
+            rows,
+            layout.complete,
+            layout.supported_through,
+            layout.epsilon,
+        ))
+    }
+
     pub(crate) fn attention_presentations(&self) -> &[crate::attention::AttentionPresentation] {
         self.npc_current
             .as_ref()
@@ -574,6 +603,7 @@ pub(crate) fn capture_actor_perception(
                 complete: read.complete(),
                 visited: read.visited(),
                 supported_through: read.supported_through(),
+                epsilon: state.installed.spatial.epsilon,
             }),
         )
     } else {

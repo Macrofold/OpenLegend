@@ -114,6 +114,37 @@ impl RuntimeNpcBindingRequest {
         Ok(())
     }
 
+    /// A boundary and the surface facts it names stay tied to the original
+    /// acquired rows. Final disclosure rechecks these exact observations.
+    pub fn bind_query_observation(
+        &mut self,
+        alias: &str,
+        ordinal: usize,
+    ) -> Result<(), RuntimeError> {
+        use crate::capture::{NpcObservationAlias, NpcObservationOrdinal};
+        let observations = &mut self.request.selection.observations;
+        if observations
+            .iter()
+            .any(|reference| reference.alias == alias)
+        {
+            return Ok(());
+        }
+        self._custody.resize(
+            self._custody
+                .bytes()
+                .checked_add(size_of::<NpcObservationAlias>() + alias.len())
+                .ok_or(CapacityError)?,
+        )?;
+        observations
+            .try_reserve_exact(1)
+            .map_err(|_| CapacityError)?;
+        observations.push(NpcObservationAlias {
+            alias: alias.into(),
+            source: NpcObservationOrdinal::Acquired { ordinal },
+        });
+        Ok(())
+    }
+
     /// Attach a reference actually sent in the query answer to the original
     /// held facet. The final dispatch checks its availability again.
     pub fn bind_query_facet(&mut self, alias: &str, ordinal: usize) -> Result<(), RuntimeError> {
