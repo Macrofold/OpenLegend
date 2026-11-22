@@ -10,6 +10,7 @@ pub(crate) use retry::ChatRetryRequest;
 pub(crate) mod schedule;
 pub(crate) mod semantic_index;
 mod settings;
+pub(crate) use settings::creation_model_settings;
 mod slots;
 mod speech;
 pub(crate) use speech::{ChatRequest, human_request, valid_request_id};

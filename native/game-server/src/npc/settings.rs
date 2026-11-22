@@ -254,9 +254,11 @@ pub(super) fn summary_model(
         };
         let (floor, input, output) = direct_prices()?;
         let reserve = |input_tokens| {
-            micro_usd(floor.max(0.25).max(
-                (input_tokens * input + output_tokens as f64 * output) / 1_000_000.0,
-            ))
+            micro_usd(
+                floor
+                    .max(0.25)
+                    .max((input_tokens * input + output_tokens as f64 * output) / 1_000_000.0),
+            )
         };
         (
             Model {
@@ -275,15 +277,99 @@ pub(super) fn summary_model(
         return Ok(None);
     }
     let timeout = Duration::from_secs_f64(number("AI_TIMEOUT_SECONDS", 35.0, 5.0, 120.0)?);
-    Ok(Some(SummaryModel { model, ceiling, timeout }))
+    Ok(Some(SummaryModel {
+        model,
+        ceiling,
+        timeout,
+    }))
+}
+
+/// Report effective creation-target model settings through the same parsed
+/// route and spending owners the live director uses. No transport starts.
+pub(crate) fn creation_model_settings(
+    budget_usd: f64,
+    summary_tokens: usize,
+) -> Result<std::collections::BTreeMap<String, serde_json::Value>, Error> {
+    use serde_json::json;
+    let (capacity, models) = from_env(budget_usd)?;
+    let summary = summary_model(models.as_ref(), budget_usd, summary_tokens)?;
+    let narrator = narrator_model(models.as_ref(), budget_usd)?;
+    let embedding = embedding_model(models.as_ref(), budget_usd)?;
+    let mut values = std::collections::BTreeMap::from([
+        ("npcAiCapacity".to_owned(), json!(capacity)),
+        (
+            "jevOnly".to_owned(),
+            json!(setting("AI_JEV_ONLY", "false")? == "true"),
+        ),
+        (
+            "liveAiConfigured".to_owned(),
+            json!(models.is_some() || summary.is_some() || narrator.is_some() || embedding.is_some()),
+        ),
+    ]);
+    if let Some(models) = &models {
+        let model_names = [
+            (
+                "jevModel",
+                "macrofoldJevModel",
+                Some(&models.routes.judgment),
+            ),
+            (
+                "miniModel",
+                "macrofoldMiniModel",
+                models.routes.fast.as_ref(),
+            ),
+            (
+                "complexModel",
+                "macrofoldComplexModel",
+                models.routes.complex.as_ref(),
+            ),
+        ];
+        for (direct, managed, model) in model_names {
+            if let Some(model) = model {
+                let name = if model.macrofold.is_some() {
+                    managed
+                } else {
+                    direct
+                };
+                values.insert(name.to_owned(), json!(model.requested));
+            }
+        }
+        values.insert(
+            "interactiveReserveUsd".to_owned(),
+            json!(models.interactive as f64 / 1_000_000.0),
+        );
+    }
+    if let Some(summary) = summary {
+        let name = if summary.model.macrofold.is_some() {
+            "macrofoldSummaryModel"
+        } else {
+            "summaryModel"
+        };
+        values.insert(name.to_owned(), json!(summary.model.requested));
+        values.insert(
+            "summaryTimeoutSeconds".to_owned(),
+            json!(summary.timeout.as_secs_f64()),
+        );
+    }
+    if let Some(narrator) = narrator {
+        values.insert("journalModel".to_owned(), json!(narrator.requested));
+        values.insert(
+            "journalCallReserveUsd".to_owned(),
+            json!(narrator.amount as f64 / 1_000_000.0),
+        );
+    }
+    if let Some(embedding) = embedding {
+        values.insert("embeddingModel".to_owned(), json!(embedding.model));
+        values.insert("embeddingDimensions".to_owned(), json!(embedding.dimensions));
+        values.insert("embeddingCallReserveUsd".to_owned(), json!(embedding.amount as f64 / 1_000_000.0));
+    }
+    Ok(values)
 }
 
 fn judgment_allowance(macrofold: bool) -> Result<u64, Error> {
     let price = number("JEV_INPUT_USD_PER_MILLION", 0.042, 0.0, 1000.0)?;
     let minimum = number("JEV_CALL_RESERVE_USD", 0.005, 0.000001, 1.0)?;
-    micro_usd(minimum.max(
-        (500_000.0 + if macrofold { 1024.0 } else { 0.0 }) * price / 1_000_000.0,
-    ))
+    micro_usd(minimum.max((500_000.0 + if macrofold { 1024.0 } else { 0.0 }) * price / 1_000_000.0))
 }
 
 fn interactive_allowance(judgment: u64, generation: u64) -> Result<u64, Error> {

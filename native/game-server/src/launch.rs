@@ -149,10 +149,7 @@ impl PreparedGame {
         if !(1.0..=60.0).contains(&grace) {
             return Err("OPEN_LEGEND_EXIT_GRACE_SECONDS must be between 1 and 60".into());
         }
-        let limit_usd = setting("AI_BUDGET_USD", "50")?.parse::<f64>()?;
-        if !(0.0..=100.0).contains(&limit_usd) {
-            return Err("AI_BUDGET_USD must be between 0 and 100".into());
-        }
+        let limit_usd = ai_budget_limit()?;
         let macrofold = !setting("MACROFOLD_API_KEY", "")?.is_empty();
         let jev = !setting("TYPESAFE_API_KEY", &setting("JEV_API_KEY", "")?)?.is_empty();
         let language = !setting("OPENAI_API_KEY", "")?.is_empty();
@@ -494,6 +491,14 @@ async fn build_cache(request: Request, next: Next) -> Response {
         );
     }
     response
+}
+
+fn ai_budget_limit() -> Result<f64, LaunchError> {
+    let limit = setting("AI_BUDGET_USD", "50")?.parse::<f64>()?;
+    if !(0.0..=100.0).contains(&limit) {
+        return Err("AI_BUDGET_USD must be between 0 and 100".into());
+    }
+    Ok(limit)
 }
 
 fn setting(name: &str, default: &str) -> Result<String, std::env::VarError> {

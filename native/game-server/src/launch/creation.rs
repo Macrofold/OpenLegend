@@ -1,6 +1,9 @@
 //! An explicitly empty target opens a world only after an exact committed
 //! receipt. Waiting and live entry share one bound socket and database writer.
-use super::{DatabaseConfig, LaunchError, ListenerSettings, PreparedGame, build_cache, setting, shutdown_signal};
+use super::{
+    DatabaseConfig, LaunchError, ListenerSettings, PreparedGame, ai_budget_limit, build_cache,
+    setting, shutdown_signal,
+};
 use crate::{
     access_http::{BrowserOrigin, guard_origin},
     boot::{CurrentServer, StartupStorage},
@@ -48,7 +51,12 @@ pub(super) async fn serve(
     let opening_sha = std::env::var("OPEN_LEGEND_CREATION_OPENING_SHA256")?;
     let startup = Arc::new(StartupStorage::open(release, database, 1, true).await?);
     let clock_rate = startup.base_clock_rate(release)?;
-    let operating = operating_settings(&settings, clock_rate)?;
+    let budget_usd = ai_budget_limit()?;
+    let mut operating = operating_settings(&settings, clock_rate, budget_usd)?;
+    operating.extend(crate::npc::creation_model_settings(
+        budget_usd,
+        startup.store.schema.recall.maintenance.output_tokens,
+    )?);
     let config = configuration_fingerprint(&opening_sha, release)?;
     let validate: OpeningValidator = {
         let startup = startup.clone();
@@ -182,6 +190,7 @@ pub(super) async fn serve(
 fn operating_settings(
     settings: &ListenerSettings,
     clock_rate: f64,
+    budget_usd: f64,
 ) -> Result<BTreeMap<String, Value>, LaunchError> {
     Ok(BTreeMap::from([
         (
@@ -200,17 +209,10 @@ fn operating_settings(
             "departureGraceMs".to_owned(),
             json!(setting("OPEN_LEGEND_EXIT_GRACE_SECONDS", "15")?.parse::<f64>()? * 1000.0),
         ),
-        (
-            "monthlyActorAiBudgetUsd".to_owned(),
-            json!(setting("AI_BUDGET_USD", "50")?.parse::<f64>()?),
-        ),
+        ("monthlyActorAiBudgetUsd".to_owned(), json!(budget_usd)),
         (
             "creatorToolsEnabled".to_owned(),
             json!(setting("OPEN_LEGEND_GOD_MODE", "false")? == "true"),
-        ),
-        (
-            "jevOnly".to_owned(),
-            json!(setting("AI_JEV_ONLY", "false")? == "true"),
         ),
     ]))
 }
@@ -220,7 +222,10 @@ fn operating_settings(
 fn configuration_fingerprint(opening: &str, release: &Path) -> Result<String, LaunchError> {
     let relevant = [
         "OPEN_LEGEND_",
+        "OPENLEGEND_",
         "AI_",
+        "COGNITION_",
+        "EMBEDDING_",
         "JEV_",
         "TYPESAFE_",
         "MACROFOLD_",
