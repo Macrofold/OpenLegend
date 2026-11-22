@@ -136,6 +136,11 @@ impl LiveSaves {
         self.lexical_wake.clone()
     }
 
+    /// Wake recall indexing when a new source has been durably accepted.
+    pub(crate) fn signal_recall_change(&self) {
+        self.lexical_wake.notify_one();
+    }
+
     pub(crate) fn story_waker(&self) -> Arc<Notify> {
         self.story_wake.clone()
     }

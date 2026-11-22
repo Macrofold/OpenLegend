@@ -395,7 +395,7 @@ fn ordinal(value: i64) -> StoreResult<u64> {
         .ok_or(StoreError::InvalidRecord)
 }
 
-fn sql_ordinal(value: u64) -> StoreResult<i64> {
+pub(crate) fn sql_ordinal(value: u64) -> StoreResult<i64> {
     if value <= MAX_SAFE_INTEGER {
         Ok(value as i64)
     } else {

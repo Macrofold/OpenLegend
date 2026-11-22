@@ -17,10 +17,14 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+mod invites;
+pub(crate) use invites::Enrollment;
+
 #[derive(Clone)]
 struct AccessRoutes {
     authority: Arc<Authority>,
     identity: IdentityMode,
+    enrollment: Option<Enrollment>,
 }
 
 #[derive(Clone)]
@@ -34,7 +38,7 @@ pub fn local_access_router(authority: Arc<Authority>, port: u16) -> Router {
 }
 
 pub fn oidc_access_router(authority: Arc<Authority>, oidc: Arc<Oidc>) -> Router {
-    oidc_router(authority, oidc, Router::new())
+    oidc_router(authority, oidc, Router::new(), None)
 }
 
 pub(crate) fn local_router(authority: Arc<Authority>, port: u16, game: Router) -> Router {
@@ -42,16 +46,23 @@ pub(crate) fn local_router(authority: Arc<Authority>, port: u16, game: Router) -
         AccessRoutes {
             authority,
             identity: IdentityMode::Local(port),
+            enrollment: None,
         },
         game,
     )
 }
 
-pub(crate) fn oidc_router(authority: Arc<Authority>, oidc: Arc<Oidc>, game: Router) -> Router {
+pub(crate) fn oidc_router(
+    authority: Arc<Authority>,
+    oidc: Arc<Oidc>,
+    game: Router,
+    enrollment: Option<Enrollment>,
+) -> Router {
     access_router(
         AccessRoutes {
             authority,
             identity: IdentityMode::Oidc(oidc),
+            enrollment,
         },
         game,
     )
@@ -63,6 +74,7 @@ fn access_router(state: AccessRoutes, game: Router) -> Router {
         IdentityMode::Oidc(oidc) => BrowserOrigin::Configured(oidc.origin().into()),
     };
     let routes = Router::new()
+        .route("/auth/invite", get(invites::landing))
         .route("/auth/login", get(login))
         .route("/auth/callback", get(callback))
         .route("/api/session", get(session))
@@ -122,13 +134,20 @@ async fn check_origin(
     let matches_origin = headers
         .get(header::ORIGIN)
         .is_some_and(|value| value.as_bytes() == expected.as_bytes());
-    // The issuer redirects from its own site. This GET is authorized by the
-    // one-use browser-bound transaction. Ordinary API calls keep their origin
-    // check, including authenticated logout.
-    let issuer_callback = matches!(origin, BrowserOrigin::Configured(_))
+    // The public page, an invitation link and an identity redirect may
+    // complete a browser navigation begun on another site. Private API
+    // reads and all mutating API routes keep their existing origin checks.
+    let external_entry = matches!(origin, BrowserOrigin::Configured(_))
         && request.method() == axum::http::Method::GET
-        && request.uri().path() == "/auth/callback";
-    if !issuer_callback
+        && (request.uri().path() == "/auth/callback"
+            || (matches!(request.uri().path(), "/" | "/auth/invite")
+                && headers
+                    .get("sec-fetch-mode")
+                    .is_some_and(|value| value == "navigate")
+                && headers
+                    .get("sec-fetch-dest")
+                    .is_some_and(|value| value == "document")));
+    if !external_entry
         && (headers
             .get("sec-fetch-site")
             .is_some_and(|value| value == "cross-site")
@@ -200,27 +219,34 @@ async fn login(State(state): State<AccessRoutes>, Query(query): Query<LoginQuery
             Err(error) => access_failure(error),
         },
         IdentityMode::Oidc(oidc) => {
-            let mut nonce = [0_u8; 32];
-            if getrandom::fill(&mut nonce).is_err() {
-                return access_failure(AccessError::Availability);
-            }
-            let token = openlegend_simulation::encoding::sha256_hex(&nonce);
-            match oidc
-                .begin(&token, query.change_account.as_deref() == Some("true"))
-                .await
-            {
-                Ok(location) => redirect(
-                    location.as_str(),
-                    &[set_cookie(
-                        "ol_login",
-                        &token,
-                        oidc.origin().starts_with("https:"),
-                        Some(300),
-                    )],
-                ),
-                Err(_) => access_failure(AccessError::Availability),
-            }
+            start_oidc(oidc, query.change_account.as_deref() == Some("true"), None).await
         }
+    }
+}
+
+/// An invite starts the same OIDC operation as Sign in. Retain its hash only
+/// in this exact pending login; a second navigation cannot replace the invite.
+async fn start_oidc(
+    oidc: &Arc<Oidc>,
+    change_account: bool,
+    invitation: Option<crate::authority::invites::InviteHash>,
+) -> Response {
+    let mut nonce = [0_u8; 32];
+    if getrandom::fill(&mut nonce).is_err() {
+        return access_failure(AccessError::Availability);
+    }
+    let token = openlegend_simulation::encoding::sha256_hex(&nonce);
+    match oidc.begin(&token, change_account, invitation).await {
+        Ok(location) => redirect(
+            location.as_str(),
+            &[set_cookie(
+                "ol_login",
+                &token,
+                oidc.origin().starts_with("https:"),
+                Some(300),
+            )],
+        ),
+        Err(_) => access_failure(AccessError::Availability),
     }
 }
 
@@ -251,14 +277,35 @@ async fn callback(
         )
         .await
     {
-        Ok(token) => {
+        Ok(login) => {
             let secure = oidc.origin().starts_with("https:");
+            let (login, location) = if login.invitation.is_some() {
+                let inviting = state.clone();
+                // A claim holds its verified login deadline. Its SQL commit
+                // finishes even if the browser disconnects after admission.
+                match tokio::spawn(async move {
+                    let location = invites::complete(
+                        &inviting.authority,
+                        inviting.enrollment.as_ref(),
+                        &login,
+                    )
+                    .await;
+                    (login, location)
+                })
+                .await
+                {
+                    Ok(value) => value,
+                    Err(_) => return access_failure(AccessError::Availability),
+                }
+            } else {
+                (login, "/")
+            };
             redirect(
-                "/",
+                location,
                 &[
                     set_cookie(
                         "ol_session",
-                        &token,
+                        &login.token,
                         secure,
                         Some(state.authority.session_lifetime_secs()),
                     ),
@@ -363,6 +410,11 @@ pub(crate) fn access_failure(error: AccessError) -> Response {
             StatusCode::FORBIDDEN,
             "forbidden",
             "This operation is unavailable to this account.",
+        ),
+        AccessError::Characterless => refusal(
+            StatusCode::FORBIDDEN,
+            "characterless",
+            "This account has no character in this world. Use World operations.",
         ),
         AccessError::Changed => refusal(
             StatusCode::FORBIDDEN,

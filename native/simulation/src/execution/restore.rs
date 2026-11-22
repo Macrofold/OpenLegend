@@ -1,8 +1,8 @@
-//! Operational rewind changes these actor fields before privacy reconciliation.
-//! Their original values remain in the same sparse physical journal.
+//! Rewind and enrollment can change a body’s account-facing control. Keep its
+//! original controller and inspection in the same sparse physical journal.
 use super::*;
 impl PhysicalMutation<'_> {
-    pub(crate) fn restore_actor_operational(
+    pub(crate) fn reconcile_actor_access(
         &mut self,
         id: &str,
         make_player: bool,

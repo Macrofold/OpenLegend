@@ -2,7 +2,7 @@
 //! this browser and is consumed once, before any token exchange.
 
 use crate::{
-    authority::{AccessError, Authority, now_ms},
+    authority::{AccessError, Authority, invites::InviteHash, now_ms},
     network::{NetworkError, NetworkOperation, NetworkOwner, permitted_destination},
 };
 use openidconnect::{
@@ -88,11 +88,19 @@ impl<'a> AsyncHttpClient<'a> for SdkExchange<'_> {
 
 struct Pending {
     browser: [u8; 32],
+    invitation: Option<InviteHash>,
     verifier: PkceCodeVerifier,
     nonce: Nonce,
     until: Instant,
     expires_at: i64,
     _custody: ByteReservation,
+}
+
+pub(crate) struct LoginCompletion {
+    pub(crate) token: String,
+    pub(crate) invitation: Option<InviteHash>,
+    pub(crate) deadline: Instant,
+    pub(crate) expires_at: i64,
 }
 
 pub struct Oidc {
@@ -206,10 +214,11 @@ impl Oidc {
         result.as_ref().expect("observed discovery").clone()
     }
 
-    pub async fn begin(
+    pub(crate) async fn begin(
         self: &Arc<Self>,
         browser: &str,
         change_account: bool,
+        invitation: Option<InviteHash>,
     ) -> Result<reqwest::Url, OidcError> {
         let operation = self.network.admit(Instant::now() + OPERATION, 4096)?;
         let client = self.client(operation.deadline()).await?;
@@ -243,6 +252,7 @@ impl Oidc {
             state.secret().clone(),
             Pending {
                 browser: Sha256::digest(browser.as_bytes()).into(),
+                invitation,
                 verifier,
                 nonce,
                 until: now + PENDING_LIFETIME,
@@ -253,14 +263,14 @@ impl Oidc {
         Ok(url)
     }
 
-    pub async fn complete(
+    pub(crate) async fn complete(
         self: &Arc<Self>,
         authority: &Authority,
         state: &str,
         code: Option<String>,
         browser: Option<&str>,
         previous: Option<&str>,
-    ) -> Result<String, AccessError> {
+    ) -> Result<LoginCompletion, AccessError> {
         let now = Instant::now();
         let until = {
             let mut pending = self.pending.lock().map_err(|_| AccessError::Availability)?;
@@ -334,13 +344,19 @@ impl Oidc {
             if pending.expires_at <= now_ms() {
                 return Err(AccessError::Session);
             }
-            authority
+            let token = authority
                 .sign_in_verified(
                     claims.issuer().as_str(),
                     claims.subject().as_str(),
                     previous,
                 )
-                .await
+                .await?;
+            Ok(LoginCompletion {
+                token,
+                invitation: pending.invitation,
+                deadline: until,
+                expires_at: pending.expires_at,
+            })
         };
         tokio::time::timeout_at(until, complete)
             .await

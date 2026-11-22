@@ -118,6 +118,9 @@ pub(crate) fn router(
         .route("/api/saves/create", post(checkpoint::create))
         .route("/api/saves/receipt", post(checkpoint::receipt))
         .route("/api/operations", axum::routing::get(operations::state))
+        .route("/api/invites/create", post(operations::access::create))
+        .route("/api/invites/revoke", post(operations::access::revoke))
+        .route("/api/access", post(operations::access::remove))
         .route("/api/saves/list", post(checkpoint::list))
         .route("/api/saves/delete", post(checkpoint::delete))
         .route("/api/saves/settings", post(checkpoint::settings))
@@ -262,7 +265,12 @@ async fn control(State(state): State<PlayerRoutes>, request: Request) -> Respons
             "Your tab is paused; your character is leaving the world.",
         ),
         Ok(EmbodimentChange::Refused { message, _custody }) => {
-            control_response(&state, false, "participation", &message)
+            match state.authority.current(&authorized, Capability::Play, false, |_, _| {
+                control_response(&state, false, "participation", &message)
+            }) {
+                Ok(response) => response,
+                Err(error) => access_failure(error),
+            }
         }
         Err(error) => failed(error),
     }
@@ -567,17 +575,15 @@ async fn read_json<T: DeserializeOwned>(
                 "This request is too large.",
             )
         })?;
-    let request = serde_json::from_slice(&body).map_err(|_| {
-        refusal(
-            StatusCode::BAD_REQUEST,
-            "request",
-            "This request could not be read.",
-        )
-    })?;
+    let request = serde_json::from_slice(&body).map_err(|_| request_error())?;
     let retained = 8 * body.len();
     drop(body);
     custody.resize(retained).map_err(|_| busy())?;
     Ok((request, custody))
+}
+
+fn request_error() -> Response {
+    refusal(StatusCode::BAD_REQUEST, "request", "This request could not be read.")
 }
 
 fn control_response(

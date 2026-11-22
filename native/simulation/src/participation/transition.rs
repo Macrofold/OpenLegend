@@ -88,6 +88,11 @@ pub(crate) enum ParticipationOperation {
         attempt_id: String,
     },
     Return,
+    #[serde(skip_deserializing)]
+    Enroll {
+        account_id: String,
+        attempt_id: String,
+    },
 }
 pub(crate) enum ParticipationAnswer {
     Geometry(GeometryAnswers),
@@ -164,6 +169,13 @@ impl ParticipationCursor {
             ParticipationOperation::BeginExit { attempt_id }
             | ParticipationOperation::ReconcileExit { attempt_id }
             | ParticipationOperation::Depart { attempt_id } => attempt_id.capacity(),
+            ParticipationOperation::Enroll {
+                account_id,
+                attempt_id,
+            } => account_id
+                .capacity()
+                .checked_add(attempt_id.capacity())
+                .ok_or(ExecutionError::Capacity)?,
             _ => 0,
         };
         let storage = budget.reserve(
@@ -539,6 +551,20 @@ impl ParticipationCursor {
                         if state.is_some_and(|state| state.phase == "exiting"
                             && state.exit_attempt_id.as_ref() != Some(attempt_id)));
                     match &self.request.operation {
+                        ParticipationOperation::Enroll {
+                            account_id,
+                            attempt_id,
+                        } if !crate::values::is_safe_record_id(account_id)
+                            || !crate::values::is_safe_record_id(attempt_id)
+                            || invitable_actor(core.state, &self.request.actor_id).is_none()
+                            || state.is_none_or(|state| state.phase == "active")
+                                && self.request.expected_revision
+                                    == crate::identity::MAX_SAFE_INTEGER - 1 =>
+                        {
+                            self.outcome(&words.changed, false)?;
+                            self.phase = Phase::Done;
+                            continue;
+                        }
                         ParticipationOperation::BeginExit { attempt_id }
                         | ParticipationOperation::ReconcileExit { attempt_id }
                         | ParticipationOperation::Depart { attempt_id }
@@ -654,6 +680,31 @@ impl ParticipationCursor {
                     // Eligibility and any required return-standing check have
                     // succeeded. Refusals and no-op returns never reach this.
                     self.materialize_edit(core)?;
+                    if let ParticipationOperation::Enroll { account_id, .. } =
+                        &self.request.operation
+                    {
+                        // Control, authorship and absence commit in one protected
+                        // candidate. An already inactive body needs no second departure.
+                        core.physical()
+                            .reconcile_actor_access(&self.request.actor_id, true)?;
+                        core.journal.restore_metadata.enroll_owner(
+                            core.state,
+                            &self.request.actor_id,
+                            account_id,
+                        )?;
+                        if core
+                            .state
+                            .physical
+                            .entities
+                            .get(&self.request.actor_id)
+                            .and_then(|entity| entity.actor.as_ref())
+                            .and_then(|actor| actor.participation.as_ref())
+                            .is_some_and(|state| state.phase == "inactive")
+                        {
+                            self.phase = Phase::Finalize;
+                            continue;
+                        }
+                    }
                     // The public transition records this semantic cause before
                     // work. A simulated deadline records it after departure.
                     self.write(core, None, true, None, None, budget)?;
@@ -663,6 +714,29 @@ impl ParticipationCursor {
                         core.sync_sensory_changes()?;
                     }
                     match &self.request.operation {
+                        ParticipationOperation::Enroll { attempt_id, .. } => {
+                            let active = core
+                                .state
+                                .physical
+                                .entities
+                                .get(&self.request.actor_id)
+                                .and_then(|entity| entity.actor.as_ref())
+                                .and_then(|actor| actor.participation.as_ref())
+                                .is_some_and(|state| state.phase == "active");
+                            if active {
+                                let _copy = budget.reserve(attempt_id.len())?;
+                                let attempt = attempt_id.clone();
+                                self.write(
+                                    core,
+                                    Some("exiting"),
+                                    true,
+                                    Some(Some(&attempt)),
+                                    None,
+                                    budget,
+                                )?;
+                            }
+                            self.phase = Phase::Cancel;
+                        }
                         ParticipationOperation::BeginExit { attempt_id }
                         | ParticipationOperation::ReconcileExit { attempt_id } => {
                             let _copy = budget.reserve(attempt_id.len())?;
@@ -809,6 +883,7 @@ impl ParticipationCursor {
                     self.phase = if matches!(
                         self.request.operation,
                         ParticipationOperation::Depart { .. }
+                            | ParticipationOperation::Enroll { .. }
                     ) {
                         Phase::DepartureStanding
                     } else {

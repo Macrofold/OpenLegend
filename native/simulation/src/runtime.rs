@@ -44,7 +44,7 @@ pub use npc_intake::{
 };
 mod npc_labels;
 mod participation;
-pub use participation::RuntimeParticipation;
+pub use participation::{InvitationActor, InvitationActors, RuntimeParticipation};
 mod player;
 mod player_places;
 mod privacy;
@@ -1269,6 +1269,7 @@ impl NativeWorldSession {
             progress,
             restore,
             consolidation_recall,
+            state,
         })
     }
     /// Requires the genuine fence result, never an acceptance boolean supplied
@@ -1441,6 +1442,7 @@ pub struct RuntimePreparedProducts<'a> {
     progress: crate::simulation::session::PreparedReadProgress<'a>,
     restore: Option<crate::simulation::session::PreparedRestoreFacts<'a>>,
     consolidation_recall: Option<RuntimeRecallDecoder<'a>>,
+    state: &'a crate::simulation::SimulationState,
 }
 impl RuntimePreparedProducts<'_> {
     pub fn outcome(&self) -> &crate::commands::Outcome {

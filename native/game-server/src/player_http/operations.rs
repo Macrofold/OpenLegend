@@ -1,5 +1,5 @@
-//! Permission-scoped entry to the checkpoint panel. Pull only the accepted
-//! clock and generation. No embodied view, history or scenery is prepared.
+//! Permission-scoped entry to operations. Each section prepares only its
+//! permitted read and all bytes are handed off under the same current grant.
 
 use super::{PlayerRoutes, access_failure, busy, failed, json_response, read_scope, wire};
 use crate::authority::Capability;
@@ -11,6 +11,8 @@ use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::Response;
 use serde::Serialize;
+
+pub(super) mod access;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,7 +26,10 @@ struct Operations<'a> {
     scope: &'a str,
     generation: &'a str,
     mode: AuthenticationMode,
-    checkpoint: &'a CheckpointContext,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    checkpoint: Option<&'a CheckpointContext>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    access: Option<access::AccessSection<'a>>,
     clock: Clock<'a>,
     // Rust's startup has already refused active and scheduled maintenance.
     maintenance: (),
@@ -53,12 +58,14 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
         Ok(scope) => scope,
         Err(error) => return access_failure(error),
     };
-    if let Err(error) = state
+    let manages_access = match state
         .authority
-        .current_checkpoint_operator(&authorized, |_, _, _| ())
-    {
-        return access_failure(error);
-    }
+        .current_operations(&authorized, |_, caps, _| {
+            caps.contains(&Capability::ManageAccess)
+        }) {
+        Ok(allowed) => allowed,
+        Err(error) => return access_failure(error),
+    };
     let budget = state.game.host.budget();
     let Ok(_workspace) = budget.reserve(8192) else {
         return busy();
@@ -79,23 +86,43 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
     };
     let presentation = &state.game.view_policy().world;
     let save_failed = state.saves.has_failed();
+    let roster = if manages_access {
+        let candidates = match state
+            .game
+            .world
+            .capture(openlegend_simulation::runtime::NativeWorldSession::invitation_actors)
+            .await
+        {
+            Ok(candidates) => candidates,
+            Err(error) => return failed(error),
+        };
+        match state.authority.access_roster(&authorized, candidates).await {
+            Ok(roster) => Some(roster),
+            Err(error) => return access::failure(error),
+        }
+    } else {
+        None
+    };
     match state
         .authority
-        .current_checkpoint_operator(&authorized, |scope, _, local| {
+        .current_operations(&authorized, |scope, capabilities, local| {
             let Ok(key) = scope.key() else {
                 return busy();
             };
-            let Ok(context) = checkpoint_context(scope, &key) else {
-                return busy();
+            let context = if capabilities.contains(&Capability::Save) {
+                let Ok(context) = checkpoint_context(scope, &key) else {
+                    return busy();
+                };
+                Some(context)
+            } else {
+                None
             };
-            // This projection only serves the checkpoint panel. The other
-            // operations sections need their own scoped readers and controls.
             let (day, hour) = clock_parts(clock.at, presentation.offset_hours);
             let value = Operations {
                 ok: true,
                 world_id: &scope.world_id,
                 account_id: &scope.account_id,
-                capabilities: &[Capability::Save],
+                capabilities,
                 actor_id: (!scope.actor_id.is_empty()).then_some(scope.actor_id.as_str()),
                 scope: &key,
                 generation: &generation,
@@ -104,7 +131,10 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
                 } else {
                     AuthenticationMode::Oidc
                 },
-                checkpoint: &context,
+                checkpoint: context.as_ref(),
+                access: roster
+                    .as_ref()
+                    .map(|roster| access::AccessSection::new(roster, &scope.account_id)),
                 clock: Clock {
                     seconds: clock.at,
                     day,

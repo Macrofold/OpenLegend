@@ -2,6 +2,18 @@
 //! admits only the finite domain participation request into its private writer.
 use super::*;
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InvitationActor {
+    pub actor_id: String,
+    name: crate::text::JsText,
+}
+
+pub struct InvitationActors {
+    pub actors: Vec<InvitationActor>,
+    _custody: ByteReservation,
+}
+
 pub enum RuntimeParticipation {
     Return,
     BeginExit(String),
@@ -10,6 +22,85 @@ pub enum RuntimeParticipation {
 }
 
 impl NativeWorldSession {
+    /// The operator roster needs only living unowned bodies and their names.
+    /// This owned read keeps its allocation through the scoped SQL exclusion.
+    pub fn invitation_actors(&self) -> Result<InvitationActors, RuntimeError> {
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let eligible = || {
+            state.physical.entities.ordered_ids().filter_map(|id| {
+                crate::participation::invitable_actor(state, id).map(|entity| (id, entity))
+            })
+        };
+        let (count, bytes) = eligible()
+            .try_fold((0_usize, 0_usize), |(count, bytes), (id, entity)| {
+                Some((
+                    count.checked_add(1)?,
+                    bytes
+                        .checked_add(id.len())?
+                        .checked_add(entity.name.storage_bytes())?,
+                ))
+            })
+            .ok_or_else(|| failure("invitation roster capacity"))?;
+        let custody = self.budget.reserve(
+            bytes
+                .checked_add(
+                    count
+                        .checked_mul(std::mem::size_of::<InvitationActor>())
+                        .ok_or_else(|| failure("invitation roster capacity"))?,
+                )
+                .ok_or_else(|| failure("invitation roster capacity"))?,
+        )?;
+        let mut actors = Vec::new();
+        actors.try_reserve_exact(count).map_err(failure)?;
+        for (id, entity) in eligible() {
+            actors.push(InvitationActor {
+                actor_id: id.to_owned(),
+                name: entity.name.clone(),
+            });
+        }
+        Ok(InvitationActors {
+            actors,
+            _custody: custody,
+        })
+    }
+
+    pub fn may_invite_actor(&self, id: &str) -> Result<bool, RuntimeError> {
+        self.require_active()?;
+        Ok(crate::participation::invitable_actor(
+            &self.session.accepted().map_err(failure)?.state,
+            id,
+        )
+        .is_some())
+    }
+
+    /// Only a protected Rust caller can bind a new account to a living,
+    /// unowned actor and settle ordinary absence before its first entry.
+    pub fn begin_invitation_enrollment(
+        &mut self,
+        actor: String,
+        account: String,
+        attempt: String,
+    ) -> Result<CandidateKey, RuntimeError> {
+        use crate::participation::{ParticipationOperation, ParticipationRequest, invitable_actor};
+        self.require_active()?;
+        let current = self.session.accepted().map_err(failure)?;
+        let expected_revision = invitable_actor(&current.state, &actor)
+            .and_then(|body| body.actor.as_ref())
+            .and_then(|actor| actor.participation.as_ref())
+            .map_or(0, |participation| participation.revision);
+        self.session
+            .begin_participation(ParticipationRequest {
+                actor_id: actor,
+                expected_revision,
+                operation: ParticipationOperation::Enroll {
+                    account_id: account,
+                    attempt_id: attempt,
+                },
+            })
+            .map_err(failure)
+    }
+
     pub fn begin_participation(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;

@@ -16,7 +16,10 @@ use tokio_postgres::Row;
 use uuid::Uuid;
 
 mod control;
+pub(crate) mod invites;
+mod managed_access;
 pub use control::{ControlChange, ControlOperation, ControlRequest};
+pub(crate) use managed_access::{AccessUpdateError, RemoveAccess};
 
 pub(crate) const LOCAL_ISSUER: &str = "https://local.openlegend.invalid";
 pub(crate) const LOCAL_SUBJECT: &str = "local-player";
@@ -34,6 +37,7 @@ pub(crate) fn granted_actor(stored: &str) -> Option<&str> {
 pub enum AccessError {
     Session,
     Forbidden,
+    Characterless,
     Changed,
     Busy,
     Availability,
@@ -46,6 +50,7 @@ impl std::fmt::Display for AccessError {
         match self {
             Self::Session => f.write_str("No current session"),
             Self::Forbidden => f.write_str("The current account cannot use this capability"),
+            Self::Characterless => f.write_str("The current account has no character"),
             Self::Changed => f.write_str("The request's authority changed"),
             Self::Busy => f.write_str("Session admission is busy"),
             Self::Availability => f.write_str("Session authority is unavailable"),
@@ -193,6 +198,7 @@ struct Cache {
     revision: u64,
     revoking: HashSet<TokenHash>,
     changing_control: HashSet<String>,
+    changing_grant: Option<String>,
 }
 
 pub struct Authority {
@@ -344,6 +350,7 @@ impl Authority {
                 revision: 0,
                 revoking: HashSet::new(),
                 changing_control: HashSet::new(),
+                changing_grant: None,
             }),
             changes: Arc::new(tokio::sync::Mutex::new(())),
         }
@@ -532,6 +539,16 @@ impl Authority {
             .map_err(|_| StoreError::Capacity)?;
         let (world, account, actor) = (world.to_owned(), account.to_owned(), actor.to_owned());
         let lease = self.changes.clone().lock_owned().await;
+        if self
+            .cache
+            .lock()
+            .map_err(|_| AccessError::Availability)?
+            .changing_grant
+            .as_deref()
+            == Some(account.as_str())
+        {
+            return Err(AccessError::Changed);
+        }
         let permitted: bool = self
             .store
             .read_operational(move |tx| {
@@ -646,8 +663,22 @@ impl Authority {
         capability: Capability,
         controlling: bool,
     ) -> Result<(&'cache WorldGrant, bool), AccessError> {
+        let (grant, controls) = self.selected_grant(cache, authorized, controlling)?;
+        if !grant.capabilities.contains(&capability) {
+            return Err(AccessError::Changed);
+        }
+        Ok((grant, controls))
+    }
+
+    fn selected_grant<'cache>(
+        &self,
+        cache: &'cache Cache,
+        authorized: &AuthorizedScope,
+        controlling: bool,
+    ) -> Result<(&'cache WorldGrant, bool), AccessError> {
         let scope = &authorized.scope;
         if cache.revoking.contains(&authorized.key)
+            || cache.changing_grant.as_deref() == Some(scope.account_id.as_str())
             || cache.changing_control.contains(&scope.actor_id)
             || scope.world_id != self.world_id
             || scope.timeline_id != self.timeline
@@ -665,7 +696,7 @@ impl Authority {
             || scope.session_revision != current.session_revision
             || scope.grant_revision != grant.revision
             || scope.actor_id != grant.actor_id.as_deref().unwrap_or("")
-            || !grant.capabilities.contains(&capability)
+            || grant.capabilities.is_empty()
         {
             return Err(AccessError::Changed);
         }
@@ -763,6 +794,7 @@ impl Authority {
         let mut cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
         if cache.revoking.contains(&key)
             || cache.revision != revision
+            || cache.changing_grant.as_deref() == Some(access.account.as_str())
             || access.expires_at <= now_ms()
         {
             return Err(AccessError::Changed);

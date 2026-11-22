@@ -7,25 +7,100 @@ use crate::{
         ControlRequest, now_ms,
     },
     boot::CurrentServer,
+    language::LanguageProvider,
     live_save::LiveSaves,
-    store::{OrdinaryProjection, PrefixProjection, StoreError, StoreResult},
+    store::{
+        CommitError, OrdinaryProjection, PrefixProjection, PreparedActivityMemories,
+        PreparedRecall, Store, StoreError, StoreResult,
+    },
     world::{ProtectedCommit, WorldError},
 };
 use openlegend_simulation::{
     commands::Outcome,
-    host::ByteReservation,
+    host::{ByteBudget, ByteReservation},
     records::SaveRows,
-    runtime::{RuntimeDirectOutput, RuntimeError, RuntimeHistory, RuntimeParticipation},
+    runtime::{
+        RuntimeDirectOutput, RuntimeError, RuntimeHistory, RuntimeHistoryCuts,
+        RuntimeParticipation, RuntimePreparedProducts,
+    },
     text::JsText,
 };
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
+};
 use tokio_postgres::Transaction;
 use uuid::Uuid;
 
 struct PreparedControl {
     outcome: Outcome,
-    history: RuntimeHistory,
+    save: Option<ParticipationSave>,
     _custody: ByteReservation,
+}
+
+/// History and recall belonging to a protected participation candidate. Use
+/// the ordinary writer and notify its workers only after the native ACK.
+pub(crate) struct ParticipationSave {
+    history: RuntimeHistory,
+    eligibility: Option<RuntimeHistoryCuts>,
+    recall: Option<PreparedRecall>,
+    activity_memories: Option<Arc<PreparedActivityMemories>>,
+    recall_hard_bytes: i64,
+    story_enqueued: AtomicBool,
+}
+
+impl ParticipationSave {
+    pub(crate) fn prepare(
+        product: &RuntimePreparedProducts<'_>,
+        store: &Store,
+        budget: &ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        product
+            .prepare_participation_save(budget, |history, eligibility, recall| {
+                let activity_memories =
+                    OrdinaryProjection::validate_candidate(store, recall.changes, &history)?;
+                let recall_hard_bytes =
+                    i64::try_from(recall.hard_bytes).map_err(|_| StoreError::Capacity)?;
+                let recall = store.prepare_recall(recall)?;
+                Ok::<_, StoreError>(Self {
+                    history,
+                    eligibility,
+                    recall,
+                    activity_memories,
+                    recall_hard_bytes,
+                    story_enqueued: AtomicBool::new(false),
+                })
+            })?
+            .map_err(RuntimeError::application_refused)
+    }
+
+    pub(crate) fn projection<'a>(
+        &'a self,
+        store: &'a Store,
+        language: Option<&'a LanguageProvider>,
+    ) -> OrdinaryProjection<'a> {
+        OrdinaryProjection::new(store, std::slice::from_ref(&self.history))
+            .with_projections(self.eligibility.as_ref(), self.recall.as_ref(), language)
+            .with_activity_memories(self.activity_memories.as_slice(), self.recall_hard_bytes)
+    }
+
+    pub(crate) fn record_commit(&self, projection: &OrdinaryProjection<'_>) {
+        self.story_enqueued
+            .store(projection.story_enqueued(), Ordering::Relaxed);
+    }
+
+    pub(crate) fn acknowledged(&self, saves: &LiveSaves) {
+        if self.recall.is_some() || self.activity_memories.is_some() {
+            saves.signal_recall_change();
+        }
+        if self.story_enqueued.load(Ordering::Relaxed) {
+            saves.story_waker().notify_one();
+        }
+        saves.signal_view();
+    }
 }
 
 struct ControlProjection<'a> {
@@ -101,6 +176,7 @@ pub(crate) async fn change(
     let control = Arc::new(presence.fence_control(authorized, request)?);
     let write = control.clone();
     let provider = game.clone();
+    let language = game.language().cloned();
     let store = game.store.clone();
     let candidate_store = store.clone();
     let candidate = game
@@ -117,16 +193,11 @@ pub(crate) async fn change(
                 let RuntimeDirectOutput::Prepared(product) = output else {
                     unreachable!("participation does not preview")
                 };
-                let history = product.retain_history();
-                if product.outcome().ok {
-                    OrdinaryProjection::validate_candidate(
-                        &candidate_store,
-                        product.changes(),
-                        &history,
-                    )
-                    .map_err(RuntimeError::application_refused)?;
-                }
                 let outcome = product.outcome();
+                let save = outcome
+                    .ok
+                    .then(|| ParticipationSave::prepare(&product, &candidate_store, budget))
+                    .transpose()?;
                 let bytes = openlegend_simulation::encoding::json_record_len(outcome)
                     .map_err(RuntimeError::application_refused)?
                     .checked_mul(3)
@@ -134,22 +205,24 @@ pub(crate) async fn change(
                     .ok_or_else(|| RuntimeError::application_refused(StoreError::Capacity))?;
                 Ok(PreparedControl {
                     outcome: outcome.clone(),
-                    history,
+                    save,
                     _custody: budget.reserve(bytes)?,
                 })
             },
             || Ok(()),
             move |candidate, prefix| -> ProtectedCommit<'_> {
                 Box::pin(async move {
+                    let save = candidate.save.as_ref().ok_or(CommitError::RolledBack(
+                        StoreError::DerivedProjectionRequired,
+                    ))?;
                     let projection = ControlProjection {
-                        gameplay: OrdinaryProjection::new(
-                            &store,
-                            std::slice::from_ref(&candidate.history),
-                        ),
+                        gameplay: save.projection(&store, language.as_deref()),
                         control: &write,
                         exit: exit.as_ref().map(|(id, deadline)| (id.as_str(), *deadline)),
                     };
-                    store.commit_prefix(prefix.rows(), &[], &projection).await
+                    let acknowledgement = store.commit_save(prefix, &[], &projection).await?;
+                    save.record_commit(&projection.gameplay);
+                    Ok(acknowledgement)
                 })
             },
         )
@@ -161,7 +234,11 @@ pub(crate) async fn change(
             _custody: candidate._custody,
         });
     }
-    saves.signal_view();
+    candidate
+        .save
+        .as_ref()
+        .ok_or(StoreError::InvalidRecord)?
+        .acknowledged(saves);
     Ok(if release {
         EmbodimentChange::Released
     } else {

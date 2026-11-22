@@ -171,6 +171,48 @@ impl MetadataJournal {
         });
         Ok(())
     }
+    /// A first enrollment adds authorship to the gameplay rows committed
+    /// with the account grant. Retain the old map for protected rollback.
+    pub(crate) fn enroll_owner(
+        &mut self,
+        state: &mut SimulationState,
+        actor: &str,
+        account: &str,
+    ) -> Result<(), ExecutionError> {
+        let previous = &state.administration.authorship.player_account_ids;
+        if previous.contains_key(actor) {
+            return Err(ExecutionError::Invariant);
+        }
+        let count = previous
+            .len()
+            .checked_add(1)
+            .ok_or(ExecutionError::Capacity)?;
+        let bytes = previous
+            .iter()
+            .try_fold(
+                map_storage::<String, String>(count)
+                    .and_then(|bytes| bytes.checked_add(actor.len()))
+                    .and_then(|bytes| bytes.checked_add(account.len()))
+                    .ok_or(ExecutionError::Capacity)?,
+                |bytes, (actor, account)| {
+                    bytes.checked_add(actor.len())?.checked_add(account.len())
+                },
+            )
+            .ok_or(ExecutionError::Capacity)?;
+        let mut reservation = self.budget.reserve(bytes)?;
+        let mut next = IndexMap::new();
+        next.try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        next.extend(
+            previous
+                .iter()
+                .map(|(actor, account)| (actor.clone(), account.clone())),
+        );
+        next.insert(actor.to_owned(), account.to_owned());
+        reservation.resize(next.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        let resident = self.budget.adopt_record(reservation)?;
+        self.replace_bindings(state, next, resident)
+    }
     pub(crate) fn encode_changes(
         &self,
         state: &SimulationState,
@@ -305,7 +347,7 @@ pub(crate) fn begin_restore_metadata(
             if changes_controller {
                 core.settle_numeric_prediction()?;
             }
-            core.physical().restore_actor_operational(actor, true)?;
+            core.physical().reconcile_actor_access(actor, true)?;
         }
     }
     if next != core.state.administration.authorship.player_account_ids {
@@ -343,7 +385,7 @@ pub(crate) fn begin_restore_metadata(
         .map(str::to_owned)
         .collect::<Vec<_>>();
     for actor in ids {
-        core.physical().restore_actor_operational(&actor, false)?;
+        core.physical().reconcile_actor_access(&actor, false)?;
     }
     Ok(RestoreMetadataPreparation {
         input,

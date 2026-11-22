@@ -3,9 +3,10 @@
 
 use super::{NativeWorldSession, RuntimeError, RuntimePreparedProducts, failure};
 use crate::experience::{CapturedHistoryInput, HistoryOriginals, history_account_eligible_at};
-use crate::host::ByteReservation;
+use crate::host::{ByteBudget, ByteReservation};
 use crate::received::TemporalReceipt;
 use crate::reception::SensoryFacet;
+use crate::simulation::SimulationState;
 
 pub use crate::experience::SensoryExpiration;
 
@@ -32,6 +33,38 @@ impl RuntimePreparedProducts<'_> {
     /// Authority to publish a scoped account still belongs to its reader.
     pub fn retain_history(&self) -> RuntimeHistory {
         RuntimeHistory(self.history.clone())
+    }
+
+    /// Prepare the same scoped eligibility and recall inputs as an ordinary
+    /// save, from the private participation candidate and its protected prefix.
+    /// The callback may retain only its funded derived products through commit.
+    pub fn prepare_participation_save<T>(
+        &self,
+        budget: &ByteBudget,
+        prepare: impl FnOnce(RuntimeHistory, Option<RuntimeHistoryCuts>, RuntimeRecallRead<'_>) -> T,
+    ) -> Result<T, RuntimeError> {
+        if !matches!(
+            self.operation,
+            crate::simulation::CompletedOperation::Participation(_)
+        ) || !self.outcome().ok
+        {
+            return Err(failure(
+                "participation save requires its completed candidate",
+            ));
+        }
+        let prefix = self
+            .protected_save
+            .ok_or_else(|| failure("participation save requires a protected prefix"))?;
+        let history = self.retain_history();
+        let eligibility = capture_history_cuts(
+            self.state,
+            prefix.through_cut,
+            std::slice::from_ref(&history),
+            budget,
+        )?;
+        let recall =
+            RuntimeRecallRead::new(self.state, prefix.through_cut, &prefix.changes, budget)?;
+        Ok(prepare(history, eligibility, recall))
     }
 
     /// An occurrence can request a reply only when the intended recipient
@@ -142,69 +175,80 @@ impl NativeWorldSession {
     ) -> Result<Option<RuntimeHistoryCuts>, RuntimeError> {
         self.require_active()?;
         let state = &self.session.accepted().map_err(failure)?.state;
-        if through != state.accepted_cut
-            || histories
-                .windows(2)
-                .any(|pair| pair[0].base_cut() >= pair[1].base_cut())
-            || histories.iter().any(|history| {
-                history.world_id() != state.physical.header.id
-                    || history.generation() != state.generation
-                    || history.base_cut() >= through
-            })
-        {
+        if through != state.accepted_cut {
             return Err(failure("history eligibility cut is stale"));
         }
-        let needed = histories
-            .iter()
-            .filter(|history| history.0.account_count() != 0);
-        let captures = needed.clone().count();
-        if captures == 0 {
-            return Ok(None);
-        }
-        let bytes = needed
-            .clone()
-            .try_fold(
-                state
-                    .physical
-                    .header
-                    .id
-                    .len()
-                    .checked_add(state.generation.len())
-                    .ok_or_else(|| failure("capacity"))?,
-                |bytes, history| {
-                    bytes
-                        .checked_add(std::mem::size_of::<(RuntimeHistory, Vec<bool>)>())?
-                        .checked_add(history.0.account_count())
-                },
-            )
-            .ok_or_else(|| failure("capacity"))?;
-        let storage = self.budget.reserve(bytes).map_err(failure)?;
-        let accounts = needed
-            .map(|history| {
-                (
-                    history.clone(),
-                    history
-                        .accounts()
-                        .map(|account| {
-                            history_account_eligible_at(
-                                state,
-                                account.actor_id,
-                                account.event_id,
-                                account.temporal.map(|temporal| temporal.receipt),
-                            )
-                        })
-                        .collect(),
-                )
-            })
-            .collect();
-        Ok(Some(RuntimeHistoryCuts {
-            world: state.physical.header.id.clone(),
-            generation: state.generation.clone(),
-            through,
-            accounts,
-            _storage: storage,
-        }))
+        capture_history_cuts(state, through, histories, &self.budget)
     }
+}
+
+fn capture_history_cuts(
+    state: &SimulationState,
+    through: u64,
+    histories: &[RuntimeHistory],
+    budget: &ByteBudget,
+) -> Result<Option<RuntimeHistoryCuts>, RuntimeError> {
+    if histories
+        .windows(2)
+        .any(|pair| pair[0].base_cut() >= pair[1].base_cut())
+        || histories.iter().any(|history| {
+            history.world_id() != state.physical.header.id
+                || history.generation() != state.generation
+                || history.base_cut() >= through
+        })
+    {
+        return Err(failure("history eligibility cut is stale"));
+    }
+    let needed = histories
+        .iter()
+        .filter(|history| history.0.account_count() != 0);
+    let captures = needed.clone().count();
+    if captures == 0 {
+        return Ok(None);
+    }
+    let bytes = needed
+        .clone()
+        .try_fold(
+            state
+                .physical
+                .header
+                .id
+                .len()
+                .checked_add(state.generation.len())
+                .ok_or_else(|| failure("capacity"))?,
+            |bytes, history| {
+                bytes
+                    .checked_add(std::mem::size_of::<(RuntimeHistory, Vec<bool>)>())?
+                    .checked_add(history.0.account_count())
+            },
+        )
+        .ok_or_else(|| failure("capacity"))?;
+    let storage = budget.reserve(bytes).map_err(failure)?;
+    let accounts = needed
+        .map(|history| {
+            (
+                history.clone(),
+                history
+                    .accounts()
+                    .map(|account| {
+                        history_account_eligible_at(
+                            state,
+                            account.actor_id,
+                            account.event_id,
+                            account.temporal.map(|temporal| temporal.receipt),
+                        )
+                    })
+                    .collect(),
+            )
+        })
+        .collect();
+    Ok(Some(RuntimeHistoryCuts {
+        world: state.physical.header.id.clone(),
+        generation: state.generation.clone(),
+        through,
+        accounts,
+        _storage: storage,
+    }))
 }
 
 /// Exact accepted changes needed for recall indexes. The database projection
@@ -227,6 +271,22 @@ pub struct RuntimeRecallDecoder<'a> {
 }
 
 impl RuntimeRecallRead<'_> {
+    fn new<'a>(
+        state: &'a SimulationState,
+        through: u64,
+        changes: &'a crate::records::ChangedRows,
+        budget: &'a ByteBudget,
+    ) -> Result<RuntimeRecallRead<'a>, RuntimeError> {
+        let decoder = RuntimeRecallDecoder::for_state(state, budget)?;
+        Ok(RuntimeRecallRead {
+            world_id: &state.physical.header.id,
+            generation: &state.generation,
+            through,
+            hard_bytes: decoder.hard_bytes,
+            changes,
+            decoder,
+        })
+    }
     /// Decode one accepted awareness body under its own parser and builder
     /// custody. Reuse the world's actual identity-support placement law.
     pub fn with_awareness<T>(
@@ -404,19 +464,12 @@ impl NativeWorldSession {
             .session
             .ordinary_recall_rows(through)
             .map_err(failure)?;
-        let hard = derived_hard_bytes(state)?;
-        Ok(read(RuntimeRecallRead {
-            world_id: &state.physical.header.id,
-            generation: &state.generation,
+        Ok(read(RuntimeRecallRead::new(
+            state,
             through,
-            hard_bytes: hard,
             changes,
-            decoder: RuntimeRecallDecoder {
-                hard_bytes: hard,
-                account_law: state.installed.account_law(),
-                budget: &self.budget,
-            },
-        }))
+            &self.budget,
+        )?))
     }
 
     /// Lend the verified installation law to its stopped checkpoint writer.

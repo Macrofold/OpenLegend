@@ -1224,14 +1224,16 @@ impl Session {
                         &self.budget,
                     )
                     .map_err(PublicationError::from)?;
+                    // A participation refusal carries only its outcome. It must
+                    // not prepare a commit for a new control or account grant.
                     let protected = matches!(&result, CompletedOperation::RecallEdit(done)
                         if done.privacy_change().is_some())
                         || matches!(
                             &result,
                             CompletedOperation::Restore(_)
                                 | CompletedOperation::HostControl(_)
-                                | CompletedOperation::Participation(_)
                         )
+                        || matches!(&result, CompletedOperation::Participation(done) if done.outcome.ok)
                         || matches!(&result, CompletedOperation::Response(done) if done.protected())
                         || matches!(&result, CompletedOperation::Consolidation(done) if done.protected);
                     let source_versions = preparing.driver.take_source_versions();

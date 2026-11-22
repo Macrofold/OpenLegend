@@ -103,6 +103,9 @@ impl Views {
             if scope.scope.world_id != self.routes.expected_world {
                 return Err(world_access(AccessError::Changed));
             }
+            if scope.scope.actor_id.is_empty() {
+                return Err(world_access(AccessError::Characterless));
+            }
             authority
                 .current(&scope, Capability::Play, false, |_, _| ())
                 .map_err(world_access)?;

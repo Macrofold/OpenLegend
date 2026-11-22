@@ -15,6 +15,24 @@ pub(crate) use transition::{
     ParticipationOperation, ParticipationRequest, ParticipationStep,
 };
 
+pub(crate) fn invitable_actor<'a>(
+    state: &'a crate::simulation::SimulationState,
+    id: &str,
+) -> Option<&'a crate::state::Entity> {
+    let entity = state.physical.entities.get(id)?;
+    let actor = entity.actor.as_ref()?;
+    (actor.alive
+        && actor.controller != "player"
+        && matches!(entity.kind.as_str(), "npc" | "player")
+        && entity.retirement.is_none()
+        && !state
+            .administration
+            .authorship
+            .player_account_ids
+            .contains_key(id))
+    .then_some(entity)
+}
+
 pub(crate) struct ParticipationState {
     pub(super) exposures: Option<IndexMap<String, f64>>,
     // These closed facts come from complete current owners. Positive social

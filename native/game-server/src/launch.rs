@@ -252,7 +252,15 @@ impl PreparedGame {
                 settings.loopback_http,
                 custody.clone(),
             )?;
-            access_http::oidc_router(authority, oidc, game_routes)
+            access_http::oidc_router(
+                authority,
+                oidc,
+                game_routes,
+                Some(access_http::Enrollment {
+                    game: game.clone(),
+                    saves: saves.clone(),
+                }),
+            )
         };
         clock.initialize().await?;
         Ok(Self {
