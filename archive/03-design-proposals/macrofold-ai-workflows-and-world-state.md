@@ -1,6 +1,6 @@
 # Macrofold for AI workflows and world context
 
-Status: **proposed architecture**, September 19, 2026, responding to [U10](../00-source/design-followups.md#u10--environment-state-and-general-ai-workflows-in-macrofold). The user owns both products and explicitly wants to consider reusable Macrofold improvements. This is design authorization, not authorization to implement either product. Extends the [shared-worker proposal](macrofold-shared-workers.md); current repository behavior remains documented in the [comparison](../02-research/macrofold-workspaces.md).
+Status: **proposed architecture**, September 19, 2026, responding to [U10](../00-source/design-followups.md#u10--environment-state-and-general-ai-workflows-in-macrofold). The user owns both products and explicitly wants to consider reusable Macrofold improvements. This is design authorization, not authorization to implement either product. Extends the [shared-worker proposal](macrofold-shared-workers.md); the [historical comparison](../02-research/macrofold-workspaces.md#source-provenance) identifies the inspected source and its limits.
 
 ## Recommended direction
 
@@ -17,7 +17,7 @@ This distinction concerns responsibility, not server placement. Macrofold may su
 | Live positions, inventory ownership, needs, ongoing actions and resource quantities | Structured state under the simulation's transactional authority, exposed through scoped resource APIs | Many concurrent events require validation and atomic changes rather than agent edits to files |
 | NPC memories and beliefs | Structured per-actor records with game-defined recall policy | Rich queries and provenance, while actors remain limited to what they know |
 
-Macrofold's existing workspace API persists files and Git history with one writer per workspace. Reads show the published revision; it does not promise a continuously current, application-consistent view of an active simulation. Revision-conditional file edits are useful, but are not equivalent to a transaction moving inventory between two actors while recording an event. [Workspace implementation](../../../AgentCloud/docs/features/workspaces/implementation.md), [file reads](../../../AgentCloud/docs/features/workspaces/read-files.md).
+Macrofold's existing workspace API persists files and Git history with one writer per workspace. Reads show the published revision; it does not promise a continuously current, application-consistent view of an active simulation. Revision-conditional file edits are useful, but are not equivalent to a transaction moving inventory between two actors while recording an event.
 
 It is reasonable to evolve a workspace into a resource namespace: files plus references to structured collections, read APIs, snapshots, approved tools and associated jobs. That is a proposed Macrofold feature, not a description of today's workspace. Start by connecting existing application-owned data through narrow tools. If Macrofold later hosts the structured records, preserve schema ownership, atomicity and the same authorized commit boundary. Do not maintain two independent writable copies of world truth.
 
@@ -74,7 +74,7 @@ For NPC work, the [canonical memory specification](../../docs/memory-architectur
 
 ## Existing foundations and necessary additions
 
-Macrofold already supplies durable jobs, run identity, scoped model/tool access, budgets, file persistence and run diagnostics. Its model gateway can process non-streaming responses, but it still expects an admitted run and native-harness-oriented configuration. Do not mistake HTTP support for an already implemented Jev adapter or a cheap standalone typed-inference endpoint. [Gateway](../../../AgentCloud/packages/core/src/model-gateway.ts), [current runtime](../../../AgentCloud/docs/features/execution/runtime.md).
+Macrofold already supplies durable jobs, run identity, scoped model/tool access, budgets, file persistence and run diagnostics. Its model gateway can process non-streaming responses, but it still expects an admitted run and native-harness-oriented configuration. Do not mistake HTTP support for an already implemented Jev adapter or a cheap standalone typed-inference endpoint.
 
 The reusable additions worth considering are:
 
@@ -83,7 +83,7 @@ The reusable additions worth considering are:
 3. **Versioned resource access.** Let a workspace refer to immutable snapshots and authorized queries over external or platform-hosted records. Make permissions, provenance, versions and write ownership explicit. A game supplies its own projection and commit handlers.
 4. **Small composable workflows.** Reuse existing queue/lifecycle primitives for sequences such as classify → deliberate if necessary → validate → publish a proposal. Record results, costs and versions; add reconciliation and cancellation without automatic paid retries. A generic visual workflow builder or new distributed database is not a prerequisite.
 
-Current scheduling and automation facilities should not be assumed to be a low-latency simulation event bus. The game filters and coalesces events before submitting work. A brief judgment should avoid a full filesystem lifecycle. Recent Macrofold working-tree changes already remove artificial ready-phase waits and improve hydration; the proposed lightweight executor is a distinct new path. Preserve authorization and spending bounds while measuring per-call database/queue/gateway overhead. [Scheduling](../../../AgentCloud/docs/features/execution/scheduling.md), [updated startup findings](../02-research/macrofold-workspaces.md#vercel-and-slow-startup), [implementation handoff](../07-technical-architecture/macrofold-implementation-brief.md).
+Current scheduling and automation facilities should not be assumed to be a low-latency simulation event bus. The game filters and coalesces events before submitting work. A brief judgment should avoid a full filesystem lifecycle. Recent Macrofold working-tree changes already remove artificial ready-phase waits and improve hydration; the proposed lightweight executor is a distinct new path. Preserve authorization and spending bounds while measuring per-call database/queue/gateway overhead. [updated startup findings](../02-research/macrofold-workspaces.md#vercel-and-slow-startup), [implementation handoff](../07-technical-architecture/macrofold-implementation-brief.md).
 
 A generic cache may live in Macrofold, but the application defines which inputs and versions make a result reusable. Include tenant/world scope, actor visibility where relevant, actual input fingerprint, model, rubric and policy versions. Semantic similarity alone does not make a previous decision valid. Record nondeterministic results so replay uses what actually happened; requerying the same model is not deterministic replay. Returning a cached result still requires current authorization and live action validation.
 

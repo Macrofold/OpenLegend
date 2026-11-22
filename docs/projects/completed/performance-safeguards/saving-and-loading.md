@@ -12,7 +12,9 @@ Read the [technical design](../performance-safeguards-tech-design.md) and its so
 
 ### Path at design time
 
-[SqlGameRepository.commit](../../../../apps/server/src/store.ts) first checks `canDeferWorldTables`, encodes the journal transition, prepares memory-source data, marks the write deferred, then calls [WorldJournal.append](../../../../apps/server/src/world-journal.ts). Inside its raw writer transaction, the callback runs [journalConstraints](../../../../apps/server/src/journal-admission.ts).
+This records the retired journal path. The original files `apps/server/src/world-journal.ts` and `apps/server/src/journal-admission.ts` are recoverable from local commit `fb0940a8b850c065db716d3b77bd3c91d33dba12` with `git show <commit>:<path>`. A published copy of the exact revision was not found. See [direct PostgreSQL saving](../../bookkeeping-simplification-tech-design.md#4-direct-transactional-saving) for the current path.
+
+The baseline `SqlGameRepository.commit` in `apps/server/src/store.ts` first checks `canDeferWorldTables`, encodes the journal transition, prepares memory-source data, marks the write deferred, then calls `WorldJournal.append`. Inside its raw writer transaction, the callback runs `journalConstraints`.
 
 `journalConstraints` mixes two different responsibilities:
 
