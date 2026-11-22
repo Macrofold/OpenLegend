@@ -17,7 +17,7 @@ use std::{
 
 mod collision;
 mod features;
-mod index;
+pub(crate) mod index;
 mod navigation;
 mod recast;
 mod release;

@@ -1,6 +1,60 @@
 //! The existing four-entry extent tree partition and traversal order.
 
 use super::{Bounds, coordinates, extent, point};
+use openlegend_simulation::host::{ByteBudget, ByteReservation, CapacityError};
+use std::mem::size_of;
+
+/// A temporary index of already admitted extents. Build only for an actual
+/// query. Its workspace and tree backing are owned until the batch returns.
+pub(crate) struct ReceivedIndex {
+    root: Option<Node>,
+    _storage: ByteReservation,
+}
+impl ReceivedIndex {
+    pub(crate) fn build(
+        bounds: impl ExactSizeIterator<Item = Option<Bounds>>,
+        budget: &ByteBudget,
+    ) -> Result<Self, CapacityError> {
+        // Stable sort scratch, recursive splits and the boxed leaves/branches
+        // can overlap. Reserve all of that before the first allocation.
+        let count = bounds.len();
+        let storage = budget.reserve(
+            count
+                .checked_mul(4 * (size_of::<Node>() + size_of::<Entry>()))
+                .ok_or(CapacityError)?,
+        )?;
+        let mut entries = Vec::new();
+        entries
+            .try_reserve_exact(count)
+            .map_err(|_| CapacityError)?;
+        entries.extend(
+            bounds
+                .enumerate()
+                .filter_map(|(id, bounds)| bounds.map(|bounds| Entry { id, bounds })),
+        );
+        Ok(Self {
+            root: Node::build(entries),
+            _storage: storage,
+        })
+    }
+
+    /// Return whether the bounded traversal completed. A hit names the
+    /// original input ordinal and owns no new geometry or permissions.
+    pub(crate) fn query(
+        &self,
+        window: &Bounds,
+        remaining: &mut u64,
+        hit: &mut impl FnMut(usize),
+    ) -> bool {
+        self.root.as_ref().is_none_or(|root| {
+            root.query(
+                &|bounds| super::overlaps(window, bounds, 0.0),
+                remaining,
+                hit,
+            )
+        })
+    }
+}
 
 pub(super) struct Entry {
     pub id: usize,

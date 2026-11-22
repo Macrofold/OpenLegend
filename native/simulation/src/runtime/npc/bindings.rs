@@ -39,8 +39,29 @@ pub struct RuntimeNpcBindingRequest {
 }
 
 impl RuntimeNpcBindingRequest {
-    /// The references from the first prompt are the only anchors. Resolve
-    /// them back to the same life in the originating read before measuring.
+    /// Only a supplied physical reference can anchor an original-scene
+    /// query. Match the life and lease before looking at the old coordinates.
+    pub fn received_anchor(
+        &self,
+        original: &RuntimeNpcRead,
+        current: &RuntimeNpcRead,
+        alias: &str,
+    ) -> Option<usize> {
+        let selected = self.request.selection.entities.iter().find(|row| row.alias == alias)?;
+        match selected.source {
+            NpcEntityOrdinal::Body { ordinal } => {
+                let anchor = current.read.perception.bodies.get(ordinal)?;
+                original.read.perception.bodies.iter().position(|body| {
+                    body.source_id == anchor.source_id
+                        && body.physical_life == anchor.physical_life
+                        && body.lease_id == anchor.lease_id
+                })
+            }
+            NpcEntityOrdinal::ReceivedBody { ordinal } => Some(ordinal),
+            _ => None,
+        }
+    }
+
     pub fn received_separation(
         &self,
         original: &RuntimeNpcRead,
@@ -48,30 +69,49 @@ impl RuntimeNpcBindingRequest {
         first: &str,
         second: &str,
     ) -> super::RuntimeNpcSeparationEvidence {
-        let resolve = |reference| {
-            let selected = self
-                .request
-                .selection
-                .entities
-                .iter()
-                .find(|row| row.alias == reference)?;
-            match selected.source {
-                NpcEntityOrdinal::Body { ordinal } => {
-                    let anchor = current.read.perception.bodies.get(ordinal)?;
-                    original.read.perception.bodies.iter().position(|body| {
-                        body.source_id == anchor.source_id
-                            && body.physical_life == anchor.physical_life
-                            && body.lease_id == anchor.lease_id
-                    })
-                }
-                NpcEntityOrdinal::ReceivedBody { ordinal } => Some(ordinal),
-                _ => None,
-            }
-        };
-        match resolve(first).zip(resolve(second)) {
+        match self.received_anchor(original, current, first)
+            .zip(self.received_anchor(original, current, second)) {
             Some((first, second)) => original.query_separation(first, second),
             None => super::RuntimeNpcSeparationEvidence::UNAVAILABLE,
         }
+    }
+
+    pub fn received_body_alias(
+        &self,
+        original: &RuntimeNpcRead,
+        current: &RuntimeNpcRead,
+        ordinal: usize,
+    ) -> Option<&str> {
+        let subject = original.read.perception.bodies.get(ordinal)?;
+        self.request.selection.entities.iter().find_map(|row| {
+            let matched = match row.source {
+                NpcEntityOrdinal::Body { ordinal } => current.read.perception.bodies.get(ordinal)
+                    .is_some_and(|body| body.source_id == subject.source_id
+                        && body.physical_life == subject.physical_life && body.lease_id == subject.lease_id),
+                NpcEntityOrdinal::ReceivedBody { ordinal: index } => index == ordinal,
+                _ => false,
+            };
+            matched.then_some(row.alias.as_str())
+        })
+    }
+
+    /// Bind only a body that appears in the final sent query answer. The
+    /// response owner resolves its lease and life from the original read.
+    pub fn bind_query_body(&mut self, alias: &str, ordinal: usize) -> Result<(), RuntimeError> {
+        let entities = &mut self.request.selection.entities;
+        if entities.iter().any(|reference| reference.alias == alias) {
+            return Ok(());
+        }
+        self._custody.resize(
+            self._custody.bytes().checked_add(size_of::<NpcEntityAlias>() + alias.len())
+                .ok_or(CapacityError)?,
+        )?;
+        entities.try_reserve_exact(1).map_err(|_| CapacityError)?;
+        entities.push(NpcEntityAlias {
+            alias: alias.into(),
+            source: NpcEntityOrdinal::ReceivedBody { ordinal },
+        });
+        Ok(())
     }
 
     /// Attach a reference actually sent in the query answer to the original

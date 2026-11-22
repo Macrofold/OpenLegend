@@ -50,6 +50,7 @@ pub(super) struct Prepared {
 pub(super) struct Projection {
     pub(super) fields: Value,
     pub(super) offers: Vec<NativeOffer>,
+    reference_key: String,
     refs: Vec<String>,
     physical: Vec<String>,
     attention: Vec<String>,
@@ -66,11 +67,8 @@ pub(super) struct NativeOffer {
 }
 
 impl Projection {
-    pub(super) fn reference_scope(&self) -> Result<&str, CallFailure> {
-        self.refs
-            .first()
-            .map(String::as_str)
-            .ok_or(CallFailure::Invalid)
+    pub(super) fn reference_scope(&self) -> &str {
+        &self.reference_key
     }
 
     pub(super) fn render_response(
@@ -78,7 +76,7 @@ impl Projection {
         game: &CurrentServer,
         selected: &[&NativeOffer],
         include_actions: bool,
-        queries: bool,
+        expansion: Option<&super::query::Answers<'_>>,
     ) -> Result<(PreparedPrompt, BoundSchema), CallFailure> {
         let budget = game.host.budget();
         let offered = selected
@@ -97,18 +95,26 @@ impl Projection {
             .cognition
             .prompt(fields, &offered, include_actions, budget)
             .map_err(invalid)?;
+        let extended = expansion
+            .filter(|answers| answers.added_references().next().is_some())
+            .map(|answers| answers.extend_references(&self.refs, &self.physical, budget))
+            .transpose()?;
+        let (entity, physical) = extended.as_ref().map_or(
+            (self.refs.as_slice(), self.physical.as_slice()),
+            |([entity, physical], _)| (entity.as_slice(), physical.as_slice()),
+        );
         let schema = game
             .cognition
             .response_schema(
                 self.speaks,
                 self.expressions,
-                queries,
+                expansion.is_none(),
                 &ResponseReferences {
-                    entity: &self.refs,
+                    entity,
                     action: &aliases,
                     knowledge: &[],
                     identity: &[],
-                    physical: &self.physical,
+                    physical,
                     attention: &self.attention,
                     retention: &[],
                     appraisal: None,
@@ -531,6 +537,7 @@ fn project(
         Projection {
             fields,
             offers,
+            reference_key,
             refs,
             physical,
             attention: attention_aliases,
@@ -862,6 +869,28 @@ fn intention_prompt_value(value: &SqlCell) -> Result<Value, CallFailure> {
     })
 }
 
+#[derive(Serialize)]
+pub(super) struct RelativeBody {
+    right: f64,
+    above: f64,
+    forward: f64,
+}
+
+pub(super) fn relative_body(
+    origin: openlegend_simulation::state::Point,
+    heading: f64,
+    point: openlegend_simulation::state::Point,
+) -> RelativeBody {
+    let x = point.x - origin.x;
+    let z = point.z - origin.z;
+    let (sin, cos) = heading.sin_cos();
+    RelativeBody {
+        right: -cos * x + sin * z,
+        above: point.y - origin.y,
+        forward: sin * x + cos * z,
+    }
+}
+
 fn received_body(
     own: &RuntimeNpcSelf,
     facet: RuntimeNpcObservedBody<'_>,
@@ -869,15 +898,7 @@ fn received_body(
     alias: &str,
 ) -> (String, Value) {
     let body = facet.body;
-    let x = body.position.x - own.position.x;
-    let y = body.position.y - own.position.y;
-    let z = body.position.z - own.position.z;
-    let (sin, cos) = own.heading.sin_cos();
-    let relative = json!({
-        "right": -cos * x + sin * z,
-        "above": y,
-        "forward": sin * x + cos * z,
-    });
+    let relative = relative_body(own.position, own.heading, body.position);
     let mut line = format!(
         "I can see {name} (ID:{alias}). Physical form: measured at simulation second {}; received at {}.",
         facet.value_measured_from, facet.value_acquired_at,

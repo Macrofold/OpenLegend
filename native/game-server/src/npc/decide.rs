@@ -320,7 +320,7 @@ pub(super) async fn run(
             .ok_or(CallFailure::Invalid.at("route"))?;
             let (response, schema) = prepared
                 .context
-                .render_response(game, &selected, include_actions, true)
+                .render_response(game, &selected, include_actions, None)
                 .map_err(|error| error.at("generation-preparation"))?;
             let reply_player = if prepared.addressed {
                 prepared.context.preview_player.as_ref()
@@ -358,11 +358,7 @@ pub(super) async fn run(
                         .await
                         .map_err(prepare::binding_failure)?;
                     prepared.context.fields["situationQueries"] = false.into();
-                    let (mut response, schema) = prepared
-                        .context
-                        .render_response(game, &selected, include_actions, false)
-                        .map_err(|error| error.at("situation-query-preparation"))?;
-                    {
+                    let (response, schema) = {
                         let answers = query::answer(
                             &questions,
                             &binding,
@@ -370,13 +366,17 @@ pub(super) async fn run(
                             &current,
                             &policy,
                             budget,
-                            prepared.context.reference_scope()?,
+                            prepared.context.reference_scope(),
+                            &prepared.frame,
                         )?;
-                        response
-                            .append_received_evidence(&answers)
-                            .map_err(generation_failure)?;
+                        let (mut response, schema) = prepared
+                            .context
+                            .render_response(game, &selected, include_actions, Some(&answers))
+                            .map_err(|error| error.at("situation-query-preparation"))?;
+                        response.append_received_evidence(&answers).map_err(generation_failure)?;
                         answers.bind(&mut binding)?;
-                    }
+                        (response, schema)
+                    };
                     drop(questions);
                     drop(held);
                     ensure_running(&work)?;

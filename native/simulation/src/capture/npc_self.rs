@@ -29,6 +29,7 @@ pub struct RuntimeNpcSelf {
 
 pub struct RuntimeNpcDecisionFrame {
     pub x: f64,
+    pub y: f64,
     pub z: f64,
     pub heading: f64,
     pub support: Option<String>,
@@ -91,6 +92,7 @@ impl RuntimeNpcSelf {
     pub(crate) fn into_frame(self) -> RuntimeNpcDecisionFrame {
         RuntimeNpcDecisionFrame {
             x: self.position.x,
+            y: self.position.y,
             z: self.position.z,
             heading: self.heading,
             support: self.support,
