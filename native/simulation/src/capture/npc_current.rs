@@ -389,8 +389,9 @@ pub(crate) fn prepare(
                 })
                 .count()
         });
-    let attention_read = crate::reception::capture_attention_read(state, actor_id, budget)?;
-    let attention = serde_json::from_str::<&serde_json::value::RawValue>(&attention_read.json)
+    let attention_read = crate::reception::capture_attention_read(state, actor_id, budget, true)?;
+    let attention_bridge = attention_read.bridge.ok_or(ExecutionError::Invariant)?;
+    let attention = serde_json::from_str::<&serde_json::value::RawValue>(&attention_bridge.json)
         .map_err(|_| ExecutionError::Invariant)?;
     let mut handle_ids = Vec::new();
     handle_ids
@@ -479,7 +480,7 @@ pub(crate) fn prepare(
     Ok(PreparedNpcCurrent {
         capture: NpcCurrentCapture {
             bridge: Some((json, storage)),
-            attention: attention_read.presentations,
+            attention: attention_bridge.presentations,
         },
         current,
         backing,

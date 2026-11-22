@@ -13,11 +13,15 @@ pub(crate) struct CapturedAttentionPresentations {
     _storage: ByteReservation,
 }
 pub(crate) struct CapturedAttentionRead {
-    pub(crate) json: String,
+    pub(crate) bridge: Option<AttentionBridgeRead>,
     pub(crate) cue_inputs_token: String,
     pub(crate) semantic_causes: CapturedSemanticCauses,
+    _storage: ByteReservation,
+}
+pub(crate) struct AttentionBridgeRead {
+    pub(crate) json: String,
     pub(crate) presentations: CapturedAttentionPresentations,
-    pub(crate) _storage: ByteReservation,
+    _storage: ByteReservation,
 }
 /// Native-origin scheduling causes retain their actual source roster. Model
 /// output and copied JSON cannot create one for a response acknowledgment.
@@ -199,10 +203,13 @@ fn prepare_presentations(
     })
 }
 
+/// Prepare current causes and their exact scheduling witness. Only callers
+/// exporting the bridge read need the projected positions and encoded body.
 pub(crate) fn capture_attention_read(
     state: &crate::simulation::SimulationState,
     observer: &str,
     budget: &ByteBudget,
+    bridge: bool,
 ) -> Result<CapturedAttentionRead, crate::execution::ExecutionError> {
     let mut scratch = CurrentJournal::new(budget)?;
     let (attention, candidates) = presentation_inputs(state, observer, &mut scratch)?;
@@ -211,14 +218,6 @@ pub(crate) fn capture_attention_read(
         latches
             .checked_mul(size_of::<Cue<'_>>())
             .ok_or_else(capacity)?,
-    )?;
-    let presentations = prepare_presentations(
-        state,
-        observer,
-        attention,
-        &candidates,
-        budget,
-        &mut scratch,
     )?;
     let mut cues = Vec::new();
     cues.try_reserve_exact(latches).map_err(|_| capacity())?;
@@ -287,7 +286,7 @@ pub(crate) fn capture_attention_read(
     let cue_length = json_record_len(&CueInputs(&cues)).map_err(|_| invalid())?;
     scratch.reserve_growth(cue_length.checked_mul(2).ok_or_else(capacity)?)?;
     let cue_json = json_record(&CueInputs(&cues)).map_err(|_| invalid())?;
-    let cue_storage = budget.reserve(64).map_err(|_| capacity())?;
+    let storage = budget.reserve(64).map_err(|_| capacity())?;
     let cue_inputs_token = crate::encoding::sha256_hex(cue_json.as_bytes());
     drop(cue_json);
     let actor = state
@@ -346,31 +345,34 @@ pub(crate) fn capture_attention_read(
     cause_storage
         .resize(causes.heap_bytes().ok_or_else(capacity)?)
         .map_err(|_| capacity())?;
-    let product = Product {
-        entries: attention.map_or(&[], |attention| attention.entries.as_slice()),
-        candidates: &candidates,
-        presentations: &presentations.entries,
-        cues: &cues,
+    let bridge = if bridge {
+        let presentations =
+            prepare_presentations(state, observer, attention, &candidates, budget, &mut scratch)?;
+        let product = Product {
+            entries: attention.map_or(&[], |attention| attention.entries.as_slice()),
+            candidates: &candidates,
+            presentations: &presentations.entries,
+            cues: &cues,
+        };
+        let length = json_record_len(&product).map_err(|_| invalid())?;
+        let mut packet = budget.reserve(length.checked_mul(2).ok_or_else(capacity)?)?;
+        let json = json_record(&product).map_err(|_| invalid())?;
+        packet.resize(json.capacity())?;
+        Some(AttentionBridgeRead {
+            json,
+            presentations,
+            _storage: packet,
+        })
+    } else {
+        None
     };
-    let length = crate::encoding::json_record_len(&product)
-        .map_err(|_| crate::execution::ExecutionError::Invariant)?;
-    let mut storage = budget.reserve(
-        length
-            .checked_mul(2)
-            .ok_or(crate::execution::ExecutionError::Capacity)?,
-    )?;
-    let json = crate::encoding::json_record(&product)
-        .map_err(|_| crate::execution::ExecutionError::Invariant)?;
-    storage.resize(json.capacity())?;
-    storage.merge(cue_storage)?;
     Ok(CapturedAttentionRead {
-        json,
+        bridge,
         cue_inputs_token,
         semantic_causes: CapturedSemanticCauses {
             values: causes,
             _storage: cause_storage,
         },
         _storage: storage,
-        presentations,
     })
 }

@@ -70,16 +70,6 @@ pub(super) fn capture<'a>(
                     .map(|purpose| &purpose.definition),
             }
         });
-    // The ordinary plan owner refuses an activity graph at install and at every
-    // edit. Do not manufacture a missing graph purpose from ordinary plan text.
-    if actor
-        .agency
-        .plan
-        .as_ref()
-        .is_some_and(|plan| plan.activity.is_some())
-    {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
     let memories = state
         .experience
         .optional_collection(id, PersonalSourceKind::Memory)?;

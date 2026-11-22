@@ -431,6 +431,7 @@ fn prepare(
     if !entity.has_memory() || actor.controller != "npc" {
         return Err(ExecutionError::UnsupportedFamily);
     }
+    let packets = matches!(output, IntakeOutput::Packets);
     let unseen = unseen_intake(
         &state.experience,
         id,
@@ -440,7 +441,7 @@ fn prepare(
         &state.installed.cognition.significant_event_types,
         budget,
     )?;
-    let attention = crate::reception::capture_attention_read(state, id, budget)?;
+    let attention = crate::reception::capture_attention_read(state, id, budget, packets)?;
     let policy = state
         .installed
         .body_policy
@@ -454,7 +455,7 @@ fn prepare(
         .and_then(|owners| owners.get(id));
     let current_count = current.map_or(0, |owner| owner.current.len());
     let queue_only = matches!(output, IntakeOutput::Queue | IntakeOutput::QueuePacket);
-    let reconsideration_bytes = size_of::<Reconsideration<'_>>() * if queue_only { 1 } else { 2 };
+    let reconsideration_bytes = size_of::<Reconsideration<'_>>() * if packets { 2 } else { 1 };
     let bytes = count
         .checked_mul(reconsideration_bytes)
         .and_then(|n| {
@@ -474,7 +475,7 @@ fn prepare(
     let _scratch = budget.reserve(bytes)?;
     let read = state.installed.status_read(&state.physical);
     let mut reconsideration = Vec::with_capacity(count);
-    let mut director_inputs = Vec::with_capacity(if queue_only { 0 } else { count });
+    let mut director_inputs = Vec::with_capacity(if packets { count } else { 0 });
     if let Some(policy) = policy {
         for input in &policy.reconsideration_inputs {
             let value = read
@@ -484,7 +485,7 @@ fn prepare(
                 key: &input.key,
                 value,
             });
-            if input.director && !queue_only {
+            if input.director && packets {
                 director_inputs.push(Reconsideration {
                     key: &input.key,
                     value,
@@ -778,6 +779,61 @@ fn prepare(
         return Ok(PreparedIntake::QueuePacket(text, storage));
     }
 
+    // The ordinary reader still needs this installed plan shape for the
+    // prepared-result semantics. A witness cannot bless a new shape.
+    if actor
+        .agency
+        .plan
+        .as_ref()
+        .is_some_and(|plan| plan.activity.is_some())
+    {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    let _event_storage = budget.reserve(
+        unseen
+            .records
+            .len()
+            .checked_mul(size_of::<EventMetadata<'_>>())
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let mut events = Vec::with_capacity(unseen.records.len());
+    for source in &unseen.records {
+        if let Some(original) = source.event_id.and_then(|event| {
+            state
+                .occurrences
+                .hot()
+                .find(|hot| hot.event().event().id == event)
+        }) {
+            let event = original.event().event();
+            let response_recorded = event.data.as_ref().and_then(|data| data.get("responseId")).is_some_and(|value| matches!(value, crate::reception::EventScalar::Text(id) if id.as_unicode().is_some_and(|id| state.responses.get(id).is_some())));
+            events.push(EventMetadata {
+                id: &event.id,
+                kind: &event.event_type,
+                actor_id: event.actor_id.as_deref(),
+                data: EventData(event.data.as_ref()),
+                response_recorded,
+            });
+        }
+    }
+    // Acknowledgement protects the current resolved causes and exact receipt
+    // metadata. It never needs private wording or an outgoing attention view.
+    let (inspection, inspection_storage) = token(
+        &(
+            actor.agency.semantic.as_ref().map(|state| &state.resolved),
+            &events,
+        ),
+        budget,
+    )?;
+    token_storage.merge(inspection_storage)?;
+    if matches!(output, IntakeOutput::Witness) {
+        return Ok(PreparedIntake::Witness(NpcIntakeWitness {
+            tokens,
+            dependencies,
+            inspection,
+            _storage: token_storage,
+        }));
+    }
+
     let attributes = project_attributes(
         entity,
         &state.installed.attributes,
@@ -801,14 +857,6 @@ fn prepare(
                     .rows()
                     .len()
                     .checked_mul(size_of::<(&str, &crate::text::JsText)>())?,
-            )
-        })
-        .and_then(|n| {
-            n.checked_add(
-                unseen
-                    .records
-                    .len()
-                    .checked_mul(size_of::<EventMetadata<'_>>())?,
             )
         })
         .ok_or(ExecutionError::Capacity)?;
@@ -917,25 +965,6 @@ fn prepare(
             label: names.observer_name(source)?,
         });
     }
-    let mut events = Vec::with_capacity(unseen.records.len());
-    for source in &unseen.records {
-        if let Some(original) = source.event_id.and_then(|event| {
-            state
-                .occurrences
-                .hot()
-                .find(|hot| hot.event().event().id == event)
-        }) {
-            let event = original.event().event();
-            let response_recorded = event.data.as_ref().and_then(|data| data.get("responseId")).is_some_and(|value| matches!(value, crate::reception::EventScalar::Text(id) if id.as_unicode().is_some_and(|id| state.responses.get(id).is_some())));
-            events.push(EventMetadata {
-                id: &event.id,
-                kind: &event.event_type,
-                actor_id: event.actor_id.as_deref(),
-                data: EventData(event.data.as_ref()),
-                response_recorded,
-            });
-        }
-    }
     let purpose_bytes = actor
         .agency
         .plan
@@ -947,18 +976,6 @@ fn prepare(
         .ok_or(ExecutionError::Capacity)?;
     let _purpose_storage = budget.reserve(purpose_bytes)?;
     let purpose = crate::execution::occupied_purpose(actor)?;
-    // Queue wake inputs intentionally omit semantic bookkeeping. The later
-    // inspection also protects the actual resolved causes and receipt metadata
-    // used by this read, so it cannot acknowledge an obsolete opportunity.
-    let (inspection, inspection_storage) = token(
-        &(
-            actor.agency.semantic.as_ref().map(|state| &state.resolved),
-            &events,
-        ),
-        budget,
-    )?;
-    token_storage.merge(inspection_storage)?;
-
     let (prepared_result, _result_storage) = result::capture(state, actor, id, budget)?;
     let product = Product {
         world_id: input.world_id,
@@ -992,7 +1009,13 @@ fn prepare(
             agency: AgencyRead(&actor.agency),
             attributes: attributes.rows(),
         },
-        attention: raw(&attention.json)?,
+        attention: raw(
+            &attention
+                .bridge
+                .as_ref()
+                .ok_or(ExecutionError::Invariant)?
+                .json,
+        )?,
         protection_labels: &protection_labels,
         actions_blocked: input.actions_blocked,
         speech_blocked: input.speech_blocked,
@@ -1015,14 +1038,6 @@ fn prepare(
         events: &events,
         prepared_result,
     };
-    if matches!(output, IntakeOutput::Witness) {
-        return Ok(PreparedIntake::Witness(NpcIntakeWitness {
-            tokens,
-            dependencies,
-            inspection,
-            _storage: token_storage,
-        }));
-    }
     let (inputs_json, inputs_storage) = encode_inputs(&input, budget)?;
     let length = json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
     let mut storage = budget.reserve(
