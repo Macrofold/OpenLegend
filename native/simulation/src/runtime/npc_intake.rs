@@ -1,6 +1,8 @@
 //! The director can inspect a finite native wakeup cut. The opaque handle is
 //! the freshness witness; restoring its JSON cannot acknowledge an inspection.
 use super::*;
+pub use crate::capture::npc_intake::NpcQueueInputs;
+pub use crate::experience::intake::IntakeSelection as RuntimeNpcIntakeSelection;
 mod direct;
 pub use direct::{NpcScheduleCause, NpcSchedulePopulation, NpcScheduleSources};
 pub struct RuntimeNpcTrigger {
@@ -80,13 +82,33 @@ impl NativeWorldSession {
         let request = serde_json::from_slice(input).map_err(failure)?;
         let state = &self.session.accepted().map_err(session_failure)?.state;
         let (text, custody) =
-            crate::capture::npc_intake::capture_queue_inputs(state, &request, &self.budget)
+            crate::capture::npc_intake::capture_queue_packet(state, &request, &self.budget)
                 .map_err(failure)?;
         Ok(RuntimeJson {
             bytes: text.into_bytes(),
             custody,
             handoff: None,
         })
+    }
+    /// The Rust scheduler keeps the exact acknowledged queue inputs together
+    /// with their reservation, so neither side transfers a JSON packet.
+    pub fn read_npc_queue_inputs_direct(
+        &self,
+        actor_id: String,
+        weighed_through: Option<u64>,
+        selection: RuntimeNpcIntakeSelection,
+    ) -> Result<NpcQueueInputs, RuntimeError> {
+        use crate::capture::npc_intake::{NpcIntakeReadRequest, capture_queue_inputs};
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
+        let request = NpcIntakeReadRequest {
+            actor_id,
+            after_sequence: 0,
+            weighed_through,
+            selection,
+        };
+        capture_queue_inputs(state, &request, &self.budget)
+            .map_err(|error| session_failure(error.into()))
     }
     pub fn npc_trigger_current(&self, trigger: &RuntimeNpcTrigger) -> Result<bool, RuntimeError> {
         self.require_active()?;

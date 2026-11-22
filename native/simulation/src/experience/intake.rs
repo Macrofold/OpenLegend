@@ -24,9 +24,9 @@ impl ExperienceState {
     }
 }
 
-#[derive(Clone, Copy, Deserialize)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct IntakeSelection {
+pub struct IntakeSelection {
     pub limit: usize,
     pub protected_importance: f64,
     pub preferred_importance: f64,

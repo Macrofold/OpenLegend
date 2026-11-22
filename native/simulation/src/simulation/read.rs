@@ -112,7 +112,7 @@ impl AcceptedActorRead {
     pub(crate) fn appraisals_json(&self) -> Option<&str> {
         self.appraisals
             .as_ref()
-            .map(|appraisals| appraisals.json.as_str())
+            .and_then(|appraisals| appraisals.bridge_json())
     }
 }
 impl Simulation {
@@ -463,11 +463,12 @@ impl Simulation {
             };
         let (own, prepared) = with_actor_self(state, actor_id, purpose, budget, prepare)?;
         let perception = capture_actor_perception(state, actor_id, purpose, budget)?;
-        let appraisals = if matches!(purpose, ActorReadPurpose::NpcDecision { .. }) {
+        let appraisals = if let ActorReadPurpose::NpcDecision { bridge } = purpose {
             Some(crate::appraisals::capture_actor_appraisals(
                 state,
                 actor_id,
                 required_appraisals,
+                bridge,
                 budget,
             )?)
         } else {

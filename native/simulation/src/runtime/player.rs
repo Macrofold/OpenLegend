@@ -5,6 +5,7 @@ use crate::capture::{
     CapturedPlayerControls, PlayerControlFacts, PlayerControlPreparation, PlayerPerception,
     PlayerSelfFacts,
 };
+pub use crate::commands::player::RuntimePlayerCommand;
 use crate::geometry::{GeometryAnswers, GeometryBinding};
 use crate::host::{CapacityError, PublicationLease};
 use crate::simulation::AcceptedActorRead;
@@ -93,6 +94,42 @@ impl RuntimePlayerPublication {
     }
 }
 impl NativeWorldSession {
+    /// Admit a decoded browser movement or stop on the same command journal
+    /// used by the bridge. Authorization and receipt lookup belong to the
+    /// application caller. Only the saved learner record and replay signature
+    /// are encoded. The cursor independently admits the retained command.
+    pub fn begin_player_command(
+        &mut self,
+        id: &str,
+        actor: &str,
+        command: RuntimePlayerCommand<'_>,
+        preview: bool,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        // Size the live input copies and both small escaped JSON records.
+        let bytes = id
+            .len()
+            .checked_add(actor.len())
+            .and_then(|n| n.checked_add(command.selected_text_bytes()))
+            .and_then(|n| n.checked_mul(24))
+            .and_then(|n| n.checked_add(4096))
+            .ok_or(CapacityError)?;
+        let _workspace = self.budget.reserve(bytes)?;
+        let (command, signature) = command.bind(id, actor).map_err(failure)?;
+        self.session
+            .begin_command(
+                command,
+                signature,
+                crate::commands::CommandOptions {
+                    preview,
+                    native_controller: false,
+                    native_movement: None,
+                    durable_receipt: !preview,
+                },
+            )
+            .map_err(session_failure)
+    }
+
     /// The application verifies external catalog retention before adopting
     /// the cold writer. Simulation does not interpret these asset references.
     pub fn saved_presentation_release(&self) -> (Option<&RawValue>, Option<u64>) {

@@ -6,24 +6,22 @@ use crate::{
     world::WorldError,
 };
 use openlegend_simulation::{
-    encoding::{json_record, json_tree_allocation_bound, sha256_hex},
-    experience::{AwarenessSourceBody, PersonalSourceKind, PersonalSourceRef},
+    encoding::{json_record, sha256_hex},
+    experience::{PersonalSourceKind, PersonalSourceRef},
     host::{ByteBudget, ByteReservation, CapacityError},
-    narration::{NameArticle, NativeText, name_phrase, native_text},
-    reception::{
-        AttributeDisplay, AttributeKnowledge, KnowledgeDocument, SpeechAddressing,
-        SpeechParticipant,
-    },
+    narration::{NameArticle, name_phrase, native_text},
+    reception::{AttributeDisplay, AttributeKnowledge, KnowledgeDocument},
     records::SqlCell,
     runtime::{
-        RuntimeError, RuntimeJson, RuntimeNpcObservedBody, RuntimeNpcRead,
-        RuntimeNpcResponseTicket, RuntimeNpcSelf, RuntimeNpcSelfPrompt,
+        NpcActivityFacts, RuntimeError, RuntimeNpcFeelings, RuntimeNpcObservedBody,
+        RuntimeNpcPersonalSource as PersonalSource, RuntimeNpcPersonalSources as PersonalSources,
+        RuntimeNpcRead, RuntimeNpcResponseTicket, RuntimeNpcSelf, RuntimeNpcSelfPrompt,
     },
-    state::{Goal, Named},
+    state::Goal,
     text::JsText,
-    values::{AttributeValue, deserialize_present_safe_integer},
+    values::AttributeValue,
 };
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::Serialize;
 use serde_json::{Value, json};
 use std::{borrow::Cow, collections::HashMap, fmt::Write as _, sync::Arc};
 
@@ -35,97 +33,6 @@ pub(super) use recall::{Collected, RecallReview, collect};
 enum ProjectionPurpose {
     Recall,
     Decision,
-}
-
-struct FundedPreparation<T> {
-    value: T,
-    _custody: ByteReservation,
-}
-
-type PersonalSources = FundedPreparation<PersonalPacket>;
-type CurrentRead = FundedPreparation<CurrentFacts>;
-
-/// Current formatter fields only. The fresh native capture also carries
-/// private history and response-validity products that this caller never uses.
-#[derive(Deserialize)]
-struct CurrentFacts {
-    appraisals: Option<CurrentAppraisals>,
-    candidates: Option<Value>,
-    recall: Option<Value>,
-}
-
-#[derive(Deserialize)]
-struct CurrentAppraisals {
-    values: Vec<Value>,
-    names: Vec<AppraisalName>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct AppraisalName {
-    entity_id: String,
-    name: Named,
-}
-
-// The exact leased source and grant ordinals stay with the native ticket.
-// Decode only the permitted metadata and prose consumed by the formatter.
-#[derive(Deserialize)]
-struct PersonalPacket {
-    ordinal: usize,
-    inventory: PersonalInventory,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct PersonalInventory {
-    personal: Vec<PersonalSource>,
-    unavailable_personal: Vec<usize>,
-}
-
-#[derive(Deserialize)]
-struct PersonalSource {
-    selection: usize,
-    reference: PersonalSourceRef,
-    value: PersonalFacts,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct PersonalFacts {
-    event_id: Option<String>,
-    event_type: Option<String>,
-    modality: Option<String>,
-    trigger_kind: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_present_safe_integer")]
-    sequence: Option<u64>,
-    at: Option<f64>,
-    to: Option<f64>,
-    source_body: Option<AwarenessSourceBody>,
-    speech: Option<PersonalSpeech>,
-    text: Option<NativeText>,
-    content: Option<NativeText>,
-    summary: Option<JsText>,
-}
-
-#[derive(Deserialize)]
-struct PersonalSpeech {
-    speaker: Option<SpeechParticipant>,
-    addressee: Option<SpeechParticipant>,
-    addressing: Option<SpeechAddressing>,
-}
-
-impl<T: DeserializeOwned> FundedPreparation<T> {
-    /// Fund the independent decoded presentation graph before parsing the
-    /// packet. The caller's output and the native evidence have separate guards.
-    fn read(packet: &RuntimeJson, budget: &ByteBudget) -> Result<Self, CallFailure> {
-        let text = std::str::from_utf8(packet.bytes()).map_err(invalid)?;
-        let bound = json_tree_allocation_bound(text).ok_or_else(|| capacity(CapacityError))?;
-        let custody = budget.reserve(bound).map_err(capacity)?;
-        Ok(Self {
-            value: serde_json::from_str(text).map_err(invalid)?,
-            _custody: custody,
-        })
-    }
 }
 
 pub(super) struct Prepared {
@@ -154,7 +61,7 @@ pub(super) struct NativeOffer {
     pub(super) id: String,
     pub(super) caption: String,
     pub(super) no_intervention: bool,
-    pub(super) transition: String,
+    pub(super) transition: &'static str,
 }
 
 impl Projection {
@@ -212,24 +119,18 @@ pub(super) async fn finish(
     ensure_running(work)?;
     let budget = game.host.budget();
     let current = capture_offers(game, work, consumer(work), "current-offers").await?;
-    let captured = CurrentRead::read(
-        &current.decision_packet(budget).map_err(packet_failure)?,
-        budget,
-    )?;
     let through = collected.through.max(current.accepted_cut());
-    // The independent projection remains funded after its decoded inputs drop.
-    let projection =
-        collected.projection_custody(&captured, &current, ProjectionPurpose::Decision, budget)?;
+    // The projection has separate custody from the captured evidence it renders.
+    let projection = collected.projection_custody(&current, ProjectionPurpose::Decision, budget)?;
     let (binding, context, addressed, speech_trigger) = project(
         game,
         work,
-        (&current, &captured.value),
+        &current,
         &collected.attention.ordinals,
-        collected.sources.as_ref().map(|data| &data.value),
+        collected.sources.as_ref(),
         &collected.required,
         ProjectionPurpose::Decision,
     )?;
-    drop(captured);
     drop(collected.sources.take());
     drop(collected.attention);
     let route = game
@@ -336,9 +237,9 @@ fn read_request(
 fn project(
     game: &CurrentServer,
     work: &Work,
-    (read, facts): (&RuntimeNpcRead, &CurrentFacts),
+    read: &RuntimeNpcRead,
     original_attention: &[usize],
-    selected: Option<&PersonalPacket>,
+    selected: Option<&PersonalSources>,
     rows: &[usize],
     purpose: ProjectionPurpose,
 ) -> Result<(Value, Projection, bool, bool), CallFailure> {
@@ -347,12 +248,6 @@ fn project(
     let self_facts = read.current_self().map_err(packet_failure)?;
     let own = self_facts.prompt().ok_or(CallFailure::Invalid)?;
     let origin = read.decision_origin();
-    let prepared = if decision {
-        facts.candidates.as_ref()
-    } else {
-        facts.recall.as_ref()
-    }
-    .ok_or(CallFailure::Invalid)?;
     let own_name = name_phrase(&own.observer_name, NameArticle::None, false);
     let own_name = prompt_text(&own_name);
     let reference_key = uuid::Uuid::new_v4().simple().to_string();
@@ -396,13 +291,7 @@ fn project(
     let mut source_entries = Vec::with_capacity(rows.len());
     if let Some(selected) = selected {
         for &row in rows {
-            source_entries.push(
-                selected
-                    .inventory
-                    .personal
-                    .get(row)
-                    .ok_or(CallFailure::Invalid)?,
-            );
+            source_entries.push(selected.personal.get(row).ok_or(CallFailure::Invalid)?);
         }
     }
     source_entries.sort_by(|a, b| {
@@ -503,7 +392,7 @@ fn project(
     let mut offers = Vec::new();
     let identity = identity(own, &own_name, &self_reference);
     let body = body_text(own)?;
-    let work_facts = agency(own, &prepared["workContext"])?;
+    let work_facts = agency(own, read)?;
     let notepad = own
         .notepad
         .as_ref()
@@ -515,15 +404,15 @@ fn project(
         })
         .transpose()?;
     let (mut fields, speaks, expressions, preview_player) = if decision {
-        for (ordinal, offer) in records(&prepared["offers"])?.iter().enumerate() {
+        for (ordinal, offer) in read.decision_offers().map_err(packet_failure)?.enumerate() {
             let id = format!("a{ordinal}");
-            let caption = text(&offer["description"])?;
+            let caption = prompt_text(offer.description.ok_or(CallFailure::Invalid)?);
             actions.push(json!({"alias":id,"ordinal":ordinal,"source":"current"}));
             offers.push(NativeOffer {
                 id,
-                caption: caption.to_owned(),
-                no_intervention: offer["hasCommand"] == false,
-                transition: text(&offer["transition"])?.to_owned(),
+                caption: caption.into_owned(),
+                no_intervention: offer.no_intervention,
+                transition: offer.transition,
             });
         }
         let speaks = own.speech;
@@ -533,13 +422,13 @@ fn project(
             .as_ref()
             .and_then(|(_, scope)| canonical.get(scope.scope.actor_id.as_str()).cloned());
         let fields = json!({
-            "identity":identity,"aboutMe":about_me(game, own)?,"body":body,"feelings":feelings(origin.actor_id,facts.appraisals.as_ref().ok_or(CallFailure::Invalid)?)?,
+            "identity":identity,"aboutMe":about_me(game, own)?,"body":body,"feelings":feelings(read.feelings().map_err(packet_failure)?)?,
             "capabilities":{"speech":speaks,"expressions":expressions},"commitments":[],
             "stimulus":stimulus,"triggerFacts":trigger_facts,"conversation":conversation,
             "agency":work_facts,"currentSupport":self_facts.support,"publicSurfaces":[],
             "now":display_time(now),"simTime":now,"recall":recall,"experience":experience,
             "surroundings":surroundings,"receivedSituation":{"measuredAt":now,"bodies":scene},
-            "activityRequests":activity_requests(game,&prepared["activity"],&canonical)?,
+            "activityRequests":activity_requests(game,read.activity_facts().map_err(packet_failure)?,&canonical)?,
             "possessions":[],"notepad":null,
             "knowledge":[],"references":descriptions,"situationQueries":true,
         });
@@ -623,7 +512,10 @@ fn speech_only(causes: &[PersonalSourceRef], entries: &[&PersonalSource]) -> boo
     heard
 }
 
-fn personal_evidence(sources: Option<&PersonalPacket>, rows: impl Iterator<Item = usize>) -> Value {
+fn personal_evidence(
+    sources: Option<&PersonalSources>,
+    rows: impl Iterator<Item = usize>,
+) -> Value {
     let ordinal = sources.map(|data| data.ordinal);
     Value::Array(
         rows.map(|row| json!({"inventory":ordinal,"ordinal":row}))
@@ -665,15 +557,6 @@ fn alias(key: &str, kind: &str, index: usize) -> String {
     digest[..24].to_owned()
 }
 
-fn text(value: &Value) -> Result<&str, CallFailure> {
-    value.as_str().ok_or(CallFailure::Invalid)
-}
-fn records(value: &Value) -> Result<&[Value], CallFailure> {
-    value
-        .as_array()
-        .map(Vec::as_slice)
-        .ok_or(CallFailure::Invalid)
-}
 fn invalid(_: impl std::fmt::Display) -> CallFailure {
     CallFailure::Invalid
 }
@@ -850,17 +733,22 @@ fn body_text(own: &RuntimeNpcSelfPrompt) -> Result<String, CallFailure> {
     Ok(parts.join(" "))
 }
 
-fn agency(own: &RuntimeNpcSelfPrompt, work: &Value) -> Result<Value, CallFailure> {
-    let remaining = |value: &Value| {
-        Some(
-            value["views"]
-                .as_array()?
-                .iter()
-                .filter_map(|view| view["title"].as_str().or_else(|| view["label"].as_str()))
-                .collect::<Vec<_>>()
-                .join("; "),
-        )
-    };
+fn agency(own: &RuntimeNpcSelfPrompt, read: &RuntimeNpcRead) -> Result<Value, CallFailure> {
+    let remaining =
+        |paused| {
+            Ok::<_, CallFailure>(read.remaining_plan(paused).map_err(packet_failure)?.map(
+                |views| {
+                    let mut summary = String::new();
+                    for (index, activity) in views.iter().enumerate() {
+                        if index != 0 {
+                            summary.push_str("; ");
+                        }
+                        summary.push_str(&prompt_text(&activity.name));
+                    }
+                    summary
+                },
+            ))
+        };
     let goals = own
         .goals
         .iter()
@@ -872,7 +760,7 @@ fn agency(own: &RuntimeNpcSelfPrompt, work: &Value) -> Result<Value, CallFailure
         })
         .collect::<Result<Vec<_>, _>>()?;
     Ok(
-        json!({"goals":goals,"plan":remaining(&work["plan"]),"paused":remaining(&work["suspended"]),
+        json!({"goals":goals,"plan":remaining(false)?,"paused":remaining(true)?,
         "planRevision":own.plan_revision,"attempts":pending_intentions(own)?}),
     )
 }
@@ -965,70 +853,79 @@ fn received_body(
 
 fn activity_requests(
     game: &CurrentServer,
-    read: &Value,
+    read: NpcActivityFacts<'_>,
     canonical: &HashMap<&str, String>,
 ) -> Result<Value, CallFailure> {
-    let available = &read["available"];
-    let choices = records(&available["choices"])?;
-    let mut permitted = Vec::new();
-    for choice in choices {
-        let id = text(&choice["id"])?;
-        let key = match choice["kind"].as_str() {
-            Some("entity") => "entityId",
-            Some("definition") => "definitionId",
+    let mut permitted = Vec::with_capacity(read.choices.len());
+    for choice in read.choices {
+        let (key, reference) = match choice.kind {
+            "entity" => {
+                let Some(alias) = canonical.get(choice.id.as_str()) else {
+                    continue;
+                };
+                ("entityId", alias.as_str())
+            }
+            "definition" => ("definitionId", choice.id.as_str()),
             _ => return Err(CallFailure::Invalid),
         };
-        let alias = if key == "entityId" {
-            let Some(alias) = canonical.get(id) else {
-                continue;
-            };
-            alias.as_str()
-        } else {
-            id
-        };
-        let mut formatted = choice.as_object().ok_or(CallFailure::Invalid)?.clone();
-        formatted.shift_remove("id");
-        formatted.insert(key.to_owned(), alias.into());
+        let mut formatted = serde_json::Map::from_iter([
+            ("label".into(), json!(prompt_text(&choice.label))),
+            ("kind".into(), json!(choice.kind)),
+            ("roles".into(), json!(choice.roles)),
+            ("requestIds".into(), json!(choice.request_ids)),
+        ]);
+        if let Some(distance) = choice.distance {
+            formatted.insert("distance".into(), json!(distance));
+        }
+        formatted.insert("accessible".into(), json!(choice.accessible));
+        formatted.insert(key.to_owned(), json!(reference));
         permitted.push(Value::Object(formatted));
     }
-    Ok(
-        json!({"requests":game.cognition.requests,"choices":permitted,"warnings":available["warnings"]}),
-    )
+    let warnings: Vec<_> = read.warnings.iter().map(prompt_text).collect();
+    Ok(json!({"requests":game.cognition.requests,"choices":permitted,"warnings":warnings}))
 }
 
-fn feelings(actor_id: &str, read: &CurrentAppraisals) -> Result<String, CallFailure> {
-    let mut lines = Vec::new();
-    for value in &read.values {
-        let mut line = format!("I feel {}", text(&value["feeling"])?);
-        if let Some(target) = value["targetId"].as_str()
-            && let Some(name) = read.names.iter().find(|entry| entry.entity_id == target)
-        {
-            line.push_str(" concerning ");
-            if actor_id == target {
-                line.push_str("myself");
+fn feelings(read: &RuntimeNpcFeelings) -> Result<String, CallFailure> {
+    let mut summary = String::new();
+    for feeling in &read.values {
+        if !summary.is_empty() {
+            summary.push(' ');
+        }
+        write!(summary, "I feel {}", feeling.feeling).map_err(invalid)?;
+        if let Some(index) = feeling.concerning {
+            let target = read.targets.get(index).ok_or(CallFailure::Invalid)?;
+            summary.push_str(" concerning ");
+            if target.myself {
+                summary.push_str("myself");
             } else {
-                let phrase = name_phrase(&name.name, NameArticle::Definite, false);
-                line.push_str(&prompt_text(&phrase));
+                let phrase = name_phrase(&target.name, NameArticle::Definite, false);
+                summary.push_str(&prompt_text(&phrase));
             }
         }
-        if value["value"]["kind"] == "scaled" && value["scale"].is_object() {
-            line.push_str(&format!(
+        if let Some((value, min, max)) = feeling.intensity {
+            let number = |value| serde_json::Number::from_f64(value).ok_or(CallFailure::Invalid);
+            write!(
+                summary,
                 "; current intensity {} on the installed {}–{} scale",
-                value["value"]["value"], value["scale"]["min"], value["scale"]["max"]
-            ));
+                number(value)?,
+                number(min)?,
+                number(max)?
+            )
+            .map_err(invalid)?;
         }
-        let duration = if let Some(decay) = value["decayPerHour"].as_f64() {
-            format!("decays by {decay} per game hour without a new interpretation")
+        write!(summary, ". Source: {}; lifetime: ", feeling.coverage).map_err(invalid)?;
+        if let Some(decay) = feeling.decay_per_hour {
+            write!(
+                summary,
+                "decays by {decay} per game hour without a new interpretation"
+            )
+            .map_err(invalid)?;
         } else {
-            text(&value["lifetime"])?.to_owned()
-        };
-        line.push_str(&format!(
-            ". Source: {}; lifetime: {duration}.",
-            text(&value["coverage"])?
-        ));
-        lines.push(line);
+            summary.push_str(feeling.lifetime);
+        }
+        summary.push('.');
     }
-    Ok(lines.join(" "))
+    Ok(summary)
 }
 
 fn project_markers(value: &mut Value, canonical: &HashMap<&str, String>, issued: &[String]) {
@@ -1071,7 +968,7 @@ fn project_markers(value: &mut Value, canonical: &HashMap<&str, String>, issued:
     }
 }
 
-fn game_time(at: f64, offset: f64, day: Option<&str>) -> String {
+pub(in crate::npc) fn game_time(at: f64, offset: f64, day: Option<&str>) -> String {
     let minutes = (at / 60.0 + offset * 60.0).floor() as i64;
     let clock = minutes.rem_euclid(24 * 60);
     let wall = format!("{:02}:{:02}", clock / 60, clock % 60);

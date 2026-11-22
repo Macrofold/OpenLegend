@@ -1,3 +1,4 @@
+use openlegend_simulation::runtime::RuntimeNpcIntakeSelection;
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -10,7 +11,7 @@ pub(crate) struct SchedulingPolicy {
     pub(crate) reads_per_pass: usize,
     pub(crate) urgent: f64,
     pub(crate) aging_ms: u64,
-    pub(crate) selection: Value,
+    pub(crate) selection: RuntimeNpcIntakeSelection,
     pub(crate) actor_paths: HashMap<String, usize>,
     pub(crate) stimuli: StimulusPolicy,
     pub(crate) significant_events: HashSet<String>,

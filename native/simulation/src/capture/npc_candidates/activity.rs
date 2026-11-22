@@ -16,19 +16,19 @@ pub(super) struct NpcActivityPreparation {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Choice {
-    id: String,
-    label: JsText,
-    kind: &'static str,
-    roles: Vec<&'static str>,
-    request_ids: Vec<String>,
+pub struct NpcActivityChoice {
+    pub id: String,
+    pub label: JsText,
+    pub kind: &'static str,
+    pub roles: Vec<&'static str>,
+    pub request_ids: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    distance: Option<f64>,
-    accessible: bool,
+    pub distance: Option<f64>,
+    pub accessible: bool,
 }
 #[derive(Serialize)]
 struct Available {
-    choices: Vec<Choice>,
+    choices: Vec<NpcActivityChoice>,
     warnings: Vec<JsText>,
 }
 #[derive(Serialize)]
@@ -39,6 +39,22 @@ pub(super) struct NpcActivityRead {
     pub labels: Vec<ActivityLabel>,
     #[serde(skip)]
     storage: ByteReservation,
+}
+
+pub struct NpcActivityFacts<'a> {
+    pub choices: &'a [NpcActivityChoice],
+    pub warnings: &'a [JsText],
+    pub admitted_bytes: usize,
+}
+
+impl NpcActivityRead {
+    pub(super) fn facts(&self) -> NpcActivityFacts<'_> {
+        NpcActivityFacts {
+            choices: &self.available.choices,
+            warnings: &self.available.warnings,
+            admitted_bytes: self.storage.bytes(),
+        }
+    }
 }
 impl NpcActivityPreparation {
     pub(super) fn prepare(
@@ -210,7 +226,7 @@ impl NpcActivityPreparation {
             .ok_or(ExecutionError::Capacity)?;
         let mut storage = budget.reserve(
             maximum
-                .checked_mul(size_of::<Choice>() + size_of::<ActivityLabel>())
+                .checked_mul(size_of::<NpcActivityChoice>() + size_of::<ActivityLabel>())
                 .and_then(|n| n.checked_add(rules.len() * size_of::<JsText>()))
                 .ok_or(ExecutionError::Capacity)?,
         )?;
@@ -358,7 +374,7 @@ impl NpcActivityRead {
                 .checked_add(id.len() + request.len() + size_of::<&str>() + size_of::<String>())
                 .ok_or(ExecutionError::Capacity)?,
         )?;
-        self.available.choices.push(Choice {
+        self.available.choices.push(NpcActivityChoice {
             id: id.into(),
             label: JsText::default(),
             kind: "entity",

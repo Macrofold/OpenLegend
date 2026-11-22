@@ -15,7 +15,7 @@ use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
     host::{ByteBudget, ByteReservation},
     reception::EncounterExposure,
-    runtime::{NativeWorldSession, RuntimeDirectOutput, RuntimeError},
+    runtime::{NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimePlayerCommand},
     state::SurfacePoint,
     values::deserialize_present_option,
 };
@@ -222,7 +222,6 @@ impl PlayerCommands {
     ) -> Result<crate::player_view::PausedStop, WorldError> {
         let authority = self.authority.clone();
         let provider = self.game.clone();
-        let command_budget = self.game.host.budget().clone();
         let preview = self
             .game
             .world
@@ -234,17 +233,12 @@ impl PlayerCommands {
                     if world.accepted_progress()?.through_cut != cut || !world.clock()?.paused {
                         return Err(WorldError::ProjectionChanged);
                     }
-                    let _command = command_budget.reserve(4096).map_err(RuntimeError::from)?;
-                    let (input, signature) = encode_operation(
+                    Ok(ApplicationStart::Candidate(world.begin_player_command(
                         &Uuid::new_v4().to_string(),
                         &scope.scope.actor_id,
-                        MoveOrCancel::Cancel,
-                        None,
-                        None,
-                    )?;
-                    Ok(ApplicationStart::Candidate(
-                        world.begin_command_preview(input.as_bytes(), signature)?,
-                    ))
+                        RuntimePlayerCommand::Cancel(None),
+                        true,
+                    )?))
                 },
                 move |question| {
                     let game = provider.clone();
@@ -411,12 +405,12 @@ impl PlayerCommands {
                             } else {
                                 begin_facts.request.command.position.as_ref()
                             };
-                            let (command, signature) =
-                                begin_facts.command(&begin_scope.scope.actor_id, position)?;
-                            Ok(ApplicationStart::Candidate(world.begin_command(
-                                command.as_bytes(),
-                                signature,
-                                true,
+                            let command = begin_facts.command(position)?;
+                            Ok(ApplicationStart::Candidate(world.begin_player_command(
+                                &begin_facts.id,
+                                &begin_scope.scope.actor_id,
+                                command,
+                                false,
                             )?))
                         },
                         move |question| {
@@ -569,97 +563,20 @@ impl CommandRequest {
 }
 
 impl PreparedRequest {
-    fn command(
-        &self,
-        actor: &str,
-        destination: Option<&SurfacePoint>,
-    ) -> Result<(String, String), WorldError> {
-        let input = &self.request.command;
-        encode_operation(
-            &self.id,
-            actor,
-            input.kind,
-            destination,
-            input.expected_action_id.as_deref(),
-        )
-    }
-}
-
-pub(crate) fn encode_place_preview(
-    id: &str,
-    actor: &str,
-    destination: &SurfacePoint,
-) -> Result<(String, String), WorldError> {
-    encode_operation(id, actor, MoveOrCancel::Move, Some(destination), None)
-}
-
-fn encode_operation(
-    id: &str,
-    actor: &str,
-    kind: MoveOrCancel,
-    destination: Option<&SurfacePoint>,
-    expected_action_id: Option<&str>,
-) -> Result<(String, String), WorldError> {
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Operation<'a> {
-        id: &'a str,
-        actor_id: &'a str,
-        human_initiated: bool,
-        #[serde(rename = "type")]
-        kind: MoveOrCancel,
-        #[serde(skip_serializing_if = "Option::is_none")]
+    fn command<'a>(
+        &'a self,
         destination: Option<&'a SurfacePoint>,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        expected_action_id: Option<&'a str>,
+    ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
+        let input = &self.request.command;
+        match input.kind {
+            MoveOrCancel::Move => Ok(RuntimePlayerCommand::Move(
+                destination.ok_or(StoreError::InvalidRecord)?,
+            )),
+            MoveOrCancel::Cancel => Ok(RuntimePlayerCommand::Cancel(
+                input.expected_action_id.as_deref(),
+            )),
+        }
     }
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Point<'a> {
-        surface_id: &'a str,
-        x: f64,
-        y: f64,
-        z: f64,
-    }
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Canonical<'a> {
-        actor_id: &'a str,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        destination: Option<Point<'a>>,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        expected_action_id: Option<&'a str>,
-        human_initiated: bool,
-        id: &'a str,
-        #[serde(rename = "type")]
-        kind: MoveOrCancel,
-    }
-    let operation = Operation {
-        id,
-        actor_id: actor,
-        human_initiated: true,
-        kind,
-        destination,
-        expected_action_id,
-    };
-    let canonical = Canonical {
-        actor_id: actor,
-        destination: operation.destination.map(|at| Point {
-            surface_id: &at.surface_id,
-            x: at.x,
-            y: at.y,
-            z: at.z,
-        }),
-        expected_action_id: operation.expected_action_id,
-        human_initiated: true,
-        id,
-        kind,
-    };
-    let encode = |error| WorldError::Simulation(RuntimeError::application_refused(error));
-    Ok((
-        json_record(&operation).map_err(encode)?,
-        json_record(&canonical).map_err(encode)?,
-    ))
 }
 
 fn report(

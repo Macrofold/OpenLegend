@@ -38,8 +38,8 @@ pub use maintenance::{
 mod npc;
 mod npc_intake;
 pub use npc_intake::{
-    NpcScheduleCause, NpcSchedulePopulation, NpcScheduleSources, RuntimeNpcInspection,
-    RuntimeNpcTrigger,
+    NpcQueueInputs, NpcScheduleCause, NpcSchedulePopulation, NpcScheduleSources,
+    RuntimeNpcInspection, RuntimeNpcIntakeSelection, RuntimeNpcTrigger,
 };
 mod npc_labels;
 mod participation;
@@ -69,17 +69,20 @@ pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
 pub use crate::capture::npc_self::{RuntimeNpcSelf, RuntimeNpcSelfPrompt};
+pub use crate::capture::{NpcActivityChoice, NpcActivityFacts};
 pub use crate::time::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput};
 pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
-    RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcObservedBody,
-    RuntimeNpcOperations, RuntimeNpcPreparationStep, RuntimeNpcPresentedBody,
+    RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcFeeling, RuntimeNpcFeelingTarget,
+    RuntimeNpcFeelings, RuntimeNpcObservedBody, RuntimeNpcOffer,
+    RuntimeNpcOperations, RuntimeNpcPersonalSource, RuntimeNpcPersonalSources,
+    RuntimeNpcPreparationStep, RuntimeNpcPresentedBody,
     RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
 };
 pub use player::{
-    InteractionMode, PlayerInteractionFacts, RuntimePlayerInputState, RuntimePlayerPublication,
-    RuntimePlayerRead,
+    InteractionMode, PlayerInteractionFacts, RuntimePlayerCommand, RuntimePlayerInputState,
+    RuntimePlayerPublication, RuntimePlayerRead,
 };
 pub use reply_preview::{
     RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,

@@ -48,11 +48,31 @@ enum IntakeOutput {
     Witness,
     Packets,
     Queue,
+    QueuePacket,
 }
 enum PreparedIntake {
     Witness(NpcIntakeWitness),
     Packets(NpcIntakeWitness, NpcIntakePackets),
-    Queue(String, ByteReservation),
+    Queue(NpcQueueInputs),
+    QueuePacket(String, ByteReservation),
+}
+
+/// Independently held inputs for the server's resident queue. The evidence
+/// tokens are moved out of their original native preparation.
+pub struct NpcQueueInputs {
+    pub actor_id: String,
+    pub world_id: String,
+    pub generation: String,
+    pub accepted_cut: u64,
+    pub at: f64,
+    pub enrolled: bool,
+    pub eligible: bool,
+    pub values: Vec<String>,
+    pub dependency_token: String,
+    pub awareness_through: u64,
+    pub urgency: f64,
+    pub discovery_reservation: Option<String>,
+    _storage: ByteReservation,
 }
 impl NpcIntakeCapture {
     pub(crate) fn matches_actor(&self, actor: &str) -> bool {
@@ -377,9 +397,20 @@ pub(crate) fn capture_queue_inputs(
     state: &SimulationState,
     request: &NpcIntakeReadRequest,
     budget: &ByteBudget,
-) -> Result<(String, ByteReservation), ExecutionError> {
+) -> Result<NpcQueueInputs, ExecutionError> {
     match prepare(state, request, IntakeOutput::Queue, budget)? {
-        PreparedIntake::Queue(text, storage) => Ok((text, storage)),
+        PreparedIntake::Queue(value) => Ok(value),
+        _ => Err(ExecutionError::Invariant),
+    }
+}
+
+pub(crate) fn capture_queue_packet(
+    state: &SimulationState,
+    request: &NpcIntakeReadRequest,
+    budget: &ByteBudget,
+) -> Result<(String, ByteReservation), ExecutionError> {
+    match prepare(state, request, IntakeOutput::QueuePacket, budget)? {
+        PreparedIntake::QueuePacket(text, storage) => Ok((text, storage)),
         _ => Err(ExecutionError::Invariant),
     }
 }
@@ -422,7 +453,7 @@ fn prepare(
         .as_ref()
         .and_then(|owners| owners.get(id));
     let current_count = current.map_or(0, |owner| owner.current.len());
-    let queue_only = matches!(output, IntakeOutput::Queue);
+    let queue_only = matches!(output, IntakeOutput::Queue | IntakeOutput::QueuePacket);
     let reconsideration_bytes = size_of::<Reconsideration<'_>>() * if queue_only { 1 } else { 2 };
     let bytes = count
         .checked_mul(reconsideration_bytes)
@@ -677,6 +708,40 @@ fn prepare(
             .minds
             .as_ref()
             .is_some_and(|minds| minds.contains_key(id));
+    if matches!(output, IntakeOutput::Queue) {
+        let world_id = &state.physical.header.id;
+        let generation = &state.generation;
+        let reservation = actor.agency.semantic.as_ref().and_then(|semantic| {
+            (semantic.discovery == "reserved")
+                .then_some(semantic.reservation.as_deref())
+                .flatten()
+        });
+        let storage = [
+            world_id.len(),
+            generation.len(),
+            id.len(),
+            reservation.map_or(0, str::len),
+        ]
+        .into_iter()
+        .try_fold(size_of::<NpcQueueInputs>(), usize::checked_add)
+        .ok_or(ExecutionError::Capacity)?;
+        token_storage.merge(budget.reserve(storage)?)?;
+        return Ok(PreparedIntake::Queue(NpcQueueInputs {
+            actor_id: id.to_owned(),
+            world_id: world_id.clone(),
+            generation: generation.clone(),
+            accepted_cut: state.accepted_cut,
+            at: state.physical.header.sim_time,
+            enrolled,
+            eligible: enrolled && !actor.incapacitated,
+            values: tokens,
+            dependency_token: dependencies,
+            awareness_through: unseen.awareness_through,
+            urgency: unseen.urgency,
+            discovery_reservation: reservation.map(str::to_owned),
+            _storage: token_storage,
+        }));
+    }
     let input = InputProduct {
         world_id: &state.physical.header.id,
         generation: &state.generation,
@@ -710,7 +775,7 @@ fn prepare(
     };
     if queue_only {
         let (text, storage) = encode_inputs(&input, budget)?;
-        return Ok(PreparedIntake::Queue(text, storage));
+        return Ok(PreparedIntake::QueuePacket(text, storage));
     }
 
     let attributes = project_attributes(

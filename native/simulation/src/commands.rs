@@ -32,6 +32,7 @@ mod native_movement;
 pub(crate) use native_movement::{
     begin_native_feed, begin_native_foraging_move, begin_native_movement, begin_native_stop,
 };
+pub(crate) mod player;
 mod state;
 pub(crate) use state::*;
 mod display;

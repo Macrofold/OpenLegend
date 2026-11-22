@@ -1,11 +1,10 @@
 //! Bounded personal recall discovery and disclosure before executable decisions.
 
 use super::{
-    Arc, ByteBudget, ByteReservation, CallFailure, CapacityError, CurrentRead, CurrentServer,
-    PersonalSources, ProjectionPurpose, ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket,
-    Work, capacity, capture_origin, consumer, describe_experience, ensure_running, invalid, json,
-    packet_failure, personal_description, personal_evidence, project, project_markers,
-    read_request, wire_failure,
+    Arc, ByteBudget, ByteReservation, CallFailure, CapacityError, CurrentServer, PersonalSources,
+    ProjectionPurpose, ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket, Work, capacity,
+    capture_origin, consumer, describe_experience, ensure_running, invalid, json, packet_failure,
+    personal_description, personal_evidence, project, project_markers, read_request, wire_failure,
 };
 use crate::{
     decision_render::{BoundAttention, RenderError},
@@ -131,17 +130,13 @@ pub(in crate::npc::decide) async fn collect(
             )
             .await
             .map_err(|error| CallFailure::World(error).at("original-sources"))?;
-        let product = original
-            .latest_sources_packet(budget)
-            .map_err(packet_failure)?;
-        let data = PersonalSources::read(&product, budget)?;
-        let inventory = &data.value.inventory;
-        for &index in &inventory.unavailable_personal {
+        let data = original.personal_sources(budget).map_err(packet_failure)?;
+        for &index in &data.unavailable_personal {
             if selected.get(index).ok_or(CallFailure::Invalid)?.1 {
                 return Err(CallFailure::Stale("decision-selected-account-withdrawn"));
             }
         }
-        let personal = &inventory.personal;
+        let personal = &data.personal;
         for (row, source) in personal.iter().enumerate() {
             if selected
                 .get(source.selection)
@@ -215,27 +210,22 @@ impl Collected {
             .capture_npc_recall(game.clone(), request)
             .await
             .map_err(|error| CallFailure::World(error).at("recall-current-context"))?;
-        let facts = CurrentRead::read(
-            &fresh.recall_packet(budget).map_err(packet_failure)?,
-            budget,
-        )?;
         let through = self.through.max(fresh.accepted_cut());
         let projection_custody =
-            self.projection_custody(&facts, &fresh, ProjectionPurpose::Recall, budget)?;
-        let source_data = self.sources.as_ref().map(|data| &data.value);
+            self.projection_custody(&fresh, ProjectionPurpose::Recall, budget)?;
+        let source_data = self.sources.as_ref();
         let mut ranked = Vec::new();
         let (mut binding, context, _, _) = project(
             game,
             work,
-            (&fresh, &facts.value),
+            &fresh,
             &self.attention.ordinals,
             source_data,
             &self.required,
             ProjectionPurpose::Recall,
         )?;
-        drop(facts);
         fresh.release_current_self();
-        let rows = &source_data.ok_or(CallFailure::Invalid)?.inventory.personal;
+        let rows = &source_data.ok_or(CallFailure::Invalid)?.personal;
         for &row in &self.optional {
             let source = rows.get(row).ok_or(CallFailure::Invalid)?;
             let (description, _) = personal_description(source)?;
@@ -328,7 +318,6 @@ impl Collected {
 
     pub(super) fn projection_custody(
         &self,
-        fresh: &CurrentRead,
         read: &RuntimeNpcRead,
         purpose: ProjectionPurpose,
         budget: &ByteBudget,
@@ -372,17 +361,57 @@ impl Collected {
             })?;
         let self_facts = read.current_self().map_err(packet_failure)?;
         let own = self_facts.prompt().ok_or(CallFailure::Invalid)?;
-        let bytes = fresh
-            ._custody
-            .bytes()
-            .checked_add(attention)
+        let offers = if matches!(purpose, ProjectionPurpose::Decision) {
+            read.decision_offers()
+                .map_err(packet_failure)?
+                .try_fold(0usize, |bytes, offer| {
+                    bytes.checked_add(1024)?.checked_add(
+                        offer
+                            .description
+                            .map_or(0, |text| text.storage_bytes())
+                            .checked_mul(8)?,
+                    )
+                })
+                .ok_or_else(|| capacity(CapacityError))?
+        } else {
+            0
+        };
+        let plans = [
+            read.remaining_plan(false).map_err(packet_failure)?,
+            read.remaining_plan(true).map_err(packet_failure)?,
+        ]
+        .into_iter()
+        .flatten()
+        .flatten()
+        .try_fold(0usize, |bytes, view| {
+            bytes
+                .checked_add(view.name.storage_bytes().checked_mul(12)?)?
+                .checked_add(32)
+        })
+        .ok_or_else(|| capacity(CapacityError))?;
+        let presentation = if matches!(purpose, ProjectionPurpose::Decision) {
+            let feelings = read.feelings().map_err(packet_failure)?;
+            let activity = read.activity_facts().map_err(packet_failure)?;
+            feelings
+                .admitted_bytes()
+                .checked_mul(12)
+                .and_then(|bytes| bytes.checked_add(activity.admitted_bytes.checked_mul(12)?))
+                .and_then(|bytes| bytes.checked_add(activity.choices.len().checked_mul(1024)?))
+                .ok_or_else(|| capacity(CapacityError))?
+        } else {
+            0
+        };
+        let bytes = presentation
+            .checked_add(plans)
+            .and_then(|bytes| bytes.checked_add(attention))
             .and_then(|bytes| bytes.checked_add(bodies))
+            .and_then(|bytes| bytes.checked_add(offers))
             .and_then(|bytes| bytes.checked_add(own.projection_bytes()?))
             .and_then(|n| {
                 n.checked_add(
                     self.sources
                         .as_ref()
-                        .map_or(0, |data| data._custody.bytes()),
+                        .map_or(0, |data| data.admitted_bytes()),
                 )
             })
             .and_then(|n| n.checked_add(32_768))

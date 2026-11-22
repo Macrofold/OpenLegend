@@ -5,6 +5,7 @@ use crate::encoding::json_record;
 use crate::host::retained_size::map_storage;
 use crate::records::SqlCell;
 use indexmap::IndexMap;
+use serde::Serialize;
 use serde_json::value::RawValue;
 use std::sync::Arc;
 
@@ -27,7 +28,13 @@ impl CommandEncoding {
             .as_object()
             .expect("A validated command is an object")
             .len();
-        let json = Arc::from(RawValue::from_string(json_record(&cell)?)?);
+        Self::from_ordered(cell, fields)
+    }
+    pub(super) fn from_ordered(
+        value: &impl Serialize,
+        fields: usize,
+    ) -> Result<Self, serde_json::Error> {
+        let json = Arc::from(RawValue::from_string(json_record(value)?)?);
         Ok(Self { json, fields })
     }
     pub(super) fn edit(

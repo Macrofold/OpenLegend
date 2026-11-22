@@ -15,12 +15,10 @@ use crate::{
 };
 use indexmap::IndexMap;
 use openlegend_simulation::{
-    encoding::json_tree_allocation_bound,
     host::{ByteBudget, ByteReservation, CapacityError},
     records::ChangedRows,
-    runtime::{RuntimeDirectOutput, RuntimeError},
+    runtime::{NpcQueueInputs, RuntimeDirectOutput, RuntimeError},
 };
-use serde::Deserialize;
 use serde_json::json;
 use std::{
     borrow::Cow,
@@ -183,36 +181,13 @@ impl Wake {
     }
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Inputs {
-    actor_id: String,
-    world_id: String,
-    generation: String,
-    accepted_cut: u64,
-    at: f64,
-    enrolled: bool,
-    eligible: bool,
-    values: Vec<String>,
-    dependency_token: String,
-    awareness_through: u64,
-    urgency: f64,
-    discovery: Option<Discovery>,
-}
-
-#[derive(Deserialize)]
-struct Discovery {
-    state: String,
-    reservation: Option<String>,
-}
-
 struct ResidentWork {
-    observed: Inputs,
+    observed: NpcQueueInputs,
     wake: WakeTimes,
     first_cut: u64,
     dirty_since: Option<Instant>,
     order: u64,
-    _custody: ByteReservation,
+    _entry_custody: ByteReservation,
 }
 
 #[derive(Clone, Copy)]
@@ -231,14 +206,19 @@ struct Queue {
 }
 
 impl Queue {
-    fn refresh(&mut self, observed: Inputs, custody: ByteReservation, policy: &SchedulingPolicy) {
+    fn refresh(
+        &mut self,
+        observed: NpcQueueInputs,
+        policy: &SchedulingPolicy,
+        budget: &ByteBudget,
+    ) -> Result<(), RuntimeError> {
         let actor = &observed.actor_id;
         if !observed.enrolled
             || observed.generation != self.generation
             || observed.world_id != self.world
         {
             self.work.remove(actor);
-            return;
+            return Ok(());
         }
         if let Some(previous) = self.work.get_mut(actor) {
             if previous.observed.values != observed.values
@@ -251,11 +231,12 @@ impl Queue {
                 let urgency = previous.observed.urgency.max(observed.urgency);
                 previous.observed = observed;
                 previous.observed.urgency = urgency;
-                previous._custody = custody;
             } else {
                 previous.observed.awareness_through = observed.awareness_through;
             }
         } else {
+            let storage = budget.reserve(actor.len().checked_add(512).ok_or(CapacityError)?)?;
+            self.work.try_reserve(1).map_err(|_| CapacityError)?;
             self.next_order += 1;
             self.work.insert(
                 actor.clone(),
@@ -268,10 +249,11 @@ impl Queue {
                     observed,
                     dirty_since: Some(Instant::now()),
                     order: self.next_order,
-                    _custody: custody,
+                    _entry_custody: storage,
                 },
             );
         }
+        Ok(())
     }
 
     fn acknowledge(&mut self, actor: &str, wake: WakeTimes) {
@@ -387,50 +369,34 @@ impl Director {
                 .work
                 .get(actor)
                 .map(|work| work.observed.awareness_through);
-            let bytes =
-                request(&actor, 0, baseline, policy).map_err(RuntimeError::application_refused)?;
+            let selection = policy.selection;
             let actor_id = actor.clone();
             let read = self
                 .game
                 .world
                 .capture(move |session| {
                     if session.npc_schedule_enrolled(&actor_id)? {
-                        session.read_npc_queue_inputs(&bytes).map(Some)
+                        session
+                            .read_npc_queue_inputs_direct(actor_id, baseline, selection)
+                            .map(Some)
                     } else {
                         Ok(None)
                     }
                 })
                 .await?;
-            let Some(read) = read else {
+            let Some(inputs) = read else {
                 queue.work.remove(actor);
                 queue.dirty.shift_remove_index(0);
                 continue;
             };
-            let text =
-                std::str::from_utf8(read.bytes()).map_err(RuntimeError::application_refused)?;
-            let custody = self
-                .game
-                .host
-                .budget()
-                .reserve(
-                    json_tree_allocation_bound(text)
-                        .ok_or(CapacityError)
-                        .map_err(RuntimeError::from)?
-                        + 512,
-                )
-                .map_err(RuntimeError::from)?;
-            let inputs: Inputs =
-                serde_json::from_str(text).map_err(RuntimeError::application_refused)?;
-            if let Some(discovery) = inputs.discovery.as_ref()
-                && discovery.state == "reserved"
-                && let Some(reservation) = discovery.reservation.as_ref()
+            if let Some(reservation) = inputs.discovery_reservation.as_ref()
                 && self.slots.available(&inputs.actor_id)?
             {
                 let dispatched = self.game.store.discovery_spent(reservation.clone()).await?;
                 self.change_discovery(&inputs.actor_id, &inputs.generation, json!({"type":"settle-discovery","reservation":reservation,"dispatched":dispatched})).await?;
             }
+            queue.refresh(inputs, policy, &inbox.budget)?;
             queue.dirty.shift_remove_index(0);
-            queue.refresh(inputs, custody, policy);
         }
 
         let reserve_bytes = queue

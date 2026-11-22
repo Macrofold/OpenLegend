@@ -1,13 +1,13 @@
 //! Interpret an original accepted intake read. The record and cue identities
 //! used here are still validated by the native owner before model admission.
-use super::{Inputs, SchedulingPolicy};
+use super::SchedulingPolicy;
 use crate::store::ThoughtRead;
 use openlegend_simulation::{
     encoding::{json_record, json_tree_allocation_bound, sha256_hex},
     experience::PersonalSourceKind,
     host::{ByteBudget, ByteReservation, CapacityError},
     reception::EventScalar,
-    runtime::{NpcScheduleCause, RuntimeError},
+    runtime::{NpcQueueInputs, NpcScheduleCause, RuntimeError},
     text::JsText,
 };
 use serde::Serialize;
@@ -53,7 +53,7 @@ impl Inspection {
         })
     }
 
-    pub(super) fn matches(&self, queued: &Inputs) -> bool {
+    pub(super) fn matches(&self, queued: &NpcQueueInputs) -> bool {
         self.read.enrolled
             && self.read.eligible
             && self.read.actor_id == queued.actor_id

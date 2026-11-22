@@ -22,6 +22,7 @@ use index::AppraisalIndex;
 mod hydration;
 mod read;
 mod response;
+pub use read::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
 pub(crate) use read::{AppraisalScope, CapturedActorAppraisals, capture_actor_appraisals, capture_validity_views};
 pub(crate) use response::{
     AppraisalBindings, AppraisalChangeCursor, AppraisalChangeStep, AppraisalPublication,

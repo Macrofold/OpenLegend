@@ -151,10 +151,43 @@ fn view<'a>(
     }))
 }
 
-/// The request keeps precisely the records selected by the formatter, with
-/// shared capture pins. A JSON presentation is never parsed back into authority.
+pub struct RuntimeNpcFeeling {
+    pub feeling: String,
+    pub concerning: Option<usize>,
+    pub intensity: Option<(f64, f64, f64)>,
+    pub lifetime: &'static str,
+    pub decay_per_hour: Option<f64>,
+    pub coverage: String,
+}
+
+pub struct RuntimeNpcFeelingTarget {
+    pub name: crate::state::Named,
+    pub myself: bool,
+}
+
+pub struct RuntimeNpcFeelings {
+    pub values: Vec<RuntimeNpcFeeling>,
+    pub targets: Vec<RuntimeNpcFeelingTarget>,
+    custody: ByteReservation,
+}
+
+impl RuntimeNpcFeelings {
+    pub fn admitted_bytes(&self) -> usize {
+        self.custody.bytes()
+    }
+}
+
+enum Presentation {
+    Bridge {
+        json: String,
+        _storage: ByteReservation,
+    },
+    Direct(RuntimeNpcFeelings),
+}
+
+/// The validated appraisal records and their display are independent owners.
 pub(crate) struct CapturedActorAppraisals {
-    pub(crate) json: String,
+    presentation: Presentation,
     records: Vec<Arc<AppraisalRecord>>,
     hot_count: usize,
     pub(crate) content: AppraisalContentWitness,
@@ -164,9 +197,21 @@ pub(crate) struct CapturedActorAppraisals {
     required_revisions: IndexMap<String, u64>,
     _pins: Vec<Arc<crate::host::SharedMemoryPin>>,
     _backing: ByteReservation,
-    _json: ByteReservation,
 }
 impl CapturedActorAppraisals {
+    pub(crate) fn bridge_json(&self) -> Option<&str> {
+        match &self.presentation {
+            Presentation::Bridge { json, .. } => Some(json),
+            Presentation::Direct(_) => None,
+        }
+    }
+
+    pub(crate) fn direct(&self) -> Option<&RuntimeNpcFeelings> {
+        match &self.presentation {
+            Presentation::Direct(view) => Some(view),
+            Presentation::Bridge { .. } => None,
+        }
+    }
     pub(crate) fn scoped_current(
         &self,
         state: &SimulationState,
@@ -473,6 +518,7 @@ pub(crate) fn capture_actor_appraisals(
     state: &SimulationState,
     actor_id: &str,
     required: &[AppraisalScope],
+    bridge: bool,
     budget: &ByteBudget,
 ) -> Result<CapturedActorAppraisals, ExecutionError> {
     let entity = state
@@ -605,13 +651,21 @@ pub(crate) fn capture_actor_appraisals(
         names: captured_names,
         subscribed,
     };
-    let length =
-        crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
-    let mut reservation = budget.reserve(length.checked_mul(2).ok_or_else(capacity)?.max(8))?;
-    let text = json_record(&product).map_err(|_| ExecutionError::Invariant)?;
-    reservation.resize(text.capacity())?;
+    let presentation = if bridge {
+        let length =
+            crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
+        let mut reservation = budget.reserve(length.checked_mul(2).ok_or_else(capacity)?.max(8))?;
+        let text = json_record(&product).map_err(|_| ExecutionError::Invariant)?;
+        reservation.resize(text.capacity())?;
+        Presentation::Bridge {
+            json: text,
+            _storage: reservation,
+        }
+    } else {
+        Presentation::Direct(prepare_direct_feelings(&product, budget)?)
+    };
     Ok(CapturedActorAppraisals {
-        json: text,
+        presentation,
         records,
         hot_count,
         content: state.appraisals.content_witness(actor_id),
@@ -626,6 +680,69 @@ pub(crate) fn capture_actor_appraisals(
         required_revisions,
         _pins: pins,
         _backing: backing,
-        _json: reservation,
+    })
+}
+
+fn prepare_direct_feelings(
+    product: &Product<'_>,
+    budget: &ByteBudget,
+) -> Result<RuntimeNpcFeelings, ExecutionError> {
+    let bytes = product
+        .values
+        .len()
+        .checked_mul(size_of::<RuntimeNpcFeeling>())
+        .and_then(|values| {
+            values.checked_add(
+                product
+                    .names
+                    .len()
+                    .checked_mul(size_of::<RuntimeNpcFeelingTarget>())?,
+            )
+        })
+        .ok_or_else(capacity)?;
+    let bytes = product.values.iter().try_fold(bytes, |bytes, feeling| {
+        bytes
+            .checked_add(feeling.view.feeling.len())
+            .and_then(|bytes| bytes.checked_add(feeling.view.coverage.len()))
+            .ok_or_else(capacity)
+    })?;
+    let bytes = product.names.iter().try_fold(bytes, |bytes, name| {
+        bytes
+            .checked_add(name.name.heap_bound()?)
+            .ok_or_else(capacity)
+    })?;
+    let custody = budget.reserve(bytes)?;
+    let values = product
+        .values
+        .iter()
+        .map(|feeling| RuntimeNpcFeeling {
+            feeling: feeling.view.feeling.to_owned(),
+            concerning: feeling
+                .view
+                .target_id
+                .and_then(|id| product.names.iter().position(|name| name.entity_id == id)),
+            intensity: match (&feeling.view.value, &feeling.scale) {
+                (AppraisalValue::Scaled { value }, Some(scale)) => {
+                    Some((*value, scale.min, scale.max))
+                }
+                _ => None,
+            },
+            lifetime: feeling.view.lifetime,
+            decay_per_hour: feeling.decay_per_hour,
+            coverage: feeling.view.coverage.to_owned(),
+        })
+        .collect();
+    let targets = product
+        .names
+        .iter()
+        .map(|name| RuntimeNpcFeelingTarget {
+            name: name.name.owned(),
+            myself: name.entity_id == product.actor_id,
+        })
+        .collect();
+    Ok(RuntimeNpcFeelings {
+        values,
+        targets,
+        custody,
     })
 }

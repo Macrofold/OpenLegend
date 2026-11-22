@@ -166,7 +166,7 @@ impl<'a> From<&'a Named> for PersonalName<'a> {
     }
 }
 impl PersonalName<'_> {
-    fn heap_bound(self) -> Result<usize, ReceivedError> {
+    pub(crate) fn heap_bound(self) -> Result<usize, ReceivedError> {
         heap_sum([
             self.name.storage_bytes(),
             self.name_form.map_or(0, str::len),
@@ -174,7 +174,7 @@ impl PersonalName<'_> {
         ])
         .ok_or_else(capacity)
     }
-    fn owned(self) -> Named {
+    pub(crate) fn owned(self) -> Named {
         Named {
             name: self.name.to_owned(),
             name_form: self.name_form.map(str::to_owned),

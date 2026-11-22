@@ -156,6 +156,14 @@ These checks qualify the selected path locally. The overlapping-update check at 
 
 The release built from `b8d017d8baf375905cc472f95c02c8bdec441d11` (`c1998bb7b77da05f595ac98c8f72c32c672bd4ef241e767763e442fd155c0fbe`) passed the real held-generation case and the expanded own-facts case. The provider saw the expected private notepad, completed goal and pending intention with their exact text before and after restart. The reply settled once, and the refused dependent move left the successful speech intact. A same-cut diagnostic on the previous slice found byte-identical canonical receipt input through the typed and JSON round trips. The actual saved digest replayed exactly after restart. These are local correctness checks.
 
+### Personal recall, current offers and browser commands
+
+The Rust listener reads selected personal bodies directly from their stored payloads and renders current work, feelings and activity choices from typed captured facts. It also moves automatic queue inputs and authorized walk/cancel inputs as Rust values. Command learning and receipt signatures still use their original ordered and canonical bytes. The bridge keeps its actual byte-format callers.
+
+On frozen source `108edda5bc4199619a76a2e97af2b571169cf6fa`, all three disposable PostgreSQL journeys passed. The real chat prepared optional recall through controlled HTTPS while the player walked. A valid reply applied and persisted once. Withdrawal stopped final generation, and cancellation settled the attempt without applying a reply. Repeating a movement request returned the original result and a changed body with the same ID was refused. A new login could not recover the older command receipt. The original session still recovered that receipt after cold restart. The executable SHA-256 is `4605935614a01edfdb4fc704c13d15a7575bd2ce2afa3db7a72d65305b93ddb4`. The storage SHA-256 is `59ea4f718a922b4e5008798e50fe808e8068f1c1832c9263d812dcaf1d3b1844`. The fixture archive is `native-runtime-foundations/nsc04-first-reply-20261121.LsAlK7Y8/`, runs `final-typed-move-2`, `final-typed-withdraw` and `final-typed-cancel`.
+
+Local checks covered the selected scene and named callers. Positive appraisal and plan fields, paused cancel, remembered-place preview, the overlapping final-source comparison and isolated managed runs still require separate witnesses. No speed claim is made.
+
 ### Shutdown during an automatic NPC commit
 
 An advisory lock on an isolated PostgreSQL fixture held the automatic scheduler at the actual `COMMIT`. The player’s accepted movement was visible and still needed the final save. On `a782ad14f45b`, stopping the server dropped the scheduler's transaction future. The writer closed admission as designed for an unknown outcome. The final save failed with `WriterUnavailable` and the process exited with status 1.

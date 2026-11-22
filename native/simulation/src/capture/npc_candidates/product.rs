@@ -14,21 +14,6 @@ pub(crate) struct PreparedNpcRecall {
     pub(super) _storage: ByteReservation,
 }
 
-impl PreparedNpcRecall {
-    pub(crate) fn context(&self) -> impl Serialize + '_ {
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Context<'a> {
-            body_ordinals: &'a [usize],
-            work_context: &'a NpcWorkContext,
-        }
-        Context {
-            body_ordinals: self.selection.body_ordinals(),
-            work_context: &self.work_context,
-        }
-    }
-}
-
 /// A recall read retains presentation and its observation selection. Only a
 /// full catalogue can bind executable choices.
 pub(crate) enum PreparedNpcRead {
@@ -37,6 +22,13 @@ pub(crate) enum PreparedNpcRead {
 }
 
 impl PreparedNpcRead {
+    pub(crate) fn work_context(&self) -> &NpcWorkContext {
+        match self {
+            Self::Recall(read) => &read.work_context,
+            Self::Offers(read) => &read.work_context,
+        }
+    }
+
     pub(crate) fn selection(&self) -> &NpcObservationSelection {
         match self {
             Self::Recall(read) => &read.selection,
@@ -128,6 +120,10 @@ impl PreparedNpcCandidates {
     }
     pub(crate) fn selection(&self) -> &NpcObservationSelection {
         &self.selection
+    }
+
+    pub(crate) fn activity_facts(&self) -> NpcActivityFacts<'_> {
+        self.activity.facts()
     }
     pub(crate) fn write_json(
         &self,

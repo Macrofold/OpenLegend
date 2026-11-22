@@ -11,7 +11,7 @@ pub(super) struct RemainingPlan {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(super) struct NpcWorkContext {
+pub(crate) struct NpcWorkContext {
     lost_work_seconds: f64,
     spent_inputs: Vec<crate::state::Yield>,
     has_plan: bool,
@@ -24,6 +24,11 @@ pub(super) struct NpcWorkContext {
     storage: ByteReservation,
 }
 impl NpcWorkContext {
+    pub(crate) fn remaining_views(&self, paused: bool) -> Option<&[crate::activity::ActivityView]> {
+        let plan = if paused { &self.suspended } else { &self.plan };
+        plan.as_ref().map(|plan| plan.views.as_slice())
+    }
+
     pub(super) fn prepare(
         core: &CoreMutation<'_>,
         actor: &str,

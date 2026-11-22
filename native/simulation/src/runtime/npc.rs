@@ -8,26 +8,35 @@ use crate::capture::{
     npc_self::{RuntimeNpcSelf, RuntimeNpcSelfSelection},
 };
 use crate::host::PublicationLease;
-use crate::simulation::AcceptedActorRead;
+use crate::simulation::{AcceptedActorRead, ActorReadError};
 use std::mem::size_of;
 use std::sync::atomic::AtomicBool;
 
 mod bindings;
 mod held_sources;
 mod origin;
+mod personal;
 mod perspectives;
 mod presentation;
+pub use crate::appraisals::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
 pub(super) use bindings::ActiveNpcResponse;
 pub use bindings::{RuntimeNpcOperations, RuntimeNpcResponseTicket};
 pub(super) use held_sources::HeldReceiptRegistry;
 pub(crate) use held_sources::HeldSourceProof;
 pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};
+pub use personal::{RuntimeNpcPersonalSource, RuntimeNpcPersonalSources};
 pub use presentation::{RuntimeNpcObservedBody, RuntimeNpcPresentedBody};
 
 /// A brief dispatch gate, never retained while SQL or a provider is awaited.
 /// Historical disclosure and current response semantics are separate routes.
 pub struct RuntimeNpcPublication {
     _lease: PublicationLease,
+}
+
+pub struct RuntimeNpcOffer<'a> {
+    pub description: Option<&'a crate::text::JsText>,
+    pub no_intervention: bool,
+    pub transition: &'static str,
 }
 
 pub struct RuntimeNpcRead {
@@ -369,7 +378,11 @@ impl NativeWorldSession {
                 selection,
                 &self.budget,
             )
-            .map_err(failure)?;
+            .map_err(|error| match (selection, error) {
+                (Some(_), ActorReadError::Capture(error)) => session_failure(error.into()),
+                (Some(_), ActorReadError::Busy) => fence_failure(FenceError::Busy),
+                (_, error) => failure(error),
+            })?;
         let history = crate::experience::capture_history_cuts(
             &simulation.state,
             std::iter::once(request.actor_id.as_str()),
@@ -702,6 +715,29 @@ impl RuntimeNpcRead {
     pub fn accepted_cut(&self) -> u64 {
         self.read.accepted_cut
     }
+
+    /// Describe executable choices in their native ordinal order. The
+    /// read still owns the commands and the actual bindings.
+    pub fn decision_offers(
+        &self,
+    ) -> Result<impl ExactSizeIterator<Item = RuntimeNpcOffer<'_>>, RuntimeError> {
+        use crate::commands::WorkTransitionMode;
+        Ok(self
+            .candidates()
+            .ok_or_else(|| failure("NPC choices are unavailable"))?
+            .offers()
+            .iter()
+            .map(|offer| RuntimeNpcOffer {
+                description: offer.description.as_ref(),
+                no_intervention: offer.command.is_none(),
+                transition: match offer.transition {
+                    WorkTransitionMode::Continue => "continue",
+                    WorkTransitionMode::Enqueue => "enqueue",
+                    WorkTransitionMode::Replace => "replace",
+                    WorkTransitionMode::Interrupt => "interrupt",
+                },
+            }))
+    }
     /// Preparation adds a finite product to the same read. Re-encoding its
     /// immutable base would make every retained formatter pin another copy.
     pub fn candidates_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
@@ -739,34 +775,36 @@ impl RuntimeNpcRead {
         )
     }
 
-    /// Encode the remaining recall facts while their callers move to typed
-    /// presentation. Body identities and leases are borrowed from this read.
-    pub fn recall_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        let Some(PreparedNpcRead::Recall(read)) = &self.preparation else {
-            return Err(failure("NPC recall context is unavailable"));
-        };
-        let context = RuntimeJson::encode(&read.context(), budget)?;
-        RuntimeJson::join(&[b"{\"recall\":", context.bytes(), b"}"], budget)
+    /// Detached activity titles already selected by the accepted work read.
+    /// Missing plans and existing plans with no remaining steps stay distinct.
+    pub fn remaining_plan(
+        &self,
+        paused: bool,
+    ) -> Result<Option<&[crate::activity::ActivityView]>, RuntimeError> {
+        Ok(self
+            .preparation
+            .as_ref()
+            .ok_or_else(|| failure("NPC work context is unavailable"))?
+            .work_context()
+            .remaining_views(paused))
     }
 
-    /// Encode the remaining stand-alone decision facts. Received bodies are
-    /// borrowed directly; evidence and validity stay with the binding read.
-    pub fn decision_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        let appraisals = self
-            .read
-            .appraisals_json()
-            .ok_or_else(|| failure("NPC appraisal capture is unavailable"))?;
-        let candidates = self.candidates_packet(budget)?;
-        RuntimeJson::join(
-            &[
-                b"{\"appraisals\":",
-                appraisals.as_bytes(),
-                b",\"candidates\":",
-                candidates.bytes(),
-                b"}",
-            ],
-            budget,
-        )
+    /// Borrow the installed interpretation for this captured cut. The
+    /// appraisal records and currentness checks remain with the native read.
+    pub fn feelings(&self) -> Result<&RuntimeNpcFeelings, RuntimeError> {
+        self.read
+            .appraisal_read()
+            .and_then(|read| read.direct())
+            .ok_or_else(|| failure("NPC appraisal capture is unavailable"))
+    }
+
+    /// Choices already selected and funded by the finite catalogue. The host
+    /// still maps entity choices to the exact references disclosed in its prompt.
+    pub fn activity_facts(&self) -> Result<crate::capture::NpcActivityFacts<'_>, RuntimeError> {
+        Ok(self
+            .candidates()
+            .ok_or_else(|| failure("NPC choices are unavailable"))?
+            .activity_facts())
     }
 
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {

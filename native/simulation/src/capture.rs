@@ -54,6 +54,7 @@ pub(crate) use npc_sources::{
 mod npc_selection;
 pub(crate) use npc_selection::NpcObservationSelection;
 mod npc_candidates;
+pub use npc_candidates::{NpcActivityChoice, NpcActivityFacts};
 pub(crate) use npc_candidates::{
     NpcCandidateAnswer, NpcCandidateCursor, NpcCandidateStep, NpcDescriptionsAnswer,
     NpcDescriptionsRequest, NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead,

@@ -3,9 +3,7 @@
 
 use super::*;
 use crate::{
-    player_command::{
-        KNOWN_PLACE_UNAVAILABLE, PlaceReference, SelectedKnownPlace, encode_place_preview,
-    },
+    player_command::{KNOWN_PLACE_UNAVAILABLE, PlaceReference, SelectedKnownPlace},
     store::{PlaceViewRequest, PlaceViewSearch},
     world::{ApplicationStart, PlayerDisclosure},
 };
@@ -13,7 +11,7 @@ use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
     host::ByteReservation,
     reception::EncounterExposure,
-    runtime::{RuntimeDirectOutput, RuntimeError},
+    runtime::{RuntimeDirectOutput, RuntimeError, RuntimePlayerCommand},
     state::SurfacePoint,
     text::JsText,
 };
@@ -179,20 +177,16 @@ async fn preview(
                     })));
                 }
                 let position = destination.ok_or(StoreError::InvalidRecord)?;
-                let _command = game
-                    .host
-                    .budget()
-                    .reserve(4096)
-                    .map_err(|_| StoreError::Capacity)?;
                 let id = uuid::Uuid::new_v4().to_string();
-                let (command, signature) =
-                    encode_place_preview(&id, &scope.scope.actor_id, position)?;
                 preview_cut
                     .set(through)
                     .map_err(|_| StoreError::InvalidRecord)?;
-                Ok(ApplicationStart::Candidate(
-                    world.begin_command_preview(command.as_bytes(), signature)?,
-                ))
+                Ok(ApplicationStart::Candidate(world.begin_player_command(
+                    &id,
+                    &scope.scope.actor_id,
+                    RuntimePlayerCommand::Move(position),
+                    true,
+                )?))
             },
             {
                 let game = state.game.clone();
