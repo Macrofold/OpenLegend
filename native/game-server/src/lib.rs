@@ -1,7 +1,6 @@
 //! Stand-alone game-server application owners. They link the same simulation
 //! and worker admission as the addon and never depend on the Node bridge.
 pub mod access_http;
-mod activity_format;
 pub mod authority;
 pub mod boot;
 pub mod command_epoch;

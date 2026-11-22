@@ -2,7 +2,7 @@
 //! replies retain their original binding and add no world authority.
 
 use crate::{
-    activity_format, control_format,
+    control_format,
     language::{LanguageProvider, canonical::write_canonical},
     world::WorldError,
 };
@@ -33,6 +33,9 @@ pub(crate) fn answer(
     language: Option<&LanguageProvider>,
 ) -> Result<Option<RuntimeProviderInput>, WorldError> {
     if let Some(answer) = request.format_activity_learning(budget)? {
+        return Ok(Some(answer));
+    }
+    if let Some(answer) = request.format_activity_display(budget)? {
         return Ok(Some(answer));
     }
     if let Some(answer) = request.with_control(|binding, paused, speed| {
@@ -112,17 +115,7 @@ pub(crate) fn answer(
             )
             .map(Some);
         }
-        if envelope.kind != "display" {
-            return Ok(None);
-        }
-        let workspace = budget
-            .reserve(format_workspace(envelope.value.get())?)
-            .map_err(HostError::from)?;
-        Ok(Some(RuntimeProviderInput::local_format(
-            envelope.binding,
-            LocalFormat::Display(activity_format::format(envelope.value)?),
-            workspace,
-        )?))
+        Ok(None)
     })?
 }
 

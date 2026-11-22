@@ -10,9 +10,10 @@ use crate::host::{ByteBudget, ByteReservation, CandidateKey};
 use crate::reception::{AttributeView, CurrentBodyReadScope, SightBatch};
 use crate::state::Point;
 use crate::text::JsText;
+use crate::worlds::activity_display as authored;
 use serde::Serialize;
-use serde_json::value::RawValue;
 use std::mem::size_of;
+use std::sync::Arc;
 
 #[derive(Serialize)]
 struct Profile {
@@ -23,7 +24,7 @@ struct Profile {
 pub(crate) struct ActivityDisplayRequest {
     pub binding: GeometryBinding,
     profile: Profile,
-    input: Box<RawValue>,
+    input: Input,
     #[serde(skip)]
     _reservation: ByteReservation,
 }
@@ -36,7 +37,7 @@ pub(crate) enum ActivityDisplayAnswer {
 }
 pub(crate) enum ActivityDisplayStep<'a> {
     Geometry(&'a GeometryQueries),
-    Format(&'a ActivityDisplayRequest),
+    Format(&'a Arc<ActivityDisplayRequest>),
     Complete(CompletedActivityDisplay),
 }
 pub(crate) struct CompletedActivityDisplay {
@@ -56,77 +57,100 @@ impl CompletedActivityDisplay {
     }
 }
 #[derive(Serialize)]
-struct Actor {
-    position: Point,
-    heading: f64,
-}
-#[derive(Serialize)]
-struct Target<'a> {
-    name: &'a JsText,
-    position: Point,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    health: Option<&'a AttributeView>,
-}
-#[derive(Serialize)]
-struct Effect<'a> {
-    label: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    activate: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    deactivate: Option<&'a str>,
-}
-#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Purpose<'a> {
+struct Purpose {
     #[serde(skip_serializing_if = "Option::is_none")]
-    purpose: Option<&'a JsText>,
+    purpose: Option<JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    chosen_purpose: Option<&'a JsText>,
+    chosen_purpose: Option<JsText>,
 }
 #[derive(Serialize)]
 #[serde(tag = "type")]
-enum Command<'a> {
+enum Command {
     #[serde(rename = "move")]
     Move {
         #[serde(flatten)]
-        purpose: Purpose<'a>,
+        purpose: Purpose,
         destination: Point,
     },
     #[serde(rename = "say")]
     Say {
         #[serde(flatten)]
-        purpose: Purpose<'a>,
-        text: &'a JsText,
+        purpose: Purpose,
+        text: JsText,
     },
     #[serde(rename = "status-effect")]
     Status {
         #[serde(flatten)]
-        purpose: Purpose<'a>,
+        purpose: Purpose,
         operation: &'static str,
     },
     #[serde(rename = "follow")]
     Follow {
         #[serde(flatten)]
-        purpose: Purpose<'a>,
+        purpose: Purpose,
         #[serde(skip_serializing_if = "Option::is_none")]
         distance: Option<f64>,
     },
     #[serde(rename = "strike")]
     Strike {
         #[serde(flatten)]
-        purpose: Purpose<'a>,
+        purpose: Purpose,
     },
 }
 #[derive(Serialize)]
-struct Input<'a> {
-    command: Command<'a>,
-    actor: Actor,
+struct Input {
+    command: Command,
+    actor: authored::ObservedActor,
     #[serde(skip_serializing_if = "Option::is_none")]
-    target: Option<Target<'a>>,
+    target: Option<authored::ObservedTarget>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    effect: Option<Effect<'a>>,
+    effect: Option<authored::EffectWords>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    strike: Option<&'a crate::worlds::base_decision_offers::NativeStrikeRead>,
+    strike: Option<authored::StrikeRead>,
+}
+impl ActivityDisplayRequest {
+    /// Render only the selected facts under a separate output allowance. The
+    /// original snapshot stays with its pending operation through this call.
+    pub(crate) fn format(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<(ActivityView, ByteReservation), ExecutionError> {
+        let workspace = budget.reserve(
+            self._reservation
+                .bytes()
+                .checked_mul(12)
+                .and_then(|bytes| bytes.checked_add(4096))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        use authored::OrdinaryAction as Action;
+        let (purpose, action) = match &self.input.command {
+            Command::Move {
+                purpose,
+                destination,
+            } => (purpose, Action::Move(*destination)),
+            Command::Say { purpose, text } => (purpose, Action::Say(text.clone())),
+            Command::Follow { purpose, .. } => (purpose, Action::Follow),
+            Command::Status { purpose, operation } => (
+                purpose,
+                Action::Status {
+                    activate: *operation == "activate",
+                    effect: self.input.effect.clone(),
+                },
+            ),
+            Command::Strike { purpose } => (purpose, Action::Strike(self.input.strike)),
+        };
+        let view = authored::format(
+            (&self.profile.id, self.profile.version),
+            action,
+            purpose.purpose.clone(),
+            purpose.chosen_purpose.clone(),
+            Some(self.input.actor),
+            self.input.target.clone(),
+        )
+        .ok_or(ExecutionError::UnsupportedFamily)?;
+        Ok((view, workspace))
+    }
 }
 enum Phase {
     Sight,
@@ -138,7 +162,7 @@ pub(crate) struct ActivityDisplayCursor {
     candidate: CandidateKey,
     seen: bool,
     sight: Option<SightBatch>,
-    request: Option<ActivityDisplayRequest>,
+    request: Option<Arc<ActivityDisplayRequest>>,
     phase: Phase,
     _reservation: ByteReservation,
 }
@@ -152,7 +176,7 @@ impl ActivityDisplayCursor {
         if matches!(
             command,
             NativeCommand::Outing { .. }
-            | NativeCommand::Handover { .. }
+                | NativeCommand::Handover { .. }
                 | NativeCommand::Feed { .. }
                 | NativeCommand::Gather { .. }
                 | NativeCommand::Fish { .. }
@@ -296,7 +320,7 @@ impl ActivityDisplayCursor {
         &self,
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
-    ) -> Result<ActivityDisplayRequest, ExecutionError> {
+    ) -> Result<Arc<ActivityDisplayRequest>, ExecutionError> {
         let state = &core.state;
         let actor_id = &self.command.envelope().actor_id;
         let actor = state
@@ -363,24 +387,63 @@ impl ActivityDisplayCursor {
         };
         let health = attributes
             .and_then(|values| values.iter().find(|value| value.body_health == Some(true)));
-        let target = if let (Some(target), Some(name)) = (target, name.as_ref()) {
-            Some(Target {
+        let envelope = self.command.envelope();
+        let effect_definition = match &self.command {
+            NativeCommand::StatusEffect { definition_id, .. } => state
+                .installed
+                .status_policy
+                .definitions
+                .iter()
+                .find(|definition| &definition.id == definition_id),
+            _ => None,
+        };
+        let effect_bytes = effect_definition
+            .map_or(Some(0), |definition| {
+                let actions = definition.actions.as_ref();
+                let words = actions.map_or(Some(0), |actions| {
+                    actions.activate.len().checked_add(actions.deactivate.len())
+                })?;
+                definition.label.len().checked_add(words)?.checked_mul(3)
+            })
+            .ok_or(ExecutionError::Capacity)?;
+        let speech = match &self.command {
+            NativeCommand::Say { text, .. } => text.storage_bytes(),
+            _ => 0,
+        };
+        let bound = heap_sum([
+            size_of::<ActivityDisplayRequest>() + 2 * size_of::<usize>(),
+            state.installed.content.profile.id.len(),
+            name.as_ref().map_or(0, JsText::storage_bytes),
+            health
+                .map_or(Some(0), HeapBytes::heap_bytes)
+                .ok_or(ExecutionError::Capacity)?,
+            envelope.purpose.as_ref().map_or(0, JsText::storage_bytes),
+            envelope
+                .chosen_purpose
+                .as_ref()
+                .map_or(0, |purpose| purpose.description.storage_bytes()),
+            effect_bytes,
+            speech,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let reservation = budget.reserve(bound)?;
+        let target = if let (Some(target), Some(name)) = (target, name) {
+            Some(authored::ObservedTarget {
                 name,
                 position: target
                     .world_position()
                     .ok_or(ExecutionError::InvalidPosition)?,
-                health,
+                health: health.cloned(),
             })
         } else {
             None
         };
-        let envelope = self.command.envelope();
         let purpose = Purpose {
-            purpose: envelope.purpose.as_ref(),
+            purpose: envelope.purpose.clone(),
             chosen_purpose: envelope
                 .chosen_purpose
                 .as_ref()
-                .map(|purpose| &purpose.description),
+                .map(|purpose| purpose.description.clone()),
         };
         let command = match &self.command {
             NativeCommand::Move { destination, .. } => Command::Move {
@@ -391,7 +454,10 @@ impl ActivityDisplayCursor {
                     z: destination.z,
                 },
             },
-            NativeCommand::Say { text, .. } => Command::Say { purpose, text },
+            NativeCommand::Say { text, .. } => Command::Say {
+                purpose,
+                text: text.clone(),
+            },
             NativeCommand::StatusEffect { operation, .. } => Command::Status {
                 purpose,
                 operation: if *operation == StatusOperation::Activate {
@@ -412,7 +478,7 @@ impl ActivityDisplayCursor {
             | NativeCommand::Pickup { .. }
             | NativeCommand::Drop { .. }
             | NativeCommand::TendFire { .. }
-                | NativeCommand::PlaceHearth { .. }
+            | NativeCommand::PlaceHearth { .. }
             | NativeCommand::Cook { .. }
             | NativeCommand::Craft { .. }
             | NativeCommand::Eat { .. }
@@ -425,29 +491,36 @@ impl ActivityDisplayCursor {
                 return Err(ExecutionError::UnsupportedFamily);
             }
         };
-        let effect = match &self.command {
-            NativeCommand::StatusEffect { definition_id, .. } => state
+        let effect = effect_definition.map(|definition| authored::EffectWords {
+            label: definition.label.as_str().into(),
+            activate: definition
+                .actions
+                .as_ref()
+                .map(|actions| actions.activate.as_str().into()),
+            deactivate: definition
+                .actions
+                .as_ref()
+                .map(|actions| actions.deactivate.as_str().into()),
+        });
+        let strike = match &self.command {
+            NativeCommand::Strike { definition_id, .. } => state
                 .installed
-                .status_policy
-                .definitions
-                .iter()
-                .find(|definition| &definition.id == definition_id)
-                .map(|definition| Effect {
-                    label: &definition.label,
-                    activate: definition
-                        .actions
-                        .as_ref()
-                        .map(|actions| actions.activate.as_str()),
-                    deactivate: definition
-                        .actions
-                        .as_ref()
-                        .map(|actions| actions.deactivate.as_str()),
+                .retained
+                .native_strike_read
+                .get(definition_id)
+                .map(|strike| authored::StrikeRead {
+                    damage: strike.damage,
+                    range: strike.range,
+                    approach_range: strike.approach_range,
+                    work_seconds: strike.work_seconds,
+                    recovery_seconds: strike.recovery_seconds,
+                    accuracy: strike.accuracy,
                 }),
             _ => None,
         };
         let input = Input {
             command,
-            actor: Actor {
+            actor: authored::ObservedActor {
                 position: actor
                     .world_position()
                     .ok_or(ExecutionError::InvalidPosition)?,
@@ -455,47 +528,23 @@ impl ActivityDisplayCursor {
             },
             target,
             effect,
-            strike: if let NativeCommand::Strike { definition_id, .. } = &self.command {
-                state
-                    .installed
-                    .retained
-                    .native_strike_read
-                    .get(definition_id)
-            } else {
-                None
-            },
+            strike,
         };
-        let length =
-            crate::encoding::json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
-        let reservation = budget.reserve(
-            length
-                .checked_mul(2)
-                .and_then(|n| {
-                    n.checked_add(
-                        size_of::<ActivityDisplayRequest>()
-                            + state.installed.content.profile.id.len(),
-                    )
-                })
-                .ok_or(ExecutionError::Capacity)?,
-        )?;
-        let encoded =
-            crate::encoding::json_record(&input).map_err(|_| ExecutionError::Invariant)?;
         let profile = Profile {
             id: state.installed.content.profile.id.clone(),
             version: state.installed.content.profile.version,
         };
-        let input = RawValue::from_string(encoded).map_err(|_| ExecutionError::Invariant)?;
         let binding = GeometryBinding::new(
             self.candidate,
             core.state.installed.geometry.spatial.revision,
             core.journal.next_provider_serial()?,
         );
-        Ok(ActivityDisplayRequest {
+        Ok(Arc::new(ActivityDisplayRequest {
             binding,
             profile,
             input,
             _reservation: reservation,
-        })
+        }))
     }
 }
 fn target_id(command: &NativeCommand) -> Option<&str> {

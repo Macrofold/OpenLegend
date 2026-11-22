@@ -7,7 +7,7 @@ use crate::{
     state::Point,
     text::JsText,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 
 #[derive(Deserialize)]
@@ -56,22 +56,27 @@ struct AttackWords<'a> {
     chance: &'a str,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct EffectWords {
-    label: JsText,
-    activate: Option<JsText>,
-    deactivate: Option<JsText>,
+    pub(crate) label: JsText,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) activate: Option<JsText>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) deactivate: Option<JsText>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StrikeRead {
-    damage: f64,
-    range: f64,
-    approach_range: Option<f64>,
-    work_seconds: f64,
-    recovery_seconds: Option<f64>,
-    accuracy: Option<f64>,
+    pub(crate) damage: f64,
+    pub(crate) range: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) approach_range: Option<f64>,
+    pub(crate) work_seconds: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) recovery_seconds: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) accuracy: Option<f64>,
 }
 
 pub enum OrdinaryAction {
@@ -125,16 +130,17 @@ struct ObservedWords<'a> {
     health_name: &'a str,
 }
 
-#[derive(Clone, Copy, Deserialize)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct ObservedActor {
     pub(crate) position: Point,
     pub(crate) heading: f64,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct ObservedTarget {
     pub(crate) name: JsText,
     pub(crate) position: Point,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) health: Option<crate::reception::AttributeView>,
 }
 

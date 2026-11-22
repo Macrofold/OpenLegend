@@ -851,6 +851,24 @@ impl RuntimeProvider {
             .map(|request| format(request.binding, request.paused, request.speed)))
     }
 
+    /// Render work labels from the funded selected actor/target facts. The
+    /// result owns independent storage and carries the exact question binding.
+    pub fn format_activity_display(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<Option<RuntimeProviderInput>, RuntimeError> {
+        let question = self.question()?;
+        let Some(request) = question.display() else {
+            return Ok(None);
+        };
+        let (view, custody) = request.format(budget).map_err(failure)?;
+        Ok(Some(RuntimeProviderInput::local_format(
+            request.binding,
+            LocalFormat::Display(view),
+            custody,
+        )?))
+    }
+
     /// Use the exact already prepared command text for canonical ordering.
     /// The plan owns the input. The formatter must fund its own result.
     pub fn with_plan_command<T>(
@@ -938,6 +956,9 @@ impl RuntimeProvider {
         }
         if let Some(control) = question.control_envelope() {
             return RuntimeJson::encode(&control, budget);
+        }
+        if let Some(display) = question.display_envelope() {
+            return RuntimeJson::encode(&display, budget);
         }
         if let Some(command) = question.plan_command_envelope() {
             return RuntimeJson::encode(&command, budget);

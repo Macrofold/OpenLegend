@@ -141,6 +141,7 @@ enum QuestionBody {
     Geometry(Box<GeometryQueries>),
     Control(super::host_control::ControlFormat),
     PlanCommand(Arc<crate::plans::PlanCommandRequest>),
+    Display(Arc<crate::commands::ActivityDisplayRequest>),
     Utterance(UtteranceRequest),
     Words(WordsProviderRequest),
     Collation(CollationProviderRequest),
@@ -216,6 +217,23 @@ impl ProviderQuestion {
         &self,
     ) -> Option<QuestionEnvelope<'_, super::host_control::ControlFormat>> {
         self.control().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    pub(crate) fn display(&self) -> Option<&crate::commands::ActivityDisplayRequest> {
+        match &self.body {
+            QuestionBody::Display(request) => Some(request),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn display_envelope(
+        &self,
+    ) -> Option<QuestionEnvelope<'_, crate::commands::ActivityDisplayRequest>> {
+        self.display().map(|value| QuestionEnvelope {
             kind: self.kind,
             binding: self.binding,
             value,
@@ -2189,14 +2207,18 @@ fn poll_display(
             return geometry_question(answer, q, budget, DisplayReply::Geometry);
         }
         ActivityDisplayStep::Format(q) => {
-            return question(
-                answer,
-                ProviderKind::Display,
-                q.binding,
-                q,
-                budget,
+            if answer.is_some() {
+                return Err(DriveError::StaleResponse);
+            }
+            Ok(Poll::Question(
+                ProviderQuestion::prepare_bound(
+                    ProviderKind::Display,
+                    q.binding,
+                    QuestionBody::Display(Arc::clone(q)),
+                    budget,
+                )?,
                 DisplayReply::Format,
-            );
+            ))
         }
     }
 }
