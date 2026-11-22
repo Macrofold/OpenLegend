@@ -4,6 +4,7 @@ These established documents own supported behavior and explicitly labeled remain
 
 | Topic                                            | Owner                                                                                                           |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Installed Unreal desktop play, landscape and art | [Unreal player experience](unreal-player/README.md)                                                             |
 | Actions, offered choices and execution           | [Actions](../action-capabilities.md), [agency](../agent-agency.md)                                              |
 | Noticing, reacting and remembering               | [Witness decisions, personal reactions and memories](noticing-and-remembering/README.md)                        |
 | Character experience, recollection and knowledge | [Memory](../memory-architecture.md), [knowledge](../knowledge.md), [action experience](../action-experience.md) |

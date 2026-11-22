@@ -344,9 +344,9 @@ ND15, ND14's calls and separately selected ND16 propagation/media families. Sett
 
 #### DG35 — A selected platform or offline capability
 
-[The platform/offline decision](../projects/completed/platform-and-offline-decision-brief.md) selects the browser for now. No desktop package, native/console client, replacement renderer or offline product is selected. Reconsider only for a new explicit audience or production need.
+The [UE5 player feature](../features/unreal-player/README.md) selects installed Windows and Apple Silicon Mac play for the landscape and agent-production goals. The [earlier browser choice](../projects/completed/platform-and-offline-decision-brief.md) remains a historical reference. Other consumer platforms and offline operation require their own need and decision.
 
-**Owners/dependencies:** ND34, SW10, UIUX/AC, MP/PD and host/provider owners. Current browser controls, hosting and D09 device qualification remain active. A future desktop wrapper, replacement client and offline simulation are distinct choices; offline needs its own host/provider policy and equivalent-play comparison.
+**Owners/dependencies:** ND34, SW10, UIUX/AC, MP/PD and host/provider owners. Current browser controls, hosting and D09 device qualification remain active. Qualify native play on both target operating systems. Consumer browser play, a console port and offline simulation are distinct additions. Offline needs its own host/provider policy and equivalent-play comparison.
 
 #### DG36 — One useful application beyond the game
 
@@ -406,7 +406,7 @@ Each ND entry retains one preparation description below. Multiple DGs indicate d
 | ND31 | DG10             | Conditional human social pilot                                                                                                                                                                     |
 | ND32 | DG36             | Selected beyond-game use                                                                                                                                                                           |
 | ND33 | DG19             | Food condition and preservation                                                                                                                                                                    |
-| ND34 | DG35             | Browser retained; other platforms conditional                                                                                                                                                      |
+| ND34 | DG35             | Installed UE5 player selected; additional platforms and offline conditional                                                                                                                                                      |
 | ND35 | DG25             | Protected shared restore versus broader portability/history                                                                                                                                        |
 | ND36 | DG15             | Selected external perspective versus other cutaways                                                                                                                                                |
 | ND37 | DG08             | Public reporting and operator authority                                                                                                                                                            |
@@ -762,7 +762,7 @@ Carry the [Elden Ring application questions](#elden-ring-applications-through-ex
 
 ### ND34 — Additional distribution platforms and offline play
 
-**Browser selected; additional platforms/offline deferred.** [DG35's decision brief](../projects/completed/platform-and-offline-decision-brief.md), SW10 and the [client replacement path](../spatial-world.md#client-replacement-path) retain alternatives. Current browser controls, hosting and minimum-device qualification remain open in their owners.
+**Installed Unreal desktop player selected.** The [Windows and Mac feature spec](../features/unreal-player/desktop-access.md) and [UE01–UE08](unreal-engine-5-migration.md) carry ND34's selected native-client scope. Current browser controls, hosted authority, target hardware and accessibility still need the corresponding native evidence. Other consumer platforms and offline play remain conditional.
 
 A new selected audience/production need must distinguish desktop packaging, replacement native/console client and offline simulation. Define controller/text/accessibility, accounts, suspend/reconnect, packaging/updates and qualification as applicable; offline separately needs a local host/provider policy. Compare equivalent play and maintenance cost before replacement. Source: [engine/distribution research](../../archive/02-research/engines-art-and-audio.md).
 
