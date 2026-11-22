@@ -1,6 +1,7 @@
 //! The Source body-before-work endpoint order over one captured interval.
 //! Motion and the later zero-time arrival remain separate phase owners.
 //! See docs/simulation-time.md#native-interval-contract.
+use super::gifts::{GiftAnswer, GiftStep};
 use super::{NativeParticipants, SliceActions};
 use crate::activity::PendingActivityResult;
 use crate::body::{BodyAnswer, BodyRateCursor, BodyStep};
@@ -89,7 +90,11 @@ impl EndpointCursor {
             .complete(completed)
     }
     pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
-        self.work.as_ref().and_then(|cursor| cursor.queries().ok())
+        if self.phase == Phase::Gifts {
+            self.gifts.geometry()
+        } else {
+            self.work.as_ref().and_then(|cursor| cursor.queries().ok())
+        }
     }
     pub(crate) fn new(
         core: &mut CoreMutation<'_>,
@@ -223,12 +228,9 @@ impl EndpointCursor {
                     .ok_or(ExecutionError::Invariant)?
                     .personal()?
             }),
-            Progress::Geometry => EndpointStep::Geometry(
-                self.work
-                    .as_ref()
-                    .ok_or(ExecutionError::Invariant)?
-                    .queries()?,
-            ),
+            Progress::Geometry => {
+                EndpointStep::Geometry(self.geometry_request().ok_or(ExecutionError::Invariant)?)
+            }
             Progress::Complete => EndpointStep::Complete,
         })
     }
@@ -428,10 +430,21 @@ impl EndpointCursor {
                     self.phase = Phase::Gifts;
                 }
                 Phase::Gifts => {
-                    if let Some(event) = self.gifts.step(core, occurrence(answer.take())?, &self.budget)? {
-                        return Ok(Progress::Occurrence(event));
+                    let answer = match answer.take() {
+                        Some(EndpointAnswer::Occurrence(answer)) => {
+                            Some(GiftAnswer::Occurrence(answer))
+                        }
+                        Some(EndpointAnswer::Geometry(answer)) => {
+                            Some(GiftAnswer::Geometry(answer))
+                        }
+                        Some(_) => return Err(ExecutionError::UnfinishedOccurrence),
+                        None => None,
+                    };
+                    match self.gifts.step(core, answer, self.binding, &self.budget)? {
+                        GiftStep::Occurrence(event) => return Ok(Progress::Occurrence(event)),
+                        GiftStep::Geometry => return Ok(Progress::Geometry),
+                        GiftStep::Complete => self.phase = Phase::Done,
                     }
-                    self.phase = Phase::Done;
                 }
                 Phase::Done => {
                     if answer.is_some() {

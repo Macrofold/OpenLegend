@@ -66,6 +66,12 @@ impl GiftLot {
                 .subtree_revision
                 .is_none_or(|value| value <= MAX_SAFE_INTEGER)
     }
+
+    fn is_loose_stock(&self) -> bool {
+        self.capacity.is_none()
+            && self.contents_revision.is_none()
+            && self.subtree_revision.is_none()
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -116,8 +122,9 @@ impl GiftOffer {
     }
 }
 
-struct RetainedGift {
-    offer: GiftOffer,
+pub(crate) struct RetainedGift {
+    pub(crate) offer: GiftOffer,
+    review_loose_stock: bool,
     _custody: ResidentReservation,
 }
 
@@ -136,22 +143,51 @@ pub(crate) struct GiftState {
     parties: BTreeMap<String, BTreeSet<String>>,
     lots: BTreeMap<String, String>,
     deadlines: BTreeMap<Deadline, BTreeSet<String>>,
+    review: BTreeSet<String>,
 }
-pub(crate) struct GiftUndo {
-    id: String,
-    prior: Option<(usize, Arc<RetainedGift>)>,
-    has_after: bool,
+pub(crate) struct GiftUndo(GiftInverse);
+enum GiftInverse {
+    Row {
+        id: String,
+        prior: Option<(usize, Arc<RetainedGift>, bool)>,
+        has_after: bool,
+    },
+    Review {
+        id: String,
+        was_requested: bool,
+    },
 }
 impl GiftUndo {
     pub(crate) fn revert(self, state: &mut GiftState) -> Result<(), ExecutionError> {
-        if state.rows.contains_key(&self.id) != self.has_after {
-            return Err(ExecutionError::Invariant);
-        }
-        if self.has_after {
-            state.remove(&self.id);
-        }
-        if let Some((ordinal, prior)) = self.prior {
-            state.insert(ordinal, prior);
+        match self.0 {
+            GiftInverse::Row {
+                id,
+                prior,
+                has_after,
+            } => {
+                if state.rows.contains_key(&id) != has_after {
+                    return Err(ExecutionError::Invariant);
+                }
+                if has_after {
+                    state.remove(&id);
+                }
+                if let Some((ordinal, prior, review)) = prior {
+                    state.insert(ordinal, prior);
+                    if review {
+                        state.review.insert(id);
+                    }
+                }
+            }
+            GiftInverse::Review { id, was_requested } => {
+                if !state.rows.contains_key(&id) {
+                    return Err(ExecutionError::Invariant);
+                }
+                if was_requested {
+                    state.review.insert(id);
+                } else {
+                    state.review.remove(&id);
+                }
+            }
         }
         Ok(())
     }
@@ -170,6 +206,7 @@ impl GiftState {
             parties: BTreeMap::new(),
             lots: BTreeMap::new(),
             deadlines: BTreeMap::new(),
+            review: BTreeSet::new(),
         };
         for (id, offer) in saved.into_iter().flatten() {
             if id != offer.id
@@ -188,6 +225,10 @@ impl GiftState {
                 return Err(InstallError::CurrentFormat);
             }
             let row = Self::fund(offer, budget).map_err(|_| InstallError::Capacity)?;
+            // A save can fall between a stock change and the next clock step.
+            if row.review_loose_stock {
+                state.review.insert(id);
+            }
             state.insert(state.rows.len(), row);
         }
         Ok(state)
@@ -260,8 +301,10 @@ impl GiftState {
         // entry may hold this body independently of current membership.
         let capacity = Self::record_bytes(&offer).ok_or(ExecutionError::Capacity)?;
         let custody = budget.reserve_record(capacity)?;
+        let review_loose_stock = offer.lots().all(GiftLot::is_loose_stock);
         Ok(Arc::new(RetainedGift {
             offer,
+            review_loose_stock,
             _custody: custody,
         }))
     }
@@ -272,7 +315,9 @@ impl GiftState {
             .checked_add(offer.offerer_id.capacity())?
             .checked_add(offer.recipient_id.capacity())?
             .checked_mul(6)?
-            .checked_add(2048)?;
+            .checked_add(2048)?
+            .checked_add(offer.id.capacity())?
+            .checked_add(crate::host::retained_size::tree_node_bound::<String, ()>()?)?;
         let slots = offer
             .offered
             .capacity()
@@ -308,7 +353,7 @@ impl GiftState {
             .insert(id.clone());
         self.rows.shift_insert(ordinal, id, retained);
     }
-    fn remove(&mut self, id: &str) -> Option<(usize, Arc<RetainedGift>)> {
+    fn remove(&mut self, id: &str) -> Option<(usize, Arc<RetainedGift>, bool)> {
         let (ordinal, _, retained) = self.rows.shift_remove_full(id)?;
         let offer = &retained.offer;
         for lot in offer.lots() {
@@ -318,7 +363,7 @@ impl GiftState {
             remove_key(&mut self.parties, actor, id);
         }
         remove_key(&mut self.deadlines, &Deadline::new(offer.expires_at), id);
-        Some((ordinal, retained))
+        Some((ordinal, retained, self.review.remove(id)))
     }
     pub(crate) fn add(
         &mut self,
@@ -333,11 +378,11 @@ impl GiftState {
         let id = offer.id.clone();
         let row = Self::fund(offer, budget)?;
         self.insert(self.rows.len(), row);
-        Ok(GiftUndo {
+        Ok(GiftUndo(GiftInverse::Row {
             id,
             prior: None,
             has_after: true,
-        })
+        }))
     }
     pub(crate) fn replace(
         &mut self,
@@ -355,23 +400,28 @@ impl GiftState {
         let prepared = Self::fund(offer, budget)?;
         let prior = self.remove(&id).ok_or(ExecutionError::Invariant)?;
         self.insert(prior.0, prepared);
-        Ok(GiftUndo {
+        Ok(GiftUndo(GiftInverse::Row {
             id,
             prior: Some(prior),
             has_after: true,
-        })
+        }))
     }
 
     pub(crate) fn finish(&mut self, id: &str) -> Result<GiftUndo, ExecutionError> {
         let prior = self.remove(id).ok_or(ExecutionError::Invariant)?;
-        Ok(GiftUndo {
+        Ok(GiftUndo(GiftInverse::Row {
             id: id.into(),
             prior: Some(prior),
             has_after: false,
-        })
+        }))
     }
     pub(crate) fn get(&self, id: &str) -> Option<&GiftOffer> {
-        self.rows.get(id).map(|row| &row.offer)
+        self.retained(id).map(|row| &row.offer)
+    }
+
+    /// Share the already funded body with an ending that removes its index row.
+    pub(crate) fn retained(&self, id: &str) -> Option<&Arc<RetainedGift>> {
+        self.rows.get(id)
     }
     pub(crate) fn for_actor(&self, actor: &str) -> impl Iterator<Item = &GiftOffer> {
         self.parties
@@ -383,19 +433,55 @@ impl GiftState {
     pub(crate) fn for_item(&self, item: &str) -> Option<&GiftOffer> {
         self.lots.get(item).and_then(|id| self.get(id))
     }
+    pub(crate) fn review_pending(&self, id: &str) -> bool {
+        self.review.contains(id)
+    }
+
+    pub(crate) fn can_queue_review(&self, id: &str) -> bool {
+        self.rows.get(id).is_some_and(|row| row.review_loose_stock) && !self.review_pending(id)
+    }
+
+    /// The row already funds one review key for its entire pending lifetime.
+    pub(crate) fn queue_review(&mut self, id: String) -> Result<GiftUndo, ExecutionError> {
+        if !self.can_queue_review(&id) {
+            return Err(ExecutionError::Invariant);
+        }
+        let undo = GiftUndo(GiftInverse::Review {
+            id: id.clone(),
+            was_requested: false,
+        });
+        self.review.insert(id);
+        Ok(undo)
+    }
+
+    pub(crate) fn take_review(&mut self, id: &str) -> Option<GiftUndo> {
+        self.review.take(id).map(|id| {
+            GiftUndo(GiftInverse::Review {
+                id,
+                was_requested: true,
+            })
+        })
+    }
+
+    pub(crate) fn review_ids(&self) -> impl Iterator<Item = (usize, &str)> {
+        self.review
+            .iter()
+            .filter_map(|id| self.rows.get_index_of(id).map(|order| (order, id.as_str())))
+    }
+
     pub(crate) fn next_deadline(&self) -> Option<f64> {
         self.deadlines
             .first_key_value()
             .map(|(at, _)| f64::from_bits(at.0))
     }
-    pub(crate) fn next_due(&self, at: f64) -> Option<&GiftOffer> {
+    pub(crate) fn next_due(&self, at: f64) -> Option<&Arc<RetainedGift>> {
         let (_, ids) = self.deadlines.range(..=Deadline::new(at)).next()?;
         // Simultaneous deadlines keep the same ordinary offer order, which
         // the changed world row and rollback entries already preserve.
         ids.iter()
             .filter_map(|id| self.rows.get_full(id))
             .min_by_key(|(ordinal, _, _)| *ordinal)
-            .map(|(_, _, retained)| &retained.offer)
+            .map(|(_, _, retained)| retained)
     }
     pub(crate) fn is_empty(&self) -> bool {
         self.rows.is_empty()
@@ -737,9 +823,7 @@ pub(crate) fn loose_lot_current(
         definition.pin == lot.definition_pin
             && (!exact || entity.item.as_ref().is_some_and(|item| item.revision == lot.revision)
                 && matches!(&entity.placement, Some(crate::state::Placement::Contained { revision, .. }) if *revision == lot.placement_revision))
-            && lot.capacity.is_none()
-            && lot.contents_revision.is_none()
-            && lot.subtree_revision.is_none()
+            && lot.is_loose_stock()
     })
 }
 
@@ -758,15 +842,41 @@ pub(crate) fn loose_offer_current(
             .all(|lot| loose_lot_current(state, &offer.recipient_id, lot, true))
 }
 
-pub(crate) fn gift_participant(
-    state: &crate::simulation::SimulationState,
-    entity: &crate::state::Entity,
-) -> Result<bool, ExecutionError> {
-    Ok(entity.actively_participates()
+fn gift_able(entity: &crate::state::Entity) -> bool {
+    entity.actively_participates()
         && entity
             .actor
             .as_ref()
             .is_some_and(|actor| actor.alive && !actor.incapacitated)
+}
+
+/// Ongoing consent uses actor life and stock custody. A temporary action
+/// restriction such as sleep prevents a new command without ending an offer.
+pub(crate) fn loose_offer_still_held(
+    state: &crate::simulation::SimulationState,
+    offer: &GiftOffer,
+) -> bool {
+    let able = |id: &str, holder: bool| {
+        state.physical.entities.get(id).is_some_and(|entity| {
+            gift_able(entity)
+                && (!holder
+                    || state
+                        .installed
+                        .retained
+                        .item_handling_read
+                        .can_handle(&entity.spatial.body.id))
+        })
+    };
+    able(&offer.offerer_id, true)
+        && able(&offer.recipient_id, !offer.requested.is_empty())
+        && loose_offer_current(state, offer)
+}
+
+pub(crate) fn gift_participant(
+    state: &crate::simulation::SimulationState,
+    entity: &crate::state::Entity,
+) -> Result<bool, ExecutionError> {
+    Ok(gift_able(entity)
         && state
             .installed
             .retained

@@ -1,4 +1,5 @@
 use super::*;
+mod review;
 use crate::{
     events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope},
     handover::{GiftDescription, GiftDescriptions, GiftLot, GiftOffer},
@@ -142,6 +143,7 @@ pub(crate) enum GiftMessenger<'a> {
         verb: &'static str,
     },
     Expiry,
+    Lapse,
     OwnEnding { target: &'a str },
 }
 
@@ -221,8 +223,13 @@ pub(crate) fn stage_gift_notice(
             receiver,
             Some(target.into()),
         ),
-        GiftMessenger::Expiry => {
-            let template = format!("{} {{terms}}", GIFT_COPY.deadline);
+        GiftMessenger::Expiry | GiftMessenger::Lapse => {
+            let copy = if matches!(messenger, GiftMessenger::Expiry) {
+                GIFT_COPY.deadline
+            } else {
+                GIFT_COPY.lapsed
+            };
+            let template = format!("{copy} {{terms}}");
             (
                 Narration {
                     parts: vec![NarrationPart::Literal(gift_terms(

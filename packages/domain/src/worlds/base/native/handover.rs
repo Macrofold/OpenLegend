@@ -30,6 +30,7 @@ pub(crate) struct GiftCopy {
     pub witness_exchange: &'static str,
     pub participant_exchange: &'static str,
     pub deadline: &'static str,
+    pub lapsed: &'static str,
     pub proposed: &'static str,
     pub accepted: &'static str,
     pub no_transfer: &'static str,

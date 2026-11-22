@@ -373,6 +373,7 @@ impl CandidateJournal {
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
+        self.physical.queue_gift_reviews(&mut state.physical)?;
         self.physical.settle_agency_memory(&mut state.physical)?;
         Ok(PreparedJournalRelease {
             owner: self.owner.clone(),
@@ -1286,6 +1287,7 @@ impl ClockSnapshot {
 struct Frame {
     serial: u64,
     undo_start: usize,
+    gift_review_start: usize,
     changes_start: usize,
     clock: ClockSnapshot,
     identity: IdentityState,
@@ -1594,6 +1596,7 @@ pub(crate) struct PhysicalJournal {
     undo: Vec<Undo>,
     frames: Vec<Frame>,
     changes: Vec<PhysicalChange>,
+    gift_review_through: usize,
     next_frame: u64,
     // Rust drops fields in declaration order: storage must precede its guard.
     reservation: ByteReservation,
@@ -1609,11 +1612,13 @@ impl PhysicalJournal {
             undo: Vec::new(),
             frames: Vec::with_capacity(1),
             changes: Vec::new(),
+            gift_review_through: 0,
             next_frame: 1,
         };
         value.frames.push(Frame {
             serial: 0,
             undo_start: 0,
+            gift_review_start: 0,
             changes_start: 0,
             clock: ClockSnapshot::capture(state),
             identity: state.identity,
@@ -1733,6 +1738,7 @@ impl PhysicalJournal {
         self.frames.push(Frame {
             serial,
             undo_start: self.undo.len(),
+            gift_review_start: self.gift_review_through,
             changes_start: self.changes.len(),
             clock: ClockSnapshot::capture(state),
             identity: state.identity,
@@ -2552,6 +2558,7 @@ impl PhysicalJournal {
             Self::settle_agency_frame(state, &frame, &mut self.reservation, true)?;
         }
         self.changes.truncate(frame.changes_start);
+        self.gift_review_through = frame.gift_review_start;
         frame.clock.restore(state);
         // A rejected private candidate issued nothing. High-water preservation
         // belongs only to the separate accepted gameplay-restore owner.
