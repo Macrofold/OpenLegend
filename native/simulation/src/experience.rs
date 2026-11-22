@@ -56,8 +56,10 @@ mod policy;
 pub use policy::*;
 mod obligation;
 pub(crate) use obligation::{
-    PreparedObligationReplacement, apply_obligation_replacement, prepare_obligation_replacement,
+    PreparedObligationReplacement, amend_owned_promise, apply_obligation_replacement,
+    prepare_obligation_replacement,
 };
+pub use obligation::PromiseAmendment;
 mod commitments;
 mod receipt;
 pub(crate) use receipt::append_personal_receipt;

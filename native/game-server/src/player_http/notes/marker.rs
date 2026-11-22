@@ -90,7 +90,7 @@ pub(in crate::player_http) async fn edit(
         &state,
         selected.clone(),
         world,
-        generation,
+        Some(generation),
         true,
         move |session, scope| {
             Ok(session.begin_owner_map_marker(&scope.account_id, &scope.actor_id, edit)?)

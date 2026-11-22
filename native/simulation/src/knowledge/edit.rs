@@ -24,6 +24,7 @@ impl CompletedKnowledgeEdit {
 }
 
 enum PrivateEdit {
+    Promise(crate::experience::PromiseAmendment),
     Marker(super::cartography::MapMarkerEdit),
     Note {
         edit: KnowledgeEdit,
@@ -36,8 +37,8 @@ enum PrivateEdit {
     },
 }
 
-/// Dispatch a direct personal edit to its existing knowledge or names writer.
-/// The server has already resolved any supplied contact or place for this turn.
+/// Run an owner-authorized personal edit under the shared undo checkpoint.
+/// Each edit calls its existing record owner, which retains its own rules.
 pub(crate) struct KnowledgeEditCursor {
     actor_id: String,
     edit: PrivateEdit,
@@ -45,6 +46,18 @@ pub(crate) struct KnowledgeEditCursor {
     _storage: ByteReservation,
 }
 impl KnowledgeEditCursor {
+    pub(crate) fn promise(
+        actor_id: String,
+        edit: crate::experience::PromiseAmendment,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let storage = budget.reserve(
+            heap_sum([size_of::<Self>(), actor_id.capacity(), edit.input_bytes()])
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok(Self { actor_id, edit: PrivateEdit::Promise(edit), done: false, _storage: storage })
+    }
+
     pub(crate) fn new(
         actor_id: String,
         edit: KnowledgeEdit,
@@ -124,6 +137,15 @@ impl KnowledgeEditCursor {
         self.done = true;
         let checkpoint = core.journal.checkpoint(core.state)?;
         let result = match &self.edit {
+            PrivateEdit::Promise(edit) => crate::experience::amend_owned_promise(
+                core, &self.actor_id, edit, budget,
+            ).and_then(|changed| {
+                if changed {
+                    result(true, "commitment-updated", "Native obligation updated.", budget)
+                } else {
+                    result(false, "commitment-rejected", "Stale or unsupported obligation change.", budget)
+                }
+            }),
             PrivateEdit::Marker(edit) => super::cartography::edit_marker(core, &self.actor_id, edit, budget),
             PrivateEdit::Note { edit, permitted } => edit_knowledge(
                 core,

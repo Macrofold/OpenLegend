@@ -46,6 +46,26 @@ impl RuntimeResidentPromise {
 }
 
 impl NativeWorldSession {
+    /// The authenticated caller binds the owner and control to this candidate.
+    /// The obligation writer checks the active source against its exact revision.
+    pub fn begin_owner_promise_amendment(
+        &mut self,
+        account: &str,
+        actor: &str,
+        edit: crate::experience::PromiseAmendment,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        self.session
+            .accepted()
+            .map_err(failure)?
+            .require_player_read(account, actor)
+            .map_err(failure)?;
+        let cursor =
+            crate::knowledge::KnowledgeEditCursor::promise(actor.into(), edit, &self.budget)
+                .map_err(failure)?;
+        self.session.begin_personal_edit(cursor).map_err(failure)
+    }
+
     /// A single pass over this actor's resident records counts every open
     /// obligation. The bounded resolved overlay includes recent completions
     /// waiting for the ordinary save. SQL supplies the older page separately.

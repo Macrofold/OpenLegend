@@ -188,6 +188,7 @@ pub(crate) fn router(
         .route("/api/history", axum::routing::get(history::journal))
         .route("/api/memories", post(recall::recollections))
         .route("/api/commitments", post(promises::list))
+        .route("/api/commitment", post(promises::amend))
         .route("/api/mind", post(notes::get))
         .route("/api/mind/subjects", post(notes::subjects::read))
         .route("/api/knowledge", post(notes::edit))

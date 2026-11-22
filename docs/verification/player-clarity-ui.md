@@ -120,7 +120,15 @@ Native write and exact-text results use tree `44658e3135bd` and executable `94f5
 
 At 16 open obligations, the seventeenth utterance was still saved once and survived replay and restart. It did not create another obligation. Disconnecting only the request-owned PostgreSQL connection during each history page returned a partial result with 20 then 9 kept promises. The regular receipt still returned, and a fresh history request reported a complete result. These checks use result `f52bc5efe073` on the same executable.
 
-Rust loaded all 29 saved promise bodies into resident history in this world. The check exercised its indexed page selection, held SQL, restart and live pending completions. Serving a body that has left the resident set and creation plus completion in the same save prefix need separate evidence.
+Rust loaded all 29 saved promise bodies into resident history in this world. The check exercised its indexed page selection, held SQL, restart and live pending completions. Serving a body that has left the resident set still needs separate evidence.
+
+### Revisioned promise amendments on the stand-alone Rust server
+
+November 22, 2026. Through the existing authenticated `/api/commitment` caller, Source and Rust accepted unilateral cancellation, a deadline and a changed completion rule. The deadline became overdue during ordinary play. The newly tracked promise was kept by actual gathering and saved with the exact occurrence as evidence. Cancellation retained the original words and speech evidence. A replay at the old revision, a retired occurrence type, a foreign target, an uninstalled item and a second account without control were refused. Cold reopening returned the same open and past records.
+
+During another run, speech and immediate cancellation entered the same ordinary save. PostgreSQL placed the promise once with cancellation at revision two. Cold reopening showed the original words and the final status. The result hash is `3a2551535cde`. An earlier test held a save past its SQL timeout and did not verify this case.
+
+The Source reference `54fab59460b0` and Rust candidate used separate disposable PostgreSQL databases. The Rust pin was tree `99b6d43ce5db` and executable `180bef3a6eb0`. Type checking, the locked Rust build and the network guard passed. There are no new browser controls, provider charges or speed claims.
 
 ## Reaction bubbles
 

@@ -8,7 +8,7 @@ use crate::store::recall::browse::{
 use crate::{player_references::PlayerReferences, world::PlayerDisclosure};
 use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
-    experience::PersonalSourceKind,
+    experience::{PersonalSourceKind, PromiseAmendment},
     runtime::{RuntimePromisePosition, RuntimePromiseView, RuntimeResidentPromise},
     text::JsText,
     values::is_safe_record_id,
@@ -114,6 +114,55 @@ pub(super) async fn list(State(state): State<PlayerRoutes>, request: Request) ->
         }
     }
     changed()
+}
+
+pub(super) async fn amend(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    let Ok(_slot) = state.capacity.try_acquire() else {
+        return busy();
+    };
+    let (parts, body) = request.into_parts();
+    let selected = match scope(&state.authority, &parts.headers, None).await {
+        Ok(selected) => Arc::new(selected),
+        Err(error) => return access_failure(error),
+    };
+    let (edit, _custody): (PromiseAmendment, _) =
+        match json(&parts.headers, body, state.game.host.budget()).await {
+            Ok(value) => value,
+            Err(error) => return error,
+        };
+    if !edit.valid_request() {
+        return request_error();
+    }
+    let result = super::notes::execute_edit(
+        &state,
+        selected.clone(),
+        selected.scope.world_id.clone(),
+        None,
+        true,
+        move |session, scope| {
+            Ok(session.begin_owner_promise_amendment(&scope.account_id, &scope.actor_id, edit)?)
+        },
+    )
+    .await;
+    match result {
+        Ok(Some(result)) => {
+            match state
+                .authority
+                .current(&selected, Capability::Play, true, |_, _| {
+                    wire::encode(&result.outcome, b"", b"", state.game.host.budget())
+                }) {
+                Ok(Ok(bytes)) => json_response(StatusCode::OK, bytes),
+                Ok(Err(error)) => failed(WorldError::Wire(error)),
+                Err(error) => access_failure(error),
+            }
+        }
+        Ok(None) => refusal(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "commitment-save-unconfirmed",
+            "Saving the change hasn’t been confirmed. Refresh commitments to check.",
+        ),
+        Err(error) => failed(error),
+    }
 }
 
 async fn publish(

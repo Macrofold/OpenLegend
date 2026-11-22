@@ -39,7 +39,7 @@ pub(crate) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
         &state,
         selected.clone(),
         request.world_id,
-        request.generation,
+        Some(request.generation),
         false,
         move |session, scope| {
             let contact = references

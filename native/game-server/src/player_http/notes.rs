@@ -81,14 +81,14 @@ struct Continuity<'a> {
 }
 
 #[derive(Serialize)]
-struct EditOutcome {
+pub(super) struct EditOutcome {
     ok: bool,
     code: String,
     message: JsText,
 }
 
-struct StagedEdit {
-    outcome: EditOutcome,
+pub(super) struct StagedEdit {
+    pub(super) outcome: EditOutcome,
     save: Arc<AcceptedSaveInput>,
     cut: u64,
     _storage: ByteReservation,
@@ -233,7 +233,7 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
         &state,
         selected.clone(),
         world_id,
-        generation,
+        Some(generation),
         true,
         move |session, scope| {
             if let Some((place_id, evidence)) = selected_place {
@@ -278,11 +278,13 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
     }
 }
 
-async fn execute_edit(
+/// Stage one owner-controlled private change and await the ordinary save
+/// without holding the world turn. The callback uses the exact admitted actor.
+pub(super) async fn execute_edit(
     state: &PlayerRoutes,
     selected: Arc<AuthorizedScope>,
     world_id: String,
-    generation: String,
+    generation: Option<String>,
     check_maintenance: bool,
     begin: impl FnOnce(
         &mut NativeWorldSession,
@@ -316,7 +318,9 @@ async fn execute_edit(
             openlegend_simulation::profile::sites::TURN_OTHER,
             move |session| {
                 let progress = session.accepted_progress()?;
-                if progress.world_id != world_id || progress.generation != generation {
+                if progress.world_id != world_id
+                    || generation.as_ref().is_some_and(|expected| progress.generation != expected)
+                {
                     return Err(WorldError::ProjectionChanged);
                 }
                 begin_authority.current(&begin_scope, Capability::Play, true, |scope, _| {

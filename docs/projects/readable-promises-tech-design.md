@@ -12,7 +12,7 @@ The [recorded Journal journeys](../verification/player-clarity-ui.md#bw17--read-
 
 - **Obligation state:** [commitments.ts](../../packages/domain/src/commitments.ts) records an `Obligation` inside a `MemoryRecord` of kind `commitment` (`revision`, `status`, `dueAt`, `completion {eventType, targetId?, definitionId?}`, `evidenceId`, `fulfilledBy`, `fulfilledAt`). The experience owner is the only writer. Recognition, the 16-record admission limit and completion matching are unchanged.
 - **Residency:** unresolved obligations always stay in `world.memories`. Resolved ones can leave resident memory after the raw-history window but remain in PostgreSQL `mind_memories` and the derived `recall_sources` index (`memory_kind='commitment'`, `required=1` while unresolved, partial index `recall_commitments`).
-- **Existing surfaces:** `POST /api/commitment` amends (unchanged, not called by this slice). God mind inspection keeps its own summary.
+- **Existing surfaces:** `POST /api/commitment` amends through Source or Rust with the current player control and exact obligation revision. The read-only panel does not call it. Creator mind inspection keeps its own summary.
 
 ## 2. Read contract
 
@@ -77,7 +77,7 @@ Page size (20) and the reuse of the admission limit are recorded in [BW04](../li
 
 ## 7. Extension seams and deferred work
 
-- Amendment/cancellation (after D64) reuses `id`/`revision` and `/api/commitment`; the read contract needs no change.
+- Future controls after D64 can reuse `id` and `revision`. The existing amendment API supports only the owner's deadline, permitted completion rule and unilateral cancellation. The native replacement preserves the original words and evidence, and projects the changed status in the ordinary PostgreSQL transaction. A saved cancellation does not establish agreement from a recipient.
 - Cancellation time and overdue history are not recorded by the domain; the view does not invent them.
 
 ## 8. Verification

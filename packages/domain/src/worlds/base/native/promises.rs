@@ -304,6 +304,7 @@ mod policy_residency;
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Presentation<'a> {
+    retired_completion_event: &'a str,
     undefined_item: &'a str,
     any_item: &'a str,
     gather_terms_prefix: &'a str,
@@ -315,6 +316,14 @@ struct Presentation<'a> {
     cancelled: &'a str,
     overdue_tracked: &'a str,
     overdue_untracked: &'a str,
+}
+
+fn promise_presentation() -> &'static Presentation<'static> {
+    static COPY: std::sync::OnceLock<Presentation<'static>> = std::sync::OnceLock::new();
+    COPY.get_or_init(|| {
+        serde_json::from_str(include_str!("../config/promise-presentation.json"))
+            .expect("the bundled promise presentation is valid")
+    })
 }
 
 #[derive(Clone, Copy, Deserialize)]
@@ -338,6 +347,10 @@ impl ObligationStatus {
 }
 
 impl PromiseRules {
+    pub(crate) fn completion_event_allowed(&self, event: &str) -> bool {
+        event != promise_presentation().retired_completion_event
+    }
+
     pub(crate) fn recorded_words(&self, summary: crate::text::JsText) -> crate::text::JsText {
         let lower = summary.ascii_lowercase();
         let prefix = crate::text::JsText::from(self.admission_prefix.as_str()).ascii_lowercase();
@@ -356,11 +369,7 @@ impl PromiseRules {
         status: ObligationStatus,
     ) -> (crate::text::JsText, Option<crate::text::JsText>) {
         use crate::text::JsText;
-        static COPY: std::sync::OnceLock<Presentation<'static>> = std::sync::OnceLock::new();
-        let words = COPY.get_or_init(|| {
-            serde_json::from_str(include_str!("../config/promise-presentation.json"))
-                .expect("the bundled promise presentation is valid")
-        });
+        let words = promise_presentation();
         let gathered =
             (tracked_event == Some(self.completion_event.as_str())).then(|| match named_item {
                 Some(Some(name)) => name.clone(),

@@ -6,7 +6,7 @@ import presentation from './config/promise-presentation.json' with { type: 'json
  * promised as an automatic completion. Presentation is only a partial view.
  * docs/projects/bookkeeping-simplification-tech-design.md#bk29-e--remove-generic-animal-announcements-and-private-invalidation */
 export function allowsCommitmentCompletion(eventType: string): boolean {
-  return eventType !== 'animal-response';
+  return eventType !== presentation.retiredCompletionEvent;
 }
 
 export const BASE_PROMISE_RULES = {

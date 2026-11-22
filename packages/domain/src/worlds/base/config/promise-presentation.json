@@ -1,4 +1,5 @@
 {
+  "retiredCompletionEvent": "animal-response",
   "undefinedItem": "an item no longer defined",
   "anyItem": "anything",
   "gatherTermsPrefix": "Kept automatically when you gather ",
