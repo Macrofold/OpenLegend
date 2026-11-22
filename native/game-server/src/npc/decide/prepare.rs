@@ -188,20 +188,11 @@ fn consumer(work: &Work) -> &'static str {
 async fn capture_offers(
     game: &Arc<CurrentServer>,
     work: &Work,
-    consumer: &str,
+    consumer: &'static str,
     stage: &'static str,
 ) -> Result<RuntimeNpcRead, CallFailure> {
-    let budget = game.host.budget();
-    let request = read_request(work, consumer, budget)?;
-    let selector = crate::wire::encode(
-        &json!({"expandedBodyOrdinals":[],"coverage":"suggestions"}),
-        b"",
-        b"",
-        budget,
-    )
-    .map_err(invalid)?;
     game.world
-        .capture_npc_offers(game.clone(), request, selector)
+        .capture_npc_offers(game.clone(), &work.actor, consumer)
         .await
         .map_err(|error| CallFailure::World(error).at(stage))
 }
@@ -211,27 +202,12 @@ async fn capture_offers(
 async fn capture_origin(
     game: &Arc<CurrentServer>,
     work: &Work,
-    consumer: &str,
+    consumer: &'static str,
 ) -> Result<RuntimeNpcRead, CallFailure> {
-    let request = read_request(work, consumer, game.host.budget())?;
     game.world
-        .capture_npc_read(request)
+        .capture_npc_read(&work.actor, consumer)
         .await
         .map_err(|error| CallFailure::World(error).at("original-read"))
-}
-
-fn read_request(
-    work: &Work,
-    consumer: &str,
-    budget: &ByteBudget,
-) -> Result<axum::body::Bytes, CallFailure> {
-    crate::wire::encode(
-        &json!({"actorId":work.actor,"requiredAppraisals":[],"consumer":consumer}),
-        b"",
-        b"",
-        budget,
-    )
-    .map_err(invalid)
 }
 
 fn project(

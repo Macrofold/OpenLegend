@@ -332,52 +332,56 @@ impl NativeWorldSession {
     }
 
     pub fn read_npc(&mut self, request: &[u8]) -> Result<RuntimeNpcRead, RuntimeError> {
-        self.read_npc_with_presentation(request, None)
+        self.require_active()?;
+        let _decode = decode_preparation(request, &self.budget)?;
+        let request: NpcReadRequest = serde_json::from_slice(request).map_err(failure)?;
+        self.read_npc_with_presentation(
+            &request.actor_id,
+            &request.consumer,
+            &request.required_appraisals,
+            None,
+        )
     }
 
     /// The Rust formatter borrows received presentation from the detached
     /// native read and needs no bridge scene bytes.
-    pub fn read_npc_direct(&mut self, request: &[u8]) -> Result<RuntimeNpcRead, RuntimeError> {
-        self.read_npc_with_presentation(request, Some(RuntimeNpcSelfSelection::Prompt))
+    pub fn read_npc_direct(
+        &mut self,
+        actor: &str,
+        consumer: &str,
+    ) -> Result<RuntimeNpcRead, RuntimeError> {
+        self.read_npc_with_presentation(actor, consumer, &[], Some(RuntimeNpcSelfSelection::Prompt))
     }
 
     /// Retain the original pose and source bindings before recall and model
     /// preparation. This origin will not render a current prompt's self fields.
-    pub fn read_npc_origin(&mut self, request: &[u8]) -> Result<RuntimeNpcRead, RuntimeError> {
-        self.read_npc_with_presentation(request, Some(RuntimeNpcSelfSelection::Frame))
+    pub fn read_npc_origin(
+        &mut self,
+        actor: &str,
+        consumer: &str,
+    ) -> Result<RuntimeNpcRead, RuntimeError> {
+        self.read_npc_with_presentation(actor, consumer, &[], Some(RuntimeNpcSelfSelection::Frame))
     }
 
     fn read_npc_with_presentation(
         &mut self,
-        request: &[u8],
+        actor_id: &str,
+        consumer: &str,
+        required_appraisals: &[AppraisalScope],
         selection: Option<RuntimeNpcSelfSelection>,
     ) -> Result<RuntimeNpcRead, RuntimeError> {
         self.require_active()?;
-        let _decode = decode_preparation(request, &self.budget)?;
-        let request: NpcReadRequest = serde_json::from_slice(request).map_err(failure)?;
         let serial = self
             .next_read_serial
             .checked_add(1)
             .filter(|serial| *serial <= crate::identity::MAX_SAFE_INTEGER)
             .ok_or_else(|| failure("read identity exhausted"))?;
         let simulation = self.session.accepted().map_err(failure)?;
-        if !npc_consumer_current(
-            &simulation.state,
-            &request.actor_id,
-            &request.consumer,
-            None,
-        )
-        .map_err(failure)?
-        {
+        if !npc_consumer_current(&simulation.state, actor_id, consumer, None).map_err(failure)? {
             return Err(failure("NPC consumer is no longer eligible"));
         }
         let mut read = simulation
-            .read_npc(
-                &request.actor_id,
-                &request.required_appraisals,
-                selection,
-                &self.budget,
-            )
+            .read_npc(actor_id, required_appraisals, selection, &self.budget)
             .map_err(|error| match (selection, error) {
                 (Some(_), ActorReadError::Capture(error)) => session_failure(error.into()),
                 (Some(_), ActorReadError::Busy) => fence_failure(FenceError::Busy),
@@ -385,7 +389,7 @@ impl NativeWorldSession {
             })?;
         let history = crate::experience::capture_history_cuts(
             &simulation.state,
-            std::iter::once(request.actor_id.as_str()),
+            std::iter::once(actor_id),
             &self.budget,
         )
         .map_err(failure)?;
@@ -405,7 +409,7 @@ impl NativeWorldSession {
             .state
             .physical
             .entities
-            .get(&request.actor_id)
+            .get(actor_id)
             .and_then(|entity| entity.actor.as_ref())
             .ok_or_else(|| failure("NPC actor disappeared"))?
             .agency
@@ -424,7 +428,7 @@ impl NativeWorldSession {
             .state
             .physical
             .entities
-            .get(&request.actor_id)
+            .get(actor_id)
             .and_then(|entity| entity.actor.as_ref())
             .ok_or_else(|| failure("NPC actor disappeared"))?
             .plan_generation;
@@ -483,6 +487,16 @@ impl NativeWorldSession {
             &request.expanded_body_ordinals,
             Some(request.coverage),
         )
+    }
+
+    /// Prepare the current suggested physical choices from the original cut.
+    pub fn begin_npc_suggestions(
+        &mut self,
+        read: &mut RuntimeNpcRead,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        read.require_unprepared()?;
+        self.begin_npc_context(read, &[], Some(NpcOfferCoverage::Suggestions))
     }
 
     /// Prepare remaining work and bind current presented bodies for recall.
@@ -583,6 +597,19 @@ impl NativeWorldSession {
         request: &[u8],
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
+        let _decode = decode_preparation(request, &self.budget)?;
+        let request = serde_json::from_slice(request).map_err(failure)?;
+        self.begin_npc_sources_direct(read, request)
+    }
+
+    /// Move the exact ordinal selection into the read's owning candidate.
+    /// The candidate admits its actual selection backing before retaining it.
+    pub fn begin_npc_sources_direct(
+        &mut self,
+        read: &mut RuntimeNpcRead,
+        request: crate::capture::NpcSourceSelection,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
         if read.candidate_key.is_some() {
             return Err(failure("NPC read preparation is active"));
         }
@@ -591,9 +618,6 @@ impl NativeWorldSession {
                 "NPC source preparation is still retained by an execution",
             ));
         }
-        let _decode = decode_preparation(request, &self.budget)?;
-        let request: crate::capture::NpcSourceSelection =
-            serde_json::from_slice(request).map_err(failure)?;
         if read.sources.len() == read.sources.capacity() {
             let capacity = read
                 .sources

@@ -4,15 +4,18 @@ use super::{
     Arc, ByteBudget, ByteReservation, CallFailure, CapacityError, CurrentServer, PersonalSources,
     ProjectionPurpose, ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket, Work, capacity,
     capture_origin, consumer, describe_experience, ensure_running, invalid, json, packet_failure,
-    personal_description, personal_evidence, project, project_markers, read_request, wire_failure,
+    personal_description, personal_evidence, project, project_markers, wire_failure,
 };
 use crate::{
     decision_render::{BoundAttention, RenderError},
     store::RecallScope,
     world::NpcBinding,
 };
-use openlegend_simulation::runtime::NativeWorldSession;
-use std::collections::{HashMap, HashSet};
+use openlegend_simulation::capture::{NpcPersonalSelection, NpcSourceSelection};
+use std::{
+    collections::{HashMap, HashSet},
+    mem::size_of,
+};
 
 pub(in crate::npc::decide) struct Collected {
     pub(super) original: Option<RuntimeNpcRead>,
@@ -119,15 +122,30 @@ pub(in crate::npc::decide) async fn collect(
         None
     } else {
         ensure_running(work)?;
-        let select = crate::wire::encode(&json!({"personal":selected.iter().map(|(reference, _)| json!({"reference":reference})).collect::<Vec<_>>(),"receipts":[]}), b"", b"", budget).map_err(wire_failure)?;
+        let selection_bytes = selected
+            .iter()
+            .try_fold(0usize, |bytes, (reference, _)| {
+                bytes
+                    .checked_add(size_of::<NpcPersonalSelection>())?
+                    .checked_add(reference.id.len())?
+                    .checked_add(reference.revision.len())
+            })
+            .ok_or_else(|| capacity(CapacityError))?;
+        let selection_storage = budget.reserve(selection_bytes).map_err(capacity)?;
+        let select = NpcSourceSelection {
+            personal: selected
+                .iter()
+                .map(|(reference, _)| NpcPersonalSelection {
+                    reference: (*reference).clone(),
+                    through: None,
+                })
+                .collect(),
+            receipts: Vec::new(),
+            consolidation_job: None,
+        };
         original = game
             .world
-            .prepare_npc(
-                game.clone(),
-                original,
-                select,
-                NativeWorldSession::begin_npc_sources,
-            )
+            .select_npc_sources(game.clone(), original, select, selection_storage)
             .await
             .map_err(|error| CallFailure::World(error).at("original-sources"))?;
         let data = original.personal_sources(budget).map_err(packet_failure)?;
@@ -204,10 +222,9 @@ impl Collected {
             return Ok(None);
         }
         let budget = game.host.budget();
-        let request = read_request(work, consumer(work), budget)?;
         let mut fresh = game
             .world
-            .capture_npc_recall(game.clone(), request)
+            .capture_npc_recall(game.clone(), &work.actor, consumer(work))
             .await
             .map_err(|error| CallFailure::World(error).at("recall-current-context"))?;
         let through = self.through.max(fresh.accepted_cut());

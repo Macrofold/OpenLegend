@@ -8,9 +8,7 @@ use axum::body::Bytes;
 use openlegend_simulation::runtime::{
     RuntimeNpcPreparationStep, RuntimeNpcRead, RuntimeNpcTrigger,
 };
-
-pub(crate) type BeginNpcRead =
-    fn(&mut NativeWorldSession, &mut RuntimeNpcRead, &[u8]) -> Result<CandidateKey, RuntimeError>;
+use openlegend_simulation::{capture::NpcSourceSelection, host::ByteReservation};
 
 type ActorPreparationStep<T> = fn(
     &mut NativeWorldSession,
@@ -25,6 +23,31 @@ pub(crate) enum NpcBinding {
         original: RuntimeNpcRead,
         reason: RuntimeError,
     },
+}
+
+struct NpcReadInput {
+    actor: Box<str>,
+    consumer: &'static str,
+    _storage: ByteReservation,
+}
+
+impl NpcReadInput {
+    fn new(host: &WorldHost, actor: &str, consumer: &'static str) -> Result<Self, RuntimeError> {
+        let storage = host.budget().reserve(actor.len())?;
+        Ok(Self {
+            actor: actor.into(),
+            consumer,
+            _storage: storage,
+        })
+    }
+
+    fn original(self, session: &mut NativeWorldSession) -> Result<RuntimeNpcRead, RuntimeError> {
+        session.read_npc_origin(&self.actor, self.consumer)
+    }
+
+    fn current(self, session: &mut NativeWorldSession) -> Result<RuntimeNpcRead, RuntimeError> {
+        session.read_npc_direct(&self.actor, self.consumer)
+    }
 }
 
 impl HostedWorld {
@@ -56,11 +79,12 @@ impl HostedWorld {
     /// serial. No physical catalogue is prepared for this read.
     pub(crate) async fn capture_npc_read(
         self: &Arc<Self>,
-        request: Bytes,
+        actor: &str,
+        consumer: &'static str,
     ) -> Result<RuntimeNpcRead, WorldError> {
+        let input = NpcReadInput::new(&self.host, actor, consumer)?;
         let _turn = self.enter().await?;
-        self.call(move |session| session.read_npc_origin(&request))
-            .await
+        self.call(move |session| input.original(session)).await
     }
 
     /// Read and begin the physical catalogue in one world turn. The native
@@ -68,13 +92,14 @@ impl HostedWorld {
     pub(crate) async fn capture_npc_offers(
         self: &Arc<Self>,
         game: Arc<CurrentServer>,
-        request: Bytes,
-        selector: Bytes,
+        actor: &str,
+        consumer: &'static str,
     ) -> Result<RuntimeNpcRead, WorldError> {
+        let input = NpcReadInput::new(&self.host, actor, consumer)?;
         self.prepare_actor_read(
             game,
-            move |session| session.read_npc_direct(&request),
-            move |session, read| session.begin_npc_candidates(read, &selector),
+            move |session| input.current(session),
+            NativeWorldSession::begin_npc_suggestions,
             NativeWorldSession::step_npc_preparation,
         )
         .await
@@ -85,11 +110,13 @@ impl HostedWorld {
     pub(crate) async fn capture_npc_recall(
         self: &Arc<Self>,
         game: Arc<CurrentServer>,
-        request: Bytes,
+        actor: &str,
+        consumer: &'static str,
     ) -> Result<RuntimeNpcRead, WorldError> {
+        let input = NpcReadInput::new(&self.host, actor, consumer)?;
         self.prepare_actor_read(
             game,
-            move |session| session.read_npc_direct(&request),
+            move |session| input.current(session),
             NativeWorldSession::begin_npc_recall,
             NativeWorldSession::step_npc_preparation,
         )
@@ -98,17 +125,20 @@ impl HostedWorld {
 
     /// Keep one native read's own cut and its funded prepared products. The
     /// originating caller supplies the real typed choice or source selection.
-    pub(crate) async fn prepare_npc(
+    pub(crate) async fn select_npc_sources(
         self: &Arc<Self>,
         game: Arc<CurrentServer>,
         read: RuntimeNpcRead,
-        request: Bytes,
-        begin: BeginNpcRead,
+        request: NpcSourceSelection,
+        selection_storage: ByteReservation,
     ) -> Result<RuntimeNpcRead, WorldError> {
         self.prepare_actor_read(
             game,
             move |_| Ok(read),
-            move |session, read| begin(session, read, &request),
+            move |session, read| {
+                let _selection_storage = selection_storage;
+                session.begin_npc_sources_direct(read, request)
+            },
             NativeWorldSession::step_npc_preparation,
         )
         .await
@@ -119,13 +149,8 @@ impl HostedWorld {
     pub(crate) async fn prepare_actor_read<T: Send + 'static>(
         self: &Arc<Self>,
         game: Arc<CurrentServer>,
-        read: impl FnOnce(&mut NativeWorldSession) -> Result<T, RuntimeError>
-        + Send
-        + 'static,
-        begin: impl FnOnce(
-            &mut NativeWorldSession,
-            &mut T,
-        ) -> Result<CandidateKey, RuntimeError>
+        read: impl FnOnce(&mut NativeWorldSession) -> Result<T, RuntimeError> + Send + 'static,
+        begin: impl FnOnce(&mut NativeWorldSession, &mut T) -> Result<CandidateKey, RuntimeError>
         + Send
         + 'static,
         advance: ActorPreparationStep<T>,
@@ -175,12 +200,8 @@ impl HostedWorld {
                                     Some((ticket, input)) => (Some(ticket), Some(input)),
                                     None => (None, None),
                                 };
-                                let result = advance(
-                                    session,
-                                    &mut read,
-                                    key,
-                                    ticket.as_ref().zip(input),
-                                )?;
+                                let result =
+                                    advance(session, &mut read, key, ticket.as_ref().zip(input))?;
                                 Ok((read, result))
                             })
                             .await?;
