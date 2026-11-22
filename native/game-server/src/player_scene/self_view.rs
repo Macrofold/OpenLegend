@@ -15,6 +15,7 @@ use openlegend_simulation::{
     worlds::base_observed::{ObservedActionAnimation, SpeechVolume, StatusEffectProjection},
 };
 use serde::{Deserialize, Serialize};
+use serde_json::value::RawValue;
 use std::sync::Arc;
 
 mod practice;
@@ -28,6 +29,7 @@ pub struct OwnPolicy {
     portraits: IndexMap<String, PublicArt>,
     #[serde(default)]
     departure_notice: Option<Arc<str>>,
+    authored_recipes: IndexMap<String, Arc<RawValue>>,
     acoustics: AcousticPolicy,
     sight_body_fractions: [f64; 3],
     #[serde(default)]
@@ -115,6 +117,7 @@ pub struct PreparedSelf {
     pub vision: VisionGuide,
     pub hearing: HearingGuide,
     pub communication_references: Vec<CommunicationReference>,
+    pub recipes: Vec<Arc<RawValue>>,
     pub map_markers: Vec<Marker>,
     pub can_speak: bool,
     pub can_steer: bool,
@@ -374,13 +377,32 @@ pub fn prepare_self(
     if !references.matches_reader(facts.world_id, facts.actor_id) {
         return Err(SceneError::Capture);
     }
-    if !facts.known_recipes.is_empty() || facts.has_activity_plan() || !facts.equipped.is_empty() {
+    if facts.has_activity_plan() || !facts.equipped.is_empty() {
         return Err(SceneError::Unsupported(
-            "an unconverted learned method, activity graph, or equipment",
+            "an unconverted activity graph or equipment",
         ));
     }
     let output = facts.projection_bytes().ok_or(SceneError::Capacity)?;
+    let output = output
+        .checked_add(
+            facts
+                .known_recipes
+                .len()
+                .checked_mul(std::mem::size_of::<Arc<RawValue>>())
+                .ok_or(SceneError::Capacity)?,
+        )
+        .ok_or(SceneError::Capacity)?;
     let mut custody = budget.reserve(output)?;
+    let mut recipes = Vec::with_capacity(facts.known_recipes.len());
+    for recipe in facts.known_recipes {
+        recipes.push(
+            policy
+                .authored_recipes
+                .get(recipe)
+                .ok_or(SceneError::Capture)?
+                .clone(),
+        );
+    }
     let practice = project_practice(&facts, &policy.practice, &mut custody)?;
     let mut attempts = Vec::new();
     attempts
@@ -629,6 +651,7 @@ pub fn prepare_self(
             ear_height: facts.body_profile.ear_height,
         },
         communication_references: actor_references,
+        recipes,
         map_markers: facts
             .map_markers()
             .map(|field| Marker {

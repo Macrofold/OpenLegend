@@ -478,6 +478,9 @@ fn assemble_selected_core(
         &mut import,
         child(&mut children, "knowledge", true)?,
         &physical.entities,
+        &installed.retained.recipes,
+        physical.header.sim_time,
+        budget,
     )?;
     let mut appraisals = crate::appraisals::install_appraisals(
         &mut import,

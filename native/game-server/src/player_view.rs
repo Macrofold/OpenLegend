@@ -850,8 +850,7 @@ impl Serialize for FullView<'_> {
             "communicationReferences",
             &data.own.communication_references,
         )?;
-        // The capture refuses known recipe sources before preparing this view.
-        wire.serialize_entry("recipes", &[(); 0])?;
+        wire.serialize_entry("recipes", &data.own.recipes)?;
         wire.serialize_entry("events", data.events.journal())?;
         wire.serialize_entry("conversation", data.events.conversation())?;
         wire.serialize_entry("ai", &host.telemetry.ai)?;

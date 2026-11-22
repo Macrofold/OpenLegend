@@ -105,6 +105,7 @@ fn same_output(
         .changed()
         && before.contacts.entities == after.contacts.entities
         && before.own.communication_references == after.own.communication_references
+        && same_recipes(&before.own, &after.own)
         && before.own.map_markers == after.own.map_markers
         && before.host.history.places_revision == after.host.history.places_revision
         && before.events.journal() == after.events.journal()
@@ -112,6 +113,15 @@ fn same_output(
         && before.host.telemetry.ai == after.host.telemetry.ai
         && before.host.milestones == after.host.milestones
         && before.host.persistence == after.host.persistence
+}
+
+fn same_recipes(before: &PreparedSelf, after: &PreparedSelf) -> bool {
+    before.recipes.len() == after.recipes.len()
+        && before
+            .recipes
+            .iter()
+            .zip(&after.recipes)
+            .all(|(before, after)| Arc::ptr_eq(before, after))
 }
 
 #[derive(Serialize)]
@@ -237,6 +247,9 @@ impl Serialize for GamePatch<'_> {
                 "communicationReferences",
                 &after.own.communication_references,
             )?;
+        }
+        if !same_recipes(&before.own, &after.own) {
+            map.serialize_entry("recipes", &after.own.recipes)?;
         }
         if before.host.command_epoch != after.host.command_epoch {
             map.serialize_entry("commandEpoch", &after.host.command_epoch)?;

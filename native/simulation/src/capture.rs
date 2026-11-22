@@ -905,7 +905,7 @@ pub(crate) fn with_actor_self<T>(
                     .any(|plan| *plan == body.plan)
             }),
             inventory_count: inventory.held_stock.len(),
-            known_recipes_count: state.learned_capabilities.known_recipes().len(),
+            known_recipes_count: state.learned_capabilities.known_recipes(actor_id).len(),
             forgotten: state
                 .experience
                 .actor(actor_id)
@@ -970,7 +970,7 @@ pub(crate) fn with_actor_self<T>(
                     .ok_or(ExecutionError::Invariant)?
                     .communications
                     .subjects,
-                known_recipes: state.learned_capabilities.known_recipes(),
+                known_recipes: state.learned_capabilities.known_recipes(actor_id),
             })
         },
     };

@@ -70,7 +70,7 @@ import { entityGet } from '@open-legend/domain';
 import { selectedEventPresentation } from '@open-legend/domain';
 import { outingViews } from './outing-view.js';
 
-import { recipeDetailsView } from './recipe-view.js';
+import { authoredRecipeView, recipeDetailsView } from './recipe-view.js';
 import { guardWorkLabel, BASE_RANGED_TEXT, nativeActivityViews } from '@open-legend/domain';
 import { waitingForFeedback } from './competence-actions.js';
 import { ownPractice, coachingFor, occurrenceFor, type PracticeView } from '@open-legend/domain';
@@ -1347,19 +1347,15 @@ export async function projectView(
       ],
       () =>
         observation.knownRecipes.map((recipe) => {
+          if (recipe.provenance.source === 'authored-world')
+            return authoredRecipeView(world, recipe, quantity);
           return {
             id: recipe.id,
             ...recipeDetailsView(world, recipe, quantity),
-            origin:
-              recipe.provenance.source === 'authored-world'
-                ? 'authored'
-                : knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated
-                  ? 'npc'
-                  : 'player',
-            provenance:
-              recipe.provenance.source === 'authored-world'
-                ? 'Known authored method; learned through an admitted disclosure.'
-                : `${recipe.provenance.source} (${recipe.provenance.model ?? 'supplied proposal'})`,
+            origin: knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated
+              ? 'npc'
+              : 'player',
+            provenance: `${recipe.provenance.source} (${recipe.provenance.model ?? 'supplied proposal'})`,
           };
         }),
     ),

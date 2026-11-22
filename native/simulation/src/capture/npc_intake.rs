@@ -1000,7 +1000,7 @@ fn prepare(
         opportunity: Opportunity {
             body_inputs: &director_inputs,
             concerns: &concerns,
-            knowledge: state.learned_capabilities.known_recipes(),
+            knowledge: state.learned_capabilities.known_recipes(id),
             knowledge_revision: state
                 .reception
                 .knowledge_revisions

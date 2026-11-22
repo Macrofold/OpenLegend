@@ -18,6 +18,7 @@ import {
 import { SIGHT_BODY_FRACTIONS } from '../packages/domain/src/perception.js';
 import { talkUnavailableReason } from '../apps/server/src/observed-body-view.js';
 import { practiceEvidenceHeader } from '../apps/server/src/player-self-view.js';
+import { authoredRecipeView } from '../apps/server/src/recipe-view.js';
 
 const pin = (value: unknown) => createHash('sha256').update(canonicalJson(value)).digest('hex');
 
@@ -35,6 +36,13 @@ export function rustGameServerScenePolicy(world: WorldState) {
       defaultAppearance: rules.defaultAppearance,
       portraits: world.presentation?.portraits,
       departureNotice: world.participationPolicy?.exitDescription,
+      // Current Rust carried-inventory installation requires an empty stock.
+      // The live actor grant is selected independently from these definitions.
+      authoredRecipes: Object.fromEntries(
+        Object.values(world.recipes)
+          .filter((recipe) => recipe.provenance.source === 'authored-world')
+          .map((recipe) => [recipe.id, authoredRecipeView(world, recipe, () => 0)]),
+      ),
       acoustics: world.moduleManifest.acoustics,
       sightBodyFractions: SIGHT_BODY_FRACTIONS,
       evasionLabel: body?.evasion?.label,
