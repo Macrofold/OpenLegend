@@ -34,7 +34,7 @@ pub(crate) const IO_YIELD: Duration = Duration::from_millis(8);
 mod activity_learning;
 mod npc;
 mod recall_maintenance;
-pub(crate) use npc::NpcBinding;
+pub(crate) use npc::{NpcBinding, NpcHistoryRows};
 mod player_history;
 mod player_inventory;
 pub(crate) mod narrator;
