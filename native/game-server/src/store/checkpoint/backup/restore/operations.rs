@@ -257,10 +257,12 @@ pub(super) async fn stage(
                 return Err(StoreError::InvalidRecord);
             }
             if name == "meta" {
-                let key: &str = serde_json::from_str(fields["key"].get())
+                // Receipt keys can embed structured IDs. Decode their JSON
+                // escapes before matching the exact operational namespace.
+                let key: String = serde_json::from_str(fields["key"].get())
                     .map_err(|_| StoreError::InvalidRecord)?;
                 if key == "schema" {
-                    let value: &str = serde_json::from_str(fields["value"].get())
+                    let value: String = serde_json::from_str(fields["value"].get())
                         .map_err(|_| StoreError::InvalidRecord)?;
                     if schema_seen || value != store.schema.version {
                         return Err(StoreError::Schema);
@@ -284,8 +286,8 @@ pub(super) async fn stage(
             } else if let Import::Existing { world } = import {
                 let selected = fields
                     .get("world_id")
-                    .and_then(|id| serde_json::from_str::<&str>(id.get()).ok());
-                if selected != Some(world) {
+                    .and_then(|id| serde_json::from_str::<String>(id.get()).ok());
+                if selected.as_deref() != Some(world) {
                     return Err(StoreError::InvalidRecord);
                 }
             }

@@ -45,7 +45,8 @@ export async function restoreRustWorld(
       },
     );
     const report = JSON.parse(stdout) as RestoredWorldArtwork;
-    assertAssetRevisionReference(report.artwork?.release);
+    const release = report.artwork?.release;
+    if (release !== null) assertAssetRevisionReference(release);
     if (report.artwork.principal !== principal.accountId)
       throw new Error('The staged artwork restore belongs to another recovery operator.');
     const latest = await readCurrentAssetAuthority(storage, verification);

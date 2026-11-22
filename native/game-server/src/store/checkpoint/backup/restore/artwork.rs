@@ -15,7 +15,8 @@ pub(crate) struct ArtworkOperator {
 pub struct BackupArtwork {
     package_id: String,
     principal: String,
-    release: AssetRevision,
+    #[serde(deserialize_with = "Deserialize::deserialize")]
+    release: Option<AssetRevision>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -42,7 +43,11 @@ pub(super) fn assert_replay(
     match (staged, incoming) {
         (None, None) => Ok(()),
         (Some(staged), Some(incoming))
-            if staged.principal == incoming.principal && staged.release == incoming.installed =>
+            if staged.principal == incoming.principal
+                && staged
+                    .release
+                    .as_ref()
+                    .is_none_or(|release| release == &incoming.installed) =>
         {
             Ok(())
         }
@@ -69,11 +74,25 @@ pub(super) async fn quarantine(
             Err(StoreError::InvalidRecord)
         };
     };
-    let release = AssetRevision::from_current(release.ok_or(StoreError::InvalidRecord)?)?;
-    if revision.is_none_or(|value| value == 0) || release != operator.installed {
-        return Err(StoreError::InvalidRecord);
+    let release = release.map(AssetRevision::from_current).transpose()?;
+    if let Some(release) = &release {
+        if revision.is_none_or(|value| value == 0) || release != &operator.installed {
+            return Err(StoreError::InvalidRecord);
+        }
+        require_pins(tx, &head.world_id, "world", &head.world_id, release).await?;
+    } else {
+        // The saved absence is intentional. Imported catalogue records cannot
+        // create a world selection or retain files as if one was installed.
+        let bound: bool = tx.query_one(
+            "SELECT EXISTS (SELECT 1 FROM asset_world_bindings WHERE world_id=$1) \
+                 OR EXISTS (SELECT 1 FROM asset_pins WHERE owner_kind='world' AND owner_id=$1) \
+                 OR EXISTS (SELECT 1 FROM asset_pin_files WHERE owner_kind='world' AND owner_id=$1)",
+            &[&head.world_id],
+        ).await?.try_get(0)?;
+        if bound {
+            return Err(StoreError::InvalidRecord);
+        }
     }
-    require_pins(tx, &head.world_id, "world", &head.world_id, &release).await?;
     for (save, selected) in saves {
         let owner = json_record(&[&head.world_id, save]).map_err(|_| StoreError::InvalidRecord)?;
         require_pins(tx, &head.world_id, "save", &owner, selected).await?;

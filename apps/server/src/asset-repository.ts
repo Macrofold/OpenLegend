@@ -55,7 +55,7 @@ export interface RestoredWorldArtwork {
   artwork: {
     packageId: string;
     principal: string;
-    release: AssetRevisionReference;
+    release: AssetRevisionReference | null;
   };
 }
 
@@ -2400,7 +2400,9 @@ export class AssetRepository {
         staged.artwork.packageId !== report.artwork.packageId ||
         staged.artwork.principal !== principal.accountId ||
         staged.artwork.principal !== report.artwork.principal ||
-        !sameAssetRevision(staged.artwork.release, report.artwork.release)
+        (staged.artwork.release === null
+          ? report.artwork.release !== null
+          : !sameAssetRevision(staged.artwork.release, report.artwork.release ?? undefined))
       ) {
         throw new AssetAccessError('conflict', 'The exact staged world restore is unavailable.');
       }
@@ -2420,9 +2422,11 @@ export class AssetRepository {
       }
       await this.applyRecoveredAuthority(snapshot, snapshot.generation, staged.artwork.packageId);
       await this.assertRecoveryOperator(principal);
-      const status = await this.worldReleaseStatus(staged.worldId, staged.artwork.release);
-      if (!status.available)
-        throw new AssetAccessError('unavailable', 'The saved artwork is no longer available.');
+      if (staged.artwork.release) {
+        const status = await this.worldReleaseStatus(staged.worldId, staged.artwork.release);
+        if (!status.available)
+          throw new AssetAccessError('unavailable', 'The saved artwork is no longer available.');
+      }
       await this.db
         .prepare('UPDATE meta SET value=? WHERE key=?')
         .run(JSON.stringify({ ...staged, status: 'complete' }), RUST_ARTWORK_RESTORE);
@@ -2451,7 +2455,7 @@ export class AssetRepository {
       !staged.artwork.principal
     )
       throw new AssetAccessError('integrity', 'The artwork restore closure is damaged.');
-    assertAssetRevisionReference(staged.artwork.release);
+    if (staged.artwork.release !== null) assertAssetRevisionReference(staged.artwork.release);
     return staged;
   }
 
