@@ -222,6 +222,10 @@ On Rust, a second player walked from x24.50 to x24.78 and saved while the origin
 
 The Rust correctness tree was `ba39210b00c2ea185b60f8da9138df135b41c73d` over `cac85d83becb…`, executable SHA-256 `d719c54a4942923450877760ba05b94595caeb30cd1e8f863289779ae6141143`. Locked Rust build, TypeScript, affected formatting and network checks passed. The `nsc04-npc-reciprocal-callers-20261122` archive retains the exact caller, eleven attempts and disposable cleanup. One early TypeScript attempt returned `stale-source` before submitting the proposal. A later completed decline used the exact source event. These controlled local requests cost $0. Integrated reconnect and recovery have a separate release check.
 
+### NPC replies to a filled bag
+
+The same Rust executable and the TypeScript control both accepted and declined a signed offer for one Woven bag. Acceptance kept the original two-cord lot inside the original bag, and decline left both with the donor. A different account's Inventory read was denied before, during and after the held reply. A separate Rust run moved the cord out with an ordinary authenticated command while the choice was held. The change saved, the old choice stopped before generation at `native-response-gift-terms`, and the bag stayed with its donor. Each completed reply saved one result, and the original proposal receipt remained available. The `nsc04-npc-filled-bag-20261122` archive retains the five callers and confirms that their databases were removed. Controlled local requests cost $0.
+
 ## Remembered trade terms during Source command admission
 
 November 22, 2026. A signed trade request was held during its original command-receipt lookup. Another player's real speech added a personal awareness record, recognition and sensory support, changing the requesting player's private revision from 3 to 4. The trade query then found the original stone at revision 4. Ordinary sight updated recognition and sensory support before admission at revision 5. The old check still expected revision 3 and refused `stale-source` before any trade or NPC request. The precise revision sequence of the earlier intermittent run was unavailable.
