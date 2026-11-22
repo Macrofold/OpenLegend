@@ -385,6 +385,111 @@ fn complete_sound(
     mutation.behavior_changed(&completion.actor_id, false)
 }
 
+/// Start or renew the one response episode for an already acquired cause.
+/// The receiving caller still owns its sense-specific evidence and visibility.
+fn begin_alarm(
+    mutation: &mut PhysicalMutation<'_>,
+    actor: &str,
+    kind: CauseKind,
+    id: &str,
+    at: f64,
+) -> Result<bool, ExecutionError> {
+    let handle = mutation
+        .state
+        .entities
+        .handle(actor)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let state = mutation
+        .state
+        .entities
+        .resolve(handle)
+        .and_then(|body| body.animal.as_ref())
+        .ok_or(ExecutionError::Invariant)?;
+    if state
+        .episode
+        .as_ref()
+        .is_some_and(|episode| episode.latest_cause.kind == kind && episode.latest_cause.id == id)
+    {
+        return Ok(false);
+    }
+    let fresh = state.episode.is_none();
+    let storage = if fresh {
+        std::mem::size_of::<NativeResponseEpisode>()
+            + state.profile.id.len()
+            + state.profile.digest.len()
+            + state.locomotion.len()
+            + state.aerial_route_id.as_ref().map_or(0, String::len)
+            + id.len()
+    } else {
+        0
+    };
+    mutation.reserve_response_growth(
+        storage
+            .checked_add(id.len())
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let initial = if fresh {
+        let state = mutation
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|body| body.animal.as_ref())
+            .ok_or(ExecutionError::Invariant)?;
+        Some((
+            state.profile.clone(),
+            state.locomotion.clone(),
+            state.aerial_route_id.clone(),
+        ))
+    } else {
+        None
+    };
+    mutation.interrupt_territorial_alarm(handle, actor)?;
+    foraging::relinquish(mutation, actor)?;
+    let now = mutation.state.header.sim_time;
+    let slot = mutation.snapshot_episode(actor)?;
+    let cause = ResponseCause {
+        kind,
+        id: id.into(),
+        at,
+    };
+    if let Some((profile_pin, locomotion, aerial_route_id)) = initial {
+        *slot = Some(NativeResponseEpisode {
+            id: id.into(),
+            started_at: at,
+            latest_cause: cause,
+            preparations: None,
+            preferred_refuge: None,
+            aerial_route_id,
+            profile_pin,
+            locomotion,
+            mode: ResponseMode::Escaping,
+            dangers: IndexMap::new(),
+            review_at: now,
+            proposal_generation: 0,
+            acoustic_cue: None,
+            acoustic_leg_required: None,
+            refuge: None,
+            proposal: None,
+            clear_since: None,
+            movement: None,
+            blocked: None,
+        });
+    } else {
+        let episode = slot.as_mut().ok_or(ExecutionError::Invariant)?;
+        episode.latest_cause = cause;
+        episode.mode = if episode.movement.is_some() {
+            ResponseMode::Blocked
+        } else {
+            ResponseMode::Escaping
+        };
+        episode.review_at = now;
+        episode.clear_since = None;
+        episode.proposal = None;
+        episode.blocked = None;
+    }
+    Ok(true)
+}
+
 /// Consume one newly acquired sound in the actual event reaction phase. Alarm
 /// preparation remains private; physical movement has its own outward owner.
 pub(crate) fn acquire_sound(
@@ -500,14 +605,13 @@ pub(crate) fn acquire_sound(
                 .and_then(|actor| actor.action.as_ref())
                 .is_some_and(|action| action.id == movement.id)
         });
-    let fresh = state.episode.is_none();
-    let repeated = state.episode.as_ref().is_some_and(|episode| {
-        episode.latest_cause.kind == CauseKind::Event && episode.latest_cause.id == cue.event_id
-    });
-    let profile_pin = state.profile.clone();
-    let locomotion = state.locomotion.clone();
-    let aerial_route_id = state.aerial_route_id.clone();
-    let at = mutation.state.header.sim_time;
+    begin_alarm(
+        mutation,
+        &awareness.actor_id,
+        CauseKind::Event,
+        &cue.event_id,
+        cue.at,
+    )?;
     let completion = SoundCompletion {
         animal: handle,
         actor_id: awareness.actor_id.clone(),
@@ -515,64 +619,6 @@ pub(crate) fn acquire_sound(
         blocked,
         moving,
     };
-    if !repeated {
-        mutation.interrupt_territorial_alarm(handle, &awareness.actor_id)?;
-        foraging::relinquish(mutation, &awareness.actor_id)?;
-        mutation.reserve_response_growth(
-            std::mem::size_of::<NativeResponseEpisode>()
-                .saturating_add(profile_pin.id.len())
-                .saturating_add(profile_pin.digest.len())
-                .saturating_add(locomotion.len())
-                .saturating_add(completion.cue.event_id.len().saturating_mul(3))
-                .saturating_add(512),
-        )?;
-        let slot = mutation.snapshot_episode(&awareness.actor_id)?;
-        if fresh {
-            *slot = Some(NativeResponseEpisode {
-                acoustic_cue: None,
-                acoustic_leg_required: None,
-                id: completion.cue.event_id.clone(),
-                started_at: completion.cue.at,
-                latest_cause: ResponseCause {
-                    kind: CauseKind::Event,
-                    id: completion.cue.event_id.clone(),
-                    at: completion.cue.at,
-                },
-                preparations: None,
-                preferred_refuge: None,
-                aerial_route_id,
-                profile_pin,
-                locomotion,
-                mode: ResponseMode::Escaping,
-                dangers: IndexMap::new(),
-                review_at: at,
-                clear_since: None,
-                proposal_generation: 0,
-                proposal: None,
-                refuge: None,
-                movement: None,
-                blocked: None,
-            });
-        }
-        let episode = slot.as_mut().ok_or(ExecutionError::Invariant)?;
-        episode.latest_cause = ResponseCause {
-            kind: CauseKind::Event,
-            id: completion.cue.event_id.clone(),
-            at: completion.cue.at,
-        };
-        episode.mode = if episode.movement.is_some() {
-            ResponseMode::Blocked
-        } else {
-            ResponseMode::Escaping
-        };
-        episode.review_at = at;
-        episode.clear_since = None;
-        episode.proposal = None;
-        episode.blocked = None;
-    }
-    if !repeated {
-        mutation.behavior_changed(&awareness.actor_id, false)?;
-    }
     complete_sound(mutation, completion)?;
     Ok(())
 }

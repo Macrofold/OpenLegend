@@ -14,6 +14,8 @@ use crate::worlds::base_foraging::{FoodSighting, foraging_night, perceive_food};
 use std::mem::size_of;
 
 mod pack;
+mod hunt;
+pub(crate) use hunt::RouteChoice as HuntRouteChoice;
 
 pub(crate) fn remaining_pack_travel(
     installed: &InstalledWorld,
@@ -56,10 +58,33 @@ pub(crate) fn remaining_pack_travel(
     Ok(Some((limit - work.travelled_metres).max(0.0)))
 }
 
+/// Chase speed is available only to an animal's selected hunt during its
+/// cooldown or while following its own last observation. New approaches use
+/// the ordinary travel speed from the animal's installed profile.
+pub(crate) fn travel_locomotion<'a>(
+    installed: &'a InstalledWorld, entity: &Entity, now: f64,
+) -> Option<&'a str> {
+    let state = entity.animal.as_ref()?.foraging.as_ref()?;
+    let work = state.work.as_ref().filter(|work| work.kind == ForagingWorkKind::Hunt)?;
+    if now >= work.ends_at || !(state.mode == ForagingMode::Searching || entity.actor.as_ref()?
+        .combat_ready_at.is_some_and(|until| until > now)) {
+        return None;
+    }
+    installed.retained.foraging.profiles.get(&state.profile.id)?.profile.hunt.as_ref()
+        .map(|rule| rule.locomotion_id.as_str())
+}
+
 pub(crate) enum ForageIntention {
     Feed(String, Option<String>, ByteReservation),
     Move(SurfacePoint, ByteReservation),
     Stop,
+    HuntStrike(EntityHandle),
+    HuntMove(SurfacePoint, Option<crate::geometry::GuardedRoutePlan>, ByteReservation),
+}
+
+pub(crate) enum ForageProgress {
+    Complete(Option<ForageIntention>),
+    Routes(Box<hunt::RouteChoice>),
 }
 
 pub(crate) struct ForageChoice {
@@ -96,14 +121,27 @@ pub(crate) fn review_at(
     {
         return Ok(None);
     }
-    let stale_work = forage.mode != ForagingMode::Blocked
+    let stale_work = !matches!(forage.mode, ForagingMode::Blocked | ForagingMode::Searching)
         && forage.work.as_ref().is_some_and(|work| {
             actor
                 .action
                 .as_ref()
                 .is_none_or(|action| work.action_id != action.id)
         });
-    Ok(Some(if stale_work { now } else { forage.review_at }))
+    let mut due = if stale_work || forage.proposal.is_some() {
+        now
+    } else {
+        forage.review_at
+    };
+    if let Some(work) = forage.work.as_ref().filter(|work| {
+        matches!(work.kind, ForagingWorkKind::Hunt | ForagingWorkKind::Regroup)
+    }) {
+        due = due.min(work.ends_at);
+        if remaining_pack_travel(installed, animal, Some(&work.action_id))? == Some(0.0) {
+            due = now;
+        }
+    }
+    Ok(Some(due))
 }
 
 fn operator(
@@ -265,8 +303,9 @@ impl ForageChoice {
         mut self,
         core: &mut crate::execution::CoreMutation<'_>,
         answer: &CollationAnswer,
+        binding: GeometryBinding,
         budget: &ByteBudget,
-    ) -> Result<Option<ForageIntention>, ExecutionError> {
+    ) -> Result<ForageProgress, ExecutionError> {
         if self.at != core.state.physical.header.sim_time {
             return Err(ExecutionError::Invariant);
         }
@@ -323,7 +362,7 @@ impl ForageChoice {
         })?;
         let bytes = rated.clone().try_fold(body_bytes, |bytes, id| {
             let surface =
-                if profile.regroup.is_some() {
+                if profile.regroup.is_some() || profile.hunt.is_some() {
                     core.state.physical.entities.get(id).map_or(0, |entity| {
                         match &entity.placement {
                             Some(crate::state::Placement::World {
@@ -430,7 +469,40 @@ impl ForageChoice {
         {
             next.work = None;
         }
-        let food = perceive_food(profile, &mut next, &seen, at, here, reach, hungry, &ranks)?;
+        let food = perceive_food(profile, &mut next, &seen, at, here, reach,
+            hungry && !action.is_some_and(|action| action.strike_phase == Some(crate::contact::StrikePhase::Windup)),
+            &ranks)?;
+        if food.is_none() && let Some(rules) = &profile.hunt {
+            let hunt = hunt::HuntRead {
+                state: core.state, animal, rules, visible: &visible,
+                pack: before.pack_id.as_deref(), night, fullness,
+            };
+            let choice = hunt.choose(&mut next, &ranks, hungry, profile.fullness.stop_at, binding, budget)?;
+            match choice {
+                hunt::HuntChoice::Routes(routes) => {
+                    let storage = budget.reserve(size_of::<hunt::RouteChoice>())?;
+                    return Ok(ForageProgress::Routes(Box::new(hunt::RouteChoice {
+                        animal: self.animal, next, next_storage, routes, visible, at,
+                        _storage: storage,
+                    })));
+                }
+                hunt::HuntChoice::None => {}
+                choice => {
+                    let decision = match choice {
+                        hunt::HuntChoice::Stop => Some(ForageIntention::Stop),
+                        hunt::HuntChoice::Strike(target) => Some(ForageIntention::HuntStrike(target)),
+                        hunt::HuntChoice::LastPoint(point) => {
+                            let storage = budget.reserve(point.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+                            Some(ForageIntention::HuntMove(point, None, storage))
+                        }
+                        hunt::HuntChoice::Hold => None,
+                        _ => return Err(ExecutionError::Invariant),
+                    };
+                    save(core, self.animal, budget, next, next_storage)?;
+                    return Ok(ForageProgress::Complete(decision));
+                }
+            }
+        }
         let regroup = if food.is_none() {
             pack::regroup(
                 core.state, animal, &mut next, profile, &visible, &ranks, budget,
@@ -440,13 +512,22 @@ impl ForageChoice {
         };
         let decision = if let Some((id, item)) = food {
             let allowance = budget.reserve(id.len() + item.map_or(0, str::len))?;
+            let target = id.to_owned();
+            let item = item.map(str::to_owned);
             next.mode = ForagingMode::Feeding;
+            if next.work.as_ref().is_some_and(|work| work.kind == ForagingWorkKind::Hunt) {
+                let _name = budget.reserve(animal.id.len())?;
+                let actor = animal.id.clone();
+                stop_owned_action(&mut core.physical(), &actor)?;
+                next.work = None;
+                next.destination = None;
+                next.proposal = None;
+                if let Some(rules) = &profile.hunt {
+                    next.reconsider_at = Some(at + rules.pursuit.reconsider_after_game_seconds);
+                }
+            }
             next.review_at = at + profile.routine.choice_game_seconds;
-            Some(ForageIntention::Feed(
-                id.into(),
-                item.map(str::to_owned),
-                allowance,
-            ))
+            Some(ForageIntention::Feed(target, item, allowance))
         } else if let Some(regroup) = regroup {
             regroup.intention()
         } else if action.is_none() {
@@ -473,7 +554,7 @@ impl ForageChoice {
             None
         };
         save(core, self.animal, budget, next, next_storage)?;
-        Ok(decision)
+        Ok(ForageProgress::Complete(decision))
     }
 }
 
@@ -540,6 +621,7 @@ pub(crate) fn admitted(
     let kind = match action.kind.as_str() {
         "feed" => ForagingWorkKind::Food,
         "move" => ForagingWorkKind::Routine,
+        "strike" if forage.work.as_ref().is_some_and(|work| work.kind == ForagingWorkKind::Hunt) => ForagingWorkKind::Hunt,
         _ => return Err(ExecutionError::Invariant),
     };
     if kind != ForagingWorkKind::Food
@@ -639,6 +721,34 @@ pub(crate) fn work_failed(
         .change_foraging(actor, 0, |next| block(next, review))
 }
 
+/// A pursuit loses sight at the contact owner's exact failed observation.
+/// Keep its last observed point and deadline and let its next search run once
+/// the old action has been cleared.
+pub(crate) fn lost_sight(
+    core: &mut crate::execution::CoreMutation<'_>,
+    actor: &str,
+    action_id: &str,
+) -> Result<bool, ExecutionError> {
+    let matching = core.state.physical.entities.get(actor)
+        .and_then(|entity| entity.animal.as_ref())
+        .and_then(|animal| animal.foraging.as_ref())
+        .and_then(|forage| forage.work.as_ref())
+        .is_some_and(|work| work.kind == ForagingWorkKind::Hunt && work.action_id == action_id);
+    if !matching {
+        return Ok(false);
+    }
+    let at = core.state.physical.header.sim_time;
+    core.physical().change_foraging(actor, 0, |next| {
+        if let Some(work) = next.work.as_mut() {
+            work.lost_at.get_or_insert(at);
+        }
+        next.proposal = None;
+        next.mode = ForagingMode::Searching;
+        next.review_at = at;
+    })?;
+    Ok(true)
+}
+
 fn block(next: &mut ForagingContinuation, review: f64) {
     next.mode = ForagingMode::Blocked;
     next.review_at = review;
@@ -659,51 +769,53 @@ pub(crate) fn relinquish(
     physical: &mut PhysicalMutation<'_>,
     actor: &str,
 ) -> Result<(), ExecutionError> {
-    let Some(animal) = physical.state.entities.get(actor) else {
-        return Ok(());
-    };
-    let Some(state) = animal
-        .animal
-        .as_ref()
+    if physical
+        .state
+        .entities
+        .get(actor)
+        .and_then(|entity| entity.animal.as_ref())
         .and_then(|animal| animal.foraging.as_ref())
-    else {
+        .is_none()
+    {
         return Ok(());
-    };
-    let action = animal
-        .actor
-        .as_ref()
-        .and_then(|actor| actor.action.as_ref())
-        .filter(|action| {
-            state
-                .work
-                .as_ref()
-                .is_some_and(|work| work.action_id == action.id)
-        });
-    if let Some(bytes) = action.map(|action| action.id.len()) {
-        physical.reserve_response_growth(bytes)?;
-        let action_id = physical
-            .state
-            .entities
-            .get(actor)
-            .and_then(|entity| entity.actor.as_ref())
-            .and_then(|actor| actor.action.as_ref())
-            .ok_or(ExecutionError::Invariant)?
-            .id
-            .clone();
-        physical.release_work(&action_id)?;
-        physical.replace_action(
-            actor,
-            None,
-            crate::execution::ActionWrite {
-                generation: crate::execution::PlanGenerationWrite::Advance,
-                behavior: Some(false),
-            },
-        )?;
     }
+    stop_owned_action(physical, actor)?;
     let at = physical.state.header.sim_time;
     physical.change_foraging(actor, 0, |next| {
         next.work = None;
+        next.proposal = None;
+        next.destination = None;
         next.mode = ForagingMode::Resting;
         next.review_at = at;
     })
+}
+
+fn stop_owned_action(
+    physical: &mut PhysicalMutation<'_>,
+    actor: &str,
+) -> Result<(), ExecutionError> {
+    let entity = physical.state.entities.get(actor).ok_or(ExecutionError::MissingEntity)?;
+    let owned = entity.animal.as_ref()
+        .and_then(|animal| animal.foraging.as_ref())
+        .and_then(|foraging| foraging.work.as_ref());
+    let active = entity.actor.as_ref().and_then(|actor| actor.action.as_ref());
+    let Some(action) = active.filter(|action| owned.is_some_and(|work| work.action_id == action.id))
+    else {
+        return Ok(());
+    };
+    physical.reserve_response_growth(action.id.len())?;
+    let id = physical.state.entities.get(actor)
+        .and_then(|entity| entity.actor.as_ref())
+        .and_then(|actor| actor.action.as_ref())
+        .ok_or(ExecutionError::Invariant)?
+        .id.clone();
+    physical.release_work(&id)?;
+    physical.replace_action(
+        actor,
+        None,
+        crate::execution::ActionWrite {
+            generation: crate::execution::PlanGenerationWrite::Advance,
+            behavior: Some(false),
+        },
+    )
 }

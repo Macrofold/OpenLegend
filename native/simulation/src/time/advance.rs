@@ -33,7 +33,7 @@ use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::language::{CollationAnswer, CollationRequest};
 use crate::movement::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
-use crate::native_controller::foraging::{ForageChoice, ForageIntention};
+use crate::native_controller::foraging::{ForageChoice, ForageIntention, ForageProgress, HuntRouteChoice};
 use crate::native_controller::territorial::{
     Intention as TerritorialIntention, Notice as TerritorialNotice, Review as TerritorialReview,
 };
@@ -431,6 +431,7 @@ pub(crate) struct AdvanceCursor {
     perception_before: Option<(PhysicalChangeCursor, usize)>,
     response: Option<GroundResponseCursor>,
     forage: Option<ForageChoice>,
+    hunt_route: Option<Box<HuntRouteChoice>>,
     territorial: Option<TerritorialReview>,
     territorial_notice: Option<PendingTerritorialNotice>,
     wander: Option<WanderCursor>,
@@ -485,6 +486,7 @@ impl AdvanceCursor {
                     .and_then(SteeringPreparation::question)
             })
             .or_else(|| self.forage.as_ref().and_then(ForageChoice::sight_request))
+            .or_else(|| self.hunt_route.as_deref().map(HuntRouteChoice::queries))
             .or_else(|| {
                 self.territorial
                     .as_ref()
@@ -616,6 +618,7 @@ impl AdvanceCursor {
             perception_before: None,
             response: None,
             forage: None,
+            hunt_route: None,
             territorial: None,
             territorial_notice: None,
             wander: None,

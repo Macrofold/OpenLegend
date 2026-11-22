@@ -370,7 +370,7 @@ Source: `packages/domain/src/types.ts`; 60 declared fields. `?` retains source o
 
 Nested bindings that need particular care: `follow` contains observed last-seen position/episode/deadline and cannot read a hidden live target; `navigation.request` is source/action-bound; `strikeMotion`, ranged release and recovery can outlive ordinary cancellation; construction/material/recipe pins name historical meaning. They are not interchangeable generic timers.
 
-The [finite cast checks](../verification/river-meal.md#stand-alone-rust-casts) cover `Action.fishing` and `itemId` with exact source, installed rules, tool and output pins, the selected stance, ordinary approach and earned work. The shared stock and item owners commit a catch together. The player command and current-format saved action have caller evidence. NPC choice and the complete meal still need their connected journeys.
+The [finite cast checks](../verification/river-meal.md#stand-alone-rust-casts) cover `Action.fishing` and `itemId` with exact source, installed rules, tool and output pins, the selected stance, ordinary approach and earned work. The shared stock and item owners commit a catch together. The player command, permitted NPC choice and saved action have caller evidence. The complete meal still needs its connected journey.
 
 ### Responses, agency and experience
 
@@ -413,7 +413,7 @@ The plan/result field names and result-address rows above use the current select
 
 ### Current perception, recording and animal continuation
 
-The stand-alone animal clock consumes `NativeForagingState.packId`, the installed regroup rule and the personally seen companion's life and position. It commits one ordinary Move and saves its deadline, actual travel and observed support in `sim_animal_behavior`. The [visible and hidden companion checks](../verification/first-threat-encounter.md#stand-alone-rust-pack-regrouping) cover Source-equivalent destination selection and cold continuation. Positive hunt and search work still requires its controller and receiving owners.
+The stand-alone animal clock consumes `NativeForagingState.packId`, the installed hunt and regroup rules and the personally seen quarry or companion's life and position. It commits ordinary movement and natural contact, saving deadlines, actual travel and last observations in `sim_animal_behavior`. [Regrouping](../verification/first-threat-encounter.md#stand-alone-rust-pack-regrouping) and [hunting](../verification/first-threat-encounter.md#stand-alone-rust-pack-hunting-and-search) cover route selection, contact, sight loss and cold continuation, including a current pending route proposal. Far search, wider pack eligibility and aerial response remain open.
 
 N owns canonical acquisition/continuation; R captures only already permitted selected facts; S preserves actual records and clocks. `recent` directories and process-local indexes are rebuildable and supply no new observation. All conversion remains pending.
 

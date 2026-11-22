@@ -131,7 +131,7 @@ fn one(
 fn plain(_import: &mut RowImport, _parent: &mut RawRecord, _id: &str) -> Result<(), InstallError> {
     Ok(())
 }
-fn collection(
+fn collection<T: DeserializeOwned + Serialize>(
     import: &mut RowImport,
     parent: &mut RawRecord,
     parent_id: &str,
@@ -139,7 +139,7 @@ fn collection(
     table: &str,
     list: bool,
     keyed: bool,
-    join: fn(&mut RowImport, &mut RawRecord, &str) -> Result<(), InstallError>,
+    join: fn(&mut RowImport, &mut T, &str) -> Result<(), InstallError>,
 ) -> Result<(), InstallError> {
     let present = child_present(parent, field, list)?;
     let input = rows::take_collection(import, table, parent_id, present, true)?;
@@ -175,7 +175,7 @@ fn collection(
         } else {
             rows::validate_map_row(&row, parent_id, field, key, input.coverage.next_ordinal)?;
         }
-        let mut value: RawRecord =
+        let mut value: T =
             serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
         join(import, &mut value, &row.id)?;
         if list {
@@ -348,6 +348,7 @@ fn episode(import: &mut RowImport, value: &mut RawRecord, id: &str) -> Result<()
         false,
         plain,
     )?;
+    // Each preparation binds one observed source life to its action ID.
     collection(
         import,
         value,
@@ -356,7 +357,7 @@ fn episode(import: &mut RowImport, value: &mut RawRecord, id: &str) -> Result<()
         "sim_native_attack_preparations",
         false,
         false,
-        plain,
+        |_, _: &mut String, _| Ok(()),
     )
 }
 fn entity(import: &mut RowImport, value: &mut RawRecord, id: &str) -> Result<(), InstallError> {

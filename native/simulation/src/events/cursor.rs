@@ -1110,7 +1110,13 @@ impl EventCursor {
                     sequence: event.sequence,
                 };
                 core.acquired_occurrence(&acquired)?;
-                crate::native_controller::acquire_event(core, event, &acquired)?;
+                crate::native_controller::acquire_event(
+                    core,
+                    event,
+                    &acquired,
+                    &self.acquired,
+                    budget,
+                )?;
                 let installed = Arc::clone(&core.state.installed);
                 for awareness in &self.acquired {
                     if awareness.sound.is_some() {

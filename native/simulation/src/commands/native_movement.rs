@@ -155,7 +155,7 @@ pub(crate) fn begin_native_movement(
     candidate: CandidateKey,
     budget: &ByteBudget,
 ) -> Result<CommandOperation, CommandOperationError> {
-    begin_native_ground(core, actor_id, Some(route), None, mode, candidate, budget)
+    begin_native_ground(core, actor_id, Some(route), None, None, mode, candidate, budget)
 }
 
 pub(crate) fn begin_native_foraging_move(
@@ -170,10 +170,22 @@ pub(crate) fn begin_native_foraging_move(
         actor_id,
         None,
         Some(destination),
+        None,
         LocomotionMode::Travel,
         candidate,
         budget,
     )
+}
+
+pub(crate) fn begin_native_hunt_move(
+    core: &mut CoreMutation<'_>,
+    actor_id: &str,
+    destination: &SurfacePoint,
+    plan: Option<crate::geometry::GuardedRoutePlan>,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<CommandOperation, CommandOperationError> {
+    begin_native_ground(core, actor_id, None, Some(destination), plan, LocomotionMode::Travel, candidate, budget)
 }
 
 pub(crate) fn begin_territorial_move(
@@ -227,6 +239,7 @@ fn begin_native_ground(
     actor_id: &str,
     route: Option<RefugeRoute>,
     proposed: Option<&SurfacePoint>,
+    prepared: Option<crate::geometry::GuardedRoutePlan>,
     mode: LocomotionMode,
     candidate: CandidateKey,
     budget: &ByteBudget,
@@ -248,7 +261,9 @@ fn begin_native_ground(
         .ok_or(ExecutionError::UnsupportedFamily)?;
     let episode = animal.episode.as_ref();
     let (pin, locomotion, episode_binding) = match mode {
-        LocomotionMode::Travel => (&animal.profile, animal.locomotion.as_str(), None),
+        LocomotionMode::Travel => (&animal.profile, crate::native_controller::foraging::travel_locomotion(
+            &core.state.installed, entity, core.state.physical.header.sim_time,
+        ).unwrap_or(animal.locomotion.as_str()), None),
         LocomotionMode::Escape => {
             let episode = episode.ok_or(ExecutionError::Invariant)?;
             (
@@ -326,7 +341,7 @@ fn begin_native_ground(
         CommandOptions {
             preview: false,
             native_controller: true,
-            native_movement: Some(NativeMovementInput { binding, route }),
+            native_movement: Some(NativeMovementInput { binding, route, prepared }),
             durable_receipt: false,
         },
         geometry,

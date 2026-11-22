@@ -32,6 +32,7 @@ mod natural_contact;
 pub(crate) struct NativeMovementInput {
     pub binding: crate::native_response::NativeLocomotion,
     pub route: Option<crate::native_refuge::RefugeRoute>,
+    pub prepared: Option<crate::geometry::GuardedRoutePlan>,
 }
 pub(crate) struct CommandOptions {
     pub preview: bool,
@@ -403,6 +404,87 @@ impl CommandCursor {
         )?;
         Ok(())
     }
+    // Accept the same finite provider plan whether this command asked for it
+    // or the native controller already evaluated it within this candidate.
+    fn accept_ground_route(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        plan: crate::geometry::GuardedRoutePlan,
+        ordinary: &crate::worlds::InstalledOrdinaryActionRules,
+    ) -> Result<(), ExecutionError> {
+        let crate::geometry::GuardedRoutePlan(route, storage) = plan;
+        if self.options.native_controller
+            && !core.physical().admit_territorial_detour(
+                &self.command.envelope().actor_id,
+                &route,
+            )?
+        {
+            self.refuse(&ordinary.no_route);
+            self.queries = None;
+            return Ok(());
+        }
+        self.action_storage
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?
+            .merge(storage)?;
+        let action =
+            self.action.as_mut().ok_or(ExecutionError::Invariant)?;
+        match route {
+            RoutePlan::Reached { path, .. } => {
+                action.path = path;
+                action.stage = "approaching".to_owned();
+            }
+            RoutePlan::Pending { mut request, .. } => {
+                if self.options.native_controller {
+                    let animal = core
+                        .state
+                        .physical
+                        .entities
+                        .get(&self.command.envelope().actor_id)
+                        .and_then(|entity| entity.animal.as_ref())
+                        .ok_or(ExecutionError::Invariant)?;
+                    let profile =
+                        crate::native_controller::selected_profile(
+                            &core.state.installed,
+                            animal,
+                        )?;
+                    request.wait = Some(match profile.candidates.navigation_wait {
+                        crate::native_response::NavigationWait::Entity => "entity",
+                        crate::native_response::NavigationWait::World => "world",
+                    }.into());
+                    self.grow_action_storage(6)?;
+                }
+                let action = self
+                    .action
+                    .as_mut()
+                    .ok_or(ExecutionError::Invariant)?;
+                action.stage = "approaching".to_owned();
+                action.navigation = Some(NavigationPending {
+                    request,
+                    failure: None,
+                });
+            }
+            RoutePlan::InvalidEndpoint { .. } => {
+                self.outcome = Some(outcome(
+                    false,
+                    "invalid-endpoint",
+                    &ordinary.no_route.message,
+                ));
+                self.phase = Phase::Done;
+            }
+            RoutePlan::NoRoute { .. } => self.refuse(&ordinary.no_route),
+            RoutePlan::BudgetExceeded { .. } => {
+                self.refuse(&ordinary.budget_exceeded)
+            }
+        }
+        if !matches!(self.phase, Phase::Done) {
+            self.size_action_storage()?;
+            self.phase = Phase::Prepared;
+        }
+        self.queries = None;
+        Ok(())
+    }
+
     fn size_action_storage(&mut self) -> Result<(), ExecutionError> {
         let bytes = self
             .action
@@ -629,77 +711,8 @@ impl CommandCursor {
                             }
                             Phase::Route => {
                                 let route = answer.routes.pop().ok_or(ExecutionError::Invariant)?;
-                                let crate::geometry::GuardedRoutePlan(route, storage) =
-                                    crate::geometry::route_plan(route, &self.budget)?;
-                                if self.options.native_controller
-                                    && !core.physical().admit_territorial_detour(
-                                        &self.command.envelope().actor_id,
-                                        &route,
-                                    )?
-                                {
-                                    self.refuse(&ordinary.no_route);
-                                    self.queries = None;
-                                    return self.drive(core, None);
-                                }
-                                self.action_storage
-                                    .as_mut()
-                                    .ok_or(ExecutionError::Invariant)?
-                                    .merge(storage)?;
-                                let action =
-                                    self.action.as_mut().ok_or(ExecutionError::Invariant)?;
-                                match route {
-                                    RoutePlan::Reached { path, .. } => {
-                                        action.path = path;
-                                        action.stage = "approaching".to_owned();
-                                    }
-                                    RoutePlan::Pending { mut request, .. } => {
-                                        if self.options.native_controller {
-                                            let animal = core
-                                                .state
-                                                .physical
-                                                .entities
-                                                .get(&self.command.envelope().actor_id)
-                                                .and_then(|entity| entity.animal.as_ref())
-                                                .ok_or(ExecutionError::Invariant)?;
-                                            let profile =
-                                                crate::native_controller::selected_profile(
-                                                    &core.state.installed,
-                                                    animal,
-                                                )?;
-                                            request.wait = Some(match profile.candidates.navigation_wait {
-                                                crate::native_response::NavigationWait::Entity => "entity",
-                                                crate::native_response::NavigationWait::World => "world",
-                                            }.into());
-                                            self.grow_action_storage(6)?;
-                                        }
-                                        let action = self
-                                            .action
-                                            .as_mut()
-                                            .ok_or(ExecutionError::Invariant)?;
-                                        action.stage = "approaching".to_owned();
-                                        action.navigation = Some(NavigationPending {
-                                            request,
-                                            failure: None,
-                                        });
-                                    }
-                                    RoutePlan::InvalidEndpoint { .. } => {
-                                        self.outcome = Some(outcome(
-                                            false,
-                                            "invalid-endpoint",
-                                            &ordinary.no_route.message,
-                                        ));
-                                        self.phase = Phase::Done;
-                                    }
-                                    RoutePlan::NoRoute { .. } => self.refuse(&ordinary.no_route),
-                                    RoutePlan::BudgetExceeded { .. } => {
-                                        self.refuse(&ordinary.budget_exceeded)
-                                    }
-                                }
-                                if !matches!(self.phase, Phase::Done) {
-                                    self.size_action_storage()?;
-                                    self.phase = Phase::Prepared;
-                                }
-                                self.queries = None;
+                                let route = crate::geometry::route_plan(route, &self.budget)?;
+                                self.accept_ground_route(core, route, ordinary)?;
                             }
                             Phase::FeedReach => {
                                 self.queries = None;
@@ -1084,6 +1097,12 @@ impl CommandCursor {
                         None,
                     );
                     self.action = Some(action);
+                    if let Some(route) = self.options.native_movement.as_mut()
+                        .and_then(|movement| movement.prepared.take())
+                    {
+                        self.accept_ground_route(core, route, ordinary)?;
+                        continue;
+                    }
                     if in_reach {
                         self.phase = Phase::Prepared;
                         continue;
@@ -1171,7 +1190,9 @@ impl CommandCursor {
                         let episode = animal.episode.as_ref();
                         let (pin, locomotion) = match native.binding.mode {
                             crate::native_response::LocomotionMode::Travel => {
-                                (&animal.profile, animal.locomotion.as_str())
+                                (&animal.profile, crate::native_controller::foraging::travel_locomotion(
+                                    &core.state.installed, actor, core.state.physical.header.sim_time,
+                                ).unwrap_or(animal.locomotion.as_str()))
                             }
                             crate::native_response::LocomotionMode::Escape => {
                                 let e = episode.ok_or(ExecutionError::Invariant)?;

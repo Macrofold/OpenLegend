@@ -12,6 +12,27 @@ pub(crate) fn begin_native_contact(
     candidate: CandidateKey,
     budget: &ByteBudget,
 ) -> Result<CommandOperation, CommandOperationError> {
+    prepare_contact(core, source, target, false, candidate, budget)
+}
+
+pub(crate) fn begin_native_hunt_contact(
+    core: &mut CoreMutation<'_>,
+    source: &str,
+    target: crate::state::EntityHandle,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<CommandOperation, CommandOperationError> {
+    prepare_contact(core, source, target, true, candidate, budget)
+}
+
+fn prepare_contact(
+    core: &mut CoreMutation<'_>,
+    source: &str,
+    target: crate::state::EntityHandle,
+    hunt: bool,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<CommandOperation, CommandOperationError> {
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
     struct Input<'a> {
@@ -23,15 +44,25 @@ pub(crate) fn begin_native_contact(
         definition_id: &'a str,
     }
     let entities = &core.state.physical.entities;
-    let threat = entities
-        .get(source)
-        .and_then(|entity| entity.threat.as_ref())
-        .ok_or(ExecutionError::Invariant)?;
     let target = entities.resolve(target).ok_or(ExecutionError::Invariant)?;
-    let definition_id = threat.strike_definition();
+    let actor = entities.get(source).ok_or(ExecutionError::MissingActor)?;
+    let definition_id = if hunt {
+        let state = actor.animal.as_ref().and_then(|animal| animal.foraging.as_ref())
+            .ok_or(ExecutionError::Invariant)?;
+        state.work.as_ref().filter(|work| {
+            work.kind == crate::native_response::ForagingWorkKind::Hunt
+                && work.target_id.as_deref() == Some(target.id.as_str())
+                && work.target_life == target.physical_life()
+        }).ok_or(ExecutionError::Invariant)?;
+        &core.state.installed.retained.foraging.profiles.get(&state.profile.id)
+            .and_then(|profile| profile.profile.hunt.as_ref()).ok_or(ExecutionError::UnsupportedFamily)?.strike_id
+    } else {
+        actor.threat.as_ref().ok_or(ExecutionError::Invariant)?.strike_definition()
+    };
     let _scratch =
         budget.reserve((source.len() + target.id.len() + definition_id.len() + 64) * 12)?;
-    let id = format!("native-contact-{}", core.state.physical.identity.next_id());
+    let family = if hunt { "native-forage" } else { "native-contact" };
+    let id = format!("{family}-{}", core.state.physical.identity.next_id());
     let encoded = crate::encoding::json_record(&Input {
         id: &id,
         actor_id: source,

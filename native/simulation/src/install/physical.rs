@@ -1150,18 +1150,47 @@ fn validate_resource_foraging(
         .filter(|definition| definition.pin == saved.profile)
         .ok_or(InstallError::DefinitionPin)?;
     use crate::native_response::{ForagingMode, ForagingWorkKind};
-    if saved.proposal.is_some()
-        || profile.profile.hunt.is_some()
-        || saved
-            .work
-            .as_ref()
-            .is_some_and(|work| work.kind == ForagingWorkKind::Hunt)
-        || matches!(
-            saved.mode,
-            ForagingMode::Stalking | ForagingMode::Pursuing | ForagingMode::Searching
-        )
-    {
-        return Err(InstallError::UnsupportedFamily("pack hunting"));
+    let current = entity.actor.as_ref().and_then(|actor| actor.action.as_ref());
+    let hunt = profile.profile.hunt.as_ref();
+    if let Some(hunt) = hunt {
+        let strike = crate::contact::profile(installed, entity, &hunt.strike_id)
+            .and_then(|strike| strike.preparation_motion.as_ref())
+            .ok_or(InstallError::DefinitionBody)?;
+        if strike.locomotion_profile_id != hunt.locomotion_id {
+            return Err(InstallError::DefinitionBody);
+        }
+    }
+    if let Some(work) = saved.work.as_ref().filter(|work| work.kind == ForagingWorkKind::Hunt) {
+        let rules = hunt.ok_or(InstallError::CurrentFormat)?;
+        // A save can land after choosing a quarry but before a route returns.
+        // The controller reacquires sight and prepares current routes on resume.
+        let awaiting_route = match &saved.proposal {
+            Some(proposal) => {
+                if proposal.generation == 0
+                    || proposal.candidates.len() as u64 > rules.approach.bearings
+                    || work.lost_at.is_some()
+                {
+                    return Err(InstallError::CurrentFormat);
+                }
+                true
+            }
+            None => false,
+        };
+        if work.ends_at > work.started_at + rules.pursuit.game_seconds
+            || work.travelled_metres > rules.pursuit.route_metres + installed.spatial.epsilon
+            || work.search_index.is_some_and(|index| index > rules.lost_sight.candidate_count)
+            || (!awaiting_route && !matches!(saved.mode, ForagingMode::Stalking | ForagingMode::Pursuing | ForagingMode::Searching | ForagingMode::Blocked))
+            || current.is_some_and(|action| {
+                action.id == work.action_id && action.kind != "move"
+                    && !(action.is_natural_contact()
+                        && action.definition_id.as_deref() == Some(&rules.strike_id)
+                        && action.target_id == work.target_id && action.target_life == work.target_life)
+            })
+        {
+            return Err(InstallError::CurrentFormat);
+        }
+    } else if saved.proposal.is_some() || matches!(saved.mode, ForagingMode::Stalking | ForagingMode::Pursuing | ForagingMode::Searching) {
+        return Err(InstallError::CurrentFormat);
     }
     if let Some(work) = saved
         .work

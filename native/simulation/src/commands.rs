@@ -31,8 +31,9 @@ pub(crate) use finalization::*;
 mod native_contact;
 mod native_movement;
 pub(crate) use native_contact::begin_native_contact;
+pub(crate) use native_contact::begin_native_hunt_contact;
 pub(crate) use native_movement::{
-    begin_native_feed, begin_native_foraging_move, begin_native_movement, begin_native_stop,
+    begin_native_feed, begin_native_foraging_move, begin_native_hunt_move, begin_native_movement, begin_native_stop,
     begin_territorial_move,
 };
 pub(crate) mod player;

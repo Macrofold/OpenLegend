@@ -38,6 +38,7 @@ pub(crate) enum ContactStep {
     Personal,
     AdvanceComplete,
     ActionComplete,
+    SightLost,
     Invalidated,
 }
 
@@ -486,7 +487,7 @@ impl ImpactCursor {
                         .finish(visible)
                         .map_err(crate::native_controller::sensor_error)?;
                     if visible.seen(&self.target) != Some(true) {
-                        return Ok(ContactStep::Invalidated);
+                        return Ok(ContactStep::SightLost);
                     }
                     if self
                         .source(&core.state.physical.entities)?

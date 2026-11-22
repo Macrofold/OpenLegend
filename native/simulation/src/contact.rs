@@ -22,12 +22,87 @@ pub(crate) fn stage_preparation(
 > {
     use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
     use crate::execution::ExecutionError;
-    let text = core
+    let body = core
         .state
         .physical
         .entities
         .get(source)
-        .and_then(|entity| entity.threat.as_ref())
+        .ok_or(ExecutionError::MissingActor)?;
+    let action = body
+        .actor
+        .as_ref()
+        .and_then(|actor| actor.action.as_ref())
+        .ok_or(ExecutionError::Invariant)?;
+    let installed = &core.state.installed;
+    let hunt = body
+        .animal
+        .as_ref()
+        .and_then(|animal| animal.foraging.as_ref())
+        .and_then(|foraging| {
+            installed
+                .retained
+                .foraging
+                .profiles
+                .get(&foraging.profile.id)
+        })
+        .and_then(|definition| definition.profile.hunt.as_ref());
+    if hunt.is_some_and(|hunt| action.definition_id.as_deref() == Some(&hunt.strike_id)) {
+        use crate::narration::{Narration, NarrationPart, PersonRole};
+        use crate::reception::EventScalar;
+        let target = action
+            .target_id
+            .as_deref()
+            .ok_or(ExecutionError::Invariant)?;
+        let cue = installed
+            .body_policy
+            .as_ref()
+            .and_then(|body| body.value().combat.as_ref())
+            .and_then(|combat| combat.encounters.as_ref())
+            .ok_or(ExecutionError::UnsupportedFamily)?;
+        let event_type = &installed.ordinary_actions.value().action_started_event;
+        let storage = budget.reserve(
+            768 + 2 * (source.len() + target.len())
+                + action.id.len()
+                + event_type.len()
+                + 2 * cue.preparing_strike.len(),
+        )?;
+        let event = EventEmissionIntent {
+            event_type: event_type.clone(),
+            text: EmissionText::Narration(Narration {
+                parts: vec![
+                    NarrationPart::Participant {
+                        entity_id: source.into(),
+                        role: PersonRole::Subject,
+                        article: None,
+                    },
+                    NarrationPart::Literal(format!(" {} ", cue.preparing_strike).into()),
+                    NarrationPart::Participant {
+                        entity_id: target.into(),
+                        role: PersonRole::Object,
+                        article: None,
+                    },
+                    NarrationPart::Literal(".".into()),
+                ],
+            }),
+            audience: AudienceSelection::Physical,
+            source_id: Some(source.into()),
+            target_id: Some(target.into()),
+            data: Some(indexmap::IndexMap::from([
+                (
+                    "actionId".into(),
+                    EventScalar::Text(action.id.clone().into()),
+                ),
+                ("actionType".into(), EventScalar::Text("strike".into())),
+            ])),
+            scope: EventScope::External,
+            origin: None,
+            exposure: None,
+        };
+        return Ok((core.stage_event(event)?, storage));
+    }
+    let text = body
+        .threat
+        .as_ref()
         .ok_or(ExecutionError::Invariant)?
         .windup_text();
     let storage =
@@ -86,13 +161,28 @@ pub(crate) fn may_target(
     target: &Entity,
     life: u64,
 ) -> bool {
+    contact_permitted(installed, source, target, life)
+        && (target.animal.is_none()
+            || source.animal.as_ref().and_then(|animal| animal.foraging.as_ref())
+                .and_then(|state| state.work.as_ref())
+                .is_some_and(|work| {
+                    work.kind == crate::native_response::ForagingWorkKind::Hunt
+                        && work.target_id.as_deref() == Some(target.id.as_str())
+                        && work.target_life == Some(life)
+                }))
+}
+
+/// World policy authorizes the pair and its current life. A caller still has
+/// to establish why it acts, what it perceives, and how its target reacts.
+pub(crate) fn contact_permitted(
+    installed: &InstalledWorld,
+    source: &Entity,
+    target: &Entity,
+    life: u64,
+) -> bool {
     source.id != target.id
         && source.actively_participates()
         && target.actively_participates()
-        // Contact-triggered prey escape and territorial retaliation have a
-        // separate receiving owner. Admit the real player/NPC consequence
-        // while those active native-target consequences remain unsupported.
-        && target.animal.is_none()
         && source.actor.as_ref().is_some_and(|actor| {
             actor.controller == "native" && actor.alive && !actor.incapacitated
         })

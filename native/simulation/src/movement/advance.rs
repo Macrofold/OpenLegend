@@ -75,6 +75,7 @@ pub(crate) struct MoveAdvanceCursor {
     queries: Option<(GeometryQueries, ByteReservation)>,
     binding: GeometryBinding,
     failure: Option<crate::text::JsText>,
+    hunt_lost_sight: bool,
     pending: Option<PendingActionFinish>,
     gathered_item: Option<crate::commands::ActivityOutput>,
     cast_result: Option<Outcome>,
@@ -154,6 +155,7 @@ impl MoveAdvanceCursor {
             queries: None,
             binding,
             failure: None,
+            hunt_lost_sight: false,
             pending: None,
             gathered_item: None,
             cast_result: None,
@@ -277,6 +279,14 @@ impl MoveAdvanceCursor {
                 ContactStep::Personal => return Ok(Progress::Personal),
                 ContactStep::AdvanceComplete => self.phase = Phase::Done,
                 ContactStep::ActionComplete => self.phase = Phase::Finish,
+                ContactStep::SightLost => {
+                    self.hunt_lost_sight = crate::native_controller::foraging::lost_sight(
+                        core,
+                        &self.actor_id,
+                        self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
+                    )?;
+                    self.fail(&rules.natural_contact.unavailable)?;
+                }
                 ContactStep::Invalidated => self.fail(&rules.natural_contact.unavailable)?,
             }
             self.contact = None;
@@ -877,7 +887,7 @@ impl MoveAdvanceCursor {
                     }
                 }
                 Phase::Clear => {
-                    if self.failure.is_some() {
+                    if self.failure.is_some() && !self.hunt_lost_sight {
                         crate::native_controller::foraging::work_failed(
                             core,
                             &self.actor_id,

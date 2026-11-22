@@ -83,7 +83,7 @@ pub(crate) struct Fullness {
     drain_per_game_second: f64,
     seek_below_day: f64,
     seek_below_night: f64,
-    stop_at: f64,
+    pub(crate) stop_at: f64,
 }
 
 #[derive(Debug, Deserialize)]

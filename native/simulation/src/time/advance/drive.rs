@@ -958,7 +958,7 @@ impl AdvanceCursor {
                         .and_then(|entity| entity.animal.as_ref())
                         .is_some_and(|state| state.episode.is_some());
                     if !has_episode {
-                        if self.forage.is_none() {
+                        if self.forage.is_none() && self.hunt_route.is_none() {
                             let entity = core
                                 .state
                                 .physical
@@ -985,8 +985,7 @@ impl AdvanceCursor {
                                 continue;
                             }
                         }
-                        let choice = self.forage.as_mut().ok_or_else(invalid)?;
-                        if choice.sight_request().is_some() {
+                        if self.forage.as_ref().is_some_and(|choice| choice.sight_request().is_some()) {
                             let Some(AdvanceAnswer::Geometry(result)) = answer.take() else {
                                 return Ok(Progress::Geometry);
                             };
@@ -999,15 +998,27 @@ impl AdvanceCursor {
                             )?;
                             return Ok(Progress::Collation);
                         }
-                        let Some(AdvanceAnswer::Collation(result)) = answer.take() else {
-                            return Ok(Progress::Collation);
-                        };
                         let before = core.journal.physical.change_cursor();
-                        let decision = self
-                            .forage
-                            .take()
-                            .ok_or_else(invalid)?
-                            .choose(core, &result, budget)?;
+                        let progress = if self.hunt_route.is_some() {
+                            let Some(AdvanceAnswer::Geometry(result)) = answer.take() else {
+                                return Ok(Progress::Geometry);
+                            };
+                            let binding = self.binding(core)?;
+                            self.hunt_route.take().ok_or_else(invalid)?.step(core, result, binding, budget)?
+                        } else {
+                            let Some(AdvanceAnswer::Collation(result)) = answer.take() else {
+                                return Ok(Progress::Collation);
+                            };
+                            let binding = self.binding(core)?;
+                            self.forage.take().ok_or_else(invalid)?.choose(core, &result, binding, budget)?
+                        };
+                        let decision = match progress {
+                            ForageProgress::Complete(decision) => decision,
+                            ForageProgress::Routes(route) => {
+                                self.hunt_route = Some(route);
+                                return Ok(Progress::Geometry);
+                            }
+                        };
                         if core
                             .journal
                             .physical
@@ -1277,6 +1288,16 @@ impl AdvanceCursor {
                                         &point,
                                         self.candidate,
                                         budget,
+                                    )?
+                                }
+                                ForageIntention::HuntMove(point, route, _allowance) => {
+                                    crate::commands::begin_native_hunt_move(
+                                        core, &actor, &point, route, self.candidate, budget,
+                                    )?
+                                }
+                                ForageIntention::HuntStrike(target) => {
+                                    crate::commands::begin_native_hunt_contact(
+                                        core, &actor, target, self.candidate, budget,
                                     )?
                                 }
                             };

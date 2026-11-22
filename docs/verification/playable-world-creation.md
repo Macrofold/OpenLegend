@@ -32,6 +32,12 @@ The release executable from the same source (`27235b1cc194c99bcec5c50626e15fb799
 
 The shared native compute worker now validates and opens the checked records. Moving validation alone left a second debug stack overflow when the async caller received the installed session by value. The session now keeps its already admitted resident allocation and passes its owning pointer. With ordinary stack settings, source `c08891191c0c9c8dbc952aada4fd3f9911798d92` (debug executable `5de6457a3bf958b84067400937f7bd0094a32c8e475923572a44190614ecc8a9`, current storage `1d43c8c74320b2acfc0389250607f1e52ac2e3263629f0a08474cf15d99a9802`) repeated reviewed Solo Start, exact acknowledgement recovery, browser entry, ordinary save and cold continuation. Raw result `solo-reviewed-native-box/real-positive.json`. The check closed its database, listeners and browser. It did not measure performance.
 
+### Standard Main opens and saves in Rust — November 22, 2026
+
+The normal Source startup prepared the unfiltered 163-entity Main opening at seed 1086, then closed its PostgreSQL writer. The Rust listener opened that same world and ran with Node absent from its environment. An authenticated player claimed control, resumed the clock and walked from `(11, 0, 13)` to `(12, 0, 13)`. Ordinary saving advanced the durable revision from 2 to at least 7. Reopening the listener returned the same position and a later world time. Both listeners released their allocations, and the disposable database was removed.
+
+The local HTTP result `1f84f417be95` uses source `0063ebe47b44` and executable `b7e7a27af6c1`. This checks installation and ordinary continuation with both authored river reaches and the wolf pack present. The representative browser journey, additional observers and Rust-first activation of the complete opening remain in [NSC04-R3](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
+
 ### Reviewed target operating settings — November 21, 2026
 
 An authorized Source client checked an empty Rust destination. The approved review used the destination’s actual account mode, clock, player and NPC settings, spending ceiling and configured model choices. The same parsers supply those settings to the live listener. The local fixture reported 60 game seconds per real second, a $2 monthly allowance, 1,000 configured NPC jobs, and the exact selected decision, summary, Journal and embedding models. The embedding review retained its 256 dimensions and $0.015 reservation. Credentials and private endpoints stayed server-side.
