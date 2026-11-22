@@ -689,12 +689,17 @@ export function PersonMemoryEditor({
       if (generation.current !== attempt) return;
       if (!result.ok || !result.json || result.hash !== entry.hash)
         throw new Error(result.message || 'This memory changed. Refresh and try again.');
-      const record = JSON.parse(result.json) as { importance: number; summary: string };
+      const record = JSON.parse(result.json) as {
+        importance: number;
+        summary?: string;
+        text?: string;
+      };
       setSelected({ ...entry, json: JSON.stringify(record, null, 2) });
       setPrevious(String(record.importance));
       setImportance(String(record.importance));
-      setPreviousSummary(record.summary);
-      setSummary(record.summary);
+      const wording = record.summary ?? record.text ?? '';
+      setPreviousSummary(wording);
+      setSummary(wording);
       setForgetting(false);
     } catch (problem) {
       if (generation.current === attempt) {
@@ -719,7 +724,8 @@ export function PersonMemoryEditor({
           : {
               operation: 'update',
               importance: Number(importance),
-              ...(summary !== previousSummary && { summary }),
+              ...(summary !== previousSummary &&
+                (selected.source === 'memory' ? { summary } : { text: summary })),
             },
         cut: {
           generation: loaded.generation,

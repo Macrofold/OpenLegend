@@ -11,11 +11,10 @@ use openlegend_simulation::{
     runtime::{RuntimePreparedProducts, RuntimeSave},
 };
 
-const KIND: PersonalSourceKind = PersonalSourceKind::Memory;
-
 struct PreparedReplacement {
     world: String,
     generation: String,
+    kind: PersonalSourceKind,
     through: u64,
     actor: String,
     id: String,
@@ -45,7 +44,9 @@ impl Store {
                     edit,
                     product.changes(),
                     &product.retain_history(),
-                    replacement.as_ref().map(|row| row.record.as_str()),
+                    replacement
+                        .as_ref()
+                        .map(|row| (row.kind, row.record.as_str())),
                 )
             })
             .transpose()
@@ -68,29 +69,38 @@ impl Store {
         product: &RuntimePreparedProducts<'_>,
         invalidates: bool,
     ) -> Result<Option<PreparedReplacement>, openlegend_simulation::runtime::RuntimeError> {
-        let Some((actor, id, previous, decoder)) = product.memory_replacement(&self.budget)? else {
+        let Some((kind, actor, id, previous, decoder)) =
+            product.person_replacement(&self.budget)?
+        else {
             return Ok(None);
         };
         (|| -> StoreResult<_> {
             let progress = product.progress();
             let records = product.changes();
-            let table = KIND.table();
+            let table = kind.table();
             let [row] = records.writes.get(table).map_or(&[][..], Vec::as_slice) else {
                 return Err(StoreError::DerivedProjectionRequired);
             };
             if row.create
-                || ["mind_awareness", "mind_summaries"]
+                || ["mind_awareness", "mind_memories", "mind_summaries"]
                     .into_iter()
+                    .filter(|name| *name != table)
                     .any(|name| records.writes.contains_key(name))
                 || [
-                    table,
+                    "mind_memories",
                     "mind_awareness",
                     "mind_forgotten",
                     "mind_corrections",
                 ]
                 .into_iter()
                 .any(|name| records.deletes.contains_key(name))
-                || !invalidates && records.deletes.contains_key("mind_summaries")
+                || records
+                    .deletes
+                    .get("mind_summaries")
+                    .is_some_and(|deletes| {
+                        !invalidates
+                            || kind == PersonalSourceKind::Summary && deletes.contains(&row.id)
+                    })
             {
                 return Err(StoreError::DerivedProjectionRequired);
             }
@@ -135,7 +145,7 @@ impl Store {
                 .map_err(|_| StoreError::Capacity)?;
             let placement = compile_placement(
                 progress.world_id,
-                KIND,
+                kind,
                 AccountImage {
                     record: &row.id,
                     actor,
@@ -156,6 +166,7 @@ impl Store {
             Ok(Some(PreparedReplacement {
                 world: progress.world_id.into(),
                 generation: progress.generation.into(),
+                kind,
                 through: progress.through_cut,
                 actor: actor.into(),
                 id: id.into(),
@@ -218,8 +229,8 @@ impl PrefixProjection for EditorProjection<'_> {
             return Err(StoreError::StaleCut);
         }
         let current: bool = tx.query_one(
-            "SELECT EXISTS(SELECT 1 FROM recall_sources WHERE world_id=$1 AND actor_id=$2 AND id=$3 AND source_kind='memory' AND record_id=$4 AND revision=$5)",
-            &[&row.world, &row.actor, &row.id, &row.record, &row.previous],
+            "SELECT EXISTS(SELECT 1 FROM recall_sources WHERE world_id=$1 AND actor_id=$2 AND id=$3 AND source_kind=$4 AND record_id=$5 AND revision=$6)",
+            &[&row.world, &row.actor, &row.id, &source_kind(row.kind), &row.record, &row.previous],
         ).await?.try_get(0)?;
         if !current {
             return Err(StoreError::StaleCut);
@@ -229,7 +240,7 @@ impl PrefixProjection for EditorProjection<'_> {
             &[
                 &row.world,
                 &std::slice::from_ref(&row.record),
-                &"memory",
+                &source_kind(row.kind),
                 &Some(row.actor.as_str()),
             ],
         )
@@ -257,7 +268,7 @@ impl PrefixProjection for EditorProjection<'_> {
             .insert_retained_accounts(
                 tx,
                 &row.world,
-                "memory",
+                source_kind(row.kind),
                 row.hard_bytes,
                 std::slice::from_ref(&row.placement),
             )

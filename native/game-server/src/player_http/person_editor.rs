@@ -39,6 +39,7 @@ struct SaveChange {
     operation: SaveOperation,
     importance: Option<f64>,
     summary: Option<JsText>,
+    text: Option<JsText>,
 }
 
 #[derive(Deserialize)]
@@ -49,12 +50,16 @@ enum SaveOperation {
 }
 
 impl SaveChange {
-    fn into_edit(self) -> Option<PersonMemoryEdit> {
-        match (self.operation, self.importance, self.summary) {
-            (SaveOperation::Update, Some(importance), summary) => Some(PersonMemoryEdit::Update {
-                importance,
-                summary,
-            }),
+    fn into_edit(self, kind: PersonalSourceKind) -> Option<PersonMemoryEdit> {
+        let wording = match kind {
+            PersonalSourceKind::Memory if self.text.is_none() => self.summary,
+            PersonalSourceKind::Summary if self.summary.is_none() => self.text,
+            _ => return None,
+        };
+        match (self.operation, self.importance, wording) {
+            (SaveOperation::Update, Some(importance), text) => {
+                Some(PersonMemoryEdit::Update { importance, text })
+            }
             (SaveOperation::Forget, None, None) => Some(PersonMemoryEdit::Forget),
             _ => None,
         }
@@ -140,9 +145,14 @@ async fn actor(
         .map_err(WorldError::Access)
 }
 
-fn memory_id(id: &str) -> Option<&str> {
-    let id = id.strip_prefix("memory:")?;
-    is_safe_record_id(id).then_some(id)
+fn editable_id(id: &str) -> Option<(PersonalSourceKind, &str)> {
+    let (tag, id) = id.split_once(':')?;
+    let kind = match tag {
+        "memory" => PersonalSourceKind::Memory,
+        "summary" => PersonalSourceKind::Summary,
+        _ => return None,
+    };
+    is_safe_record_id(id).then_some((kind, id))
 }
 
 fn changed() -> Response {
@@ -170,7 +180,7 @@ pub(super) async fn read(State(state): State<PlayerRoutes>, request: Request) ->
     let detail = parts.uri.path().ends_with("/memory");
     let exact = match (detail, input.entry_id.as_deref()) {
         (false, None) => None,
-        (true, Some(id)) if input.before.is_none() => match memory_id(id) {
+        (true, Some(id)) if input.before.is_none() => match editable_id(id) {
             Some(id) => Some(id),
             None => return changed(),
         },
@@ -196,7 +206,7 @@ async fn read_cut(
     selected: &Arc<AuthorizedScope>,
     actor: &str,
     before: Option<&str>,
-    exact: Option<&str>,
+    exact: Option<(PersonalSourceKind, &str)>,
 ) -> Result<PlayerDisclosure, WorldError> {
     let world = &state.game.world;
     let (history, cut) = world
@@ -225,7 +235,7 @@ async fn read_cut(
             }
             let position: MemoryPosition =
                 serde_json::from_str(json).map_err(|_| WorldError::ProjectionChanged)?;
-            if position.kind != PersonalSourceKind::Memory
+            if position.kind == PersonalSourceKind::Awareness
                 || !position.at.is_finite()
                 || !is_safe_record_id(&position.id)
             {
@@ -237,7 +247,7 @@ async fn read_cut(
     let mut rows = state
         .game
         .store
-        .editor_memory_rows(cut, position, exact.map(str::to_owned))
+        .editor_memory_rows(cut, position, exact.map(|(kind, id)| (kind, id.to_owned())))
         .await?;
     let count = rows.references.len();
     if exact.is_some() && count != 1 {
@@ -315,16 +325,41 @@ async fn read_cut(
 }
 
 fn memory<'a>(reference: &'a PersonalSourceRef, payload: &str) -> Result<Memory<'a>, StoreError> {
+    if reference.kind == PersonalSourceKind::Summary {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Summary {
+            to: f64,
+            text: JsText,
+            entity_ids: Vec<String>,
+        }
+        let Summary {
+            to,
+            text,
+            entity_ids,
+        } = serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
+        return Ok(Memory {
+            id: format!("summary:{}", reference.id),
+            hash: &reference.revision,
+            time: to,
+            text,
+            tags: std::iter::once("reflection".to_owned())
+                .chain(entity_ids)
+                .collect(),
+            source: "summary",
+            label: "Consolidated",
+        });
+    }
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
-    struct Summary {
+    struct Body {
         at: f64,
         kind: String,
         source: String,
         summary: JsText,
         entity_ids: Vec<String>,
     }
-    let Summary {
+    let Body {
         at,
         kind,
         source,
@@ -366,18 +401,18 @@ pub(super) async fn save(State(state): State<PlayerRoutes>, request: Request) ->
         Ok(input) => input,
         Err(error) => return error,
     };
-    let Some(id) = memory_id(&input.entry_id) else {
+    let Some((kind, id)) = editable_id(&input.entry_id) else {
         return changed();
     };
     let reference = PersonalSourceRef {
-        kind: PersonalSourceKind::Memory,
+        kind,
         id: id.into(),
         revision: input.expected_hash,
     };
-    let Some(change) = input.change.into_edit() else {
+    let Some(change) = input.change.into_edit(kind) else {
         return request_error();
     };
-    if !reference.validate() || !change.valid() {
+    if !reference.validate() || !change.valid(kind) {
         return refusal(
             StatusCode::BAD_REQUEST,
             "invalid-memory",

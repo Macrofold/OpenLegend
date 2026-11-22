@@ -7,6 +7,7 @@ use super::read::admitted_query;
 use super::{PrefixProjection, Store, StoreError, StoreResult};
 use indexmap::IndexMap;
 use openlegend_simulation::encoding::{json_record, json_record_len};
+use openlegend_simulation::experience::PersonalSourceKind;
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::records::{ChangedRows, SaveRows, SqlCell};
 use openlegend_simulation::runtime::{RuntimeHistory, RuntimePrivacyEdit};
@@ -24,7 +25,7 @@ pub(crate) struct PreparedPrivacyEdit {
     invalidated: Vec<String>,
     principal: Option<String>,
     base_cut: u64,
-    rewritten_memory: Option<String>,
+    rewritten_source: Option<(PersonalSourceKind, String)>,
     _custody: ByteReservation,
 }
 
@@ -34,7 +35,7 @@ impl PreparedPrivacyEdit {
         edit: RuntimePrivacyEdit<'_>,
         changes: &ChangedRows,
         history: &RuntimeHistory,
-        rewritten_memory: Option<&str>,
+        rewritten_source: Option<(PersonalSourceKind, &str)>,
     ) -> StoreResult<Self> {
         let principal = history.story_principal(edit.actor_id);
         let bytes = edit
@@ -48,7 +49,7 @@ impl PreparedPrivacyEdit {
             )
             .chain(edit.invalidated_ids())
             .chain(principal)
-            .chain(rewritten_memory)
+            .chain(rewritten_source.map(|(_, id)| id))
             .chain(std::iter::once(edit.actor_id))
             .try_fold(size_of::<Self>(), |used, value| {
                 used.checked_add(value.len())?.checked_add(128)
@@ -68,7 +69,7 @@ impl PreparedPrivacyEdit {
             invalidated: edit.invalidated_ids().map(str::to_owned).collect(),
             principal: principal.map(str::to_owned),
             base_cut: history.base_cut(),
-            rewritten_memory: rewritten_memory.map(str::to_owned),
+            rewritten_source: rewritten_source.map(|(kind, id)| (kind, id.to_owned())),
             _custody: custody,
         };
         projection.check_rows(changes)?;
@@ -76,20 +77,18 @@ impl PreparedPrivacyEdit {
     }
 
     fn check_rows(&self, changes: &ChangedRows) -> StoreResult<()> {
-        // Prose editing may replace its independently prepared memory row.
-        // The protected invalidation writer still refuses all other body writes.
-        let memories = changes.writes.get(MEMORY).map_or(&[][..], Vec::as_slice);
-        let exact = match (self.rewritten_memory.as_deref(), memories) {
-            (None, []) => true,
-            (Some(id), [row]) => !row.create && row.id == id,
-            _ => false,
-        };
-        if !exact
-            || [AWARENESS, SUMMARY]
-                .iter()
-                .any(|table| changes.writes.contains_key(*table))
-        {
-            return Err(StoreError::DerivedProjectionRequired);
+        // A protected edit may only write the one selected canonical replacement.
+        for table in [AWARENESS, MEMORY, SUMMARY] {
+            let rows = changes.writes.get(table).map_or(&[][..], Vec::as_slice);
+            let expected = self
+                .rewritten_source
+                .as_ref()
+                .filter(|(kind, _)| kind.table() == table);
+            match (expected, rows) {
+                (None, []) => (),
+                (Some((_, id)), [row]) if !row.create && row.id == *id => (),
+                _ => return Err(StoreError::DerivedProjectionRequired),
+            }
         }
         Ok(())
     }

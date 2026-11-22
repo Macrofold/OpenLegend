@@ -52,32 +52,27 @@ impl NativeWorldSession {
 pub enum PersonMemoryEdit {
     Update {
         importance: f64,
-        summary: Option<crate::text::JsText>,
+        text: Option<crate::text::JsText>,
     },
     Forget,
 }
 impl PersonMemoryEdit {
     pub fn withdraws_source(&self) -> bool {
-        matches!(
-            self,
-            Self::Forget
-                | Self::Update {
-                    summary: Some(_),
-                    ..
-                }
-        )
+        matches!(self, Self::Forget | Self::Update { text: Some(_), .. })
     }
 
-    pub fn valid(&self) -> bool {
+    pub fn valid(&self, kind: crate::experience::PersonalSourceKind) -> bool {
         match self {
-            Self::Update {
-                importance,
-                summary,
-            } => {
+            Self::Update { importance, text } => {
                 (0.0..=10.0).contains(importance)
-                    && summary
-                        .as_ref()
-                        .is_none_or(|text| text.character_count() <= 32_768)
+                    && text.as_ref().is_none_or(|text| {
+                        text.character_count()
+                            <= if kind == crate::experience::PersonalSourceKind::Memory {
+                                32_768
+                            } else {
+                                20_000
+                            }
+                    })
             }
             Self::Forget => true,
         }
@@ -95,10 +90,10 @@ impl NativeWorldSession {
         edit: PersonMemoryEdit,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
-        if reference.kind != crate::experience::PersonalSourceKind::Memory
+        if reference.kind == crate::experience::PersonalSourceKind::Awareness
             || !reference.validate()
             || !crate::values::is_safe_record_id(&reference.id)
-            || !edit.valid()
+            || !edit.valid(reference.kind)
         {
             return Err(failure("invalid memory edit"));
         }
@@ -109,20 +104,23 @@ impl NativeWorldSession {
         let mode = match edit {
             PersonMemoryEdit::Update {
                 importance,
-                summary: None,
+                text: None,
             } => PrivacyEditMode::Rank {
+                kind: reference.kind,
                 revision: reference.revision,
                 importance,
             },
             PersonMemoryEdit::Update {
                 importance,
-                summary: Some(summary),
+                text: Some(text),
             } => PrivacyEditMode::Rewrite {
+                kind: reference.kind,
                 revision: reference.revision,
                 importance,
-                summary,
+                text,
             },
-            PersonMemoryEdit::Forget => PrivacyEditMode::ForgetMemory {
+            PersonMemoryEdit::Forget => PrivacyEditMode::ForgetSource {
+                kind: reference.kind,
                 revision: reference.revision,
             },
         };
@@ -133,17 +131,27 @@ impl NativeWorldSession {
 }
 
 impl RuntimePreparedProducts<'_> {
-    pub fn memory_replacement<'a>(
+    pub fn person_replacement<'a>(
         &'a self,
         budget: &'a ByteBudget,
-    ) -> Result<Option<(&str, &str, &str, RuntimeRecallDecoder<'a>)>, RuntimeError> {
+    ) -> Result<
+        Option<(
+            crate::experience::PersonalSourceKind,
+            &str,
+            &str,
+            &str,
+            RuntimeRecallDecoder<'a>,
+        )>,
+        RuntimeError,
+    > {
         let CompletedOperation::RecallEdit(edit) = self.operation else {
             return Ok(None);
         };
-        let Some(old_revision) = edit.replacement_revision() else {
+        let Some((kind, old_revision)) = edit.replacement() else {
             return Ok(None);
         };
         Ok(Some((
+            kind,
             edit.actor_id(),
             edit.source_id(),
             old_revision,

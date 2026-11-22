@@ -4,17 +4,17 @@ use super::*;
 
 const PAGE: usize = 100;
 const SELECT: &str = "SELECT r.at,r.id,r.source_kind,r.revision FROM recall_sources r
-    WHERE r.world_id=$1 AND r.actor_id=$2 AND r.source_kind='memory' AND r.at<=$3
-      AND ($4::double precision IS NULL OR (r.at,r.id)<($4,$5))
-      AND ($6::text IS NULL OR r.id=$6)
-    ORDER BY r.at DESC,r.id DESC LIMIT $7";
+    WHERE r.world_id=$1 AND r.actor_id=$2 AND r.source_kind IN ('memory','summary') AND r.at<=$3
+      AND ($4::double precision IS NULL OR (r.at,r.id,r.source_kind)<($4,$5,$6))
+      AND ($7::text IS NULL OR (r.id,r.source_kind)=($7,$8))
+    ORDER BY r.at DESC,r.id DESC,r.source_kind DESC LIMIT $9";
 
 impl Store {
     pub(crate) async fn editor_memory_rows(
         &self,
         cut: Arc<MemoryBrowseCut>,
         before: Option<MemoryPosition>,
-        exact: Option<String>,
+        exact: Option<(PersonalSourceKind, String)>,
     ) -> StoreResult<MemoryPage> {
         let budget = self.budget.clone();
         self.read_isolated(move |tx| {
@@ -36,7 +36,9 @@ impl Store {
                         &cut.at,
                         &before.as_ref().map(|row| row.at),
                         &before.as_ref().map(|row| row.id.as_str()),
-                        &exact.as_deref(),
+                        &before.as_ref().map(|row| source_kind(row.kind)),
+                        &exact.as_ref().map(|(_, id)| id.as_str()),
+                        &exact.as_ref().map(|(kind, _)| source_kind(*kind)),
                         &(count as i64),
                     ],
                     &budget,
@@ -54,7 +56,7 @@ impl Store {
                         .resize(custody.bytes() + id.len() * 2 + revision.len())
                         .map_err(|_| StoreError::Capacity)?;
                     let reference = PersonalSourceRef {
-                        kind: PersonalSourceKind::Memory,
+                        kind: decode_kind(row.try_get(2)?)?,
                         id: id.to_owned(),
                         revision: revision.to_owned(),
                     };

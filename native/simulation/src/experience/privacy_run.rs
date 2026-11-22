@@ -12,17 +12,20 @@ use crate::worlds::RecognitionPrivacyPreparation;
 
 pub(crate) enum PrivacyEditMode {
     Forget,
-    ForgetMemory {
+    ForgetSource {
+        kind: PersonalSourceKind,
         revision: String,
     },
     Rank {
+        kind: PersonalSourceKind,
         revision: String,
         importance: f64,
     },
     Rewrite {
+        kind: PersonalSourceKind,
         revision: String,
         importance: f64,
-        summary: crate::text::JsText,
+        text: crate::text::JsText,
     },
     InvalidateProse,
     Correct {
@@ -72,17 +75,19 @@ pub(crate) struct PrivacyEditCursor {
 }
 impl PrivacyEditMode {
     pub(super) fn forgets(&self) -> bool {
-        matches!(self, Self::Forget | Self::ForgetMemory { .. })
+        matches!(self, Self::Forget | Self::ForgetSource { .. })
     }
 
     pub(super) fn retained_bytes(&self) -> usize {
         match self {
             Self::Forget | Self::InvalidateProse => 0,
-            Self::Rewrite {
-                revision, summary, ..
-            } => revision.capacity().saturating_add(summary.storage_bytes()),
+            Self::Rewrite { revision, text, .. } => {
+                revision.capacity().saturating_add(text.storage_bytes())
+            }
             Self::Correct { event_id } => event_id.capacity(),
-            Self::ForgetMemory { revision } | Self::Rank { revision, .. } => revision.capacity(),
+            Self::ForgetSource { revision, .. } | Self::Rank { revision, .. } => {
+                revision.capacity()
+            }
         }
     }
 }
@@ -381,7 +386,7 @@ fn begin(
                 return Err(ExecutionError::Invariant);
             }
             PrivacyEditMode::InvalidateProse => (),
-            PrivacyEditMode::Forget | PrivacyEditMode::ForgetMemory { .. } => {
+            PrivacyEditMode::Forget | PrivacyEditMode::ForgetSource { .. } => {
                 core.journal
                     .experience
                     .forget_alias(&mut core.state.experience, &actor, id)?;

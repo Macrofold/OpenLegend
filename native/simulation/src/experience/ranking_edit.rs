@@ -1,19 +1,20 @@
-//! Replace only an exact acquired memory’s editable text and importance.
+//! Replace only an exact acquired recollection’s editable text and importance.
 //! The caller owns dependent invalidation when the prose changes.
 use super::*;
 use crate::{execution::CoreMutation, host::ByteBudget};
 
-/// Borrow only the current canonical memory with the selected exact revision.
-pub(super) fn current_memory<'a>(
+/// Borrow only the current canonical recollection with the selected exact revision.
+pub(super) fn current_source<'a>(
     core: &'a CoreMutation<'_>,
     actor: &str,
+    kind: PersonalSourceKind,
     id: &str,
     expected: &str,
 ) -> Result<Option<&'a Arc<PersonalSourceRecord>>, ExperienceError> {
     Ok(core
         .state
         .experience
-        .optional_collection(actor, PersonalSourceKind::Memory)?
+        .optional_collection(actor, kind)?
         .and_then(|collection| {
             collection
                 .lookup
@@ -26,12 +27,13 @@ pub(super) fn current_memory<'a>(
 pub(super) fn prose_changed(
     core: &CoreMutation<'_>,
     actor: &str,
+    kind: PersonalSourceKind,
     id: &str,
     expected: &str,
-    summary: &crate::text::JsText,
+    text: &crate::text::JsText,
     budget: &ByteBudget,
 ) -> Result<Option<bool>, memory::MemoryAcquisitionError> {
-    let Some(memory) = current_memory(core, actor, id, expected)? else {
+    let Some(memory) = current_source(core, actor, kind, id, expected)? else {
         return Ok(None);
     };
     let _work = budget
@@ -39,24 +41,25 @@ pub(super) fn prose_changed(
         .map_err(|_| ExperienceError::Capacity)?;
     let body = memory::MemoryBody::decode(memory.payload())?;
     let current = body
-        .get::<crate::text::JsText>("summary")?
+        .get::<crate::text::JsText>(text_field(kind))?
         .ok_or(ExperienceError::InvalidBody("memory summary"))?;
-    Ok(Some(current != *summary))
+    Ok(Some(current != *text))
 }
 
-pub(super) fn replace_memory(
+pub(super) fn replace_source(
     core: &mut CoreMutation<'_>,
     actor: &str,
+    kind: PersonalSourceKind,
     id: &str,
     expected: &str,
     importance: f64,
-    summary: Option<&crate::text::JsText>,
+    text: Option<&crate::text::JsText>,
     budget: &ByteBudget,
 ) -> Result<bool, memory::MemoryAcquisitionError> {
-    let Some(before) = current_memory(core, actor, id, expected)?.cloned() else {
+    let Some(before) = current_source(core, actor, kind, id, expected)?.cloned() else {
         return Ok(false);
     };
-    let added = summary
+    let added = text
         .map_or(Some(0), |text| text.storage_bytes().checked_mul(12))
         .ok_or(ExperienceError::Capacity)?;
     let _work = budget
@@ -67,20 +70,29 @@ pub(super) fn replace_memory(
         )
         .map_err(|_| ExperienceError::Capacity)?;
     let mut body = memory::MemoryBody::decode(before.payload())?;
-    if summary.is_none() && body.get::<f64>("importance")? == Some(importance) {
+    if text.is_none() && body.get::<f64>("importance")? == Some(importance) {
         // Repeating a successful edit still requires the exact new hash.
         return Ok(false);
     }
     body.set("importance", &importance)?;
-    if let Some(summary) = summary {
-        body.set("summary", summary)?;
+    if let Some(text) = text {
+        body.set(text_field(kind), text)?;
+    }
+    if kind == PersonalSourceKind::Summary {
+        let revision = body
+            .get::<u64>("revision")?
+            .unwrap_or(0)
+            .checked_add(1)
+            .filter(|value| *value <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or(crate::execution::ExecutionError::Identity)?;
+        body.set("revision", &revision)?;
     }
     let payload = body.encoded()?;
     let projected = body.projection()?;
     let state = &mut core.state;
     let policy = &state.installed.attention.value().retention;
     let law = state.installed.account_law();
-    let header = memory::source_header(&projected, actor, &payload, &law)?;
+    let header = header(&projected, kind, actor, &payload, &law)?;
     let extra = memory::memory_columns(
         &projected,
         &header,
@@ -93,7 +105,7 @@ pub(super) fn replace_memory(
     .map(Into::into)
     .collect();
     let after = PersonalSourceRecord::install(
-        PersonalSourceKind::Memory,
+        kind,
         actor,
         InstalledRow {
             id: before.row_id.clone(),
@@ -127,7 +139,7 @@ pub(super) fn replace_memory(
     core.journal
         .experience
         .replace(&mut state.experience, &before.header.reference, after)?;
-    if summary.is_some() {
+    if text.is_some() {
         // The enclosing invalidation advances the actor and physical revisions.
         return Ok(true);
     }
@@ -145,4 +157,11 @@ pub(super) fn replace_memory(
         .filter(|revision| *revision <= crate::identity::MAX_SAFE_INTEGER)
         .ok_or(crate::execution::ExecutionError::Identity)?;
     Ok(true)
+}
+
+fn text_field(kind: PersonalSourceKind) -> &'static str {
+    match kind {
+        PersonalSourceKind::Memory => "summary",
+        PersonalSourceKind::Summary | PersonalSourceKind::Awareness => "text",
+    }
 }
