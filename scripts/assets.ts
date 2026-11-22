@@ -242,6 +242,7 @@ async function run(): Promise<void> {
   serve [--port PORT] [--page /art-study.html]
   login --page /restricted/curated-private/PUBLISHED/PAGE.html
   install --operation ID [--origin http://127.0.0.1:3211]
+  mount-runtime [--public] --server-release DIRECTORY --output NEW_DIRECTORY
   authority-export --output /outside/repository/current-authority.json
   recovery-initialize --output /outside/repository/authority-work
   recovery-create --operation CHECKPOINT --output /outside/repository/checkpoint-work [--source-config FROZEN_ENV_CONFIG]
@@ -297,6 +298,48 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
           2,
         ),
       );
+    return;
+  }
+  if (command === 'mount-runtime') {
+    if (values.index || values.path || values.prefix || values.all)
+      throw new Error('The runtime mount uses the complete index pinned by --server-release.');
+    const { prepareRuntimeMount, readRuntimeMountInput } = await import(
+      './assets/runtime-mount.js'
+    );
+    const release = await readRuntimeMountInput(
+      resolve(required('server-release')),
+      required('output'),
+    );
+    const resolver = await createAssetResolver({
+      ...resolverOptions,
+      indexPath: release.indexPath,
+      purpose: 'runtime',
+      publicOnly: values.public === true,
+    });
+    const prepare = (authorize?: (reference?: ArtifactReference) => Promise<void>) =>
+      prepareRuntimeMount({
+        ...release,
+        maximumBytes: configuration.publication.maxBytes,
+        maximumFiles: configuration.publication.maxFiles,
+        resolver,
+        ...(authorize ? { authorize } : {}),
+      });
+    try {
+      const result = values.public
+        ? await prepare()
+        : await repository(
+            (repo, _storage, principal) =>
+              prepare(async (reference) => {
+                if (reference)
+                  await repo.authorizeArtifact(principal, release.index.release, reference);
+                else await repo.revision(release.index.release, principal);
+              }),
+            true,
+          );
+      console.log(JSON.stringify({ operation: command, ...result }));
+    } finally {
+      await resolver.close();
+    }
     return;
   }
   if (['pull', 'verify', 'workspace'].includes(command)) {

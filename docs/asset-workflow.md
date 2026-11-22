@@ -138,6 +138,18 @@ For local authentication, `pnpm assets install --operation selected-art-release`
 
 A clean code checkout can pull, verify and copy explicitly public files with `--public` without AWS credentials or PostgreSQL. Running a world has an additional prerequisite: its owning PostgreSQL database must contain the real records of the selected release's publication and current permissions. Downloading public bytes does not create those records or grant game installation. On a fresh machine, restore the verified publication catalog and reconcile the independently current authority through the recovery workflow below before creating the world or installing its release. An existing local world uses its existing owning database; ordinary asset installation does not require resetting it.
 
+### Prepare the Rust runtime asset mount
+
+After building the Rust release, prepare its exact `assets.json` selection once in a new directory outside Git and outside the public browser build:
+
+```sh
+pnpm assets mount-runtime --server-release /external/release --output /external/runtime-assets
+```
+
+The operator command uses the existing asset identity and current catalog permissions. Use `--public` only for an entirely public runtime release. It can use the shared download cache, then copies each distinct checked file into the read-only mount. The Rust-visible files appear together after the complete selection passes. A failed preparation leaves no usable partial mount and preserves any existing destination. Prepare a different destination for another release.
+
+Give the Rust process read access to that directory and set `OPEN_LEGEND_RUNTIME_ASSET_ROOT=/external/runtime-assets` when running `openlegend-game-server serve /external/release`. The mounted files and the installed release are inputs to the server. Current sign-in and catalog permission still govern download and selection. Preparation grants no world access and changes neither the saved artwork selection nor the publication catalog. The server needs no Node process or storage credential to serve these mounted files.
+
 ## Preserve and remove repository payloads
 
 Before removal, inventory current tracked media, embedded payloads, generated geometry, historical changes and linked local sources. Freeze the approved history scope, preserve exact sources and provenance, publish the intended study/runtime copies, verify complete dependency closure, and qualify isolated recovery. Historical comparison pages must retain their original assets and the limits of their original verification. Missing original evidence must be identified explicitly; do not silently replace it with a different iteration.
