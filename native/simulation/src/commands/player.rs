@@ -108,7 +108,8 @@ impl RuntimePlayerCommand<'_> {
             Self::LearnRecord(record) => record.item_id.len() + record.record_pin.id.len() + record.record_pin.digest.len(),
             Self::InspectItem { item, container, .. } => item.len() + container.len(),
             Self::InspectStorage { root, after, expected_scope, .. } => root.len() + after.map_or(0, str::len) + expected_scope.map_or(0, crate::text::JsText::storage_bytes),
-            Self::TransferItem(selection) => selection.item_id.len() + selection.target_id.len(),
+            Self::TransferItem(selection) => selection.item_id.len() + selection.target_id.len()
+                + selection.world_storage.map_or(0, str::len),
             Self::MoveGroup(selection, group) =>
                 selection.item_id.len() + selection.target_id.len() + group_text_bytes(group),
             Self::Eat(item) | Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
@@ -460,6 +461,11 @@ fn bind_transfer(
     if !headers.valid()
         || !crate::values::is_safe_record_id(selection.item_id)
         || !crate::values::is_safe_record_id(selection.target_id)
+        || selection.world_storage.is_some_and(|root| {
+            group.is_some()
+                || selection.arrangement != OwnedArrangement::Move
+                || !crate::values::is_safe_record_id(root)
+        })
     {
         return Err(serde::ser::Error::custom("Invalid item move."));
     }
@@ -469,7 +475,8 @@ fn bind_transfer(
         human_initiated: true, id, kind: selection.arrangement.command_type(),
     };
     let encoding = CommandEncoding::from_ordered(
-        &input, 10 + usize::from(selection.expected_contents_revision.is_some()) + usize::from(group.is_some()),
+        &input, 10 + usize::from(selection.expected_contents_revision.is_some())
+            + usize::from(selection.world_storage.is_some()) + usize::from(group.is_some()),
     )?;
     let signature = encoding.json.get().to_owned();
     Ok((NativeCommand::TransferItem {

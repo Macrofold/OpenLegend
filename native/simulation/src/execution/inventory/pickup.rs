@@ -68,6 +68,7 @@ pub(super) struct DirectRelocation<'a> {
     pub destination: &'a str,
     pub actor: &'a str,
     pub source_owner: Option<&'a str>,
+    pub destination_owner: Option<&'a str>,
     pub item: &'a str,
     pub quantity: u64,
     pub cause: &'a str,
@@ -133,8 +134,8 @@ impl CoreMutation<'_> {
         let source_owner = self.state.physical.entities.get(source)
             .is_some_and(|entity| entity.actor.is_some()).then_some(source);
         self.relocate_stock(DirectRelocation {
-            source, destination: actor, actor, source_owner, item, quantity, cause, merge_receiving_lot,
-            publish_contents: true,
+            source, destination: actor, actor, source_owner, item, quantity, cause,
+            destination_owner: Some(actor), merge_receiving_lot, publish_contents: true,
         })
     }
 
@@ -145,7 +146,7 @@ impl CoreMutation<'_> {
         request: DirectRelocation<'_>,
     ) -> Result<Option<String>, ExecutionError> {
         let DirectRelocation {
-            source, destination, actor, source_owner, item, quantity, cause, merge_receiving_lot, publish_contents,
+            source, destination, actor, source_owner, destination_owner, item, quantity, cause, merge_receiving_lot, publish_contents,
         } = request;
         let installed = self.state.installed.clone();
         let entities = &self.state.physical.entities;
@@ -201,7 +202,7 @@ impl CoreMutation<'_> {
         };
         self.relocate_contained_lot(source, destination, &moving, publish_contents)?;
         if let Some(receiver) = receiver {
-            self.merge_direct_lots(destination, actor, &moving, &receiver, quantity, cause)?;
+            self.merge_direct_lots(destination, destination_owner, &moving, &receiver, quantity, cause)?;
             Ok(Some(receiver))
         } else {
             Ok(Some(moving))
@@ -225,13 +226,13 @@ impl CoreMutation<'_> {
     /// Merge two admitted direct lots. Ancestor packing and revisions stay
     /// with the caller that owns the entire arrangement.
     pub(super) fn merge_direct_lots(
-        &mut self, parent: &str, custodian: &str, source: &str, target: &str,
+        &mut self, parent: &str, custodian: Option<&str>, source: &str, target: &str,
         quantity: u64, cause: &str,
     ) -> Result<(), ExecutionError> {
         self.transfer_activity_sources(source, target, quantity, quantity)?;
         self.grow_direct_lot(parent, target, quantity, false)?;
         self.debit_inventory_lot(parent, source, quantity, LotDebit {
-            cause, custodian: Some(custodian), target: Some((LineageKind::Merge, target)),
+            cause, custodian, target: Some((LineageKind::Merge, target)),
         })
     }
 

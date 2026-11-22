@@ -1204,7 +1204,7 @@ impl CommandCursor {
                             }
                         }
                         NativeCommand::InspectInventory { world: Some(_), .. } => {
-                            if self.start_storage_inspection(core, &actor_id)? { return Ok(Progress::Geometry); }
+                            if self.start_storage_access(core, &actor_id)? { return Ok(Progress::Geometry); }
                         }
                         NativeCommand::InspectInventory { selected: Some(_), .. } => {
                             if let Some(event) = self.inspect_item(core, &actor_id)? {
@@ -1333,6 +1333,11 @@ impl CommandCursor {
                         }
                         NativeCommand::Drop { .. } => {
                             if self.prepare_drop(core, &actor_id)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
+                        NativeCommand::TransferItem { selection, .. } if selection.world_storage.is_some() => {
+                            if self.start_storage_access(core, &actor_id)? {
                                 return Ok(Progress::Geometry);
                             }
                         }

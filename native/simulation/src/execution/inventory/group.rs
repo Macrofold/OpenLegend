@@ -244,6 +244,7 @@ impl CoreMutation<'_> {
                     destination: target,
                     actor: actor_id,
                     source_owner: Some(actor_id),
+                    destination_owner: Some(actor_id),
                     item: &member.item_id,
                     quantity: member.quantity,
                     cause,

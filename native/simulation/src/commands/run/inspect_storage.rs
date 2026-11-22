@@ -1,5 +1,5 @@
-//! A deliberate, bounded world inspection. The ordinary command owns sight,
-//! reach, exact continuation, private acquisitions and the accepted page.
+//! Deliberate world storage access uses one sight and reach path. Inspection
+//! additionally owns its bounded page and private acquisitions.
 use super::inspect_item::{ItemEvidence, ItemPlace, prepare_item_evidence};
 use super::*;
 use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
@@ -34,20 +34,39 @@ impl PreparedStorage {
 }
 
 impl CommandCursor {
-    pub(super) fn start_storage_inspection(
+    fn storage_root(&self) -> Result<&str, ExecutionError> {
+        match &self.command {
+            NativeCommand::InspectInventory {
+                world: Some(selected),
+                ..
+            } => Ok(&selected.root),
+            NativeCommand::TransferItem {
+                selection,
+                group: None,
+                ..
+            } => selection
+                .world_storage
+                .as_deref()
+                .ok_or(ExecutionError::Invariant),
+            _ => Err(ExecutionError::Invariant),
+        }
+    }
+
+    fn refuse_storage_access(&mut self) -> Result<(), ExecutionError> {
+        if matches!(self.command, NativeCommand::TransferItem { .. }) {
+            self.refuse_arrangement(crate::execution::OwnedMoveError::Unavailable)
+        } else {
+            self.refuse_inspection()
+        }
+    }
+
+    pub(super) fn start_storage_access(
         &mut self,
         core: &mut CoreMutation<'_>,
         actor: &str,
     ) -> Result<bool, ExecutionError> {
-        let NativeCommand::InspectInventory {
-            world: Some(selected),
-            ..
-        } = &self.command
-        else {
-            return Err(ExecutionError::Invariant);
-        };
-        if WorldStorage::selected(&core.state, actor, &selected.root).is_none() {
-            self.refuse_inspection()?;
+        if WorldStorage::selected(&core.state, actor, self.storage_root()?).is_none() {
+            self.refuse_storage_access()?;
             return Ok(false);
         }
         self.binding.serial = core.journal.next_provider_serial()?;
@@ -56,7 +75,7 @@ impl CommandCursor {
                 &core.state.physical,
                 &core.state.installed,
                 actor,
-                &[&selected.root],
+                &[self.storage_root()?],
                 self.binding,
                 &self.budget,
             )
@@ -78,15 +97,9 @@ impl CommandCursor {
             .ok_or(ExecutionError::Invariant)?
             .finish(answer)
             .map_err(|_| ExecutionError::Invariant)?;
-        let NativeCommand::InspectInventory {
-            world: Some(selected),
-            ..
-        } = &self.command
-        else {
-            return Err(ExecutionError::Invariant);
-        };
-        let ray = if sight.seen(&selected.root) == Some(true) {
-            WorldStorage::selected(&core.state, actor, &selected.root)
+        let root = self.storage_root()?;
+        let ray = if sight.seen(root) == Some(true) {
+            WorldStorage::selected(&core.state, actor, root)
                 .map(|root| root.reach(&self.budget))
                 .transpose()?
                 .flatten()
@@ -98,7 +111,7 @@ impl CommandCursor {
             self.question(core, Phase::StorageReach)?.sight.push(ray);
             return Ok(Progress::Geometry);
         }
-        self.refuse_inspection()?;
+        self.refuse_storage_access()?;
         self.drive(core, None)
     }
 
@@ -113,7 +126,13 @@ impl CommandCursor {
             .validate_answers(&answer)
             .map_err(|_| ExecutionError::Invariant)?;
         if answer.sight.as_slice() != [true] {
-            self.refuse_inspection()?;
+            self.refuse_storage_access()?;
+            return self.drive(core, None);
+        }
+        if matches!(self.command, NativeCommand::TransferItem { .. }) {
+            if let Some(event) = self.transfer_item(core, actor)? {
+                return Ok(Progress::Occurrence(event));
+            }
             return self.drive(core, None);
         }
         let NativeCommand::InspectInventory {

@@ -181,7 +181,63 @@ impl<'a> RuntimeWorldStorage<'a> {
     }
 }
 
+fn observed_world_storage<'a>(
+    state: &'a SimulationState,
+    actor: &str,
+    contact: &PlayerObservedBody<'_>,
+) -> Option<WorldStorage<'a>> {
+    let root = WorldStorage::selected(state, actor, contact.source_id)?;
+    let SensoryFacet::Body { body } = &contact.body_facet()?.value else {
+        return None;
+    };
+    let storage = body.storage.as_ref()?;
+    let (position, surface) = root.root.world_support()?;
+    (storage.placement_revision == root.placement_revision
+        && body.position == position
+        && body.support_surface_id.as_deref() == Some(surface))
+    .then_some(root)
+}
+
 impl NativeWorldSession {
+    /// A transfer out of a world pile names only its exact item. Bind its
+    /// source through the actor's admitted page and current received contact,
+    /// without following a guessed item ID into someone else's storage. The
+    /// candidate rechecks the page and actual reach before custody changes.
+    pub fn inspected_move_source(
+        &self,
+        account: &str,
+        actor: &str,
+        item: &str,
+    ) -> Result<Option<(String, ByteReservation)>, RuntimeError> {
+        self.require_active()?;
+        let accepted = self.session.accepted().map_err(failure)?;
+        let state = &accepted.state;
+        let Some(page) = state
+            .physical
+            .entities
+            .get(actor)
+            .and_then(|body| body.actor.as_ref())
+            .and_then(|body| body.inventory_inspection.as_ref())
+            .filter(|page| page.item_ids.iter().any(|id| id == item))
+        else {
+            return Ok(None);
+        };
+        let Some(root) = page.container_id.as_deref() else {
+            return Ok(None);
+        };
+        let current = accepted
+            .visit_accepted_player_contacts(account, actor, &self.budget, |contact| {
+                contact.source_id == root
+                    && observed_world_storage(state, actor, &contact).is_some()
+            })
+            .map_err(failure)?;
+        if !current {
+            return Ok(None);
+        }
+        let custody = self.budget.reserve(root.len())?;
+        Ok(Some((root.to_owned(), custody)))
+    }
+
     /// Perform at most a single reach check and an explicitly requested
     /// approach for the selected current storage contact. Neither check
     /// captures contents or grants an inspection.
@@ -207,28 +263,9 @@ impl NativeWorldSession {
                 if !matching(&contact) {
                     return false;
                 }
-                let Some(root) =
-                    WorldStorage::selected(&simulation.state, actor, contact.source_id)
-                else {
+                let Some(root) = observed_world_storage(&simulation.state, actor, &contact) else {
                     return true;
                 };
-                let Some(SensoryFacet::Body { body }) =
-                    contact.body_facet().map(|facet| &facet.value)
-                else {
-                    return true;
-                };
-                let Some(storage) = body.storage.as_ref() else {
-                    return true;
-                };
-                let Some((position, surface)) = root.root.world_support() else {
-                    return true;
-                };
-                if storage.placement_revision != root.placement_revision
-                    || body.position != position
-                    || body.support_surface_id.as_deref() != Some(surface)
-                {
-                    return true;
-                }
                 let encode = respond.take().expect("one exact storage contact");
                 result = Some((|| {
                     let binding = GeometryBinding::new(

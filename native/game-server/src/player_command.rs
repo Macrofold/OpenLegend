@@ -804,10 +804,15 @@ impl PlayerCommands {
                                 }
                                 _ => None,
                             };
+                            let exact_move = matches!(raw.kind, CommandKind::TransferItem)
+                                && raw.inventory_group.is_none();
+                            let world_destination = exact_move
+                                && target_ref.is_some_and(|id| id.starts_with("contact-"));
                             let target = match target_ref.filter(|_| {
-                                // Arranging private belongings binds the exact owned
-                                // destination in the same native candidate, not a world contact.
-                                !own_status && !matches!(raw.kind, CommandKind::Say) && raw.kind.arrangement().is_none()
+                                // Owned endpoints bind by owned identity. A world deposit
+                                // requires the current public contact from the open page.
+                                !own_status && !matches!(raw.kind, CommandKind::Say)
+                                    && (raw.kind.arrangement().is_none() || world_destination)
                             }) {
                                 None => None,
                                 Some(contact) => {
@@ -885,6 +890,15 @@ impl PlayerCommands {
                             } else {
                                 None
                             };
+                            let world_source = if exact_move && !world_destination {
+                                world.inspected_move_source(
+                                    &begin_scope.scope.account_id,
+                                    &begin_scope.scope.actor_id,
+                                    raw.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                                )?
+                            } else {
+                                None
+                            };
                             let command = begin_facts.command(
                                 position,
                                 target.as_ref().map(|value| value.id.as_str())
@@ -894,6 +908,7 @@ impl PlayerCommands {
                                 selected_review.as_ref().and_then(|slot| slot.get()).map(|review| &review.permission),
                                 trade_evidence.as_ref(),
                                 group.as_ref().map(|group| &group.selection),
+                                world_source.as_ref().map(|(root, _)| root.as_str()),
                             )?;
                             Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
                                 &begin_facts.id,
@@ -1361,6 +1376,7 @@ impl CommandInput {
             placement_revision: self.placement_revision.ok_or(StoreError::InvalidRecord)?,
             expected_contents_revision: self.expected_contents_revision,
             target_revision: self.target_revision.ok_or(StoreError::InvalidRecord)?,
+            world_storage: None,
         })
     }
 
@@ -1385,6 +1401,7 @@ impl PreparedRequest {
         strike_permission: Option<&'a openlegend_simulation::runtime::StrikePermission>,
         trade_evidence: Option<&'a Arc<openlegend_simulation::handover::TradeEvidence>>,
         group: Option<&'a OwnedStockSelection>,
+        world_source: Option<&'a str>,
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
         if let Some(group) = group {
@@ -1513,8 +1530,14 @@ impl PreparedRequest {
                 preparation_digest: input.preparation_digest.as_deref().ok_or(StoreError::InvalidRecord)?,
                 inputs: input.inputs.as_ref().ok_or(StoreError::InvalidRecord)?,
             }),
-            CommandKind::TransferItem | CommandKind::SplitItem | CommandKind::MergeItem =>
-                Ok(RuntimePlayerCommand::TransferItem(input.owned_move()?)),
+            CommandKind::TransferItem | CommandKind::SplitItem | CommandKind::MergeItem => {
+                let mut selection = input.owned_move()?;
+                if matches!(input.kind, CommandKind::TransferItem) {
+                    selection.target_id = target.unwrap_or(selection.target_id);
+                    selection.world_storage = target.or(world_source);
+                }
+                Ok(RuntimePlayerCommand::TransferItem(selection))
+            }
             CommandKind::Eat => Ok(RuntimePlayerCommand::Eat(input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?)),
             CommandKind::Equip => Ok(RuntimePlayerCommand::Equip(
                 input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,

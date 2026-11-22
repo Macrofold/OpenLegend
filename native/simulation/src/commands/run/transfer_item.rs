@@ -45,33 +45,20 @@ impl CommandCursor {
             return Err(ExecutionError::Invariant);
         };
         let result = if let Some(group) = group {
-            core.move_stock_group(actor, group, &selection.target_id, selection.target_revision, &envelope.id)?
+            core.move_stock_group(
+                actor,
+                group,
+                &selection.target_id,
+                selection.target_revision,
+                &envelope.id,
+            )?
         } else {
-            core.arrange_owned_lot(actor, &envelope.id, selection.map_ids(String::as_str))?
+            core.arrange_lot(actor, &envelope.id, selection.map_ids(String::as_str))?
         };
         let item = match result {
             Ok(item) => item,
             Err(reason) => {
-                let (code, message) = match &reason {
-                    OwnedMoveError::Unavailable => ("unavailable", &COPY.unavailable),
-                    OwnedMoveError::Busy => ("in-use", &COPY.busy),
-                    OwnedMoveError::Stale => ("stale", &COPY.stale),
-                    OwnedMoveError::NotPortable => ("not-portable", &COPY.not_portable),
-                    OwnedMoveError::Quantity => ("item-unavailable", &COPY.quantity),
-                    OwnedMoveError::Packing => ("item-unavailable", &COPY.packing),
-                    OwnedMoveError::Depth => ("item-unavailable", &COPY.depth),
-                    OwnedMoveError::NoPackingLoad => ("item-unavailable", &COPY.no_packing_load),
-                    OwnedMoveError::Material { message, .. } => ("item-unavailable", message),
-                    OwnedMoveError::FilledOpenBag => ("item-unavailable", &COPY.filled_open_bag),
-                    OwnedMoveError::SplitParent => ("stale", &COPY.split_parent),
-                    OwnedMoveError::MergeQuantity => ("stale", &COPY.merge_quantity),
-                    OwnedMoveError::MergeMismatch => ("item-unavailable", &COPY.merge_mismatch),
-                };
-                self.reserve(message.storage_bytes() + code.len())?;
-                let mut result = outcome(false, code, "");
-                result.message = message.clone();
-                self.outcome = Some(result);
-                self.phase = Phase::Done;
+                self.refuse_arrangement(reason)?;
                 return Ok(None);
             }
         };
@@ -113,5 +100,31 @@ impl CommandCursor {
         self.event = Some(event.id.clone());
         self.after_event = Phase::ImmediateResult;
         Ok(Some(event))
+    }
+    pub(super) fn refuse_arrangement(
+        &mut self,
+        reason: OwnedMoveError,
+    ) -> Result<(), ExecutionError> {
+        let (code, message) = match &reason {
+            OwnedMoveError::Unavailable => ("unavailable", &COPY.unavailable),
+            OwnedMoveError::Busy => ("in-use", &COPY.busy),
+            OwnedMoveError::Stale => ("stale", &COPY.stale),
+            OwnedMoveError::NotPortable => ("not-portable", &COPY.not_portable),
+            OwnedMoveError::Quantity => ("item-unavailable", &COPY.quantity),
+            OwnedMoveError::Packing => ("item-unavailable", &COPY.packing),
+            OwnedMoveError::Depth => ("item-unavailable", &COPY.depth),
+            OwnedMoveError::NoPackingLoad => ("item-unavailable", &COPY.no_packing_load),
+            OwnedMoveError::Material { message, .. } => ("item-unavailable", message),
+            OwnedMoveError::FilledOpenBag => ("item-unavailable", &COPY.filled_open_bag),
+            OwnedMoveError::SplitParent => ("stale", &COPY.split_parent),
+            OwnedMoveError::MergeQuantity => ("stale", &COPY.merge_quantity),
+            OwnedMoveError::MergeMismatch => ("item-unavailable", &COPY.merge_mismatch),
+        };
+        self.reserve(message.storage_bytes() + code.len())?;
+        let mut result = outcome(false, code, "");
+        result.message = message.clone();
+        self.outcome = Some(result);
+        self.phase = Phase::Done;
+        Ok(())
     }
 }

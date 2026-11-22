@@ -1,5 +1,5 @@
-//! The player is arranging items in their own accessible inventory. Prove the
-//! original source, destination and their net packing changes before editing.
+//! Arrange a permitted exact lot between accessible storage endpoints.
+//! Prove both ancestry paths and their net packing changes before editing.
 use super::drop::inventory_work_bound;
 use super::packing::PackingChange;
 use super::pickup::{DirectRelocation, compatible_lots};
@@ -37,6 +37,10 @@ pub struct OwnedMove<I> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expected_contents_revision: Option<u64>,
     pub target_revision: u64,
+    // A signed world transfer binds exactly one already observed storage
+    // root. Its current inspection and final physical reach are checked again.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub world_storage: Option<I>,
 }
 
 impl<I> OwnedMove<I> {
@@ -50,6 +54,7 @@ impl<I> OwnedMove<I> {
             placement_revision: self.placement_revision,
             expected_contents_revision: self.expected_contents_revision,
             target_revision: self.target_revision,
+            world_storage: self.world_storage.as_ref().map(convert),
         }
     }
 }
@@ -125,10 +130,10 @@ pub(crate) fn same_container_merge(
 }
 
 impl CoreMutation<'_> {
-    /// Arrange an exact carried lot. Only its two ancestry chains are read.
-    /// Shared ancestors change once with the net load. All changes use the
-    /// existing physical journal and remain private to the caller.
-    pub(crate) fn arrange_owned_lot(
+    /// Arrange an exact lot after any world endpoint's sight and reach reply.
+    /// Shared ancestors change once with the net load. The ordinary inventory
+    /// journal owns both sides and the caller's private result.
+    pub(crate) fn arrange_lot(
         &mut self,
         actor: &str,
         cause: &str,
@@ -155,15 +160,48 @@ impl CoreMutation<'_> {
         {
             return Ok(Err(Refuse::Unavailable));
         }
-        let Some(item) =
-            crate::install::owned_item_ancestry(physical, actor, request.item_id, |parent| {
-                source_path.extend(entities.handle(&parent.id));
-            })?
-        else {
-            return Ok(Err(Refuse::Unavailable));
+        let (world_source, world_destination) = if let Some(id) = request.world_storage {
+            let Some(storage) =
+                crate::ground_items::inspection::WorldStorage::selected(state, actor, id)
+            else {
+                return Ok(Err(Refuse::Unavailable));
+            };
+            let Some(page) = storage.inspection(&self.journal.budget)? else {
+                return Ok(Err(Refuse::Unavailable));
+            };
+            if request.arrangement != OwnedArrangement::Move {
+                return Ok(Err(Refuse::Unavailable));
+            }
+            if request.target_id == id {
+                (None, Some(storage.root))
+            } else if page.item_ids.iter().any(|item| item == request.item_id) {
+                (Some(storage.root), None)
+            } else {
+                return Ok(Err(Refuse::Unavailable));
+            }
+        } else {
+            (None, None)
         };
         let actor_handle = entities.handle(actor).ok_or(ExecutionError::Invariant)?;
-        source_path.push(actor_handle);
+        let item = if let Some(root) = world_source {
+            let Some(item) = entities.get(request.item_id).filter(|item| {
+                item.item.is_some() && state.inventory.has_direct_item(entities, &root.id, item)
+            }) else {
+                return Ok(Err(Refuse::Unavailable));
+            };
+            source_path.push(entities.handle(&root.id).ok_or(ExecutionError::Invariant)?);
+            item
+        } else {
+            let Some(item) =
+                crate::install::owned_item_ancestry(physical, actor, request.item_id, |parent| {
+                    source_path.extend(entities.handle(&parent.id));
+                })?
+            else {
+                return Ok(Err(Refuse::Unavailable));
+            };
+            source_path.push(actor_handle);
+            item
+        };
         let source = crate::install::inventory_parent(item).ok_or(ExecutionError::Invariant)?;
         let merge_target = if request.arrangement == OwnedArrangement::Merge {
             let Some(target) = crate::install::owned_item_ancestry(
@@ -179,27 +217,31 @@ impl CoreMutation<'_> {
             None
         };
         let destination_id = if merge_target.is_some() { source } else { request.target_id };
-        let destination = if destination_id == actor {
-            body
+        let destination = if let Some(root) = world_destination {
+            destination_path.push(entities.handle(&root.id).ok_or(ExecutionError::Invariant)?);
+            root
         } else {
-            let Some(destination) = crate::install::owned_item_ancestry(
-                physical,
-                actor,
-                destination_id,
-                |parent| destination_path.extend(entities.handle(&parent.id)),
-            )?
-            .filter(|bag| crate::install::inventory_bag_access(bag, actor)) else {
-                return Ok(Err(Refuse::Unavailable));
+            let destination = if destination_id == actor {
+                body
+            } else {
+                let Some(destination) = crate::install::owned_item_ancestry(
+                    physical,
+                    actor,
+                    destination_id,
+                    |parent| destination_path.extend(entities.handle(&parent.id)),
+                )?
+                .filter(|bag| crate::install::inventory_bag_access(bag, actor)) else {
+                    return Ok(Err(Refuse::Unavailable));
+                };
+                destination_path.insert(
+                    0,
+                    entities.handle(&destination.id).ok_or(ExecutionError::Invariant)?,
+                );
+                destination
             };
-            destination_path.insert(
-                0,
-                entities
-                    .handle(&destination.id)
-                    .ok_or(ExecutionError::Invariant)?,
-            );
+            destination_path.push(actor_handle);
             destination
         };
-        destination_path.push(actor_handle);
         let action = body.actor.as_ref().and_then(|body| body.action.as_ref());
         if action.is_some() || !physical.holds.is_empty() {
             let mut visit = || {
@@ -276,7 +318,7 @@ impl CoreMutation<'_> {
                     .ok_or(ExecutionError::Invariant)?;
                 self.split_direct_lot(&source, Some(actor), request.item_id, before, quantity, definition, cause)?
             } else {
-                self.merge_direct_lots(&source, actor, request.item_id, request.target_id, quantity, cause)?;
+                self.merge_direct_lots(&source, Some(actor), request.item_id, request.target_id, quantity, cause)?;
                 request.target_id.to_owned()
             };
             for (index, handle) in source_path.into_iter().enumerate() {
@@ -370,7 +412,8 @@ impl CoreMutation<'_> {
             source: &source,
             destination: request.target_id,
             actor,
-            source_owner: Some(actor),
+            source_owner: world_source.is_none().then_some(actor),
+            destination_owner: world_destination.is_none().then_some(actor),
             item: request.item_id,
             quantity,
             cause,
