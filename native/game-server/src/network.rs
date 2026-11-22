@@ -90,6 +90,11 @@ impl NetworkOwner {
     }
 }
 
+/// Parse an operator-configured URL without starting network work.
+pub(crate) fn parse_url(value: &str) -> Result<reqwest::Url, NetworkError> {
+    reqwest::Url::parse(value).map_err(|_| NetworkError::Destination)
+}
+
 pub(crate) fn permitted_destination(url: &reqwest::Url, allow_loopback_http: bool) -> bool {
     if !url.username().is_empty() || url.password().is_some() {
         return false;

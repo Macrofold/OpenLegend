@@ -159,6 +159,23 @@ impl Store {
         transaction
             .execute("DELETE FROM data_world WHERE world_id=$1", &[world])
             .await?;
+        self.stage_opening_records(transaction, checkpoint, history, true)
+            .await
+    }
+
+    /// Use the same typed row and history writers for a validated installation
+    /// on an empty target. Its authority owner inserts the new head in this
+    /// transaction before calling here. Only recovery deletes preceding rows.
+    pub(crate) async fn stage_opening_records(
+        &self,
+        transaction: &Transaction<'_>,
+        checkpoint: &CurrentOpening,
+        history: &CheckpointHistory,
+        replace_history: bool,
+    ) -> StoreResult<()> {
+        let candidate = &checkpoint.records;
+        let world = &candidate.world_id;
+        let revision = sql_ordinal(candidate.durable_revision)?;
         for table in &self.schema.tables {
             let rows = candidate
                 .tables
@@ -166,7 +183,7 @@ impl Store {
                 .ok_or(StoreError::Schema)?;
             insert_checkpoint_rows(transaction, table, world, revision, rows, &self.budget).await?;
         }
-        self.stage_checkpoint_history(transaction, world, history)
+        self.stage_checkpoint_history(transaction, world, history, replace_history)
             .await?;
         let supports = candidate
             .tables
@@ -183,12 +200,15 @@ impl Store {
         transaction: &Transaction<'_>,
         world: &str,
         history: &CheckpointHistory,
+        replace: bool,
     ) -> StoreResult<()> {
         for name in &self.schema.checkpoint.history_tables {
             let rows = history.tables.get(name).ok_or(StoreError::InvalidRecord)?;
-            transaction
-                .execute(&format!("DELETE FROM {name} WHERE world_id=$1"), &[&world])
-                .await?;
+            if replace {
+                transaction
+                    .execute(&format!("DELETE FROM {name} WHERE world_id=$1"), &[&world])
+                    .await?;
+            }
             if rows.is_empty() {
                 continue;
             }

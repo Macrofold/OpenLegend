@@ -434,6 +434,27 @@ impl NativeWorldSession {
             .map_err(failure)?;
         RuntimeRecallDecoder::for_state(state, &self.budget)
     }
+
+    /// Lend the installed law to the first publication transaction. The
+    /// caller reads each canonical account from its own staged SQL rows.
+    pub fn opening_recall_decoder(&self) -> Result<RuntimeRecallDecoder<'_>, RuntimeError> {
+        if self.active || self.restore_installation {
+            return Err(failure(
+                "recall preparation requires an unpublished opening",
+            ));
+        }
+        let state = &self.session.accepted().map_err(failure)?.state;
+        if state.durable_revision != 1
+            || state.accepted_cut != 0
+            || state.physical.header.sim_time != 0.0
+            || !state.physical.header.paused
+        {
+            return Err(failure(
+                "recall preparation requires the first paused revision",
+            ));
+        }
+        RuntimeRecallDecoder::for_state(state, &self.budget)
+    }
 }
 
 fn derived_hard_bytes(state: &crate::simulation::SimulationState) -> Result<u64, RuntimeError> {

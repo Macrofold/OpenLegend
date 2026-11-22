@@ -18,8 +18,8 @@ use uuid::Uuid;
 mod control;
 pub use control::{ControlChange, ControlOperation, ControlRequest};
 
-const LOCAL_ISSUER: &str = "https://local.openlegend.invalid";
-const LOCAL_SUBJECT: &str = "local-player";
+pub(crate) const LOCAL_ISSUER: &str = "https://local.openlegend.invalid";
+pub(crate) const LOCAL_SUBJECT: &str = "local-player";
 const CHARACTERLESS: &str = "#characterless:";
 const TOKEN_CACHE_LIMIT: usize = 4096;
 const ACCESS_COLUMN_BYTES: i32 = 512;
