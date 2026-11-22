@@ -273,3 +273,29 @@ Configured account/character IDs: **100 characters maximum**.
 **Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
 
 [Implementation starting point](../../apps/server/src/authority.ts).
+
+## MDL01 — Delivery policy scope
+
+**No additional uniform limit selected — desired design · Restrictiveness: — (no additional restriction).**
+
+The [delivery specification](../features/multiplayer-delivery/README.md) introduces no universal transmission rate, distance band, character count, visibility cap or delivery-specific history lifetime. Existing surface/world rules and supported operational limits still apply; this is not unlimited resource admission, full-history replay or a larger capacity claim. The restriction explicitly declined is one global delivery policy imposed on otherwise different supported consumers.
+
+**Reason / tradeoff:** A character view, remembered account, remote sense and operational overview have different purposes. Their owners determine available information; delivery preserves that meaning. Reuse existing connection/admission limits ([LA164](#la164)), scoped recovery ([LA165](#la165)), stalled-write handling ([LA166](#la166)), presence ([LA233](#la233)) and spectator scope ([MP17](#mp17)) within each entry's stated implementation/evidence baseline. A bound on retained incremental frames does not bound complete views, preparation or aggregate memory. Admission failure follows the existing honest refusal/recovery owner; required privacy and outcome correctness are not tunable limits.
+
+**Follow-through:** [MP20](../maintainers/multiplayer.md#mp20--delivery-foundation-for-the-first-playable-scene). Existing evidence is reused; the design adds no measured population or throughput allowance.
+
+## MDL02 — Optional presentation allowances
+
+**Proposed only for a selected experiment · Restrictiveness: — (policy and values unselected).**
+
+MDX01 may propose particular optional information, frequency/detail/priority rules and allowed age/delay, but none is adopted here. Before activation, select the affected surface and workload, every numerical allowance with its unit and clock, the difference between fact age and transmission waiting, and what happens at an importance, visibility, expiry or capacity boundary. Existing behavior remains in force until that policy is defined and qualified. When its requirements cannot be met, use its declared bounded defer/refusal/recovery; do not silently enlarge the allowance.
+
+**Reason / tradeoff:** Reducing optional presentation may preserve useful interaction at lower cost, but may also obscure motion, postpone feedback or starve ordinary work. Required acquired evidence, distinct outcomes and access/removal semantics cannot be spent as a latency or loss allowance. [MDX01](../features/multiplayer-delivery/experiments-and-sequencing.md#mdx01--permitted-frequency-detail-and-priority) owns the behavior; [MP21](../maintainers/multiplayer.md#mp21--conditional-presentation-policy-experiment) owns the conditional decision and evidence. Movement-memory reduction remains PS04-A, not this allowance.
+
+## MDL03 — Experimental reuse, representation and grouping bounds
+
+**Proposed only for selected experiments · Restrictiveness: — (values unselected).**
+
+MDX02–MDX04 select no new retained-result quota, payload ceiling, compression threshold, group size or waiting interval. Any future candidate must use the relevant existing resource/input owner or justify a changed bound with exact units, per-recipient and aggregate scope, temporary versus retained costs and boundary behavior. Grouping must predeclare maximum added real-time waiting and low-volume progress. Finite reference/value ranges and unsupported inputs require the MDX03 refusal/replacement behavior, never silent truncation or reinterpretation.
+
+**Reason / tradeoff:** Saved bytes or repeated preparation may be outweighed by retained state, recipient work, waiting and recovery. A smaller result alone does not bound the work of producing it. No candidate gets an unlimited intermediate allowance or an automatic increase in current budgets. Until a scope and its bounds are selected, retain established behavior rather than activate an unspecified policy. [Experiments](../features/multiplayer-delivery/experiments-and-sequencing.md#conditional-experiments--usually-after-playable-interaction) define acceptance; [MP22–MP24](../maintainers/multiplayer.md#mp22--conditional-equivalent-result-reuse-experiment) retain the open design/evidence.

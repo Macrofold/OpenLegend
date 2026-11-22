@@ -209,3 +209,45 @@ Private fictional messages/read/evidence restore coherently, but current account
 [DG29](../projects/participants-and-world-travel-feature-spec.md) and [PT01–PT06](participants-and-world-travel.md) refine PS05–PS08 using current account/access/control, MP04 inactive participation and safe-return authority. Membership, occupancy, an invitation and a carried character grant different rights; travel does not automatically create a second controlled body or disclose another human's history. Current scopes and operational receipts still constrain delayed completion and gameplay restore. The first product scope does not silently enable dangerous-logout continuation, opt-in PvP or protected-building policy. Cross-world identity/possession transfer and broader admission remain their existing data and operational owners' unqualified delivery work.
 
 Existing PF11/D5 qualification must include full terrain plus body payload, cold/warm spectator construction, concurrent reads and aggregate gameplay-projection memory. The current overview enumerates every entity on a new service revision; the reconnect budget is per scope and excludes its complete view. [The body-row limit](../limits/multiplayer.md#mp17) and [reconnect accounting](../limits/multiplayer.md#la165) are not total work/memory bounds. Reuse current indexes/snapshots only with correct invalidation and disclosure; this clarifies the existing release gate rather than introducing a richer spectator feature or a second performance owner.
+
+## Multiplayer delivery and recovery
+
+The [behavior specification](../features/multiplayer-delivery/README.md) defines truthful, private and coherent delivery, including slow readers and recovery. The [sequencing and experiments](../features/multiplayer-delivery/experiments-and-sequencing.md) prioritize foundational guarantees now/soon while keeping unproven optimizations conditional. The [Horizon dossier](../../research/game-engines/horizon-server.md) preserves source findings, native equivalents and prior rejected/withdrawn candidates. [MDL01–MDL03](../limits/multiplayer.md#mdl01--delivery-policy-scope) record policy scope and unresolved experiment allowances.
+
+**Status:** Behavioral design is complete; no runtime change or new execution evidence is claimed by this packet. Existing MP01.4/MP01.5 and native publication work already establish substantial parts of the foundation. Reuse their applicable source/evidence rather than reopening completed work. Any actual gap belongs with its existing owner; these entries coordinate additional delivery obligations and conditional experiments, not a parallel networking rewrite. MP19 remains the separate open pause-authority task.
+
+### MP20 — Delivery foundation for the first playable scene
+
+- [ ] **Reconcile and close concrete foundational gaps. Priority: now/soon.**
+  - [x] Specify information categories, valid starting/replacement views, final disclosure, distinct outcomes, current versus remembered information, slow-reader isolation, bounded refusal and composable consumer requirements.
+  - [ ] Map the supported native/player surfaces to the [behavioral scenarios](../features/multiplayer-delivery/behavior.md#10-scenario-and-acceptance-matrix), reusing valid existing implementation and evidence. Identify only unsupported or invalidated obligations; do not infer a defect from an unperformed new test.
+  - [ ] Resolve any actual gaps through the owning authority, view, receipt, perception, memory, participation or delivery path. Select a technical-design update only where a concrete engineering decision needs one; no new framework is a prerequisite.
+  - [ ] Qualify changed or previously uncovered obligations in the smallest connected ordinary-player journey, including actual recipient information and a relevant recovery/failure case. Reuse unaffected evidence; unsupported gameplay is not required as a fixture. Record any remaining playability or broader-workload limits explicitly.
+
+**Dependencies:** Current MP01.4/MP01.5, MP18 and NET05/NET06/NET08; the supported Rust publication/receipt owners; existing witnessing, action, save and time contracts. The spectator membership-selection gap stays under MP01.4, and saved browser background behavior stays under UIUX14. Do not duplicate or silently close those tasks.
+
+**Exit:** Each applicable foundation obligation is backed by existing valid evidence, newly qualified changed behavior, or a clearly owned remaining gap. Claim the foundation complete only when no required supported-surface gap remains. Players can follow the supported encounter, distinguish current observation from retained history, understand one actual outcome after a lost reply, and recover privately without a held reader blocking another admitted viewer. Larger hosted capacity remains PF11/D5/E01 and PS08 work.
+
+### MP21 — Conditional presentation-policy experiment
+
+- [ ] **MDX01; later unless a demonstrated small-scene problem makes it worthwhile sooner.** Establish a representative trigger; define optional information, importance transitions, clocks/units, age/delay bounds, fairness and fallback before the trial. Evaluate frequency, detail, priority and boundary stabilization separately where attribution matters. Preserve admitted perception, memory and lifecycle semantics; route-detail retention remains PS04-A. Reuse the [common experiment criteria](../features/multiplayer-delivery/experiments-and-sequencing.md#common-experiment-and-adoption-requirements).
+
+**Status:** Conditional; needs experiment design and evidence, not selected implementation. **Dependencies:** Applicable MP20 foundation and existing performance owners. **Exit:** A scoped adopt/reject/inconclusive disposition with complete interaction/cost evidence and chosen limits if adopted. A rejection can close the investigation; inconclusive work remains explicitly unresolved. No unqualified policy becomes the ordinary default.
+
+### MP22 — Conditional equivalent-result reuse experiment
+
+- [ ] **MDX02; later unless measured repeated eligible work is already material.** Identify the reusable portion and every relevant dependency, distinguish the hypothesis from previous withdrawn/rejected candidates, and include equivalence/eligibility work, changing audiences, retained resources and independent recovery in the comparison. A baseline-dependent change needs its matching basis; independent prepared content need not.
+
+**Status:** Conditional; needs experiment design and evidence. **Dependencies:** MP20 privacy/lifecycle and the existing native publication/resource owners. **Exit:** The common criteria establish a meaningful complete-path benefit with identical required information, or record rejection/inconclusive evidence. No blanket nearby-player grouping or shared-view cache is selected.
+
+### MP23 — Conditional compact-representation experiment
+
+- [ ] **MDX03; later unless transfer or representation cost is already a demonstrated problem.** Define a lossless candidate's supported inputs, recipient requirements, reference/ordering lifetimes, invalid/unsupported outcomes and comparison with the established behavior. Include client processing and recovery; do not count reduced optional information as lossless savings.
+
+**Status:** Conditional; needs experiment design and evidence. **Dependencies:** MP20 and existing scoped-reference, current-format and publication owners. **Exit:** A scoped decision under the common criteria, with no widened disclosure, ambiguous reference or unsupported legacy-compatibility obligation. No format is selected by this task entry.
+
+### MP24 — Conditional compression and grouping experiments
+
+- [ ] **MDX04; later unless measured byte or repeated-delivery cost justifies a trial.** Compare compression and bounded grouping separately before a combined policy; define added real-time waiting, resource/size bounds, low-volume progress, early release and oversize/reset/revocation outcomes. Include server/recipient work, transfer savings, retained/temporary memory and healthy-reader progress.
+
+**Status:** Conditional; needs experiment design and evidence. **Dependencies:** Applicable MP20 foundation and existing resource/measurement owners. **Exit:** A scoped decision under the common criteria, with selected limits and fallback only on adoption. No universal compression, grouping interval, larger allowance or replacement transport is selected.

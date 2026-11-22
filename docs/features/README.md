@@ -10,6 +10,7 @@ These established documents own supported behavior and explicitly labeled remain
 | Speech, hearing and narration                    | [Hearing](../hearing-and-speech.md), [narration/conversations](../narration-and-conversations.md)               |
 | World creation and reviewed invention            | [World Agent](../world-agent-runtime.md), [invention foundation](../invention-foundation.md)                    |
 | Saving and return                                | [Save/load](../save-and-load.md)                                                                                |
+| Multiplayer updates and recovery                 | [Delivery behavior, scenarios and conditional experiments](multiplayer-delivery/README.md)                      |
 | Survival, camps, conflict and people             | [Base-world rules](../worlds/base/README.md); engine mechanisms remain separate                                 |
 | Scale and belonging targets                      | [Product scalability](../product-scalability/README.md)                                                         |
 

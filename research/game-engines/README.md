@@ -1,8 +1,8 @@
 # Game engine and platform research
 
-| Research status                                                        | Progress                                                                                               | Last updated |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------ |
-| Desk research updated; no migration or comparative benchmark completed | Reconciles browser-first delivery and adds a deep Godot adoption, community and AI-development review. | 2026-10-17   |
+| Research status                                         | Progress                                                                                                  | Last updated |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| Source review added; no comparative benchmark completed | Adds Horizon server lessons against the Rust branch; preserves the earlier renderer/platform assessments. | 2026-11-22   |
 
 ## Start here
 
@@ -28,21 +28,24 @@ Each main dossier addresses performance/hardware, rendering/effects, gameplay/ne
 
 ## Cross-cutting research
 
-| Topic                                                                | What it answers                                                                                                                    |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| [Performance and hardware](performance-and-hardware.md)              | Stored/active/visible populations; CPU/GPU/memory/threading; frame time and hardware tiers                                         |
-| [Controllers and networking](controllers-and-networking.md)          | Gamepad versus complete controller support, haptics, transports, prediction, privacy and cross-play                                |
-| [Platforms and deployment](platforms-and-deployment.md)              | Browser, native desktop/mobile, wrappers, consoles, handhelds, XR, cloud streaming and server placement                            |
-| [Dynamic worlds and production](dynamic-worlds-and-production.md)    | Live invention, runtime assets, changing geometry, animation, AI-assisted development and toolchain ownership                      |
-| [Godot community and AI development](godot-community-and-ai-2026.md) | Dated adoption signals, five integrations, developer/maintainer perspectives, research benchmarks and fair productivity comparison |
-| [Licensing and cost](licensing-and-cost.md)                          | AGPL constraints, proprietary integrations, current fees, platform rights and total future cost                                    |
-| [Sources and maintenance](sources-and-maintenance.md)                | Evidence standards, version-sensitive findings, primary references and refresh triggers                                            |
+| Topic                                                                | What it answers                                                                                                                      |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| [Horizon server and Rust comparison](horizon-server.md)              | Source-pinned multiplayer delivery patterns, existing native equivalents, conditional experiments and architecture/gameplay cautions |
+| [Performance and hardware](performance-and-hardware.md)              | Stored/active/visible populations; CPU/GPU/memory/threading; frame time and hardware tiers                                           |
+| [Controllers and networking](controllers-and-networking.md)          | Gamepad versus complete controller support, haptics, transports, prediction, privacy and cross-play                                  |
+| [Platforms and deployment](platforms-and-deployment.md)              | Browser, native desktop/mobile, wrappers, consoles, handhelds, XR, cloud streaming and server placement                              |
+| [Dynamic worlds and production](dynamic-worlds-and-production.md)    | Live invention, runtime assets, changing geometry, animation, AI-assisted development and toolchain ownership                        |
+| [Godot community and AI development](godot-community-and-ai-2026.md) | Dated adoption signals, five integrations, developer/maintainer perspectives, research benchmarks and fair productivity comparison   |
+| [Licensing and cost](licensing-and-cost.md)                          | AGPL constraints, proprietary integrations, current fees, platform rights and total future cost                                      |
+| [Sources and maintenance](sources-and-maintenance.md)                | Evidence standards, version-sensitive findings, primary references and refresh triggers                                              |
 
 ## Scope and evidence boundary
 
 The original collection responded to Mike's request for an unbiased engine/platform assessment, with performance as the main emphasis. The October 17 follow-up reconciles next-work priorities and expands Godot research. It changes no runtime code, dependencies, licensing or world rules, and does not establish measured FPS, population capacity or port durations.
 
-Original repository observations used GitHub `Macrofold/OpenLegend`, `refs/heads/main` at `02faa5f82ecd9357ad4b7c775ed29aab7a346da4`. The seven research commits were replayed without changing their content onto GitHub `main` at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` before this follow-up. Work remains on `research/game-engine-tradeoffs`; no local checkout or worktree was created or modified. This is not a claim about Mike's local `main`.
+The November 22 [Horizon chapter](horizon-server.md) compares a server reference with the selected Rust implementation. Its pinned revisions, implementation findings and evidence limits are independent of the older renderer/platform assessment. [Delivery behavior and experiments](../../docs/features/multiplayer-delivery/README.md) own the resulting product design; the chapter does not select a rendering-engine migration or claim a comparative speedup.
+
+Original repository observations used GitHub `Macrofold/OpenLegend`, `refs/heads/main` at `02faa5f82ecd9357ad4b7c775ed29aab7a346da4`. The seven research commits were replayed without changing their content onto GitHub `main` at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` before the October 17 follow-up. That original research work used `research/game-engine-tradeoffs`; no local checkout or worktree was created or modified for that review. This is not a claim about Mike's local `main`.
 
 The [architecture](../../docs/architecture.md), [performance contract](../../docs/performance.md), [gameplay priorities](../../docs/repertoires/gameplay-priorities.md), [platform decision](../../docs/projects/completed/platform-and-offline-decision-brief.md) and [licensing guide](../../LICENSING.md) remain canonical. Research recommendations are not separate implementation authorization.
 
@@ -56,6 +59,6 @@ The October 17 review also corrects the recommendation's sequence: a native tria
 
 ## Verification limits
 
-The original change was confined to 18 new research Markdown files. This follow-up adds the Godot community chapter and reconciles selected planning/research owners; actual delivery is distinguishable in the branch diff. No engine or AI-editor tool was installed or tested, no game/provider run occurred, and no legal or console qualification is claimed.
+The original change was confined to 18 new research Markdown files. The October 17 follow-up adds the Godot community chapter and reconciles selected planning/research owners; its actual delivery is distinguishable in that branch diff. No engine or AI-editor tool was installed or tested, no game/provider run occurred, and no legal or console qualification is claimed.
 
 The original pinned Prettier check could not run because the formatter was unavailable and package retrieval failed. Do not interpret that historical limitation or this documentation review as a passing formatter/CI result. Content, source scope, relative links, preservation of existing requirements and the final affected diff require review before handoff; runtime testing is not implied by documentation-only changes.
