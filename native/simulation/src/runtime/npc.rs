@@ -19,6 +19,8 @@ pub use history::RuntimeNpcHistoryWindow;
 mod knowledge;
 pub use knowledge::RuntimeNpcSubjectNote;
 mod appraisal_read;
+mod identity_read;
+pub use identity_read::RuntimeNpcIdentity;
 mod origin;
 mod personal;
 mod perspectives;

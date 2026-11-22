@@ -119,6 +119,13 @@ pub enum NpcSubjectOrdinal {
         ordinal: usize,
         subject: usize,
     },
+    /// A recognized person in a selected personal source. This only supplies
+    /// an identity subject, without an entity, speech or physical reference.
+    PersonalEntity {
+        inventory: usize,
+        ordinal: usize,
+        entity: usize,
+    },
     Social {
         ordinal: usize,
     },
@@ -316,8 +323,7 @@ impl NpcBindingRead<'_> {
                 .and_then(|_| self.references.bodies.get(ordinal)?.subject.as_ref()),
             NpcSubjectOrdinal::BodyEntity { ordinal } => {
                 let fact = &self.references.bodies.get(ordinal)?.entity;
-                (fact.identity_present && !fact.seed_only && fact.can_address_remembered)
-                    .then_some(fact)
+                fact.remembered_entity().then_some(fact)
             }
             NpcSubjectOrdinal::BodySubject { ordinal, subject } => self
                 .body(ordinal)
@@ -335,8 +341,7 @@ impl NpcBindingRead<'_> {
             NpcSubjectOrdinal::ReceivedBodyEntity { ordinal } => {
                 self.original.perception.bodies.get(ordinal)?;
                 let fact = &self.original_references.bodies.get(ordinal)?.entity;
-                (fact.identity_present && !fact.seed_only && fact.can_address_remembered)
-                    .then_some(fact)
+                fact.remembered_entity().then_some(fact)
             }
             NpcSubjectOrdinal::ReceivedBodySubject { ordinal, subject } => {
                 self.original.perception.bodies.get(ordinal).and_then(|_| {
@@ -359,6 +364,18 @@ impl NpcBindingRead<'_> {
                 .get(ordinal)?
                 .attribution
                 .subject(subject),
+            NpcSubjectOrdinal::PersonalEntity {
+                inventory,
+                ordinal,
+                entity,
+            } => self
+                .sources
+                .get(inventory)?
+                .personal
+                .get(ordinal)?
+                .attribution
+                .name_entity(entity)
+                .filter(|fact| fact.remembered_entity()),
             NpcSubjectOrdinal::Social { ordinal } => self.references.social.get(ordinal),
         }
     }
@@ -809,6 +826,13 @@ impl NpcBindingMaps {
         let mut identity_references = IndexMap::with_capacity(selection.identities.len());
         let mut knowledge_references = IndexMap::with_capacity(selection.knowledge.len());
         for selected in &selection.identities {
+            if let NpcSubjectOrdinal::PersonalEntity {
+                inventory, ordinal, ..
+            } = selected.source
+                && !selected_personal.contains(&(inventory, ordinal))
+            {
+                return Err(invalid());
+            }
             let fact = read.subject(&selected.source).ok_or_else(invalid)?;
             let interpretation = matches!(selected.source, NpcSubjectOrdinal::MindRecord { .. });
             if !interpretation && !fact.interpretation_identity() {

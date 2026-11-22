@@ -32,6 +32,7 @@ use serde_json::{Value, json};
 use std::{borrow::Cow, collections::HashMap, fmt::Write as _, sync::Arc};
 
 mod appraisal;
+mod identity;
 mod recall;
 pub(in crate::npc) mod reflection;
 pub(super) use openlegend_simulation::runtime::RuntimeNpcDecisionFrame as ReceivedFrame;
@@ -55,6 +56,7 @@ pub(super) struct Projection {
     refs: Vec<String>,
     physical: Vec<String>,
     knowledge: Vec<String>,
+    names: Vec<String>,
     attention: Vec<String>,
     appraisal_schema: Option<Value>,
     speaks: bool,
@@ -126,7 +128,7 @@ impl Projection {
                     entity,
                     action: &aliases,
                     knowledge: &self.knowledge,
-                    identity: &[],
+                    identity: &self.names,
                     physical,
                     attention: &self.attention,
                     retention,
@@ -301,7 +303,7 @@ fn project(
     selected: Option<&PersonalSources>,
     rows: &[usize],
     purpose: ProjectionPurpose,
-    appraisal_read: Option<(&RuntimeNpcRead, &mut ByteReservation)>,
+    original_read: Option<(&RuntimeNpcRead, &mut ByteReservation)>,
 ) -> Result<(RuntimeNpcBindingInput, Projection, bool, bool), CallFailure> {
     let consumer = consumer(work);
     let decision = matches!(purpose, ProjectionPurpose::Decision);
@@ -506,19 +508,24 @@ fn project(
             ordinal: note.ordinal,
         });
     }
-    let appraisal = appraisal_read
-        .map(|(original, custody)| {
-            appraisal::prepare(
-                &game.cognition,
-                appraisal::Input {
-                    current: read, original, sources: selected, rows: &source_entries,
-                    trigger: trigger_index, canonical: &canonical, refs: &refs, key: &reference_key,
-                },
-                &mut experience, custody,
-            )
-        })
-        .transpose()?
-        .flatten();
+    let (appraisal, naming) = if let Some((original, custody)) = original_read {
+        let appraisal = appraisal::prepare(
+            &game.cognition,
+            appraisal::Input {
+                current: read, original, sources: selected, rows: &source_entries,
+                trigger: trigger_index, canonical: &canonical, refs: &refs, key: &reference_key,
+            },
+            &mut experience, custody,
+        )?;
+        let naming = identity::prepare(
+            read, original, &canonical,
+            selected.map(|selection| (selection.ordinal, source_entries.as_slice())),
+            &reference_key, custody,
+        )?;
+        (appraisal, naming)
+    } else {
+        (None, identity::Naming::default())
+    };
     let (mut fields, speaks, expressions, preview_player) = if decision {
         for (ordinal, offer) in read.decision_offers().map_err(packet_failure)?.enumerate() {
             let id = format!("a{ordinal}");
@@ -587,6 +594,9 @@ fn project(
         }
         None => (None, None),
     };
+    if !naming.description.is_empty() {
+        fields["naming"] = Value::Array(naming.description);
+    }
     project_markers(&mut fields, &canonical, &refs);
     let evidence = if decision {
         personal_evidence(selected, rows.iter().copied())?
@@ -604,6 +614,7 @@ fn project(
             .map_or_else(Vec::new, |trigger| trigger.causes.clone()),
         evidence,
         entities,
+        identities: naming.bindings,
         knowledge,
         attention,
         presented,
@@ -618,6 +629,7 @@ fn project(
             refs,
             physical,
             knowledge: knowledge_aliases,
+            names: naming.aliases,
             attention: attention_aliases,
             appraisal_schema,
             speaks,

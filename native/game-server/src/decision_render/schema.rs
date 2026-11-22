@@ -7,6 +7,7 @@ use serde_json::{Value, json};
 
 /// These aliases must come from the corresponding native response binding.
 /// The published schema lists them, but only that binding can execute them.
+#[derive(Clone, Copy)]
 pub(crate) struct ResponseReferences<'a> {
     pub(crate) entity: &'a [String],
     pub(crate) action: &'a [String],
@@ -166,10 +167,25 @@ impl DecisionPolicy {
                 };
                 *template = appraisal.clone();
             }
+            if let Some(name) = properties
+                .get_mut("name")
+                .filter(|value| value["type"] != "null")
+            {
+                if references.identity.is_empty() {
+                    return false;
+                }
+                name["properties"]["subjectId"] =
+                    json!({"type":"string","enum":references.identity});
+            }
             !(references.attention.is_empty() && properties["observe"]["type"] != "null"
                 || references.retention.is_empty() && properties["remember"]["type"] != "null")
         });
-        if !bind_references(&mut value, references, self) {
+        // Naming references do not enter the other operation schemas.
+        let ordinary = ResponseReferences {
+            identity: &[],
+            ..*references
+        };
+        if !bind_references(&mut value, &ordinary, self) {
             return Err(RenderError::Contract);
         }
         Ok(BoundSchema {

@@ -257,6 +257,11 @@ pub(super) fn render(
     text!("structuredExperience");
     out.json(fields.get("experience").unwrap_or(&EMPTY_ARRAY))?;
     text!("experiencePermission");
+    if exists("naming") {
+        out.section()?;
+        out.text("Permitted name edits: ")?;
+        out.json(field("naming"))?;
+    }
     if exists("appraisals") {
         out.section()?;
         out.text("Permitted appraisal operations and their exact evidence: ")?;

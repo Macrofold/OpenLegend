@@ -262,6 +262,7 @@ pub(in crate::npc) async fn prepare(
             })
             .collect(),
         entities,
+        identities: Vec::new(),
         knowledge: Vec::new(),
         attention: Vec::new(),
         presented: Vec::new(),

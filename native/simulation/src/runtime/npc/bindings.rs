@@ -29,6 +29,7 @@ pub struct RuntimeNpcBindingInput {
     pub semantic_causes: Vec<usize>,
     pub evidence: Vec<NpcPersonalEvidence>,
     pub entities: Vec<NpcEntityAlias>,
+    pub identities: Vec<crate::capture::NpcSubjectAlias>,
     pub knowledge: Vec<NpcAliasOrdinal>,
     pub attention: Vec<NpcAliasOrdinal>,
     pub presented: Vec<usize>,
@@ -219,27 +220,6 @@ impl RuntimeNpcBindingInput {
         self,
         workspace: &mut ByteReservation,
     ) -> Result<RuntimeNpcBindingRequest, RuntimeError> {
-        self.fund_selected(Vec::new(), workspace)
-    }
-
-    /// Use the same captured interpretation subjects shown in the private
-    /// reflection. Binding does not grant action or a new encounter reference.
-    pub fn fund_reflection(
-        self,
-        subjects: Vec<crate::capture::NpcSubjectAlias>,
-        workspace: &mut ByteReservation,
-    ) -> Result<RuntimeNpcBindingRequest, RuntimeError> {
-        if self.purpose != NpcBindingPurpose::Reflection {
-            return Err(failure("interpretation subjects require a reflection read"));
-        }
-        self.fund_selected(subjects, workspace)
-    }
-
-    fn fund_selected(
-        self,
-        subjects: Vec<crate::capture::NpcSubjectAlias>,
-        workspace: &mut ByteReservation,
-    ) -> Result<RuntimeNpcBindingRequest, RuntimeError> {
         let bytes = heap_sum([
             self.decision_id.capacity(),
             self.actions.heap_bytes().ok_or(CapacityError)?,
@@ -247,7 +227,7 @@ impl RuntimeNpcBindingInput {
             self.evidence.heap_bytes().ok_or(CapacityError)?,
             self.entities.heap_bytes().ok_or(CapacityError)?,
             self.knowledge.heap_bytes().ok_or(CapacityError)?,
-            subjects.heap_bytes().ok_or(CapacityError)?,
+            self.identities.heap_bytes().ok_or(CapacityError)?,
             self.attention.heap_bytes().ok_or(CapacityError)?,
             self.presented.heap_bytes().ok_or(CapacityError)?,
             self.appraisals.heap_bytes().ok_or(CapacityError)?,
@@ -274,7 +254,7 @@ impl RuntimeNpcBindingInput {
                     intents: Vec::new(),
                     evidence: self.evidence,
                     entities: self.entities,
-                    identities: subjects,
+                    identities: self.identities,
                     knowledge: self.knowledge,
                     observations: Vec::new(),
                     current: Vec::new(),
@@ -286,6 +266,20 @@ impl RuntimeNpcBindingInput {
             },
             _custody: custody,
         })
+    }
+
+    /// Use the same captured interpretation subjects shown in the private
+    /// reflection. Binding does not grant action or a new encounter reference.
+    pub fn fund_reflection(
+        mut self,
+        subjects: Vec<crate::capture::NpcSubjectAlias>,
+        workspace: &mut ByteReservation,
+    ) -> Result<RuntimeNpcBindingRequest, RuntimeError> {
+        if self.purpose != NpcBindingPurpose::Reflection {
+            return Err(failure("interpretation subjects require a reflection read"));
+        }
+        self.identities = subjects;
+        self.fund(workspace)
     }
 }
 

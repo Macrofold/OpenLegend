@@ -115,7 +115,7 @@ pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
     AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal, RuntimeNpcAppraisalRecord,
-    RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcBoundaryFact, RuntimeNpcConsumer,
+    RuntimeNpcIdentity, RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcBoundaryFact, RuntimeNpcConsumer,
     RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcFeeling, RuntimeNpcFeelingTarget,
     RuntimeNpcFeelings, RuntimeNpcHistoryWindow, RuntimeNpcObservedBody, RuntimeNpcOffer, RuntimeNpcOperations,
     RuntimeNpcPersonalSource, RuntimeNpcPersonalSources, RuntimeNpcPreparationStep,

@@ -63,6 +63,16 @@ During a held valid reply, the ordinary clock and movement continued and Postgre
 
 The cases in local archive `nsc04-standalone-appraisal-20261122` use executable SHA-256 `6ffe8826624fa30587f82d280c0108cb9f8e1e692e8a7e5a23e9bc0d04c15868`. The archive preserves a failed cold fixture that tried a recipient reference from the previous session. Reconnecting and selecting the current permitted recipient completed that check. The locked Rust build, TypeScript and network checks passed. All disposable databases were removed.
 
+## Private NPC naming on the stand-alone Rust server — November 22, 2026
+
+An NPC can change a private name during an ordinary reply to a signed-in player. The name may refer to a currently observed individual or an independently recognized person in the NPC’s selected memory. Rust supplies the exact name revision and the installed world’s naming rules apply the edit. Remembered references authorize the name edit only. They convey no physical target, speech recipient or access to a private note.
+
+The authenticated conversation and controlled HTTPS provider saved one private name for a nearby individual and one for a person outside sight, in separate worlds. Both saved their exact Unicode text and supporting evidence, survived cold reopening and recovered the same request receipt. The player’s view never exposed either private name. A completed walk saved while another reply was held, and the valid reply then applied once. A forged reference failed response validation. A valid reference with a stale revision refused the name change and still let independent speech apply.
+
+Forgetting the exact original evidence stopped generation when held after judgment and refused effects when held during generation. Cancellation also left no name or reply. Replaying the original request did not make another provider attempt. Controlled Jev calls incurred $0 in total across these cases. The cases establish correctness for the authorized names. No live model quality or speed was measured.
+
+The local archive `nsc04-standalone-naming-20261122` records eight passing callers and the original failing control with no naming choices in the provider request. The local locked build from `095ad47e6` and the scoped naming patch used executable SHA-256 `c40e0396bd6674618241401639bfdbd9c6d5a87adce797da304d9155e039854b`. The Rust build, new-module formatting and network checks passed. All disposable databases were removed.
+
 ## Live policy comparison
 
 All **48/48 fresh cases received an answer and delivered it**. Jev chose an accepted answer in every case, so the enabled policy correctly bought **zero** stronger-model calls. The comparison is complete; it shows no measured benefit on this small, straightforward sample.

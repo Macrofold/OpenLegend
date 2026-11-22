@@ -42,6 +42,14 @@ impl NpcSubjectFact {
         &self.label
     }
 
+    pub(crate) fn name_revision(&self) -> u64 {
+        self.name_revision
+    }
+
+    pub(crate) fn remembered_entity(&self) -> bool {
+        self.identity_present && !self.seed_only && self.can_address_remembered
+    }
+
     /// A captured personal document can stay editable after recognition ends.
     pub(crate) fn has_notepad_text(&self) -> bool {
         self.note_characters > 0

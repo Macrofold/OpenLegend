@@ -42,6 +42,8 @@ struct SourceAttribution {
     #[serde(default)]
     source_subject: Option<ObserverSubject>,
     #[serde(default)]
+    recognized: bool,
+    #[serde(default)]
     evidence: Option<SpeechSubject>,
     #[serde(default)]
     observation: Option<SubjectObservation>,
@@ -68,6 +70,7 @@ struct OccurrenceRole {
 pub(crate) struct NpcSourceAttribution {
     subjects: Vec<NpcSubjectFact>,
     entity_subjects: Vec<NpcSubjectFact>,
+    remembered_name_subjects: Vec<NpcSubjectFact>,
     presentation_subjects: Vec<NpcSubjectFact>,
     permitted_entities: Vec<String>,
     bound_entity_ids: Vec<String>,
@@ -189,6 +192,22 @@ impl NpcSourceAttribution {
     pub(crate) fn subject(&self, ordinal: usize) -> Option<&NpcSubjectFact> {
         self.subjects.get(ordinal)
     }
+    pub(crate) fn subject_facts(&self) -> &[NpcSubjectFact] {
+        &self.subjects
+    }
+    pub(crate) fn name_entity_facts(&self) -> impl Iterator<Item = &NpcSubjectFact> {
+        self.entity_subjects
+            .iter()
+            .chain(&self.remembered_name_subjects)
+    }
+    pub(crate) fn name_entity(&self, ordinal: usize) -> Option<&NpcSubjectFact> {
+        if ordinal < self.entity_subjects.len() {
+            self.entity_subjects.get(ordinal)
+        } else {
+            self.remembered_name_subjects.get(ordinal - self.entity_subjects.len())
+        }
+    }
+
     pub(crate) fn entity(&self, ordinal: usize) -> Option<(&NpcSubjectFact, bool)> {
         let fact = self.entity_subjects.get(ordinal)?;
         let id = fact.canonical_id.as_deref()?;
@@ -278,17 +297,17 @@ impl NpcSourceAttribution {
                 )
             })
             .ok_or(ExecutionError::Capacity)?;
+        let roster_count = count
+            .checked_add(body.entity_ids.len())
+            .and_then(|n| n.checked_add(1 + usize::from(awareness && body.recognized)))
+            .ok_or(ExecutionError::Capacity)?;
         let mut bound = size_of::<Self>()
             .checked_add(
                 count
                     .checked_mul(size_of::<NpcSubjectFact>())
                     .ok_or(ExecutionError::Capacity)?,
             )
-            .and_then(|n| {
-                n.checked_add(map_storage::<&str, ()>(
-                    count.checked_add(body.entity_ids.len())?.checked_add(1)?,
-                )?)
-            })
+            .and_then(|n| n.checked_add(map_storage::<&str, ()>(roster_count)?))
             .and_then(|n| n.checked_add(2 * size_of::<OccurrenceRole>() + 2 * size_of::<&str>()))
             .ok_or(ExecutionError::Capacity)?;
         for id in body
@@ -336,7 +355,7 @@ impl NpcSourceAttribution {
                         })
                     }),
             );
-        let mut permitted = IndexSet::with_capacity(count + body.entity_ids.len() + 1);
+        let mut permitted = IndexSet::with_capacity(roster_count);
         permitted.insert(actor);
         for subject in subject_inputs {
             subjects.push(subject_fact(state, actor, names, subject, budget)?);
@@ -476,7 +495,46 @@ impl NpcSourceAttribution {
                 budget,
             )?);
         }
-        let permitted_entities = permitted.into_iter().map(str::to_owned).collect();
+        let permitted_entities = permitted.iter().copied().map(str::to_owned).collect();
+        // These names come from remembered episodes or an actually recognized
+        // speaker. Keep them out of the exported entity and speech roster.
+        let mut seen_for_name = permitted;
+        let mentioned = body.entity_ids.iter().filter(|_| !awareness).chain(
+            body.source_id
+                .iter()
+                .filter(|_| awareness && body.recognized),
+        );
+        for id in mentioned {
+            if !seen_for_name.contains(id.as_str())
+                && names_for_subjects.can_address_remembered_subject(id)
+            {
+                seen_for_name.insert(id);
+            }
+        }
+        let named_from_memory = seen_for_name.len() - entity_subjects.len();
+        storage.resize(
+            storage
+                .bytes()
+                .checked_add(
+                    named_from_memory
+                        .checked_mul(size_of::<NpcSubjectFact>())
+                        .ok_or(ExecutionError::Capacity)?,
+                )
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut remembered_name_subjects = Vec::with_capacity(named_from_memory);
+        for id in seen_for_name.into_iter().skip(entity_subjects.len()) {
+            let _copy = budget.reserve(id.len())?;
+            remembered_name_subjects.push(subject_fact(
+                state,
+                actor,
+                names_for_subjects,
+                ObserverSubject::Entity {
+                    entity_id: id.to_owned(),
+                },
+                budget,
+            )?);
+        }
         let reading_modality = if awareness {
             let raw = body
                 .modality
@@ -513,6 +571,7 @@ impl NpcSourceAttribution {
         Ok(Self {
             subjects,
             entity_subjects,
+            remembered_name_subjects,
             permitted_entities,
             bound_entity_ids,
             occurrence_roles,
