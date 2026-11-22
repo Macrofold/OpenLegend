@@ -366,6 +366,7 @@ import {
   splitLot,
   mergeLots,
   custodian,
+  itemContainerCapacity,
 } from './objects.js';
 import { worldPosition, worldSupport, worldPlacement } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
@@ -466,11 +467,7 @@ import {
   movingStrikeInReach,
   movingStrikeStance,
 } from './strikes.js';
-import {
-  inspectPossessions,
-  inspectedContainer,
-  recordInspectedItems,
-} from './inventory-inspection.js';
+import { inspectPossessions, recordInspectedItems } from './inventory-inspection.js';
 import { exposedPlaces, placeLandmarkIndex } from './places.js';
 import { reconcileConditions } from './conditions.js';
 import { gatheringYield, gatheringBindingProblem } from './gathering.js';
@@ -3916,15 +3913,24 @@ function executeCommandNative(
             command.expectedScope,
             command.itemId,
           );
-          component.inventoryInspection = cursor;
+          const item = command.itemId ? itemFor(world, command.itemId) : undefined;
+          const recipeRecord = item && world.itemDefinitions[item.definitionId]?.recipeRecord;
+          const previousId = component.inventoryInspection?.containerId;
+          const previous = previousId ? entityGet(world.entities, previousId) : undefined;
+          // Owned details can add evidence without replacing a world storage
+          // page. Its original access and revision checks still apply.
+          const keepWorldPage =
+            previous?.placement?.mode === 'world' &&
+            (!previous.actor || previous.remains) &&
+            item &&
+            !recipeRecord &&
+            custodian(world, item.id) === actor.id;
+          if (!keepWorldPage) component.inventoryInspection = cursor;
           cursor.evidenceIds.push(
             ...recordInspectedItems(world, events, actor.id, { ...cursor, page }),
           );
-          if (
-            command.itemId &&
-            world.itemDefinitions[itemFor(world, command.itemId)?.definitionId ?? '']?.recipeRecord
-          ) {
-            const read = readRecipeRecord(world, actor.id, command.itemId);
+          if (item && recipeRecord) {
+            const read = readRecipeRecord(world, actor.id, item.id);
             if ('recipe' in read) {
               emit(
                 world,
@@ -3945,10 +3951,16 @@ function executeCommandNative(
               );
             }
           }
-          const container = inspectedContainer(world, actor.id);
+          // This cursor owns the details in the event even when another
+          // inventory page remains open. Packing is from the admitted parent.
+          const parent = cursor.containerId
+            ? entityGet(world.entities, cursor.containerId)
+            : undefined;
+          const load = parent?.container?.load;
+          const capacity = parent && itemContainerCapacity(world, parent);
           const packing =
-            container?.load !== undefined && container.capacity !== undefined
-              ? ` Packing space: ${container.load} of ${container.capacity} units used; ${container.capacity - container.load} units free.`
+            load !== undefined && capacity !== undefined
+              ? ` Packing space: ${load} of ${capacity} units used; ${capacity - load} units free.`
               : '';
           const inspectionEvent = emit(
             world,

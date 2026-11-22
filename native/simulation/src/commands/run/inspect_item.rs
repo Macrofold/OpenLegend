@@ -5,7 +5,7 @@ use super::inspect_storage::PreparedStorage;
 use super::*;
 use crate::{
     events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope},
-    ground_items::inspection::owned,
+    ground_items::inspection::{WorldStorage, owned},
     host::retained_size::{HeapBytes, heap_sum},
     reception::{EncounterExposure, EventScalar, ObservedItemLocation, VersionedFamily},
     state::{Individuality, InventoryInspection, Named},
@@ -60,9 +60,9 @@ impl CommandCursor {
             return Err(ExecutionError::Invariant);
         };
         let state = &core.state;
-        if state.physical.entities.get(actor).is_none() {
+        let Some(actor_body) = state.physical.entities.get(actor) else {
             return Err(ExecutionError::MissingActor);
-        }
+        };
         let definition_set = &state.installed.retained;
         let item = state
             .physical
@@ -184,7 +184,18 @@ impl CommandCursor {
             self.phase = Phase::StoragePage;
             return Ok(None);
         }
-        core.physical().clear_inventory_inspection(actor)?;
+        // Ordinary owned details record a private fact without requiring a
+        // page. Keep the previously opened world storage under its original
+        // inspection fences so selecting the source cannot close its destination.
+        let world_page = actor_body
+            .actor
+            .as_ref()
+            .and_then(|actor| actor.inventory_inspection.as_ref())
+            .and_then(|page| page.container_id.as_deref())
+            .is_some_and(|root| WorldStorage::selected(state, actor, root).is_some());
+        if !world_page {
+            core.physical().clear_inventory_inspection(actor)?;
+        }
         self._reservation.merge(prepared.custody)?;
         let event = core.stage_event(prepared.intent)?;
         self.reserve(event.id.len() + COPY.inspected.len() + 64)?;
