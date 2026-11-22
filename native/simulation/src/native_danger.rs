@@ -43,17 +43,16 @@ fn danger_source(profile: &NativeResponseProfile, source: &Entity) -> Result<boo
     if danger_body(profile, source) {
         return Ok(true);
     }
-    // A selected live strike requires the full strike owner; an opaque input
-    // field cannot quietly decide that a natural attack is harmless.
-    if profile.dangers.current_natural_attack
-        && actor
-            .action
-            .as_ref()
-            .is_some_and(|action| action.kind == "strike" && action.stage == "working")
-    {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
-    Ok(false)
+    Ok(profile.dangers.current_natural_attack
+        && actor.action.as_ref().is_some_and(|action| {
+            action.strike_phase == Some(crate::contact::StrikePhase::Windup)
+                && action.definition_id.as_ref().is_some_and(|id| {
+                    actor
+                        .natural_strike_ids
+                        .as_ref()
+                        .is_some_and(|ids| ids.contains(id))
+                })
+        }))
 }
 
 pub(crate) struct DangerAssessment {

@@ -204,6 +204,27 @@ pub struct SightRay {
     pub to: Point,
 }
 
+/// Return the interaction-anchor line to check once both bodies are within
+/// reach. This prepares a ray only. The caller still owns permission and the
+/// meaning of a clear or obstructed answer.
+pub(crate) fn interaction_reach(
+    actor: &crate::state::Entity,
+    target: &crate::state::Entity,
+    reach: f64,
+    budget: &crate::host::ByteBudget,
+) -> Result<Option<SightRay>, crate::execution::ExecutionError> {
+    use crate::execution::ExecutionError;
+    let mut from = actor
+        .world_position()
+        .ok_or(ExecutionError::InvalidPosition)?;
+    from.y += crate::status::effective_body_profile(actor, budget)?.interaction_height;
+    let mut to = target
+        .world_position()
+        .ok_or(ExecutionError::InvalidPosition)?;
+    to.y += crate::status::effective_body_profile(target, budget)?.interaction_height;
+    Ok((crate::spatial::distance(from, to) <= reach).then_some(SightRay { from, to }))
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WalkingSegment {

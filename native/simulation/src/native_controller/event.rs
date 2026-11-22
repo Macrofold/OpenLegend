@@ -1,6 +1,5 @@
-//! The selected ordinary command closure proves preparation has no offensive
-//! action. Actual attack/ranged occurrences remain refused before acquisition,
-//! rather than being accepted with missing combat/animal consequences.
+//! Selected directly targeted animal consequences. A body impact does not
+//! authorize an unfinished reaction owner to accept the same event.
 use crate::events::{AcquiredOccurrence, EventScope, WorldEvent};
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::state::Entity;
@@ -55,24 +54,30 @@ pub(crate) fn require_supported_event(
     event: &WorldEvent,
 ) -> Result<(), ExecutionError> {
     let installed = &core.state.installed;
+    let source_action = event
+        .actor_id
+        .as_deref()
+        .and_then(|id| core.state.physical.entities.get(id))
+        .and_then(|entity| entity.actor.as_ref())
+        .and_then(|actor| actor.action.as_ref());
+    let supported_contact = event.event_type == "struck"
+        && source_action.is_some_and(|action| action.is_natural_contact())
+        && receiver(core, event)?.is_none();
     if installed
         .occurrence_rules
         .value()
         .native_target_events
         .contains(&event.event_type)
         && event.event_type != installed.ordinary_actions.value().action_started_event
+        && !supported_contact
     {
         return Err(ExecutionError::UnsupportedFamily);
     }
-    if let Some(action) = event
-        .actor_id
-        .as_deref()
-        .and_then(|id| core.state.physical.entities.get(id))
-        .and_then(|entity| entity.actor.as_ref())
-        .and_then(|actor| actor.action.as_ref())
-    {
+    if let Some(action) = source_action {
         if action.has_unconverted_fields()
-            || (!action.has_ground_motion() && action.kind != "status-effect")
+            || (!action.has_ground_motion()
+                && !action.is_natural_contact()
+                && action.kind != "status-effect")
         {
             return Err(ExecutionError::UnsupportedFamily);
         }
@@ -101,9 +106,7 @@ pub(crate) fn acquire_event(
     let Some(_animal) = receiver(core, event)? else {
         return Ok(());
     };
-    // The only admitted native-target vocabulary here is actual action start.
-    // Its source action has already passed the closed physical-family owner:
-    // neither Move nor Status is attackPreparation. There is therefore no alarm
-    // to acquire; actual attacks were rejected by the same gate above.
+    // Natural contact against people has no animal receiver. An actual attack
+    // against a native receiver requires that receiver's unfinished response.
     Ok(())
 }

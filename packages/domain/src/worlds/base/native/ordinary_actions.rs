@@ -74,6 +74,7 @@ pub(crate) struct OrdinaryActionRules {
     pub travel: super::base_outings::TravelRules,
     pub participation: ParticipationRules,
     pub audience_milestone: AudienceMilestone,
+    pub natural_contact: NaturalContactText,
     pub invalid_command: ActionMessage,
     pub unknown_actor: ActionMessage,
     pub inactive: ActionMessage,
@@ -123,6 +124,16 @@ pub(crate) struct OrdinaryActionRules {
     pub action_stopped_prefix: String,
     pub action_stopped_event: String,
     pub movement_arrival_event: String,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct NaturalContactText {
+    pub missed: String,
+    pub connected: String,
+    pub out_of_range: String,
+    pub unavailable: String,
+    pub interrupted: String,
+    pub body_changed: String,
 }
 impl DefinitionIdentity for OrdinaryActionRules {
     fn definition_id(&self) -> &str {

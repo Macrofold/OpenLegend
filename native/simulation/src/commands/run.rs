@@ -24,6 +24,7 @@ use crate::state::{Action, NavigationPending, SurfacePoint};
 use crate::work::{MeterToken, WorkUnit};
 mod discovery;
 mod feeding;
+mod natural_contact;
 
 pub(crate) struct NativeMovementInput {
     pub binding: crate::native_response::NativeLocomotion,
@@ -70,6 +71,7 @@ enum Phase {
     Standing,
     Route,
     FeedReach,
+    ContactReach,
     FeedApproach,
     Probe,
     Prepared,
@@ -592,7 +594,10 @@ impl CommandCursor {
                                 let crate::geometry::GuardedRoutePlan(route, storage) =
                                     crate::geometry::route_plan(route, &self.budget)?;
                                 if self.options.native_controller
-                                    && !core.physical().admit_territorial_detour(&self.command.envelope().actor_id, &route)?
+                                    && !core.physical().admit_territorial_detour(
+                                        &self.command.envelope().actor_id,
+                                        &route,
+                                    )?
                                 {
                                     self.refuse(&ordinary.no_route);
                                     self.queries = None;
@@ -666,6 +671,14 @@ impl CommandCursor {
                                     } else {
                                         Phase::FeedApproach
                                     };
+                            }
+                            Phase::ContactReach => {
+                                self.queries = None;
+                                if answer.sight.pop().ok_or(ExecutionError::Invariant)? {
+                                    self.phase = Phase::Prepared;
+                                } else {
+                                    self.refuse(&ordinary.out_of_reach);
+                                }
                             }
                             Phase::StatusReach => {
                                 if !answer.sight.pop().ok_or(ExecutionError::Invariant)? {
@@ -851,7 +864,11 @@ impl CommandCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
-                    if self.command.discovery_only() {
+                    if self.command.discovery_only()
+                        && !(self.options.native_controller
+                            && self.preparation_mode.is_none()
+                            && matches!(self.command, NativeCommand::Strike { .. }))
+                    {
                         if self.preparation_mode.is_none() {
                             return Err(ExecutionError::UnsupportedFamily);
                         }
@@ -935,9 +952,13 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::Strike { .. } => {
+                            if self.prepare_natural_contact(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
                         NativeCommand::Outing { .. }
                         | NativeCommand::Follow { .. }
-                        | NativeCommand::Strike { .. }
                         | NativeCommand::InspectInventory { .. }
                         | NativeCommand::InspectActivities { .. } => {
                             return Err(ExecutionError::Invariant);
@@ -1403,6 +1424,9 @@ impl CommandCursor {
                     if !native && !routine {
                         if matches!(self.command, NativeCommand::Feed { .. }) {
                             return self.feeding_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::Strike { .. }) {
+                            return self.natural_contact_started(core, &actor_id);
                         }
                         let NativeCommand::Move { destination, .. } = &self.command else {
                             return Err(ExecutionError::Invariant);
@@ -1995,6 +2019,7 @@ impl CommandCursor {
                 Phase::Support
                 | Phase::Probe
                 | Phase::FeedReach
+                | Phase::ContactReach
                 | Phase::StatusSight
                 | Phase::DiscoverySight
                 | Phase::DiscoveryReach
@@ -2026,12 +2051,7 @@ fn actor_problem(
     if matches!(command, NativeCommand::Feed { .. }) && !native {
         return Ok(Some(ordinary.unsupported_controller.outcome(false)));
     }
-    if entity.spatial.local_pose.is_some()
-        || actor
-            .action
-            .as_ref()
-            .is_some_and(|action| action.kind == "strike" && action.stage == "working")
-    {
+    if entity.spatial.local_pose.is_some() {
         return Err(ExecutionError::UnsupportedFamily);
     }
     if command.envelope().cooperation.is_some() || command.envelope().combat_help_id.is_some() {

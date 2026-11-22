@@ -133,25 +133,55 @@ impl ObservationRules {
 }
 
 impl ObservationRules {
-    /// The selected Move/Status/Say closure has no working strike. A genuine
-    /// strike needs its installed strike, item and permitted sight owners;
-    /// installation/admission refuses that active family before effects.
+    /// Physical animation uses the present body's public heading. It exposes
+    /// the active phase and progress without a target identity or position.
     pub(crate) fn observed_action_animation(
         &self,
         entity: &Entity,
+        strikes: &indexmap::IndexMap<String, crate::worlds::base_decision_offers::NativeStrikeRead>,
     ) -> Result<
         Option<crate::worlds::base_observed::ObservedActionAnimation>,
         crate::status::ProjectionError,
     > {
-        if entity
+        use crate::contact::StrikePhase;
+        use crate::worlds::base_observed::{
+            AnimationKind, AnimationPhase, HorizontalDirection, ObservedActionAnimation,
+        };
+        let Some(action) = entity
             .actor
             .as_ref()
             .and_then(|actor| actor.action.as_ref())
-            .is_some_and(|action| action.kind == "strike" && action.stage == "working")
-        {
-            return Err(crate::status::ProjectionError::UnsupportedFamily);
-        }
-        Ok(None)
+            .filter(|action| action.kind == "strike" && action.stage == "working")
+        else {
+            return Ok(None);
+        };
+        let definition = action
+            .definition_id
+            .as_ref()
+            .and_then(|id| strikes.get(id))
+            .filter(|definition| Some(definition.version) == action.definition_version)
+            .ok_or(crate::status::ProjectionError::UnsupportedFamily)?;
+        let kind = match definition.animation.as_str() {
+            "punch" => AnimationKind::Punch,
+            "melee" => AnimationKind::Melee,
+            _ => return Err(crate::status::ProjectionError::UnsupportedFamily),
+        };
+        let phase = match action.strike_phase {
+            Some(StrikePhase::Windup) => AnimationPhase::Windup,
+            Some(StrikePhase::Recovery) => AnimationPhase::Recovery,
+            None => return Err(crate::status::ProjectionError::UnsupportedFamily),
+        };
+        Ok(Some(ObservedActionAnimation {
+            id: action.id.clone(),
+            kind,
+            phase,
+            tool: None,
+            progress: (1.0 - action.remaining_seconds / action.total_seconds).clamp(0.0, 1.0),
+            direction: HorizontalDirection {
+                x: entity.spatial.heading.sin(),
+                z: entity.spatial.heading.cos(),
+            },
+        }))
     }
 }
 
@@ -170,16 +200,16 @@ impl ObservationRules {
         if !self.outward_activity.actions.contains(&action.kind) {
             return Ok(None);
         }
-        if action.strike_phase.is_some() {
-            return Err(crate::received::ReceivedError(
-                "Current outward action phase is unsupported.",
-            ));
-        }
+        let phase = match action.strike_phase {
+            Some(crate::contact::StrikePhase::Windup) => "windup",
+            Some(crate::contact::StrikePhase::Recovery) => "recovery",
+            None => self.outward_activity.preparing_phase.as_str(),
+        };
         crate::encoding::json_record(&[
             action.id.as_str(),
             action.kind.as_str(),
             action.stage.as_str(),
-            self.outward_activity.preparing_phase.as_str(),
+            phase,
         ])
         .map(Some)
         .map_err(|_| crate::received::ReceivedError("Current outward action cannot be encoded."))

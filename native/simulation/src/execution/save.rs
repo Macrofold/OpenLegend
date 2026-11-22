@@ -661,6 +661,8 @@ impl PhysicalJournal {
                         | Undo::Contacts { entity, .. }
                         | Undo::Heading { entity, .. }
                         | Undo::Health { entity, .. }
+                        | Undo::CombatReady { entity, .. }
+                        | Undo::ContactPhase { entity, .. }
                         | Undo::Heat { entity, .. }
                         | Undo::Territorial { entity, .. }
                         | Undo::Action { entity, .. }
@@ -718,7 +720,7 @@ impl PhysicalJournal {
                         Undo::Heading { before, .. } => {
                             rows.geometry_heading.get_or_insert(*before);
                         }
-                        Undo::Health { .. } => rows.actor = true,
+                        Undo::Health { .. } | Undo::CombatReady { .. } => rows.actor = true,
                         Undo::Heat { .. } => rows.heat = true,
                         Undo::Territorial { .. } => rows.territorial = true,
                         Undo::Action { .. } => {
@@ -730,6 +732,7 @@ impl PhysicalJournal {
                         | Undo::ActionReplans { .. }
                         | Undo::ActionNavigation { .. }
                         | Undo::ActionRemaining { .. }
+                        | Undo::ContactPhase { .. }
                         | Undo::ActionSample { .. } => rows.action = true,
                         Undo::AnimalEpisode { before, .. } => {
                             rows.episode = true;

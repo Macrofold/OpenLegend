@@ -82,7 +82,7 @@ impl HealthChangeCursor {
         )?;
         Ok(())
     }
-    pub(super) fn personal(
+    pub(crate) fn personal(
         &self,
     ) -> Result<&crate::activity::PendingActivityResult, ExecutionError> {
         self.reconcile

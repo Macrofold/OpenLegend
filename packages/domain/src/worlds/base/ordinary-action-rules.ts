@@ -12,6 +12,14 @@ export const BASE_ORDINARY_ACTION_RULES = {
   travel: BASE_TRAVEL_RULES,
   participation: BASE_PARTICIPATION_PRESENTATION,
   audienceMilestone: BASE_PLAYTEST_AUDIENCE_MILESTONE,
+  naturalContact: {
+    missed: 'missed',
+    connected: 'The contact blow connected.',
+    outOfRange: 'The target moved out of reach.',
+    unavailable: 'the weapon, capability or perceived target is no longer available.',
+    interrupted: 'Injury interrupted the prepared strike.',
+    bodyChanged: ' body changed.',
+  },
   invalidCommand: {
     code: 'invalid-command',
     message: 'A command needs bounded actor and command IDs.',

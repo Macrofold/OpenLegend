@@ -168,7 +168,9 @@ pub(super) fn prepare_visual_source(
         reservation.merge(guard)?;
         (
             Some(effects),
-            Some(rules.observed_action_animation(subject)?),
+            Some(
+                rules.observed_action_animation(subject, &state.installed.retained.native_strike_read)?,
+            ),
         )
     } else {
         (None, None)

@@ -162,7 +162,7 @@ impl PhysicalMutation<'_> {
         }
         Ok(())
     }
-    pub(crate) fn advance_movement_work(
+    pub(crate) fn advance_timed_work(
         &mut self,
         id: &str,
         action_id: &str,
@@ -184,12 +184,17 @@ impl PhysicalMutation<'_> {
             .and_then(|entity| entity.actor.as_ref())
             .and_then(|actor| actor.action.as_ref())
             .filter(|action| {
-                action.id == action_id && action.has_ground_motion() && action.stage == "working"
+                action.id == action_id
+                    && action.stage == "working"
+                    && (action.has_ground_motion() || action.is_natural_contact())
             })
             .ok_or(ExecutionError::Invariant)?;
         let before = action.remaining_seconds;
         let after = (before - seconds).max(0.0);
         let after = if after <= epsilon { 0.0 } else { after };
+        if after == before {
+            return Ok(after == 0.0);
+        }
         self.journal
             .reserve(2 * size_of::<Undo>() + action_id.len())?;
         let key = UndoKey::ActionRemaining(handle.slot, handle.generation);

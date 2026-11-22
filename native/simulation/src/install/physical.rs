@@ -811,8 +811,8 @@ fn validate_entity(
         }
         if actor.action.as_ref().is_some_and(|a| {
             a.has_unconverted_fields()
-                || a.target_life.is_some()
-                || (!a.has_ground_motion() && a.kind != "status-effect")
+                || (a.target_life.is_some() && !a.is_natural_contact())
+                || (!a.has_ground_motion() && !a.is_natural_contact() && a.kind != "status-effect")
         }) {
             return Err(InstallError::CurrentFormat);
         }

@@ -1246,6 +1246,13 @@ impl AdvanceCursor {
                                 TerritorialIntention::Stop => {
                                     begin_native_stop(core, &actor, self.candidate, budget)?
                                 }
+                                TerritorialIntention::Strike(target) => begin_native_contact(
+                                    core,
+                                    &actor,
+                                    target,
+                                    self.candidate,
+                                    budget,
+                                )?,
                             };
                             (command, LocomotionMode::Travel)
                         }

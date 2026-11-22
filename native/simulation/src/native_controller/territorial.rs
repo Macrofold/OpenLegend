@@ -191,6 +191,14 @@ fn known_choices(choices: &[String], allowed: &[&str]) -> bool {
 }
 
 impl Threat {
+    pub(crate) fn strike_definition(&self) -> &str {
+        &self.policy.strike_definition_id
+    }
+
+    pub(crate) fn windup_text(&self) -> &JsText {
+        &self.policy.windup_text
+    }
+
     pub(crate) fn needs_feeding_location(&self) -> bool {
         self.policy.activation.is_some()
     }

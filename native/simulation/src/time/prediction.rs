@@ -341,8 +341,16 @@ impl MechanicalForecast {
             if action.kind == "status-effect" {
                 continue;
             }
-            if !action.has_ground_motion() || action.has_unconverted_fields() {
+            if (!action.has_ground_motion() && !action.is_natural_contact())
+                || action.has_unconverted_fields()
+            {
                 return Err(ExecutionError::UnsupportedFamily);
+            }
+            if action.is_natural_contact() {
+                if action.remaining_seconds > 0.0 {
+                    bound.limit(action.remaining_seconds);
+                }
+                continue;
             }
             if let Some(plan) = &actor.agency.plan {
                 crate::plans::require_supported_activity(plan)?;

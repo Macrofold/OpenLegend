@@ -11,8 +11,9 @@ use super::{
     private_motion_seconds,
 };
 use crate::commands::{
-    CommandOperation, CommandOperationError, CompletedCommandOperation, Outcome, begin_native_feed,
-    begin_native_foraging_move, begin_native_movement, begin_native_stop, begin_territorial_move,
+    CommandOperation, CommandOperationError, CompletedCommandOperation, Outcome,
+    begin_native_contact, begin_native_feed, begin_native_foraging_move, begin_native_movement,
+    begin_native_stop, begin_territorial_move,
 };
 use crate::events::{
     CompletedEvent, EventAccountPlacement, EventCursor, WorldEvent, begin_staged_occurrence,

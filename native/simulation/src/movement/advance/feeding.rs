@@ -27,7 +27,7 @@ impl MoveAdvanceCursor {
             return self.drive(core, None);
         };
         let reach = core.state.installed.retained.item_handling_read.reach;
-        if let Some(ray) = feeding::reach_ray(actor, target, reach, &self.budget)? {
+        if let Some(ray) = crate::geometry::interaction_reach(actor, target, reach, &self.budget)? {
             let storage = self
                 .budget
                 .reserve(size_of::<GeometryQueries>() + size_of::<crate::geometry::SightRay>())?;
@@ -212,7 +212,7 @@ impl MoveAdvanceCursor {
         } else {
             None
         };
-        if !core.physical().advance_movement_work(
+        if !core.physical().advance_timed_work(
             &self.actor_id,
             id,
             self.seconds,

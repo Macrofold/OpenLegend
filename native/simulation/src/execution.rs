@@ -33,6 +33,8 @@ mod agency;
 mod attributes;
 mod body;
 mod conditions;
+mod contact;
+use contact::ContactPhase;
 mod heat;
 mod participation;
 mod practice;
@@ -44,8 +46,8 @@ mod semantic;
 pub(crate) use semantic::occupied_purpose;
 mod sensing;
 mod status;
-mod territorial;
 mod temporal;
+mod territorial;
 mod values;
 pub(crate) use status::{
     PendingStatusEnd, StatusActivationAnswer, StatusActivationCursor, StatusActivationProgress,
@@ -1180,6 +1182,8 @@ enum UndoKey {
     Heat(usize, u64),
     Territorial(usize, u64),
     Health(usize, u64),
+    CombatReady(usize, u64),
+    ContactPhase(usize, u64),
     Action(usize, u64),
     ActionPath(usize, u64),
     ActionRoute(usize, u64),
@@ -1383,6 +1387,15 @@ enum Undo {
         entity: EntityHandle,
         action_id: String,
         before: f64,
+    },
+    CombatReady {
+        entity: EntityHandle,
+        before: Option<f64>,
+    },
+    ContactPhase {
+        entity: EntityHandle,
+        action_id: String,
+        before: ContactPhase,
     },
     ActionSample {
         entity: EntityHandle,
@@ -2116,6 +2129,28 @@ impl PhysicalJournal {
                         .filter(|action| action.id == action_id)
                         .ok_or(ExecutionError::Invariant)?
                         .remaining_seconds = before;
+                }
+                Undo::CombatReady { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .combat_ready_at = before;
+                }
+                Undo::ContactPhase {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    let action = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.action.as_mut())
+                        .filter(|action| action.id == action_id)
+                        .ok_or(ExecutionError::Invariant)?;
+                    before.restore(action);
                 }
                 Undo::ActionSample {
                     entity,

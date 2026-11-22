@@ -1,7 +1,7 @@
 //! One selected ground resource action. The physical owners prepare reach,
 //! stock and attribute writes. The installed world supplies diet and wording.
 use crate::execution::{CoreMutation, ExecutionError, StagedOccurrence};
-use crate::geometry::{RouteQuery, SightRay};
+use crate::geometry::RouteQuery;
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::native_response::{FoodStock, ResourceFeeding};
@@ -63,23 +63,6 @@ pub(crate) fn binding(
         },
         storage,
     ))
-}
-
-pub(crate) fn reach_ray(
-    actor: &Entity,
-    target: &Entity,
-    reach: f64,
-    budget: &ByteBudget,
-) -> Result<Option<SightRay>, ExecutionError> {
-    let mut from = actor
-        .world_position()
-        .ok_or(ExecutionError::InvalidPosition)?;
-    from.y += crate::status::effective_body_profile(actor, budget)?.interaction_height;
-    let mut to = target
-        .world_position()
-        .ok_or(ExecutionError::InvalidPosition)?;
-    to.y += crate::status::effective_body_profile(target, budget)?.interaction_height;
-    Ok((crate::spatial::distance(from, to) <= reach).then_some(SightRay { from, to }))
 }
 
 pub(crate) fn approach(

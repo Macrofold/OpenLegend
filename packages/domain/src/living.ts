@@ -27,7 +27,7 @@ import { canonicalJson, emit, finish, outcome } from './events.js';
 import { attributeRange, projectAttributes, readAttribute } from './world-modules.js';
 import { canNoticeInternalChange } from './conditions.js';
 import { BASE_GUARD_TEXT } from './worlds/base/shield-defense.js';
-import { selectedObservationRules } from './world-composition.js';
+import { selectedObservationRules, selectedOrdinaryActionRules } from './world-composition.js';
 import { baseCombatInjuryInterruption } from './worlds/base/body-policy.js';
 
 export interface LivingBody {
@@ -376,7 +376,7 @@ export function commitBodyEffects(
       world,
       entity.id,
       interrupted.id,
-      outcome(false, 'interrupted', 'Injury interrupted the prepared strike.'),
+      outcome(false, 'interrupted', selectedOrdinaryActionRules(world).naturalContact.interrupted),
     );
     actor.action = null;
   }
@@ -384,7 +384,12 @@ export function commitBodyEffects(
     world,
     events,
     'body-effect',
-    { parts: [person(entity, 'possessive'), ' body changed.'] },
+    {
+      parts: [
+        person(entity, 'possessive'),
+        selectedOrdinaryActionRules(world).naturalContact.bodyChanged,
+      ],
+    },
     entity,
     entity.id,
     {

@@ -29,6 +29,7 @@ impl CommandExposure {
             NativeCommand::StatusEffect { target_id, .. } => target_id,
             NativeCommand::Feed { envelope, .. }
             | NativeCommand::Move { envelope, .. }
+            | NativeCommand::Strike { envelope, .. }
             | NativeCommand::Cancel { envelope, .. } => {
                 let entity = core
                     .state
@@ -43,9 +44,10 @@ impl CommandExposure {
                     .value()
                     .outward_activity
                     .actions;
-                let exposes_feed = matches!(command, NativeCommand::Feed { .. })
-                    && outward.iter().any(|kind| kind == command.kind());
-                if !exposes_feed
+                let exposes_action = matches!(command, NativeCommand::Strike { .. })
+                    || matches!(command, NativeCommand::Feed { .. })
+                        && outward.iter().any(|kind| kind == command.kind());
+                if !exposes_action
                     && !entity
                         .status_effects
                         .as_ref()
@@ -62,7 +64,6 @@ impl CommandExposure {
             }
             NativeCommand::Say { .. } | NativeCommand::WithdrawAttempt { .. } => return Ok(None),
             NativeCommand::Follow { .. }
-            | NativeCommand::Strike { .. }
             | NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. } => {
                 return Err(ExecutionError::UnsupportedFamily);
@@ -133,7 +134,8 @@ fn fingerprint(
     )?;
     let rules = state.installed.observation_rules.value();
     let activity = rules.outward_body_activity(entity)?;
-    let animation = rules.observed_action_animation(entity)?;
+    let animation =
+        rules.observed_action_animation(entity, &state.installed.retained.native_strike_read)?;
     let effects = project_status_effects(
         entity,
         &state.installed.status_policy,

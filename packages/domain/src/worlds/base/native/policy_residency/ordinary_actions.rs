@@ -32,6 +32,7 @@ heap_record!(OrdinaryActionRules {
     travel,
     participation,
     audience_milestone,
+    natural_contact,
     invalid_command,
     unknown_actor,
     inactive,
@@ -81,6 +82,14 @@ heap_record!(OrdinaryActionRules {
     action_stopped_prefix,
     action_stopped_event,
     movement_arrival_event
+});
+heap_record!(NaturalContactText {
+    missed,
+    connected,
+    out_of_range,
+    unavailable,
+    interrupted,
+    body_changed
 });
 heap_record!(PlanRules {
     requested_movement_family,

@@ -235,8 +235,8 @@ pub struct ProbeOffer {
     pub dz: f64,
 }
 
-/// Read-only discovery/availability projection of the actual installed strike
-/// definition. Its raw immutable row remains the sole authored definition.
+/// Typed installed strike data shared by availability and native contact.
+/// Its raw immutable row remains the sole authored definition.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NativeStrikeRead {

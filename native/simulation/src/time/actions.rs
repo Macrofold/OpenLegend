@@ -47,7 +47,9 @@ impl SliceActions {
             let Some(action) = &actor.action else {
                 continue;
             };
-            if (!action.has_ground_motion() && action.kind != "status-effect")
+            if (!action.has_ground_motion()
+                && !action.is_natural_contact()
+                && action.kind != "status-effect")
                 || action.has_unconverted_fields()
             {
                 return Err(ExecutionError::UnsupportedFamily);
@@ -57,7 +59,9 @@ impl SliceActions {
                 .installed
                 .capabilities
                 .capability_blocked(Some(entity), "locomotion")?;
-            if action.stage == "working" && (!restricted || action.kind == "status-effect") {
+            if action.stage == "working"
+                && (!restricted || action.kind == "status-effect" || action.is_natural_contact())
+            {
                 reservation.resize(
                     reservation
                         .bytes()

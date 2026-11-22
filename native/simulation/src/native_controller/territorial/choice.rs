@@ -13,6 +13,7 @@ use std::{cmp::Ordering, mem::size_of};
 
 pub(crate) enum Intention {
     Move(SurfacePoint, ByteReservation),
+    Strike(EntityHandle),
     Stop,
 }
 
@@ -476,13 +477,28 @@ impl Review {
             next.detours_spent = 0;
             return Ok((action.is_some().then_some(Intention::Stop), notice, true));
         }
-        // Contact execution still needs the admitted strike owner. A territory
-        // cannot bypass that boundary by moving through, hitting or waking a
-        // body directly. Keep its actual target and bounded withdrawal.
-        if next.mode == Mode::Pursuit && remaining <= law.attack_range {
-            return Ok((action.is_some().then_some(Intention::Stop), notice, changed));
+        if action.is_some_and(|action| action.is_natural_contact()) {
+            return Ok((stop_intention(), notice, changed));
         }
-        if remaining <= law.arrival_radius || action.is_some_and(|action| action.kind == "strike") {
+        if next.mode == Mode::Pursuit && actor.combat_ready_at.is_none_or(|at| at <= self.at) {
+            if let Some(target) = next
+                .target_id
+                .as_deref()
+                .filter(|id| sight(id))
+                .and_then(|id| physical.entities.get(id))
+            {
+                if crate::geometry::interaction_reach(entity, target, law.attack_range, budget)?
+                    .is_some()
+                {
+                    let handle = physical
+                        .entities
+                        .handle(&target.id)
+                        .ok_or(ExecutionError::Invariant)?;
+                    return Ok((Some(Intention::Strike(handle)), notice, changed));
+                }
+            }
+        }
+        if remaining <= law.arrival_radius {
             return Ok((stop_intention(), notice, changed));
         }
         if !stop

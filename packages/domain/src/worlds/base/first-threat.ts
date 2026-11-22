@@ -17,7 +17,7 @@ export const STAG_CONTACT: StrikeDefinition = {
   version: 1,
   requiredBodyPlan: 'quadruped',
   label: 'Antler strike',
-  pastTense: 'struck with its antlers',
+  pastTense: 'butted',
   range: 1.6,
   approachRange: 1.6,
   autoMoveToRange: false,

@@ -46,7 +46,8 @@ impl CommandCursor {
         ));
         self.action_storage = Some(storage);
         let reach = installed.retained.item_handling_read.reach;
-        if let Some(ray) = feeding::reach_ray(animal, target, reach, &self.budget)? {
+        if let Some(ray) = crate::geometry::interaction_reach(animal, target, reach, &self.budget)?
+        {
             self.reserve(size_of::<crate::geometry::SightRay>())?;
             self.question(core, Phase::FeedReach)?.sight.push(ray);
             Ok(true)

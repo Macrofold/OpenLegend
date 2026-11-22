@@ -5,6 +5,7 @@ use super::{MotionOperation, MotionStep};
 use crate::activity::{ActivityStatus, PendingActivityResult};
 use crate::attention::ActivityRecordingContext;
 use crate::commands::Outcome;
+use crate::contact::{ContactAnswer, ContactStep, ImpactCursor};
 use crate::events::{
     AudienceSelection, CompletedOccurrence, EmissionText, EventEmissionIntent, EventScope,
 };
@@ -64,6 +65,7 @@ pub(crate) struct MoveAdvanceCursor {
     seconds: f64,
     phase: Phase,
     motion: Option<MotionOperation>,
+    contact: Option<Box<ImpactCursor>>,
     meal_sight: Option<crate::reception::SightBatch>,
     queries: Option<(GeometryQueries, ByteReservation)>,
     binding: GeometryBinding,
@@ -140,6 +142,7 @@ impl MoveAdvanceCursor {
             seconds,
             phase: Phase::Start,
             motion: None,
+            contact: None,
             meal_sight: None,
             queries: None,
             binding,
@@ -212,7 +215,9 @@ impl MoveAdvanceCursor {
         })
     }
     pub(crate) fn queries(&self) -> Result<&GeometryQueries, ExecutionError> {
-        if let Some(motion) = &self.motion {
+        if let Some(contact) = &self.contact {
+            contact.queries()
+        } else if let Some(motion) = &self.motion {
             motion.queries().ok_or(ExecutionError::Invariant)
         } else if let Some(sight) = &self.meal_sight {
             Ok(sight.queries())
@@ -221,6 +226,9 @@ impl MoveAdvanceCursor {
         }
     }
     pub(crate) fn personal(&self) -> Result<&PendingActivityResult, ExecutionError> {
+        if let Some(contact) = &self.contact {
+            return contact.personal();
+        }
         Ok(self
             .pending
             .as_ref()
@@ -236,6 +244,23 @@ impl MoveAdvanceCursor {
         let rules = installed.ordinary_actions.value();
         if installed.geometry.spatial.revision != self.binding.geometry_revision {
             return Err(ExecutionError::Invariant);
+        }
+        if let Some(work) = &mut self.contact {
+            let answer = answer.map(|answer| match answer {
+                MoveAdvanceAnswer::Geometry(answer) => ContactAnswer::Geometry(answer),
+                MoveAdvanceAnswer::Occurrence(answer) => ContactAnswer::Occurrence(answer),
+                MoveAdvanceAnswer::Personal(answer) => ContactAnswer::Personal(answer),
+            });
+            match work.step(core, answer)? {
+                ContactStep::Geometry => return Ok(Progress::Geometry),
+                ContactStep::Occurrence(event) => return Ok(Progress::Occurrence(event)),
+                ContactStep::Personal => return Ok(Progress::Personal),
+                ContactStep::AdvanceComplete => self.phase = Phase::Done,
+                ContactStep::ActionComplete => self.phase = Phase::Finish,
+                ContactStep::Invalidated => self.fail(&rules.natural_contact.unavailable)?,
+            }
+            self.contact = None;
+            return self.drive(core, None);
         }
         let mut geometry = None;
         if let Some(answer) = answer {
@@ -469,18 +494,30 @@ impl MoveAdvanceCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
-                    if !action.has_ground_motion() || entity.spatial.local_pose.is_some() {
+                    if (!action.has_ground_motion() && !action.is_natural_contact())
+                        || entity.spatial.local_pose.is_some()
+                    {
                         return Err(ExecutionError::UnsupportedFamily);
                     }
                     self.reserve(action.id.len())?;
                     self.action_id = Some(action.id.clone());
                     self.physical_life =
                         entity.physical_life().ok_or(ExecutionError::MissingActor)?;
+                    if action.is_natural_contact() {
+                        self.contact = Some(Box::new(ImpactCursor::new(
+                            &self.actor_id,
+                            action,
+                            self.seconds,
+                            self.binding,
+                            &self.budget,
+                        )?));
+                        return self.drive(core, None);
+                    }
                     if action.feeding.is_some() && action.stage == "working" {
                         return self.begin_feed_check(core);
                     }
                     if action.stage == "working" {
-                        if core.physical().advance_movement_work(
+                        if core.physical().advance_timed_work(
                             &self.actor_id,
                             self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
                             self.seconds,

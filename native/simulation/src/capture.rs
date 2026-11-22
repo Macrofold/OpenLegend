@@ -959,7 +959,10 @@ pub(crate) fn with_actor_self<T>(
                     .installed
                     .observation_rules
                     .value()
-                    .observed_action_animation(entity)?,
+                    .observed_action_animation(
+                        entity,
+                        &state.installed.retained.native_strike_read,
+                    )?,
                 senses: &player_metadata
                     .as_ref()
                     .ok_or(ExecutionError::Invariant)?

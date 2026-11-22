@@ -309,17 +309,6 @@ fn assemble_selected_core(
         &physical.entities,
         budget,
     )?;
-    for id in physical.entities.ordered_ids() {
-        let entity = physical.entities.get(id).ok_or(InstallError::CurrentFormat)?;
-        if let Some(threat) = &entity.threat {
-            if !threat.valid(entity, &retained.native_strike_read) {
-                return Err(InstallError::CurrentFormat.into());
-            }
-            if threat.needs_feeding_location() {
-                return Err(InstallError::UnsupportedFamily("territory follows an active feeding or resting place").into());
-            }
-        }
-    }
     use crate::host::retained_size::HeapBytes;
     let mut definition_storage = meanings.storage;
     definition_storage
@@ -482,6 +471,44 @@ fn assemble_selected_core(
         physical.header.sim_time,
         budget,
     )?;
+    for id in physical.entities.ordered_ids() {
+        let entity = physical.entities.get(id).ok_or(InstallError::CurrentFormat)?;
+        if let Some(threat) = &entity.threat {
+            if !threat.valid(entity, &installed.retained.native_strike_read) {
+                return Err(InstallError::CurrentFormat.into());
+            }
+            if threat.needs_feeding_location() {
+                return Err(InstallError::UnsupportedFamily(
+                    "territory follows an active feeding or resting place",
+                )
+                .into());
+            }
+            if entity
+                .actor
+                .as_ref()
+                .is_some_and(|actor| actor.controller == "native")
+                && crate::contact::profile(&installed, entity, threat.strike_definition()).is_none()
+            {
+                return Err(InstallError::UnsupportedFamily("territorial contact profile").into());
+            }
+        }
+        if entity
+            .actor
+            .as_ref()
+            .and_then(|actor| actor.action.as_ref())
+            .is_some_and(|action| {
+                action.is_natural_contact()
+                    && !crate::contact::valid_action(
+                        &installed,
+                        entity,
+                        action,
+                        physical.header.sim_time,
+                    )
+            })
+        {
+            return Err(InstallError::CurrentFormat.into());
+        }
+    }
     let mut appraisals = crate::appraisals::install_appraisals(
         &mut import,
         child(&mut children, "appraisals", false)?,

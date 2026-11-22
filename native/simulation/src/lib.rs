@@ -13,6 +13,7 @@ pub mod capture;
 pub mod cognition;
 pub mod commands;
 pub mod conditions;
+mod contact;
 pub mod encoding;
 pub mod events;
 pub mod execution;

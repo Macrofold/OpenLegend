@@ -671,7 +671,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub strike_phase: Option<UnconvertedField>,
+    pub(crate) strike_phase: Option<crate::contact::StrikePhase>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -683,7 +683,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub strike_outcome: Option<UnconvertedField>,
+    pub(crate) strike_outcome: Option<crate::contact::StrikeOutcome>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -831,8 +831,14 @@ impl Action {
         self.kind == "move" || (self.kind == "feed" && self.feeding.is_some())
     }
 
+    pub(crate) fn is_natural_contact(&self) -> bool {
+        self.kind == "strike" && self.strike_phase.is_some()
+    }
+
     pub(crate) fn has_unconverted_fields(&self) -> bool {
         (self.feeding.is_some() != (self.kind == "feed"))
+            || (!self.is_natural_contact()
+                && (self.strike_phase.is_some() || self.strike_outcome.is_some()))
             || self.gathering.is_some()
             || self.attack_observers.is_some()
             || self.cooperation.is_some()
@@ -860,9 +866,7 @@ impl Action {
             || self.manufacture_tools.is_some()
             || self.food_preparation.is_some()
             || self.fishing.is_some()
-            || self.strike_phase.is_some()
             || self.strike_motion.is_some()
-            || self.strike_outcome.is_some()
             || self.guard.is_some()
             || self.follow.is_some()
             || self.transferred.is_some()
@@ -944,6 +948,22 @@ impl Action {
     pub(crate) fn status_effect(episode: String, definition_id: String) -> Self {
         let mut action = Self::native_action(episode, "status-effect", "working");
         action.definition_id = Some(definition_id);
+        action
+    }
+    pub(crate) fn natural_contact(
+        id: String,
+        target_id: String,
+        target_life: u64,
+        definition: &crate::worlds::base_decision_offers::NativeStrikeRead,
+    ) -> Self {
+        let mut action = Self::native_action(id, "strike", "working");
+        action.target_id = Some(target_id);
+        action.target_life = Some(target_life);
+        action.definition_id = Some(definition.id.clone());
+        action.definition_version = Some(definition.version);
+        action.remaining_seconds = definition.work_seconds;
+        action.total_seconds = definition.work_seconds;
+        action.strike_phase = Some(crate::contact::StrikePhase::Windup);
         action
     }
     pub(crate) fn resource_feed(

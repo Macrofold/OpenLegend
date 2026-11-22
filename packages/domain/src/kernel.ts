@@ -5693,12 +5693,7 @@ function advanceAction(
       !entityGet(world.entities, action.targetId!)?.actor?.alive ||
       !visible(world, actor, entityGet(world.entities, action.targetId!)!))
   ) {
-    failAction(
-      world,
-      actor,
-      events,
-      'the weapon, capability or perceived target is no longer available.',
-    );
+    failAction(world, actor, events, selectedOrdinaryActionRules(world).naturalContact.unavailable);
     return;
   }
   if (action.type === 'feed' && action.stage === 'working') {
@@ -6117,14 +6112,15 @@ function advanceAction(
     retainCombatRecovery(world, actor, 'combat', actor.actor!.combatReadyAt);
     // The shared event owner records the world outcome and the actor's own awareness.
     // A completed miss is evidence for another choice, never an automatic retry.
+    const contactText = selectedOrdinaryActionRules(world).naturalContact;
     emit(
       world,
       events,
       'struck',
       subjectNarration(actor, [
-        `${hit ? definition.pastTense : 'missed'} `,
+        `${hit ? definition.pastTense : contactText.missed} `,
         person(target, actor.id === target.id ? 'reflexive' : 'object'),
-        `.${hit ? ' The contact blow connected.' : inRange ? '' : ' The target moved out of reach.'}`,
+        `.${hit ? ` ${contactText.connected}` : inRange ? '' : ` ${contactText.outOfRange}`}`,
       ]),
       actor,
       target.id,
