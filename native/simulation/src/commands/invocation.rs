@@ -518,41 +518,18 @@ impl InvocationCursor {
                         self.queries.as_ref().ok_or(ExecutionError::Invariant)?,
                     ));
                 }
-                let support = input.surface_id.as_deref();
-                let eps = core.state.installed.spatial.epsilon;
-                let surfaces = &core.state.installed.geometry.spatial.surfaces;
-                let mut selected = surfaces.iter().filter(|s| {
-                    support.is_none_or(|id| id == s.id)
-                        && x >= s.min_x - eps
-                        && x <= s.max_x + eps
-                        && z >= s.min_z - eps
-                        && z <= s.max_z + eps
-                });
-                let first = selected.next();
-                let multiple = selected.next().is_some();
-                if let Some(surface) = first.filter(|_| !multiple) {
-                    self.reserve(surface.id.len())?;
-                    self.bind(SurfacePoint {
-                        x,
-                        y: surface.y
-                            + (x - surface.min_x) * surface.slope_x
-                            + (z - surface.min_z) * surface.slope_z,
-                        z,
-                        surface_id: surface.id.clone(),
-                    })?;
-                } else {
-                    self.refuse(
-                        if multiple {
-                            "ambiguous-destination"
-                        } else {
-                            "invalid-destination"
-                        },
-                        if multiple {
-                            "Choose the intended support or floor for these coordinates."
-                        } else {
-                            "No supported surface covers that destination."
-                        },
-                    )?;
+                match installed_coordinate(&core.state.installed, x, z, input.surface_id.as_deref())
+                {
+                    Ok((surface, y)) => {
+                        self.reserve(surface.len())?;
+                        self.bind(SurfacePoint {
+                            x,
+                            y,
+                            z,
+                            surface_id: surface.into(),
+                        })?;
+                    }
+                    Err(reason) => self.refuse(reason.code, reason.message)?,
                 }
             }
         }
@@ -572,4 +549,48 @@ impl InvocationCursor {
             self.queries.as_ref().ok_or(ExecutionError::Invariant)?,
         ))
     }
+}
+
+/// Exact refusals from the shared installed support selector.
+pub struct CoordinateRefusal {
+    pub code: &'static str,
+    pub message: &'static str,
+}
+
+/// Read the exact installed floor for a typed x/z point. The borrowed surface
+/// keeps allocation and ordinary route admission with its actual caller.
+pub(crate) fn installed_coordinate<'a>(
+    installed: &'a crate::simulation::InstalledWorld,
+    x: f64,
+    z: f64,
+    support: Option<&str>,
+) -> Result<(&'a str, f64), CoordinateRefusal> {
+    let eps = installed.spatial.epsilon;
+    let mut selected = installed
+        .geometry
+        .spatial
+        .surfaces
+        .iter()
+        .filter(|surface| {
+            support.is_none_or(|id| id == surface.id)
+                && x >= surface.min_x - eps
+                && x <= surface.max_x + eps
+                && z >= surface.min_z - eps
+                && z <= surface.max_z + eps
+        });
+    let first = selected.next();
+    if selected.next().is_some() {
+        return Err(CoordinateRefusal {
+            code: "ambiguous-destination",
+            message: "Choose the intended support or floor for these coordinates.",
+        });
+    }
+    let surface = first.ok_or(CoordinateRefusal {
+        code: "invalid-destination",
+        message: "No supported surface covers that destination.",
+    })?;
+    Ok((
+        &surface.id,
+        surface.y + (x - surface.min_x) * surface.slope_x + (z - surface.min_z) * surface.slope_z,
+    ))
 }

@@ -1,4 +1,4 @@
-//! Ordinary completion memories are already acquired by the installed world.
+//! Ordinary activity results and plan-control memories are acquired by the installed world.
 //! Reuse their exact saved text and chronology when placing recall indexes.
 
 use super::*;
@@ -29,14 +29,18 @@ struct Memory {
     source: String,
 }
 
-// This is the append-only result produced by experience::result, not an
-// authorization to accept notes, impressions, copied evidence or edits.
+// The native activity/plan owners append their own work episodes here.
+// Other memory forms and edits need their own projection.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ResultBody {
     id: String,
     actor_id: String,
-    activity_id: String,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_option"
+    )]
+    activity_id: Option<String>,
     kind: String,
     source: String,
     importance: f64,
@@ -111,9 +115,15 @@ impl Store {
                     .ok_or(StoreError::InvalidRecord)
             };
             let revision = field(revision_column)?;
+            let work_result = match &body.activity_id {
+                Some(activity) => !activity.is_empty(),
+                // A plan report has no particular physical activity or
+                // event. Its own acquired receipt follows the same check.
+                None => body.event_type.is_none(),
+            };
             if body.kind != "episode"
                 || body.source != "internal"
-                || body.activity_id.is_empty()
+                || !work_result
                 || body.actor_id != field(actor_column)?
                 || body.id != field(id_column)?
                 || body.entity_ids.as_slice() != [body.actor_id.as_str()]

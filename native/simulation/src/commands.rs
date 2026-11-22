@@ -15,7 +15,7 @@ mod outings_input;
 pub(crate) use outings_input::OutingParameters;
 pub use outings_input::{PlayerTravelDestination, PlayerTravelIntent};
 
-mod invocation;
+pub(crate) mod invocation;
 mod preparation;
 pub(crate) use invocation::{
     BoundInvocation, InvocationCursor, InvocationStep, movement_destination,

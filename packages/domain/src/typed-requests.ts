@@ -1,3 +1,4 @@
+import pointGrammar from './typed-point.json' with { type: 'json' };
 import stopGrammar from './typed-stop.json' with { type: 'json' };
 import { selectedTypedRequestVocabulary } from './world-composition.js';
 import type { WorldState } from './types.js';
@@ -53,3 +54,6 @@ export function typedStop(text: string): keyof typeof stopGrammar.activities | n
 export function typedStopMatches(activity: keyof typeof stopGrammar.activities, kind: string) {
   return stopGrammar.activities[activity] === kind;
 }
+
+/** Neutral coordinate phrases shared by the normalized Source and Rust readers. */
+export const typedPointGrammar = pointGrammar;

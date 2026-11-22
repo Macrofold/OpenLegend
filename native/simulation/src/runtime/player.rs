@@ -10,6 +10,7 @@ use crate::capture::{
     PlayerSelfFacts,
 };
 pub use crate::commands::player::RuntimePlayerCommand;
+pub use crate::commands::invocation::CoordinateRefusal;
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, RoutePlan};
 use crate::host::{CapacityError, PublicationLease};
 use crate::simulation::AcceptedActorRead;
@@ -92,6 +93,13 @@ pub use crate::simulation::PlayerInputState as RuntimePlayerInputState;
 pub struct RuntimePlayerPublication {
     can_use_inventory: bool,
     _lease: PublicationLease,
+}
+
+pub struct TypedWalk<'a> {
+    pub x: f64,
+    pub z: f64,
+    pub support: Option<&'a str>,
+    pub mode: crate::plans::PlanMode,
 }
 
 pub struct RuntimeGatherOffer<'a> {
@@ -383,6 +391,26 @@ impl NativeWorldSession {
             kind.is_none_or(|kind| body.action.as_ref().is_some_and(|action| action.kind == kind))))
     }
 
+    /// Use the same current floor binding and choice/plan owners as a
+    /// structured response. The plan is the effect, not an immediate walk.
+    pub fn begin_player_typed_walk(
+        &mut self, request: &str, account: &str, actor: &str, input: TypedWalk<'_>,
+    ) -> Result<Result<CandidateKey, CoordinateRefusal>, RuntimeError> {
+        self.require_active()?;
+        let accepted = self.session.accepted().map_err(failure)?;
+        accepted.require_player_read(account, actor).map_err(failure)?;
+        let (surface, y) = match crate::commands::invocation::installed_coordinate(
+            &accepted.state.installed, input.x, input.z, input.support,
+        ) {
+            Ok(value) => value,
+            Err(reason) => return Ok(Err(reason)),
+        };
+        let _surface = self.budget.reserve(surface.len())?;
+        let point = crate::state::SurfacePoint { x: input.x, y, z: input.z, surface_id: surface.into() };
+        self.begin_bound_player_command(request, actor, RuntimePlayerCommand::Move(&point),
+            false, None, Some(input.mode)).map(Ok)
+    }
+
     /// Admit a decoded browser movement or stop on the same command journal
     /// used by the bridge. Authorization and receipt lookup belong to the
     /// application caller. Only the saved learner record and replay signature
@@ -405,6 +433,14 @@ impl NativeWorldSession {
         preview: bool,
         materials: Option<std::sync::Arc<crate::construction_gather::MaterialGrants>>,
     ) -> Result<CandidateKey, RuntimeError> {
+        self.begin_bound_player_command(id, actor, command, preview, materials, None)
+    }
+
+    fn begin_bound_player_command(
+        &mut self, id: &str, actor: &str, command: RuntimePlayerCommand<'_>, preview: bool,
+        materials: Option<std::sync::Arc<crate::construction_gather::MaterialGrants>>,
+        plan: Option<crate::plans::PlanMode>,
+    ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         // Size the live input copies and both small escaped JSON records.
         let bytes = id
@@ -417,7 +453,7 @@ impl NativeWorldSession {
         let _workspace = self.budget.reserve(bytes)?;
         let (command, signature) = command.bind(id, actor).map_err(failure)?;
         self.session
-            .begin_command_with_materials(
+            .begin_command_with_plan(
                 command,
                 signature,
                 crate::commands::CommandOptions {
@@ -427,6 +463,7 @@ impl NativeWorldSession {
                     durable_receipt: !preview,
                 },
                 crate::construction_gather::ConstructionGather::for_command(materials),
+                plan,
             )
             .map_err(session_failure)
     }

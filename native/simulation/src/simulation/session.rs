@@ -635,6 +635,16 @@ impl Session {
         options: crate::commands::CommandOptions,
         material_gather: crate::construction_gather::ConstructionGather,
     ) -> Result<CandidateKey, SessionError> {
+        self.begin_command_with_plan(command, canonical, options, material_gather, None)
+    }
+    pub(crate) fn begin_command_with_plan(
+        &mut self,
+        command: crate::commands::NativeCommand,
+        canonical: String,
+        options: crate::commands::CommandOptions,
+        material_gather: crate::construction_gather::ConstructionGather,
+        typed_plan: Option<crate::plans::PlanMode>,
+    ) -> Result<CandidateKey, SessionError> {
         let preview = options.preview;
         if preview
             && !matches!(
@@ -661,7 +671,7 @@ impl Session {
                 options,
                 binding,
                 &self.budget,
-            )?;
+            )?.with_typed_plan(typed_plan);
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,
                 journal: &mut journal,

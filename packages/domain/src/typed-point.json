@@ -1,0 +1,6 @@
+{
+  "verbs": ["go", "move", "walk", "run"],
+  "destination": "to",
+  "axes": ["x", "z"],
+  "support": ["on", "surface"]
+}

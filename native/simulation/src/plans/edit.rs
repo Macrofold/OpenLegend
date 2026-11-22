@@ -42,6 +42,15 @@ pub(crate) struct PlanEditCursor {
     reservation: ByteReservation,
 }
 impl PlanEditCursor {
+    pub(crate) fn personal(
+        &self,
+    ) -> Result<&crate::activity::PendingActivityResult, ExecutionError> {
+        self.control
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .personal()
+    }
+
     pub(crate) fn new(input: PlanEditInput, budget: &ByteBudget) -> Result<Self, ExecutionError> {
         let bytes = heap_sum([
             size_of::<Self>(),

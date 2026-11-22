@@ -24,7 +24,7 @@ use openlegend_simulation::{
     text::JsText,
     values::deserialize_present_option,
     worlds::base_observed::SpeechVolume,
-    runtime::{FireOperation, PlayerTravelDestination, PlayerTravelIntent, TravelOperation, TravelWorkMode},
+    runtime::{FireOperation, PlayerTravelDestination, PlayerTravelIntent, TravelOperation, PlanMode},
 };
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
@@ -95,7 +95,7 @@ struct CommandInput {
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     outing_operation: Option<TravelOperation>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
-    outing_mode: Option<TravelWorkMode>,
+    outing_mode: Option<PlanMode>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     outing_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]

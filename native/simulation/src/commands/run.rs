@@ -29,6 +29,7 @@ mod fire;
 mod follow;
 mod hearth;
 mod travel;
+mod typed_plan;
 mod manufacture;
 mod equipment;
 mod eating;
@@ -106,6 +107,7 @@ enum Phase {
     TravelNotices,
     TravelChoice,
     TravelAccept,
+    TypedPlan,
     HearthRoutes,
     HearthNavigation,
     CookReach,
@@ -181,6 +183,8 @@ pub(crate) struct CommandCursor {
     follow: Option<crate::movement::follow::FollowCursor>,
     hearth: Option<hearth::PreparedHearth>,
     travel: Option<Box<travel::Consent>>,
+    typed_plan_mode: Option<crate::plans::PlanMode>,
+    typed_plan: Option<Box<typed_plan::PreparedWalk>>,
     binding: GeometryBinding,
     resolved: Option<SurfacePoint>,
     action: Option<Action>,
@@ -269,6 +273,8 @@ impl CommandCursor {
             follow: None,
             hearth: None,
             travel: None,
+            typed_plan_mode: None,
+            typed_plan: None,
             binding,
             resolved: None,
             action: None,
@@ -295,16 +301,23 @@ impl CommandCursor {
             _reservation: reservation,
         })
     }
+    pub(crate) fn with_typed_plan(mut self, mode: Option<crate::plans::PlanMode>) -> Self {
+        self.typed_plan_mode = mode;
+        self
+    }
+
     pub(super) fn travel_terms(&self) -> Option<&crate::language::CanonicalJsonRequest> {
         self.travel.as_ref()?.notice.as_ref()?.canonical_request().ok()
     }
     pub(super) fn display_cursor(&mut self) -> Option<&mut super::ActivityDisplayCursor> {
+        if matches!(self.phase, Phase::TypedPlan) { return self.typed_plan.as_mut()?.display(); }
         if matches!(self.phase, Phase::TravelChoice | Phase::TravelAccept) {
             return self.travel.as_mut()?.display();
         }
         self.display.as_mut()
     }
     pub(super) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        if matches!(self.phase, Phase::TypedPlan) { return self.typed_plan.as_ref()?.geometry(); }
         if matches!(self.phase, Phase::TravelChoice | Phase::TravelAccept | Phase::TravelEndReception) {
             return self.travel.as_ref()?.queries();
         }
@@ -324,6 +337,7 @@ impl CommandCursor {
     pub(crate) fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         // The selected travel cursor can still own an ordinary child
         // preview. Close its nested work meter before this command's meter.
+        if let Some(mut child) = self.typed_plan.take() { child.close(core)?; }
         if let Some(mut child) = self.travel.take() {
             child.abort(core)?;
         }
@@ -637,6 +651,8 @@ impl CommandCursor {
             }
             Progress::Personal => CommandStep::Personal(if let Some(pending) = &self.personal {
                 pending.result()
+            } else if matches!(self.phase, Phase::TypedPlan) {
+                self.typed_plan.as_ref().ok_or(ExecutionError::Invariant)?.personal()?
             } else if matches!(self.phase, Phase::TravelAccept) {
                 self.travel.as_deref().and_then(travel::Consent::acceptance)
                     .ok_or(ExecutionError::Invariant)?.personal()?
@@ -674,6 +690,7 @@ impl CommandCursor {
         core: &mut CoreMutation<'_>,
         answer: Option<CommandAnswer>,
     ) -> Result<Progress, ExecutionError> {
+        if matches!(self.phase, Phase::TypedPlan) { return self.typed_walk_step(core, answer); }
         let installed = core.state.installed.clone();
         let ordinary = installed.ordinary_actions.value();
         let mut answer = answer;
@@ -1078,6 +1095,7 @@ impl CommandCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
+                    if self.typed_plan_mode.is_some() { return self.prepare_typed_walk(core); }
                     if self.command.discovery_only()
                         && !(self.options.native_controller
                             && self.preparation_mode.is_none()
@@ -1367,6 +1385,7 @@ impl CommandCursor {
                 Phase::TravelChoice => return self.travel_choice(core, None),
                 Phase::TravelAccept => return self.travel_accept(core, None),
                 Phase::TravelTerms => return Ok(Progress::TravelTerms),
+                Phase::TypedPlan => return self.typed_walk_step(core, None),
                 Phase::Prepared => {
                     if core
                         .state

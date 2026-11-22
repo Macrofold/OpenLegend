@@ -6,7 +6,12 @@ import {
   type TypedNavigationPrepared,
   type TypedNavigationSyntax,
 } from './typed-navigation.js';
-import { typedStop, type ActionFulfillment, type ResolutionCategory } from '@open-legend/domain';
+import {
+  typedPointGrammar,
+  typedStop,
+  type ActionFulfillment,
+  type ResolutionCategory,
+} from '@open-legend/domain';
 import type { SurfacePoint } from '@open-legend/spatial';
 
 /** Pure lexical facts shared by the Source binder and native preparation.
@@ -37,9 +42,10 @@ const directions: Readonly<Record<string, { readonly x: number; readonly z: numb
   left: { x: -1, z: 0 },
   right: { x: 1, z: 0 },
 };
-const number = '(-?\\d+(?:\\.\\d+)?)';
+const number = '(-?[0-9]+(?:\\.[0-9]+)?)';
+const [x, z] = typedPointGrammar.axes;
 const point = new RegExp(
-  `^(?:go|move|walk|run)(?: to)?\\s+(?:x\\s*=\\s*)?${number}\\s*,\\s*(?:z\\s*=\\s*)?${number}(?:\\s+(?:on|surface)\\s+([a-z0-9_:-]+))?$`,
+  `^(?:${typedPointGrammar.verbs.join('|')})(?: ${typedPointGrammar.destination})? +(?:${x} *= *)?${number} *, *(?:${z} *= *)?${number}(?: +(?:${typedPointGrammar.support.join('|')}) +([a-z0-9_:-]+))?$`,
   'u',
 );
 const part =
