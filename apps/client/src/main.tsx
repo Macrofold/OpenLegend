@@ -291,6 +291,7 @@ function App({
     [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: entryFailure ?? 'loading' }),
     [sceneError, setSceneError] = useState(''),
     [sceneCreated, setSceneCreated] = useState(false),
+    [sceneCanvasRevision, setSceneCanvasRevision] = useState(0),
     [notice, setNotice] = useState('');
   const [sceneLoad, setSceneLoad] = useState<{
     owner: string;
@@ -2860,6 +2861,7 @@ function App({
     <WorldClockProvider clock={view?.clock}>
       <canvas
         id="world"
+        key={sceneCanvasRevision}
         ref={canvas}
         data-entry-loading={!sceneReady}
         tabIndex={view && sceneReady ? 0 : -1}
@@ -2889,6 +2891,8 @@ function App({
             status={visibleEntryStatus}
             onRetry={() => {
               if (sceneError) {
+                // A failed canvas may still own the lost WebGL context.
+                setSceneCanvasRevision((previous) => previous + 1);
                 setSceneLoad(null);
                 setSceneError('');
                 return;
