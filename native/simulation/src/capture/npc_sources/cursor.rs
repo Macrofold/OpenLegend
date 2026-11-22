@@ -9,9 +9,11 @@ use crate::host::CandidateKey;
 #[serde(rename_all = "camelCase")]
 pub(crate) struct NpcSourcesRequest {
     pub binding: GeometryBinding,
-    origin: Arc<NpcHistoricalScope>,
-    selection: NpcSourceSelection,
-    maximum_transfer_bytes: usize,
+    pub(crate) origin: Arc<NpcHistoricalScope>,
+    pub(crate) selection: NpcSourceSelection,
+    pub(crate) maximum_transfer_bytes: usize,
+    #[serde(skip)]
+    _storage: ByteReservation,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -117,7 +119,7 @@ impl NpcPersonalScope {
 }
 
 pub(crate) struct NpcSourcesCursor {
-    request: NpcSourcesRequest,
+    request: Arc<NpcSourcesRequest>,
     personal_cut: NpcPersonalScope,
     _storage: ByteReservation,
     done: bool,
@@ -140,7 +142,7 @@ impl NpcSourcesCursor {
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
-        let mut bytes = size_of::<Self>()
+        let mut bytes = (size_of::<NpcSourcesRequest>() + 2 * size_of::<usize>())
             .checked_add(
                 selection
                     .consolidation_job
@@ -196,7 +198,12 @@ impl NpcSourcesCursor {
                     .ok_or(ExecutionError::Capacity)?;
             }
         }
-        let storage = budget.reserve(bytes)?;
+        // The question and cursor share this immutable selection. Its own
+        // guard follows the Arc independently of the cursor's remaining state.
+        let mut storage = budget.reserve(
+            bytes.checked_add(size_of::<Self>()).ok_or(ExecutionError::Capacity)?,
+        )?;
+        let request_storage = storage.split_off(bytes)?;
         let binding = GeometryBinding::new(
             candidate,
             core.state.installed.geometry.spatial.revision,
@@ -205,17 +212,18 @@ impl NpcSourcesCursor {
         let personal_cut = NpcPersonalScope::capture(core.state, &scope.actor_id)?;
         Ok(Self {
             personal_cut,
-            request: NpcSourcesRequest {
+            request: Arc::new(NpcSourcesRequest {
                 binding,
                 origin: scope,
                 selection,
                 maximum_transfer_bytes: budget.limit().saturating_sub(budget.used()),
-            },
+                _storage: request_storage,
+            }),
             _storage: storage,
             done: false,
         })
     }
-    pub(crate) fn request(&self) -> &NpcSourcesRequest {
+    pub(crate) fn request(&self) -> &Arc<NpcSourcesRequest> {
         &self.request
     }
     pub(crate) fn complete(

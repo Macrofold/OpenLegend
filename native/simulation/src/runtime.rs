@@ -1045,6 +1045,9 @@ impl RuntimeProvider {
         if let Some(maintenance) = question.maintenance_envelope() {
             return RuntimeJson::encode(&maintenance, budget);
         }
+        if let Some(sources) = question.npc_sources_envelope() {
+            return RuntimeJson::encode(&sources, budget);
+        }
         if let Some(appraisals) = question.appraisal_outcomes_envelope() {
             return RuntimeJson::encode(&appraisals, budget);
         }

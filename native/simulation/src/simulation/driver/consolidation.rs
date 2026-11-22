@@ -50,14 +50,9 @@ pub(super) fn poll_consolidation(
         ConsolidationStep::Dream(q) => {
             maintenance_question(answer, q, budget, ConsolidationReply::Dream)
         }
-        ConsolidationStep::Sources(q) => question(
-            answer,
-            ProviderKind::Sources,
-            q.binding,
-            q,
-            budget,
-            ConsolidationReply::Sources,
-        ),
+        ConsolidationStep::Sources(q) => {
+            npc_sources_question(answer, q, budget, ConsolidationReply::Sources)
+        }
         ConsolidationStep::Format(q) => question(
             answer,
             ProviderKind::ConsolidationFormat,

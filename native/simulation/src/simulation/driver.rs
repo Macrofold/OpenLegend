@@ -125,9 +125,9 @@ impl From<crate::experience::HistoryPreparationError> for DriveError {
     }
 }
 
-/// The pending driver owns the question body. Detached provider jobs receive
-/// independently funded encoded/decoded copies, rather than keeping this body
-/// alive after consumption. Weak tickets retain only its fixed Arc backing.
+/// The pending driver owns the question. A typed body can share already funded
+/// immutable inputs with its cursor. Detached work retains only the inputs its
+/// provider independently admits. Weak tickets retain only fixed Arc backing.
 pub(crate) struct ProviderQuestion {
     kind: ProviderKind,
     binding: GeometryBinding,
@@ -150,6 +150,7 @@ enum QuestionBody {
     Maintenance(crate::cognition::format::MaintenanceFormatRequest),
     ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
     AppraisalOutcomes(Box<crate::response::AppraisalCreatesRequest>),
+    NpcSources(Arc<crate::capture::NpcSourcesRequest>),
     ActivityLearningFormat(Arc<crate::activity::LearningFormatRequest>),
 }
 
@@ -359,6 +360,23 @@ impl ProviderQuestion {
         &self,
     ) -> Option<QuestionEnvelope<'_, crate::cognition::format::MaintenanceFormatRequest>> {
         self.maintenance().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    pub(crate) fn npc_sources(&self) -> Option<&crate::capture::NpcSourcesRequest> {
+        match &self.body {
+            QuestionBody::NpcSources(request) => Some(request),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn npc_sources_envelope(
+        &self,
+    ) -> Option<QuestionEnvelope<'_, crate::capture::NpcSourcesRequest>> {
+        self.npc_sources().map(|value| QuestionEnvelope {
             kind: self.kind,
             binding: self.binding,
             value,
@@ -1146,6 +1164,25 @@ fn question<T: Serialize + ?Sized, V, R>(
         route,
     ))
 }
+fn npc_sources_question<V, R>(
+    answer: &Option<Answer>,
+    request: &Arc<crate::capture::NpcSourcesRequest>,
+    budget: &ByteBudget,
+    route: R,
+) -> Result<Poll<V, R>, DriveError> {
+    if answer.is_some() {
+        return Err(DriveError::StaleResponse);
+    }
+    Ok(Poll::Question(
+        ProviderQuestion::prepare_bound(
+            ProviderKind::Sources,
+            request.binding,
+            QuestionBody::NpcSources(Arc::clone(request)),
+            budget,
+        )?,
+        route,
+    ))
+}
 fn geometry_question<V, R>(
     answer: &Option<Answer>,
     queries: &GeometryQueries,
@@ -1547,17 +1584,12 @@ impl OperationCursor {
                 )
             }
             Self::NpcSources(cursor) => match route {
-                None => {
-                    let request = cursor.request();
-                    question(
-                        answer,
-                        ProviderKind::Sources,
-                        request.binding,
-                        request,
-                        budget,
-                        OperationReply::NpcSources,
-                    )
-                }
+                None => npc_sources_question(
+                    answer,
+                    cursor.request(),
+                    budget,
+                    OperationReply::NpcSources,
+                ),
                 Some(OperationReply::NpcSources) => {
                     let Answer::Sources(reply) = direct(answer, ProviderKind::Sources)? else {
                         return Err(DriveError::StaleResponse);
@@ -2840,14 +2872,7 @@ fn poll_response(
                 return appraisal_outcomes_question(answer, q, budget, ResponseReply::AppraisalCreates);
             }
             ResponseStep::Sources(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Sources,
-                    q.binding,
-                    q,
-                    budget,
-                    ResponseReply::Sources,
-                );
+                return npc_sources_question(answer, q, budget, ResponseReply::Sources);
             }
             ResponseStep::Complete(value) => return Ok(Poll::Complete(value)),
             ResponseStep::Typed(q) => {

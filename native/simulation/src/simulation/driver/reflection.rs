@@ -49,14 +49,7 @@ pub(super) fn poll_reflection(
                 return maintenance_question(answer, q, budget, ReflectionReply::Format);
             }
             ReflectionStep::Sources(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Sources,
-                    q.binding,
-                    q,
-                    budget,
-                    ReflectionReply::Sources,
-                );
+                return npc_sources_question(answer, q, budget, ReflectionReply::Sources);
             }
             ReflectionStep::Creates(q) => {
                 return appraisal_outcomes_question(answer, q, budget, ReflectionReply::Creates);

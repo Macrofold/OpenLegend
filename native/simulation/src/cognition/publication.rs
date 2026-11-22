@@ -53,7 +53,7 @@ pub(crate) enum ReflectionAnswer {
 }
 pub(crate) enum ReflectionStep<'a> {
     Format(&'a MaintenanceFormatRequest),
-    Sources(&'a crate::capture::NpcSourcesRequest),
+    Sources(&'a Arc<crate::capture::NpcSourcesRequest>),
     Creates(&'a AppraisalCreatesRequest),
     Event(&'a mut EventCursor),
     Complete(CompletedReflection),

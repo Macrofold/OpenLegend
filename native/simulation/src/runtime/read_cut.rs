@@ -39,7 +39,7 @@ impl RuntimeProvider {
     }
 
     pub fn asks_npc_sources(&self) -> Result<bool, RuntimeError> {
-        Ok(self.question()?.kind() == crate::simulation::ProviderKind::Sources)
+        Ok(self.question()?.npc_sources().is_some())
     }
 
     pub fn asks_appraisal_outcomes(&self) -> Result<bool, RuntimeError> {
@@ -215,28 +215,6 @@ impl RuntimeNpcSourceRead<'_> {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct NpcSourceRequest<'a> {
-    binding: crate::geometry::GeometryBinding,
-    #[serde(borrow)]
-    origin: NpcSourceOrigin<'a>,
-    selection: NpcSourceSelection,
-    maximum_transfer_bytes: usize,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct NpcSourceOrigin<'a> {
-    #[serde(borrow)]
-    world_id: Cow<'a, str>,
-    #[serde(borrow)]
-    generation: Cow<'a, str>,
-    #[serde(borrow)]
-    actor_id: Cow<'a, str>,
-    read_serial: u64,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
 struct SourceHeader<'a> {
     binding: crate::geometry::GeometryBinding,
     #[serde(borrow)]
@@ -303,19 +281,9 @@ impl NativeWorldSession {
     ) -> Result<Option<T>, RuntimeError> {
         self.require_active()?;
         let question = ticket.question()?;
-        if question.kind() != crate::simulation::ProviderKind::Sources {
+        let Some(request) = question.npc_sources() else {
             return Ok(None);
-        }
-        #[derive(Deserialize)]
-        struct Envelope<'a> {
-            #[serde(borrow)]
-            value: NpcSourceRequest<'a>,
-        }
-        let text = question
-            .json()
-            .ok_or_else(|| failure("missing NPC source request"))?;
-        let _parse = decode_preparation(text.as_bytes(), &self.budget)?;
-        let Envelope { value: request } = serde_json::from_str(text).map_err(failure)?;
+        };
         if question.binding() != request.binding {
             return Err(failure("NPC source request binding changed"));
         }

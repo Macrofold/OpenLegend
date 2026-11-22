@@ -39,7 +39,7 @@ pub(crate) enum ConsolidationAnswer {
     Collation(CollationAnswer),
 }
 pub(crate) enum ConsolidationStep<'a> {
-    Sources(&'a NpcSourcesRequest),
+    Sources(&'a Arc<NpcSourcesRequest>),
     Dream(&'a MaintenanceFormatRequest),
     Format(&'a ConsolidationFormatRequest),
     Collation(&'a CollationRequest),

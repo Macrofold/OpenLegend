@@ -45,7 +45,7 @@ pub(crate) enum ResponseAnswer {
 }
 pub(crate) enum ResponseStep<'a> {
     AppraisalCreates(&'a AppraisalCreatesRequest),
-    Sources(&'a crate::capture::NpcSourcesRequest),
+    Sources(&'a Arc<crate::capture::NpcSourcesRequest>),
     Digest(&'a CanonicalJsonRequest),
     Normalization(&'a AttemptNormalizationRequest),
     Typed(&'a TypedActionRequest),
