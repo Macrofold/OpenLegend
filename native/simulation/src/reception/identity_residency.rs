@@ -20,6 +20,7 @@ pub(crate) struct IdentityDirectory {
     records: IndexMap<String, InstalledObserverIdentity>,
     values_bytes: usize,
     keys_bytes: usize,
+    map_bytes: usize,
     storage: ResidentReservation,
     budget: ByteBudget,
 }
@@ -59,21 +60,33 @@ impl IdentityDirectory {
             .keys()
             .try_fold(0_usize, |sum, key| sum.checked_add(key.capacity()))
             .ok_or_else(capacity)?;
-        let bytes = heap_sum([
-            values_bytes,
-            keys_bytes,
-            map_storage::<String, InstalledObserverIdentity>(records.capacity())
-                .ok_or_else(capacity)?,
-        ])
-        .ok_or_else(capacity)?;
+        let map_bytes = map_storage::<String, InstalledObserverIdentity>(records.capacity())
+            .ok_or_else(capacity)?;
+        let bytes = heap_sum([values_bytes, keys_bytes, map_bytes]).ok_or_else(capacity)?;
         Ok(Self {
             records,
             values_bytes,
             keys_bytes,
+            map_bytes,
             storage: budget.reserve_backing(bytes).map_err(|_| capacity())?,
             budget: budget.clone(),
         })
     }
+
+    /// Removing an entry can leave a tombstone. Fund restoring it even if
+    /// nested writes consume the directory's remaining insertion room.
+    pub(crate) fn removal_undo_growth(&self) -> Result<usize, ReceivedError> {
+        let (_, needed) = Self::insertion_backing(self.records.len())?;
+        Ok(needed.saturating_sub(self.map_bytes))
+    }
+
+    fn insertion_backing(next_len: usize) -> Result<(usize, usize), ReceivedError> {
+        let target = next_len.checked_mul(2).ok_or_else(capacity)?;
+        let bytes =
+            map_storage::<String, InstalledObserverIdentity>(target).ok_or_else(capacity)?;
+        Ok((target, bytes))
+    }
+
     /// Only the selected semantic journal calls this after its policy/account
     /// admission and before publishing its dependent correspondence changes.
     /// Its existing workspace funds copied keys and the moved old before-image.
@@ -84,11 +97,12 @@ impl IdentityDirectory {
         workspace: &mut ByteReservation,
         restoring: bool,
     ) -> Result<Option<(usize, InstalledObserverIdentity)>, ReceivedError> {
-        let old = self.records.get_key_value(key);
+        let old = self.records.get_full(key);
+        let old_position = old.map(|(position, _, _)| position);
         let old_value = old
-            .map_or(Some(0), |(_, value)| value.heap_bytes())
+            .map_or(Some(0), |(_, _, value)| value.heap_bytes())
             .ok_or_else(capacity)?;
-        let old_key = old.map_or(0, |(key, _)| key.capacity());
+        let old_key = old.map_or(0, |(_, key, _)| key.capacity());
         let next_value = after
             .as_ref()
             .map_or(Some(0), |(_, value)| value.heap_bytes())
@@ -98,10 +112,13 @@ impl IdentityDirectory {
             .checked_sub(old_value)
             .and_then(|n| n.checked_add(next_value))
             .ok_or_else(capacity)?;
+        let next_key = after
+            .as_ref()
+            .map_or(0, |_| old.map_or(key.len(), |(_, key, _)| key.capacity()));
         let keys_bytes = self
             .keys_bytes
             .checked_sub(old_key)
-            .and_then(|n| n.checked_add(if after.is_some() { key.len() } else { 0 }))
+            .and_then(|n| n.checked_add(next_key))
             .ok_or_else(capacity)?;
         let old_present = old.is_some();
         if after
@@ -113,21 +130,17 @@ impl IdentityDirectory {
             ));
         }
         let inserting = after.is_some() && !old_present;
-        let target = if inserting && self.records.len() == self.records.capacity() {
-            self.records
-                .capacity()
-                .checked_add(1)
-                .and_then(|n| n.checked_mul(2))
-                .ok_or_else(capacity)?
+        let growth = if inserting && self.records.len() == self.records.capacity() {
+            let next_len = self.records.len().checked_add(1).ok_or_else(capacity)?;
+            Some(Self::insertion_backing(next_len)?)
         } else {
-            self.records.capacity()
+            None
         };
-        let forecast = heap_sum([
-            values_bytes,
-            keys_bytes,
-            map_storage::<String, InstalledObserverIdentity>(target).ok_or_else(capacity)?,
-        ])
-        .ok_or_else(capacity)?;
+        // IndexMap capacity is remaining insertion room, not the size of
+        // either allocation. Tombstones can change it without any allocation.
+        // Only a reserve can increase our funded backing estimate.
+        let map_bytes = growth.map_or(self.map_bytes, |(_, bound)| self.map_bytes.max(bound));
+        let forecast = heap_sum([values_bytes, keys_bytes, map_bytes]).ok_or_else(capacity)?;
         if forecast > self.storage.bytes() {
             let growth = workspace
                 .split_off(forecast - self.storage.bytes())
@@ -139,7 +152,7 @@ impl IdentityDirectory {
             }
             .map_err(|_| capacity())?;
         }
-        if target > self.records.capacity() {
+        if let Some((target, _)) = growth {
             // Ordinary reserve rounds the entry buffer up to the hash table's
             // capacity. Keep this explicit pre-admitted target exact instead.
             if self
@@ -147,50 +160,48 @@ impl IdentityDirectory {
                 .try_reserve_exact(target - self.records.len())
                 .is_err()
             {
-                // IndexMap can grow its index before the entry allocation
-                // fails. An empty partial map must drop that hidden buffer
-                // before its zero-capacity backing is settled.
-                if self.records.is_empty() {
+                // A failed reserve can still grow one of the two buffers.
+                // Keep its admitted capacity unless we can drop both.
+                self.map_bytes = if self.records.is_empty() {
                     self.records = IndexMap::new();
-                }
+                    0
+                } else {
+                    map_bytes
+                };
                 self.storage
                     .resize(
-                        heap_sum([
-                            self.values_bytes,
-                            self.keys_bytes,
-                            map_storage::<String, InstalledObserverIdentity>(
-                                self.records.capacity(),
-                            )
+                        heap_sum([self.values_bytes, self.keys_bytes, self.map_bytes])
                             .ok_or_else(capacity)?,
-                        ])
-                        .ok_or_else(capacity)?,
                     )
                     .map_err(|_| capacity())?;
                 return Err(capacity());
             }
         }
-        // Refuse an unfunded layout before changing a canonical value; its
-        // journal has no before-image until this operation returns.
-        let actual = heap_sum([
-            values_bytes,
-            keys_bytes,
-            map_storage::<String, InstalledObserverIdentity>(self.records.capacity())
-                .ok_or_else(capacity)?,
-        ])
-        .ok_or_else(capacity)?;
-        if actual > self.storage.bytes() {
-            return Err(capacity());
-        }
-        let before = self
-            .records
-            .shift_remove_full(key)
-            .map(|(position, _, value)| (position, value));
-        if let Some((position, value)) = after {
-            self.records.shift_insert(position, key.to_owned(), value);
-        }
+        // Removing and reinserting a retained key can rehash or grow a full
+        // index after admission. Move only the old value into the journal.
+        let before = match (old_position, after) {
+            (Some(old), Some((position, value))) => {
+                let (_, previous) = self.records.get_index_mut(old).ok_or_else(capacity)?;
+                let previous = std::mem::replace(previous, value);
+                if old != position {
+                    self.records.move_index(old, position);
+                }
+                Some((old, previous))
+            }
+            (Some(_), None) => self
+                .records
+                .shift_remove_full(key)
+                .map(|(position, _, value)| (position, value)),
+            (None, Some((position, value))) => {
+                self.records.shift_insert(position, key.to_owned(), value);
+                None
+            }
+            (None, None) => None,
+        };
         self.values_bytes = values_bytes;
         self.keys_bytes = keys_bytes;
-        self.storage.resize(actual).map_err(|_| capacity())?;
+        self.map_bytes = map_bytes;
+        self.storage.resize(forecast).map_err(|_| capacity())?;
         Ok(before)
     }
 }

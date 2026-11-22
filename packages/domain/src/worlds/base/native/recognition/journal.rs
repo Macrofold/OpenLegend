@@ -471,12 +471,14 @@ impl RecognitionJournal {
         installed: &InstalledWorld,
         receiving: &mut ReceivingMutation<'_>,
     ) -> Result<(), ExecutionError> {
-        let Some(prior) = state
+        let Some(records) = state
             .observer_identities
             .as_ref()
             .and_then(|root| root.get(observer))
-            .and_then(|records| records.get(key))
         else {
+            return Ok(());
+        };
+        let Some(prior) = records.get(key) else {
             return Ok(());
         };
         let cohort = if correspondence_changes(Some(prior), None) {
@@ -497,6 +499,7 @@ impl RecognitionJournal {
                 2 * size_of::<RecognitionUndo>(),
                 prior.individual_id.as_ref().map_or(0, String::len),
                 source_scratch(Some(prior))?,
+                records.removal_undo_growth()?,
             ])
             .ok_or_else(capacity)?,
         )?;

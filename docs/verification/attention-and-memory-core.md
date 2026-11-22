@@ -173,6 +173,12 @@ In the reviewed 163-entity Main world, Chromium opened a visible person's inspec
 
 The disposable result `nsc04-nickname-20261122/native-main-r2/result.json` (`07241a6dcbcb`) uses executable `15c9d8a831cc` and the reviewed Main release. The locked Rust check/build, formatting and network checks passed. These were local correctness checks with no provider calls. Creator naming and provider-led introductions have separate callers.
 
+### Recognition allocation during play and rollback — November 22, 2026
+
+In the reviewed Main, updating or removing a private identity could bill a map again when its reported insertion room changed. The failed operation attempted an unfunded transfer, and rollback could stop the writer. The identity directory now keeps its admitted backing estimate across removals, replaces an existing value in place, and funds any reinsert required to undo retirement. No host allowance changed.
+
+Two signed-in players passed the [Main movement, access removal and cold return](playable-world-creation.md#reviewed-main-activation-with-its-construction-grant--november-22-2026). A separate caller forced PostgreSQL to refuse a correction. The original stayed visible with the same privacy revision. Retrying the exact edit succeeded once. A later forget while a history read was held withheld that result and stayed in effect after restart. The earlier refusal trace is `b72a98c385cc`; the exact rollback case is `ce153020b72a` on tree `b620c42c1ead`. Both listeners released their reservations. These checks give no performance result.
+
 ## Performance evidence and remaining limits
 
 Movement admission, saved random selection and bookkeeping share the existing command transaction, removing a second publication; one offered route needs no random-selection draft. Fully admitted ordinary automatic travel can also reuse its enclosing advance's working draft through that same command owner. No preparation is reused across changed inputs. The gather/JSON-restoration check passes in **10,678.633 ms**, including complete warm/restored world equality; climb–gather–return passes in **12,098.672 ms**. The former combined service-speed case exceeded the global 15-second watchdog at **16,891.353 ms**; its later diagnostics and independent-case registration are recorded below. Earlier native failures follow for attribution. Clock rate, game workload and assertions remain unchanged.
