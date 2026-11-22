@@ -32,7 +32,7 @@ pub(crate) use held_sources::HeldSourceProof;
 pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};
 pub use personal::{RuntimeNpcPersonalSource, RuntimeNpcPersonalSources};
 pub use presentation::{RuntimeNpcObservedBody, RuntimeNpcPresentedBody};
-pub use queries::{RuntimeNpcBoundaryFact, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence};
+pub use queries::{RuntimeNpcBoundaryFact, RuntimeNpcHistoricalPose, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence};
 
 /// A brief dispatch gate, never retained while SQL or a provider is awaited.
 /// Historical disclosure and current response semantics are separate routes.

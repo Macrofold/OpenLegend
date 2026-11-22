@@ -16,6 +16,14 @@ type ActorPreparationStep<T> = fn(
     Option<(&RuntimeProvider, RuntimeProviderInput)>,
 ) -> Result<RuntimeNpcPreparationStep, RuntimeError>;
 
+pub(crate) struct NpcHistoryRows {
+    pub(crate) inventory: Option<usize>,
+    pub(crate) incomplete: bool,
+    pub(crate) truncated: bool,
+    pub(crate) limit: u64,
+    pub(crate) operations: u64,
+}
+
 pub(crate) enum NpcBinding {
     Issued(RuntimeNpcResponseTicket),
     Refused {
@@ -87,25 +95,34 @@ impl HostedWorld {
         original: Box<RuntimeNpcRead>,
         from: f64,
         through: f64,
-    ) -> Result<(Box<RuntimeNpcRead>, Option<usize>, bool, u64, u64), WorldError> {
+    ) -> Result<(Box<RuntimeNpcRead>, NpcHistoryRows), WorldError> {
         let store = self.store.clone();
         let (mut original, window, storage) = self
             .capture(move |session| {
-                let (window, storage) = session.with_npc_history(&original, from, through, |read| {
-                    store.prepare_recent_sources(read)
-                })?;
+                let (window, storage) =
+                    session.with_npc_history(&original, from, through, |read| {
+                        store.prepare_recent_sources(read)
+                    })?;
                 Ok((original, window, storage))
             })
             .await?;
-        let (incomplete, limit, operations) = (window.incomplete, window.limit, window.operations);
+        let mut result = NpcHistoryRows {
+            inventory: None,
+            incomplete: window.incomplete,
+            truncated: window.truncated,
+            limit: window.limit,
+            operations: window.operations,
+        };
         let Some(storage) = storage else {
-            return Ok((original, None, incomplete, limit, operations));
+            return Ok((original, result));
         };
         let rows = self.store.read_source_rows(storage?).await?;
         let _turn = self.enter().await?;
         self.call(move |session| {
-            let inventory = rows.admit(|rows| session.admit_npc_history(&mut original, window, rows))?;
-            Ok((original, Some(inventory), incomplete, limit, operations))
+            let inventory =
+                rows.admit(|rows| session.admit_npc_history(&mut original, window, rows))?;
+            result.inventory = Some(inventory);
+            Ok((original, result))
         })
         .await
     }

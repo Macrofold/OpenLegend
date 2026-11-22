@@ -73,6 +73,7 @@ enum QueryResult<'a> {
     Bodies(BodyPage<'a>),
     Boundaries(boundaries::Boundaries),
     History(history::HistoryPage),
+    HistoricalSpatial(history::spatial::Page),
 }
 
 #[derive(Serialize)]
@@ -140,6 +141,7 @@ impl Answers<'_> {
                 QueryResult::Bodies(result) => result.bind(binding)?,
                 QueryResult::Boundaries(result) => result.bind(binding)?,
                 QueryResult::History(result) => result.bind(binding)?,
+                QueryResult::HistoricalSpatial(result) => result.bind(binding)?,
             }
         }
         Ok(())
@@ -273,6 +275,15 @@ pub(super) fn answer<'a>(
                 frame,
                 maximum,
             )?),
+            "historical-spatial" => QueryResult::HistoricalSpatial(historical.spatial(
+                original,
+                current,
+                binding,
+                query,
+                &mut remaining,
+                budget,
+                reference_scope,
+            )?),
             "boundaries" => QueryResult::Boundaries(boundaries::answer(
                 binding.received_anchor(original, current, field("anchor")?),
                 original,
@@ -291,6 +302,7 @@ pub(super) fn answer<'a>(
                 Some(QueryResult::Bodies(last)) => last.trim(excess)?,
                 Some(QueryResult::Boundaries(last)) => last.trim(excess)?,
                 Some(QueryResult::History(last)) => last.trim(excess),
+                Some(QueryResult::HistoricalSpatial(last)) => last.trim(excess)?,
                 _ => excess,
             };
             if excess != 0 {

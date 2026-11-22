@@ -14,6 +14,7 @@ pub struct RuntimeNpcHistoryWindow {
     read_serial: u64,
     receipts: Vec<NpcReceiptSelection>,
     pub incomplete: bool,
+    pub truncated: bool,
     pub limit: u64,
     pub operations: u64,
     _storage: ByteReservation,
@@ -62,6 +63,7 @@ impl NativeWorldSession {
                 || actor
                     .and_then(|history| history.header().recording_gap.as_ref())
                     .is_some_and(|gap| gap.from <= through && gap.through >= clipped),
+            truncated: false,
             _storage: self.budget.reserve(0)?,
         };
         let Some(actor) = actor.filter(|_| prefix.epoch.is_some() && clipped <= through) else {
@@ -83,6 +85,7 @@ impl NativeWorldSession {
         'candidates: for (visited, block) in directory.directories().rev().enumerate() {
             if visited >= maximum_blocks {
                 window.incomplete = true;
+                window.truncated = true;
                 break;
             }
             let Some(header) = block.entries.first() else {
@@ -97,6 +100,7 @@ impl NativeWorldSession {
             for entry_index in (header.first_entry..=ceiling).rev() {
                 if window.receipts.len() == maximum {
                     window.incomplete = true;
+                    window.truncated = true;
                     break 'candidates;
                 }
                 window._storage.resize(

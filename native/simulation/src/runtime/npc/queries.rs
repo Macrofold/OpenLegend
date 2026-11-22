@@ -9,7 +9,7 @@ use crate::reception::{
 use crate::state::{Bounds, Point};
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Clone, Copy, Serialize)]
 #[serde(tag = "status", rename_all = "kebab-case")]
 pub enum RuntimeNpcSeparation {
     Unavailable,
@@ -187,21 +187,13 @@ impl RuntimeNpcRead {
                 complete = false;
                 continue;
             };
-            let measurement = received_separation::boundary(
+            let measurement = measured(received_separation::boundary(
                 &anchor.measure,
                 boundary,
                 observation.acquired_at,
                 through,
                 epsilon,
-            )
-            .map_or(RuntimeNpcSeparation::Unavailable, |result| {
-                RuntimeNpcSeparation::Complete {
-                    at: result.at,
-                    lower: result.lower,
-                    upper: result.upper,
-                    decrease: result.decrease,
-                }
-            });
+            ));
             visit(RuntimeNpcBoundaryFact {
                 ordinal: first + index,
                 observation,
@@ -213,4 +205,79 @@ impl RuntimeNpcRead {
         }
         Ok(complete)
     }
+}
+
+/// One supported pose selected from the retained receipt inventory. Shape and
+/// point can have different available intervals. The caller has already checked
+/// their original track, receipt phase and fence before composing this value.
+#[derive(Clone, Copy)]
+pub struct RuntimeNpcHistoricalPose {
+    pub position: Point,
+    pub radius: f64,
+    pub height: f64,
+    pub shape_from: f64,
+    pub point: Option<(f64, f64)>,
+    pub at: f64,
+}
+
+impl RuntimeNpcHistoricalPose {
+    fn measurement(self) -> received_separation::Body {
+        use received_separation::{Body, PointSample, Span};
+        Body {
+            position: self.position,
+            extent: crate::spatial::Extent {
+                radius: self.radius,
+                height: self.height,
+            },
+            span: Span {
+                from: self.shape_from,
+                through: self.at,
+            },
+            location: self.point.map(|(from, error)| PointSample {
+                span: Span {
+                    from,
+                    through: self.at,
+                },
+                point: Some((self.position, error)),
+            }),
+            motion: None,
+        }
+    }
+
+    pub fn separation(self, other: Self) -> RuntimeNpcSeparation {
+        measured(body(&self.measurement(), &other.measurement()))
+    }
+}
+
+impl RuntimeNpcRead {
+    /// Apply the installed geometry tolerance from this NPC's captured cut.
+    /// No new acquisition or host geometry work is allowed here.
+    pub fn received_historical_clearance(
+        &self,
+        pose: RuntimeNpcHistoricalPose,
+        boundary: &ObservedBoundary,
+        from: f64,
+    ) -> RuntimeNpcSeparation {
+        let Some((_, _, _, _, epsilon)) = self.read.perception.query_geometry() else {
+            return RuntimeNpcSeparation::Unavailable;
+        };
+        measured(received_separation::boundary(
+            &pose.measurement(),
+            boundary,
+            from,
+            pose.at,
+            epsilon,
+        ))
+    }
+}
+
+fn measured(result: Option<received_separation::Separation>) -> RuntimeNpcSeparation {
+    result.map_or(RuntimeNpcSeparation::Unavailable, |result| {
+        RuntimeNpcSeparation::Complete {
+            at: result.at,
+            lower: result.lower,
+            upper: result.upper,
+            decrease: result.decrease,
+        }
+    })
 }

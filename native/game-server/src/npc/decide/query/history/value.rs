@@ -20,7 +20,7 @@ pub(super) fn row(
     ordinal: usize,
 ) -> Result<Value, CallFailure> {
     let receipt = selected.receipt();
-    let reference = prepare::alias(scope, &format!("history-{inventory}"), ordinal);
+    let reference = super::reference(scope, inventory, ordinal);
     let subject = |track: &str| {
         // UUID scope and fixed separator are private to this request. Unlike
         // entity aliases, the result carries no permission to act on a subject.

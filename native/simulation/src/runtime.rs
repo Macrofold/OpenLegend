@@ -116,7 +116,7 @@ pub use npc::{
     RuntimeNpcFeelings, RuntimeNpcHistoryWindow, RuntimeNpcObservedBody, RuntimeNpcOffer, RuntimeNpcOperations,
     RuntimeNpcPersonalSource, RuntimeNpcPersonalSources, RuntimeNpcPreparationStep,
     RuntimeNpcPresentedBody, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
-    RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
+    RuntimeNpcHistoricalPose, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
 };
 pub use player::{
     RuntimeHearthCatalogue, RuntimeHearthShape,

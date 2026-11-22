@@ -2,7 +2,7 @@
 //! original cut. Neither a historical subject nor a receipt grants a target.
 use super::{CallFailure, RuntimeNpcBindingRequest, RuntimeNpcRead, capacity};
 use crate::npc::decide::prepare;
-use crate::world::HostedWorld;
+use crate::world::{HostedWorld, NpcHistoryRows};
 use openlegend_simulation::{
     encoding::json_record_len,
     host::{ByteBudget, ByteReservation},
@@ -13,6 +13,7 @@ use serde::Serialize;
 use serde_json::Value;
 use std::{collections::VecDeque, mem::size_of, sync::Arc};
 
+pub(super) mod spatial;
 mod value;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -23,10 +24,7 @@ struct Range {
 
 struct HistoryRead {
     range: Range,
-    source: Option<usize>,
-    incomplete: bool,
-    limit: u64,
-    operations: u64,
+    rows: NpcHistoryRows,
 }
 
 pub(in crate::npc::decide) struct HistoryReads {
@@ -36,7 +34,7 @@ pub(in crate::npc::decide) struct HistoryReads {
 
 impl HistoryReads {
     pub(in crate::npc::decide) fn requested(questions: &[SqlCell]) -> bool {
-        questions.iter().any(is_history)
+        questions.iter().any(is_history_query)
     }
 
     pub(in crate::npc::decide) fn empty(budget: &ByteBudget) -> Result<Self, CallFailure> {
@@ -58,10 +56,18 @@ impl HistoryReads {
     ) -> Result<(Box<RuntimeNpcRead>, Self), CallFailure> {
         let mut reads = Vec::<HistoryRead>::new();
         let mut custody = budget.reserve(0).map_err(super::super::response_capacity)?;
-        for question in questions.iter().filter(|question| is_history(question)) {
-            let Some((range, _)) = selection(question, &original, current, binding)? else {
-                continue;
+        for question in questions
+            .iter()
+            .filter(|question| is_history_query(question))
+        {
+            let range = if query_kind(question) == Some("historical-spatial") {
+                spatial::request(question, &original, current, binding)?
+                    .map(|_| spatial::receipt_range(&original))
+            } else {
+                selection(question, &original, current, binding)?.map(|(range, _)| range)
             };
+            let Some(range) = range else { continue };
+
             if reads.iter().any(|read| read.range == range) {
                 continue;
             }
@@ -69,18 +75,12 @@ impl HistoryReads {
                 .resize((reads.len() + 1) * size_of::<HistoryRead>())
                 .map_err(super::super::response_capacity)?;
             reads.try_reserve_exact(1).map_err(|_| capacity())?;
-            let (next, source, incomplete, limit, operations) = world
+            let (next, rows) = world
                 .read_npc_history(original, range.from, range.through)
                 .await
                 .map_err(|error| prepare::binding_failure(error).at("situation-history-storage"))?;
             original = next;
-            reads.push(HistoryRead {
-                range,
-                source,
-                incomplete,
-                limit,
-                operations,
-            });
+            reads.push(HistoryRead { range, rows });
         }
         Ok((
             original,
@@ -109,14 +109,10 @@ impl HistoryReads {
                 entries: None,
             });
         };
-        let read = self
-            .reads
-            .iter()
-            .find(|read| read.range == range)
-            .ok_or(CallFailure::Invalid)?;
+        let read = &self.window(range)?.rows;
         let mut incomplete = read.incomplete;
         let mut entries = VecDeque::new();
-        if let Some(inventory) = read.source {
+        if let Some(inventory) = read.inventory {
             let (rows, unavailable) = original
                 .query_receipts(inventory)
                 .map_err(prepare::packet_failure)?;
@@ -199,14 +195,27 @@ impl HistoryReads {
             entries: Some(entries),
         })
     }
+    fn window(&self, range: Range) -> Result<&HistoryRead, CallFailure> {
+        self.reads
+            .iter()
+            .find(|read| read.range == range)
+            .ok_or(CallFailure::Invalid)
+    }
 }
 
-fn is_history(value: &SqlCell) -> bool {
+fn is_history_query(value: &SqlCell) -> bool {
+    matches!(query_kind(value), Some("history" | "historical-spatial"))
+}
+
+fn query_kind(value: &SqlCell) -> Option<&str> {
     value
         .as_object()
         .and_then(|item| item.get("kind"))
         .and_then(SqlCell::as_str)
-        == Some("history")
+}
+
+pub(self) fn reference(scope: &str, inventory: usize, ordinal: usize) -> String {
+    prepare::alias(scope, &format!("history-{inventory}"), ordinal)
 }
 
 fn selection<'a>(
