@@ -19,7 +19,9 @@ use crate::{
 };
 use bundle::Bundle;
 use contracts::{Check, MAX_ORDINAL, START_MILLIS, Start, valid_hash, valid_key};
-use openlegend_simulation::{encoding::sha256_hex, runtime::NativeWorldSession};
+use openlegend_simulation::{
+    InitialConstructionGrant, encoding::sha256_hex, runtime::NativeWorldSession,
+};
 use ring::hmac;
 use serde::Serialize;
 use serde_json::{Value, value::RawValue};
@@ -35,6 +37,7 @@ pub(crate) type OpeningValidator = Arc<
             CurrentOpening,
             String,
             String,
+            Arc<[InitialConstructionGrant]>,
         ) -> Pin<Box<dyn Future<Output = StoreResult<ValidatedOpening>> + Send>>
         + Send
         + Sync,

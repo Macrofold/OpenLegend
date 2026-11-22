@@ -296,6 +296,7 @@ impl StartupStorage {
         opening: CurrentOpening,
         account: String,
         actor: String,
+        construction_grants: Arc<[openlegend_simulation::InitialConstructionGrant]>,
     ) -> StoreResult<crate::creation::ValidatedOpening> {
         use crate::world::WorldError;
         use openlegend_world_host::pool::HostError;
@@ -306,6 +307,7 @@ impl StartupStorage {
             .compute(move || -> Result<crate::creation::ValidatedOpening, BootError> {
                 let (session, _, _) = startup.install(&release, opening, true)?;
                 session.check_initial_player(&account, &actor)?;
+                session.check_initial_construction_grants(&actor, &construction_grants)?;
                 session.check_current_work()?;
                 let (selected, revision) = session.saved_presentation_release();
                 let artwork = if let Some(selected) = selected {

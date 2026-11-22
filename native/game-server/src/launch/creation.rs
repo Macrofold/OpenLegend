@@ -61,12 +61,12 @@ pub(super) async fn serve(
     let validate: OpeningValidator = {
         let startup = startup.clone();
         let release = release.to_owned();
-        Arc::new(move |opening, account, actor| {
+        Arc::new(move |opening, account, actor, construction_grants| {
             let startup = startup.clone();
             let release = release.clone();
             Box::pin(async move {
                 startup
-                    .validate_creation_opening(&release, opening, account, actor)
+                    .validate_creation_opening(&release, opening, account, actor, construction_grants)
                     .await
             })
         })

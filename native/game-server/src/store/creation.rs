@@ -78,6 +78,7 @@ pub(crate) struct FirstInstallation {
     pub opening: CurrentOpening,
     pub history: super::CheckpointHistory,
     pub head: DurableHead,
+    pub construction_grants: Arc<[openlegend_simulation::InitialConstructionGrant]>,
 }
 
 pub(crate) struct ActivationWriteInput {
@@ -197,6 +198,7 @@ impl Store {
                     opening,
                     history,
                     head,
+                    construction_grants,
                 } = input.installation;
                 if head.world_id != input.receipt.world_id || head.revision != 1 {
                     return Err(StoreError::InvalidRecord);
@@ -214,7 +216,13 @@ impl Store {
                     })?;
                 let account = &input.account.account_id;
                 let actor = &input.actor;
-                let native = (input.validate)(opening, account.clone(), actor.clone()).await?;
+                let native = (input.validate)(
+                    opening,
+                    account.clone(),
+                    actor.clone(),
+                    construction_grants.clone(),
+                )
+                .await?;
                 Store::stage_initial_artwork(
                     tx,
                     &head.world_id,
@@ -250,6 +258,17 @@ impl Store {
                     &[&head.world_id, actor, account],
                 )
                 .await?;
+                use openlegend_simulation::encoding::{json_record, json_record_len};
+                for grant in construction_grants.iter() {
+                    let bytes = json_record_len(grant).map_err(|_| StoreError::InvalidRecord)?;
+                    let _body = store.budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+                    let body = json_record(grant).map_err(|_| StoreError::InvalidRecord)?;
+                    tx.execute(
+                        "INSERT INTO auth_construction_grants(world_id,id,revision,payload) VALUES($1,$2,1,$3)",
+                        &[&head.world_id, &grant.id(), &body],
+                    )
+                    .await?;
+                }
                 let timeline_key = format!("integration:world-timeline:{}", head.world_id);
                 let timeline = serde_json::to_string(&Uuid::new_v4().to_string())
                     .map_err(|_| StoreError::InvalidRecord)?;

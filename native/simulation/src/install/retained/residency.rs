@@ -38,6 +38,7 @@ heap_record!(RetainedDefinitions {
     social_offer_read,
     hearth_definitions,
     assembly_families,
+    construction_seed_families,
     construction_profile,
     contents_exposure_profiles,
     daily_rain_definitions,

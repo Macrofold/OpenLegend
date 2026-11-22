@@ -38,7 +38,7 @@ The normal Source startup prepared the unfiltered 163-entity Main opening at see
 
 Chromium on source `69dd04272423` and executable `cb04cee982a1` independently signed in, rendered the scene and submitted an ordinary walk by clicking the terrain. The permitted view showed 44 entities after entering the running world. PostgreSQL revision 9 kept the displayed destination and Chromium returned to it after the listener restarted. This opening contains 7 humans including the player, 7 hares, 7 deer, 3 wolves, 2 bears, 1 bird and 136 other entities. The browser result is `ce1bbe2c88c8`. The first driver used a camera button label absent from this browser build. The completed run used the existing Home shortcut.
 
-The local HTTP result `1f84f417be95` uses source `0063ebe47b44` and executable `b7e7a27af6c1`. Both checks load the authored river reaches and wolf pack. Rust-first activation with the complete Main opening's artwork and construction grants, plus the second-observer and broader gameplay journey, remain in [NSC04-R3](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
+The local HTTP result `1f84f417be95` uses source `0063ebe47b44` and executable `b7e7a27af6c1`. Both checks load the authored river reaches and wolf pack. The [reviewed Rust activation](#reviewed-main-activation-with-its-construction-grant--november-22-2026) separately verifies initial publication from an empty target.
 
 ### Reviewed target operating settings — November 21, 2026
 
@@ -52,7 +52,15 @@ A reviewed custom opening selected the deployment's installed private artwork. T
 
 A second database used the same reviewed opening. The catalog operator withdrew the release after Check and before Start. The next Check refused it and Start left no world, account grant, asset binding, pin or receipt. Both databases were removed. The locked build, TypeScript and network boundary checks passed. Results `64bd6aff5358` and `eb51c86d90ca` in `nsc04-opening-artwork-20261122` use source `4ac970762ed2` and executable `a8e17df40a13`.
 
-The separate authored Main package contains 163 entities and one construction grant for the starting player with 14 eligible resource sources. Its build exporter still refuses construction-grant packaging. [NSC04-R3](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server) owns passing that exact permission through native validation and the first commit.
+### Reviewed Main activation with its construction grant — November 22, 2026
+
+The existing Main builder prepared all 163 entities, the installed artwork and the starting player's one construction grant with 14 eligible resource sources. The build exporter compared the saved grant with the builder's exact intended record. The Rust destination checked the actor, world, site, installed family and material definitions. It saved the exact grant with the world, the account, the artwork pins and the receipt in PostgreSQL.
+
+The real creation client activated an empty destination. Chromium signed in, resumed the initially paused world using the ordinary P shortcut, and moved with the keyboard. The first permitted view included 44 entities. The ordinary save kept the new position and the cold listener returned the same position, grant and Start receipt. The separate fresh Solo destination saved its 12 entities with no construction grant and recovered its original receipt after restart.
+
+A grant for a foreign builder failed Check and Start with no partial publication. A forced grant write failure also rolled back all world, access and art records. The activation client recovered the original receipt after the listener switched from waiting to gameplay. Earlier browser drivers tried movement while the new world was still manually paused. The successful Chromium run exercised the normal resume control and input endpoint.
+
+The browser result `83ed7395db14`, failed-write and exact retry receipt `6fc19eb213f2`, foreign-builder refusal `220e0d9a7c69` and Solo result `150f60a478b3` use source `2993e1399145` and executable `3e3df77d0d43`. All databases were disposable and removed. The locked Rust build, TypeScript, network and formatting checks passed. Applying the construction grant to ordinary gathering and building remains under [NSC04-R4](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
 
 ## October 14 main world and solo testing ground
 

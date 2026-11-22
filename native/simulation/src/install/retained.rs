@@ -103,6 +103,7 @@ pub(crate) struct RetainedDefinitions {
     pub social_offer_read: Option<SocialOfferReadPolicy>,
     pub hearth_definitions: Option<RetainedMap>,
     pub assembly_families: Option<RetainedMap>,
+    pub construction_seed_families: IndexMap<String, crate::values::DefinitionPin>,
     pub construction_profile: Option<RetainedOne>,
     pub contents_exposure_profiles: Option<RetainedMap>,
     pub daily_rain_definitions: Option<RetainedMap>,
@@ -578,11 +579,22 @@ pub(crate) fn install_retained(
         .ok_or(InstallError::ParentPresence)?;
     let (foraging, _foraging_preparation) =
         foraging::prepare(foraging_input.as_ref(), &item_input, budget)?;
-    let assembly_families = r.map(
+    let assembly = r.verified_map(
         "assemblyFamilies",
         "config_assembly_families",
         input.assembly_families,
     )?;
+    let (construction_seed_families, _construction_families_preparation) =
+        if let Some((rows, input)) = &assembly {
+            let (_canonical_storage, canonical) = canonical_entries(rows, input, budget)?;
+            crate::construction_seed::prepare_families(&canonical, budget)?
+        } else {
+            (
+                IndexMap::new(),
+                budget.reserve(0).map_err(|_| InstallError::Capacity)?,
+            )
+        };
+    let assembly_families = assembly.map(|(rows, _)| rows);
     let (items, _item_preparation) = prepare_items(
         &item_definitions,
         &item_input,
@@ -678,6 +690,7 @@ pub(crate) fn install_retained(
             input.hearth_definitions,
         )?,
         assembly_families,
+        construction_seed_families,
         construction_profile: r.one(
             "constructionProfile",
             "config_construction_profile",

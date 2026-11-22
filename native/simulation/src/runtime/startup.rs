@@ -2,9 +2,10 @@
 //! installed hot-event progression before disclosure. Creation is separate.
 use super::*;
 impl NativeWorldSession {
-    /// Confirm the destination-approved controller exists in the exact inactive
-    /// initial world. This validates a binding without creating a session or a lease.
-    pub fn check_initial_player(&self, account: &str, actor: &str) -> Result<(), RuntimeError> {
+    fn inactive_initial_player_world(
+        &self,
+        actor: &str,
+    ) -> Result<&crate::simulation::Simulation, RuntimeError> {
         let simulation = self.session.accepted().map_err(failure)?;
         let entity = simulation.state.physical.entities.get(actor);
         if self.active
@@ -20,8 +21,31 @@ impl NativeWorldSession {
                 "The creation route requires a paused initial world with its intended playable character",
             ));
         }
-        simulation
+        Ok(simulation)
+    }
+
+    /// Confirm the approved player against the inactive initial world, without
+    /// creating an authority session or a control lease.
+    pub fn check_initial_player(&self, account: &str, actor: &str) -> Result<(), RuntimeError> {
+        self.inactive_initial_player_world(actor)?
             .require_player_owner(account, actor)
+            .map_err(failure)
+    }
+
+    /// Validate publisher-provided fresh grants before the host writes them in
+    /// the initial-world transaction. No operational permission is issued here.
+    pub fn check_initial_construction_grants(
+        &self,
+        actor: &str,
+        grants: &[crate::InitialConstructionGrant],
+    ) -> Result<(), RuntimeError> {
+        let initial = self.inactive_initial_player_world(actor)?;
+        if self.restore_installation {
+            return Err(failure(
+                "A restored world cannot issue initial construction grants",
+            ));
+        }
+        crate::construction_seed::check(&initial.state, actor, grants, &self.budget)
             .map_err(failure)
     }
 

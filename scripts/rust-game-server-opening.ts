@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { selectedCreationProfileForCandidate } from '../packages/domain/src/index.js';
+import { constructionPermissionSchema } from '../apps/server/src/authority.js';
 import { digest } from '../apps/server/src/content-digest.js';
 import { CreationTargetRepository } from '../apps/server/src/creation-target.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
@@ -62,20 +63,54 @@ try {
       Object.keys(world.authorship.playerAccountIds).length !== 1 ||
       (
         await database
-          .prepare(
-            'SELECT EXISTS(SELECT 1 FROM auth_construction_grants UNION ALL SELECT 1 FROM auth_camp_asset_grants) AS initial',
-          )
+          .prepare('SELECT EXISTS(SELECT 1 FROM auth_camp_asset_grants) AS initial')
           .get()
       )?.initial
     )
-      throw new Error('This opening needs destination construction or camp asset provisioning.');
+      throw new Error('This opening needs destination camp asset provisioning.');
     const grant = await database
       .prepare('SELECT account_id FROM auth_grants WHERE world_id=? AND actor_id=?')
       .get(world.id, actorId);
     if (grant?.account_id !== account)
       throw new Error('The prepared world and its reviewed initial account disagree.');
-    return { world, account };
+    const rows = await database
+      .prepare(
+        'SELECT id,revision,payload FROM auth_construction_grants WHERE world_id=? ORDER BY id',
+      )
+      .all(world.id);
+    const constructionGrants = rows.map((row) => {
+      const permission = constructionPermissionSchema.parse(JSON.parse(String(row['payload'])));
+      if (
+        permission.id !== row['id'] ||
+        permission.worldId !== world.id ||
+        permission.actorId !== actorId ||
+        permission.revision !== 1 ||
+        Number(row['revision']) !== 1 ||
+        permission.revoked
+      )
+        throw new Error('The prepared world contains a changed initial construction grant.');
+      return permission;
+    });
+    return { world, account, constructionGrants };
   });
+  const expectedGrants =
+    profile.build(candidate, {
+      creatorAccountIds: [initial.account],
+      playerAccountId: initial.account,
+    }).constructionSeeds ?? [];
+  const expectedById = new Map(
+    expectedGrants.map((permission) => [
+      permission.id,
+      digest(constructionPermissionSchema.parse(permission)),
+    ]),
+  );
+  if (
+    expectedById.size !== initial.constructionGrants.length ||
+    initial.constructionGrants.some(
+      (permission) => digest(permission) !== expectedById.get(permission.id),
+    )
+  )
+    throw new Error('The saved construction grants differ from the exact authored opening.');
   const readiness = await prepareOpeningReadiness(candidate, initial.world);
   if (readiness.findings.some((finding) => finding.status !== 'ready'))
     throw new Error('Resolve the opening readiness checks before exporting it.');
@@ -105,6 +140,7 @@ try {
     worldId: initial.world.id,
     actorId,
     controlAccountId: initial.account,
+    constructionGrants: initial.constructionGrants,
     findings: readiness.findings.map((finding) => finding.message),
   });
   await writeFile(join(output, 'opening.json'), descriptor, { flag: 'wx' });

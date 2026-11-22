@@ -4,7 +4,7 @@
 use super::contracts::{CANDIDATE_BYTES, valid_hash, valid_id};
 use super::{CreationError, OpeningValidator};
 use crate::store::{DurableHead, Store, StoreError, creation::FirstInstallation};
-use openlegend_simulation::{encoding::sha256_hex, host::ByteReservation};
+use openlegend_simulation::{InitialConstructionGrant, encoding::sha256_hex, host::ByteReservation};
 use serde::Deserialize;
 use serde_json::value::RawValue;
 use std::{fs::File, io::Read, path::PathBuf, sync::Arc};
@@ -23,6 +23,7 @@ struct ReviewedOpening {
     world_id: String,
     actor_id: String,
     control_account_id: String,
+    construction_grants: Arc<[InitialConstructionGrant]>,
     findings: Vec<String>,
 }
 
@@ -149,6 +150,7 @@ impl Bundle {
             opening,
             history,
             head,
+            construction_grants: self.reviewed.construction_grants.clone(),
         })
     }
 
@@ -158,10 +160,19 @@ impl Bundle {
         account: String,
         validate: OpeningValidator,
     ) -> Result<(), CreationError> {
-        let FirstInstallation { opening, .. } = self.prepare(&store).await?;
-        let artwork = validate(opening, account.clone(), self.reviewed.actor_id.clone())
-            .await?
-            .artwork;
+        let FirstInstallation {
+            opening,
+            construction_grants,
+            ..
+        } = self.prepare(&store).await?;
+        let artwork = validate(
+            opening,
+            account.clone(),
+            self.reviewed.actor_id.clone(),
+            construction_grants,
+        )
+        .await?
+        .artwork;
         if let Some(artwork) = artwork
             && store
                 .permit_installed_asset(&account, &artwork, None)
