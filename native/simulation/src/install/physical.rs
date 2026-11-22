@@ -652,7 +652,6 @@ fn validate_entity(
     let pending_family = [
         (entity.hearth.is_some(), "placed hearth"),
         (entity.practice_target.is_some(), "practice target"),
-        (entity.threat.is_some(), "territorial response"),
         (entity.assembly.is_some(), "assembly"),
         (
             entity.inventory_revision.is_some()

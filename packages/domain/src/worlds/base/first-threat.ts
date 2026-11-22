@@ -55,6 +55,7 @@ export function installFirstThreat(world: WorldState): void {
         refuge,
         entryRadius: 4,
         territoryRadius: 8,
+        arrivalRadius: 0.15,
         pursuitSeconds: 2400,
         reentryAfterTimeout: true,
         searchSeconds: 30,

@@ -93,13 +93,50 @@ impl AdvanceCursor {
             EventDestination::Endpoint => {
                 self.endpoint_answer = Some(EndpointAnswer::Occurrence(receipt))
             }
-            EventDestination::Appraisal => {}
+            EventDestination::Appraisal | EventDestination::Territorial => {}
         }
         self.retain(EventBatch::Event {
             event,
             _reservation: reservation,
         })?;
         self.event = None;
+        Ok(())
+    }
+    fn queue_territorial(&mut self, handle: EntityHandle, intention: TerritorialIntention) {
+        self.queued_movement = Some((handle, NativeIntention::Territorial(intention), self.phase));
+        self.phase = Phase::NativeCommand;
+    }
+    fn territorial_notice(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        handle: EntityHandle,
+        notice: TerritorialNotice,
+        intention: Option<TerritorialIntention>,
+        budget: &ByteBudget,
+    ) -> Result<(), AdvanceError> {
+        let active = core
+            .state
+            .physical
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .is_some_and(|actor| actor.action.is_some());
+        let follow =
+            intention.filter(|intention| matches!(intention, TerritorialIntention::Move(..)));
+        if active {
+            self.territorial_notice = Some(PendingTerritorialNotice {
+                handle,
+                notice,
+                follow,
+            });
+            self.queue_territorial(handle, TerritorialIntention::Stop);
+        } else {
+            if let Some(follow) = follow {
+                self.queue_territorial(handle, follow);
+            }
+            let staged = notice.stage(core, handle, budget)?;
+            self.stage_event(core, staged, EventDestination::Territorial, budget)?;
+        }
         Ok(())
     }
     fn mechanical_change(
@@ -351,6 +388,19 @@ impl AdvanceCursor {
             let successful = done.command.outcome().ok;
             self.retain(EventBatch::Command(done))?;
             self.command = None;
+            if std::mem::take(&mut self.command_territorial) && !successful {
+                let notice = crate::native_controller::territorial::refused(core, handle, budget)?;
+                self.territorial_notice(core, handle, notice, None, budget)?;
+            } else if let Some(pending) = self.territorial_notice.take() {
+                if !successful || pending.handle != handle {
+                    return Err(invalid().into());
+                }
+                if let Some(follow) = pending.follow {
+                    self.queue_territorial(handle, follow);
+                }
+                let staged = pending.notice.stage(core, handle, budget)?;
+                self.stage_event(core, staged, EventDestination::Territorial, budget)?;
+            }
             let before = self.command_before.take();
             if self.phase == Phase::Wander {
                 self.slice_invalidated = true;
@@ -361,6 +411,9 @@ impl AdvanceCursor {
                 }
             {
                 self.discard_mechanics()?;
+            }
+            if self.event.is_some() {
+                return Ok(Progress::Event);
             }
         }
         if self.perception.is_some() {
@@ -669,17 +722,96 @@ impl AdvanceCursor {
                         .resolve(handle)
                         .ok_or(ExecutionError::Invariant)?;
                     let actor = entity.actor.as_ref().ok_or(ExecutionError::Invariant)?;
-                    if !actor.alive
-                        || actor.incapacitated
-                        || (self.mechanics.is_some() && actor.agency.plan.is_none())
-                    {
+                    if !actor.alive || actor.incapacitated {
                         self.next += 1;
+                        continue;
+                    }
+                    let now = core.state.physical.header.sim_time;
+                    let due = entity
+                        .threat
+                        .as_ref()
+                        .and_then(|law| law.review_at(entity, now))
+                        .is_some_and(|at| at <= now);
+                    if self.mechanics.is_some() && actor.agency.plan.is_none() {
+                        if due {
+                            self.phase = Phase::ActorTerritorial;
+                        } else {
+                            self.next += 1;
+                        }
                         continue;
                     }
                     self.reconcile = Some(ReconcileCursor::Conditions(
                         crate::conditions::ConditionReconcileCursor::new(&entity.id, budget)?,
                     ));
+                    self.phase = if due {
+                        Phase::ActorTerritorial
+                    } else {
+                        Phase::ActorPlan
+                    };
+                }
+                Phase::ActorTerritorial => {
+                    let handle = self.roster.as_ref().ok_or_else(invalid)?.actors()[self.next];
+                    if self.territorial.is_none() {
+                        let binding = self.binding(core)?;
+                        let Some(review) =
+                            TerritorialReview::prepare(core, handle, binding, budget)?
+                        else {
+                            self.phase = Phase::ActorPlan;
+                            continue;
+                        };
+                        if review.needs_materialized_rates(core)?
+                            && self.pending_flush(core, Phase::ActorTerritorial, budget)?
+                        {
+                            continue;
+                        }
+                        self.territorial = Some(review);
+                    }
+                    if self
+                        .territorial
+                        .as_ref()
+                        .and_then(TerritorialReview::queries)
+                        .is_some()
+                    {
+                        let Some(AdvanceAnswer::Geometry(visible)) = answer.take() else {
+                            return Ok(Progress::Geometry);
+                        };
+                        let binding = self.binding(core)?;
+                        self.territorial
+                            .as_mut()
+                            .ok_or_else(invalid)?
+                            .receive(core, visible, binding, budget)?;
+                    }
+                    let ranks = if self
+                        .territorial
+                        .as_ref()
+                        .and_then(TerritorialReview::collation)
+                        .is_some()
+                    {
+                        let Some(AdvanceAnswer::Collation(ranks)) = answer.take() else {
+                            return Ok(Progress::Collation);
+                        };
+                        Some(ranks)
+                    } else {
+                        None
+                    };
+                    let (intention, notice, changed) = self
+                        .territorial
+                        .take()
+                        .ok_or_else(invalid)?
+                        .apply(core, ranks.as_ref(), budget)?;
+                    if changed {
+                        self.discard_mechanics()?;
+                    }
+                    core.sync_sensory_changes()?;
                     self.phase = Phase::ActorPlan;
+                    if let Some(notice) = notice {
+                        self.territorial_notice(core, handle, notice, intention, budget)?;
+                        if self.event.is_some() {
+                            return Ok(Progress::Event);
+                        }
+                    } else if let Some(intention) = intention {
+                        self.queue_territorial(handle, intention);
+                    }
                 }
                 Phase::ActorPlan => {
                     let handle = self.roster.as_ref().ok_or_else(invalid)?.actors()[self.next];
@@ -1098,6 +1230,24 @@ impl AdvanceCursor {
                             };
                             self.command_foraging = true;
                             (operation, LocomotionMode::Travel)
+                        }
+                        NativeIntention::Territorial(intention) => {
+                            let command = match intention {
+                                TerritorialIntention::Move(point, _funded) => {
+                                    self.command_territorial = true;
+                                    begin_territorial_move(
+                                        core,
+                                        &actor,
+                                        &point,
+                                        self.candidate,
+                                        budget,
+                                    )?
+                                }
+                                TerritorialIntention::Stop => {
+                                    begin_native_stop(core, &actor, self.candidate, budget)?
+                                }
+                            };
+                            (command, LocomotionMode::Travel)
                         }
                     };
                     self.command = Some(command);

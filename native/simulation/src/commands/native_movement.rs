@@ -171,6 +171,52 @@ pub(crate) fn begin_native_foraging_move(
     )
 }
 
+pub(crate) fn begin_territorial_move(
+    core: &mut CoreMutation<'_>,
+    actor_id: &str,
+    destination: &SurfacePoint,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<CommandOperation, CommandOperationError> {
+    // Territorial motion is ordinary Move work. Its installed movement
+    // factor belongs to the world's speed calculation, not an escape profile.
+    let _scratch = budget.reserve(
+        heap_sum([actor_id.len(), destination.surface_id.len(), 80])
+            .and_then(|n| n.checked_mul(12))
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let id = format!(
+        "native-territorial-{}",
+        core.state.physical.identity.next_id()
+    );
+    let encoded = json_record(&MovementInput {
+        id: &id,
+        actor_id,
+        kind: "move",
+        destination,
+    })
+    .map_err(|_| ExecutionError::Invariant)?;
+    let command = serde_json::from_str(&encoded).map_err(|_| ExecutionError::Invariant)?;
+    let geometry = GeometryBinding::new(
+        candidate,
+        core.state.installed.geometry.spatial.revision,
+        core.journal.next_provider_serial()?,
+    );
+    let cursor = CommandCursor::new(
+        command,
+        encoded,
+        CommandOptions {
+            preview: false,
+            native_controller: true,
+            native_movement: None,
+            durable_receipt: false,
+        },
+        geometry,
+        budget,
+    )?;
+    CommandOperation::from_cursor(core, cursor, candidate, budget)
+}
+
 fn begin_native_ground(
     core: &mut CoreMutation<'_>,
     actor_id: &str,

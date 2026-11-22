@@ -1273,7 +1273,7 @@ pub struct Entity {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub threat: Option<UnconvertedField>,
+    pub(crate) threat: Option<crate::native_controller::territorial::Threat>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

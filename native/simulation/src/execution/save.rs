@@ -139,6 +139,7 @@ struct EntityRows<'a> {
     animal: bool,
     resource: bool,
     heat: bool,
+    territorial: bool,
     episode: bool,
     episode_before: Option<&'a Option<crate::native_response::NativeResponseEpisode>>,
     attributes: IndexMap<&'a str, bool>,
@@ -661,6 +662,7 @@ impl PhysicalJournal {
                         | Undo::Heading { entity, .. }
                         | Undo::Health { entity, .. }
                         | Undo::Heat { entity, .. }
+                        | Undo::Territorial { entity, .. }
                         | Undo::Action { entity, .. }
                         | Undo::ActionPath { entity, .. }
                         | Undo::ActionRoute { entity, .. }
@@ -718,6 +720,7 @@ impl PhysicalJournal {
                         }
                         Undo::Health { .. } => rows.actor = true,
                         Undo::Heat { .. } => rows.heat = true,
+                        Undo::Territorial { .. } => rows.territorial = true,
                         Undo::Action { .. } => {
                             rows.actor = true;
                             rows.action = true;
@@ -1072,6 +1075,18 @@ impl PhysicalJournal {
                     &parent,
                     "heat",
                     entity.heat.as_ref(),
+                    budget,
+                )?;
+            }
+            if rows.territorial {
+                one(
+                    ledger,
+                    output,
+                    "sim_territorial_threat",
+                    &["world", "entities", id, "threat"],
+                    &parent,
+                    "threat",
+                    entity.threat.as_ref(),
                     budget,
                 )?;
             }

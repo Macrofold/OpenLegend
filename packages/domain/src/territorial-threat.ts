@@ -24,6 +24,7 @@ export interface TerritorialPolicy {
   refuge: SurfacePoint;
   entryRadius: number;
   territoryRadius: number;
+  arrivalRadius: number;
   pursuitSeconds: number;
   reentryAfterTimeout: boolean;
   searchSeconds: number;
@@ -382,7 +383,10 @@ export function territorialIntention(
         ? threat.lastSeen
         : undefined;
   if (!destination) return null;
-  if (threat.mode === 'return' && distance3D(worldPosition(entity), destination) <= 0.15) {
+  if (
+    threat.mode === 'return' &&
+    distance3D(worldPosition(entity), destination) <= policy.arrivalRadius
+  ) {
     stopAction(world, entity);
     threat.mode = 'idle';
     delete threat.episodeUntil;
@@ -419,7 +423,7 @@ export function territorialIntention(
       return null;
     stopAction(world, entity);
   }
-  if (distance3D(worldPosition(entity), destination) <= 0.15) return null;
+  if (distance3D(worldPosition(entity), destination) <= policy.arrivalRadius) return null;
   threat.repathAt = world.simTime + policy.refreshSeconds;
   return { ...envelope, type: 'move', destination: { ...destination } };
 }
@@ -475,6 +479,7 @@ export function validateTerritorialThreats(world: WorldState): void {
       ![
         p.entryRadius,
         p.territoryRadius,
+        p.arrivalRadius,
         p.pursuitSeconds,
         p.searchSeconds,
         p.reviewSeconds,

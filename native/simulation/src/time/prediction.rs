@@ -243,8 +243,12 @@ impl MechanicalForecast {
                 .entities
                 .resolve(*handle)
                 .ok_or(ExecutionError::Invariant)?;
-            if entity.threat.is_some() {
-                return Err(ExecutionError::UnsupportedFamily);
+            if let Some(at) = entity
+                .threat
+                .as_ref()
+                .and_then(|threat| threat.review_at(entity, physical.header.sim_time))
+            {
+                bound.at(at);
             }
             if let Some(heat) = &entity.heat {
                 if heat.lit && heat.fuel_seconds > 0.0 {

@@ -591,6 +591,13 @@ impl CommandCursor {
                                 let route = answer.routes.pop().ok_or(ExecutionError::Invariant)?;
                                 let crate::geometry::GuardedRoutePlan(route, storage) =
                                     crate::geometry::route_plan(route, &self.budget)?;
+                                if self.options.native_controller
+                                    && !core.physical().admit_territorial_detour(&self.command.envelope().actor_id, &route)?
+                                {
+                                    self.refuse(&ordinary.no_route);
+                                    self.queries = None;
+                                    return self.drive(core, None);
+                                }
                                 self.action_storage
                                     .as_mut()
                                     .ok_or(ExecutionError::Invariant)?

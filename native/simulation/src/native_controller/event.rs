@@ -34,8 +34,16 @@ fn receiver<'a>(
     {
         return Ok(None);
     }
-    if animal.threat.is_some() {
-        return Err(ExecutionError::UnsupportedFamily);
+    if animal
+        .threat
+        .as_ref()
+        .is_some_and(|threat| threat.defends())
+        && animal
+            .animal
+            .as_ref()
+            .is_none_or(|state| state.foraging.is_none())
+    {
+        return Ok(None);
     }
     if event.scope == Some(EventScope::Private) && !event.audience.contains(&animal.id) {
         return Ok(None);

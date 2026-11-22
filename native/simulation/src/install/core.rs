@@ -309,6 +309,17 @@ fn assemble_selected_core(
         &physical.entities,
         budget,
     )?;
+    for id in physical.entities.ordered_ids() {
+        let entity = physical.entities.get(id).ok_or(InstallError::CurrentFormat)?;
+        if let Some(threat) = &entity.threat {
+            if !threat.valid(entity, &retained.native_strike_read) {
+                return Err(InstallError::CurrentFormat.into());
+            }
+            if threat.needs_feeding_location() {
+                return Err(InstallError::UnsupportedFamily("territory follows an active feeding or resting place").into());
+            }
+        }
+    }
     use crate::host::retained_size::HeapBytes;
     let mut definition_storage = meanings.storage;
     definition_storage

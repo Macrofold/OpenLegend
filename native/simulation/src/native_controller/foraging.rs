@@ -359,14 +359,6 @@ impl ForageChoice {
     }
 }
 
-fn sensor_error(error: crate::reception::SensorError) -> ExecutionError {
-    match error {
-        crate::reception::SensorError::Capacity => ExecutionError::Capacity,
-        crate::reception::SensorError::UnsupportedFamily => ExecutionError::UnsupportedFamily,
-        _ => ExecutionError::Invariant,
-    }
-}
-
 fn save(
     core: &mut crate::execution::CoreMutation<'_>,
     handle: EntityHandle,

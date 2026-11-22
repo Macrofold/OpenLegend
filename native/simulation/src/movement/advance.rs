@@ -314,6 +314,13 @@ impl MoveAdvanceCursor {
                 };
                 let crate::geometry::GuardedRoutePlan(route, storage) =
                     crate::geometry::route_plan(route, &self.budget)?;
+                if !core
+                    .physical()
+                    .admit_territorial_detour(&self.actor_id, &route)?
+                {
+                    self.fail(&rules.no_route.message)?;
+                    return self.drive(core, None);
+                }
                 match route {
                     RoutePlan::Reached { path, .. } => {
                         core.physical().replace_action_route(
@@ -345,12 +352,6 @@ impl MoveAdvanceCursor {
                     RoutePlan::Pending { mut request, .. } => {
                         let (entity, _) =
                             bound(core, &self.actor_id, action_id, self.physical_life)?;
-                        // Territorial pursuit is not an admitted live family;
-                        // the actual selected ground-refuge request uses its
-                        // verified episode/profile navigation wait unchanged.
-                        if entity.threat.is_some() {
-                            return Err(ExecutionError::UnsupportedFamily);
-                        }
                         if entity
                             .actor
                             .as_ref()

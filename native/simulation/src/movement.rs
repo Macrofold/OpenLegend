@@ -412,6 +412,7 @@ pub(crate) struct MotionCursor {
     body: BodyProfile,
     remaining: f64,
     occupied: bool,
+    territory: Option<(Point, f64)>,
     epsilon: f64,
     phase: Phase,
     start: SurfacePoint,
@@ -450,9 +451,7 @@ impl MotionCursor {
         occupied: bool,
         epsilon: f64,
     ) -> Result<Self, MovementError> {
-        // Territorial pursuit and flight keep their separate motion owners.
-        // The installed resource diet has no independent route limits.
-        if entity.threat.is_some() || entity.spatial.flight.is_some() {
+        if entity.spatial.flight.is_some() {
             return Err(MovementError::UnsupportedFamily);
         }
         let position = entity
@@ -478,8 +477,17 @@ impl MotionCursor {
             consumed_points: 0,
             travelled: 0.0,
             body: entity.body_profile().into_owned(),
-            remaining: distance_budget,
+            remaining: entity
+                .threat
+                .as_ref()
+                .and_then(|threat| threat.remaining_pursuit_distance())
+                .map_or(distance_budget, |limit| limit.min(distance_budget)),
             occupied,
+            territory: entity
+                .threat
+                .as_ref()
+                .filter(|threat| threat.progress.mode.chases())
+                .map(|threat| (threat.policy.home.point(), threat.policy.territory_radius)),
             epsilon,
             phase: Phase::Next,
             start: position.clone(),
@@ -627,6 +635,14 @@ impl MotionCursor {
                     self.phase = Phase::Walk(Probe::Full);
                 }
                 Phase::Walk(_) => {
+                    if self.territory.is_some_and(|(home, radius)| {
+                        (home.x - self.pending_to.x).hypot(home.z - self.pending_to.z) > radius
+                    }) {
+                        if self.answer_clear(false).is_err() {
+                            self.phase = Phase::Done(false);
+                        }
+                        continue;
+                    }
                     return Some((
                         MotionQuestion::Walk,
                         self.start.clone(),

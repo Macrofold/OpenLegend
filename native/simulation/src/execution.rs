@@ -44,6 +44,7 @@ mod semantic;
 pub(crate) use semantic::occupied_purpose;
 mod sensing;
 mod status;
+mod territorial;
 mod temporal;
 mod values;
 pub(crate) use status::{
@@ -1177,6 +1178,7 @@ enum UndoKey {
     Placement(usize, u64),
     Heading(usize, u64),
     Heat(usize, u64),
+    Territorial(usize, u64),
     Health(usize, u64),
     Action(usize, u64),
     ActionPath(usize, u64),
@@ -1261,6 +1263,10 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    Territorial {
+        entity: EntityHandle,
+        before: crate::native_controller::territorial::Progress,
+    },
     Heat {
         entity: EntityHandle,
         before: crate::state::Heat,
@@ -2169,6 +2175,19 @@ impl PhysicalJournal {
                         .resolve_mut(entity)
                         .ok_or(ExecutionError::Invariant)?
                         .heat = Some(before);
+                }
+                Undo::Territorial { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.threat.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .progress = before;
+                    state.entities.settle_operational_memory(
+                        entity,
+                        &mut self.reservation,
+                        true,
+                    )?;
                 }
                 Undo::RestoreActor {
                     entity,
@@ -3589,6 +3608,7 @@ impl PhysicalMutation<'_> {
                 }),
             )?;
         }
+        self.record_territorial_travel(cursor.actor, cursor.travelled)?;
         Ok(result)
     }
 }

@@ -104,7 +104,7 @@ pub(crate) fn private_motion_seconds(
             continue;
         };
         if entity.threat.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
+            continue;
         }
         let running = matches!(
             animal.wander,

@@ -117,6 +117,11 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
                 .capacity()
                 .checked_add(actor.inventory_inspection.heap_bytes()?)
         })
+        .and_then(|actor| {
+            actor.checked_add(
+                entity.threat.as_ref().map_or(Some(0), |threat| threat.progress.heap_bytes())?,
+            )
+        })
         .ok_or(ExecutionError::Capacity)
 }
 fn participation_bytes(entity: &Entity) -> Result<usize, ExecutionError> {

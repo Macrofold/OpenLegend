@@ -95,8 +95,8 @@ impl InstalledMovementPolicy {
             Some(_) => Err(ExecutionError::UnsupportedFamily),
         }
     }
-    /// Scar meaning is supplied by the same installed body's lifecycle policy.
-    /// This function does not invent a default for an unported scar or threat.
+    /// The installed body's lifecycle and territorial rules supply their own
+    /// speed factors. Native response routes keep their independent profiles.
     pub(crate) fn speed(
         &self,
         entity: &Entity,
@@ -107,9 +107,6 @@ impl InstalledMovementPolicy {
         if !scar_factor.is_finite() || scar_factor <= 0.0 {
             return Err(ExecutionError::Invariant);
         }
-        if entity.threat.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
         let action = entity
             .actor
             .as_ref()
@@ -118,7 +115,11 @@ impl InstalledMovementPolicy {
             return Err(ExecutionError::UnsupportedFamily);
         }
         let Some(binding) = action.and_then(|action| action.native_locomotion.as_ref()) else {
-            return Ok(self.value.movement_tiles_per_second * scar_factor);
+            let territory = entity
+                .threat
+                .as_ref()
+                .map_or(1.0, |threat| threat.policy.movement_factor);
+            return Ok(self.value.movement_tiles_per_second * territory * scar_factor);
         };
         let key = profile_key(&binding.profile).map_err(|_| ExecutionError::Invariant)?;
         let profile = profiles

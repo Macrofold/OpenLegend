@@ -17,6 +17,7 @@ mod ground;
 pub(crate) use ground::{GroundTurn, ground_turn, proposal_current};
 pub(crate) mod feeding;
 pub(crate) mod foraging;
+pub(crate) mod territorial;
 mod movement;
 pub(crate) use movement::{complete_movement, movement_refused};
 mod response;
@@ -26,6 +27,14 @@ pub(crate) use response::{
     CompletedGroundResponse, GroundResponseCursor, GroundResponseDecision, GroundResponseStep,
 };
 pub(crate) use wander::{CompletedWander, WanderCursor, WanderStep};
+
+fn sensor_error(error: crate::reception::SensorError) -> ExecutionError {
+    match error {
+        crate::reception::SensorError::Capacity => ExecutionError::Capacity,
+        crate::reception::SensorError::UnsupportedFamily => ExecutionError::UnsupportedFamily,
+        _ => ExecutionError::Invariant,
+    }
+}
 
 /// The ordinary animal turn alone creates this saved search. Geometry resumes
 /// may fill its current candidate but never redraw its bearing, distance or side.
@@ -402,6 +411,7 @@ pub(crate) fn acquire_sound(
         || state.physical_life != sound.physical_life
         || animal.physical_life() != Some(sound.physical_life)
         || sound.acquisition == SoundAcquisition::SelfBody
+        || animal.threat.as_ref().is_some_and(|threat| threat.defends()) && state.foraging.is_none()
     {
         return Ok(());
     }

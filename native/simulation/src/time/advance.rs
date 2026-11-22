@@ -12,7 +12,7 @@ use super::{
 };
 use crate::commands::{
     CommandOperation, CommandOperationError, CompletedCommandOperation, Outcome, begin_native_feed,
-    begin_native_foraging_move, begin_native_movement, begin_native_stop,
+    begin_native_foraging_move, begin_native_movement, begin_native_stop, begin_territorial_move,
 };
 use crate::events::{
     CompletedEvent, EventAccountPlacement, EventCursor, WorldEvent, begin_staged_occurrence,
@@ -32,6 +32,9 @@ use crate::identity::MAX_SAFE_INTEGER;
 use crate::language::{CollationAnswer, CollationRequest};
 use crate::movement::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
 use crate::native_controller::foraging::{ForageChoice, ForageIntention};
+use crate::native_controller::territorial::{
+    Intention as TerritorialIntention, Notice as TerritorialNotice, Review as TerritorialReview,
+};
 use crate::native_controller::{
     GroundResponseCursor, GroundResponseDecision, GroundResponseStep, WanderCursor, WanderStep,
     advance_wander_clock, expire_acoustic_patterns, reconcile_wander,
@@ -308,6 +311,7 @@ enum Phase {
     AppraisalsStart,
     StatusStart,
     ActorCondition,
+    ActorTerritorial,
     ActorPlan,
     ActorAction,
     AnimalClocks,
@@ -346,6 +350,7 @@ enum EventDestination {
     Motion,
     Endpoint,
     Appraisal,
+    Territorial,
 }
 enum NativeIntention {
     Route(
@@ -355,6 +360,12 @@ enum NativeIntention {
     ),
     Stop,
     Forage(ForageIntention),
+    Territorial(TerritorialIntention),
+}
+struct PendingTerritorialNotice {
+    handle: EntityHandle,
+    notice: TerritorialNotice,
+    follow: Option<TerritorialIntention>,
 }
 pub(crate) struct AdvanceCursor {
     exits: Option<crate::participation::DueExits>,
@@ -405,6 +416,7 @@ pub(crate) struct AdvanceCursor {
     command_actor: Option<EntityHandle>,
     command_mode: Option<LocomotionMode>,
     command_foraging: bool,
+    command_territorial: bool,
     command_before: Option<LocalCommandPreparation>,
     queued_movement: Option<(EntityHandle, NativeIntention, Phase)>,
     slice_invalidated: bool,
@@ -412,6 +424,8 @@ pub(crate) struct AdvanceCursor {
     perception_before: Option<(PhysicalChangeCursor, usize)>,
     response: Option<GroundResponseCursor>,
     forage: Option<ForageChoice>,
+    territorial: Option<TerritorialReview>,
+    territorial_notice: Option<PendingTerritorialNotice>,
     wander: Option<WanderCursor>,
     choices: Vec<EntityHandle>,
     perception: Option<PerceptionCursor>,
@@ -463,6 +477,11 @@ impl AdvanceCursor {
                     .and_then(SteeringPreparation::question)
             })
             .or_else(|| self.forage.as_ref().and_then(ForageChoice::sight_request))
+            .or_else(|| {
+                self.territorial
+                    .as_ref()
+                    .and_then(TerritorialReview::queries)
+            })
             .or_else(|| {
                 self.response
                     .as_ref()
@@ -579,6 +598,7 @@ impl AdvanceCursor {
             command_actor: None,
             command_mode: None,
             command_foraging: false,
+            command_territorial: false,
             command_before: None,
             queued_movement: None,
             slice_invalidated: false,
@@ -586,6 +606,8 @@ impl AdvanceCursor {
             perception_before: None,
             response: None,
             forage: None,
+            territorial: None,
+            territorial_notice: None,
             wander: None,
             choices: Vec::new(),
             perception: None,
@@ -802,6 +824,11 @@ impl AdvanceCursor {
                         self.forage
                             .as_ref()
                             .and_then(ForageChoice::collation_request)
+                    })
+                    .or_else(|| {
+                        self.territorial
+                            .as_ref()
+                            .and_then(TerritorialReview::collation)
                     })
                     .ok_or_else(invalid)?,
             ),
