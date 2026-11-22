@@ -24,7 +24,7 @@ import {
   decisionAppraisalSchema,
   REFLECTION_WORKSPACE_GUIDANCE,
   REFLECTION_WORKSPACE_INSTRUCTIONS,
-  RESPONSE_INSTRUCTIONS,
+  responseInstructions,
 } from '../apps/server/src/cognition-contracts.js';
 import {
   COGNITION_PERMISSIONS,
@@ -43,7 +43,7 @@ import {
   formatCandidateTemporary,
 } from '../apps/server/src/candidate-description.js';
 import { ACTIVITY_COVERAGE } from '../apps/server/src/decision-activity-facts.js';
-import { decisionPromptText } from '../apps/server/src/decision-prompt-text.js';
+import { decisionPromptTextForCapabilities } from '../apps/server/src/decision-prompt-text.js';
 import {
   SITUATION_QUERY_INSTRUCTIONS,
   situationResponseJsonSchema,
@@ -170,12 +170,19 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
   ];
   if (recallQuestion?.type !== 'noul')
     throw new Error('The installed context-attention template is unavailable.');
+  // The stand-alone host accepts installed actions and exact invocations.
+  const actionCapabilities = { proposals: false };
   const schemas = [false, true].flatMap((speech) =>
     [false, true].map((expressions) => {
       const bound = boundResponseSchema(
         [references.entity],
         [references.action],
-        { speech, expressions, expressionVerbs: expressions ? supported.expressionVerbs : [] },
+        {
+          speech,
+          expressions,
+          expressionVerbs: expressions ? supported.expressionVerbs : [],
+          ...actionCapabilities,
+        },
         [references.knowledge],
         namedTimes,
         requests,
@@ -204,7 +211,7 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
   const maximum = world.cognitionPolicy.maxImmediateLevel;
   return {
     instructionsVersion: COGNITION_VERSION,
-    responseInstructions: RESPONSE_INSTRUCTIONS,
+    responseInstructions: responseInstructions(actionCapabilities),
     appraisalPolicies,
     appraisalSourceLimit: APPRAISAL_SOURCE_BINDINGS,
     reflection: {
@@ -218,8 +225,9 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
     },
     queryInstructions: SITUATION_QUERY_INSTRUCTIONS,
     contextBytes: CONTEXT_BYTE_LIMIT,
-    text: decisionPromptText,
-    namedTimes,
+    text: decisionPromptTextForCapabilities(actionCapabilities),
+    // The renderer lists stopping times only for proposal slots.
+    namedTimes: actionCapabilities.proposals ? namedTimes : [],
     outputFamilies: itemOutputFamilies(world),
     navigation: navigationInstructions(world, true),
     activityCoverage: ACTIVITY_COVERAGE,

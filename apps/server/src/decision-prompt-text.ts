@@ -1,3 +1,10 @@
+const invocationRules =
+  'For invoke, fill invocation using Native navigation or an optional installed activity request; actionId, verb, description and top-level targetEntityId remain null. Request families use only their exact parameters and null navigation fields; their selected mode equals act.mode. A chosen request is neither a learned method nor completed work.';
+const goalPlanRules =
+  ' No unsupported effects are implied.\nGoal: goal={"operation":"create|revise|pause|resume|complete|abandon","goalId":null,"expectedRevision":null,"objective":null,"parentId":null}. Create supplies objective (max 500), optional parentId; revise supplies existing goalId/revision, objective and optional parentId. Status changes supply only existing goalId/revision. Eight active/paused goals maximum. Completion is a subjective declaration.\nPlan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only ';
+const referenceRules =
+  '## References\nNames are display prose, never identifiers. Copy the opaque ID token from (ID:token) into structured entity fields. Never invent a token or use a species name as an ID.';
+
 /** Shared response prompt language. The release compiler includes the same
  * fragments for the Rust server's renderer; installed world wording stays in
  * the world policies that supply the corresponding context fields. */
@@ -86,8 +93,7 @@ export const decisionPromptText = {
     'for proposal, fill description (max 500), optionally targetEntityId, and optionally slots={"itemId":null,"instrumentId":null,"recipientId":null,"quantity":null,"quantityMode":null,"until":null,"method":null}: exact permitted IDs for the item acted on, the tool used and the recipient; a whole quantity with quantityMode exact (units handled) or held (total to carry afterwards); ',
   untilTime: 'until ',
   unnamedTime: 'until null (this world names no stopping times)',
-  actionGoalPlanRules:
-    '; method keeps required wording such as quietly. Slots are null for other kinds. Complete typed proposals such as "drop 2 ITEM", "pick up ITEM" or "follow NAME at 4 m" bind without interpretation; a refused one states why. For invoke, fill invocation using Native navigation or an optional installed activity request; actionId, verb, description and top-level targetEntityId remain null. Request families use only their exact parameters and null navigation fields; their selected mode equals act.mode. A chosen request is neither a learned method nor completed work. Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.\nGoal: goal={"operation":"create|revise|pause|resume|complete|abandon","goalId":null,"expectedRevision":null,"objective":null,"parentId":null}. Create supplies objective (max 500), optional parentId; revise supplies existing goalId/revision, objective and optional parentId. Status changes supply only existing goalId/revision. Eight active/paused goals maximum. Completion is a subjective declaration.\nPlan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only ',
+  actionGoalPlanRules: `; method keeps required wording such as quietly. Slots are null for other kinds. Complete typed proposals such as "drop 2 ITEM", "pick up ITEM" or "follow NAME at 4 m" bind without interpretation; a refused one states why. ${invocationRules} Unlisted attempts remain available with no action suggestions.${goalPlanRules}`,
   itemOutputRules:
     ' supply item outputs. Later steps wait for earlier completion and recheck prerequisites. Cancel has empty steps and null goalId. A new goal may be referenced as "$localId" only with that localId in requiresAccepted. Physical work takes simulation time. A plan may have no goal.\n',
   attentionExamples:
@@ -95,6 +101,20 @@ export const decisionPromptText = {
   speechExampleLabel: '; speech alone ',
   speechExample:
     '{"localId":"reply","requiresAccepted":[],"talk":{"text":"Hello.","addresseeEntityId":"COPY_PERMITTED_ID","selfIntroduction":null,"volume":"normal"},"act":null,"think":null,"goal":null,"plan":null,"note":null,"name":null,"appraise":null,"observe":null,"remember":null}]}; combined decisions can contain separate speech and thought operations, repeated kinds, or a goal creation followed by a plan requiring that goal\'s admission. Never invent a goal or thought just to fill the schema. No reasoning transcript or fabricated completion.',
-  references:
-    '## References\nNames are display prose, never identifiers. Copy the opaque ID token from (ID:token) into structured entity fields. Never invent a token or use a species name as an ID. Include (ID:token) in an unlisted proposal when identifying its target.\n',
+  references: `${referenceRules} Include (ID:token) in an unlisted proposal when identifying its target.\n`,
 } as const;
+
+/** Select the same action capabilities as the response schema. */
+export function decisionPromptTextForCapabilities({ proposals }: { proposals: boolean }) {
+  if (proposals) return decisionPromptText;
+  return {
+    ...decisionPromptText,
+    unlistedActions: '',
+    expressionKinds: 'known|expression|invoke',
+    plainKinds: 'known|invoke',
+    proposalArguments: '',
+    unnamedTime: '',
+    actionGoalPlanRules: `Slots are null. ${invocationRules}${goalPlanRules}`,
+    references: `${referenceRules}\n`,
+  };
+}

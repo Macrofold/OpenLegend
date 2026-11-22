@@ -73,6 +73,14 @@ Forgetting the exact original evidence stopped generation when held after judgme
 
 The local archive `nsc04-standalone-naming-20261122` records eight passing callers and the original failing control with no naming choices in the provider request. The local locked build from `095ad47e6` and the scoped naming patch used executable SHA-256 `c40e0396bd6674618241401639bfdbd9c6d5a87adce797da304d9155e039854b`. The Rust build, new-module formatting and network checks passed. All disposable databases were removed.
 
+## Offered NPC actions on the stand-alone Rust server — November 22, 2026
+
+The stand-alone release offers the model installed action choices and exact invocations, plus expression choices where supported. Its provider schema and both instruction sections now share that capability. Free-form action proposals require a separate interpretation path. Source and Node-hosted default instructions and proposal choices retain their original bytes.
+
+A signed-in conversation on the original release reproduced an advertised proposal and independent speech reaching the server together. Generation completed once, then native response preparation requested the unavailable interpreter and recorded `response-application/application`. The player’s speech saved, but the NPC never answered. On the corrected release a supported movement request visibly moved the NPC 0.35 m and saved with one NPC reply. The original receipt and effects survived retry and cold reopening. A provider test that deliberately returned the unoffered proposal recorded `generate/invalid-output` with no effects or second attempt. A valid but conflicting appraisal separately refused its own effect while independent speech saved. Forgetting the exact history supporting a held valid reply prevented all effects.
+
+The local archive `nsc04-standalone-proposal-offer-20261122` preserves the original failure, exact exporter source at `cc319036b` plus the verified patch, and the same Node-free executable in both arms (SHA-256 `a4950d9c15471591f16ed5849fb4d3b63300a1a653142548434d3dc83708ddf4`). The archive records original and corrected release manifest hashes and confirms the corrected cognition SHA-256 `ca539de594e5c6b9582d7e6954cb716fc58edae952b4f6eea5ce86469587234e`. Controlled HTTPS incurred $0 in new and cumulative Jev cost for these checks. TypeScript, formatting and network checks passed. All 12 disposable fixture databases were removed. No speed comparison or live model-quality claim was made.
+
 ## Live policy comparison
 
 All **48/48 fresh cases received an answer and delivered it**. Jev chose an accepted answer in every case, so the enabled policy correctly bought **zero** stronger-model calls. The comparison is complete; it shows no measured benefit on this small, straightforward sample.
