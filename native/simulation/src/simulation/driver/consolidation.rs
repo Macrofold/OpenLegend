@@ -66,13 +66,6 @@ pub(super) fn poll_consolidation(
             budget,
             ConsolidationReply::Format,
         ),
-        ConsolidationStep::Collation(q) => question(
-            answer,
-            ProviderKind::Collation,
-            q.binding(),
-            q,
-            budget,
-            ConsolidationReply::Collation,
-        ),
+        ConsolidationStep::Collation(q) => collation_question(answer, q, budget, ConsolidationReply::Collation),
     }
 }

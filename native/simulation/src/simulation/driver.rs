@@ -10,7 +10,7 @@ use crate::events::{CompletedEvent, EventAnswer, EventCursor, EventStep};
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries};
 use crate::host::{ByteBudget, ByteReservation};
-use crate::language::{CollationAnswer, WordsAnswer};
+use crate::language::{CollationAnswer, CollationRequest, WordsAnswer};
 use crate::plans::{CompletedPlanRun, PlanRunAnswer, PlanRunCursor, PlanRunStep};
 use crate::reception::{
     CompletedHeldReception, CompletedNativeExposure, CompletedObserverReception,
@@ -141,6 +141,7 @@ enum QuestionBody {
     Geometry(Box<GeometryQueries>),
     Utterance(UtteranceRequest),
     Words(WordsProviderRequest),
+    Collation(CollationProviderRequest),
     Maintenance(crate::cognition::format::MaintenanceFormatRequest),
     ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
     ActivityLearningFormat(Arc<crate::activity::LearningFormatRequest>),
@@ -156,6 +157,12 @@ pub(crate) struct UtteranceRequest {
 pub(crate) struct WordsProviderRequest {
     pub(crate) binding: GeometryBinding,
     pub(crate) strings: Vec<JsText>,
+}
+
+#[derive(Serialize)]
+pub(crate) struct CollationProviderRequest {
+    pub(crate) binding: GeometryBinding,
+    pub(crate) strings: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -220,6 +227,21 @@ impl ProviderQuestion {
 
     pub(crate) fn words_envelope(&self) -> Option<QuestionEnvelope<'_, WordsProviderRequest>> {
         self.words().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    pub(crate) fn collation(&self) -> Option<&CollationProviderRequest> {
+        match &self.body {
+            QuestionBody::Collation(request) => Some(request),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn collation_envelope(&self) -> Option<QuestionEnvelope<'_, CollationProviderRequest>> {
+        self.collation().map(|value| QuestionEnvelope {
             kind: self.kind,
             binding: self.binding,
             value,
@@ -366,6 +388,7 @@ enum AnswerBody {
     Geometry(Box<GeometryAnswers>),
     Utterance(Box<UtteranceAnswer>),
     Words(Box<WordsAnswer>),
+    Collation(Box<CollationAnswer>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
@@ -443,6 +466,22 @@ impl ProviderResponse {
             kind: ProviderKind::Words,
             binding,
             body: AnswerBody::Words(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn collation(
+        binding: GeometryBinding,
+        answer: Box<CollationAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::Collation,
+            binding,
+            body: AnswerBody::Collation(answer),
             _reservation: reservation,
         })
     }
@@ -883,6 +922,38 @@ fn geometry_question<V, R>(
         route,
     ))
 }
+fn collation_question<V, R>(
+    answer: &Option<Answer>,
+    request: &CollationRequest,
+    budget: &ByteBudget,
+    route: R,
+) -> Result<Poll<V, R>, DriveError> {
+    if answer.is_some() {
+        return Err(DriveError::StaleResponse);
+    }
+    // The continuation still owns its keys for result validation. The immutable
+    // provider copy has independent custody through its synchronous ICU read,
+    // including when the original candidate is canceled during that read.
+    let strings = request.strings();
+    let bytes = strings.iter().try_fold(
+        strings.len().checked_mul(size_of::<String>()).ok_or(DriveError::Capacity)?,
+        |bytes, value| bytes.checked_add(value.len()).ok_or(DriveError::Capacity)
+    )?;
+    let reservation = budget.reserve(bytes).map_err(|_| DriveError::Capacity)?;
+    let backing = ProviderQuestion::reserve_backing(budget)?;
+    let binding = request.binding();
+    Ok(Poll::Question(Arc::new(ProviderQuestion {
+        kind: ProviderKind::Collation,
+        binding,
+        body: QuestionBody::Collation(CollationProviderRequest {
+            binding,
+            strings: strings.to_vec(),
+        }),
+        _reservation: reservation,
+        backing,
+    }), route))
+}
+
 fn maintenance_question<V, R>(
     answer: &Option<Answer>,
     request: &crate::cognition::format::MaintenanceFormatRequest,
@@ -1664,6 +1735,9 @@ impl OperationDriver {
                     AnswerBody::Utterance(value) => {
                         (Some(Answer::Utterance(*value)), Some(_reservation), None)
                     }
+                    AnswerBody::Collation(value) => {
+                        (Some(Answer::Collation(*value)), Some(_reservation), None)
+                    }
                     AnswerBody::Words(value) => {
                         (Some(Answer::Words(*value)), Some(_reservation), None)
                     }
@@ -1878,14 +1952,7 @@ fn poll_event(
             return Ok(Poll::Question(question, EventReply::Utterance));
         }
         EventStep::Collation(q) => {
-            return question(
-                answer,
-                ProviderKind::Collation,
-                q.binding(),
-                q,
-                budget,
-                EventReply::Collation,
-            );
+            return collation_question(answer, q, budget, EventReply::Collation);
         }
         EventStep::Words(q) => {
             if answer.is_some() {
@@ -1957,14 +2024,7 @@ fn poll_forget(
     let supplied = privacy_reply(answer, route)?;
     match cursor.step(core, supplied, budget)? {
         Step::Complete(done) => Ok(Poll::Complete(done)),
-        Step::Collation(request) => question(
-            answer,
-            ProviderKind::Collation,
-            request.binding(),
-            request,
-            budget,
-            ForgetReply::Collation,
-        ),
+        Step::Collation(request) => collation_question(answer, request, budget, ForgetReply::Collation),
         Step::History(request) => question(
             answer,
             ProviderKind::History,
@@ -2155,14 +2215,7 @@ fn poll_held(
             return geometry_question(answer, q, budget, HeldReply::Geometry);
         }
         HeldReceptionStep::Language(q) => {
-            return question(
-                answer,
-                ProviderKind::Collation,
-                q.binding(),
-                q,
-                budget,
-                HeldReply::Language,
-            );
+            return collation_question(answer, q, budget, HeldReply::Language);
         }
     }
 }
@@ -2223,14 +2276,7 @@ fn poll_human(
                 return geometry_question(answer, q, budget, HumanReply::Geometry);
             }
             ObserverReceptionStep::Language(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Collation,
-                    q.binding(),
-                    q,
-                    budget,
-                    HumanReply::Language,
-                );
+                return collation_question(answer, q, budget, HumanReply::Language);
             }
             ObserverReceptionStep::Event(child) => {
                 let child_route = match route.take() {
@@ -2360,14 +2406,7 @@ fn poll_advance(
                 return geometry_question(answer, q, budget, AdvanceReply::Geometry);
             }
             AdvanceStep::Collation(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Collation,
-                    q.binding(),
-                    q,
-                    budget,
-                    AdvanceReply::Collation,
-                );
+                return collation_question(answer, q, budget, AdvanceReply::Collation);
             }
             AdvanceStep::Event(child) => {
                 let child_route = match route.take() {

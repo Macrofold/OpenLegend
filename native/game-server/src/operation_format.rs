@@ -39,7 +39,6 @@ struct Answer {
 enum Formatted {
     Activity { view: ActivityView },
     Control { message: JsText },
-    Collation { order: Vec<u32>, groups: Vec<u32> },
     Canonical { canonical: String },
 }
 
@@ -72,6 +71,25 @@ pub(crate) fn answer(
     })? {
         return answer.map(Some);
     }
+    if let Some(answer) = request.with_collation(|binding, strings| {
+        let language = language.ok_or(WorldError::ProviderKind)?;
+        let bytes = strings.iter().try_fold(
+            // Vector headers, order, equal groups and stable sort scratch.
+            strings.len().checked_mul(size_of::<Vec<u16>>() + 6 * size_of::<u32>())
+                .and_then(|bytes| bytes.checked_add(512))
+                .ok_or(HostError::Capacity)?,
+            // UTF-16 allocation growth, including the minimum short buffer.
+            |bytes, text| text.len().checked_mul(4)
+                .and_then(|n| n.checked_add(8))
+                .and_then(|n| bytes.checked_add(n))
+                .ok_or(HostError::Capacity),
+        )?;
+        let custody = budget.reserve(bytes).map_err(HostError::from)?;
+        let (order, groups) = language.collate_selected(strings).map_err(WorldError::Language)?;
+        Ok::<_, WorldError>(RuntimeProviderInput::collation(binding, order, groups, custody)?)
+    })? {
+        return answer.map(Some);
+    }
     if let Some(answer) = request.with_maintenance_format(|binding, publication| {
         format_maintenance(
             binding,
@@ -87,7 +105,7 @@ pub(crate) fn answer(
             serde_json::from_str(request).map_err(|_| WorldError::ProviderKind)?;
         if !matches!(
             envelope.kind,
-            "display" | "control" | "collation" | "canonical" | "digest"
+            "display" | "control" | "canonical" | "digest"
         ) {
             return Ok(None);
         }
@@ -95,9 +113,7 @@ pub(crate) fn answer(
             .value
             .get()
             .len()
-            // A collation array can have a short string per slot. The
-            // carrier bound covers the typed string, UTF16 and rank lists.
-            .checked_mul(if envelope.kind == "collation" { 48 } else { 12 })
+            .checked_mul(12)
             .and_then(|n| n.checked_add(4096))
             .ok_or(HostError::Capacity)?;
         let bytes = if matches!(envelope.kind, "canonical" | "digest") {
@@ -115,19 +131,6 @@ pub(crate) fn answer(
             "control" => Formatted::Control {
                 message: control_format::format(envelope.value)?,
             },
-            "collation" => {
-                #[derive(Deserialize)]
-                struct Input {
-                    strings: Vec<JsText>,
-                }
-                let input: Input = serde_json::from_str(envelope.value.get())
-                    .map_err(|_| WorldError::ProviderKind)?;
-                let (order, groups) = language
-                    .ok_or(WorldError::ProviderKind)?
-                    .collate(&input.strings)
-                    .map_err(WorldError::Language)?;
-                Formatted::Collation { order, groups }
-            }
             "canonical" | "digest" => {
                 #[derive(Deserialize)]
                 struct Command<'a> {

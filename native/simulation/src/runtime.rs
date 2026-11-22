@@ -315,6 +315,7 @@ enum RuntimeAnswerBody {
     Geometry(Box<crate::geometry::GeometryAnswers>),
     Utterance(Box<crate::speech::UtteranceAnswer>),
     Words(Box<crate::language::WordsAnswer>),
+    Collation(Box<crate::language::CollationAnswer>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
@@ -390,6 +391,29 @@ impl RuntimeProviderInput {
             body: RuntimeAnswerBody::Words(Box::new(crate::language::WordsAnswer {
                 binding,
                 words,
+            })),
+            custody,
+        })
+    }
+
+    /// Transfer the admitted order and equal groups for this exact request.
+    /// The issuing cursor remains responsible for validating the permutation.
+    pub fn collation(
+        binding: crate::geometry::GeometryBinding,
+        order: Vec<u32>,
+        groups: Vec<u32>,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        let bytes = order.capacity().checked_add(groups.capacity())
+            .and_then(|n| n.checked_mul(size_of::<u32>()))
+            .and_then(|n| n.checked_add(size_of::<crate::language::CollationAnswer>()))
+            .ok_or_else(|| failure("capacity"))?;
+        custody.resize(bytes)?;
+        Ok(Self {
+            body: RuntimeAnswerBody::Collation(Box::new(crate::language::CollationAnswer {
+                binding,
+                order,
+                groups,
             })),
             custody,
         })
@@ -495,6 +519,12 @@ fn provider_response(
                         return Err(failure("speech words require the actual utterance request"));
                     }
                     ProviderResponse::utterance(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::Collation(answer) => {
+                    if question.collation().is_none() {
+                        return Err(failure("collation ranks require the actual strings request"));
+                    }
+                    ProviderResponse::collation(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::Words(answer) => {
                     if question.words().is_none() {
@@ -807,6 +837,16 @@ impl RuntimeProvider {
             .map(|ask| prepare(ask.binding, &ask.strings)))
     }
 
+    /// Borrow the selected strings from this pending candidate through the
+    /// synchronous ICU call. The returned ranks carry independent custody.
+    pub fn with_collation<T>(
+        &self,
+        compare: impl FnOnce(crate::geometry::GeometryBinding, &[String]) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question.collation().map(|ask| compare(ask.binding, &ask.strings)))
+    }
+
     /// Lend the active mind publication to the pure ICU formatter. A provider
     /// can only return separately funded text facts for this exact question.
     pub fn with_maintenance_format<T>(
@@ -847,6 +887,9 @@ impl RuntimeProvider {
         }
         if let Some(words) = question.words_envelope() {
             return RuntimeJson::encode(&words, budget);
+        }
+        if let Some(collation) = question.collation_envelope() {
+            return RuntimeJson::encode(&collation, budget);
         }
         if let Some(maintenance) = question.maintenance_envelope() {
             return RuntimeJson::encode(&maintenance, budget);

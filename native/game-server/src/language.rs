@@ -159,15 +159,25 @@ impl LanguageProvider {
     /// The operation already owns the caller's admitted UTF-16 temporaries.
     /// Match the stable ECMAScript sort and preserve the comparator's equality.
     pub fn collate(&self, strings: &[JsText]) -> Result<(Vec<u32>, Vec<u32>), LanguageError> {
+        self.collate_units(strings.iter().map(JsText::units))
+    }
+
+    /// Use the same ICU order for the resident UTF-8 keys selected by the
+    /// simulation. The caller funds conversion, sort scratch and the result.
+    pub(crate) fn collate_selected(&self, strings: &[String]) -> Result<(Vec<u32>, Vec<u32>), LanguageError> {
+        self.collate_units(strings.iter().map(|value| value.encode_utf16()))
+    }
+
+    fn collate_units<I: Iterator<Item = u16>>(
+        &self,
+        strings: impl ExactSizeIterator<Item = I>,
+    ) -> Result<(Vec<u32>, Vec<u32>), LanguageError> {
         let capacity = u32::try_from(strings.len()).map_err(|_| LanguageError::Capacity)?;
-        let values = strings
-            .iter()
-            .map(|value| {
-                let length =
-                    i32::try_from(value.units_len()).map_err(|_| LanguageError::Capacity)?;
-                Ok((value.units().collect::<Vec<_>>(), length))
-            })
-            .collect::<Result<Vec<_>, LanguageError>>()?;
+        let values = strings.map(|units| {
+            let value: Vec<_> = units.collect();
+            let length = i32::try_from(value.len()).map_err(|_| LanguageError::Capacity)?;
+            Ok((value, length))
+        }).collect::<Result<Vec<_>, LanguageError>>()?;
         let collator = self.collator.lock().map_err(|_| LanguageError::Provider)?;
         let compare = |left: u32, right: u32| {
             let (a, an) = &values[left as usize];
