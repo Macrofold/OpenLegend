@@ -307,6 +307,7 @@ enum RuntimeAnswerBody {
     Json(String),
     Geometry(Box<crate::geometry::GeometryAnswers>),
     Utterance(Box<crate::speech::UtteranceAnswer>),
+    Words(Box<crate::language::WordsAnswer>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
@@ -358,6 +359,30 @@ impl RuntimeProviderInput {
                 binding,
                 words,
                 lowercase,
+            })),
+            custody,
+        })
+    }
+
+    /// Move the provider's funded strings into the original introduction
+    /// question. The receiving cursor validates their source slices.
+    pub fn speech_words(
+        binding: crate::geometry::GeometryBinding,
+        words: Vec<Vec<crate::text::JsText>>,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        use crate::host::retained_size::HeapBytes;
+        let bytes = words
+            .heap_bytes()
+            .and_then(|bytes| {
+                bytes.checked_add(std::mem::size_of::<crate::language::WordsAnswer>())
+            })
+            .ok_or_else(|| failure("capacity"))?;
+        custody.resize(bytes)?;
+        Ok(Self {
+            body: RuntimeAnswerBody::Words(Box::new(crate::language::WordsAnswer {
+                binding,
+                words,
             })),
             custody,
         })
@@ -463,6 +488,14 @@ fn provider_response(
                         return Err(failure("speech words require the actual utterance request"));
                     }
                     ProviderResponse::utterance(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::Words(answer) => {
+                    if question.words().is_none() {
+                        return Err(failure(
+                            "word lists require the actual introduction request",
+                        ));
+                    }
+                    ProviderResponse::words(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::NpcSources(answer) => {
                     if question.kind() != crate::simulation::ProviderKind::Sources {
@@ -755,6 +788,18 @@ impl RuntimeProvider {
             .map(|ask| prepare(ask.binding, &ask.text)))
     }
 
+    /// Borrow the already selected, funded words request. This callback
+    /// never acquires additional character knowledge or source permissions.
+    pub fn with_speech_words<T>(
+        &self,
+        prepare: impl FnOnce(crate::geometry::GeometryBinding, &[crate::text::JsText]) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question
+            .words()
+            .map(|ask| prepare(ask.binding, &ask.strings)))
+    }
+
     /// Lend the active mind publication to the pure ICU formatter. A provider
     /// can only return separately funded text facts for this exact question.
     pub fn with_maintenance_format<T>(
@@ -792,6 +837,9 @@ impl RuntimeProvider {
         }
         if let Some(utterance) = question.utterance_envelope() {
             return RuntimeJson::encode(&utterance, budget);
+        }
+        if let Some(words) = question.words_envelope() {
+            return RuntimeJson::encode(&words, budget);
         }
         if let Some(maintenance) = question.maintenance_envelope() {
             return RuntimeJson::encode(&maintenance, budget);

@@ -10,7 +10,6 @@ use openlegend_simulation::{
     speech::SpeechWord,
     text::JsText,
 };
-use serde::Serialize;
 use std::{
     ffi::{c_char, c_void},
     ptr::NonNull,
@@ -72,11 +71,17 @@ impl PreparedUtterance {
     }
 }
 
-#[derive(Serialize)]
 pub(crate) struct PreparedWordLists {
-    pub(crate) words: Vec<Vec<JsText>>,
-    #[serde(skip)]
-    _custody: ByteReservation,
+    words: Vec<Vec<JsText>>,
+    custody: ByteReservation,
+}
+impl PreparedWordLists {
+    pub(crate) fn into_answer(
+        self,
+        binding: GeometryBinding,
+    ) -> Result<RuntimeProviderInput, RuntimeError> {
+        RuntimeProviderInput::speech_words(binding, self.words, self.custody)
+    }
 }
 
 impl LanguageProvider {
@@ -154,7 +159,7 @@ impl LanguageProvider {
         }
         Ok(PreparedWordLists {
             words: output,
-            _custody: custody,
+            custody,
         })
     }
 

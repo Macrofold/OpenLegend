@@ -140,6 +140,7 @@ enum QuestionBody {
     Json(String),
     Geometry(Box<GeometryQueries>),
     Utterance(UtteranceRequest),
+    Words(WordsProviderRequest),
     Maintenance(crate::cognition::format::MaintenanceFormatRequest),
     ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
     ActivityLearningFormat(Arc<crate::activity::LearningFormatRequest>),
@@ -149,6 +150,12 @@ enum QuestionBody {
 pub(crate) struct UtteranceRequest {
     pub(crate) binding: GeometryBinding,
     pub(crate) text: JsText,
+}
+
+#[derive(Serialize)]
+pub(crate) struct WordsProviderRequest {
+    pub(crate) binding: GeometryBinding,
+    pub(crate) strings: Vec<JsText>,
 }
 
 #[derive(Serialize)]
@@ -198,6 +205,21 @@ impl ProviderQuestion {
 
     pub(crate) fn utterance_envelope(&self) -> Option<QuestionEnvelope<'_, UtteranceRequest>> {
         self.utterance().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    pub(crate) fn words(&self) -> Option<&WordsProviderRequest> {
+        match &self.body {
+            QuestionBody::Words(ask) => Some(ask),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn words_envelope(&self) -> Option<QuestionEnvelope<'_, WordsProviderRequest>> {
+        self.words().map(|value| QuestionEnvelope {
             kind: self.kind,
             binding: self.binding,
             value,
@@ -343,6 +365,7 @@ enum AnswerBody {
     Json(String),
     Geometry(Box<GeometryAnswers>),
     Utterance(Box<UtteranceAnswer>),
+    Words(Box<WordsAnswer>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
@@ -404,6 +427,22 @@ impl ProviderResponse {
             kind: ProviderKind::Utterance,
             binding,
             body: AnswerBody::Utterance(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn words(
+        binding: GeometryBinding,
+        answer: Box<WordsAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::Words,
+            binding,
+            body: AnswerBody::Words(answer),
             _reservation: reservation,
         })
     }
@@ -1625,6 +1664,9 @@ impl OperationDriver {
                     AnswerBody::Utterance(value) => {
                         (Some(Answer::Utterance(*value)), Some(_reservation), None)
                     }
+                    AnswerBody::Words(value) => {
+                        (Some(Answer::Words(*value)), Some(_reservation), None)
+                    }
                     AnswerBody::NpcSources(value) => {
                         (Some(Answer::Sources(*value)), Some(_reservation), None)
                     }
@@ -1846,14 +1888,34 @@ fn poll_event(
             );
         }
         EventStep::Words(q) => {
-            return question(
-                answer,
-                ProviderKind::Words,
-                q.binding(),
-                q,
-                budget,
-                EventReply::Words,
-            );
+            if answer.is_some() {
+                return Err(DriveError::StaleResponse);
+            }
+            let strings = q.strings();
+            let bytes = strings.iter().try_fold(
+                strings
+                    .len()
+                    .checked_mul(size_of::<JsText>())
+                    .ok_or(DriveError::Capacity)?,
+                |bytes, text| {
+                    bytes
+                        .checked_add(text.storage_bytes())
+                        .ok_or(DriveError::Capacity)
+                },
+            )?;
+            let reservation = budget.reserve(bytes).map_err(|_| DriveError::Capacity)?;
+            let backing = ProviderQuestion::reserve_backing(budget)?;
+            let question = Arc::new(ProviderQuestion {
+                kind: ProviderKind::Words,
+                binding: q.binding(),
+                body: QuestionBody::Words(WordsProviderRequest {
+                    binding: q.binding(),
+                    strings: strings.to_vec(),
+                }),
+                _reservation: reservation,
+                backing,
+            });
+            return Ok(Poll::Question(question, EventReply::Words));
         }
     }
 }
