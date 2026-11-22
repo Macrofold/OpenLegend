@@ -86,10 +86,12 @@ pub(crate) fn router(
     loads: Arc<crate::launch::checkpoint_load::LoadInbox>,
 ) -> Result<Router, getrandom::Error> {
     let commands = Arc::new(PlayerCommands::new(
+    let references = Arc::new(ReferenceIssuer::new()?);
         game.clone(),
         saves.clone(),
         authority.clone(),
         identity,
+        references.clone(),
     ));
     let state = PlayerRoutes {
         authority,
@@ -100,7 +102,7 @@ pub(crate) fn router(
         inputs,
         clock,
         decisions,
-        references: Arc::new(ReferenceIssuer::new()?),
+        references,
         expected_world,
         capacity: Arc::new(Semaphore::new(capacity)),
         grace,
