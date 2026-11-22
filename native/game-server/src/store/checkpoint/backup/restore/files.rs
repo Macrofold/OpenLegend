@@ -176,20 +176,21 @@ pub(super) fn next_attempt(
 
 pub(super) fn begin(
     directory: &Path,
-    manifest: &Manifest,
+    world: &str,
+    saves: &[String],
     directory_owner: Uuid,
     starting_revision: Option<u64>,
     recovery_id: Option<String>,
 ) -> StoreResult<Attempt> {
     let mut preexisting = BTreeSet::new();
-    for id in &manifest.saves {
+    for id in saves {
         if exists(&directory.join(id)).map_err(io_error)? {
             preexisting.insert(id.clone());
         }
     }
     if let Some(id) = recovery_id.as_ref()
         && (starting_revision.is_none()
-            || manifest.saves.contains(id)
+            || saves.contains(id)
             || exists(&directory.join(id)).map_err(io_error)?)
     {
         return Err(StoreError::InvalidRecord);
@@ -198,9 +199,9 @@ pub(super) fn begin(
         format: FORMAT.into(),
         id: Uuid::new_v4(),
         directory_owner,
-        world_id: manifest.world_id.clone(),
+        world_id: world.to_owned(),
         starting_revision,
-        saves: manifest.saves.iter().cloned().collect(),
+        saves: saves.to_owned(),
         preexisting,
         recovery_id,
     };

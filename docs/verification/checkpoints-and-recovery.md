@@ -206,7 +206,15 @@ A revision 11 backup initially could not replace a readable revision 6 target. T
 
 The locked build used base `583a2af381db`, scoped changes `28cf053a0b16` and executable `5a0ec1f1677f`. A public re-export was reordered for formatting after the pin. The disposable archive `nsc04-readable-operational-restore-20261122` retains `older-qualified`, `newer-qualified`, `damaged-verified` and `artwork-verified`. Earlier results preserve the future-revision refusals, stale browser scopes and fixture assumptions about empty-target replay and withdrawn artwork. The network and scoped formatting checks passed. All fixture databases were removed. Rust ran without Node on its path. The separate artwork authority tool used local records, and no model or AWS calls were made. [Operator instructions](../save-and-load.md#stopped-operational-backup).
 
-The separate stopped `recover-checkpoint` caller adopted a target-owned slot from revision 8 to 9 and left **Before last load** absent. That remaining R5 gap is recorded in `retained-predecessor-audit.log` in the same archive.
+The earlier stopped `recover-checkpoint` caller adopted a target-owned slot from revision 8 to 9 and left **Before last load** absent. Its original result is in `retained-predecessor-audit.log` in the same archive.
+
+## Stand-alone Rust stopped recovery from a retained checkpoint
+
+On November 22, 2026, the stopped Rust command restored a target-owned checkpoint and saved a complete **Before last load** point for the readable predecessor. Chromium reopened at the selected checkpoint, saved another walk, reopened again, and loaded the protected predecessor at x=22.95. The selected checkpoint and older recovery files remained exact. The target kept its current grants, charge and forgetting. First use of an unmarked save directory also acquired the database's owner marker and published a protected predecessor.
+
+Separate failures during capture and installation kept the old database and pointer. Killing the process at the actual SQL write left a complete attempt-owned file, and an exact retry removed that abandoned file. Replaying the committed request kept later play, and a different slot under the same request ID refused. The same command refused a damaged header without a valid allocation floor. It then recovered with the matching floor, retained the previous pointer and unchanged file catalog, and reopened at x=24.
+
+The locked build used base `2888ec7b3185`, scoped changes `0bf0f0efffeb` and executable `016f0ec149c5`. The archive `nsc04-retained-predecessor-20261122` contains the connected runs `retained-complete`, `portable-final` and `newer-complete`. Initial fixtures mixed a previous TypeScript package with current definitions and correctly failed before gameplay setup. The successful fixtures built the definitions from the matching source and read the exact portable-backup position after the source stopped. All 14 fixture databases were removed. The Rust processes ran without Node and the checks made no paid calls. [Stopped checkpoint instructions](../save-and-load.md#loading-as-an-authority-transition).
 
 ## Typed Rust checkpoint input — November 22, 2026
 

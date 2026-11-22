@@ -3,7 +3,6 @@
 
 use super::*;
 use crate::language::LanguageProvider;
-use crate::store::checkpoint::pre_load::BeforeLoad;
 use crate::store::checkpoint::recover::ReplacementAuthority;
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::runtime::RuntimeInstallDefinitions;
@@ -130,7 +129,14 @@ impl Store {
         let revision = expected.revision;
         let attempt = local(move || {
             files::write_owner(&target, owner)?;
-            files::begin(&target, &manifest, owner, Some(revision), recovery)
+            files::begin(
+                &target,
+                &manifest.world_id,
+                &manifest.saves,
+                owner,
+                Some(revision),
+                recovery,
+            )
         })
         .await
         .map(Arc::new)
@@ -154,7 +160,7 @@ impl Store {
         .await;
         let prepared = match saved {
             Ok(saves) => self
-                .capture_backup_predecessor(&directory, &expected, &attempt)
+                .capture_stopped_predecessor(&directory, &expected, &attempt)
                 .await
                 .map(|point| (saves, point)),
             Err(error) => Err(error),
@@ -222,14 +228,7 @@ impl Store {
                                 },
                             )
                             .await?;
-                        let marker_key = format!("{ATTEMPT_PREFIX}{}", attempt.id);
-                        let marker = json_record(&serde_json::json!({"worldId": world}))
-                            .map_err(|_| StoreError::InvalidRecord)?;
-                        tx.execute(
-                            "INSERT INTO meta(key,value) VALUES($1,$2)",
-                            &[&marker_key, &marker],
-                        )
-                        .await?;
+                        mark_restore_attempt(tx, &attempt).await?;
                         Ok(adopted)
                     })
                 })
@@ -238,43 +237,14 @@ impl Store {
                 .map(|restored| report(restored.head, retained_count))
             }
         };
-        self.finish_restore_files(&directory, owner, Some(expected), &result)
-            .await;
+        self.finish_restore_files(
+            &directory,
+            owner,
+            Some(expected),
+            result.as_ref().map(RestoredBackup::head),
+        )
+        .await;
         result
-    }
-
-    async fn capture_backup_predecessor(
-        self: &Arc<Self>,
-        directory: &Path,
-        expected: &DurableHead,
-        attempt: &Arc<files::Attempt>,
-    ) -> StoreResult<Option<BeforeLoad>> {
-        let Some(id) = attempt.recovery_id.as_ref() else {
-            return Ok(None);
-        };
-        let root = directory.to_owned();
-        let pending = attempt.clone();
-        let stage = local(move || files::prepare_recovery(&root, &pending)).await?;
-        let point = self
-            .capture_pre_load_in(
-                directory,
-                Some(stage.clone()),
-                &expected.world_id,
-                id.clone(),
-            )
-            .await
-            .map_err(|error| {
-                eprintln!("Could not protect the world before backup replacement: {error}");
-                StoreError::InvalidRecord
-            })?;
-        let root = directory.to_owned();
-        let attempt_id = attempt.id;
-        let revision = expected.revision;
-        local(move || {
-            files::publish_recovery(&root, &stage, attempt_id, point.metadata(), revision)?;
-            Ok(Some(point))
-        })
-        .await
     }
 }
 

@@ -140,8 +140,8 @@ impl Adoption {
 
 impl Store {
     /// Check and replace a retained slot under the database's unique writer.
-    /// The live listener must be fully drained. A browser restore additionally
-    /// captures the preceding cut and rechecks the operator before commit.
+    /// The live listener must be fully drained. Readable predecessors get an
+    /// exact recovery file. Browser loads also recheck the operator at commit.
     #[allow(clippy::too_many_arguments)]
     pub async fn recover_checkpoint(
         self: &Arc<Self>,
@@ -164,6 +164,13 @@ impl Store {
             .await
             .map_err(CommitError::RolledBack)?;
         let expected = head.ok_or(CommitError::RolledBack(StoreError::InitializationRequired))?;
+        let directory_owner = if operator.is_none() {
+            self.stopped_checkpoint_directory(directory, &expected)
+                .await
+                .map_err(CommitError::RolledBack)?
+        } else {
+            None
+        };
         if let Some(prior) = prior {
             if prior.save_id != slot_id
                 || prior.world_id != expected.world_id
@@ -174,6 +181,14 @@ impl Store {
             }
             return Ok(prior.report(operation_id));
         }
+        // Classify and release the old records before decoding the selected
+        // checkpoint. Only structural damage may skip the predecessor capture.
+        let capture_stopped = operator.is_none()
+            && match self.current_opening().await {
+                Ok(_) => true,
+                Err(StoreError::InvalidRecord | StoreError::DamagedInstallation) => false,
+                Err(error) => return Err(CommitError::RolledBack(error)),
+            };
         let file_id = if slot_id == pre_load::ID {
             self.pre_load_file(&expected.world_id)
                 .await
@@ -186,6 +201,9 @@ impl Store {
             .retained_checkpoint(directory.to_owned(), file_id, expected.world_id.clone())
             .await
             .map_err(CommitError::RolledBack)?;
+        if slot.revision > expected.revision {
+            return Err(CommitError::RolledBack(StoreError::StaleCut));
+        }
         let floor = match floor_slot_id {
             Some(floor) if floor != slot_id => Some(
                 self.retained_checkpoint(
@@ -198,111 +216,143 @@ impl Store {
             ),
             _ => None,
         };
-        let before_load = if let Some(operator) = operator {
-            if operator.world_id != expected.world_id {
-                return Err(CommitError::RolledBack(StoreError::StaleCut));
-            }
+        let stopped = if capture_stopped {
             Some(
-                self.capture_pre_load(directory, &operator.world_id)
-                    .await
-                    .map_err(|error| {
-                        eprintln!("Could not protect the world before checkpoint load: {error}");
-                        CommitError::RolledBack(StoreError::InvalidRecord)
-                    })?,
+                self.begin_stopped_checkpoint(directory, directory_owner, &expected)
+                    .await?,
             )
         } else {
             None
         };
-        self.assert_write_admission()
-            .map_err(CommitError::RolledBack)?;
-        let mut writer = self.writer.lock().await;
-        self.assert_write_admission()
-            .map_err(CommitError::RolledBack)?;
-        let tx = writer
-            .client
-            .transaction()
-            .await
-            .map_err(|error| CommitError::RolledBack(error.into()))?;
-        match receipt(&tx, &key).await {
-            Ok(Some(saved)) => {
-                if saved.save_id != slot_id
-                    || saved.world_id != expected.world_id
-                    || saved.generation != expected.generation
-                    || saved.revision > expected.revision
-                {
-                    return Err(self.rollback(tx, StoreError::StaleCut).await);
-                }
-                self.commit(tx).await?;
-                return Ok(saved.report(operation_id));
-            }
-            Ok(None) => {}
-            Err(error) => return Err(self.rollback(tx, error).await),
-        }
-        let replacement = DurableHead {
-            world_id: expected.world_id.clone(),
-            generation: Uuid::new_v4().to_string(),
-            revision: expected
-                .revision
-                .checked_add(1)
-                .ok_or(CommitError::RolledBack(StoreError::Capacity))?,
-        };
-        let timeline = Uuid::new_v4().to_string();
-        let prepared = self
-            .stage_recovery(
-                &tx,
-                &expected,
-                replacement,
-                &timeline,
-                &key,
-                slot_id,
-                slot,
-                floor.as_ref(),
-                definitions,
-                definition_custody,
-                &language,
-                installed_release,
-                operator,
-                before_load.as_ref(),
-                ReplacementAuthority::RetainedCheckpoint,
-            )
-            .await;
-        let mut adoption = match prepared {
-            Ok(adoption) => adoption,
-            Err(error) => {
-                let error = self.rollback(tx, error).await;
-                drop(writer);
-                if matches!(error, CommitError::RolledBack(_))
-                    && let Some(point) = before_load
-                {
-                    self.discard_pre_load(directory, &expected.world_id, point)
-                        .await;
-                }
-                return Err(error);
-            }
-        };
-        let commit = self.commit(tx).await;
-        drop(writer);
-        if let Err(error) = commit {
-            let expected_receipt = &adoption.receipt;
-            match self.read_recovery_witness(&key).await {
-                Ok((Some(head), Some(received)))
-                    if head == expected_receipt.head() && received == *expected_receipt => {}
-                Ok((Some(head), None)) if head == expected => {
-                    adoption
-                        .session
-                        .cancel(adoption.key)
-                        .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
+        let mut before_load = None;
+        let result = async {
+            before_load = if let Some(stopped) = stopped.as_ref() {
+                Some(
+                    self.capture_stopped_checkpoint(directory, &expected, stopped)
+                        .await
+                        .map_err(CommitError::RolledBack)?,
+                )
+            } else if let Some(operator) = operator {
+                if operator.world_id != expected.world_id {
                     return Err(CommitError::RolledBack(StoreError::StaleCut));
                 }
-                _ => return Err(error),
+                Some(
+                    self.capture_pre_load(directory, &operator.world_id)
+                        .await
+                        .map_err(|error| {
+                            eprintln!(
+                                "Could not protect the world before checkpoint load: {error}"
+                            );
+                            CommitError::RolledBack(StoreError::InvalidRecord)
+                        })?,
+                )
+            } else {
+                None
+            };
+            self.assert_write_admission()
+                .map_err(CommitError::RolledBack)?;
+            let mut writer = self.writer.lock().await;
+            self.assert_write_admission()
+                .map_err(CommitError::RolledBack)?;
+            let tx = writer
+                .client
+                .transaction()
+                .await
+                .map_err(|error| CommitError::RolledBack(error.into()))?;
+            match receipt(&tx, &key).await {
+                Ok(Some(saved)) => {
+                    if saved.save_id != slot_id
+                        || saved.world_id != expected.world_id
+                        || saved.generation != expected.generation
+                        || saved.revision > expected.revision
+                    {
+                        return Err(self.rollback(tx, StoreError::StaleCut).await);
+                    }
+                    self.commit(tx).await?;
+                    return Ok(saved.report(operation_id));
+                }
+                Ok(None) => {}
+                Err(error) => return Err(self.rollback(tx, error).await),
+            }
+            let replacement = DurableHead {
+                world_id: expected.world_id.clone(),
+                generation: Uuid::new_v4().to_string(),
+                revision: expected
+                    .revision
+                    .checked_add(1)
+                    .ok_or(CommitError::RolledBack(StoreError::Capacity))?,
+            };
+            let timeline = Uuid::new_v4().to_string();
+            let prepared = self
+                .stage_recovery(
+                    &tx,
+                    &expected,
+                    replacement,
+                    &timeline,
+                    &key,
+                    slot_id,
+                    slot,
+                    floor.as_ref(),
+                    definitions,
+                    definition_custody,
+                    &language,
+                    installed_release,
+                    operator,
+                    before_load.as_ref(),
+                    ReplacementAuthority::RetainedCheckpoint,
+                )
+                .await;
+            let mut adoption = match prepared {
+                Ok(adoption) => adoption,
+                Err(error) => return Err(self.rollback(tx, error).await),
+            };
+            if let Some(stopped) = stopped.as_ref()
+                && let Err(error) = stopped.mark_installed(&tx).await
+            {
+                return Err(self.rollback(tx, error).await);
+            }
+            let commit = self.commit(tx).await;
+            drop(writer);
+            if let Err(error) = commit {
+                let expected_receipt = &adoption.receipt;
+                match self.read_recovery_witness(&key).await {
+                    Ok((Some(head), Some(received)))
+                        if head == expected_receipt.head() && received == *expected_receipt => {}
+                    Ok((Some(head), None)) if head == expected => {
+                        adoption
+                            .session
+                            .cancel(adoption.key)
+                            .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
+                        return Err(CommitError::RolledBack(StoreError::StaleCut));
+                    }
+                    _ => return Err(error),
+                }
+            }
+            adoption.activate(operation_id)
+        }
+        .await;
+        if let Some(stopped) = stopped {
+            self.finish_stopped_checkpoint(
+                directory,
+                &expected,
+                stopped,
+                result.as_ref().map(|report| report.head.clone()),
+            )
+            .await;
+        } else if let Some(point) = before_load {
+            match &result {
+                Ok(_) => {
+                    self.retain_pre_load(directory, &expected.world_id, point.file_id())
+                        .await
+                }
+                Err(CommitError::RolledBack(_)) => {
+                    self.discard_pre_load(directory, &expected.world_id, point)
+                        .await
+                }
+                Err(CommitError::Unknown(_)) => {}
             }
         }
-        let result = adoption.activate(operation_id)?;
-        if let Some(point) = before_load {
-            self.retain_pre_load(directory, &expected.world_id, point.file_id())
-                .await;
-        }
-        Ok(result)
+        result
     }
 
     /// Read only the existing operation receipt; this never restores a slot.
@@ -370,13 +420,6 @@ impl Store {
         before_load: Option<&BeforeLoad>,
         source: ReplacementAuthority,
     ) -> StoreResult<Adoption> {
-        // A retained local slot cannot come from ahead of its target. An
-        // operational backup comes from a separately verified database cut.
-        if matches!(source, ReplacementAuthority::RetainedCheckpoint)
-            && slot.revision > expected.revision
-        {
-            return Err(StoreError::StaleCut);
-        }
         let captured_revision = slot.revision;
         let slot_id = slot.id.clone();
         let floor = match source {

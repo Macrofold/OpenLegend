@@ -5,6 +5,7 @@
 use super::*;
 use crate::command_epoch::RequestIdentity;
 use crate::store::assets::AssetRevision;
+use crate::store::checkpoint::pre_load::BeforeLoad;
 use crate::store::{CommitError, CurrentOpening, DurableHead, StoreResult, sql_ordinal};
 use openlegend_simulation::encoding::{json_record, json_record_len, sha256_hex};
 use openlegend_simulation::records::SqlCell;
@@ -35,6 +36,47 @@ pub struct RestoredBackup {
     pub retained_checkpoints: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub artwork: Option<artwork::BackupArtwork>,
+}
+
+impl RestoredBackup {
+    fn head(&self) -> DurableHead {
+        DurableHead {
+            world_id: self.world_id.clone(),
+            generation: self.generation.clone(),
+            revision: self.revision,
+        }
+    }
+}
+
+pub(in crate::store::checkpoint) struct StoppedCheckpointFiles {
+    owner: Uuid,
+    attempt: Arc<files::Attempt>,
+}
+
+impl StoppedCheckpointFiles {
+    pub(in crate::store::checkpoint) async fn mark_installed(
+        &self,
+        tx: &Transaction<'_>,
+    ) -> StoreResult<()> {
+        mark_restore_attempt(tx, &self.attempt).await
+    }
+}
+
+fn restore_marker(attempt: &files::Attempt) -> StoreResult<(String, String)> {
+    let key = format!("{ATTEMPT_PREFIX}{}", attempt.id);
+    let marker = json_record(&serde_json::json!({"worldId": attempt.world_id}))
+        .map_err(|_| StoreError::InvalidRecord)?;
+    Ok((key, marker))
+}
+
+async fn mark_restore_attempt(tx: &Transaction<'_>, attempt: &files::Attempt) -> StoreResult<()> {
+    let (key, marker) = restore_marker(attempt)?;
+    tx.execute(
+        "INSERT INTO meta(key,value) VALUES($1,$2)",
+        &[&key, &marker],
+    )
+    .await?;
+    Ok(())
 }
 
 impl Store {
@@ -191,7 +233,15 @@ impl Store {
         let selection = manifest.clone();
         let attempt = local(move || {
             files::write_owner(&target, owner)?;
-            files::begin(&target, &selection, owner, None, None).map(Arc::new)
+            files::begin(
+                &target,
+                &selection.world_id,
+                &selection.saves,
+                owner,
+                None,
+                None,
+            )
+            .map(Arc::new)
         })
         .await
         .map_err(CommitError::RolledBack)?;
@@ -283,9 +333,7 @@ impl Store {
                             return Err(StoreError::InvalidRecord);
                         }
                         RequestIdentity::restore(tx, &head.world_id, &authority.timeline).await?;
-                        let key = format!("{ATTEMPT_PREFIX}{}", attempt.id);
-                        let marker = json_record(&serde_json::json!({"worldId": head.world_id}))
-                            .map_err(|_| StoreError::InvalidRecord)?;
+                        let (key, marker) = restore_marker(&attempt)?;
                         let report = RestoredBackup {
                             world_id: head.world_id,
                             generation: head.generation,
@@ -307,9 +355,128 @@ impl Store {
             }
         };
 
-        self.finish_restore_files(&directory, owner, None, &result)
-            .await;
+        self.finish_restore_files(
+            &directory,
+            owner,
+            None,
+            result.as_ref().map(RestoredBackup::head),
+        )
+        .await;
         result
+    }
+
+    /// The stopped local-slot command first resolves any older file attempts.
+    /// A retained source is never copied or included among the attempt's files.
+    pub(in crate::store::checkpoint) async fn stopped_checkpoint_directory(
+        self: &Arc<Self>,
+        directory: &Path,
+        expected: &DurableHead,
+    ) -> StoreResult<Option<Uuid>> {
+        let state = self
+            .read_operational(|tx| {
+                Box::pin(async move {
+                    Ok(RestoreState {
+                        head: durable_head(tx).await?,
+                        owner: owner(tx).await?,
+                        receipt: None,
+                    })
+                })
+            })
+            .await?;
+        if state.head.as_ref() != Some(expected) {
+            return Err(StoreError::StaleCut);
+        }
+        let store = self.clone();
+        let target = directory.to_owned();
+        let world = expected.world_id.clone();
+        local(move || files::verify_owner(&target, state.owner, &world, &store.schema.checkpoint))
+            .await?;
+        self.reconcile_restore_files(directory, &state).await?;
+        Ok(state.owner)
+    }
+
+    pub(in crate::store::checkpoint) async fn begin_stopped_checkpoint(
+        self: &Arc<Self>,
+        directory: &Path,
+        existing: Option<Uuid>,
+        expected: &DurableHead,
+    ) -> Result<StoppedCheckpointFiles, CommitError> {
+        let owner = self
+            .bind_restore_directory(existing, Some(expected.clone()))
+            .await?;
+        let target = directory.to_owned();
+        let head = expected.clone();
+        let attempt = local(move || {
+            files::write_owner(&target, owner)?;
+            files::begin(
+                &target,
+                &head.world_id,
+                &[],
+                owner,
+                Some(head.revision),
+                Some(Uuid::new_v4().to_string()),
+            )
+            .map(Arc::new)
+        })
+        .await
+        .map_err(CommitError::RolledBack)?;
+        Ok(StoppedCheckpointFiles { owner, attempt })
+    }
+
+    pub(in crate::store::checkpoint) async fn capture_stopped_checkpoint(
+        self: &Arc<Self>,
+        directory: &Path,
+        expected: &DurableHead,
+        files: &StoppedCheckpointFiles,
+    ) -> StoreResult<BeforeLoad> {
+        self.capture_stopped_predecessor(directory, expected, &files.attempt)
+            .await?
+            .ok_or(StoreError::InvalidRecord)
+    }
+
+    async fn capture_stopped_predecessor(
+        self: &Arc<Self>,
+        directory: &Path,
+        expected: &DurableHead,
+        attempt: &Arc<files::Attempt>,
+    ) -> StoreResult<Option<BeforeLoad>> {
+        let Some(id) = attempt.recovery_id.as_ref() else {
+            return Ok(None);
+        };
+        let root = directory.to_owned();
+        let pending = attempt.clone();
+        let stage = local(move || files::prepare_recovery(&root, &pending)).await?;
+        let point = self
+            .capture_pre_load_in(
+                directory,
+                Some(stage.clone()),
+                &expected.world_id,
+                id.clone(),
+            )
+            .await
+            .map_err(|error| {
+                eprintln!("Could not protect the world before stopped recovery: {error}");
+                StoreError::InvalidRecord
+            })?;
+        let root = directory.to_owned();
+        let attempt_id = attempt.id;
+        let revision = expected.revision;
+        local(move || {
+            files::publish_recovery(&root, &stage, attempt_id, point.metadata(), revision)?;
+            Ok(Some(point))
+        })
+        .await
+    }
+
+    pub(in crate::store::checkpoint) async fn finish_stopped_checkpoint(
+        self: &Arc<Self>,
+        directory: &Path,
+        expected: &DurableHead,
+        files: StoppedCheckpointFiles,
+        result: Result<DurableHead, &CommitError>,
+    ) {
+        self.finish_restore_files(directory, files.owner, Some(expected.clone()), result)
+            .await;
     }
 
     async fn bind_restore_directory(
@@ -349,7 +516,7 @@ impl Store {
         directory: &Path,
         owner: Uuid,
         rollback_head: Option<DurableHead>,
-        result: &Result<RestoredBackup, CommitError>,
+        result: Result<DurableHead, &CommitError>,
     ) {
         match result {
             Err(CommitError::Unknown(_)) => {
@@ -359,15 +526,7 @@ impl Store {
             }
             outcome => {
                 let existing = RestoreState {
-                    head: outcome
-                        .as_ref()
-                        .ok()
-                        .map(|saved| DurableHead {
-                            world_id: saved.world_id.clone(),
-                            generation: saved.generation.clone(),
-                            revision: saved.revision,
-                        })
-                        .or(rollback_head),
+                    head: outcome.ok().or(rollback_head),
                     owner: Some(owner),
                     receipt: None,
                 };
