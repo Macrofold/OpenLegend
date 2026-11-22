@@ -40,6 +40,11 @@ pub(crate) fn answer(
     })? {
         return answer.map(Some);
     }
+    if let Some(answer) = request.with_plan_command(|binding, command| {
+        canonical_answer(binding, command, budget, language, LocalFormat::Canonical)
+    })? {
+        return answer.map(Some);
+    }
     if let Some(answer) = request.with_utterance(|binding, text| {
         let prepared = language
             .ok_or(WorldError::ProviderKind)?
@@ -90,70 +95,71 @@ pub(crate) fn answer(
     request.with_request(|request| {
         let envelope: Envelope<'_> =
             serde_json::from_str(request).map_err(|_| WorldError::ProviderKind)?;
-        if !matches!(
-            envelope.kind,
-            "display" | "canonical" | "digest"
-        ) {
+        if envelope.kind == "digest" {
+            #[derive(Deserialize)]
+            struct Value<'a> {
+                #[serde(borrow)]
+                value: &'a RawValue,
+            }
+            let selected: Value<'_> =
+                serde_json::from_str(envelope.value.get()).map_err(|_| WorldError::ProviderKind)?;
+            return canonical_answer(
+                envelope.binding,
+                selected.value.get(),
+                budget,
+                language,
+                LocalFormat::Digest,
+            )
+            .map(Some);
+        }
+        if envelope.kind != "display" {
             return Ok(None);
         }
-        let bytes = envelope
-            .value
-            .get()
-            .len()
-            .checked_mul(12)
-            .and_then(|n| n.checked_add(4096))
-            .ok_or(HostError::Capacity)?;
-        let bytes = if matches!(envelope.kind, "canonical" | "digest") {
-            json_tree_allocation_bound(envelope.value.get())
-                .and_then(|scratch| scratch.checked_add(bytes))
-                .ok_or(HostError::Capacity)?
-        } else {
-            bytes
-        };
-        let workspace = budget.reserve(bytes).map_err(HostError::from)?;
-        let value = match envelope.kind {
-            "display" => LocalFormat::Display(activity_format::format(envelope.value)?),
-            "canonical" | "digest" => {
-                #[derive(Deserialize)]
-                struct Command<'a> {
-                    #[serde(borrow)]
-                    command: &'a RawValue,
-                }
-                #[derive(Deserialize)]
-                struct Value<'a> {
-                    #[serde(borrow)]
-                    value: &'a RawValue,
-                }
-                let selected = match envelope.kind {
-                    "canonical" => serde_json::from_str::<Command<'_>>(envelope.value.get())
-                        .map(|input| input.command),
-                    _ => serde_json::from_str::<Value<'_>>(envelope.value.get())
-                        .map(|input| input.value),
-                }
-                .map_err(|_| WorldError::ProviderKind)?;
-                let language = language.ok_or(WorldError::ProviderKind)?;
-                let mut encoded = Vec::with_capacity(selected.get().len());
-                write_canonical(
-                    selected.get(),
-                    &|left, right| language.compare_utf8(left, right),
-                    &mut encoded,
-                )
-                .map_err(WorldError::Language)?;
-                let canonical = String::from_utf8(encoded).map_err(|_| WorldError::ProviderKind)?;
-                if envelope.kind == "canonical" {
-                    LocalFormat::Canonical(canonical)
-                } else {
-                    LocalFormat::Digest(canonical)
-                }
-            }
-            _ => unreachable!("validated provider kind"),
-        };
+        let workspace = budget
+            .reserve(format_workspace(envelope.value.get())?)
+            .map_err(HostError::from)?;
         Ok(Some(RuntimeProviderInput::local_format(
             envelope.binding,
-            value,
+            LocalFormat::Display(activity_format::format(envelope.value)?),
             workspace,
         )?))
     })?
+}
+
+fn format_workspace(input: &str) -> Result<usize, WorldError> {
+    input
+        .len()
+        .checked_mul(12)
+        .and_then(|bytes| bytes.checked_add(4096))
+        .ok_or(HostError::Capacity.into())
+}
+
+fn canonical_answer(
+    binding: GeometryBinding,
+    input: &str,
+    budget: &ByteBudget,
+    language: Option<&LanguageProvider>,
+    answer: impl FnOnce(String) -> LocalFormat,
+) -> Result<RuntimeProviderInput, WorldError> {
+    let language = language.ok_or(WorldError::ProviderKind)?;
+    let bound = format_workspace(input)?;
+    let bytes = json_tree_allocation_bound(input)
+        .and_then(|scratch| scratch.checked_add(bound))
+        .ok_or(HostError::Capacity)?;
+    let workspace = budget.reserve(bytes).map_err(HostError::from)?;
+    let mut encoded = Vec::with_capacity(input.len());
+    write_canonical(
+        input,
+        &|left, right| language.compare_utf8(left, right),
+        &mut encoded,
+    )
+    .map_err(WorldError::Language)?;
+    let canonical = String::from_utf8(encoded).map_err(|_| WorldError::ProviderKind)?;
+    Ok(RuntimeProviderInput::local_format(
+        binding,
+        answer(canonical),
+        workspace,
+    )?)
 }
 
 fn format_maintenance(

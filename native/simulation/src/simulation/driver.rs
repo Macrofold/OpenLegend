@@ -140,6 +140,7 @@ enum QuestionBody {
     Json(String),
     Geometry(Box<GeometryQueries>),
     Control(super::host_control::ControlFormat),
+    PlanCommand(Arc<crate::plans::PlanCommandRequest>),
     Utterance(UtteranceRequest),
     Words(WordsProviderRequest),
     Collation(CollationProviderRequest),
@@ -215,6 +216,23 @@ impl ProviderQuestion {
         &self,
     ) -> Option<QuestionEnvelope<'_, super::host_control::ControlFormat>> {
         self.control().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    pub(crate) fn plan_command(&self) -> Option<&crate::plans::PlanCommandRequest> {
+        match &self.body {
+            QuestionBody::PlanCommand(request) => Some(request),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn plan_command_envelope(
+        &self,
+    ) -> Option<QuestionEnvelope<'_, crate::plans::PlanCommandRequest>> {
+        self.plan_command().map(|value| QuestionEnvelope {
             kind: self.kind,
             binding: self.binding,
             value,
@@ -343,6 +361,24 @@ impl ProviderQuestion {
         Ok(Arc::new(
             budget.reserve(bytes).map_err(|_| DriveError::Capacity)?,
         ))
+    }
+
+    /// Own scalar or already funded immutable facts with no separate copy
+    /// of the question body. The wrapper itself is still admitted.
+    fn prepare_bound(
+        kind: ProviderKind,
+        binding: GeometryBinding,
+        body: QuestionBody,
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, DriveError> {
+        let backing = Self::reserve_backing(budget)?;
+        Ok(Arc::new(Self {
+            kind,
+            binding,
+            body,
+            _reservation: budget.reserve(0).map_err(|_| DriveError::Capacity)?,
+            backing,
+        }))
     }
 
     fn prepare_geometry(
@@ -1419,16 +1455,13 @@ impl OperationCursor {
                 }
                 None if answer.is_none() => {
                     let request = cursor.format(core)?;
-                    let backing = ProviderQuestion::reserve_backing(budget)?;
-                    let reservation = budget.reserve(0).map_err(|_| DriveError::Capacity)?;
                     Ok(Poll::Question(
-                        Arc::new(ProviderQuestion {
-                            kind: ProviderKind::Control,
-                            binding: request.binding,
-                            body: QuestionBody::Control(*request),
-                            _reservation: reservation,
-                            backing,
-                        }),
+                        ProviderQuestion::prepare_bound(
+                            ProviderKind::Control,
+                            request.binding,
+                            QuestionBody::Control(*request),
+                            budget,
+                        )?,
                         OperationReply::HostControl,
                     ))
                 }
@@ -2261,14 +2294,18 @@ fn poll_plan(
                 return geometry_question(answer, q, budget, PlanReply::Geometry);
             }
             PlanRunStep::Canonical(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Canonical,
-                    q.binding,
-                    q,
-                    budget,
+                if answer.is_some() {
+                    return Err(DriveError::StaleResponse);
+                }
+                return Ok(Poll::Question(
+                    ProviderQuestion::prepare_bound(
+                        ProviderKind::Canonical,
+                        q.binding,
+                        QuestionBody::PlanCommand(Arc::clone(q)),
+                        budget,
+                    )?,
                     PlanReply::Canonical,
-                );
+                ));
             }
             PlanRunStep::Command(child) => {
                 let child_route = match route.take() {

@@ -11,6 +11,7 @@ use crate::experience::{acquire_activity_result, prepare_activity_result};
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries};
 use crate::host::{ByteBudget, ByteReservation, CandidateKey};
 use std::mem::size_of;
+use std::sync::Arc;
 
 #[derive(Serialize)]
 pub(crate) struct PlanCommandRequest {
@@ -29,7 +30,7 @@ pub(crate) enum PlanRunAnswer {
 }
 pub(crate) enum PlanRunStep<'a> {
     Geometry(&'a GeometryQueries),
-    Canonical(&'a PlanCommandRequest),
+    Canonical(&'a Arc<PlanCommandRequest>),
     Command(&'a mut CommandOperation),
     Complete(CompletedPlanRun),
 }
@@ -49,7 +50,7 @@ pub(crate) struct PlanRunCursor {
     checkpoint: Option<CandidateCheckpoint>,
     readiness: Option<PlanReadyCursor>,
     ready: Option<ReadyPlanStep>,
-    request: Option<PlanCommandRequest>,
+    request: Option<Arc<PlanCommandRequest>>,
     operation: Option<CommandOperation>,
     done: bool,
     _reservation: ByteReservation,
@@ -252,14 +253,20 @@ impl PlanRunCursor {
                     );
                     let command = ready.command(core)?;
                     let reservation = budget.reserve(
-                        size_of::<PlanCommandRequest>()
-                            + command.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                        command
+                            .heap_bytes()
+                            .and_then(|bytes| {
+                                bytes.checked_add(
+                                    size_of::<PlanCommandRequest>() + 2 * size_of::<usize>(),
+                                )
+                            })
+                            .ok_or(ExecutionError::Capacity)?,
                     )?;
-                    self.request = Some(PlanCommandRequest {
+                    self.request = Some(Arc::new(PlanCommandRequest {
                         binding,
                         command: command.clone(),
                         _reservation: reservation,
-                    });
+                    }));
                     self.ready = Some(ready);
                     return Ok(Progress::Canonical);
                 }

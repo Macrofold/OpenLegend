@@ -850,6 +850,18 @@ impl RuntimeProvider {
             .map(|request| format(request.binding, request.paused, request.speed)))
     }
 
+    /// Use the exact already prepared command text for canonical ordering.
+    /// The plan owns the input. The formatter must fund its own result.
+    pub fn with_plan_command<T>(
+        &self,
+        format: impl FnOnce(crate::geometry::GeometryBinding, &str) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question
+            .plan_command()
+            .map(|request| format(request.binding, request.command.source_encoding())))
+    }
+
     pub fn asks_known_places(&self) -> Result<bool, RuntimeError> {
         Ok(self.question()?.kind() == crate::simulation::ProviderKind::KnownPlaces)
     }
@@ -925,6 +937,9 @@ impl RuntimeProvider {
         }
         if let Some(control) = question.control_envelope() {
             return RuntimeJson::encode(&control, budget);
+        }
+        if let Some(command) = question.plan_command_envelope() {
+            return RuntimeJson::encode(&command, budget);
         }
         if let Some(utterance) = question.utterance_envelope() {
             return RuntimeJson::encode(&utterance, budget);
