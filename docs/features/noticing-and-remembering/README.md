@@ -19,10 +19,10 @@ The outputs can coexist: a physical effect, an observable sign of attention, an 
 
 The witness, decision and memory rules above are specified. Two questions depend on play evidence.
 
-| Question                                                           | Status                 | What would settle it                                                                                                                                           |
-| ------------------------------------------------------------------ | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Could witnesses who follow someone closely keep less route detail? | Conditional experiment | Preserve the admitted samples by default. Compare what a bystander and a deliberate follower can still notice, act on and recount.                             |
-| Do quiet and crowded scenes feel lively at an affordable cost?     | Needs play evidence    | Count warranted and missed reactions and actual requests. Let players watch the scene and question its witnesses. No fixed fraction of the crowd has to react. |
+| Question                                                           | Status                 | What would settle it                                                                                                                                             |
+| ------------------------------------------------------------------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Could witnesses who follow someone closely keep less route detail? | Conditional experiment | Keep the detail unless profiling shows a material cost and a measured reduction preserves what a bystander and a deliberate follower can notice, do and recount. |
+| Do quiet and crowded scenes feel lively at an affordable cost?     | Needs play evidence    | Count warranted and missed reactions and actual requests. Let players watch the scene and question its witnesses. No fixed fraction of the crowd has to react.   |
 
 Examples apply where the world supports the activity. They require no particular new ability or art asset.
 
