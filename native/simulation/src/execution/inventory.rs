@@ -9,7 +9,7 @@ mod equipment;
 mod debit;
 mod pickup;
 pub(crate) use pickup::partitionable_stock;
-pub(crate) use debit::{OwnedDebits, can_debit_lot};
+pub(crate) use debit::{OwnedDebits, can_debit_lot, can_debit_lot_after_hold};
 pub(crate) use equipment::{EquipmentDecision, EquipmentRequest, equipment_fits};
 
 struct LotDebit<'a> {
@@ -538,8 +538,8 @@ impl CoreMutation<'_> {
         let parent_entity = physical.entities.resolve(parent).ok_or(ExecutionError::Invariant)?;
         let entity = physical.entities.resolve(child).ok_or(ExecutionError::Invariant)?;
         let lot = entity.item.as_ref().ok_or(ExecutionError::Invariant)?;
-        // The installed resource-hold family is empty. Loads refuse actual
-        // holds until this mutation owner can also check their live balances.
+        // The planner already admitted this exact owned amount against the
+        // live reservation total. Keep the low-level debit behind that check.
         let before_quantity = lot.quantity;
         let revision = lot.revision;
         let retire = quantity == before_quantity;
@@ -671,6 +671,48 @@ impl CoreMutation<'_> {
                 entity_id: parent_id.into(),
                 request_detail: true,
             })?;
+        }
+        Ok(())
+    }
+}
+
+impl ContentsBefore {
+    pub(super) fn selection(&self) -> (EntityHandle, bool) { (self.handle, self.bag.is_some()) }
+
+    pub(super) fn restore(&self, state: &mut PhysicalState) -> Result<(), ExecutionError> {
+        let entity = state.entities.resolve_mut(self.handle).ok_or(ExecutionError::Invariant)?;
+        entity.inventory_revision = self.revision;
+        if let Some((load, load_revision, subtree_revision, height)) = self.bag {
+            let bag = entity.container.as_mut().ok_or(ExecutionError::Invariant)?;
+            (bag.load, bag.load_revision, bag.subtree_revision, bag.height) = (load, load_revision, subtree_revision, height);
+        }
+        Ok(())
+    }
+}
+
+impl PhysicalMutation<'_> {
+    /// A hold changes what the actual contents read offers without changing
+    /// placement or load. Revise only the current path to the owning actor.
+    pub(super) fn hold_availability(&mut self, item: &str) -> Result<(), ExecutionError> {
+        let mut child = self.state.entities.handle(item).ok_or(ExecutionError::MissingEntity)?;
+        while let Some(parent) = self.state.entities.resolve(child).and_then(crate::install::inventory_parent) {
+            let handle = self.state.entities.handle(parent).ok_or(ExecutionError::Invariant)?;
+            let original = self.state.entities.resolve(handle).ok_or(ExecutionError::Invariant)?;
+            let revision = next_revision(original.inventory_revision.unwrap_or_default())?;
+            let bag_revision = original.container.as_ref().map(|bag| next_revision(bag.subtree_revision)).transpose()?;
+            let before = ContentsBefore {
+                handle, revision: original.inventory_revision,
+                bag: original.container.as_ref().map(|bag| (bag.load, bag.load_revision, bag.subtree_revision, bag.height)),
+            };
+            self.journal.reserve(size_of::<Undo>())?;
+            self.journal.undo.push(Undo::InventoryAvailability(before));
+            let entity = self.state.entities.resolve_mut(handle).ok_or(ExecutionError::Invariant)?;
+            entity.inventory_revision = Some(revision);
+            if let (Some(bag), Some(revision)) = (&mut entity.container, bag_revision) {
+                bag.subtree_revision = revision;
+                bag.load_revision = revision;
+            }
+            child = handle;
         }
         Ok(())
     }

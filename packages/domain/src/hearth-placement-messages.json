@@ -1,0 +1,62 @@
+{
+  "available": {
+    "code": "available",
+    "message": "Current prerequisites are available; execution rechecks them."
+  },
+  "unavailableDefinition": {
+    "code": "unavailable-placement",
+    "message": "The selected construction definition is unavailable."
+  },
+  "activity": {
+    "materialName": "material",
+    "materialSuffix": "; held during work, spent only on completion",
+    "workName": "work",
+    "workSuffix": " game seconds plus approach",
+    "placementName": "placement"
+  },
+  "unavailable": {
+    "code": "unavailable-placement",
+    "message": "The selected construction definition or material is unavailable."
+  },
+  "notVisible": {
+    "code": "not-visible",
+    "message": "Move where you can see the selected ground before choosing this work."
+  },
+  "support": {
+    "code": "unsupported-placement",
+    "message": "The complete footprint needs compatible, sufficiently level support."
+  },
+  "blocked": {
+    "code": "blocked-placement",
+    "message": "The footprint or required space above it is occupied."
+  },
+  "occupied": {
+    "code": "occupied-placement",
+    "message": "Another body or object occupies this place."
+  },
+  "scanIncomplete": {
+    "code": "preparation-incomplete",
+    "message": "The bounded material check is incomplete. Choose a smaller accessible stock arrangement before starting."
+  },
+  "permission": {
+    "code": "construction-permission",
+    "message": "The complete placement needs current site permission and enough available permitted material."
+  },
+  "stance": {
+    "code": "blocked-stance",
+    "message": "No supported clear working stance is available."
+  },
+  "changed": {
+    "code": "construction-permission",
+    "message": "The selected placement, body or current permission changed."
+  },
+  "changedMaterial": {
+    "code": "changed-material",
+    "message": "The exact held construction materials are no longer available."
+  },
+  "changedStance": {
+    "code": "blocked-stance",
+    "message": "The actual working stance or physical reach changed."
+  },
+  "missingGrant": "Current construction permission is required for this place and its actual materials."
+}

@@ -15,6 +15,7 @@ import {
 import { getOwn, isSafeRecordId } from './records.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { contributionSourceBound } from './status-capabilities.js';
+import stockTransferLimits from './stock-transfer-limits.json' with { type: 'json' };
 import { WorkBudgetError } from './work-budget.js';
 import { definitionPin, type DefinitionPin } from './world-modules.js';
 import type { ItemInstance, WorldState } from './types.js';
@@ -22,7 +23,7 @@ import type { ItemInstance, WorldState } from './types.js';
 /** Native admission work, independent of world-authored delivery quantities.
  * docs/projects/parallel-batch-01-playable-week/camp-activities.md#fresh-stock-binding-at-the-existing-custody-owner
  */
-export const STOCK_TRANSFER_LIMITS = Object.freeze({ examined: 200, movedLots: 16 });
+export const STOCK_TRANSFER_LIMITS = Object.freeze(stockTransferLimits);
 
 export interface StockTransferRequest {
   sourceId: string;

@@ -31,7 +31,7 @@ impl CommandCursor {
         };
         let unavailable = &eater.policy.unavailable_text;
         let Some(item) = crate::install::owned_by(
-            &core.state.physical.entities,
+            &core.state.physical,
             &installed.retained,
             actor_id,
             item_id,

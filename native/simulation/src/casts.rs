@@ -225,7 +225,7 @@ pub(crate) fn tool<'a>(
     source: &Source<'_>,
 ) -> Result<Option<&'a ItemDefinitionRead>, ExecutionError> {
     let installed = &state.installed.retained;
-    let Some(item) = owned_by(&state.physical.entities, installed, actor, id)? else {
+    let Some(item) = owned_by(&state.physical, installed, actor, id)? else {
         return Ok(None);
     };
     let definition = installed

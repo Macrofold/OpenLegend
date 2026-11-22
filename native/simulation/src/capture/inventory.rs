@@ -35,7 +35,7 @@ pub(super) fn capture<'a>(
     };
     let reads_recipes = !npc && !state.learned_capabilities.known_recipes(actor).is_empty();
     state.inventory.visit_owned(
-        &state.physical.entities,
+        &state.physical,
         &state.installed.retained,
         actor,
         actor,

@@ -60,7 +60,7 @@ impl CommandCursor {
             let mut same = 0_u64;
             let mut ordinal = 0_u64;
             core.state.inventory.visit_owned(
-                &core.state.physical.entities,
+                &core.state.physical,
                 definitions,
                 &actor.id,
                 &actor.id,

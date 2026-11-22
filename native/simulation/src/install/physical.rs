@@ -97,6 +97,8 @@ pub(crate) struct NativeDefinitionInputs {
     pub ordinary_actions: DefinitionInput,
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub fire_care: Option<DefinitionInput>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub hearth_placement: Option<CanonicalInput>,
     pub observation_rules: DefinitionInput,
     pub event_appraisal_rules: DefinitionInput,
     pub promises: DefinitionInput,
@@ -565,8 +567,14 @@ pub(crate) fn install_physical(
         &entities,
         budget,
     )?;
+    let reservations = super::rows::take_collection(
+        import, "sim_resource_reservations", "[\"world\"]",
+        children.take("resourceReservations")?.unwrap_or(false), true,
+    )?;
+    let holds = crate::item_holds::install(reservations, &entities, budget)?;
     Ok(PhysicalInstallation {
         state: PhysicalState {
+            holds,
             participation,
             coaching,
             header,
@@ -652,7 +660,6 @@ fn validate_entity(
         return Err(InstallError::CurrentFormat);
     }
     let pending_family = [
-        (entity.hearth.is_some(), "placed hearth"),
         (entity.assembly.is_some(), "assembly"),
         (entity.replenisher.is_some(), "replenishment source"),
         (
@@ -1109,8 +1116,14 @@ pub(super) fn validate_physical_item_references(
             }
         }
         validate_resource_foraging(entity, state, installed)?;
+        if entity.hearth.as_ref().is_some_and(|placed| {
+            !retained.hearths.get(&placed.definition.id).is_some_and(|hearth| placed.valid(entity, hearth))
+        }) {
+            return Err(InstallError::CurrentFormat);
+        }
         if entity.actor.as_ref().and_then(|actor| actor.action.as_ref()).is_some_and(|action| {
-            action.is_cooking() && !crate::food_preparation::valid_saved(action, state, retained)
+            action.is_placing_hearth() && !crate::hearth::valid_saved(state, installed, entity, action)
+                || action.is_cooking() && !crate::food_preparation::valid_saved(action, state, retained)
                 || action.is_tending_fire() && !crate::fire_care::valid_saved(
                     action, state, installed.fire_care.as_ref().map(|rule| rule.value()),
                 )

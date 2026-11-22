@@ -7,7 +7,7 @@ use openlegend_simulation::{
     state::{BodyProfile, NavigationRequest},
 };
 
-const SUPPORT: f64 = 0.015;
+pub(super) const SUPPORT: f64 = 0.015;
 const MAX_PATH_POINTS: usize = 2048;
 
 /// Clamping a sloped patch at its edges makes its height piecewise linear.
@@ -215,7 +215,7 @@ impl SpatialProvider {
             && (!support.terrain || self.terrain_segment(a.point(), b.point()))
     }
 
-    fn terrain_at(&self, x: i64, z: i64) -> bool {
+    pub(super) fn terrain_at(&self, x: i64, z: i64) -> bool {
         (x as usize) < self.width
             && (z as usize) < self.height
             && self.walkable[(z as usize) * self.width + (x as usize)]

@@ -214,6 +214,11 @@ pub(crate) enum NativeCommand {
         definition: crate::values::DefinitionPin,
         inputs: indexmap::IndexMap<String, String>,
     },
+    PlaceHearth {
+        envelope: CommandEnvelope,
+        definition: crate::values::DefinitionPin,
+        site: crate::state::SurfacePoint,
+    },
     TendFire {
         envelope: CommandEnvelope,
         target_id: String,
@@ -359,6 +364,36 @@ fn fire_care_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     })
 }
 
+fn hearth_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Input {
+        #[serde(rename = "type")]
+        _kind: String,
+        #[serde(flatten)]
+        headers: CommandHeaders,
+        definition_id: String,
+        #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
+        definition_version: u64,
+        definition_digest: String,
+        destination: crate::state::SurfacePoint,
+    }
+    let input: Input = serde_json::from_str(raw)?;
+    let definition = crate::values::DefinitionPin {
+        id: input.definition_id,
+        version: input.definition_version,
+        digest: input.definition_digest,
+    };
+    if !input.headers.valid() || !crate::hearth::valid_plan(&definition, &input.destination) {
+        return Err(serde::de::Error::custom("Invalid hearth placement binding."));
+    }
+    Ok(NativeCommand::PlaceHearth {
+        envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
+        definition,
+        site: input.destination,
+    })
+}
+
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let raw = Box::<serde_json::value::RawValue>::deserialize(deserializer)?;
@@ -370,6 +405,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         let tag: Tag = serde_json::from_str(raw.get()).map_err(serde::de::Error::custom)?;
         if tag.kind == crate::worlds::base_outings::travel_command_type() {
             return outings_input::decode(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if tag.kind == "place-hearth" {
+            return hearth_input(raw.get()).map_err(serde::de::Error::custom);
         }
         if tag.kind == "tend-fire" {
             return fire_care_input(raw.get()).map_err(serde::de::Error::custom);
@@ -714,6 +752,7 @@ impl NativeCommand {
             | Self::Fish { envelope, .. }
             | Self::Pickup { envelope, .. }
             | Self::TendFire { envelope, .. }
+            | Self::PlaceHearth { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
             | Self::Eat { envelope, .. }
@@ -743,6 +782,7 @@ impl NativeCommand {
             | Self::Fish { envelope, .. }
             | Self::Pickup { envelope, .. }
             | Self::TendFire { envelope, .. }
+            | Self::PlaceHearth { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
             | Self::Eat { envelope, .. }
@@ -766,6 +806,7 @@ impl NativeCommand {
             Self::Fish { .. } => "fish",
             Self::Pickup { .. } => "pickup",
             Self::TendFire { .. } => "tend-fire",
+            Self::PlaceHearth { .. } => "place-hearth",
             Self::Cook { .. } => "cook",
             Self::Craft { .. } => "craft",
             Self::Eat { .. } => "eat",

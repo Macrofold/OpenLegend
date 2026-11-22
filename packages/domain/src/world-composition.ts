@@ -36,6 +36,7 @@ import {
   baseObservedBodyKind,
   basePlayerWorkLabels,
   basePlayerControlCanUseInactive,
+  nativeActionIcon,
   BASE_PLAYER_VIEW_RULES,
   type BasePlayerWorkContext,
 } from './worlds/base/presentation.js';
@@ -67,7 +68,11 @@ import { BASE_FIRE_ACTIVITY_HOST } from './worlds/base/fire-activity.js';
 import { BASE_FIRE_CARE } from './worlds/base/fire-rules.js';
 import { BASE_CAMP_ACTIVITY_HOST } from './worlds/base/camp-activity.js';
 import { BASE_OUTING_HOST } from './worlds/base/outing.js';
-import { BASE_NATIVE_ACTIVITY_HOSTS } from './worlds/base/native-activities.js';
+import {
+  BASE_HEARTH_ACTIVITY_HOST,
+  BASE_HEARTH_PLACEMENT_LABEL,
+  BASE_NATIVE_ACTIVITY_HOSTS,
+} from './worlds/base/native-activities.js';
 import { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
 import { BASE_CREATION_PROFILE } from './worlds/base/creation-profile.js';
 import { BASE_SOCIAL_POLICY } from './worlds/base/social.js';
@@ -549,6 +554,14 @@ export function selectedNativeLawDefinitions(
     socialDefaults: BASE_SOCIAL_POLICY,
     speechAction: BASE_SPEECH_ACTION,
     ordinaryActions: BASE_ORDINARY_ACTION_RULES,
+    hearthPlacement:
+      activityHostForCommand(world, 'place-hearth') === BASE_HEARTH_ACTIVITY_HOST
+        ? {
+            host: activityHostPin(BASE_HEARTH_ACTIVITY_HOST),
+            icon: nativeActionIcon('place-hearth'),
+            label: BASE_HEARTH_PLACEMENT_LABEL,
+          }
+        : null,
     fireCare:
       activityHostForCommand(world, 'tend-fire') === BASE_FIRE_ACTIVITY_HOST
         ? { ...BASE_FIRE_CARE, host: activityHostPin(BASE_FIRE_ACTIVITY_HOST) }

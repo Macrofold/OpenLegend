@@ -327,6 +327,12 @@ fn write_created_entity(
         )?;
         return observe_entity_children(entity, &parent, output, budget);
     }
+    if let Some(heat) = &entity.heat {
+        created(output, "sim_heat", &["world", "entities", id, "heat"], &parent, "heat", 0,
+            heat, &[], budget)?;
+        observe(output, "sim_attributes", &parent, false, 0, budget)?;
+        return observe_entity_children(entity, &parent, output, budget);
+    }
     let actor_parent = ["world", "entities", id, "actor"];
     let agency_parent = ["world", "entities", id, "actor", "agency"];
     let actor = entity.actor.as_ref().ok_or_else(error)?;
@@ -412,7 +418,7 @@ fn observe_entity_children(
         ("sim_object_retirements", entity.retirement.is_some()),
         ("sim_territorial_threat", false),
         ("sim_resources", false),
-        ("sim_heat", false),
+        ("sim_heat", entity.heat.is_some()),
         ("sim_reservoirs", false),
         ("sim_animal_behavior", false),
         ("sim_status_effects", false),
@@ -682,10 +688,19 @@ impl PhysicalJournal {
         let mut coaching = false;
         let mut object_membership = false;
         let mut object_lineage = false;
+        let mut claims = IndexMap::with_capacity(maximum);
         let mut added = 0u64;
         participation::encode_exposures(self, state, ledger, output, budget)?;
         for change in &self.undo {
             match change {
+                Undo::InventoryAvailability(before) => {
+                    let (handle, container) = before.selection();
+                    let rows = selected.entry((handle.slot, handle.generation)).or_default();
+                    rows.root = true;
+                    rows.container |= container;
+                }
+                Undo::ItemHoldAdded { id, .. } => { claims.insert(id.as_str(), None); }
+                Undo::ItemHoldEnded { key, hold, .. } => { claims.insert(key.as_str(), Some(&**hold)); }
                 Undo::ExitExposure { .. } => {}
                 Undo::CoachingPresence { .. } => coaching = true,
                 Undo::RemovedPhysicalRoot(before) => {
@@ -971,6 +986,18 @@ impl PhysicalJournal {
                     }
                 }
             }
+        }
+        if !claims.is_empty() {
+            let table = "sim_resource_reservations";
+            let parent = ["world"];
+            for (id, after) in claims {
+                let row = after.or_else(|| state.holds.get(id)).ok_or_else(error)?;
+                let path = ["world", "resourceReservations", id];
+                let placement = SelectedPlacement::new(ledger, table, &path, &parent, id,
+                    row.ordinal, true, budget)?;
+                output.write(table, placement.value(), &row.value, &[], placement.create(), RowEffects::default())?;
+            }
+            output.observe_owner(&state.holds.coverage)?;
         }
         if object_membership {
             one(

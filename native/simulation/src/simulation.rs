@@ -72,6 +72,7 @@ pub(crate) struct InstalledWorld {
     pub speech_action: VerifiedDefinition<crate::worlds::InstalledSpeechAction>,
     pub ordinary_actions: VerifiedDefinition<crate::worlds::InstalledOrdinaryActionRules>,
     pub fire_care: Option<VerifiedDefinition<crate::fire_care::FireCare>>,
+    pub hearth_placement: Option<crate::hearth::InstalledPlacement>,
     pub promises: VerifiedDefinition<crate::worlds::InstalledPromiseRules>,
     pub event_appraisal_rules: VerifiedDefinition<crate::worlds::InstalledEventAppraisalRules>,
     pub observation_rules: VerifiedDefinition<crate::worlds::InstalledObservationRules>,
@@ -137,6 +138,7 @@ pub(crate) struct PhysicalState {
     pub bodies: BodyIndex,
     pub pending_values: Option<NativeValueWindow>,
     pub work: WorkBook,
+    pub holds: crate::item_holds::ItemHolds,
 }
 
 /// Receiver and history owners retain their independent chronology/privacy
@@ -172,7 +174,7 @@ impl SimulationState {
         crate::work::add_work(
             crate::work::add_work(
                 self.physical.work.allocations(),
-                self.inventory.work_allocation(),
+                self.physical.holds.work_allocation(),
             )?,
             self.installed
                 .population_work

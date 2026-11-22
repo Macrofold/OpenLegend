@@ -69,7 +69,7 @@ impl CommandCursor {
         .flatten()
         .filter(|entity| crate::install::inventory_parent(entity) == Some(actor));
         let item = if let Some(item) = item {
-            crate::install::owned_by(&state.physical.entities, definition_set, actor, &item.id)?
+            crate::install::owned_by(&state.physical, definition_set, actor, &item.id)?
                 .map(|read| (item, read))
         } else {
             None

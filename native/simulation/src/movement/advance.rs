@@ -26,6 +26,7 @@ use std::mem::size_of;
 mod casting;
 mod preparing_food;
 mod fire;
+mod hearth;
 mod manufacture;
 mod feeding;
 mod pickup;
@@ -64,6 +65,7 @@ enum Phase {
     PickupRetire,
     CastLine,
     CookReach,
+    HearthWork,
     Finish,
     Clear,
     Stopped,
@@ -348,6 +350,7 @@ impl MoveAdvanceCursor {
                 if self.phase == Phase::CookReach {
                     return self.cook_reach_answer(core, answer.sight.pop() == Some(true));
                 }
+                if self.phase == Phase::HearthWork { return self.finish_hearth_geometry(core, answer); }
                 if self.phase == Phase::CastLine {
                     return self.finish_cast_line(core, answer);
                 }
@@ -604,6 +607,16 @@ impl MoveAdvanceCursor {
                         self.fail(&rules.not_applicable.message)?;
                         continue;
                     }
+                    if action.is_placing_hearth() && action.stage == "working" {
+                        if action.remaining_seconds > self.seconds + installed.time_epsilon {
+                            core.physical().advance_timed_work(&self.actor_id,
+                                self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
+                                self.seconds, installed.time_epsilon)?;
+                            self.phase = Phase::Done;
+                            continue;
+                        }
+                        return self.check_hearth(core);
+                    }
                     if (action.is_picking_up() || action.is_tending_fire()) && action.stage == "working" {
                         if action.remaining_seconds > self.seconds + installed.time_epsilon {
                             core.physical().advance_timed_work(
@@ -791,6 +804,7 @@ impl MoveAdvanceCursor {
                     let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
                     let (entity, action) =
                         bound(core, &self.actor_id, action_id, self.physical_life)?;
+                    if action.is_placing_hearth() { return self.check_hearth(core); }
                     if action.is_casting() {
                         self.start_target_work(core, action.replans)?;
                         self.phase = Phase::Done;
@@ -977,6 +991,7 @@ impl MoveAdvanceCursor {
                 | Phase::ContactMotion
                 | Phase::FeedReach
                 | Phase::FeedSight
+                | Phase::HearthWork
                 | Phase::CastLine
                 | Phase::CookReach => {
                     return Err(ExecutionError::Invariant);

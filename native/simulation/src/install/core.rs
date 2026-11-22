@@ -173,6 +173,7 @@ fn assemble_selected_core(
         speech_action,
         ordinary_actions,
         fire_care,
+        hearth_placement,
         observation_rules,
         event_appraisal_rules,
         promises,
@@ -259,6 +260,9 @@ fn assemble_selected_core(
         || !meanings.manifest.activity_hosts.contains(&rule.value().host)) {
         return Err(InstallError::DefinitionBody.into());
     }
+    let hearth_placement = hearth_placement.map(|input| {
+        crate::hearth::InstalledPlacement::install(input, &meanings.manifest, budget)
+    }).transpose()?;
     let promises = selected::<crate::worlds::InstalledPromiseRules>(promises, budget)?;
     let observation_rules =
         selected::<crate::worlds::InstalledObservationRules>(observation_rules, budget)?;
@@ -304,7 +308,7 @@ fn assemble_selected_core(
     content.fund(budget)?;
     let retained = install_retained(
         &mut import, &mut children, retained, &schema, &activity, (&content.profile.id, content.profile.version),
-        &meanings.manifest.recipe_families, budget,
+        &meanings.manifest.recipe_families, spatial.max_extent, budget,
     )?;
     crate::flight::validate_corridors(
         &retained.flight_corridors,
@@ -370,6 +374,7 @@ fn assemble_selected_core(
         speech_action,
         ordinary_actions,
         fire_care,
+        hearth_placement,
         promises,
         observation_rules,
         event_appraisal_rules,
@@ -484,7 +489,6 @@ fn assemble_selected_core(
     )?;
     let inventory = super::inventory::install_inventory(
         &mut import,
-        child(&mut children, "resourceReservations", false)?,
         child(&mut children, "objectLineage", false)?,
         physical.header.sim_time,
         &physical.entities,

@@ -451,7 +451,7 @@ pub(crate) fn claims(
         let id = inputs[&ingredient.role].as_str();
         let previous = lots.get(id).copied().unwrap_or(0_u64);
         let Some(owned) = crate::install::owned_by(
-            &state.physical.entities,
+            &state.physical,
             &state.installed.retained,
             actor,
             id,

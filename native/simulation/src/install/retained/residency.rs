@@ -39,6 +39,7 @@ heap_record!(RetainedDefinitions {
     social_offer_policy,
     social_offer_read,
     hearth_definitions,
+    hearths,
     assembly_families,
     construction_seed_families,
     construction_profile,

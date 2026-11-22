@@ -42,9 +42,27 @@ impl Solid {
         })
     }
 
+    pub(super) fn intersects_upright(&self, foot: Point, radius: f64, height: f64) -> bool {
+        upright_contact(&self.pose, self.shape.as_ref(), foot, radius, height)
+    }
+
     pub(super) fn sweep(&self, from: Point, to: Point, body: &BodyProfile) -> Option<f64> {
         sweep(&self.pose, self.shape.as_ref(), from, to, body)
     }
+}
+
+pub(super) fn box_intersects_upright(bounds: &Bounds, foot: Point, radius: f64, height: f64) -> bool {
+    let centre = scale(add(bounds.min, bounds.max), 0.5);
+    let shape = Cuboid::new(vector(scale(sub(bounds.max, bounds.min), 0.5)));
+    upright_contact(&Pose::from_translation(vector(centre)), &shape, foot, radius, height)
+}
+
+fn upright_contact(other_pose: &Pose, other: &dyn Shape, foot: Point, radius: f64, height: f64) -> bool {
+    let centre = Point { y: foot.y + height / 2.0, ..foot };
+    let cylinder = Cylinder::new((height / 2.0) as f32, radius as f32);
+    query::contact(&Pose::from_translation(vector(centre)), &cylinder, other_pose, other, 0.0)
+        .expect("supported upright placement contact")
+        .is_some_and(|contact| f64::from(contact.dist) < -1e-5)
 }
 
 pub(super) fn sweep_box(

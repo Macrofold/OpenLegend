@@ -264,7 +264,7 @@ impl CommandCursor {
             for (index, ingredient) in portions.iter().enumerate() {
                 let label = &retained.items[&ingredient.definition_id].named.name;
                 let owned = crate::install::owned_by(
-                    &core.state.physical.entities,
+                    &core.state.physical,
                     retained,
                     &envelope.actor_id,
                     &inputs[&ingredient.role],

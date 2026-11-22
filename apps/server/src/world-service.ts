@@ -183,6 +183,9 @@ import {
 import { boundaryConstructionChoices } from './construction.js';
 import {
   hearthBounds,
+  hearthConstructionPermissionMessage,
+  hearthPreviewAvailable,
+  hearthPreviewUnavailable,
   hearthDefinition,
   hearthApproach,
   pointVisionQuery,
@@ -5217,8 +5220,7 @@ export class WorldService {
         : {}),
       ...(!authorized && choices.length
         ? {
-            reason:
-              'Current construction permission is required for this place and its actual materials.',
+            reason: hearthConstructionPermissionMessage,
           }
         : {}),
     };
@@ -5236,8 +5238,7 @@ export class WorldService {
     )
       return {
         ok: false,
-        code: 'unavailable-placement',
-        message: 'The selected construction definition is unavailable.',
+        ...hearthPreviewUnavailable,
         shapes: [],
       };
     const command: Command = {
@@ -5304,7 +5305,7 @@ export class WorldService {
       }
     }
     return {
-      ...result,
+      ...(result.ok ? { ok: true, ...hearthPreviewAvailable } : result),
       shapes: [
         {
           id: 'hearth-placement-footprint',

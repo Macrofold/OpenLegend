@@ -118,6 +118,7 @@ export function nativeDefinitionInputs(
     socialDefaults: policy(world.socialDefaults),
     speechAction: definition(world.speechAction, definitionPin(world.speechAction)),
     ordinaryActions: definition(world.ordinaryActions, definitionPin(world.ordinaryActions)),
+    hearthPlacement: world.hearthPlacement === null ? null : policy(world.hearthPlacement),
     fireCare:
       world.fireCare === null ? null : definition(world.fireCare, definitionPin(world.fireCare)),
     observationRules: definition(world.observationRules, definitionPin(world.observationRules)),

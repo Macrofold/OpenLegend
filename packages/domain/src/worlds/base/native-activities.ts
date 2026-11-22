@@ -84,6 +84,13 @@ function host(
     },
   };
 }
+export const BASE_HEARTH_PLACEMENT_LABEL = 'Place a fire';
+export const BASE_HEARTH_ACTIVITY_HOST = host('base:hearth-placement', ['place-hearth'], {
+  label: BASE_HEARTH_PLACEMENT_LABEL,
+  category: 'Build',
+  reason: 'Choose a supported place and permitted material.',
+});
+
 /** Optional capabilities are separate exact installations. Missing possessions block an
  * installed command; linking this source grants no availability.
  * docs/worlds/base/actions.md */
@@ -99,11 +106,7 @@ export const BASE_NATIVE_ACTIVITY_HOSTS = [
     category: 'Build',
     reason: 'Choose a perceived gate with a reached handle and current public-use permission.',
   }),
-  host('base:hearth-placement', ['place-hearth'], {
-    label: 'Place a fire',
-    category: 'Build',
-    reason: 'Choose a supported place and permitted material.',
-  }),
+  BASE_HEARTH_ACTIVITY_HOST,
   host('base:gathering', ['gather'], {
     label: 'Gather resources',
     category: 'Gather',

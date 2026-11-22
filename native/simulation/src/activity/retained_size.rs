@@ -127,6 +127,9 @@ impl HeapBytes for NativeCommand {
                 envelope,
                 parameters,
             } => heap_sum([envelope.heap_bytes()?, parameters.heap_bytes()?]),
+            Self::PlaceHearth { envelope, definition, site } => heap_sum([
+                envelope.heap_bytes()?, definition.heap_bytes()?, site.heap_bytes()?,
+            ]),
             Self::Move {
                 envelope,
                 destination,

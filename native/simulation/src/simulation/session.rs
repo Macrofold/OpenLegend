@@ -633,6 +633,7 @@ impl Session {
                 &command,
                 crate::commands::NativeCommand::Cancel { .. }
                     | crate::commands::NativeCommand::Move { .. }
+                    | crate::commands::NativeCommand::PlaceHearth { .. }
             )
         {
             return Err(ExecutionError::UnsupportedFamily.into());
@@ -1554,7 +1555,7 @@ impl Session {
     pub(crate) fn prepared_material_acquisitions(
         &self,
         key: CandidateKey,
-    ) -> Result<&[Arc<crate::construction_gather::GatheredMaterial>], SessionError> {
+    ) -> Result<&[Arc<crate::construction_gather::ConstructionEffect>], SessionError> {
         let Some(Candidate::Prepared(prepared)) = self.candidate.as_ref() else {
             return Err(FenceError::NotReady.into());
         };

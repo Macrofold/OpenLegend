@@ -601,7 +601,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub hearth_work: Option<UnconvertedField>,
+    pub hearth_work: Option<Box<crate::hearth::Binding>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -613,7 +613,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub construction_grant: Option<UnconvertedField>,
+    pub construction_grant: Option<Box<crate::construction_gather::MaterialGrantFence>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -843,6 +843,7 @@ impl Action {
             || self.is_cooking()
             || self.is_picking_up()
             || self.is_tending_fire()
+            || self.is_placing_hearth()
     }
 
     pub(crate) fn owns_ground_route(&self) -> bool {
@@ -863,6 +864,23 @@ impl Action {
 
     pub(crate) fn is_cooking(&self) -> bool {
         self.kind == "cook" && self.food_preparation.is_some()
+    }
+
+    pub(crate) fn is_placing_hearth(&self) -> bool {
+        self.kind == "place-hearth" && self.hearth_work.is_some() && self.construction_grant.is_some()
+    }
+
+    pub(crate) fn place_hearth(
+        id: String, destination: SurfacePoint, binding: crate::hearth::Binding,
+        grant: crate::construction_gather::MaterialGrantFence, seconds: f64,
+    ) -> Self {
+        let mut action = Self::native_action(id, "place-hearth", "working");
+        action.destination = Some(destination.into());
+        action.hearth_work = Some(Box::new(binding));
+        action.construction_grant = Some(Box::new(grant));
+        action.total_seconds = seconds;
+        action.remaining_seconds = seconds;
+        action
     }
 
     pub(crate) fn is_tending_fire(&self) -> bool {
@@ -899,9 +917,10 @@ impl Action {
             || self.assembly_exit_pending.is_some()
             || self.gate_work.is_some()
             || self.boundary_impact.is_some()
-            || self.hearth_work.is_some()
+            || self.hearth_work.is_some() != self.is_placing_hearth()
+            || self.construction_grant.is_some() != self.is_placing_hearth()
+            || ((self.kind == "place-hearth") != self.is_placing_hearth())
             || self.assembly_corner.is_some()
-            || self.construction_grant.is_some()
             || (self.material_permission.is_some() && !self.is_gathering())
             || self.material_origin_ids.is_some()
             || self.material_contribution_ids.is_some()
@@ -1410,7 +1429,7 @@ pub struct Entity {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub hearth: Option<UnconvertedField>,
+    pub hearth: Option<crate::hearth::PlacedHearth>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -1722,29 +1741,30 @@ impl EntityStore {
         &mut self,
         entity: Entity,
         budget: &crate::host::ByteBudget,
-    ) -> Result<EntityInsertion, &'static str> {
+    ) -> Result<EntityInsertion, crate::execution::ExecutionError> {
+        use crate::execution::ExecutionError;
         // The physical and inventory owners validate the full inserted shape.
-        if entity.actor.is_none() && entity.item.is_none() {
-            return Err("No installed insertion owner for this entity.");
+        if entity.actor.is_none() && entity.item.is_none() && entity.hearth.is_none() {
+            return Err(ExecutionError::UnsupportedFamily);
         }
         if entity
             .actor
             .as_ref()
             .is_some_and(|actor| actor.action.is_some())
         {
-            return Err("A newly created action must enter its funded semantic owner.");
+            return Err(ExecutionError::Invariant);
         }
         if self.by_id.contains_key(&entity.id) {
-            return Err("Existing entity membership.");
+            return Err(ExecutionError::Invariant);
         }
         let memory_before = self
             .memory
             .as_ref()
-            .ok_or("Entity metadata custody.")?
+            .ok_or(ExecutionError::Invariant)?
             .counts();
         let metadata_storage =
-            Some(residency::EntityMetadata::new(&entity, budget).map_err(|_| "Entity capacity.")?);
-        self.slots.try_reserve(1).map_err(|_| "Entity capacity.")?;
+            Some(residency::EntityMetadata::new(&entity, budget).map_err(|_| ExecutionError::Capacity)?);
+        self.slots.try_reserve(1).map_err(|_| ExecutionError::Capacity)?;
         let previous = self.next_insertion;
         let renumbered = if self.next_insertion == MAX_SAFE_INTEGER {
             // Source relabels current string keys at precision exhaustion. This
@@ -1752,12 +1772,12 @@ impl EntityStore {
             let mut labels = Vec::new();
             labels
                 .try_reserve_exact(self.len())
-                .map_err(|_| "Entity capacity.")?;
+                .map_err(|_| ExecutionError::Capacity)?;
             let mut next = 0u64;
             let mut order = BTreeMap::new();
             let mut order_bytes = 0usize;
             for id in self.by_order.values() {
-                let handle = *self.by_id.get(id).ok_or("Entity membership.")?;
+                let handle = *self.by_id.get(id).ok_or(ExecutionError::Invariant)?;
                 let old = &self.slots[handle.slot].order;
                 let label = if old.starts_with("0/") {
                     old.clone()
@@ -1774,9 +1794,9 @@ impl EntityStore {
                             label.len(),
                             id.len(),
                         )
-                        .ok_or("Entity capacity.")?,
+                        .ok_or(ExecutionError::Capacity)?,
                     )
-                    .ok_or("Entity capacity.")?;
+                    .ok_or(ExecutionError::Capacity)?;
                 labels.push((handle.slot, label));
             }
             let old_order = std::mem::replace(&mut self.by_order, order);
@@ -1786,7 +1806,7 @@ impl EntityStore {
             self.next_insertion = next;
             self.memory
                 .as_mut()
-                .ok_or("Entity metadata custody.")?
+                .ok_or(ExecutionError::Invariant)?
                 .set_order_bytes(order_bytes);
             Some((old_order, labels))
         } else {
@@ -1802,9 +1822,9 @@ impl EntityStore {
         self.by_order.insert(order.clone(), entity.id.clone());
         self.memory
             .as_mut()
-            .ok_or("Entity metadata custody.")?
+            .ok_or(ExecutionError::Invariant)?
             .add_member(entity.id.len(), order.capacity(), order.len())
-            .ok_or("Entity capacity.")?;
+            .ok_or(ExecutionError::Capacity)?;
         self.slots.push(EntitySlot {
             generation: 0,
             entity: Some(entity),

@@ -102,6 +102,7 @@ pub(crate) struct RetainedDefinitions {
     pub social_offer_policy: Option<RetainedOne>,
     pub social_offer_read: Option<SocialOfferReadPolicy>,
     pub hearth_definitions: Option<RetainedMap>,
+    pub hearths: IndexMap<String, crate::hearth::InstalledHearth>,
     pub assembly_families: Option<RetainedMap>,
     pub construction_seed_families: IndexMap<String, crate::values::DefinitionPin>,
     pub construction_profile: Option<RetainedOne>,
@@ -415,6 +416,7 @@ pub(crate) fn install_retained(
     activity: &crate::activity::ActivityLimits,
     profile: (&str, u64),
     family_pins: &[crate::values::DefinitionPin],
+    maximum_extent: f64,
     budget: &crate::host::ByteBudget,
 ) -> Result<RetainedDefinitions, InstallError> {
     let mut r = Reader {
@@ -614,6 +616,14 @@ pub(crate) fn install_retained(
         assembly_families.as_ref(),
         budget,
     )?;
+    let hearths_input = r.verified_map(
+        "hearthDefinitions", "config_hearth_definitions", input.hearth_definitions,
+    )?;
+    let (_hearth_preparation, hearths) = match hearths_input.as_ref() {
+        Some((loaded, exact)) => prepare_hearths(loaded, exact, &items, maximum_extent, budget)?,
+        None => (budget.reserve(0).map_err(|_| InstallError::Capacity)?, IndexMap::new()),
+    };
+    let hearth_definitions = hearths_input.map(|(loaded, _)| loaded);
     let (food_preparations, preparation_input) = r
         .verified_map("foodPreparations", "config_food_preparations", Some(input.food_preparations))?
         .ok_or(InstallError::ParentPresence)?;
@@ -728,11 +738,8 @@ pub(crate) fn install_retained(
         )?,
         social_offer_policy,
         social_offer_read,
-        hearth_definitions: r.map(
-            "hearthDefinitions",
-            "config_hearth_definitions",
-            input.hearth_definitions,
-        )?,
+        hearth_definitions,
+        hearths,
         assembly_families,
         construction_seed_families,
         construction_profile: r.one(
@@ -783,6 +790,31 @@ pub(crate) fn install_retained(
     );
     installed.places_read.finish_install();
     Ok(installed)
+}
+
+/// Read each exact installed definition once, alongside its canonical pin.
+fn prepare_hearths(
+    definitions: &RetainedMap,
+    input: &CanonicalInput,
+    items: &IndexMap<String, ItemDefinitionRead>,
+    maximum_extent: f64,
+    budget: &crate::host::ByteBudget,
+) -> Result<(crate::host::ByteReservation, IndexMap<String, crate::hearth::InstalledHearth>), InstallError> {
+    let (_canonical_storage, canonical) = canonical_entries(definitions, input, budget)?;
+    let mut storage = budget.reserve(
+        map_storage::<String, crate::hearth::InstalledHearth>(definitions.len())
+            .ok_or(InstallError::Capacity)?,
+    ).map_err(|_| InstallError::Capacity)?;
+    let mut hearths = IndexMap::with_capacity(definitions.len());
+    for (id, body) in definitions.entries() {
+        let parsed = super::reserve_typed_parse::<crate::hearth::Definition>(body, 0, None, budget)?;
+        let definition: crate::hearth::Definition = serde_json::from_str(body)
+            .map_err(|_| InstallError::DefinitionBody)?;
+        storage.merge(parsed).map_err(|_| InstallError::Capacity)?;
+        let exact = canonical.get(id).ok_or(InstallError::DefinitionBody)?;
+        hearths.insert(id.to_owned(), definition.install(id, exact.get(), items, maximum_extent)?);
+    }
+    Ok((storage, hearths))
 }
 
 /// Compile the facts used by custody and visible stock from the already

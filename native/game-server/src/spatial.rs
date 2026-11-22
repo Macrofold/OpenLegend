@@ -24,6 +24,7 @@ mod release;
 mod scene;
 mod sight;
 mod walking;
+mod placement;
 
 use features::Features;
 use recast::{NavigationMesh, Recast};
@@ -89,6 +90,10 @@ pub struct SpatialProvider {
 }
 
 impl SpatialProvider {
+    pub(crate) fn hearth_site_visible(&self, ray: &openlegend_simulation::geometry::SightRay) -> bool {
+        self.clear_sight(ray.from, ray.to)
+    }
+
     /// Prepare the selected installation's physical extents once. The caller's
     /// admitted immutable map remains shared. Derived shapes and indexes have
     /// separate resident ownership until this provider is dropped.
@@ -337,6 +342,8 @@ impl SpatialProvider {
             convex_views,
             body_sweeps,
             standing_columns,
+            placement_volumes: q.placement_volumes.iter().map(|volume| self.placement_clearance(volume)).collect(),
+            placement_stances: q.placement_stances.iter().map(|query| self.placement_stances(query)).collect(),
         };
         Ok(FundedAnswers {
             answers,
@@ -361,6 +368,11 @@ impl SpatialProvider {
             + 8 * q.sound.len()
             + size_of::<BodySweepAnswer>() * q.body_sweeps.len()
             + (size_of::<StandingSelection>() + self.surface_units) * q.standing_columns.len()
+            + q.placement_volumes.len() * size_of::<openlegend_simulation::geometry::PlacementClearance>()
+            + q.placement_stances.iter().map(|query| {
+                use openlegend_simulation::geometry::PlacementStance;
+                size_of::<Vec<PlacementStance>>() + 8 * (size_of::<PlacementStance>() + query.site.surface_id.len())
+            }).sum::<usize>()
             + size_of::<Option<SurfacePoint>>() * q.support.len()
             + self.surface_units * q.support.len()
             + (size_of::<Option<SurfaceLineAnswer>>() + 2 * line_points * point)

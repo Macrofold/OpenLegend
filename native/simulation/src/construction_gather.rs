@@ -78,8 +78,49 @@ pub struct MaterialGrant {
     pub revision: u64,
     revoked: bool,
     pub material_ids: Vec<String>,
+    site: ConstructionSite,
+    operations: Vec<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option")]
+    contribution: Option<ContributionScope>,
     #[serde(default, deserialize_with = "deserialize_present_option")]
     acquisition: Option<MaterialAcquisitionRules>,
+}
+
+/// Bounds on the grant's exact named support. Receipt bounds use this same
+/// record shape. A site and its material must be covered by one grant.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ConstructionSite {
+    pub surface_id: String,
+    pub min_x: f64,
+    pub max_x: f64,
+    pub min_z: f64,
+    pub max_z: f64,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ContributionScope {
+    expires_at: f64,
+    foreign_origin_ids: Vec<String>,
+    prior_contribution_ids: Vec<String>,
+}
+
+impl ConstructionSite {
+    fn valid(&self) -> bool {
+        is_safe_record_id(&self.surface_id)
+            && [self.min_x, self.max_x, self.min_z, self.max_z].into_iter().all(f64::is_finite)
+            && self.min_x <= self.max_x
+            && self.min_z <= self.max_z
+    }
+
+    fn covers(&self, site: &Self) -> bool {
+        self.surface_id == site.surface_id
+            && self.min_x <= site.min_x
+            && self.max_x >= site.max_x
+            && self.min_z <= site.min_z
+            && self.max_z >= site.max_z
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -99,8 +140,13 @@ heap_record!(MaterialGrant {
     world_id,
     actor_id,
     material_ids,
+    site,
+    operations,
+    contribution,
     acquisition
 });
+heap_record!(ConstructionSite { surface_id });
+heap_record!(ContributionScope { foreign_origin_ids, prior_contribution_ids });
 heap_record!(MaterialAcquisitionRules { sources });
 heap_record!(MaterialSource {
     entity_id,
@@ -115,6 +161,13 @@ impl MaterialGrant {
             && self.revision > 0
             && is_safe_record_id(&self.id)
             && is_safe_record_id(&self.actor_id)
+            && self.site.valid()
+            && self.operations.iter().all(|operation| is_safe_record_id(operation))
+            && self.contribution.as_ref().is_none_or(|scope| {
+                scope.expires_at.is_finite()
+                    && scope.foreign_origin_ids.iter().all(|id| is_safe_record_id(id))
+                    && scope.prior_contribution_ids.iter().all(|id| is_safe_record_id(id))
+            })
             && self.material_ids.len() <= material_origin_limit()
             && self.material_ids.iter().all(|id| is_safe_record_id(id))
             && self.acquisition.as_ref().is_none_or(|acquisition| {
@@ -125,6 +178,25 @@ impl MaterialGrant {
                             .iter()
                             .all(|prior| prior.entity_id != source.entity_id)
                 })
+            })
+    }
+
+    pub(crate) fn permits_hearth(&self, actor: &str, at: f64, site: &ConstructionSite) -> bool {
+        !self.revoked
+            && self.actor_id == actor
+            && self.operations.iter().any(|operation| operation == "place-hearth")
+            && self.site.covers(site)
+            && self.contribution.as_ref().is_none_or(|scope| at < scope.expires_at)
+    }
+
+    pub(crate) fn permits_origins(&self, origins: &[String], contribution_ids: &[String]) -> bool {
+        !origins.is_empty()
+            && origins.iter().all(|origin| self.material_ids.contains(origin))
+            && self.contribution.as_ref().is_none_or(|scope| {
+                !origins.iter().any(|origin| scope.foreign_origin_ids.contains(origin))
+                    || contribution_ids.iter().any(|id| {
+                        id == &self.id || scope.prior_contribution_ids.contains(id)
+                    })
             })
     }
 
@@ -147,6 +219,17 @@ pub struct MaterialGrants {
 }
 
 impl MaterialGrants {
+    pub(crate) fn hearth_available(&self, actor: &str, at: f64) -> bool {
+        self.grants.iter().any(|grant| grant.actor_id == actor
+            && grant.permits_hearth(actor, at, &grant.site))
+    }
+
+    pub(crate) fn hearth_revision<'a>(&'a self, actor: &'a str) -> impl Iterator<Item = (&'a str, u64, bool)> + 'a {
+        self.grants.iter().filter_map(move |grant| (grant.actor_id == actor
+            && grant.operations.iter().any(|op| op == "place-hearth"))
+            .then_some((grant.id.as_str(), grant.revision, grant.revoked)))
+    }
+
     pub fn from_funded(
         grants: Vec<MaterialGrant>,
         mut custody: ByteReservation,
@@ -182,12 +265,51 @@ pub struct GatheredMaterial {
     _custody: ByteReservation,
 }
 
+/// Ordered protected effects for one candidate. Publication uses the same
+/// grant locks and timeline receipt transaction for both physical families.
+pub enum ConstructionEffect {
+    Gather(GatheredMaterial),
+    Hearth(CompletedHearth),
+}
+
+impl ConstructionEffect {
+    pub fn actor_id(&self) -> &str {
+        match self {
+            Self::Gather(fact) => &fact.actor_id,
+            Self::Hearth(fact) => &fact.actor_id,
+        }
+    }
+}
+
+pub struct CompletedHearth {
+    pub action_id: String,
+    pub actor_id: String,
+    pub physical_life: u64,
+    pub at: f64,
+    pub hearth_id: String,
+    pub definition: DefinitionPin,
+    pub grant: MaterialGrantFence,
+    pub site: ConstructionSite,
+    pub origin_ids: Vec<String>,
+    _custody: ByteReservation,
+}
+
+impl CompletedHearth {
+    /// The exact contribution checks already belonged to each lot while it
+    /// was live. Here we verify the same guarded grant and origin membership.
+    pub fn permitted(&self, grant: &MaterialGrant) -> bool {
+        grant.id == self.grant.id && grant.revision == self.grant.revision
+            && grant.permits_hearth(&self.actor_id, self.at, &self.site)
+            && self.origin_ids.iter().all(|origin| grant.material_ids.contains(origin))
+    }
+}
+
 #[derive(Default)]
 pub(crate) struct ConstructionGather {
     pub(crate) checked: bool,
     pub(crate) protected: bool,
     pub(crate) input: Option<Arc<MaterialGrants>>,
-    effects: Vec<Arc<GatheredMaterial>>,
+    effects: Vec<Arc<ConstructionEffect>>,
     slots: Option<ByteReservation>,
 }
 
@@ -195,6 +317,7 @@ pub(crate) struct ConstructionGather {
 pub(crate) enum Refusal {
     Changed,
     Full,
+    Hearth(&'static crate::worlds::InstalledActionMessage),
 }
 
 impl Refusal {
@@ -202,6 +325,7 @@ impl Refusal {
         match self {
             Self::Changed => "construction-permission",
             Self::Full => "construction-material-limit",
+            Self::Hearth(copy) => &copy.code,
         }
     }
 
@@ -210,6 +334,7 @@ impl Refusal {
         match self {
             Self::Changed => &copy.changed,
             Self::Full => &copy.full,
+            Self::Hearth(copy) => &copy.message,
         }
     }
 }
@@ -245,13 +370,38 @@ impl ConstructionGather {
         self.effects.truncate(before);
     }
 
-    pub(crate) fn effects(&self) -> &[Arc<GatheredMaterial>] {
+    pub(crate) fn effects(&self) -> &[Arc<ConstructionEffect>] {
         &self.effects
+    }
+
+    pub(crate) fn hearth_grants(&self) -> impl Iterator<Item = &MaterialGrant> {
+        self.input.iter().flat_map(|input| input.grants.iter())
+    }
+
+    pub(crate) fn hearth_fence(&self, grant: &MaterialGrant) -> Result<MaterialGrantFence, ExecutionError> {
+        let revision = grant.revision.checked_add(self.used(grant) as u64)
+            .filter(|revision| *revision <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Identity)?;
+        Ok(MaterialGrantFence { id: grant.id.clone(), revision })
+    }
+
+    pub(crate) fn current_hearth_grant(
+        &self, fence: &MaterialGrantFence, actor: &str, at: f64, site: &ConstructionSite,
+    ) -> Result<Option<&MaterialGrant>, ExecutionError> {
+        if self.input.is_none() { return Err(ExecutionError::ConstructionGatherNeedsAuthority); }
+        Ok(self.hearth_grants().find(|grant| {
+            grant.id == fence.id && grant.permits_hearth(actor, at, site)
+                && grant.revision.checked_add(self.used(grant) as u64) == Some(fence.revision)
+        }))
     }
 
     fn used(&self, grant: &MaterialGrant) -> usize {
         self.effects
             .iter()
+            .filter_map(|effect| match effect.as_ref() {
+                ConstructionEffect::Gather(fact) => Some(fact),
+                ConstructionEffect::Hearth(_) => None,
+            })
             .filter(|effect| {
                 effect.grants.iter().any(|fence| fence.id == grant.id)
                     && !grant.material_ids.contains(&effect.item_id)
@@ -341,7 +491,7 @@ impl ConstructionGather {
         custody.resize(
             heap_sum([
                 custody.bytes(),
-                size_of::<GatheredMaterial>() + 2 * size_of::<usize>(),
+                size_of::<ConstructionEffect>() + 2 * size_of::<usize>(),
                 action.len(),
                 actor.len(),
                 source.len(),
@@ -350,6 +500,22 @@ impl ConstructionGather {
             ])
             .ok_or(ExecutionError::Capacity)?,
         )?;
+        self.reserve_effect_slot(budget)?;
+        self.effects.push(Arc::new(ConstructionEffect::Gather(GatheredMaterial {
+            action_id: action.to_owned(),
+            actor_id: actor.to_owned(),
+            physical_life,
+            at,
+            source_id: source.to_owned(),
+            definition: definition.clone(),
+            item_id: item.to_owned(),
+            quantity,
+            grants,
+            _custody: custody,
+        })));
+        Ok(())
+    }
+    fn reserve_effect_slot(&mut self, budget: &ByteBudget) -> Result<(), ExecutionError> {
         if self.slots.is_none() {
             self.slots = Some(budget.reserve(0)?);
         }
@@ -366,25 +532,46 @@ impl ConstructionGather {
                 .ok_or(ExecutionError::Capacity)?;
             slots.resize(
                 capacity
-                    .checked_mul(size_of::<Arc<GatheredMaterial>>())
+                    .checked_mul(size_of::<Arc<ConstructionEffect>>())
                     .ok_or(ExecutionError::Capacity)?,
             )?;
             self.effects
                 .try_reserve_exact(capacity - self.effects.len())
                 .map_err(|_| ExecutionError::Capacity)?;
         }
-        self.effects.push(Arc::new(GatheredMaterial {
-            action_id: action.to_owned(),
-            actor_id: actor.to_owned(),
-            physical_life,
-            at,
-            source_id: source.to_owned(),
-            definition: definition.clone(),
-            item_id: item.to_owned(),
-            quantity,
-            grants,
-            _custody: custody,
-        }));
+        Ok(())
+    }
+
+    pub(crate) fn record_hearth(
+        &mut self, actor: &str, at: f64, action: &crate::state::Action,
+        hearth_id: &str, definition: &crate::hearth::Definition, budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        if !self.protected { return Err(ExecutionError::ConstructionGatherNeedsAuthority); }
+        let work = action.hearth_work.as_ref().ok_or(ExecutionError::Invariant)?;
+        let grant = action.construction_grant.as_ref().ok_or(ExecutionError::Invariant)?;
+        let mut bytes = heap_sum([
+            size_of::<ConstructionEffect>() + 2 * size_of::<usize>(),
+            actor.len(), action.id.len(), hearth_id.len(), work.site.surface_id.len(),
+            work.definition.heap_bytes().ok_or(ExecutionError::Capacity)?, grant.id.len(),
+        ]).ok_or(ExecutionError::Capacity)?;
+        let count = work.stones.iter().try_fold(0_usize, |count, stone| {
+            for id in &stone.origin_ids {
+                bytes = bytes.checked_add(id.len() + size_of::<String>())?;
+            }
+            count.checked_add(stone.origin_ids.len())
+        }).ok_or(ExecutionError::Capacity)?;
+        let custody = budget.reserve(bytes)?;
+        let mut origin_ids = Vec::new();
+        origin_ids.try_reserve_exact(count).map_err(|_| ExecutionError::Capacity)?;
+        for id in work.stones.iter().flat_map(|stone| &stone.origin_ids) {
+            if !origin_ids.contains(id) { origin_ids.push(id.clone()); }
+        }
+        self.reserve_effect_slot(budget)?;
+        self.effects.push(Arc::new(ConstructionEffect::Hearth(CompletedHearth {
+            action_id: action.id.clone(), actor_id: actor.to_owned(), physical_life: work.physical_life, at,
+            hearth_id: hearth_id.to_owned(), definition: work.definition.clone(), grant: (**grant).clone(),
+            site: crate::hearth::site::grant_bounds(&work.site, definition), origin_ids, _custody: custody,
+        })));
         Ok(())
     }
 }
@@ -407,7 +594,7 @@ pub(crate) fn has_bound_work(state: &crate::simulation::SimulationState) -> bool
             body.actor
                 .as_ref()
                 .and_then(|actor| actor.action.as_ref())
-                .is_some_and(|action| action.material_permission.is_some())
+                .is_some_and(|action| action.material_permission.is_some() || action.is_placing_hearth())
         })
 }
 
@@ -424,36 +611,22 @@ pub(crate) fn reconcile(
     let mut workspace = budget.reserve(0)?;
     let entities = &core.state.physical.entities;
     for owner in entities.ordered_ids().filter_map(|id| entities.get(id)) {
-        let Some((action, prior)) = owner
-            .actor
-            .as_ref()
-            .and_then(|actor| actor.action.as_ref())
-            .and_then(|action| {
-                action
-                    .material_permission
-                    .as_deref()
-                    .map(|prior| (action, prior))
-            })
-        else {
-            continue;
-        };
-        let problem = match action
-            .target_id
-            .as_deref()
-            .and_then(|id| crate::gathering::source(core.state, id))
-        {
-            Some(source) => core
-                .journal
-                .material_gather
-                .prepare(
-                    &owner.id,
-                    &source.entity.id,
-                    &source.definition.pin,
-                    Some(prior),
-                    budget,
-                )?
-                .err(),
-            None => Some(Refusal::Changed),
+        let Some(action) = owner.actor.as_ref().and_then(|actor| actor.action.as_ref()) else { continue; };
+        let problem = if let Some(prior) = action.material_permission.as_deref() {
+            match action.target_id.as_deref().and_then(|id| crate::gathering::source(core.state, id)) {
+                Some(source) => core.journal.material_gather.prepare(
+                    &owner.id, &source.entity.id, &source.definition.pin, Some(prior), budget,
+                )?.err(),
+                None => Some(Refusal::Changed),
+            }
+        } else if let Some(work) = &action.hearth_work {
+            let Some(meaning) = core.state.installed.retained.hearths.get(&work.definition.id) else {
+                return Err(ExecutionError::Invariant.into());
+            };
+            crate::hearth::current_problem(core.state, &core.journal.material_gather, owner, action,
+                &meaning.definition, core.state.physical.header.sim_time, budget)?.map(Refusal::Hearth)
+        } else {
+            None
         };
         if let Some(reason) = problem {
             workspace.resize(
@@ -481,7 +654,7 @@ pub(crate) fn reconcile(
     for (owner, action, reason) in invalid {
         let result = crate::commands::Outcome {
             ok: false,
-            code: Refusal::Changed.code().into(),
+            code: reason.code().into(),
             message: reason.message().into(),
             spent: None,
             outputs: None,

@@ -38,7 +38,7 @@ pub(crate) fn choices<'a>(
     let mut materials: IndexMap<&str, Vec<Lot<'_>>> = IndexMap::new();
     let mut selected_definition = None;
     state.inventory.visit_owned(
-        &state.physical.entities,
+        &state.physical,
         retained,
         actor,
         actor,

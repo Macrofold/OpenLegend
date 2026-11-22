@@ -37,6 +37,7 @@ mod checkpoint;
 mod dialogue;
 mod event_history;
 mod history;
+pub(crate) mod hearth;
 mod inventory;
 mod notes;
 mod known_places;
@@ -125,6 +126,8 @@ pub(crate) fn router(
     )
     .merge(preview::router(state.clone(), streams, stop));
     let operations = Router::new()
+        .route("/api/construction/hearths", axum::routing::get(hearth::catalogue))
+        .route("/api/construction/hearth-preview", post(hearth::preview))
         .route("/api/command", post(command))
         .route("/api/command/receipt", post(command))
         .route("/api/embodiment", post(control))

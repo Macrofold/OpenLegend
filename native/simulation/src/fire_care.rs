@@ -280,7 +280,7 @@ pub(crate) fn owned_materials<'a>(
 ) -> Result<MaterialsRead<'a>, ExecutionError> {
     let mut selected = MaterialsRead::default();
     state.inventory.visit_owned(
-        &state.physical.entities,
+        &state.physical,
         &state.installed.retained,
         actor,
         actor,
@@ -335,7 +335,7 @@ pub(crate) fn exact_fuel<'a>(
     id: &str,
 ) -> Result<Option<OwnedItem<'a>>, ExecutionError> {
     let retained = &state.installed.retained;
-    let Some(lot) = crate::install::owned_by(&state.physical.entities, retained, actor, id)? else {
+    let Some(lot) = crate::install::owned_by(&state.physical, retained, actor, id)? else {
         return Ok(None);
     };
     let definition = &retained.items[lot.definition_id];

@@ -314,7 +314,6 @@ pub(super) struct PackingLoad {
 heap_record!(PackingLoad { definition });
 
 pub(crate) struct Inventory {
-    resource_reservations: OwnerCoverage,
     pub(crate) lineage: OwnerCoverage,
     children: IndexMap<String, Children>,
     _custody: ResidentReservation,
@@ -667,16 +666,6 @@ impl Inventory {
             })
     }
 
-    /// Installation still closes resource holds. The next activity owner must
-    /// replace this result when it starts issuing claims.
-    pub(crate) fn work_allocation(&self) -> crate::values::WorkVector {
-        crate::values::WorkVector::default()
-    }
-
-    pub(crate) fn resource_reservations(&self) -> &OwnerCoverage {
-        &self.resource_reservations
-    }
-
     pub(crate) fn has_children(&self, parent: &str) -> bool {
         self.children.contains_key(parent)
     }
@@ -705,31 +694,48 @@ impl Inventory {
     /// its holder, and checking access controls whether its contents are read.
     pub(crate) fn visit_owned<'a>(
         &'a self,
-        entities: &'a EntityStore,
+        physical: &'a crate::simulation::PhysicalState,
         definitions: &'a RetainedDefinitions,
         actor: &str,
         parent: &str,
         visit: &mut impl FnMut(OwnedItem<'a>) -> Result<(), ExecutionError>,
     ) -> Result<(), ExecutionError> {
+        self.visit_owned_until(&physical.entities, actor, parent, &mut |entity, accessible| {
+            visit(project_owned(definitions, actor, entity, accessible, physical.holds.quantity(&entity.id))?)?;
+            Ok(false)
+        }).map(|_| ())
+    }
+
+    /// Visit affected stock in original order, without reading the rest once
+    /// the caller has completed its bounded exact selection.
+    pub(crate) fn visit_owned_until<'a>(
+        &'a self,
+        entities: &'a EntityStore,
+        actor: &str,
+        parent: &str,
+        visit: &mut impl FnMut(&'a Entity, bool) -> Result<bool, ExecutionError>,
+    ) -> Result<bool, ExecutionError> {
         for entity in self.children(entities, parent, false) {
             let accessible = accessible_bag(entity, actor);
-            visit(project_owned(definitions, actor, entity, accessible)?)?;
-            if accessible {
-                self.visit_owned(entities, definitions, actor, &entity.id, visit)?;
+            if visit(entity, accessible)?
+                || (accessible && self.visit_owned_until(entities, actor, &entity.id, visit)?)
+            {
+                return Ok(true);
             }
         }
-        Ok(())
+        Ok(false)
     }
 }
 
 /// Bind one exact shortcut in work proportional to its depth. Knowing the ID
 /// of a lot in somebody else's or a restricted bag cannot open that bag.
 pub(crate) fn owned_by<'a>(
-    entities: &'a EntityStore,
+    physical: &'a crate::simulation::PhysicalState,
     definitions: &'a RetainedDefinitions,
     actor: &str,
     id: &str,
 ) -> Result<Option<OwnedItem<'a>>, ExecutionError> {
+    let entities = &physical.entities;
     let Some(entity) = entities
         .get(id)
         .filter(|entity| entity.item.is_some() && entity.retirement.is_none())
@@ -742,7 +748,7 @@ pub(crate) fn owned_by<'a>(
             return Ok(None);
         };
         if current == actor {
-            return project_owned(definitions, actor, entity, accessible_bag(entity, actor))
+            return project_owned(definitions, actor, entity, accessible_bag(entity, actor), physical.holds.quantity(id))
                 .map(Some);
         }
         let Some(container) = entities
@@ -769,6 +775,7 @@ pub(crate) fn project_owned<'a>(
     actor: &str,
     entity: &'a Entity,
     accessible: bool,
+    held: u64,
 ) -> Result<OwnedItem<'a>, ExecutionError> {
     let lot = entity.item.as_ref().ok_or(ExecutionError::Invariant)?;
     let definition = definitions
@@ -791,7 +798,7 @@ pub(crate) fn project_owned<'a>(
         revision: lot.revision,
         placement_revision,
         quantity: lot.quantity,
-        available_quantity: lot.quantity,
+        available_quantity: lot.quantity.saturating_sub(held),
         equipped,
         named: &definition.named,
         icon: definition.icon.as_deref().filter(|icon| !icon.is_empty()),
@@ -812,7 +819,6 @@ pub(crate) fn project_owned<'a>(
 
 pub(super) fn install_inventory(
     import: &mut RowImport,
-    present: bool,
     has_lineage: bool,
     through: f64,
     entities: &EntityStore,
@@ -820,16 +826,6 @@ pub(super) fn install_inventory(
     pile_kind: &str,
     budget: &ByteBudget,
 ) -> Result<Inventory, InstallError> {
-    let reservations = take_collection(
-        import,
-        "sim_resource_reservations",
-        "[\"world\"]",
-        present,
-        true,
-    )?;
-    if !reservations.rows.is_empty() {
-        return Err(InstallError::UnsupportedFamily("resourceReservations"));
-    }
     let lineage = take_collection(
         import,
         "sim_object_lineage",
@@ -1047,7 +1043,6 @@ pub(super) fn install_inventory(
     )?;
     storage.resize(bytes).map_err(|_| InstallError::Capacity)?;
     Ok(Inventory {
-        resource_reservations: reservations.coverage,
         lineage: lineage.coverage,
         children,
         _custody: budget

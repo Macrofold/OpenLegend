@@ -13,6 +13,8 @@ pub mod capture;
 mod casts;
 mod food_preparation;
 mod fire_care;
+mod hearth;
+mod item_holds;
 pub mod cognition;
 pub mod commands;
 pub mod conditions;

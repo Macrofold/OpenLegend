@@ -536,7 +536,52 @@ pub struct GeometryQueries {
     pub convex_views: Vec<ConvexViewQuery>,
     pub body_sweeps: Vec<BodySweepGroup>,
     pub standing_columns: Vec<StandingColumnsQuery>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub placement_volumes: Vec<PlacementVolume>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub placement_stances: Vec<PlacementStances>,
 }
+
+/// A finite upright footprint and its independent dynamic body boxes. Static
+/// solids and selected support come from the provider's same bound geometry.
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlacementVolume {
+    pub site: SurfacePoint,
+    pub radius: f64,
+    pub clearance: f64,
+    pub maximum_height_difference: f64,
+    pub terrain_only: bool,
+    pub bodies: Vec<crate::state::Bounds>,
+}
+
+/// A bounded choice of physically reachable work positions around a footprint.
+/// An actual work recheck instead supplies one exact saved contact and origin.
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlacementStances {
+    pub site: SurfacePoint,
+    pub radius: f64,
+    pub height: f64,
+    pub from: SurfacePoint,
+    pub body: BodyProfile,
+    pub interaction_height: f64,
+    pub reach: f64,
+    pub bodies: Vec<Bounds>,
+    pub exact: Option<PlacementStance>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PlacementStance {
+    pub stance: SurfacePoint,
+    pub point: Point,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PlacementClearance { Clear, Unsupported, Blocked, Occupied }
+
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -558,6 +603,10 @@ pub struct GeometryAnswers {
     pub convex_views: Vec<ConvexViewAnswer>,
     pub body_sweeps: Vec<BodySweepAnswer>,
     pub standing_columns: Vec<Option<StandingSelection>>,
+    #[serde(default)]
+    pub placement_volumes: Vec<PlacementClearance>,
+    #[serde(default)]
+    pub placement_stances: Vec<Vec<PlacementStance>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -703,8 +752,13 @@ mod query_custody {
         feature_ids,
         convex_views,
         body_sweeps,
-        standing_columns
+        standing_columns,
+        placement_volumes,
+        placement_stances
     });
+    heap_record!(PlacementVolume { site, bodies });
+    heap_record!(PlacementStances { site, from, body, bodies, exact });
+    heap_record!(PlacementStance { stance });
 }
 
 impl GeometryQueries {
@@ -724,6 +778,8 @@ impl GeometryQueries {
             && self.convex_views.is_empty()
             && self.body_sweeps.is_empty()
             && self.standing_columns.is_empty()
+            && self.placement_volumes.is_empty()
+            && self.placement_stances.is_empty()
     }
     pub fn new(binding: GeometryBinding) -> Self {
         Self {
@@ -743,6 +799,8 @@ impl GeometryQueries {
             convex_views: Vec::new(),
             body_sweeps: Vec::new(),
             standing_columns: Vec::new(),
+            placement_volumes: Vec::new(),
+            placement_stances: Vec::new(),
         }
     }
 
@@ -768,6 +826,8 @@ impl GeometryQueries {
             || self.convex_views.len() != answer.convex_views.len()
             || self.body_sweeps.len() != answer.body_sweeps.len()
             || self.standing_columns.len() != answer.standing_columns.len()
+            || self.placement_volumes.len() != answer.placement_volumes.len()
+            || self.placement_stances.len() != answer.placement_stances.len()
         {
             return Err(GeometryAnswerError::Incomplete);
         }
@@ -777,7 +837,14 @@ impl GeometryQueries {
                 && point.z.is_finite()
                 && !point.surface_id.is_empty()
         };
-        if answer.support.iter().flatten().any(|value| !point(value))
+        if answer.placement_stances.iter().zip(&self.placement_stances).any(|(stances, query)| {
+            stances.len() > if query.exact.is_some() { 1 } else { 8 }
+                || stances.iter().any(|stance| {
+                    !point(&stance.stance)
+                        || stance.stance.surface_id != query.site.surface_id
+                        || ![stance.point.x, stance.point.y, stance.point.z].into_iter().all(f64::is_finite)
+                })
+        }) || answer.support.iter().flatten().any(|value| !point(value))
             || answer
                 .surface_lines
                 .iter()

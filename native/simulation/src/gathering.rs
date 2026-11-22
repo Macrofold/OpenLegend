@@ -91,7 +91,7 @@ pub(crate) fn exact_tool<'a>(
     resource: &str,
 ) -> Result<Option<(&'a DefinitionPin, u64)>, ExecutionError> {
     let definitions = &state.installed.retained;
-    let Some(item) = owned_by(&state.physical.entities, definitions, actor, item)? else {
+    let Some(item) = owned_by(&state.physical, definitions, actor, item)? else {
         return Ok(None);
     };
     let definition = &definitions.items[item.definition_id];
@@ -121,7 +121,7 @@ pub(crate) fn quantity(
     if binding.mode == GatheringMode::AvailableTools {
         let definitions = &state.installed.retained;
         state.inventory.visit_owned(
-            &state.physical.entities,
+            &state.physical,
             definitions,
             actor,
             actor,

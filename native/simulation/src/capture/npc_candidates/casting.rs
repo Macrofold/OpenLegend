@@ -29,7 +29,7 @@ impl CastTools {
         let mut backing = budget.reserve(0)?;
         let mut text = budget.reserve(0)?;
         state.inventory.visit_owned(
-            &state.physical.entities,
+            &state.physical,
             installed,
             actor,
             actor,

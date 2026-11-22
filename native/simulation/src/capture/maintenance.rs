@@ -372,7 +372,7 @@ fn dependencies(
 ) -> Result<(String, ByteReservation), ExecutionError> {
     let manifest: &RawValue = serde_json::from_str(&state.installed.manifest.row.payload)
         .map_err(|_| ExecutionError::Invariant)?;
-    let claims = state.inventory.resource_reservations();
+    let claims = &state.physical.holds.coverage;
     token(
         &(
             state.installed.geometry.spatial.revision,

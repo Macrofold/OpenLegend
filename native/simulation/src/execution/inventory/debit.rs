@@ -21,9 +21,18 @@ pub(crate) struct OwnedDebits {
 }
 
 pub(crate) fn can_debit_lot(state: &crate::simulation::SimulationState, entity: &Entity, quantity: u64) -> bool {
+    can_debit_lot_after_hold(state, entity, quantity, state.physical.holds.quantity(&entity.id))
+}
+
+pub(crate) fn can_debit_lot_after_hold(
+    state: &crate::simulation::SimulationState,
+    entity: &Entity,
+    quantity: u64,
+    still_held: u64,
+) -> bool {
         entity.item.as_ref().is_some_and(|lot| {
             quantity > 0
-                && quantity <= lot.quantity
+                && quantity <= lot.quantity.saturating_sub(still_held)
                 && lot.assembly_claim.is_none()
                 && lot.material_contribution_ids.is_none()
                 && (quantity < lot.quantity

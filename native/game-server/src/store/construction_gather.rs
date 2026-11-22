@@ -5,7 +5,7 @@
 use super::read::admitted_query;
 use super::{PrefixProjection, Store, StoreError, StoreResult, ordinal, sql_ordinal};
 use openlegend_simulation::construction_gather::{
-    GatheredMaterial, MaterialGrant, MaterialGrants, material_origin_limit,
+    CompletedHearth, ConstructionEffect, GatheredMaterial, MaterialGrant, MaterialGrants, material_origin_limit,
 };
 use openlegend_simulation::encoding::{json_record, sha256_hex};
 use openlegend_simulation::host::ByteReservation;
@@ -101,7 +101,7 @@ fn decode(
 pub(crate) struct MaterialGatherProjection<'a, P> {
     pub(crate) store: &'a Store,
     pub(crate) gameplay: P,
-    pub(crate) acquisitions: &'a [Arc<GatheredMaterial>],
+    pub(crate) acquisitions: &'a [Arc<ConstructionEffect>],
 }
 
 impl<P: PrefixProjection> PrefixProjection for MaterialGatherProjection<'_, P> {
@@ -159,7 +159,7 @@ impl<P> MaterialGatherProjection<'_, P> {
         let mut actors: Vec<&str> = self
             .acquisitions
             .iter()
-            .map(|fact| fact.actor_id.as_str())
+            .map(|fact| fact.actor_id())
             .collect();
         actors.sort_unstable();
         actors.dedup();
@@ -168,7 +168,14 @@ impl<P> MaterialGatherProjection<'_, P> {
         let (mut grants, mut custody) = decode(self.store, world, &rows)?;
         // Earlier acquisitions in this prefix affect the fences of later
         // completions. PostgreSQL reads and locks exactly this actor set.
-        for fact in self.acquisitions {
+        for effect in self.acquisitions {
+            let fact = match effect.as_ref() {
+                ConstructionEffect::Gather(fact) => fact,
+                ConstructionEffect::Hearth(fact) => {
+                    self.record_hearth(tx, world, &timeline, fact, &grants).await?;
+                    continue;
+                }
+            };
             let mut selected = grants
                 .iter_mut()
                 .filter(|grant| grant.matches(&fact.actor_id, &fact.source_id, &fact.definition));
@@ -310,4 +317,47 @@ fn fingerprint(store: &Store, permission_id: &str, fact: &GatheredMaterial) -> S
     })
     .map_err(|_| StoreError::InvalidRecord)?;
     Ok(sha256_hex(payload.as_bytes()))
+}
+
+impl<P> MaterialGatherProjection<'_, P> {
+    async fn record_hearth(&self, tx: &Transaction<'_>, world: &str, timeline: &str,
+        fact: &CompletedHearth, grants: &[MaterialGrant]) -> StoreResult<()> {
+        if !grants.iter().any(|grant| fact.permitted(grant)) { return Err(StoreError::StaleCut); }
+        let fingerprint = hearth_fingerprint(self.store, fact)?;
+        let added = tx.execute(
+            "INSERT INTO auth_construction_effect_receipts \
+            (world_id,timeline_id,permission_id,effect_kind,action_id,fingerprint) \
+            VALUES($1,$2,$3,'hearth-created',$4,$5) ON CONFLICT DO NOTHING",
+            &[&world, &timeline, &fact.grant.id, &fact.action_id, &fingerprint],
+        ).await?;
+        if added != 1 { return Err(StoreError::StaleCut); }
+        Ok(())
+    }
+}
+
+fn hearth_fingerprint(store: &Store, fact: &CompletedHearth) -> StoreResult<String> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Site<'a> { max_x: f64, max_z: f64, min_x: f64, min_z: f64, surface_id: &'a str }
+    #[derive(Serialize)]
+    struct Pin<'a> { digest: &'a str, id: &'a str, version: u64 }
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Effect<'a> {
+        action_id: &'a str, actor_id: &'a str, definition: Pin<'a>, hearth_id: &'a str,
+        kind: &'static str, origin_ids: &'a [String], permission_id: &'a str,
+        permission_revision: u64, physical_life: u64, site: Site<'a>,
+    }
+    let effect = Effect {
+        action_id: &fact.action_id, actor_id: &fact.actor_id,
+        definition: Pin { digest: &fact.definition.digest, id: &fact.definition.id, version: fact.definition.version },
+        hearth_id: &fact.hearth_id, kind: "hearth-created", origin_ids: &fact.origin_ids,
+        permission_id: &fact.grant.id, permission_revision: fact.grant.revision, physical_life: fact.physical_life,
+        site: Site { max_x: fact.site.max_x, max_z: fact.site.max_z, min_x: fact.site.min_x,
+            min_z: fact.site.min_z, surface_id: &fact.site.surface_id },
+    };
+    let bytes = openlegend_simulation::encoding::json_record_len(&effect).map_err(|_| StoreError::InvalidRecord)?;
+    let _custody = store.budget.reserve(bytes + 128).map_err(|_| StoreError::Capacity)?;
+    let text = json_record(&effect).map_err(|_| StoreError::InvalidRecord)?;
+    Ok(sha256_hex(text.as_bytes()))
 }

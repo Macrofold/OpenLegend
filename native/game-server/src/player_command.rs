@@ -82,6 +82,8 @@ struct CommandInput {
     container_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     fire_operation: Option<FireOperation>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    hearth_plan: Option<crate::player_http::hearth::HearthPlan>,
     #[serde(
         default,
         deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
@@ -235,6 +237,8 @@ enum CommandKind {
     Fish,
     #[serde(rename = "tend-fire")]
     TendFire,
+    #[serde(rename = "place-hearth")]
+    PlaceHearth,
     Pickup,
     Cook,
     Craft,
@@ -438,7 +442,7 @@ impl PlayerCommands {
                 } else {
                     None
                 };
-                let materials = if matches!(facts.request.command.kind, CommandKind::Gather) {
+                let materials = if matches!(facts.request.command.kind, CommandKind::Gather | CommandKind::PlaceHearth) {
                     Some(self.game.store.construction_materials(
                         world_id, Some(&scope.scope.actor_id),
                     ).await?)
@@ -681,6 +685,7 @@ impl CommandRequest {
             || command.quantity.is_some_and(|quantity| !matches!(command.kind, CommandKind::Pickup) || quantity == 0)
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
+            || (!matches!(command.kind, CommandKind::PlaceHearth) && command.hearth_plan.is_some())
             || (!matches!(command.kind, CommandKind::Say)
                 && (command.text.is_some() || command.volume.is_some()))
             || (!matches!(command.kind, CommandKind::StatusEffect)
@@ -785,6 +790,11 @@ impl CommandRequest {
                         .is_some_and(openlegend_simulation::values::is_safe_record_id)
                     && command.effect_operation.is_some()
                     && command.facing_heading.is_none_or(f64::is_finite) => Ok(()),
+            CommandKind::PlaceHearth
+                if command.position.is_none() && command.known_place.is_none()
+                    && command.expected_action_id.is_none() && command.gathering_mode.is_none()
+                    && command.target_id.is_none() && command.item_id.is_none()
+                    && command.hearth_plan.as_ref().is_some_and(|plan| plan.valid()) => Ok(()),
             CommandKind::TendFire
                 if command.position.is_none() && command.known_place.is_none()
                     && command.expected_action_id.is_none() && command.gathering_mode.is_none()
@@ -924,6 +934,10 @@ impl PreparedRequest {
                 operation: input.effect_operation.ok_or(StoreError::InvalidRecord)?,
                 facing: input.facing_heading,
             }),
+            CommandKind::PlaceHearth => {
+                let plan = input.hearth_plan.as_ref().ok_or(StoreError::InvalidRecord)?;
+                Ok(RuntimePlayerCommand::PlaceHearth { definition: &plan.definition, site: &plan.site })
+            }
             CommandKind::TendFire => Ok(RuntimePlayerCommand::TendFire {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 operation: input.fire_operation.ok_or(StoreError::InvalidRecord)?,

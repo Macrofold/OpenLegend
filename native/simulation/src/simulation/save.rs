@@ -157,6 +157,7 @@ pub(crate) fn encode_root_changes(
         "responseReceipts",
         "exitExposures",
         "objectLineage",
+        "resourceReservations",
     ];
     let extra = map_storage::<String, SqlCell>(
         body.len()
@@ -215,6 +216,11 @@ pub(crate) fn encode_root_changes(
         &mut body,
         "objectLineage",
         state.inventory.lineage.parent_present,
+    );
+    marker(
+        &mut body,
+        "resourceReservations",
+        state.physical.holds.coverage.parent_present,
     );
     marker(
         &mut body,

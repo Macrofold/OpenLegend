@@ -2,6 +2,8 @@
 //! read borrow survives a provider/SQL await; the immutable evidence owner does.
 use super::*;
 mod status_menu;
+mod hearth;
+pub use hearth::{RuntimeHearthCatalogue, RuntimeHearthShape};
 pub use status_menu::{RuntimeStatusChoice, RuntimeStatusMenu};
 use crate::capture::{
     CapturedPlayerControls, PlayerControlFacts, PlayerControlPreparation, PlayerPerception,
@@ -296,7 +298,7 @@ fn fish_offer<'a, T>(
     state
         .inventory
         .visit_owned(
-            &state.physical.entities,
+            &state.physical,
             installed,
             actor,
             actor,
@@ -610,7 +612,7 @@ impl NativeWorldSession {
         let _lease = self.session.fence().begin_publication().map_err(failure)?;
         let installed = &state.installed;
         let selected = if let Some(item) = item {
-            let Some(selected) = crate::install::owned_by(&state.physical.entities, &installed.retained, actor, item)
+            let Some(selected) = crate::install::owned_by(&state.physical, &installed.retained, actor, item)
                 .map_err(failure)? else {
                 return Ok(None);
             };
@@ -774,7 +776,7 @@ impl NativeWorldSession {
         for (index, id) in ids.iter().enumerate() {
             if !ids[..index].contains(id)
                 && let Some(item) = crate::install::owned_by(
-                    &state.physical.entities,
+                    &state.physical,
                     &state.installed.retained,
                     actor,
                     id,
@@ -815,7 +817,10 @@ impl NativeWorldSession {
         )?;
         let mut items = Vec::with_capacity(count);
         for entry in state.inventory.children(entities, actor, false) {
-            let item = crate::install::project_owned(definitions, actor, entry, crate::install::accessible_bag(entry, actor)).map_err(failure)?;
+            let item = crate::install::project_owned(
+                definitions, actor, entry, crate::install::accessible_bag(entry, actor),
+                state.physical.holds.quantity(&entry.id),
+            ).map_err(failure)?;
             let definition = definitions.items.get(item.definition_id).ok_or_else(|| failure("inventory definition unavailable"))?;
             items.push(crate::install::InventoryDetail {
                 item, category: definition.category, description: definition.description.as_ref(), properties: &definition.properties,

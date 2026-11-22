@@ -437,6 +437,9 @@ impl TryFrom<NativeGeometryBinding> for core::GeometryBinding {
 impl TryFrom<core::GeometryQueries> for NativeGeometryQueries {
     type Error = Error;
     fn try_from(value: core::GeometryQueries) -> Result<Self> {
+        if !value.placement_volumes.is_empty() || !value.placement_stances.is_empty() {
+            return Err(Error::from_reason("Placement volumes require the stand-alone Rust provider."));
+        }
         Ok(Self {
             binding: value.binding.try_into()?,
             sight: value.sight.into_iter().map(Into::into).collect(),
@@ -617,6 +620,8 @@ impl TryFrom<NativeGeometryAnswers> for core::GeometryAnswers {
     type Error = Error;
     fn try_from(value: NativeGeometryAnswers) -> Result<Self> {
         Ok(Self {
+            placement_volumes: Vec::new(),
+            placement_stances: Vec::new(),
             binding: value.binding.try_into()?,
             sight: value.sight,
             walking: value.walking,

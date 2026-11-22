@@ -303,8 +303,7 @@ impl PhysicalMutation<'_> {
         let before = self
             .state
             .entities
-            .insert_new(entity, &self.journal.budget)
-            .map_err(|_| ExecutionError::Capacity)?;
+            .insert_new(entity, &self.journal.budget)?;
         let handle = before.handle;
         let renumbered = before.renumbered();
         self.journal.undo.push(Undo::AddedEntity(before));

@@ -43,6 +43,7 @@ pub(super) fn bytes(entity: &Entity) -> Option<usize> {
         entity.description.heap_bytes()?,
         entity.appearance.heap_bytes()?,
         entity.practice_target.heap_bytes()?,
+        entity.hearth.heap_bytes()?,
         entity.spatial.body.heap_bytes()?,
         entity.spatial.inactive_body.heap_bytes()?,
         entity

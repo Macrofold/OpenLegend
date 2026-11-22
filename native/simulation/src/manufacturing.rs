@@ -409,7 +409,7 @@ pub(crate) fn materials<'a>(
         budget.reserve(size_of::<Vec<(&str, u64)>>() * method.totals.len() + size_of::<Stock>())?;
     let mut lots = vec![Vec::<(&str, u64)>::new(); method.totals.len()];
     state.inventory.visit_owned(
-        &state.physical.entities,
+        &state.physical,
         retained,
         actor,
         actor,

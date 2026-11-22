@@ -26,6 +26,7 @@ mod discovery;
 mod casting;
 mod preparing_food;
 mod fire;
+mod hearth;
 mod manufacture;
 mod equipment;
 mod eating;
@@ -86,6 +87,9 @@ enum Phase {
     CastLine,
     CookSight,
     FireSight,
+    HearthGeometry,
+    HearthRoutes,
+    HearthNavigation,
     CookReach,
     ContactReach,
     ContactRoute,
@@ -149,6 +153,7 @@ pub(crate) struct CommandCursor {
     phase: Phase,
     queries: Option<GeometryQueries>,
     contact_route: Option<crate::contact::StrikeRoute>,
+    hearth: Option<hearth::PreparedHearth>,
     binding: GeometryBinding,
     resolved: Option<SurfacePoint>,
     action: Option<Action>,
@@ -231,6 +236,7 @@ impl CommandCursor {
             phase: Phase::Start,
             queries: None,
             contact_route: None,
+            hearth: None,
             binding,
             resolved: None,
             action: None,
@@ -332,6 +338,10 @@ impl CommandCursor {
         }
         if matches!(self.command, NativeCommand::Craft { .. }) {
             self.prepare_craft_view(core)?;
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::PlaceHearth { .. }) {
+            self.prepare_hearth_view(core)?;
             return Ok(false);
         }
         if matches!(self.command, NativeCommand::TendFire { .. }) {
@@ -757,6 +767,9 @@ impl CommandCursor {
                                         Phase::FeedApproach
                                     };
                             }
+                            Phase::HearthGeometry => return self.hearth_geometry(core, answer),
+                            Phase::HearthRoutes => return self.hearth_routes(core, answer),
+                            Phase::HearthNavigation => return self.hearth_navigation(core, answer),
                             Phase::CastLine => return self.cast_line(core, answer),
                             Phase::CookReach => return self.cook_reach(
                                 core, answer.sight.pop().ok_or(ExecutionError::Invariant)?,
@@ -1065,6 +1078,9 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::PlaceHearth { .. } => {
+                            if self.prepare_hearth(core)? { return Ok(Progress::Geometry); }
+                        }
                         NativeCommand::TendFire { .. } => {
                             if self.prepare_fire(core)? { return Ok(Progress::Geometry); }
                         }
@@ -1238,6 +1254,13 @@ impl CommandCursor {
                         })
                     {
                         self.refuse(&ordinary.cannot_interrupt);
+                        continue;
+                    }
+                    // A placement preview reaches the same geometry, grant, and
+                    // replacement checks without publishing a made-up action ID.
+                    if self.options.preview && matches!(self.command, NativeCommand::PlaceHearth { .. }) {
+                        self.outcome = Some(crate::hearth::messages().available.outcome(true));
+                        self.phase = Phase::Done;
                         continue;
                     }
                     if let Some(native) = &self.options.native_movement {
@@ -1491,6 +1514,7 @@ impl CommandCursor {
                 Phase::Install => {
                     let action = self.action.take().ok_or(ExecutionError::Invariant)?;
                     let action_id = action.id.clone();
+                    let place_hearth = action.is_placing_hearth();
                     if action.is_manufacturing() && !self.admit_craft_record(core, &actor_id, &action)? {
                         continue;
                     }
@@ -1511,6 +1535,7 @@ impl CommandCursor {
                             behavior: Some(false),
                         },
                     )?;
+                    if place_hearth { core.reserve_hearth_holds(&actor_id)?; }
                     let mut result = ordinary.accepted.outcome(true);
                     result.action_id = Some(action_id);
                     self.outcome = Some(result);
@@ -1586,6 +1611,9 @@ impl CommandCursor {
                         }
                         if matches!(self.command, NativeCommand::Cook { .. }) {
                             return self.cook_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::PlaceHearth { .. }) {
+                            return self.hearth_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::TendFire { .. }) {
                             return self.fire_started(core, &actor_id);
@@ -2193,6 +2221,9 @@ impl CommandCursor {
                 | Phase::CastSight
                 | Phase::CastLine
                 | Phase::FireSight
+                | Phase::HearthGeometry
+                | Phase::HearthRoutes
+                | Phase::HearthNavigation
                 | Phase::CookSight
                 | Phase::CookReach
                 | Phase::ContactReach

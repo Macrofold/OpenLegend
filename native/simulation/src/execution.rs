@@ -39,9 +39,11 @@ use contact::ContactPhase;
 mod flight;
 mod foraging;
 mod heat;
+mod hearth;
 mod inventory;
+mod item_holds;
 pub(crate) use inventory::partitionable_stock;
-pub(crate) use inventory::{OwnedDebits, can_debit_lot};
+pub(crate) use inventory::{OwnedDebits, can_debit_lot, can_debit_lot_after_hold};
 mod participation;
 pub(crate) use inventory::{EquipmentDecision, EquipmentRequest, equipment_fits};
 mod practice;
@@ -1293,6 +1295,14 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    InventoryAvailability(inventory::ContentsBefore),
+    ItemHoldAdded { id: String, ordinal: u64, parent_present: bool },
+    ItemHoldEnded {
+        key: String,
+        hold: Box<crate::item_holds::HeldRecord>,
+        amount: f64,
+        _custody: ByteReservation,
+    },
     Flight {
         entity: EntityHandle,
         before: Option<crate::flight::FlightProgress>,
@@ -1843,6 +1853,19 @@ impl PhysicalJournal {
         while self.undo.len() > frame.undo_start {
             let undo = self.undo.pop().ok_or(ExecutionError::Invariant)?;
             match undo {
+                Undo::InventoryAvailability(before) => before.restore(state)?,
+                Undo::ItemHoldAdded { id, ordinal, parent_present } => {
+                    state.holds.remove(&id)?;
+                    state.holds.coverage.next_ordinal = ordinal;
+                    state.holds.coverage.parent_present = parent_present;
+                }
+                Undo::ItemHoldEnded { key, mut hold, amount, .. } => {
+                    use crate::item_holds::ClaimState;
+                    hold.value.revision -= 1;
+                    hold.value.state = ClaimState::Held;
+                    hold.value.amount = amount;
+                    state.holds.put(key, *hold)?;
+                }
                 Undo::AgencyPlan { entity, before } => {
                     state
                         .entities
@@ -3396,11 +3419,16 @@ impl PhysicalMutation<'_> {
                 .filter(|n| *n <= MAX_SAFE_INTEGER)
                 .ok_or(ExecutionError::Invariant)?,
         };
+        let binding_changed = actor.action.as_ref().map(|action| action.id.as_str())
+            != action.as_ref().map(|action| action.id.as_str());
+        if binding_changed && actor.action.as_ref().is_some_and(|a| a.is_placing_hearth()) {
+            self.release_hearth_holds(handle)?;
+        }
+        let actor = self.state.entities.resolve(handle).and_then(|e| e.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
         let first = self
             .journal
             .first(&UndoKey::Action(handle.slot, handle.generation))?;
-        let binding_changed = actor.action.as_ref().map(|action| action.id.as_str())
-            != action.as_ref().map(|action| action.id.as_str());
         self.journal
             .reserve(size_of::<Undo>() * 2 + size_of::<PhysicalChange>() * 2 + id.len() * 4)?;
         self.journal

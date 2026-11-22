@@ -13,7 +13,7 @@ use crate::{
     world_input::{InputSnapshot, WorldInputs},
 };
 use openlegend_simulation::{
-    construction_gather::{GatheredMaterial, MaterialGrants},
+    construction_gather::{ConstructionEffect, MaterialGrants},
     host::ByteReservation,
     runtime::{NativeWorldSession, RuntimeClock, RuntimeDirectOutput, RuntimeError},
 };
@@ -42,7 +42,7 @@ struct Advance {
 struct ProtectedAdvance {
     advance: Advance,
     save: ProtectedGameplaySave,
-    acquisitions: Vec<Arc<GatheredMaterial>>,
+    acquisitions: Vec<Arc<ConstructionEffect>>,
     wake: Option<ScheduleWake>,
     _custody: ByteReservation,
 }
@@ -481,7 +481,7 @@ impl GameClock {
                     return Err(RuntimeError::application_refused(&result.code));
                 }
                 let bytes = product.material_acquisitions().len()
-                    .checked_mul(std::mem::size_of::<Arc<GatheredMaterial>>())
+                    .checked_mul(std::mem::size_of::<Arc<ConstructionEffect>>())
                     .ok_or(openlegend_simulation::host::CapacityError)?;
                 let custody = budget.reserve(bytes)?;
                 Ok(ProtectedAdvance {

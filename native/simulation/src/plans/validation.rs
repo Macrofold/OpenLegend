@@ -107,7 +107,8 @@ pub(crate) fn valid_command(
         | NativeCommand::Follow { .. }
         | NativeCommand::Strike { .. }
         | NativeCommand::InspectInventory { .. }
-        | NativeCommand::InspectActivities { .. } => false,
+        | NativeCommand::InspectActivities { .. }
+        | NativeCommand::PlaceHearth { .. } => false,
     }
 }
 fn valid_evidence(value: Option<&ResultEvidence>, actor: &str) -> bool {

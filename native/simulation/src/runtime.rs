@@ -110,6 +110,7 @@ pub use npc::{
     RuntimeNpcSeparationEvidence,
 };
 pub use player::{
+    RuntimeHearthCatalogue, RuntimeHearthShape,
     InteractionMode, PlayerInteractionFacts, RuntimePlayerCommand, RuntimePlayerInputState,
     RuntimePlayerPublication, RuntimePlayerRead, RuntimeGatherOffer,
     RuntimeFishOffer, RuntimeFishTool, RuntimePickupOffer, RuntimePickupLot, RuntimeResourceOffer, RuntimeHeatContact, RuntimeFoodMenu, RuntimePreparation,
@@ -1665,7 +1666,7 @@ pub struct RuntimePreparedProducts<'a> {
     progress: crate::simulation::session::PreparedReadProgress<'a>,
     restore: Option<crate::simulation::session::PreparedRestoreFacts<'a>>,
     consolidation_recall: Option<RuntimeRecallDecoder<'a>>,
-    material_acquisitions: &'a [Arc<crate::construction_gather::GatheredMaterial>],
+    material_acquisitions: &'a [Arc<crate::construction_gather::ConstructionEffect>],
     state: &'a crate::simulation::SimulationState,
 }
 impl RuntimePreparedProducts<'_> {
@@ -1686,7 +1687,7 @@ impl RuntimePreparedProducts<'_> {
     }
 
     /// Borrow the exact lot facts while this private candidate still owns them.
-    pub fn material_acquisitions(&self) -> &[Arc<crate::construction_gather::GatheredMaterial>] {
+    pub fn material_acquisitions(&self) -> &[Arc<crate::construction_gather::ConstructionEffect>] {
         self.material_acquisitions
     }
 

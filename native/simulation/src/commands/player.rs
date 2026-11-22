@@ -35,6 +35,7 @@ pub enum RuntimePlayerCommand<'a> {
         preparation_digest: &'a str,
         inputs: &'a IndexMap<String, String>,
     },
+    PlaceHearth { definition: &'a DefinitionPin, site: &'a SurfacePoint },
     TendFire { target: &'a str, operation: crate::fire_care::FireOperation, item: Option<&'a str> },
     Pickup { target: &'a str, item: &'a str, quantity: Option<u64> },
     InspectItem { item: &'a str, container: &'a str, expected_revision: u64 },
@@ -51,6 +52,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } | Self::Pickup { target, item: tool, .. } => target.len() + tool.len(),
             Self::Craft { recipe } => recipe.len(),
+            Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
             Self::TendFire { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
             Self::Status { target, definition, .. } => target.len() + definition.len(),
@@ -76,6 +78,9 @@ impl RuntimePlayerCommand<'_> {
                 version: preparation_version,
                 digest: preparation_digest.into(),
             }, inputs);
+        }
+        if let Self::PlaceHearth { definition, site } = self {
+            return bind_hearth(id, actor, definition, site);
         }
         if let Self::TendFire { target, operation, item } = self {
             return bind_fire(id, actor, target, operation, item);
@@ -168,7 +173,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::InspectItem { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => ("eat", None, None, None, Some(item), None),
@@ -289,7 +294,7 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::InspectItem { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },
@@ -534,4 +539,42 @@ fn bind_fire(
         operation,
         item_id: item.map(str::to_owned),
     }, json_record(&input)?))
+}
+
+fn bind_hearth(
+    id: &str, actor: &str, definition: &DefinitionPin, site: &SurfacePoint,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct SignaturePoint<'a> { surface_id: &'a str, x: f64, y: f64, z: f64 }
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Operation<'a> {
+        actor_id: &'a str,
+        definition_digest: &'a str,
+        definition_id: &'a str,
+        definition_version: u64,
+        destination: SignaturePoint<'a>,
+        human_initiated: bool,
+        id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid() || !crate::hearth::valid_plan(definition, site)
+        || !crate::values::is_safe_record_id(&crate::item_holds::hearth_hold_id(id, 0))
+    {
+        return Err(serde::de::Error::custom("Invalid hearth placement binding."));
+    }
+    let operation = Operation {
+        actor_id: actor, definition_digest: &definition.digest, definition_id: &definition.id,
+        definition_version: definition.version,
+        destination: SignaturePoint { surface_id: &site.surface_id, x: site.x, y: site.y, z: site.z },
+        human_initiated: true, id, kind: "place-hearth",
+    };
+    let signature = json_record(&operation)?;
+    let encoding = CommandEncoding::from_ordered(&operation, 8)?;
+    Ok((NativeCommand::PlaceHearth {
+        envelope: headers.envelope(encoding), definition: definition.clone(), site: site.clone(),
+    }, signature))
 }

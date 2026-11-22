@@ -273,7 +273,7 @@ impl NativeWorldSession {
                     .current_observation(exposure, &state.physical),
                 EncounterExposure::InventoryItem { id, definition, .. } => {
                     crate::install::owned_by(
-                        &state.physical.entities,
+                        &state.physical,
                         &state.installed.retained,
                         &read.scope.actor_id,
                         id,

@@ -1,3 +1,4 @@
+import hearthCopy from '../../hearth-placement-messages.json' with { type: 'json' };
 import { gateUseLabel } from '../../gate-operations.js';
 import { entityGet } from '../../entity-collection.js';
 import { observedBodyHealthValue } from './hunting.js';
@@ -488,12 +489,16 @@ function activityView(
       view.name = hearth.actionLabel;
       view.facts.push(
         {
-          name: 'material',
-          value: `${hearth.input.quantity} ${world.itemDefinitions[hearth.input.definition.id]?.name ?? 'material units'}; held during work, spent only on completion`,
+          name: hearthCopy.activity.materialName,
+          value: `${hearth.input.quantity} ${world.itemDefinitions[hearth.input.definition.id]?.name ?? 'material units'}${hearthCopy.activity.materialSuffix}`,
           critical: true,
         },
-        { name: 'work', value: `${hearth.workSeconds} game seconds plus approach`, critical: true },
-        { name: 'placement', value: hearth.help, critical: true },
+        {
+          name: hearthCopy.activity.workName,
+          value: `${hearth.workSeconds}${hearthCopy.activity.workSuffix}`,
+          critical: true,
+        },
+        { name: hearthCopy.activity.placementName, value: hearth.help, critical: true },
       );
     }
   }
