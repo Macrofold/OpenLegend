@@ -1195,7 +1195,9 @@ impl CommandCursor {
                             }
                         }
                         NativeCommand::LearnRecord { .. } => {
-                            if self.start_record_learning(core, &actor_id)? { return Ok(Progress::Geometry); }
+                            if let Some(progress) = self.start_record_learning(core, &actor_id)? {
+                                return Ok(progress);
+                            }
                         }
                         NativeCommand::InspectInventory { world: Some(_), .. } => {
                             if self.start_storage_inspection(core, &actor_id)? { return Ok(Progress::Geometry); }

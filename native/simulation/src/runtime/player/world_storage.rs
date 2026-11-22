@@ -29,6 +29,7 @@ pub struct InspectedItemRead<'a> {
     pub recipe_record: Option<InspectedRecipeRecord<'a>>,
 }
 
+#[derive(Clone, Copy)]
 pub enum InspectedRecipeRecord<'a> {
     Available {
         recipe_id: &'a str,
@@ -38,9 +39,72 @@ pub enum InspectedRecipeRecord<'a> {
     Unavailable,
 }
 
+impl<'a> InspectedRecipeRecord<'a> {
+    pub(super) fn from_definition(
+        state: &SimulationState,
+        actor: &str,
+        definition: &'a crate::install::ItemDefinitionRead,
+    ) -> Option<Self> {
+        let record = definition.recipe_record.as_ref()?;
+        Some(if record.available {
+            let id = &record.method.id;
+            Self::Available {
+                recipe_id: id,
+                record_pin: &definition.pin,
+                known: state.learned_capabilities.known_recipes(actor).contains(id),
+            }
+        } else {
+            Self::Unavailable
+        })
+    }
+}
+
+pub(super) fn can_learn(
+    state: &SimulationState,
+    actor: &crate::state::Entity,
+) -> Result<bool, RuntimeError> {
+    Ok(actor.has_memory()
+        && actor
+            .actor
+            .as_ref()
+            .is_some_and(|actor| actor.alive && !actor.incapacitated)
+        && !state
+            .installed
+            .capabilities
+            .capability_blocked(Some(actor), "actions")
+            .map_err(failure)?)
+}
+
+pub(super) fn tally_recipe_stock(
+    state: &SimulationState,
+    actor: &str,
+    quantities: &mut IndexMap<&str, u64>,
+) -> Result<(), RuntimeError> {
+    if quantities.is_empty() {
+        return Ok(());
+    }
+    state
+        .inventory
+        .visit_owned(
+            &state.physical,
+            &state.installed.retained,
+            actor,
+            actor,
+            &mut |item| {
+                if let Some(count) = quantities.get_mut(item.definition_id) {
+                    *count = count
+                        .saturating_add(item.quantity)
+                        .min(crate::identity::MAX_SAFE_INTEGER);
+                }
+                Ok(())
+            },
+        )
+        .map_err(failure)
+}
+
 impl<'a> RuntimeWorldStorage<'a> {
-    /// Eligibility for the selected record button. The actual command repeats
-    /// the authoritative check after binding its exact item and current page.
+    /// Eligibility for the selected record button. The command checks again
+    /// after binding the exact item and current page.
     pub fn can_learn(&self) -> Result<bool, RuntimeError> {
         let actor = self
             .state
@@ -48,45 +112,15 @@ impl<'a> RuntimeWorldStorage<'a> {
             .entities
             .get(self.actor)
             .ok_or_else(|| failure("Inspection actor unavailable."))?;
-        Ok(actor.has_memory()
-            && actor
-                .actor
-                .as_ref()
-                .is_some_and(|actor| actor.alive && !actor.incapacitated)
-            && !self
-                .state
-                .installed
-                .capabilities
-                .capability_blocked(Some(actor), "actions")
-                .map_err(failure)?)
+        can_learn(self.state, actor)
     }
 
-    /// Fill only the requested material definitions from this actor's current
-    /// accessible possessions. Caller holds the selected page and its funding.
+    /// Count only requested ingredients in current accessible possessions.
     pub fn tally_recipe_stock(
         &self,
         quantities: &mut IndexMap<&str, u64>,
     ) -> Result<(), RuntimeError> {
-        if quantities.is_empty() {
-            return Ok(());
-        }
-        self.state
-            .inventory
-            .visit_owned(
-                &self.state.physical,
-                &self.state.installed.retained,
-                self.actor,
-                self.actor,
-                &mut |item| {
-                    if let Some(count) = quantities.get_mut(item.definition_id) {
-                        *count = count
-                            .saturating_add(item.quantity)
-                            .min(crate::identity::MAX_SAFE_INTEGER);
-                    }
-                    Ok(())
-                },
-            )
-            .map_err(failure)
+        tally_recipe_stock(self.state, self.actor, quantities)
     }
 
     /// Return only an exact member of the captured page, with its retained
@@ -140,22 +174,9 @@ impl<'a> RuntimeWorldStorage<'a> {
             description: definition.description.as_ref(),
             properties: &definition.properties,
             container: definition.is_container(),
-            recipe_record: definition.recipe_record.as_ref().map(|record| {
-                if record.available {
-                    let id = &record.method.id;
-                    InspectedRecipeRecord::Available {
-                        recipe_id: id,
-                        record_pin: &definition.pin,
-                        known: self
-                            .state
-                            .learned_capabilities
-                            .known_recipes(self.actor)
-                            .contains(id),
-                    }
-                } else {
-                    InspectedRecipeRecord::Unavailable
-                }
-            }),
+            recipe_record: InspectedRecipeRecord::from_definition(
+                self.state, self.actor, definition,
+            ),
         })
     }
 }

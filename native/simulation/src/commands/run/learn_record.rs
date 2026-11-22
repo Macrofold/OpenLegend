@@ -1,11 +1,12 @@
-//! Learning uses the exact current inspection and one real sight/reach
-//! question for its physical root. The grant leaves the object in place.
+//! Learn from a current carried or world inspection. Only a world record
+//! needs sight and reach. The grant leaves the object in place.
 use super::*;
 use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
-use crate::ground_items::inspection::WorldStorage;
+use crate::ground_items::inspection::{WorldStorage, owned};
 use crate::knowledge::recipe_grants::{LEARNED_EVENT, Learning, learn_record, learning_copy};
 use crate::reception::{EventScalar, SightBatch};
 use crate::text::JsText;
+use crate::values::DefinitionPin;
 
 const UNINSPECTED: &str = "record-uninspected";
 const UNAVAILABLE: &str = "record-unavailable";
@@ -13,10 +14,17 @@ const STALE: &str = "stale-record";
 const METHOD: &str = "method-unavailable";
 
 struct AdmittedRecord<'a> {
-    root: WorldStorage<'a>,
+    root: Option<WorldStorage<'a>>,
     item: &'a crate::state::Entity,
     item_name: &'a JsText,
-    recipe: &'a crate::values::DefinitionPin,
+    recipe: &'a DefinitionPin,
+}
+
+struct ReadRecord {
+    item_id: String,
+    item_name: JsText,
+    recipe: DefinitionPin,
+    method_name: JsText,
 }
 
 fn selected_record<'a>(
@@ -37,19 +45,23 @@ fn selected_record<'a>(
         .and_then(|actor| actor.actor.as_ref())
         .and_then(|actor| actor.inventory_inspection.as_ref())
         .and_then(|page| page.container_id.as_deref())
-        .and_then(|root| WorldStorage::selected(state, actor, root))
     else {
         return Ok(Err((UNINSPECTED, copy.uninspected)));
     };
-    let Some(page) = root.inspection(budget)? else {
+    let world = WorldStorage::selected(state, actor, root);
+    let page = if let Some(world) = &world {
+        world.inspection(budget)?
+    } else {
+        owned::current(state, actor, root, budget)?
+    };
+    let Some(page) = page else {
         return Ok(Err((UNINSPECTED, copy.uninspected)));
     };
     if !page.item_ids.contains(&record.item_id) {
         return Ok(Err((UNINSPECTED, copy.uninspected)));
     }
     let Some(item) = state.physical.entities.get(&record.item_id).filter(|item| {
-        item.retirement.is_none()
-            && crate::install::inventory_parent(item) == Some(root.root.id.as_str())
+        item.retirement.is_none() && crate::install::inventory_parent(item) == Some(root)
     }) else {
         return Ok(Err((UNAVAILABLE, copy.unavailable)));
     };
@@ -83,7 +95,7 @@ fn selected_record<'a>(
         return Ok(Err((METHOD, copy.definition_unavailable)));
     }
     Ok(Ok(AdmittedRecord {
-        root,
+        root: world,
         item,
         item_name: &definition.named.name,
         recipe: &method.method,
@@ -102,13 +114,20 @@ impl CommandCursor {
         &mut self,
         core: &mut CoreMutation<'_>,
         actor: &str,
-    ) -> Result<bool, ExecutionError> {
+    ) -> Result<Option<Progress>, ExecutionError> {
         let selected = match selected_record(core.state, actor, &self.command, &self.budget)? {
             Ok(selected) => selected,
             Err((code, message)) => {
                 self.record_refusal(code, message)?;
-                return Ok(false);
+                return Ok(None);
             }
+        };
+        let Some(root) = &selected.root else {
+            let prepared = self.prepare_record(core.state, actor, selected)?;
+            if let Some(prepared) = prepared {
+                return self.apply_record(core, actor, prepared).map(Some);
+            }
+            return Ok(None);
         };
         self.binding.serial = core.journal.next_provider_serial()?;
         self.sight = Some(
@@ -116,14 +135,14 @@ impl CommandCursor {
                 &core.state.physical,
                 &core.state.installed,
                 actor,
-                &[selected.root.root.id.as_str()],
+                &[root.root.id.as_str()],
                 self.binding,
                 &self.budget,
             )
             .map_err(|_| ExecutionError::Invariant)?,
         );
         self.phase = Phase::LearnRecordSight;
-        Ok(true)
+        Ok(Some(Progress::Geometry))
     }
 
     pub(super) fn record_learning_geometry(
@@ -158,9 +177,10 @@ impl CommandCursor {
                 return self.drive(core, None);
             }
         };
+        let root = selected.root.as_ref().ok_or(ExecutionError::Invariant)?;
         if let Some(sight) = sight {
-            if sight.seen(&selected.root.root.id) == Some(true) {
-                if let Some(ray) = selected.root.reach(&self.budget)? {
+            if sight.seen(&root.root.id) == Some(true) {
+                if let Some(ray) = root.reach(&self.budget)? {
                     self.reserve(size_of::<crate::geometry::SightRay>())?;
                     self.question(core, Phase::LearnRecordReach)?
                         .sight
@@ -171,13 +191,26 @@ impl CommandCursor {
             self.record_refusal(UNAVAILABLE, learning_copy().unavailable)?;
             return self.drive(core, None);
         }
+        let prepared = self.prepare_record(core.state, &actor, selected)?;
+        match prepared {
+            Some(prepared) => self.apply_record(core, &actor, prepared),
+            None => self.drive(core, None),
+        }
+    }
+
+    fn prepare_record(
+        &mut self,
+        state: &crate::simulation::SimulationState,
+        actor: &str,
+        selected: AdmittedRecord<'_>,
+    ) -> Result<Option<ReadRecord>, ExecutionError> {
         if self.options.preview || self.preparation_mode.is_some() {
             self.outcome = Some(outcome(true, "available", ""));
             self.phase = Phase::Done;
-            return self.drive(core, None);
+            return Ok(None);
         }
-        let installed = core.state.installed.clone();
-        let method_body = installed
+        let method_body = state
+            .installed
             .retained
             .recipes
             .get(&selected.recipe.id)
@@ -198,15 +231,31 @@ impl CommandCursor {
                 + selected.recipe.digest.len() * 2
                 + actor.len() * 4,
         )?;
-        let recipe = selected.recipe.clone();
-        let item_name = selected.item_name.clone();
-        let item_id = selected.item.id.clone();
+        Ok(Some(ReadRecord {
+            recipe: selected.recipe.clone(),
+            item_name: selected.item_name.clone(),
+            item_id: selected.item.id.clone(),
+            method_name: method.name,
+        }))
+    }
+
+    fn apply_record(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        actor: &str,
+        ReadRecord {
+            recipe,
+            item_name,
+            item_id,
+            method_name,
+        }: ReadRecord,
+    ) -> Result<Progress, ExecutionError> {
         let NativeCommand::LearnRecord { envelope, record } = &self.command else {
             return Err(ExecutionError::Invariant);
         };
         let item_revision = record.expected_revision;
         let placement_revision = record.placement_revision;
-        let learned = learn_record(core, &actor, &envelope.id, &recipe.id, &self.budget)?;
+        let learned = learn_record(core, actor, &envelope.id, &recipe.id, &self.budget)?;
         if learned == Learning::Capacity {
             self.record_refusal("knowledge-capacity", learning_copy().capacity)?;
             return self.drive(core, None);
@@ -217,14 +266,14 @@ impl CommandCursor {
             "I checked "
         });
         if learned == Learning::Acquired {
-            text.push_text(&method.name);
+            text.push_text(&method_name);
             text.push_str(" from ");
             text.push_text(&item_name);
             text.push_str(". No item was made.");
         } else {
             text.push_text(&item_name);
             text.push_str("; I already know the exact method for ");
-            text.push_text(&method.name);
+            text.push_text(&method_name);
             text.push_str(".");
         }
         let (code, suffix) = if learned == Learning::Acquired {
@@ -238,8 +287,8 @@ impl CommandCursor {
         let event = core.stage_event(EventEmissionIntent {
             event_type: LEARNED_EVENT.into(),
             text: EmissionText::Literal(text),
-            audience: AudienceSelection::Explicit(vec![actor.clone()]),
-            source_id: Some(actor),
+            audience: AudienceSelection::Explicit(vec![actor.to_owned()]),
+            source_id: Some(actor.to_owned()),
             target_id: None,
             data: Some(IndexMap::from([
                 (
@@ -273,7 +322,7 @@ impl CommandCursor {
         self.event = Some(event.id.clone());
         self.after_event = Phase::Tail;
         let mut result = outcome(true, code, "");
-        result.message = method.name;
+        result.message = method_name;
         result.message.push_str(suffix);
         result.recipe_id = Some(recipe.id);
         self.outcome = Some(result);

@@ -8,6 +8,8 @@ use crate::simulation::SimulationState;
 use crate::state::{Entity, EntityHandle, InventoryInspection, Named, Placement};
 use crate::text::JsText;
 
+pub(crate) mod owned;
+
 pub(crate) const PAGE_ITEMS: usize = 16;
 pub(crate) const PAGE_DESCRIPTION_BYTES: usize = 8_000;
 

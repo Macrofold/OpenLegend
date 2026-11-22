@@ -82,6 +82,56 @@ pub struct InventorySlot<'a> {
 }
 
 impl<'a> DirectInventory<'a> {
+    /// Recheck the one retained deliberate read against live custody. The
+    /// borrowed record is usable only inside the current disclosure callback.
+    pub fn inspected_recipe(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<Option<(&'a str, InspectedRecipeRecord<'a>)>, RuntimeError> {
+        let parent = self
+            .breadcrumbs
+            .last()
+            .ok_or_else(|| failure("inventory root unavailable"))?;
+        let Some(page) = crate::ground_items::inspection::owned::current(
+            self.state,
+            &self.actor.id,
+            parent.id,
+            budget,
+        )
+        .map_err(failure)?
+        else {
+            return Ok(None);
+        };
+        let id = &page.item_ids[0];
+        let Some(item) = self.state.physical.entities.get(id).filter(|item| {
+            item.retirement.is_none() && crate::install::inventory_parent(item) == Some(parent.id)
+        }) else {
+            return Ok(None);
+        };
+        Ok(InspectedRecipeRecord::from_definition(
+            self.state,
+            &self.actor.id,
+            self.definition(item)?,
+        )
+        .map(|record| (id.as_str(), record)))
+    }
+
+    pub fn paused(&self) -> bool {
+        self.state.physical.header.paused
+    }
+
+    pub fn can_learn(&self) -> Result<bool, RuntimeError> {
+        super::world_storage::can_learn(self.state, self.actor)
+    }
+
+    /// Count only requested ingredients in current accessible possessions.
+    pub fn tally_recipe_stock(
+        &self,
+        quantities: &mut IndexMap<&str, u64>,
+    ) -> Result<(), RuntimeError> {
+        super::world_storage::tally_recipe_stock(self.state, &self.actor.id, quantities)
+    }
+
     pub fn count(&self) -> usize {
         self.children.len()
     }

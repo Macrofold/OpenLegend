@@ -1,12 +1,14 @@
 //! An exact explicit read gains one private occurrence. Passive inventory
 //! pages, possession changes and preview never select story evidence.
 
+use super::inspect_storage::PreparedStorage;
 use super::*;
 use crate::{
     events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope},
-    host::retained_size::heap_sum,
+    ground_items::inspection::owned,
+    host::retained_size::{HeapBytes, heap_sum},
     reception::{EncounterExposure, EventScalar, ObservedItemLocation, VersionedFamily},
-    state::Individuality,
+    state::{Individuality, InventoryInspection, Named},
     text::JsText,
 };
 use indexmap::IndexMap;
@@ -97,7 +99,7 @@ impl CommandCursor {
             self.phase = Phase::Done;
             return Ok(None);
         }
-        let bag_name = if parent.id == actor {
+        let bag = if parent.id == actor {
             None
         } else {
             let definition = parent
@@ -105,21 +107,84 @@ impl CommandCursor {
                 .as_ref()
                 .and_then(|item| definition_set.items.get(&item.definition_pin.id))
                 .ok_or(ExecutionError::Invariant)?;
-            Some(&definition.named.name)
+            Some(&definition.named)
         };
         let Some(prepared) = prepare_item_evidence(
             state,
             actor,
             body,
             lot,
-            ItemPlace::Possession(bag_name),
-            ItemInspection::Selected,
+            ItemPlace::Possession(bag.map(|name| &name.name)),
             &self.budget,
         )?
         else {
             self.refuse_inspection()?;
             return Ok(None);
         };
+        if definition_set
+            .items
+            .get(lot.definition_id)
+            .is_some_and(|definition| definition.recipe_record.is_some())
+        {
+            let Some((scope, mut custody)) = owned::scope(state, actor, &parent.id, &self.budget)?
+            else {
+                self.refuse_inspection()?;
+                return Ok(None);
+            };
+            let Some(EncounterExposure::InventoryItem { description, .. }) =
+                prepared.intent.exposure.as_ref()
+            else {
+                return Err(ExecutionError::Invariant);
+            };
+            custody.resize(
+                heap_sum([
+                    custody.bytes(),
+                    4096,
+                    parent.id.len(),
+                    body.id.len() * 2,
+                    lot.named.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                    bag.map_or_else(
+                        || {
+                            heap_sum([
+                                parent.name.storage_bytes(),
+                                parent.name_form.as_ref().map_or(0, String::len),
+                                parent.indefinite_article.as_ref().map_or(0, String::len),
+                            ])
+                        },
+                        HeapBytes::heap_bytes,
+                    )
+                    .ok_or(ExecutionError::Capacity)?,
+                    description
+                        .storage_bytes()
+                        .checked_mul(2)
+                        .ok_or(ExecutionError::Capacity)?,
+                ])
+                .ok_or(ExecutionError::Capacity)?,
+            )?;
+            let mut summary = JsText::from(": ");
+            summary.push_text(description);
+            let page = InventoryInspection {
+                revision: selected.expected_revision,
+                scope,
+                container_id: Some(parent.id.clone()),
+                container_name: bag.cloned().unwrap_or_else(|| Named {
+                    name: parent.name.clone(),
+                    name_form: parent.name_form.clone(),
+                    indefinite_article: parent.indefinite_article.clone(),
+                }),
+                after: body.id.clone(),
+                more: false,
+                item_ids: vec![body.id.clone()],
+                item_names: vec![lot.named.clone()],
+                evidence_ids: Vec::with_capacity(2),
+            };
+            self.storage_inspection = Some(PreparedStorage::owned_record(
+                page, custody, prepared, summary,
+            ));
+            self.phase = Phase::StoragePage;
+            return Ok(None);
+        }
+        core.physical().clear_inventory_inspection(actor)?;
         self._reservation.merge(prepared.custody)?;
         let event = core.stage_event(prepared.intent)?;
         self.reserve(event.id.len() + COPY.inspected.len() + 64)?;
@@ -196,18 +261,12 @@ pub(super) struct ItemEvidence {
     pub description_bytes: usize,
 }
 
-pub(super) enum ItemInspection {
-    Page,
-    Selected,
-}
-
 pub(super) fn prepare_item_evidence(
     state: &crate::simulation::SimulationState,
     actor: &str,
     body: &crate::state::Entity,
     lot: crate::install::OwnedItem<'_>,
     place: ItemPlace<'_>,
-    inspection: ItemInspection,
     budget: &ByteBudget,
 ) -> Result<Option<ItemEvidence>, ExecutionError> {
     let definition_set = &state.installed.retained;
@@ -225,11 +284,8 @@ pub(super) fn prepare_item_evidence(
     )?;
     let facts: AdditionalFacts =
         serde_json::from_str(raw).map_err(|_| ExecutionError::Invariant)?;
-    // The page records the item's ordinary description. Exact recipe reading
-    // has its own action, while a place report also needs exposure on a page.
-    if facts.place_report.is_some()
-        || (matches!(inspection, ItemInspection::Selected) && definition.recipe_record.is_some())
-    {
+    // A place report needs its own exact evidence and remains outside this read.
+    if facts.place_report.is_some() {
         return Err(ExecutionError::UnsupportedFamily);
     }
     let mut workspace = budget.reserve(

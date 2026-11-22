@@ -57,6 +57,74 @@ static RECORD_COPY: LazyLock<RecordCopy> = LazyLock::new(|| {
     .expect("recipe record wording")
 });
 
+pub(super) fn learn_action<'a>(
+    item: OwnedItem<'a>,
+    record_pin: &'a openlegend_simulation::values::DefinitionPin,
+    paused: bool,
+    controlling: bool,
+    can_learn: impl FnOnce() -> Result<bool, RuntimeError>,
+) -> Result<Action<'a>, InventoryPageError> {
+    let reason = if paused {
+        Some(RECORD_COPY.paused)
+    } else if !controlling {
+        Some(RECORD_COPY.control_required)
+    } else {
+        (!can_learn().map_err(InventoryPageError::Read)?).then_some(RECORD_COPY.unavailable)
+    };
+    Ok(Action {
+        id: format!("learn-record-{}", item.id),
+        label: RECORD_COPY.learn_label,
+        command: ItemCommand {
+            kind: "learn-record",
+            item_id: item.id,
+            expected_revision: Some(item.revision),
+            placement_revision: Some(item.placement_revision),
+            quantity: None,
+            record_pin: Some(record_pin),
+        },
+        enabled: reason.is_none(),
+        reason,
+    })
+}
+
+impl RecipeRecord {
+    pub(super) fn available(method: Recipe, known: bool) -> Self {
+        Self {
+            method: Some(InspectedRecipe(method)),
+            message: if known {
+                "This exact method is already known."
+            } else {
+                "This record describes one installed method. Reading it grants no items or knowledge."
+            },
+        }
+    }
+
+    pub(super) const fn unavailable() -> Self {
+        Self {
+            method: None,
+            message: "The exact method on this record is no longer available.",
+        }
+    }
+}
+
+/// Fund the temporary stock index before collecting current quantities. The
+/// selected views reuse it until their ingredient counts are prepared.
+pub(super) fn recipe_stock<'a>(
+    budget: &ByteBudget,
+    definitions: impl Iterator<Item = &'a str> + Clone,
+    tally: impl FnOnce(&mut IndexMap<&'a str, u64>) -> Result<(), RuntimeError>,
+) -> Result<(IndexMap<&'a str, u64>, ByteReservation), InventoryPageError> {
+    use InventoryPageError::{Capacity, Read};
+    let count = definitions.clone().count();
+    let custody = budget
+        .reserve(map_storage::<&str, u64>(count).ok_or(Capacity)?)
+        .map_err(|_| Capacity)?;
+    let mut stock = IndexMap::with_capacity(count);
+    stock.extend(definitions.map(|definition| (definition, 0)));
+    tally(&mut stock).map_err(Read)?;
+    Ok((stock, custody))
+}
+
 impl PlayerScenePolicy {
     pub(crate) fn encode_inspected_inventory(
         &self,
@@ -106,41 +174,23 @@ impl PlayerScenePolicy {
                         ))
                     })?;
                     selected_methods.push((items.len(), template, known));
-                    let reason = if read.paused {
-                        Some(RECORD_COPY.paused)
-                    } else if !controlling {
-                        Some(RECORD_COPY.control_required)
-                    } else {
-                        let eligible = match can_learn {
-                            Some(eligible) => eligible,
-                            None => {
-                                let eligible = read.can_learn().map_err(Read)?;
-                                can_learn = Some(eligible);
-                                eligible
+                    actions.push(learn_action(
+                        item.lot,
+                        record_pin,
+                        read.paused,
+                        controlling,
+                        || {
+                            if let Some(eligible) = can_learn {
+                                return Ok(eligible);
                             }
-                        };
-                        (!eligible).then_some(RECORD_COPY.unavailable)
-                    };
-                    actions.push(Action {
-                        id: format!("learn-record-{}", item.lot.id),
-                        label: RECORD_COPY.learn_label,
-                        command: ItemCommand {
-                            kind: "learn-record",
-                            item_id: item.lot.id,
-                            expected_revision: Some(item.lot.revision),
-                            placement_revision: Some(item.lot.placement_revision),
-                            quantity: None,
-                            record_pin: Some(record_pin),
+                            let eligible = read.can_learn()?;
+                            can_learn = Some(eligible);
+                            Ok(eligible)
                         },
-                        enabled: reason.is_none(),
-                        reason,
-                    });
+                    )?);
                     None
                 }
-                Some(InspectedRecipeRecord::Unavailable) => Some(RecipeRecord {
-                    method: None,
-                    message: "The exact method on this record is no longer available.",
-                }),
+                Some(InspectedRecipeRecord::Unavailable) => Some(RecipeRecord::unavailable()),
                 None => None,
             };
             items.push(Item {
@@ -159,24 +209,12 @@ impl PlayerScenePolicy {
             let definitions = selected_methods
                 .iter()
                 .flat_map(|(_, template, _)| template.stock_definitions());
-            let count = definitions.clone().count();
-            let _stock = budget
-                .reserve(map_storage::<&str, u64>(count).ok_or(Capacity)?)
-                .map_err(|_| Capacity)?;
-            let mut stock = IndexMap::with_capacity(count);
-            stock.extend(definitions.map(|definition| (definition, 0)));
-            read.tally_recipe_stock(&mut stock).map_err(Read)?;
+            let (stock, _stock) =
+                recipe_stock(budget, definitions, |stock| read.tally_recipe_stock(stock))?;
             for (index, template, known) in selected_methods {
                 let method =
                     Recipe::prepare(template, &stock, &mut workspace).map_err(|_| Capacity)?;
-                items[index].recipe_record = Some(RecipeRecord {
-                    method: Some(InspectedRecipe(method)),
-                    message: if known {
-                        "This exact method is already known."
-                    } else {
-                        "This record describes one installed method. Reading it grants no items or knowledge."
-                    },
-                });
+                items[index].recipe_record = Some(RecipeRecord::available(method, known));
             }
         }
         match input.sort {

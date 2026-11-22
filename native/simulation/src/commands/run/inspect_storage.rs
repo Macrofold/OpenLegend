@@ -1,6 +1,6 @@
 //! A deliberate, bounded world inspection. The ordinary command owns sight,
 //! reach, exact continuation, private acquisitions and the accepted page.
-use super::inspect_item::{ItemEvidence, ItemInspection, ItemPlace, prepare_item_evidence};
+use super::inspect_item::{ItemEvidence, ItemPlace, prepare_item_evidence};
 use super::*;
 use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
 use crate::ground_items::inspection::{PAGE_DESCRIPTION_BYTES, PAGE_ITEMS, WorldStorage};
@@ -14,6 +14,23 @@ pub(super) struct PreparedStorage {
     custody: ByteReservation,
     occurrences: std::vec::IntoIter<ItemEvidence>,
     summary: JsText,
+}
+
+impl PreparedStorage {
+    /// The same two-phase publication for one deliberately read owned record.
+    pub(super) fn owned_record(
+        page: InventoryInspection,
+        custody: ByteReservation,
+        item: ItemEvidence,
+        summary: JsText,
+    ) -> Self {
+        Self {
+            page,
+            custody,
+            occurrences: vec![item].into_iter(),
+            summary,
+        }
+    }
 }
 
 impl CommandCursor {
@@ -177,29 +194,40 @@ impl CommandCursor {
             .as_ref()
             .ok_or(ExecutionError::Invariant)?;
         self.reserve(1024 + target.len() + actor.len() * 4)?;
+        let mut parts = vec![
+            NarrationPart::Participant {
+                entity_id: actor.to_owned(),
+                role: PersonRole::Subject,
+                article: None,
+            },
+            NarrationPart::Literal(" ".into()),
+            NarrationPart::Verb {
+                subject_id: actor.to_owned(),
+                verb: "inspect".into(),
+            },
+        ];
+        if target == actor {
+            parts.push(NarrationPart::Literal(" ".into()));
+            parts.push(NarrationPart::Participant {
+                entity_id: actor.to_owned(),
+                role: PersonRole::Possessive,
+                article: None,
+            });
+            parts.push(NarrationPart::Literal(" accessible possessions".into()));
+        } else {
+            parts.push(NarrationPart::Literal(
+                " the accessible contents of ".into(),
+            ));
+            parts.push(NarrationPart::Participant {
+                entity_id: target.to_owned(),
+                role: PersonRole::Object,
+                article: Some(NameArticle::Definite),
+            });
+        }
+        parts.push(NarrationPart::Literal(summary));
         let event = core.stage_event(EventEmissionIntent {
             event_type: "inventory-inspected".into(),
-            text: EmissionText::Narration(Narration {
-                parts: vec![
-                    NarrationPart::Participant {
-                        entity_id: actor.to_owned(),
-                        role: PersonRole::Subject,
-                        article: None,
-                    },
-                    NarrationPart::Literal(" ".into()),
-                    NarrationPart::Verb {
-                        subject_id: actor.to_owned(),
-                        verb: "inspect".into(),
-                    },
-                    NarrationPart::Literal(" the accessible contents of ".into()),
-                    NarrationPart::Participant {
-                        entity_id: target.to_owned(),
-                        role: PersonRole::Object,
-                        article: Some(NameArticle::Definite),
-                    },
-                    NarrationPart::Literal(summary),
-                ],
-            }),
+            text: EmissionText::Narration(Narration { parts }),
             audience: AudienceSelection::Explicit(vec![actor.to_owned()]),
             source_id: Some(actor.to_owned()),
             target_id: None,
@@ -272,7 +300,6 @@ fn prepare_storage(
                 parent: root.root,
                 label: &name.name().name,
             },
-            ItemInspection::Page,
             budget,
         )?
         else {

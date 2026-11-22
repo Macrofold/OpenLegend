@@ -10,9 +10,14 @@ impl PhysicalMutation<'_> {
         self.set_actor_access_metadata(id, make_player, None)
     }
 
+    pub(crate) fn clear_inventory_inspection(&mut self, id: &str) -> Result<(), ExecutionError> {
+        self.set_actor_access_metadata(id, false, None)
+    }
+
     /// The already funded page moves into the same actor-storage journal as
     /// control reconciliation. It grants no read until the disclosure owner
-    /// checks its current contents, physical reach and visible contact.
+    /// checks current contents and either owned ancestry or a reachable
+    /// visible world contact.
     pub(crate) fn install_inventory_inspection(
         &mut self,
         id: &str,

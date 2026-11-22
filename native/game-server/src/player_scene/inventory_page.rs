@@ -7,14 +7,17 @@ use openlegend_simulation::{
     encoding::{js_trim, json_record, sha256_hex},
     host::{ByteBudget, ByteReservation},
     install::{OwnedItem, equipment_ports_conflict},
-    runtime::{DirectInventory, InventoryContainer, InventoryCrumb, RuntimeError},
+    runtime::{
+        DirectInventory, InspectedRecipeRecord, InventoryContainer, InventoryCrumb, RuntimeError,
+    },
     text::JsText,
 };
 use serde::{Deserialize, Serialize};
 use std::{mem::size_of, sync::LazyLock};
 
 mod world_storage;
-use super::self_view::recipes::InspectedRecipe;
+use super::self_view::recipes::{InspectedRecipe, Recipe};
+use world_storage::{learn_action, recipe_stock};
 
 #[derive(Serialize)]
 struct RecipeRecord {
@@ -343,6 +346,7 @@ impl PlayerScenePolicy {
         let query: Vec<u16> = query.units().collect();
         let mut items = Vec::new();
         let mut checked = after;
+        let selected_recipe = inventory.inspected_recipe(budget).map_err(Read)?;
         for position in (after..count).take(200) {
             if items.len() == 40 {
                 break;
@@ -514,6 +518,46 @@ impl PlayerScenePolicy {
             } else {
                 None
             };
+            let recipe_record = match selected_recipe
+                .filter(|(id, _)| *id == item.id)
+                .map(|(_, record)| record)
+            {
+                Some(InspectedRecipeRecord::Available {
+                    recipe_id,
+                    known,
+                    record_pin,
+                }) => {
+                    let template = self.self_view.authored_recipe(recipe_id).ok_or_else(|| {
+                        Read(RuntimeError::application_refused(
+                            "Installed recipe presentation unavailable",
+                        ))
+                    })?;
+                    let (stock, _stock) =
+                        recipe_stock(budget, template.stock_definitions(), |stock| {
+                            inventory.tally_recipe_stock(stock)
+                        })?;
+                    let method =
+                        Recipe::prepare(template, &stock, &mut custody).map_err(|_| Capacity)?;
+                    custody
+                        .resize(
+                            custody
+                                .bytes()
+                                .checked_add(4 * size_of::<Action<'_>>() + item.id.len() + 32)
+                                .ok_or(Capacity)?,
+                        )
+                        .map_err(|_| Capacity)?;
+                    actions.push(learn_action(
+                        *item,
+                        record_pin,
+                        inventory.paused(),
+                        controlling,
+                        || inventory.can_learn(),
+                    )?);
+                    Some(RecipeRecord::available(method, known))
+                }
+                Some(InspectedRecipeRecord::Unavailable) => Some(RecipeRecord::unavailable()),
+                None => None,
+            };
             items.push(Item {
                 lot: *item,
                 art: self.observed.item_art.get(item.definition_id),
@@ -523,7 +567,7 @@ impl PlayerScenePolicy {
                 actions,
                 characteristics,
                 equipment_conflicts,
-                recipe_record: None,
+                recipe_record,
             });
         }
         let source = *inventory.breadcrumbs.last().ok_or(Stale)?;
