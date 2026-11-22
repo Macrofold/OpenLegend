@@ -1,19 +1,16 @@
-, exact_manifests AS (
-    SELECT r.payload::jsonb AS description
-    FROM closure c JOIN asset_revisions r USING (revision_key, manifest_sha256)
-), declared_files AS MATERIALIZED (
-    SELECT f.value AS payload
-    FROM exact_manifests c CROSS JOIN LATERAL jsonb_each(c.description->'manifest'->'files') f
-    UNION ALL
-    SELECT c.description->'manifestArtifact' FROM exact_manifests c
-    LIMIT 20001
-)
 SELECT 1
 FROM root r
-JOIN asset_world_bindings b USING (revision_key, manifest_sha256)
 JOIN asset_authority a ON a.id = 'current' AND a.complete = 1
-WHERE b.world_id = $3 AND b.payload::jsonb->'reference' = $4::jsonb
-  AND NULLIF(b.payload::jsonb->'principal'->>'accountId', '') IS NOT NULL
+WHERE (($5 = 'world' AND EXISTS (
+          SELECT 1 FROM asset_world_bindings b
+          WHERE b.world_id = $3 AND b.revision_key = r.revision_key
+            AND b.manifest_sha256 = r.manifest_sha256 AND b.payload::jsonb->'reference' = $4::jsonb
+            AND NULLIF(b.payload::jsonb->'principal'->>'accountId', '') IS NOT NULL
+       )) OR ($5 = 'save' AND EXISTS (
+          SELECT 1 FROM asset_save_claims s
+          WHERE s.world_id = $3 AND s.status = 'published' AND s.payload::jsonb = $4::jsonb
+            AND concat('[',to_json(s.world_id)::text,',',to_json(s.save_id)::text,']') = $6
+       )))
   AND (SELECT complete FROM required_closure)
   AND (SELECT count(*) FROM dependencies) <= 10000
   AND (SELECT count(*) FROM declared_files) <= 20000

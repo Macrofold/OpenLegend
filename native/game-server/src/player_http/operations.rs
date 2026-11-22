@@ -2,14 +2,16 @@
 //! permitted read and all bytes are handed off under the same current grant.
 
 use super::{PlayerRoutes, access_failure, busy, failed, json_response, read_scope, wire};
-use crate::authority::Capability;
+use crate::authority::{AccessError, Capability};
 use crate::player_view::{
     AuthenticationMode, CheckpointContext, PauseReason, checkpoint_context, clock_parts,
     pause_reason,
 };
+use crate::store::assets::AssetRevision;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::Response;
+use openlegend_simulation::runtime::RuntimeError;
 use serde::Serialize;
 
 pub(super) mod access;
@@ -28,6 +30,10 @@ struct Operations<'a> {
     mode: AuthenticationMode,
     #[serde(skip_serializing_if = "Option::is_none")]
     checkpoint: Option<&'a CheckpointContext>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    presentation_release: Option<&'a AssetRevision>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    presentation_release_revision: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     access: Option<access::AccessSection<'a>>,
     clock: Clock<'a>,
@@ -51,32 +57,51 @@ struct Clock<'a> {
 }
 
 pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap) -> Response {
-    let Ok(_slot) = state.capacity.try_acquire() else {
+    let Ok(_slot) = state.capacity.clone().try_acquire_owned() else {
         return busy();
     };
     let authorized = match read_scope(&state.authority, &headers).await {
         Ok(scope) => scope,
         Err(error) => return access_failure(error),
     };
-    let manages_access = match state
-        .authority
-        .current_operations(&authorized, |_, caps, _| {
-            caps.contains(&Capability::ManageAccess)
-        }) {
-        Ok(allowed) => allowed,
-        Err(error) => return access_failure(error),
-    };
+    let (manages_access, manages_saves) =
+        match state
+            .authority
+            .current_operations(&authorized, |_, caps, _| {
+                (
+                    caps.contains(&Capability::ManageAccess),
+                    caps.contains(&Capability::Save),
+                )
+            }) {
+            Ok(allowed) => allowed,
+            Err(error) => return access_failure(error),
+        };
     let budget = state.game.host.budget();
     let Ok(_workspace) = budget.reserve(8192) else {
         return busy();
     };
-    let (clock, generation) = match state
+    let (clock, generation, artwork, artwork_revision) = match state
         .game
         .world
-        .capture(|world| {
+        .capture(move |world| {
+            let (reference, revision) = if manages_saves {
+                let (raw, revision) = world.saved_presentation_release();
+                (
+                    raw.map(AssetRevision::from_current)
+                        .transpose()
+                        .map_err(|_| {
+                            RuntimeError::application_refused("Invalid saved artwork identity")
+                        })?,
+                    Some(revision.unwrap_or(0)),
+                )
+            } else {
+                (None, None)
+            };
             Ok((
                 world.clock()?,
                 world.accepted_progress()?.generation.to_owned(),
+                reference,
+                revision,
             ))
         })
         .await
@@ -84,7 +109,6 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
         Ok(value) => value,
         Err(error) => return failed(error),
     };
-    let presentation = &state.game.view_policy().world;
     let save_failed = state.saves.has_failed();
     let roster = if manages_access {
         let candidates = match state
@@ -103,9 +127,21 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
     } else {
         None
     };
-    match state
-        .authority
-        .current_operations(&authorized, |scope, capabilities, local| {
+    let artwork = match (artwork, state.game.installed_assets()) {
+        (Some(reference), Some(installed)) => match installed
+            .permitted_release(&state.game.store, &authorized.scope.account_id, &reference)
+            .await
+        {
+            Ok(Some(_)) => Some(reference),
+            Ok(None) => None,
+            Err(_) => return busy(),
+        },
+        _ => None,
+    };
+    let world = state.game.world.clone();
+    let disclose = move || match state.authority.current_operations(
+        &authorized,
+        |scope, capabilities, local| {
             let Ok(key) = scope.key() else {
                 return busy();
             };
@@ -117,6 +153,7 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
             } else {
                 None
             };
+            let presentation = &state.game.view_policy().world;
             let (day, hour) = clock_parts(clock.at, presentation.offset_hours);
             let value = Operations {
                 ok: true,
@@ -132,6 +169,8 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
                     AuthenticationMode::Oidc
                 },
                 checkpoint: context.as_ref(),
+                presentation_release: artwork.as_ref(),
+                presentation_release_revision: artwork_revision,
                 access: roster
                     .as_ref()
                     .map(|roster| access::AccessSection::new(roster, &scope.account_id)),
@@ -147,12 +186,26 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
                 },
                 maintenance: (),
             };
-            match wire::encode(&value, b"", b"", budget) {
+            match wire::encode(&value, b"", b"", state.game.host.budget()) {
                 Ok(bytes) => json_response(StatusCode::OK, bytes),
                 Err(_) => busy(),
             }
-        }) {
+        },
+    ) {
         Ok(response) => response,
         Err(error) => access_failure(error),
+    };
+    match artwork_revision {
+        Some(expected) => match world
+            .capture(move |world| {
+                Ok((world.saved_presentation_release().1.unwrap_or(0) == expected).then(disclose))
+            })
+            .await
+        {
+            Ok(Some(response)) => response,
+            Ok(None) => access_failure(AccessError::Changed),
+            Err(error) => failed(error),
+        },
+        None => disclose(),
     }
 }

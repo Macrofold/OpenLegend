@@ -1189,6 +1189,11 @@ impl OperationCursor {
                 _ => Err(DriveError::StaleResponse),
             },
             Self::HostControl(cursor) => match route {
+                None if cursor.updates_presentation() && answer.is_none() => {
+                    Ok(Poll::Complete(DriverCompletion::Operation(
+                        CompletedOperation::HostControl(cursor.finish_presentation(budget)?),
+                    )))
+                }
                 None => {
                     let kind = cursor.kind();
                     let request = cursor.format(core)?;

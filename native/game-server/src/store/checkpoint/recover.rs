@@ -8,6 +8,7 @@ use super::{AdministrativeCheckpoint, read_recovery_authority, reconcile_history
 use crate::authority::{RequestScope, assert_saved_grant};
 use crate::command_epoch::RequestIdentity;
 use crate::language::LanguageProvider;
+use crate::store::assets::AssetRevision;
 use crate::store::read::admitted_query;
 use crate::store::{
     CommitError, DurableHead, Store, StoreError, StoreResult, durable_head, sql_ordinal,
@@ -108,6 +109,7 @@ impl Store {
         definitions: RuntimeInstallDefinitions,
         definition_custody: ByteReservation,
         language: Arc<LanguageProvider>,
+        installed_release: &AssetRevision,
         operator: Option<&RequestScope>,
     ) -> Result<RecoveredCheckpoint, CommitError> {
         if Uuid::parse_str(operation_id).is_err() {
@@ -215,6 +217,7 @@ impl Store {
                 definitions,
                 definition_custody,
                 &language,
+                installed_release,
                 operator,
                 before_load.as_ref(),
             )
@@ -335,6 +338,7 @@ impl Store {
         definitions: RuntimeInstallDefinitions,
         definition_custody: ByteReservation,
         language: &LanguageProvider,
+        installed_release: &AssetRevision,
         operator: Option<&RequestScope>,
         before_load: Option<&BeforeLoad>,
     ) -> StoreResult<Adoption> {
@@ -366,8 +370,15 @@ impl Store {
         };
         let (mut opening, history) = slot.into_opening(self, replacement.clone())?;
         opening.prepare_language(language, &self.budget)?;
-        self.recovery_asset_binding(tx, &replacement.world_id, &slot_id, &opening)
-            .await?;
+        self.recovery_asset_binding(
+            tx,
+            &replacement.world_id,
+            &slot_id,
+            &opening,
+            installed_release,
+            operator,
+        )
+        .await?;
         reconcile_history_positions(
             self,
             tx,

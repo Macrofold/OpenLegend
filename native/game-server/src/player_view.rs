@@ -619,6 +619,11 @@ impl PreparedPlayerView {
         store: &crate::store::Store,
     ) -> Result<(), ViewError> {
         let source = self.read.view_source().map_err(runtime)?;
+        if self.owned.host.access.can_manage_saves {
+            // The operator can replace an old or withdrawn installation
+            // using its revision without receiving its private identity.
+            self.owned.host.presentation_release_revision = Some(source.presentation_release_revision.unwrap_or(0));
+        }
         let (Some(raw), Some(installed)) = (source.presentation_release(), installed) else {
             return Ok(());
         };

@@ -24,7 +24,7 @@ pub(super) struct ControlAnswer {
     pub message: JsText,
 }
 pub(super) struct HostControlCursor {
-    request: ControlFormat,
+    request: Option<ControlFormat>,
     started: bool,
     _storage: ByteReservation,
 }
@@ -50,17 +50,31 @@ impl HostControlCursor {
             return Err(DriveError::MalformedResponse);
         }
         Ok(Self {
-            request: ControlFormat {
+            request: Some(ControlFormat {
                 binding,
                 paused,
                 speed,
-            },
+            }),
             started: false,
             _storage: budget
                 .reserve(size_of::<Self>())
                 .map_err(|_| DriveError::Capacity)?,
         })
     }
+    pub(super) fn presentation(budget: &ByteBudget) -> Result<Self, DriveError> {
+        Ok(Self {
+            request: None,
+            started: false,
+            _storage: budget
+                .reserve(size_of::<Self>())
+                .map_err(|_| DriveError::Capacity)?,
+        })
+    }
+
+    pub(super) fn updates_presentation(&self) -> bool {
+        self.request.is_none()
+    }
+
     pub(super) fn format(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -68,20 +82,41 @@ impl HostControlCursor {
         if self.started {
             return Err(DriveError::StaleResponse);
         }
-        set_paused(core, self.request.paused);
+        let request = self.request.as_ref().ok_or(DriveError::StaleResponse)?;
+        set_paused(core, request.paused);
         self.started = true;
-        Ok(&self.request)
+        Ok(request)
     }
     pub(super) fn complete(
         &mut self,
         answer: ControlAnswer,
         budget: &ByteBudget,
     ) -> Result<CompletedHostControl, DriveError> {
-        if !self.started || answer.binding != self.request.binding {
+        if !self.started
+            || self
+                .request
+                .as_ref()
+                .is_none_or(|request| answer.binding != request.binding)
+        {
             return Err(DriveError::StaleResponse);
         }
+        Self::completed(answer.message, budget)
+    }
+
+    pub(super) fn finish_presentation(
+        &mut self,
+        budget: &ByteBudget,
+    ) -> Result<CompletedHostControl, DriveError> {
+        if self.started || !self.updates_presentation() {
+            return Err(DriveError::StaleResponse);
+        }
+        self.started = true;
+        Self::completed(JsText::default(), budget)
+    }
+
+    fn completed(message: JsText, budget: &ByteBudget) -> Result<CompletedHostControl, DriveError> {
         let bytes = size_of::<CompletedHostControl>()
-            .checked_add(answer.message.heap_bytes().ok_or(DriveError::Capacity)?)
+            .checked_add(message.heap_bytes().ok_or(DriveError::Capacity)?)
             .and_then(|n| n.checked_add("control".len()))
             .ok_or(DriveError::Capacity)?;
         let storage = budget.reserve(bytes).map_err(|_| DriveError::Capacity)?;
@@ -91,7 +126,7 @@ impl HostControlCursor {
                 outputs: None,
                 ok: true,
                 code: "control".to_owned(),
-                message: answer.message,
+                message,
                 recipe_id: None,
                 item_id: None,
                 entity_id: None,

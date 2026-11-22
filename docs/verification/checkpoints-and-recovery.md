@@ -144,4 +144,4 @@ The November 21, 2026 browser, held-generation and stopped-server cases used sou
 
 Final shutdown reports after releasing the listener, retained requests and shared PostgreSQL Store. Checkpoint handoff reports separately because the same Store remains open for the replacement world. The [activity-learning and maintenance replay](attention-and-memory-core.md) confirmed zero transient, resident and pending-save reservations at final shutdown, including a recovered checkpoint and continued play.
 
-Retained asset releases, the other World operations sections and the managed due-capture comparison remain open under [NSC04-R5](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
+[Retained artwork recovery](game-asset-storage.md#stand-alone-world-artwork-selection) now covers a mismatched installed release and restoring exact saved pins after catalog permission was withdrawn. Other World operations sections and the managed due-capture comparison remain open under [NSC04-R5](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).

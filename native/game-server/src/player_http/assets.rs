@@ -52,6 +52,8 @@ const TRANSFERS: usize = 16;
 const TRANSFER_TIMEOUT: Duration = Duration::from_secs(300);
 type AssetError = Box<dyn Error + Send + Sync>;
 
+pub(super) mod selection;
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct AssetIndex {
@@ -216,30 +218,24 @@ async fn selected_asset(
     permit: OwnedSemaphorePermit,
     deadline: Instant,
 ) -> Response {
-    let Some(file) = state
-        .installed
-        .index
-        .files
-        .get(&path)
-        .filter(|file| file.bytes <= state.installed.max_object_bytes)
-    else {
-        return failure(
-            StatusCode::NOT_FOUND,
-            "Asset is not in the selected release.",
-        );
-    };
     let Some(token) = read_cookie(&headers, "ol_session") else {
         return denied("This asset requires current project access.");
     };
     let Ok(access) = state.authority.asset_access(token).await else {
         return denied("This asset requires current project access.");
     };
+    let file = state
+        .installed
+        .index
+        .files
+        .get(&path)
+        .filter(|file| file.bytes <= state.installed.max_object_bytes);
     let current = || {
-        state.store.permit_installed_asset(
-            access.account_id(),
-            state.installed.release(),
-            Some(file),
-        )
+        // The release check also protects a missing path from exposing the
+        // private index to an account that cannot use it.
+        state
+            .store
+            .permit_installed_asset(access.account_id(), state.installed.release(), file)
     };
     let generation = match current().await {
         Ok(Some(generation)) => generation,
@@ -247,6 +243,17 @@ async fn selected_asset(
         Err(_) => return unavailable(),
     };
     let changed = || denied("Access to this asset changed during preparation.");
+    let Some(file) = file else {
+        return state
+            .authority
+            .disclose_asset(&access, || {
+                failure(
+                    StatusCode::NOT_FOUND,
+                    "Asset is not in the selected release.",
+                )
+            })
+            .unwrap_or_else(|_| changed());
+    };
     if pins
         .release
         .as_ref()
@@ -256,10 +263,15 @@ async fn selected_asset(
             .as_ref()
             .is_some_and(|value| value != &file.sha256)
     {
-        return failure(
-            StatusCode::CONFLICT,
-            "The selected asset release changed. Reload the page.",
-        );
+        return state
+            .authority
+            .disclose_asset(&access, || {
+                failure(
+                    StatusCode::CONFLICT,
+                    "The selected asset release changed. Reload the page.",
+                )
+            })
+            .unwrap_or_else(|_| changed());
     }
     let tag = format!("\"{}\"", file.sha256);
     let tag = tag.as_str();

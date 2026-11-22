@@ -137,6 +137,12 @@ async fn serve_with_recovery(
     let socket = listen.into_std()?;
     let custody = game.game.host.budget().clone();
     let loads = game.loads.clone();
+    let installed_release = game
+        .game
+        .installed_assets()
+        .ok_or("The listener has no installed artwork index")?
+        .release()
+        .clone();
     let result = async {
         let mut game = game;
         loop {
@@ -152,6 +158,7 @@ async fn serve_with_recovery(
                     &request.slot,
                     request.id,
                     &request.authorized.scope,
+                    &installed_release,
                 )
                 .await;
             let refused = match outcome {

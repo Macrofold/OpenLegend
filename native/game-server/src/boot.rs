@@ -122,6 +122,13 @@ pub async fn recover_checkpoint(
     let budget = ByteBudget::new(TRANSIENT_BYTES);
     let (definitions, custody) = read_definitions(release, &manifest, &budget)?;
     let language = Arc::new(LanguageProvider::open(&release.join("language"), &budget)?);
+    let installed = InstalledAssets::load(
+        &release.join("assets.json"),
+        &manifest.assets_sha256,
+        None,
+        manifest.asset_max_object_bytes,
+        &budget,
+    )?;
     let store = open_store(release, &manifest, database, &budget, false).await?;
     let recovered = store
         .recover_checkpoint(
@@ -132,6 +139,7 @@ pub async fn recover_checkpoint(
             definitions,
             custody,
             language,
+            installed.release(),
             None,
         )
         .await?;
@@ -204,6 +212,7 @@ impl StartupStorage {
         slot: &str,
         operation: uuid::Uuid,
         scope: &crate::authority::RequestScope,
+        installed_release: &crate::store::assets::AssetRevision,
     ) -> Result<(), crate::store::CommitError> {
         let (definitions, custody, language) = (|| -> Result<_, BootError> {
             let budget = self.host.budget();
@@ -215,10 +224,19 @@ impl StartupStorage {
             eprintln!("Cannot read installed definitions for checkpoint load: {error}");
             crate::store::CommitError::RolledBack(StoreError::InvalidRecord)
         })?;
-        self.store.recover_checkpoint(
-            directory, slot, None, &operation.to_string(), definitions, custody, language,
-            Some(scope),
-        ).await?;
+        self.store
+            .recover_checkpoint(
+                directory,
+                slot,
+                None,
+                &operation.to_string(),
+                definitions,
+                custody,
+                language,
+                installed_release,
+                Some(scope),
+            )
+            .await?;
         Ok(())
     }
 

@@ -13,6 +13,7 @@ pub(crate) struct HostSave<'a> {
     pub settings: &'a InstalledHostSettings,
     pub milestones: &'a super::milestones::MilestoneJournal,
     pub controls: bool,
+    pub presentation: bool,
 }
 
 /// One complete gameplay delta for the existing SQL writer. Each semantic
@@ -265,11 +266,21 @@ pub(crate) fn encode_root_changes(
     output.write_if_changed("world_settings", placement, &body, template)?;
     if let Some(host) = host {
         let template = state.records.host_settings_template();
+        let selected = host
+            .presentation
+            .then(|| host.settings.presentation_release.as_deref())
+            .flatten();
+        let selection_bytes = selected
+            .map(|raw| crate::experience::encoded_body_bound(raw.get()).map_err(|_| error()))
+            .transpose()?
+            .unwrap_or(0);
         let _host = budget
             .reserve(
                 crate::experience::encoded_body_bound(template)
                     .map_err(|_| error())?
                     .checked_add("speed".len() + "manuallyPaused".len())
+                    .and_then(|n| n.checked_add(selection_bytes))
+                    .and_then(|n| n.checked_add(if host.presentation { 128 } else { 0 }))
                     .ok_or_else(error)?,
             )
             .map_err(|_| error())?;
@@ -291,8 +302,22 @@ pub(crate) fn encode_root_changes(
                 host.settings.actor_milestones.is_some(),
             );
         }
-        // Presentation stays with its operational owner. Only actual changed
-        // controls and the journaled milestone-presence marker enter this root.
+        if let Some(selected) = selected {
+            let revision = host
+                .settings
+                .presentation_release_revision
+                .ok_or_else(error)?;
+            set(
+                &mut body,
+                "presentationRelease",
+                serde_json::from_str(selected.get()).map_err(|_| error())?,
+            );
+            set(
+                &mut body,
+                "presentationReleaseRevision",
+                SqlCell::from(revision),
+            );
+        }
         let placement = state
             .records
             .placement("data_world", "[]")

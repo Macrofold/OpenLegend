@@ -45,4 +45,17 @@ impl NativeWorldSession {
             .begin_control(paused, speed, manually_paused)
             .map_err(failure)
     }
+
+    /// Install the trusted application owner's exact art choice under the
+    /// same protected cut as other host settings. Gameplay is untouched.
+    pub fn begin_presentation_release(
+        &mut self,
+        reference: Box<serde_json::value::RawValue>,
+        expected_revision: u64,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        self.session
+            .begin_presentation_release(reference, expected_revision)
+            .map_err(failure)
+    }
 }

@@ -9,7 +9,8 @@ use crate::administration::InstalledHostSettings;
 use crate::execution::{CandidateJournal, CoreMutation, ExecutionError};
 use crate::experience::{CapturedHistoryInput, HistorySettings, capture_history_input};
 use crate::host::{
-    ByteBudget, CandidateFence, CandidateKey, CandidatePhase, FenceError, ResidentReservation,
+    ByteBudget, ByteReservation, CandidateFence, CandidateKey, CandidatePhase, FenceError,
+    ResidentReservation,
 };
 use crate::install::SelectedInstallation;
 use crate::received::TemporalSaveLimits;
@@ -231,6 +232,7 @@ struct HostControlSnapshot {
     speed: f64,
     manually_paused: bool,
     milestones: super::milestones::MilestoneJournal,
+    presentation: Option<Box<(crate::administration::SavedPresentation, ByteReservation)>>,
 }
 
 pub(crate) struct Session {
@@ -781,6 +783,59 @@ impl Session {
         self.host.manually_paused = manually_paused;
         Ok(key)
     }
+
+    /// The application checks the exact installed release and owns its
+    /// catalog permission. The private candidate owns only the saved choice.
+    pub(crate) fn begin_presentation_release(
+        &mut self,
+        reference: Box<serde_json::value::RawValue>,
+        expected_revision: u64,
+    ) -> Result<CandidateKey, SessionError> {
+        if !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        if self.host.presentation_release_revision.unwrap_or(0) != expected_revision
+            || expected_revision >= crate::identity::MAX_SAFE_INTEGER
+        {
+            return Err(FenceError::Stale.into());
+        }
+        let workspace = self
+            .budget
+            .reserve(std::mem::size_of::<(
+                crate::administration::SavedPresentation,
+                ByteReservation,
+            )>())
+            .map_err(|_| ExecutionError::Capacity)?;
+        let body = self
+            .budget
+            .reserve(reference.get().len())
+            .map_err(|_| ExecutionError::Capacity)?;
+        let storage = self
+            .budget
+            .adopt_backing(body)
+            .map_err(|_| ExecutionError::Capacity)?;
+        let cursor = super::host_control::HostControlCursor::presentation(&self.budget)?;
+        let (key, mut journal) = self.begin()?;
+        let mut core = CoreMutation {
+            state: &mut self.simulation.state,
+            journal: &mut journal,
+        };
+        let driver = OperationDriver::host_control(&mut core, cursor, &self.budget);
+        let key = self.install_driver(key, journal, driver, false)?;
+        let before = self
+            .host_before
+            .as_mut()
+            .expect("host candidate has a snapshot");
+        let original = self
+            .host
+            .replace_presentation(crate::administration::SavedPresentation {
+                reference: Some(reference),
+                revision: Some(expected_revision + 1),
+                storage: Some(storage),
+            });
+        before.presentation = Some(Box::new((original, workspace)));
+        Ok(key)
+    }
     pub(crate) fn begin_npc_intake(
         &mut self,
         request: super::npc_intake::NpcIntakeRequest,
@@ -1047,6 +1102,7 @@ impl Session {
             speed: self.host.speed,
             manually_paused: self.host.manually_paused,
             milestones: super::milestones::MilestoneJournal::new(&self.host),
+            presentation: None,
         });
         Ok((key, journal))
     }
@@ -1252,20 +1308,24 @@ impl Session {
                         &self.simulation.fence,
                         key,
                         {
-                            let controls = matches!(
-                                &result,
-                                CompletedOperation::Restore(_) | CompletedOperation::HostControl(_)
-                            );
-                            let milestones = &self
-                                .host_before
-                                .as_ref()
-                                .ok_or(ExecutionError::Invariant)?
-                                .milestones;
-                            (controls || milestones.changed()).then_some(super::save::HostSave {
-                                settings: &self.host,
-                                milestones,
-                                controls,
-                            })
+                            let host_before =
+                                self.host_before.as_ref().ok_or(ExecutionError::Invariant)?;
+                            let presentation = host_before.presentation.is_some();
+                            let controls = !presentation
+                                && matches!(
+                                    &result,
+                                    CompletedOperation::Restore(_)
+                                        | CompletedOperation::HostControl(_)
+                                );
+                            let milestones = &host_before.milestones;
+                            (controls || presentation || milestones.changed()).then_some(
+                                super::save::HostSave {
+                                    settings: &self.host,
+                                    milestones,
+                                    controls,
+                                    presentation,
+                                },
+                            )
                         },
                         protected.then_some(self.temporal_save_limits),
                         source_plan,
@@ -1499,6 +1559,10 @@ impl Session {
         if let Some(mut before) = self.host_before.take() {
             self.host.speed = before.speed;
             self.host.manually_paused = before.manually_paused;
+            if let Some(presentation) = before.presentation.take() {
+                let (original, _workspace) = *presentation;
+                self.host.replace_presentation(original);
+            }
             if let Err(error) = before.milestones.rollback(&mut self.host) {
                 self.host_before = Some(before);
                 self.simulation.fence.poison();

@@ -40,6 +40,7 @@ mod inventory;
 mod known_places;
 mod operations;
 mod preview;
+mod save_access;
 mod view;
 
 const REQUEST_LIMIT: usize = 4096;
@@ -131,6 +132,8 @@ pub(crate) fn router(
         .route("/api/saves/delete", post(checkpoint::delete))
         .route("/api/saves/settings", post(checkpoint::settings))
         .route("/api/saves/acknowledge", post(checkpoint::ack))
+        .route("/api/assets/install", post(assets::selection::install))
+        .route("/api/assets/selection-result", post(assets::selection::receipt))
         .route("/api/known-places", post(known_places::list))
         .route("/api/inventory/bindings", post(inventory::bindings))
         .route("/api/known-places/inspect", post(known_places::inspect))

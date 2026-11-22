@@ -81,6 +81,16 @@ pub(crate) struct InstalledHostSettings {
     // Drop owned strings/maps before releasing their canonical allocation.
     #[serde(skip)]
     _storage: Option<crate::host::ResidentReservation>,
+    #[serde(skip)]
+    presentation_storage: Option<crate::host::ResidentReservation>,
+}
+
+/// The host's protected update moves an entire exact reference and its
+/// allocation custody together. It is never an actor or geometry product.
+pub(crate) struct SavedPresentation {
+    pub(crate) reference: Option<Box<serde_json::value::RawValue>>,
+    pub(crate) revision: Option<u64>,
+    pub(crate) storage: Option<crate::host::ResidentReservation>,
 }
 
 pub(crate) fn read_host_settings(
@@ -116,11 +126,12 @@ pub(crate) fn read_host_settings(
     {
         return Err(InstallError::CurrentFormat);
     }
+    let presentation_bytes = settings
+        .presentation_release
+        .as_ref()
+        .map_or(0, |raw| raw.get().len());
     let bytes = heap_sum([
-        settings
-            .presentation_release
-            .as_ref()
-            .map_or(0, |raw| raw.get().len()),
+        presentation_bytes,
         settings
             .actor_milestones
             .heap_bytes()
@@ -128,6 +139,16 @@ pub(crate) fn read_host_settings(
     ])
     .ok_or(InstallError::Capacity)?;
     decoded.resize(bytes).map_err(|_| InstallError::Capacity)?;
+    if presentation_bytes != 0 {
+        let owned = decoded
+            .split_off(presentation_bytes)
+            .map_err(|_| InstallError::Capacity)?;
+        settings.presentation_storage = Some(
+            budget
+                .adopt_backing(owned)
+                .map_err(|_| InstallError::Capacity)?,
+        );
+    }
     settings._storage = Some(
         budget
             .adopt_backing(decoded)
@@ -222,6 +243,14 @@ pub(crate) fn read_host_settings(
 }
 
 impl InstalledHostSettings {
+    pub(crate) fn replace_presentation(&mut self, next: SavedPresentation) -> SavedPresentation {
+        SavedPresentation {
+            reference: std::mem::replace(&mut self.presentation_release, next.reference),
+            revision: std::mem::replace(&mut self.presentation_release_revision, next.revision),
+            storage: std::mem::replace(&mut self.presentation_storage, next.storage),
+        }
+    }
+
     pub(crate) fn storage_bytes(&self) -> usize {
         self._storage
             .as_ref()
