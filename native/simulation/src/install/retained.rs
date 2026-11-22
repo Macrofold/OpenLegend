@@ -434,6 +434,7 @@ pub(crate) fn install_retained(
     activity: &crate::activity::ActivityLimits,
     profile: (&str, u64),
     family_pins: &[crate::values::DefinitionPin],
+    attributes: &dyn crate::status::AttributeDefinitions,
     maximum_extent: f64,
     clock_offset: f64,
     finite_rain: Option<&crate::weather::FiniteRainInput>,
@@ -655,6 +656,8 @@ pub(crate) fn install_retained(
         &item_input,
         assembly_families.as_ref(),
         exposure.as_ref().map(|(_, canonical)| canonical),
+        attributes,
+        maximum_extent,
         budget,
     )?;
     std::mem::drop(exposure);
@@ -946,6 +949,8 @@ fn prepare_items(
     input: &CanonicalInput,
     assembly: Option<&RetainedMap>,
     exposure: Option<&IndexMap<String, &RawValue>>,
+    attributes: &dyn crate::status::AttributeDefinitions,
+    maximum_extent: f64,
     budget: &crate::host::ByteBudget,
 ) -> Result<
     (
@@ -962,6 +967,13 @@ fn prepare_items(
         )
         .map_err(|_| InstallError::Capacity)?;
     let mut items = IndexMap::new();
+    let mut laws = crate::material_exposure::ExposureLaws::new(
+        assembly.map_or(0, RetainedMap::len),
+        assembly.into_iter().flat_map(|rows| rows.entries().map(|(key, _)| key)),
+        maximum_extent,
+        attributes,
+        budget,
+    )?;
     items
         .try_reserve(definitions.len())
         .map_err(|_| InstallError::Capacity)?;
@@ -975,7 +987,7 @@ fn prepare_items(
         let value: ItemDefinitionFields =
             serde_json::from_str(source).map_err(|_| InstallError::DefinitionBody)?;
         let exact = canonical.get(id).ok_or(InstallError::DefinitionBody)?.get();
-        let value = ItemDefinitionRead::from_verified(id, exact, value, assembly, exposure, budget)?;
+        let value = ItemDefinitionRead::from_verified(id, exact, value, assembly, exposure, &mut laws, budget)?;
         preparation
             .resize(
                 id.len()

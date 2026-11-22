@@ -4671,7 +4671,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         ]),
         inventoryReadRevision: {
           bindings: inventory.bindingRevision,
-          details: inventory.detailRevision,
+          details: [inventory.detailRevision, 0, 0],
           disclosure: permittedSourceHandle({ id: this.worldId }, scope.actorId, [
             'inventory-disclosure',
             undefined,

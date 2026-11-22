@@ -43,6 +43,7 @@ mod hearth;
 mod inventory;
 pub(crate) mod gift;
 mod item_holds;
+mod material;
 pub(crate) use inventory::can_receive_trade_container;
 pub(crate) use inventory::partitionable_stock;
 pub use inventory::{OwnedArrangement, OwnedMove, OwnedStockLot, OwnedStockSelection};
@@ -1325,6 +1326,8 @@ struct WindowClock {
 enum Undo {
     Gift(crate::handover::GiftUndo),
     InventoryAvailability(inventory::ContentsBefore),
+    MaterialWet { item: EntityHandle, before: bool },
+    MaterialDetails { root: EntityHandle, before: u64 },
     ItemHoldAdded { id: String, ordinal: u64, parent_present: bool },
     ItemHoldEnded {
         key: String,
@@ -1892,6 +1895,11 @@ impl PhysicalJournal {
             let undo = self.undo.pop().ok_or(ExecutionError::Invariant)?;
             match undo {
                 Undo::InventoryAvailability(before) => before.restore(state)?,
+                Undo::MaterialWet { item, before } => inventory.exposure.set_wet(item, before),
+                Undo::MaterialDetails { root, before } => {
+                    let entity = state.entities.resolve(root).ok_or(ExecutionError::Invariant)?;
+                    inventory.set_material_detail_revision(&entity.id, before)?;
+                }
                 Undo::ItemHoldAdded { id, ordinal, parent_present } => {
                     state.holds.remove(&id)?;
                     state.holds.coverage.next_ordinal = ordinal;

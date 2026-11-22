@@ -301,7 +301,7 @@ function publicView(): import('@open-legend/protocol').GameView {
       inventory: [],
       equipmentPorts: [],
       inventoryRevision: 1,
-      inventoryReadRevision: { bindings: 1, details: 1, disclosure: 'fixture-inventory' },
+      inventoryReadRevision: { bindings: 1, details: [1, 0, 0], disclosure: 'fixture-inventory' },
       memoryRevision: 'memory:1',
       canUseInventory: true,
       actionAttempts: [],

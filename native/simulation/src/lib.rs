@@ -38,6 +38,7 @@ pub(crate) mod knowledge;
 pub mod language;
 pub mod movement;
 mod manufacturing;
+mod material_exposure;
 mod consumption;
 mod ground_items;
 pub mod narration;

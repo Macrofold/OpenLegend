@@ -122,7 +122,7 @@ pub struct CheckpointContext {
 #[derive(Serialize, PartialEq)]
 pub struct InventoryReadRevision {
     pub bindings: u64,
-    pub details: u64,
+    pub details: [u64; 3],
     pub disclosure: String,
 }
 

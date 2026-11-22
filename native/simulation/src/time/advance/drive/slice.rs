@@ -159,6 +159,15 @@ impl AdvanceCursor {
         if !(seconds > 0.0) || !seconds.is_finite() {
             return Err(ExecutionError::Invariant.into());
         }
+        let end_at = endpoint.unwrap_or(now + seconds);
+        let end_incident = if end_at >= now + weather.seconds_to_edge {
+            core.state.weather_at(end_at).incident
+        } else {
+            weather.incident
+        };
+        self.material = crate::material_exposure::MaterialSlice::capture(
+            core, weather.incident, end_incident, budget,
+        )?;
         self.working = Some(SliceActions::capture(core, participants, budget)?);
         // Eligibility is reconciled after any command/status work and before
         // the saved countdown receives time. No new decision receives a draw.
@@ -179,7 +188,7 @@ impl AdvanceCursor {
             )?;
             advance_wander_clock(&mut core.physical(), &id, seconds)?;
         }
-        core.state.physical.header.sim_time = endpoint.unwrap_or(now + seconds);
+        core.state.physical.header.sim_time = end_at;
         expire_sensory_awareness(core)?;
         for handle in participants.animals() {
             let entity = core
@@ -321,6 +330,11 @@ impl AdvanceCursor {
         budget: &ByteBudget,
     ) -> Result<Progress, AdvanceError> {
         let Some(handle) = self.choices.get(self.next).copied() else {
+            if let Some(material) = self.material.take() {
+                // The admitted openings have no installed assembly panels.
+                // Static landscape blockers carry no rain transmission law.
+                material.settle(core, self.seconds, budget)?;
+            }
             self.phase = Phase::Endpoint;
             return Ok(Progress::Continue);
         };

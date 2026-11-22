@@ -9,7 +9,7 @@ use axum::body::Bytes;
 use openlegend_simulation::{
     encoding::{js_trim, json_record, sha256_hex},
     host::{ByteBudget, ByteReservation},
-    install::{OwnedItem, equipment_ports_conflict},
+    install::{MaterialCondition, OwnedItem, equipment_ports_conflict},
     runtime::{
         DirectInventory, InspectedRecipeRecord, InventoryContainer, InventoryCrumb, RuntimeError,
     },
@@ -149,6 +149,8 @@ struct Item<'a> {
     category: &'static str,
     description: &'a JsText,
     tags: &'a [JsText],
+    #[serde(skip_serializing_if = "Option::is_none")]
+    material_condition: Option<MaterialCondition<'a>>,
     actions: Vec<Action<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     characteristics: Option<[HeldPlacement; 1]>,
@@ -683,6 +685,7 @@ impl PlayerScenePolicy {
                 None => None,
             };
             items.push(Item {
+                material_condition: entry.material_condition,
                 lot,
                 individual: item.individual,
                 art: self.observed.item_art.get(item.definition_id),

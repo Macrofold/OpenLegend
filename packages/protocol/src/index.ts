@@ -1226,7 +1226,11 @@ export interface GameView {
     history?: string;
     inventory: InventoryItemBinding[];
     /** Scoped refresh hints, never custody, disclosure or action authority. */
-    inventoryReadRevision: { bindings: number; details: number; disclosure: string };
+    inventoryReadRevision: {
+      bindings: number;
+      details: readonly [inventory: number, ownedMaterial: number, inspectedMaterial: number];
+      disclosure: string;
+    };
     /** The current body's installed places and actual attachments, including empty places. */
     equipmentPorts: Array<{
       id: string;

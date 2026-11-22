@@ -125,6 +125,7 @@ impl CoreMutation<'_> {
                 })));
         }
         let detached = self.state.inventory.detach_loose_item(source_id, child)?;
+        let material = detached.material;
         self.journal
             .physical
             .undo
@@ -151,6 +152,7 @@ impl CoreMutation<'_> {
             &self.state.physical.entities,
             destination_id,
             child,
+            material,
             &self.journal.budget,
         )?;
         let entities = &mut self.state.physical.entities;

@@ -277,6 +277,9 @@ impl CoreMutation<'_> {
             &item,
         )
         .map_err(|_| ExecutionError::Invariant)?;
+        let definition = item.item.as_ref().and_then(|lot| self.state.installed.retained.items.get(&lot.definition_pin.id))
+            .ok_or(ExecutionError::Invariant)?;
+        let material = crate::material_exposure::MaterialPresence::of(&item, definition.exposure.as_ref())?;
         let previous_contents = destination.inventory_revision;
         let previous_membership = self.state.administration.object_membership.revision;
         let contents = next_revision(previous_contents.unwrap_or_default())?;
@@ -285,7 +288,7 @@ impl CoreMutation<'_> {
         self.journal.physical.reserve(size_of::<InventoryUndo>())?;
         self.state
             .inventory
-            .add_item(&self.state.physical.entities, parent_id, child, &budget)?;
+            .add_item(&self.state.physical.entities, parent_id, child, material, &budget)?;
         self.journal
             .physical
             .undo

@@ -33,7 +33,7 @@ pub(crate) fn can_receive_trade_container(
                 .item
                 .as_ref()
                 .and_then(|lot| definitions.get(&lot.definition_pin.id))
-                .is_some_and(|definition| definition.exposed_material)
+                .is_some_and(|definition| definition.exposure.is_some())
         })
 }
 

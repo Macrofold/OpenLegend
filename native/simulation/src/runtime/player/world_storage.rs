@@ -25,6 +25,7 @@ pub struct InspectedItemRead<'a> {
     pub category: &'static str,
     pub description: Option<&'a crate::text::JsText>,
     pub properties: &'a [crate::text::JsText],
+    pub material_condition: Option<crate::install::MaterialCondition<'a>>,
     pub container: bool,
     pub recipe_record: Option<InspectedRecipeRecord<'a>>,
 }
@@ -173,6 +174,9 @@ impl<'a> RuntimeWorldStorage<'a> {
             category: definition.category,
             description: definition.description.as_ref(),
             properties: &definition.properties,
+            material_condition: crate::material_exposure::material_condition(
+                self.state, body, definition.exposure.as_ref(),
+            ).map_err(failure)?,
             container: definition.is_container(),
             recipe_record: InspectedRecipeRecord::from_definition(
                 self.state, self.actor, definition,
@@ -181,7 +185,7 @@ impl<'a> RuntimeWorldStorage<'a> {
     }
 }
 
-fn observed_world_storage<'a>(
+pub(super) fn observed_world_storage<'a>(
     state: &'a SimulationState,
     actor: &str,
     contact: &PlayerObservedBody<'_>,

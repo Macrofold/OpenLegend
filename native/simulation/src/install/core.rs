@@ -321,7 +321,7 @@ fn assemble_selected_core(
         .transpose().map_err(|_| InstallError::CurrentFormat)?;
     let (retained, finite_rain) = install_retained(
         &mut import, &mut children, retained, &schema, &activity, (&content.profile.id, content.profile.version),
-        &meanings.manifest.recipe_families, spatial.max_extent,
+        &meanings.manifest.recipe_families, &meanings.attributes, spatial.max_extent,
         meanings.status_policy.clock_offset_hours, finite_rain_input.as_ref(), budget,
     )?;
     drop((_finite_rain_preparation, finite_rain_input, finite_rain_row));

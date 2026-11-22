@@ -455,8 +455,17 @@ includes the disposable Source inputs, Rust tree `14c9edcc3a53`, executable SHA-
 PostgreSQL databases were removed, and successful Rust shutdowns released all
 tracked allocation. Locked game-server build, TypeScript types, formatting and
 network boundaries passed. This is local correctness evidence for clock and view
-continuation with Main's exact rain definition in a small scene. Material wetting,
-covered drying and their inspections remain the separate exposure journey.
+continuation with Main's exact rain definition in a small scene.
+
+### Material exposure and open Inventory in Rust — November 22, 2026
+
+The signed-in player carried prepared fiber directly and in an authored open woven basket. In separate current-format scenes, Source and Rust both walked into an actual finite shower, reached x16.7, and saved both lots wetting. Both lots dried at the installed rate after the shower expired. Another account could not read the basket. A second pair walked during Main's authored daily rain and saved through the 18:00 drying boundary. Each sample matched the installed rates at its own saved game time. The no-cover geometry also matched Source exactly on 2,003 motion and overlap inputs and 24,723 rain-fraction samples.
+
+Chromium kept the same fiber selected while the stationary player's Inventory stayed open through each daily edge. Both hosts refreshed the visible process with an ordinary inventory response. In a separate Rust case, a player dropped fiber into a visible pile and inspected it. Only that player received the pile's detail updates. The earlier Rust build refused inventory reads during sleep but still exposed changes to the hidden pile through the state stream. The final build stopped publishing that pile's updates when sight was lost. Waking and inspecting the same pile showed the original fiber drying. Walking away and coming back also required fresh inspection.
+
+The accepted-cut stamp for each inventory root follows the same undo journal as the material write. It changes for a visible condition or wetting/drying change, leaving custody and action bindings independent. Ordinary dry intervals visit only wet stock. Material selection retains the world-authored dimensions, rates and wording. All these scenes have uncovered stock. Rust's [cutover scope](../../projects/rust-server-completion-feature-spec.md#rust-cutover-scope) defers assembly work, and its current installer refuses installed assembly panels. These checks do not qualify covered drying or the full Main performance case in SH12.
+
+The locked build used tree `65cc5b551c51…` and executable `26d85caf07175…`. TypeScript, affected formatting and network checks passed. Local archive `nsc04-rust-material-exposure-20261122`, manifest `b5ba2f7ef2a9…`, contains the raw gameplay, geometry and before-repair privacy cases. `nsc04-material-inventory-caller-20261122`, manifest `f8d364c1de35…`, contains both Chrome runs per host and the reviewed browser build. All named disposable databases were removed. Successful Rust listeners exited with zero tracked reservations. No local speed comparison or paid provider requests were made.
 
 ### Open basket runtime and known manufacture
 

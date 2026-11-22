@@ -29,7 +29,7 @@ pub(crate) use inventory::inventory_display_limit;
 pub(crate) use inventory::item_count_pin;
 pub(crate) use inventory::validate_item as validate_native_item;
 pub use inventory::{
-    DropOffer, InventoryDetail, OwnedContainer, OwnedItem, equipment_ports_conflict, shortcut_limit,
+    DropOffer, InventoryDetail, MaterialCondition, OwnedContainer, OwnedItem, equipment_ports_conflict, shortcut_limit,
 };
 pub(crate) use inventory::{
     accessible_bag, inventory_ancestor_limit, owned_item_ancestry, project_owned,

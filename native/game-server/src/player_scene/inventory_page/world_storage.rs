@@ -202,6 +202,7 @@ impl PlayerScenePolicy {
                 art: self.observed.item_art.get(item.lot.definition_id),
                 category: item.category,
                 description: item.description.unwrap_or(&blank),
+                material_condition: item.material_condition,
                 tags: item.properties,
                 actions,
                 characteristics: None,

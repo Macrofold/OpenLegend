@@ -15,7 +15,7 @@ use serde_json::value::RawValue;
 use std::mem::size_of;
 use std::sync::Arc;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub(crate) struct IncidentRain {
     pub(crate) min_x: f64,
     pub(crate) max_x: f64,

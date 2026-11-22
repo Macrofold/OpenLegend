@@ -159,6 +159,7 @@ pub struct RuntimePlayerViewSource {
     pub places_revision: u64,
     pub place_note_revision: u64,
     pub inventory_revision: u64,
+    pub inventory_detail_revision: [u64; 3],
     pub world_storage: Option<(String, u64)>,
     recent_story_age: f64,
     presentation_release: Option<Box<RawValue>>,
@@ -1155,7 +1156,7 @@ impl NativeWorldSession {
             .map_err(failure)?;
         let state = &simulation.state;
         let view_source = app_view
-            .then(|| capture_view_source(&self.session, state, actor, &self.budget))
+            .then(|| capture_view_source(&self.session, state, actor, &read, &self.budget))
             .transpose()?;
         let outings = if app_view && state.installed.travel && state.outings.has_rows() {
             crate::outings::view::PreparedOutings::prepare(state, actor, &self.budget).map_err(failure)?
@@ -1478,6 +1479,7 @@ fn capture_view_source(
     session: &crate::simulation::Session,
     state: &crate::simulation::SimulationState,
     actor: &str,
+    read: &AcceptedActorRead,
     budget: &ByteBudget,
 ) -> Result<RuntimePlayerViewSource, RuntimeError> {
     use crate::host::retained_size::map_storage;
@@ -1486,16 +1488,35 @@ fn capture_view_source(
         .actor_milestones
         .as_ref()
         .and_then(|rows| rows.get(actor));
-    let storage = state.physical.entities.get(actor)
+    let inspected_root = state.physical.entities.get(actor)
         .and_then(|body| body.actor.as_ref())
         .and_then(|body| body.inventory_inspection.as_ref())
-        .and_then(|page| page.container_id.as_deref())
-        .and_then(|root| crate::ground_items::inspection::WorldStorage::selected(state, actor, root));
+        .and_then(|page| page.container_id.as_deref());
+    let storage = if let Some(root) = inspected_root {
+        // A retained page does not disclose live details after its current
+        // contact is lost. Match the contact already prepared for this view.
+        PlayerPerception::new(&read.perception)
+            .map_err(failure)?
+            .bodies()
+            .flatten()
+            .find(|contact| contact.source_id == root)
+            .and_then(|contact| world_storage::observed_world_storage(state, actor, &contact))
+    } else {
+        None
+    };
     let world_storage = match storage {
         Some(storage) => storage.inspection(budget).map_err(failure)?
             .map(|page| (storage.root.id.as_str(), page.revision)),
         None => None,
     };
+    let inventory_revision = state.administration.object_membership.revision;
+    // The inspected root is already bound to this reader's current page,
+    // placement and privacy scope. No other pile's changes enter this view.
+    let inventory_detail_revision = [
+        inventory_revision,
+        state.inventory.material_detail_revision(actor),
+        world_storage.map_or(0, |(root, _)| state.inventory.material_detail_revision(root)),
+    ];
     let bytes = milestones
         .map_or(Some(0), |rows| {
             rows.keys()
@@ -1524,7 +1545,8 @@ fn capture_view_source(
         memory_cut: state.accepted_cut,
         places_revision: state.experience.known_place_revision(actor),
         place_note_revision: state.reception.actor_knowledge.place_revision(actor),
-        inventory_revision: state.administration.object_membership.revision,
+        inventory_revision,
+        inventory_detail_revision,
         world_storage: world_storage.map(|(root, revision)| (root.to_owned(), revision)),
         recent_story_age: state
             .installed

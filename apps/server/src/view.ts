@@ -496,7 +496,7 @@ export async function projectView(
     [inventoryBindingRevision, inventoryDetailRevision, inventoryDisclosureRevision],
     () => ({
       bindings: inventoryBindingRevision,
-      details: inventoryDetailRevision,
+      details: [inventoryDetailRevision, 0, 0] as const,
       disclosure: inventoryDisclosureRevision,
     }),
   );

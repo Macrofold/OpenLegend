@@ -187,7 +187,7 @@ impl ViewHostInput {
             },
             inventory: InventoryReadRevision {
                 bindings: input.inventory_revision,
-                details: input.inventory_revision,
+                details: input.inventory_detail_revision,
                 disclosure,
             },
             history: HistoryViewFacts {

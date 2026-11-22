@@ -184,7 +184,7 @@ impl CoreMutation<'_> {
                         .material
                         .as_ref()
                         .and_then(|rule| rule.bag_refusal.as_ref())
-                        && !(definition.exposed_material && destination_is_open)
+                        && !(definition.exposure.is_some() && destination_is_open)
                     {
                         let custody = self.journal.budget.reserve(refusal.storage_bytes())?;
                         return Ok(Err(Refuse::Material {

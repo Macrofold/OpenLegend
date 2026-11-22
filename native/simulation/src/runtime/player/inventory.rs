@@ -294,6 +294,9 @@ impl<'a> DirectInventory<'a> {
             category: slot.definition.category,
             description: slot.definition.description.as_ref(),
             properties: &slot.definition.properties,
+            material_condition: crate::material_exposure::material_condition(
+                self.state, slot.entity, slot.definition.exposure.as_ref(),
+            ).map_err(failure)?,
             equipment_ports: slot.definition.equipment_ports(),
             equipment_fits: crate::execution::equipment_fits(self.state, self.actor, slot.entity),
             eating: self

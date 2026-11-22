@@ -340,7 +340,7 @@ impl CoreMutation<'_> {
             .and_then(|rule| rule.bag_refusal.as_ref())
         {
             if destination.container.is_some()
-                && !(definition.exposed_material && destination_is_open)
+                && !(definition.exposure.is_some() && destination_is_open)
             {
                 let _copy = self.journal.budget.reserve(refusal.storage_bytes())?;
                 return Ok(Err(Refuse::Material {
@@ -358,7 +358,7 @@ impl CoreMutation<'_> {
                     .item
                     .as_ref()
                     .and_then(|lot| definitions.items.get(&lot.definition_pin.id))
-                    .is_some_and(|definition| definition.exposed_material)
+                    .is_some_and(|definition| definition.exposure.is_some())
                 {
                     return Ok(Err(Refuse::FilledOpenBag));
                 }

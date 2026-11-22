@@ -7,6 +7,7 @@ use crate::{
     host::retained_size::{HeapBytes, heap_record, map_storage},
     host::{ByteBudget, ByteReservation, ResidentReservation},
     identity::MAX_SAFE_INTEGER,
+    material_exposure::{MaterialPresence, StockExposure},
     records::OwnerCoverage,
     state::{Entity, EntityHandle, EntityStore, Individuality, Named, Placement},
     values::{DefinitionPin, deserialize_safe_integer, is_safe_record_id},
@@ -175,7 +176,7 @@ pub(crate) struct ItemDefinitionRead {
     pub material: Option<ItemMaterialRule>,
     pub(crate) recipe_record: Option<ItemRecipeRecord>,
     open_contents: bool,
-    pub(crate) exposed_material: bool,
+    pub(crate) exposure: Option<crate::material_exposure::ExposedMaterial>,
 }
 
 impl ItemDefinitionRead {
@@ -185,6 +186,7 @@ impl ItemDefinitionRead {
         value: ItemDefinitionFields,
         assembly: Option<&super::retained::RetainedMap>,
         exposure: Option<&IndexMap<String, &serde_json::value::RawValue>>,
+        laws: &mut crate::material_exposure::ExposureLaws<'_>,
         budget: &ByteBudget,
     ) -> Result<Self, InstallError> {
         let pin = DefinitionPin {
@@ -227,7 +229,7 @@ impl ItemDefinitionRead {
                 return Err(InstallError::DefinitionBody);
             }
         }
-        let (material, exposed_material) = value.assembly_material.as_ref().map(|role| {
+        let (material, material_exposure) = value.assembly_material.as_ref().map(|role| {
             #[derive(Deserialize)]
             struct Family<'a> {
                 implementation: &'a str,
@@ -242,9 +244,14 @@ impl ItemDefinitionRead {
             let rule = family.inventory.get(role.role.as_str()).ok_or(InstallError::DefinitionBody)?;
             let material = serde_json::from_str::<ItemMaterialRule>(rule.get())
                 .map_err(|_| InstallError::DefinitionBody)?;
-            Ok::<_, InstallError>((Some(material), family.implementation == "four-corner-flexible-bays"
-                && matches!(role.role.as_str(), "cover" | "fiber")))
-        }).transpose()?.unwrap_or((None, false));
+            let exposure = if family.implementation == "four-corner-flexible-bays" {
+                crate::material_exposure::ExposureRole::from_role(&role.role)
+                    .map(|kind| laws.material(&role.family_id, payload, kind, budget)).transpose()?
+            } else {
+                None
+            };
+            Ok::<_, InstallError>((Some(material), exposure))
+        }).transpose()?.unwrap_or((None, None));
         if let Some(contents) = &value.contents_exposure {
             #[derive(Deserialize)]
             struct Profile<'a> {
@@ -302,7 +309,7 @@ impl ItemDefinitionRead {
             material,
             recipe_record: value.recipe_record,
             open_contents: value.contents_exposure.is_some(),
-            exposed_material,
+            exposure: material_exposure,
         })
     }
 
@@ -387,6 +394,7 @@ heap_record!(PackingLoad { definition });
 
 pub(crate) struct Inventory {
     pub(crate) lineage: OwnerCoverage,
+    pub(crate) exposure: StockExposure,
     children: IndexMap<String, Children>,
     _custody: ResidentReservation,
 }
@@ -395,17 +403,22 @@ pub(crate) struct Inventory {
 struct Children {
     items: Vec<EntityHandle>,
     equipped: Vec<EntityHandle>,
+    material_detail_revision: u64,
 }
 
 /// Inverse for removing one exposed item. Moving the last list into this
 /// value keeps its capacity funded until acceptance or exact rollback.
-pub(crate) enum RemovedInventoryChild {
+pub(crate) struct RemovedInventoryChild {
+    membership: RemovedMembership,
+    pub(crate) material: MaterialPresence,
+}
+
+enum RemovedMembership {
     Member(usize),
     Last {
         position: usize,
         parent: String,
-        items: Vec<EntityHandle>,
-        equipped: Vec<EntityHandle>,
+        children: Children,
         storage: ResidentReservation,
     },
 }
@@ -444,10 +457,19 @@ pub struct InventoryDetail<'a> {
     pub category: &'static str,
     pub description: Option<&'a crate::text::JsText>,
     pub properties: &'a [crate::text::JsText],
+    pub material_condition: Option<MaterialCondition<'a>>,
     pub equipment_ports: Option<&'a [String]>,
     pub equipment_fits: bool,
     pub eating: Option<crate::consumption::EatingOffer<'a>>,
     pub drop: Option<DropOffer<'a>>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MaterialCondition<'a> {
+    pub(crate) label: &'a crate::text::JsText,
+    pub(crate) process: &'static str,
+    pub(crate) covered_fraction: f64,
 }
 
 pub struct DropOffer<'a> {
@@ -501,6 +523,22 @@ impl Inventory {
         self.children.get(parent).map_or(0, |kids| kids.items.len())
     }
 
+    pub(crate) fn material_detail_revision(&self, root: &str) -> u64 {
+        self.children.get(root).map_or(0, |children| children.material_detail_revision)
+    }
+
+    pub(crate) fn set_material_detail_revision(
+        &mut self,
+        root: &str,
+        revision: u64,
+    ) -> Result<(), ExecutionError> {
+        self.children
+            .get_mut(root)
+            .ok_or(ExecutionError::Invariant)?
+            .material_detail_revision = revision;
+        Ok(())
+    }
+
     pub(crate) fn set_attachment(
         &mut self,
         entities: &EntityStore,
@@ -534,10 +572,12 @@ impl Inventory {
         entities: &EntityStore,
         parent: &str,
         child: EntityHandle,
+        material: MaterialPresence,
         budget: &ByteBudget,
     ) -> Result<(), crate::execution::ExecutionError> {
         use crate::execution::ExecutionError;
         let id = &entities.resolve(child).ok_or(ExecutionError::Invariant)?.id;
+        self.exposure.prepare_insert(material, budget)?;
         if let Some(kids) = self.children.get_mut(parent) {
             let position = kids
                 .items
@@ -590,12 +630,13 @@ impl Inventory {
             let parent = parent.to_owned();
             let kids = Children {
                 items: vec![child],
-                equipped: Vec::new(),
+                ..Children::default()
             };
             admitted.resize(after - before + parent.capacity() + size_of::<EntityHandle>())?;
             budget.fund_backing(&mut self._custody, admitted)?;
             self.children.insert(parent, kids);
         }
+        self.exposure.insert(child, material);
         Ok(())
     }
 
@@ -628,6 +669,7 @@ impl Inventory {
                     .ok_or(ExecutionError::Invariant)?,
             )?;
         }
+        self.exposure.remove(child);
         Ok(())
     }
 
@@ -651,7 +693,10 @@ impl Inventory {
         }
         if kids.items.len() > 1 {
             kids.items.remove(at);
-            return Ok(RemovedInventoryChild::Member(at));
+            return Ok(RemovedInventoryChild {
+                membership: RemovedMembership::Member(at),
+                material: self.exposure.remove(child),
+            });
         }
         let (key, kids) = self
             .children
@@ -660,16 +705,13 @@ impl Inventory {
         let bytes = key.capacity()
             + (kids.items.capacity() + kids.equipped.capacity()) * size_of::<EntityHandle>();
         let storage = self._custody.split_off(bytes)?;
-        let (position, parent, kids) = self
+        let (position, parent, children) = self
             .children
             .shift_remove_full(parent)
             .ok_or(ExecutionError::Invariant)?;
-        Ok(RemovedInventoryChild::Last {
-            position,
-            parent,
-            items: kids.items,
-            equipped: kids.equipped,
-            storage,
+        Ok(RemovedInventoryChild {
+            membership: RemovedMembership::Last { position, parent, children, storage },
+            material: self.exposure.remove(child),
         })
     }
 
@@ -680,32 +722,25 @@ impl Inventory {
         removed: RemovedInventoryChild,
     ) -> Result<(), crate::execution::ExecutionError> {
         use crate::execution::ExecutionError;
-        match removed {
-            RemovedInventoryChild::Member(position) => {
+        match removed.membership {
+            RemovedMembership::Member(position) => {
                 self.children
                     .get_mut(parent)
                     .ok_or(ExecutionError::Invariant)?
                     .items
                     .insert(position, child);
             }
-            RemovedInventoryChild::Last {
+            RemovedMembership::Last {
                 position,
                 parent,
-                items,
-                equipped,
+                children,
                 storage,
             } => {
                 self._custody.merge(storage)?;
-                self.children.shift_insert(
-                    position,
-                    parent,
-                    Children {
-                        items,
-                        equipped,
-                    },
-                );
+                self.children.shift_insert(position, parent, children);
             }
         }
+        self.exposure.insert(child, removed.material);
         Ok(())
     }
 
@@ -968,6 +1003,7 @@ pub(super) fn install_inventory(
         }
     }
     let mut children = IndexMap::<String, Children>::new();
+    let mut exposure = StockExposure::new(budget).map_err(|_| InstallError::Capacity)?;
     let mut storage = budget.reserve(0).map_err(|_| InstallError::Capacity)?;
     // The startup scratch admits the index's backing before each new key and
     // child. Final custody reflects only the maps and slices actually retained.
@@ -977,6 +1013,10 @@ pub(super) fn install_inventory(
         if let Some(parent_id) = parent_id(entity) {
             let parent = entities.get(parent_id).ok_or(InstallError::CurrentFormat)?;
             let lot = entity.item.as_ref().ok_or(InstallError::CurrentFormat)?;
+            let material = MaterialPresence::of(entity, definitions.items[&lot.definition_pin.id].exposure.as_ref())
+                .map_err(|_| InstallError::CurrentFormat)?;
+            exposure.prepare_insert(material, budget).map_err(|_| InstallError::Capacity)?;
+            exposure.insert(entities.handle(id).ok_or(InstallError::CurrentFormat)?, material);
             if !(parent.actor.is_some() || parent.kind == pile_kind || parent.container.is_some())
                 || parent.retirement.is_some()
             {
@@ -1148,6 +1188,7 @@ pub(super) fn install_inventory(
     storage.resize(bytes).map_err(|_| InstallError::Capacity)?;
     Ok(Inventory {
         lineage: lineage.coverage,
+        exposure,
         children,
         _custody: budget
             .adopt_backing(storage)
