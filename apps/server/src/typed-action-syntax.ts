@@ -6,7 +6,7 @@ import {
   type TypedNavigationPrepared,
   type TypedNavigationSyntax,
 } from './typed-navigation.js';
-import type { ActionFulfillment, ResolutionCategory } from '@open-legend/domain';
+import { typedStop, type ActionFulfillment, type ResolutionCategory } from '@open-legend/domain';
 import type { SurfacePoint } from '@open-legend/spatial';
 
 /** Pure lexical facts shared by the Source binder and native preparation.
@@ -48,21 +48,8 @@ const offset = new RegExp(`^(?:go|move|walk|step|run) ${part}(?: (?:and|then) ${
 
 /** Input is one already-cleaned clause in Source's bounded composition parser. */
 export function parseFreeTypedActionClause(text: string): FreeTypedActionSyntax | null {
-  const stopping =
-    /^(?:stop|cancel|halt)(?: (?:it|that|now|everything|what (?:i'?m|i am|you'?re) doing|working|(following|gathering|moving|walking)))?$/u.exec(
-      text,
-    );
-  if (stopping) {
-    const activity = stopping[1];
-    if (
-      activity === undefined ||
-      activity === 'following' ||
-      activity === 'gathering' ||
-      activity === 'moving' ||
-      activity === 'walking'
-    )
-      return { kind: 'stop', activity: activity ?? null };
-  }
+  const activity = typedStop(text);
+  if (activity !== undefined) return { kind: 'stop', activity };
   const selected = point.exec(text);
   if (selected)
     return {

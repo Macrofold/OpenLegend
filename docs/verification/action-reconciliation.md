@@ -46,3 +46,15 @@ Commits `565ec02f` and `cb5af992` add the explicit `OPEN_LEGEND_PROFILE_POSTGRES
 In run `36181932510`, both successful scenes and the no-vector startup case left zero `openlegend_profile_*` databases in their respective disposable services. The no-vector case reported `0A000`, zero phases and a normal failure exit of 1 rather than a timeout, with no cleanup errors. A local refused-connection exercise also exited with a sanitized creation error, zero phases and no password in its report. The local SQLite fallback completed a five-second native server phase with no storage or cleanup error; this was compatibility evidence, not a production comparison.
 
 These observations qualify the profiler's owned-resource path, not general `createGameServer` startup ownership for all callers. AR07 remains open. Process kill, remote topology, cleanup denial, occupied-database teardown and long-running multi-client/cognition workloads remain separate qualification work.
+
+## Typed Stop on the stand-alone Rust server
+
+November 22, 2026. Signed-in Chrome sessions drove the existing action attempt, command, state, stream and receipt endpoints on independent disposable PostgreSQL databases. The Rust application used source tree `5086580350` and executable SHA-256 `bfdf86313053787b8bbda0558573cf29da2160adbe7fe98252a6b0a630514a7d`. Only the fixture used Node. Both hosts ran without paid calls.
+
+A player began an ordinary walk and requested `ＳＴＯＰ moving.!` through the typed action route. The shared grammar recognized the normalized wording, and the ordinary native Cancel owner stopped the actual work. A request naming a different activity, a forged reference and an unimplemented sequence all left the walk running. The requester recovered its own saved result. A second account could see no receipt for it, and a previous timeline was refused.
+
+The existing Character panel also submitted the exact wording through its Queue action button and recovered the saved result after cold sign-in. The first UI scenario had opened the Game menu instead of the Character panel and produced no action.
+
+The Rust check issued the same request simultaneously twice and received one exact saved result. A different text or scheduling mode with the same ID conflicted. Cold reopening preserved the stopped state and receipt. Resubmitting that accepted request after starting another walk returned the stored result and left the new trip moving. Both processes shut down cleanly.
+
+The selected branch supports bare and named Stop phrases. Typed point and target movement, planned replacement or interruption for those actions, authored vocabulary, extra details, paid interpretation, expression receipts and shared identity with those jobs still need their own callers and checks. A refusal is explicit before any unsupported request executes. No speed or scale comparison ran.

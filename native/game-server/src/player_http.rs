@@ -47,6 +47,7 @@ mod preview;
 mod recall;
 mod save_access;
 mod trade;
+mod typed_actions;
 mod view;
 
 const REQUEST_LIMIT: usize = 4096;
@@ -132,6 +133,8 @@ pub(crate) fn router(
         .route("/api/construction/hearth-preview", post(hearth::preview))
         .route("/api/command", post(command))
         .route("/api/command/receipt", post(command))
+        .route("/api/action-attempt", post(typed_actions::access))
+        .route("/api/action-attempt/receipt", post(typed_actions::access))
         .route("/api/embodiment", post(control))
         .route("/api/presence", post(presence_report))
         .route("/api/control", post(manual_clock))

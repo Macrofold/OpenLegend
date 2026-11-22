@@ -361,6 +361,21 @@ impl RuntimePlayerPublication {
     }
 }
 impl NativeWorldSession {
+    /// Typed work observes only the admitted player's live body and selected
+    /// action kind. The ordinary command owns all resulting cancellation.
+    pub fn player_typed_stop_current(
+        &self, account: &str, actor: &str, kind: Option<&str>,
+    ) -> Result<(bool, bool), RuntimeError> {
+        let current = self.session.accepted().map_err(failure)?;
+        current.require_player_read(account, actor).map_err(failure)?;
+        let actor = current.state.physical.entities.get(actor).ok_or_else(|| failure("missing current actor"))?;
+        let body = actor.actor.as_ref().ok_or_else(|| failure("missing current actor body"))?;
+        let restricted = current.state.installed.capabilities
+            .capability_blocked(Some(actor), "actions").map_err(failure)?;
+        Ok((body.alive && !body.incapacitated && !restricted,
+            kind.is_none_or(|kind| body.action.as_ref().is_some_and(|action| action.kind == kind))))
+    }
+
     /// Admit a decoded browser movement or stop on the same command journal
     /// used by the bridge. Authorization and receipt lookup belong to the
     /// application caller. Only the saved learner record and replay signature

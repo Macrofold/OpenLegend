@@ -31,6 +31,8 @@ use serde_json::value::RawValue;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
+mod typed;
+pub(crate) use typed::{ActionAttempt, AttemptRecovery};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -406,6 +408,23 @@ impl PlayerCommands {
         preview.ok_or(WorldError::ProjectionChanged)
     }
 
+    /// The read watch covers pending acceptance during the independent SQL
+    /// read. A receipt remains pinned even if that cut is acknowledged meanwhile.
+    async fn read_original_receipt(
+        &self,
+        world: &str,
+        id: &str,
+        watch: &crate::live_save::ReceiptRead<'_>,
+    ) -> Result<Option<ResultOwner>, WorldError> {
+        let durable = if watch.accepted()?.is_none() {
+            self.game.store.command_receipt(world, id).await?
+        } else {
+            None
+        };
+        Ok(watch.accepted()?.map(ResultOwner::Accepted)
+            .or_else(|| durable.map(ResultOwner::Durable)))
+    }
+
     pub(crate) async fn command(
         &self,
         scope: Arc<AuthorizedScope>,
@@ -446,15 +465,7 @@ impl PlayerCommands {
                 let budget = self.game.host.budget();
                 let facts = Arc::new(input.prepare(&scope.scope, epoch.0, body, budget)?);
                 let watch = self.saves.read_receipt(&facts.id)?;
-                let durable = if watch.accepted()?.is_none() {
-                    self.game.store.command_receipt(world_id, &facts.id).await?
-                } else {
-                    None
-                };
-                let mut prior = watch
-                    .accepted()?
-                    .map(ResultOwner::Accepted)
-                    .or_else(|| durable.map(ResultOwner::Durable));
+                let mut prior = self.read_original_receipt(world_id, &facts.id, &watch).await?;
                 if recovery || prior.is_some() || !epoch.1 {
                     let fresh_epoch = if recovery && prior.is_none() {
                         self.identity.lock().await.epoch.token == facts.request.command_epoch

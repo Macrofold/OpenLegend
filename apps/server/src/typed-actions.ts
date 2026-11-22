@@ -48,6 +48,7 @@ import {
   namedClockTimes,
   producedItemDefinition,
   typedRequestVocabulary,
+  typedStopMatches,
   type TypedRequestVocabulary,
   unmetSlots,
   FOLLOW_RULES,
@@ -1084,14 +1085,8 @@ function parseOne(scope: Scope, text: string): Outcome | undefined {
   const syntax = parseFreeTypedActionClause(text);
   if (syntax?.kind === 'stop') {
     // A named activity must be the current one; "stop following" never ends a craft.
-    const named = {
-      following: ['follow'],
-      gathering: ['gather'],
-      moving: ['move'],
-      walking: ['move'],
-    };
     const current = entityGet(scope.world.entities, scope.actorId)?.actor?.action?.type;
-    if (syntax.activity && !named[syntax.activity].includes(current ?? ''))
+    if (syntax.activity && !typedStopMatches(syntax.activity, current ?? ''))
       return refuse(
         'needs_clarification',
         `You are not ${syntax.activity} right now; nothing was stopped.`,
