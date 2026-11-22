@@ -464,7 +464,16 @@ export class S3AssetStorage {
           }
         },
       );
-      await settleStorageResources(current, consuming);
+      await settleStorageResources(
+        current,
+        consuming.catch((error: unknown) => {
+          // A rejected object may never enter the pipeline. End its caller's
+          // sink before draining the transfer it already registered with us.
+          // The cache still owns the temporary path and cleanup.
+          suppliedSink?.destroy();
+          throw error;
+        }),
+      );
     });
   }
   /** Cache owns the sink and pathname. Late SDK bodies are destroyed before
