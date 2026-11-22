@@ -167,6 +167,10 @@ impl FireCare {
         }
     }
 
+    pub(crate) fn can_add_fuel(&self, heat: Heat) -> bool {
+        heat.fuel_seconds + self.fuel.seconds_per_unit <= self.fuel.maximum_fuel_seconds
+    }
+
     pub(crate) fn addition_hours(&self) -> f64 {
         self.fuel.seconds_per_unit / self.seconds_per_hour
     }
@@ -217,7 +221,7 @@ impl FireCare {
             }
             FireOperation::Fuel => {
                 let fuel = item.or(owned.fuel).ok_or(&self.refusals.missing_fuel)?;
-                if heat.fuel_seconds + self.fuel.seconds_per_unit > self.fuel.maximum_fuel_seconds {
+                if !self.can_add_fuel(heat) {
                     return Err(&self.refusals.full);
                 }
                 Ok(Selection {

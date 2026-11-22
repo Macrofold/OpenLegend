@@ -80,7 +80,7 @@ impl NpcCandidateCursor {
             .iter()
             .enumerate()
             .skip(from)
-            .find(|(_, target)| target.visible && target.heat_lit)
+            .find(|(_, target)| target.visible && target.heat_lit == Some(true))
         else {
             self.cooking = None;
             self.stage = Enumerate::Strike(0, 0);

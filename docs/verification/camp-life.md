@@ -195,6 +195,16 @@ Source and Rust checks used disposable PostgreSQL databases. The pinned Rust tre
 
 **Finding outside this branch.** A step dispatched from a persistent plan leaves a live immer draft proxy in `actionExperience.occurrences[].command`. `structuredClone` of the world then fails, which breaks `tests/fixtures/service.ts` `editWorld`; JSON serialization still works. It reproduces on the base commit with an ordinary gather plan. It was reported for the action-experience owner rather than changed here. The service scenarios use a JSON copy for fixture edits.
 
+### Stand-alone Rust NPC fire care
+
+An NPC can choose to light a visible fire, add one exact carried fuel item, or put the fire out. The action list uses the installed fire rules and the ordinary command preview. Preparing fuel choices waits until a visible fire has room and then shares one stock read across eligible fires. The compact list presents one accessible lot per fuel kind. The model sees the fire and item names, while Rust keeps the exact item and fire bindings for execution.
+
+An authenticated player spoke to the NPC through the existing chat route. Controlled HTTPS decisions selected each of the three operations while the player could keep walking. Each choice saved one completed action and one fire event. Lighting used one tinder bundle and kept the drill. Fuelling spent one branch from the selected bag and preserved the other bag. Putting the fire out kept its remaining fuel. The Source command checks matched all three effects. Cold reopening recovered the original request, and an additional run restarted during a saved Light step and finished the same work once.
+
+A full fire offered no fuel action. The NPC could not put out a fire while another actor was cooking there. Unseen heat and an installation without fire care produced no fire choices. Cancellation kept the materials. When the player lit the fire during a held NPC judgment, the older NPC choice refused to light it again and kept its tinder. The failed integration attempts and the corrected database event witness are preserved with the final results.
+
+Tree `5cba62ccac9004d9565ec8bc78dcbdd3949a3185` and executable SHA-256 `2577efaa12d4870038cac88ba91f3dc1c63bb56d080a8e5a32019e6fcf7a067e` passed the locked build and addon check, TypeScript, focused formatting and the network boundary check. The independent local PostgreSQL cases and cleanup results are in `nsc04-npc-fire-care-20261122`. Provider cost was $0. Repeated tending and performance measurement remain open.
+
 ### Stand-alone Rust ordinary hearth placement
 
 The Source and stand-alone Rust browsers used the existing Build panel to place a stone-ring hearth. The preview showed the same cylinder and availability without creating an action. Both refused occupied ground and an outdated definition pin. The player started and stopped an attempt, kept all four held stones, then used the same stones to complete one new cold hearth. Its activity saved the material, work and placement guidance. Exact replay returned the original receipt. The player added fuel, lit the ring, cooked a fish and found the same hearth after a cold PostgreSQL reopen.

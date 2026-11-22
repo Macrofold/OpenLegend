@@ -35,6 +35,8 @@ mod casting;
 use casting::CastTools;
 mod cooking;
 use cooking::CookingChoices;
+mod fire;
+use fire::FuelChoices;
 
 struct Target {
     body: usize,
@@ -43,7 +45,7 @@ struct Target {
     support: Option<String>,
     interaction_height: f64,
     alive: bool,
-    heat_lit: bool,
+    heat_lit: Option<bool>,
     visible: bool,
 }
 #[derive(Clone, Copy)]
@@ -59,6 +61,7 @@ enum Enumerate {
     Probe(usize),
     Approach(usize),
     Fish(usize, usize),
+    Fire(usize, usize),
     Cook(usize, usize),
     Strike(usize, usize),
     CurrentWork(usize),
@@ -103,6 +106,7 @@ pub(crate) struct NpcCandidateCursor {
     activity_done: Option<NpcActivityRead>,
     cast_tools: Option<CastTools>,
     cooking: Option<CookingChoices>,
+    fuels: Option<FuelChoices>,
 }
 
 #[derive(Serialize)]
@@ -212,7 +216,7 @@ impl NpcCandidateCursor {
                 support: body.support_surface_id.clone(),
                 interaction_height: profile.interaction_height,
                 alive: target.actor.as_ref().is_some_and(|actor| actor.alive),
-                heat_lit: body.heat_lit == Some(true),
+                heat_lit: body.heat_lit,
                 visible: false,
             });
         }
@@ -270,6 +274,7 @@ impl NpcCandidateCursor {
             activity_done: None,
             cast_tools: None,
             cooking: None,
+            fuels: None,
         })
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
@@ -544,6 +549,7 @@ impl NpcCandidateCursor {
                     if outcome.ok {
                         self.describe_cast(core, &mut offer)?;
                         self.describe_cooking(core, &mut offer)?;
+                        self.describe_fire(core, &mut offer)?;
                         self.append(offer)?;
                     } else if matches!(offer.meaning, NpcOfferMeaning::Strike { .. })
                         && matches!(

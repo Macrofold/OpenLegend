@@ -72,6 +72,16 @@ pub(crate) fn valid_command(
         NativeCommand::Craft { recipe_id, .. } => is_safe_record_id(recipe_id),
         NativeCommand::Cook { heat_id, definition, inputs, .. } =>
             is_safe_record_id(heat_id) && definition.is_valid() && crate::food_preparation::valid_inputs(inputs),
+        NativeCommand::TendFire {
+            target_id,
+            operation,
+            item_id,
+            ..
+        } => {
+            world.fire_care.is_some()
+                && is_safe_record_id(target_id)
+                && operation.admits_item(item_id.as_deref())
+        }
         NativeCommand::Say {
             text,
             target_id,
@@ -87,7 +97,6 @@ pub(crate) fn valid_command(
         }
         NativeCommand::Outing { .. }
         | NativeCommand::Handover { .. }
-        | NativeCommand::TendFire { .. }
         | NativeCommand::Feed { .. }
         | NativeCommand::Gather { .. }
         | NativeCommand::Drop { .. }

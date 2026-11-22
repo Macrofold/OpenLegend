@@ -43,7 +43,7 @@ export type NativeNpcOfferMeaning =
       readonly reach: number;
     }
   | { readonly kind: 'probe'; readonly probe: number }
-  | { readonly kind: 'fish' | 'cook'; readonly body: number }
+  | { readonly kind: 'fish' | 'cook' | 'fire-care'; readonly body: number }
   | {
       readonly kind: 'strike';
       readonly body: number;
@@ -321,6 +321,7 @@ export function formatNativeNpcCandidateDescriptions(
       }
       case 'fish':
       case 'cook':
+      case 'fire-care':
         subjectIds = [body(meaning.body).sourceId];
         // An already prepared choice includes the exact native text and the
         // common details. A formatter request asks only for those details.

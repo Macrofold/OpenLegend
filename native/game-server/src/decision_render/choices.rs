@@ -147,9 +147,9 @@ impl DecisionPolicy {
                 text(&wording["strikes"][definition()?][usize::from(meaning["hunting"] == true)])?,
                 &[("name", &name(&target["name"], NameArticle::Definite)?)],
             ),
-            // The capture supplies the selected recipe or cast text. This
-            // formatter adds the common target and work details.
-            "fish" | "cook" => String::new(),
+            // The capture supplies the installed action text. This formatter
+            // adds the common target and work details.
+            "fish" | "cook" | "fire-care" => String::new(),
             _ => return Err(WorldError::ProviderKind),
         };
         if let Some(temporary) = offer["temporary"].as_object() {
@@ -168,7 +168,7 @@ impl DecisionPolicy {
         if source["hasAction"] == true && offer["hasCommand"] == true {
             result.push_str(text(&wording["transitions"][text(&offer["transition"])?])?);
         }
-        if matches!(kind, "follow" | "status" | "strike" | "fish" | "cook")
+        if matches!(kind, "follow" | "status" | "strike" | "fish" | "cook" | "fire-care")
             && (meaning["body"].is_null() || target["visible"] == true)
         {
             let distance = if meaning["body"].is_null() {

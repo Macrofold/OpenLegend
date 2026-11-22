@@ -74,6 +74,9 @@ pub(crate) enum NpcOfferMeaning {
     Cook {
         body: usize,
     },
+    FireCare {
+        body: usize,
+    },
     Probe {
         probe: usize,
     },
