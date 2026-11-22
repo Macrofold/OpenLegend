@@ -63,21 +63,6 @@ impl CommandCursor {
                 )?;
                 return Ok(false);
             }
-            NativeCommand::InspectActivities {
-                history_after,
-                method_after,
-                ..
-            } => {
-                if *history_after != -1 || *method_after != 0 {
-                    return Err(ExecutionError::UnsupportedFamily);
-                }
-                self.discovery_result(
-                    true,
-                    "available",
-                    "Current prerequisites are available; execution rechecks them.",
-                )?;
-                return Ok(false);
-            }
             NativeCommand::Strike {
                 definition_id,
                 weapon_item_id,

@@ -6,6 +6,7 @@ use crate::{
     world::WorldError,
 };
 use openlegend_simulation::{
+    activity::{RuntimeActivityDecisionPage, inspection_event},
     capture::{
         NpcActionOrdinal, NpcAliasOrdinal, NpcBindingPurpose as ProjectionPurpose,
         NpcCatalogueSource, NpcEntityAlias, NpcEntityOrdinal, NpcPersonalEvidence,
@@ -126,12 +127,51 @@ pub(super) async fn finish(
 ) -> Result<Prepared, CallFailure> {
     ensure_running(work)?;
     let budget = game.host.budget();
-    let current = capture_offers(game, work, consumer(work).as_str(), "current-offers").await?;
+    let inspection = if let Some(trigger) = work.automatic.as_ref().and_then(|work| work.evidence.as_deref())
+        && collected.sources.as_ref().is_some_and(|selected| {
+            collected.required.iter().any(|&row| {
+                selected.personal.get(row).is_some_and(|source| {
+                    source.value.event_type.as_deref() == Some(inspection_event())
+                        && (source.reference.id == trigger || source.value.event_id.as_deref() == Some(trigger))
+                })
+            })
+        })
+    {
+        let (page, read) = game
+            .world
+            .decision_activity_inspection(&work.actor, trigger)
+            .await
+            .map_err(|error| CallFailure::World(error).at("activity-inspection"))?
+            .ok_or(CallFailure::Stale("native-response-activity-inspection"))?;
+        collected
+            .original
+            .as_mut()
+            .ok_or(CallFailure::Invalid)?
+            .retain_activity_inspection(read);
+        Some(page)
+    } else {
+        None
+    };
+    let current = capture_offers(
+        game,
+        work,
+        consumer(work).as_str(),
+        inspection.as_ref().map(RuntimeActivityDecisionPage::navigation),
+        "current-offers",
+    ).await?;
     let through = collected.through.max(current.accepted_cut());
     // The projection has separate custody from the captured evidence it renders.
     let mut projection =
         collected.projection_custody(&current, ProjectionPurpose::Decision, budget)?;
-    let (binding, context, addressed, speech_trigger) = project(
+    if let Some(page) = &inspection {
+        projection.resize(
+            page.admitted_bytes()
+                .checked_mul(8)
+                .and_then(|bytes| bytes.checked_add(projection.bytes() + 1024))
+                .ok_or_else(|| capacity(CapacityError))?,
+        ).map_err(capacity)?;
+    }
+    let (binding, mut context, addressed, speech_trigger) = project(
         game,
         work,
         &current,
@@ -140,6 +180,9 @@ pub(super) async fn finish(
         &collected.required,
         ProjectionPurpose::Decision,
     )?;
+    if let Some(page) = inspection {
+        finish_activity_fields(&mut context, page);
+    }
     drop(collected.sources.take());
     drop(collected.attention);
     let route = game
@@ -176,6 +219,17 @@ pub(super) async fn finish(
     })
 }
 
+fn finish_activity_fields(context: &mut Projection, page: RuntimeActivityDecisionPage) {
+    context.fields["inspectedActions"] = json!(
+        page.action_texts().map(prompt_text).collect::<Vec<_>>()
+    );
+    context.fields["inspectedMethods"] = json!(
+        page.method_texts()
+            .map(|(text, status)| format!("{}. {status}", prompt_text(text)))
+            .collect::<Vec<_>>()
+    );
+}
+
 pub(super) fn binding_failure(error: WorldError) -> CallFailure {
     if let WorldError::Simulation(inner) = &error
         && let Some(reason) = inner.stale_reason()
@@ -197,10 +251,11 @@ async fn capture_offers(
     game: &Arc<CurrentServer>,
     work: &Work,
     consumer: &'static str,
+    inspection: Option<openlegend_simulation::activity::ActivityInspectionNavigation>,
     stage: &'static str,
 ) -> Result<RuntimeNpcRead, CallFailure> {
     game.world
-        .capture_npc_offers(game.clone(), &work.actor, consumer)
+        .capture_npc_offers(game.clone(), &work.actor, consumer, inspection)
         .await
         .map_err(|error| CallFailure::World(error).at(stage))
 }

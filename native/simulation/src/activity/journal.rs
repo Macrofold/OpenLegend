@@ -889,14 +889,7 @@ impl ActivityJournal {
         state
             .learning
             .entry(actor_id.clone())
-            .or_insert_with(|| LearningCursor {
-                inspection: None,
-                after: None,
-                position: None,
-                examined: None,
-                pending: Vec::new(),
-                assessed: Vec::new(),
-            });
+            .or_default();
         state.settle_metadata(
             metadata,
             Some(actor_id),

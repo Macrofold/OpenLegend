@@ -47,6 +47,8 @@ struct Target {
 enum Enumerate {
     Visibility,
     Activities,
+    ActivityHistoryNext,
+    ActivityMethodsNext,
     Inventory,
     Continue,
     Follow(usize, usize),
@@ -69,6 +71,7 @@ pub(crate) struct NpcCandidateCursor {
     actor: String,
     candidate: CandidateKey,
     coverage: Option<NpcOfferCoverage>,
+    inspection: Option<crate::activity::ActivityInspectionNavigation>,
     selection: Option<NpcObservationSelection>,
     targets: Vec<Target>,
     stage: Enumerate,
@@ -150,6 +153,7 @@ impl NpcCandidateCursor {
         read: &AcceptedActorRead,
         expanded: &[usize],
         coverage: Option<NpcOfferCoverage>,
+        inspection: Option<crate::activity::ActivityInspectionNavigation>,
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
@@ -232,6 +236,7 @@ impl NpcCandidateCursor {
             actor: read.perception.actor_id.clone(),
             candidate,
             coverage,
+            inspection,
             selection: Some(selection),
             targets,
             stage,

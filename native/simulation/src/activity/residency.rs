@@ -340,6 +340,27 @@ impl ActivityJournal {
             .map_err(|_| ActivityError::Capacity)?;
         Ok(Some(owner))
     }
+    /// Reserve the selected actor's new cursor slot without allocating the
+    /// physical action's unrelated active, current and history entries.
+    pub(super) fn prepare_learning_slot(
+        &mut self,
+        state: &mut ActivityState,
+        actor: &str,
+    ) -> Result<MetadataBefore, ActivityError> {
+        let before = MetadataBefore::capture(state, Some(actor), &[])?;
+        if !state.learning.contains_key(actor) {
+            let bytes = growth::<String, LearningCursor>(
+                state.learning.capacity(),
+                state.learning.len() == state.learning.capacity(),
+            )?;
+            self.reserve(bytes)?;
+            state
+                .learning
+                .try_reserve(1)
+                .map_err(|_| ActivityError::Capacity)?;
+        }
+        Ok(before)
+    }
     pub(super) fn prepare_metadata(
         &mut self,
         state: &mut ActivityState,

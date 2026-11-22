@@ -1,3 +1,4 @@
+import activityLearningCopy from './activity-learning-copy.json' with { type: 'json' };
 import inspectionCopy from './inventory-inspection-copy.json' with { type: 'json' };
 import { selectedOccurrenceRules } from './world-composition.js';
 import { selectedMovementRules, selectedTimeRules } from './world-composition.js';
@@ -3865,6 +3866,7 @@ function executeCommandNative(
         break;
       }
       case 'inspect-activities': {
+        const inspection = activityLearningCopy.inspection;
         if (
           !Number.isSafeInteger(command.after) ||
           command.after < -1 ||
@@ -3873,15 +3875,15 @@ function executeCommandNative(
               command.methodAfter < 0 ||
               command.methodAfter > ACTIVITY_LIMITS.acquisitions))
         )
-          return reject('invalid-page', 'Choose a valid action-history page.');
+          return reject('invalid-page', inspection.badPage);
         const event = emit(
           world,
           events,
-          'activity-history-requested',
+          inspection.event,
           subjectNarration(actor, [
-            'chose to inspect ',
+            inspection.chosen,
             person(actor, 'possessive'),
-            ' own recorded actions and their results.',
+            inspection.details,
           ]),
           actor,
           undefined,
@@ -3898,11 +3900,7 @@ function executeCommandNative(
           after: command.after,
           methodAfter: command.methodAfter ?? 0,
         };
-        result = outcome(
-          true,
-          'history-requested',
-          'Own action history selected for the next decision context.',
-        );
+        result = outcome(true, 'history-requested', inspection.accepted);
         break;
       }
       case 'inspect-inventory': {

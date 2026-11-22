@@ -6,7 +6,32 @@ use crate::execution::ExecutionError;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::records::{InstalledRow, SqlCell};
 use crate::simulation::SimulationState;
-use std::mem::size_of;
+use std::{mem::size_of, sync::LazyLock};
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct InspectionCopy<'a> {
+    pub event: &'a str,
+    pub chosen: &'a str,
+    pub details: &'a str,
+    pub bad_page: &'a str,
+    pub accepted: &'a str,
+    pub next_history: &'a str,
+    pub next_methods: &'a str,
+}
+
+pub(crate) static COPY: LazyLock<InspectionCopy<'static>> = LazyLock::new(|| {
+    #[derive(Deserialize)]
+    struct Copy<'a> {
+        #[serde(borrow)]
+        inspection: InspectionCopy<'a>,
+    }
+    serde_json::from_str::<Copy>(include_str!(
+        "../../../../packages/domain/src/activity-learning-copy.json"
+    ))
+    .expect("repository-owned activity inspection wording")
+    .inspection
+});
 
 pub(crate) const INSPECTION_ROWS: usize = 16;
 const INSPECTION_BYTES: usize = 16_384;
@@ -22,6 +47,8 @@ pub struct RuntimeActivityPage<'a> {
     next: Option<i64>,
     methods: Vec<InspectionMethod>,
     method_next: Option<usize>,
+    #[serde(skip)]
+    recent_entries: u32,
     #[serde(skip)]
     _storage: ByteReservation,
 }
@@ -40,6 +67,60 @@ struct InspectionMethod {
     text: JsText,
 }
 
+/// Compact text for a resident's exact selected inspection trigger. The
+/// player endpoint uses the same rows, result receipts and method formatter.
+pub struct RuntimeActivityDecisionPage {
+    entries: Vec<InspectionEntry>,
+    methods: Vec<InspectionMethod>,
+    navigation: ActivityInspectionNavigation,
+    pub(crate) recent_entries: u32,
+    storage: ByteReservation,
+}
+
+#[derive(Clone, Copy)]
+pub struct ActivityInspectionNavigation {
+    pub(crate) after: i64,
+    pub(crate) method_after: u64,
+    pub(crate) next: Option<i64>,
+    pub(crate) method_next: Option<usize>,
+}
+
+impl RuntimeActivityDecisionPage {
+    pub fn navigation(&self) -> ActivityInspectionNavigation {
+        self.navigation
+    }
+    pub fn action_texts(&self) -> impl Iterator<Item = &JsText> {
+        self.entries.iter().map(|entry| &entry.text)
+    }
+    pub fn method_texts(&self) -> impl Iterator<Item = (&JsText, &'static str)> {
+        self.methods.iter().map(|method| (&method.text, method.status))
+    }
+    pub fn admitted_bytes(&self) -> usize {
+        self.storage.bytes()
+    }
+}
+
+impl RuntimeActivityPage<'_> {
+    pub(crate) fn into_decision(
+        self,
+        after: i64,
+        method_after: u64,
+    ) -> RuntimeActivityDecisionPage {
+        RuntimeActivityDecisionPage {
+            entries: self.entries,
+            methods: self.methods,
+            navigation: ActivityInspectionNavigation {
+                after,
+                method_after,
+                next: self.next,
+                method_next: self.method_next,
+            },
+            recent_entries: self.recent_entries,
+            storage: self._storage,
+        }
+    }
+}
+
 pub(crate) struct ActivityInspection {
     entries: Vec<(i64, ActivityOccurrence)>,
     after: i64,
@@ -55,11 +136,43 @@ pub(crate) fn ordinal(state: &SimulationState, actor: &str) -> u64 {
         .map_or(0, |owner| owner.next_ordinal)
 }
 
+/// Acquisitions append and retain revoked supports in place. A new row can
+/// shift a method page; edits to existing support are fenced by actor privacy.
+pub(crate) fn acquisition_count(state: &SimulationState, actor: &str) -> usize {
+    state
+        .activity
+        .library
+        .acquisitions
+        .get(actor)
+        .map_or(0, indexmap::IndexMap::len)
+}
+
 fn projection(error: ActivityError) -> ExecutionError {
     ExecutionError::Activity(error)
 }
 
 impl ActivityInspection {
+    pub(crate) fn recent_still_eligible(
+        &self,
+        state: &SimulationState,
+        actor: &str,
+        selected: u32,
+        budget: &ByteBudget,
+    ) -> Result<bool, ExecutionError> {
+        for (index, (_, entry)) in self.entries.iter().enumerate() {
+            if (selected & (1 << index)) != 0
+                && !entry
+                    .result_evidence
+                    .as_ref()
+                    .ok_or(ExecutionError::Invariant)?
+                    .recent_eligible(state, actor, budget)?
+            {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
     pub(crate) fn prepare(
         state: &SimulationState,
         actor: &str,
@@ -165,7 +278,8 @@ impl ActivityInspection {
         let mut bytes = 0;
         let mut through = self.after;
         let mut remaining = false;
-        for (position, entry) in &self.entries {
+        let mut recent_entries = 0;
+        for (index, (position, entry)) in self.entries.iter().enumerate() {
             if denied(state, actor, entry) {
                 through = *position;
                 continue;
@@ -191,6 +305,9 @@ impl ActivityInspection {
                 }
                 remaining = true;
                 break;
+            }
+            if matches!(entry.result_evidence, Some(ResultEvidence::Recent { .. })) {
+                recent_entries |= 1 << index;
             }
             bytes += text.utf8_len();
             entries.push(InspectionEntry {
@@ -264,6 +381,7 @@ impl ActivityInspection {
             next: remaining.then_some(through),
             methods,
             method_next,
+            recent_entries,
             _storage: storage,
         })
     }

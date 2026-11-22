@@ -47,6 +47,9 @@ impl PreparedNpcRead {
 )]
 pub(crate) enum NpcOfferMeaning {
     Activities,
+    ActivityPage {
+        page: &'static str,
+    },
     Inspection,
     Continuation {
         action_type: Option<String>,

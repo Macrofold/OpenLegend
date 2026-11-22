@@ -897,7 +897,6 @@ impl NativeCommand {
             Self::Outing { .. }
                 | Self::Strike { .. }
                 | Self::InspectInventory { selected: None, .. }
-                | Self::InspectActivities { .. }
         )
     }
     pub(crate) fn recorded(&self) -> Result<Self, serde_json::Error> {

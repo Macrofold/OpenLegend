@@ -61,7 +61,7 @@ pub(super) fn command(
 ) -> Result<Option<NativeCommand>, ExecutionError> {
     if !matches!(
         raw.get("type").and_then(SqlCell::as_str),
-        Some("move" | "follow" | "say" | "status-effect" | "fish" | "cancel" | "withdraw-attempt")
+        Some("move" | "follow" | "say" | "status-effect" | "fish" | "cancel" | "withdraw-attempt" | "inspect-activities")
     ) {
         return Ok(None);
     }
@@ -497,7 +497,9 @@ pub(super) fn prepare(
                 };
                 if matches!(
                     selected,
-                    NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
+                    NativeCommand::Cancel { .. }
+                        | NativeCommand::WithdrawAttempt { .. }
+                        | NativeCommand::InspectActivities { .. }
                 ) {
                     Ok(ActionIntent::Command(selected))
                 } else {

@@ -713,6 +713,7 @@ impl Session {
         read: &super::AcceptedActorRead,
         expanded: &[usize],
         coverage: Option<crate::capture::NpcOfferCoverage>,
+        inspection: Option<crate::activity::ActivityInspectionNavigation>,
     ) -> Result<CandidateKey, SessionError> {
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
@@ -725,6 +726,7 @@ impl Session {
                 read,
                 expanded,
                 coverage,
+                inspection,
                 key,
                 &self.budget,
             )?;

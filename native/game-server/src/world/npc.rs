@@ -122,12 +122,13 @@ impl HostedWorld {
         game: Arc<CurrentServer>,
         actor: &str,
         consumer: &'static str,
+        inspection: Option<openlegend_simulation::activity::ActivityInspectionNavigation>,
     ) -> Result<RuntimeNpcRead, WorldError> {
         let input = NpcReadInput::new(&self.host, actor, consumer)?;
         self.prepare_actor_read(
             game,
             move |session| input.current(session),
-            NativeWorldSession::begin_npc_suggestions,
+            move |session, read| session.begin_npc_suggestions(read, inspection),
             NativeWorldSession::step_npc_preparation,
         )
         .await

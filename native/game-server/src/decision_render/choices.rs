@@ -93,6 +93,11 @@ impl DecisionPolicy {
         };
         let mut result = match kind {
             "activities" | "inspection" => text(&wording[kind])?.to_owned(),
+            "activity-page" => openlegend_simulation::activity::inspection_next_label(
+                meaning["page"].as_str().ok_or(WorldError::ProviderKind)?,
+            )
+            .ok_or(WorldError::ProviderKind)?
+            .to_owned(),
             "continuation" => match meaning["actionType"].as_str() {
                 Some(action) => fill(text(&wording[kind][0])?, &[("action", action)]),
                 None => text(&wording[kind][if meaning["planPending"] == true { 1 } else { 2 }])?

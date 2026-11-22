@@ -846,3 +846,40 @@ pub fn narration_template(
     parts.push(NarrationPart::Literal(template[end..].to_owned().into()));
     Narration { parts }
 }
+
+/// Old internal routing annotations do not identify a person in history.
+/// Walk code units only when an annotation is present so quoted text stays exact.
+pub fn historical_account(text: &JsText) -> JsText {
+    const MARKER: [u16; 4] = [40, 73, 68, 58];
+    let marker: JsText = "(ID:".into();
+    if text.find_from(&marker, 0).is_none() {
+        return text.clone();
+    }
+    let input: Vec<_> = text.units().collect();
+    let mut result = Vec::with_capacity(input.len());
+    let whitespace = |unit| char::from_u32(u32::from(unit)).is_some_and(is_js_whitespace);
+    let mut at = 0;
+    while at < input.len() {
+        let mut end = at;
+        if input[at..].starts_with(&MARKER) {
+            end = at + MARKER.len();
+            let name = end;
+            while let Some(&unit) = input.get(end) {
+                if matches!(unit, 40 | 41) || whitespace(unit) {
+                    break;
+                }
+                end += 1;
+            }
+            if end > name && input.get(end) == Some(&41) {
+                while matches!(result.last(), Some(32 | 9)) {
+                    result.pop();
+                }
+                at = end + 1;
+                continue;
+            }
+        }
+        result.push(input[at]);
+        at += 1;
+    }
+    JsText::from_units(result)
+}

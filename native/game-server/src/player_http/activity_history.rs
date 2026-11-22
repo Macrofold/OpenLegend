@@ -64,7 +64,7 @@ pub(super) async fn read(State(state): State<PlayerRoutes>, request: Request) ->
                 &request.actor_id,
                 request.after,
                 request.method_after,
-                recall::recent_text::historical_account,
+                openlegend_simulation::narration::historical_account,
                 |page, budget| {
                     wire::encode(&PageResponse { ok: true, page }, b"", b"", budget)
                         .map_err(WorldError::Wire)

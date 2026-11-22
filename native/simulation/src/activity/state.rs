@@ -634,7 +634,7 @@ pub(crate) struct LearningInspection {
     )]
     pub method_after: Option<u64>,
 }
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct LearningCursor {
     // Source creates after/pending/assessed together; learning publication adds
@@ -837,7 +837,10 @@ impl ActivityState {
                 || cursor
                     .inspection
                     .as_ref()
-                    .is_some_and(|inspection| !is_safe_record_id(&inspection.event_id))
+                    .is_some_and(|inspection| {
+                        !is_safe_record_id(&inspection.event_id)
+                            || inspection.method_after.is_some_and(|after| after > limits.acquisitions)
+                    })
             {
                 return Err(ActivityError::InvalidStructure);
             }

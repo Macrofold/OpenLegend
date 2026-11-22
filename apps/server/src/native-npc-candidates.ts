@@ -1,3 +1,4 @@
+import activityLearningCopy from '../../../packages/domain/src/activity-learning-copy.json' with { type: 'json' };
 import { namePhrase } from '@open-legend/language';
 import {
   decisionOfferDescription,
@@ -22,6 +23,7 @@ import {
 
 export type NativeNpcOfferMeaning =
   | { readonly kind: 'activities' | 'inspection' }
+  | { readonly kind: 'activity-page'; readonly page: 'history' | 'methods' }
   | {
       readonly kind: 'continuation';
       readonly actionType: string | null;
@@ -258,6 +260,14 @@ export function formatNativeNpcCandidateDescriptions(
       case 'activities':
       case 'inspection':
         base = decisionOfferDescription({ kind: meaning.kind });
+        break;
+      case 'activity-page':
+        base = {
+          description:
+            meaning.page === 'history'
+              ? activityLearningCopy.inspection.nextHistory
+              : activityLearningCopy.inspection.nextMethods,
+        };
         break;
       case 'continuation':
         base = decisionOfferDescription({

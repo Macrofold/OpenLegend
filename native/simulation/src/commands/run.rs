@@ -33,6 +33,7 @@ mod equipment;
 mod eating;
 mod drop;
 mod pickup;
+mod inspect_activities;
 mod inspect_item;
 mod feeding;
 mod gathering;
@@ -1163,9 +1164,13 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::InspectActivities { .. } => {
+                            if let Some(event) = self.inspect_activities(core, &actor_id)? {
+                                return Ok(Progress::Occurrence(event));
+                            }
+                        }
                         NativeCommand::Outing { .. }
-                        | NativeCommand::InspectInventory { selected: None, .. }
-                        | NativeCommand::InspectActivities { .. } => {
+                        | NativeCommand::InspectInventory { selected: None, .. } => {
                             return Err(ExecutionError::Invariant);
                         }
                         NativeCommand::StatusEffect { .. } => self.phase = Phase::Deactivate,

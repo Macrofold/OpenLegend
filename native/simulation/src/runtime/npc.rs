@@ -58,6 +58,7 @@ pub struct RuntimeNpcRead {
     pub(super) host_generation: u64,
     sources: Arc<Vec<crate::capture::PreparedNpcSources>>,
     perspectives: Arc<Vec<crate::capture::NpcPerspectiveSnapshot>>,
+    activity_inspection: Option<Box<super::RuntimeActivityInspection>>,
     candidate_key: Option<CandidateKey>,
     query_expanded: bool,
     receipt_payload: Arc<AtomicBool>,
@@ -346,6 +347,11 @@ impl NativeWorldSession {
         if !ticket.current.historical_scope.still_permitted(state) {
             return Ok(Err("native-response-current-history"));
         }
+        if let Some(inspection) = &ticket.original.activity_inspection
+            && !inspection.decision_current(state, actor_id, &self.budget)?
+        {
+            return Ok(Err("native-response-activity-inspection"));
+        }
         if ticket
             .original
             .sources
@@ -589,6 +595,7 @@ impl NativeWorldSession {
             host_generation: self.session.operational_generation(),
             sources: Arc::new(Vec::new()),
             perspectives: Arc::new(Vec::new()),
+            activity_inspection: None,
             candidate_key: None,
             query_expanded: false,
             receipt_payload: Arc::new(AtomicBool::new(true)),
@@ -608,6 +615,7 @@ impl NativeWorldSession {
             read,
             &request.expanded_body_ordinals,
             Some(request.coverage),
+            None,
         )
     }
 
@@ -615,10 +623,11 @@ impl NativeWorldSession {
     pub fn begin_npc_suggestions(
         &mut self,
         read: &mut RuntimeNpcRead,
+        inspection: Option<crate::activity::ActivityInspectionNavigation>,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         read.require_unprepared()?;
-        self.begin_npc_context(read, &[], Some(NpcOfferCoverage::Suggestions))
+        self.begin_npc_context(read, &[], Some(NpcOfferCoverage::Suggestions), inspection)
     }
 
     /// Prepare remaining work and bind current presented bodies for recall.
@@ -629,7 +638,7 @@ impl NativeWorldSession {
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         read.require_unprepared()?;
-        self.begin_npc_context(read, &[], None)
+        self.begin_npc_context(read, &[], None, None)
     }
 
     fn begin_npc_context(
@@ -637,10 +646,11 @@ impl NativeWorldSession {
         read: &mut RuntimeNpcRead,
         expanded: &[usize],
         coverage: Option<NpcOfferCoverage>,
+        inspection: Option<crate::activity::ActivityInspectionNavigation>,
     ) -> Result<CandidateKey, RuntimeError> {
         let key = self
             .session
-            .begin_npc_candidates(&read.read, expanded, coverage)
+            .begin_npc_candidates(&read.read, expanded, coverage, inspection)
             .map_err(failure)?;
         read.candidate_key = Some(key);
         Ok(key)
@@ -808,6 +818,12 @@ impl NativeWorldSession {
 }
 
 impl RuntimeNpcRead {
+    /// Retain the exact approved page's sources through decision dispatch,
+    /// the optional query continuation and final effects.
+    pub fn retain_activity_inspection(&mut self, read: super::RuntimeActivityInspection) {
+        self.activity_inspection = Some(Box::new(read));
+    }
+
     fn require_unprepared(&self) -> Result<(), RuntimeError> {
         if self.candidate_key.is_some() || self.preparation.is_some() {
             return Err(failure(

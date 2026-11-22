@@ -2,6 +2,29 @@
 use super::*;
 
 impl NpcCandidateCursor {
+    fn offer_inspection(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        preparation_id: &str,
+        after: i64,
+        method_after: u64,
+        page: Option<&'static str>,
+    ) -> Result<(), ExecutionError> {
+        let mut input = CommandInput::new(&self.actor, preparation_id, "inspect-activities");
+        input.after = Some(after);
+        input.method_after = Some(method_after);
+        let (command, guard) = self.command(&input)?;
+        let (id, meaning) = if let Some(page) = page {
+            (
+                self.id(&["inspect-activities", page])?,
+                NpcOfferMeaning::ActivityPage { page },
+            )
+        } else {
+            (self.id(&["inspect-activities"])?, NpcOfferMeaning::Activities)
+        };
+        self.start(core, id, meaning, command, guard, WorkTransitionMode::Continue)
+    }
+
     pub(super) fn enumerate(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -51,24 +74,29 @@ impl NpcCandidateCursor {
                 );
             }
             Enumerate::Activities => {
-                self.stage = Enumerate::Inventory;
-                // Positive learned methods/acquisitions have no installed
-                // selected producer. This real cursor can grow independently.
+                self.stage = if self.inspection.is_some() {
+                    Enumerate::ActivityHistoryNext
+                } else {
+                    Enumerate::Inventory
+                };
                 if core.state.activity.learning.contains_key(&self.actor) {
-                    let mut input =
-                        CommandInput::new(&self.actor, preparation_id, "inspect-activities");
-                    input.after = Some(-1);
-                    input.method_after = Some(0);
-                    let (command, guard) = self.command(&input)?;
-                    let id = self.id(&["inspect-activities"])?;
-                    self.start(
-                        core,
-                        id,
-                        NpcOfferMeaning::Activities,
-                        command,
-                        guard,
-                        WorkTransitionMode::Continue,
-                    )?;
+                    self.offer_inspection(core, preparation_id, -1, 0, None)?;
+                }
+            }
+            Enumerate::ActivityHistoryNext => {
+                self.stage = Enumerate::ActivityMethodsNext;
+                if let Some(page) = self.inspection
+                    && let Some(after) = page.next
+                {
+                    self.offer_inspection(core, preparation_id, after, page.method_after, Some("history"))?;
+                }
+            }
+            Enumerate::ActivityMethodsNext => {
+                self.stage = Enumerate::Inventory;
+                if let Some(page) = self.inspection
+                    && let Some(after) = page.method_next
+                {
+                    self.offer_inspection(core, preparation_id, page.after, after as u64, Some("methods"))?;
                 }
             }
             Enumerate::Inventory => {

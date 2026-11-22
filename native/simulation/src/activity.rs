@@ -32,8 +32,23 @@ pub(crate) use learning::{
     learning_signatures,
 };
 mod inspection;
-pub(crate) use inspection::{ActivityInspection, INSPECTION_ROWS, ordinal as activity_ordinal};
-pub use inspection::RuntimeActivityPage;
+pub(crate) use inspection::{
+    ActivityInspection, COPY as ACTIVITY_INSPECTION_COPY, INSPECTION_ROWS, acquisition_count,
+    ordinal as activity_ordinal,
+};
+
+pub fn inspection_event() -> &'static str {
+    ACTIVITY_INSPECTION_COPY.event
+}
+pub use inspection::{ActivityInspectionNavigation, RuntimeActivityDecisionPage, RuntimeActivityPage};
+
+pub fn inspection_next_label(kind: &str) -> Option<&'static str> {
+    match kind {
+        "history" => Some(ACTIVITY_INSPECTION_COPY.next_history),
+        "methods" => Some(ACTIVITY_INSPECTION_COPY.next_methods),
+        _ => None,
+    }
+}
 mod retained_size;
 pub use fields::ActivityFields;
 pub(crate) use install::install_activity;

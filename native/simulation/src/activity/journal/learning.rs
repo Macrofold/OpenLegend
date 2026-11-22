@@ -5,6 +5,25 @@ use crate::activity::learning::{LearningAcquisition, LearningMethod};
 use std::sync::Arc;
 
 impl ActivityJournal {
+    pub(crate) fn select_activity_inspection(
+        &mut self,
+        state: &mut ActivityState,
+        actor: &str,
+        event_id: &str,
+        after: i64,
+        method_after: u64,
+    ) -> Result<(), ActivityError> {
+        self.reserve(actor.len().checked_add(event_id.len()).ok_or(ActivityError::Capacity)?)?;
+        self.learning_before(state, actor)?;
+        let before = self.prepare_learning_slot(state, actor)?;
+        state.learning.entry(actor.to_owned()).or_default().inspection = Some(LearningInspection {
+            event_id: event_id.to_owned(),
+            after,
+            method_after: Some(method_after),
+        });
+        state.settle_metadata(before, Some(actor), &[], &mut self.reservation)
+    }
+
     pub(crate) fn insert_learning_method(
         &mut self,
         state: &mut ActivityState,

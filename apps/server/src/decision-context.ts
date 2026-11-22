@@ -1,3 +1,4 @@
+import activityLearningCopy from '../../../packages/domain/src/activity-learning-copy.json' with { type: 'json' };
 import {
   resultEvidenceId,
   resultEvidenceMatchesReceipt,
@@ -356,8 +357,7 @@ function decisionActionCandidates(
       ? [
           {
             id: 'inspect-methods-next',
-            description:
-              'Inspect the next page of my own learned activities and their requirements.',
+            description: activityLearningCopy.inspection.nextMethods,
             command: {
               type: 'inspect-activities' as const,
               historyAfter: inspection.after,
@@ -370,7 +370,7 @@ function decisionActionCandidates(
       ? [
           {
             id: 'inspect-activities-next',
-            description: 'Inspect the next page of my own recorded actions and results.',
+            description: activityLearningCopy.inspection.nextHistory,
             command: { type: 'inspect-activities' as const, historyAfter: inspection.next },
           },
         ]
