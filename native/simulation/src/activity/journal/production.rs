@@ -330,6 +330,96 @@ impl ActivityJournal {
         )
     }
 
+    /// Move existing material history with the measured portion. Like ordinary
+    /// consumption, a mixed stack preserves bounds without assigning identities
+    /// to units it cannot distinguish.
+    pub(crate) fn transfer_item_sources(
+        &mut self,
+        state: &mut ActivityState,
+        item: &str,
+        target: &str,
+        before: u64,
+        quantity: u64,
+    ) -> Result<(), ActivityError> {
+        let Some(sources) = state.items.get(item) else {
+            return Ok(());
+        };
+        let previous_target = state.items.get(target);
+        let limit = state.limits.links as usize;
+        let free = (before - quantity) as f64;
+        let ambiguous = sources.len() > 1
+            || sources.iter().any(|source| source.ambiguous == Some(true))
+            || sources.iter().map(|source| source.quantity).sum::<f64>() < before as f64;
+        let map_growth = if previous_target.is_none() {
+            map_storage::<String, Vec<ActivityItemSource>>(
+                state
+                    .items
+                    .capacity()
+                    .max(4)
+                    .checked_mul(2)
+                    .ok_or(ActivityError::Capacity)?,
+            )
+            .ok_or(ActivityError::Capacity)?
+        } else {
+            0
+        };
+        self.reserve(
+            heap_sum([
+                2 * sources.heap_bytes().ok_or(ActivityError::Capacity)?,
+                previous_target
+                    .map_or(Some(0), HeapBytes::heap_bytes)
+                    .ok_or(ActivityError::Capacity)?,
+                2 * (item.len() + target.len()),
+                map_growth,
+            ])
+            .ok_or(ActivityError::Capacity)?,
+        )?;
+        let target_capacity = previous_target.map_or(0, Vec::len);
+        let mut transferred = Vec::with_capacity(limit.min(target_capacity + sources.len()));
+        transferred.extend(previous_target.into_iter().flatten().cloned());
+        let mut remaining = Vec::with_capacity(sources.len());
+        for source in sources {
+            let moved = (quantity as f64).min(source.quantity);
+            let prior = transferred.iter_mut().find(|candidate| {
+                candidate.actor_id == source.actor_id
+                    && candidate.occurrence_id == source.occurrence_id
+                    && candidate.port == source.port
+            });
+            if let Some(prior) = prior {
+                prior.quantity += moved;
+                if ambiguous {
+                    prior.ambiguous = Some(true);
+                }
+            } else if transferred.len() < limit {
+                let mut entry = source.clone();
+                entry.quantity = moved;
+                if ambiguous {
+                    entry.ambiguous = Some(true);
+                }
+                transferred.push(entry);
+            }
+            let mut source = source.clone();
+            source.quantity = if ambiguous {
+                source.quantity.min(free)
+            } else {
+                (source.quantity - quantity as f64).max(0.0)
+            };
+            if ambiguous {
+                source.ambiguous = Some(true);
+            }
+            remaining.push(source);
+        }
+        self.replace_item_sources(state, target, Some(transferred))?;
+        self.replace_item_sources(
+            state,
+            item,
+            remaining
+                .iter()
+                .any(|source| source.quantity > 0.0)
+                .then_some(remaining),
+        )
+    }
+
     pub(super) fn restore_item_sources(
         &mut self,
         state: &mut ActivityState,

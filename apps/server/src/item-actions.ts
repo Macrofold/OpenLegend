@@ -1,4 +1,10 @@
-import { canHandleItems, portableItems, type WorldState, type Entity } from '@open-legend/domain';
+import {
+  canHandleItems,
+  itemMoveReason,
+  portableItems,
+  type WorldState,
+  type Entity,
+} from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
 export function pickupActions(
   world: WorldState,
@@ -9,6 +15,8 @@ export function pickupActions(
   if (!(pile.kind === 'item-pile' || pile.remains) || !canHandleItems(world, actor)) return [];
   const items = portableItems(world, pile.id);
   const one = items.map((item) => ({
+    pickupLimit:
+      item.quantity > 1 && !itemMoveReason(world, item.id, actor.id, 1) ? item.quantity : undefined,
     id: `pickup-${item.id}`,
     label:
       items.length === 1
@@ -22,6 +30,7 @@ export function pickupActions(
       ? [
           {
             id: `pickup-all-${pile.id}`,
+            pickupLimit: undefined,
             label: 'Pick Up All',
             description: 'Pick up all portable contents',
             command: { type: 'pickup', targetId: pile.id } as CommandInput,

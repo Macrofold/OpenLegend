@@ -712,10 +712,10 @@ pub struct Action {
     pub transferred: Option<UnconvertedField>,
     #[serde(
         default,
-        deserialize_with = "deserialize_present_option",
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
         skip_serializing_if = "Option::is_none"
     )]
-    pub quantity: Option<UnconvertedField>,
+    pub quantity: Option<u64>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -910,7 +910,7 @@ impl Action {
             || self.guard.is_some()
             || self.follow.is_some()
             || self.transferred.is_some()
-            || self.quantity.is_some()
+            || self.quantity.is_some_and(|n| n == 0 || !self.is_picking_up())
             || self.recipe_id.is_some() != self.is_manufacturing()
             || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting() || self.is_picking_up()))
             || self.weapon_item_id.is_some()
@@ -1031,10 +1031,11 @@ impl Action {
         action
     }
 
-    pub(crate) fn pickup(id: String, pile: String, item: String, seconds: f64) -> Self {
+    pub(crate) fn pickup(id: String, pile: String, item: String, quantity: Option<u64>, seconds: f64) -> Self {
         let mut action = Self::native_action(id, "pickup", "working");
         action.target_id = Some(pile);
         action.item_id = Some(item);
+        action.quantity = quantity;
         action.remaining_seconds = seconds;
         action.total_seconds = seconds;
         action

@@ -214,7 +214,7 @@ impl CoreMutation<'_> {
             .physical
             .reserve(affected.len() * size_of::<ContentsBefore>())?;
         for (parent, item, quantity) in lots {
-            self.debit_inventory_lot(&parent, &item, quantity, cause, Some(actor))?;
+            self.debit_inventory_lot(&parent, &item, quantity, LotDebit::consume(cause, Some(actor)))?;
         }
         let Some(Undo::Inventory(undo)) = self.journal.physical.undo.last_mut() else {
             return Err(ExecutionError::Invariant);

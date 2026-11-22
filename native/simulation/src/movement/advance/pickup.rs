@@ -57,7 +57,12 @@ impl MoveAdvanceCursor {
             return Ok(Progress::Complete);
         }
         let policy = &installed.retained.item_handling_read;
-        let quantity = lot.lot.quantity;
+        let requested = action.quantity;
+        if !lot.admits_quantity(requested) {
+            self.fail(&copy.not_applicable.message)?;
+            return self.drive(core, None);
+        }
+        let quantity = requested.unwrap_or(lot.lot.quantity);
         let displayed_name = &lot.definition.named.name;
         let definition = &lot.definition.pin.id;
         self._reservation.resize(
@@ -125,10 +130,10 @@ impl MoveAdvanceCursor {
             self.phase = Phase::Done;
             return Ok(Progress::Complete);
         }
-        if !core.take_ground_lot(&self.actor_id, &target, &item)? {
+        let Some(item) = core.take_ground_lot(&self.actor_id, &target, &item, requested)? else {
             self.fail(&copy.not_applicable.message)?;
             return self.drive(core, None);
-        }
+        };
         core.begin_received_value_scope()?;
         let event = core.stage_event(EventEmissionIntent {
             event_type: "items-picked-up".into(),

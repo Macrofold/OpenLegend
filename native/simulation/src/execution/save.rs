@@ -314,6 +314,13 @@ fn write_created_entity(
                 )?;
             }
         }
+        if let Some(owner) = &entity.declared_owner {
+            created(
+                output, "sim_declared_owners",
+                &["world", "entities", id, "declaredOwner"],
+                &parent, "declaredOwner", 0, owner, &[], budget,
+            )?;
+        }
         observe(
             output, "sim_attributes", &parent, entity.attributes.is_some(),
             entity.attributes.as_ref().map_or(0, |rows| rows.len() as u64), budget,
@@ -401,7 +408,7 @@ fn observe_entity_children(
         ("sim_assemblies", false),
         ("sim_items", entity.item.is_some()),
         ("sim_containers", entity.container.is_some()),
-        ("sim_declared_owners", false),
+        ("sim_declared_owners", entity.declared_owner.is_some()),
         ("sim_object_retirements", entity.retirement.is_some()),
         ("sim_territorial_threat", false),
         ("sim_resources", false),
@@ -732,13 +739,14 @@ impl PhysicalJournal {
                     if let Some((ordinal, entry)) = &before.lineage {
                         object_lineage = true;
                         let _cells = budget.reserve(
-                            entry.source_id.len() + 2 * size_of::<SqlCell>(),
+                            entry.source_id.len() + entry.target_id.as_ref().map_or(0, String::len)
+                                + 2 * size_of::<SqlCell>(),
                         ).map_err(|_| error())?;
                         created(
                             output, "sim_object_lineage",
                             &["world", "objectLineage", &entry.id],
                             &["world"], &entry.id, *ordinal, entry,
-                            &[entry.source_id.as_str().into(), SqlCell::Null], budget,
+                            &[entry.source_id.as_str().into(), entry.target_id.as_deref().map_or(SqlCell::Null, SqlCell::from)], budget,
                         )?;
                     }
                 }

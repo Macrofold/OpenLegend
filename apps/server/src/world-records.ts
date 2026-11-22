@@ -1468,6 +1468,17 @@ export class WorldRecords {
     // index. A surviving child's placement remains restrictive unless its admitted
     // reparenting write above moved it; never cascade through physical_parent_id.
     // docs/save-and-load.md#current-subsystem-integration
+    // A merged item survives as a retired entity. Delete its selected
+    // placement before deleting the old pile it still references on disk.
+    const deletedPlacements = changes.deletes.get('sim_placements') ?? [];
+    for (let offset = 0; offset < deletedPlacements.length; offset += 800) {
+      const batch = deletedPlacements.slice(offset, offset + 800);
+      await this.db
+        .prepare(
+          `DELETE FROM sim_placements WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
+        )
+        .run(worldId, ...batch);
+    }
     const deletedEntities = changes.deletes.get('sim_entities') ?? [];
     for (let offset = 0; offset < deletedEntities.length; offset += 800) {
       const batch = deletedEntities.slice(offset, offset + 800);
@@ -1486,6 +1497,7 @@ export class WorldRecords {
       return false;
     };
     for (const [table, ids] of changes.deletes) {
+      if (table === 'sim_placements') continue;
       // Cascade-related or additional foreign-key owners retain explicit order;
       // independent families can share the existing bounded SQL group.
       if (

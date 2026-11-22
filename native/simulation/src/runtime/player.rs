@@ -130,8 +130,13 @@ pub enum RuntimeResourceOffer<'a> {
 pub struct RuntimePickupOffer<'a> {
     pub label: &'a str,
     pub reason: Option<&'a str>,
-    pub items: &'a [&'a crate::reception::ObservedPileItem],
+    pub items: &'a [RuntimePickupLot<'a>],
     pub sequence: u64,
+}
+
+pub struct RuntimePickupLot<'a> {
+    pub item: &'a crate::reception::ObservedPileItem,
+    pub partial_limit: Option<u64>,
 }
 
 fn render_pickup<T>(
@@ -143,15 +148,20 @@ fn render_pickup<T>(
     encode: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
 ) -> Result<T, RuntimeError> {
     let actor = state.physical.entities.get(actor).ok_or_else(|| failure("pickup actor unavailable"))?;
-    let _items = budget.reserve(observed.len().checked_mul(size_of::<&crate::reception::ObservedPileItem>())
+    let _items = budget.reserve(observed.len().checked_mul(size_of::<RuntimePickupLot>())
         .ok_or_else(|| failure("pickup offer capacity"))?)?;
     let mut items = Vec::with_capacity(observed.len());
     if let Some(pile) = crate::ground_items::pickup_pile(state, actor, target) {
-        items.extend(observed.iter().filter(|witness| witness.portable
-            && crate::ground_items::pickup_lot(state, pile, &witness.id).is_some_and(|item| {
-                item.lot.definition_pin.id == witness.definition_id
-                    && item.lot.quantity as f64 == witness.quantity
-            })));
+        items.extend(observed.iter().filter_map(|witness| {
+            if !witness.portable {
+                return None;
+            }
+            let item = crate::ground_items::pickup_lot(state, pile, &witness.id)?;
+            (item.lot.definition_pin.id == witness.definition_id
+                && item.lot.quantity as f64 == witness.quantity).then(|| RuntimePickupLot {
+                    item: witness, partial_limit: item.partial_limit(),
+                })
+        }));
     }
     let policy = &state.installed.retained.item_handling_read;
     let reason = crate::consumption::action_problem(&state.installed, actor, state.physical.header.paused)

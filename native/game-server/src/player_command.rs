@@ -82,6 +82,12 @@ struct CommandInput {
         deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
         skip_serializing_if = "Option::is_none"
     )]
+    quantity: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
     expected_revision: Option<u64>,
     #[serde(
         default,
@@ -661,6 +667,7 @@ impl CommandRequest {
             || Uuid::parse_str(&self.command_epoch).is_err()
             || (!matches!(command.kind, CommandKind::Unequip)
                 && (command.expected_revision.is_some() || command.placement_revision.is_some()))
+            || command.quantity.is_some_and(|quantity| !matches!(command.kind, CommandKind::Pickup) || quantity == 0)
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
             || (!matches!(command.kind, CommandKind::Say)
                 && (command.text.is_some() || command.volume.is_some()))
@@ -864,6 +871,7 @@ impl PreparedRequest {
             CommandKind::Pickup => Ok(RuntimePlayerCommand::Pickup {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                quantity: input.quantity,
             }),
             CommandKind::Fish => Ok(RuntimePlayerCommand::Fish {
                 target: target.ok_or(StoreError::InvalidRecord)?,

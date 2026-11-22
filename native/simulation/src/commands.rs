@@ -214,7 +214,7 @@ pub(crate) enum NativeCommand {
         definition: crate::values::DefinitionPin,
         inputs: indexmap::IndexMap<String, String>,
     },
-    Pickup { envelope: CommandEnvelope, target_id: String, item_id: String },
+    Pickup { envelope: CommandEnvelope, target_id: String, item_id: String, quantity: Option<u64> },
     Eat { envelope: CommandEnvelope, item_id: String },
     Equipment {
         envelope: CommandEnvelope,
@@ -282,7 +282,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -314,6 +314,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
         if (input.kind != "gather" && input.gathering_mode.is_some())
             || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "pickup" | "eat" | "equip" | "unequip") && input.item_id.is_some())
             || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
+            || input.quantity.is_some_and(|n| input.kind != "pickup" || n == 0 || n > crate::identity::MAX_SAFE_INTEGER)
             || (input.kind != "craft" && input.recipe_id.is_some())
             || (input.kind != "cook" && (input.heat_id.is_some() || input.preparation_id.is_some()
                 || input.preparation_version.is_some() || input.preparation_digest.is_some() || input.inputs.is_some()))
@@ -565,6 +566,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     envelope,
                     target_id: input.target_id.filter(|id| is_safe_record_id(id)).ok_or_else(invalid)?,
                     item_id: input.item_id.filter(|id| is_safe_record_id(id)).ok_or_else(invalid)?,
+                    quantity: input.quantity,
                 })
             }
             "eat" if !extras_for_move && input.destination.is_none() => Ok(Self::Eat {

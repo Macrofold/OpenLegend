@@ -457,7 +457,11 @@ function nativeActionCatalogue(
     command: CommandInput,
     keywords: string[] = [],
     targetId?: string,
-    provided?: { availability: { ok: boolean; message: string }; description: string },
+    provided?: {
+      availability: { ok: boolean; message: string };
+      description: string;
+      pickupLimit?: number;
+    },
     icon = nativeActionIcon(command.type),
   ) => {
     if (actionIds.has(id) || !nativeCommandSupported(world, nativeCommandKind(command.type)))
@@ -493,6 +497,7 @@ function nativeActionCatalogue(
       icon,
       category,
       description: provided?.description ?? descriptions.describe(command),
+      ...(provided?.pickupLimit === undefined ? {} : { pickupLimit: provided.pickupLimit }),
       facts: descriptions.facts(command),
       keywords,
       ...(targetId ? { targetId } : {}),
@@ -747,7 +752,11 @@ function nativeActionCatalogue(
         option.command,
         ['take', 'collect', option.description],
         target.id,
-        { availability: option.availability, description: option.description },
+        {
+          availability: option.availability,
+          description: option.description,
+          pickupLimit: option.pickupLimit,
+        },
       );
     if (target.actor && target.id !== scope.actorId)
       for (const definition of [

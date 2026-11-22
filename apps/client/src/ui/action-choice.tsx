@@ -23,9 +23,15 @@ export function ActionChoice({
     input?.type === 'outing' && input.cooperationTask?.kind === 'prepare'
       ? input.cooperationTask
       : undefined;
+  const pickupLimit = input?.type === 'pickup' ? action.pickupLimit : undefined;
+  const defaultAmount = task?.quantity ?? pickupLimit;
   const [amount, setAmount] = useState<string>();
-  const quantity = amount === undefined ? task?.quantity : Number(amount);
-  const validQuantity = !task || (Number.isSafeInteger(quantity) && quantity! > 0);
+  const quantity = amount === undefined ? defaultAmount : Number(amount);
+  const validQuantity =
+    defaultAmount === undefined ||
+    (Number.isSafeInteger(quantity) &&
+      quantity! > 0 &&
+      (pickupLimit === undefined || quantity! <= pickupLimit));
   const identity = action.facts?.filter(
     ([label]) => label === 'Tool' || (!hideTarget && label === 'Target'),
   );
@@ -43,20 +49,13 @@ export function ActionChoice({
           aria-disabled={!action.enabled || !validQuantity}
           onPress={() => {
             if (!action.enabled || !validQuantity) return;
-            run(
+            const command =
               task && input
-                ? {
-                    ...action,
-                    intent: {
-                      kind: 'command',
-                      command: {
-                        ...input,
-                        cooperationTask: { ...task, quantity: quantity! },
-                      },
-                    },
-                  }
-                : action,
-            );
+                ? { ...input, cooperationTask: { ...task, quantity: quantity! } }
+                : input && pickupLimit !== undefined && amount !== undefined
+                  ? { ...input, quantity }
+                  : undefined;
+            run(command ? { ...action, intent: { kind: 'command', command } } : action);
           }}
         >
           <Icon name={icon} badge={badge} fallbackLabel={action.label} />
@@ -71,19 +70,30 @@ export function ActionChoice({
           </span>
         </AriaButton>
       </Explanation>
-      {task && (
+      {defaultAmount !== undefined && (
         <label className="ol-field">
-          <span>Total items requested</span>
+          <span>
+            {pickupLimit === undefined
+              ? 'Total items requested'
+              : `Quantity (up to ${pickupLimit})`}
+          </span>
           <input
             type="number"
             min={1}
             step={1}
-            value={amount ?? String(task.quantity)}
+            max={pickupLimit}
+            value={amount ?? String(defaultAmount)}
             disabled={!action.enabled}
             aria-invalid={!validQuantity}
             onChange={(event) => setAmount(event.target.value)}
           />
-          {!validQuantity && <small>Choose a positive whole number.</small>}
+          {!validQuantity && (
+            <small>
+              {pickupLimit === undefined
+                ? 'Choose a positive whole number.'
+                : `Choose a whole number from 1 to ${pickupLimit}.`}
+            </small>
+          )}
         </label>
       )}
     </div>

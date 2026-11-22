@@ -42,7 +42,7 @@ Pickup approaches through the existing supported movement path, then transfers t
 
 Inventory item details expose **Drop** and a whole-number quantity selector for portable items. Drop places that quantity at the actor's current supported location, only where the pile body can fit. Unrelated work may continue; dropping an item or bag needed by an active action or reservation is refused, including dependencies inside the bag. Release or cancel that specific dependency before moving it. Equipment changes retain their separate active-work restriction. Equipping individualizes one unit; dropping the unequipped remainder leaves that unit equipped. Moving the selected unit detaches it. Player and NPC concrete action options use the same native commands. Ordinary pause, body and capability restrictions still apply.
 
-[Stand-alone Rust pickup](../../verification/river-meal.md#stand-alone-rust-ground-pickup) covers one visible whole portable lot, the approach and work, the exact transfer, empty-pile retirement and saved continuation. The pickup title and narration are part of the installed handling policy.
+For a visible divisible stack, the picker shows its available quantity. Leaving the field untouched selects the whole stack. An entered quantity stays exact through approach and work. A later shortage fails the pickup before any transfer. A compatible receiving lot keeps its identity, and the remaining ground stock stays visible. The installed handling policy supplies the pickup title and narration. [Stand-alone Rust pickup evidence](../../verification/river-meal.md#stand-alone-rust-ground-pickup).
 
 ## Compatible held equipment
 

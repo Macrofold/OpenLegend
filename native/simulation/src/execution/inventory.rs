@@ -8,8 +8,21 @@ use crate::values::DefinitionPin;
 mod equipment;
 mod debit;
 mod pickup;
+pub(crate) use pickup::partitionable_stock;
 pub(crate) use debit::OwnedDebits;
 pub(crate) use equipment::{EquipmentDecision, EquipmentRequest, equipment_fits};
+
+struct LotDebit<'a> {
+    cause: &'a str,
+    custodian: Option<&'a str>,
+    target: Option<(LineageKind, &'a str)>,
+}
+
+impl<'a> LotDebit<'a> {
+    fn consume(cause: &'a str, custodian: Option<&'a str>) -> Self {
+        Self { cause, custodian, target: None }
+    }
+}
 
 enum ItemEdit {
     Inserted,
@@ -203,11 +216,11 @@ fn next_revision(before: u64) -> Result<u64, ExecutionError> {
 
 impl CoreMutation<'_> {
     /// A trusted gameplay producer transfers one new lot and its construction
-    /// reservation. The item owner checks direct actor custody and settles the
+    /// reservation. The item owner checks the exact direct parent and settles the
     /// membership, revision, index and new stored rows in this candidate.
-    pub(crate) fn insert_actor_lot(
+    fn insert_direct_lot(
         &mut self,
-        actor_id: &str,
+        parent_id: &str,
         item: Entity,
         prepared: ByteReservation,
     ) -> Result<(), ExecutionError> {
@@ -215,23 +228,23 @@ impl CoreMutation<'_> {
             .state
             .physical
             .entities
-            .handle(actor_id)
+            .handle(parent_id)
             .ok_or(ExecutionError::MissingEntity)?;
-        let actor = self
+        let destination = self
             .state
             .physical
             .entities
             .resolve(parent)
             .ok_or(ExecutionError::Invariant)?;
         let budget = self.journal.physical.budget.clone();
-        if actor.actor.is_none()
-            || actor.container.is_some()
-            || actor.world_position().is_none()
-            || !matches!(&item.placement, Some(Placement::Contained { parent_entity_id, revision: 0 }) if parent_entity_id == actor_id)
+        if !(destination.actor.is_some()
+                || destination.kind == self.state.installed.observation_rules.value().pile_kind)
+            || destination.container.is_some()
+            || destination.world_position().is_none()
+            || !matches!(&item.placement, Some(Placement::Contained { parent_entity_id, revision: 0 }) if parent_entity_id == parent_id)
             || item.actor.is_some()
             || item.item.is_none()
             || item.retirement.is_some()
-            || item.declared_owner.is_some()
             || !budget.owns(&prepared)
         {
             return Err(ExecutionError::Invariant);
@@ -244,7 +257,7 @@ impl CoreMutation<'_> {
             &item,
         )
         .map_err(|_| ExecutionError::Invariant)?;
-        let previous_contents = actor.inventory_revision;
+        let previous_contents = destination.inventory_revision;
         let previous_membership = self.state.administration.object_membership.revision;
         let contents = next_revision(previous_contents.unwrap_or_default())?;
         let membership = next_revision(previous_membership)?;
@@ -252,7 +265,7 @@ impl CoreMutation<'_> {
         self.journal.physical.reserve(size_of::<InventoryUndo>())?;
         self.state
             .inventory
-            .add_item(&self.state.physical.entities, actor_id, child, &budget)?;
+            .add_item(&self.state.physical.entities, parent_id, child, &budget)?;
         self.journal
             .physical
             .undo
@@ -302,18 +315,43 @@ impl CoreMutation<'_> {
         if let Some(target) = self.carried_stock_target_for(actor, definition, quantity) {
             let _workspace = budget.reserve(target.len())?;
             let id = target.to_owned();
-            self.grow_direct_lot(actor, &id, quantity)?;
+            self.grow_direct_lot(actor, &id, quantity, true)?;
             return Ok(id);
         }
+        self.create_direct_stock(actor, definition, quantity, None)
+    }
+
+    /// A split creates a new identity through the same direct item constructor
+    /// as production. It retains the actual source's state and provenance.
+    fn create_direct_stock(
+        &mut self,
+        parent: &str,
+        definition: &crate::install::ItemDefinitionRead,
+        quantity: u64,
+        split: Option<&str>,
+    ) -> Result<String, ExecutionError> {
+        let installed = self.state.installed.clone();
+        let material = definition.material.as_ref();
+        let container = definition.is_container();
+        let individual = container || material.is_some_and(|rule| !rule.homogeneous);
+        let budget = self.journal.physical.budget.clone();
         let body = &installed.retained.item_handling_read.object_body;
         let mut bytes = heap_sum([
-            size_of::<Entity>(), 1024, actor.len(), body.id.len(),
+            size_of::<Entity>(), 1024, parent.len(), body.id.len(),
             definition.named.heap_bytes().ok_or(ExecutionError::Capacity)?,
             definition.pin.heap_bytes().ok_or(ExecutionError::Capacity)?,
             if container { definition.pin.heap_bytes().ok_or(ExecutionError::Capacity)? } else { 0 },
             crate::install::item_count_pin().heap_bytes().ok_or(ExecutionError::Capacity)?,
         ]).ok_or(ExecutionError::Capacity)?;
-        if let Some(material) = material {
+        let split_source = split.map(|id| self.state.physical.entities.get(id)
+            .ok_or(ExecutionError::Invariant)).transpose()?;
+        if let Some(source) = split_source {
+            let lot = source.item.as_ref().ok_or(ExecutionError::Invariant)?;
+            bytes = heap_sum([bytes, lot.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                source.attributes.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                source.declared_owner.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            ]).ok_or(ExecutionError::Capacity)?;
+        } else if let Some(material) = material {
             let size = crate::host::retained_size::map_storage::<String, AttributeState>(material.initial_attributes.len()).ok_or(ExecutionError::Capacity)?;
             bytes = bytes.checked_add(size).ok_or(ExecutionError::Capacity)?;
             for id in &material.initial_attributes {
@@ -325,10 +363,9 @@ impl CoreMutation<'_> {
             }
         }
         let prepared = budget.reserve(bytes)?;
-        let physical = &mut self.state.physical;
-        let issued = physical.identity.allocate_entity("item", |id| physical.entities.get(id).is_some())?;
-        let result = issued.id.clone();
-        let attributes = material.map(|material| -> Result<IndexMap<String, AttributeState>, ExecutionError> {
+        let attributes = if let Some(source) = split_source {
+            source.attributes.clone()
+        } else { material.map(|material| -> Result<IndexMap<String, AttributeState>, ExecutionError> {
             material.initial_attributes.iter().map(|id| {
                 let definition = installed.attributes.get(id).ok_or(ExecutionError::Invariant)?.value();
                 let value = match &definition.schema {
@@ -337,19 +374,27 @@ impl CoreMutation<'_> {
                 };
                 Ok((id.clone(), AttributeState { value, revision: 0, concern_active: None }))
             }).collect()
-        }).transpose()?;
+        }).transpose()? };
+        let split_lot = split_source.and_then(|source| source.item.as_ref());
+        let split_origins = split_lot.map(|lot| lot.material_origin_ids.clone());
+        let contributions = split_lot.and_then(|lot| lot.material_contribution_ids.clone());
+        let declared_owner = split_source.and_then(|source| source.declared_owner.clone());
+        let physical = &mut self.state.physical;
+        let issued = physical.identity.allocate_entity("item", |id| physical.entities.get(id).is_some())?;
+        let result = issued.id.clone();
+        let origins = split_origins.unwrap_or_else(|| definition.tracks_material_origins.then(|| vec![result.clone()]));
         let entity = Entity {
             id: issued.id, kind: "item".into(), name: definition.named.name.clone(),
             name_form: definition.named.name_form.clone(), indefinite_article: definition.named.indefinite_article.clone(),
             item: Some(crate::state::ItemLot {
                 definition_pin: definition.pin.clone(), unit_pin: crate::install::item_count_pin().clone(),
-                quantity, revision: 0, material_origin_ids: definition.tracks_material_origins.then(|| vec![result.clone()]),
-                material_contribution_ids: None, assembly_claim: None,
+                quantity, revision: 0, material_origin_ids: origins,
+                material_contribution_ids: contributions, assembly_claim: None,
                 individuality: if individual { crate::state::Individuality::Individual }
                 else { crate::state::Individuality::Homogeneous },
             }),
             attributes,
-            placement: Some(Placement::Contained { parent_entity_id: actor.into(), revision: 0 }),
+            placement: Some(Placement::Contained { parent_entity_id: parent.into(), revision: 0 }),
             spatial: crate::state::EntitySpatial {
                 body: body.clone(), heading: 0.0, inactive_body: None, soft_footprint: None, local_pose: None,
                 local_avoidance_ready_at: None, flight: None, fall_velocity: None,
@@ -359,11 +404,11 @@ impl CoreMutation<'_> {
                 definition_pin: definition.pin.clone(),
                 subtree_revision: 0, load: 0, load_revision: 0, height: 0, access: None,
             }),
-            declared_owner: None, retirement: None, sensory_progress: None, icon: None,
+            declared_owner, retirement: None, sensory_progress: None, icon: None,
             description: None, status_effects: None, mechanism_fields: None, appearance: None, actor: None,
             animal: None, replenisher: None, resource: None, remains: None, heat: None,
         };
-        self.insert_actor_lot(actor, entity, prepared)?;
+        self.insert_direct_lot(parent, entity, prepared)?;
         Ok(result)
     }
 
@@ -396,12 +441,16 @@ impl CoreMutation<'_> {
         }).map(|entity| entity.id.as_str())
     }
 
-    fn grow_direct_lot(&mut self, actor: &str, id: &str, quantity: u64) -> Result<(), ExecutionError> {
+    fn grow_direct_lot(&mut self, actor: &str, id: &str, quantity: u64, publish_contents: bool) -> Result<(), ExecutionError> {
         let entities = &mut self.state.physical.entities;
         let parent = entities.handle(actor).ok_or(ExecutionError::MissingActor)?;
         let child = entities.handle(id).ok_or(ExecutionError::MissingEntity)?;
         let previous_contents = entities.resolve(parent).ok_or(ExecutionError::Invariant)?.inventory_revision;
-        let contents = next_revision(previous_contents.unwrap_or_default())?;
+        let contents = if publish_contents {
+            Some(next_revision(previous_contents.unwrap_or_default())?)
+        } else {
+            previous_contents
+        };
         let lot = entities.resolve_mut(child).and_then(|entity| entity.item.as_mut()).ok_or(ExecutionError::Invariant)?;
         let before = lot.quantity;
         let revision = lot.revision;
@@ -415,7 +464,7 @@ impl CoreMutation<'_> {
         })));
         lot.quantity = next_quantity;
         lot.revision = next_revision;
-        entities.resolve_mut(parent).ok_or(ExecutionError::Invariant)?.inventory_revision = Some(contents);
+        entities.resolve_mut(parent).ok_or(ExecutionError::Invariant)?.inventory_revision = contents;
         Ok(())
     }
 
@@ -469,7 +518,7 @@ impl CoreMutation<'_> {
         if !self.can_debit_lot(entity, 1) {
             return Ok(false);
         }
-        self.debit_inventory_lot(pile_id, item_id, 1, cause, None)?;
+        self.debit_inventory_lot(pile_id, item_id, 1, LotDebit::consume(cause, None))?;
         Ok(true)
     }
 
@@ -480,9 +529,9 @@ impl CoreMutation<'_> {
         parent_id: &str,
         item_id: &str,
         quantity: u64,
-        cause: &str,
-        custodian: Option<&str>,
+        debit: LotDebit<'_>,
     ) -> Result<(), ExecutionError> {
+        let LotDebit { cause, custodian, target } = debit;
         let physical = &self.state.physical;
         let parent = physical.entities.handle(parent_id).ok_or(ExecutionError::Invariant)?;
         let child = physical.entities.handle(item_id).ok_or(ExecutionError::Invariant)?;
@@ -527,6 +576,7 @@ impl CoreMutation<'_> {
                 parent_id.len(),
                 cause.len(),
                 custodian.map_or(0, |id| 2 * id.len()),
+                target.map_or(0, |(_, id)| id.len()),
                 unit_bytes,
                 if retire {
                     lot_bytes + definition_bytes + parent_id.len() + cause.len() + retained_index
@@ -548,9 +598,9 @@ impl CoreMutation<'_> {
         let issued = self.state.physical.identity.allocate("object-history")?;
         let lineage = ObjectLineage {
             id: issued.id,
-            kind: LineageKind::Consume,
+            kind: target.map_or(LineageKind::Consume, |(kind, _)| kind),
             source_id: item_id.into(),
-            target_id: None,
+            target_id: target.map(|(_, id)| id.to_owned()),
             quantity,
             cause: cause.into(),
             at,

@@ -40,6 +40,7 @@ mod flight;
 mod foraging;
 mod heat;
 mod inventory;
+pub(crate) use inventory::partitionable_stock;
 pub(crate) use inventory::OwnedDebits;
 mod participation;
 pub(crate) use inventory::{EquipmentDecision, EquipmentRequest, equipment_fits};

@@ -35,7 +35,7 @@ pub enum RuntimePlayerCommand<'a> {
         preparation_digest: &'a str,
         inputs: &'a IndexMap<String, String>,
     },
-    Pickup { target: &'a str, item: &'a str },
+    Pickup { target: &'a str, item: &'a str, quantity: Option<u64> },
     Eat(&'a str),
     Equip(&'a str),
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
@@ -47,7 +47,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Move(point) => point.surface_id.len(),
             Self::Cancel(action) => action.map_or(0, str::len),
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
-            Self::Fish { target, tool } | Self::Pickup { target, item: tool } => target.len() + tool.len(),
+            Self::Fish { target, tool } | Self::Pickup { target, item: tool, .. } => target.len() + tool.len(),
             Self::Craft { recipe } => recipe.len(),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
             Self::Status { target, definition, .. } => target.len() + definition.len(),
@@ -97,6 +97,8 @@ impl RuntimePlayerCommand<'_> {
             #[serde(skip_serializing_if = "Option::is_none")]
             placement_revision: Option<u64>,
             #[serde(skip_serializing_if = "Option::is_none")]
+            quantity: Option<u64>,
+            #[serde(skip_serializing_if = "Option::is_none")]
             gathering_mode: Option<GatheringMode>,
             #[serde(skip_serializing_if = "Option::is_none")]
             recipe_id: Option<&'a str>,
@@ -134,6 +136,8 @@ impl RuntimePlayerCommand<'_> {
             #[serde(skip_serializing_if = "Option::is_none")]
             placement_revision: Option<u64>,
             #[serde(skip_serializing_if = "Option::is_none")]
+            quantity: Option<u64>,
+            #[serde(skip_serializing_if = "Option::is_none")]
             recipe_id: Option<&'a str>,
             #[serde(skip_serializing_if = "Option::is_none")]
             target_id: Option<&'a str>,
@@ -150,7 +154,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Move(point) => ("move", Some(point), None, None, None, None),
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
             Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
-            Self::Pickup { target, item } => ("pickup", None, None, Some(target), Some(item), None),
+            Self::Pickup { target, item, .. } => ("pickup", None, None, Some(target), Some(item), None),
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
@@ -166,6 +170,10 @@ impl RuntimePlayerCommand<'_> {
                 (Some(expected_revision), Some(placement_revision)),
             _ => (None, None),
         };
+        let quantity = match self {
+            Self::Pickup { quantity, .. } => quantity,
+            _ => None,
+        };
         let recipe_id = match self {
             Self::Craft { recipe } => Some(recipe),
             _ => None,
@@ -179,6 +187,7 @@ impl RuntimePlayerCommand<'_> {
             || recipe_id.is_some_and(|id| !crate::values::is_safe_record_id(id))
             || destination
                 .is_some_and(|point| ![point.x, point.y, point.z].iter().all(|n| n.is_finite()))
+            || quantity.is_some_and(|n| n == 0 || n > crate::identity::MAX_SAFE_INTEGER)
             || [expected_revision, placement_revision].into_iter().flatten().any(|revision| revision > crate::identity::MAX_SAFE_INTEGER)
         {
             return Err(serde_json::Error::io(std::io::Error::new(
@@ -201,13 +210,14 @@ impl RuntimePlayerCommand<'_> {
                 item_id,
                 expected_revision,
                 placement_revision,
+                quantity,
                 gathering_mode,
                 recipe_id,
                 target_role,
                 text,
                 volume,
             },
-            4 + [destination.is_some(), expected_action_id.is_some(), target_id.is_some(), item_id.is_some(), gathering_mode.is_some(), recipe_id.is_some(), expected_revision.is_some(), placement_revision.is_some(), text.is_some(), target_role.is_some(), volume.is_some()]
+            4 + [destination.is_some(), expected_action_id.is_some(), target_id.is_some(), item_id.is_some(), gathering_mode.is_some(), recipe_id.is_some(), expected_revision.is_some(), placement_revision.is_some(), quantity.is_some(), text.is_some(), target_role.is_some(), volume.is_some()]
                 .into_iter().filter(|value| *value).count(),
         )?;
         let signature = json_record(&Signature {
@@ -225,6 +235,7 @@ impl RuntimePlayerCommand<'_> {
             id,
             item_id,
             placement_revision,
+            quantity,
             recipe_id,
             target_id,
             target_role,
@@ -260,8 +271,8 @@ impl RuntimePlayerCommand<'_> {
                 self_introduction: None,
                 volume: volume.map(|volume| volume.id().to_owned()),
             },
-            Self::Pickup { target, item } => NativeCommand::Pickup {
-                envelope, target_id: target.into(), item_id: item.into(),
+            Self::Pickup { target, item, quantity } => NativeCommand::Pickup {
+                envelope, target_id: target.into(), item_id: item.into(), quantity,
             },
             Self::Fish { target, tool } => NativeCommand::Fish {
                 envelope,

@@ -48,6 +48,7 @@ impl CommandCursor {
             envelope,
             target_id,
             item_id,
+            quantity,
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);
@@ -63,7 +64,7 @@ impl CommandCursor {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
         };
-        if pickup_lot(state, pile, item_id).is_none() {
+        if !pickup_lot(state, pile, item_id).is_some_and(|lot| lot.admits_quantity(*quantity)) {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
         }
@@ -75,6 +76,7 @@ impl CommandCursor {
             envelope.id.clone(),
             target_id.clone(),
             item_id.clone(),
+            *quantity,
             policy.pickup_seconds,
         ));
         self.action_storage = Some(funded);
@@ -97,6 +99,7 @@ impl CommandCursor {
             envelope,
             target_id,
             item_id,
+            ..
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);

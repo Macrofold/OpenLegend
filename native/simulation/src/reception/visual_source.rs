@@ -17,7 +17,6 @@ pub(super) struct PreparedVisualSource {
     pub location: ObservedLocation,
     pub pose: ObservedBodyPose,
     pub facets: Vec<SensoryFacet>,
-    pub inventory_revision: u64,
     pub token: String,
     pub reservation: ByteReservation,
 }
@@ -327,14 +326,26 @@ pub(super) fn prepare_visual_source(
         &pose,
         public.key(),
     );
-    let token_bytes = crate::encoding::json_record_len(&descriptor).map_err(|_| invalid())?;
+    // Only roots whose contents are explicitly observable carry a contents
+    // dependency. A change in a person's private inventory does not affect sight.
+    let contents = (subject.kind == rules.pile_kind || subject.remains.is_some())
+        .then_some((&descriptor, subject.inventory_revision.unwrap_or_default()));
+    let token_bytes = match &contents {
+        Some(exposed) => crate::encoding::json_record_len(exposed),
+        None => crate::encoding::json_record_len(&descriptor),
+    }
+    .map_err(|_| invalid())?;
     reservation.resize(
         reservation
             .bytes()
             .checked_add(token_bytes)
             .ok_or(ExecutionError::Capacity)?,
     )?;
-    let token = crate::encoding::json_record(&descriptor).map_err(|_| invalid())?;
+    let token = match &contents {
+        Some(exposed) => crate::encoding::json_record(exposed),
+        None => crate::encoding::json_record(&descriptor),
+    }
+    .map_err(|_| invalid())?;
     reservation.resize(
         heap_sum([
             size_of::<PreparedVisualSource>(),
@@ -349,7 +360,6 @@ pub(super) fn prepare_visual_source(
         location,
         pose,
         facets,
-        inventory_revision: state.administration.object_membership.revision,
         token,
         reservation,
     })

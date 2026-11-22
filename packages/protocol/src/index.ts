@@ -385,6 +385,8 @@ export interface CatalogueAction {
   label: string;
   icon?: string;
   category: string;
+  /** Current maximum for an exact divisible pickup stack. Omitting an amount selects the whole stack. */
+  pickupLimit?: number;
   /** Situation-aware plain text, projected by the server from permitted facts. */
   description: string;
   facts?: Array<[string, string]>;

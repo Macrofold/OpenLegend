@@ -61,6 +61,23 @@ fn portable_lot<'a>(
     })
 }
 
+impl GroundLot<'_> {
+    pub(crate) fn admits_quantity(&self, amount: Option<u64>) -> bool {
+        amount.is_none_or(|amount| {
+            amount == self.lot.quantity
+                || (amount > 0
+                    && amount < self.lot.quantity
+                    && crate::execution::partitionable_stock(self.entity, self.definition))
+        })
+    }
+
+    pub(crate) fn partial_limit(&self) -> Option<u64> {
+        (self.lot.quantity > 1
+            && crate::execution::partitionable_stock(self.entity, self.definition))
+        .then_some(self.lot.quantity)
+    }
+}
+
 /// Execution binds the selected item's exact identity without enumerating
 /// the pile. The relationship is rechecked against the current placement.
 pub(crate) fn pickup_lot<'a>(

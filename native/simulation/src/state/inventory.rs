@@ -72,14 +72,14 @@ pub(crate) struct ContainerState {
     pub access: Option<ContainerAccess>,
 }
 
-#[derive(Debug, PartialEq, serde::Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum OwnershipDisclosure {
     Custodian,
     Public,
 }
 
-#[derive(Debug, PartialEq, serde::Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct DeclaredOwner {
     #[serde(deserialize_with = "deserialize_nullable")]
