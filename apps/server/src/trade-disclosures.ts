@@ -7,6 +7,7 @@ import { sealCursor, openCursor } from './scoped-cursor.js';
 import { searchTerms, matchesSearch } from './text-search.js';
 import { digest } from './store.js';
 import { disclosedView } from './handover-actions.js';
+import { TRADE_DISCLOSURE_READ } from './trade-disclosure-sql.js';
 import type { WorldService } from './world-service.js';
 import { resolveContactTarget, ContactReferenceError } from './public-contact-references.js';
 
@@ -22,11 +23,6 @@ const cursorSchema = z
     offset: z.number().int().nonnegative().safe(),
   })
   .strict();
-// Transport/read bounds keep the chooser compact and each search finite.
-// They grant no trade permission and do not reuse authored suggestion tuning.
-// docs/limits/interface.md#td01--remembered-trade-item-pages
-const DISCLOSURE_READ = { pageRows: 6, scanRows: 200 } as const;
-
 async function prepare(service: WorldService, actorId: string) {
   await service.ready;
   const head = await service.store.records!.head();
@@ -72,7 +68,7 @@ export async function tradeDisclosures(
     throw new HistoryCursorError('Remembered trade items changed. Refresh this search.');
   const page = await service.store.memories!.tradeDisclosurePage(prepared.scope, personId, {
     ...(cursor ? { before: cursor.before } : {}),
-    limit: DISCLOSURE_READ.scanRows,
+    limit: TRADE_DISCLOSURE_READ.scanRows,
   });
   service.assertScope(scope);
   assertPrepared(service, prepared);
@@ -86,7 +82,7 @@ export async function tradeDisclosures(
     before = entry.position;
     if (entry.lot && (!terms || matchesSearch(terms, `${entry.lot.name} ${entry.lot.description}`)))
       items.push(disclosedView(service.world, entry.lot, (cursor?.offset ?? 0) + examined - 1));
-    if (items.length === DISCLOSURE_READ.pageRows) break;
+    if (items.length === TRADE_DISCLOSURE_READ.pageRows) break;
   }
   const more = examined < page.entries.length || page.more;
   return {
@@ -95,7 +91,7 @@ export async function tradeDisclosures(
     ...(more && before
       ? { next: sealCursor({ fence, before, offset: (cursor?.offset ?? 0) + examined }) }
       : {}),
-    scanLimited: more && examined >= DISCLOSURE_READ.scanRows,
+    scanLimited: more && examined >= TRADE_DISCLOSURE_READ.scanRows,
   };
 }
 

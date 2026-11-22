@@ -54,6 +54,7 @@ pub(crate) struct CommandOptions {
     pub preview: bool,
     pub native_controller: bool,
     pub native_movement: Option<NativeMovementInput>,
+    pub trade_evidence: Option<std::sync::Arc<crate::handover::TradeEvidence>>,
     pub durable_receipt: bool,
 }
 pub(crate) enum CommandAnswer {

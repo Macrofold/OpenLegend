@@ -170,9 +170,9 @@ struct CommandInput {
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     handover_operation: Option<openlegend_simulation::handover::GiftOperation>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
-    offered_items: Option<[openlegend_simulation::handover::GiftSelection; 1]>,
+    offered_items: Option<Vec<openlegend_simulation::handover::GiftSelection>>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
-    requested_items: Option<[(); 0]>,
+    requested_items: Option<Vec<openlegend_simulation::handover::GiftSelection>>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     offer_id: Option<String>,
     #[serde(
@@ -449,6 +449,61 @@ impl PlayerCommands {
         preview.ok_or(WorldError::ProjectionChanged)
     }
 
+    /// Existing receipt recovery precedes this actor-scoped SQL selection.
+    /// The accepted command then rechecks the exact received source and lot.
+    async fn read_trade_evidence(
+        &self,
+        scope: &Arc<AuthorizedScope>,
+        contact: &str,
+        items: &[openlegend_simulation::handover::GiftSelection],
+    ) -> Result<Option<Arc<openlegend_simulation::handover::TradeEvidence>>, WorldError> {
+        use openlegend_simulation::handover::{ReceivedTradeTerm, TradeEvidence};
+        use openlegend_world_host::pool::HostError;
+
+        let references = self.references.clone();
+        let budget = self.game.host.budget();
+        let input_bytes = items
+            .len()
+            .checked_mul(std::mem::size_of::<String>())
+            .and_then(|size| size.checked_add(contact.len()))
+            .and_then(|size| {
+                items.iter().try_fold(size, |bytes, item| bytes.checked_add(item.item_id.len()))
+            })
+            .ok_or(StoreError::Capacity)?;
+        let _inputs = budget.reserve(input_bytes).map_err(HostError::from)?;
+        let funding = budget.clone();
+        let contact = contact.to_owned();
+        let (_selected, cut, person) = self.game.world.capture_recollections_with(
+            self.authority.clone(),
+            scope.clone(),
+            scope.scope.actor_id.clone(),
+            move |world, permit| {
+                Ok(references.resolve_contact(world, permit, &contact, &funding)?)
+            },
+        ).await?;
+        let Some(person) = person else {
+            return Ok(None);
+        };
+        let _person_input = budget.reserve(person.id.len()).map_err(HostError::from)?;
+        let requested = items.iter().map(|item| item.item_id.clone()).collect();
+        let body = match self.game.store.exact_trade_disclosures(cut.clone(), person.id.clone(), requested).await {
+            Ok(body) => body,
+            Err(StoreError::StaleCut) => return Ok(None),
+            Err(error) => return Err(error.into()),
+        };
+        let terms = body.lots.into_iter().map(|row| ReceivedTradeTerm { source: row.source, lot: row.lot });
+        let proof = TradeEvidence::admit(
+            &cut.world,
+            &cut.actor,
+            &person.id,
+            &cut.generation,
+            cut.privacy_revision,
+            terms,
+            body.custody,
+        ).map_err(HostError::from)?;
+        Ok(Some(Arc::new(proof)))
+    }
+
     /// The read watch covers pending acceptance during the independent SQL
     /// read. A receipt remains pinned even if that cut is acknowledged meanwhile.
     async fn read_original_receipt(
@@ -491,7 +546,7 @@ impl PlayerCommands {
                 }
                 // Recovering an existing result cannot admit a mutation. Do not keep
                 // a protected save waiting for this independent receipt read.
-                let _intake = if recovery {
+                let mut intake = if recovery {
                     None
                 } else {
                     Some(self.saves.enter_ordinary().await)
@@ -562,6 +617,35 @@ impl PlayerCommands {
                     }
                     None => None,
                 };
+                let private_trade = facts.gift.as_ref().is_some_and(|gift| {
+                    gift.requested_items.as_ref().is_some_and(|items| !items.is_empty())
+                        || gift.handover_operation != openlegend_simulation::handover::GiftOperation::Offer
+                });
+                let trade_evidence = if let (Some(contact), Some(items)) = (
+                    facts.request.command.target_id.as_deref(),
+                    facts.gift.as_ref().and_then(|gift| gift.requested_items.as_ref())
+                        .filter(|items| !items.is_empty()),
+                ) {
+                    // The retained-item read can wait on PostgreSQL. Its fixed
+                    // cut owns the original proof without holding up protected
+                    // edits or recovery on the ordinary save-admission gate.
+                    drop(intake.take());
+                    let evidence = self.read_trade_evidence(&scope, contact, items).await?;
+                    intake = Some(self.saves.enter_ordinary().await);
+                    permits.current(&scope, Capability::Play, true, |_, _| ())?;
+                    if self.identity.lock().await.epoch.token != facts.request.command_epoch {
+                        let receipt = self.read_original_receipt(world_id, &facts.id, &watch).await?;
+                        return permits.current(&scope, Capability::Play, true, |scope, _| {
+                            report(receipt.as_ref(), &facts, scope, false, false, budget)
+                        })?;
+                    }
+                    self.maintenance.allow_ordinary(permits, &scope)?;
+                    self.saves.check_admission(tokio::time::Instant::now())?;
+                    evidence
+                } else {
+                    None
+                };
+                let _intake = intake;
                 let prepare = facts.clone();
                 let begin_facts = facts.clone();
                 let begin_saves = self.saves.clone();
@@ -736,6 +820,7 @@ impl PlayerCommands {
                                 speech_target.as_ref().map(|value| (value.id.as_str(), value.role)),
                                 travel_destination.as_ref().map(|value| value.id.as_str()),
                                 selected_review.as_ref().and_then(|slot| slot.get()).map(|review| &review.permission),
+                                trade_evidence.as_ref(),
                             )?;
                             Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
                                 &begin_facts.id,
@@ -798,7 +883,7 @@ impl PlayerCommands {
                                 Capability::Play,
                                 true,
                                 |scope, _| {
-                                    if remembered {
+                                    if remembered || private_trade {
                                         return finish_world
                                             .with_unedited_history(&scope.actor_id, || {
                                                 Ok(fence.settle(key, true)?)
@@ -1175,7 +1260,7 @@ impl CommandInput {
         Some(openlegend_simulation::handover::GiftIntent {
             handover_operation: self.handover_operation?,
             offered_items: self.offered_items.clone(),
-            requested_items: self.requested_items,
+            requested_items: self.requested_items.clone(),
             offer_id: self.offer_id.clone(),
             expected_offer_revision: self.expected_offer_revision,
         })
@@ -1190,12 +1275,14 @@ impl PreparedRequest {
         speech_target: Option<(&'a str, SpeechTargetRole)>,
         travel_destination: Option<&'a str>,
         strike_permission: Option<&'a openlegend_simulation::runtime::StrikePermission>,
+        trade_evidence: Option<&'a Arc<openlegend_simulation::handover::TradeEvidence>>,
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
         match input.kind {
             CommandKind::Handover => Ok(RuntimePlayerCommand::Handover {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 gift: self.gift.as_ref().ok_or(StoreError::InvalidRecord)?,
+                evidence: trade_evidence,
             }),
             CommandKind::Outing => {
                 let operation = input.outing_operation.ok_or(StoreError::InvalidRecord)?;

@@ -97,7 +97,7 @@ impl CoreMutation<'_> {
     ) -> Result<Option<String>, ExecutionError> {
         let mut received = None;
         for (item, quantity) in selected {
-            let Some(item) = self.transfer_direct_loose_lot(pile, actor, item, *quantity, "pickup")?
+            let Some(item) = self.transfer_direct_loose_lot(pile, actor, item, *quantity, "pickup", true)?
             else {
                 return Ok(None);
             };
@@ -116,6 +116,7 @@ impl CoreMutation<'_> {
     /// merge, exact lineage, revisions and inverse storage belong here.
     pub(crate) fn transfer_direct_loose_lot(
         &mut self, source: &str, actor: &str, item: &str, quantity: u64, cause: &'static str,
+        merge_receiving_lot: bool,
     ) -> Result<Option<String>, ExecutionError> {
         let installed = self.state.installed.clone();
         let entities = &self.state.physical.entities;
@@ -136,7 +137,7 @@ impl CoreMutation<'_> {
         if quantity > before.saturating_sub(held) {
             return Ok(None);
         }
-        let merge = if held == 0 && partitionable_stock(selected, definition) {
+        let merge = if merge_receiving_lot && held == 0 && partitionable_stock(selected, definition) {
             let bound = body.actor.as_ref().and_then(|body| body.action.as_ref());
             self.state
                 .inventory

@@ -232,6 +232,36 @@ impl HostedWorld {
         })
     }
 
+    /// Publish independently retained personal rows after rechecking the
+    /// caller's additional current dependency and every selected source.
+    /// No storage read can occur while the application turn or lease is held.
+    pub(crate) async fn disclose_personal_sources<'a>(
+        self: &Arc<Self>,
+        authority: &Authority,
+        selected: &PlayerHistoryRead,
+        sources: impl IntoIterator<Item = &'a openlegend_simulation::experience::PersonalSourceRef>,
+        check: impl FnOnce(&NativeWorldSession, &RequestScope) -> Result<bool, WorldError>,
+        publish: impl FnOnce(&ByteBudget) -> Result<Bytes, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
+        let _turn = self.clone().player_disclosure_turn().await?;
+        let actor = selected.read.actor_id();
+        self.with_private_reader(authority, &selected.scope, actor, |session, _| {
+            Ok(self
+                .with_unedited_history(actor, || {
+                    if !check(session, &selected.scope.scope)? {
+                        return Ok(None);
+                    }
+                    let Some(_lease) = session.personal_history_publication(&selected.read, sources)?
+                    else {
+                        return Ok(None);
+                    };
+                    publish(self.host.budget()).map(Some)
+                })?
+                .flatten()
+                .map_or(PlayerDisclosure::Changed, PlayerDisclosure::Published))
+        })
+    }
+
     /// The caller owns a world turn. Keep the same session and app grant
     /// throughout the native private read and actual response preparation.
     fn with_private_reader<T>(

@@ -30,6 +30,7 @@ mod flight;
 pub mod gathering;
 pub mod geometry;
 pub mod handover;
+mod stock_transfer;
 pub mod host;
 pub mod identity;
 pub mod install;

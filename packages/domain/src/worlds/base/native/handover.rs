@@ -6,6 +6,9 @@ use std::sync::LazyLock;
 #[serde(rename_all = "camelCase")]
 pub(crate) struct GiftCopy {
     pub changed: &'static str,
+    pub reciprocal_separator: &'static str,
+    pub reciprocal_unavailable: &'static str,
+    pub reciprocal_accepted: &'static str,
     pub gift_unavailable: &'static str,
     pub choose_person: &'static str,
     pub cannot_take: &'static str,

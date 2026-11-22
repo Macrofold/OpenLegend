@@ -725,6 +725,33 @@ impl NativeWorldSession {
         }
         Ok(())
     }
+    /// Persisted personal pages already own their bounded decoded bodies.
+    /// Recheck those exact source references without loading every body again.
+    pub fn personal_history_publication<'a>(
+        &self,
+        read: &RuntimePrivateHistoryRead,
+        references: impl IntoIterator<Item = &'a crate::experience::PersonalSourceRef>,
+    ) -> Result<Option<RuntimePrivateHistoryPublication>, RuntimeError> {
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let scope = &read.scope;
+        let mut references = references.into_iter().peekable();
+        if !matches!(read.purpose, HistoryPurpose::Personal)
+            || !scope.still_permitted(state)
+            || (references.peek().is_some()
+                && !state.experience.personal_references_current(
+                    &scope.generation,
+                    &scope.actor_id,
+                    scope.privacy_revision,
+                    references,
+                ))
+        {
+            return Ok(None);
+        }
+        Ok(Some(RuntimePrivateHistoryPublication {
+            _lease: self.session.fence().begin_publication().map_err(failure)?,
+        }))
+    }
+
     pub fn history_publication(
         &self,
         read: &RuntimePrivateHistoryRead,

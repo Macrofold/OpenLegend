@@ -186,6 +186,7 @@ pub(crate) fn router(
         .route("/api/inventory", post(inventory::page))
         .route("/api/inventory/access", post(inventory::access))
         .route("/api/trade", post(trade::read))
+        .route("/api/trade/disclosures", post(trade::disclosures::list))
         .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))
         .route("/api/memories", post(recall::recollections))

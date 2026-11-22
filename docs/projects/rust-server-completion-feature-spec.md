@@ -1,8 +1,8 @@
 # Complete game on the Rust server
 
-| Status      | Current progress                                                                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Reviewed River Camp and Solo can open and resume in Rust. Full Main and the combined gameplay and cutover checks remain open. | 2026-11-21   |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Reviewed River Camp, Main and Solo can open and resume in Rust. The complete gameplay and cutover checks remain open. | 2026-11-22   |
 
 ## What a player should be able to do
 

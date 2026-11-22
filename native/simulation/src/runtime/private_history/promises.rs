@@ -231,24 +231,11 @@ impl NativeWorldSession {
         references: impl IntoIterator<Item = &'a PersonalSourceRef>,
         consume: impl FnOnce(RuntimePromisePresentation<'_>) -> T,
     ) -> Result<Option<T>, RuntimeError> {
-        let state = &self.session.accepted().map_err(failure)?.state;
-        let scope = &read.scope;
-        let actor = &scope.actor_id;
-        if !matches!(read.purpose, HistoryPurpose::Personal) || !scope.still_permitted(state) {
+        let Some(_lease) = self.personal_history_publication(read, references)? else {
             return Ok(None);
-        }
-        let mut references = references.into_iter().peekable();
-        if references.peek().is_some()
-            && !state.experience.personal_references_current(
-                &scope.generation,
-                actor,
-                scope.privacy_revision,
-                references,
-            )
-        {
-            return Ok(None);
-        }
-        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        };
+        let state = &self.session.publication_read().map_err(failure)?.state;
+        let actor = &read.scope.actor_id;
         let names = crate::worlds::InstalledPersonalNameReader::prepare(
             &state.physical,
             &state.reception,

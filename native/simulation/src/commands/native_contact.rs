@@ -84,6 +84,7 @@ fn prepare_contact(
             preview: false,
             native_controller: true,
             native_movement: None,
+            trade_evidence: None,
             durable_receipt: false,
         },
         binding,

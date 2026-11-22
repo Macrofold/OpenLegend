@@ -79,7 +79,7 @@ pub(super) async fn recollections(State(state): State<PlayerRoutes>, request: Re
         return recent::page(&state, &selected, &request, creator_route).await;
     }
     for _ in 0..2 {
-        let search = match terms(&state, request.query.as_deref()) {
+        let search = match terms(&state, request.query.as_deref(), 200) {
             Ok(value) => value,
             Err(error) => return error,
         };
@@ -264,15 +264,19 @@ fn entry<'a>(source: &'a PersonalSourceRef, payload: &str) -> Result<Recollectio
     })
 }
 
-fn terms(state: &PlayerRoutes, query: Option<&str>) -> Result<Option<MemorySearch>, Response> {
+pub(super) fn terms(
+    state: &PlayerRoutes,
+    query: Option<&str>,
+    maximum: usize,
+) -> Result<Option<MemorySearch>, Response> {
     let Some(query) = query else {
         return Ok(None);
     };
-    if query.encode_utf16().count() > 200 {
+    if query.encode_utf16().count() > maximum {
         return Err(refusal(
             StatusCode::BAD_REQUEST,
             "history-search",
-            "Search with at most 200 characters.",
+            &format!("Search with at most {maximum} characters."),
         ));
     }
     let query = js_trim(query);

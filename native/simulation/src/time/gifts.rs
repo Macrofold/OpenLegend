@@ -64,7 +64,7 @@ impl DueGifts {
             let event = stage_gift_notice(
                 core,
                 offer,
-                &known.descriptions.offered[0],
+                &known.descriptions,
                 receiver,
                 "offer-expired",
                 GiftMessenger::Expiry,

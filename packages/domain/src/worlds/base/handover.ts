@@ -19,7 +19,7 @@ export const BASE_HANDOVER = {
     giveQuantity: copy.giveQuantity,
     receiveQuantity: copy.receiveQuantity,
     selectionHint: copy.selectionHint,
-    exchanged: (terms: string) => `Exchanged ${terms}.`,
+    exchanged: (terms: string) => copy.reciprocalAccepted.replace('{terms}', () => terms),
     into: copy.into,
     to: copy.to,
     remembered: copy.remembered,
@@ -35,11 +35,14 @@ export const BASE_HANDOVER = {
     waiting: copy.waiting,
     incoming: copy.incoming,
     changed: copy.changed,
-    unavailable: 'The agreed items are no longer available.',
+    unavailable: copy.reciprocalUnavailable,
     giftUnavailable: copy.giftUnavailable,
     unknown: copy.unknown,
     carriedLot: (name: string, index: number) => `${name} (carried stack ${index + 1})`,
-    disclosedLot: (name: string, index: number) => `${name} (disclosed stack ${index + 1})`,
+    disclosedLot: (name: string, index: number) =>
+      copy.disclosedLot.replace(/\{(name|number)\}/g, (_slot, key) =>
+        key === 'name' ? name : String(index + 1),
+      ),
     actionLabel: (verb: string, terms: string, person: string, incoming: boolean) =>
       `${verb} ${terms} ${incoming ? 'from' : 'to'} ${person}`,
     acceptDescription: (receive: string, give?: string) =>
@@ -55,7 +58,8 @@ export const BASE_HANDOVER = {
       `Offer ${give} to ${person}. Nothing moves unless they accept within ${minutes} game minutes; I keep it meanwhile and can withdraw it.`,
     replyDuringWork: 'Replying does not interrupt unrelated work.',
     draftChanged: copy.draftChanged,
-    terms: (give: string, receive?: string) => (receive ? `${give} for ${receive}` : give),
+    terms: (give: string, receive?: string) =>
+      receive ? `${give}${copy.reciprocalSeparator}${receive}` : give,
     witness: (verb: string) => copy.witnessExchange.replace('{verb}', () => verb),
     participantEvent: (personId: string, verb: string, terms: string) =>
       subjectNarration(

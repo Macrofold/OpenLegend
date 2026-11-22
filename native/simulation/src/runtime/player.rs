@@ -538,6 +538,10 @@ impl NativeWorldSession {
             }
             _ => None,
         };
+        let trade_evidence = match command {
+            RuntimePlayerCommand::Handover { evidence, .. } => evidence.cloned(),
+            _ => None,
+        };
         let (command, signature) = command.bind(id, actor).map_err(failure)?;
         self.session
             .begin_command_with_plan(
@@ -547,6 +551,7 @@ impl NativeWorldSession {
                     preview,
                     native_controller: false,
                     native_movement: None,
+                    trade_evidence,
                     durable_receipt: !preview,
                 },
                 crate::construction_gather::ConstructionGather::for_command(materials),
@@ -645,7 +650,7 @@ impl NativeWorldSession {
         mut matches: impl FnMut(&crate::capture::PlayerObservedBody<'_>) -> bool,
         consume: impl FnOnce(crate::handover::GiftRead<'_>, &ByteBudget) -> Result<T, RuntimeError>,
     ) -> Result<Option<T>, RuntimeError> {
-        use crate::handover::{GiftRead, GiftReadLot, ReceivedGifts};
+        use crate::handover::{GiftRead, GiftReadLot, GiftReadOffer, ReceivedGifts, loose_offer_current};
         self.require_active()?;
         let simulation = self.session.accepted().map_err(failure)?;
         let _lease = self.session.fence().begin_publication().map_err(failure)?;
@@ -660,7 +665,7 @@ impl NativeWorldSession {
                 let gifts = ReceivedGifts::from_player(state, actor, &self.budget).map_err(failure)?;
                 let count = state.inventory.direct_item_count(actor);
                 let bytes = count.checked_mul(size_of::<GiftReadLot>())
-                    .and_then(|bytes| bytes.checked_add(body.gift_heads.len().checked_mul(size_of::<&crate::handover::GiftDisclosure>())?))
+                    .and_then(|bytes| bytes.checked_add(gifts.with_party(body.source_id).count().checked_mul(size_of::<GiftReadOffer>())?))
                     .ok_or(CapacityError)?;
                 let _storage = self.budget.reserve(bytes)?;
                 let mut owned = Vec::with_capacity(count);
@@ -678,7 +683,15 @@ impl NativeWorldSession {
                     owned.push(GiftReadLot { item, description: definition.description.as_ref(), whole });
                 }
                 let other = body.source_id;
-                let all = gifts.with_party(other).collect::<Vec<_>>();
+                let all = gifts.with_party(other).map(|disclosed| {
+                    let can_accept = disclosed.offer.recipient_id == actor
+                        && state.physical.gifts.get(&disclosed.offer.id).is_some_and(|current| {
+                            current.revision == disclosed.offer.revision
+                                && current.expires_at > state.physical.header.sim_time
+                                && loose_offer_current(state, current)
+                        });
+                    GiftReadOffer { disclosed, can_accept }
+                }).collect::<Vec<_>>();
                 consume.take().expect("one accepted gift selection")(
                     GiftRead { counterpart: body, owned: &owned, offers: &all },
                     &self.budget,

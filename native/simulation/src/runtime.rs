@@ -1460,6 +1460,7 @@ impl NativeWorldSession {
                     preview: false,
                     native_controller: false,
                     native_movement: None,
+                    trade_evidence: None,
                     durable_receipt,
                 },
             )

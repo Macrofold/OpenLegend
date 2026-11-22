@@ -1,3 +1,9 @@
+import {
+  TRADE_DISCLOSURE_READ,
+  tradeDisclosurePageSql,
+  tradeDisclosureReferencesSql,
+} from '../apps/server/src/trade-disclosure-sql.js';
+import { STOCK_TRANSFER_LIMITS } from '../packages/domain/src/stock-transfer.js';
 import { createHash } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -125,6 +131,10 @@ async function storageSchema() {
     orderedWrites: Boolean(node.uniqueIndexes?.length),
   }));
   let jobParameter = 0;
+  const numbered = (statement: string) => {
+    let index = 0;
+    return statement.replace(/\?/g, () => `$${++index}`);
+  };
   const consolidationScope =
     'r.world_id=$1 AND r.actor_id=$2 AND (SELECT generation FROM world_head WHERE id=1)=$3 AND r.eligible=1';
   const consolidationPage = {
@@ -230,6 +240,13 @@ async function storageSchema() {
         'SELECT actor_id,id,$4::text FROM unnest($2::text[],$3::text[]) c(actor_id,id)',
         '$1',
       ),
+      tradeDisclosures: {
+        first: numbered(tradeDisclosurePageSql(false)),
+        earlier: numbered(tradeDisclosurePageSql(true)),
+        exact: numbered(tradeDisclosureReferencesSql),
+        ...TRADE_DISCLOSURE_READ,
+        maximumReferences: STOCK_TRANSFER_LIMITS.movedLots,
+      },
       maintenance: {
         anchor: consolidationAnchorSql(consolidationScope, '$4', ['$1', '$2']),
         hourly: consolidationSourceSql(consolidationPage),

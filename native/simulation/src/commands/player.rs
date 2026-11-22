@@ -40,6 +40,7 @@ pub enum RuntimePlayerCommand<'a> {
     Handover {
         target: &'a str,
         gift: &'a crate::handover::GiftIntent,
+        evidence: Option<&'a std::sync::Arc<crate::handover::TradeEvidence>>,
     },
     Craft {
         recipe: &'a str,
@@ -90,7 +91,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Pickup { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Drop { item, .. } => item.len(),
             Self::Craft { recipe } => recipe.len(),
-            Self::Handover { target, gift } => target.len() + gift.retained_text_bytes(),
+            Self::Handover { target, gift, .. } => target.len() + gift.retained_text_bytes(),
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
             Self::TendFire { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
@@ -147,7 +148,7 @@ impl RuntimePlayerCommand<'_> {
         if let Self::Status { target, definition, operation, facing } = self {
             return bind_status(id, actor, target, definition, operation, facing);
         }
-        if let Self::Handover { target, gift } = self {
+        if let Self::Handover { target, gift, .. } = self {
             return bind_gift(id, actor, target, gift);
         }
         if let Self::LearnRecord(record) = self {

@@ -3,7 +3,10 @@
 use super::*;
 use crate::{
     execution::gift::{GiftMessenger, gift_narration, gift_terms, stage_gift_notice},
-    handover::{GiftDescription, GiftLot, GiftOffer, GiftOperation, gift_participant, usable_lot},
+    handover::{
+        GiftDescription, GiftDescriptions, GiftLot, GiftOffer, GiftOperation, gift_participant,
+        loose_lot_current, loose_offer_current, prepare_loose_lot,
+    },
     worlds::base_handover::GIFT_COPY as copy,
 };
 
@@ -12,7 +15,7 @@ pub(super) struct GiftNotice {
     kind: &'static str,
     verb: &'static str,
     observers: Vec<String>,
-    description: GiftDescription,
+    descriptions: GiftDescriptions,
 }
 
 impl CommandCursor {
@@ -44,7 +47,9 @@ impl CommandCursor {
                 .as_deref()
                 .and_then(|id| core.state.physical.gifts.get(id));
             let Some(row) = row.filter(|offer| {
-                if gift.handover_operation == GiftOperation::Withdraw {
+                if gift.handover_operation == GiftOperation::Counter {
+                    offer.party(self.actor_id()) && offer.party(target_id)
+                } else if gift.handover_operation == GiftOperation::Withdraw {
                     offer.offerer_id == self.actor_id() && offer.recipient_id == *target_id
                 } else {
                     offer.recipient_id == self.actor_id() && offer.offerer_id == *target_id
@@ -66,8 +71,10 @@ impl CommandCursor {
                 self.gift_refusal("stale-offer", copy.changed)?;
                 return Ok(false);
             }
-            if gift.handover_operation == GiftOperation::Accept
-                && core.state.physical.header.sim_time >= row.expires_at
+            if matches!(
+                gift.handover_operation,
+                GiftOperation::Accept | GiftOperation::Counter
+            ) && core.state.physical.header.sim_time >= row.expires_at
             {
                 self.gift_refusal("expired", copy.expired)?;
                 return Ok(false);
@@ -83,7 +90,7 @@ impl CommandCursor {
         };
         let ready = gift_participant(core.state, owner)?
             && gift_participant(core.state, target)?
-            && (gift.handover_operation != GiftOperation::Offer
+            && (!gift.handover_operation.proposes()
                 || core
                     .state
                     .administration
@@ -164,13 +171,15 @@ impl CommandCursor {
         let op = gift.handover_operation;
         if sight.seen(other) != Some(true) {
             match op {
-                GiftOperation::Offer => self.gift_refusal("not-visible", copy.choose_person)?,
+                GiftOperation::Offer | GiftOperation::Counter => {
+                    self.gift_refusal("not-visible", copy.choose_person)?
+                }
                 GiftOperation::Accept => self.gift_refusal("not-visible", copy.mutual_sight)?,
                 GiftOperation::Decline | GiftOperation::Withdraw => self.phase = Phase::GiftApply,
             }
             return self.drive(core, None);
         }
-        if !reverse && op != GiftOperation::Offer {
+        if !reverse && !op.proposes() {
             self.gift_sight(core, true)?;
             return Ok(Progress::Geometry);
         }
@@ -341,84 +350,101 @@ impl CommandCursor {
         let pending = &state.physical.gifts;
         let op = gift.handover_operation;
         let preview = self.options.preview || self.preparation_mode.is_some();
-        let name_input = match op {
-            GiftOperation::Offer => gift
-                .offered_items
-                .as_ref()
-                .map(|[item]| item.item_id.as_str()),
-            _ => gift
-                .offer_id
-                .as_deref()
-                .and_then(|id| pending.get(id))
-                .map(|offer| offer.lot().item_id.as_str()),
-        };
-        let name = name_input
-            .and_then(|id| state.physical.entities.get(id))
-            .and_then(|item| item.item.as_ref())
-            .and_then(|lot| state.installed.retained.items.get(&lot.definition_pin.id));
-        let reserve = name
-            .map_or(Some(0), |item| {
-                item.description
-                    .heap_bytes()?
-                    .checked_add(item.named.name.heap_bytes()?)?
-                    .checked_mul(4)
-            })
-            .and_then(|bytes| bytes.checked_add(1024))
-            .and_then(|bytes| {
-                bytes.checked_add(
-                    (owner.len() + target_id.len() + gift.retained_text_bytes()).checked_mul(6)?,
-                )
-            })
-            .ok_or(ExecutionError::Capacity)?;
-        self._reservation.resize(
-            self._reservation
-                .bytes()
-                .checked_add(reserve)
+        let prior = gift.offer_id.as_deref().and_then(|id| pending.get(id));
+        let _selection = self.budget.reserve(
+            gift.retained_text_bytes()
+                .checked_mul(6)
+                .and_then(|bytes| bytes.checked_add(4096))
                 .ok_or(ExecutionError::Capacity)?,
         )?;
-        let offer = if op == GiftOperation::Offer {
-            let [selected] = gift
+        let offer = if op.proposes() {
+            let offered = gift
                 .offered_items
-                .as_ref()
+                .as_deref()
                 .ok_or(ExecutionError::Invariant)?;
-            let (entity, definition) =
-                match usable_lot(state, owner, &selected.item_id, selected.quantity) {
-                    Ok(value) => value,
+            let requested = gift
+                .requested_items
+                .as_deref()
+                .ok_or(ExecutionError::Invariant)?;
+            let used_elsewhere = |id: &str| {
+                pending
+                    .for_item(id)
+                    .is_some_and(|offer| prior.is_none_or(|prior| offer.id != prior.id))
+            };
+            let mut own = Vec::with_capacity(offered.len());
+            for selected in offered {
+                let lot = match prepare_loose_lot(state, owner, selected) {
+                    Ok(lot) => lot,
                     Err((code, message)) => {
                         self.gift_refusal(code, message)?;
                         return Ok(None);
                     }
                 };
-            let lot = entity.item.as_ref().ok_or(ExecutionError::Invariant)?;
-            let Some(crate::state::Placement::Contained {
-                revision: placement,
-                ..
-            }) = &entity.placement
-            else {
-                return Err(ExecutionError::Invariant);
+                if used_elsewhere(&selected.item_id) {
+                    self.gift_refusal("already-offered", copy.already_offered)?;
+                    return Ok(None);
+                }
+                own.push(lot);
+            }
+            let mut wanted = Vec::with_capacity(requested.len());
+            let proof = self
+                .options
+                .trade_evidence
+                .as_ref()
+                .filter(|proof| proof.current(state, owner, target_id));
+            let previous = prior.map(|offer| {
+                if offer.offerer_id == *target_id {
+                    &offer.offered
+                } else {
+                    &offer.requested
+                }
+            });
+            for selected in requested {
+                let disclosed = proof
+                    .and_then(|read| read.lot(&selected.item_id))
+                    .or_else(|| {
+                        previous.and_then(|lots| {
+                            lots.iter().find(|lot| lot.item_id == selected.item_id)
+                        })
+                    });
+                let Some(disclosed) = disclosed.filter(|lot| {
+                    selected.quantity <= lot.quantity
+                        && (!lot.whole || selected.quantity == lot.quantity)
+                        && selected
+                            .expected_revision
+                            .is_none_or(|value| value == lot.revision)
+                        && selected
+                            .placement_revision
+                            .is_none_or(|value| value == lot.placement_revision)
+                        && selected
+                            .expected_contents_revision
+                            .is_none_or(|value| Some(value) == lot.contents_revision)
+                }) else {
+                    self.gift_refusal("offer-lapsed", copy.reciprocal_unavailable)?;
+                    return Ok(None);
+                };
+                let mut next = disclosed.clone();
+                next.quantity = selected.quantity;
+                if !loose_lot_current(state, target_id, &next, true)
+                    || used_elsewhere(&next.item_id)
+                {
+                    self.gift_refusal("offer-lapsed", copy.reciprocal_unavailable)?;
+                    return Ok(None);
+                }
+                wanted.push(next);
+            }
+            let current = |offer: &&GiftOffer| {
+                offer.expires_at > at && prior.is_none_or(|old| offer.id != old.id)
             };
-            let placement = *placement;
-            if selected
-                .expected_revision
-                .is_some_and(|rev| rev != lot.revision)
-                || selected
-                    .placement_revision
-                    .is_some_and(|rev| rev != placement)
-            {
-                self.gift_refusal("stale", copy.review_item)?;
-                return Ok(None);
-            }
-            if pending.for_item(&selected.item_id).is_some() {
-                self.gift_refusal("already-offered", copy.already_offered)?;
-                return Ok(None);
-            }
             let outgoing = pending
                 .for_actor(owner)
-                .filter(|o| o.offerer_id == owner && o.expires_at > at)
+                .filter(current)
+                .filter(|offer| offer.offerer_id == owner)
                 .count();
             let incoming = pending
                 .for_actor(target_id)
-                .filter(|o| o.recipient_id == *target_id && o.expires_at > at)
+                .filter(current)
+                .filter(|offer| offer.recipient_id == *target_id)
                 .count();
             let conflict = if outgoing as u64 >= policy.outgoing {
                 Some(("too-many-outgoing", &policy.messages.outgoing))
@@ -427,7 +453,8 @@ impl CommandCursor {
             } else if policy.one_pending_per_pair
                 && pending
                     .for_actor(owner)
-                    .any(|offer| offer.party(target_id) && offer.expires_at > at)
+                    .filter(current)
+                    .any(|offer| offer.party(target_id))
             {
                 Some(("offer-pending", &policy.messages.pair))
             } else {
@@ -440,43 +467,36 @@ impl CommandCursor {
                 self.phase = Phase::Done;
                 return Ok(None);
             }
-            let lot = GiftLot {
-                item_id: selected.item_id.clone(),
-                definition_pin: lot.definition_pin.clone(),
-                quantity: selected.quantity,
-                whole: !crate::execution::partitionable_stock(entity, definition),
-                revision: lot.revision,
-                placement_revision: placement,
-            };
             let expires_at = at + policy.pending_seconds;
             if !expires_at.is_finite() {
                 return Err(ExecutionError::Invariant);
             }
+            let revision = prior
+                .map_or(Some(1), |old| old.revision.checked_add(1))
+                .filter(|revision| *revision <= crate::identity::MAX_SAFE_INTEGER)
+                .ok_or(ExecutionError::Identity)?;
             GiftOffer {
-                id: String::new(),
-                revision: 1,
+                id: prior.map_or_else(String::new, |old| old.id.clone()),
+                revision,
                 offerer_id: owner.into(),
                 recipient_id: target_id.clone(),
-                offered: [lot],
-                requested: [],
+                offered: own,
+                requested: wanted,
                 created_at: at,
                 expires_at,
             }
         } else {
-            let row = pending
-                .get(gift.offer_id.as_deref().ok_or(ExecutionError::Invariant)?)
-                .ok_or(ExecutionError::Invariant)?;
-            if op == GiftOperation::Accept
-                && usable_lot(
-                    state,
-                    &row.offerer_id,
-                    &row.lot().item_id,
-                    row.lot().quantity,
-                )
-                .ok()
-                .is_none_or(|(_, installed)| installed.pin != row.lot().definition_pin)
-            {
-                self.gift_refusal("offer-lapsed", copy.gift_unavailable)?;
+            let row = prior.ok_or(ExecutionError::Invariant)?;
+            let exact = !row.requested.is_empty();
+            if op == GiftOperation::Accept && !loose_offer_current(state, row) {
+                self.gift_refusal(
+                    "offer-lapsed",
+                    if exact {
+                        copy.reciprocal_unavailable
+                    } else {
+                        copy.gift_unavailable
+                    },
+                )?;
                 return Ok(None);
             }
             row.clone()
@@ -486,35 +506,70 @@ impl CommandCursor {
             self.phase = Phase::Done;
             return Ok(None);
         }
-        let item_def = state
-            .installed
-            .retained
-            .items
-            .get(&offer.lot().definition_pin.id)
-            .ok_or(ExecutionError::Invariant)?;
-        let description = GiftDescription {
-            name: item_def.named.name.clone(),
-            description: item_def.description.clone().unwrap_or_default(),
+        let description_bound = offer
+            .lots()
+            .try_fold(0usize, |bytes, lot| {
+                let definition = state.installed.retained.items.get(&lot.definition_pin.id)?;
+                bytes
+                    .checked_add(lot.item_id.capacity())?
+                    .checked_add(lot.definition_pin.id.capacity())?
+                    .checked_add(lot.definition_pin.digest.capacity())?
+                    .checked_add(definition.named.name.heap_bytes()?.checked_mul(4)?)?
+                    .checked_add(definition.description.heap_bytes()?.checked_mul(4)?)?
+                    .checked_add(384)
+            })
+            .ok_or(ExecutionError::Capacity)?;
+        self._reservation.resize(
+            self._reservation
+                .bytes()
+                .checked_add(description_bound)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let describe = |lots: &[GiftLot]| -> Result<Vec<GiftDescription>, ExecutionError> {
+            lots.iter()
+                .map(|lot| {
+                    let item = state
+                        .installed
+                        .retained
+                        .items
+                        .get(&lot.definition_pin.id)
+                        .filter(|item| item.pin == lot.definition_pin)
+                        .ok_or(ExecutionError::Invariant)?;
+                    Ok(GiftDescription {
+                        name: item.named.name.clone(),
+                        description: item.description.clone().unwrap_or_default(),
+                    })
+                })
+                .collect()
+        };
+        let descriptions = GiftDescriptions {
+            offered: describe(&offer.offered)?,
+            requested: describe(&offer.requested)?,
         };
         let mut offer = offer;
         let (kind, verb, code, message) = match op {
             GiftOperation::Offer => ("item-offered", "offered", "offered", copy.proposed),
+            GiftOperation::Counter => ("item-offered", "revised", "offered", copy.proposed),
             GiftOperation::Accept => (
                 "offer-accepted",
                 "accepted",
                 "accepted-offer",
-                copy.accepted,
+                if offer.requested.is_empty() {
+                    copy.accepted
+                } else {
+                    copy.reciprocal_accepted
+                },
             ),
             GiftOperation::Decline => ("offer-declined", "declined", "declined", copy.declined),
             GiftOperation::Withdraw => ("offer-withdrawn", "withdrew", "withdrawn", copy.withdrawn),
         };
         let mut accepted = outcome(true, code, message);
-        if matches!(op, GiftOperation::Offer | GiftOperation::Accept) {
+        if op.proposes() || op == GiftOperation::Accept {
             let template = message.replace(
                 "{minutes}",
                 &ryu_js::Buffer::new().format(policy.pending_seconds / 60.0),
             );
-            accepted.message = gift_terms(&template, &offer, &description)?;
+            accepted.message = gift_terms(&template, &offer, &descriptions)?;
         }
 
         let target = target_id.clone();
@@ -522,17 +577,19 @@ impl CommandCursor {
         if op == GiftOperation::Offer {
             offer.id = core.physical().allocate("offer")?.id;
             core.add_gift(offer.clone())?;
+        } else if op == GiftOperation::Counter {
+            core.replace_gift(offer.clone())?;
         } else {
             if op == GiftOperation::Accept {
-                let Some(item) = core.transfer_direct_loose_lot(
-                    &offer.offerer_id,
-                    &offer.recipient_id,
-                    &offer.lot().item_id,
-                    offer.lot().quantity,
-                    "handover",
-                )?
-                else {
-                    self.gift_refusal("offer-lapsed", copy.gift_unavailable)?;
+                let Some(item) = core.transfer_handover_lots(&offer)? else {
+                    self.gift_refusal(
+                        "offer-lapsed",
+                        if offer.requested.is_empty() {
+                            copy.gift_unavailable
+                        } else {
+                            copy.reciprocal_unavailable
+                        },
+                    )?;
                     return Ok(None);
                 };
                 accepted.item_id = Some(item);
@@ -542,7 +599,7 @@ impl CommandCursor {
         let counterpart_holds = self.gift_counterpart_notice
             && crate::handover::ReceivedGifts::from_player(core.state, &target, &self.budget)?
                 .contains_revision(&offer.id, offer.revision);
-        let observers = if op == GiftOperation::Offer || counterpart_holds {
+        let observers = if op.proposes() || counterpart_holds {
             vec![target.clone(), owner.clone()]
         } else {
             vec![owner.clone()]
@@ -552,7 +609,7 @@ impl CommandCursor {
             kind,
             verb,
             observers,
-            description,
+            descriptions,
         });
         self.outcome = Some(accepted);
         let event = core.stage_event(EventEmissionIntent {
@@ -596,7 +653,7 @@ impl CommandCursor {
         let event = stage_gift_notice(
             core,
             &notice.offer,
-            &notice.description,
+            &notice.descriptions,
             &observer,
             notice.kind,
             GiftMessenger::Person {

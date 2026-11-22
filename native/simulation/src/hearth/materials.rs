@@ -8,24 +8,8 @@ use crate::host::{ByteBudget, ByteReservation};
 use crate::simulation::SimulationState;
 use crate::state::{Entity, SurfacePoint};
 use crate::work::WorkUnit;
-use serde::Deserialize;
-use std::{mem::size_of, sync::LazyLock};
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct StockTransferLimits {
-    examined: usize,
-    pub(super) moved_lots: usize,
-}
-pub(super) fn limits() -> &'static StockTransferLimits {
-    static LIMITS: LazyLock<StockTransferLimits> = LazyLock::new(|| {
-        serde_json::from_str(include_str!(
-            "../../../../packages/domain/src/stock-transfer-limits.json"
-        ))
-        .expect("shared stock transfer limits")
-    });
-    &LIMITS
-}
+use crate::stock_transfer::limits;
+use std::mem::size_of;
 
 pub(crate) enum MaterialSelection {
     Ready {

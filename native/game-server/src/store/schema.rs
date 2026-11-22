@@ -35,6 +35,7 @@ pub(crate) struct RecallStatements {
     pub restore_vectors: String,
     pub reused_vector_queue: String,
     pub maintenance: super::recall::maintenance_scan::MaintenanceQueries,
+    pub trade_disclosures: super::recall::browse::trade::TradeDisclosureStatements,
 }
 
 #[derive(Deserialize)]
@@ -182,6 +183,7 @@ impl StorageSchema {
             .checked_add(self.upsert_job.capacity())?
             .checked_add(self.recall.reconcile.capacity())?
             .checked_add(self.recall.maintenance.retained_bytes()?)?
+            .checked_add(self.recall.trade_disclosures.retained_bytes()?)?
             .checked_add(self.default_story.get().len())?
             .checked_add(self.transcript_account.capacity())?
             .checked_add(self.banner_account.capacity())?
@@ -221,6 +223,7 @@ impl StorageSchema {
             || self.recall.insert.is_empty()
             || self.recall.reconcile.is_empty()
             || !self.recall.maintenance.valid()
+            || !self.recall.trade_disclosures.valid()
             || self.lexical.work.is_empty()
             || self.lexical.write.is_empty()
             || self.lexical.complete.is_empty()

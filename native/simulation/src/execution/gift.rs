@@ -1,7 +1,7 @@
 use super::*;
 use crate::{
     events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope},
-    handover::{GiftDescription, GiftDescriptions, GiftDisclosure, GiftOffer},
+    handover::{GiftDescription, GiftDescriptions, GiftLot, GiftOffer},
     narration::{Narration, NarrationPart, PersonRole},
     reception::EventScalar,
     text::JsText,
@@ -19,6 +19,61 @@ impl CoreMutation<'_> {
         Ok(())
     }
 
+    pub(crate) fn replace_gift(&mut self, offer: GiftOffer) -> Result<(), ExecutionError> {
+        self.journal
+            .physical
+            .reserve(offer.id.len() + size_of::<Undo>())?;
+        let inverse = self
+            .state
+            .physical
+            .gifts
+            .replace(offer, &self.journal.budget)?;
+        self.journal.physical.undo.push(Undo::Gift(inverse));
+        Ok(())
+    }
+
+    /// Both sets of already validated directly held lots move in one undo
+    /// checkpoint. A reciprocal exchange cannot merge away a promised lot
+    /// before the other side has moved it.
+    pub(crate) fn transfer_handover_lots(
+        &mut self,
+        offer: &GiftOffer,
+    ) -> Result<Option<String>, ExecutionError> {
+        let scope = self.journal.checkpoint(self.state)?;
+        let result = (|| {
+            let merge = offer.offered.len() == 1 && offer.requested.is_empty();
+            let mut received = None;
+            for (giver, receiver, lots) in [
+                (&offer.offerer_id, &offer.recipient_id, &offer.offered),
+                (&offer.recipient_id, &offer.offerer_id, &offer.requested),
+            ] {
+                for lot in lots {
+                    let Some(moved) = self.transfer_direct_loose_lot(
+                        giver,
+                        receiver,
+                        &lot.item_id,
+                        lot.quantity,
+                        "handover",
+                        merge,
+                    )?
+                    else {
+                        return Ok(None);
+                    };
+                    if received.is_none() {
+                        received = Some(moved);
+                    }
+                }
+            }
+            Ok(received)
+        })();
+        if matches!(&result, Ok(Some(_))) {
+            self.journal.keep(self.state, scope)?;
+        } else {
+            self.journal.rollback_to(self.state, scope)?;
+        }
+        result
+    }
+
     pub(crate) fn finish_gift(&mut self, id: &str) -> Result<(), ExecutionError> {
         self.journal
             .physical
@@ -32,17 +87,38 @@ impl CoreMutation<'_> {
 pub(crate) fn gift_terms(
     template: &str,
     offer: &GiftOffer,
-    description: &GiftDescription,
+    descriptions: &GiftDescriptions,
 ) -> Result<JsText, ExecutionError> {
     let (before, after) = template
         .split_once("{terms}")
         .ok_or(ExecutionError::Invariant)?;
     let mut text = JsText::from(before);
-    text.push_str(&offer.lot().quantity.to_string());
-    text.push_str(" ");
-    text.push_text(&description.name);
+    append_terms(&mut text, &offer.offered, &descriptions.offered)?;
+    if !offer.requested.is_empty() {
+        text.push_str(GIFT_COPY.reciprocal_separator);
+        append_terms(&mut text, &offer.requested, &descriptions.requested)?;
+    }
     text.push_str(after);
     Ok(text)
+}
+
+fn append_terms(
+    text: &mut JsText,
+    lots: &[GiftLot],
+    descriptions: &[GiftDescription],
+) -> Result<(), ExecutionError> {
+    if lots.len() != descriptions.len() {
+        return Err(ExecutionError::Invariant);
+    }
+    for (index, (lot, description)) in lots.iter().zip(descriptions).enumerate() {
+        if index != 0 {
+            text.push_str(", ");
+        }
+        text.push_str(&lot.quantity.to_string());
+        text.push_str(" ");
+        text.push_text(&description.name);
+    }
+    Ok(())
 }
 
 pub(crate) fn gift_narration(actor: &str, suffix: JsText) -> Narration {
@@ -71,21 +147,28 @@ pub(crate) enum GiftMessenger<'a> {
 pub(crate) fn stage_gift_notice(
     core: &mut CoreMutation<'_>,
     offer: &GiftOffer,
-    description: &GiftDescription,
+    descriptions: &GiftDescriptions,
     receiver: &str,
     kind: &'static str,
     messenger: GiftMessenger<'_>,
 ) -> Result<StagedOccurrence, ExecutionError> {
     let pending = kind == "item-offered";
-    let body = GiftDisclosure {
-        family: "item-offer".into(),
-        offer: offer.clone(),
-        descriptions: GiftDescriptions {
-            offered: [description.clone()],
-            requested: [],
-        },
-        status: if pending { "pending" } else { "ended" }.into(),
-        cause: (!pending).then(|| kind.into()),
+    #[derive(serde::Serialize)]
+    struct Notice<'a> {
+        family: &'static str,
+        #[serde(flatten)]
+        offer: &'a GiftOffer,
+        descriptions: &'a GiftDescriptions,
+        status: &'static str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        cause: Option<&'a str>,
+    }
+    let body = Notice {
+        family: "item-offer",
+        offer,
+        descriptions,
+        status: if pending { "pending" } else { "ended" },
+        cause: (!pending).then_some(kind),
     };
     let bytes = crate::encoding::json_record_len(&body).map_err(|_| ExecutionError::Invariant)?;
     let _storage = core.journal.budget.reserve(
@@ -125,7 +208,7 @@ pub(crate) fn stage_gift_notice(
             verb,
         } => {
             let template = GIFT_COPY.participant_exchange.replace("{verb}", verb);
-            let text = gift_terms(&template, offer, description)?;
+            let text = gift_terms(&template, offer, descriptions)?;
             (gift_narration(source, text), source, Some(target.into()))
         }
         GiftMessenger::Expiry => {
@@ -135,7 +218,7 @@ pub(crate) fn stage_gift_notice(
                     parts: vec![NarrationPart::Literal(gift_terms(
                         &template,
                         offer,
-                        description,
+                        descriptions,
                     )?)],
                 },
                 receiver,

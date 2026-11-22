@@ -91,7 +91,7 @@ impl Definition {
             || !(0.0 <= self.maximum_height_difference_metres
                 && self.maximum_height_difference_metres.is_finite())
             || !(0.0 < self.work_seconds && self.work_seconds <= 86400.0)
-            || !(1..=materials::limits().moved_lots as u64).contains(&self.input.quantity)
+            || !(1..=crate::stock_transfer::limits().moved_lots as u64).contains(&self.input.quantity)
             || !items.get(&self.input.definition.id).is_some_and(|item| {
                 item.pin == self.input.definition && item.tracks_material_origins
             })
@@ -307,7 +307,7 @@ pub(crate) fn valid_saved(
             .all(|surface| surface.id != work.site.surface_id)
         || actor.physical_life().unwrap_or_default() != work.physical_life
         || work.stones.is_empty()
-        || work.stones.len() > materials::limits().moved_lots
+        || work.stones.len() > crate::stock_transfer::limits().moved_lots
     {
         return false;
     }

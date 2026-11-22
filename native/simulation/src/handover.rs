@@ -1,5 +1,5 @@
 //! Active consent is a single authoritative pending collection. Its indexes
-//! contain only the keys needed for one pair, one lot and the next deadline.
+//! contain only current participants, exact lots and the next deadline.
 use crate::{
     execution::ExecutionError,
     host::{ByteBudget, ResidentReservation, retained_size::HeapBytes},
@@ -14,6 +14,11 @@ use std::{
     sync::Arc,
 };
 
+/// One atomic transfer uses the shared stock-operation envelope.
+pub fn trade_lot_limit() -> usize {
+    crate::stock_transfer::limits().moved_lots
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GiftLot {
@@ -23,6 +28,44 @@ pub struct GiftLot {
     pub whole: bool,
     pub revision: u64,
     pub placement_revision: u64,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub capacity: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub contents_revision: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub subtree_revision: Option<u64>,
+}
+impl GiftLot {
+    /// Check the actual persisted offer shape before using its received terms.
+    /// This confers no stock access. The command rechecks current ownership.
+    pub fn valid_shape(&self) -> bool {
+        is_safe_record_id(&self.item_id)
+            && self.definition_pin.is_valid()
+            && (1..=MAX_SAFE_INTEGER).contains(&self.quantity)
+            && self.revision <= MAX_SAFE_INTEGER
+            && self.placement_revision <= MAX_SAFE_INTEGER
+            && self
+                .capacity
+                .is_none_or(|value| (1..=MAX_SAFE_INTEGER).contains(&value))
+            && self
+                .contents_revision
+                .is_none_or(|value| value <= MAX_SAFE_INTEGER)
+            && self
+                .subtree_revision
+                .is_none_or(|value| value <= MAX_SAFE_INTEGER)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -32,8 +75,8 @@ pub struct GiftOffer {
     pub revision: u64,
     pub offerer_id: String,
     pub recipient_id: String,
-    pub offered: [GiftLot; 1],
-    pub requested: [(); 0],
+    pub offered: Vec<GiftLot>,
+    pub requested: Vec<GiftLot>,
     pub created_at: f64,
     pub expires_at: f64,
 }
@@ -45,17 +88,26 @@ impl GiftOffer {
         self.offerer_id == actor || self.recipient_id == actor
     }
 
+    pub(crate) fn lots(&self) -> impl Iterator<Item = &GiftLot> + Clone {
+        self.offered.iter().chain(&self.requested)
+    }
+
     fn valid_shape(&self, at: f64) -> bool {
-        let lot = self.lot();
-        [&self.id, &self.offerer_id, &self.recipient_id, &lot.item_id]
+        [&self.id, &self.offerer_id, &self.recipient_id]
             .into_iter()
             .all(|id| is_safe_record_id(id))
             && self.offerer_id != self.recipient_id
             && (1..=MAX_SAFE_INTEGER).contains(&self.revision)
-            && lot.definition_pin.is_valid()
-            && (1..=MAX_SAFE_INTEGER).contains(&lot.quantity)
-            && lot.revision <= MAX_SAFE_INTEGER
-            && lot.placement_revision <= MAX_SAFE_INTEGER
+            && !self.offered.is_empty()
+            && self.offered.len().saturating_add(self.requested.len())
+                <= crate::stock_transfer::limits().moved_lots
+            && self.lots().enumerate().all(|(position, lot)| {
+                lot.valid_shape()
+                    && self
+                        .lots()
+                        .take(position)
+                        .all(|prior| prior.item_id != lot.item_id)
+            })
             && self.created_at.is_finite()
             && self.created_at >= 0.0
             && self.created_at <= at
@@ -88,18 +140,20 @@ pub(crate) struct GiftState {
 pub(crate) struct GiftUndo {
     id: String,
     prior: Option<(usize, Arc<RetainedGift>)>,
+    has_after: bool,
 }
 impl GiftUndo {
     pub(crate) fn revert(self, state: &mut GiftState) -> Result<(), ExecutionError> {
-        let removed = state.remove(&self.id);
-        match self.prior {
-            Some((ordinal, prior)) if removed.is_none() => {
-                state.insert(ordinal, prior);
-                Ok(())
-            }
-            None if removed.is_some() => Ok(()),
-            _ => Err(ExecutionError::Invariant),
+        if state.rows.contains_key(&self.id) != self.has_after {
+            return Err(ExecutionError::Invariant);
         }
+        if self.has_after {
+            state.remove(&self.id);
+        }
+        if let Some((ordinal, prior)) = self.prior {
+            state.insert(ordinal, prior);
+        }
+        Ok(())
     }
 }
 
@@ -118,7 +172,6 @@ impl GiftState {
             deadlines: BTreeMap::new(),
         };
         for (id, offer) in saved.into_iter().flatten() {
-            let lot = offer.lot();
             if id != offer.id
                 || !offer.valid_shape(at)
                 || offer.expires_at < at
@@ -128,7 +181,9 @@ impl GiftState {
                 || !entities
                     .get(&offer.recipient_id)
                     .is_some_and(|entity| entity.actor.is_some())
-                || state.lots.contains_key(&lot.item_id)
+                || offer
+                    .lots()
+                    .any(|lot| state.lots.contains_key(&lot.item_id))
             {
                 return Err(InstallError::CurrentFormat);
             }
@@ -152,14 +207,15 @@ impl GiftState {
             .ok_or(InstallError::CurrentFormat)?;
         for retained in self.rows.values() {
             let offer = &retained.offer;
-            let lot = offer.lot();
             if offer.expires_at > offer.created_at + policy.pending_seconds
-                || !definitions
-                    .items
-                    .get(&lot.definition_pin.id)
-                    .is_some_and(|definition| {
-                        definition.pin == lot.definition_pin && definition.portable
-                    })
+                || offer.lots().any(|lot| {
+                    !definitions
+                        .items
+                        .get(&lot.definition_pin.id)
+                        .is_some_and(|definition| {
+                            definition.pin == lot.definition_pin && definition.portable
+                        })
+                })
             {
                 return Err(InstallError::CurrentFormat);
             }
@@ -202,31 +258,44 @@ impl GiftState {
     fn fund(offer: GiftOffer, budget: &ByteBudget) -> Result<Arc<RetainedGift>, ExecutionError> {
         // Fund the immutable offer and all of its exact index keys. An undo
         // entry may hold this body independently of current membership.
-        let variable = [
-            &offer.id,
-            &offer.offerer_id,
-            &offer.recipient_id,
-            &offer.lot().item_id,
-            &offer.lot().definition_pin.id,
-            &offer.lot().definition_pin.digest,
-        ]
-        .iter()
-        .try_fold(0usize, |n, value| n.checked_add(value.capacity()))
-        .ok_or(ExecutionError::Capacity)?;
-        let capacity = variable
-            .checked_mul(6)
-            .and_then(|bytes| bytes.checked_add(2048))
-            .ok_or(ExecutionError::Capacity)?;
+        let capacity = Self::record_bytes(&offer).ok_or(ExecutionError::Capacity)?;
         let custody = budget.reserve_record(capacity)?;
         Ok(Arc::new(RetainedGift {
             offer,
             _custody: custody,
         }))
     }
+    fn record_bytes(offer: &GiftOffer) -> Option<usize> {
+        let base = offer
+            .id
+            .capacity()
+            .checked_add(offer.offerer_id.capacity())?
+            .checked_add(offer.recipient_id.capacity())?
+            .checked_mul(6)?
+            .checked_add(2048)?;
+        let slots = offer
+            .offered
+            .capacity()
+            .checked_add(offer.requested.capacity())?;
+        offer.lots().try_fold(
+            base.checked_add(slots.checked_mul(std::mem::size_of::<GiftLot>())?)?,
+            |size, lot| {
+                let text = lot
+                    .item_id
+                    .capacity()
+                    .checked_add(lot.definition_pin.id.capacity())?
+                    .checked_add(lot.definition_pin.digest.capacity())?;
+                size.checked_add(text.checked_mul(6)?)?.checked_add(256)
+            },
+        )
+    }
+
     fn insert(&mut self, ordinal: usize, retained: Arc<RetainedGift>) {
         let offer = &retained.offer;
         let id = offer.id.clone();
-        self.lots.insert(offer.lot().item_id.clone(), id.clone());
+        for lot in offer.lots() {
+            self.lots.insert(lot.item_id.clone(), id.clone());
+        }
         for actor in [&offer.offerer_id, &offer.recipient_id] {
             self.parties
                 .entry(actor.clone())
@@ -242,7 +311,9 @@ impl GiftState {
     fn remove(&mut self, id: &str) -> Option<(usize, Arc<RetainedGift>)> {
         let (ordinal, _, retained) = self.rows.shift_remove_full(id)?;
         let offer = &retained.offer;
-        self.lots.remove(&offer.lot().item_id);
+        for lot in offer.lots() {
+            self.lots.remove(&lot.item_id);
+        }
         for actor in [&offer.offerer_id, &offer.recipient_id] {
             remove_key(&mut self.parties, actor, id);
         }
@@ -254,19 +325,49 @@ impl GiftState {
         offer: GiftOffer,
         budget: &ByteBudget,
     ) -> Result<GiftUndo, ExecutionError> {
-        if self.rows.contains_key(&offer.id) || self.lots.contains_key(&offer.lot().item_id) {
+        if self.rows.contains_key(&offer.id)
+            || offer.lots().any(|lot| self.lots.contains_key(&lot.item_id))
+        {
             return Err(ExecutionError::Invariant);
         }
         let id = offer.id.clone();
         let row = Self::fund(offer, budget)?;
         self.insert(self.rows.len(), row);
-        Ok(GiftUndo { id, prior: None })
+        Ok(GiftUndo {
+            id,
+            prior: None,
+            has_after: true,
+        })
     }
+    pub(crate) fn replace(
+        &mut self,
+        offer: GiftOffer,
+        budget: &ByteBudget,
+    ) -> Result<GiftUndo, ExecutionError> {
+        if offer.lots().any(|lot| {
+            self.lots
+                .get(&lot.item_id)
+                .is_some_and(|id| id != &offer.id)
+        }) {
+            return Err(ExecutionError::Invariant);
+        }
+        let id = offer.id.clone();
+        let prepared = Self::fund(offer, budget)?;
+        let prior = self.remove(&id).ok_or(ExecutionError::Invariant)?;
+        self.insert(prior.0, prepared);
+        Ok(GiftUndo {
+            id,
+            prior: Some(prior),
+            has_after: true,
+        })
+    }
+
     pub(crate) fn finish(&mut self, id: &str) -> Result<GiftUndo, ExecutionError> {
         let prior = self.remove(id).ok_or(ExecutionError::Invariant)?;
         Ok(GiftUndo {
             id: id.into(),
             prior: Some(prior),
+            has_after: false,
         })
     }
     pub(crate) fn get(&self, id: &str) -> Option<&GiftOffer> {
@@ -300,20 +401,10 @@ impl GiftState {
         self.rows.is_empty()
     }
     pub(crate) fn storage_bytes(&self) -> Option<usize> {
-        self.rows.values().try_fold(0usize, |n, record| {
-            let offer = &record.offer;
-            [
-                offer.id.heap_bytes(),
-                offer.offerer_id.heap_bytes(),
-                offer.recipient_id.heap_bytes(),
-                offer.lot().item_id.heap_bytes(),
-                offer.lot().definition_pin.id.heap_bytes(),
-                offer.lot().definition_pin.digest.heap_bytes(),
-            ]
-            .into_iter()
-            .try_fold(n.checked_add(4096)?, |n, bytes| {
-                n.checked_add(bytes?.checked_mul(6)?)
-            })
+        self.rows.values().try_fold(0usize, |bytes, record| {
+            bytes
+                .checked_add(Self::record_bytes(&record.offer)?)?
+                .checked_add(2048)
         })
     }
 }
@@ -339,9 +430,16 @@ impl Serialize for GiftState {
 #[serde(rename_all = "kebab-case")]
 pub enum GiftOperation {
     Offer,
+    Counter,
     Accept,
     Decline,
     Withdraw,
+}
+
+impl GiftOperation {
+    pub fn proposes(self) -> bool {
+        matches!(self, Self::Offer | Self::Counter)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -362,6 +460,12 @@ pub struct GiftSelection {
         skip_serializing_if = "Option::is_none"
     )]
     pub placement_revision: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub expected_contents_revision: Option<u64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -373,13 +477,13 @@ pub struct GiftIntent {
         deserialize_with = "crate::values::deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub offered_items: Option<[GiftSelection; 1]>,
+    pub offered_items: Option<Vec<GiftSelection>>,
     #[serde(
         default,
         deserialize_with = "crate::values::deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub requested_items: Option<[(); 0]>,
+    pub requested_items: Option<Vec<GiftSelection>>,
     #[serde(
         default,
         deserialize_with = "crate::values::deserialize_present_option",
@@ -395,32 +499,149 @@ pub struct GiftIntent {
 }
 impl GiftIntent {
     pub fn valid(&self) -> bool {
-        match self.handover_operation {
-            GiftOperation::Offer => {
-                self.offered_items.as_ref().is_some_and(|[item]| {
-                    is_safe_record_id(&item.item_id)
-                        && item.quantity > 0
-                        && item.quantity <= MAX_SAFE_INTEGER
-                }) && self.requested_items.is_some()
-                    && self.offer_id.is_none()
-                    && self.expected_offer_revision.is_none()
-            }
-            GiftOperation::Accept | GiftOperation::Decline | GiftOperation::Withdraw => {
-                self.offered_items.is_none()
-                    && self.requested_items.is_none()
-                    && self.offer_id.as_deref().is_some_and(is_safe_record_id)
-                    && self
-                        .expected_offer_revision
-                        .is_some_and(|revision| revision <= MAX_SAFE_INTEGER)
-            }
-        }
-    }
-    pub fn retained_text_bytes(&self) -> usize {
-        self.offer_id.as_ref().map_or(0, String::capacity)
-            + self
+        let prior = self.offer_id.as_deref().is_some_and(is_safe_record_id)
+            && self
+                .expected_offer_revision
+                .is_some_and(|revision| revision <= MAX_SAFE_INTEGER);
+        if self.handover_operation.proposes() {
+            let Some((offered, requested)) = self
                 .offered_items
                 .as_ref()
-                .map_or(0, |[lot]| lot.item_id.capacity())
+                .zip(self.requested_items.as_ref())
+            else {
+                return false;
+            };
+            let terms = offered.iter().chain(requested);
+            !offered.is_empty()
+                && offered.len().saturating_add(requested.len())
+                    <= crate::stock_transfer::limits().moved_lots
+                && terms.clone().enumerate().all(|(position, item)| {
+                    is_safe_record_id(&item.item_id)
+                        && (1..=MAX_SAFE_INTEGER).contains(&item.quantity)
+                        && terms
+                            .clone()
+                            .take(position)
+                            .all(|prior| prior.item_id != item.item_id)
+                })
+                && if self.handover_operation == GiftOperation::Counter {
+                    prior
+                } else {
+                    self.offer_id.is_none() && self.expected_offer_revision.is_none()
+                }
+        } else {
+            self.offered_items.is_none() && self.requested_items.is_none() && prior
+        }
+    }
+
+    pub fn retained_text_bytes(&self) -> usize {
+        let terms = [&self.offered_items, &self.requested_items]
+            .into_iter()
+            .flatten()
+            .map(|items| {
+                items.capacity() * std::mem::size_of::<GiftSelection>()
+                    + items
+                        .iter()
+                        .map(|item| item.item_id.capacity())
+                        .sum::<usize>()
+            })
+            .sum::<usize>();
+        terms + self.offer_id.as_ref().map_or(0, String::capacity)
+    }
+}
+
+/// An exact received barter lot from the original participant's retained
+/// awareness. The command must still validate current source and custody.
+pub struct ReceivedTradeTerm {
+    pub source: crate::experience::PersonalSourceRef,
+    pub lot: GiftLot,
+}
+
+pub struct TradeEvidence {
+    world: String,
+    actor: String,
+    counterpart: String,
+    generation: String,
+    privacy_revision: u64,
+    terms: Vec<ReceivedTradeTerm>,
+    _custody: crate::host::ByteReservation,
+}
+
+impl TradeEvidence {
+    /// Move the already admitted query bodies into command custody. The
+    /// reservation covers both vectors during the move, then retains only the
+    /// command's own scoped identities and selected terms.
+    pub fn admit(
+        world: &str,
+        actor: &str,
+        counterpart: &str,
+        generation: &str,
+        privacy_revision: u64,
+        terms: impl ExactSizeIterator<Item = ReceivedTradeTerm>,
+        mut custody: crate::host::ByteReservation,
+    ) -> Result<Self, crate::host::CapacityError> {
+        use crate::host::CapacityError;
+
+        let fixed = [world.len(), actor.len(), counterpart.len(), generation.len()]
+            .into_iter()
+            .try_fold(256usize, usize::checked_add)
+            .and_then(|bytes| {
+                bytes.checked_add(terms.len().checked_mul(std::mem::size_of::<ReceivedTradeTerm>())?)
+            })
+            .ok_or(CapacityError)?;
+        custody.resize(custody.bytes().checked_add(fixed).ok_or(CapacityError)?)?;
+        let mut prepared = Vec::with_capacity(terms.len());
+        let mut retained = fixed;
+        for term in terms {
+            retained = [
+                term.source.id.capacity(),
+                term.source.revision.capacity(),
+                term.lot.item_id.capacity(),
+                term.lot.definition_pin.id.capacity(),
+                term.lot.definition_pin.digest.capacity(),
+            ]
+            .into_iter()
+            .try_fold(retained, usize::checked_add)
+            .ok_or(CapacityError)?;
+            prepared.push(term);
+        }
+        let world = world.to_owned();
+        let actor = actor.to_owned();
+        let counterpart = counterpart.to_owned();
+        let generation = generation.to_owned();
+        custody.resize(retained)?;
+        Ok(Self {
+            world,
+            actor,
+            counterpart,
+            generation,
+            privacy_revision,
+            terms: prepared,
+            _custody: custody,
+        })
+    }
+
+    pub(crate) fn current(
+        &self,
+        state: &crate::simulation::SimulationState,
+        actor: &str,
+        counterpart: &str,
+    ) -> bool {
+        self.actor == actor
+            && self.counterpart == counterpart
+            && self.world == state.physical.header.id
+            && state.experience.personal_references_current(
+                &self.generation,
+                actor,
+                self.privacy_revision,
+                self.terms.iter().map(|term| &term.source),
+            )
+    }
+
+    pub(crate) fn lot(&self, id: &str) -> Option<&GiftLot> {
+        self.terms
+            .iter()
+            .find(|term| term.lot.item_id == id)
+            .map(|term| &term.lot)
     }
 }
 
@@ -484,6 +705,74 @@ pub(crate) fn usable_lot<'a>(
     Ok((entity, definition))
 }
 
+pub(crate) fn prepare_loose_lot(
+    state: &crate::simulation::SimulationState,
+    owner: &str,
+    selection: &GiftSelection,
+) -> Result<GiftLot, (&'static str, &'static str)> {
+    use crate::worlds::base_handover::GIFT_COPY as copy;
+    let (entity, definition) = usable_lot(state, owner, &selection.item_id, selection.quantity)?;
+    let item = entity
+        .item
+        .as_ref()
+        .ok_or(("item-unavailable", copy.own_possessions))?;
+    let Some(crate::state::Placement::Contained { revision, .. }) = &entity.placement else {
+        return Err(("item-unavailable", copy.own_possessions));
+    };
+    if selection
+        .expected_revision
+        .is_some_and(|version| version != item.revision)
+        || selection
+            .placement_revision
+            .is_some_and(|version| version != *revision)
+        || selection.expected_contents_revision.is_some()
+    {
+        return Err(("stale", copy.review_item));
+    }
+    Ok(GiftLot {
+        item_id: selection.item_id.clone(),
+        definition_pin: item.definition_pin.clone(),
+        quantity: selection.quantity,
+        whole: !crate::execution::partitionable_stock(entity, definition),
+        revision: item.revision,
+        placement_revision: *revision,
+        capacity: None,
+        contents_revision: None,
+        subtree_revision: None,
+    })
+}
+
+pub(crate) fn loose_lot_current(
+    state: &crate::simulation::SimulationState,
+    owner: &str,
+    lot: &GiftLot,
+    exact: bool,
+) -> bool {
+    usable_lot(state, owner, &lot.item_id, lot.quantity).is_ok_and(|(entity, definition)| {
+        definition.pin == lot.definition_pin
+            && (!exact || entity.item.as_ref().is_some_and(|item| item.revision == lot.revision)
+                && matches!(&entity.placement, Some(crate::state::Placement::Contained { revision, .. }) if *revision == lot.placement_revision))
+            && lot.capacity.is_none()
+            && lot.contents_revision.is_none()
+            && lot.subtree_revision.is_none()
+    })
+}
+
+pub(crate) fn loose_offer_current(
+    state: &crate::simulation::SimulationState,
+    offer: &GiftOffer,
+) -> bool {
+    let exact = !offer.requested.is_empty();
+    offer
+        .offered
+        .iter()
+        .all(|lot| loose_lot_current(state, &offer.offerer_id, lot, exact))
+        && offer
+            .requested
+            .iter()
+            .all(|lot| loose_lot_current(state, &offer.recipient_id, lot, true))
+}
+
 pub(crate) fn gift_participant(
     state: &crate::simulation::SimulationState,
     entity: &crate::state::Entity,
@@ -513,8 +802,8 @@ pub struct GiftDescription {
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GiftDescriptions {
-    pub offered: [GiftDescription; 1],
-    pub requested: [(); 0],
+    pub offered: Vec<GiftDescription>,
+    pub requested: Vec<GiftDescription>,
 }
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -595,8 +884,17 @@ impl ReceivedGifts {
                 // The stand-alone travel projection owns this authored
                 // notice family. Gift terms still require the original
                 // separately admitted item agreement below.
-                if state.installed.travel && header.event_type.as_deref()
-                    == Some(state.installed.ordinary_actions.value().travel.event_type.as_str())
+                if state.installed.travel
+                    && header.event_type.as_deref()
+                        == Some(
+                            state
+                                .installed
+                                .ordinary_actions
+                                .value()
+                                .travel
+                                .event_type
+                                .as_str(),
+                        )
                 {
                     continue;
                 }
@@ -618,6 +916,8 @@ impl ReceivedGifts {
                 if gift.family != "item-offer"
                     || !gift.offer.party(actor)
                     || !gift.offer.valid_shape(header.at)
+                    || gift.descriptions.offered.len() != gift.offer.offered.len()
+                    || gift.descriptions.requested.len() != gift.offer.requested.len()
                 {
                     return Err(ExecutionError::UnsupportedFamily);
                 }
@@ -697,26 +997,39 @@ fn parsed_agreement(
 impl GiftDisclosure {
     fn body_bytes(&self) -> Option<usize> {
         let gift = &self.offer;
-        let item = gift.lot();
-        let description = &self.descriptions.offered[0];
-        [
-            &gift.id,
-            &gift.id,
-            &gift.offerer_id,
-            &gift.recipient_id,
-            &item.item_id,
-            &item.definition_pin.id,
-            &item.definition_pin.digest,
-            &self.family,
-            &self.status,
-        ]
-        .into_iter()
-        .try_fold(std::mem::size_of::<Self>() * 3, |bytes, value| {
-            bytes.checked_add(value.capacity())
-        })?
-        .checked_add(self.cause.heap_bytes()?)?
-        .checked_add(description.name.heap_bytes()?)?
-        .checked_add(description.description.heap_bytes()?)
+        let rows = gift
+            .offered
+            .capacity()
+            .checked_add(gift.requested.capacity())?;
+        let descriptions = self
+            .descriptions
+            .offered
+            .capacity()
+            .checked_add(self.descriptions.requested.capacity())?;
+        let base = std::mem::size_of::<Self>()
+            .checked_add(self.family.capacity())?
+            .checked_add(self.status.capacity())?
+            .checked_add(self.cause.heap_bytes()?)?
+            .checked_add(gift.id.capacity().checked_mul(2)?)?
+            .checked_add(gift.offerer_id.capacity())?
+            .checked_add(gift.recipient_id.capacity())?
+            .checked_add(rows.checked_mul(std::mem::size_of::<GiftLot>())?)?
+            .checked_add(descriptions.checked_mul(std::mem::size_of::<GiftDescription>())?)?;
+        let lot_bytes = gift.lots().try_fold(base, |bytes, lot| {
+            bytes
+                .checked_add(lot.item_id.capacity())?
+                .checked_add(lot.definition_pin.id.capacity())?
+                .checked_add(lot.definition_pin.digest.capacity())
+        })?;
+        self.descriptions
+            .offered
+            .iter()
+            .chain(&self.descriptions.requested)
+            .try_fold(lot_bytes, |bytes, description| {
+                bytes
+                    .checked_add(description.name.heap_bytes()?)?
+                    .checked_add(description.description.heap_bytes()?)
+            })
     }
 }
 
@@ -731,7 +1044,12 @@ pub struct GiftHead {
 pub struct GiftRead<'a> {
     pub counterpart: crate::capture::PlayerObservedBody<'a>,
     pub owned: &'a [GiftReadLot<'a>],
-    pub offers: &'a [&'a GiftDisclosure],
+    pub offers: &'a [GiftReadOffer<'a>],
+}
+
+pub struct GiftReadOffer<'a> {
+    pub disclosed: &'a GiftDisclosure,
+    pub can_accept: bool,
 }
 
 pub struct GiftReadLot<'a> {
