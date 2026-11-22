@@ -519,14 +519,19 @@ export class WorldRecords {
     };
     await db.exec(create(WORLD_RECORD_SCHEMA));
     // An immutable ID may be hydrated again, never rebound to different contents.
-    // Enforce this at the one SQL owner without a preceding ownership/read scan.
+    // Identical stored text needs no JSONB comparison. Canonical JavaScript JSON
+    // can represent isolated UTF-16 units that PostgreSQL JSONB rejects.
     await db.exec(`CREATE OR REPLACE FUNCTION reject_received_value_mutation() RETURNS trigger
       LANGUAGE plpgsql AS $$ BEGIN
         RAISE EXCEPTION 'An immutable received value cannot change its contents.';
       END $$;
       DROP TRIGGER IF EXISTS received_value_immutable ON mind_perception_values;
       CREATE TRIGGER received_value_immutable BEFORE UPDATE OF payload ON mind_perception_values
-        FOR EACH ROW WHEN (OLD.payload::jsonb IS DISTINCT FROM NEW.payload::jsonb)
+        FOR EACH ROW WHEN (
+          CASE WHEN OLD.payload COLLATE "C" = NEW.payload THEN FALSE
+            ELSE OLD.payload::jsonb IS DISTINCT FROM NEW.payload::jsonb
+          END
+        )
         EXECUTE FUNCTION reject_received_value_mutation()`);
     await db.exec(`CREATE INDEX IF NOT EXISTS temporal_page_buckets
       ON mind_temporal_pages USING gin(lookup_buckets)`);
