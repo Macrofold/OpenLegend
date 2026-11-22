@@ -286,7 +286,7 @@ impl PreparedGame {
                 checkpoints.clone(),
                 game.view_policy().base_ratio(),
             )
-            .with_inputs(presence.clone(), inputs.clone()),
+            .with_inputs(presence.clone(), inputs.clone(), Duration::from_secs_f64(grace)),
         );
         let decisions = Arc::new(crate::npc::Director::new(
             game.clone(),
@@ -323,7 +323,7 @@ impl PreparedGame {
             identity,
             game.clone(),
             saves.clone(),
-            presence,
+            presence.clone(),
             inputs,
             clock.clone(),
             decisions.clone(),
@@ -355,7 +355,7 @@ impl PreparedGame {
             None => game_routes,
         };
         let routes = if local {
-            access_http::local_router(authority, port, game_routes)
+            access_http::local_router(authority, port, game_routes, Some(presence))
         } else {
             let secret = setting("OPEN_LEGEND_OIDC_CLIENT_SECRET", "")?;
             let oidc = Oidc::new(
@@ -374,6 +374,7 @@ impl PreparedGame {
                     game: game.clone(),
                     saves: saves.clone(),
                 }),
+                Some(presence),
             )
         };
         let routes = routes.merge(mcp.unwrap_or_else(crate::mcp_http::disabled));

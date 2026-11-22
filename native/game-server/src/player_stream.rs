@@ -4,6 +4,7 @@
 use crate::{
     authority::{AccessError, Authority, AuthorizedScope},
     player_view::{PreparedPlayerView, PreviousView, ViewError, ViewSelection},
+    presence::StreamPresence,
     wire,
     world::{HostedWorld, PlayerDisclosure, PlayerDisclosureTurn, WorldError},
 };
@@ -59,6 +60,7 @@ pub(crate) struct PlayerStream {
     fresh_attempt: bool,
     ended: bool,
     _permit: OwnedSemaphorePermit,
+    presence: Option<StreamPresence>,
     // The preparation closure holds the request owner until this body drops.
     prepare: PrepareView,
 }
@@ -74,6 +76,7 @@ impl PlayerStream {
         stop: watch::Receiver<bool>,
         first: ViewAttempt,
         permit: OwnedSemaphorePermit,
+        presence: Option<StreamPresence>,
     ) -> Self {
         let now = Instant::now();
         Self {
@@ -91,6 +94,7 @@ impl PlayerStream {
             fresh_attempt: false,
             ended: false,
             _permit: permit,
+            presence,
             prepare,
         }
     }
@@ -150,6 +154,7 @@ impl PlayerStream {
         self.first = None;
         self.previous = None;
         self.pending = None;
+        self.presence = None;
     }
 
     fn defer(&mut self) {

@@ -93,6 +93,7 @@ pub struct GameClock {
     checkpoints: Arc<CheckpointSchedule>,
     base_ratio: f64,
     presence: Option<Arc<Presence>>,
+    exit_grace: Duration,
     inputs: Option<Arc<WorldInputs>>,
     accepted_reset: Mutex<Instant>,
 }
@@ -110,6 +111,7 @@ impl GameClock {
             checkpoints,
             base_ratio,
             presence: None,
+            exit_grace: Duration::ZERO,
             inputs: None,
             accepted_reset: Mutex::new(Instant::now()),
         }
@@ -122,13 +124,17 @@ impl GameClock {
         self.clock_with_presence().await.map(|_| ())
     }
 
-    pub(crate) fn with_inputs(mut self, presence: Arc<Presence>, inputs: Arc<WorldInputs>) -> Self {
+    pub(crate) fn with_inputs(mut self, presence: Arc<Presence>, inputs: Arc<WorldInputs>, exit_grace: Duration) -> Self {
         self.presence = Some(presence);
+        self.exit_grace = exit_grace;
         self.inputs = Some(inputs);
         self
     }
 
     async fn clock_with_presence(&self) -> Result<(RuntimeClock, bool), WorldError> {
+        if let Some(presence) = &self.presence {
+            crate::embodiment::reconcile(&self.game, &self.saves, presence, self.exit_grace).await?;
+        }
         let current = self.game.world.capture(NativeWorldSession::clock).await?;
         let Some(presence) = &self.presence else {
             return Ok((current, false));

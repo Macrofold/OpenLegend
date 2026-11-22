@@ -371,6 +371,23 @@ async fn events(
             Box::pin(async move { views.prepare(&tab).await })
         })
     };
+    let authority = &views.routes.authority;
+    let controlling = match authority.current(&first.scope, Capability::Play, false, |_, controlling| controlling) {
+        Ok(controlling) => controlling,
+        Err(error) => return access_failure(error),
+    };
+    let presence = if controlling {
+        let background = match views.routes.game.store.player_background(&first.scope.scope).await {
+            Ok(background) => background,
+            Err(error) => return failed(error.into()),
+        };
+        match views.routes.presence.connect(first.scope.clone(), background) {
+            Ok(presence) => presence,
+            Err(error) => return access_failure(error),
+        }
+    } else {
+        None
+    };
     let body = PlayerStream::new(
         views.routes.authority.clone(),
         views.routes.game.world.clone(),
@@ -379,6 +396,7 @@ async fn events(
         views.stop.clone(),
         first,
         connection,
+        presence,
     );
     (
         [

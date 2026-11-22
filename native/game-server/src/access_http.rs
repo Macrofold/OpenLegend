@@ -4,6 +4,7 @@
 use crate::{
     authority::{AccessError, Authority, WorldGrant},
     oidc::Oidc,
+    presence::Presence,
     wire,
 };
 use axum::{
@@ -25,6 +26,7 @@ struct AccessRoutes {
     authority: Arc<Authority>,
     identity: IdentityMode,
     enrollment: Option<Enrollment>,
+    presence: Option<Arc<Presence>>,
 }
 
 #[derive(Clone)]
@@ -34,19 +36,25 @@ enum IdentityMode {
 }
 
 pub fn local_access_router(authority: Arc<Authority>, port: u16) -> Router {
-    local_router(authority, port, Router::new())
+    local_router(authority, port, Router::new(), None)
 }
 
 pub fn oidc_access_router(authority: Arc<Authority>, oidc: Arc<Oidc>) -> Router {
-    oidc_router(authority, oidc, Router::new(), None)
+    oidc_router(authority, oidc, Router::new(), None, None)
 }
 
-pub(crate) fn local_router(authority: Arc<Authority>, port: u16, game: Router) -> Router {
+pub(crate) fn local_router(
+    authority: Arc<Authority>,
+    port: u16,
+    game: Router,
+    presence: Option<Arc<Presence>>,
+) -> Router {
     access_router(
         AccessRoutes {
             authority,
             identity: IdentityMode::Local(port),
             enrollment: None,
+            presence,
         },
         game,
     )
@@ -57,12 +65,14 @@ pub(crate) fn oidc_router(
     oidc: Arc<Oidc>,
     game: Router,
     enrollment: Option<Enrollment>,
+    presence: Option<Arc<Presence>>,
 ) -> Router {
     access_router(
         AccessRoutes {
             authority,
             identity: IdentityMode::Oidc(oidc),
             enrollment,
+            presence,
         },
         game,
     )
@@ -381,22 +391,29 @@ async fn logout(
         return access_failure(AccessError::Session);
     };
     match state.authority.logout(token).await {
-        Ok(()) => (
-            [(
-                header::SET_COOKIE,
-                set_cookie(
-                    "ol_session",
-                    "",
-                    match &state.identity {
-                        IdentityMode::Local(_) => false,
-                        IdentityMode::Oidc(oidc) => oidc.origin().starts_with("https:"),
-                    },
-                    Some(0),
-                ),
-            )],
-            Json(serde_json::json!({"ok": true, "message": "Signed out."})),
-        )
-            .into_response(),
+        Ok(session) => {
+            if let Some(presence) = &state.presence
+                && let Err(error) = presence.session_ended(&session)
+            {
+                eprintln!("Failed to reconcile a revoked session: {error:?}");
+            }
+            (
+                [(
+                    header::SET_COOKIE,
+                    set_cookie(
+                        "ol_session",
+                        "",
+                        match &state.identity {
+                            IdentityMode::Local(_) => false,
+                            IdentityMode::Oidc(oidc) => oidc.origin().starts_with("https:"),
+                        },
+                        Some(0),
+                    ),
+                )],
+                Json(serde_json::json!({"ok": true, "message": "Signed out."})),
+            )
+                .into_response()
+        }
         Err(error) => access_failure(error),
     }
 }

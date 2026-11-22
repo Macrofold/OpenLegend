@@ -18,6 +18,7 @@ use uuid::Uuid;
 mod control;
 pub(crate) mod invites;
 mod managed_access;
+pub(crate) use control::DepartureControl;
 pub use control::{ControlChange, ControlOperation, ControlRequest};
 pub(crate) use managed_access::{AccessUpdateError, UpdateGrant, assert_saved_grant};
 
@@ -726,24 +727,24 @@ impl Authority {
         Ok((grant, controls))
     }
 
-    pub async fn logout(&self, token: &str) -> Result<(), AccessError> {
+    pub async fn logout(&self, token: &str) -> Result<String, AccessError> {
         let (key, access) = self.access(token).await?;
         let _change = self.changes.lock().await;
         let _fence = self.begin_revocation(key)?;
-        let session = access.session.clone();
+        let row = access.clone();
         self.store
             .operational(move |tx| {
                 Box::pin(async move {
                     tx.execute(
                         "UPDATE auth_sessions SET revision=revision+1,expires_at=$1 WHERE id=$2",
-                        &[&now_ms(), &session],
+                        &[&now_ms(), &row.session],
                     )
                     .await?;
                     Ok(())
                 })
             })
             .await?;
-        Ok(())
+        Ok(access.session.clone())
     }
 
     fn begin_revocation(&self, key: TokenHash) -> Result<AccessChange<'_>, AccessError> {

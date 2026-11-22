@@ -4,10 +4,11 @@
 use crate::{
     authority::{
         AccessError, Authority, AuthorizedScope, Capability, ControlChange, ControlOperation,
-        ControlRequest, now_ms,
+        ControlRequest, DepartureControl, now_ms,
     },
     boot::CurrentServer,
     live_save::{LiveSaves, ProtectedGameplaySave},
+    presence::{ControlPresence, Presence},
     store::{CommitError, OrdinaryProjection, PrefixProjection, StoreError, StoreResult},
     world::{ProtectedCommit, WorldError},
 };
@@ -30,8 +31,7 @@ struct PreparedControl {
 
 struct ControlProjection<'a> {
     gameplay: OrdinaryProjection<'a>,
-    control: &'a ControlChange,
-    exit: Option<(&'a str, i64)>,
+    operation: &'a HostParticipation,
 }
 
 impl PrefixProjection for ControlProjection<'_> {
@@ -55,8 +55,7 @@ impl PrefixProjection for ControlProjection<'_> {
         self.gameplay
             .after_records(transaction, rows, revision)
             .await?;
-        self.control.write(transaction).await?;
-        self.control.write_exit(transaction, self.exit).await
+        self.operation.write(transaction).await
     }
 }
 
@@ -76,7 +75,7 @@ pub(crate) async fn change(
     authority: &Arc<Authority>,
     authorized: &AuthorizedScope,
     request: ControlRequest,
-    presence: &Arc<crate::presence::Presence>,
+    presence: &Arc<Presence>,
     grace: Duration,
 ) -> Result<EmbodimentChange, WorldError> {
     let _barrier = saves.enter_protected().await?;
@@ -87,31 +86,157 @@ pub(crate) async fn change(
         authority.current(authorized, Capability::Play, false, |_, _| ())?;
         return Ok(EmbodimentChange::Replayed);
     }
-    let exit = (request.operation == ControlOperation::Release).then(|| {
-        (
-            Uuid::new_v4().to_string(),
-            now_ms().saturating_add(grace.as_millis().try_into().unwrap_or(i64::MAX)),
-        )
-    });
+    let exit = (request.operation == ControlOperation::Release).then(|| Exit::new(grace));
     let operation = match &exit {
-        Some((id, _)) => RuntimeParticipation::BeginExit(id.clone()),
+        Some(exit) => RuntimeParticipation::BeginExit(exit.id.clone()),
         None => RuntimeParticipation::Return,
     };
     let release = exit.is_some();
     let (control, reserved_presence) = presence.fence_control(authorized, request)?;
-    let control = Arc::new(control);
-    let write = control.clone();
+    let host = HostParticipation::Browser {
+        control,
+        presence: reserved_presence,
+        exit,
+    };
+    let candidate = apply(
+        game,
+        saves,
+        scope.account_id,
+        scope.actor_id,
+        operation,
+        host,
+    )
+    .await?;
+    if !candidate.outcome.ok {
+        return Ok(EmbodimentChange::Refused {
+            message: candidate.outcome.message,
+            _custody: candidate._custody,
+        });
+    }
+    Ok(if release {
+        EmbodimentChange::Released
+    } else {
+        EmbodimentChange::Returned
+    })
+}
+
+/// Reconcile one due lost controller before the next clock offer. Ordinary
+/// heartbeat renewals and clocks with no due presence do not take this lane.
+pub(crate) async fn reconcile(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    presence: &Arc<Presence>,
+    grace: Duration,
+) -> Result<(), WorldError> {
+    while presence.departure_due()? {
+        let _barrier = saves.enter_protected().await?;
+        let Some(control) = presence.fence_departure()? else {
+            break;
+        };
+        let scope = control.scope.clone();
+        if !control.selected().await? {
+            presence.departure_finished(&scope)?;
+            continue;
+        }
+        let exit = Exit::new(grace);
+        let operation = RuntimeParticipation::BeginExit(exit.id.clone());
+        let host = HostParticipation::Loss {
+            control,
+            presence: presence.clone(),
+            exit,
+        };
+        let candidate = apply(
+            game,
+            saves,
+            scope.scope.account_id.clone(),
+            scope.scope.actor_id.clone(),
+            operation,
+            host,
+        )
+        .await?;
+        if !candidate.outcome.ok {
+            // Gameplay already denies an otherwise current loss, e.g. a
+            // body that ceased participating before this transport closed.
+            presence.departure_finished(&scope)?;
+        }
+    }
+    Ok(())
+}
+
+struct Exit {
+    id: String,
+    deadline: i64,
+}
+
+impl Exit {
+    fn new(grace: Duration) -> Self {
+        Self {
+            id: Uuid::new_v4().to_string(),
+            deadline: now_ms().saturating_add(grace.as_millis().try_into().unwrap_or(i64::MAX)),
+        }
+    }
+
+    fn fields(&self) -> (&str, i64) {
+        (self.id.as_str(), self.deadline)
+    }
+}
+
+enum HostParticipation {
+    Browser {
+        control: ControlChange,
+        presence: ControlPresence,
+        exit: Option<Exit>,
+    },
+    Loss {
+        control: DepartureControl,
+        presence: Arc<Presence>,
+        exit: Exit,
+    },
+}
+
+impl HostParticipation {
+    async fn write(&self, tx: &Transaction<'_>) -> StoreResult<()> {
+        match self {
+            Self::Browser { control, exit, .. } => {
+                control.write(tx).await?;
+                control
+                    .write_exit(tx, exit.as_ref().map(Exit::fields))
+                    .await
+            }
+            Self::Loss { control, exit, .. } => control.write(tx, exit.fields()).await,
+        }
+    }
+
+    fn confirmed(self) -> Result<(), AccessError> {
+        match self {
+            Self::Browser {
+                control, presence, ..
+            } => presence.confirmed(control),
+            Self::Loss {
+                control, presence, ..
+            } => presence.departure_finished(&control.scope),
+        }
+    }
+}
+
+async fn apply(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    account: String,
+    actor: String,
+    operation: RuntimeParticipation,
+    host: HostParticipation,
+) -> Result<PreparedControl, WorldError> {
+    let host = Arc::new(host);
+    let write = host.clone();
     let provider = game.clone();
     let language = game.language().cloned();
     let store = game.store.clone();
     let candidate_store = store.clone();
     let settled_saves = saves.clone();
-    let candidate = game
-        .world
+    game.world
         .execute_protected_then(
-            move |world| {
-                world.begin_participation_direct(&scope.account_id, scope.actor_id, operation)
-            },
+            move |world| world.begin_participation_direct(&account, actor, operation),
             move |question| {
                 let provider = provider.clone();
                 async move { provider.answer_operation(question).await }
@@ -144,8 +269,7 @@ pub(crate) async fn change(
                     ))?;
                     let projection = ControlProjection {
                         gameplay: save.projection(&store, language.as_deref()),
-                        control: &write,
-                        exit: exit.as_ref().map(|(id, deadline)| (id.as_str(), *deadline)),
+                        operation: &write,
                     };
                     let acknowledgement = store.commit_save(prefix, &[], &projection).await?;
                     save.record_commit(&projection.gameplay);
@@ -153,8 +277,9 @@ pub(crate) async fn change(
                 })
             },
             move |candidate| {
-                let change = Arc::try_unwrap(control).map_err(|_| AccessError::Availability)?;
-                reserved_presence.confirmed(change)?;
+                Arc::try_unwrap(host)
+                    .map_err(|_| AccessError::Availability)?
+                    .confirmed()?;
                 candidate
                     .save
                     .as_ref()
@@ -164,16 +289,5 @@ pub(crate) async fn change(
             },
         )
         .await?
-        .ok_or(AccessError::Changed)?;
-    if !candidate.outcome.ok {
-        return Ok(EmbodimentChange::Refused {
-            message: candidate.outcome.message,
-            _custody: candidate._custody,
-        });
-    }
-    Ok(if release {
-        EmbodimentChange::Released
-    } else {
-        EmbodimentChange::Returned
-    })
+        .ok_or(AccessError::Changed.into())
 }

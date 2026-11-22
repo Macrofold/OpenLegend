@@ -196,19 +196,7 @@ impl ControlChange {
     }
 
     fn invalidate(&mut self, cache: &mut Cache) {
-        // An older operational read must not install its old controller
-        // after this fence. Keep unrelated actors' cached authority current.
-        cache.revision = cache
-            .revision
-            .checked_add(1)
-            .expect("access revision exhausted");
-        cache.tokens.retain(|_, row| {
-            row.grant
-                .as_ref()
-                .and_then(|grant| grant.actor_id.as_deref())
-                != Some(&self.scope.actor_id)
-        });
-        cache.changing_control.remove(&self.scope.actor_id);
+        invalidate_control(cache, &self.scope.actor_id);
         self.finished = true;
     }
 
@@ -320,6 +308,100 @@ impl ControlChange {
     ) -> StoreResult<()> {
         apply_exit(tx, &self.scope.world_id, &self.scope.actor_id, attempt).await
     }
+}
+
+/// An internal loss notification is not a credential. It may retire only
+/// the saved controller whose exact generation and connection were observed.
+pub(crate) struct DepartureControl {
+    owner: Arc<Authority>,
+    pub(crate) scope: Arc<AuthorizedScope>,
+    _custody: ByteReservation,
+}
+
+impl Authority {
+    pub(crate) fn fence_departure(
+        self: &Arc<Self>,
+        scope: Arc<AuthorizedScope>,
+    ) -> Result<DepartureControl, AccessError> {
+        if scope.scope.world_id != self.world_id
+            || scope.scope.timeline_id != self.timeline
+            || !scope.scope.embodied()
+            || scope.scope.control_generation >= MAX_SAFE_INTEGER
+        {
+            return Err(AccessError::Changed);
+        }
+        let custody = self.budget.reserve(8192).map_err(|_| AccessError::Busy)?;
+        let mut cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        if !cache.changing_control.insert(scope.scope.actor_id.clone()) {
+            return Err(AccessError::Busy);
+        }
+        Ok(DepartureControl {
+            owner: self.clone(),
+            scope,
+            _custody: custody,
+        })
+    }
+}
+
+impl DepartureControl {
+    /// An old page can survive a concurrent access edit or replacement. Skip
+    /// that page before preparing physical work; repeat the exact match at write.
+    pub(crate) async fn selected(&self) -> StoreResult<bool> {
+        let scope = self.scope.clone();
+        self.owner.store.read_operational(move |tx| {
+            Box::pin(async move {
+                let value = &scope.scope;
+                Ok(tx.query_opt(
+                    "SELECT 1 FROM auth_controls WHERE world_id=$1 AND actor_id=$2 AND generation=$3 \
+                     AND account_id=$4 AND session_id=$5 AND connection_id=$6",
+                    &[&value.world_id, &value.actor_id, &(value.control_generation as i64),
+                     &value.account_id, &value.session_id, &value.connection_id],
+                ).await?.is_some())
+            })
+        }).await
+    }
+
+    pub(crate) async fn write(
+        &self,
+        tx: &Transaction<'_>,
+        attempt: (&str, i64),
+    ) -> StoreResult<()> {
+        let value = &self.scope.scope;
+        let updated = tx.execute(
+            "UPDATE auth_controls SET generation=generation+1,session_id='',connection_id='' \
+             WHERE world_id=$1 AND actor_id=$2 AND generation=$3 AND account_id=$4 AND session_id=$5 AND connection_id=$6",
+            &[&value.world_id, &value.actor_id, &(value.control_generation as i64),
+              &value.account_id, &value.session_id, &value.connection_id],
+        ).await?;
+        if updated != 1 {
+            return Err(StoreError::StaleCut);
+        }
+        apply_exit(tx, &value.world_id, &value.actor_id, Some(attempt)).await
+    }
+}
+
+impl Drop for DepartureControl {
+    fn drop(&mut self) {
+        if let Ok(mut cache) = self.owner.cache.lock() {
+            invalidate_control(&mut cache, &self.scope.scope.actor_id);
+        }
+    }
+}
+
+fn invalidate_control(cache: &mut Cache, actor: &str) {
+    // An older operational read must not install its old controller
+    // after this fence. Keep unrelated actors' cached authority current.
+    cache.revision = cache
+        .revision
+        .checked_add(1)
+        .expect("access revision exhausted");
+    cache.tokens.retain(|_, row| {
+        row.grant
+            .as_ref()
+            .and_then(|grant| grant.actor_id.as_deref())
+            != Some(actor)
+    });
+    cache.changing_control.remove(actor);
 }
 
 pub(crate) async fn apply_exit(
