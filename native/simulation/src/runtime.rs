@@ -32,7 +32,7 @@ pub use direct_history::{
 };
 mod handoff;
 mod inspection;
-pub use inspection::{RuntimeDefinitionInspection, RuntimeDefinitionKind, RuntimeWorldInspection};
+pub use inspection::{RuntimeDefinitionCatalogue, RuntimeDefinitionInspection, RuntimeDefinitionKind, RuntimeWorldInspection};
 mod knowledge;
 pub use crate::knowledge::cartography::{MapMarkerEdit, MarkerChange};
 mod learning;

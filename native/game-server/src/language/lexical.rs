@@ -50,6 +50,27 @@ impl LexicalVector {
 }
 
 impl LanguageProvider {
+    /// Match ECMAScript lowercase without normalizing text or changing its
+    /// non-scalar UTF-16 units. Return the funded result to the lexical reader.
+    pub(crate) fn lowercase_text(
+        &self,
+        input: TextRef<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(Vec<u16>, ByteReservation), LanguageError> {
+        let _input = budget
+            .reserve(
+                input
+                    .storage_bytes()
+                    .checked_mul(2)
+                    .ok_or(LanguageError::Capacity)?,
+            )
+            .map_err(|_| LanguageError::Capacity)?;
+        let units: Vec<u16> = match input {
+            TextRef::Unicode(text) => text.encode_utf16().collect(),
+            TextRef::Text(text) => text.units().collect(),
+        };
+        self.lowercase_units(&units, budget)
+    }
     /// Normalize an already permitted Notes label with the same Unicode data
     /// used for its query. The returned units and reservation stay together.
     pub(crate) fn normalize_mind_label(

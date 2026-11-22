@@ -43,6 +43,9 @@ impl RetainedMap {
     pub(crate) fn get(&self, key: &str) -> Option<&str> {
         self.rows.get(key).map(|row| row.payload.as_str())
     }
+    pub(crate) fn id_at(&self, index: usize) -> Option<&str> {
+        self.rows.get_index(index).map(|(key, _)| key.as_str())
+    }
     pub(crate) fn is_empty(&self) -> bool {
         self.rows.is_empty()
     }

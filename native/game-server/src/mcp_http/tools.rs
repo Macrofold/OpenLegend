@@ -26,6 +26,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json, value::RawValue};
 use std::{borrow::Cow, sync::Arc};
 
+mod find;
+
 const CONTEXT: &str = "ol_context";
 const INSPECT: &str = "ol_inspect";
 const ITEM_DEFINITION: &str = "item-definition";
@@ -34,6 +36,7 @@ const SENSE: &str = "sense";
 const BODY_POLICY: &str = "body-policy";
 const RECIPE: &str = "recipe";
 const ITEM_HANDLING: &str = "item-handling-policy";
+const ITEM_HANDLING_LABEL: &str = "Item handling policy";
 const RESULT_BYTES: usize = 64 * 1024;
 const CONTEXT_DESCRIPTION: &str =
     "Inspect the current world profile, installed revision, policy and available read tools.";
@@ -45,6 +48,7 @@ pub(super) struct WorldTools {
     world: Arc<HostedWorld>,
     timeline: Arc<str>,
     budget: ByteBudget,
+    find: Option<Arc<find::CatalogueSearch>>,
 }
 
 impl WorldTools {
@@ -53,12 +57,14 @@ impl WorldTools {
         world: Arc<HostedWorld>,
         timeline: Arc<str>,
         budget: ByteBudget,
+        language: Option<Arc<crate::language::LanguageProvider>>,
     ) -> Self {
         Self {
             access,
             world,
             timeline,
             budget,
+            find: language.map(|language| Arc::new(find::CatalogueSearch::new(language))),
         }
     }
 }
@@ -103,32 +109,36 @@ impl ServerHandler for WorldTools {
             ));
         }
         let context_handle = json!({"type":"string","minLength":32,"maxLength":256});
+        let mut tools = vec![
+            tool(
+                CONTEXT,
+                CONTEXT_DESCRIPTION,
+                json!({
+                    "type":"object","additionalProperties":false,
+                    "properties":{"contextHandle":context_handle},
+                }),
+            ),
+            tool(
+                INSPECT,
+                INSPECT_DESCRIPTION,
+                json!({
+                    "type":"object","additionalProperties":false,"required":["kind","id"],
+                    "properties":{
+                        "kind":{"type":"string","minLength":1,"maxLength":200},
+                        "id":{"type":"string","minLength":1,"maxLength":500},
+                        "version":{"type":"string","minLength":1,"maxLength":100},
+                        "sections":{"type":"array","minItems":1,"maxItems":3,
+                            "items":{"enum":["facts","mechanics","relationships"]}},
+                        "contextHandle":context_handle,
+                    }
+                }),
+            ),
+        ];
+        if self.find.is_some() {
+            tools.push(find::tool(context_handle));
+        }
         Ok(ListToolsResult {
-            tools: vec![
-                tool(
-                    CONTEXT,
-                    CONTEXT_DESCRIPTION,
-                    json!({
-                        "type":"object","additionalProperties":false,
-                        "properties":{"contextHandle":context_handle},
-                    }),
-                ),
-                tool(
-                    INSPECT,
-                    INSPECT_DESCRIPTION,
-                    json!({
-                        "type":"object","additionalProperties":false,"required":["kind","id"],
-                        "properties":{
-                            "kind":{"type":"string","minLength":1,"maxLength":200},
-                            "id":{"type":"string","minLength":1,"maxLength":500},
-                            "version":{"type":"string","minLength":1,"maxLength":100},
-                            "sections":{"type":"array","minItems":1,"maxItems":3,
-                                "items":{"enum":["facts","mechanics","relationships"]}},
-                            "contextHandle":context_handle,
-                        }
-                    }),
-                ),
-            ],
+            tools,
             ..Default::default()
         })
     }
@@ -159,17 +169,24 @@ impl ServerHandler for WorldTools {
         let access = self.access.clone();
         let budget = self.budget.clone();
         let timeline = self.timeline.clone();
+        let find_available = self.find.is_some();
         let prepared = tokio::select! {
             biased;
             _ = context.ct.cancelled() => return Ok(Failure::Expired.result().into()),
-            result = self.world.capture(move |world| {
-                world.inspect_world(selected.definition(), |read| {
-                    if !access.current() || access.config.world_id != read.progress.world_id {
-                        return Err(Failure::Expired);
-                    }
-                    selected.reply(read, &timeline, &budget)
-                })
-            }) => result.map_err(|_| Failure::Unavailable).and_then(|value| value),
+            result = async {
+                if let Selection::Find(input) = selected {
+                    let search = self.find.clone().ok_or(Failure::Unavailable)?;
+                    return find::search(search, &self.world, access, timeline, input, budget, lease.clone(), context.ct.clone()).await;
+                }
+                self.world.capture(move |world| {
+                    world.inspect_world(selected.definition(), |read| {
+                        if !access.current() || access.config.world_id != read.progress.world_id {
+                            return Err(Failure::Expired);
+                        }
+                        selected.reply(read, &timeline, &budget, find_available)
+                    })
+                }).await.map_err(|_| Failure::Unavailable)?
+            } => result,
         };
         if !self.access.current() || context.ct.is_cancelled() {
             return Ok(Failure::Expired.result().into());
@@ -215,7 +232,17 @@ enum Section {
 enum Selection {
     Context,
     Inspect(InspectInput, RuntimeDefinitionKind),
+    Find(find::Input),
 }
+
+const KINDS: [(&str, RuntimeDefinitionKind); 6] = [
+    (ITEM_DEFINITION, RuntimeDefinitionKind::Item),
+    (ATTRIBUTE, RuntimeDefinitionKind::Attribute),
+    (SENSE, RuntimeDefinitionKind::Sense),
+    (BODY_POLICY, RuntimeDefinitionKind::BodyPolicy),
+    (RECIPE, RuntimeDefinitionKind::Recipe),
+    (ITEM_HANDLING, RuntimeDefinitionKind::ItemHandling),
+];
 
 fn valid(value: &str, min: usize, max: usize) -> bool {
     (min..=max).contains(&value.encode_utf16().count())
@@ -259,17 +286,14 @@ fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Fa
             }) {
                 return Err(Failure::Unavailable);
             }
-            let kind = match input.kind.as_str() {
-                ITEM_DEFINITION => RuntimeDefinitionKind::Item,
-                ATTRIBUTE => RuntimeDefinitionKind::Attribute,
-                SENSE => RuntimeDefinitionKind::Sense,
-                BODY_POLICY => RuntimeDefinitionKind::BodyPolicy,
-                RECIPE => RuntimeDefinitionKind::Recipe,
-                ITEM_HANDLING => RuntimeDefinitionKind::ItemHandling,
-                _ => return Err(Failure::Unavailable),
-            };
+            let kind = KINDS
+                .iter()
+                .find(|(name, _)| *name == input.kind)
+                .ok_or(Failure::Unavailable)?
+                .1;
             Ok(Selection::Inspect(input, kind))
         }
+        find::NAME => find::Input::parse(arguments).map(Selection::Find),
         _ => Err(Failure::Invalid),
     }
 }
@@ -277,7 +301,7 @@ fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Fa
 impl Selection {
     fn definition(&self) -> Option<(RuntimeDefinitionKind, &str)> {
         match self {
-            Self::Context => None,
+            Self::Context | Self::Find(_) => None,
             Self::Inspect(input, kind) => Some((*kind, &input.id)),
         }
     }
@@ -287,6 +311,7 @@ impl Selection {
         read: RuntimeWorldInspection<'_>,
         timeline: &str,
         budget: &ByteBudget,
+        find_available: bool,
     ) -> Result<PreparedReply, Failure> {
         let snapshot = Snapshot {
             world_id: read.progress.world_id,
@@ -305,24 +330,8 @@ impl Selection {
                     controlled_actor_id: None,
                     manifest_revision: read.manifest_revision,
                     policy: raw(read.policy)?,
-                    definition_kinds: &[
-                        ITEM_DEFINITION,
-                        ATTRIBUTE,
-                        SENSE,
-                        BODY_POLICY,
-                        RECIPE,
-                        ITEM_HANDLING,
-                    ],
-                    tools: [
-                        Description {
-                            name: CONTEXT,
-                            description: CONTEXT_DESCRIPTION,
-                        },
-                        Description {
-                            name: INSPECT,
-                            description: INSPECT_DESCRIPTION,
-                        },
-                    ],
+                    definition_kinds: KINDS.map(|(name, _)| name),
+                    tools: &DESCRIPTIONS[..2 + usize::from(find_available)],
                     limitations: &[
                         "This connector reads public installed definitions. It has no account, model spending or write authority.",
                     ],
@@ -344,6 +353,7 @@ impl Selection {
                     budget,
                 ),
             },
+            Self::Find(_) => Err(Failure::Unavailable),
         }
     }
 }
@@ -363,6 +373,25 @@ fn projected_reply(
     projection: Projection<'_>,
     budget: &ByteBudget,
 ) -> Result<PreparedReply, Failure> {
+    with_projection(source, projection, budget, |name, fields| {
+        let bytes = json_record_len(fields).map_err(|_| Failure::Unavailable)?;
+        if bytes > RESULT_BYTES {
+            return Err(Failure::Capacity);
+        }
+        let _payload = budget.reserve(bytes).map_err(|_| Failure::Capacity)?;
+        let mut output = Vec::with_capacity(bytes);
+        write_json_record(fields, &mut output).map_err(|_| Failure::Unavailable)?;
+        let payload = std::str::from_utf8(&output).map_err(|_| Failure::Unavailable)?;
+        definition_reply(snapshot, input, name, payload, budget)
+    })
+}
+
+fn with_projection<T>(
+    source: &str,
+    projection: Projection<'_>,
+    budget: &ByteBudget,
+    project: impl FnOnce(TextRef<'_>, &IndexMap<String, &RawValue>) -> Result<T, Failure>,
+) -> Result<T, Failure> {
     let workspace = json_tree_allocation_bound(source).ok_or(Failure::Capacity)?;
     let _workspace = budget.reserve(workspace).map_err(|_| Failure::Capacity)?;
     let _pin_memory: ByteReservation;
@@ -390,18 +419,10 @@ fn projected_reply(
             _pin_memory = budget.reserve(memory).map_err(|_| Failure::Capacity)?;
             policy_pin = json_record(pin).map_err(|_| Failure::Unavailable)?;
             fields.insert("pin".into(), raw(&policy_pin)?);
-            "Item handling policy".into()
+            ITEM_HANDLING_LABEL.into()
         }
     };
-    let bytes = json_record_len(&fields).map_err(|_| Failure::Unavailable)?;
-    if bytes > RESULT_BYTES {
-        return Err(Failure::Capacity);
-    }
-    let _payload = budget.reserve(bytes).map_err(|_| Failure::Capacity)?;
-    let mut output = Vec::with_capacity(bytes);
-    write_json_record(&fields, &mut output).map_err(|_| Failure::Unavailable)?;
-    let payload = std::str::from_utf8(&output).map_err(|_| Failure::Unavailable)?;
-    definition_reply(snapshot, input, name, payload, budget)
+    project(name, &fields)
 }
 
 fn definition_reply(
@@ -467,6 +488,21 @@ struct Description {
     description: &'static str,
 }
 
+static DESCRIPTIONS: [Description; 3] = [
+    Description {
+        name: CONTEXT,
+        description: CONTEXT_DESCRIPTION,
+    },
+    Description {
+        name: INSPECT,
+        description: INSPECT_DESCRIPTION,
+    },
+    Description {
+        name: find::NAME,
+        description: find::DESCRIPTION,
+    },
+];
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ContextData<'a> {
@@ -474,8 +510,8 @@ struct ContextData<'a> {
     controlled_actor_id: Option<&'a str>,
     manifest_revision: u64,
     policy: &'a RawValue,
-    definition_kinds: &'static [&'static str],
-    tools: [Description; 2],
+    definition_kinds: [&'static str; KINDS.len()],
+    tools: &'static [Description],
     limitations: &'static [&'static str],
 }
 
@@ -552,6 +588,7 @@ fn result<T: Serialize>(
 enum Failure {
     Invalid,
     Stale,
+    ListingChanged,
     Forbidden,
     Expired,
     Unavailable,
@@ -563,6 +600,10 @@ impl Failure {
         let (status, message) = match self {
             Self::Invalid => ("invalid", "Arguments do not match the tool."),
             Self::Stale => ("stale", "Definition changed. Read its current version."),
+            Self::ListingChanged => (
+                "stale",
+                "The selected source or query changed. Restart this listing.",
+            ),
             Self::Forbidden => (
                 "forbidden",
                 "The selected inspection is unavailable to this grant.",

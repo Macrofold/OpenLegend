@@ -151,6 +151,7 @@ pub(crate) fn router(
     world_id: &str,
     timeline: &str,
     world: Arc<HostedWorld>,
+    language: Option<Arc<crate::language::LanguageProvider>>,
     budget: ByteBudget,
     stop: watch::Receiver<bool>,
     request_owner: watch::Sender<()>,
@@ -160,7 +161,13 @@ pub(crate) fn router(
         config,
         stop,
     });
-    let tools = tools::WorldTools::new(access.clone(), world, timeline.into(), budget.clone());
+    let tools = tools::WorldTools::new(
+        access.clone(),
+        world,
+        timeline.into(),
+        budget.clone(),
+        language,
+    );
     let transport = StreamableHttpService::new(
         move || Ok(tools.clone()),
         LocalSessionManager::default().into(),

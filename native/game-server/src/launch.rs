@@ -323,6 +323,7 @@ impl PreparedGame {
                 &world_id,
                 timeline.as_str(),
                 game.world.clone(),
+                game.language().cloned(),
                 custody.clone(),
                 http_stop.clone(),
                 request_owner.clone(),
