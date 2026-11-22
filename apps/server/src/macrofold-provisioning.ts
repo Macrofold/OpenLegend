@@ -6,15 +6,7 @@ import {
 } from '@open-legend/ai';
 import { digest, type GameRepository } from './store.js';
 import type { AppConfig } from './config.js';
-export const COGNITION_PERMISSIONS = {
-  version: 1,
-  shell: 'deny',
-  files: {
-    read: { include: ['mind/*.md'] },
-    write: { include: ['mind/*.md'], exclude: ['mind/identity.md'] },
-  },
-  tools: { include: [] },
-};
+import { COGNITION_PERMISSIONS } from './macrofold-model.js';
 export interface WorkspaceToolProfile {
   id: string;
   permissions: unknown;

@@ -21,6 +21,11 @@ import { MEMORY_CACHE_TABLES, MEMORY_HISTORY_TABLES } from './memory-repository.
 import { HISTORY_TABLES } from './history.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 
+export const BACKUP_FORMAT = 'openlegend-backup-records-1';
+export const BACKUP_OPERATIONS_FORMAT = 'operations-1';
+export const MAX_BACKUP_SLOTS = 10_000;
+export const BACKUP_MANIFEST_BYTES = 1024 * 1024;
+
 export const OPERATION_TABLES = [
   'jobs',
   'attempts',
@@ -44,13 +49,13 @@ export const OPERATION_TABLES = [
 export const BACKUP_TABLES = [...OPERATION_TABLES, ...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES];
 const manifestSchema = z
   .object({
-    format: z.literal('openlegend-backup-records-1'),
+    format: z.literal(BACKUP_FORMAT),
     worldId: z.string().min(1),
     checkpoint: z.string().uuid(),
     operations: z.string().uuid(),
     saves: z
       .array(z.string().uuid())
-      .max(10000)
+      .max(MAX_BACKUP_SLOTS)
       .refine((ids) => new Set(ids).size === ids.length),
   })
   .strict();
@@ -166,7 +171,7 @@ export async function writeOperationalBackup(
           label: 'External authority',
           createdAt: new Date().toISOString(),
           simTime: 0,
-          format: 'operations-1',
+          format: BACKUP_OPERATIONS_FORMAT,
         },
         (async function* () {
           for (const table of OPERATION_TABLES) {
@@ -182,7 +187,7 @@ export async function writeOperationalBackup(
         throw new Error(
           'Retained save catalog is damaged; repair or separately preserve it before backing up.',
         );
-      if (saved.length > 10000)
+      if (saved.length > MAX_BACKUP_SLOTS)
         throw new Error('Backup exceeds the retained-slot manifest allowance.');
       for (const save of saved)
         await copySlot(join(sourceDirectory, 'saves'), join(staging, 'saves'), save.id);
@@ -194,7 +199,7 @@ export async function writeOperationalBackup(
         saved.map((save) => save.id),
       );
       const manifest = manifestSchema.parse({
-        format: 'openlegend-backup-records-1',
+        format: BACKUP_FORMAT,
         worldId: head.worldId,
         checkpoint,
         operations,
@@ -222,7 +227,7 @@ export async function readOperationalBackup(
   db: SqlDatabase,
 ): Promise<OperationalBackup> {
   const path = join(directory, 'manifest.json');
-  if ((await stat(path)).size > 1024 * 1024)
+  if ((await stat(path)).size > BACKUP_MANIFEST_BYTES)
     throw new Error('Backup manifest exceeds its allowance.');
   const manifest = manifestSchema.parse(JSON.parse(await readFile(path, 'utf8')));
   const payload = await new GameSaves(db, join(directory, 'checkpoints')).read(
@@ -231,7 +236,11 @@ export async function readOperationalBackup(
   );
   const files = new SaveFiles(join(directory, 'checkpoints'));
   const metadata = await files.metadata(manifest.operations);
-  if (!metadata || metadata.worldId !== manifest.worldId || metadata.format !== 'operations-1')
+  if (
+    !metadata ||
+    metadata.worldId !== manifest.worldId ||
+    metadata.format !== BACKUP_OPERATIONS_FORMAT
+  )
     throw new Error('Missing backup external authority.');
   const checkpointMetadata = await files.metadata(manifest.checkpoint);
   if (!checkpointMetadata) throw new Error('Missing backup gameplay checkpoint.');

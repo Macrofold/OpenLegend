@@ -57,6 +57,7 @@ pub use write::{CommitError, PrefixProjection};
 
 use openlegend_simulation::{host::ByteBudget, text::JsText};
 use std::fmt;
+use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -170,7 +171,7 @@ impl Store {
     /// trusted release input. Its DDL is only applied on explicit initialization
     /// after the preexisting metadata check.
     pub async fn open(
-        mut config: Config,
+        config: Config,
         tls: MakeRustlsConnect,
         mut schema: StorageSchema,
         initialize: bool,
@@ -194,20 +195,7 @@ impl Store {
         schema_custody
             .resize(bytes)
             .map_err(|_| StoreError::Capacity)?;
-        config.connect_timeout(SQL_TIMEOUT);
-        let loopback = config.get_hosts().iter().all(|host| match host {
-            Host::Tcp(name) => name
-                .parse::<std::net::IpAddr>()
-                .is_ok_and(|ip| ip.is_loopback()),
-            #[cfg(unix)]
-            Host::Unix(_) => true,
-        }) && config
-            .get_hostaddrs()
-            .iter()
-            .all(std::net::IpAddr::is_loopback);
-        if !loopback && config.get_ssl_mode() != SslMode::Require {
-            return Err(StoreError::SecureConnectionRequired);
-        }
+        let config = Self::checked_database(config)?;
         let mut writer = Self::session(&config, tls.clone()).await?;
         let acquired: bool = writer
             .client
@@ -238,6 +226,48 @@ impl Store {
             writer_connected,
             budget,
         })
+    }
+
+    fn checked_database(mut config: Config) -> StoreResult<Config> {
+        config.connect_timeout(SQL_TIMEOUT);
+        let loopback = config.get_hosts().iter().all(|host| match host {
+            Host::Tcp(name) => name
+                .parse::<std::net::IpAddr>()
+                .is_ok_and(|ip| ip.is_loopback()),
+            #[cfg(unix)]
+            Host::Unix(_) => true,
+        }) && config
+            .get_hostaddrs()
+            .iter()
+            .all(std::net::IpAddr::is_loopback);
+        if !loopback && config.get_ssl_mode() != SslMode::Require {
+            return Err(StoreError::SecureConnectionRequired);
+        }
+        Ok(config)
+    }
+
+    /// Export holds the writer key in shared mode on a read-only connection.
+    /// The source cannot start accepting changes until that connection closes.
+    pub(crate) async fn backup_world(
+        database: Config,
+        tls: MakeRustlsConnect,
+        schema: &StorageSchema,
+        budget: &ByteBudget,
+        data: &Path,
+        destination: &Path,
+    ) -> Result<usize, checkpoint::CaptureError> {
+        schema.validate()?;
+        let database = Self::checked_database(database)?;
+        let reader = Self::read_only_session(&database, tls).await?;
+        let stopped: bool = reader
+            .client
+            .query_one("SELECT pg_try_advisory_lock_shared(187114, 1)", &[])
+            .await?
+            .try_get(0)?;
+        if !stopped {
+            return Err(StoreError::WriterOwned.into());
+        }
+        checkpoint::write_operational_backup(reader, schema, budget, data, destination).await
     }
 
     async fn read_only_session(config: &Config, tls: MakeRustlsConnect) -> StoreResult<Session> {
@@ -272,18 +302,16 @@ impl Store {
         Ok(session)
     }
 
-    async fn initialize(
-        client: &mut Client,
+    async fn current_schema(
+        client: &impl GenericClient,
         schema: &StorageSchema,
-        initialize: bool,
-    ) -> StoreResult<()> {
-        let transaction = client.transaction().await?;
-        let marker: bool = transaction
+    ) -> StoreResult<bool> {
+        let marker: bool = client
             .query_one("SELECT to_regclass('open_legend.meta') IS NOT NULL", &[])
             .await?
             .try_get(0)?;
         if marker {
-            let actual: Option<String> = transaction
+            let actual: Option<String> = client
                 .query_opt("SELECT value FROM meta WHERE key='schema'", &[])
                 .await?
                 .map(|row| row.try_get(0))
@@ -291,7 +319,17 @@ impl Store {
             if actual.as_deref() != Some(&schema.version) {
                 return Err(StoreError::Schema);
             }
-        } else {
+        }
+        Ok(marker)
+    }
+
+    async fn initialize(
+        client: &mut Client,
+        schema: &StorageSchema,
+        initialize: bool,
+    ) -> StoreResult<()> {
+        let transaction = client.transaction().await?;
+        if !Self::current_schema(&transaction, schema).await? {
             // An unmarked gameplay layout is never mistaken for a new database.
             if transaction
                 .query_opt(

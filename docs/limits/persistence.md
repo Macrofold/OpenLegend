@@ -378,7 +378,7 @@ Earlier feeling conversion supported only the known fear/discomfort format and d
 
 **Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots; partial/selective backup is not current behavior.
 
-[Implementation](../../apps/server/src/operational-backup.ts).
+[Package contract](../../apps/server/src/operational-backup.ts) · [Stopped Rust export](../../native/game-server/src/store/checkpoint/backup.rs).
 
 ## SB18
 

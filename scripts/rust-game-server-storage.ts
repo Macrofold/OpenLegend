@@ -38,6 +38,13 @@ import {
   RESTORED_HISTORY_POSITION_TABLES,
 } from '../apps/server/src/native-current-sources.js';
 import { CHECKPOINT_ENCODING, CHECKPOINT_LIMITS } from '../apps/server/src/checkpoint-format.js';
+import {
+  BACKUP_FORMAT,
+  BACKUP_MANIFEST_BYTES,
+  BACKUP_OPERATIONS_FORMAT,
+  MAX_BACKUP_SLOTS,
+  OPERATION_TABLES,
+} from '../apps/server/src/operational-backup.js';
 import { AUTOSAVE_DEFAULTS, AUTOSAVE_LIMITS, SAVE_FORMAT } from '../apps/server/src/game-saves.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { storyAccountAvailableSql, storyAccountSql } from '../apps/server/src/personal-accounts.js';
@@ -146,6 +153,13 @@ async function storageSchema() {
       encoding: CHECKPOINT_ENCODING,
       format: SAVE_FORMAT,
       ...CHECKPOINT_LIMITS,
+      backup: {
+        format: BACKUP_FORMAT,
+        operationsFormat: BACKUP_OPERATIONS_FORMAT,
+        manifestBytes: BACKUP_MANIFEST_BYTES,
+        slots: MAX_BACKUP_SLOTS,
+        tables: OPERATION_TABLES,
+      },
       historyTables: [...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES],
       captureSelection: Object.fromEntries(
         [...tables.map((table) => table.name), ...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES]

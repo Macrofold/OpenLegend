@@ -66,7 +66,17 @@ async fn open_store(
     initialize: bool,
 ) -> Result<Arc<Store>, BootError> {
     let _workspace = budget.reserve(16 * 1024 * 1024)?;
-    let schema: StorageSchema = artifact(
+    let (schema, tls) = storage_configuration(release, manifest)?;
+    Ok(Arc::new(
+        Store::open(database, tls, schema, initialize, budget.clone()).await?,
+    ))
+}
+
+fn storage_configuration(
+    release: &Path,
+    manifest: &ReleaseManifest,
+) -> Result<(StorageSchema, MakeRustlsConnect), BootError> {
+    let schema = artifact(
         release,
         "storage.json",
         &manifest.storage_sha256,
@@ -75,9 +85,7 @@ async fn open_store(
     let _ = rustls::crypto::ring::default_provider().install_default();
     let (tls, _) = MakeRustlsConnect::with_native_certs()
         .map_err(|_| "No usable trust roots for PostgreSQL")?;
-    Ok(Arc::new(
-        Store::open(database, tls, schema, initialize, budget.clone()).await?,
-    ))
+    Ok((schema, tls))
 }
 
 /// Explicitly prepare only the current PostgreSQL layout. Gameplay and
@@ -90,6 +98,20 @@ pub async fn initialize_storage(
     let budget = ByteBudget::new(TRANSIENT_BYTES);
     let store = open_store(release, &manifest, database, &budget, true).await?;
     Ok(store.initialized_storage().await?)
+}
+
+/// Export an existing stopped database and its retained current-format slots.
+pub async fn backup_world(
+    release: &Path,
+    database: Config,
+    data: &Path,
+    destination: &Path,
+) -> Result<usize, BootError> {
+    let manifest = read_manifest(release)?;
+    let budget = ByteBudget::new(TRANSIENT_BYTES);
+    let _workspace = budget.reserve(16 * 1024 * 1024)?;
+    let (schema, tls) = storage_configuration(release, &manifest)?;
+    Ok(Store::backup_world(database, tls, &schema, &budget, data, destination).await?)
 }
 
 fn read_definitions(

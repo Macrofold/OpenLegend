@@ -25,8 +25,8 @@ import {
   REFLECTION_WORKSPACE_INSTRUCTIONS,
   RESPONSE_INSTRUCTIONS,
 } from '../apps/server/src/cognition-contracts.js';
-import { COGNITION_PERMISSIONS } from '../apps/server/src/macrofold-provisioning.js';
 import {
+  COGNITION_PERMISSIONS,
   DEFAULT_MACROFOLD_MODEL,
   macrofoldModelParameters,
 } from '../apps/server/src/macrofold-model.js';

@@ -23,6 +23,8 @@ use uuid::Uuid;
 
 mod archives;
 mod authority;
+mod backup;
+pub(super) use backup::write_operational_backup;
 mod capture;
 pub(crate) use capture::CaptureError;
 mod capture_assets;
@@ -43,8 +45,8 @@ pub(super) use authority::{AcceptedPrivacy, validate_privacy};
 pub(crate) use authority::{RecoveryAuthority, read_recovery_authority};
 pub(crate) use history_read::PreparedCheckpointHistory;
 pub(crate) use positions::reconcile_history_positions;
-pub use recover::RecoveredCheckpoint;
 pub(crate) use recover::LoadReceipt;
+pub use recover::RecoveredCheckpoint;
 pub(crate) use schedule::CheckpointSchedule;
 pub(crate) use schedule::CreationReceipt;
 pub(crate) use schedule::Settings as CheckpointSettings;
@@ -63,6 +65,7 @@ pub(crate) struct CheckpointFormat {
     pub(super) bytes: usize,
     pub(super) rows: usize,
     pub(super) page: usize,
+    backup: backup::BackupFormat,
     pub(super) history_tables: Vec<String>,
     pub(super) capture_selection: BTreeMap<String, String>,
     pub(super) capture_ownership: String,
@@ -102,7 +105,8 @@ impl CheckpointFormat {
             .checked_add(self.retention_membership.capacity())?
             .checked_add(self.history_edit.dependencies.capacity())?
             .checked_add(self.history_edit.alias_pages.capacity())?
-            .checked_add(self.history_edit.addressed_pages.capacity())?;
+            .checked_add(self.history_edit.addressed_pages.capacity())?
+            .checked_add(self.backup.retained_bytes()?)?;
         let bytes = self
             .account_metadata
             .iter()
@@ -140,6 +144,7 @@ impl CheckpointFormat {
             || self.archive_selection.is_empty()
             || self.capture_ownership.is_empty()
             || !self.schedule.valid()
+            || !self.backup.valid()
             || self.archive_rows == 0
             || self.support_membership.is_empty()
             || self.retention_membership.is_empty()
@@ -200,16 +205,20 @@ struct Metadata {
     format: String,
     checksum: String,
     encoding: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     kind: Option<MetadataKind>,
     bytes: usize,
     rows: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
     revision: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     sequence: Option<u64>,
 }
 
 impl Metadata {
     fn valid(&self, id: &str, world: &str, contract: &CheckpointFormat) -> bool {
         !(self.id != id
+            || self.world_id.is_empty()
             || self.world_id != world
             || self.format != contract.format
             || self.encoding != contract.encoding

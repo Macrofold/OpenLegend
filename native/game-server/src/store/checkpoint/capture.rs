@@ -4,13 +4,14 @@
 
 use super::{CheckpointFormat, FILE_BUFFER, Header, Metadata, MetadataKind};
 use crate::live_save::LiveSaves;
-use crate::store::{Store, StoreError, durable_head};
+use crate::store::{StorageSchema, Store, StoreError, durable_head};
 use crate::world::WorldError;
 use openlegend_simulation::encoding::hex_bytes;
+use openlegend_simulation::host::ByteBudget;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
@@ -45,6 +46,8 @@ impl std::fmt::Display for CaptureError {
         }
     }
 }
+
+impl std::error::Error for CaptureError {}
 
 impl From<WorldError> for CaptureError {
     fn from(error: WorldError) -> Self {
@@ -82,7 +85,6 @@ impl Store {
         validate: impl Fn() -> Result<(), WorldError>,
     ) -> Result<Metadata, CaptureError> {
         let opened = Instant::now();
-        let deadline = opened + CAPTURE_TIME;
         let known = self.clone();
         let directory = root.clone();
         let world_id = world.to_owned();
@@ -120,18 +122,19 @@ impl Store {
             }
             validate()?;
             drop(barrier);
-            let file = self
-                .stream_checkpoint(
-                    root.clone(),
+            let capture = SnapshotCapture::new(&self.schema, &self.budget, opened);
+            let file = capture
+                .write(
+                    &root,
                     world,
                     &id,
                     &tx,
-                    captured.revision,
-                    sequence,
-                    kind,
-                    label,
-                    opened,
-                    deadline,
+                    SnapshotKind::Gameplay {
+                        revision: captured.revision,
+                        sequence: Some(sequence),
+                        kind: Some(kind),
+                        label,
+                    },
                 )
                 .await?;
             tx.commit().await?;
@@ -148,67 +151,79 @@ impl Store {
         }
         result
     }
+}
 
-    async fn stream_checkpoint(
-        self: &Arc<Self>,
-        root: PathBuf,
+pub(super) enum SnapshotKind {
+    Gameplay {
+        revision: u64,
+        sequence: Option<u64>,
+        kind: Option<MetadataKind>,
+        label: String,
+    },
+    Operations,
+}
+
+/// Streams from the caller's fixed, read-only PostgreSQL transaction. Each
+/// product has an independent bounded file worker and the same capture start
+/// sets its deadline; no world or account authority is loaded into memory.
+pub(super) struct SnapshotCapture<'a> {
+    schema: &'a StorageSchema,
+    budget: &'a ByteBudget,
+    opened: Instant,
+}
+
+impl<'a> SnapshotCapture<'a> {
+    pub(super) fn new(schema: &'a StorageSchema, budget: &'a ByteBudget, opened: Instant) -> Self {
+        Self {
+            schema,
+            budget,
+            opened,
+        }
+    }
+
+    pub(super) async fn write(
+        &self,
+        root: &Path,
         world: &str,
         id: &str,
         snapshot: &Transaction<'_>,
-        revision: u64,
-        sequence: u64,
-        kind: MetadataKind,
-        label: String,
-        opened: Instant,
-        deadline: Instant,
+        content: SnapshotKind,
     ) -> Result<Metadata, CaptureError> {
         let contract = &self.schema.checkpoint;
-        let (_custody, rows) = crate::store::read::admitted_query(
-            snapshot,
-            r#"SELECT payload FROM world_settings WHERE world_id=$1 AND id='["world"]'"#,
-            &[&world],
-            &self.budget,
-        )
-        .await?;
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Time {
-            sim_time: f64,
-        }
-        let [row] = rows.as_slice() else {
-            return Err(StoreError::InvalidRecord.into());
-        };
-        let settings: &str = row.try_get(0)?;
-        let time: Time = serde_json::from_str(settings).map_err(|_| StoreError::InvalidRecord)?;
-        if !time.sim_time.is_finite() {
-            return Err(StoreError::InvalidRecord.into());
-        }
-        let tables = self
-            .schema
-            .tables
-            .iter()
-            .map(|table| table.name.clone())
-            .chain(contract.history_tables.iter().cloned())
-            .collect();
-        let head = Header {
-            encoding: contract.encoding.clone(),
-            format: contract.format.clone(),
-            world_id: world.to_owned(),
-            revision,
-            tables,
-        };
-        drop(rows);
-        drop(_custody);
-        // Parent/child buffers and pipe custody are separate from each SQL page.
+        // Parent/child buffers, the manifest and pipe custody are separate
+        // from each admitted SQL page.
         let _workspace = self
             .budget
-            .reserve(5 * FILE_BUFFER)
+            .reserve(5 * FILE_BUFFER + super::METADATA)
             .map_err(|_| StoreError::Capacity)?;
+        let (sim_time, header) = match &content {
+            SnapshotKind::Gameplay { revision, .. } => {
+                let time = self.game_time(snapshot, world).await?;
+                let header = Header {
+                    encoding: contract.encoding.clone(),
+                    format: contract.format.clone(),
+                    world_id: world.to_owned(),
+                    revision: *revision,
+                    tables: self
+                        .schema
+                        .tables
+                        .iter()
+                        .map(|table| table.name.clone())
+                        .chain(contract.history_tables.iter().cloned())
+                        .collect(),
+                };
+                (
+                    time,
+                    Some(serde_json::to_vec(&header).map_err(|_| CaptureError::Format)?),
+                )
+            }
+            SnapshotKind::Operations => (0.0, None),
+        };
         let nonce = uuid::Uuid::new_v4().to_string();
         let stage = root.join(format!(".pending-{nonce}"));
         let mut child = Command::new(std::env::current_exe()?)
             .arg("checkpoint-file")
-            .arg(&root)
+            .arg(root)
             .arg(id)
             .arg(nonce)
             .env_clear()
@@ -216,32 +231,61 @@ impl Store {
             .stdout(Stdio::null())
             .kill_on_drop(true)
             .spawn()?;
-        let result = tokio::time::timeout_at(deadline, async {
+        let result = tokio::time::timeout_at(self.opened + CAPTURE_TIME, async {
             let input = child.stdin.take().ok_or(CaptureError::Format)?;
             let mut package = Package::new(input, contract);
-            let header = serde_json::to_vec(&head).map_err(|_| CaptureError::Format)?;
-            tokio::time::timeout_at(opened + SCAN_TIME, async {
-                package.emit(&[&header, b"\n"]).await?;
-                self.capture_pages(snapshot, world, &mut package).await
+            tokio::time::timeout_at(self.opened + SCAN_TIME, async {
+                match header {
+                    Some(header) => {
+                        package.emit(&[&header, b"\n"]).await?;
+                        self.capture_gameplay(snapshot, world, &mut package).await
+                    }
+                    None => {
+                        for table in &contract.backup.tables {
+                            self.capture_table(snapshot, table, None, &mut package)
+                                .await?;
+                        }
+                        Ok(())
+                    }
+                }
             })
             .await
             .map_err(|_| CaptureError::Deadline)??;
-            let (bytes, rows) = (package.bytes, package.rows);
-            let checksum = hex_bytes(&package.hash.finalize());
+            let (label, format, revision, sequence, kind) = match content {
+                SnapshotKind::Gameplay {
+                    revision,
+                    sequence,
+                    kind,
+                    label,
+                } => (
+                    label,
+                    contract.format.clone(),
+                    Some(revision),
+                    sequence,
+                    kind,
+                ),
+                SnapshotKind::Operations => (
+                    "External authority".into(),
+                    contract.backup.operations_format.clone(),
+                    None,
+                    None,
+                    None,
+                ),
+            };
             let metadata = Metadata {
                 id: id.to_owned(),
-                world_id: head.world_id,
+                world_id: world.to_owned(),
                 label,
                 created_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
-                sim_time: time.sim_time,
-                format: head.format,
-                checksum,
-                encoding: head.encoding,
-                kind: Some(kind),
-                bytes,
-                rows,
-                revision: Some(revision),
-                sequence: Some(sequence),
+                sim_time,
+                format,
+                checksum: hex_bytes(&package.hash.finalize()),
+                encoding: contract.encoding.clone(),
+                kind,
+                bytes: package.bytes,
+                rows: package.rows,
+                revision,
+                sequence,
             };
             let mut input = package.input;
             let manifest = serde_json::to_vec(&metadata).map_err(|_| CaptureError::Format)?;
@@ -268,7 +312,35 @@ impl Store {
         result
     }
 
-    async fn capture_pages(
+    async fn game_time(
+        &self,
+        snapshot: &Transaction<'_>,
+        world: &str,
+    ) -> Result<f64, CaptureError> {
+        let (_custody, rows) = crate::store::read::admitted_query(
+            snapshot,
+            r#"SELECT payload FROM world_settings WHERE world_id=$1 AND id='["world"]'"#,
+            &[&world],
+            self.budget,
+        )
+        .await?;
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Time {
+            sim_time: f64,
+        }
+        let [row] = rows.as_slice() else {
+            return Err(StoreError::InvalidRecord.into());
+        };
+        let settings: &str = row.try_get(0)?;
+        let time: Time = serde_json::from_str(settings).map_err(|_| StoreError::InvalidRecord)?;
+        if !time.sim_time.is_finite() {
+            return Err(StoreError::InvalidRecord.into());
+        }
+        Ok(time.sim_time)
+    }
+
+    async fn capture_gameplay(
         &self,
         tx: &Transaction<'_>,
         world: &str,
@@ -294,71 +366,97 @@ impl Store {
             .map(|table| table.name.as_str())
             .chain(contract.history_tables.iter().map(String::as_str))
         {
-            package
-                .emit(&[b"{\"table\":\"", table.as_bytes(), b"\"}\n"])
-                .await?;
-            let keys = stable_keys(tx, table).await?;
-            let predicate = contract
-                .capture_selection
-                .get(table)
-                .map_or("TRUE", String::as_str);
-            let output = keys
-                .iter()
-                .map(|(key, _)| format!("t.{key}::text"))
-                .collect::<Vec<_>>()
-                .join(",");
-            let order = keys
-                .iter()
-                .map(|(key, _)| format!("t.{key}"))
-                .collect::<Vec<_>>()
-                .join(",");
-            let bound = keys
-                .iter()
-                .enumerate()
-                .map(|(index, (_, ty))| format!("(${}::text)::{ty}", index + 2))
-                .collect::<Vec<_>>()
-                .join(",");
-            let first = format!(
-                "SELECT row_to_json(t)::text,{output} FROM {table} t WHERE t.world_id=$1 AND {predicate} ORDER BY {order} LIMIT {}",
-                contract.page
-            );
-            let next = format!(
-                "SELECT row_to_json(t)::text,{output} FROM {table} t WHERE t.world_id=$1 AND {predicate} AND ({order}) > ({bound}) ORDER BY {order} LIMIT {}",
-                contract.page
-            );
-            let mut cursor = Vec::<String>::new();
-            loop {
-                let mut params: Vec<&(dyn ToSql + Sync)> = vec![&world];
-                params.extend(cursor.iter().map(|value| value as &(dyn ToSql + Sync)));
-                let (_custody, rows) = crate::store::read::admitted_query(
-                    tx,
-                    if cursor.is_empty() { &first } else { &next },
-                    &params,
-                    &self.budget,
+            self.capture_table(tx, table, Some(world), package).await?;
+        }
+        Ok(())
+    }
+
+    async fn capture_table(
+        &self,
+        tx: &Transaction<'_>,
+        table: &str,
+        world: Option<&str>,
+        package: &mut Package<'_>,
+    ) -> Result<(), CaptureError> {
+        package
+            .emit(&[b"{\"table\":\"", table.as_bytes(), b"\"}\n"])
+            .await?;
+        let keys = stable_keys(tx, table, world.is_some()).await?;
+        let contract = &self.schema.checkpoint;
+        let predicate = match world {
+            Some(_) => format!(
+                "t.world_id=$1 AND {}",
+                contract
+                    .capture_selection
+                    .get(table)
+                    .map_or("TRUE", String::as_str)
+            ),
+            None => "TRUE".to_owned(),
+        };
+        let output = keys
+            .iter()
+            .map(|(key, _)| format!("t.{key}::text"))
+            .collect::<Vec<_>>()
+            .join(",");
+        let order = keys
+            .iter()
+            .map(|(key, _)| format!("t.{key}"))
+            .collect::<Vec<_>>()
+            .join(",");
+        let bound = keys
+            .iter()
+            .enumerate()
+            .map(|(index, (_, ty))| {
+                format!(
+                    "(${}::text)::{ty}",
+                    index + 1 + usize::from(world.is_some())
                 )
-                .await?;
-                let full = rows.len() == contract.page;
-                if full {
-                    let last = rows.last().expect("full checkpoint page");
-                    cursor = (1..=keys.len())
-                        .map(|index| last.try_get(index))
-                        .collect::<Result<_, _>>()?;
-                }
-                for row in rows {
-                    let value: &str = row.try_get(0)?;
-                    package
-                        .emit(&[
-                            b"{\"table\":\"",
-                            table.as_bytes(),
-                            b"\",\"row\":",
-                            value.as_bytes(),
-                            b"}\n",
-                        ])
-                        .await?;
-                }
-                if !full {
-                    break;
-                }
+            })
+            .collect::<Vec<_>>()
+            .join(",");
+        let first = format!(
+            "SELECT row_to_json(t)::text,{output} FROM {table} t WHERE {predicate} ORDER BY {order} LIMIT {}",
+            contract.page
+        );
+        let next = format!(
+            "SELECT row_to_json(t)::text,{output} FROM {table} t WHERE {predicate} AND ({order}) > ({bound}) ORDER BY {order} LIMIT {}",
+            contract.page
+        );
+        let mut cursor = Vec::<String>::new();
+        loop {
+            let mut params: Vec<&(dyn ToSql + Sync)> = Vec::with_capacity(keys.len() + 1);
+            if let Some(ref world) = world {
+                params.push(world);
+            }
+            params.extend(cursor.iter().map(|value| value as &(dyn ToSql + Sync)));
+            let (_custody, rows) = crate::store::read::admitted_query(
+                tx,
+                if cursor.is_empty() { &first } else { &next },
+                &params,
+                self.budget,
+            )
+            .await?;
+            let full = rows.len() == contract.page;
+            if full {
+                let last = rows.last().expect("full checkpoint page");
+                cursor = (1..=keys.len())
+                    .map(|index| last.try_get(index))
+                    .collect::<Result<_, _>>()?;
+            }
+            for row in rows {
+                let value: &str = row.try_get(0)?;
+                package
+                    .emit(&[
+                        b"{\"table\":\"",
+                        table.as_bytes(),
+                        b"\",\"row\":",
+                        value.as_bytes(),
+                        b"}\n",
+                    ])
+                    .await?;
+            }
+            if !full {
+                break;
             }
         }
         Ok(())
@@ -368,6 +466,7 @@ impl Store {
 async fn stable_keys(
     tx: &Transaction<'_>,
     table: &str,
+    fixed_world: bool,
 ) -> Result<Vec<(String, String)>, CaptureError> {
     let rows = tx.query(
         "SELECT a.attname,format_type(a.atttypid,NULL) FROM pg_index i JOIN pg_attribute a ON a.attrelid=i.indrelid AND a.attnum=ANY(i.indkey) WHERE i.indrelid=($1::text)::regclass AND i.indisprimary ORDER BY array_position(i.indkey,a.attnum)", &[&table]
@@ -378,7 +477,7 @@ async fn stable_keys(
             Ok((row.try_get(0)?, row.try_get(1)?))
         })
         .collect::<Result<Vec<_>, _>>()?;
-    if keys.len() > 1 {
+    if fixed_world && keys.len() > 1 {
         // world_id is fixed for the capture and never advances the cursor.
         keys.retain(|(name, _)| name != "world_id");
     }

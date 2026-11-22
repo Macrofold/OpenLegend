@@ -205,6 +205,12 @@ A compacted recovery journal alone does not provide historical saves. “Ten min
 
 [Sling practice/coaching qualification](verification/practical-competence.md#continuity-and-private-inspection) verifies one outcome per actual release, duplicate receipts, current SQL reopening, active NPC work and current correction overlays. Completed support survives reconnect/restore. Continuously present NPC preparation and jointly chosen feedback retain their owned work and resolve once. Human work also survives the transport reset during paused restoration pending verified presence; actual departure or resuming without that presence interrupts it before simulation advances, as described in [Continuation and identity](#continuation-and-identity). Saving supplies no consent or exception to presence rules.
 
+### Stopped operational backup
+
+Stop the game server. With its PostgreSQL URL in `OPEN_LEGEND_DATABASE_URL` and its matching data directory in `OPEN_LEGEND_DATA_DIR`, run `openlegend-game-server backup-world RELEASE_DIRECTORY NEW_BACKUP_DIRECTORY`. The command uses a read-only snapshot and refuses while another process holds the database writer lock. It writes current gameplay, external access and accounting records, and every retained checkpoint for that world. It refuses an invalid catalog or a missing recovery checkpoint, and it publishes the complete package in a new private directory. Keep the package private and preserve separately stored game artwork under the asset workflow. [Backup limits](limits/persistence.md#sb17) · [Asset workflow](asset-workflow.md).
+
+The existing `scripts/restore-world.ts` operator command reads this package. Use an independent target database and data directory for a recovery drill. Once restored, start the stand-alone Rust listener normally. The [full-server conversion inventory](maintainers/native-simulation-core-coverage.md#full-server-conversion-inventory) tracks the remaining operator tooling.
+
 ## Research and design basis
 
 These primary sources describe useful, established patterns, not a universal implementation or a ranking of games:

@@ -10,9 +10,12 @@ import { workshopRunAllocation } from './macrofold-allocation.js';
 import type { WorldAgentTurn } from './world-authoring.js';
 import { AuthoringRequestError } from './world-authoring-contracts.js';
 import { ActorWorkspaceFiles } from './workspace.js';
-import { COGNITION_PERMISSIONS } from './macrofold-provisioning.js';
 import type { IntelligenceLog } from './intelligence-log.js';
-import { macrofoldModelParameters, cognitionOutputTokens } from './macrofold-model.js';
+import {
+  COGNITION_PERMISSIONS,
+  cognitionOutputTokens,
+  macrofoldModelParameters,
+} from './macrofold-model.js';
 import { LEVEL_LIMITS, REFLECTION_WORKSPACE_GUIDANCE } from './cognition-contracts.js';
 import {
   ModelTargetPreparation,

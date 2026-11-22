@@ -1641,6 +1641,7 @@ dependencies = [
  "http-body",
  "httpdate",
  "indexmap 2.14.2",
+ "libc",
  "libloading",
  "openidconnect",
  "openlegend-simulation",
