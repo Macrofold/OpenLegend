@@ -63,6 +63,42 @@ struct PreparationAction<'a> {
     intent: Intent<'a>,
 }
 
+#[derive(Serialize)]
+#[serde(untagged)]
+enum FoodAction<'a> {
+    Cooking(PreparationAction<'a>),
+    Eating(EatAction<'a>),
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct EatAction<'a> {
+    id: String,
+    label: JsText,
+    category: &'static str,
+    description: &'a str,
+    keywords: [&'a JsText; 1],
+    item_id: &'a str,
+    enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<&'a str>,
+    intent: EatIntent<'a>,
+}
+
+#[derive(Serialize)]
+struct EatIntent<'a> {
+    kind: &'static str,
+    command: EatCommand<'a>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct EatCommand<'a> {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    item_id: &'a str,
+}
+
 pub(super) fn render<'a>(
     menu: RuntimeFoodMenu<'a>,
     controls: bool,
@@ -135,7 +171,7 @@ pub(super) fn render<'a>(
             },
             None => Intent::Unavailable,
         };
-        actions.push(PreparationAction {
+        actions.push(FoodAction::Cooking(PreparationAction {
             id: format!("cook-{}", sha256_hex(signature.as_bytes())),
             label,
             category: CATEGORY,
@@ -146,7 +182,7 @@ pub(super) fn render<'a>(
             enabled: reason.is_none(),
             reason,
             intent,
-        });
+        }));
         Ok(())
     };
     for preparation in menu.preparations {
@@ -162,6 +198,30 @@ pub(super) fn render<'a>(
                 push(preparation, None)?;
             }
         }
+    }
+    let has_cooking = !actions.is_empty();
+    if let Some((item_id, (name, offer))) = selected_item.zip(menu.eating) {
+        custody.resize(custody.bytes().checked_add(512 + 4 * (item_id.len() + name.storage_bytes() + offer.label.len()))
+            .ok_or(CapacityError)?)?;
+        let reason = blocker.or(offer.reason);
+        let mut label = JsText::from(offer.label);
+        label.push_str(" ");
+        label.push_text(name);
+        actions.push(FoodAction::Eating(EatAction {
+            id: format!("eat-{item_id}"),
+            label,
+            category: "Body",
+            description: offer.label,
+            keywords: [name],
+            item_id,
+            enabled: reason.is_none(),
+            reason,
+            intent: EatIntent { kind: "command", command: EatCommand { kind: "eat", item_id } },
+        }));
+        if has_cooking {
+            return resource_menu_categories(menu.sequence, &actions, &[CATEGORY, "Body"], budget);
+        }
+        return resource_menu(menu.sequence, &actions, "Body", budget);
     }
     resource_menu(menu.sequence, &actions, CATEGORY, budget)
 }

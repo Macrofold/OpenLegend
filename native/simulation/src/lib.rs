@@ -33,6 +33,7 @@ pub(crate) mod knowledge;
 pub mod language;
 pub mod movement;
 mod manufacturing;
+mod consumption;
 pub mod narration;
 pub mod native_controller;
 pub mod native_danger;

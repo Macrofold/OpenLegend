@@ -210,6 +210,7 @@ enum CommandKind {
     Fish,
     Cook,
     Craft,
+    Eat,
     Equip,
     Unequip,
 }
@@ -658,14 +659,14 @@ impl CommandRequest {
             {
                 Ok(())
             }
-            CommandKind::Equip | CommandKind::Unequip
+            CommandKind::Eat | CommandKind::Equip | CommandKind::Unequip
                 if command.position.is_none()
                     && command.known_place.is_none()
                     && command.expected_action_id.is_none()
                     && command.target_id.is_none()
                     && command.gathering_mode.is_none()
                     && command.item_id.as_deref().is_some_and(id)
-                    && (matches!(command.kind, CommandKind::Equip)
+                    && (matches!(command.kind, CommandKind::Eat | CommandKind::Equip)
                         || command.expected_revision.is_some() && command.placement_revision.is_some()) => Ok(()),
             _ => Err(AccessError::Forbidden.into()),
         }
@@ -756,6 +757,7 @@ impl PreparedRequest {
                 preparation_digest: input.preparation_digest.as_deref().ok_or(StoreError::InvalidRecord)?,
                 inputs: input.inputs.as_ref().ok_or(StoreError::InvalidRecord)?,
             }),
+            CommandKind::Eat => Ok(RuntimePlayerCommand::Eat(input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?)),
             CommandKind::Equip => Ok(RuntimePlayerCommand::Equip(
                 input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
             )),

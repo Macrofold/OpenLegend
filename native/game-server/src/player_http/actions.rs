@@ -43,6 +43,12 @@ struct Position {
 struct MenuRequest {
     target_id: Option<String>,
     item_id: Option<String>,
+    // The inventory picker identifies a display group and its available amount.
+    // Exact one-item actions use only the selected lot's current native state.
+    #[serde(rename = "inventoryGroup")]
+    _inventory_group: Option<String>,
+    #[serde(rename = "quantity")]
+    _quantity: Option<f64>,
     recipe_id: Option<String>,
     position: Option<Position>,
 }
@@ -237,11 +243,20 @@ fn resource_menu<T: Serialize>(
     category: &'static str,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
+    resource_menu_categories(revision, actions, &[category], budget)
+}
+
+fn resource_menu_categories<T: Serialize>(
+    revision: u64,
+    actions: &[T],
+    categories: &[&'static str],
+    budget: &ByteBudget,
+) -> Result<Bytes, RuntimeError> {
     #[derive(Serialize)]
     struct Catalogue<'a, T> {
         revision: u64,
         actions: &'a [T],
-        categories: [&'static str; 1],
+        categories: &'a [&'static str],
     }
     #[derive(Serialize)]
     struct Menu<'a, T> {
@@ -254,7 +269,7 @@ fn resource_menu<T: Serialize>(
             catalogue: Catalogue {
                 revision,
                 actions,
-                categories: [category],
+                categories,
             },
         },
         b"",

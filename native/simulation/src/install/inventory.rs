@@ -68,6 +68,7 @@ pub(super) struct ItemDefinitionFields {
     #[serde(default)]
     properties: Vec<crate::text::JsText>,
     ammunition: Option<serde::de::IgnoredAny>,
+    nutrition: Option<f64>,
     fishing_tool: Option<FishingTool>,
     gathering_tool: Option<GatheringTool>,
     #[serde(default)]
@@ -133,6 +134,7 @@ pub(crate) struct ItemDefinitionRead {
     pub description: Option<crate::text::JsText>,
     pub properties: Vec<crate::text::JsText>,
     pub category: &'static str,
+    pub(crate) nutrition: Option<f64>,
     gathering_tool: Option<GatheringTool>,
     fishing_tool: Option<FishingTool>,
     pub portable: bool,
@@ -225,6 +227,7 @@ impl ItemDefinitionRead {
             description: value.description,
             properties: value.properties,
             category,
+            nutrition: value.nutrition,
             gathering_tool: value.gathering_tool,
             fishing_tool: value.fishing_tool,
             portable: value.portable,
@@ -360,6 +363,7 @@ pub struct InventoryDetail<'a> {
     pub properties: &'a [crate::text::JsText],
     pub equipment_ports: Option<&'a [String]>,
     pub equipment_fits: bool,
+    pub eating: Option<crate::consumption::EatingOffer<'a>>,
 }
 
 pub struct DirectInventory<'a> {

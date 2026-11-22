@@ -27,6 +27,7 @@ mod casting;
 mod preparing_food;
 mod manufacture;
 mod equipment;
+mod eating;
 mod feeding;
 mod gathering;
 mod natural_contact;
@@ -103,6 +104,7 @@ enum Phase {
     StatusApply,
     StatusFacts,
     Speech,
+    EatNarration,
     ImmediateResult,
     Tail,
     Conditions,
@@ -130,7 +132,7 @@ pub(crate) struct CommandCursor {
     view: Option<ActivityView>,
     view_reservation: Option<ByteReservation>,
     display: Option<super::ActivityDisplayCursor>,
-    prepared_speech: Option<EventEmissionIntent>,
+    prepared_emission: Option<EventEmissionIntent>,
     before_action_id: Option<String>,
     chosen_work_done: bool,
     source_scope_started: bool,
@@ -212,7 +214,7 @@ impl CommandCursor {
             view: None,
             view_reservation: None,
             display: None,
-            prepared_speech: None,
+            prepared_emission: None,
             before_action_id: None,
             chosen_work_done: false,
             source_scope_started: false,
@@ -270,7 +272,7 @@ impl CommandCursor {
         self.display = None;
         self.view = None;
         self.view_reservation = None;
-        self.prepared_speech = None;
+        self.prepared_emission = None;
         self.conditions = None;
         self.exposure = None;
         Ok(())
@@ -921,7 +923,7 @@ impl CommandCursor {
                         && matches!(
                             self.command,
                             NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
-                                | NativeCommand::Equipment { .. }
+                                | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
                         )
                     {
                         self.reserve(128)?;
@@ -1042,6 +1044,11 @@ impl CommandCursor {
                         NativeCommand::Cook { .. } => {
                             if self.prepare_cook(core)? {
                                 return Ok(Progress::Geometry);
+                            }
+                        }
+                        NativeCommand::Eat { .. } => {
+                            if let Some(event) = self.eat(core, &actor_id)? {
+                                return Ok(Progress::Occurrence(event));
                             }
                         }
                         NativeCommand::Equipment { .. } => {
@@ -2011,7 +2018,7 @@ impl CommandCursor {
                             .checked_add(bytes)
                             .ok_or(ExecutionError::Capacity)?,
                     )?;
-                    self.prepared_speech = Some(plan.emission());
+                    self.prepared_emission = Some(plan.emission());
                     self.outcome =
                         Some(outcome(true, &speech.success.code, &speech.success.message));
                     core.physical().settle_entity(&actor_id)?;
@@ -2046,7 +2053,7 @@ impl CommandCursor {
                         self.activity_id = Some(id);
                     }
                     let event = core.stage_event(
-                        self.prepared_speech
+                        self.prepared_emission
                             .take()
                             .ok_or(ExecutionError::Invariant)?,
                     )?;
@@ -2054,6 +2061,7 @@ impl CommandCursor {
                     self.after_event = Phase::ImmediateResult;
                     return Ok(Progress::Occurrence(event));
                 }
+                Phase::EatNarration => return self.finish_eating(core).map(Progress::Occurrence),
                 Phase::ImmediateResult => {
                     self.begin_chosen_work(core)?;
                     if self.activity_id.is_some() {

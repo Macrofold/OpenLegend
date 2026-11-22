@@ -18,7 +18,7 @@ Successful outputs pass through ordinary item creation and action records. A sin
 
 Completed action records retain their captured facts if an installed preparation later changes. A reusable method cannot be inferred from that changed meaning, and a proposed method's consumption summary does not substitute current quantities for an obsolete preparation. Repeated ingredient roles that refer to the same earlier product contribute their combined quantity.
 
-The stand-alone listener compiles the same installed recipes and their item dependencies. The player menu uses permitted heat contacts and exact accessible lots. Ordinary movement, timed work, inventory and action history retain their existing owners, including nested bag summaries and links to ingredients produced by earlier work. [Stand-alone cooking evidence](verification/river-meal.md#stand-alone-rust-cooking)
+The stand-alone listener compiles the same installed recipes and their item dependencies. The player menu uses permitted heat contacts and exact accessible lots. Ordinary movement, timed work, inventory and action history retain their existing owners, including nested bag summaries and links to ingredients produced by earlier work. [Stand-alone cooking evidence](verification/river-meal.md#stand-alone-rust-cooking). [Ordinary Eat](verification/river-meal.md#stand-alone-rust-eating) binds an exact accessible lot and commits one debit, the installed body-meter gain and the private action record together.
 
 ## Finite source attempts
 

@@ -116,6 +116,7 @@ pub struct RuntimeFoodMenu<'a> {
     pub paused: bool,
     pub heat: &'a [RuntimeHeatContact],
     pub preparations: &'a [RuntimePreparation<'a>],
+    pub eating: Option<(&'a crate::text::JsText, crate::consumption::EatingOffer<'a>)>,
 }
 
 pub enum RuntimeResourceOffer<'a> {
@@ -538,16 +539,38 @@ impl NativeWorldSession {
         self.require_active()?;
         let simulation = self.session.accepted().map_err(failure)?;
         let state = &simulation.state;
-        if state.installed.retained.preparations.is_empty() {
-            return Ok(None);
-        }
         let _lease = self.session.fence().begin_publication().map_err(failure)?;
-        if let Some(item) = item {
-            if crate::install::owned_by(&state.physical.entities, &state.installed.retained, actor, item)
-                .map_err(failure)?.is_none()
-            {
+        let installed = &state.installed;
+        let selected = if let Some(item) = item {
+            let Some(selected) = crate::install::owned_by(&state.physical.entities, &installed.retained, actor, item)
+                .map_err(failure)? else {
                 return Ok(None);
-            }
+            };
+            Some(selected)
+        } else {
+            None
+        };
+        let eating = if let Some(item) = selected {
+            let definition = installed.retained.items.get(item.definition_id)
+                .ok_or_else(|| failure("inventory definition unavailable"))?;
+            let entity = state.physical.entities.get(actor).ok_or_else(|| failure("inventory owner unavailable"))?;
+            let blocked = crate::consumption::action_problem(installed, entity, state.physical.header.paused)
+                .map_err(failure)?;
+            crate::consumption::Eater::current(installed, &state.physical, entity).map_err(failure)?
+                .and_then(|eater| eater.offer(definition, blocked))
+                .map(|eating| (&definition.named.name, eating))
+        } else {
+            None
+        };
+        if !installed.retained.preparations.values().any(|recipe| {
+            selected.is_none_or(|lot| recipe.definition.inputs.iter().any(|input| input.definition_id == lot.definition_id))
+        }) {
+            let Some(eating) = eating else { return Ok(None) };
+            simulation.require_player_owner(account, actor).map_err(failure)?;
+            return use_menu(RuntimeFoodMenu {
+                sequence: state.physical.header.sequence, paused: state.physical.header.paused,
+                preparations: &[], heat: &[], eating: Some(eating),
+            }).map(Some);
         }
         let mut heat = Vec::new();
         let mut storage = self.budget.reserve(0)?;
@@ -604,6 +627,7 @@ impl NativeWorldSession {
             paused: state.physical.header.paused,
             heat: &heat,
             preparations: &rows,
+            eating,
         }).map(Some)
     }
 
@@ -687,9 +711,11 @@ impl NativeWorldSession {
         let definitions = &state.installed.retained;
         let entity = entities.get(actor).ok_or_else(|| failure("inventory owner unavailable"))?;
         let body = entity.actor.as_ref().ok_or_else(|| failure("inventory owner unavailable"))?;
-        let can_act = !state.physical.header.paused && body.alive && !body.incapacitated
-            && body.action.is_none() && entity.actively_participates() && entity.supported_position().is_some()
-            && !state.installed.capabilities.capability_blocked(Some(entity), "actions").map_err(failure)?;
+        let action_problem = crate::consumption::action_problem(&state.installed, entity, state.physical.header.paused)
+            .map_err(failure)?;
+        let can_act = action_problem.is_none() && body.action.is_none();
+        let eater = crate::consumption::Eater::current(&state.installed, &state.physical, entity)
+            .map_err(failure)?;
         let count = state.inventory.direct_item_count(actor);
         let _custody = self.budget.reserve(
             count.checked_mul(size_of::<crate::install::InventoryDetail<'_>>()).ok_or(CapacityError)?,
@@ -702,6 +728,7 @@ impl NativeWorldSession {
                 item, category: definition.category, description: definition.description.as_ref(), properties: &definition.properties,
                 equipment_ports: definition.equipment_ports(),
                 equipment_fits: crate::execution::equipment_fits(state, entity, entry),
+                eating: eater.as_ref().and_then(|eater| eater.offer(definition, action_problem)),
             });
         }
         Ok(consume(crate::install::DirectInventory {

@@ -101,6 +101,7 @@ pub(crate) fn valid_command(
         | NativeCommand::Feed { .. }
         | NativeCommand::Gather { .. }
         | NativeCommand::Equipment { .. }
+        | NativeCommand::Eat { .. }
         | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }
         | NativeCommand::Follow { .. }

@@ -154,16 +154,16 @@ fn held_placement(
 #[derive(Serialize)]
 struct Action<'a> {
     id: String,
-    label: &'static str,
-    command: EquipmentCommand<'a>,
+    label: &'a str,
+    command: ItemCommand<'a>,
     enabled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    reason: Option<&'static str>,
+    reason: Option<&'a str>,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct EquipmentCommand<'a> {
+struct ItemCommand<'a> {
     #[serde(rename = "type")]
     kind: &'static str,
     item_id: &'a str,
@@ -324,7 +324,7 @@ impl PlayerScenePolicy {
                         .bytes()
                         .checked_add(
                             2 * size_of::<Item<'_>>()
-                                + size_of::<Action<'_>>()
+                                + 4 * size_of::<Action<'_>>()
                                 + entry.item.id.len()
                                 + 16,
                         )
@@ -332,7 +332,7 @@ impl PlayerScenePolicy {
                 )
                 .map_err(|_| Capacity)?;
             let item = &entry.item;
-            let actions = entry
+            let mut actions: Vec<_> = entry
                 .equipment_ports
                 .map(|_| {
                     let (kind, label) = if item.equipped {
@@ -355,7 +355,7 @@ impl PlayerScenePolicy {
                         id: format!("{kind}-{}", item.id),
                         label,
                         enabled: reason.is_none(),
-                        command: EquipmentCommand {
+                        command: ItemCommand {
                             kind,
                             item_id: item.id,
                             expected_revision: item.equipped.then_some(item.revision),
@@ -366,6 +366,23 @@ impl PlayerScenePolicy {
                 })
                 .into_iter()
                 .collect();
+            if let Some(eating) = &entry.eating {
+                custody.resize(custody.bytes().checked_add(item.id.len() + 4).ok_or(Capacity)?)
+                    .map_err(|_| Capacity)?;
+                let reason = if controlling { eating.reason } else { Some(COPY.control_required.as_str()) };
+                actions.push(Action {
+                    id: format!("eat-{}", item.id),
+                    label: eating.label,
+                    enabled: reason.is_none(),
+                    reason,
+                    command: ItemCommand {
+                        kind: "eat",
+                        item_id: item.id,
+                        expected_revision: None,
+                        placement_revision: None,
+                    },
+                });
+            }
             let mut equipment_conflicts = Vec::new();
             let characteristics = if let Some(ports) = entry.equipment_ports {
                 if !item.equipped {

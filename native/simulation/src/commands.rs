@@ -214,6 +214,7 @@ pub(crate) enum NativeCommand {
         definition: crate::values::DefinitionPin,
         inputs: indexmap::IndexMap<String, String>,
     },
+    Eat { envelope: CommandEnvelope, item_id: String },
     Equipment {
         envelope: CommandEnvelope,
         item_id: String,
@@ -310,7 +311,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
         if (input.kind != "gather" && input.gathering_mode.is_some())
-            || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "equip" | "unequip") && input.item_id.is_some())
+            || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "eat" | "equip" | "unequip") && input.item_id.is_some())
             || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
             || (input.kind != "craft" && input.recipe_id.is_some())
             || (input.kind != "cook" && (input.heat_id.is_some() || input.preparation_id.is_some()
@@ -549,6 +550,11 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     auto_equip: input.auto_equip,
                 })
             }
+            "eat" if !extras_for_move && input.destination.is_none() => Ok(Self::Eat {
+                envelope,
+                item_id: input.item_id.filter(|id| is_safe_record_id(id))
+                    .ok_or_else(|| D::Error::custom("Eating requires the selected carried item."))?,
+            }),
             "equip" | "unequip" if !extras_for_move && input.destination.is_none() => {
                 let invalid = || D::Error::custom("Invalid selected equipment binding.");
                 let request = if input.kind == "equip" {
@@ -616,6 +622,7 @@ impl NativeCommand {
             | Self::Fish { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
+            | Self::Eat { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
@@ -642,6 +649,7 @@ impl NativeCommand {
             | Self::Fish { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
+            | Self::Eat { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
@@ -662,6 +670,7 @@ impl NativeCommand {
             Self::Fish { .. } => "fish",
             Self::Cook { .. } => "cook",
             Self::Craft { .. } => "craft",
+            Self::Eat { .. } => "eat",
             Self::Equipment { request, .. } => match request {
                 crate::execution::EquipmentRequest::Equip => "equip",
                 crate::execution::EquipmentRequest::Unequip { .. } => "unequip",

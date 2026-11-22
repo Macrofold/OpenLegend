@@ -22,6 +22,7 @@ pub enum RuntimePlayerCommand<'a> {
         preparation_digest: &'a str,
         inputs: &'a IndexMap<String, String>,
     },
+    Eat(&'a str),
     Equip(&'a str),
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
 }
@@ -38,7 +39,7 @@ impl RuntimePlayerCommand<'_> {
                 heat.len() + preparation_id.len() + preparation_digest.len()
                     + inputs.iter().map(|(role, item)| role.len() + item.len()).sum::<usize>()
             }
-            Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
+            Self::Eat(item) | Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
         }
     }
 
@@ -121,6 +122,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Cook { .. } => unreachable!("food preparation uses its own typed wire fields"),
+            Self::Eat(item) => ("eat", None, None, None, Some(item), None),
             Self::Equip(item) => ("equip", None, None, None, Some(item), None),
             Self::Unequip { item, .. } => ("unequip", None, None, None, Some(item), None),
         };
@@ -219,6 +221,7 @@ impl RuntimePlayerCommand<'_> {
                 item_id: tool.into(),
             },
             Self::Cook { .. } => unreachable!("food preparation uses its own typed wire fields"),
+            Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },
             Self::Equip(item) => NativeCommand::Equipment {
                 envelope,
                 item_id: item.into(),

@@ -150,7 +150,7 @@ Disposable loopback PostgreSQL cases confirmed a cooked meat result after ordina
 
 A real browser selected the fish recipe and displayed the exact cooked item in Inventory. The result retained its private material link to the ordinary Source cast used to prepare the fixture. The stand-alone cast has separate evidence above. The Rust run used source tree `74ef96147cc39c5c79a3ff13ddfbe2c821156757` and executable SHA-256 `c4a54ecb8fe07f50e13b284912735756b289902d979b686c1f169ce93923de3e`. Raw caller results are retained in the task's `nsc04-cooking-20261122` evidence directory.
 
-These are local gameplay checks with the stand-alone executable, ordinary saves and a disposable database for each case. They establish the caught-item and cooking junction, including the preserved private ingredient source. Eating the result and an NPC independently choosing to cook remain separate callers.
+These are local gameplay checks with the stand-alone executable, ordinary saves and a disposable database for each case. They establish the caught-item and cooking junction, including the preserved private ingredient source. [Eating the result](#stand-alone-rust-eating) has a connected player case. An NPC independently choosing to cook remains a separate caller.
 
 ## Stand-alone Rust River line manufacture
 
@@ -160,7 +160,15 @@ The player took that exact tool to the Camp river reach, caught one fish and red
 
 Separate cases covered cancellation after the debit, a saved current-format NPC manufacture that finished after reopening, and an actor who owned all the materials but had never learned the recipe. Cancellation produced no tool. The unlearned method stayed private and its command left all quantities unchanged. An earlier cancellation check tried a new login after restart and correctly could not recover the old private receipt.
 
-The checked Rust source tree was `c0b907e17e8fe1fde53a446d7b0699cf61ee7ce0` and the executable SHA-256 was `5bc99ad84ecbb1417b672628e13ec30d5a18c97060e521721eb7f0c2843cb45c`. These cases used ordinary clocks, browser streams and isolated loopback PostgreSQL databases. No provider call ran. The local checks establish gameplay and persistence. Retained-tool and repeat manufacture, new recipe learning, eating and NPC selection of cooking have separate callers.
+The checked Rust source tree was `c0b907e17e8fe1fde53a446d7b0699cf61ee7ce0` and the executable SHA-256 was `5bc99ad84ecbb1417b672628e13ec30d5a18c97060e521721eb7f0c2843cb45c`. These cases used ordinary clocks, browser streams and isolated loopback PostgreSQL databases. No provider call ran. The local checks establish gameplay and persistence. Retained-tool and repeat manufacture, new recipe learning and NPC selection of cooking have separate callers.
+
+## Stand-alone Rust eating
+
+The player made a River line, caught one fish and cooked that exact catch. Both Inventory surfaces offered **Eat one** for the cooked item. Selecting it from the browser's item menu took the item out of Inventory and raised the installed Food meter to its maximum. The saved action linked to the actual cooking result and recorded the exact gain. The ordinary eating event described the item. The numeric Food change was private to the eater.
+
+Raw fish, an unavailable item and a forged quantity override left stock unchanged. In a separate world, another resident's real cooked item remained private. The player ate one unit from their own two-unit stack while an accepted walk remained active. PostgreSQL saved the remaining unit. Identical requests returned the original result, and cold reopening preserved consumed stock, Food and the original result. Source matched the legal single-unit effects and walking behavior.
+
+The frozen source was `2fbff45da34e3f4984bb923d8b619e583e392b3c` and the executable SHA-256 was `895b678ac6d8cf317eb39deba0fef1daed26d53be965afbe35d2f1ae08ba37cc`. These local gameplay checks used ordinary saves and disposable PostgreSQL. Two earlier runs caught menu failures. The server first checked for an idle world while it already held the view's publication lock. After that was repaired, the browser's ordinary quantity field still triggered a bad-request response. The menu now accepts the browser's display hints and uses the selected item's current native record to decide whether the player can eat it. The failed and passing records are retained under `nsc04-eating-20261122`. Repeated meals and NPC selection have separate callers.
 
 ## Maintained records
 
