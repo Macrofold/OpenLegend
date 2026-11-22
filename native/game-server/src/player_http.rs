@@ -74,7 +74,7 @@ struct PlayerRoutes {
 
 pub(crate) fn router(
     authority: Arc<Authority>,
-    identity: RequestIdentity,
+    identity: Arc<tokio::sync::Mutex<RequestIdentity>>,
     game: Arc<CurrentServer>,
     saves: Arc<LiveSaves>,
     presence: Arc<Presence>,
@@ -99,6 +99,7 @@ pub(crate) fn router(
         authority.clone(),
         references.clone(),
         identity,
+        clock.maintenance().clone(),
     ));
     let state = PlayerRoutes {
         authority,
@@ -139,6 +140,26 @@ pub(crate) fn router(
         .route("/api/saves/load", post(checkpoint::load))
         .route("/api/saves/receipt", post(checkpoint::receipt))
         .route("/api/operations", axum::routing::get(operations::state))
+        .route(
+            "/api/maintenance/schedule",
+            post(operations::maintenance::edit),
+        )
+        .route(
+            "/api/maintenance/update",
+            post(operations::maintenance::edit),
+        )
+        .route(
+            "/api/maintenance/start",
+            post(operations::maintenance::edit),
+        )
+        .route(
+            "/api/maintenance/cancel",
+            post(operations::maintenance::edit),
+        )
+        .route(
+            "/api/maintenance/ready",
+            post(operations::maintenance::edit),
+        )
         .route("/api/invites/create", post(operations::access::create))
         .route("/api/invites/revoke", post(operations::access::revoke))
         .route("/api/access", post(operations::access::update_grant))
@@ -403,6 +424,11 @@ async fn manual_clock(State(state): State<PlayerRoutes>, request: Request) -> Re
             "away",
             "This game tab has not reconnected yet. Reload it and try Resume again.",
         ),
+        Err(WorldError::OperatorMaintenance) => refusal(
+            StatusCode::CONFLICT,
+            "maintenance",
+            crate::operator_maintenance::HOLD_MESSAGE,
+        ),
         Err(error) => failed(error),
     }
 }
@@ -478,6 +504,14 @@ async fn update_input(State(state): State<PlayerRoutes>, request: Request) -> Re
             Ok(input) => input,
             Err(error) => return error,
         };
+    let _ordinary = state.saves.enter_ordinary().await;
+    if let Err(error) = state
+        .clock
+        .maintenance()
+        .allow_ordinary(&state.authority, &authorized)
+    {
+        return failed(error);
+    }
     let inputs = state.inputs.clone();
     let accepted_scope = authorized.clone();
     state.game.world.request_advance_publication();
@@ -698,6 +732,11 @@ fn busy() -> Response {
 
 fn failed(error: WorldError) -> Response {
     match error {
+        WorldError::OperatorMaintenance => refusal(
+            StatusCode::CONFLICT,
+            "maintenance",
+            crate::operator_maintenance::ACTION_MESSAGE,
+        ),
         WorldError::Access(error) => access_failure(error),
         WorldError::Commit(CommitError::RolledBack(StoreError::StaleCut))
         | WorldError::Storage(StoreError::StaleCut) => access_failure(AccessError::Changed),

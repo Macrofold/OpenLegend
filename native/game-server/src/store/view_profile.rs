@@ -130,7 +130,7 @@ impl Store {
         .await
     }
 
-    /// Keep maintenance and the current narrator in the view's operational
+    /// Keep the current narrator in the view's operational
     /// snapshot even when the player has no Settings panel open.
     pub(super) async fn read_view_narrator(
         &self,
@@ -143,15 +143,13 @@ impl Store {
             .budget
             .reserve(4096)
             .map_err(|_| StoreError::Capacity)?;
-        let row = tx.query_one(
-            "SELECT EXISTS(SELECT 1 FROM ops_maintenance WHERE world_id=$1 AND payload::jsonb->>'status' IN ('scheduled','active')), \
-             EXISTS(SELECT 1 FROM story_banners WHERE world_id=$1 AND owner_id=$2)",
-            &[&world, &account],
-        ).await?;
-        if row.try_get::<_, bool>(0)? {
-            return Err(StoreError::Maintenance);
-        }
-        if row.try_get(1)? {
+        let row = tx
+            .query_one(
+                "SELECT EXISTS(SELECT 1 FROM story_banners WHERE world_id=$1 AND owner_id=$2)",
+                &[&world, &account],
+            )
+            .await?;
+        if row.try_get(0)? {
             self.latest_banner(tx, world, account, actor).await
         } else {
             Ok(None)

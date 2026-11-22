@@ -189,12 +189,16 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
         text,
         ..
     } = request;
+    let maintenance = state.clock.maintenance().clone();
+    let selected_for_edit = selected.clone();
+    let authority = state.authority.clone();
     let edited = execute_edit(
         &state,
         selected.clone(),
         world_id,
         generation,
         move |session, scope| {
+            maintenance.allow_ordinary(&authority, &selected_for_edit)?;
             Ok(session.begin_owner_knowledge_edit(
                 &scope.account_id,
                 &scope.actor_id,

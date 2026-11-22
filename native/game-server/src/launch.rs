@@ -279,14 +279,21 @@ impl PreparedGame {
             world_id.clone(),
             PathBuf::from(setting("OPEN_LEGEND_DATA_DIR", ".data")?).join("saves"),
         ));
+        let timeline = identity.timeline.clone();
+        let identity = Arc::new(tokio::sync::Mutex::new(identity));
         let clock = Arc::new(
             GameClock::new(
                 game.clone(),
                 saves.clone(),
                 checkpoints.clone(),
                 game.view_policy().base_ratio(),
+                identity.clone(),
             )
-            .with_inputs(presence.clone(), inputs.clone(), Duration::from_secs_f64(grace)),
+            .with_inputs(
+                presence.clone(),
+                inputs.clone(),
+                Duration::from_secs_f64(grace),
+            ),
         );
         let decisions = Arc::new(crate::npc::Director::new(
             game.clone(),
@@ -311,7 +318,7 @@ impl PreparedGame {
             crate::mcp_http::router(
                 settings.clone(),
                 &world_id,
-                identity.timeline.as_str(),
+                timeline.as_str(),
                 game.world.clone(),
                 custody.clone(),
                 http_stop.clone(),
@@ -379,6 +386,7 @@ impl PreparedGame {
         };
         let routes = routes.merge(mcp.unwrap_or_else(crate::mcp_http::disabled));
         clock.initialize().await?;
+        clock.maintenance().initialize(&clock).await?;
         Ok(Self {
             routes,
             clock,
@@ -509,6 +517,14 @@ async fn run(
             .await
     };
     let clock_work = clock.run(clock_stop);
+    let operator_clock = clock.clone();
+    let operator_stop = end_http.subscribe();
+    let operator_maintenance = tokio::spawn(async move {
+        operator_clock
+            .maintenance()
+            .run(&operator_clock, operator_stop)
+            .await;
+    });
     let save_work = saves.run(save_stop);
     let loading = async {
         loop {
@@ -550,13 +566,19 @@ async fn run(
     let stop_decisions = async move {
         // Let the scheduler acknowledge its in-flight PostgreSQL write and
         // register the corresponding task before draining decision owners.
-        let (scheduled, maintained, narrated, indexed) =
-            tokio::join!(scheduler, maintenance, narration, semantic);
+        let (scheduled, maintained, narrated, indexed, operator) = tokio::join!(
+            scheduler,
+            maintenance,
+            narration,
+            semantic,
+            operator_maintenance
+        );
         let settled = decisions.stop().await;
         scheduled?;
         maintained?;
         narrated??;
         indexed?;
+        operator?;
         settled?;
         Ok::<_, LaunchError>(())
     };

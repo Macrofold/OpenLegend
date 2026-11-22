@@ -249,7 +249,7 @@ pub struct ViewHostFacts {
     pub history: HistoryViewFacts,
     pub paused_stop: Option<PausedStop>,
     pub weather: Option<WeatherView>,
-    pub maintenance: Option<Arc<RawValue>>,
+    pub maintenance: Option<Arc<crate::operator_maintenance::Window>>,
     pub presentation_release: Option<Arc<RawValue>>,
     pub presentation_release_revision: Option<u64>,
     pub milestones: Vec<Milestone>,
@@ -281,6 +281,7 @@ struct ViewOwned {
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum PauseReason {
     Away,
+    Maintenance,
     Manual,
     Storage,
 }
@@ -362,6 +363,9 @@ pub(crate) async fn prepare_view(
         )
         .await
         .map_err(ViewError::World)?;
+    if read.clock().maintenance_revision != host.maintenance_revision {
+        return Err(ViewError::Changed);
+    }
     let mut own = own.map_err(ViewError::Capture)?;
     if read.clock().paused
         && own.player.has_work
@@ -486,6 +490,8 @@ pub(crate) fn pause_reason(
 ) -> Option<PauseReason> {
     if storage_failed {
         Some(PauseReason::Storage)
+    } else if actual.maintenance {
+        Some(PauseReason::Maintenance)
     } else if !actual.paused {
         None
     } else if actual.manually_paused {
@@ -807,7 +813,10 @@ impl Serialize for FullView<'_> {
             &data.contacts.sight_confirmed_through,
         )?;
         wire.serialize_entry("access", &host.access)?;
-        wire.serialize_entry("maintenance", &host.maintenance)?;
+        wire.serialize_entry(
+            "maintenance",
+            &host.maintenance.as_ref().map(|window| &window.notice),
+        )?;
         if let Some(checkpoint) = &host.checkpoint {
             wire.serialize_entry("checkpoint", checkpoint)?;
         }

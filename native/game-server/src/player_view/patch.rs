@@ -52,7 +52,12 @@ impl PreparedPlayerView {
             || raw(before.host.presentation_release.as_ref())
                 != raw(after.host.presentation_release.as_ref())
             || before.host.presentation_release_revision != after.host.presentation_release_revision
-            || raw(before.host.maintenance.as_ref()) != raw(after.host.maintenance.as_ref())
+            || before
+                .host
+                .maintenance
+                .as_ref()
+                .map(|window| &window.notice)
+                != after.host.maintenance.as_ref().map(|window| &window.notice)
         {
             return Ok(ViewSelection::Reset);
         }

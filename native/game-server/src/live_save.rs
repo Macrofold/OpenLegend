@@ -274,7 +274,7 @@ impl LiveSaves {
         self.pending.lock().map_or(true, |pending| pending.fault)
     }
 
-    fn latch_fault(&self, error: WorldError) -> WorldError {
+    pub(crate) fn latch_fault(&self, error: WorldError) -> WorldError {
         if let Ok(mut pending) = self.pending.lock()
             && !pending.fault
         {

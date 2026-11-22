@@ -15,6 +15,7 @@ use openlegend_simulation::runtime::RuntimeError;
 use serde::Serialize;
 
 pub(super) mod access;
+pub(super) mod maintenance;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,8 +38,9 @@ struct Operations<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     access: Option<access::AccessSection<'a>>,
     clock: Clock<'a>,
-    // Rust's startup has already refused active and scheduled maintenance.
-    maintenance: (),
+    maintenance: Option<&'a crate::operator_maintenance::Notice>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    maintenance_history: Option<Vec<&'a crate::operator_maintenance::Notice>>,
 }
 
 #[derive(Serialize)]
@@ -80,7 +82,8 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
     let Ok(_workspace) = budget.reserve(8192) else {
         return busy();
     };
-    let (clock, generation, artwork, artwork_revision) = match state
+    let published = state.clock.maintenance().clone();
+    let (clock, generation, artwork, artwork_revision, maintenance) = match state
         .game
         .world
         .capture(move |world| {
@@ -102,6 +105,7 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
                 world.accepted_progress()?.generation.to_owned(),
                 reference,
                 revision,
+                published.snapshot(),
             ))
         })
         .await
@@ -139,6 +143,7 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
         _ => None,
     };
     let world = state.game.world.clone();
+    let revision = maintenance.revision;
     let disclose = move || match state.authority.current_operations(
         &authorized,
         |scope, capabilities, local| {
@@ -162,7 +167,7 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
                 capabilities,
                 actor_id: (!scope.actor_id.is_empty()).then_some(scope.actor_id.as_str()),
                 scope: &key,
-                generation: &generation,
+                generation: maintenance.generation.as_deref().unwrap_or(&generation),
                 mode: if local {
                     AuthenticationMode::Local
                 } else {
@@ -184,7 +189,10 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
                     paused: clock.paused || save_failed,
                     pause_reason: pause_reason(clock, save_failed),
                 },
-                maintenance: (),
+                maintenance: maintenance.notice(),
+                maintenance_history: capabilities
+                    .contains(&Capability::Create)
+                    .then(|| maintenance.history().collect()),
             };
             match wire::encode(&value, b"", b"", state.game.host.budget()) {
                 Ok(bytes) => json_response(StatusCode::OK, bytes),
@@ -195,17 +203,17 @@ pub(super) async fn state(State(state): State<PlayerRoutes>, headers: HeaderMap)
         Ok(response) => response,
         Err(error) => access_failure(error),
     };
-    match artwork_revision {
-        Some(expected) => match world
-            .capture(move |world| {
-                Ok((world.saved_presentation_release().1.unwrap_or(0) == expected).then(disclose))
-            })
-            .await
-        {
-            Ok(Some(response)) => response,
-            Ok(None) => access_failure(AccessError::Changed),
-            Err(error) => failed(error),
-        },
-        None => disclose(),
+    match world
+        .capture(move |world| {
+            let artwork_current = artwork_revision.is_none_or(|expected| {
+                world.saved_presentation_release().1.unwrap_or(0) == expected
+            });
+            Ok((artwork_current && world.clock()?.maintenance_revision == revision).then(disclose))
+        })
+        .await
+    {
+        Ok(Some(response)) => response,
+        Ok(None) => access_failure(AccessError::Changed),
+        Err(error) => failed(error),
     }
 }

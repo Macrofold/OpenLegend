@@ -17,6 +17,7 @@ pub use reflection::{
 };
 pub struct RuntimeMaintenanceRead {
     pub(crate) read: Arc<crate::capture::maintenance::MaintenanceCapture>,
+    host_generation: u64,
 }
 pub struct RuntimeDreamReview {
     pub world_id: String,
@@ -183,6 +184,9 @@ impl NativeWorldSession {
         read: &RuntimeMaintenanceRead,
     ) -> Result<bool, RuntimeError> {
         self.require_active()?;
+        if !self.work_is_current(read.host_generation) {
+            return Ok(false);
+        }
         read.read
             .inputs_current(
                 &self.session.publication_read().map_err(failure)?.state,
@@ -202,6 +206,7 @@ impl NativeWorldSession {
         .map_err(failure)?;
         Ok(RuntimeMaintenanceRead {
             read: Arc::new(read),
+            host_generation: self.work_generation(),
         })
     }
     pub fn read_maintenance_direct(
@@ -217,6 +222,7 @@ impl NativeWorldSession {
         .map_err(failure)?;
         Ok(RuntimeMaintenanceRead {
             read: Arc::new(read),
+            host_generation: self.work_generation(),
         })
     }
     /// This method is deliberately synchronous and accepts the existing
@@ -229,6 +235,9 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let admission = serde_json::from_slice(input).map_err(failure)?;
+        if !self.work_is_current(read.host_generation) {
+            return Ok(false);
+        }
         read.read
             .current(
                 &self.session.publication_read().map_err(failure)?.state,

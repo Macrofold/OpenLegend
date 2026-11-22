@@ -17,6 +17,13 @@ pub(super) async fn chat(State(state): State<PlayerRoutes>, request: Request) ->
         Ok(access) => Arc::new(access),
         Err(error) => return access_failure(error),
     };
+    if let Err(error) = state
+        .clock
+        .maintenance()
+        .allow_ordinary(&state.authority, &access)
+    {
+        return failed(error);
+    }
     let retry = parts.uri.path() == "/api/chat/retry";
     let status = if retry {
         StatusCode::OK

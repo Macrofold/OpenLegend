@@ -21,6 +21,7 @@ mod npc;
 mod narrator;
 pub mod oidc;
 mod operation_format;
+mod operator_maintenance;
 mod player_command;
 pub mod player_events;
 mod player_http;

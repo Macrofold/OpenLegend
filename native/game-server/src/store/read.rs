@@ -392,16 +392,6 @@ impl Store {
         let Some(head) = durable_head(&transaction).await? else {
             return Err(self.missing_opening(&transaction).await?);
         };
-        let maintenance = transaction
-            .query_opt(
-                "SELECT 1 FROM ops_maintenance WHERE world_id=$1 \
-             AND payload::jsonb->>'status' IN ('scheduled','active') LIMIT 1",
-                &[&head.world_id],
-            )
-            .await?;
-        if maintenance.is_some() {
-            return Err(StoreError::Maintenance);
-        }
         self.validate_received(&transaction, &head.world_id).await?;
         let initial = self
             .schema

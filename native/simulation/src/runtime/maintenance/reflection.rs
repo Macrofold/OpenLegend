@@ -126,7 +126,7 @@ impl NativeWorldSession {
     ) -> Result<bool, RuntimeError> {
         self.require_active()?;
         let state = &self.session.publication_read().map_err(failure)?.state;
-        if !ticket.workspace.scope_current(state) {
+        if !self.npc_host_current(&ticket.npc.original) || !ticket.workspace.scope_current(state) {
             return Ok(false);
         }
         ticket
@@ -252,6 +252,9 @@ impl NativeWorldSession {
         let ticket = owner
             .as_ref()
             .ok_or_else(|| failure("reflection ticket was released"))?;
+        if !self.npc_host_current(&ticket.npc.original) {
+            return Err(stale("reflection-maintenance-boundary"));
+        }
         let input = ticket.prepare(
             &self.session.accepted().map_err(failure)?.state,
             proposal,
@@ -275,6 +278,9 @@ impl NativeWorldSession {
             return Err(failure(
                 "reflection proposal belongs to another native budget",
             ));
+        }
+        if !self.npc_host_current(&ticket.npc.original) {
+            return Err(stale("reflection-maintenance-boundary"));
         }
         let input = ticket.prepare_value(
             &self.session.accepted().map_err(failure)?.state,
@@ -312,6 +318,9 @@ impl NativeWorldSession {
             .as_ref()
             .ok_or_else(|| failure("NPC reflection ticket was released"))?;
         if npc.bindings.purpose != NpcBindingPurpose::Reflection
+            || !self.npc_host_current(&npc.original)
+            || !self.work_is_current(body.host_generation)
+            || !self.work_is_current(workspace.host_generation)
             || !body.read.scope_current(state)
             || !workspace.read.scope_current(state)
             || workspace.read.inner_revision != Some(input.expected_revision)

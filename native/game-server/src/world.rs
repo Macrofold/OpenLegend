@@ -56,6 +56,7 @@ pub enum WorldError {
     Geometry(crate::spatial::SpatialError),
     Language(crate::language::LanguageError),
     ClockChanged,
+    OperatorMaintenance,
     ProjectionChanged,
     NpcDecisionExpired,
     SourceEditPending,
@@ -104,6 +105,7 @@ impl std::fmt::Display for WorldError {
             Self::Storage(error) => error.fmt(f),
             Self::Access(error) => error.fmt(f),
             Self::Wire(error) => error.fmt(f),
+            Self::OperatorMaintenance => f.write_str(crate::operator_maintenance::HOLD_MESSAGE),
             Self::RecoveryRequired => {
                 f.write_str("The protected operation is fenced pending durable recovery")
             }
@@ -865,9 +867,17 @@ impl HostedWorld {
                 return Ok(PlayerDisclosure::Changed);
             }
             let prepared = read.clock();
-            if (clock.paused, clock.manually_paused, clock.speed)
-                != (prepared.paused, prepared.manually_paused, prepared.speed)
-            {
+            if (
+                clock.paused,
+                clock.manually_paused,
+                clock.speed,
+                clock.maintenance_revision,
+            ) != (
+                prepared.paused,
+                prepared.manually_paused,
+                prepared.speed,
+                prepared.maintenance_revision,
+            ) {
                 return Ok(PlayerDisclosure::Changed);
             }
             let Some(permit) =

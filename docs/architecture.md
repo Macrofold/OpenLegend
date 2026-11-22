@@ -403,6 +403,14 @@ explicit Ready resumes, never while storage has failed. Players receive notices 
 with full dates, zone names/offsets and their local time. Bounds are in
 [MP15–MP17](limits/multiplayer.md#mp15); [evidence](verification/multiplayer-entry-maintenance.md).
 
+The [stand-alone Rust server](verification/multiplayer-entry-maintenance.md#stand-alone-rust-creator-maintenance--november-22-2026)
+commits the operational record, native pause and new command token together through the existing
+protected writer. Its separate work generation invalidates in-flight decisions and private
+background work without changing the saved recovery timeline. Already accepted command results
+remain available for exact retry. Connection-loss reconciliation and real-time departure
+deadlines still run during a hold. The Operations panel and player stream use the accepted
+notice, with audit history limited to accounts that currently hold creator permission.
+
 The current rendering adapter shares billboard depth/CPU picking transforms, removes shadow-only proxies from color layers, batches decorative plank seams and reuses reveal uniforms. Navigation support projection queries only spatially relevant candidate surfaces. A supercover terrain traversal checks every crossed terrain cell, including short diagonal water crossings; continuous coordinates remain independent of that representation. Worker failure and shutdown rules are in [performance](performance/spatial.md#navigation-failure-and-shutdown).
 
 ## State and transitions

@@ -8,6 +8,7 @@ pub struct RuntimeActivityLearning {
     key: Option<CandidateKey>,
     batch: Option<Arc<crate::activity::PreparedActivityLearning>>,
     privacy_revision: u64,
+    host_generation: u64,
     _storage: ByteReservation,
 }
 pub enum RuntimeActivityLearningStep {
@@ -110,6 +111,7 @@ impl NativeWorldSession {
             key: Some(key),
             batch: None,
             privacy_revision,
+            host_generation: key.generation,
             _storage: storage,
         })
     }
@@ -180,6 +182,9 @@ impl NativeWorldSession {
         admission: Option<&RuntimeMaintenanceRead>,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
+        if !self.work_is_current(read.host_generation) {
+            return Err(stale("activity-learning-maintenance-boundary"));
+        }
         if read.key.is_some() {
             return Err(failure("learning preparation is unfinished"));
         }
@@ -255,6 +260,9 @@ impl NativeWorldSession {
         admission: &RuntimeMaintenanceRead,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
+        if !self.work_is_current(read.host_generation) {
+            return Err(stale("activity-learning-maintenance-boundary"));
+        }
         let request = crate::activity::LearningPublicationRequest {
             judgments,
             dispatched,
@@ -295,6 +303,7 @@ impl NativeWorldSession {
             .actor(actor)
             .map_or(0, |actor| actor.privacy.revision());
         if state.physical.header.paused
+            || !self.work_is_current(read.host_generation)
             || privacy != read.privacy_revision
             || !learning_idle(state, actor)
             || !admission

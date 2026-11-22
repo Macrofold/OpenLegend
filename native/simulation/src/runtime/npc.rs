@@ -55,6 +55,7 @@ pub struct RuntimeNpcRead {
     action_catalogue: Option<RuntimeNpcActionCatalogue>,
     intent_ids: Vec<String>,
     pub(super) work_generation: u64,
+    pub(super) host_generation: u64,
     sources: Arc<Vec<crate::capture::PreparedNpcSources>>,
     perspectives: Arc<Vec<crate::capture::NpcPerspectiveSnapshot>>,
     candidate_key: Option<CandidateKey>,
@@ -162,6 +163,10 @@ fn npc_consumer_current(
 }
 
 impl NativeWorldSession {
+    pub(super) fn npc_host_current(&self, read: &RuntimeNpcRead) -> bool {
+        self.work_is_current(read.host_generation)
+    }
+
     /// One query continuation moves the actual read owners back to preparation.
     /// Serialized context can neither recreate a read nor replace its old cut.
     pub fn open_npc_response(
@@ -284,6 +289,9 @@ impl NativeWorldSession {
         perspectives: &[crate::capture::NpcPerspectiveOrdinal],
     ) -> Result<Result<(), &'static str>, RuntimeError> {
         let simulation = self.session.accepted().map_err(failure)?;
+        if !self.npc_host_current(read) {
+            return Ok(Err("native-response-maintenance-boundary"));
+        }
         if read.candidate_key.is_some() {
             return Ok(Err("native-history-uses-candidate"));
         }
@@ -320,6 +328,9 @@ impl NativeWorldSession {
     ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
         use crate::response::ResponseValidityRoute;
         self.require_active()?;
+        if !self.npc_host_current(&ticket.original) || !self.npc_host_current(&ticket.current) {
+            return Ok(Err("native-response-maintenance-boundary"));
+        }
         if !ticket.publication_available() {
             return Ok(Err("native-response-ticket"));
         }
@@ -575,6 +586,7 @@ impl NativeWorldSession {
             action_catalogue: None,
             intent_ids,
             work_generation,
+            host_generation: self.session.operational_generation(),
             sources: Arc::new(Vec::new()),
             perspectives: Arc::new(Vec::new()),
             candidate_key: None,

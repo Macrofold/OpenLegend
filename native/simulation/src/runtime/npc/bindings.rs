@@ -601,6 +601,9 @@ impl NativeWorldSession {
             .as_ref()
             .ok_or_else(|| failure("NPC response ticket was released"))?;
         ticket.require_prepared()?;
+        if !self.npc_host_current(&ticket.original) || !self.npc_host_current(&ticket.current) {
+            return Err(stale("native-response-maintenance-boundary"));
+        }
         if ticket.bindings.purpose != NpcBindingPurpose::Decision {
             return Err(failure("private reflection requires its publication owner"));
         }
@@ -830,6 +833,12 @@ impl NativeWorldSession {
             .as_ref()
             .ok_or_else(|| failure("current NPC read was released"))?;
         let action = action_read.as_deref().and_then(Option::as_ref);
+        if !self.npc_host_current(first)
+            || !self.npc_host_current(fresh)
+            || action.is_some_and(|read| !self.npc_host_current(read))
+        {
+            return Err(stale("native-response-maintenance-boundary"));
+        }
         if action.is_some_and(|action| {
             action.serial == first.serial
                 || action.serial == fresh.serial

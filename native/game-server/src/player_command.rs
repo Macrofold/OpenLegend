@@ -289,7 +289,8 @@ pub(crate) struct PlayerCommands {
     saves: Arc<LiveSaves>,
     authority: Arc<Authority>,
     references: Arc<ReferenceIssuer>,
-    identity: Mutex<RequestIdentity>,
+    identity: Arc<Mutex<RequestIdentity>>,
+    maintenance: Arc<crate::operator_maintenance::OperatorMaintenance>,
 }
 
 enum ResultOwner {
@@ -314,19 +315,31 @@ impl PlayerCommands {
         saves: Arc<LiveSaves>,
         authority: Arc<Authority>,
         references: Arc<ReferenceIssuer>,
-        identity: RequestIdentity,
+        identity: Arc<Mutex<RequestIdentity>>,
+        maintenance: Arc<crate::operator_maintenance::OperatorMaintenance>,
     ) -> Self {
         Self {
             game,
             saves,
             authority,
             references,
-            identity: Mutex::new(identity),
+            identity,
+            maintenance,
         }
     }
 
-    pub(crate) async fn epoch(&self) -> String {
-        self.identity.lock().await.epoch.token.clone()
+    /// Bind the command token to the notice published with it. A view which
+    /// captures its native clock on the other side of the transition retries.
+    pub(crate) async fn view_epoch(
+        &self,
+    ) -> (String, u64, Option<Arc<crate::operator_maintenance::Window>>) {
+        let identity = self.identity.lock().await;
+        let current = self.maintenance.snapshot();
+        (
+            identity.epoch.token.clone(),
+            current.revision,
+            current.retained_notice(),
+        )
     }
 
     /// Paused work follows the ordinary checked Stop command through a
@@ -440,6 +453,7 @@ impl PlayerCommands {
                         report(prior.as_ref(), &facts, scope, fresh_epoch, recovery, budget)
                     })?;
                 }
+                self.maintenance.allow_ordinary(permits, &scope)?;
                 self.saves.check_admission(tokio::time::Instant::now())?;
                 // A recovered receipt above grants no new speech. For a new
                 // utterance, use the same allowance gate as the Speak control.

@@ -38,6 +38,7 @@ struct Groups {
 pub struct RuntimeConsolidationTicket {
     pub(super) job: String,
     pub(super) body: Arc<MaintenanceCapture>,
+    host_generation: u64,
     pub(super) inner_revision: Option<u64>,
     pub(super) admission: MaintenanceAdmission,
     pub(super) scope: Arc<NpcHistoricalScope>,
@@ -89,6 +90,7 @@ impl NativeWorldSession {
         self.require_active()?;
         let state = &self.session.accepted().map_err(failure)?.state;
         if !crate::values::is_safe_record_id(&input.job_id)
+            || !self.work_is_current(body.host_generation)
             || !body.read.scope_current(state)
             || !input.selection.receipts.is_empty()
             || input.selection.personal.is_empty()
@@ -162,6 +164,7 @@ impl NativeWorldSession {
         Ok(RuntimeConsolidationTicket {
             job: input.job_id,
             body: Arc::clone(&body.read),
+            host_generation: body.host_generation,
             inner_revision,
             admission,
             scope: Arc::new(scope),
@@ -299,6 +302,7 @@ impl NativeWorldSession {
                     .is_some_and(|current| current.revision == inner)
         });
         Ok(!state.physical.header.paused
+            && self.work_is_current(ticket.host_generation)
             && draft_current
             && ticket
                 .watch

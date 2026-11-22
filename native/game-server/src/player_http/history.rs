@@ -60,6 +60,10 @@ pub(super) async fn regenerate(State(state): State<PlayerRoutes>, request: Reque
         let _owners = (slot, custody);
         let _intake = state.saves.enter_ordinary().await;
         state
+            .clock
+            .maintenance()
+            .allow_ordinary(&state.authority, &selected)?;
+        state
             .authority
             .current(&selected, Capability::Play, false, |_, _| ())?;
         let fields = &selected.scope;

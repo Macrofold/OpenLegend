@@ -11,6 +11,7 @@ pub(crate) struct StoryDisclosure {
     pub(crate) claim: Arc<ClaimedStory>,
     pub(crate) authority: Arc<Authority>,
     read: RuntimePlayerTranscriptRead,
+    host_generation: u64,
     revisions: StoryRevisions,
     exposures: Vec<EncounterExposure>,
     _custody: ByteReservation,
@@ -44,6 +45,7 @@ impl HostedWorld {
                     claim,
                     authority,
                     read,
+                    host_generation: session.work_generation(),
                     revisions,
                     exposures,
                     _custody: custody,
@@ -80,6 +82,9 @@ impl NpcDisclosureTurn<'_> {
             Err(std::sync::TryLockError::WouldBlock) => return Ok(Err(NpcDisclosure::Busy)),
             Err(std::sync::TryLockError::Poisoned(_)) => return Err(HostError::Poisoned.into()),
         };
+        if !session.work_is_current(selected.host_generation) {
+            return Ok(Err(NpcDisclosure::Refused("story-maintenance-boundary")));
+        }
         if session.clock()?.paused {
             return Ok(Err(NpcDisclosure::Refused("story-world-paused")));
         }

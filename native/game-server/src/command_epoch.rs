@@ -93,7 +93,11 @@ impl RequestIdentity {
     }
 }
 
-async fn rotate(tx: &Transaction<'_>, world: &str, now: i64) -> StoreResult<CommandEpoch> {
+pub(crate) async fn rotate(
+    tx: &Transaction<'_>,
+    world: &str,
+    now: i64,
+) -> StoreResult<CommandEpoch> {
     let key = format!("integration:command-epoch:{world}");
     let previous = read::<CommandEpoch>(tx, &key).await?;
     if previous.as_ref().is_some_and(|epoch| {

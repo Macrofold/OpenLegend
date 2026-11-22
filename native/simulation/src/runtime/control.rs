@@ -16,6 +16,8 @@ pub struct RuntimeClock {
     pub manually_paused: bool,
     pub speed: f64,
     pub exit_exposure_active: bool,
+    pub maintenance: bool,
+    pub maintenance_revision: u64,
 }
 
 impl NativeWorldSession {
@@ -23,6 +25,17 @@ impl NativeWorldSession {
     /// not prepare a view or expose any actor.
     pub fn clock(&self) -> Result<RuntimeClock, RuntimeError> {
         self.session.clock().map_err(session_failure)
+    }
+
+    /// Captured application work retains this host epoch independently of
+    /// ordinary gameplay writes and the saved recovery generation.
+    pub fn work_generation(&self) -> u64 {
+        self.session.operational_generation()
+    }
+
+    /// Safe at the actual send/effect boundary under the accepted world turn.
+    pub fn work_is_current(&self, generation: u64) -> bool {
+        !self.session.operator_maintenance_active() && self.work_generation() == generation
     }
 
     pub fn begin_control(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
@@ -43,6 +56,22 @@ impl NativeWorldSession {
         self.require_active()?;
         self.session
             .begin_control(paused, speed, manually_paused)
+            .map_err(failure)
+    }
+
+    /// Operational maintenance uses the ordinary protected native clock.
+    /// Its revision invalidates captured public controls and work across a hold.
+    pub fn begin_operator_maintenance(
+        &mut self,
+        paused: bool,
+        speed: f64,
+        manually_paused: bool,
+        maintenance: bool,
+        revision: u64,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        self.session
+            .begin_operator_maintenance(paused, speed, manually_paused, maintenance, revision)
             .map_err(failure)
     }
 

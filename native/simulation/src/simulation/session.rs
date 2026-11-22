@@ -231,6 +231,8 @@ enum Candidate {
 struct HostControlSnapshot {
     speed: f64,
     manually_paused: bool,
+    maintenance: (bool, u64),
+    generation: u64,
     milestones: super::milestones::MilestoneJournal,
     presentation: Option<Box<(crate::administration::SavedPresentation, ByteReservation)>>,
 }
@@ -239,6 +241,7 @@ pub(crate) struct Session {
     simulation: Simulation,
     host: InstalledHostSettings,
     host_before: Option<HostControlSnapshot>,
+    maintenance: (bool, u64),
     save: SaveJournal,
     pending_residency: Option<Arc<crate::received::SavedTemporalResidency>>,
     restore_adoption: Option<restore::RestoreAdoption>,
@@ -290,6 +293,7 @@ impl Session {
             },
             host: installed.host_settings,
             host_before: None,
+            maintenance: (false, 0),
             save,
             pending_residency: None,
             restore_adoption: None,
@@ -304,6 +308,10 @@ impl Session {
     pub(crate) fn fence(&self) -> Arc<CandidateFence> {
         self.simulation.fence.clone()
     }
+    pub(crate) fn operator_maintenance_active(&self) -> bool {
+        self.maintenance.0
+    }
+
     pub(crate) fn operational_generation(&self) -> u64 {
         self.generation
     }
@@ -817,6 +825,31 @@ impl Session {
         Ok(key)
     }
 
+    /// Application-owned holds rotate the existing operational work generation.
+    /// Gameplay storage and the recovery timeline keep their own identities.
+    pub(crate) fn begin_operator_maintenance(
+        &mut self,
+        paused: bool,
+        speed: f64,
+        manually_paused: bool,
+        maintenance: bool,
+        revision: u64,
+    ) -> Result<CandidateKey, SessionError> {
+        let transition = self.maintenance.0 != maintenance;
+        let generation = self
+            .generation
+            .checked_add(u64::from(transition))
+            .filter(|value| *value <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or(FenceError::Stale)?;
+        if revision < self.maintenance.1 || (maintenance && !paused) {
+            return Err(FenceError::Stale.into());
+        }
+        let key = self.begin_control(paused, speed, manually_paused)?;
+        self.maintenance = (maintenance, revision);
+        self.generation = generation;
+        Ok(key)
+    }
+
     /// The application checks the exact installed release and owns its
     /// catalog permission. The private candidate owns only the saved choice.
     pub(crate) fn begin_presentation_release(
@@ -1150,6 +1183,8 @@ impl Session {
         self.host_before = Some(HostControlSnapshot {
             speed: self.host.speed,
             manually_paused: self.host.manually_paused,
+            maintenance: self.maintenance,
+            generation: self.generation,
             milestones: super::milestones::MilestoneJournal::new(&self.host),
             presentation: None,
         });
@@ -1623,6 +1658,8 @@ impl Session {
         if let Some(mut before) = self.host_before.take() {
             self.host.speed = before.speed;
             self.host.manually_paused = before.manually_paused;
+            self.maintenance = before.maintenance;
+            self.generation = before.generation;
             if let Some(presentation) = before.presentation.take() {
                 let (original, _workspace) = *presentation;
                 self.host.replace_presentation(original);
@@ -1710,6 +1747,8 @@ impl Session {
             paused: header.paused,
             manually_paused: self.host.manually_paused,
             speed: self.host.speed,
+            maintenance: self.maintenance.0,
+            maintenance_revision: self.maintenance.1,
             exit_exposure_active: state
                 .participation
                 .exposures()

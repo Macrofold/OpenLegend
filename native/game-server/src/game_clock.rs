@@ -4,11 +4,15 @@
 use crate::{
     authority::{AccessError, Authority, AuthorizedScope, Capability},
     boot::CurrentServer,
+    command_epoch::RequestIdentity,
     live_save::{AcceptedSaveInput, LiveSaves, ProtectedGameplaySave},
     npc::schedule::ScheduleWake,
+    operator_maintenance::{OperatorMaintenance, Snapshot, Window},
     presence::Presence,
-    store::{CommitError, MetadataProjection, StoreError, checkpoint::CheckpointSchedule,
-        construction_gather::MaterialGatherProjection},
+    store::{
+        CommitError, MetadataProjection, StoreError, checkpoint::CheckpointSchedule,
+        construction_gather::MaterialGatherProjection,
+    },
     world::{ApplicationStart, IO_YIELD, ProtectedCommit, WorldError},
     world_input::{InputSnapshot, WorldInputs},
 };
@@ -95,7 +99,9 @@ pub struct GameClock {
     presence: Option<Arc<Presence>>,
     exit_grace: Duration,
     inputs: Option<Arc<WorldInputs>>,
-    accepted_reset: Mutex<Instant>,
+    accepted_reset: Arc<Mutex<Instant>>,
+    maintenance: Arc<OperatorMaintenance>,
+    identity: Arc<tokio::sync::Mutex<RequestIdentity>>,
 }
 
 impl GameClock {
@@ -104,6 +110,7 @@ impl GameClock {
         saves: Arc<LiveSaves>,
         checkpoints: Arc<CheckpointSchedule>,
         base_ratio: f64,
+        identity: Arc<tokio::sync::Mutex<RequestIdentity>>,
     ) -> Self {
         Self {
             game,
@@ -113,8 +120,129 @@ impl GameClock {
             presence: None,
             exit_grace: Duration::ZERO,
             inputs: None,
-            accepted_reset: Mutex::new(Instant::now()),
+            accepted_reset: Arc::new(Mutex::new(Instant::now())),
+            maintenance: Arc::new(OperatorMaintenance::default()),
+            identity,
         }
+    }
+
+    pub(crate) fn game(&self) -> &CurrentServer {
+        &self.game
+    }
+    pub(crate) fn maintenance(&self) -> &Arc<OperatorMaintenance> {
+        &self.maintenance
+    }
+    pub(crate) fn saving_failed(&self) -> bool {
+        self.saves.has_failed()
+    }
+    pub(crate) fn fail_maintenance(&self, error: WorldError) {
+        self.saves.latch_fault(error);
+    }
+
+    pub(crate) async fn set_maintenance(
+        &self,
+        snapshot: Arc<Snapshot>,
+        edit: Option<(Arc<Window>, Option<u64>)>,
+        operator: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
+    ) -> Result<(), WorldError> {
+        let _protected = self.saves.enter_protected().await?;
+        let previous = self.game.world.capture(NativeWorldSession::clock).await?;
+        let transition = previous.maintenance != snapshot.active;
+        let paused = if transition {
+            let visible = self
+                .presence
+                .as_ref()
+                .map_or(Ok(true), |presence| presence.visible())?;
+            snapshot.active || previous.manually_paused || !(visible || previous.exit_exposure_active)
+        } else {
+            previous.paused
+        };
+        let mut identity = if transition {
+            Some((
+                self.identity.clone().lock_owned().await,
+                Arc::new(Mutex::new(None)),
+            ))
+        } else {
+            None
+        };
+        let staged_epoch = identity.as_ref().map(|(_, epoch)| epoch.clone());
+        let active = snapshot.active;
+        let revision = snapshot.revision;
+        let provider = self.game.clone();
+        let store = self.game.store.clone();
+        let budget = self.game.host.budget().clone();
+        let persisted_operator = operator.as_ref().map(|(_, scope)| scope.clone());
+        let clock = self.accepted_reset.clone();
+        let inputs = self.inputs.clone();
+        let saves = self.saves.clone();
+        let maintenance = self.maintenance.clone();
+        self.game
+            .world
+            .execute_protected_then(
+                move |session| {
+                    session.begin_operator_maintenance(
+                        paused,
+                        previous.speed,
+                        previous.manually_paused,
+                        active,
+                        revision,
+                    )
+                },
+                move |question| {
+                    let game = provider.clone();
+                    async move { game.answer_operation(question).await }
+                },
+                |value, _| {
+                    let RuntimeDirectOutput::Prepared(value) = value else {
+                        unreachable!("host control cannot preview")
+                    };
+                    value.metadata_control().map(MetadataProjection::new)
+                },
+                move || {
+                    if let Some((authority, scope)) = operator {
+                        authority.current(&scope, Capability::Create, false, |_, _| ())?;
+                    }
+                    Ok(())
+                },
+                move |metadata, prefix| -> ProtectedCommit<'_> {
+                    Box::pin(async move {
+                        store
+                            .commit_prefix(
+                                prefix.rows(),
+                                &[],
+                                &crate::store::operator_maintenance::MaintenanceProjection {
+                                    metadata,
+                                    edit,
+                                    operator: persisted_operator,
+                                    budget,
+                                    staged_epoch,
+                                },
+                            )
+                            .await
+                    })
+                },
+                move |_| {
+                    if let Some((identity, epoch)) = identity.as_mut() {
+                        identity.epoch = epoch
+                            .lock()
+                            .map_err(|_| HostError::Poisoned)?
+                            .take()
+                            .ok_or(StoreError::StaleCut)?;
+                        *clock.lock().map_err(|_| HostError::Poisoned)? = Instant::now();
+                        if let Some(inputs) = inputs {
+                            inputs.exclude()?;
+                        }
+                        if !paused {
+                            saves.resume_semantic_index();
+                        }
+                    }
+                    maintenance.publish(snapshot);
+                    saves.signal_view();
+                    Ok(())
+                },
+            )
+            .await?;
+        Ok(())
     }
 
     /// A visibility transition has the same acknowledgement boundary as the
@@ -152,7 +280,9 @@ impl GameClock {
         }
         let should_pause = |clock: RuntimeClock| {
             Ok::<_, WorldError>(
-                clock.manually_paused || !(presence.visible()? || clock.exit_exposure_active),
+                clock.maintenance
+                    || clock.manually_paused
+                    || !(presence.visible()? || clock.exit_exposure_active),
             )
         };
         if should_pause(current)? == current.paused {
@@ -175,7 +305,7 @@ impl GameClock {
         scope: Arc<AuthorizedScope>,
         setting: Option<bool>,
     ) -> Result<bool, WorldError> {
-        self.set_manual_pause(setting, move || {
+        self.set_manual_pause(setting, false, move || {
             Ok(authority.current(&scope, Capability::Play, true, |_, _| ())?)
         })
         .await
@@ -188,7 +318,7 @@ impl GameClock {
         authority: Arc<Authority>,
         scope: Arc<AuthorizedScope>,
     ) -> Result<(), WorldError> {
-        self.set_manual_pause(Some(true), move || {
+        self.set_manual_pause(Some(true), true, move || {
             Ok(authority.current(&scope, Capability::Save, false, |_, _| ())?)
         })
         .await?;
@@ -198,11 +328,15 @@ impl GameClock {
     async fn set_manual_pause(
         &self,
         setting: Option<bool>,
+        recovery: bool,
         validate: impl Fn() -> Result<(), WorldError> + Send + 'static,
     ) -> Result<bool, WorldError> {
         validate()?;
         let _protected = self.saves.enter_protected().await?;
         let previous = self.game.world.capture(NativeWorldSession::clock).await?;
+        if previous.maintenance && !recovery {
+            return Err(WorldError::OperatorMaintenance);
+        }
         let visible = match &self.presence {
             Some(presence) => presence.visible()?,
             None => true,
@@ -211,7 +345,7 @@ impl GameClock {
             return Ok(false);
         }
         let manual = setting.unwrap_or(previous.manually_paused);
-        let paused = manual || !(visible || previous.exit_exposure_active);
+        let paused = previous.maintenance || manual || !(visible || previous.exit_exposure_active);
         if manual != previous.manually_paused || paused != previous.paused {
             let active = RuntimeClock {
                 paused,

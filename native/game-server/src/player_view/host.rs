@@ -14,6 +14,8 @@ pub(crate) struct ViewHostInput {
     access: PlayerAccess,
     checkpoint: Option<CheckpointContext>,
     command_epoch: String,
+    pub(super) maintenance_revision: u64,
+    maintenance: Option<Arc<crate::operator_maintenance::Window>>,
     pub(crate) paused_stop: Option<PausedStop>,
     telemetry: ViewTelemetry,
     narrator: Option<NarrationBanner>,
@@ -77,6 +79,7 @@ pub(crate) async fn capture_host(
         && presence
             .controller_present(&scope.actor_id)
             .map_err(|problem| ViewError::World(problem.into()))?;
+    let (command_epoch, maintenance_revision, maintenance) = commands.view_epoch().await;
     Ok(ViewHostInput {
         access: PlayerAccess {
             scope: key,
@@ -98,7 +101,9 @@ pub(crate) async fn capture_host(
             },
         },
         checkpoint,
-        command_epoch: commands.epoch().await,
+        command_epoch,
+        maintenance_revision,
+        maintenance,
         paused_stop: None,
         telemetry,
         narrator,
@@ -191,7 +196,7 @@ impl ViewHostInput {
             },
             paused_stop: self.paused_stop,
             weather: policy.world.weather_at(control.at, own.player.position),
-            maintenance: None,
+            maintenance: self.maintenance,
             presentation_release: None,
             presentation_release_revision,
             milestones,

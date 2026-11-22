@@ -172,7 +172,7 @@ Invite links are **single-use** bearer links with a 256-bit token stored only as
 
 Creator maintenance allows **one scheduled or active window** per world. A start may be at most **366 days** ahead; the announced duration is **5 minutes to 7 days**, and an active window can be extended up to **7 days** past the current time. Messages are at most **280 characters**. Each window keeps **20** audit changes, and **20** finished or cancelled windows are retained for creators. Players see cancelled or finished notices for **30 minutes**. A scheduled start that loses the writer lane to overload retries after **1 second**; any other persistence failure pauses the world with a storage error.
 
-**Reason / tradeoff:** One window keeps notices unambiguous; the announced end is an estimate, never an automatic resume. Recurring or overlapping schedules need a product decision. [Implementation](../../apps/server/src/maintenance.ts).
+**Reason / tradeoff:** One window keeps notices unambiguous; the announced end is an estimate, never an automatic resume. Recurring or overlapping schedules need a product decision. [TypeScript implementation](../../apps/server/src/maintenance.ts) · [Rust implementation](../../native/game-server/src/operator_maintenance.rs).
 
 ## MP17
 
