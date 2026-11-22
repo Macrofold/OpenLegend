@@ -25,6 +25,7 @@ use crate::state::{Action, Entity, NavigationPending, Placement, Point, SurfaceP
 use std::mem::size_of;
 mod casting;
 mod preparing_food;
+mod manufacture;
 mod feeding;
 mod gathering;
 
@@ -104,7 +105,7 @@ fn bound<'a>(
         .actor
         .as_ref()
         .and_then(|actor| actor.action.as_ref())
-        .filter(|value| value.id == action && value.owns_ground_route())
+        .filter(|value| value.id == action && (value.owns_ground_route() || value.is_manufacturing()))
         .ok_or(ExecutionError::Invariant)?;
     Ok((entity, action))
 }
@@ -575,7 +576,7 @@ impl MoveAdvanceCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
-                    if (!action.has_ground_motion() && !action.is_natural_contact())
+                    if (!action.has_ground_motion() && !action.is_natural_contact() && !action.is_manufacturing())
                         || entity.spatial.local_pose.is_some()
                     {
                         return Err(ExecutionError::UnsupportedFamily);
@@ -596,6 +597,9 @@ impl MoveAdvanceCursor {
                     }
                     if (action.feeding.is_some() || action.is_gathering()) && action.stage == "working" {
                         return self.begin_feed_check(core);
+                    }
+                    if action.is_manufacturing() {
+                        return self.advance_craft(core);
                     }
                     if action.is_cooking() && action.stage == "working" {
                         return self.check_cook(core);

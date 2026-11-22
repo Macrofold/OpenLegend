@@ -91,6 +91,7 @@ struct MaterialRole {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ItemMaterialRule {
     pub initial_attributes: Vec<String>,
+    pub state_attributes: Vec<String>,
     pub homogeneous: bool,
 }
 
@@ -249,6 +250,9 @@ impl ItemDefinitionRead {
             .is_some_and(|gear| gear.uses.contains(&EquipmentUse::Gather))
     }
 
+    pub(crate) fn packing_load(&self) -> Option<u64> {
+        self.packing_load
+    }
     pub(crate) fn fishing_kind(&self) -> Option<&str> {
         self.fishing_tool.as_ref().map(|tool| tool.kind.as_str())
     }
@@ -276,7 +280,7 @@ heap_record!(ItemDefinitionRead {
 });
 heap_record!(GatheringTool { resource_id });
 heap_record!(FishingTool { kind });
-heap_record!(ItemMaterialRule { initial_attributes });
+heap_record!(ItemMaterialRule { initial_attributes, state_attributes });
 impl HeapBytes for Equipment {
     fn heap_bytes(&self) -> Option<usize> {
         self.ports.heap_bytes()?.checked_add(

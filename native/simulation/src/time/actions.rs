@@ -49,6 +49,7 @@ impl SliceActions {
             };
             if (!action.has_ground_motion()
                 && !action.is_natural_contact()
+                && !action.is_manufacturing()
                 && action.kind != "status-effect")
                 || action.has_unconverted_fields()
             {
@@ -60,7 +61,7 @@ impl SliceActions {
                 .capabilities
                 .capability_blocked(Some(entity), "locomotion")?;
             if (action.stage == "working" || action.awaiting_moving_contact())
-                && (!restricted || action.kind == "status-effect" || action.is_natural_contact())
+                && (!restricted || action.kind == "status-effect" || action.is_natural_contact() || action.is_manufacturing())
             {
                 reservation.resize(
                     reservation

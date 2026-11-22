@@ -186,7 +186,7 @@ impl PhysicalMutation<'_> {
             .filter(|action| {
                 action.id == action_id
                     && action.stage == "working"
-                    && (action.has_ground_motion() || action.is_natural_contact())
+                    && (action.has_ground_motion() || action.is_natural_contact() || action.is_manufacturing())
             })
             .ok_or(ExecutionError::Invariant)?;
         let before = action.remaining_seconds;

@@ -123,6 +123,7 @@ pub(crate) struct RetainedDefinitions {
     pub item_definitions: RetainedMap,
     pub items: IndexMap<String, ItemDefinitionRead>,
     pub recipes: RetainedMap,
+    pub manufacture: IndexMap<String, crate::manufacturing::InstalledMethod>,
     pub flight_routes: RetainedMap,
     pub flight_corridors: crate::flight::Corridors,
     pub places: RetainedMap,
@@ -409,6 +410,8 @@ pub(crate) fn install_retained(
     input: RetainedDefinitionInputs,
     schema: &RecordSchema,
     activity: &crate::activity::ActivityLimits,
+    profile: (&str, u64),
+    family_pins: &[crate::values::DefinitionPin],
     budget: &crate::host::ByteBudget,
 ) -> Result<RetainedDefinitions, InstallError> {
     let mut r = Reader {
@@ -423,6 +426,7 @@ pub(crate) fn install_retained(
         "config_knowledge",
         input.knowledge_policy,
     )?;
+    let handling_pin = crate::manufacturing::item_handling_pin(&input.item_handling.canonical)?;
     let item_handling = r
         .one(
             "itemHandling",
@@ -669,6 +673,37 @@ pub(crate) fn install_retained(
         let route = serde_json::from_str(body).map_err(|_| InstallError::CurrentFormat)?;
         flight_corridors.insert(id.to_owned(), route);
     }
+    let (recipes, recipe_input) = r
+        .verified_map("recipes", "definition_recipes", Some(input.recipes))?
+        .ok_or(InstallError::ParentPresence)?;
+    let (_recipe_canonical_storage, recipe_canonical) =
+        canonical_entries(&recipes, &recipe_input, budget)?;
+    let mut method_storage = budget.reserve(
+        map_storage::<String, crate::manufacturing::InstalledMethod>(recipes.len())
+            .ok_or(InstallError::Capacity)?,
+    ).map_err(|_| InstallError::Capacity)?;
+    let mut manufacture = IndexMap::new();
+    for (id, body) in recipes.entries() {
+        let mut prepared = super::reserve_typed_parse::<crate::manufacturing::Definition<'_>>(
+            body,
+            size_of::<crate::manufacturing::Input>()
+                .max(size_of::<crate::manufacturing::Output>()).max(128),
+            Some(size_of::<(&str, &RawValue)>()),
+            budget,
+        )?;
+        let decoded: crate::manufacturing::Definition<'_> =
+            serde_json::from_str(body).map_err(|_| InstallError::DefinitionBody)?;
+        let canonical = recipe_canonical.get(id).ok_or(InstallError::DefinitionBody)?.get();
+        if let Some(method) = decoded.install(
+            id, canonical, profile, family_pins, &handling_pin,
+            &items, &item_definitions,
+        )? {
+            prepared.resize(id.len().checked_add(method.heap_bytes().ok_or(InstallError::Capacity)?)
+                .ok_or(InstallError::Capacity)?).map_err(|_| InstallError::Capacity)?;
+            method_storage.merge(prepared).map_err(|_| InstallError::Capacity)?;
+            manufacture.insert(id.to_owned(), method);
+        }
+    }
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
@@ -725,9 +760,8 @@ pub(crate) fn install_retained(
         story_policy: r.one("storyPolicy", "config_story", input.story_policy)?,
         item_definitions,
         items,
-        recipes: r
-            .map("recipes", "definition_recipes", Some(input.recipes))?
-            .ok_or(InstallError::ParentPresence)?,
+        recipes,
+        manufacture,
         flight_routes,
         flight_corridors,
         places,

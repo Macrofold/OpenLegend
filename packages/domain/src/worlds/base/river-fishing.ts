@@ -3,22 +3,15 @@ import { baseSpatial } from './spatial-definitions.js';
 import type { CastDefinition } from '../../finite-casts.js';
 import type { RecipeFamilyDescriptor } from '../../invention-families.js';
 import type { RecipeCandidate, WorldState } from '../../types.js';
+import { MATERIAL_PROPERTIES } from '../../types.js';
 import { starterGroundAt } from './landscape.js';
 import { worldPlacement } from '../../spatial-state.js';
+import lineRules from './river-line-rules.json' with { type: 'json' };
 
-const TOOL_RULES = {
-  kind: 'base:river-line',
-  workSeconds: 240,
-  packingLoad: 2,
-  roles: [
-    { id: 'shaft', label: 'Shaft', properties: ['shaft'] as const, quantity: 1 },
-    { id: 'line', label: 'Line', properties: ['binding'] as const, quantity: 2 },
-    { id: 'hook', label: 'Hook', properties: ['point'] as const, quantity: 1 },
-  ],
-};
+const { familyId, ...TOOL_RULES } = lineRules;
 export const RIVER_LINE_FAMILY: RecipeFamilyDescriptor = {
   definition: {
-    id: 'base:fishing-line',
+    id: familyId,
     version: 1,
     interface: 'recipe-family-v1',
     implementationVersion: 1,
@@ -28,7 +21,11 @@ export const RIVER_LINE_FAMILY: RecipeFamilyDescriptor = {
       roles: TOOL_RULES.roles.map((role) => ({
         id: role.id,
         label: role.label,
-        properties: [...role.properties],
+        properties: role.properties.map((property) => {
+          const meaning = MATERIAL_PROPERTIES.find((candidate) => candidate === property);
+          if (!meaning) throw new Error(`Unknown fishing line material property "${property}".`);
+          return meaning;
+        }),
         required: true,
         accepts: { native: true, generatedMaterials: [] },
       })),

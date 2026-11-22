@@ -14,6 +14,7 @@ pub enum RuntimePlayerCommand<'a> {
     Cancel(Option<&'a str>),
     Gather { target: &'a str, tool: Option<&'a str>, mode: Option<GatheringMode> },
     Fish { target: &'a str, tool: &'a str },
+    Craft { recipe: &'a str },
     Cook {
         heat: &'a str,
         preparation_id: &'a str,
@@ -32,6 +33,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Cancel(action) => action.map_or(0, str::len),
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } => target.len() + tool.len(),
+            Self::Craft { recipe } => recipe.len(),
             Self::Cook { heat, preparation_id, preparation_digest, inputs, .. } => {
                 heat.len() + preparation_id.len() + preparation_digest.len()
                     + inputs.iter().map(|(role, item)| role.len() + item.len()).sum::<usize>()
@@ -76,6 +78,8 @@ impl RuntimePlayerCommand<'_> {
             placement_revision: Option<u64>,
             #[serde(skip_serializing_if = "Option::is_none")]
             gathering_mode: Option<GatheringMode>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            recipe_id: Option<&'a str>,
         }
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
@@ -104,6 +108,8 @@ impl RuntimePlayerCommand<'_> {
             #[serde(skip_serializing_if = "Option::is_none")]
             placement_revision: Option<u64>,
             #[serde(skip_serializing_if = "Option::is_none")]
+            recipe_id: Option<&'a str>,
+            #[serde(skip_serializing_if = "Option::is_none")]
             target_id: Option<&'a str>,
             #[serde(rename = "type")]
             kind: &'a str,
@@ -113,6 +119,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
             Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
+            Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Cook { .. } => unreachable!("food preparation uses its own typed wire fields"),
             Self::Equip(item) => ("equip", None, None, None, Some(item), None),
             Self::Unequip { item, .. } => ("unequip", None, None, None, Some(item), None),
@@ -121,6 +128,10 @@ impl RuntimePlayerCommand<'_> {
             Self::Unequip { expected_revision, placement_revision, .. } =>
                 (Some(expected_revision), Some(placement_revision)),
             _ => (None, None),
+        };
+        let recipe_id = match self {
+            Self::Craft { recipe } => Some(recipe),
+            _ => None,
         };
         let headers = CommandHeaders {
             id: id.to_owned(),
@@ -132,6 +143,7 @@ impl RuntimePlayerCommand<'_> {
             chosen_purpose: None,
         };
         if !headers.valid()
+            || recipe_id.is_some_and(|id| !crate::values::is_safe_record_id(id))
             || destination
                 .is_some_and(|point| ![point.x, point.y, point.z].iter().all(|n| n.is_finite()))
             || [expected_revision, placement_revision].into_iter().flatten().any(|revision| revision > crate::identity::MAX_SAFE_INTEGER)
@@ -157,8 +169,9 @@ impl RuntimePlayerCommand<'_> {
                 expected_revision,
                 placement_revision,
                 gathering_mode,
+                recipe_id,
             },
-            4 + [destination.is_some(), expected_action_id.is_some(), target_id.is_some(), item_id.is_some(), gathering_mode.is_some(), expected_revision.is_some(), placement_revision.is_some()]
+            4 + [destination.is_some(), expected_action_id.is_some(), target_id.is_some(), item_id.is_some(), gathering_mode.is_some(), recipe_id.is_some(), expected_revision.is_some(), placement_revision.is_some()]
                 .into_iter().filter(|value| *value).count(),
         )?;
         let signature = json_record(&Signature {
@@ -176,6 +189,7 @@ impl RuntimePlayerCommand<'_> {
             id,
             item_id,
             placement_revision,
+            recipe_id,
             target_id,
             kind,
         })?;
@@ -198,6 +212,7 @@ impl RuntimePlayerCommand<'_> {
                     ))
                 })?,
             },
+            Self::Craft { recipe } => NativeCommand::Craft { envelope, recipe_id: recipe.into() },
             Self::Fish { target, tool } => NativeCommand::Fish {
                 envelope,
                 target_id: target.into(),

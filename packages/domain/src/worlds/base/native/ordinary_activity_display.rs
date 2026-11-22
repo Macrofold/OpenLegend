@@ -89,7 +89,7 @@ pub enum OrdinaryAction {
         supply: JsText,
         selected_tool: JsText,
     },
-    FoodPreparation {
+    Production {
         name: JsText,
         details: Vec<ActivityFact>,
     },
@@ -367,7 +367,7 @@ pub fn format(
             facts.push(fact("approach", copy.approach.into()));
             purpose.unwrap_or_else(|| copy.label.into())
         }
-        OrdinaryAction::FoodPreparation { name, details } => {
+        OrdinaryAction::Production { name, details } => {
             facts.extend(details);
             purpose.unwrap_or(name)
         }

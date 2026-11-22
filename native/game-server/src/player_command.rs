@@ -103,6 +103,8 @@ struct CommandInput {
     preparation_digest: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     inputs: Option<indexmap::IndexMap<String, String>>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    recipe_id: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -209,6 +211,7 @@ enum CommandKind {
     Gather,
     Fish,
     Cook,
+    Craft,
     Equip,
     Unequip,
 }
@@ -578,6 +581,7 @@ impl CommandRequest {
             || Uuid::parse_str(&self.command_epoch).is_err()
             || (!matches!(command.kind, CommandKind::Unequip)
                 && (command.expected_revision.is_some() || command.placement_revision.is_some()))
+            || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
             || (!matches!(command.kind, CommandKind::Cook)
                 && (command.preparation_id.is_some()
                     || command.preparation_version.is_some()
@@ -643,6 +647,12 @@ impl CommandRequest {
             {
                 Ok(())
             }
+            CommandKind::Craft
+                if command.position.is_none() && command.known_place.is_none()
+                    && command.target_id.is_none() && command.item_id.is_none()
+                    && command.expected_action_id.is_none() && command.gathering_mode.is_none()
+                    && command.recipe_id.as_deref().is_some_and(openlegend_simulation::values::is_safe_record_id)
+                => Ok(()),
             CommandKind::Cook
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -746,6 +756,9 @@ impl PreparedRequest {
             CommandKind::Fish => Ok(RuntimePlayerCommand::Fish {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 tool: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+            }),
+            CommandKind::Craft => Ok(RuntimePlayerCommand::Craft {
+                recipe: input.recipe_id.as_deref().ok_or(StoreError::InvalidRecord)?,
             }),
             CommandKind::Cook => Ok(RuntimePlayerCommand::Cook {
                 heat: target.ok_or(StoreError::InvalidRecord)?,

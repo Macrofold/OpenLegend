@@ -162,7 +162,7 @@ impl CommandCursor {
                 .as_mut()
                 .ok_or(ExecutionError::Invariant)?
                 .consumed = food::work_requirements(recipe);
-            self.cooking_debits = Some(debits);
+            self.production_debits = Some(debits);
             self.phase = Phase::Prepared;
             return self.drive(core, None);
         }
@@ -305,7 +305,7 @@ impl CommandCursor {
         let profile = &core.state.installed.content.profile;
         let view = format(
             (&profile.id, profile.version),
-            OrdinaryAction::FoodPreparation {
+            OrdinaryAction::Production {
                 name: terms.name.clone(),
                 details: facts,
             },
@@ -387,7 +387,7 @@ impl CommandCursor {
             .preparations
             .get(&pin.id)
             .ok_or(ExecutionError::Invariant)?;
-        let fits = if let Some(debits) = self.cooking_debits.take() {
+        let fits = if let Some(debits) = self.production_debits.take() {
             food::start_work(core, actor, &action.id, recipe, debits, &self.budget)?
         } else {
             food::check_completion(core, actor, &action.id, recipe, &self.budget)?

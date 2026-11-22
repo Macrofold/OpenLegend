@@ -858,7 +858,7 @@ fn validate_entity(
                 })
                 || (a.strike_motion.is_some() && !a.is_natural_contact())
                 || (a.target_life.is_some() && !a.is_natural_contact())
-                || (!a.has_ground_motion() && !a.is_natural_contact() && a.kind != "status-effect")
+                || (!a.has_ground_motion() && !a.is_natural_contact() && !a.is_manufacturing() && a.kind != "status-effect")
         }) {
             return Err(InstallError::CurrentFormat);
         }

@@ -341,7 +341,7 @@ impl MechanicalForecast {
             if action.kind == "status-effect" {
                 continue;
             }
-            if (!action.has_ground_motion() && !action.is_natural_contact())
+            if (!action.has_ground_motion() && !action.is_natural_contact() && !action.is_manufacturing())
                 || action.has_unconverted_fields()
             {
                 return Err(ExecutionError::UnsupportedFamily);

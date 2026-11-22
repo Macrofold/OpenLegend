@@ -50,6 +50,8 @@ mod npc_labels;
 mod participation;
 pub use participation::{InvitationActor, InvitationActors, RuntimeParticipation};
 mod player;
+mod manufacture;
+pub use manufacture::RuntimeManufactureOffer;
 pub use crate::food_preparation::valid_inputs as valid_preparation_inputs;
 mod player_places;
 mod privacy;

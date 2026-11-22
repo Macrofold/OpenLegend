@@ -29,7 +29,24 @@ impl CoreMutation<'_> {
                 && lot.material_contribution_ids.is_none()
                 && (quantity < lot.quantity
                     || (!self.state.inventory.has_children(&entity.id)
-                        && entity.attributes.as_ref().is_none_or(IndexMap::is_empty)
+                        && entity.attributes.as_ref().is_none_or(|attributes| {
+                            attributes.is_empty()
+                                || (entity.container.is_none()
+                                    && self
+                                        .state
+                                        .installed
+                                        .retained
+                                        .items
+                                        .get(&lot.definition_pin.id)
+                                        .filter(|definition| definition.pin == lot.definition_pin)
+                                        .and_then(|definition| definition.material.as_ref())
+                                        .is_some_and(|rule| {
+                                            rule.homogeneous
+                                                && attributes
+                                                    .keys()
+                                                    .all(|id| rule.state_attributes.contains(id))
+                                        }))
+                        })
                         && entity
                             .status_effects
                             .as_ref()

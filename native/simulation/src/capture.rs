@@ -984,6 +984,7 @@ pub(crate) fn with_actor_self<T>(
                 inventory_revision: entity.inventory_revision.unwrap_or_default(),
                 inventory: &inventory.items,
                 held_stock: &inventory.held,
+                craft_stock: &inventory.craft_stock,
                 equipped: &inventory.equipped,
                 knowledge_revision: state
                     .reception

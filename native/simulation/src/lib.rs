@@ -31,6 +31,7 @@ pub mod install;
 pub(crate) mod knowledge;
 pub mod language;
 pub mod movement;
+mod manufacturing;
 pub mod narration;
 pub mod native_controller;
 pub mod native_danger;

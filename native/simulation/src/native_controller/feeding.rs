@@ -284,6 +284,17 @@ pub(crate) fn stage(
     text: crate::text::JsText,
     data: indexmap::IndexMap<String, crate::reception::EventScalar>,
 ) -> Result<StagedOccurrence, ExecutionError> {
+    stage_subject(core, actor, Some(target), event_type, text, data)
+}
+
+pub(crate) fn stage_subject(
+    core: &mut CoreMutation<'_>,
+    actor: &str,
+    target: Option<&str>,
+    event_type: &str,
+    text: crate::text::JsText,
+    data: indexmap::IndexMap<String, crate::reception::EventScalar>,
+) -> Result<StagedOccurrence, ExecutionError> {
     use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
     use crate::narration::{Narration, NarrationPart, PersonRole};
     core.stage_event(EventEmissionIntent {
@@ -301,7 +312,7 @@ pub(crate) fn stage(
         }),
         audience: AudienceSelection::Physical,
         source_id: Some(actor.into()),
-        target_id: Some(target.into()),
+        target_id: target.map(str::to_owned),
         data: Some(data),
         scope: EventScope::External,
         origin: None,

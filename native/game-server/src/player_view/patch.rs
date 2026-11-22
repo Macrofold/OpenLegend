@@ -116,12 +116,7 @@ fn same_output(
 }
 
 fn same_recipes(before: &PreparedSelf, after: &PreparedSelf) -> bool {
-    before.recipes.len() == after.recipes.len()
-        && before
-            .recipes
-            .iter()
-            .zip(&after.recipes)
-            .all(|(before, after)| Arc::ptr_eq(before, after))
+    before.recipes == after.recipes
 }
 
 #[derive(Serialize)]

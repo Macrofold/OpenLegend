@@ -15,12 +15,12 @@ use openlegend_simulation::{
     worlds::base_observed::{ObservedActionAnimation, SpeechVolume, StatusEffectProjection},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
 use std::sync::Arc;
 
 mod inventory;
 use inventory::{EquipmentBinding, ItemBinding};
 mod practice;
+mod recipes;
 use practice::{PracticePolicy, PracticeView, project_practice};
 
 #[derive(Deserialize)]
@@ -31,7 +31,7 @@ pub struct OwnPolicy {
     portraits: IndexMap<String, PublicArt>,
     #[serde(default)]
     departure_notice: Option<Arc<str>>,
-    authored_recipes: IndexMap<String, Arc<RawValue>>,
+    authored_recipes: IndexMap<String, Arc<recipes::RecipeTemplate>>,
     acoustics: AcousticPolicy,
     sight_body_fractions: [f64; 3],
     #[serde(default)]
@@ -119,7 +119,7 @@ pub struct PreparedSelf {
     pub vision: VisionGuide,
     pub hearing: HearingGuide,
     pub communication_references: Vec<CommunicationReference>,
-    pub recipes: Vec<Arc<RawValue>>,
+    pub recipes: Vec<recipes::Recipe>,
     pub map_markers: Vec<Marker>,
     pub can_speak: bool,
     pub can_steer: bool,
@@ -389,7 +389,7 @@ pub fn prepare_self(
             facts
                 .known_recipes
                 .len()
-                .checked_mul(std::mem::size_of::<Arc<RawValue>>())
+                .checked_mul(std::mem::size_of::<recipes::Recipe>())
                 .ok_or(SceneError::Capacity)?,
         )
         .ok_or(SceneError::Capacity)?;
@@ -398,13 +398,8 @@ pub fn prepare_self(
         inventory::prepare(&facts, &scene.observed.item_art, &mut custody)?;
     let mut recipes = Vec::with_capacity(facts.known_recipes.len());
     for recipe in facts.known_recipes {
-        recipes.push(
-            policy
-                .authored_recipes
-                .get(recipe)
-                .ok_or(SceneError::Capture)?
-                .clone(),
-        );
+        let template = policy.authored_recipes.get(recipe).ok_or(SceneError::Capture)?;
+        recipes.push(recipes::Recipe::prepare(template, facts.craft_stock, &mut custody)?);
     }
     let practice = project_practice(&facts, &policy.practice, &mut custody)?;
     let mut attempts = Vec::new();

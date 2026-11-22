@@ -296,7 +296,10 @@ fn assemble_selected_core(
         budget,
     )?;
     content.fund(budget)?;
-    let retained = install_retained(&mut import, &mut children, retained, &schema, &activity, budget)?;
+    let retained = install_retained(
+        &mut import, &mut children, retained, &schema, &activity, (&content.profile.id, content.profile.version),
+        &meanings.manifest.recipe_families, budget,
+    )?;
     crate::flight::validate_corridors(
         &retained.flight_corridors,
         maximum_candidates,
@@ -493,6 +496,15 @@ fn assemble_selected_core(
             .entities
             .get(id)
             .ok_or(InstallError::CurrentFormat)?;
+        if entity.actor.as_ref().and_then(|actor| actor.action.as_ref()).is_some_and(|action| {
+            action.is_manufacturing() && (
+                !crate::manufacturing::valid_saved(&physical, &installed.retained, id, action)
+                || !learned_capabilities.known_recipes(id).iter()
+                    .any(|recipe| Some(recipe.as_str()) == action.recipe_id.as_deref())
+            )
+        }) {
+            return Err(InstallError::CurrentFormat.into());
+        }
         if let Some(threat) = &entity.threat {
             if !threat.valid(entity, &installed.retained.native_strike_read) {
                 return Err(InstallError::CurrentFormat.into());

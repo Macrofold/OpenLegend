@@ -234,6 +234,8 @@ pub(super) struct OwnPlayerView<'a> {
     pub inventory_revision: u64,
     pub inventory: &'a [crate::install::OwnedItem<'a>],
     pub held_stock: &'a [(&'a str, f64)],
+    #[serde(skip)]
+    pub craft_stock: &'a indexmap::IndexMap<&'a str, u64>,
     pub equipped: &'a [crate::install::OwnedItem<'a>],
     pub knowledge_revision: u64,
     pub agency: &'a crate::state::ActorAgency,

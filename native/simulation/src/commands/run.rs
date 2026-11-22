@@ -25,6 +25,7 @@ use crate::work::{MeterToken, WorkUnit};
 mod discovery;
 mod casting;
 mod preparing_food;
+mod manufacture;
 mod equipment;
 mod feeding;
 mod gathering;
@@ -146,7 +147,7 @@ pub(crate) struct CommandCursor {
     resolved: Option<SurfacePoint>,
     action: Option<Action>,
     action_storage: Option<ByteReservation>,
-    cooking_debits: Option<crate::execution::OwnedDebits>,
+    production_debits: Option<crate::execution::OwnedDebits>,
     activity_id: Option<String>,
     interrupt_at: usize,
     personal: Option<PersonalTask>,
@@ -228,7 +229,7 @@ impl CommandCursor {
             resolved: None,
             action: None,
             action_storage: None,
-            cooking_debits: None,
+            production_debits: None,
             activity_id: None,
             interrupt_at: 0,
             personal: None,
@@ -317,6 +318,10 @@ impl CommandCursor {
         }
         if matches!(self.command, NativeCommand::Fish { .. }) {
             self.prepare_cast_view(core)?;
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::Craft { .. }) {
+            self.prepare_craft_view(core)?;
             return Ok(false);
         }
         if matches!(self.command, NativeCommand::Cook { .. }) {
@@ -1033,6 +1038,7 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::Craft { .. } => self.prepare_craft(core)?,
                         NativeCommand::Cook { .. } => {
                             if self.prepare_cook(core)? {
                                 return Ok(Progress::Geometry);
@@ -1447,6 +1453,9 @@ impl CommandCursor {
                 Phase::Install => {
                     let action = self.action.take().ok_or(ExecutionError::Invariant)?;
                     let action_id = action.id.clone();
+                    if action.is_manufacturing() && !self.admit_craft_record(core, &actor_id, &action)? {
+                        continue;
+                    }
                     if action.is_cooking() && !self.admit_cook_record(core, &actor_id, &action)? {
                         continue;
                     }
@@ -1536,6 +1545,9 @@ impl CommandCursor {
                         }
                         if matches!(self.command, NativeCommand::Cook { .. }) {
                             return self.cook_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::Craft { .. }) {
+                            return self.craft_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::Strike { .. }) {
                             return self.natural_contact_started(core, &actor_id);

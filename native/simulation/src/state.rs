@@ -653,13 +653,13 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub recipe_pin: Option<UnconvertedField>,
+    pub recipe_pin: Option<DefinitionPin>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub manufacture_tools: Option<UnconvertedField>,
+    pub manufacture_tools: Option<[(); 0]>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -719,7 +719,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub recipe_id: Option<UnconvertedField>,
+    pub recipe_id: Option<String>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -853,6 +853,10 @@ impl Action {
         self.kind == "gather" && self.gathering.is_some()
     }
 
+    pub(crate) fn is_manufacturing(&self) -> bool {
+        self.kind == "craft" && self.recipe_id.is_some() && self.recipe_pin.is_some()
+    }
+
     pub(crate) fn is_cooking(&self) -> bool {
         self.kind == "cook" && self.food_preparation.is_some()
     }
@@ -892,15 +896,15 @@ impl Action {
             || self.requires_lethal_review.is_some()
             || self.lethal_permission.is_some()
             || self.scar_id.is_some()
-            || self.recipe_pin.is_some()
-            || self.manufacture_tools.is_some()
+            || self.recipe_pin.is_some() != self.is_manufacturing()
+            || self.manufacture_tools.is_some() != self.is_manufacturing()
             || self.food_preparation.is_some() != (self.kind == "cook")
             || self.fishing.is_some() != (self.kind == "fish")
             || self.guard.is_some()
             || self.follow.is_some()
             || self.transferred.is_some()
             || self.quantity.is_some()
-            || self.recipe_id.is_some()
+            || self.recipe_id.is_some() != self.is_manufacturing()
             || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting()))
             || self.weapon_item_id.is_some()
             || self.ammo_item_id.is_some()
@@ -1006,6 +1010,17 @@ impl Action {
         action.remaining_seconds = seconds;
         action.total_seconds = seconds;
         action.feeding = Some(Box::new(feeding));
+        action
+    }
+
+    pub(crate) fn craft(id: String, recipe: DefinitionPin, seconds: f64, consumed: Vec<Yield>) -> Self {
+        let mut action = Self::native_action(id, "craft", "working");
+        action.recipe_id = Some(recipe.id.clone());
+        action.recipe_pin = Some(recipe);
+        action.manufacture_tools = Some([]);
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
+        action.consumed = consumed;
         action
     }
 

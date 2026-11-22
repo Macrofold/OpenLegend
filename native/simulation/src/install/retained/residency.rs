@@ -58,6 +58,7 @@ heap_record!(RetainedDefinitions {
     item_definitions,
     items,
     recipes,
+    manufacture,
     flight_routes,
     flight_corridors,
     places,

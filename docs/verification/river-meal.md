@@ -121,7 +121,7 @@ Existing catalogue/view/boundary files passed 21 cases; four selected native see
 
 ## Stand-alone Rust casts
 
-The [full-server conversion](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server) uses the same two authored reaches, tool definition, result text and saved random sequence. The local specimens gave the actor an already produced River line. A separate Source run crafted that exact definition from wood, cord and bone. Loading its completed craft record still reaches the stand-alone activity collection's current-format refusal. Tool manufacture and the cooked meal remain separate conversion checks.
+The [full-server conversion](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server) uses the same two authored reaches, tool definition, result text and saved random sequence. The initial cast specimens gave the actor an already produced River line. [The connected manufacture journey](#stand-alone-rust-river-line-manufacture) makes that same tool in the Rust world and uses it for a meal.
 
 The stand-alone source `927a9ec8ef8410b36ee708e673a37fd1491bd0ce` ran executable `fad5e6aee90a…` against disposable PostgreSQL. The Rust process served the browser and owned the live game. Preparation tools and the browser were separate processes. No paid provider ran.
 
@@ -150,7 +150,17 @@ Disposable loopback PostgreSQL cases confirmed a cooked meat result after ordina
 
 A real browser selected the fish recipe and displayed the exact cooked item in Inventory. The result retained its private material link to the ordinary Source cast used to prepare the fixture. The stand-alone cast has separate evidence above. The Rust run used source tree `74ef96147cc39c5c79a3ff13ddfbe2c821156757` and executable SHA-256 `c4a54ecb8fe07f50e13b284912735756b289902d979b686c1f169ce93923de3e`. Raw caller results are retained in the task's `nsc04-cooking-20261122` evidence directory.
 
-These are local gameplay checks with the stand-alone executable, ordinary saves and a disposable database for each case. They establish the caught-item and cooking junction, including the preserved private ingredient source. Tool manufacture, eating the result and an NPC independently choosing to cook remain separate callers.
+These are local gameplay checks with the stand-alone executable, ordinary saves and a disposable database for each case. They establish the caught-item and cooking junction, including the preserved private ingredient source. Eating the result and an NPC independently choosing to cook remain separate callers.
+
+## Stand-alone Rust River line manufacture
+
+Chromium started with one Supple branch, two Fiber cord and one Bone fragment. The ordinary Crafting panel showed the actual stock. Selecting **Craft** spent those quantities once, and the live view showed none left. Work earned the installed 240 game seconds and saved one real River line with its material record. The same request returned the original result before and after a server restart. Starting another batch with spent stock was unavailable. The retired cord kept its installed material condition in PostgreSQL.
+
+The player took that exact tool to the Camp river reach, caught one fish and reduced the reach's stock by one. The player walked to the campfire and cooked that catch. The saved cooking record linked to the exact cast result, and Inventory displayed the cooked fish. The same sign-in recovered the tool and meal after reopening. Source completed the equivalent journey with the same ingredients, work, stock debit, output definitions and material link.
+
+Separate cases covered cancellation after the debit, a saved current-format NPC manufacture that finished after reopening, and an actor who owned all the materials but had never learned the recipe. Cancellation produced no tool. The unlearned method stayed private and its command left all quantities unchanged. An earlier cancellation check tried a new login after restart and correctly could not recover the old private receipt.
+
+The checked Rust source tree was `c0b907e17e8fe1fde53a446d7b0699cf61ee7ce0` and the executable SHA-256 was `5bc99ad84ecbb1417b672628e13ec30d5a18c97060e521721eb7f0c2843cb45c`. These cases used ordinary clocks, browser streams and isolated loopback PostgreSQL databases. No provider call ran. The local checks establish gameplay and persistence. Retained-tool and repeat manufacture, new recipe learning, eating and NPC selection of cooking have separate callers.
 
 ## Maintained records
 

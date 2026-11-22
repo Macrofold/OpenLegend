@@ -3,6 +3,7 @@ import {
   BASE_GUARD_TEXT,
   BASE_SKILLED_TEXT,
   canonicalJson,
+  manufactureInputQuantities,
   nativeCommandSupported,
   selectedNaturalStrikeBodyPlans,
   selectedPlayerViewRules,
@@ -36,12 +37,38 @@ export function rustGameServerScenePolicy(world: WorldState) {
       defaultAppearance: rules.defaultAppearance,
       portraits: world.presentation?.portraits,
       departureNotice: world.participationPolicy?.exitDescription,
-      // Current Rust carried-inventory installation requires an empty stock.
-      // The live actor grant is selected independently from these definitions.
+      // Keep exact definitions with the presentation. The Rust reader supplies
+      // the independent actor grant and current quantities when it serves a view.
       authoredRecipes: Object.fromEntries(
         Object.values(world.recipes)
           .filter((recipe) => recipe.provenance.source === 'authored-world')
-          .map((recipe) => [recipe.id, authoredRecipeView(world, recipe, () => 0)]),
+          .map((recipe) => {
+            const { ingredients, retainedTools, ...details } = authoredRecipeView(
+              world,
+              recipe,
+              () => 0,
+            );
+            return [
+              recipe.id,
+              {
+                details,
+                ingredients: [...manufactureInputQuantities(recipe).keys()].map(
+                  (definitionId, index) => {
+                    const { available: _available, ...view } = ingredients[index]!;
+                    return { definitionId, view };
+                  },
+                ),
+                retainedTools: retainedTools.map(({ role, quantity, choices }, index) => ({
+                  role,
+                  quantity,
+                  choices: choices.map(({ name }, choice) => ({
+                    name,
+                    definitionId: recipe.retainedTools[index]!.allowedDefinitions[choice]!.id,
+                  })),
+                })),
+              },
+            ];
+          }),
       ),
       acoustics: world.moduleManifest.acoustics,
       sightBodyFractions: SIGHT_BODY_FRACTIONS,

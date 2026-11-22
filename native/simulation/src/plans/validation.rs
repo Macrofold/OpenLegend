@@ -81,6 +81,7 @@ pub(crate) fn valid_command(
         NativeCommand::Fish {
             target_id, item_id, ..
         } => is_safe_record_id(target_id) && is_safe_record_id(item_id),
+        NativeCommand::Craft { recipe_id, .. } => is_safe_record_id(recipe_id),
         NativeCommand::Cook { heat_id, definition, inputs, .. } =>
             is_safe_record_id(heat_id) && definition.is_valid() && crate::food_preparation::valid_inputs(inputs),
         NativeCommand::Say {

@@ -78,6 +78,9 @@ pub(crate) mod base_foraging;
 #[path = "../../../packages/domain/src/worlds/base/native/gathering.rs"]
 pub(crate) mod base_gathering;
 
+#[path = "../../../packages/domain/src/worlds/base/native/line_manufacture.rs"]
+pub(crate) mod base_line_manufacture;
+
 #[path = "../../../packages/domain/src/worlds/base/native/ordinary_activity_display.rs"]
 pub mod activity_display;
 

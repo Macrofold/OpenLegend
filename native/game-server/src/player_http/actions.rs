@@ -10,6 +10,7 @@ use openlegend_simulation::{
 };
 use std::sync::LazyLock;
 mod preparation;
+mod manufacture;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,6 +43,7 @@ struct Position {
 struct MenuRequest {
     target_id: Option<String>,
     item_id: Option<String>,
+    recipe_id: Option<String>,
     position: Option<Position>,
 }
 
@@ -69,7 +71,11 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
         .target_id
         .filter(|id| crate::npc::valid_request_id(id));
     let item = input.item_id.filter(|id| crate::npc::valid_request_id(id));
-    if target.is_none() && item.is_none() {
+    let recipe = input.recipe_id.filter(|id| crate::npc::valid_request_id(id));
+    if recipe.is_some() && (target.is_some() || item.is_some()) {
+        return access_failure(AccessError::Changed);
+    }
+    if target.is_none() && item.is_none() && recipe.is_none() {
         return refusal(
             StatusCode::BAD_REQUEST,
             "unsupported-action-context",
@@ -93,6 +99,12 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                 |scope, controls| -> Result<_, RuntimeError> {
                     let budget = game.host.budget();
                     let _workspace = budget.reserve(2048)?;
+                    if let Some(recipe) = recipe.as_deref() {
+                        return session.with_player_manufacture_offer(
+                            &scope.account_id, &scope.actor_id, recipe,
+                            |offer| manufacture::render(recipe, offer, controls, budget),
+                        );
+                    }
                     let references = tokens
                         .scoped(scope)
                         .map_err(RuntimeError::application_refused)?;

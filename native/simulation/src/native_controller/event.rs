@@ -115,6 +115,7 @@ pub(crate) fn require_supported_event(
         if action.has_unconverted_fields()
             || (!action.has_ground_motion()
                 && !action.is_natural_contact()
+                && !action.is_manufacturing()
                 && action.kind != "status-effect")
         {
             return Err(ExecutionError::UnsupportedFamily);
