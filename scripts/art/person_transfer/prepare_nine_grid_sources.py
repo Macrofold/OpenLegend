@@ -2,30 +2,21 @@
 """Confirm the selected 9-sheet body reference set, measure 2D silhouettes, and emit unscaled equal-canvas 3-view crops."""
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 from pathlib import Path
-import numpy as np
-from PIL import Image, ImageDraw
+import sys
 
-STUDY_ROOT = Path("/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-12-body-reference-family/study")
-GRID_DIR = STUDY_ROOT / "grid-9-20261112"
-FAMILY_DIR = STUDY_ROOT / "family-20261113"
-PEACOCK_ANCHOR = Path(
-    "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-meshy-conform/study/references/body/sheet.png"
-)
-PEACOCK_V3_COMPILED = Path(
-    "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-full-transfer/study/continuation/finish/root/body-audit/body-v3-kit/compiled.json"
-)
-SHIRT_LANE_COMPILED = Path(
-    "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-full-transfer/study/continuation/finish/root/lane-orientation-kit/compiled.json"
-)
-SHORTS_R4_NPZ = (
-    STUDY_ROOT / "execution-20261112/retry/retry-coverage/torso-exact-r4-kit/shorts-panel-correction.npz"
-)
-SHORTS_R4_WITNESS_BLEND = (
-    STUDY_ROOT / "execution-20261112/retry/retry-coverage/t-pose-continuous-covered/kit/family.blend"
-)
+sys.dont_write_bytecode = True
+
+PACKAGE_DIR = Path(__file__).resolve().parent
+if str(PACKAGE_DIR) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_DIR))
+
+import numpy as np  # noqa: E402
+from pil_compat import Image, ImageDraw  # noqa: E402
+from runtime_env import external_output, resolve_workspace_root  # noqa: E402
 
 EXPECTED_SHEETS = [
     ("M000-F000", [0.0, 0.0], "c14", "stage-b-support", "d8841a32d1e0cf08540d4a5d775213109cdbb7f525f5fd1a5d6af16e47248d50", 6023511),
@@ -181,26 +172,41 @@ def measure_panel(fg: np.ndarray, x0: int, x1: int, view: str) -> dict:
 
 
 def main() -> None:
-    sources_dir = FAMILY_DIR / "sources"
-    crops_root = sources_dir / "crops"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--workspace", type=Path, default=None, help="External OpenLegend art workspace root")
+    parser.add_argument("--study-dir", type=Path, default=None)
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else None)
+
+    ws = resolve_workspace_root(args.workspace)
+    study_root = external_output(args.study_dir if args.study_dir is not None else (ws / "2026-11-12-body-reference-family/study"))
+    grid_dir = study_root / "grid-9-20261112"
+    family_dir = study_root / "family-20261113"
+    peacock_anchor = ws / "2026-11-11-peacock-meshy-conform/study/references/body/sheet.png"
+    peacock_v3_compiled = ws / "2026-11-11-peacock-full-transfer/study/continuation/finish/root/body-audit/body-v3-kit/compiled.json"
+    shirt_lane_compiled = ws / "2026-11-11-peacock-full-transfer/study/continuation/finish/root/lane-orientation-kit/compiled.json"
+    shorts_r4_npz = study_root / "execution-20261112/retry/retry-coverage/torso-exact-r4-kit/shorts-panel-correction.npz"
+    shorts_r4_witness_blend = study_root / "execution-20261112/retry/retry-coverage/t-pose-continuous-covered/kit/family.blend"
+
+    sources_dir = external_output(family_dir / "sources")
+    crops_root = external_output(sources_dir / "crops")
     sources_dir.mkdir(parents=True, exist_ok=True)
     crops_root.mkdir(parents=True, exist_ok=True)
 
     # Verify canonical pinned inputs first
-    peacock_anchor_sha = sha256_file(PEACOCK_ANCHOR)
+    peacock_anchor_sha = sha256_file(peacock_anchor)
     if peacock_anchor_sha != "003a013911bc90ed768396432ee64fc9199c9c7a3efd9812d9a461af7ebd5cc1":
         raise ValueError(f"Approved Peacock anchor hash mismatch: {peacock_anchor_sha}")
-    v3_sha = sha256_file(PEACOCK_V3_COMPILED)
+    v3_sha = sha256_file(peacock_v3_compiled)
     if v3_sha != "99061449c8f83a60b9d28ef6d6127c27e69132e8c71d95af65302b1b85ed7519":
         raise ValueError(f"Pinned Peacock V3 compiled.json hash mismatch: {v3_sha}")
-    lane_sha = sha256_file(SHIRT_LANE_COMPILED)
+    lane_sha = sha256_file(shirt_lane_compiled)
     if lane_sha != "8f673f1d2c53ff6f5766b9d58887073242813df57cd78071bd3de36d275f563e":
         raise ValueError(f"Pinned lane-orientation-kit compiled.json hash mismatch: {lane_sha}")
-    r4_npz_sha = sha256_file(SHORTS_R4_NPZ)
-    r4_witness_sha = sha256_file(SHORTS_R4_WITNESS_BLEND)
+    r4_npz_sha = sha256_file(shorts_r4_npz)
+    r4_witness_sha = sha256_file(shorts_r4_witness_blend)
 
-    selected_grid = json.loads((GRID_DIR / "selected-grid.json").read_text())
-    v3_doc = json.loads(PEACOCK_V3_COMPILED.read_text())
+    selected_grid = json.loads((grid_dir / "selected-grid.json").read_text())
+    v3_doc = json.loads(peacock_v3_compiled.read_text())
 
     # First pass: inspect all 9 sheets, verify hashes/sizes, find panel bounds and max width
     inspected = []
@@ -344,11 +350,11 @@ def main() -> None:
             },
         },
         "pinnedInputs": {
-            "approvedPeacockLeanSheet": {"path": str(PEACOCK_ANCHOR), "sha256": peacock_anchor_sha},
-            "canonicalLeanV3Compiled": {"path": str(PEACOCK_V3_COMPILED), "sha256": v3_sha},
-            "shirtAndMotionLaneCompiled": {"path": str(SHIRT_LANE_COMPILED), "sha256": lane_sha},
-            "baselineCoverageR4CorrectionNpz": {"path": str(SHORTS_R4_NPZ), "sha256": r4_npz_sha},
-            "baselineCoverageR4WitnessBlend": {"path": str(SHORTS_R4_WITNESS_BLEND), "sha256": r4_witness_sha},
+            "approvedPeacockLeanSheet": {"path": str(peacock_anchor), "sha256": peacock_anchor_sha},
+            "canonicalLeanV3Compiled": {"path": str(peacock_v3_compiled), "sha256": v3_sha},
+            "shirtAndMotionLaneCompiled": {"path": str(shirt_lane_compiled), "sha256": lane_sha},
+            "baselineCoverageR4CorrectionNpz": {"path": str(shorts_r4_npz), "sha256": r4_npz_sha},
+            "baselineCoverageR4WitnessBlend": {"path": str(shorts_r4_witness_blend), "sha256": r4_witness_sha},
             "grid9PrivateArchiveIndex": "art-direction/studies/2026-11-12-body-reference-family/grid-9.index.json",
         },
         "cropCanvasPx": [canvas_width, canvas_height],

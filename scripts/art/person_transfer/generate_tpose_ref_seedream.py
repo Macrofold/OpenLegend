@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Generate or recover a 2D horizontal T-pose reference sheet via ByteDance Seedream 5.0 Pro (Replicate API)."""
+"""Generate or recover a 2D horizontal T-pose reference sheet via ByteDance Seedream 5.0 Pro (Replicate API).
+
+Persists `request.json` before polling so interrupted tasks recover cleanly without duplicate paid calls
+(`docs/production-workflows/art-flows/README.md#waiting-on-tools`).
+"""
 from __future__ import annotations
 
 import argparse
 import base64
 import hashlib
 import json
-import os
 from pathlib import Path
 import sys
 import time
@@ -14,20 +17,11 @@ import urllib.request
 
 sys.dont_write_bytecode = True
 
+PACKAGE_DIR = Path(__file__).resolve().parent
+if str(PACKAGE_DIR) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_DIR))
 
-def load_replicate_key(repo: Path) -> str:
-    env_val = os.environ.get("REPLICATE_API_KEY", "").strip()
-    if env_val:
-        return env_val
-    for p in (repo / ".env", Path(__file__).resolve().parents[3] / ".env", repo.parent.parent / ".env"):
-        if p.is_file():
-            for line in p.read_text().splitlines():
-                s = line.strip()
-                if s.startswith("REPLICATE_API_KEY="):
-                    val = s.split("=", 1)[1].strip().strip('"').strip("'")
-                    if val:
-                        return val
-    raise RuntimeError("REPLICATE_API_KEY not found in .env")
+from runtime_env import external_output, load_env_key  # noqa: E402
 
 
 def api_json(method: str, url: str, key: str, payload: dict | None = None, timeout: int = 60) -> dict:
@@ -50,7 +44,7 @@ def main() -> None:
     parser.add_argument("--reference-sheet", required=True, type=Path)
     parser.add_argument("--prompt-file", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
-    parser.add_argument("--repository", required=True, type=Path)
+    parser.add_argument("--repository", type=Path, default=None)
     parser.add_argument("--aspect-ratio", default="auto")
     parser.add_argument(
         "--pose-suffix",
@@ -59,8 +53,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    key = load_replicate_key(args.repository.resolve())
-    out_dir = args.output_dir.resolve()
+    out_dir = external_output(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     cid = args.coordinate_id
     sfx = args.pose_suffix
@@ -74,6 +67,7 @@ def main() -> None:
             print(json.dumps({"reused": True, "png": str(png_path), "predictionId": rec.get("id")}))
             return
 
+    key = load_env_key("REPLICATE_API_KEY", args.repository)
     model_info = api_json("GET", "https://api.replicate.com/v1/models/bytedance/seedream-5-pro", key, timeout=20)
     lv = model_info["latest_version"]
     version_id = lv["id"]

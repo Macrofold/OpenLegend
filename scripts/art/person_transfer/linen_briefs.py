@@ -18,6 +18,8 @@ import os
 from pathlib import Path
 import sys
 
+sys.dont_write_bytecode = True
+
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 import numpy as np
@@ -31,11 +33,11 @@ from mesh_rig_utils import (
     weld_connectivity,
 )
 
-REPO_ART_SCRIPTS = Path(
-    "/Users/mike/Documents/Projects/OpenLegend/.worktrees/metahuman-foundation-poc/scripts/art"
-)
-if str(REPO_ART_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(REPO_ART_SCRIPTS))
+PACKAGE_DIR = Path(__file__).resolve().parent
+if str(PACKAGE_DIR) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_DIR))
+
+from runtime_env import ART_SCRIPTS_DIR as REPO_ART_SCRIPTS, get_transfer_cache_dir, load_foundation_manifest  # noqa: E402
 
 import people as ol_people  # noqa: E402
 
@@ -1203,10 +1205,7 @@ def get_cached_linen_briefs_data(compiled_family: dict, cache_dir: Path | None =
     h.update(Path(__file__).read_bytes())
     h.update(str(compiled_family["meshes"]["bodySkin"]["topology"]).encode("utf-8"))
     key = h.hexdigest()[:14]
-    c_dir = cache_dir or Path(
-        "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-12-body-reference-family/study/family-20261113/fits/_raw_fit_cache"
-    )
-    c_dir.mkdir(parents=True, exist_ok=True)
+    c_dir = get_transfer_cache_dir(cache_dir)
     c_path = c_dir / f"canonical-linen-briefs-{key}.json"
     if c_path.is_file():
         return json.loads(c_path.read_text())
@@ -1217,15 +1216,30 @@ def get_cached_linen_briefs_data(compiled_family: dict, cache_dir: Path | None =
     return data
 
 
+def get_baseline_coverage_ids(profile_path: Path | None = None) -> tuple[str, str, str]:
+    cov = load_foundation_manifest(profile_path).get("baselineCoverage", {})
+    return (
+        str(cov.get("partId", "linenBriefs")),
+        str(cov.get("materialId", "undyedLinen")),
+        str(cov.get("slot", "legs")),
+    )
+
+
 def inject_linen_briefs_into_family(compiled_family: dict, cache_dir: Path | None = None) -> dict:
-    """Return a shallow-copied family dict with `linenBriefs` registered as baseline coverage."""
+    """Return a shallow-copied family dict with profile-selected baseline coverage registered."""
+    part_id, mat_id, slot_id = get_baseline_coverage_ids()
     data = get_cached_linen_briefs_data(compiled_family, cache_dir=cache_dir)
+    mesh_entry = copy.deepcopy(data["mesh"])
+    mesh_entry["materialId"] = mat_id
+    part_entry = copy.deepcopy(data["part"])
+    part_entry["slot"] = slot_id
+    part_entry["pieces"][0]["meshId"] = part_id
     fam = dict(compiled_family)
-    fam["meshes"] = {**compiled_family["meshes"], "linenBriefs": copy.deepcopy(data["mesh"])}
-    fam["parts"] = {**compiled_family["parts"], "linenBriefs": copy.deepcopy(data["part"])}
-    fam["materials"] = {**compiled_family["materials"], "undyedLinen": copy.deepcopy(data["material"])}
+    fam["meshes"] = {**compiled_family["meshes"], part_id: mesh_entry}
+    fam["parts"] = {**compiled_family["parts"], part_id: part_entry}
+    fam["materials"] = {**compiled_family["materials"], mat_id: copy.deepcopy(data["material"])}
     sel = copy.deepcopy(compiled_family["selectionParts"])
-    sel.setdefault("coverage", {})["linenBriefs"] = ["linenBriefs"]
+    sel.setdefault("coverage", {})[part_id] = [part_id]
     fam["selectionParts"] = sel
     fam["_linenBriefsOuterMask"] = data["outerShellTriMask"]
     return fam
@@ -1241,13 +1255,14 @@ def eval_linen_briefs_bl(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Evaluate `linenBriefs` on `body_lod1_bl` via `people.surface_points` + outward body clearance."""
     _ = is_ext_full
+    part_id = get_baseline_coverage_ids()[0]
     fam = (
         compiled_family
-        if "linenBriefs" in compiled_family.get("parts", {})
+        if part_id in compiled_family.get("parts", {})
         else inject_linen_briefs_into_family(compiled_family)
     )
-    fit = fam["parts"]["linenBriefs"]["pieces"][0]["fit"]
-    sh_mesh = fam["meshes"]["linenBriefs"]
+    fit = fam["parts"][part_id]["pieces"][0]["fit"]
+    sh_mesh = fam["meshes"][part_id]
     support_g = blender_to_gltf(body_lod1_bl).astype(np.float32).reshape(-1)
     briefs_g = ol_people.surface_points(support_g, fit["triangles"], fit["barycentric"], fit["offsets"]).reshape(-1, 3)
     briefs_bl = gltf_to_blender(briefs_g).astype(np.float64)
@@ -1422,7 +1437,7 @@ def measure_linen_briefs_clearance(
     sh_conn = weld_connectivity(briefs_bl, outer_tri, decimals=5)
     self_x = self_intersections(briefs_bl, outer_tri, sh_conn[0])
     return {
-        "garmentId": "linenBriefs",
+        "garmentId": get_baseline_coverage_ids()[0],
         "outerShellTriangles": int(len(outer_tri)),
         "totalTriangles": int(len(briefs_tri)),
         "outerShellOverlapPairs": int(len(overlaps)),

@@ -30,22 +30,22 @@ from mathutils.bvhtree import BVHTree
 from mathutils.kdtree import KDTree
 import numpy as np
 
-from linen_briefs import (
+PACKAGE_DIR = Path(__file__).resolve().parent
+if str(PACKAGE_DIR) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_DIR))
+
+from linen_briefs import (  # noqa: E402
     _eval_brief_level_set_bl,
     clear_briefs_against_dense_body,
     eval_linen_briefs_bl,
     extract_clean_donor_linen_masks,
     fit_linen_briefs_to_donor_posed,
+    get_baseline_coverage_ids,
     inject_linen_briefs_into_family,
     unpose_donor_briefs_to_rest,
 )
-from mesh_rig_utils import blender_to_gltf, gltf_to_blender, self_intersections, smootherstep, vertex_normals, weld_connectivity
-
-REPO_ART_SCRIPTS = Path(
-    "/Users/mike/Documents/Projects/OpenLegend/.worktrees/metahuman-foundation-poc/scripts/art"
-)
-if str(REPO_ART_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(REPO_ART_SCRIPTS))
+from mesh_rig_utils import blender_to_gltf, gltf_to_blender, self_intersections, smootherstep, vertex_normals, weld_connectivity  # noqa: E402
+from runtime_env import ART_SCRIPTS_DIR as REPO_ART_SCRIPTS, bootstrap_foundation, external_output  # noqa: E402
 
 import people as ol_people  # noqa: E402
 
@@ -54,9 +54,9 @@ assert _ART_SPEC is not None and _ART_SPEC.loader is not None
 ol_art_tool = importlib.util.module_from_spec(_ART_SPEC)
 _ART_SPEC.loader.exec_module(ol_art_tool)
 
-WITNESS_PACKAGE_JSON = Path(
-    "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-full-transfer/study/runtime/export-witness/package/family.json"
-)
+
+def get_witness_package_json(workspace: Path | None = None) -> Path:
+    return bootstrap_foundation(workspace=workspace)["witnessPackage"]
 
 
 def _canonical_body_nipple_uv_centers(fam: dict | None) -> tuple[list[tuple[float, float]], set[int]]:
@@ -1965,10 +1965,11 @@ def export_fitted_covered_character_glb(
             dense_tri=high_tri,
             is_ext_full=is_ext_full_wb,
         )
+    cov_part_id = get_baseline_coverage_ids()[0]
     draped_briefs_gltf = blender_to_gltf(draped_briefs_bl).astype(np.float32).reshape(-1)
     fitted_body_mesh_entry = {**fam["meshes"]["bodySkin"], "positions": canon_positions["bodySkin"].tolist()}
-    fam["meshes"]["linenBriefs"]["positions"] = draped_briefs_gltf.tolist()
-    fam["parts"]["linenBriefs"]["pieces"][0]["fit"] = ol_people.bind_surface(
+    fam["meshes"][cov_part_id]["positions"] = draped_briefs_gltf.tolist()
+    fam["parts"][cov_part_id]["pieces"][0]["fit"] = ol_people.bind_surface(
         fitted_body_mesh_entry, "bodySkin", draped_briefs_gltf
     )
     for sid, spts in sub_shifted.items():
@@ -2007,7 +2008,7 @@ def export_fitted_covered_character_glb(
         "controls": {k: v["default"] for k, v in fam["controls"].items()},
         "selections": {
             fam["faceSelectionRole"]: next(iter(fam["facePresets"].keys())),
-            fam["coverageSelectionRole"]: "linenBriefs",
+            fam["coverageSelectionRole"]: cov_part_id,
         },
     }
     evaluated = {
@@ -2035,7 +2036,8 @@ def export_fitted_covered_character_glb(
         donor_tri=donor_tri,
     )
 
-    witness_pkg = ol_people.load_family(WITNESS_PACKAGE_JSON)
+    out_glb_path = external_output(out_glb_path)
+    witness_pkg = ol_people.load_family(get_witness_package_json())
     pkg_for_mats = {
         "manifest": witness_pkg["manifest"],
         "root": witness_pkg["root"],

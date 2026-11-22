@@ -9,17 +9,21 @@
 """
 from __future__ import annotations
 
+import sys
+sys.dont_write_bytecode = True
+
 from collections import defaultdict, deque
-import json
 from pathlib import Path
 import shutil
-import subprocess
 
 import bpy
 import numpy as np
 
+PACKAGE_DIR = Path(__file__).resolve().parent
+if str(PACKAGE_DIR) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_DIR))
 
-PYTHON_PIL = "/Users/mike/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python"
+from pil_compat import Image, ImageDraw  # noqa: E402
 
 
 def _strip_arms_for_pelvis_profile(
@@ -180,278 +184,270 @@ def _render_tile(
     bpy.ops.render.render(write_still=True)
 
 
-_STITCH_HELPER_CODE = r"""
-import json, sys
-from pathlib import Path
-import numpy as np
-from PIL import Image, ImageDraw
+def _stitch_audit_boards(cfg: dict) -> None:
+    def fg_bounds(im):
+        arr = np.asarray(im, dtype=np.float32)
+        bg = np.median(np.stack([arr[4, 4], arr[4, -5], arr[-5, 4], arr[-5, -5]], axis=0), axis=0)
+        fg = np.linalg.norm(arr - bg[None, None, :], axis=2) > 26.0
+        if not np.any(fg):
+            return 0, im.height - 1, 0.5 * im.width
+        ys, xs = np.nonzero(fg)
+        y0, y1 = int(ys.min()), int(ys.max())
+        head_xs = xs[ys < y0 + max(16, int(0.10 * (y1 - y0)))]
+        xm = float(np.median(head_xs)) if len(head_xs) else 0.5 * im.width
+        return y0, y1, xm
 
-cfg = json.loads(Path(sys.argv[1]).read_text())
+    def fit_ref_to_render(ref_im, ren_im, w, h, crop_upper_frac=None):
+        ry0, ry1, rxm = fg_bounds(ref_im)
+        ty0, ty1, txm = fg_bounds(ren_im)
+        sc = (ty1 - ty0) / max(ry1 - ry0, 1)
+        nw, nh = max(1, int(round(ref_im.width * sc))), max(1, int(round(ref_im.height * sc)))
+        resized = ref_im.resize((nw, nh), Image.Resampling.LANCZOS)
+        bg = ref_im.getpixel((4, 4))
+        full_w, full_h = ren_im.width, ren_im.height
+        aligned = Image.new("RGB", (full_w, full_h), bg)
+        ox = int(round(txm - rxm * sc))
+        oy = int(round(ty0 - ry0 * sc))
+        aligned.paste(resized, (ox, oy))
+        if crop_upper_frac is not None:
+            ch = int(round(full_h * crop_upper_frac))
+            y_top = max(0, ty0 - 14)
+            aligned = aligned.crop((0, y_top, full_w, min(full_h, y_top + ch)))
+        return aligned.resize((w, h), Image.Resampling.LANCZOS)
 
-def fg_bounds(im):
-    arr = np.asarray(im, dtype=np.float32)
-    bg = np.median(np.stack([arr[4, 4], arr[4, -5], arr[-5, 4], arr[-5, -5]], axis=0), axis=0)
-    fg = np.linalg.norm(arr - bg[None, None, :], axis=2) > 26.0
-    if not np.any(fg):
-        return 0, im.height - 1, 0.5 * im.width
-    ys, xs = np.nonzero(fg)
-    y0, y1 = int(ys.min()), int(ys.max())
-    head_xs = xs[ys < y0 + max(16, int(0.10 * (y1 - y0)))]
-    xm = float(np.median(head_xs)) if len(head_xs) else 0.5 * im.width
-    return y0, y1, xm
+    def make_grid_board(rows, tw, th, out_path, title=None):
+        ncols = max(len(r[1]) for r in rows)
+        top_pad = 36 if title else 10
+        bw = ncols * (tw + 8) + 16
+        bh = top_pad + len(rows) * (th + 30) + 12
+        board = Image.new("RGB", (bw, bh), (20, 22, 26))
+        draw = ImageDraw.Draw(board)
+        if title:
+            draw.text((14, 10), title, fill=(255, 225, 150))
+        for ri, (row_lbl, tiles) in enumerate(rows):
+            oy = top_pad + ri * (th + 30)
+            for ci, (lbl, p_str) in enumerate(tiles):
+                ox = 12 + ci * (tw + 8)
+                draw.text((ox + 4, oy + 4), lbl, fill=(230, 236, 244))
+                with Image.open(p_str) as im:
+                    if im.size != (tw, th):
+                        im = im.convert("RGB").resize((tw, th), Image.Resampling.LANCZOS)
+                    else:
+                        im = im.convert("RGB")
+                    board.paste(im, (ox, oy + 22))
+        board.save(out_path, format="PNG")
 
-def fit_ref_to_render(ref_im, ren_im, w, h, crop_upper_frac=None):
-    ry0, ry1, rxm = fg_bounds(ref_im)
-    ty0, ty1, txm = fg_bounds(ren_im)
-    sc = (ty1 - ty0) / max(ry1 - ry0, 1)
-    nw, nh = max(1, int(round(ref_im.width * sc))), max(1, int(round(ref_im.height * sc)))
-    resized = ref_im.resize((nw, nh), Image.Resampling.LANCZOS)
-    bg = ref_im.getpixel((4, 4))
-    full_w, full_h = ren_im.width, ren_im.height
-    aligned = Image.new("RGB", (full_w, full_h), bg)
-    ox = int(round(txm - rxm * sc))
-    oy = int(round(ty0 - ry0 * sc))
-    aligned.paste(resized, (ox, oy))
-    if crop_upper_frac is not None:
-        ch = int(round(full_h * crop_upper_frac))
-        y_top = max(0, ty0 - 14)
-        aligned = aligned.crop((0, y_top, full_w, min(full_h, y_top + ch)))
-    return aligned.resize((w, h), Image.Resampling.LANCZOS)
+    # Prepare 2D T-pose reference full-body + 1:1 full-arm & flank crops if available
+    ref_jpg = cfg.get("refRaisedJpg")
+    if ref_jpg and Path(ref_jpg).is_file() and "tposeCorFrontFull" in cfg:
+        ref = Image.open(ref_jpg).convert("RGB")
+        rw, rh = ref.size
+        ref_f, ref_b = ref.crop((0, 0, rw // 2, rh)), ref.crop((rw // 2, 0, rw, rh))
+        cor_f_full = Image.open(cfg["tposeCorFrontFull"]).convert("RGB")
+        cor_b_full = Image.open(cfg["tposeCorBackFull"]).convert("RGB")
+        rf_align = fit_ref_to_render(ref_f, cor_f_full, cor_f_full.width, cor_f_full.height)
+        rb_align = fit_ref_to_render(ref_b, cor_b_full, cor_b_full.width, cor_b_full.height)
+        rf_align.save(cfg["refFrontAlignedOut"])
+        rb_align.save(cfg["refBackAlignedOut"])
 
-def make_grid_board(rows, tw, th, out_path, title=None):
-    ncols = max(len(r[1]) for r in rows)
-    top_pad = 36 if title else 10
-    bw = ncols * (tw + 8) + 16
-    bh = top_pad + len(rows) * (th + 30) + 12
-    board = Image.new("RGB", (bw, bh), (20, 22, 26))
-    draw = ImageDraw.Draw(board)
-    if title:
-        draw.text((14, 10), title, fill=(255, 225, 150))
-    for ri, (row_lbl, tiles) in enumerate(rows):
-        oy = top_pad + ri * (th + 30)
-        for ci, (lbl, p_str) in enumerate(tiles):
-            ox = 12 + ci * (tw + 8)
-            draw.text((ox + 4, oy + 4), lbl, fill=(230, 236, 244))
-            with Image.open(p_str) as im:
-                if im.size != (tw, th):
-                    im = im.convert("RGB").resize((tw, th), Image.Resampling.LANCZOS)
-                else:
-                    im = im.convert("RGB")
-                board.paste(im, (ox, oy + 22))
-    board.save(out_path, format="PNG")
+        ty0, ty1, txm = fg_bounds(cor_f_full)
+        h_fig = max(ty1 - ty0, 64)
 
-# Prepare 2D T-pose reference full-body + 1:1 full-arm & flank crops if available
-ref_jpg = cfg.get("refRaisedJpg")
-if ref_jpg and Path(ref_jpg).is_file() and "tposeCorFrontFull" in cfg:
-    ref = Image.open(ref_jpg).convert("RGB")
-    rw, rh = ref.size
-    ref_f, ref_b = ref.crop((0, 0, rw // 2, rh)), ref.crop((rw // 2, 0, rw, rh))
-    cor_f_full = Image.open(cfg["tposeCorFrontFull"]).convert("RGB")
-    cor_b_full = Image.open(cfg["tposeCorBackFull"]).convert("RGB")
-    rf_align = fit_ref_to_render(ref_f, cor_f_full, cor_f_full.width, cor_f_full.height)
-    rb_align = fit_ref_to_render(ref_b, cor_b_full, cor_b_full.width, cor_b_full.height)
-    rf_align.save(cfg["refFrontAlignedOut"])
-    rb_align.save(cfg["refBackAlignedOut"])
+        def save_uniform_crop(src_im, out_p, cy0_c, cy1_c, cx0_c, dst_w, dst_h):
+            box_h_c = max(1, cy1_c - cy0_c)
+            box_w_c = max(1, int(round(box_h_c * (dst_w / max(dst_h, 1)))))
+            cx1_c = cx0_c + box_w_c
+            bg_c = src_im.getpixel((4, 4))
+            pad_x = max(0, -cx0_c, cx1_c - src_im.width) + 8
+            pad_y = max(0, -cy0_c, cy1_c - src_im.height) + 8
+            canvas = Image.new("RGB", (src_im.width + 2 * pad_x, src_im.height + 2 * pad_y), bg_c)
+            canvas.paste(src_im, (pad_x, pad_y))
+            crop = canvas.crop((cx0_c + pad_x, cy0_c + pad_y, cx1_c + pad_x, cy1_c + pad_y))
+            crop.resize((dst_w, dst_h), Image.Resampling.LANCZOS).save(out_p)
 
-    ty0, ty1, txm = fg_bounds(cor_f_full)
-    h_fig = max(ty1 - ty0, 64)
-
-    def save_uniform_crop(src_im, out_p, cy0_c, cy1_c, cx0_c, dst_w, dst_h):
-        box_h_c = max(1, cy1_c - cy0_c)
-        box_w_c = max(1, int(round(box_h_c * (dst_w / max(dst_h, 1)))))
-        cx1_c = cx0_c + box_w_c
-        bg_c = src_im.getpixel((4, 4))
-        pad_x = max(0, -cx0_c, cx1_c - src_im.width) + 8
-        pad_y = max(0, -cy0_c, cy1_c - src_im.height) + 8
-        canvas = Image.new("RGB", (src_im.width + 2 * pad_x, src_im.height + 2 * pad_y), bg_c)
-        canvas.paste(src_im, (pad_x, pad_y))
-        crop = canvas.crop((cx0_c + pad_x, cy0_c + pad_y, cx1_c + pad_x, cy1_c + pad_y))
-        crop.resize((dst_w, dst_h), Image.Resampling.LANCZOS).save(out_p)
-
-    # Fast iteration sheet Row 4: 1:1 half-span (head/midline-to-wrist x head-to-waistband)
-    tw_f, th_f = cfg["fastTileW"], cfg["fastTileH"]
-    cy0_fast = int(round(ty0 - 0.016 * h_fig))
-    cy1_fast = int(round(ty0 + 0.504 * h_fig))
-    cx0_fast = int(round(txm - 0.052 * h_fig))
-    for src_im, fast_dst in [
-        (rf_align, cfg["fastRefFrontCrop"]),
-        (cor_f_full, cfg["fastCorFrontCrop"]),
-        (rb_align, cfg["fastRefBackCrop"]),
-        (cor_b_full, cfg["fastCorBackCrop"]),
-    ]:
-        save_uniform_crop(src_im, fast_dst, cy0_fast, cy1_fast, cx0_fast, tw_f, th_f)
-
-    # Sign-off Board 4 crops: Head-to-Waistband (`cy0..cy1`) for BOTH:
-    #  a) Side-by-side 1:1 half-span (`midline-to-wrist x head-to-waistband`, 680x600, 0 intervening columns)
-    #  b) Stacked 1:1 wide (`wrist-to-wrist x head-to-waistband`, 1584x720, 2D Reference directly above Pose Corrective)
-    if "halfRefFrontOut" in cfg:
-        cy0_b4 = int(round(ty0 - 0.018 * h_fig))
-        cy1_b4 = int(round(ty0 + 0.502 * h_fig))
-        half_w, half_h = 680, 600
-        cx0_half = int(round(txm - 0.055 * h_fig))
-        for src_im, half_dst in [
-            (rf_align, cfg["halfRefFrontOut"]),
-            (cor_f_full, cfg["halfCorFrontOut"]),
-            (rb_align, cfg["halfRefBackOut"]),
-            (cor_b_full, cfg["halfCorBackOut"]),
+        # Fast iteration sheet Row 4: 1:1 half-span (head/midline-to-wrist x head-to-waistband)
+        tw_f, th_f = cfg["fastTileW"], cfg["fastTileH"]
+        cy0_fast = int(round(ty0 - 0.016 * h_fig))
+        cy1_fast = int(round(ty0 + 0.504 * h_fig))
+        cx0_fast = int(round(txm - 0.052 * h_fig))
+        for src_im, fast_dst in [
+            (rf_align, cfg["fastRefFrontCrop"]),
+            (cor_f_full, cfg["fastCorFrontCrop"]),
+            (rb_align, cfg["fastRefBackCrop"]),
+            (cor_b_full, cfg["fastCorBackCrop"]),
         ]:
-            save_uniform_crop(src_im, half_dst, cy0_b4, cy1_b4, cx0_half, half_w, half_h)
+            save_uniform_crop(src_im, fast_dst, cy0_fast, cy1_fast, cx0_fast, tw_f, th_f)
 
-        wide_w, wide_h = 1584, 768
-        box_w_wide = int(round((cy1_b4 - cy0_b4) * (wide_w / wide_h)))
-        cx0_wide = int(round(txm - 0.5 * box_w_wide))
-        for src_im, wide_dst in [
-            (rf_align, cfg["wideRefFrontOut"]),
-            (cor_f_full, cfg["wideCorFrontOut"]),
-            (rb_align, cfg["wideRefBackOut"]),
-            (cor_b_full, cfg["wideCorBackOut"]),
-        ]:
-            save_uniform_crop(src_im, wide_dst, cy0_b4, cy1_b4, cx0_wide, wide_w, wide_h)
+        # Sign-off Board 4 crops: Head-to-Waistband (`cy0..cy1`) for BOTH:
+        #  a) Side-by-side 1:1 half-span (`midline-to-wrist x head-to-waistband`, 680x600, 0 intervening columns)
+        #  b) Stacked 1:1 wide (`wrist-to-wrist x head-to-waistband`, 1584x720, 2D Reference directly above Pose Corrective)
+        if "halfRefFrontOut" in cfg:
+            cy0_b4 = int(round(ty0 - 0.018 * h_fig))
+            cy1_b4 = int(round(ty0 + 0.502 * h_fig))
+            half_w, half_h = 680, 600
+            cx0_half = int(round(txm - 0.055 * h_fig))
+            for src_im, half_dst in [
+                (rf_align, cfg["halfRefFrontOut"]),
+                (cor_f_full, cfg["halfCorFrontOut"]),
+                (rb_align, cfg["halfRefBackOut"]),
+                (cor_b_full, cfg["halfCorBackOut"]),
+            ]:
+                save_uniform_crop(src_im, half_dst, cy0_b4, cy1_b4, cx0_half, half_w, half_h)
 
-# 0. Pre-build any 1:1 arms-hidden pelvis silhouette/contour overlays (`ORANGE=Donor | CYAN=Fit + Briefs`)
-for ov in cfg.get("pelvisOverlays", []):
-    arr_d = np.asarray(Image.open(ov["donor"]).convert("RGB"), dtype=np.float32)
-    arr_f = np.asarray(Image.open(ov["fit"]).convert("RGB"), dtype=np.float32)
-    bg_ov = arr_d[4, 4]
-    fg_d = np.linalg.norm(arr_d - bg_ov[None, None, :], axis=2) > 12.0
-    fg_f = np.linalg.norm(arr_f - bg_ov[None, None, :], axis=2) > 12.0
-    lum_d = arr_d.mean(axis=2)
-    lum_f = arr_f.mean(axis=2)
-    out_ov = np.zeros_like(arr_d)
-    out_ov[:, :] = [28, 30, 35]
-    both_ov = fg_d & fg_f
-    only_d_ov = fg_d & (~fg_f)
-    only_f_ov = fg_f & (~fg_d)
-    avg_l_ov = 0.5 * (lum_d + lum_f)
-    out_ov[both_ov, 0] = np.clip(avg_l_ov[both_ov] + 0.7 * (lum_d[both_ov] - lum_f[both_ov]), 0, 255)
-    out_ov[both_ov, 1] = np.clip(avg_l_ov[both_ov], 0, 255)
-    out_ov[both_ov, 2] = np.clip(avg_l_ov[both_ov] + 0.7 * (lum_f[both_ov] - lum_d[both_ov]), 0, 255)
-    out_ov[only_d_ov] = [255, 110, 30]
-    out_ov[only_f_ov] = [30, 220, 255]
-    # Crisp 1-px outer boundary traces so even sub-millimeter profile contour alignment reads immediately:
-    ed_d = fg_d & (
-        (~np.roll(fg_d, 1, axis=0))
-        | (~np.roll(fg_d, -1, axis=0))
-        | (~np.roll(fg_d, 1, axis=1))
-        | (~np.roll(fg_d, -1, axis=1))
-    )
-    ed_f = fg_f & (
-        (~np.roll(fg_f, 1, axis=0))
-        | (~np.roll(fg_f, -1, axis=0))
-        | (~np.roll(fg_f, 1, axis=1))
-        | (~np.roll(fg_f, -1, axis=1))
-    )
-    ed_both = ed_d & ed_f
-    out_ov[ed_d & (~ed_both)] = [255, 155, 50]
-    out_ov[ed_f & (~ed_both)] = [40, 235, 255]
-    out_ov[ed_both] = [245, 250, 245]
-    Image.fromarray(out_ov.astype(np.uint8)).save(ov["out"], format="PNG")
-
-# 1. Save the consolidated 1:1 inner-iteration close-up sheet (unless pelvisPreviewOnly)
-if cfg.get("pelvisPreviewOnly"):
-    for b in cfg.get("extraBoards", []):
-        make_grid_board(b["rows"], b["tw"], b["th"], b["out"], title=b.get("title"))
-else:
-    make_grid_board(
-        cfg["fastRows"],
-        cfg["fastTileW"],
-        cfg["fastTileH"],
-        cfg["fastSheetOut"],
-        title=cfg["fastTitle"],
-    )
-
-# 2. Optional full 11-board sign-off suite
-if cfg.get("fullAudit"):
-    for b in cfg["extraBoards"]:
-        make_grid_board(b["rows"], b["tw"], b["th"], b["out"], title=b.get("title"))
-
-    if "tposeRefBoard" in cfg:
-        tb = cfg["tposeRefBoard"]
-        if tb.get("hasRef"):
-            bw_t = 3216
-            top_pad_t = 36
-            row_h_t = 600 + 30
-            stack_y0 = top_pad_t + 2 * row_h_t + 10
             wide_w, wide_h = 1584, 768
-            bh_t = stack_y0 + 2 * (wide_h + 26) + 14
-            tboard = Image.new("RGB", (bw_t, bh_t), (20, 22, 26))
-            tdraw = ImageDraw.Draw(tboard)
-            tdraw.text((14, 10), tb["title"], fill=(255, 225, 150))
-            for ri_t, r_tiles in enumerate(tb["topRows"]):
-                oy_t = top_pad_t + ri_t * row_h_t
-                ox_t = 12
-                for lbl_t, p_t, tw_t, th_t in r_tiles:
-                    tdraw.text((ox_t + 4, oy_t + 4), lbl_t, fill=(230, 236, 244))
-                    with Image.open(p_t) as im_t:
-                        im_rgb = im_t.convert("RGB")
-                        if im_rgb.size != (tw_t, th_t):
-                            im_rgb = im_rgb.resize((tw_t, th_t), Image.Resampling.LANCZOS)
-                        tboard.paste(im_rgb, (ox_t, oy_t + 22))
-                    ox_t += tw_t + 8
-            for si_t, stack_pair in enumerate(tb["wideStacks"]):
-                ox_s = 12 + si_t * (wide_w + 20)
-                for pi_t, (lbl_w, p_w) in enumerate(stack_pair):
-                    oy_s = stack_y0 + pi_t * (wide_h + 26)
-                    tdraw.text((ox_s + 4, oy_s + 4), lbl_w, fill=(255, 232, 175) if pi_t == 0 else (230, 236, 244))
-                    with Image.open(p_w) as im_w:
-                        im_w_rgb = im_w.convert("RGB")
-                        if im_w_rgb.size != (wide_w, wide_h):
-                            im_w_rgb = im_w_rgb.resize((wide_w, wide_h), Image.Resampling.LANCZOS)
-                        tboard.paste(im_w_rgb, (ox_s, oy_s + 22))
-            tboard.save(tb["out"], format="PNG")
-        else:
-            make_grid_board(tb["fallbackRows"], 600, 600, tb["out"], title=tb["title"])
+            box_w_wide = int(round((cy1_b4 - cy0_b4) * (wide_w / wide_h)))
+            cx0_wide = int(round(txm - 0.5 * box_w_wide))
+            for src_im, wide_dst in [
+                (rf_align, cfg["wideRefFrontOut"]),
+                (cor_f_full, cfg["wideCorFrontOut"]),
+                (rb_align, cfg["wideRefBackOut"]),
+                (cor_b_full, cfg["wideCorBackOut"]),
+            ]:
+                save_uniform_crop(src_im, wide_dst, cy0_b4, cy1_b4, cx0_wide, wide_w, wide_h)
 
-    # Silhouette overlay detail board (clay-detail-audit.png)
-    spec_main = cfg["main6AngleRows"]
-    upper_tiles = cfg["detailUpperTiles"]
-    lower_tiles = cfg["detailLowerTiles"]
-    tw, th = 360, 620
-    cw, ch = 360, 440
-    det_h = (th + 38) + 2 * (ch + 38) + 20
-    det = Image.new("RGB", (6 * (tw + 8) + 16, det_h), (22, 24, 28))
-    dd = ImageDraw.Draw(det)
-    dd.text((14, 14), "Silhouette Overlay (Grey/White = Exact Match | ORANGE = Uncaptured Donor | CYAN = Excess Fit)", fill=(255, 220, 140))
-    bg_ref = None
-    for c_i in range(6):
-        a_name, don_p = spec_main[0][1][c_i]
-        _, fit_p = spec_main[1][1][c_i]
-        arr_d = np.asarray(Image.open(don_p).convert("RGB"), dtype=np.float32)
-        arr_f = np.asarray(Image.open(fit_p).convert("RGB"), dtype=np.float32)
-        if bg_ref is None:
-            bg_ref = arr_d[2, 2]
-        fg_d = np.linalg.norm(arr_d - bg_ref[None, None, :], axis=2) > 12.0
-        fg_f = np.linalg.norm(arr_f - bg_ref[None, None, :], axis=2) > 12.0
+    # 0. Pre-build any 1:1 arms-hidden pelvis silhouette/contour overlays (`ORANGE=Donor | CYAN=Fit + Briefs`)
+    for ov in cfg.get("pelvisOverlays", []):
+        arr_d = np.asarray(Image.open(ov["donor"]).convert("RGB"), dtype=np.float32)
+        arr_f = np.asarray(Image.open(ov["fit"]).convert("RGB"), dtype=np.float32)
+        bg_ov = arr_d[4, 4]
+        fg_d = np.linalg.norm(arr_d - bg_ov[None, None, :], axis=2) > 12.0
+        fg_f = np.linalg.norm(arr_f - bg_ov[None, None, :], axis=2) > 12.0
         lum_d = arr_d.mean(axis=2)
         lum_f = arr_f.mean(axis=2)
-        out = np.zeros_like(arr_d)
-        out[:, :] = [28, 30, 35]
-        both = fg_d & fg_f
-        only_d = fg_d & (~fg_f)
-        only_f = fg_f & (~fg_d)
-        avg_l = 0.5 * (lum_d + lum_f)
-        out[both, 0] = np.clip(avg_l[both] + 0.6 * (lum_d[both] - lum_f[both]), 0, 255)
-        out[both, 1] = np.clip(avg_l[both], 0, 255)
-        out[both, 2] = np.clip(avg_l[both] + 0.6 * (lum_f[both] - lum_d[both]), 0, 255)
-        out[only_d] = [255, 110, 30]
-        out[only_f] = [30, 220, 255]
-        ox = 12 + c_i * (tw + 8)
-        dd.text((ox + tw - 98, 14), f"[{a_name}]", fill=(175, 195, 225))
-        det.paste(Image.fromarray(out.astype(np.uint8)), (ox, 34))
-    oy1 = 10 + (th + 38)
-    for c_i, (lbl, p_str) in enumerate(upper_tiles):
-        ox = 12 + c_i * (cw + 8)
-        dd.text((ox + 4, oy1 + 6), lbl, fill=(220, 235, 250))
-        with Image.open(p_str) as im:
-            det.paste(im.convert("RGB"), (ox, oy1 + 26))
-    oy2 = oy1 + (ch + 38)
-    for c_i, (lbl, p_str) in enumerate(lower_tiles):
-        ox = 12 + c_i * (cw + 8)
-        dd.text((ox + 4, oy2 + 6), lbl, fill=(220, 235, 250))
-        with Image.open(p_str) as im:
-            det.paste(im.convert("RGB"), (ox, oy2 + 26))
-    det.save(cfg["detailAuditOut"], format="PNG")
-"""
+        out_ov = np.zeros_like(arr_d)
+        out_ov[:, :] = [28, 30, 35]
+        both_ov = fg_d & fg_f
+        only_d_ov = fg_d & (~fg_f)
+        only_f_ov = fg_f & (~fg_d)
+        avg_l_ov = 0.5 * (lum_d + lum_f)
+        out_ov[both_ov, 0] = np.clip(avg_l_ov[both_ov] + 0.7 * (lum_d[both_ov] - lum_f[both_ov]), 0, 255)
+        out_ov[both_ov, 1] = np.clip(avg_l_ov[both_ov], 0, 255)
+        out_ov[both_ov, 2] = np.clip(avg_l_ov[both_ov] + 0.7 * (lum_f[both_ov] - lum_d[both_ov]), 0, 255)
+        out_ov[only_d_ov] = [255, 110, 30]
+        out_ov[only_f_ov] = [30, 220, 255]
+        # Crisp 1-px outer boundary traces so even sub-millimeter profile contour alignment reads immediately:
+        ed_d = fg_d & (
+            (~np.roll(fg_d, 1, axis=0))
+            | (~np.roll(fg_d, -1, axis=0))
+            | (~np.roll(fg_d, 1, axis=1))
+            | (~np.roll(fg_d, -1, axis=1))
+        )
+        ed_f = fg_f & (
+            (~np.roll(fg_f, 1, axis=0))
+            | (~np.roll(fg_f, -1, axis=0))
+            | (~np.roll(fg_f, 1, axis=1))
+            | (~np.roll(fg_f, -1, axis=1))
+        )
+        ed_both = ed_d & ed_f
+        out_ov[ed_d & (~ed_both)] = [255, 155, 50]
+        out_ov[ed_f & (~ed_both)] = [40, 235, 255]
+        out_ov[ed_both] = [245, 250, 245]
+        Image.fromarray(out_ov.astype(np.uint8)).save(ov["out"], format="PNG")
+
+    # 1. Save the consolidated 1:1 inner-iteration close-up sheet (unless pelvisPreviewOnly)
+    if cfg.get("pelvisPreviewOnly"):
+        for b in cfg.get("extraBoards", []):
+            make_grid_board(b["rows"], b["tw"], b["th"], b["out"], title=b.get("title"))
+    else:
+        make_grid_board(
+            cfg["fastRows"],
+            cfg["fastTileW"],
+            cfg["fastTileH"],
+            cfg["fastSheetOut"],
+            title=cfg["fastTitle"],
+        )
+
+    # 2. Optional full 11-board sign-off suite
+    if cfg.get("fullAudit"):
+        for b in cfg["extraBoards"]:
+            make_grid_board(b["rows"], b["tw"], b["th"], b["out"], title=b.get("title"))
+
+        if "tposeRefBoard" in cfg:
+            tb = cfg["tposeRefBoard"]
+            if tb.get("hasRef"):
+                bw_t = 3216
+                top_pad_t = 36
+                row_h_t = 600 + 30
+                stack_y0 = top_pad_t + 2 * row_h_t + 10
+                wide_w, wide_h = 1584, 768
+                bh_t = stack_y0 + 2 * (wide_h + 26) + 14
+                tboard = Image.new("RGB", (bw_t, bh_t), (20, 22, 26))
+                tdraw = ImageDraw.Draw(tboard)
+                tdraw.text((14, 10), tb["title"], fill=(255, 225, 150))
+                for ri_t, r_tiles in enumerate(tb["topRows"]):
+                    oy_t = top_pad_t + ri_t * row_h_t
+                    ox_t = 12
+                    for lbl_t, p_t, tw_t, th_t in r_tiles:
+                        tdraw.text((ox_t + 4, oy_t + 4), lbl_t, fill=(230, 236, 244))
+                        with Image.open(p_t) as im_t:
+                            im_rgb = im_t.convert("RGB")
+                            if im_rgb.size != (tw_t, th_t):
+                                im_rgb = im_rgb.resize((tw_t, th_t), Image.Resampling.LANCZOS)
+                            tboard.paste(im_rgb, (ox_t, oy_t + 22))
+                        ox_t += tw_t + 8
+                for si_t, stack_pair in enumerate(tb["wideStacks"]):
+                    ox_s = 12 + si_t * (wide_w + 20)
+                    for pi_t, (lbl_w, p_w) in enumerate(stack_pair):
+                        oy_s = stack_y0 + pi_t * (wide_h + 26)
+                        tdraw.text((ox_s + 4, oy_s + 4), lbl_w, fill=(255, 232, 175) if pi_t == 0 else (230, 236, 244))
+                        with Image.open(p_w) as im_w:
+                            im_w_rgb = im_w.convert("RGB")
+                            if im_w_rgb.size != (wide_w, wide_h):
+                                im_w_rgb = im_w_rgb.resize((wide_w, wide_h), Image.Resampling.LANCZOS)
+                            tboard.paste(im_w_rgb, (ox_s, oy_s + 22))
+                tboard.save(tb["out"], format="PNG")
+            else:
+                make_grid_board(tb["fallbackRows"], 600, 600, tb["out"], title=tb["title"])
+
+        # Silhouette overlay detail board (clay-detail-audit.png)
+        spec_main = cfg["main6AngleRows"]
+        upper_tiles = cfg["detailUpperTiles"]
+        lower_tiles = cfg["detailLowerTiles"]
+        tw, th = 360, 620
+        cw, ch = 360, 440
+        det_h = (th + 38) + 2 * (ch + 38) + 20
+        det = Image.new("RGB", (6 * (tw + 8) + 16, det_h), (22, 24, 28))
+        dd = ImageDraw.Draw(det)
+        dd.text((14, 14), "Silhouette Overlay (Grey/White = Exact Match | ORANGE = Uncaptured Donor | CYAN = Excess Fit)", fill=(255, 220, 140))
+        bg_ref = None
+        for c_i in range(6):
+            a_name, don_p = spec_main[0][1][c_i]
+            _, fit_p = spec_main[1][1][c_i]
+            arr_d = np.asarray(Image.open(don_p).convert("RGB"), dtype=np.float32)
+            arr_f = np.asarray(Image.open(fit_p).convert("RGB"), dtype=np.float32)
+            if bg_ref is None:
+                bg_ref = arr_d[2, 2]
+            fg_d = np.linalg.norm(arr_d - bg_ref[None, None, :], axis=2) > 12.0
+            fg_f = np.linalg.norm(arr_f - bg_ref[None, None, :], axis=2) > 12.0
+            lum_d = arr_d.mean(axis=2)
+            lum_f = arr_f.mean(axis=2)
+            out = np.zeros_like(arr_d)
+            out[:, :] = [28, 30, 35]
+            both = fg_d & fg_f
+            only_d = fg_d & (~fg_f)
+            only_f = fg_f & (~fg_d)
+            avg_l = 0.5 * (lum_d + lum_f)
+            out[both, 0] = np.clip(avg_l[both] + 0.6 * (lum_d[both] - lum_f[both]), 0, 255)
+            out[both, 1] = np.clip(avg_l[both], 0, 255)
+            out[both, 2] = np.clip(avg_l[both] + 0.6 * (lum_f[both] - lum_d[both]), 0, 255)
+            out[only_d] = [255, 110, 30]
+            out[only_f] = [30, 220, 255]
+            ox = 12 + c_i * (tw + 8)
+            dd.text((ox + tw - 98, 14), f"[{a_name}]", fill=(175, 195, 225))
+            det.paste(Image.fromarray(out.astype(np.uint8)), (ox, 34))
+        oy1 = 10 + (th + 38)
+        for c_i, (lbl, p_str) in enumerate(upper_tiles):
+            ox = 12 + c_i * (cw + 8)
+            dd.text((ox + 4, oy1 + 6), lbl, fill=(220, 235, 250))
+            with Image.open(p_str) as im:
+                det.paste(im.convert("RGB"), (ox, oy1 + 26))
+        oy2 = oy1 + (ch + 38)
+        for c_i, (lbl, p_str) in enumerate(lower_tiles):
+            ox = 12 + c_i * (cw + 8)
+            dd.text((ox + 4, oy2 + 6), lbl, fill=(220, 235, 250))
+            with Image.open(p_str) as im:
+                det.paste(im.convert("RGB"), (ox, oy2 + 26))
+        det.save(cfg["detailAuditOut"], format="PNG")
 
 
 def render_iteration_and_signoff_boards(
@@ -1018,8 +1014,6 @@ def render_iteration_and_signoff_boards(
         cfg["detailLowerTiles"] = lo_tiles
         cfg["detailAuditOut"] = str(out_dir / "clay-detail-audit.png")
 
-    cfg_path = tmp_dir / "stitch_cfg.json"
-    cfg_path.write_text(json.dumps(cfg))
-    subprocess.run([PYTHON_PIL, "-c", _STITCH_HELPER_CODE, str(cfg_path)], check=True)
+    _stitch_audit_boards(cfg)
     shutil.rmtree(tmp_dir, ignore_errors=True)
     return outputs

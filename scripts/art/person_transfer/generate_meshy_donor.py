@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Generate or recover Multi-Image-to-3D body donor(s) via Meshy Direct API (.env MESHY_API_KEY)."""
+"""Generate or recover Multi-Image-to-3D body donor(s) via Meshy Direct OpenAPI v1 (`MESHY_API_KEY`).
+
+Follows `docs/production-workflows/art-flows/body-reference-family.md#meshy-donor-generation`:
+- `should_remesh = False` and `pose_mode` omitted so raw donor surface relief and A-pose are preserved;
+- `request-record.json` persisted immediately so interrupted runs recover `taskId` without duplicate charges;
+- Meshy credit balance recorded before and after the batch.
+"""
 from __future__ import annotations
 
 import argparse
@@ -7,7 +13,6 @@ import base64
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib
 import json
-import os
 from pathlib import Path
 import sys
 import time
@@ -15,31 +20,14 @@ import urllib.error
 import urllib.request
 
 sys.dont_write_bytecode = True
+
+PACKAGE_DIR = Path(__file__).resolve().parent
+if str(PACKAGE_DIR) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_DIR))
+
+from runtime_env import external_output, load_env_key, sha256_file  # noqa: E402
+
 API_BASE = "https://api.meshy.ai/openapi/v1"
-
-
-def sha256_file(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def load_meshy_key(repo: Path) -> str:
-    env_val = os.environ.get("MESHY_API_KEY", "").strip()
-    if env_val:
-        return env_val
-    candidates = [repo / ".env", Path(__file__).resolve().parents[3] / ".env", repo.parent.parent / ".env"]
-    for env_path in candidates:
-        if env_path.is_file():
-            for line in env_path.read_text().splitlines():
-                s = line.strip()
-                if s.startswith("MESHY_API_KEY="):
-                    val = s.split("=", 1)[1].strip().strip('"').strip("'")
-                    if val:
-                        return val
-    raise RuntimeError("MESHY_API_KEY not found in .env")
 
 
 def api_json(method: str, url: str, key: str, payload: dict | None = None, timeout: int = 60) -> dict:
@@ -80,7 +68,7 @@ def run_one_coordinate(
     poll_seconds: float = 8.0,
     timeout_seconds: float = 900.0,
 ) -> dict:
-    out_dir = donors_root / coord_id
+    out_dir = external_output(donors_root / coord_id)
     out_dir.mkdir(parents=True, exist_ok=True)
     req_record_path = out_dir / "request-record.json"
     receipt_path = out_dir / "provider-receipt.json"
@@ -97,7 +85,6 @@ def run_one_coordinate(
         if not p.is_file():
             raise FileNotFoundError(f"Missing crop panel: {p}")
 
-    # Recover in-flight task if request-record already exists (never resubmit uncertain jobs)
     task_id = None
     if req_record_path.is_file():
         prior = json.loads(req_record_path.read_text())
@@ -184,19 +171,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--coordinates", nargs="+", required=True, help="Coordinate IDs such as M050-F100")
     parser.add_argument("--study-dir", required=True, type=Path)
-    parser.add_argument("--repository", required=True, type=Path)
+    parser.add_argument("--repository", type=Path, default=None)
     parser.add_argument("--ai-model", default="latest")
     parser.add_argument("--untextured", action="store_true")
     parser.add_argument("--parallel", type=int, default=4)
     args = parser.parse_args()
 
-    study = args.study_dir.resolve()
-    repo = args.repository.resolve()
+    study = external_output(args.study_dir)
     crops_root = study / "sources/crops"
     donors_root = study / "donors"
     donors_root.mkdir(parents=True, exist_ok=True)
 
-    key = load_meshy_key(repo)
+    key = load_env_key("MESHY_API_KEY", args.repository)
     bal_before = api_json("GET", f"{API_BASE}/balance", key)
     t0 = time.monotonic()
 

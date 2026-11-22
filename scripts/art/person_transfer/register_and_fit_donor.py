@@ -4524,53 +4524,23 @@ def _compute_cg_solver_cache_key(
 
 
 def main() -> None:
+    import os
+    from runtime_env import bootstrap_foundation, external_output, get_transfer_cache_dir
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--donor-glb", required=True, type=Path)
     parser.add_argument("--coordinate-id", required=True)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument(
-        "--canonical-lod0",
-        type=Path,
-        default=Path(
-            "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-full-transfer/study/continuation/finish/root/body-audit/body-v3/authoring-controls.npz"
-        ),
-    )
-    parser.add_argument(
-        "--canonical-lod1",
-        type=Path,
-        default=Path(
-            "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-full-transfer/study/continuation/finish/root/body-audit/body-v3/runtime-controls.npz"
-        ),
-    )
-    parser.add_argument(
-        "--canonical-lean-support",
-        type=Path,
-        default=Path(
-            "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-12-body-reference-family/study/family-20261113/supports/M050-F000-lean-v3.npz"
-        ),
-    )
-    parser.add_argument(
-        "--canonical-triangles",
-        type=Path,
-        default=Path(
-            "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-full-transfer/study/transfer/final-belly/transfer-arrays.npz"
-        ),
-    )
-    parser.add_argument(
-        "--canonical-interface",
-        type=Path,
-        default=Path(
-            "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-12-body-reference-family/study/execution-20261112/stage-a/fit-evidence/workspace/fit/canonical-interface.json"
-        ),
-    )
-    parser.add_argument(
-        "--canonical-compiled",
-        type=Path,
-        default=Path(
-            "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-full-transfer/study/continuation/finish/root/body-audit/body-v3-kit/compiled.json"
-        ),
-    )
-    parser.add_argument("--shared-map", type=Path, help="Optional frozen LOD0->LOD1 mapping.npz to reuse or write")
+    parser.add_argument("--workspace", type=Path, default=None, help="External OpenLegend art workspace root")
+    parser.add_argument("--profile", type=Path, default=None, help="Foundation profile JSON (defaults to foundation-sources.json)")
+    parser.add_argument("--tpose-ref", type=Path, default=None, help="Optional 2D horizontal T-pose reference image")
+    parser.add_argument("--canonical-lod0", type=Path, default=None)
+    parser.add_argument("--canonical-lod1", type=Path, default=None)
+    parser.add_argument("--canonical-lean-support", type=Path, default=None)
+    parser.add_argument("--canonical-triangles", type=Path, default=None)
+    parser.add_argument("--canonical-interface", type=Path, default=None)
+    parser.add_argument("--canonical-compiled", type=Path, default=None)
+    parser.add_argument("--shared-map", type=Path, default=None, help="Optional frozen LOD0->LOD1 mapping.npz to reuse or write")
     parser.add_argument(
         "--lean-reference-support",
         type=Path,
@@ -4580,7 +4550,7 @@ def main() -> None:
     parser.add_argument(
         "--rebuild-raw-cache",
         action="store_true",
-        help="Force recomputing the raw pre-polish CG fit instead of loading from fits/_raw_fit_cache",
+        help="Force recomputing the raw pre-polish CG fit instead of loading from _raw_fit_cache",
     )
     parser.add_argument(
         "--full-audit",
@@ -4590,7 +4560,7 @@ def main() -> None:
     parser.add_argument(
         "--pelvis-preview-only",
         action="store_true",
-        help="Fast preview mode: render signoff-08-pelvis-groin-glutes-zoom.png only (pair with verify --concept-only)",
+        help="Fast preview mode: render signoff-08-pelvis-groin-glutes-zoom.png only (pair with verify --pelvis-preview)",
     )
     parser.add_argument(
         "--export-glb",
@@ -4601,8 +4571,8 @@ def main() -> None:
     parser.add_argument(
         "--cache-dir",
         type=Path,
-        default=Path(__file__).resolve().parent.parent / "fits" / "_raw_fit_cache",
-        help="Shared raw-CG & map cache directory",
+        default=None,
+        help="Shared external raw-CG & map cache directory",
     )
     parser.add_argument(
         "--sex",
@@ -4613,7 +4583,34 @@ def main() -> None:
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else None)
 
     t0 = perf_counter()
+    args.output = external_output(args.output)
     args.output.mkdir(parents=True, exist_ok=True)
+    args.cache_dir = get_transfer_cache_dir(args.cache_dir)
+    os.environ["OPEN_LEGEND_PERSON_TRANSFER_CACHE_DIR"] = str(args.cache_dir)
+    if args.profile is not None:
+        os.environ["OPEN_LEGEND_PERSON_TRANSFER_PROFILE"] = str(args.profile.resolve())
+
+    need_foundation = any(
+        getattr(args, attr) is None
+        for attr in (
+            "canonical_lod0",
+            "canonical_lod1",
+            "canonical_lean_support",
+            "canonical_triangles",
+            "canonical_interface",
+            "canonical_compiled",
+        )
+    )
+    if need_foundation:
+        fnd = bootstrap_foundation(workspace=args.workspace, profile_path=args.profile)
+        args.canonical_lod0 = args.canonical_lod0 or fnd["canonicalLod0"]
+        args.canonical_lod1 = args.canonical_lod1 or fnd["canonicalLod1"]
+        args.canonical_lean_support = args.canonical_lean_support or fnd["canonicalLeanSupport"]
+        args.canonical_triangles = args.canonical_triangles or fnd["canonicalTriangles"]
+        args.canonical_interface = args.canonical_interface or fnd["canonicalInterface"]
+        args.canonical_compiled = args.canonical_compiled or fnd["canonicalCompiled"]
+        if args.shared_map is None and fnd.get("sharedLod0ToLod1Map") is not None:
+            args.shared_map = fnd["sharedLod0ToLod1Map"]
 
     compiled = json.loads(args.canonical_compiled.read_text())
     compiled_sha = sha256_file(args.canonical_compiled)
@@ -5202,10 +5199,23 @@ def main() -> None:
             "raised68Lod1": measure_linen_briefs_clearance(r68_cor_base[:n_l1_b], low_tri, sh_r68_cor, sh_tri, sh_outer_mask),
         }
 
-    ref_dir = Path(__file__).resolve().parent.parent / "references"
-    ref_raised_jpg = ref_dir / f"{args.coordinate_id}-raised-arms-ref.jpg"
-    if not ref_raised_jpg.is_file():
-        ref_raised_jpg = ref_dir / f"{args.coordinate_id}-raised-arms-ref.png"
+    ref_raised_jpg: Path | None = None
+    if args.tpose_ref is not None and args.tpose_ref.is_file():
+        ref_raised_jpg = args.tpose_ref.resolve()
+    else:
+        donor_resolved = args.donor_glb.resolve()
+        for ref_dir_cand in (
+            donor_resolved.parent.parent / "references",
+            donor_resolved.parent.parent.parent / "references",
+            args.output.parent.parent / "references",
+        ):
+            for ext_s in (".png", ".jpg", ".jpeg"):
+                cand_p = ref_dir_cand / f"{args.coordinate_id}-raised-arms-ref{ext_s}"
+                if cand_p.is_file():
+                    ref_raised_jpg = cand_p
+                    break
+            if ref_raised_jpg is not None:
+                break
     rendered_boards = render_iteration_and_signoff_boards(
         args.output,
         args.coordinate_id,

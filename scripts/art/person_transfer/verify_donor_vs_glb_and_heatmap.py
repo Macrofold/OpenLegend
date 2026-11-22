@@ -5,6 +5,7 @@ a 2-row Signed Millimeter Deviation Heatmap (LOD0 & LOD1 vs 420k Meshy Donor), a
 """
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 import sys
@@ -20,73 +21,22 @@ TOOLS_DIR = Path(__file__).resolve().parent
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
-from linen_briefs import eval_linen_briefs_bl, inject_linen_briefs_into_family  # noqa: E402
+from blender_scene import (  # noqa: E402
+    attenuate_opposing_lights,
+    build_welded_clay_object as _build_mesh_obj,
+    import_glb_in_rest_pose,
+    look_at as _look_at,
+    make_clay_material as _make_clay_mat,
+    setup_studio_lights,
+)
+from linen_briefs import get_baseline_coverage_ids  # noqa: E402
 from mesh_rig_utils import smootherstep, vertex_normals, weld_connectivity  # noqa: E402
-import export_covered_glb as ecg  # noqa: E402
-
-
-def _look_at(obj: bpy.types.Object, pos: tuple[float, float, float], target: tuple[float, float, float]) -> None:
-    obj.location = Vector(pos)
-    direction = Vector(target) - obj.location
-    obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
+from pil_compat import Image, ImageDraw  # noqa: E402
+from runtime_env import bootstrap_foundation, resolve_grid9_concept_sheet  # noqa: E402
 
 
 def _setup_sculpt_lights(scn: bpy.types.Scene) -> None:
-    scn.render.engine = "BLENDER_EEVEE"
-    scn.view_settings.view_transform = "Standard"
-    scn.view_settings.look = "None"
-    scn.render.film_transparent = False
-
-    world = bpy.data.worlds.new("VerifyWorld")
-    scn.world = world
-    world.use_nodes = True
-    bg = world.node_tree.nodes.get("Background")
-    if bg is not None:
-        bg.inputs["Color"].default_value = (0.16, 0.165, 0.175, 1.0)
-        bg.inputs["Strength"].default_value = 0.16
-
-    # Crisp sculptural raking key + soft neutral fill (front & rear) so 2-4mm sulci & waist contours read cleanly without grazing arm cast-shadows:
-    for name, loc, energy, sz, col in (
-        ("FrontKey", (-1.25, -2.75, 2.55), 112.0, 1.85, (1.0, 0.985, 0.96)),
-        ("FrontFill", (2.1, -2.5, 1.60), 36.0, 2.30, (0.99, 0.985, 0.98)),
-        ("BackKey", (1.25, 2.75, 2.55), 112.0, 1.85, (1.0, 0.985, 0.96)),
-        ("BackFill", (-2.1, 2.5, 1.60), 36.0, 2.30, (0.99, 0.985, 0.98)),
-    ):
-        ld = bpy.data.lights.new(name=name, type="AREA")
-        ld.energy = energy
-        ld.size = sz
-        ld.color = col
-        lo = bpy.data.objects.new(name=name, object_data=ld)
-        scn.collection.objects.link(lo)
-        _look_at(lo, loc, (0.0, 0.0, 1.15))
-
-
-def _make_clay_mat(name: str, rgb: tuple[float, float, float], rough: float = 0.52) -> bpy.types.Material:
-    mat = bpy.data.materials.new(name)
-    mat.use_nodes = True
-    bsdf = mat.node_tree.nodes.get("Principled BSDF")
-    if bsdf is not None:
-        bsdf.inputs["Base Color"].default_value = (*rgb, 1.0)
-        bsdf.inputs["Roughness"].default_value = rough
-    return mat
-
-
-def _build_mesh_obj(name: str, pts: np.ndarray, tri: np.ndarray, mat: bpy.types.Material) -> bpy.types.Object:
-    # Weld split UV-island vertices so Clay comparison panels render true C1 smooth geometry without fake UV-seam creases:
-    conn = weld_connectivity(pts, tri, decimals=5)
-    weld = conn[0]
-    n_u = len(conn[2])
-    u_pts = np.column_stack([np.bincount(weld, weights=pts[:, c], minlength=n_u) / conn[2] for c in range(3)])
-    w_tri = weld[tri]
-    me = bpy.data.meshes.new(name)
-    me.from_pydata(u_pts.tolist(), [], w_tri.tolist())
-    for p in me.polygons:
-        p.use_smooth = True
-    me.update()
-    me.materials.append(mat)
-    obj = bpy.data.objects.new(name, me)
-    bpy.context.scene.collection.objects.link(obj)
-    return obj
+    setup_studio_lights(scn, world_name="VerifyWorld", bg_strength=0.16, aim_z=1.15)
 
 
 def _load_donor_tris(donor_glb: Path, donor_reg: np.ndarray) -> np.ndarray:
@@ -165,15 +115,7 @@ def _render_panels(cam_o: bpy.types.Object, cam_d: bpy.types.Camera, panels: lis
     for idx, (_lbl, cpos, ctgt, oscale) in enumerate(panels):
         # Attenuate opposing-hemisphere lights to a natural 12% studio rim so a 112W rear key light never blasts
         # asymmetric grazing Fresnel glare past the waist onto a single wrist in front/3-4 shots (and vice versa):
-        cy = float(cpos[1])
-        front_mul = 1.0 if cy <= 0.4 else 0.12
-        back_mul = 1.0 if cy >= -0.4 else 0.12
-        for o in scn.collection.objects:
-            if o.type == "LIGHT" and o.name in base_light_e:
-                if o.name.startswith("Front"):
-                    o.data.energy = base_light_e[o.name] * front_mul
-                elif o.name.startswith("Back"):
-                    o.data.energy = base_light_e[o.name] * back_mul
+        attenuate_opposing_lights(scn, cpos, base_light_e, rim_scale=0.12)
         cam_d.ortho_scale = oscale
         _look_at(cam_o, cpos, ctgt)
         tp = tmp_dir / f"tile_{idx}.png"
@@ -225,8 +167,9 @@ def _extract_glb_briefs_bl(glb_path: Path) -> tuple[np.ndarray, np.ndarray]:
         gltf = json.loads(f.read(jlen).decode("utf-8"))
         blen, _ = struct.unpack("<II", f.read(8))
         bin_buf = f.read(blen)
+    cov_part_id = get_baseline_coverage_ids()[0]
     for mesh in gltf["meshes"]:
-        if "linenBriefs" not in mesh["name"]:
+        if cov_part_id not in mesh["name"] and "linenBriefs" not in mesh["name"]:
             continue
         prim = mesh["primitives"][0]
         acc = gltf["accessors"][prim["attributes"]["POSITION"]]
@@ -243,21 +186,49 @@ def _extract_glb_briefs_bl(glb_path: Path) -> tuple[np.ndarray, np.ndarray]:
     raise RuntimeError(f"No linenBriefs mesh found in {glb_path}")
 
 
-def main() -> None:
+def _parse_args() -> tuple[Path, Path, Path, Path | None, bool]:
     raw_argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
+    if raw_argv and raw_argv[0].startswith("--"):
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument("--rev-dir", required=True, type=Path)
+        parser.add_argument("--glb", required=True, type=Path)
+        parser.add_argument("--study-dir", type=Path, default=None)
+        parser.add_argument("--concept-sheet", type=Path, default=None)
+        parser.add_argument("--pelvis-preview", action="store_true")
+        parser.add_argument("--concept-only", action="store_true")
+        ns = parser.parse_args(raw_argv)
+        rev_dir = ns.rev_dir.resolve()
+        study_dir = ns.study_dir.resolve() if ns.study_dir else rev_dir.parent.parent
+        concept = ns.concept_sheet.resolve() if (ns.concept_sheet and ns.concept_sheet.is_file()) else None
+        return rev_dir, ns.glb.resolve(), study_dir, concept, bool(ns.pelvis_preview or ns.concept_only)
+
     pelvis_preview = ("--pelvis-preview" in raw_argv) or ("--concept-only" in raw_argv)
-    concept_only = pelvis_preview
-    argv = [a for a in raw_argv if a not in ("--concept-only", "--pelvis-preview")]
-    rev_dir = Path(argv[0]).resolve()
-    glb_path = Path(argv[1]).resolve()
-    explicit_concept = Path(argv[2]).resolve() if len(argv) >= 3 else None
+    pos = [a for a in raw_argv if a not in ("--concept-only", "--pelvis-preview")]
+    rev_dir = Path(pos[0]).resolve()
+    glb_path = Path(pos[1]).resolve()
     study_dir = rev_dir.parent.parent
-    fam_dir = study_dir / "family-20261113"
+    explicit_concept: Path | None = None
+    for extra in pos[2:]:
+        cand = Path(extra).resolve()
+        if cand.is_dir():
+            study_dir = cand
+        elif cand.is_file():
+            explicit_concept = cand
+    return rev_dir, glb_path, study_dir, explicit_concept, pelvis_preview
+
+
+def main() -> None:
+    rev_dir, glb_path, study_dir, explicit_concept, pelvis_preview = _parse_args()
+    concept_only = pelvis_preview
 
     receipt = json.loads((rev_dir / "receipt.json").read_text())
     coord_id = receipt["coordinateId"]
-    raw_npz = np.load(Path(receipt["rawCgCache"]["path"]), allow_pickle=False)
-    map_npz = np.load(fam_dir / "fits" / "_raw_fit_cache" / "shared-lod0-to-lod1-map.npz", allow_pickle=False)
+    raw_cache_path = Path(receipt["rawCgCache"]["path"])
+    raw_npz = np.load(raw_cache_path, allow_pickle=False)
+    local_map_path = raw_cache_path.parent / "shared-lod0-to-lod1-map.npz"
+    if not local_map_path.is_file():
+        local_map_path = bootstrap_foundation()["sharedLod0ToLod1Map"]
+    map_npz = np.load(local_map_path, allow_pickle=False)
     lod0_npz = np.load(rev_dir / "lod0.npz", allow_pickle=False)
     lod1_npz = np.load(rev_dir / "lod1.npz", allow_pickle=False)
     head_npz = np.load(rev_dir / "headSkin.npz", allow_pickle=False)
@@ -517,13 +488,17 @@ def main() -> None:
 
     m0_all = bv0 & np.isfinite(e_lod0)
     m1_all = bv1 & np.isfinite(e_lod1)
+    p_l0 = None if pelvis_preview else [round(float(np.percentile(e_lod0[m0_all], q)), 2) for q in (2, 5, 50, 95, 98)]
+    p_l1 = [round(float(np.percentile(e_lod1[m1_all], q)), 2) for q in (2, 5, 50, 95, 98)]
     audit_summary = {
         "coordinateId": coord_id,
         "mode": "pelvis-preview" if pelvis_preview else "full",
         "crotchBaseDeltaZ_mm": crotch_dz_mm,
         "coveredPelvisZones": covered_pelvis_zones,
-        "overallBareBodyLod0_p02_p05_med_p95_p98_mm": None if pelvis_preview else [round(float(np.percentile(e_lod0[m0_all], q)), 2) for q in (2, 5, 50, 95, 98)],
-        "overallBareBodyLod1_p02_p05_med_p95_p98_mm": [round(float(np.percentile(e_lod1[m1_all], q)), 2) for q in (2, 5, 50, 95, 98)],
+        "overallBareBodyLod0_p02_p05_med_p95_p98_mm": p_l0,
+        "overallBareBodyLod1_p02_p05_med_p95_p98_mm": p_l1,
+        "overallBareBodyLod0P05MedP95Mm": p_l0[1:4] if p_l0 is not None else None,
+        "overallBareBodyLod1P05MedP95Mm": p_l1[1:4],
         "zones": zone_report,
     }
     (rev_dir / "deviation_audit.json").write_text(json.dumps(audit_summary, indent=2) + "\n")
@@ -686,17 +661,7 @@ def main() -> None:
 
     # Row 2: Re-Imported Exported Runtime `.glb` PBR (resetting any auto-assigned alphabetical action such as `Head left 25` to Rest!):
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bpy.ops.import_scene.gltf(filepath=str(glb_path))
-    for obj_imp in bpy.data.objects:
-        if obj_imp.type == "ARMATURE":
-            if obj_imp.animation_data is not None:
-                obj_imp.animation_data.action = None
-            for pb in obj_imp.pose.bones:
-                pb.location = (0.0, 0.0, 0.0)
-                pb.rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
-                pb.rotation_euler = (0.0, 0.0, 0.0)
-                pb.scale = (1.0, 1.0, 1.0)
-    bpy.context.view_layer.update()
+    import_glb_in_rest_pose(glb_path)
     scn = bpy.context.scene
     _setup_sculpt_lights(scn)
     cam_d = bpy.data.cameras.new("CompCam2")
@@ -719,12 +684,12 @@ def main() -> None:
             if coord_id in sel_grid and Path(sel_grid[coord_id]["path"]).is_file():
                 chosen_cand = Path(sel_grid[coord_id]["path"])
     if chosen_cand is None:
+        chosen_cand = resolve_grid9_concept_sheet(coord_id, study_dir=study_dir, auto_pull=False)
+    if chosen_cand is None:
         cand_matches = sorted((study_dir / "grid-9-20261112" / "candidates").glob(f"*-{coord_id}.png"))
         if cand_matches:
             chosen_cand = cand_matches[-1]
     if chosen_cand is not None:
-        import subprocess
-
         i_f, i_p, i_b = (0, 1, 2) if concept_only else (0, 2, 3)
         for vname, tile_arr in [
             ("donor_front", row_donor[i_f]), ("donor_prof", row_donor[i_p]), ("donor_back", row_donor[i_b]),
@@ -738,74 +703,78 @@ def main() -> None:
             im_tmp.file_format = "PNG"
             im_tmp.save()
             bpy.data.images.remove(im_tmp)
-        pil_stitch = """
-import sys
-from pathlib import Path
-import numpy as np
-from PIL import Image, ImageDraw
-tmp, c_path, out_p, cid = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), sys.argv[4]
-c_im_all = Image.open(c_path).convert("RGB")
-cw, ch = c_im_all.size
-arr = np.asarray(c_im_all, dtype=np.float32)
-fg_all = np.linalg.norm(arr - arr[8, 8][None, None, :], axis=2) > 18.0
-col_cnt = fg_all.sum(axis=0)
-s1 = int(cw * 0.30) + int(np.argmin(col_cnt[int(cw * 0.30):int(cw * 0.44)]))
-s2 = int(cw * 0.56) + int(np.argmin(col_cnt[int(cw * 0.56):int(cw * 0.70)]))
-c_views = {"front": c_im_all.crop((0, 0, s1, ch)), "prof": c_im_all.crop((s1, 0, s2, ch)), "back": c_im_all.crop((s2, 0, cw, ch))}
-def b_fg(im, thr=14.0):
-    a = np.asarray(im, dtype=np.float32)
-    ys, xs = np.nonzero(np.linalg.norm(a - a[6, 6][None, None, :], axis=2) > thr)
-    y0, y1 = int(ys.min()), int(ys.max())
-    tx = xs[ys < y0 + max(12, int(0.10 * (y1 - y0)))]
-    return y0, y1, float(0.5 * (tx.min() + tx.max())) if len(tx) else float(0.5 * (xs.min() + xs.max()))
-def crop_u(im, ty0, ty1, txm, f0, f1, dw, dh):
-    hf = ty1 - ty0
-    cy0, cy1 = int(round(ty0 + f0 * hf)), int(round(ty0 + f1 * hf))
-    bw = int(round(max(1, cy1 - cy0) * (dw / dh)))
-    cx0 = int(round(txm - 0.5 * bw))
-    cx1 = cx0 + bw
-    px, py = max(0, -cx0, cx1 - im.width) + 8, max(0, -cy0, cy1 - im.height) + 8
-    can = Image.new("RGB", (im.width + 2*px, im.height + 2*py), im.getpixel((6, 6)))
-    can.paste(im, (px, py))
-    return can.crop((cx0+px, cy0+py, cx1+px, cy1+py)).resize((dw, dh), Image.Resampling.LANCZOS)
-fw_t, fh_t, zw_t, zh_t = 380, 646, 420, 646
-board = Image.new("RGB", (12 + 4*(fw_t+8) + 12 + 3*(zw_t+8) + 12, 38 + 3*(fh_t+30) + 12), (20, 22, 26))
-draw = ImageDraw.Draw(board)
-draw.text((14, 10), f"{cid} · Matched-Stature Normal Comparison: 2D Concept vs 3D Donor vs Runtime LOD1 Clay vs Exported .glb PBR", fill=(255, 225, 150))
-for ri, (vk, vt) in enumerate([("front", "Front"), ("prof", "Right Profile"), ("back", "Back")]):
-    d_im = Image.open(tmp / f"ccomp_donor_{vk}.png").convert("RGB")
-    l_im = Image.open(tmp / f"ccomp_lod1_{vk}.png").convert("RGB")
-    g_im = Image.open(tmp / f"ccomp_glb_{vk}.png").convert("RGB")
-    ry0, ry1, rxm = b_fg(c_views[vk], 18.0)
-    ty0, ty1, txm = b_fg(l_im, 12.0)
-    sc = (ty1 - ty0) / max(ry1 - ry0, 1)
-    rsz = c_views[vk].resize((int(round(c_views[vk].width*sc)), int(round(c_views[vk].height*sc))), Image.Resampling.LANCZOS)
-    c_im = Image.new("RGB", l_im.size, c_views[vk].getpixel((6, 6)))
-    c_im.paste(rsz, (int(round(txm - rxm*sc)), int(round(ty0 - ry0*sc))))
-    oy, ox = 38 + ri * (fh_t + 30), 12
-    for lbl, s_im in [(f"2D Concept · {vt}", c_im), (f"3D Donor · {vt}", d_im), (f"Fit LOD1 Clay · {vt}", l_im), (f"Exported .glb PBR · {vt}", g_im)]:
-        draw.text((ox + 4, oy + 4), lbl, fill=(230, 236, 244))
-        board.paste(s_im.resize((fw_t, fh_t), Image.Resampling.LANCZOS), (ox, oy + 22))
-        ox += fw_t + 8
-    ox += 12
-    for lbl, s_im in [(f"2D Concept · 1:1 ({vt})", c_im), (f"Fit LOD1 Clay · 1:1 ({vt})", l_im), (f"Exported .glb PBR · 1:1 ({vt})", g_im)]:
-        draw.text((ox + 4, oy + 4), lbl, fill=(255, 232, 175) if "Concept" in lbl else (230, 236, 244))
-        board.paste(crop_u(s_im, ty0, ty1, txm, 0.08, 0.58, zw_t, zh_t), (ox, oy + 22))
-        ox += zw_t + 8
-board.save(out_p, format="PNG")
-"""
-        subprocess.run(
-            [
-                "/Users/mike/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python",
-                "-c",
-                pil_stitch,
-                str(tmp_dir),
-                str(chosen_cand),
-                str(rev_dir / "concept-vs-donor-clay-pbr.png"),
-                coord_id,
-            ],
-            check=True,
+        c_im_all = Image.open(chosen_cand).convert("RGB")
+        cw, ch = c_im_all.size
+        arr = np.asarray(c_im_all, dtype=np.float32)
+        fg_all = np.linalg.norm(arr - arr[8, 8][None, None, :], axis=2) > 18.0
+        col_cnt = fg_all.sum(axis=0)
+        s1 = int(cw * 0.30) + int(np.argmin(col_cnt[int(cw * 0.30) : int(cw * 0.44)]))
+        s2 = int(cw * 0.56) + int(np.argmin(col_cnt[int(cw * 0.56) : int(cw * 0.70)]))
+        c_views = {
+            "front": c_im_all.crop((0, 0, s1, ch)),
+            "prof": c_im_all.crop((s1, 0, s2, ch)),
+            "back": c_im_all.crop((s2, 0, cw, ch)),
+        }
+
+        def b_fg(im, thr: float = 14.0):
+            a = np.asarray(im, dtype=np.float32)
+            ys, xs = np.nonzero(np.linalg.norm(a - a[6, 6][None, None, :], axis=2) > thr)
+            y0, y1 = int(ys.min()), int(ys.max())
+            tx = xs[ys < y0 + max(12, int(0.10 * (y1 - y0)))]
+            return y0, y1, float(0.5 * (tx.min() + tx.max())) if len(tx) else float(0.5 * (xs.min() + xs.max()))
+
+        def crop_u(im, ty0: int, ty1: int, txm: float, f0: float, f1: float, dw: int, dh: int):
+            hf = ty1 - ty0
+            cy0, cy1 = int(round(ty0 + f0 * hf)), int(round(ty0 + f1 * hf))
+            bw = int(round(max(1, cy1 - cy0) * (dw / dh)))
+            cx0 = int(round(txm - 0.5 * bw))
+            cx1 = cx0 + bw
+            px, py = max(0, -cx0, cx1 - im.width) + 8, max(0, -cy0, cy1 - im.height) + 8
+            can = Image.new("RGB", (im.width + 2 * px, im.height + 2 * py), im.getpixel((6, 6)))
+            can.paste(im, (px, py))
+            return can.crop((cx0 + px, cy0 + py, cx1 + px, cy1 + py)).resize((dw, dh), Image.Resampling.LANCZOS)
+
+        fw_t, fh_t, zw_t, zh_t = 380, 646, 420, 646
+        board = Image.new("RGB", (12 + 4 * (fw_t + 8) + 12 + 3 * (zw_t + 8) + 12, 38 + 3 * (fh_t + 30) + 12), (20, 22, 26))
+        draw = ImageDraw.Draw(board)
+        draw.text(
+            (14, 10),
+            f"{coord_id} · Matched-Stature Normal Comparison: 2D Concept vs 3D Donor vs Runtime LOD1 Clay vs Exported .glb PBR",
+            fill=(255, 225, 150),
         )
+        for ri, (vk, vt) in enumerate([("front", "Front"), ("prof", "Right Profile"), ("back", "Back")]):
+            d_im = Image.open(tmp_dir / f"ccomp_donor_{vk}.png").convert("RGB")
+            l_im = Image.open(tmp_dir / f"ccomp_lod1_{vk}.png").convert("RGB")
+            g_im = Image.open(tmp_dir / f"ccomp_glb_{vk}.png").convert("RGB")
+            ry0, ry1, rxm = b_fg(c_views[vk], 18.0)
+            ty0, ty1, txm = b_fg(l_im, 12.0)
+            sc = (ty1 - ty0) / max(ry1 - ry0, 1)
+            rsz = c_views[vk].resize(
+                (int(round(c_views[vk].width * sc)), int(round(c_views[vk].height * sc))),
+                Image.Resampling.LANCZOS,
+            )
+            c_im = Image.new("RGB", l_im.size, c_views[vk].getpixel((6, 6)))
+            c_im.paste(rsz, (int(round(txm - rxm * sc)), int(round(ty0 - ry0 * sc))))
+            oy, ox = 38 + ri * (fh_t + 30), 12
+            for lbl, s_im in [
+                (f"2D Concept · {vt}", c_im),
+                (f"3D Donor · {vt}", d_im),
+                (f"Fit LOD1 Clay · {vt}", l_im),
+                (f"Exported .glb PBR · {vt}", g_im),
+            ]:
+                draw.text((ox + 4, oy + 4), lbl, fill=(230, 236, 244))
+                board.paste(s_im.resize((fw_t, fh_t), Image.Resampling.LANCZOS), (ox, oy + 22))
+                ox += fw_t + 8
+            ox += 12
+            for lbl, s_im in [
+                (f"2D Concept · 1:1 ({vt})", c_im),
+                (f"Fit LOD1 Clay · 1:1 ({vt})", l_im),
+                (f"Exported .glb PBR · 1:1 ({vt})", g_im),
+            ]:
+                draw.text((ox + 4, oy + 4), lbl, fill=(255, 232, 175) if "Concept" in lbl else (230, 236, 244))
+                board.paste(crop_u(s_im, ty0, ty1, txm, 0.08, 0.58, zw_t, zh_t), (ox, oy + 22))
+                ox += zw_t + 8
+        board.save(rev_dir / "concept-vs-donor-clay-pbr.png", format="PNG")
 
     if tmp_dir.exists():
         for p in tmp_dir.glob("*"):

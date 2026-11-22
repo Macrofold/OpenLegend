@@ -2,6 +2,9 @@
 """Shared geometry, connectivity, manifold quality, rig LBS, and fidelity metric utilities."""
 from __future__ import annotations
 
+import sys
+sys.dont_write_bytecode = True
+
 from collections import deque
 import hashlib
 import json

@@ -2,6 +2,9 @@
 """Pre-LBS fat & gravity raised-arm corrective solver and game-rig preview evaluator."""
 from __future__ import annotations
 
+import sys
+sys.dont_write_bytecode = True
+
 import numpy as np
 
 from canonical_masks import bfs_hop_distance, build_body_region_joint_masks
@@ -1413,7 +1416,8 @@ def solve_raised_arm_gravity_corrective(
         and (abs(ms_g - 0.50) > 0.10)
     )
 
-    _ra_cache_dir = _Path("/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-12-body-reference-family/study/family-20261113/fits/_raw_fit_cache")
+    from runtime_env import get_transfer_cache_dir
+    _ra_cache_dir = get_transfer_cache_dir()
     _ra_h = _hl.sha256()
     _ra_h.update(_insp.getsource(solve_raised_arm_gravity_corrective).encode("utf-8"))
     _ra_h.update(np.array([ad_g, ms_g if has_ext_head else 0.5], dtype=np.float64).tobytes())

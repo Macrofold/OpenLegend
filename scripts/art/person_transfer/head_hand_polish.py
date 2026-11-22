@@ -2,6 +2,9 @@
 """Unlocked full-scale head/face/neck polish, rigid/affine ear & eye/oral submesh follow, and 5-finger polish."""
 from __future__ import annotations
 
+import sys
+sys.dont_write_bytecode = True
+
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 import numpy as np

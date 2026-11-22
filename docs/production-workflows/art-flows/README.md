@@ -302,7 +302,7 @@ Archive the study and package ([§9](#9-preserve-and-resume)), finish the study 
 
 ### Comparison sheets
 
-Present choices as one sheet per decision: every candidate labelled with its ID, the same background, scale and viewing angle, aspect ratios preserved, and the concept or source beside them. For 3D, show the [turntable sheet](3d-models.md#step-5--inspect-and-compare-candidates) and a capture from the named consumer (the game's look for OpenLegend). Show the sheet directly in the conversation (or a review page when the host offers one), with a short recommendation and the reason. A link sent for review opens the comparison itself (in the art study, the subject's **Compare all**), not one version or the files the game uses, so Mike sees every alternative. Record Mike's choice and his words in the study record.
+Present choices as one sheet per decision: every candidate labelled with its ID, the same background, scale and viewing angle, aspect ratios preserved, and the concept or source beside them. For 3D, show the [turntable sheet](3d-models.md#step-5--inspect-and-compare-candidates) and a capture from the named consumer (the game's look for OpenLegend). Show the sheet directly in the conversation (or a review page when the host offers one), with a short recommendation and the reason; at any acceptance or sign-off checkpoint—including after a targeted single-region repair—present the complete core comparison suite inline rather than only the changed crop or local workspace paths. A link sent for review opens the comparison itself (in the art study, the subject's **Compare all**), not one version or the files the game uses, so Mike sees every alternative. Record Mike's choice and his words in the study record.
 
 ### Matched-scale comparison
 

@@ -9,6 +9,9 @@ Saddle/inseam operators gate strictly by canonical saddle topology + fitted coor
 """
 from __future__ import annotations
 
+import sys
+sys.dont_write_bytecode = True
+
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 from mathutils.kdtree import KDTree
@@ -73,13 +76,21 @@ def infer_muscle_mass_gate(
     v_signal = u_gain - 0.55 * max(0.0, w_gain)
     return float(np.clip(0.50 + v_signal / 0.044, 0.0, 1.0))
 
-_DONOR_GRID_CACHE_DIR = Path("/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-12-body-reference-family/study/family-20261113/fits/_raw_fit_cache")
+from runtime_env import get_transfer_cache_dir
+
+
+def _atomic_save_npy(dst: Path, arr: np.ndarray) -> None:
+    import os as _os
+    tmp = dst.parent / f".tmp-{dst.stem}-{_os.getpid()}.npy"
+    np.save(tmp, arr)
+    _os.replace(tmp, dst)
+
 
 def _donor_grid_key(donor_xyz: np.ndarray, tag: str) -> Path:
     import hashlib as _hl
     h = _hl.sha256(np.round(donor_xyz[::17], 4).astype(np.float32).tobytes()).hexdigest()[:12]
-    _DONOR_GRID_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    return _DONOR_GRID_CACHE_DIR / f"donor-grid-{tag}-{h}.npy"
+    c_dir = get_transfer_cache_dir()
+    return c_dir / f"donor-grid-{tag}-{h}.npy"
 
 
 def _stage_cache_eval(tag: str, fn_obj, key_arrays: list[np.ndarray], compute_fn) -> np.ndarray:
@@ -101,12 +112,12 @@ def _stage_cache_eval(tag: str, fn_obj, key_arrays: list[np.ndarray], compute_fn
             a = np.asarray(arr)
             s = a[:: max(1, len(a) // 2048)] if a.ndim >= 1 and len(a) > 4096 else a
             h.update(np.round(s.astype(np.float32), 5).tobytes() if np.issubdtype(a.dtype, np.floating) else s.tobytes())
-    _DONOR_GRID_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cp = _DONOR_GRID_CACHE_DIR / f"stage-{tag}-{h.hexdigest()[:14]}.npy"
+    c_dir = get_transfer_cache_dir()
+    cp = c_dir / f"stage-{tag}-{h.hexdigest()[:14]}.npy"
     if cp.is_file():
         return np.load(cp).astype(np.float64)
     res_f32 = np.asarray(compute_fn(), dtype=np.float32)
-    np.save(cp, res_f32)
+    _atomic_save_npy(cp, res_f32)
     return res_f32.astype(np.float64)
 
 from canonical_masks import bfs_hop_distance
@@ -4972,7 +4983,7 @@ def polish_axilla_and_upper_lat(
                     fc = np.isfinite(yg_ch[:, zi_c])
                     if np.sum(fc) >= 6:
                         yg_ch[:, zi_c] = np.interp(xg_ch, xg_ch[fc], yg_ch[fc, zi_c])
-                np.save(_ch_cp, yg_ch)
+                _atomic_save_npy(_ch_cp, yg_ch)
             if np.all(np.isfinite(yg_ch)):
                 # Smooth lateral ribcage/arm-junction columns (`|X| >= 0.138m` below Z=1.452m, `|X| >= 0.168m` above) so neither the Z~1432mm
                 # flank ribcrease nor the Z~1472mm pressed-bicep contact edge stamps a horizontal line onto Front or Profile!

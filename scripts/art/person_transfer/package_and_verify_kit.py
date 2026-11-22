@@ -10,8 +10,19 @@ import sys
 
 sys.dont_write_bytecode = True
 
-BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
-PYTHON = "/Users/mike/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python"
+PACKAGE_DIR = Path(__file__).resolve().parent
+if str(PACKAGE_DIR) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_DIR))
+
+from runtime_env import (  # noqa: E402
+    external_output,
+    resolve_blender_bin,
+    resolve_blender_python,
+    resolve_repo_root,
+    resolve_workspace_root,
+    subprocess_env,
+)
+
 EVIDENCE = "metahuman-poc-private-evaluation-owner-attestation-20261107"
 
 
@@ -42,7 +53,7 @@ def run_logged(cmd: list[str], cwd: Path, log_base: Path, timeout: int = 180) ->
     log_base.parent.mkdir(parents=True, exist_ok=True)
     out_p, err_p = log_base.with_suffix(".stdout"), log_base.with_suffix(".stderr")
     with out_p.open("wb") as stdout, err_p.open("wb") as stderr:
-        res = subprocess.run(cmd, cwd=cwd, timeout=timeout, stdout=stdout, stderr=stderr)
+        res = subprocess.run(cmd, cwd=cwd, timeout=timeout, stdout=stdout, stderr=stderr, env=subprocess_env())
     if res.returncode != 0:
         raise RuntimeError(f"Command failed ({res.returncode}): {' '.join(cmd)}\nstderr:\n{err_p.read_text()[-2500:]}")
     return out_p
@@ -52,13 +63,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True, type=Path, help="body-support-grid-input manifest.json")
     parser.add_argument("--output", required=True, type=Path, help="Fresh stage package directory")
-    parser.add_argument("--repository", required=True, type=Path)
-    parser.add_argument("--art-root", type=Path, default=Path("/Users/mike/Documents/ChatGPT/OpenLegend-art"))
+    parser.add_argument("--repository", type=Path, default=None)
+    parser.add_argument("--art-root", type=Path, default=None, help="External OpenLegend art workspace root")
+    parser.add_argument("--blender", type=Path, default=None)
     args = parser.parse_args()
 
-    repo = args.repository.resolve()
-    art_root = args.art_root.resolve()
-    out = args.output.resolve()
+    repo = resolve_repo_root(args.repository)
+    art_root = resolve_workspace_root(args.art_root)
+    out = external_output(args.output)
+    blender_bin = str(resolve_blender_bin(args.blender))
+    py_bin = str(resolve_blender_python(Path(blender_bin)))
     if out.exists():
         raise ValueError(f"Output directory already exists: {out}")
     out.mkdir(parents=True)
@@ -79,7 +93,7 @@ def main() -> None:
     # 1. Offline two-slider decomposition & reconstruction proof
     grid_dir = out / "grid-compile"
     run_logged(
-        [PYTHON, str(body_grid), "compile", "--manifest", str(args.manifest.resolve()), "--output", str(grid_dir), "--repository", str(repo)],
+        [py_bin, str(body_grid), "compile", "--manifest", str(args.manifest.resolve()), "--output", str(grid_dir), "--repository", str(repo)],
         cwd=repo,
         log_base=logs / "01-grid-compile",
     )
@@ -88,7 +102,7 @@ def main() -> None:
     kit_dir = out / "kit"
     run_logged(
         [
-            BLENDER,
+            blender_bin,
             "--background",
             "--factory-startup",
             "--offline-mode",
@@ -154,7 +168,7 @@ def main() -> None:
 
     run_logged(
         [
-            BLENDER,
+            blender_bin,
             "-b",
             "-t",
             "2",
@@ -240,18 +254,71 @@ def main() -> None:
         },
     )
 
-    # 5. Cross-evaluator parity (TypeScript person-family.ts vs Python people.py, seam closure, lean V3/lane witnesses, edit order)
+    # 5. Cross-evaluator parity (Python people.py reference -> TypeScript person-family.ts parity, seam closure, lean V3/lane witnesses, edit order)
+    py_ref_json = out / "python-evaluator-reference.json"
+    py_parity_code = (
+        "import json, sys, numpy as np\n"
+        "from pathlib import Path\n"
+        "repo, kit, patch_p, v3_p, lane_p, out_p = sys.argv[1:]\n"
+        "sys.path.insert(0, str(Path(repo) / 'scripts/art'))\n"
+        "import people\n"
+        "comp = json.loads((Path(kit) / 'compiled.json').read_text())\n"
+        "prof = json.loads((Path(kit) / 'profile.json').read_text())\n"
+        "patch = json.loads(Path(patch_p).read_text())\n"
+        "m_key, f_key, mode = patch['axisControls']['mass'], patch['axisControls']['fullness'], patch['supportMode']\n"
+        "coords = [[0.5, 0.0], [0.5, 0.5], [0.5, 1.0], [0.5, 0.25], [0.5, 0.75]] if mode == 2 else (\n"
+        "    [[m, f] for f in (0.0, 0.5, 1.0) for m in (0.0, 0.5, 1.0)] + [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]]\n"
+        ")\n"
+        "sel = {r['id']: r['defaultValue'] for r in prof['selections']}\n"
+        "out = {'recipes': {}}\n"
+        "for m, f in coords:\n"
+        "    rec = people.resolve_recipe(comp, {'family': comp['reference'], 'controls': {m_key: m, f_key: f}, 'selections': sel}, prof)\n"
+        "    st = people.evaluate_body(comp, rec)\n"
+        "    people.fit_parts(comp, st, ['proofShirt'])\n"
+        "    out['recipes'][f'{m:.2f},{f:.2f}'] = {\n"
+        "        k: np.asarray(st['canonicalPositions'][k], dtype=np.float32).tolist()\n"
+        "        for k in ('bodySkin', 'headSkin', 'studioShorts', 'proofShirt')\n"
+        "    }\n"
+        "v3 = json.loads(Path(v3_p).read_text())\n"
+        "v3_prof = json.loads((Path(v3_p).parent / 'profile.json').read_text())\n"
+        "v3_sel = {r['id']: r['defaultValue'] for r in v3_prof['selections']}\n"
+        "v3_ctrl = {m_key: 0.5, f_key: 0.0, **({'definition': 1.0} if 'definition' in v3['controls'] else {})}\n"
+        "v3_rec = people.resolve_recipe(v3, {'family': v3['reference'], 'controls': v3_ctrl, 'selections': v3_sel}, v3_prof)\n"
+        "out['leanV3Body'] = np.asarray(people.evaluate_body(v3, v3_rec)['canonicalPositions']['bodySkin'], dtype=np.float32).tolist()\n"
+        "lane = json.loads(Path(lane_p).read_text())\n"
+        "lane_prof = json.loads((Path(lane_p).parent / 'profile.json').read_text())\n"
+        "lane_sel = {r['id']: r['defaultValue'] for r in lane_prof['selections']}\n"
+        "lane_ctrl = {m_key: 0.5, f_key: 0.0, **({'definition': 1.0} if 'definition' in lane['controls'] else {})}\n"
+        "lane_rec = people.resolve_recipe(lane, {'family': lane['reference'], 'controls': lane_ctrl, 'selections': lane_sel}, lane_prof)\n"
+        "lane_st = people.evaluate_body(lane, lane_rec)\n"
+        "people.fit_parts(lane, lane_st, ['proofShirt'])\n"
+        "out['leanLaneShirt'] = np.asarray(lane_st['canonicalPositions']['proofShirt'], dtype=np.float32).tolist()\n"
+        "Path(out_p).write_text(json.dumps(out))\n"
+    )
+    run_logged(
+        [
+            py_bin,
+            "-c",
+            py_parity_code,
+            str(repo),
+            str(kit_dir),
+            str(grid_dir / "mesh-patch.json"),
+            str(lean_kit / "compiled.json"),
+            str(source_kit / "compiled.json"),
+            str(py_ref_json),
+        ],
+        cwd=repo,
+        log_base=logs / "07a-python-evaluator-ref",
+    )
     parity_json = out / "evaluator-parity.json"
     run_logged(
         [
             *tsx_cli,
             str(parity_mts),
-            str(repo),
             str(kit_dir),
             str(delivery_dir / "definition.json"),
             str(grid_dir / "mesh-patch.json"),
-            str(lean_kit / "compiled.json"),
-            str(source_kit / "compiled.json"),
+            str(py_ref_json),
             str(parity_json),
         ],
         cwd=repo,

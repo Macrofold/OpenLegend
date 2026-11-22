@@ -37,56 +37,16 @@ TOOLS_DIR = Path(__file__).resolve().parent
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
+from blender_scene import look_at as _look_at, make_clay_material as _make_clay_mat, setup_studio_lights  # noqa: E402
+from linen_briefs import get_baseline_coverage_ids  # noqa: E402
 from mesh_rig_utils import gltf_to_blender, self_intersections, vertex_normals, weld_connectivity  # noqa: E402
 import export_covered_glb as ecg  # noqa: E402
-
-PIL_PYTHON = "/Users/mike/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python"
-
-
-def _look_at(obj: bpy.types.Object, pos: tuple[float, float, float], target: tuple[float, float, float]) -> None:
-    obj.location = Vector(pos)
-    direction = Vector(target) - obj.location
-    obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
+from pil_compat import Image, ImageDraw  # noqa: E402
+from runtime_env import bootstrap_foundation  # noqa: E402
 
 
 def _setup_lights(scn: bpy.types.Scene) -> None:
-    scn.render.engine = "BLENDER_EEVEE"
-    scn.view_settings.view_transform = "Standard"
-    scn.view_settings.look = "None"
-    scn.render.film_transparent = False
-
-    world = bpy.data.worlds.new("NovelPoseWorld")
-    scn.world = world
-    world.use_nodes = True
-    bg = world.node_tree.nodes.get("Background")
-    if bg is not None:
-        bg.inputs["Color"].default_value = (0.16, 0.165, 0.175, 1.0)
-        bg.inputs["Strength"].default_value = 0.18
-
-    for name, loc, energy, sz, col in (
-        ("NP_FrontKey", (-1.35, -2.85, 2.55), 112.0, 1.90, (1.0, 0.985, 0.96)),
-        ("NP_FrontFill", (2.15, -2.55, 1.60), 38.0, 2.35, (0.99, 0.985, 0.98)),
-        ("NP_BackKey", (1.35, 2.85, 2.55), 112.0, 1.90, (1.0, 0.985, 0.96)),
-        ("NP_BackFill", (-2.15, 2.55, 1.60), 38.0, 2.35, (0.99, 0.985, 0.98)),
-    ):
-        ld = bpy.data.lights.new(name=name, type="AREA")
-        ld.energy = energy
-        ld.size = sz
-        ld.color = col
-        lo = bpy.data.objects.new(name=name, object_data=ld)
-        scn.collection.objects.link(lo)
-        _look_at(lo, loc, (0.0, 0.0, 1.05))
-
-
-def _make_clay_mat(name: str, rgb: tuple[float, float, float], rough: float = 0.48) -> bpy.types.Material:
-    mat = bpy.data.materials.new(name=name)
-    mat.use_nodes = True
-    bsdf = mat.node_tree.nodes.get("Principled BSDF")
-    if bsdf is not None:
-        bsdf.inputs["Base Color"].default_value = (rgb[0], rgb[1], rgb[2], 1.0)
-        bsdf.inputs["Roughness"].default_value = rough
-        bsdf.inputs["Metallic"].default_value = 0.0
-    return mat
+    setup_studio_lights(scn, world_name="NovelPoseWorld", bg_strength=0.18, aim_z=1.05, key_energy=112.0, fill_energy=38.0)
 
 
 NOVEL_POSE_SPECS: list[dict] = [
@@ -365,7 +325,8 @@ def _audit_and_render_glb(
 
     body_obj = meshes["bodySkin"]
     head_obj = meshes["headSkin"]
-    briefs_obj = meshes.get("linenBriefs") or meshes.get("studioShorts")
+    cov_part_id = get_baseline_coverage_ids()[0]
+    briefs_obj = meshes.get(cov_part_id) or meshes.get("linenBriefs") or meshes.get("studioShorts")
 
     b_names = [b.name for b in rig.pose.bones]
     vg_to_bi = {vg.index: b_names.index(vg.name) for vg in body_obj.vertex_groups if vg.name in b_names}
@@ -496,7 +457,7 @@ def _audit_and_render_glb(
             for mname, mobj in meshes.items():
                 if mname in ("bodySkin", "headSkin"):
                     continue
-                is_garment = mname in ("linenBriefs", "studioShorts")
+                is_garment = mname in (cov_part_id, "linenBriefs", "studioShorts")
                 for si in range(len(mobj.material_slots)):
                     mobj.material_slots[si].material = clay_brief if is_garment else clay_skin
             for v_id, az, cz, osc in spec["views"]:
@@ -525,15 +486,12 @@ def _export_temp_stage_a_glb(stage_a_fit_dir: Path, out_glb: Path) -> None:
         map_cand = Path(receipt["rawCgCache"]["path"]).parent / "shared-lod0-to-lod1-map.npz"
     map_npz = np.load(map_cand, allow_pickle=False)
 
-    witness_pkg = ecg.ol_people.load_family(ecg.WITNESS_PACKAGE_JSON)
+    fnd = bootstrap_foundation()
+    witness_pkg = ecg.ol_people.load_family(ecg.get_witness_package_json())
     compiled = witness_pkg["compiled"]
     seam_body = np.asarray(compiled["seams"][0]["bodyVertices"], dtype=np.int64)
-    lean_sup_p = Path(
-        "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-12-body-reference-family/study/family-20261113/supports/M050-F000-lean-v3.npz"
-    )
-    canon_l1_p = Path(
-        "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-11-peacock-full-transfer/study/continuation/finish/root/body-audit/body-v3/runtime-controls.npz"
-    )
+    lean_sup_p = fnd["canonicalLeanSupport"]
+    canon_l1_p = fnd["canonicalLod1"]
     lean_sup_bl = gltf_to_blender(np.load(lean_sup_p)["positions"])
     canon_l1_raw = np.load(canon_l1_p)["reference"].astype(np.float64)
     z_shift = float(lean_sup_bl[seam_body, 2].mean() - canon_l1_raw[seam_body, 2].mean())
@@ -575,41 +533,30 @@ def _export_temp_stage_a_glb(stage_a_fit_dir: Path, out_glb: Path) -> None:
 
 
 def _compose_boards_with_pil(tmp_dir: Path, out_dir: Path, has_stage_a: bool) -> None:
-    script = """
-import json, sys
-from pathlib import Path
-from PIL import Image, ImageDraw
+    meta = json.loads((tmp_dir / "layout_meta.json").read_text())
+    pw, ph = meta["pw"], meta["ph"]
 
-tmp_dir, out_dir, has_a = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3] == "1"
-meta = json.loads((tmp_dir / "layout_meta.json").read_text())
-pw, ph = meta["pw"], meta["ph"]
+    def make_board(rows_spec: list, title: str, out_path: Path) -> None:
+        ncols = max(len(r) for r in rows_spec)
+        nrows = len(rows_spec)
+        bw = 16 + ncols * (pw + 10) + 6
+        bh = 44 + nrows * (ph + 30) + 10
+        im = Image.new("RGB", (bw, bh), (20, 22, 26))
+        dr = ImageDraw.Draw(im)
+        dr.text((16, 12), title, fill=(255, 226, 152))
+        for ri, row in enumerate(rows_spec):
+            oy = 44 + ri * (ph + 30)
+            for ci, (lbl, fname, hi_col) in enumerate(row):
+                ox = 16 + ci * (pw + 10)
+                dr.text((ox + 4, oy + 4), lbl, fill=(255, 232, 175) if hi_col else (228, 234, 242))
+                tile = Image.open(tmp_dir / fname).convert("RGB")
+                im.paste(tile, (ox, oy + 22))
+        im.save(out_path, format="PNG")
 
-def make_board(rows_spec, title, out_path):
-    ncols = max(len(r) for r in rows_spec)
-    nrows = len(rows_spec)
-    bw = 16 + ncols * (pw + 10) + 6
-    bh = 44 + nrows * (ph + 30) + 10
-    im = Image.new("RGB", (bw, bh), (20, 22, 26))
-    dr = ImageDraw.Draw(im)
-    dr.text((16, 12), title, fill=(255, 226, 152))
-    for ri, row in enumerate(rows_spec):
-        oy = 44 + ri * (ph + 30)
-        for ci, (lbl, fname, hi_col) in enumerate(row):
-            ox = 16 + ci * (pw + 10)
-            dr.text((ox + 4, oy + 4), lbl, fill=(255, 232, 175) if hi_col else (228, 234, 242))
-            tile = Image.open(tmp_dir / fname).convert("RGB")
-            im.paste(tile, (ox, oy + 22))
-    im.save(out_path, format="PNG")
-
-make_board(meta["pbrRows"], meta["pbrTitle"], out_dir / "signoff-12-novel-poses-pbr-gallery.png")
-make_board(meta["clayRows"], meta["clayTitle"], out_dir / "signoff-13-novel-poses-clay-audit.png")
-if has_a:
-    make_board(meta["compRows"], meta["compTitle"], out_dir / "signoff-14-muscle-vs-fat-novel-poses.png")
-"""
-    subprocess.run(
-        [PIL_PYTHON, "-c", script, str(tmp_dir), str(out_dir), "1" if has_stage_a else "0"],
-        check=True,
-    )
+    make_board(meta["pbrRows"], meta["pbrTitle"], out_dir / "signoff-12-novel-poses-pbr-gallery.png")
+    make_board(meta["clayRows"], meta["clayTitle"], out_dir / "signoff-13-novel-poses-clay-audit.png")
+    if has_stage_a:
+        make_board(meta["compRows"], meta["compTitle"], out_dir / "signoff-14-muscle-vs-fat-novel-poses.png")
 
 
 def main() -> None:
