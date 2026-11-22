@@ -572,15 +572,15 @@ pub enum EncounterExposure {
     InventoryItem {
         id: String,
         definition: VersionedFamily,
-        label: String,
-        description: String,
+        label: crate::text::JsText,
+        description: crate::text::JsText,
         introduction_key: String,
         #[serde(
             default,
             deserialize_with = "deserialize_present_option",
             skip_serializing_if = "Option::is_none"
         )]
-        inscription: Option<String>,
+        inscription: Option<crate::text::JsText>,
         #[serde(
             default,
             deserialize_with = "deserialize_present_option",
@@ -1535,7 +1535,7 @@ impl EncounterExposure {
                 ..
             } => (
                 id,
-                text(label, 160) && text(description, 8000),
+                js_text(label, 160) && js_text(description, 8000),
                 mechanism_fields,
             ),
         };
@@ -1577,7 +1577,7 @@ impl EncounterExposure {
             } => {
                 is_safe_record_id(&definition.id)
                     && definition.version > 0
-                    && inscription.as_ref().is_none_or(|value| text(value, 600))
+                    && inscription.as_ref().is_none_or(|value| js_text(value, 600))
                     && (introduction_key == &format!("inventory-item:{id}")
                         || introduction_key == &format!("inventory-definition:{}", definition.id))
                     && observed_location

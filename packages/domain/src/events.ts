@@ -1,3 +1,4 @@
+import inspectionCopy from './inventory-inspection-copy.json' with { type: 'json' };
 import {
   acquireNativeResponseEvent,
   acquireNativeSound,
@@ -270,7 +271,7 @@ export function acquireExposure(
       ? exposure.reportedBy
         ? `I read directions to ${exposure.label}, reported by ${exposure.reportedBy}. ${exposure.description}`
         : `I reached ${exposure.label}. ${exposure.description}`
-      : `I inspected ${exposure.label}${locationSuffix}. ${exposure.description}`;
+      : `${inspectionCopy.inspect}${exposure.label}${locationSuffix}. ${exposure.description}`;
   return recordEvent(
     world,
     events,

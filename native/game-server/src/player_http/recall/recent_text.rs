@@ -268,11 +268,16 @@ pub(super) fn described<'a>(
                             observed_location,
                             ..
                         } => {
-                            parts.insert(format!("{label}: {description}").into());
+                            let mut details = label.clone();
+                            details.push_str(": ");
+                            details.push_text(description);
+                            parts.insert(details);
                             if let Some(inscription) =
                                 inscription.as_ref().filter(|text| !text.is_empty())
                             {
-                                parts.insert(format!("Inscription: {inscription}").into());
+                                let mut written = JsText::from("Inscription: ");
+                                written.push_text(inscription);
+                                parts.insert(written);
                             }
                             if let Some(
                                 ObservedItemLocation::World { label, .. }

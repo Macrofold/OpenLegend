@@ -773,6 +773,26 @@ impl<'a> PersonalNameReader<'a> {
         ids: &[&str],
         budget: &ByteBudget,
     ) -> Result<CapturedNames, ReceivedError> {
+        self.capture_names_with_acquisition(ids, None, budget)
+    }
+
+    /// A deliberate private acquisition can already have admitted its item's
+    /// exact label. Reuse that observation rather than request external sight
+    /// of an item carried inside the observer's inventory.
+    pub(crate) fn capture_names_with_acquisition(
+        &self,
+        ids: &[&str],
+        acquired: Option<(&str, &crate::text::JsText)>,
+        budget: &ByteBudget,
+    ) -> Result<CapturedNames, ReceivedError> {
+        let name = |id: &str| match acquired {
+            Some((item, label)) if item == id => Ok(PersonalName {
+                name: label.into(),
+                name_form: None,
+                indefinite_article: None,
+            }),
+            _ => self.observer_name(id),
+        };
         let mut bytes = heap_sum([
             size_of::<CapturedNames>(),
             self.observer_id.len(),
@@ -781,7 +801,7 @@ impl<'a> PersonalNameReader<'a> {
         ])
         .ok_or_else(capacity)?;
         for id in ids {
-            bytes = heap_sum([bytes, id.len(), self.observer_name(id)?.heap_bound()?])
+            bytes = heap_sum([bytes, id.len(), name(id)?.heap_bound()?])
                 .ok_or_else(capacity)?;
         }
         let reservation = budget.reserve(bytes).map_err(|_| capacity())?;
@@ -789,7 +809,7 @@ impl<'a> PersonalNameReader<'a> {
         names.try_reserve(ids.len()).map_err(|_| capacity())?;
         for id in ids {
             if !names.contains_key(*id) {
-                names.insert((*id).to_owned(), self.observer_name(id)?.owned());
+                names.insert((*id).to_owned(), name(id)?.owned());
             }
         }
         let life = self

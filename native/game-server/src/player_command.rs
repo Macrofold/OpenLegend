@@ -79,6 +79,8 @@ struct CommandInput {
     )]
     item_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    container_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     fire_operation: Option<FireOperation>,
     #[serde(
         default,
@@ -242,6 +244,8 @@ enum CommandKind {
     StatusEffect,
     Equip,
     Unequip,
+    #[serde(rename = "inspect-inventory")]
+    InspectItem,
 }
 
 struct PreparedRequest {
@@ -670,8 +674,10 @@ impl CommandRequest {
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
             || Uuid::parse_str(&self.command_epoch).is_err()
-            || (!matches!(command.kind, CommandKind::Unequip)
-                && (command.expected_revision.is_some() || command.placement_revision.is_some()))
+            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem)
+                && command.expected_revision.is_some())
+            || (!matches!(command.kind, CommandKind::Unequip) && command.placement_revision.is_some())
+            || (!matches!(command.kind, CommandKind::InspectItem) && command.container_id.is_some())
             || command.quantity.is_some_and(|quantity| !matches!(command.kind, CommandKind::Pickup) || quantity == 0)
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
@@ -689,6 +695,15 @@ impl CommandRequest {
             return Err(AccessError::Forbidden.into());
         }
         match command.kind {
+            CommandKind::InspectItem
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.target_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.item_id.as_deref().is_some_and(id)
+                    && command.container_id.as_deref().is_some_and(id)
+                    && command.expected_revision.is_some() => Ok(()),
             CommandKind::Move
                 if command.expected_action_id.is_none()
                     && command.target_id.is_none()
@@ -870,6 +885,11 @@ impl PreparedRequest {
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
         match input.kind {
+            CommandKind::InspectItem => Ok(RuntimePlayerCommand::InspectItem {
+                item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                container: input.container_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                expected_revision: input.expected_revision.ok_or(StoreError::InvalidRecord)?,
+            }),
             CommandKind::Move => Ok(RuntimePlayerCommand::Move(
                 destination.ok_or(StoreError::InvalidRecord)?,
             )),

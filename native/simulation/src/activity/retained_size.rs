@@ -208,9 +208,13 @@ impl HeapBytes for NativeCommand {
                 definition_id.heap_bytes()?,
                 weapon_item_id.heap_bytes()?,
             ]),
-            Self::InspectInventory { envelope } | Self::InspectActivities { envelope, .. } => {
-                envelope.heap_bytes()
-            }
+            Self::InspectInventory { envelope, selected } => heap_sum([
+                envelope.heap_bytes()?,
+                selected.as_ref().map_or(Some(0), |item| {
+                    item.item_id.heap_bytes()?.checked_add(item.container_id.heap_bytes()?)
+                })?,
+            ]),
+            Self::InspectActivities { envelope, .. } => envelope.heap_bytes(),
         }
     }
 }

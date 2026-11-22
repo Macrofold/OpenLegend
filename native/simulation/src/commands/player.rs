@@ -37,6 +37,7 @@ pub enum RuntimePlayerCommand<'a> {
     },
     TendFire { target: &'a str, operation: crate::fire_care::FireOperation, item: Option<&'a str> },
     Pickup { target: &'a str, item: &'a str, quantity: Option<u64> },
+    InspectItem { item: &'a str, container: &'a str, expected_revision: u64 },
     Eat(&'a str),
     Equip(&'a str),
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
@@ -57,6 +58,7 @@ impl RuntimePlayerCommand<'_> {
                 heat.len() + preparation_id.len() + preparation_digest.len()
                     + inputs.iter().map(|(role, item)| role.len() + item.len()).sum::<usize>()
             }
+            Self::InspectItem { item, container, .. } => item.len() + container.len(),
             Self::Eat(item) | Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
         }
     }
@@ -80,6 +82,9 @@ impl RuntimePlayerCommand<'_> {
         }
         if let Self::Status { target, definition, operation, facing } = self {
             return bind_status(id, actor, target, definition, operation, facing);
+        }
+        if let Self::InspectItem { item, container, expected_revision } = self {
+            return bind_inspection(id, actor, item, container, expected_revision);
         }
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
@@ -163,7 +168,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::InspectItem { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => ("eat", None, None, None, Some(item), None),
@@ -284,7 +289,7 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } => {
+            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::InspectItem { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },
@@ -301,6 +306,46 @@ impl RuntimePlayerCommand<'_> {
         };
         Ok((command, signature))
     }
+}
+
+fn bind_inspection(
+    id: &str,
+    actor: &str,
+    item: &str,
+    container: &str,
+    expected_revision: u64,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Inspection<'a> {
+        actor_id: &'a str,
+        container_id: &'a str,
+        expected_revision: u64,
+        human_initiated: bool,
+        id: &'a str,
+        item_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid() || !crate::values::is_safe_record_id(item)
+        || !crate::values::is_safe_record_id(container)
+        || expected_revision > crate::identity::MAX_SAFE_INTEGER
+    {
+        return Err(serde::ser::Error::custom("Invalid exact item inspection."));
+    }
+    let input = Inspection {
+        actor_id: actor, container_id: container, expected_revision, human_initiated: true,
+        id, item_id: item, kind: "inspect-inventory",
+    };
+    let encoding = CommandEncoding::from_ordered(&input, 7)?;
+    let signature = json_record(&input)?;
+    Ok((NativeCommand::InspectInventory {
+        envelope: headers.envelope(encoding),
+        selected: Some(super::InspectedItem {
+            item_id: item.into(), container_id: container.into(), expected_revision,
+        }),
+    }, signature))
 }
 
 fn player_headers(id: &str, actor: &str) -> CommandHeaders {

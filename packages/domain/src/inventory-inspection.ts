@@ -1,3 +1,4 @@
+import inspectionCopy from './inventory-inspection-copy.json' with { type: 'json' };
 import { entityGet } from './entity-collection.js';
 import { accessiblePossession, canAccessContainer, possessionItems } from './object-access.js';
 import { acquireExposure } from './events.js';
@@ -43,9 +44,13 @@ export function describePossession(
     const melee = definition.melee;
     facts = [
       definition.description,
-      definition.properties.length ? `Properties: ${definition.properties.join(', ')}.` : '',
-      definition.nutrition ? `Edible now; restores ${definition.nutrition} nourishment.` : '',
-      melee ? 'Can be equipped for close-range attacks.' : '',
+      definition.properties.length
+        ? `${inspectionCopy.properties}${definition.properties.join(', ')}.`
+        : '',
+      definition.nutrition
+        ? inspectionCopy.edible.replace('{quantity}', String(definition.nutrition))
+        : '',
+      melee ? inspectionCopy.melee : '',
     ]
       .filter(Boolean)
       .join(' ');
@@ -56,11 +61,9 @@ export function describePossession(
     )
       descriptions.set(definition, facts);
   }
-  const inscriptionText =
-    includeInscription && definition.inscription
-      ? ` Written text: “${definition.inscription}”`
-      : '';
-  return `${item.quantity} × ${definition.name}${equipped ? ', equipped' : `, ${location}`}. ${facts}${inscriptionText}`;
+  const words = includeInscription && definition.inscription;
+  const inscriptionText = words ? inspectionCopy.written.replace('{words}', () => words) : '';
+  return `${item.quantity} × ${definition.name}${equipped ? inspectionCopy.equipped : `, ${location}`}. ${facts}${inscriptionText}`;
 }
 
 function observedOwnerLocation(
@@ -76,7 +79,7 @@ function observedOwnerLocation(
       kind: 'possession',
       label:
         ownerId === actorId
-          ? 'in my carried possessions'
+          ? inspectionCopy.carried
           : `in my carried ${observerName(world, actorId, ownerId).name}`,
     };
   }
@@ -267,9 +270,7 @@ export function inspectPossessions(
         : !accessiblePossession(world, actorId, item.id)) ||
       (expectedRevision !== undefined && expectedRevision !== revision)
     )
-      throw new Error(
-        'This item or its access changed. Refresh the contents before inspecting it.',
-      );
+      throw new Error(inspectionCopy.changed);
     const description = describePossession(
       item,
       world.itemDefinitions[item.definitionId]!,

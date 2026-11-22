@@ -1,3 +1,4 @@
+import inspectionCopy from './inventory-inspection-copy.json' with { type: 'json' };
 import { selectedOccurrenceRules } from './world-composition.js';
 import { selectedMovementRules, selectedTimeRules } from './world-composition.js';
 import { beginPerceptionMeasurements } from './perception-timing.js';
@@ -3969,7 +3970,7 @@ function executeCommandNative(
             'private',
           );
           cursor.evidenceIds.push(inspectionEvent.id);
-          result = outcome(true, 'inventory-inspected', 'Accessible contents inspected.');
+          result = outcome(true, 'inventory-inspected', inspectionCopy.inspected);
         } catch (error) {
           return reject(
             'inspection-unavailable',

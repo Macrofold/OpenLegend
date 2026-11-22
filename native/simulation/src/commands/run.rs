@@ -30,6 +30,7 @@ mod manufacture;
 mod equipment;
 mod eating;
 mod pickup;
+mod inspect_item;
 mod feeding;
 mod gathering;
 mod natural_contact;
@@ -970,6 +971,11 @@ impl CommandCursor {
                         continue;
                     }
                     match &self.command {
+                        NativeCommand::InspectInventory { selected: Some(_), .. } => {
+                            if let Some(event) = self.inspect_item(core, &actor_id)? {
+                                return Ok(Progress::Occurrence(event));
+                            }
+                        }
                         NativeCommand::WithdrawAttempt { attempt_id, .. } => {
                             let result = crate::plans::withdraw_attempt(
                                 core,
@@ -1085,7 +1091,7 @@ impl CommandCursor {
                         }
                         NativeCommand::Outing { .. }
                         | NativeCommand::Follow { .. }
-                        | NativeCommand::InspectInventory { .. }
+                        | NativeCommand::InspectInventory { selected: None, .. }
                         | NativeCommand::InspectActivities { .. } => {
                             return Err(ExecutionError::Invariant);
                         }

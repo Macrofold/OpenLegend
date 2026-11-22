@@ -271,10 +271,17 @@ impl NativeWorldSession {
                     .retained
                     .places_read
                     .current_observation(exposure, &state.physical),
-                // The captured closed inventory admits no current item or
-                // container access. Its future positive owner must supply this
-                // check before any recorded item can authorize publication.
-                EncounterExposure::InventoryItem { .. } => false,
+                EncounterExposure::InventoryItem { id, definition, .. } => {
+                    crate::install::owned_by(
+                        &state.physical.entities,
+                        &state.installed.retained,
+                        &read.scope.actor_id,
+                        id,
+                    )
+                    .map_err(failure)?
+                    .and_then(|item| state.installed.retained.items.get(item.definition_id))
+                    .is_some_and(|item| item.pin.id == definition.id && item.pin.version == definition.version)
+                }
             };
             if !alive {
                 return Ok(None);

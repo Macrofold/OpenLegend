@@ -269,6 +269,7 @@ pub(crate) enum NativeCommand {
     },
     InspectInventory {
         envelope: CommandEnvelope,
+        selected: Option<InspectedItem>,
     },
     InspectActivities {
         envelope: CommandEnvelope,
@@ -289,6 +290,47 @@ macro_rules! optional {
     }
 }
 optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String);
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct InspectedItem {
+    pub(crate) item_id: String,
+    pub(crate) container_id: String,
+    pub(crate) expected_revision: u64,
+}
+
+fn inventory_inspection_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Input {
+        #[serde(rename = "type")]
+        _kind: String,
+        #[serde(flatten)]
+        headers: CommandHeaders,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        item_id: Option<String>,
+        #[serde(default, deserialize_with = "deserialize_present_option")]
+        container_id: Option<String>,
+        #[serde(default, deserialize_with = "deserialize_present_safe_integer")]
+        expected_revision: Option<u64>,
+    }
+    let input: Input = serde_json::from_str(raw)?;
+    let selected = match (input.item_id, input.container_id, input.expected_revision) {
+        (None, None, None) => None,
+        (Some(item_id), Some(container_id), Some(expected_revision))
+            if is_safe_record_id(&item_id) && is_safe_record_id(&container_id) =>
+        {
+            Some(InspectedItem { item_id, container_id, expected_revision })
+        }
+        _ => return Err(serde::de::Error::custom("Invalid exact item inspection.")),
+    };
+    if !input.headers.valid() {
+        return Err(serde::de::Error::custom("Invalid selected native command binding."));
+    }
+    Ok(NativeCommand::InspectInventory {
+        envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
+        selected,
+    })
+}
 
 fn fire_care_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     #[derive(Deserialize)]
@@ -331,6 +373,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         }
         if tag.kind == "tend-fire" {
             return fire_care_input(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if tag.kind == "inspect-inventory" {
+            return inventory_inspection_input(raw.get()).map_err(serde::de::Error::custom);
         }
         let input: CommandInput =
             serde_json::from_str(raw.get()).map_err(serde::de::Error::custom)?;
@@ -626,14 +671,6 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     request,
                 })
             }
-            "inspect-inventory"
-                if !discovery_extras
-                    && !discovery_fields
-                    && input.target_id.is_none()
-                    && input.definition_id.is_none() =>
-            {
-                Ok(Self::InspectInventory { envelope })
-            }
             "inspect-activities"
                 if !discovery_extras
                     && input.attempt_id.is_none()
@@ -687,7 +724,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
-            | Self::InspectInventory { envelope }
+            | Self::InspectInventory { envelope, .. }
             | Self::InspectActivities { envelope, .. } => envelope,
         }
     }
@@ -716,7 +753,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
-            | Self::InspectInventory { envelope }
+            | Self::InspectInventory { envelope, .. }
             | Self::InspectActivities { envelope, .. } => envelope,
         }
     }
@@ -752,7 +789,7 @@ impl NativeCommand {
             Self::Outing { .. }
                 | Self::Follow { .. }
                 | Self::Strike { .. }
-                | Self::InspectInventory { .. }
+                | Self::InspectInventory { selected: None, .. }
                 | Self::InspectActivities { .. }
         )
     }

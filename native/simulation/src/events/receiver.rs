@@ -136,7 +136,17 @@ pub(super) fn prepare_receiver_awareness(
         &core.state.experience,
         &receiver.actor_id,
     )?;
-    let names = reader.capture_names(&ids, budget)?;
+    let acquired = match event.exposure.as_ref() {
+        Some(crate::reception::EncounterExposure::InventoryItem { id, label, .. })
+            if own && event.scope == Some(EventScope::Private)
+                && truth(event.data.as_ref(), "acquisition")
+                && selection.target_id() == Some(id.as_str()) =>
+        {
+            Some((id.as_str(), label))
+        }
+        _ => None,
+    };
+    let names = reader.capture_names_with_acquisition(&ids, acquired, budget)?;
     let projected = selection
         .materialization_bound(&names)
         .map_err(|_| ExecutionError::Capacity)?;
