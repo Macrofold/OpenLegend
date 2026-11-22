@@ -14,10 +14,10 @@ pub(crate) fn stage_preparation(
     source: &str,
     budget: &crate::host::ByteBudget,
 ) -> Result<
-    (
+    Option<(
         crate::execution::StagedOccurrence,
         crate::host::ByteReservation,
-    ),
+    )>,
     crate::execution::ExecutionError,
 > {
     use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
@@ -46,18 +46,29 @@ pub(crate) fn stage_preparation(
                 .get(&foraging.profile.id)
         })
         .and_then(|definition| definition.profile.hunt.as_ref());
-    if hunt.is_some_and(|hunt| action.definition_id.as_deref() == Some(&hunt.strike_id)) {
+    let chosen = body
+        .actor
+        .as_ref()
+        .is_some_and(|actor| actor.controller == "npc");
+    if chosen || hunt.is_some_and(|hunt| action.definition_id.as_deref() == Some(&hunt.strike_id)) {
         use crate::reception::EventScalar;
-        let target = action
-            .target_id
-            .as_deref()
-            .ok_or(ExecutionError::Invariant)?;
-        let cue = installed
+        let Some(cue) = installed
             .body_policy
             .as_ref()
             .and_then(|body| body.value().combat.as_ref())
             .and_then(|combat| combat.encounters.as_ref())
-            .ok_or(ExecutionError::UnsupportedFamily)?;
+        else {
+            // A chosen strike does not require the optional encounter system.
+            return if chosen {
+                Ok(None)
+            } else {
+                Err(ExecutionError::UnsupportedFamily)
+            };
+        };
+        let target = action
+            .target_id
+            .as_deref()
+            .ok_or(ExecutionError::Invariant)?;
         let event_type = &installed.ordinary_actions.value().action_started_event;
         let storage = budget.reserve(
             768 + 2 * (source.len() + target.len())
@@ -67,9 +78,13 @@ pub(crate) fn stage_preparation(
         )?;
         let event = EventEmissionIntent {
             event_type: event_type.clone(),
-            text: EmissionText::Narration(crate::reception::combat_observation::preparation_narration(
-                source, target, &cue.preparing_strike,
-            )),
+            text: EmissionText::Narration(
+                crate::reception::combat_observation::preparation_narration(
+                    source,
+                    target,
+                    &cue.preparing_strike,
+                ),
+            ),
             audience: AudienceSelection::Physical,
             source_id: Some(source.into()),
             target_id: Some(target.into()),
@@ -84,7 +99,7 @@ pub(crate) fn stage_preparation(
             origin: None,
             exposure: None,
         };
-        return Ok((core.stage_event(event)?, storage));
+        return Ok(Some((core.stage_event(event)?, storage)));
     }
     let text = body
         .threat
@@ -104,7 +119,7 @@ pub(crate) fn stage_preparation(
         origin: None,
         exposure: None,
     })?;
-    Ok((event, storage))
+    Ok(Some((event, storage)))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -121,8 +136,8 @@ pub(crate) enum StrikeOutcome {
     Miss,
 }
 
-/// Only the selected automatic natural strike family. Everything this path
-/// cannot honor still needs its own admission before it can execute.
+/// Select an installed unarmed contact profile for its actual performer.
+/// Autonomous controllers still require their explicitly granted profiles.
 pub(crate) fn profile<'a>(
     installed: &'a InstalledWorld,
     source: &Entity,
@@ -131,14 +146,36 @@ pub(crate) fn profile<'a>(
     let strike = installed.retained.native_strike_read.get(definition)?;
     let actor = source.actor.as_ref()?;
     let body = actor.body.as_ref()?;
-    (actor.controller == "native"
-        && motion::support_parts(source).is_some()
-        && actor.natural_strike_ids.as_ref()?.contains(&strike.id)
-        && strike.required_body_plan.as_ref() == Some(&body.plan)
-        && strike.weapon_item_id.is_none()
-        && !strike.auto_move_to_range
-        && strike.recovery_seconds.is_some())
-    .then_some(strike)
+    let granted = actor
+        .natural_strike_ids
+        .as_ref()
+        .is_some_and(|ids| ids.contains(&strike.id));
+    if motion::support_parts(source).is_none() || strike.weapon_item_id.is_some() {
+        return None;
+    }
+    match actor.controller.as_str() {
+        "native" => (granted
+            && strike.required_body_plan.as_ref() == Some(&body.plan)
+            && !strike.auto_move_to_range
+            && strike.recovery_seconds.is_some())
+        .then_some(strike),
+        "npc" => {
+            let ordinary = &installed
+                .occurrence_rules
+                .value()
+                .response
+                .offers
+                .natural_strike_body_plans;
+            ((granted || ordinary.contains(&body.plan))
+                && strike
+                    .required_body_plan
+                    .as_ref()
+                    .is_none_or(|plan| plan == &body.plan)
+                && strike.preparation_motion.is_none())
+            .then_some(strike)
+        }
+        _ => None,
+    }
 }
 
 pub(crate) fn may_target(
@@ -148,8 +185,15 @@ pub(crate) fn may_target(
     life: u64,
 ) -> bool {
     contact_permitted(installed, source, target, life)
-        && (target.animal.is_none()
-            || source.animal.as_ref().and_then(|animal| animal.foraging.as_ref())
+        && (source
+            .actor
+            .as_ref()
+            .is_some_and(|actor| actor.controller == "npc")
+            || target.animal.is_none()
+            || source
+                .animal
+                .as_ref()
+                .and_then(|animal| animal.foraging.as_ref())
                 .and_then(|state| state.work.as_ref())
                 .is_some_and(|work| {
                     work.kind == crate::native_response::ForagingWorkKind::Hunt
@@ -158,29 +202,34 @@ pub(crate) fn may_target(
                 }))
 }
 
-/// World policy authorizes the pair and its current life. A caller still has
-/// to establish why it acts, what it perceives, and how its target reacts.
+/// World policy authorizes the pair and its current life. The caller still
+/// supplies a chosen or autonomous action and its observation proof.
 pub(crate) fn contact_permitted(
     installed: &InstalledWorld,
     source: &Entity,
     target: &Entity,
     life: u64,
 ) -> bool {
-    source.id != target.id
-        && source.actively_participates()
-        && target.actively_participates()
-        && source.actor.as_ref().is_some_and(|actor| {
-            actor.controller == "native" && actor.alive && !actor.incapacitated
-        })
-        && target.actor.as_ref().is_some_and(|actor| {
-            actor.alive
-                && actor.physical_life.unwrap_or(0) == life
-                && installed
-                    .body_policy
-                    .as_ref()
-                    .and_then(|body| body.value().combat.as_ref())
-                    .is_some_and(|policy| policy.targets.native.contains(&actor.controller))
-        })
+    if source.id == target.id || !source.actively_participates() || !target.actively_participates()
+    {
+        return false;
+    }
+    let Some(source) = source.actor.as_ref().filter(|actor| {
+        actor.alive && !actor.incapacitated && matches!(actor.controller.as_str(), "native" | "npc")
+    }) else {
+        return false;
+    };
+    target.actor.as_ref().is_some_and(|target| {
+        target.alive
+            && target.physical_life.unwrap_or(0) == life
+            && installed
+                .body_policy
+                .as_ref()
+                .and_then(|body| body.value().combat.as_ref())
+                .is_some_and(|policy| {
+                    policy.permits_target(&source.controller, &target.controller, false)
+                })
+    })
 }
 
 pub(crate) fn valid_action(
@@ -208,7 +257,9 @@ pub(crate) fn valid_action(
         || action.has_unconverted_fields()
         || action.destination.is_some()
         || action.native_locomotion.is_some()
-        || action.replans.is_some()
+        || action.replans.is_some_and(|count| {
+            !action.has_contact_approach() || count > installed.movement_settings.max_replans
+        })
         || action.motion_sample_remaining_metres.is_some()
         || action.resource_definition.is_some()
         || action.attribute_id.is_some()
@@ -230,7 +281,8 @@ pub(crate) fn valid_action(
                             && motion::valid_route(installed, action)
                     }
                     (None, true) => {
-                        definition.preparation_motion.is_some()
+                        (definition.preparation_motion.is_some()
+                            || (definition.auto_move_to_range && action.has_contact_approach()))
                             && action.remaining_seconds == action.total_seconds
                             && target.and_then(Entity::physical_life) == action.target_life
                             && motion::valid_route(installed, action)
@@ -250,7 +302,7 @@ pub(crate) fn valid_action(
                 .actor
                 .as_ref()
                 .and_then(|actor| actor.combat_ready_at);
-            Some(action.total_seconds) == definition.recovery_seconds
+            action.total_seconds == definition.recovery_seconds.unwrap_or(0.0)
                 && action.stage == "working"
                 && action.strike_outcome.is_some()
                 && action.strike_motion.is_none()

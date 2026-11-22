@@ -74,7 +74,8 @@ impl SliceActions {
             }
             if !restricted
                 && ((action.has_ground_motion() && action.stage == "approaching")
-                    || action.strike_motion.is_some())
+                    || action.strike_motion.is_some()
+                    || action.has_contact_approach())
             {
                 approaching.push(*handle);
             }

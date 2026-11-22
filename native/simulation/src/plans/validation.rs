@@ -56,8 +56,29 @@ pub(crate) fn valid_command(
         }
         NativeCommand::Follow { target_id, distance, parameters, envelope } => {
             is_safe_record_id(target_id)
-                && parameters.distance(&world.occurrence_rules.value().response.offers,
-                    *distance, 0.0, *target_id == envelope.actor_id).is_ok()
+                && parameters
+                    .distance(
+                        &world.occurrence_rules.value().response.offers,
+                        *distance,
+                        0.0,
+                        *target_id == envelope.actor_id,
+                    )
+                    .is_ok()
+        }
+        NativeCommand::Strike {
+            target_id,
+            definition_id,
+            weapon_item_id,
+            envelope,
+            ..
+        } => {
+            is_safe_record_id(target_id)
+                && world
+                    .retained
+                    .native_strike_read
+                    .contains_key(definition_id)
+                && weapon_item_id.is_none()
+                && envelope.human_initiated != Some(true)
         }
         NativeCommand::StatusEffect {
             target_id,
@@ -104,7 +125,6 @@ pub(crate) fn valid_command(
         | NativeCommand::Eat { .. }
         | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }
-        | NativeCommand::Strike { .. }
         | NativeCommand::InspectInventory { .. }
         | NativeCommand::InspectActivities { .. }
         | NativeCommand::PlaceHearth { .. } => false,

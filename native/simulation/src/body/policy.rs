@@ -76,6 +76,25 @@ pub(crate) struct CombatPolicy {
     pub unavailable_text: String,
 }
 
+impl CombatPolicy {
+    /// The installed world decides which active controllers can target one
+    /// another. A human issuer also needs the world's human-issued permission.
+    pub(crate) fn permits_target(&self, source: &str, target: &str, human_issued: bool) -> bool {
+        let targets = match source {
+            "player" => &self.targets.player,
+            "npc" => &self.targets.npc,
+            "native" => &self.targets.native,
+            _ => return false,
+        };
+        targets.iter().any(|controller| controller == target)
+            && (source != "player" && !human_issued
+                || self
+                    .human_issued_targets
+                    .iter()
+                    .any(|controller| controller == target))
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct ControllerTargets {

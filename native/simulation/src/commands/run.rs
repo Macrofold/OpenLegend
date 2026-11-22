@@ -177,6 +177,7 @@ pub(crate) struct CommandCursor {
     preparation_mode: Option<super::WorkTransitionMode>,
     discovery_approaching: bool,
     discovery_starts_work: bool,
+    chosen_contact: bool,
     phase: Phase,
     queries: Option<GeometryQueries>,
     contact_route: Option<crate::contact::StrikeRoute>,
@@ -267,6 +268,7 @@ impl CommandCursor {
             preparation_mode: None,
             discovery_approaching: false,
             discovery_starts_work: false,
+            chosen_contact: false,
             phase: Phase::Start,
             queries: None,
             contact_route: None,
@@ -436,6 +438,13 @@ impl CommandCursor {
     pub(super) fn budget(&self) -> &ByteBudget {
         &self.budget
     }
+    /// Only an accepted plan can activate a chosen contact. Caller-provided
+    /// command fields cannot turn discovery into execution.
+    pub(crate) fn for_planned_contact(mut self) -> Self {
+        self.chosen_contact = matches!(self.command, NativeCommand::Strike { .. });
+        self
+    }
+
     pub(super) fn for_preparation(mut self, mode: super::WorkTransitionMode) -> Self {
         self.preparation_mode = Some(mode);
         self
@@ -1095,7 +1104,15 @@ impl CommandCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
-                    if self.typed_plan_mode.is_some() { return self.prepare_typed_walk(core); }
+                    if self.typed_plan_mode.is_some() {
+                        return self.prepare_typed_walk(core);
+                    }
+                    if self.chosen_contact {
+                        if self.start_discovery(core)? {
+                            return Ok(Progress::Geometry);
+                        }
+                        continue;
+                    }
                     if self.command.discovery_only()
                         && !(self.options.native_controller
                             && self.preparation_mode.is_none()

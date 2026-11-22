@@ -554,7 +554,7 @@ impl SpatialProvider {
         for candidate in candidates
             .into_iter()
             .filter(|p| self.can_stand(p, body) && reaches(p.point()))
-            .take(12)
+            .take(NavigationRequest::MAX_DESTINATIONS)
         {
             let route = self.surface_route(from, &candidate, body);
             if matches!(route, RoutePlan::Reached { .. }) {

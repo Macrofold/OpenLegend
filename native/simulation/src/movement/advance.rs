@@ -218,7 +218,7 @@ impl MoveAdvanceCursor {
         )?;
         // Source's zero-time path repair uses ordinary static geometry only;
         // occupied-body avoidance belongs to the later actual native motion.
-        let occupied = phase == Phase::ContactMotion
+        let occupied = (phase == Phase::ContactMotion && action.strike_motion.is_some())
             || (phase == Phase::PositiveMotion
                 && (action.native_locomotion.is_some()
                     || entity
@@ -550,10 +550,10 @@ impl MoveAdvanceCursor {
                         .as_ref()
                         .and_then(|actor| actor.action.as_ref())
                         .ok_or(ExecutionError::MissingActor)?;
-                    let motion = action
-                        .strike_motion
-                        .as_ref()
-                        .ok_or(ExecutionError::Invariant)?;
+                    let motion = action.strike_motion.as_ref();
+                    if motion.is_none() && !action.has_contact_approach() {
+                        return Err(ExecutionError::Invariant);
+                    }
                     if action.path.is_empty()
                         || action.navigation.is_some()
                         || installed
@@ -570,7 +570,9 @@ impl MoveAdvanceCursor {
                     // The slice has already installed its closing time. The
                     // windup can move during the interval ending at release.
                     let opened_at = core.state.physical.header.sim_time - self.seconds;
-                    let elapsed = self.seconds.min((motion.release_at - opened_at).max(0.0));
+                    let elapsed = motion.map_or(self.seconds, |motion| {
+                        self.seconds.min((motion.release_at - opened_at).max(0.0))
+                    });
                     self.start_motion(
                         core,
                         installed.movement_speed(entity)? * elapsed,

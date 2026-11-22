@@ -177,47 +177,44 @@ impl CommandCursor {
                     .entities
                     .get(target_id)
                     .ok_or(ExecutionError::MissingEntity)?;
-                    let Some(source) = actor.actor.as_ref().filter(|a| a.alive && !a.incapacitated)
-                    else {
-                        return self.discovery_refuse(&rules.availability.attack_source);
-                    };
-                    let Some(destination) = target.actor.as_ref().filter(|a| {
-                        a.alive && target.id != actor.id && target.actively_participates()
-                    }) else {
-                        return self.discovery_refuse(&rules.availability.attack_target);
-                    };
-                    let policy = installed
-                        .body_policy
-                        .as_ref()
-                        .and_then(|p| p.value().combat.as_ref());
-                    let permitted = policy.is_some_and(|p| {
-                        let controllers = match source.controller.as_str() {
-                            "player" => Some(&p.targets.player),
-                            "npc" => Some(&p.targets.npc),
-                            "native" => Some(&p.targets.native),
-                            _ => None,
-                        };
-                        controllers.is_some_and(|targets| targets.contains(&destination.controller))
-                            && (source.controller != "player"
-                                && self.command.envelope().human_initiated != Some(true)
-                                || p.human_issued_targets.contains(&destination.controller))
-                    });
-                    if !permitted {
-                        return self.discovery_result(
-                            false,
-                            &rules.availability.attack_permission.code,
-                            policy.map_or(&rules.availability.attack_permission.message, |p| {
-                                &p.unavailable_text
-                            }),
-                        );
-                    }
-                    // Human lethality review is a separate required authority.
-                    // Native NPC offers never synthesize that permission.
-                    if source.controller == "player"
-                        || self.command.envelope().human_initiated == Some(true)
-                    {
-                        return Err(ExecutionError::UnsupportedFamily);
-                    }
+                let Some(source) = actor.actor.as_ref().filter(|a| a.alive && !a.incapacitated)
+                else {
+                    return self.discovery_refuse(&rules.availability.attack_source);
+                };
+                let Some(destination) = target
+                    .actor
+                    .as_ref()
+                    .filter(|a| a.alive && target.id != actor.id && target.actively_participates())
+                else {
+                    return self.discovery_refuse(&rules.availability.attack_target);
+                };
+                let policy = installed
+                    .body_policy
+                    .as_ref()
+                    .and_then(|p| p.value().combat.as_ref());
+                let permitted = policy.is_some_and(|p| {
+                    p.permits_target(
+                        &source.controller,
+                        &destination.controller,
+                        self.command.envelope().human_initiated == Some(true),
+                    )
+                });
+                if !permitted {
+                    return self.discovery_result(
+                        false,
+                        &rules.availability.attack_permission.code,
+                        policy.map_or(&rules.availability.attack_permission.message, |p| {
+                            &p.unavailable_text
+                        }),
+                    );
+                }
+                // Human lethality review is a separate required authority.
+                // Native NPC offers never synthesize that permission.
+                if source.controller == "player"
+                    || self.command.envelope().human_initiated == Some(true)
+                {
+                    return Err(ExecutionError::UnsupportedFamily);
+                }
                 let actor_profile = crate::status::effective_body_profile(actor, &self.budget)?;
                 let target_profile = crate::status::effective_body_profile(target, &self.budget)?;
                 let mut from = actor
@@ -293,7 +290,7 @@ impl CommandCursor {
                     }
                 }
                 if reached {
-                    return self.discovery_ready(core);
+                    return self.discovery_ready(core, None);
                 }
                 self.reserve(
                     crate::host::retained_size::heap_sum([
@@ -327,9 +324,9 @@ impl CommandCursor {
                 let route = answer.routes.pop().ok_or(ExecutionError::Invariant)?;
                 self.queries = None;
                 match route {
-                    RoutePlan::Reached { .. } | RoutePlan::Pending { .. } => {
+                    selected @ (RoutePlan::Reached { .. } | RoutePlan::Pending { .. }) => {
                         self.discovery_approaching = true;
-                        self.discovery_ready(core)?;
+                        self.discovery_ready(core, Some(selected))?;
                     }
                     other => {
                             let code = match other {
@@ -349,7 +346,11 @@ impl CommandCursor {
         }
         Ok(())
     }
-    fn discovery_ready(&mut self, core: &CoreMutation<'_>) -> Result<(), ExecutionError> {
+    fn discovery_ready(
+        &mut self,
+        core: &CoreMutation<'_>,
+        path: Option<RoutePlan>,
+    ) -> Result<(), ExecutionError> {
         let installed = core.state.installed.clone();
         if let Some(definition) = core
             .state
@@ -375,6 +376,9 @@ impl CommandCursor {
             {
                 return self.discovery_refuse(&installed.ordinary_actions.value().cannot_interrupt);
             }
+        }
+        if self.chosen_contact {
+            return self.install_chosen_contact(core, path);
         }
         self.discovery_starts_work = true;
         self.phase = Phase::Choice;

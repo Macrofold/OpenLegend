@@ -61,7 +61,19 @@ pub(super) fn command(
 ) -> Result<Option<NativeCommand>, ExecutionError> {
     if !matches!(
         raw.get("type").and_then(SqlCell::as_str),
-        Some("move" | "follow" | "say" | "status-effect" | "fish" | "cook" | "tend-fire" | "cancel" | "withdraw-attempt" | "inspect-activities")
+        Some(
+            "move"
+                | "follow"
+                | "say"
+                | "status-effect"
+                | "fish"
+                | "cook"
+                | "tend-fire"
+                | "strike"
+                | "cancel"
+                | "withdraw-attempt"
+                | "inspect-activities"
+        )
     ) {
         return Ok(None);
     }

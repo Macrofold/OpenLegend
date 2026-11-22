@@ -177,7 +177,8 @@ impl MotionSliceCursor {
                                 && !actor.incapacitated
                                 && actor.action.as_ref().is_some_and(|action| {
                                     (action.has_ground_motion() && action.stage == "approaching")
-                                        || action.strike_motion.is_some()
+                                        || (action.strike_motion.is_some()
+                                            || action.has_contact_approach())
                                 })
                         });
                 if !eligible {
@@ -199,7 +200,9 @@ impl MotionSliceCursor {
                     .actor
                     .as_ref()
                     .and_then(|actor| actor.action.as_ref())
-                    .is_some_and(|action| action.strike_motion.is_some());
+                    .is_some_and(|action| {
+                        (action.strike_motion.is_some() || action.has_contact_approach())
+                    });
                 let start = if moving_contact {
                     MoveAdvanceCursor::moving_contact
                 } else {

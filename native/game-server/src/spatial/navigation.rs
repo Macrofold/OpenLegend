@@ -52,7 +52,8 @@ impl SpatialProvider {
         let exterior = request.outside_bounds.as_ref();
         if request.geometry_revision != self.revision
             || exterior.map_or(
-                request.destinations.is_empty() || request.destinations.len() > 12,
+                request.destinations.is_empty()
+                    || request.destinations.len() > NavigationRequest::MAX_DESTINATIONS,
                 |b| !request.destinations.is_empty() || !valid_bounds(b),
             )
             || !self.can_stand(here, body)
@@ -212,7 +213,7 @@ impl SpatialProvider {
                             if !seen.insert(key) {
                                 continue;
                             }
-                            if found.destinations.len() == 12 {
+                            if found.destinations.len() == NavigationRequest::MAX_DESTINATIONS {
                                 found.overflow = true;
                                 return Ok(ExitSearch::Complete(found));
                             }

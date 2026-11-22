@@ -213,10 +213,21 @@ pub(crate) fn interaction_reach(
     reach: f64,
     budget: &crate::host::ByteBudget,
 ) -> Result<Option<SightRay>, crate::execution::ExecutionError> {
-    use crate::execution::ExecutionError;
-    let mut from = actor
+    let from = actor
         .world_position()
-        .ok_or(ExecutionError::InvalidPosition)?;
+        .ok_or(crate::execution::ExecutionError::InvalidPosition)?;
+    interaction_reach_from(actor, target, from, reach, budget)
+}
+
+/// Prepare the same geometry from a route endpoint instead of the current body.
+pub(crate) fn interaction_reach_from(
+    actor: &crate::state::Entity,
+    target: &crate::state::Entity,
+    mut from: Point,
+    reach: f64,
+    budget: &crate::host::ByteBudget,
+) -> Result<Option<SightRay>, crate::execution::ExecutionError> {
+    use crate::execution::ExecutionError;
     from.y += crate::status::effective_body_profile(actor, budget)?.interaction_height;
     let mut to = target
         .world_position()

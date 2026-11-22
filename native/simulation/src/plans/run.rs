@@ -183,7 +183,8 @@ impl PlanRunCursor {
                     },
                     binding,
                     budget,
-                )?;
+                )?
+                .for_planned_contact();
                 self.operation = Some(CommandOperation::from_cursor(
                     core,
                     cursor,

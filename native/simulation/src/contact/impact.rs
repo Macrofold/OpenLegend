@@ -11,12 +11,13 @@ use crate::events::{
     AudienceSelection, CompletedOccurrence, EmissionText, EventEmissionIntent, EventScope,
 };
 use crate::execution::{
-    ActionFinish, ActionRouteWrite, ActionWrite, CoreMutation, ExecutionError, PendingStatusEnd,
-    PlanGenerationWrite, StagedOccurrence, StatusEnd,
+    ActionFinish, ActionRouteWrite, ActionWrite, CoreMutation, ExecutionError, PendingActionFinish,
+    PendingStatusEnd, PlanGenerationWrite, StagedOccurrence, StatusEnd,
 };
 use crate::experience::AcquiredActivityResult;
 use crate::geometry::{
-    GeometryAnswers, GeometryBinding, GeometryQueries, GuardedRoutePlan, RoutePlan, SightRay,
+    GeometryAnswers, GeometryBinding, GeometryQueries, GuardedRoutePlan, RoutePlan, RouteQuery,
+    SightRay,
 };
 use crate::host::retained_size::HeapBytes;
 use crate::host::{ByteBudget, ByteReservation};
@@ -59,6 +60,7 @@ pub(crate) struct ImpactCursor {
     status_ids: Vec<String>,
     status_index: usize,
     pending_status: Option<PendingStatusEnd>,
+    pending_contact: Option<PendingActionFinish>,
     event: Option<String>,
     budget: ByteBudget,
     storage: ByteReservation,
@@ -70,6 +72,8 @@ enum Phase {
     Sight,
     StartRange,
     MotionRoute,
+    ApproachEndpoint,
+    ApproachRoute,
     Reach,
     Body,
     Interrupt,
@@ -109,6 +113,7 @@ impl ImpactCursor {
             status_ids: Vec::new(),
             status_index: 0,
             pending_status: None,
+            pending_contact: None,
             event: None,
             budget: budget.clone(),
             storage,
@@ -127,6 +132,9 @@ impl ImpactCursor {
     pub(crate) fn personal(&self) -> Result<&PendingActivityResult, ExecutionError> {
         if let Some(status) = &self.pending_status {
             return Ok(status.personal());
+        }
+        if let Some(contact) = &self.pending_contact {
+            return Ok(contact.personal());
         }
         self.body
             .as_ref()
@@ -171,11 +179,10 @@ impl ImpactCursor {
             .as_deref()
             .and_then(|id| profile(installed, source, id))
             .ok_or(ExecutionError::Invariant)?;
-        let start_range = definition
-            .preparation_motion
-            .as_ref()
-            .ok_or(ExecutionError::Invariant)?
-            .start_range;
+        let start_range = definition.preparation_motion.as_ref().map_or_else(
+            || definition.approach_range.unwrap_or(definition.range),
+            |motion| motion.start_range,
+        );
         let target = core
             .state
             .physical
@@ -191,7 +198,11 @@ impl ImpactCursor {
             &self.budget,
         )?
         else {
-            return Ok(ContactStep::Invalidated);
+            return if action.has_contact_approach() {
+                self.continue_contact_approach(core)
+            } else {
+                Ok(ContactStep::Invalidated)
+            };
         };
         self.reserve(size_of::<GeometryQueries>() + size_of::<SightRay>())?;
         self.binding.serial = core.journal.next_provider_serial()?;
@@ -200,6 +211,183 @@ impl ImpactCursor {
         self.impact = Some(queries);
         self.phase = Phase::StartRange;
         Ok(ContactStep::Geometry)
+    }
+
+    fn continue_contact_approach(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+    ) -> Result<ContactStep, ExecutionError> {
+        let (source, action) = self.source(&core.state.physical.entities)?;
+        if let Some(endpoint) = action.path.last() {
+            let target = core
+                .state
+                .physical
+                .entities
+                .get(&self.target)
+                .ok_or(ExecutionError::MissingEntity)?;
+            let definition = action
+                .definition_id
+                .as_deref()
+                .and_then(|id| profile(&core.state.installed, source, id))
+                .ok_or(ExecutionError::Invariant)?;
+            if let Some(ray) = crate::geometry::interaction_reach_from(
+                source,
+                target,
+                endpoint.point(),
+                definition.approach_range.unwrap_or(definition.range),
+                &self.budget,
+            )? {
+                self.reserve(size_of::<GeometryQueries>() + size_of::<SightRay>())?;
+                self.binding.serial = core.journal.next_provider_serial()?;
+                let mut query = GeometryQueries::new(self.binding);
+                query.sight.push(ray);
+                self.impact = Some(query);
+                self.phase = Phase::ApproachEndpoint;
+                return Ok(ContactStep::Geometry);
+            }
+        }
+        self.replan_contact_approach(core)
+    }
+
+    fn replan_contact_approach(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+    ) -> Result<ContactStep, ExecutionError> {
+        let (source, action) = self.source(&core.state.physical.entities)?;
+        let installed = &core.state.installed;
+        if action.replans.unwrap_or(0) >= installed.movement_settings.max_replans {
+            return Ok(ContactStep::Invalidated);
+        }
+        let target = core
+            .state
+            .physical
+            .entities
+            .get(&self.target)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let definition = action
+            .definition_id
+            .as_deref()
+            .and_then(|id| profile(installed, source, id))
+            .ok_or(ExecutionError::Invariant)?;
+        let Some((from, surface)) = support_parts(source) else {
+            return Ok(ContactStep::Invalidated);
+        };
+        let body = crate::status::effective_body_profile(source, &self.budget)?;
+        let target_body = crate::status::effective_body_profile(target, &self.budget)?;
+        let position = target
+            .world_position()
+            .ok_or(ExecutionError::InvalidPosition)?;
+        let support = support_parts(target);
+        self.reserve(
+            size_of::<GeometryQueries>()
+                + size_of::<RouteQuery>()
+                + surface.len()
+                + support.map_or(0, |(_, surface)| surface.len())
+                + body.id.len(),
+        )?;
+        let supported = |point: crate::state::Point, surface: &str| crate::state::SurfacePoint {
+            x: point.x,
+            y: point.y,
+            z: point.z,
+            surface_id: surface.into(),
+        };
+        let mut goal = position;
+        goal.y += target_body.interaction_height;
+        self.binding.serial = core.journal.next_provider_serial()?;
+        let mut query = GeometryQueries::new(self.binding);
+        query.routes.push(RouteQuery::Approach {
+            from: supported(from, surface),
+            body: (*body).clone(),
+            target_position: position,
+            target_support: support.map(|(at, surface)| supported(at, surface)),
+            reach: definition.approach_range.unwrap_or(definition.range),
+            goal,
+        });
+        self.impact = Some(query);
+        self.phase = Phase::ApproachRoute;
+        Ok(ContactStep::Geometry)
+    }
+
+    fn finish_contact_approach_route(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        mut answer: GeometryAnswers,
+    ) -> Result<ContactStep, ExecutionError> {
+        self.impact
+            .take()
+            .ok_or(ExecutionError::Invariant)?
+            .validate_answers(&answer)
+            .map_err(|_| ExecutionError::Invariant)?;
+        let answer = answer.routes.pop().ok_or(ExecutionError::Invariant)?;
+        let GuardedRoutePlan(plan, mut custody) =
+            crate::geometry::route_plan(answer, &self.budget)?;
+        let (path, navigation) = match plan {
+            RoutePlan::Reached { path, .. } => (path, None),
+            RoutePlan::Pending { mut request, .. } => {
+                custody.resize(
+                    custody
+                        .bytes()
+                        .checked_add("entity".len())
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
+                request.wait = Some("entity".into());
+                (
+                    Vec::new(),
+                    Some(NavigationPending {
+                        request,
+                        failure: None,
+                    }),
+                )
+            }
+            _ => return Ok(ContactStep::Invalidated),
+        };
+        let replans = self
+            .source(&core.state.physical.entities)?
+            .1
+            .replans
+            .unwrap_or(0)
+            .checked_add(1)
+            .ok_or(ExecutionError::Invariant)?;
+        custody.resize(
+            custody
+                .bytes()
+                .checked_add("approaching".len())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let route = FundedActionRoute::from_storage(
+            ActionRouteWrite {
+                path,
+                navigation,
+                stage: "approaching".into(),
+                replans: Some(replans),
+            },
+            custody,
+            &self.budget,
+        )?;
+        core.physical()
+            .replace_action_route(&self.source, &self.action, route)?;
+        Ok(ContactStep::AdvanceComplete)
+    }
+
+    fn start_chosen_windup(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+    ) -> Result<ContactStep, ExecutionError> {
+        let custody = self.budget.reserve("working".len())?;
+        let route = FundedActionRoute::from_storage(
+            ActionRouteWrite {
+                path: Vec::new(),
+                navigation: None,
+                stage: "working".into(),
+                replans: None,
+            },
+            custody,
+            &self.budget,
+        )?;
+        core.physical()
+            .replace_action_route(&self.source, &self.action, route)?;
+        core.physical().behavior_changed(&self.source, true)?;
+        self.stage_preparation(core)
     }
 
     fn prepare_motion_route(
@@ -382,12 +570,22 @@ impl ImpactCursor {
             core.physical()
                 .replace_strike_motion(&self.source, &self.action, Some(motion))?;
             core.physical().behavior_changed(&self.source, true)?;
-            let (event, custody) = super::stage_preparation(core, &self.source, &self.budget)?;
-            self.storage.merge(custody)?;
-            self.phase = Phase::Done;
-            return self.wait_for(event);
+            return self.stage_preparation(core);
         }
         Ok(ContactStep::AdvanceComplete)
+    }
+
+    fn stage_preparation(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+    ) -> Result<ContactStep, ExecutionError> {
+        let Some((event, custody)) = super::stage_preparation(core, &self.source, &self.budget)?
+        else {
+            return Ok(ContactStep::AdvanceComplete);
+        };
+        self.storage.merge(custody)?;
+        self.phase = Phase::Done;
+        self.wait_for(event)
     }
 
     pub(crate) fn step(
@@ -545,6 +743,9 @@ impl ImpactCursor {
                         self.phase = Phase::Reach;
                         return Ok(ContactStep::Geometry);
                     }
+                    if !self.automatic(core)? {
+                        return Ok(ContactStep::Invalidated);
+                    }
                     self.hit_reason = Some("out-of-range");
                     self.phase = Phase::Result;
                 }
@@ -557,7 +758,19 @@ impl ImpactCursor {
                         .ok_or(ExecutionError::Invariant)?
                         .validate_answers(&range)
                         .map_err(|_| ExecutionError::Invariant)?;
-                    if range.sight.pop() != Some(true) {
+                    let clear = range.sight.pop() == Some(true);
+                    if self
+                        .source(&core.state.physical.entities)?
+                        .1
+                        .has_contact_approach()
+                    {
+                        return if clear {
+                            self.start_chosen_windup(core)
+                        } else {
+                            self.continue_contact_approach(core)
+                        };
+                    }
+                    if !clear {
                         return Ok(ContactStep::Invalidated);
                     }
                     return self.prepare_motion_route(core);
@@ -567,6 +780,27 @@ impl ImpactCursor {
                         return Err(ExecutionError::UnfinishedOccurrence);
                     };
                     return self.finish_motion_route(core, route);
+                }
+                Phase::ApproachEndpoint => {
+                    let Some(ContactAnswer::Geometry(mut clearance)) = answer.take() else {
+                        return Err(ExecutionError::UnfinishedOccurrence);
+                    };
+                    self.impact
+                        .take()
+                        .ok_or(ExecutionError::Invariant)?
+                        .validate_answers(&clearance)
+                        .map_err(|_| ExecutionError::Invariant)?;
+                    return if clearance.sight.pop() == Some(true) {
+                        Ok(ContactStep::AdvanceComplete)
+                    } else {
+                        self.replan_contact_approach(core)
+                    };
+                }
+                Phase::ApproachRoute => {
+                    let Some(ContactAnswer::Geometry(route)) = answer.take() else {
+                        return Err(ExecutionError::UnfinishedOccurrence);
+                    };
+                    return self.finish_contact_approach_route(core, route);
                 }
                 Phase::Reach => {
                     let Some(ContactAnswer::Geometry(mut reach)) = answer.take() else {
@@ -581,6 +815,8 @@ impl ImpactCursor {
                     self.phase = Phase::Result;
                     if reach.sight.pop() == Some(true) {
                         self.begin_impact(core)?;
+                    } else if !self.automatic(core)? {
+                        return Ok(ContactStep::Invalidated);
                     }
                 }
                 Phase::Body => {
@@ -630,7 +866,15 @@ impl ImpactCursor {
                         }
                         continue;
                     }
-                    self.interrupt_contact(core)?;
+                    if let Some(pending) = self.pending_contact.take() {
+                        let Some(ContactAnswer::Personal(done)) = answer.take() else {
+                            return Err(ExecutionError::UnfinishedOccurrence);
+                        };
+                        core.complete_finish_action(pending, &done)?;
+                        self.clear_interrupted_contact(core)?;
+                    } else if self.interrupt_contact(core)? {
+                        return Ok(ContactStep::Personal);
+                    }
                     self.phase = Phase::BodyEvent;
                 }
                 Phase::BodyEvent => {
@@ -663,6 +907,15 @@ impl ImpactCursor {
                 Ok(Some(ContactStep::Personal))
             }
         }
+    }
+
+    fn automatic(&self, core: &CoreMutation<'_>) -> Result<bool, ExecutionError> {
+        Ok(self
+            .source(&core.state.physical.entities)?
+            .0
+            .actor
+            .as_ref()
+            .is_some_and(|actor| actor.controller == "native"))
     }
 
     fn health_after(&self, core: &CoreMutation<'_>) -> Result<f64, ExecutionError> {
@@ -705,7 +958,7 @@ impl ImpactCursor {
         let health_before = actor.health;
         // Match the selected Source guaranteed-contact path. Ineligible sight
         // or reach never spends a draw. See AC09.6 for the shared RNG follow-up.
-        if accuracy != 1.0 && core.physical().draw() >= accuracy {
+        if accuracy != 1.0 && self.automatic(core)? && core.physical().draw() >= accuracy {
             self.hit_reason = Some("accuracy");
             return Ok(());
         }
@@ -725,7 +978,7 @@ impl ImpactCursor {
         Ok(())
     }
 
-    fn interrupt_contact(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+    fn interrupt_contact(&mut self, core: &mut CoreMutation<'_>) -> Result<bool, ExecutionError> {
         let Some(target) = core.state.physical.entities.get(&self.target) else {
             return Err(ExecutionError::Invariant);
         };
@@ -737,14 +990,15 @@ impl ImpactCursor {
                 action.stage == "working" && action.strike_phase == Some(StrikePhase::Windup)
             })
         else {
-            return Ok(());
+            return Ok(false);
         };
         let seconds = action
             .definition_id
             .as_deref()
             .and_then(|id| profile(&core.state.installed, target, id))
-            .and_then(|definition| definition.recovery_seconds)
-            .ok_or(ExecutionError::Invariant)?;
+            .ok_or(ExecutionError::Invariant)?
+            .recovery_seconds
+            .unwrap_or(0.0);
         let deadline = core.state.physical.header.sim_time + seconds;
         let message = &core
             .state
@@ -770,13 +1024,17 @@ impl ImpactCursor {
         };
         core.physical()
             .retain_combat_recovery(&self.target, deadline)?;
-        if !matches!(
-            core.begin_finish_action(&self.target, &id, result)?,
-            ActionFinish::Complete(_)
-        ) {
-            // This currently admits only autonomous contact, which creates no personal activity result.
-            return Err(ExecutionError::Invariant);
+        if let ActionFinish::Personal(pending) =
+            core.begin_finish_action(&self.target, &id, result)?
+        {
+            self.pending_contact = Some(pending);
+            return Ok(true);
         }
+        self.clear_interrupted_contact(core)?;
+        Ok(false)
+    }
+
+    fn clear_interrupted_contact(&self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         core.physical().replace_action(
             &self.target,
             None,
@@ -849,9 +1107,7 @@ impl ImpactCursor {
                 .ok_or(ExecutionError::Invariant)?,
         )
         .ok_or(ExecutionError::Invariant)?;
-        let recovery = definition
-            .recovery_seconds
-            .ok_or(ExecutionError::Invariant)?;
+        let recovery = definition.recovery_seconds.unwrap_or(0.0);
         let reason = self.hit_reason.ok_or(ExecutionError::Invariant)?;
         let hit = reason == "hit";
         let rules = &installed.ordinary_actions.value().natural_contact;

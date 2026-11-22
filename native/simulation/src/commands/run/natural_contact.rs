@@ -185,28 +185,114 @@ impl CommandCursor {
         Ok(true)
     }
 
+    /// Discovery just checked current sight, reach and an optional route in
+    /// this candidate. Retain its exact target life and turn it into work only
+    /// for the accepted NPC plan.
+    pub(super) fn install_chosen_contact(
+        &mut self,
+        core: &CoreMutation<'_>,
+        route: Option<RoutePlan>,
+    ) -> Result<(), ExecutionError> {
+        let NativeCommand::Strike {
+            envelope,
+            definition_id,
+            target_id,
+            weapon_item_id: None,
+            ..
+        } = &self.command
+        else {
+            return Err(ExecutionError::UnsupportedFamily);
+        };
+        let source = core
+            .state
+            .physical
+            .entities
+            .get(&envelope.actor_id)
+            .ok_or(ExecutionError::MissingActor)?;
+        if envelope.human_initiated == Some(true)
+            || !source
+                .actor
+                .as_ref()
+                .is_some_and(|actor| actor.controller == "npc")
+        {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        let installed = &core.state.installed;
+        let definition =
+            profile(installed, source, definition_id).ok_or(ExecutionError::UnsupportedFamily)?;
+        let target = core
+            .state
+            .physical
+            .entities
+            .get(target_id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let life = target
+            .physical_life()
+            .filter(|life| may_target(installed, source, target, *life))
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let mut storage = self.budget.reserve(
+            envelope.id.len()
+                + target_id.len()
+                + definition.id.len()
+                + "strikeapproachingentity".len(),
+        )?;
+        let mut action =
+            Action::natural_contact(envelope.id.clone(), target_id.clone(), life, definition);
+        if let Some(route) = route {
+            let crate::geometry::GuardedRoutePlan(plan, guard) =
+                crate::geometry::route_plan(route, &self.budget)?;
+            storage.merge(guard)?;
+            action.stage = "approaching".into();
+            action.replans = Some(0);
+            match plan {
+                RoutePlan::Reached { path, .. } => action.path = path,
+                RoutePlan::Pending { mut request, .. } => {
+                    request.wait = Some("entity".into());
+                    action.navigation = Some(NavigationPending {
+                        request,
+                        failure: None,
+                    });
+                }
+                _ => return Err(ExecutionError::Invariant),
+            }
+        }
+        self.action = Some(action);
+        self.action_storage = Some(storage);
+        self.phase = Phase::Prepared;
+        Ok(())
+    }
+
     pub(super) fn natural_contact_started(
         &mut self,
         core: &mut CoreMutation<'_>,
         source: &str,
     ) -> Result<Progress, ExecutionError> {
-        if core
+        let after = if self.chosen_contact {
+            Phase::AfterDeparture
+        } else {
+            Phase::Tail
+        };
+        let approaching = core
             .state
             .physical
             .entities
             .get(source)
             .and_then(|entity| entity.actor.as_ref())
             .and_then(|actor| actor.action.as_ref())
-            .is_some_and(|action| action.stage == "approaching")
-        {
-            self.phase = Phase::Tail;
+            .is_some_and(|action| action.stage == "approaching");
+        let occurrence = if approaching {
+            None
+        } else {
+            crate::contact::stage_preparation(core, source, &self.budget)?
+        };
+        let Some((event, custody)) = occurrence else {
+            self.phase = after;
             return self.drive(core, None);
-        }
-        let (event, custody) = crate::contact::stage_preparation(core, source, &self.budget)?;
+        };
         self._reservation.merge(custody)?;
         self.reserve(event.id.len())?;
         self.event = Some(event.id.clone());
-        self.after_event = Phase::Tail;
+        self.after_event = after;
         Ok(Progress::Occurrence(event))
     }
 }

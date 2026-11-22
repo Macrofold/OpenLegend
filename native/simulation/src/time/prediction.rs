@@ -368,7 +368,7 @@ impl MechanicalForecast {
             {
                 return Err(ExecutionError::UnsupportedFamily);
             }
-            if action.is_natural_contact() {
+            if action.is_natural_contact() && !action.has_contact_approach() {
                 if let Some(motion) = &action.strike_motion {
                     bound.at(motion.release_at);
                     if !installed
@@ -419,7 +419,10 @@ impl MechanicalForecast {
                 continue;
             }
             let speed = installed.movement_speed(entity)?;
-            if action.navigation.is_none() && !referenced.contains(&entity.id) {
+            if !action.has_contact_approach()
+                && action.navigation.is_none()
+                && !referenced.contains(&entity.id)
+            {
                 private_walkers.insert(*handle);
                 let mut from = entity
                     .world_position()

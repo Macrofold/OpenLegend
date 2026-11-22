@@ -491,6 +491,11 @@ pub struct NavigationRequest {
     pub geometry_revision: u64,
 }
 
+impl NavigationRequest {
+    /// The geometry provider's bounded set of alternative route endpoints.
+    pub const MAX_DESTINATIONS: usize = 12;
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NavigationPending {
@@ -853,6 +858,12 @@ impl Action {
 
     pub(crate) fn awaiting_moving_contact(&self) -> bool {
         self.is_natural_contact() && self.stage == "approaching"
+    }
+
+    /// Ordinary approach owns and may replan its admitted walking route
+    /// before the windup starts. Automatic moving windups have their own motion.
+    pub(crate) fn has_contact_approach(&self) -> bool {
+        self.awaiting_moving_contact() && self.replans.is_some()
     }
 
     pub(crate) fn is_following(&self) -> bool {

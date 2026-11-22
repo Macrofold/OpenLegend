@@ -49,7 +49,13 @@ pub(super) fn valid_route(installed: &InstalledWorld, action: &Action) -> bool {
             action.path.is_empty()
                 && request.wait.as_deref() == Some("entity")
                 && valid_point(&request.from)
-                && request.destinations.len() == 1
+                && request.outside_bounds.is_none()
+                && (if action.has_contact_approach() {
+                    (1..=crate::state::NavigationRequest::MAX_DESTINATIONS)
+                        .contains(&request.destinations.len())
+                } else {
+                    request.destinations.len() == 1
+                })
                 && request.destinations.iter().all(valid_point)
         })
 }
