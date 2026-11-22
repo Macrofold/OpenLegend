@@ -261,6 +261,7 @@ impl CommandCursor {
                 ..
             } | NativeCommand::DescriptiveAct { .. }
                 | NativeCommand::TransferItem { .. }
+                | NativeCommand::Drop { group: Some(_), .. }
         ) {
             let decoded: NativeCommand =
                 serde_json::from_str(&canonical).map_err(|_| ExecutionError::Invariant)?;

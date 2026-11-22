@@ -76,6 +76,10 @@ export function inventoryWorkReason(world: WorldState, actorId: string, id: stri
   };
   return visit(id) ? itemMoveCopy.busy : null;
 }
+/** The inventory group exceeded the shared physical source allowance. */
+export function stockGroupLimitMessage(limit: number): string {
+  return itemMoveCopy.groupLimit.replace('{limit}', String(limit));
+}
 /** Discovery mirror of merge-item admission (the kernel merge case and `mergeLots`): an
  * equivalent free lot in the same container that no ongoing work needs. Merge commands
  * still recheck handling, access and revisions when submitted. The caller checks the

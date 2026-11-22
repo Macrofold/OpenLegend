@@ -39,12 +39,16 @@ impl CommandCursor {
         let NativeCommand::TransferItem {
             selection,
             envelope,
+            group,
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);
         };
-        let result =
-            core.arrange_owned_lot(actor, &envelope.id, selection.map_ids(String::as_str))?;
+        let result = if let Some(group) = group {
+            core.move_stock_group(actor, group, &selection.target_id, selection.target_revision, &envelope.id)?
+        } else {
+            core.arrange_owned_lot(actor, &envelope.id, selection.map_ids(String::as_str))?
+        };
         let item = match result {
             Ok(item) => item,
             Err(reason) => {

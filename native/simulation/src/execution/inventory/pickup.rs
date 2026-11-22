@@ -72,6 +72,7 @@ pub(super) struct DirectRelocation<'a> {
     pub quantity: u64,
     pub cause: &'a str,
     pub merge_receiving_lot: bool,
+    pub publish_contents: bool,
 }
 
 /// A pickup owns its current ground and receiving lots in one candidate.
@@ -133,6 +134,7 @@ impl CoreMutation<'_> {
             .is_some_and(|entity| entity.actor.is_some()).then_some(source);
         self.relocate_stock(DirectRelocation {
             source, destination: actor, actor, source_owner, item, quantity, cause, merge_receiving_lot,
+            publish_contents: true,
         })
     }
 
@@ -143,7 +145,7 @@ impl CoreMutation<'_> {
         request: DirectRelocation<'_>,
     ) -> Result<Option<String>, ExecutionError> {
         let DirectRelocation {
-            source, destination, actor, source_owner, item, quantity, cause, merge_receiving_lot,
+            source, destination, actor, source_owner, item, quantity, cause, merge_receiving_lot, publish_contents,
         } = request;
         let installed = self.state.installed.clone();
         let entities = &self.state.physical.entities;
@@ -197,7 +199,7 @@ impl CoreMutation<'_> {
         } else {
             item.to_owned()
         };
-        self.move_contained_lot(source, destination, &moving)?;
+        self.relocate_contained_lot(source, destination, &moving, publish_contents)?;
         if let Some(receiver) = receiver {
             self.merge_direct_lots(destination, actor, &moving, &receiver, quantity, cause)?;
             Ok(Some(receiver))

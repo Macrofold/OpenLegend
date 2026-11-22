@@ -83,6 +83,7 @@ pub(super) fn learn_action<'a>(
             placement_revision: Some(item.placement_revision),
             quantity: None,
             record_pin: Some(record_pin),
+            inventory_group: None,
         },
         enabled: reason.is_none(),
         reason,
@@ -206,6 +207,7 @@ impl PlayerScenePolicy {
                 characteristics: None,
                 equipment_conflicts: Vec::new(),
                 recipe_record,
+                group: None,
             });
         }
         if !selected_methods.is_empty() {

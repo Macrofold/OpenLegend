@@ -1,7 +1,7 @@
 //! The authorized browser handler passes its already-decoded command input.
 
 use super::outings_input::PlayerTravelIntent;
-pub use crate::execution::{OwnedArrangement, OwnedMove};
+pub use crate::execution::{OwnedArrangement, OwnedMove, OwnedStockSelection};
 use super::{CommandEncoding, CommandHeaders, NativeCommand, SpeechTargetRole, StatusOperation};
 use crate::encoding::json_record;
 use crate::gathering::{GatheringMode, ToolChoice};
@@ -68,10 +68,12 @@ pub enum RuntimePlayerCommand<'a> {
     TendFire { target: &'a str, operation: crate::fire_care::FireOperation, item: Option<&'a str> },
     Pickup { target: &'a str, item: Option<&'a str>, quantity: Option<u64> },
     Drop { item: &'a str, quantity: u64 },
+    DropGroup { item: &'a str, group: &'a OwnedStockSelection },
     LearnRecord(&'a super::RecipeRecordSelection),
     InspectItem { item: &'a str, container: &'a str, expected_revision: u64 },
     InspectStorage { root: &'a str, after: Option<&'a str>, expected_scope: Option<&'a crate::text::JsText>, expected_revision: Option<u64> },
     TransferItem(OwnedMove<&'a str>),
+    MoveGroup(OwnedMove<&'a str>, &'a OwnedStockSelection),
     Eat(&'a str),
     Equip(&'a str),
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
@@ -92,6 +94,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Fish { target, tool } => target.len() + tool.len(),
             Self::Pickup { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Drop { item, .. } => item.len(),
+            Self::DropGroup { item, group } => item.len() + group_text_bytes(group),
             Self::Craft { recipe } => recipe.len(),
             Self::Handover { target, gift, .. } => target.len() + gift.retained_text_bytes(),
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
@@ -106,6 +109,8 @@ impl RuntimePlayerCommand<'_> {
             Self::InspectItem { item, container, .. } => item.len() + container.len(),
             Self::InspectStorage { root, after, expected_scope, .. } => root.len() + after.map_or(0, str::len) + expected_scope.map_or(0, crate::text::JsText::storage_bytes),
             Self::TransferItem(selection) => selection.item_id.len() + selection.target_id.len(),
+            Self::MoveGroup(selection, group) =>
+                selection.item_id.len() + selection.target_id.len() + group_text_bytes(group),
             Self::Eat(item) | Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
         }
     }
@@ -157,8 +162,11 @@ impl RuntimePlayerCommand<'_> {
         if let Self::LearnRecord(record) = self {
             return bind_record_learning(id, actor, record);
         }
-        if let Self::TransferItem(selection) = self {
-            return bind_transfer(id, actor, selection);
+        match self {
+            Self::TransferItem(selection) => return bind_transfer(id, actor, selection, None),
+            Self::MoveGroup(selection, group) => return bind_transfer(id, actor, selection, Some(group)),
+            Self::DropGroup { item, group } => return bind_group_drop(id, actor, item, group),
+            _ => {}
         }
         if let Self::InspectItem { item, container, expected_revision } = self {
             return bind_inspection(id, actor, item, container, expected_revision);
@@ -261,6 +269,8 @@ impl RuntimePlayerCommand<'_> {
             | Self::Handover { .. }
             | Self::Travel(_)
             | Self::TransferItem(_)
+            | Self::MoveGroup(..)
+            | Self::DropGroup { .. }
             | Self::Strike { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
@@ -388,6 +398,7 @@ impl RuntimePlayerCommand<'_> {
                 envelope,
                 item_id: item.to_owned(),
                 quantity,
+                group: None,
             },
             Self::Fish { target, tool } => NativeCommand::Fish {
                 envelope,
@@ -405,6 +416,8 @@ impl RuntimePlayerCommand<'_> {
             | Self::Handover { .. }
             | Self::Travel(_)
             | Self::TransferItem(_)
+            | Self::MoveGroup(..)
+            | Self::DropGroup { .. }
             | Self::Strike { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
@@ -428,6 +441,7 @@ fn bind_transfer(
     id: &str,
     actor: &str,
     selection: OwnedMove<&str>,
+    group: Option<&OwnedStockSelection>,
 ) -> Result<(NativeCommand, String), serde_json::Error> {
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -435,6 +449,8 @@ fn bind_transfer(
         actor_id: &'a str,
         #[serde(flatten)]
         selection: OwnedMove<&'a str>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        sources: Option<&'a [crate::execution::OwnedStockLot]>,
         human_initiated: bool,
         id: &'a str,
         #[serde(rename = "type")]
@@ -448,15 +464,54 @@ fn bind_transfer(
         return Err(serde::ser::Error::custom("Invalid item move."));
     }
     let input = Binding {
-        actor_id: actor, selection, human_initiated: true, id, kind: selection.arrangement.command_type(),
+        actor_id: actor, selection,
+        sources: group.map(|group| group.members.as_slice()),
+        human_initiated: true, id, kind: selection.arrangement.command_type(),
     };
     let encoding = CommandEncoding::from_ordered(
-        &input, 10 + usize::from(selection.expected_contents_revision.is_some()),
+        &input, 10 + usize::from(selection.expected_contents_revision.is_some()) + usize::from(group.is_some()),
     )?;
     let signature = encoding.json.get().to_owned();
     Ok((NativeCommand::TransferItem {
         envelope: headers.envelope(encoding),
         selection: selection.map_ids(|id| (*id).to_owned()),
+        group: group.cloned(),
+    }, signature))
+}
+
+fn group_text_bytes(group: &OwnedStockSelection) -> usize {
+    group.container_id.len() + group.members.iter().map(|lot| lot.item_id.len() + 96).sum::<usize>()
+}
+
+fn bind_group_drop(
+    id: &str, actor: &str, item: &str, group: &OwnedStockSelection,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Binding<'a> {
+        id: &'a str,
+        actor_id: &'a str,
+        human_initiated: bool,
+        #[serde(rename = "type")]
+        kind: &'static str,
+        item_id: &'a str,
+        quantity: u64,
+        sources: &'a [crate::execution::OwnedStockLot],
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid() || !crate::values::is_safe_record_id(item) {
+        return Err(serde::ser::Error::custom("Invalid item drop."));
+    }
+    let encoding = CommandEncoding::from_ordered(&Binding {
+        id, actor_id: actor, human_initiated: true, kind: "drop", item_id: item,
+        quantity: group.quantity, sources: &group.members,
+    }, 7)?;
+    let signature = encoding.json.get().to_owned();
+    Ok((NativeCommand::Drop {
+        envelope: headers.envelope(encoding),
+        item_id: item.to_owned(),
+        quantity: group.quantity,
+        group: Some(group.clone()),
     }, signature))
 }
 

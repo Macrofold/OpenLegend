@@ -1,7 +1,10 @@
 //! The open inventory asks for its own exact page. Stream projections and
 //! shortcut updates do not prepare descriptions or equipment commands.
 use super::{PlayerScenePolicy, PublicArt};
-use crate::{authority::RequestScope, language::LanguageProvider};
+use crate::{
+    authority::RequestScope, language::LanguageProvider,
+    player_references::{InventoryGroupClaim, ReferenceIssuer},
+};
 use axum::body::Bytes;
 use openlegend_simulation::{
     encoding::{js_trim, json_record, sha256_hex},
@@ -153,6 +156,17 @@ struct Item<'a> {
     equipment_conflicts: Vec<EquipmentConflict<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     recipe_record: Option<RecipeRecord>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    group: Option<DisplayGroup>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DisplayGroup {
+    token: String,
+    members: usize,
+    representative_quantity: u64,
+    representative_available_quantity: u64,
 }
 
 #[derive(Serialize)]
@@ -237,6 +251,8 @@ struct ItemCommand<'a> {
     quantity: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     record_pin: Option<&'a openlegend_simulation::values::DefinitionPin>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    inventory_group: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -267,6 +283,7 @@ impl PlayerScenePolicy {
         controlling: bool,
         input: &InventoryPageRequest,
         language: &LanguageProvider,
+        references: &ReferenceIssuer,
         budget: &ByteBudget,
     ) -> Result<Bytes, InventoryPageError> {
         use InventoryPageError::{Capacity, Read, Stale};
@@ -288,8 +305,16 @@ impl PlayerScenePolicy {
                 )
             })
             .collect::<Vec<_>>();
+        let root = *inventory.breadcrumbs.last().ok_or(Stale)?;
+        let groups = input.merge_source_id.is_none()
+            .then(|| inventory.display_groups(budget)).transpose().map_err(Read)?;
+        let group_rows = groups.as_ref().map(|groups| groups.rows());
+        let scope_key = scope.key().map_err(|_| Capacity)?;
+        let child = |index: usize| group_rows.map_or(index, |rows| rows[index].first());
+        let count = group_rows.map_or_else(|| inventory.count(), |rows| rows.len());
+        let quantity = |index: usize| group_rows.map_or_else(|| inventory.quantity(index), |rows| Ok(rows[index].quantity));
         let query = JsText::from(input.query.as_deref().map_or("", js_trim)).lowercase();
-        let key = json_record(&(scope, path_cut, &query, &input.sort, &input.filter, &input.merge_source_id))
+        let key = json_record(&(scope, path_cut, groups.as_ref().map(|groups| groups.cut()), &query, &input.sort, &input.filter, &input.merge_source_id))
             .map_err(|_| Capacity)?;
         let cut = sha256_hex(key.as_bytes());
         let after: usize = if let Some(cursor) = input.cursor.as_deref() {
@@ -301,7 +326,6 @@ impl PlayerScenePolicy {
         } else {
             0
         };
-        let count = inventory.count();
         if after > count {
             return Err(Stale);
         }
@@ -314,7 +338,7 @@ impl PlayerScenePolicy {
             Sort::NameAsc | Sort::NameDesc => {
                 let mut bytes = 0_usize;
                 for index in 0..count {
-                    let name = inventory.name(index).map_err(Read)?;
+                    let name = inventory.name(child(index)).map_err(Read)?;
                     bytes = bytes
                         .checked_add(size_of::<JsText>() + 8 * size_of::<usize>())
                         .and_then(|base| base.checked_add(name.storage_bytes().checked_mul(6)?))
@@ -329,8 +353,7 @@ impl PlayerScenePolicy {
             Sort::QuantityDesc => {
                 let mut ranks = (0..count)
                     .map(|index| {
-                        inventory
-                            .quantity(index)
+                        quantity(index)
                             .map(|quantity| (index, quantity))
                             .map_err(Read)
                     })
@@ -346,7 +369,7 @@ impl PlayerScenePolicy {
             Sort::NameAsc | Sort::NameDesc => {
                 let mut order: Vec<_> = (0..count).collect();
                 let names = (0..count)
-                    .map(|index| inventory.name(index).cloned().map_err(Read))
+                    .map(|index| inventory.name(child(index)).cloned().map_err(Read))
                     .collect::<Result<Vec<_>, _>>()?;
                 let ranks = collation_ranks(language, &names)?;
                 if matches!(input.sort, Sort::NameDesc) {
@@ -379,7 +402,8 @@ impl PlayerScenePolicy {
                 break;
             }
             checked += 1;
-            let index = order.as_ref().map_or(position, |order| order[position]);
+            let position = order.as_ref().map_or(position, |order| order[position]);
+            let index = child(position);
             if let Some(source) = &merge
                 && !inventory.merge_matches(source, index).map_err(Read)?
             {
@@ -410,7 +434,16 @@ impl PlayerScenePolicy {
             {
                 continue;
             }
-            let split = if merge.is_none() { inventory.split_offer(&slot).map_err(Read)? } else { None };
+            let group = group_rows.map(|rows| &rows[position]).filter(|group| group.members() > 1);
+            let availability = group.map(|group| inventory.group_availability(group)).transpose().map_err(Read)?;
+            let slot = match &availability {
+                Some(available) if available.representative != index =>
+                    inventory.slot(available.representative).map_err(Read)?,
+                _ => slot,
+            };
+            let split = if merge.is_none() {
+                inventory.split_offer(&slot).map_err(Read)?
+            } else { None };
             let entry = inventory.describe(slot).map_err(Read)?;
             custody
                 .resize(
@@ -426,6 +459,28 @@ impl PlayerScenePolicy {
                 )
                 .map_err(|_| Capacity)?;
             let item = &entry.item;
+            let mut lot = *item;
+            let display_group = if let Some((group, availability)) = group.zip(availability) {
+                // The two outgoing copies are the row and the existing Drop action.
+                let token_bytes = (scope_key.len() + root.id.len() + 336).checked_mul(12).ok_or(Capacity)?;
+                custody.resize(custody.bytes().checked_add(token_bytes).ok_or(Capacity)?).map_err(|_| Capacity)?;
+                let token = references.seal_inventory_group(&InventoryGroupClaim {
+                    scope: scope_key.as_str(),
+                    container: root.id,
+                    revision: root.revision,
+                    key: group.key().ok_or(Stale)?,
+                }).ok_or(Capacity)?;
+                lot.quantity = group.quantity;
+                lot.available_quantity = availability.available;
+                Some(DisplayGroup {
+                    token,
+                    members: group.members(),
+                    representative_quantity: item.quantity,
+                    representative_available_quantity: if availability.available > 0 { item.available_quantity } else { 0 },
+                })
+            } else {
+                None
+            };
             let mut actions: Vec<_> = entry
                 .equipment_ports
                 .map(|_| {
@@ -458,6 +513,7 @@ impl PlayerScenePolicy {
                             placement_revision: item.equipped.then_some(item.placement_revision),
                             quantity: None,
                             record_pin: None,
+                            inventory_group: None,
                         },
                         reason,
                     }
@@ -492,6 +548,7 @@ impl PlayerScenePolicy {
                         placement_revision: None,
                         quantity: None,
                         record_pin: None,
+                        inventory_group: None,
                     },
                 });
             }
@@ -521,8 +578,9 @@ impl PlayerScenePolicy {
                         target_revision: None,
                         expected_revision: None,
                         placement_revision: None,
-                        quantity: Some(item.quantity),
+                        quantity: Some(if display_group.is_some() { lot.available_quantity } else { item.quantity }),
                         record_pin: None,
+                        inventory_group: display_group.as_ref().map(|group| group.token.clone()),
                     },
                 });
             }
@@ -549,6 +607,7 @@ impl PlayerScenePolicy {
                         placement_revision: Some(item.placement_revision),
                         quantity: Some(1),
                         record_pin: None,
+                        inventory_group: None,
                     },
                 });
             }
@@ -624,7 +683,7 @@ impl PlayerScenePolicy {
                 None => None,
             };
             items.push(Item {
-                lot: *item,
+                lot,
                 individual: item.individual,
                 art: self.observed.item_art.get(item.definition_id),
                 category: entry.category,
@@ -634,9 +693,10 @@ impl PlayerScenePolicy {
                 characteristics,
                 equipment_conflicts,
                 recipe_record,
+                group: display_group,
             });
         }
-        let source = *inventory.breadcrumbs.last().ok_or(Stale)?;
+        let source = root;
         let location = if inventory.container.is_some() {
             let ancestors = &inventory.breadcrumbs[1..inventory.breadcrumbs.len() - 1];
             let bytes = ancestors

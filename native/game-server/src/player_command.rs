@@ -14,12 +14,13 @@ use crate::{
 };
 use axum::body::Bytes;
 use openlegend_simulation::{
-    commands::{OwnedArrangement, OwnedMove, SpeechTargetRole, StatusOperation},
+    commands::{OwnedArrangement, OwnedMove, OwnedStockSelection, SpeechTargetRole, StatusOperation},
     encoding::{json_record, sha256_hex},
     gathering::GatheringMode,
     host::{ByteBudget, ByteReservation},
     reception::EncounterExposure,
-    runtime::{InteractionMode, NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimePlayerCommand},
+    runtime::{InteractionMode, NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimePlayerCommand,
+        StockGroupRefusal, StockGroupRequest, stock_group_limit_message},
     state::SurfacePoint,
     text::JsText,
     values::deserialize_present_option,
@@ -114,6 +115,8 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     quantity: Option<u64>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    inventory_group: Option<String>,
     #[serde(
         default,
         deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
@@ -844,6 +847,44 @@ impl PlayerCommands {
                             } else {
                                 None
                             };
+                            let _group_read = raw.inventory_group.as_ref().map(|token| {
+                                begin_budget.reserve(token.len() * 3 + 256)
+                                    .map_err(|_| StoreError::Capacity)
+                            }).transpose()?;
+                            let group = if let Some(token) = raw.inventory_group.as_deref() {
+                                let scope = &begin_scope.scope;
+                                let current = scope.key().map_err(|_| StoreError::InvalidRecord)?;
+                                let claim = begin_references.open_inventory_group(token)
+                                    .filter(|claim| claim.scope == current);
+                                let refusal = || ApplicationStart::Existing(ResultOwner::Refused(
+                                    "stale-inventory",
+                                    "These belongings changed. Refresh before moving them.",
+                                ));
+                                let Some(claim) = claim else {
+                                    return Ok(refusal());
+                                };
+                                let group = match world.resolve_inventory_group(
+                                    &scope.account_id, &scope.actor_id,
+                                    StockGroupRequest {
+                                        container: &claim.container,
+                                        revision: claim.revision,
+                                        key: claim.key,
+                                        representative: raw.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                                        quantity: raw.quantity.ok_or(StoreError::InvalidRecord)?,
+                                    },
+                                )? {
+                                    Ok(group) => group,
+                                    Err(StockGroupRefusal::Changed) => return Ok(refusal()),
+                                    Err(StockGroupRefusal::TooManyLots) => {
+                                        return Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                            "too-many-items", stock_group_limit_message(),
+                                        )));
+                                    }
+                                };
+                                Some(group)
+                            } else {
+                                None
+                            };
                             let command = begin_facts.command(
                                 position,
                                 target.as_ref().map(|value| value.id.as_str())
@@ -852,6 +893,7 @@ impl PlayerCommands {
                                 travel_destination.as_ref().map(|value| value.id.as_str()),
                                 selected_review.as_ref().and_then(|slot| slot.get()).map(|review| &review.permission),
                                 trade_evidence.as_ref(),
+                                group.as_ref().map(|group| &group.selection),
                             )?;
                             Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
                                 &begin_facts.id,
@@ -981,6 +1023,11 @@ impl CommandRequest {
             || (!matches!(command.kind, CommandKind::LearnRecord) && command.record_pin.is_some())
             || (!matches!(command.kind, CommandKind::InspectItem)
                 && (command.container_id.is_some() || command.after.is_some() || command.expected_scope.is_some()))
+            || command.inventory_group.as_ref().is_some_and(|token| {
+                !matches!(command.kind, CommandKind::Drop | CommandKind::TransferItem)
+                    || token.is_empty() || token.len() > 2048
+                    || !token.bytes().all(|byte| byte.is_ascii_hexdigit())
+            })
             || command.quantity.is_some_and(|quantity| {
                 (!arrangement && !matches!(command.kind, CommandKind::Pickup | CommandKind::Drop))
                     || quantity == 0 || quantity > openlegend_simulation::identity::MAX_SAFE_INTEGER
@@ -1245,7 +1292,9 @@ impl CommandRequest {
         budget: &ByteBudget,
     ) -> Result<PreparedRequest, WorldError> {
         let digest_bytes = self.command.text.as_ref().map_or(0, JsText::units_len)
-            .checked_mul(6).and_then(|bytes| bytes.checked_add(8192))
+            .checked_add(self.command.inventory_group.as_ref().map_or(0, String::len))
+            .and_then(|bytes| bytes.checked_mul(6))
+            .and_then(|bytes| bytes.checked_add(8192))
             .ok_or(StoreError::Capacity)?;
         let additional = budget.reserve(digest_bytes).map_err(|_| StoreError::Capacity)?;
         custody
@@ -1302,6 +1351,19 @@ impl CommandRequest {
 }
 
 impl CommandInput {
+    fn owned_move(&self) -> Result<OwnedMove<&str>, StoreError> {
+        Ok(OwnedMove {
+            arrangement: self.kind.arrangement().ok_or(StoreError::InvalidRecord)?,
+            item_id: self.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+            target_id: self.target_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+            quantity: self.quantity.ok_or(StoreError::InvalidRecord)?,
+            expected_revision: self.expected_revision.ok_or(StoreError::InvalidRecord)?,
+            placement_revision: self.placement_revision.ok_or(StoreError::InvalidRecord)?,
+            expected_contents_revision: self.expected_contents_revision,
+            target_revision: self.target_revision.ok_or(StoreError::InvalidRecord)?,
+        })
+    }
+
     fn gift(&self) -> Option<openlegend_simulation::handover::GiftIntent> {
         Some(openlegend_simulation::handover::GiftIntent {
             handover_operation: self.handover_operation?,
@@ -1322,8 +1384,20 @@ impl PreparedRequest {
         travel_destination: Option<&'a str>,
         strike_permission: Option<&'a openlegend_simulation::runtime::StrikePermission>,
         trade_evidence: Option<&'a Arc<openlegend_simulation::handover::TradeEvidence>>,
+        group: Option<&'a OwnedStockSelection>,
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
+        if let Some(group) = group {
+            return match input.kind {
+                CommandKind::Drop => Ok(RuntimePlayerCommand::DropGroup {
+                    item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                    group,
+                }),
+                CommandKind::TransferItem =>
+                    Ok(RuntimePlayerCommand::MoveGroup(input.owned_move()?, group)),
+                _ => Err(StoreError::InvalidRecord.into()),
+            };
+        }
         match input.kind {
             CommandKind::Handover => Ok(RuntimePlayerCommand::Handover {
                 target: target.ok_or(StoreError::InvalidRecord)?,
@@ -1439,16 +1513,8 @@ impl PreparedRequest {
                 preparation_digest: input.preparation_digest.as_deref().ok_or(StoreError::InvalidRecord)?,
                 inputs: input.inputs.as_ref().ok_or(StoreError::InvalidRecord)?,
             }),
-            CommandKind::TransferItem | CommandKind::SplitItem | CommandKind::MergeItem => Ok(RuntimePlayerCommand::TransferItem(OwnedMove {
-                arrangement: input.kind.arrangement().ok_or(StoreError::InvalidRecord)?,
-                item_id: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
-                target_id: input.target_id.as_deref().ok_or(StoreError::InvalidRecord)?,
-                quantity: input.quantity.ok_or(StoreError::InvalidRecord)?,
-                expected_revision: input.expected_revision.ok_or(StoreError::InvalidRecord)?,
-                placement_revision: input.placement_revision.ok_or(StoreError::InvalidRecord)?,
-                expected_contents_revision: input.expected_contents_revision,
-                target_revision: input.target_revision.ok_or(StoreError::InvalidRecord)?,
-            })),
+            CommandKind::TransferItem | CommandKind::SplitItem | CommandKind::MergeItem =>
+                Ok(RuntimePlayerCommand::TransferItem(input.owned_move()?)),
             CommandKind::Eat => Ok(RuntimePlayerCommand::Eat(input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?)),
             CommandKind::Equip => Ok(RuntimePlayerCommand::Equip(
                 input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,

@@ -11,6 +11,18 @@ impl CoreMutation<'_> {
         destination_id: &str,
         item_id: &str,
     ) -> Result<(), ExecutionError> {
+        self.relocate_contained_lot(source_id, destination_id, item_id, true)
+    }
+
+    /// Group transfers own a single revision advance after all direct lot
+    /// moves. The membership and lineage undo still belongs to this edit.
+    pub(super) fn relocate_contained_lot(
+        &mut self,
+        source_id: &str,
+        destination_id: &str,
+        item_id: &str,
+        publish_contents: bool,
+    ) -> Result<(), ExecutionError> {
         let entities = &self.state.physical.entities;
         let (Some(source), Some(destination), Some(child)) = (
             entities.handle(source_id),
@@ -48,12 +60,16 @@ impl CoreMutation<'_> {
             .resolve(source)
             .ok_or(ExecutionError::Invariant)?
             .inventory_revision;
-        let source_after = next_revision(source_before.unwrap_or_default())?;
+        let source_after = publish_contents
+            .then(|| next_revision(source_before.unwrap_or_default()))
+            .transpose()?;
         let destination_before = entities
             .resolve(destination)
             .ok_or(ExecutionError::Invariant)?
             .inventory_revision;
-        let destination_after = next_revision(destination_before.unwrap_or_default())?;
+        let destination_after = publish_contents
+            .then(|| next_revision(destination_before.unwrap_or_default()))
+            .transpose()?;
         let prior_membership = self.state.administration.object_membership.revision;
         let next_membership = next_revision(prior_membership)?;
         self.journal.physical.reserve(
@@ -156,14 +172,16 @@ impl CoreMutation<'_> {
         };
         *old_placement = Some(replaced);
         lot.item.as_mut().ok_or(ExecutionError::Invariant)?.revision = next_item;
-        entities
-            .resolve_mut(source)
-            .ok_or(ExecutionError::Invariant)?
-            .inventory_revision = Some(source_after);
-        entities
-            .resolve_mut(destination)
-            .ok_or(ExecutionError::Invariant)?
-            .inventory_revision = Some(destination_after);
+        if publish_contents {
+            entities
+                .resolve_mut(source)
+                .ok_or(ExecutionError::Invariant)?
+                .inventory_revision = source_after;
+            entities
+                .resolve_mut(destination)
+                .ok_or(ExecutionError::Invariant)?
+                .inventory_revision = destination_after;
+        }
         self.state.administration.object_membership.revision = next_membership;
         entities.settle_operational_memory(child, &mut self.journal.physical.reservation, false)?;
         Ok(())

@@ -130,7 +130,8 @@ pub use player::{
 };
 pub use player::{
     CoordinateRefusal, DirectInventory, FireOperation, InteractionMode, InventoryContainer,
-    InventoryCrumb, PlayerInteractionFacts, RuntimeFireChoice, RuntimeFireMenu, RuntimeFishOffer,
+    InventoryCrumb, InventoryGroup, PlayerInteractionFacts, ResolvedInventoryGroup,
+    RuntimeFireChoice, RuntimeFireMenu, RuntimeFishOffer, StockGroupRefusal, StockGroupRequest, stock_group_limit_message,
     RuntimeFishTool, RuntimeFoodMenu, RuntimeGatherOffer, RuntimeHearthCatalogue,
     RuntimeHearthShape, RuntimeHeatContact, RuntimePickupLot, RuntimePickupOffer,
     RuntimePlayerCommand, RuntimePlayerInputState, RuntimePlayerPublication, RuntimePlayerRead,

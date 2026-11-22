@@ -6,6 +6,7 @@ import {
   directChildIds,
   entityChangesBetween,
   STOCK_TRANSFER_LIMITS,
+  stockGroupLimitMessage,
   inventoryWorkReason,
   isEquipped,
   itemFor,
@@ -246,9 +247,7 @@ export function resolveInventoryGroup(
     if (!amount) continue;
     // Match the existing native stock operation allowance; reject the whole request.
     if (sources.length === STOCK_TRANSFER_LIMITS.movedLots)
-      throw new Error(
-        `This move needs more than ${STOCK_TRANSFER_LIMITS.movedLots} separate objects. Choose a smaller amount.`,
-      );
+      throw new Error(stockGroupLimitMessage(STOCK_TRANSFER_LIMITS.movedLots));
     sources.push({
       itemId: id,
       quantity: amount,

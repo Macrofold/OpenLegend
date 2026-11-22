@@ -18,6 +18,35 @@ impl PackingChange {
     }
 }
 
+/// Admit all net packing changes before custody edits. Root inventories
+/// need no packing load. Each affected bag's current revision is checked once.
+pub(super) fn check_packing(
+    state: &crate::simulation::SimulationState,
+    paths: &[(&[EntityHandle], PackingChange)],
+    load: Option<u64>,
+) -> Result<Result<(), OwnedMoveError>, ExecutionError> {
+    let definitions = &state.installed.retained;
+    for (path, change) in paths {
+        for handle in *path {
+            let entity = state.physical.entities.resolve(*handle).ok_or(ExecutionError::Invariant)?;
+            let Some(bag) = &entity.container else { continue; };
+            if load.is_none() {
+                return Ok(Err(OwnedMoveError::NoPackingLoad));
+            }
+            let capacity = definitions.items.get(&bag.definition_pin.id)
+                .and_then(|definition| definition.container_capacity())
+                .ok_or(ExecutionError::Invariant)?;
+            if bag.load_revision != bag.subtree_revision {
+                return Err(ExecutionError::Invariant);
+            }
+            if change.apply(bag.load).is_none_or(|value| value > capacity) {
+                return Ok(Err(OwnedMoveError::Packing));
+            }
+        }
+    }
+    Ok(Ok(()))
+}
+
 impl CoreMutation<'_> {
     /// Publish children before parents so height reflects the new membership.
     /// A direct edit may already own this parent's contents revision.

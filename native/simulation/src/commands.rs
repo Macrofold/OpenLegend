@@ -39,7 +39,7 @@ pub(crate) use native_movement::{
     begin_territorial_move,
 };
 pub(crate) mod player;
-pub use player::{OwnedArrangement, OwnedMove};
+pub use player::{OwnedArrangement, OwnedMove, OwnedStockSelection};
 mod state;
 pub(crate) use state::*;
 mod display;
@@ -239,9 +239,18 @@ pub(crate) enum NativeCommand {
         item_id: Option<String>,
         quantity: Option<u64>,
     },
-    Drop { envelope: CommandEnvelope, item_id: String, quantity: u64 },
+    Drop {
+        envelope: CommandEnvelope,
+        item_id: String,
+        quantity: u64,
+        group: Option<OwnedStockSelection>,
+    },
     Eat { envelope: CommandEnvelope, item_id: String },
-    TransferItem { envelope: CommandEnvelope, selection: OwnedMove<String> },
+    TransferItem {
+        envelope: CommandEnvelope,
+        selection: OwnedMove<String>,
+        group: Option<OwnedStockSelection>,
+    },
     Equipment {
         envelope: CommandEnvelope,
         item_id: String,
@@ -842,6 +851,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
                 let invalid = || D::Error::custom("Drop requires an exact item and quantity.");
                 Ok(Self::Drop {
                     envelope,
+                    group: None,
                     item_id: input.item_id.filter(|id| is_safe_record_id(id)).ok_or_else(invalid)?,
                     quantity: input.quantity.ok_or_else(invalid)?,
                 })

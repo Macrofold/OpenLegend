@@ -54,6 +54,7 @@ pub(super) async fn page(State(state): State<PlayerRoutes>, request: Request) ->
                                     controlling,
                                     &input,
                                     language,
+                                    &state.references,
                                     budget,
                                 )
                             }

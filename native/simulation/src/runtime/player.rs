@@ -10,7 +10,10 @@ pub use offer_recipients::{
 };
 pub use object_history::{OBJECT_HISTORY_SELECTION, RuntimeObjectHistoryEntry, RuntimeObjectHistoryRead};
 pub use world_storage::{InspectedRecipeRecord, RuntimeWorldStorage};
-pub use inventory::{DirectInventory, InventoryContainer, InventoryCrumb};
+pub use inventory::{
+    DirectInventory, InventoryContainer, InventoryCrumb, InventoryGroup, ResolvedInventoryGroup,
+    StockGroupRefusal, StockGroupRequest, stock_group_limit_message,
+};
 mod status_menu;
 mod hearth;
 pub use hearth::{RuntimeHearthCatalogue, RuntimeHearthShape};

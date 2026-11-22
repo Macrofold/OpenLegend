@@ -54,6 +54,36 @@ impl<I> OwnedMove<I> {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OwnedStockLot {
+    pub item_id: String,
+    pub quantity: u64,
+    pub revision: u64,
+    pub placement_revision: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OwnedStockSelection {
+    pub container_id: String,
+    pub revision: u64,
+    pub quantity: u64,
+    pub members: Vec<OwnedStockLot>,
+}
+
+impl crate::host::retained_size::HeapBytes for OwnedStockLot {
+    fn heap_bytes(&self) -> Option<usize> {
+        self.item_id.heap_bytes()
+    }
+}
+
+impl crate::host::retained_size::HeapBytes for OwnedStockSelection {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([self.container_id.heap_bytes()?, self.members.heap_bytes()?])
+    }
+}
+
 pub(crate) enum OwnedMoveError {
     Unavailable,
     Busy,
@@ -330,27 +360,8 @@ impl CoreMutation<'_> {
             (destination_only, PackingChange::Add(load.unwrap_or(0))),
             (shared, PackingChange::Add(0)),
         ];
-        for (path, change) in packing {
-            for handle in path {
-                let ancestor = entities.resolve(*handle).ok_or(ExecutionError::Invariant)?;
-                let Some(bag) = &ancestor.container else {
-                    continue;
-                };
-                if load.is_none() {
-                    return Ok(Err(Refuse::NoPackingLoad));
-                }
-                let capacity = definitions
-                    .items
-                    .get(&bag.definition_pin.id)
-                    .and_then(|definition| definition.container_capacity())
-                    .ok_or(ExecutionError::Invariant)?;
-                if bag.load_revision != bag.subtree_revision {
-                    return Err(ExecutionError::Invariant);
-                }
-                if change.apply(bag.load).is_none_or(|next| next > capacity) {
-                    return Ok(Err(Refuse::Packing));
-                }
-            }
+        if let Err(reason) = super::packing::check_packing(state, &packing, load)? {
+            return Ok(Err(reason));
         }
         let attached = matches!(placement, Placement::Attached { .. });
         let _source = self.journal.budget.reserve(source.len())?;
@@ -364,6 +375,7 @@ impl CoreMutation<'_> {
             quantity,
             cause,
             merge_receiving_lot: true,
+            publish_contents: true,
         })?
         else {
             return Ok(Err(Refuse::Quantity));
@@ -389,7 +401,7 @@ impl CoreMutation<'_> {
     }
 }
 
-fn positive_body(item: &Entity) -> bool {
+pub(super) fn positive_body(item: &Entity) -> bool {
     if let Some(form) = &item.spatial.soft_footprint {
         form.width.max(form.length) > 0.0 && form.height > 0.0
     } else {

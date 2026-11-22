@@ -32,6 +32,17 @@ const TRADE_CURSOR: &[u8] = b"openlegend-private-trade-cursor";
 const OFFER_RECIPIENT_CURSOR: &[u8] = b"openlegend-private-offer-recipient-cursor";
 const OBJECT_HISTORY_CURSOR: &[u8] = b"openlegend-private-object-history-cursor";
 
+const INVENTORY_GROUP: &[u8] = b"openlegend-private-inventory-group";
+
+#[derive(serde::Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct InventoryGroupClaim<Text> {
+    pub(crate) scope: Text,
+    pub(crate) container: Text,
+    pub(crate) revision: u64,
+    pub(crate) key: [u8; 32],
+}
+
 #[derive(serde::Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct RecentEditReference<Text, Receipt> {
@@ -133,6 +144,14 @@ impl ReferenceIssuer {
 
     pub(crate) fn open_object_history_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
         self.open_private(OBJECT_HISTORY_CURSOR, token)
+    }
+
+    pub(crate) fn seal_inventory_group(&self, group: &InventoryGroupClaim<&str>) -> Option<String> {
+        self.seal_private(INVENTORY_GROUP, group)
+    }
+
+    pub(crate) fn open_inventory_group(&self, token: &str) -> Option<InventoryGroupClaim<String>> {
+        self.open_private(INVENTORY_GROUP, token)
     }
 
     fn seal_private(&self, purpose: &[u8], value: &impl Serialize) -> Option<String> {

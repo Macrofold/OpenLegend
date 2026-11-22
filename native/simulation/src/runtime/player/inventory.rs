@@ -9,6 +9,8 @@ use crate::simulation::SimulationState;
 use crate::state::{Entity, EntityHandle, EquipmentPort, Placement};
 use crate::text::JsText;
 use serde::Serialize;
+mod groups;
+pub use groups::{InventoryGroup, ResolvedInventoryGroup, StockGroupRefusal, StockGroupRequest, stock_group_limit_message};
 
 #[derive(Clone, Copy, Serialize)]
 #[serde(rename_all = "camelCase")]

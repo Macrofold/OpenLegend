@@ -14,14 +14,28 @@ impl CommandCursor {
         actor: &str,
     ) -> Result<bool, ExecutionError> {
         let NativeCommand::Drop {
-            item_id, quantity, ..
+            item_id, quantity, group, ..
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);
         };
         let installed = core.state.installed.clone();
         let policy = &installed.retained.item_handling_read;
-        if let Some(reason) = core.check_drop_item(actor, item_id, *quantity)? {
+        if let Some(group) = group {
+            if let Err(problem) = core.check_stock_group(actor, group)? {
+                let reason = match problem {
+                    crate::execution::OwnedMoveError::Quantity => &policy.drop.quantity,
+                    crate::execution::OwnedMoveError::Busy => &policy.drop.needed,
+                    _ => &policy.drop.unavailable,
+                };
+                self.drop_result(false, reason)?;
+                return Ok(false);
+            }
+            if core.state.physical.entities.get(actor).and_then(Entity::world_support).is_none() {
+                self.drop_result(false, &policy.drop.support)?;
+                return Ok(false);
+            }
+        } else if let Some(reason) = core.check_drop_item(actor, item_id, *quantity)? {
             self.drop_result(false, reason)?;
             return Ok(false);
         }
@@ -66,6 +80,7 @@ impl CommandCursor {
             envelope,
             item_id,
             quantity,
+            group,
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);
@@ -154,7 +169,11 @@ impl CommandCursor {
             ]),
         );
         let pile = core.prepare_drop_pile(&site)?;
-        core.drop_checked_lot(&actor_id, item_id, *quantity, &pile)?;
+        if let Some(group) = group {
+            core.drop_stock_group(&actor_id, group, &pile)?;
+        } else {
+            core.drop_checked_lot(&actor_id, item_id, *quantity, &pile)?;
+        }
         self.drop_result(true, &policy.success)?;
         self.begin_source_scope(core)?;
         let event = core.stage_event(EventEmissionIntent {
