@@ -194,7 +194,7 @@ A selected-container decision supplies at most **24 admitted take/pack suggestio
 
 **Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Object history returns **40 entries per page**, querying 41 for continuation, for split/merge/consumption whose occurrence-time custodian matches the requesting character. Pages sort and continue by lineage-record slot, not a promised wall-clock chronology. Current authority is checked before and after the awaited history read; current possession or declared ownership alone does not grant historical custody. A named successor remains descriptive, never an actionable redirect. [History query](../../apps/server/src/world-records.ts) · [Request scope](../../apps/server/src/inventory-view.ts).
+Object history returns **40 entries per page**, querying 41 for continuation, for split/merge/consumption whose occurrence-time custodian matches the requesting character. Pages sort and continue by lineage-record slot, not a promised wall-clock chronology. Current authority is checked before and after the awaited history read; current possession or declared ownership alone does not grant historical custody. A named successor remains descriptive, never an actionable redirect. [History query](../../apps/server/src/world-records.ts) · [Request scope](../../apps/server/src/inventory-view.ts) · [Stand-alone Rust reader](../../native/game-server/src/store/object_history.rs).
 
 **Reason / tradeoff:** Bound page size and expose only the requester’s permitted custody evidence.
 

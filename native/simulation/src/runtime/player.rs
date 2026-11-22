@@ -2,11 +2,13 @@
 //! read borrow survives a provider/SQL await; the immutable evidence owner does.
 use super::*;
 mod inventory;
+mod object_history;
 mod world_storage;
 mod offer_recipients;
 pub use offer_recipients::{
     RuntimeOfferCursor, RuntimeOfferPage, RuntimeOfferProblem, RuntimeOfferSelection, RuntimeOfferSource,
 };
+pub use object_history::{OBJECT_HISTORY_SELECTION, RuntimeObjectHistoryEntry, RuntimeObjectHistoryRead};
 pub use world_storage::{InspectedRecipeRecord, RuntimeWorldStorage};
 pub use inventory::{DirectInventory, InventoryContainer, InventoryCrumb};
 mod status_menu;

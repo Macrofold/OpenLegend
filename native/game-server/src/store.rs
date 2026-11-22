@@ -25,6 +25,7 @@ mod lexical;
 mod metadata;
 mod npc_schedule;
 mod npc_sources;
+pub(crate) mod object_history;
 pub(crate) mod operator_maintenance;
 mod privacy_edit;
 mod read;

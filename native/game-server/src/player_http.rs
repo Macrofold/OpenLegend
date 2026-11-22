@@ -41,6 +41,7 @@ mod history;
 pub(crate) mod hearth;
 mod inventory;
 mod offer_recipients;
+mod object_history;
 mod inventions;
 mod notes;
 mod known_places;
@@ -186,6 +187,7 @@ pub(crate) fn router(
         .route("/api/inventory/bindings", post(inventory::bindings))
         .route("/api/inventory", post(inventory::page))
         .route("/api/inventory/destinations", post(offer_recipients::read))
+        .route("/api/inventory/history", post(object_history::read))
         .route("/api/inventory/access", post(inventory::access))
         .route("/api/trade", post(trade::read))
         .route("/api/trade/disclosures", post(trade::disclosures::list))

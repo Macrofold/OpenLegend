@@ -2,6 +2,8 @@
 
 use super::*;
 
+mod object_history;
+
 impl HostedWorld {
     pub(crate) async fn disclose_inventory<T>(
         &self,
