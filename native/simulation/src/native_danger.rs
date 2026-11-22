@@ -45,7 +45,8 @@ fn danger_source(profile: &NativeResponseProfile, source: &Entity) -> Result<boo
     }
     Ok(profile.dangers.current_natural_attack
         && actor.action.as_ref().is_some_and(|action| {
-            action.strike_phase == Some(crate::contact::StrikePhase::Windup)
+            action.stage == "working"
+                && action.strike_phase == Some(crate::contact::StrikePhase::Windup)
                 && action.definition_id.as_ref().is_some_and(|id| {
                     actor
                         .natural_strike_ids

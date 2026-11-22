@@ -1195,6 +1195,7 @@ enum UndoKey {
     Health(usize, u64),
     CombatReady(usize, u64),
     ContactPhase(usize, u64),
+    StrikeMotion(usize, u64),
     Action(usize, u64),
     ActionPath(usize, u64),
     ActionRoute(usize, u64),
@@ -1413,6 +1414,11 @@ enum Undo {
         entity: EntityHandle,
         action_id: String,
         before: ContactPhase,
+    },
+    StrikeMotion {
+        entity: EntityHandle,
+        action_id: String,
+        before: Option<crate::state::FundedStrikeMotion>,
     },
     ActionSample {
         entity: EntityHandle,
@@ -2181,6 +2187,18 @@ impl PhysicalJournal {
                         .filter(|action| action.id == action_id)
                         .ok_or(ExecutionError::Invariant)?;
                     before.restore(action);
+                }
+                Undo::StrikeMotion {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    drop(state.entities.swap_funded_strike_motion(
+                        entity,
+                        &action_id,
+                        before,
+                        &self.budget,
+                    )?);
                 }
                 Undo::ActionSample {
                     entity,

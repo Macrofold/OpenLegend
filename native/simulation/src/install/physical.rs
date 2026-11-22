@@ -823,6 +823,7 @@ fn validate_entity(
         }
         if actor.action.as_ref().is_some_and(|a| {
             a.has_unconverted_fields()
+                || (a.strike_motion.is_some() && !a.is_natural_contact())
                 || (a.target_life.is_some() && !a.is_natural_contact())
                 || (!a.has_ground_motion() && !a.is_natural_contact() && a.kind != "status-effect")
         }) {

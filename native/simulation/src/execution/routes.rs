@@ -19,7 +19,7 @@ impl PhysicalMutation<'_> {
             .resolve(handle)
             .and_then(|entity| entity.actor.as_ref())
             .and_then(|actor| actor.action.as_ref())
-            .filter(|action| action.id == action_id && action.has_ground_motion())
+            .filter(|action| action.id == action_id && action.owns_ground_route())
             .ok_or(ExecutionError::Invariant)?;
         let before = action.motion_sample_remaining_metres;
         if before == Some(remaining) {
@@ -127,7 +127,7 @@ impl PhysicalMutation<'_> {
             .resolve(handle)
             .and_then(|entity| entity.actor.as_ref())
             .and_then(|actor| actor.action.as_ref())
-            .filter(|action| action.id == action_id && action.has_ground_motion())
+            .filter(|action| action.id == action_id && action.owns_ground_route())
             .ok_or(ExecutionError::Invariant)?;
         self.journal.reserve(
             heap_sum([2 * size_of::<Undo>(), action_id.len()]).ok_or(ExecutionError::Capacity)?,
@@ -190,8 +190,14 @@ impl PhysicalMutation<'_> {
             })
             .ok_or(ExecutionError::Invariant)?;
         let before = action.remaining_seconds;
-        let after = (before - seconds).max(0.0);
-        let after = if after <= epsilon { 0.0 } else { after };
+        let after = if let Some(motion) = &action.strike_motion {
+            // A stored release time owns this boundary even when another
+            // event lands within the ordinary duration epsilon before it.
+            (motion.release_at - self.state.header.sim_time).max(0.0)
+        } else {
+            let remaining = before - seconds;
+            if remaining <= epsilon { 0.0 } else { remaining }
+        };
         if after == before {
             return Ok(after == 0.0);
         }
@@ -285,7 +291,7 @@ impl PhysicalMutation<'_> {
             .and_then(|actor| actor.action.as_ref())
             .filter(|action| action.id == action_id)
             .ok_or(ExecutionError::Invariant)?;
-        if !action.has_ground_motion() {
+        if !action.owns_ground_route() {
             return Err(ExecutionError::UnsupportedFamily);
         }
         if !after.storage.is_funded_by(&self.journal.budget) {

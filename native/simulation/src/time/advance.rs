@@ -148,6 +148,7 @@ impl EventBatch {
 pub(crate) struct CompletedAdvance {
     pub outcome: Outcome,
     pub navigation: Vec<(EntityHandle, PendingRefugeNavigation)>,
+    pub entity_routes_pending: bool,
     pub continuation: Option<AdvanceContinuation>,
     events: Vec<EventBatch>,
     _reservation: ByteReservation,
@@ -440,6 +441,7 @@ pub(crate) struct AdvanceCursor {
     flush: Option<Phase>,
     saved_interval: Option<NativeInterval>,
     navigation_blocked: bool,
+    entity_routes_pending: bool,
     navigation_gate: Option<NavigationGate>,
     navigation_after: Option<NavigationAfter>,
     outcome: Option<Outcome>,
@@ -622,6 +624,7 @@ impl AdvanceCursor {
             flush: None,
             saved_interval: None,
             navigation_blocked: false,
+            entity_routes_pending: false,
             navigation_gate: None,
             navigation_after: None,
             outcome: None,

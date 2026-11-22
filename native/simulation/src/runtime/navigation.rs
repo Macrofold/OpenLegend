@@ -5,7 +5,8 @@ use super::*;
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, RoutePlan, RouteQuery};
 use crate::native_refuge::navigation::{ProposalBinding, binding};
 use crate::native_refuge::{PendingRefugeNavigation, PreparedRefugeNavigation};
-use crate::time::{PendingActionNavigation, PreparedActionNavigation};
+use crate::native_response::NavigationWait;
+use crate::time::{PendingActionNavigation, PreparedActionNavigation, action_navigation_wait};
 use std::mem::size_of;
 
 const MAXIMUM_PREPARED: usize = 64;
@@ -158,9 +159,8 @@ impl RuntimeNavigationRead {
 }
 impl NativeWorldSession {
     /// Read a real deferred route without transferring the body's other
-    /// state. Ordinary advances already carry new entity-local offers. Walk
-    /// the accepted action membership only when a held world route blocked
-    /// elapsed time.
+    /// state. The accepted advance flags current ordinary action routes, and
+    /// carries prepared refuge offers. Scan actions only for a selected wait.
     pub fn read_deferred_navigation(
         &mut self,
         include_world: bool,
@@ -180,7 +180,13 @@ impl NativeWorldSession {
                 actors.push(id.to_owned());
                 Ok(())
             };
-            if include_world {
+            for (selected, wait) in [
+                (include_world, NavigationWait::World),
+                (self.entity_routes_pending, NavigationWait::Entity),
+            ] {
+                if !selected {
+                    continue;
+                }
                 let revision = state.installed.geometry.spatial.revision;
                 let now = state.physical.header.sim_time;
                 for id in state.physical.entities.ordered_ids() {
@@ -189,8 +195,9 @@ impl NativeWorldSession {
                         .entities
                         .get(id)
                         .ok_or_else(|| failure("missing navigation body"))?;
-                    if crate::time::action_navigation_pending(entity, now, revision, &self.budget)
+                    if action_navigation_wait(entity, now, revision, &self.budget)
                         .map_err(failure)?
+                        == Some(wait)
                     {
                         add(id)?;
                     }

@@ -501,6 +501,10 @@ fn assemble_selected_core(
                         &installed,
                         entity,
                         action,
+                        action
+                            .target_id
+                            .as_deref()
+                            .and_then(|id| physical.entities.get(id)),
                         physical.header.sim_time,
                     )
             })

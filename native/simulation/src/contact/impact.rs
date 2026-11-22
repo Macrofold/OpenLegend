@@ -1,21 +1,28 @@
 //! The clock owns windup and recovery. This cursor owns the one checked
 //! impact and drives the existing body and occurrence continuations.
-use super::{StrikeOutcome, StrikePhase, may_target, profile};
+use super::motion::support_parts;
+use super::{
+    StrikeMotion, StrikeOutcome, StrikePhase, StrikeRoute, StrikeRouteStep, may_target, profile,
+    reach,
+};
 use crate::activity::PendingActivityResult;
 use crate::body::{BodyAnswer, BodyStep, HealthChangeCursor, ScarEffect, scar_factor};
 use crate::events::{
     AudienceSelection, CompletedOccurrence, EmissionText, EventEmissionIntent, EventScope,
 };
 use crate::execution::{
-    ActionFinish, ActionWrite, CoreMutation, ExecutionError, PendingStatusEnd, PlanGenerationWrite,
-    StagedOccurrence, StatusEnd,
+    ActionFinish, ActionRouteWrite, ActionWrite, CoreMutation, ExecutionError, PendingStatusEnd,
+    PlanGenerationWrite, StagedOccurrence, StatusEnd,
 };
 use crate::experience::AcquiredActivityResult;
-use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, SightRay};
+use crate::geometry::{
+    GeometryAnswers, GeometryBinding, GeometryQueries, GuardedRoutePlan, RoutePlan, SightRay,
+};
+use crate::host::retained_size::HeapBytes;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::narration::{Narration, NarrationPart, PersonRole};
 use crate::reception::{EventScalar, SightBatch};
-use crate::state::{Action, Entity};
+use crate::state::{Action, Entity, FundedActionRoute, FundedStrikeMotion, NavigationPending};
 use indexmap::IndexMap;
 use std::mem::size_of;
 
@@ -43,6 +50,7 @@ pub(crate) struct ImpactCursor {
     phase: Phase,
     sight: Option<SightBatch>,
     impact: Option<GeometryQueries>,
+    route: Option<StrikeRoute>,
     body: Option<HealthChangeCursor>,
     health_before: f64,
     raw_injury: f64,
@@ -59,6 +67,8 @@ pub(crate) struct ImpactCursor {
 enum Phase {
     Start,
     Sight,
+    StartRange,
+    MotionRoute,
     Reach,
     Body,
     Interrupt,
@@ -90,6 +100,7 @@ impl ImpactCursor {
             phase: Phase::Start,
             sight: None,
             impact: None,
+            route: None,
             body: None,
             health_before: 0.0,
             raw_injury: 0.0,
@@ -107,6 +118,7 @@ impl ImpactCursor {
         self.sight
             .as_ref()
             .map(SightBatch::queries)
+            .or_else(|| self.route.as_ref().map(StrikeRoute::queries))
             .or(self.impact.as_ref())
             .ok_or(ExecutionError::Invariant)
     }
@@ -123,12 +135,9 @@ impl ImpactCursor {
 
     fn source<'a>(
         &self,
-        core: &'a CoreMutation<'_>,
+        entities: &'a crate::state::EntityStore,
     ) -> Result<(&'a Entity, &'a Action), ExecutionError> {
-        let entity = core
-            .state
-            .physical
-            .entities
+        let entity = entities
             .get(&self.source)
             .ok_or(ExecutionError::MissingActor)?;
         let action = entity
@@ -150,6 +159,236 @@ impl ImpactCursor {
         Ok(())
     }
 
+    fn check_start_range(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+    ) -> Result<ContactStep, ExecutionError> {
+        let (source, action) = self.source(&core.state.physical.entities)?;
+        let installed = &core.state.installed;
+        let definition = action
+            .definition_id
+            .as_deref()
+            .and_then(|id| profile(installed, source, id))
+            .ok_or(ExecutionError::Invariant)?;
+        let start_range = definition
+            .preparation_motion
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .start_range;
+        let target = core
+            .state
+            .physical
+            .entities
+            .get(&self.target)
+            .ok_or(ExecutionError::Invariant)?;
+        let Some(ray) = reach(
+            installed,
+            definition,
+            source,
+            target,
+            start_range,
+            &self.budget,
+        )?
+        else {
+            return Ok(ContactStep::Invalidated);
+        };
+        self.reserve(size_of::<GeometryQueries>() + size_of::<SightRay>())?;
+        self.binding.serial = core.journal.next_provider_serial()?;
+        let mut queries = GeometryQueries::new(self.binding);
+        queries.sight = vec![ray];
+        self.impact = Some(queries);
+        self.phase = Phase::StartRange;
+        Ok(ContactStep::Geometry)
+    }
+
+    fn prepare_motion_route(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+    ) -> Result<ContactStep, ExecutionError> {
+        let (source, action) = self.source(&core.state.physical.entities)?;
+        let now = core.state.physical.header.sim_time;
+        let installed = &core.state.installed;
+        let target = core
+            .state
+            .physical
+            .entities
+            .get(&self.target)
+            .ok_or(ExecutionError::Invariant)?;
+        let (observed, surface) = support_parts(target).ok_or(ExecutionError::InvalidPosition)?;
+        let same_point = action.strike_motion.as_ref().is_some_and(|motion| {
+            motion.observed.point.point() == observed && motion.observed.point.surface_id == surface
+        });
+        // An identical request, including a recorded rejection, keeps its
+        // result while this observation, body and map remain current.
+        let same_route = match &action.navigation {
+            Some(navigation) if same_point => crate::time::action_route_request_current(
+                source,
+                &navigation.request,
+                self.binding.geometry_revision,
+                &self.budget,
+            )?,
+            _ => false,
+        };
+        let new_motion = action
+            .strike_motion
+            .as_ref()
+            .map(|motion| motion.reobserve(target, now, &self.budget))
+            .transpose()?
+            .flatten();
+        if !same_route {
+            let definition = action
+                .definition_id
+                .as_deref()
+                .and_then(|id| profile(installed, source, id))
+                .and_then(|definition| definition.preparation_motion.as_ref())
+                .ok_or(ExecutionError::Invariant)?;
+            self.binding.serial = core.journal.next_provider_serial()?;
+            self.route = Some(StrikeRoute::prepare(
+                installed,
+                definition,
+                source,
+                target,
+                &action.path,
+                self.binding,
+                &self.budget,
+            )?);
+        }
+        if let Some((motion, storage)) = new_motion {
+            let motion = FundedStrikeMotion::from_storage(motion, storage, &self.budget)?;
+            core.physical()
+                .replace_strike_motion(&self.source, &self.action, Some(motion))?;
+        }
+        if same_route {
+            return Ok(ContactStep::AdvanceComplete);
+        }
+        self.phase = Phase::MotionRoute;
+        Ok(ContactStep::Geometry)
+    }
+
+    fn finish_motion_route(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        answer: GeometryAnswers,
+    ) -> Result<ContactStep, ExecutionError> {
+        let result = self.route.as_mut().ok_or(ExecutionError::Invariant)?.step(
+            answer,
+            || core.journal.next_provider_serial(),
+            &self.budget,
+        )?;
+        if matches!(&result, StrikeRouteStep::Geometry) {
+            return Ok(ContactStep::Geometry);
+        }
+        self.route = None;
+        let (source, action) = self.source(&core.state.physical.entities)?;
+        let awaiting = action.awaiting_moving_contact();
+        let has_route = !action.path.is_empty() || action.navigation.is_some();
+        let (path, navigation, mut custody) = match result {
+            StrikeRouteStep::Route(GuardedRoutePlan(RoutePlan::Reached { path, .. }, custody)) => {
+                (path, None, custody)
+            }
+            StrikeRouteStep::Route(GuardedRoutePlan(
+                RoutePlan::Pending { mut request, .. },
+                mut custody,
+            )) => {
+                custody.resize(
+                    custody
+                        .bytes()
+                        .checked_add("entity".len())
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
+                request.wait = Some("entity".into());
+                (
+                    Vec::new(),
+                    Some(NavigationPending {
+                        request,
+                        failure: None,
+                    }),
+                    custody,
+                )
+            }
+            StrikeRouteStep::KeepRoute => {
+                if !awaiting {
+                    return Ok(ContactStep::AdvanceComplete);
+                }
+                let bytes = action.path.heap_bytes().ok_or(ExecutionError::Capacity)?;
+                let custody = self.budget.reserve(bytes)?;
+                (action.path.clone(), None, custody)
+            }
+            StrikeRouteStep::AtStance => (Vec::new(), None, self.budget.reserve(0)?),
+            StrikeRouteStep::Unavailable | StrikeRouteStep::Route(_) => {
+                if awaiting {
+                    return Ok(ContactStep::Invalidated);
+                }
+                (Vec::new(), None, self.budget.reserve(0)?)
+            }
+            StrikeRouteStep::Geometry => return Err(ExecutionError::Invariant),
+        };
+        let starting = awaiting && navigation.is_none();
+        let motion = if starting {
+            let installed = &core.state.installed;
+            let definition = action
+                .definition_id
+                .as_deref()
+                .and_then(|id| profile(installed, source, id))
+                .ok_or(ExecutionError::Invariant)?;
+            let target = core
+                .state
+                .physical
+                .entities
+                .get(&self.target)
+                .ok_or(ExecutionError::Invariant)?;
+            let (motion, storage) = StrikeMotion::prepare(
+                installed,
+                definition,
+                target,
+                core.state.physical.header.sim_time,
+                &self.budget,
+            )?;
+            Some(FundedStrikeMotion::from_storage(
+                motion,
+                storage,
+                &self.budget,
+            )?)
+        } else {
+            None
+        };
+        if starting || has_route || navigation.is_some() || !path.is_empty() {
+            let stage = if awaiting && !starting {
+                "approaching"
+            } else {
+                "working"
+            };
+            custody.resize(
+                custody
+                    .bytes()
+                    .checked_add(stage.len())
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            let route = FundedActionRoute::from_storage(
+                ActionRouteWrite {
+                    path,
+                    navigation,
+                    stage: stage.into(),
+                    replans: None,
+                },
+                custody,
+                &self.budget,
+            )?;
+            core.physical()
+                .replace_action_route(&self.source, &self.action, route)?;
+        }
+        if let Some(motion) = motion {
+            core.physical()
+                .replace_strike_motion(&self.source, &self.action, Some(motion))?;
+            core.physical().behavior_changed(&self.source, true)?;
+            let (event, custody) = super::stage_preparation(core, &self.source, &self.budget)?;
+            self.storage.merge(custody)?;
+            self.phase = Phase::Done;
+            return self.wait_for(event);
+        }
+        Ok(ContactStep::AdvanceComplete)
+    }
+
     pub(crate) fn step(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -164,7 +403,22 @@ impl ImpactCursor {
         loop {
             match self.phase {
                 Phase::Start => {
-                    let (source, action) = self.source(core)?;
+                    let (source, action) = self.source(&core.state.physical.entities)?;
+                    if action.awaiting_moving_contact()
+                        && let Some(navigation) = &action.navigation
+                        && crate::time::action_route_request_current(
+                            source,
+                            &navigation.request,
+                            self.binding.geometry_revision,
+                            &self.budget,
+                        )?
+                    {
+                        return Ok(if navigation.failure.is_some() {
+                            ContactStep::Invalidated
+                        } else {
+                            ContactStep::AdvanceComplete
+                        });
+                    }
                     if action.strike_phase == Some(StrikePhase::Recovery) {
                         let epsilon = core.state.installed.time_epsilon;
                         return Ok(
@@ -196,7 +450,13 @@ impl ImpactCursor {
                             })
                         && !installed
                             .capabilities
-                            .capability_blocked(Some(source), "actions")?;
+                            .capability_blocked(Some(source), "actions")?
+                        && (!(action.strike_motion.is_some() || action.awaiting_moving_contact())
+                            || (support_parts(source).is_some()
+                                && support_parts(target).is_some()
+                                && !installed
+                                    .capabilities
+                                    .capability_blocked(Some(source), "locomotion")?));
                     if !valid {
                         return Ok(ContactStep::Invalidated);
                     }
@@ -228,6 +488,13 @@ impl ImpactCursor {
                     if visible.seen(&self.target) != Some(true) {
                         return Ok(ContactStep::Invalidated);
                     }
+                    if self
+                        .source(&core.state.physical.entities)?
+                        .1
+                        .awaiting_moving_contact()
+                    {
+                        return self.check_start_range(core);
+                    }
                     let epsilon = core.state.installed.time_epsilon;
                     if !core.physical().advance_timed_work(
                         &self.source,
@@ -235,9 +502,17 @@ impl ImpactCursor {
                         self.seconds,
                         epsilon,
                     )? {
+                        if self
+                            .source(&core.state.physical.entities)?
+                            .1
+                            .strike_motion
+                            .is_some()
+                        {
+                            return self.prepare_motion_route(core);
+                        }
                         return Ok(ContactStep::AdvanceComplete);
                     }
-                    let (source, action) = self.source(core)?;
+                    let (source, action) = self.source(&core.state.physical.entities)?;
                     let definition = profile(
                         &core.state.installed,
                         source,
@@ -253,7 +528,9 @@ impl ImpactCursor {
                         .entities
                         .get(&self.target)
                         .ok_or(ExecutionError::Invariant)?;
-                    if let Some(ray) = crate::geometry::interaction_reach(
+                    if let Some(ray) = reach(
+                        &core.state.installed,
+                        definition,
                         source,
                         target,
                         definition.range,
@@ -269,6 +546,26 @@ impl ImpactCursor {
                     }
                     self.hit_reason = Some("out-of-range");
                     self.phase = Phase::Result;
+                }
+                Phase::StartRange => {
+                    let Some(ContactAnswer::Geometry(mut range)) = answer.take() else {
+                        return Err(ExecutionError::UnfinishedOccurrence);
+                    };
+                    self.impact
+                        .take()
+                        .ok_or(ExecutionError::Invariant)?
+                        .validate_answers(&range)
+                        .map_err(|_| ExecutionError::Invariant)?;
+                    if range.sight.pop() != Some(true) {
+                        return Ok(ContactStep::Invalidated);
+                    }
+                    return self.prepare_motion_route(core);
+                }
+                Phase::MotionRoute => {
+                    let Some(ContactAnswer::Geometry(route)) = answer.take() else {
+                        return Err(ExecutionError::UnfinishedOccurrence);
+                    };
+                    return self.finish_motion_route(core, route);
                 }
                 Phase::Reach => {
                     let Some(ContactAnswer::Geometry(mut reach)) = answer.take() else {
@@ -379,7 +676,7 @@ impl ImpactCursor {
     }
 
     fn begin_impact(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
-        let (source, action) = self.source(core)?;
+        let (source, action) = self.source(&core.state.physical.entities)?;
         let installed = &core.state.installed;
         let definition = profile(
             installed,
@@ -435,7 +732,9 @@ impl ImpactCursor {
             .actor
             .as_ref()
             .and_then(|actor| actor.action.as_ref())
-            .filter(|action| action.strike_phase == Some(StrikePhase::Windup))
+            .filter(|action| {
+                action.stage == "working" && action.strike_phase == Some(StrikePhase::Windup)
+            })
         else {
             return Ok(());
         };
@@ -538,7 +837,7 @@ impl ImpactCursor {
         &mut self,
         core: &mut CoreMutation<'_>,
     ) -> Result<StagedOccurrence, ExecutionError> {
-        let (source, action) = self.source(core)?;
+        let (source, action) = self.source(&core.state.physical.entities)?;
         let installed = std::sync::Arc::clone(&core.state.installed);
         let definition = profile(
             &installed,

@@ -20,6 +20,45 @@ impl ContactPhase {
 }
 
 impl PhysicalMutation<'_> {
+    pub(crate) fn replace_strike_motion(
+        &mut self,
+        id: &str,
+        action_id: &str,
+        motion: Option<crate::state::FundedStrikeMotion>,
+    ) -> Result<(), ExecutionError> {
+        let entity = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        self.journal
+            .reserve(2 * size_of::<Undo>() + action_id.len())?;
+        let key = UndoKey::StrikeMotion(entity.slot, entity.generation);
+        let first = self.journal.first(&key)?;
+        if first {
+            self.state
+                .entities
+                .retain_strike_motion(entity, &self.journal.budget)?;
+        }
+        let before = self.state.entities.swap_funded_strike_motion(
+            entity,
+            action_id,
+            motion,
+            &self.journal.budget,
+        )?;
+        if first {
+            self.journal.retain(
+                key,
+                Undo::StrikeMotion {
+                    entity,
+                    action_id: action_id.into(),
+                    before,
+                },
+            )?;
+        }
+        Ok(())
+    }
+
     pub(crate) fn retain_combat_recovery(
         &mut self,
         id: &str,
@@ -86,6 +125,7 @@ impl PhysicalMutation<'_> {
             remaining: action.remaining_seconds,
             total: action.total_seconds,
         };
+        let moving = action.strike_motion.is_some();
         self.journal
             .reserve(2 * size_of::<Undo>() + action_id.len())?;
         let key = UndoKey::ContactPhase(entity.slot, entity.generation);
@@ -100,6 +140,11 @@ impl PhysicalMutation<'_> {
             )?;
         }
         self.retain_combat_recovery(id, self.state.header.sim_time + seconds)?;
+        if moving {
+            self.clear_movement_path(id, action_id)?;
+            self.clear_action_navigation(id, action_id)?;
+            self.replace_strike_motion(id, action_id, None)?;
+        }
         let action = self
             .state
             .entities

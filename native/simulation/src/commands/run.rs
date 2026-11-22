@@ -74,6 +74,7 @@ enum Phase {
     FeedReach,
     GatherSight,
     ContactReach,
+    ContactRoute,
     FeedApproach,
     Probe,
     Prepared,
@@ -132,6 +133,7 @@ pub(crate) struct CommandCursor {
     discovery_starts_work: bool,
     phase: Phase,
     queries: Option<GeometryQueries>,
+    contact_route: Option<crate::contact::StrikeRoute>,
     binding: GeometryBinding,
     resolved: Option<SurfacePoint>,
     action: Option<Action>,
@@ -212,6 +214,7 @@ impl CommandCursor {
             discovery_starts_work: false,
             phase: Phase::Start,
             queries: None,
+            contact_route: None,
             binding,
             resolved: None,
             action: None,
@@ -241,6 +244,7 @@ impl CommandCursor {
         self.sight
             .as_ref()
             .map(|sight| sight.queries())
+            .or_else(|| self.contact_route.as_ref().map(|route| route.queries()))
             .or(self.queries.as_ref())
     }
     pub(crate) fn actor_id(&self) -> &str {
@@ -448,11 +452,9 @@ impl CommandCursor {
     ) -> Result<CommandStep<'a>, ExecutionError> {
         let progress = self.drive(core, answer)?;
         Ok(match progress {
-            Progress::Geometry => CommandStep::Geometry(if let Some(sight) = &self.sight {
-                sight.queries()
-            } else {
-                self.queries.as_ref().ok_or(ExecutionError::Invariant)?
-            }),
+            Progress::Geometry => {
+                CommandStep::Geometry(self.geometry_request().ok_or(ExecutionError::Invariant)?)
+            }
             Progress::Personal => CommandStep::Personal(if let Some(pending) = &self.personal {
                 pending.result()
             } else {
@@ -544,6 +546,12 @@ impl CommandCursor {
                         }
                     }
                     CommandAnswer::Geometry(mut answer) => {
+                        if matches!(self.phase, Phase::ContactRoute) {
+                            if self.finish_contact_route(core, answer)? {
+                                return Ok(Progress::Geometry);
+                            }
+                            return self.drive(core, None);
+                        }
                         if matches!(
                             self.phase,
                             Phase::DiscoverySight | Phase::DiscoveryReach | Phase::DiscoveryRoute
@@ -694,6 +702,9 @@ impl CommandCursor {
                             Phase::ContactReach => {
                                 self.queries = None;
                                 if answer.sight.pop().ok_or(ExecutionError::Invariant)? {
+                                    if self.prepare_contact_route(core)? {
+                                        return Ok(Progress::Geometry);
+                                    }
                                     self.phase = Phase::Prepared;
                                 } else {
                                     self.refuse(&ordinary.out_of_reach);
@@ -2050,6 +2061,7 @@ impl CommandCursor {
                 | Phase::FeedReach
                 | Phase::GatherSight
                 | Phase::ContactReach
+                | Phase::ContactRoute
                 | Phase::StatusSight
                 | Phase::DiscoverySight
                 | Phase::DiscoveryReach

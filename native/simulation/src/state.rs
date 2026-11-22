@@ -20,7 +20,7 @@ use crate::values::{
     deserialize_safe_integer,
 };
 pub(crate) use action_storage::{
-    FundedAction, FundedActionNavigation, FundedActionPath, FundedActionRoute,
+    FundedAction, FundedActionNavigation, FundedActionPath, FundedActionRoute, FundedStrikeMotion,
 };
 pub(crate) use agency::AgencyOrder;
 pub(crate) use goal_storage::FundedGoals;
@@ -679,7 +679,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub strike_motion: Option<UnconvertedField>,
+    pub(crate) strike_motion: Option<Box<crate::contact::StrikeMotion>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -833,6 +833,14 @@ impl Action {
         self.kind == "move" || (self.kind == "feed" && self.feeding.is_some()) || self.is_gathering()
     }
 
+    pub(crate) fn owns_ground_route(&self) -> bool {
+        self.has_ground_motion() || self.strike_motion.is_some() || self.awaiting_moving_contact()
+    }
+
+    pub(crate) fn awaiting_moving_contact(&self) -> bool {
+        self.is_natural_contact() && self.stage == "approaching"
+    }
+
     pub(crate) fn is_gathering(&self) -> bool {
         self.kind == "gather" && self.gathering.is_some()
     }
@@ -872,7 +880,6 @@ impl Action {
             || self.manufacture_tools.is_some()
             || self.food_preparation.is_some()
             || self.fishing.is_some()
-            || self.strike_motion.is_some()
             || self.guard.is_some()
             || self.follow.is_some()
             || self.transferred.is_some()

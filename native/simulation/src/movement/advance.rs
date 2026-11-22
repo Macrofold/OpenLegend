@@ -46,6 +46,8 @@ enum Progress {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
     Start,
+    ContactMotionStart,
+    ContactMotion,
     ZeroMotion,
     Check,
     Route,
@@ -95,7 +97,7 @@ fn bound<'a>(
         .actor
         .as_ref()
         .and_then(|actor| actor.action.as_ref())
-        .filter(|value| value.id == action && value.has_ground_motion())
+        .filter(|value| value.id == action && value.owns_ground_route())
         .ok_or(ExecutionError::Invariant)?;
     Ok((entity, action))
 }
@@ -157,6 +159,16 @@ impl MoveAdvanceCursor {
             _reservation: reservation,
         })
     }
+    pub(crate) fn moving_contact(
+        actor_id: &str,
+        seconds: f64,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let mut cursor = Self::new(actor_id, seconds, binding, budget)?;
+        cursor.phase = Phase::ContactMotionStart;
+        Ok(cursor)
+    }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
         self._reservation.resize(
             self._reservation
@@ -186,13 +198,14 @@ impl MoveAdvanceCursor {
         )?;
         // Source's zero-time path repair uses ordinary static geometry only;
         // occupied-body avoidance belongs to the later actual native motion.
-        let occupied = phase == Phase::PositiveMotion
-            && (action.native_locomotion.is_some()
-                || entity
-                    .actor
-                    .as_ref()
-                    .is_some_and(|actor| actor.controller == "native")
-                    && entity.animal.is_some());
+        let occupied = phase == Phase::ContactMotion
+            || (phase == Phase::PositiveMotion
+                && (action.native_locomotion.is_some()
+                    || entity
+                        .actor
+                        .as_ref()
+                        .is_some_and(|actor| actor.controller == "native")
+                        && entity.animal.is_some()));
         self.motion = Some(MotionOperation::start(
             core,
             &self.actor_id,
@@ -459,7 +472,9 @@ impl MoveAdvanceCursor {
                     core.physical()
                         .clear_movement_path(&self.actor_id, action_id)?;
                 }
-                self.phase = if self.phase == Phase::ZeroMotion {
+                self.phase = if self.phase == Phase::ContactMotion {
+                    Phase::Done
+                } else if self.phase == Phase::ZeroMotion {
                     Phase::Check
                 } else if !complete
                     && bound(core, &self.actor_id, action_id, self.physical_life)?
@@ -476,6 +491,45 @@ impl MoveAdvanceCursor {
                 continue;
             }
             match self.phase {
+                Phase::ContactMotionStart => {
+                    let entity = core
+                        .state
+                        .physical
+                        .entities
+                        .get(&self.actor_id)
+                        .ok_or(ExecutionError::MissingEntity)?;
+                    let action = entity
+                        .actor
+                        .as_ref()
+                        .and_then(|actor| actor.action.as_ref())
+                        .ok_or(ExecutionError::MissingActor)?;
+                    let motion = action
+                        .strike_motion
+                        .as_ref()
+                        .ok_or(ExecutionError::Invariant)?;
+                    if action.path.is_empty()
+                        || action.navigation.is_some()
+                        || installed
+                            .capabilities
+                            .capability_blocked(Some(entity), "locomotion")?
+                    {
+                        self.phase = Phase::Done;
+                        continue;
+                    }
+                    self.reserve(action.id.len())?;
+                    self.action_id = Some(action.id.clone());
+                    self.physical_life =
+                        entity.physical_life().ok_or(ExecutionError::MissingActor)?;
+                    // The slice has already installed its closing time. The
+                    // windup can move during the interval ending at release.
+                    let opened_at = core.state.physical.header.sim_time - self.seconds;
+                    let elapsed = self.seconds.min((motion.release_at - opened_at).max(0.0));
+                    self.start_motion(
+                        core,
+                        installed.movement_speed(entity)? * elapsed,
+                        Phase::ContactMotion,
+                    )?;
+                }
                 Phase::Start => {
                     let entity = core
                         .state
@@ -845,6 +899,7 @@ impl MoveAdvanceCursor {
                 | Phase::Probe
                 | Phase::ZeroMotion
                 | Phase::PositiveMotion
+                | Phase::ContactMotion
                 | Phase::FeedReach
                 | Phase::FeedSight => {
                     return Err(ExecutionError::Invariant);

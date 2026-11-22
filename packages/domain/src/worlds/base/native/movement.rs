@@ -106,10 +106,16 @@ impl InstalledMovementPolicy {
             .actor
             .as_ref()
             .and_then(|actor| actor.action.as_ref());
-        if action.is_some_and(|action| action.evasion.is_some() || action.strike_motion.is_some()) {
+        if action.is_some_and(|action| action.evasion.is_some()) {
             return Err(ExecutionError::UnsupportedFamily);
         }
-        let Some(binding) = action.and_then(|action| action.native_locomotion.as_ref()) else {
+        let Some(binding) = action.and_then(|action| {
+            action
+                .strike_motion
+                .as_ref()
+                .map(|motion| &motion.locomotion)
+                .or(action.native_locomotion.as_ref())
+        }) else {
             let territory = entity
                 .threat
                 .as_ref()

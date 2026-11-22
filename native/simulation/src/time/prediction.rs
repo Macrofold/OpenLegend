@@ -347,7 +347,36 @@ impl MechanicalForecast {
                 return Err(ExecutionError::UnsupportedFamily);
             }
             if action.is_natural_contact() {
-                if action.remaining_seconds > 0.0 {
+                if let Some(motion) = &action.strike_motion {
+                    bound.at(motion.release_at);
+                    if !installed
+                        .capabilities
+                        .capability_blocked(Some(entity), "locomotion")?
+                    {
+                        let family = action
+                            .definition_id
+                            .as_ref()
+                            .and_then(|id| installed.retained.native_strike_read.get(id))
+                            .ok_or(ExecutionError::Invariant)?;
+                        let stopping_distance = family
+                            .preparation_motion
+                            .as_ref()
+                            .ok_or(ExecutionError::Invariant)?
+                            .stand_off_range;
+                        let speed = installed.movement_speed(entity)?;
+                        bound.limit(
+                            (family.range - stopping_distance).min(travel.get(*handle)) / speed,
+                        );
+                        if let Some(point) = action.path.first() {
+                            let from = entity
+                                .world_position()
+                                .ok_or(ExecutionError::InvalidPosition)?;
+                            bound.limit(
+                                epsilon.max(crate::spatial::distance(from, point.point()) / speed),
+                            );
+                        }
+                    }
+                } else if !action.awaiting_moving_contact() && action.remaining_seconds > 0.0 {
                     bound.limit(action.remaining_seconds);
                 }
                 continue;

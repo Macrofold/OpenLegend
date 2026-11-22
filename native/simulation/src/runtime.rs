@@ -827,6 +827,7 @@ pub struct NativeWorldSession {
     _history_policy_custody: ResidentReservation,
     next_read_serial: u64,
     navigation: navigation::PreparedNavigationCache,
+    entity_routes_pending: bool,
     pending_navigation: Option<(
         Vec<(
             crate::state::EntityHandle,
@@ -986,6 +987,7 @@ impl NativeWorldSession {
             next_read_serial: 0,
             navigation,
             pending_navigation: None,
+            entity_routes_pending: false,
             active: false,
             restore_installation,
             restoring: None,
@@ -1366,6 +1368,7 @@ impl NativeWorldSession {
         let accepted = match accepted {
             Some(accepted) => {
                 if let CompletedOperation::Advance(advance) = accepted.result {
+                    self.entity_routes_pending = advance.entity_routes_pending;
                     self.pending_navigation = Some(advance.into_navigation());
                 }
                 true
@@ -1536,7 +1539,7 @@ impl RuntimePreparedProducts<'_> {
     }
 
     pub fn has_deferred_navigation(&self) -> bool {
-        matches!(self.operation, CompletedOperation::Advance(advance) if !advance.navigation.is_empty())
+        matches!(self.operation, CompletedOperation::Advance(advance) if advance.entity_routes_pending || !advance.navigation.is_empty())
     }
 }
 

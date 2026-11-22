@@ -22,8 +22,24 @@ pub(crate) fn action_navigation_pending(
     revision: u64,
     budget: &ByteBudget,
 ) -> Result<bool, ExecutionError> {
-    Ok(current_action_navigation(entity, now, revision, budget)?
-        .is_some_and(|(_, request)| request.wait.as_deref() != Some("entity")))
+    Ok(action_navigation_wait(entity, now, revision, budget)? == Some(NavigationWait::World))
+}
+
+pub(crate) fn action_navigation_wait(
+    entity: &Entity,
+    now: f64,
+    revision: u64,
+    budget: &ByteBudget,
+) -> Result<Option<NavigationWait>, ExecutionError> {
+    Ok(
+        current_action_navigation(entity, now, revision, budget)?.map(|(_, request)| {
+            if request.wait.as_deref() == Some("entity") {
+                NavigationWait::Entity
+            } else {
+                NavigationWait::World
+            }
+        }),
+    )
 }
 
 fn current_action_navigation<'a>(
@@ -44,7 +60,7 @@ fn current_action_navigation<'a>(
     if !actor.alive
         || actor.incapacitated
         || !entity.actively_participates()
-        || !action.has_ground_motion()
+        || !action.owns_ground_route()
         || pending
             .failure
             .as_ref()
@@ -64,13 +80,28 @@ fn current_action_navigation<'a>(
     {
         return Ok(None);
     }
+    let request = &pending.request;
+    Ok(
+        action_route_request_current(entity, request, revision, budget)?
+            .then_some((action, request)),
+    )
+}
+
+/// Compare the geometric source of a retained route request. A recorded
+/// failure also belongs to this source until its origin, body or map changes.
+pub(crate) fn action_route_request_current(
+    entity: &Entity,
+    request: &NavigationRequest,
+    revision: u64,
+    budget: &ByteBudget,
+) -> Result<bool, ExecutionError> {
     let Some(Placement::World {
         position,
         support_surface_id: Some(surface),
         ..
     }) = &entity.placement
     else {
-        return Ok(None);
+        return Ok(false);
     };
     let _body = entity
         .spatial
@@ -79,14 +110,12 @@ fn current_action_navigation<'a>(
         .map(|_| budget.reserve(entity.ordinary_body_profile().id.len()))
         .transpose()?;
     let body = entity.body_profile();
-    let request = &pending.request;
-    let current = request.geometry_revision == revision
+    Ok(request.geometry_revision == revision
         && *surface == request.from.surface_id
         && crate::spatial::distance(*position, request.from.point()) < 1e-7
         && body.radius == request.body.radius
         && body.height == request.body.height
-        && body.max_slope == request.body.max_slope;
-    Ok(current.then_some((action, request)))
+        && body.max_slope == request.body.max_slope)
 }
 
 pub(super) enum NavigationGateStep<'a> {
@@ -100,6 +129,7 @@ pub(super) struct NavigationGate {
     proposals: Vec<EntityHandle>,
     next: usize,
     blocked: bool,
+    entity_routes_pending: bool,
     done: bool,
     question: Option<(GeometryQueries, ByteReservation)>,
     reservation: ByteReservation,
@@ -117,6 +147,7 @@ impl NavigationGate {
             proposals: Vec::new(),
             next: 0,
             blocked: false,
+            entity_routes_pending: false,
             done: false,
             question: None,
             reservation: budget.reserve(size_of::<Self>())?,
@@ -128,14 +159,18 @@ impl NavigationGate {
                 .entities
                 .get(id)
                 .ok_or(ExecutionError::Invariant)?;
-            if action_navigation_pending(
+            match action_navigation_wait(
                 entity,
                 result.at,
                 core.state.installed.geometry.spatial.revision,
                 budget,
             )? {
-                result.blocked = true;
-                break;
+                Some(NavigationWait::World) => {
+                    result.blocked = true;
+                    break;
+                }
+                Some(NavigationWait::Entity) => result.entity_routes_pending = true,
+                None => {}
             }
             let Some(proposal) = entity
                 .animal
@@ -177,6 +212,9 @@ impl NavigationGate {
             );
         }
         Ok(result)
+    }
+    pub(super) fn entity_routes_pending(&self) -> bool {
+        self.entity_routes_pending
     }
     pub(super) fn question(&self) -> Option<&GeometryQueries> {
         self.question.as_ref().map(|(question, _)| question)

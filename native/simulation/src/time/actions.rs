@@ -59,7 +59,7 @@ impl SliceActions {
                 .installed
                 .capabilities
                 .capability_blocked(Some(entity), "locomotion")?;
-            if action.stage == "working"
+            if (action.stage == "working" || action.awaiting_moving_contact())
                 && (!restricted || action.kind == "status-effect" || action.is_natural_contact())
             {
                 reservation.resize(
@@ -70,7 +70,10 @@ impl SliceActions {
                 )?;
                 working.insert(*handle, action.id.clone());
             }
-            if action.has_ground_motion() && action.stage == "approaching" && !restricted {
+            if !restricted
+                && ((action.has_ground_motion() && action.stage == "approaching")
+                    || action.strike_motion.is_some())
+            {
                 approaching.push(*handle);
             }
         }

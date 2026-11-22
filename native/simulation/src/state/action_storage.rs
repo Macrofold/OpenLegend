@@ -43,6 +43,7 @@ impl HeapBytes for Action {
         }
         heap_sum([
             self.native_locomotion.heap_bytes()?,
+            self.strike_motion.heap_bytes()?,
             self.feeding.heap_bytes()?,
             self.gathering.heap_bytes()?,
             self.item_id.heap_bytes()?,
@@ -79,6 +80,7 @@ fn heap<T: HeapBytes>(value: &T) -> Result<usize, ExecutionError> {
 pub(crate) struct ActionStorage {
     base: crate::host::ResidentReservation,
     route: ActionRouteStorage,
+    strike_motion: Option<crate::host::ResidentReservation>,
 }
 pub(crate) struct ActionRouteStorage {
     path: crate::host::ResidentReservation,
@@ -138,6 +140,15 @@ impl ActionStorage {
         let path = heap(&value.path)?;
         let navigation = heap(&value.navigation)?;
         let stage = value.stage.capacity();
+        let strike_motion = value
+            .strike_motion
+            .as_ref()
+            .map(|motion| {
+                budget
+                    .adopt_record(storage.split_off(heap(motion)?)?)
+                    .map_err(ExecutionError::from)
+            })
+            .transpose()?;
         Ok(Self {
             route: ActionRouteStorage {
                 path: budget.adopt_record(storage.split_off(path)?)?,
@@ -145,13 +156,22 @@ impl ActionStorage {
                 stage: budget.adopt_record(storage.split_off(stage)?)?,
             },
             base: budget.adopt_record(storage)?,
+            strike_motion,
         })
     }
     pub(crate) fn is_funded_by(&self, budget: &ByteBudget) -> bool {
-        budget.resident().owns(&self.base) && self.route.is_funded_by(budget)
+        budget.resident().owns(&self.base)
+            && self.route.is_funded_by(budget)
+            && self
+                .strike_motion
+                .as_ref()
+                .is_none_or(|storage| budget.resident().owns(storage))
     }
     pub(crate) fn retain(&self, budget: &ByteBudget) -> Result<(), ExecutionError> {
         budget.retain_record(&self.base)?;
+        if let Some(storage) = &self.strike_motion {
+            budget.retain_record(storage)?;
+        }
         self.route.retain(budget)
     }
 }
@@ -214,6 +234,29 @@ pub(crate) struct FundedActionNavigation {
     pub value: Option<NavigationPending>,
     pub storage: crate::host::ResidentReservation,
 }
+
+pub(crate) struct FundedStrikeMotion {
+    pub value: Box<crate::contact::StrikeMotion>,
+    storage: crate::host::ResidentReservation,
+}
+
+impl FundedStrikeMotion {
+    pub(crate) fn from_storage(
+        value: Box<crate::contact::StrikeMotion>,
+        mut workspace: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let bytes = heap(&value)?;
+        if workspace.bytes() < bytes {
+            return Err(ExecutionError::Capacity);
+        }
+        workspace.resize(bytes)?;
+        Ok(Self {
+            value,
+            storage: budget.adopt_record(workspace)?,
+        })
+    }
+}
 impl FundedActionNavigation {
     pub(crate) fn from_storage(
         value: Option<NavigationPending>,
@@ -254,6 +297,7 @@ impl EntityStore {
                             heap(&action.path)?,
                             heap(&action.navigation)?,
                             action.stage.capacity(),
+                            heap(&action.strike_motion)?,
                         ])
                         .ok_or(ExecutionError::Capacity)?,
                     )
@@ -261,6 +305,15 @@ impl EntityStore {
                 slot.action_storage = Some(ActionStorage {
                     base: budget.reserve_record(other)?,
                     route,
+                    strike_motion: action
+                        .strike_motion
+                        .as_ref()
+                        .map(|motion| {
+                            budget
+                                .reserve_record(heap(motion)?)
+                                .map_err(ExecutionError::from)
+                        })
+                        .transpose()?,
                 });
             }
         }
@@ -308,6 +361,58 @@ impl EntityStore {
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
         self.action_storage(handle)?.route.retain(budget)
+    }
+
+    pub(crate) fn retain_strike_motion(
+        &self,
+        handle: EntityHandle,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        if let Some(storage) = &self.action_storage(handle)?.strike_motion {
+            budget.retain_record(storage)?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn swap_funded_strike_motion(
+        &mut self,
+        handle: EntityHandle,
+        action_id: &str,
+        next: Option<FundedStrikeMotion>,
+        budget: &ByteBudget,
+    ) -> Result<Option<FundedStrikeMotion>, ExecutionError> {
+        let slot = self
+            .slots
+            .get_mut(handle.slot)
+            .filter(|slot| slot.generation == handle.generation)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let action = slot
+            .entity
+            .as_mut()
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.action.as_mut())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?;
+        let storage = &mut slot
+            .action_storage
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?
+            .strike_motion;
+        if action.strike_motion.is_some() != storage.is_some()
+            || next
+                .as_ref()
+                .is_some_and(|motion| !budget.resident().owns(&motion.storage))
+        {
+            return Err(ExecutionError::Invariant);
+        }
+        let (next, custody) = next
+            .map(|motion| (Some(motion.value), Some(motion.storage)))
+            .unwrap_or_default();
+        let before = std::mem::replace(&mut action.strike_motion, next);
+        let before_storage = std::mem::replace(storage, custody);
+        Ok(before
+            .zip(before_storage)
+            .map(|(value, storage)| FundedStrikeMotion { value, storage }))
     }
     pub(crate) fn swap_action_path_storage(
         &mut self,

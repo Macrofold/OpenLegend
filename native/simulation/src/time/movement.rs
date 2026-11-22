@@ -176,7 +176,8 @@ impl MotionSliceCursor {
                             actor.alive
                                 && !actor.incapacitated
                                 && actor.action.as_ref().is_some_and(|action| {
-                                    action.has_ground_motion() && action.stage == "approaching"
+                                    (action.has_ground_motion() && action.stage == "approaching")
+                                        || action.strike_motion.is_some()
                                 })
                         });
                 if !eligible {
@@ -194,12 +195,17 @@ impl MotionSliceCursor {
                     None
                 };
                 self.binding.serial = core.journal.next_provider_serial()?;
-                self.current = Some(MoveAdvanceCursor::new(
-                    &entity.id,
-                    self.seconds,
-                    self.binding,
-                    &self.budget,
-                )?);
+                let moving_contact = entity
+                    .actor
+                    .as_ref()
+                    .and_then(|actor| actor.action.as_ref())
+                    .is_some_and(|action| action.strike_motion.is_some());
+                let start = if moving_contact {
+                    MoveAdvanceCursor::moving_contact
+                } else {
+                    MoveAdvanceCursor::new
+                };
+                self.current = Some(start(&entity.id, self.seconds, self.binding, &self.budget)?);
             }
             match self
                 .current

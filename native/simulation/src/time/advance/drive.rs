@@ -461,6 +461,7 @@ impl AdvanceCursor {
                     NavigationGateStep::Geometry(_) => return Ok(Progress::Geometry),
                     NavigationGateStep::Complete(blocked) => blocked,
                 };
+                self.entity_routes_pending = gate.entity_routes_pending();
                 self.navigation_gate = None;
                 match self.navigation_after.take().ok_or_else(invalid)? {
                     NavigationAfter::Start => {
@@ -1315,6 +1316,7 @@ impl AdvanceCursor {
                     return Ok(Progress::Complete(CompletedAdvance {
                         outcome: self.outcome.take().ok_or_else(invalid)?,
                         navigation: std::mem::take(&mut self.navigation),
+                        entity_routes_pending: self.entity_routes_pending,
                         continuation: self.continuation.take(),
                         events: std::mem::take(&mut self.events),
                         _reservation: self.reservation.take().ok_or_else(invalid)?,

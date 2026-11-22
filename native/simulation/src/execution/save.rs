@@ -773,6 +773,7 @@ impl PhysicalJournal {
                         | Undo::Health { entity, .. }
                         | Undo::CombatReady { entity, .. }
                         | Undo::ContactPhase { entity, .. }
+                        | Undo::StrikeMotion { entity, .. }
                         | Undo::Heat { entity, .. }
                         | Undo::Territorial { entity, .. }
                         | Undo::TerritorialPlace { entity, .. }
@@ -844,6 +845,7 @@ impl PhysicalJournal {
                         | Undo::ActionNavigation { .. }
                         | Undo::ActionRemaining { .. }
                         | Undo::ContactPhase { .. }
+                        | Undo::StrikeMotion { .. }
                         | Undo::ActionSample { .. } => rows.action = true,
                         Undo::AnimalEpisode { before, .. } => {
                             rows.episode = true;

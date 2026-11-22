@@ -1,7 +1,7 @@
 import { TIME_EPSILON } from './simulation-time.js';
 import {
   bodySurfaceDistance,
-  resolveSupport,
+  relativeSurfacePoint,
   SPATIAL_LIMITS,
   type SurfacePoint,
 } from '@open-legend/spatial';
@@ -304,23 +304,14 @@ export function movingStrikeStance(
   const from = supportedPosition(actor),
     targetPoint = supportedPosition(target);
   if (!from || !targetPoint) return;
-  const dx = from.x - targetPoint.x,
-    dz = from.z - targetPoint.z,
-    length = Math.hypot(dx, dz),
-    radius =
-      effectiveBodyProfile(world, actor).radius +
-      effectiveBodyProfile(world, target).radius +
-      standOff,
-    angle = length > 0 ? Math.atan2(dz, dx) : actor.spatial.heading;
-  return (
-    resolveSupport(
-      spatialMap(world),
-      {
-        x: targetPoint.x + Math.cos(angle) * radius,
-        y: targetPoint.y,
-        z: targetPoint.z + Math.sin(angle) * radius,
-      },
-      targetPoint.surfaceId,
-    ) ?? undefined
-  );
+  const dx = from.x - targetPoint.x;
+  const dz = from.z - targetPoint.z;
+  const heading = dx !== 0 || dz !== 0 ? Math.atan2(dx, dz) : actor.spatial.heading;
+  const radius =
+    effectiveBodyProfile(world, actor).radius +
+    effectiveBodyProfile(world, target).radius +
+    standOff;
+  // Sample the height at the offset on the target's named support. Using
+  // the target's own height can refuse a valid stance on a slope.
+  return relativeSurfacePoint(spatialMap(world), targetPoint, heading, 0, radius) ?? undefined;
 }

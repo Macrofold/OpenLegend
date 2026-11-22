@@ -21,6 +21,7 @@ mod advance;
 mod navigation;
 pub(crate) use navigation::{
     PendingActionNavigation, PreparedActionNavigation, action_navigation_pending,
+    action_navigation_wait, action_route_request_current,
 };
 mod reconcile;
 mod sensing;
