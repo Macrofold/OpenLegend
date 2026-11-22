@@ -1,4 +1,4 @@
-use openlegend_simulation::runtime::RuntimeNpcIntakeSelection;
+use openlegend_simulation::{runtime::RuntimeNpcIntakeSelection, values::DefinitionPin};
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -19,7 +19,7 @@ pub(crate) struct SchedulingPolicy {
     pub(crate) body_policy_pin: Option<Value>,
     pub(crate) discovery: bool,
     idle_discovery_seconds: Option<NonZeroU32>,
-    pub(crate) prepared_responses: Option<Value>,
+    pub(crate) prepared_responses: Option<DefinitionPin>,
 }
 
 impl SchedulingPolicy {
@@ -34,7 +34,7 @@ impl SchedulingPolicy {
 pub(crate) struct StimulusPolicy {
     pub(crate) salience: HashMap<String, f64>,
     #[serde(rename = "noveltySeconds")]
-    pub(crate) novelty: f64,
+    _novelty: f64,
     #[serde(rename = "limit")]
     _limit: usize,
     pub(crate) review_seconds: Option<f64>,

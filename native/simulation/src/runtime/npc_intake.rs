@@ -1,7 +1,9 @@
 //! The director can inspect a finite native wakeup cut. The opaque handle is
 //! the freshness witness; restoring its JSON cannot acknowledge an inspection.
 use super::*;
-pub use crate::capture::npc_intake::NpcQueueInputs;
+pub use crate::capture::npc_intake::{
+    NpcQueueInputs, NpcScheduleFacts, ScheduleBodyInput, ScheduleEvidence,
+};
 pub use crate::experience::intake::IntakeSelection as RuntimeNpcIntakeSelection;
 mod direct;
 pub use direct::{NpcScheduleCause, NpcSchedulePopulation, NpcScheduleSources};
@@ -35,13 +37,15 @@ impl RuntimeNpcTrigger {
 
     pub fn inputs(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let raw: &serde_json::value::RawValue =
-            serde_json::from_str(self.read.inputs_json()).map_err(failure)?;
+            serde_json::from_str(self.read.inputs_json().ok_or_else(|| failure("not an addon trigger"))?)
+                .map_err(failure)?;
         RuntimeJson::encode(raw, budget)
     }
 
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let raw: &serde_json::value::RawValue =
-            serde_json::from_str(self.read.json()).map_err(failure)?;
+            serde_json::from_str(self.read.json().ok_or_else(|| failure("not an addon trigger"))?)
+                .map_err(failure)?;
         RuntimeJson::encode(raw, budget)
     }
 }

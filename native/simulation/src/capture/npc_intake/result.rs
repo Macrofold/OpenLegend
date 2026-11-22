@@ -24,6 +24,55 @@ struct Occurrence<'a> {
     forgotten: bool,
     purpose: Option<&'a DefinitionPin>,
 }
+
+pub struct ScheduleResult {
+    pub reference: Option<ResultEvidence>,
+    pub forgotten: bool,
+    pub plan_reference: Option<ResultEvidence>,
+    pub plan_purpose: Option<DefinitionPin>,
+    pub internal_memory: bool,
+    pub occurrence: Option<ScheduleOccurrence>,
+}
+
+pub struct ScheduleOccurrence {
+    pub command_type: &'static str,
+    pub running: bool,
+    pub revoked: bool,
+    pub forgotten: bool,
+    pub purpose: Option<DefinitionPin>,
+}
+
+impl PreparedResult<'_> {
+    pub(super) fn schedule_bytes(&self) -> Option<usize> {
+        let pin_bytes = |pin: Option<&DefinitionPin>| {
+            pin.map_or(Some(0), |pin| pin.id.len().checked_add(pin.digest.len()))
+        };
+        crate::host::retained_size::heap_sum([
+            self.reference.map_or(Some(0), HeapBytes::heap_bytes)?,
+            self.plan_reference.map_or(Some(0), HeapBytes::heap_bytes)?,
+            pin_bytes(self.plan_purpose)?,
+            pin_bytes(self.occurrence.as_ref().and_then(|item| item.purpose))?,
+        ])
+    }
+
+    pub(super) fn into_schedule(self) -> ScheduleResult {
+        ScheduleResult {
+            reference: self.reference.cloned(),
+            forgotten: self.forgotten,
+            plan_reference: self.plan_reference.cloned(),
+            plan_purpose: self.plan_purpose.cloned(),
+            internal_memory: self.internal_memory,
+            occurrence: self.occurrence.map(|item| ScheduleOccurrence {
+                command_type: item.command_type,
+                running: item.status == ActivityStatus::Running,
+                revoked: item.revoked,
+                forgotten: item.forgotten,
+                purpose: item.purpose.cloned(),
+            }),
+        }
+    }
+}
+
 pub(super) fn capture<'a>(
     state: &'a SimulationState,
     actor: &'a crate::state::ActorState,

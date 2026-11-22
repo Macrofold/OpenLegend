@@ -28,10 +28,9 @@ pub struct NpcScheduleCause<'a> {
 }
 
 impl RuntimeNpcTrigger {
-    /// Lend the existing funded intake record to the in-process scheduler.
-    /// It may retain only data that has its own admission.
-    pub fn with_schedule_facts<T>(&self, prepare: impl FnOnce(&str) -> T) -> T {
-        prepare(self.read.json())
+    /// The inspected cut must carry the same exact inputs as the queued wake.
+    pub fn matches_queue(&self, queued: &NpcQueueInputs) -> bool {
+        self.read.matches_queue(queued)
     }
 
     pub fn schedule_causes(&self) -> impl ExactSizeIterator<Item = NpcScheduleCause<'_>> {
@@ -48,6 +47,35 @@ impl RuntimeNpcTrigger {
 }
 
 impl NativeWorldSession {
+    /// Prepare a detached read at the current accepted cut. The trigger
+    /// retains validity and cause witnesses independently of the facts the
+    /// scheduler needs while awaiting speech receipts.
+    pub fn read_npc_schedule(
+        &self,
+        actor_id: String,
+        after_sequence: u64,
+        weighed_through: Option<u64>,
+        selection: RuntimeNpcIntakeSelection,
+    ) -> Result<(RuntimeNpcTrigger, NpcScheduleFacts), RuntimeError> {
+        self.require_active()?;
+        if after_sequence > crate::identity::MAX_SAFE_INTEGER
+            || weighed_through.is_some_and(|through| through > crate::identity::MAX_SAFE_INTEGER)
+        {
+            return Err(failure("invalid NPC schedule cursor"));
+        }
+        let state = &self.session.accepted().map_err(session_failure)?.state;
+        let request = crate::capture::npc_intake::NpcIntakeReadRequest {
+            actor_id,
+            after_sequence,
+            weighed_through,
+            selection,
+        };
+        let (read, facts) =
+            crate::capture::npc_intake::capture_schedule(state, request, &self.budget)
+                .map_err(failure)?;
+        Ok((RuntimeNpcTrigger { read }, facts))
+    }
+
     /// Membership is cheap and uses the actual accepted entity, before an
     /// affected-row hint can prepare private evidence for a non-NPC owner.
     pub fn npc_schedule_enrolled(&self, actor: &str) -> Result<bool, RuntimeError> {

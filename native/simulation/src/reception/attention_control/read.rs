@@ -14,9 +14,16 @@ pub(crate) struct CapturedAttentionPresentations {
 }
 pub(crate) struct CapturedAttentionRead {
     pub(crate) bridge: Option<AttentionBridgeRead>,
+    pub(crate) has_unpresented_description: bool,
     pub(crate) cue_inputs_token: String,
     pub(crate) semantic_causes: CapturedSemanticCauses,
     _storage: ByteReservation,
+}
+#[derive(Clone, Copy)]
+pub(crate) enum AttentionReadProduct {
+    Cues,
+    Schedule,
+    Bridge,
 }
 pub(crate) struct AttentionBridgeRead {
     pub(crate) json: String,
@@ -203,13 +210,13 @@ fn prepare_presentations(
     })
 }
 
-/// Prepare current causes and their exact scheduling witness. Only callers
-/// exporting the bridge read need the projected positions and encoded body.
+/// Prepare current causes and their exact scheduling witness. The scheduler
+/// needs only a discovery flag. The actual bridge projects and encodes the view.
 pub(crate) fn capture_attention_read(
     state: &crate::simulation::SimulationState,
     observer: &str,
     budget: &ByteBudget,
-    bridge: bool,
+    output: AttentionReadProduct,
 ) -> Result<CapturedAttentionRead, crate::execution::ExecutionError> {
     let mut scratch = CurrentJournal::new(budget)?;
     let (attention, candidates) = presentation_inputs(state, observer, &mut scratch)?;
@@ -345,7 +352,12 @@ pub(crate) fn capture_attention_read(
     cause_storage
         .resize(causes.heap_bytes().ok_or_else(capacity)?)
         .map_err(|_| capacity())?;
-    let bridge = if bridge {
+    let has_unpresented_description = matches!(output, AttentionReadProduct::Schedule)
+        && candidates.values().any(|candidate| {
+            candidate.annotation.presented_description.as_deref()
+                != Some(candidate.description_revision.as_str())
+        });
+    let bridge = if matches!(output, AttentionReadProduct::Bridge) {
         let presentations =
             prepare_presentations(state, observer, attention, &candidates, budget, &mut scratch)?;
         let product = Product {
@@ -368,6 +380,7 @@ pub(crate) fn capture_attention_read(
     };
     Ok(CapturedAttentionRead {
         bridge,
+        has_unpresented_description,
         cue_inputs_token,
         semantic_causes: CapturedSemanticCauses {
             values: causes,

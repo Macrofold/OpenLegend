@@ -475,24 +475,23 @@ impl Director {
                 observed.actor_id.clone(),
             )
             .await?;
-        let bytes = request(
-            &observed.actor_id,
-            prior.cursor.watermark.unwrap_or(0),
-            Some(observed.awareness_through),
-            policy,
-        )
-        .map_err(RuntimeError::application_refused)?;
-        let trigger = Arc::new(
-            self.game
-                .world
-                .capture(move |session| session.read_npc_trigger(&bytes))
-                .await?,
-        );
-        let plan = trigger
-            .with_schedule_facts(|text| select::Inspection::read(text, self.game.host.budget()))?;
-        if !plan.matches(observed) {
+        let actor = observed.actor_id.clone();
+        let after = prior.cursor.watermark.unwrap_or(0);
+        let weighed = Some(observed.awareness_through);
+        let selection = policy.selection;
+        let (trigger, facts) = self
+            .game
+            .world
+            .capture(move |session| session.read_npc_schedule(actor, after, weighed, selection))
+            .await?;
+        if !trigger.matches_queue(observed) {
             return Ok(None);
         }
+        let _selection = facts
+            .reserve_selection(self.game.host.budget())
+            .map_err(RuntimeError::from)?;
+        let trigger = Arc::new(trigger);
+        let plan = select::Inspection::new(facts);
         let speech_ids = plan.speech_ids();
         let prior = if speech_ids.is_empty() {
             prior
@@ -713,17 +712,4 @@ impl Director {
             .await?;
         Ok(published.is_some_and(|(accepted, _)| accepted))
     }
-}
-
-fn request(
-    actor: &str,
-    after: u64,
-    weighed: Option<u64>,
-    policy: &SchedulingPolicy,
-) -> Result<Vec<u8>, serde_json::Error> {
-    let mut request = json!({"actorId":actor,"afterSequence":after,"selection":policy.selection});
-    if let Some(weighed) = weighed {
-        request["weighedThrough"] = json!(weighed);
-    }
-    serde_json::to_vec(&request)
 }

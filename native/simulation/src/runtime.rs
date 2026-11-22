@@ -43,8 +43,9 @@ pub use maintenance::{
 mod npc;
 mod npc_intake;
 pub use npc_intake::{
-    NpcQueueInputs, NpcScheduleCause, NpcSchedulePopulation, NpcScheduleSources,
-    RuntimeNpcInspection, RuntimeNpcIntakeSelection, RuntimeNpcTrigger,
+    NpcQueueInputs, NpcScheduleCause, NpcScheduleFacts, NpcSchedulePopulation, NpcScheduleSources,
+    RuntimeNpcInspection, RuntimeNpcIntakeSelection, RuntimeNpcTrigger, ScheduleBodyInput,
+    ScheduleEvidence,
 };
 mod npc_labels;
 mod participation;

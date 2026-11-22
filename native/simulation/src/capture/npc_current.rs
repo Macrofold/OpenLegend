@@ -389,7 +389,9 @@ pub(crate) fn prepare(
                 })
                 .count()
         });
-    let attention_read = crate::reception::capture_attention_read(state, actor_id, budget, true)?;
+    let attention_read = crate::reception::capture_attention_read(
+        state, actor_id, budget, crate::reception::AttentionReadProduct::Bridge,
+    )?;
     let attention_bridge = attention_read.bridge.ok_or(ExecutionError::Invariant)?;
     let attention = serde_json::from_str::<&serde_json::value::RawValue>(&attention_bridge.json)
         .map_err(|_| ExecutionError::Invariant)?;

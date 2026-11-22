@@ -10,6 +10,8 @@ use crate::status::{AttributeAudience, EffectBindings, project_attributes};
 use serde::{Deserialize, ser::SerializeSeq};
 use serde_json::value::RawValue;
 mod result;
+mod schedule;
+pub use schedule::{NpcScheduleFacts, ScheduleBodyInput, ScheduleEvidence};
 
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -28,8 +30,12 @@ pub(crate) struct NpcIntakeCapture {
     request: NpcIntakeReadRequest,
     world: String,
     generation: String,
-    read: NpcIntakePackets,
+    life: Option<u64>,
+    eligible: bool,
+    semantic_causes: crate::reception::CapturedSemanticCauses,
+    packets: Option<NpcIntakePackets>,
     witness: NpcIntakeWitness,
+    _storage: ByteReservation,
 }
 struct NpcIntakeWitness {
     tokens: Vec<String>,
@@ -38,8 +44,6 @@ struct NpcIntakeWitness {
     _storage: ByteReservation,
 }
 struct NpcIntakePackets {
-    life: Option<u64>,
-    semantic_causes: crate::reception::CapturedSemanticCauses,
     json: String,
     inputs_json: String,
     _storage: ByteReservation,
@@ -47,12 +51,13 @@ struct NpcIntakePackets {
 enum IntakeOutput {
     Witness,
     Packets,
+    Schedule,
     Queue,
     QueuePacket,
 }
 enum PreparedIntake {
     Witness(NpcIntakeWitness),
-    Packets(NpcIntakeWitness, NpcIntakePackets),
+    Trigger(NpcIntakeCapture, Option<NpcScheduleFacts>),
     Queue(NpcQueueInputs),
     QueuePacket(String, ByteReservation),
 }
@@ -79,13 +84,21 @@ impl NpcIntakeCapture {
         self.request.actor_id == actor
     }
     pub(crate) fn semantic_causes(&self) -> &[crate::response::ResponseSemanticCause] {
-        self.read.semantic_causes.values()
+        self.semantic_causes.values()
     }
-    pub(crate) fn json(&self) -> &str {
-        &self.read.json
+    pub(crate) fn json(&self) -> Option<&str> {
+        self.packets.as_ref().map(|packet| packet.json.as_str())
     }
-    pub(crate) fn inputs_json(&self) -> &str {
-        &self.read.inputs_json
+    pub(crate) fn inputs_json(&self) -> Option<&str> {
+        self.packets.as_ref().map(|packet| packet.inputs_json.as_str())
+    }
+    pub(crate) fn matches_queue(&self, queued: &NpcQueueInputs) -> bool {
+        self.eligible
+            && self.request.actor_id == queued.actor_id
+            && self.world == queued.world_id
+            && self.generation == queued.generation
+            && self.witness.tokens == queued.values
+            && self.witness.dependencies == queued.dependency_token
     }
     pub(crate) fn copy_semantic_causes_for(
         &self,
@@ -99,11 +112,11 @@ impl NpcIntakeCapture {
         if self.world != world
             || self.generation != generation
             || self.request.actor_id != actor
-            || self.read.life.unwrap_or(0) != life
+            || self.life.unwrap_or(0) != life
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
-        self.read.semantic_causes.copy_all(budget)
+        self.semantic_causes.copy_all(budget)
     }
     /// Acknowledging a queued reason requires current evidence for this NPC.
     /// After identity, life and controller checks, rebuild the three exact
@@ -125,7 +138,7 @@ impl NpcIntakeCapture {
                         && entity.actor.as_ref().is_some_and(|actor| {
                             actor.alive
                                 && actor.controller == "npc"
-                                && actor.physical_life == self.read.life
+                                && actor.physical_life == self.life
                         })
                 })
         {
@@ -166,7 +179,7 @@ struct Stimulus<'a> {
     source_id: &'a str,
     states: [&'a str; 4],
     since: f64,
-    label: crate::worlds::base_knowledge::PersonalName<'a>,
+    label: Option<crate::worlds::base_knowledge::PersonalName<'a>>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -179,6 +192,25 @@ struct EventMetadata<'a> {
     response_recorded: bool,
 }
 struct EventData<'a>(Option<&'a indexmap::IndexMap<String, crate::reception::EventScalar>>);
+impl EventData<'_> {
+    fn get(&self, key: &str) -> Option<&crate::reception::EventScalar> {
+        self.0.and_then(|data| data.get(key))
+    }
+
+    fn text(&self, key: &str) -> Option<&str> {
+        match self.get(key)? {
+            crate::reception::EventScalar::Text(value) => value.as_unicode(),
+            _ => None,
+        }
+    }
+
+    fn number(&self, key: &str) -> Option<f64> {
+        match self.get(key)? {
+            crate::reception::EventScalar::Number(value) => Some(*value),
+            _ => None,
+        }
+    }
+}
 impl Serialize for EventData<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeMap;
@@ -192,7 +224,7 @@ impl Serialize for EventData<'_> {
             "appraisalInputSequence",
             "appraisalCauseIds",
         ] {
-            if let Some(value) = self.0.and_then(|data| data.get(key)) {
+            if let Some(value) = self.get(key) {
                 out.serialize_entry(key, value)?;
             }
         }
@@ -378,18 +410,25 @@ pub(crate) fn capture(
     request: NpcIntakeReadRequest,
     budget: &ByteBudget,
 ) -> Result<NpcIntakeCapture, ExecutionError> {
-    let PreparedIntake::Packets(witness, read) =
+    let PreparedIntake::Trigger(trigger, None) =
         prepare(state, &request, IntakeOutput::Packets, budget)?
     else {
         return Err(ExecutionError::Invariant);
     };
-    Ok(NpcIntakeCapture {
-        world: state.physical.header.id.clone(),
-        generation: state.generation.clone(),
-        request,
-        read,
-        witness,
-    })
+    Ok(trigger)
+}
+
+pub(crate) fn capture_schedule(
+    state: &SimulationState,
+    request: NpcIntakeReadRequest,
+    budget: &ByteBudget,
+) -> Result<(NpcIntakeCapture, NpcScheduleFacts), ExecutionError> {
+    let PreparedIntake::Trigger(trigger, Some(facts)) =
+        prepare(state, &request, IntakeOutput::Schedule, budget)?
+    else {
+        return Err(ExecutionError::Invariant);
+    };
+    Ok((trigger, facts))
 }
 
 /// Read only the automatic queue's compact product at this accepted cut.
@@ -432,6 +471,8 @@ fn prepare(
         return Err(ExecutionError::UnsupportedFamily);
     }
     let packets = matches!(output, IntakeOutput::Packets);
+    let schedule = matches!(output, IntakeOutput::Schedule);
+    let full = packets || schedule;
     let unseen = unseen_intake(
         &state.experience,
         id,
@@ -441,7 +482,13 @@ fn prepare(
         &state.installed.cognition.significant_event_types,
         budget,
     )?;
-    let attention = crate::reception::capture_attention_read(state, id, budget, packets)?;
+    use crate::reception::AttentionReadProduct;
+    let attention_output = match output {
+        IntakeOutput::Packets => AttentionReadProduct::Bridge,
+        IntakeOutput::Schedule => AttentionReadProduct::Schedule,
+        _ => AttentionReadProduct::Cues,
+    };
+    let attention = crate::reception::capture_attention_read(state, id, budget, attention_output)?;
     let policy = state
         .installed
         .body_policy
@@ -455,7 +502,7 @@ fn prepare(
         .and_then(|owners| owners.get(id));
     let current_count = current.map_or(0, |owner| owner.current.len());
     let queue_only = matches!(output, IntakeOutput::Queue | IntakeOutput::QueuePacket);
-    let reconsideration_bytes = size_of::<Reconsideration<'_>>() * if packets { 2 } else { 1 };
+    let reconsideration_bytes = size_of::<Reconsideration<'_>>() * if full { 2 } else { 1 };
     let bytes = count
         .checked_mul(reconsideration_bytes)
         .and_then(|n| {
@@ -475,7 +522,7 @@ fn prepare(
     let _scratch = budget.reserve(bytes)?;
     let read = state.installed.status_read(&state.physical);
     let mut reconsideration = Vec::with_capacity(count);
-    let mut director_inputs = Vec::with_capacity(if packets { count } else { 0 });
+    let mut director_inputs = Vec::with_capacity(if full { count } else { 0 });
     if let Some(policy) = policy {
         for input in &policy.reconsideration_inputs {
             let value = read
@@ -485,7 +532,7 @@ fn prepare(
                 key: &input.key,
                 value,
             });
-            if input.director && packets {
+            if input.director && full {
                 director_inputs.push(Reconsideration {
                     key: &input.key,
                     value,
@@ -593,7 +640,7 @@ fn prepare(
                 .and_then(|n| n.checked_add(4))
         })
         .ok_or(ExecutionError::Capacity)?;
-    let _goal_storage = budget.reserve(goal_bytes)?;
+    let goal_storage = budget.reserve(goal_bytes)?;
     let goal = crate::text::JsText::join(
         actor
             .agency
@@ -880,13 +927,17 @@ fn prepare(
             }
         }
     }
-    let names = InstalledPersonalNameReader::prepare(
-        &state.physical,
-        &state.reception,
-        &state.installed,
-        &state.experience,
-        id,
-    )?;
+    // Only the old bridge publishes this structured label. The Rust
+    // scheduler's literal review wording never consumed that object.
+    let names = packets
+        .then(|| InstalledPersonalNameReader::prepare(
+            &state.physical,
+            &state.reception,
+            &state.installed,
+            &state.experience,
+            id,
+        ))
+        .transpose()?;
     let _stimulus_index_storage = budget.reserve(
         crate::host::retained_size::tree_node_bound::<&str, f64>()
             .and_then(|n| {
@@ -962,9 +1013,74 @@ fn prepare(
                 .value()
                 .outward_states(subject),
             since: seen.max(changed),
-            label: names.observer_name(source)?,
+            label: names.as_ref().map(|names| names.observer_name(source)).transpose()?,
         });
     }
+    let (prepared_result, _result_storage) = result::capture(state, actor, id, budget)?;
+    let mut opportunity = Opportunity {
+        body_inputs: &director_inputs,
+        concerns: &concerns,
+        knowledge: state.learned_capabilities.known_recipes(id),
+        knowledge_revision: state
+            .reception
+            .knowledge_revisions
+            .as_ref()
+            .and_then(|owners| owners.get(id))
+            .copied()
+            .unwrap_or(0),
+        mind_revision: inner.map(|inner| inner.revision),
+        semantic_purpose: None,
+    };
+    let storage = [
+        state.physical.header.id.len(),
+        state.generation.len(),
+        request.actor_id.len(),
+    ]
+    .into_iter()
+    .try_fold(size_of::<NpcIntakeCapture>(), usize::checked_add)
+    .ok_or(ExecutionError::Capacity)?;
+    let trigger_storage = budget.reserve(storage)?;
+    let new_trigger = |packets, tokens, dependencies, semantic_causes| NpcIntakeCapture {
+        request: request.clone(),
+        world: state.physical.header.id.clone(),
+        generation: state.generation.clone(),
+        life: actor.physical_life,
+        eligible: enrolled && !actor.incapacitated,
+        semantic_causes,
+        packets,
+        witness: NpcIntakeWitness {
+            tokens,
+            dependencies,
+            inspection,
+            _storage: token_storage,
+        },
+        _storage: trigger_storage,
+    };
+    if schedule {
+        let facts = schedule::capture(
+            schedule::Inputs {
+                actor_id: id,
+                accepted_cut: state.accepted_cut,
+                at: state.physical.header.sim_time,
+                actor,
+                unseen: &unseen,
+                events: &events,
+                stimuli: &stimuli,
+                actions_blocked,
+                protection_labels: &protection_labels,
+                opportunity,
+                result: prepared_result,
+                has_unpresented_description: attention.has_unpresented_description,
+            },
+            goal,
+            goal_storage,
+            budget,
+        )?;
+        let trigger = new_trigger(None, tokens, dependencies, attention.semantic_causes);
+        return Ok(PreparedIntake::Trigger(trigger, Some(facts)));
+    }
+    drop(goal);
+    drop(goal_storage);
     let purpose_bytes = actor
         .agency
         .plan
@@ -976,7 +1092,7 @@ fn prepare(
         .ok_or(ExecutionError::Capacity)?;
     let _purpose_storage = budget.reserve(purpose_bytes)?;
     let purpose = crate::execution::occupied_purpose(actor)?;
-    let (prepared_result, _result_storage) = result::capture(state, actor, id, budget)?;
+    opportunity.semantic_purpose = purpose.as_deref();
     let product = Product {
         world_id: input.world_id,
         generation: input.generation,
@@ -1020,62 +1136,24 @@ fn prepare(
         actions_blocked: input.actions_blocked,
         speech_blocked: input.speech_blocked,
         semantic: actor.agency.semantic.as_ref(),
-        opportunity: Opportunity {
-            body_inputs: &director_inputs,
-            concerns: &concerns,
-            knowledge: state.learned_capabilities.known_recipes(id),
-            knowledge_revision: state
-                .reception
-                .knowledge_revisions
-                .as_ref()
-                .and_then(|owners| owners.get(id))
-                .copied()
-                .unwrap_or(0),
-            mind_revision: inner.map(|inner| inner.revision),
-            semantic_purpose: purpose.as_deref(),
-        },
+        opportunity,
         stimuli: &stimuli,
         events: &events,
         prepared_result,
     };
     let (inputs_json, inputs_storage) = encode_inputs(&input, budget)?;
     let length = json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
-    let mut storage = budget.reserve(
-        length
-            .checked_mul(2)
-            .and_then(|n| {
-                n.checked_add(
-                    state.physical.header.id.len()
-                        + state.generation.len()
-                        + request.actor_id.capacity()
-                        + size_of::<NpcIntakeCapture>(),
-                )
-            })
-            .ok_or(ExecutionError::Capacity)?,
-    )?;
+    let mut storage = budget.reserve(length.checked_mul(2).ok_or(ExecutionError::Capacity)?)?;
     let json = json_record(&product).map_err(|_| ExecutionError::Invariant)?;
-    storage.resize(
-        json.capacity()
-            + state.physical.header.id.capacity()
-            + state.generation.capacity()
-            + request.actor_id.capacity()
-            + size_of::<NpcIntakeCapture>(),
-    )?;
+    storage.resize(json.capacity())?;
     storage.merge(inputs_storage)?;
-    Ok(PreparedIntake::Packets(
-        NpcIntakeWitness {
-            tokens,
-            dependencies,
-            inspection,
-            _storage: token_storage,
-        },
-        NpcIntakePackets {
-            life: actor.physical_life,
-            semantic_causes: attention.semantic_causes,
+    Ok(PreparedIntake::Trigger(
+        new_trigger(Some(NpcIntakePackets {
             json,
             inputs_json,
             _storage: storage,
-        },
+        }), tokens, dependencies, attention.semantic_causes),
+        None,
     ))
 }
 struct Classifications<'a>(&'a [(&'a str, &'a str, Option<&'a str>)], bool);
