@@ -635,7 +635,7 @@ impl Session {
         options: crate::commands::CommandOptions,
         material_gather: crate::construction_gather::ConstructionGather,
     ) -> Result<CandidateKey, SessionError> {
-        self.begin_command_with_plan(command, canonical, options, material_gather, None)
+        self.begin_command_with_plan(command, canonical, options, material_gather, None, None)
     }
     pub(crate) fn begin_command_with_plan(
         &mut self,
@@ -644,6 +644,7 @@ impl Session {
         options: crate::commands::CommandOptions,
         material_gather: crate::construction_gather::ConstructionGather,
         typed_plan: Option<crate::plans::PlanMode>,
+        strike: Option<crate::contact::review::PlayerStrike<'_>>,
     ) -> Result<CandidateKey, SessionError> {
         let preview = options.preview;
         if preview
@@ -671,7 +672,12 @@ impl Session {
                 options,
                 binding,
                 &self.budget,
-            )?.with_typed_plan(typed_plan);
+            )?
+            .with_typed_plan(typed_plan);
+            let cursor = match strike {
+                Some(strike) => cursor.for_player_contact(strike.permission)?,
+                None => cursor,
+            };
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,
                 journal: &mut journal,

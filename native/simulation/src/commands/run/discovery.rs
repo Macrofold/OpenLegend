@@ -6,7 +6,7 @@ use crate::geometry::SightRay;
 use crate::state::Point;
 
 impl CommandCursor {
-    fn discovery_result(
+    pub(super) fn discovery_result(
         &mut self,
         ok: bool,
         code: &str,
@@ -210,8 +210,12 @@ impl CommandCursor {
                 }
                 // Human lethality review is a separate required authority.
                 // Native NPC offers never synthesize that permission.
-                if source.controller == "player"
-                    || self.command.envelope().human_initiated == Some(true)
+                if (source.controller == "player"
+                    || self.command.envelope().human_initiated == Some(true))
+                    && !matches!(
+                        self.chosen_contact,
+                        Some(crate::contact::review::ChosenContact::Player(_))
+                    )
                 {
                     return Err(ExecutionError::UnsupportedFamily);
                 }
@@ -377,7 +381,7 @@ impl CommandCursor {
                 return self.discovery_refuse(&installed.ordinary_actions.value().cannot_interrupt);
             }
         }
-        if self.chosen_contact {
+        if self.chosen_contact.is_some() {
             return self.install_chosen_contact(core, path);
         }
         self.discovery_starts_work = true;

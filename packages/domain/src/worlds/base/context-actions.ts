@@ -1,3 +1,4 @@
+import activityDisplay from './config/ordinary-activity-display.json' with { type: 'json' };
 import { entityGet } from '../../entity-collection.js';
 import { isEquipped } from '../../equipment.js';
 import { activelyParticipates } from '../../participation-state.js';
@@ -94,7 +95,7 @@ export function baseContextActions(world: WorldState, actorId: string, targetId?
       ...(choice.label
         ? {
             label: choice.approach
-              ? `Approach and ${choice.label[0]!.toLowerCase()}${choice.label.slice(1)}`
+              ? `${activityDisplay.strike.catalogue.approachPrefix}${choice.label[0]!.toLowerCase()}${choice.label.slice(1)}`
               : choice.label,
           }
         : {}),

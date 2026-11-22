@@ -5,9 +5,13 @@ use crate::state::{Action, Entity};
 use crate::worlds::base_decision_offers::NativeStrikeRead;
 use serde::{Deserialize, Serialize};
 mod impact;
+mod injury;
 mod motion;
+pub(crate) mod review;
 pub(crate) use impact::{ContactAnswer, ContactStep, ImpactCursor};
+pub(crate) use injury::ContactInjury;
 pub(crate) use motion::{StrikeMotion, StrikeRoute, StrikeRouteStep, reach};
+pub use review::{StrikePermission, StrikeReviewOffer};
 
 pub(crate) fn stage_preparation(
     core: &mut crate::execution::CoreMutation<'_>,
@@ -49,7 +53,7 @@ pub(crate) fn stage_preparation(
     let chosen = body
         .actor
         .as_ref()
-        .is_some_and(|actor| actor.controller == "npc");
+        .is_some_and(|actor| matches!(actor.controller.as_str(), "npc" | "player"));
     if chosen || hunt.is_some_and(|hunt| action.definition_id.as_deref() == Some(&hunt.strike_id)) {
         use crate::reception::EventScalar;
         let Some(cue) = installed
@@ -159,7 +163,7 @@ pub(crate) fn profile<'a>(
             && !strike.auto_move_to_range
             && strike.recovery_seconds.is_some())
         .then_some(strike),
-        "npc" => {
+        "npc" | "player" => {
             let ordinary = &installed
                 .occurrence_rules
                 .value()
@@ -188,7 +192,7 @@ pub(crate) fn may_target(
         && (source
             .actor
             .as_ref()
-            .is_some_and(|actor| actor.controller == "npc")
+            .is_some_and(|actor| actor.controller != "native")
             || target.animal.is_none()
             || source
                 .animal
@@ -215,7 +219,9 @@ pub(crate) fn contact_permitted(
         return false;
     }
     let Some(source) = source.actor.as_ref().filter(|actor| {
-        actor.alive && !actor.incapacitated && matches!(actor.controller.as_str(), "native" | "npc")
+        actor.alive
+            && !actor.incapacitated
+            && matches!(actor.controller.as_str(), "native" | "npc" | "player")
     }) else {
         return false;
     };
@@ -247,6 +253,22 @@ pub(crate) fn valid_action(
     else {
         return false;
     };
+    let player = source
+        .actor
+        .as_ref()
+        .is_some_and(|actor| actor.controller == "player");
+    if action.requires_lethal_review != player.then_some(true)
+        || action.lethal_permission.as_ref().is_some_and(|permission| {
+            !player
+                || !action
+                    .target_id
+                    .as_deref()
+                    .zip(action.target_life)
+                    .is_some_and(|(target, life)| permission.valid_for_action(source, target, life))
+        })
+    {
+        return false;
+    }
     if (action.stage != "working" && !action.awaiting_moving_contact())
         || action
             .target_id

@@ -425,18 +425,37 @@ fn fishing(
     resource_menu(offer.sequence, &actions, GATHER.name, budget)
 }
 
-pub(crate) fn conversation(
+pub(crate) fn contact_choices(
     revision: u64,
     selected: &str,
-    name: &JsText,
+    conversant: Option<&JsText>,
+    strike_menu: Option<openlegend_simulation::runtime::RuntimeStrikeMenu<'_>>,
+    line_clear: impl Fn(&openlegend_simulation::geometry::SightRay) -> bool,
+    controlling: bool,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
+    use openlegend_simulation::activity::{ActivityDetail, ActivityScalar};
+    use openlegend_simulation::worlds::activity_display as display;
+
+    #[derive(Serialize)]
+    #[serde(tag = "kind", rename_all = "lowercase")]
+    enum Intent<'a> {
+        Compose {
+            mode: &'static str,
+            #[serde(rename = "npcId")]
+            npc_id: &'a str,
+        },
+        Command {
+            command: Strike<'a>,
+        },
+    }
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
-    struct Compose<'a> {
+    struct Strike<'a> {
+        #[serde(rename = "type")]
         kind: &'static str,
-        mode: &'static str,
-        npc_id: &'a str,
+        target_id: &'a str,
+        definition_id: &'a str,
     }
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -448,49 +467,111 @@ pub(crate) fn conversation(
         keywords: &'a [String],
         target_id: &'a str,
         enabled: bool,
-        intent: Compose<'a>,
-    }
-    #[derive(Serialize)]
-    struct Catalogue<'a> {
-        revision: u64,
-        actions: [Action<'a>; 1],
-        categories: [&'a str; 1],
-    }
-    #[derive(Serialize)]
-    struct Menu<'a> {
-        ok: bool,
-        catalogue: Catalogue<'a>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        reason: Option<&'static str>,
+        #[serde(skip_serializing_if = "Vec::is_empty")]
+        facts: Vec<(JsText, JsText)>,
+        intent: Intent<'a>,
     }
     let words = &*CONVERSATION;
-    let _workspace = budget.reserve(2048 + 8 * name.storage_bytes() + selected.len())?;
-    let label = JsText::concat(&[&words.label_prefix, name]);
-    let description = JsText::concat(&[&words.description_prefix, name, &words.description_suffix]);
-    let action = Action {
-        id: format!("talk-{selected}"),
-        label,
-        category: &words.category,
-        description,
-        keywords: &words.keywords,
-        target_id: selected,
-        enabled: true,
-        intent: Compose {
-            kind: "compose",
-            mode: "chat",
-            npc_id: selected,
-        },
-    };
-    wire::encode(
-        &Menu {
-            ok: true,
-            catalogue: Catalogue {
-                revision,
-                actions: [action],
-                categories: [&words.category],
+    let mut workspace =
+        budget.reserve(2048 + 8 * conversant.map_or(0, JsText::storage_bytes) + selected.len())?;
+    let mut actions = Vec::new();
+    let mut categories = Vec::new();
+    if let Some(name) = conversant {
+        actions.push(Action {
+            id: format!("talk-{selected}"),
+            label: JsText::concat(&[&words.label_prefix, name]),
+            category: &words.category,
+            description: JsText::concat(&[
+                &words.description_prefix,
+                name,
+                &words.description_suffix,
+            ]),
+            keywords: &words.keywords,
+            target_id: selected,
+            enabled: true,
+            reason: None,
+            facts: Vec::new(),
+            intent: Intent::Compose {
+                mode: "chat",
+                npc_id: selected,
             },
-        },
-        b"",
-        b"",
-        budget,
-    )
-    .map_err(RuntimeError::application_refused)
+        });
+        categories.push(words.category.as_str());
+    }
+    if let Some(menu) = &strike_menu {
+        let reason = if !controlling {
+            Some("Take control of your character to act here.")
+        } else if menu.paused() {
+            Some("Resume the world to act.")
+        } else {
+            None
+        };
+        for definition in menu.definitions() {
+            let bytes = 4096_usize
+                .checked_add(
+                    4 * (definition.label.storage_bytes()
+                        + menu.name.storage_bytes()
+                        + selected.len()
+                        + definition.id.len()),
+                )
+                .ok_or(CapacityError)?;
+            workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
+            let copy = display::strike_catalogue().ok_or_else(|| {
+                RuntimeError::application_refused("Strike presentation unavailable.")
+            })?;
+            let view = menu.view(definition).ok_or_else(|| {
+                RuntimeError::application_refused("Strike presentation unavailable.")
+            })?;
+            let label = if definition.auto_move_to_range
+                && !menu
+                    .reach_line(definition, budget)?
+                    .is_some_and(|ray| line_clear(&ray))
+            {
+                JsText::concat(&[
+                    &copy.approach_prefix.into(),
+                    &definition.label.first_case(false),
+                    &" ".into(),
+                    menu.name,
+                ])
+            } else {
+                JsText::concat(&[&definition.label, &" ".into(), menu.name])
+            };
+            let facts = std::iter::once(("Target".into(), menu.name.clone()))
+                .chain(view.facts.into_iter().filter_map(|fact| match fact.value {
+                    ActivityDetail::Scalar(ActivityScalar::String(value)) => {
+                        Some((fact.name.first_case(true), value))
+                    }
+                    _ => None,
+                }))
+                .chain(std::iter::once((
+                    copy.uncertainty_name.into(),
+                    copy.uncertainty.into(),
+                )))
+                .collect();
+            actions.push(Action {
+                id: format!("{}-{selected}", definition.id),
+                label,
+                category: "Combat",
+                description: view.name,
+                keywords: &[],
+                target_id: selected,
+                enabled: reason.is_none(),
+                reason,
+                facts,
+                intent: Intent::Command {
+                    command: Strike {
+                        kind: "strike",
+                        target_id: selected,
+                        definition_id: &definition.id,
+                    },
+                },
+            });
+        }
+        if !actions.is_empty() {
+            categories.push("Combat");
+        }
+    }
+    resource_menu_categories(revision, &actions, &categories, budget)
 }

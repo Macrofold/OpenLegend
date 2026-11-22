@@ -165,6 +165,7 @@ impl HeapBytes for NativeCommand {
             Self::Cancel {
                 envelope,
                 expected_action_id,
+                ..
             } => heap_sum([envelope.heap_bytes()?, expected_action_id.heap_bytes()?]),
             Self::WithdrawAttempt {
                 envelope,

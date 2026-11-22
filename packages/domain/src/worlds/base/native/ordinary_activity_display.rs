@@ -46,6 +46,22 @@ struct StrikeWords<'a> {
     approach_name: &'a str,
     approach_prefix: &'a str,
     approach_suffix: &'a str,
+    #[serde(borrow)]
+    catalogue: StrikeCatalogue<'a>,
+}
+
+/// Extra context for a human choosing a strike, never added to NPC offers or
+/// to the original activity/review that is shown after selection.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StrikeCatalogue<'a> {
+    pub approach_prefix: &'a str,
+    pub uncertainty_name: &'a str,
+    pub uncertainty: &'a str,
+}
+
+pub fn strike_catalogue() -> Option<&'static StrikeCatalogue<'static>> {
+    words().map(|words| &words.strike.catalogue)
 }
 
 #[derive(Deserialize)]
@@ -215,8 +231,25 @@ pub(crate) fn shared_name(
         "status-effect" => words.status.name,
         _ => return None,
     };
-    Some(purpose.filter(|text| *text == words.stable_learned_purpose).cloned()
-        .unwrap_or_else(|| fallback.into()))
+    Some(
+        purpose
+            .filter(|text| *text == words.stable_learned_purpose)
+            .cloned()
+            .unwrap_or_else(|| fallback.into()),
+    )
+}
+
+impl From<&crate::worlds::base_decision_offers::NativeStrikeRead> for StrikeRead {
+    fn from(strike: &crate::worlds::base_decision_offers::NativeStrikeRead) -> Self {
+        Self {
+            damage: strike.damage,
+            range: strike.range,
+            approach_range: strike.approach_range,
+            work_seconds: strike.work_seconds,
+            recovery_seconds: strike.recovery_seconds,
+            accuracy: strike.accuracy,
+        }
+    }
 }
 
 pub fn format(

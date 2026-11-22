@@ -508,14 +508,7 @@ impl ActivityDisplayCursor {
                 .retained
                 .native_strike_read
                 .get(definition_id)
-                .map(|strike| authored::StrikeRead {
-                    damage: strike.damage,
-                    range: strike.range,
-                    approach_range: strike.approach_range,
-                    work_seconds: strike.work_seconds,
-                    recovery_seconds: strike.recovery_seconds,
-                    accuracy: strike.accuracy,
-                }),
+                .map(authored::StrikeRead::from),
             _ => None,
         };
         let input = Input {

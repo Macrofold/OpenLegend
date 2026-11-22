@@ -90,7 +90,10 @@ pub struct SpatialProvider {
 }
 
 impl SpatialProvider {
-    pub(crate) fn hearth_site_visible(&self, ray: &openlegend_simulation::geometry::SightRay) -> bool {
+    pub(crate) fn clear_interaction_line(
+        &self,
+        ray: &openlegend_simulation::geometry::SightRay,
+    ) -> bool {
         self.clear_sight(ray.from, ray.to)
     }
 

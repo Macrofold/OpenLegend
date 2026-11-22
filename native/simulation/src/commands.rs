@@ -265,6 +265,7 @@ pub(crate) enum NativeCommand {
     Cancel {
         envelope: CommandEnvelope,
         expected_action_id: Option<String>,
+        dismiss_review: bool,
     },
     WithdrawAttempt {
         envelope: CommandEnvelope,
@@ -741,6 +742,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             "cancel" if !extras_for_cancel => Ok(Self::Cancel {
                 envelope,
                 expected_action_id: input.expected_action_id,
+                dismiss_review: false,
             }),
             "strike"
                 if !discovery_extras

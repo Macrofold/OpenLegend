@@ -1,3 +1,4 @@
+import activityDisplay from './config/ordinary-activity-display.json' with { type: 'json' };
 import hearthCopy from '../../hearth-placement-messages.json' with { type: 'json' };
 import { gateUseLabel } from '../../gate-operations.js';
 import { entityGet } from '../../entity-collection.js';
@@ -726,8 +727,8 @@ function nativeCatalogueCommitments(
     command.type === 'strike'
   )
     facts.push([
-      'Uncertainty',
-      'An attempt, not a promised hit or kill; range and line of effect are checked at impact',
+      activityDisplay.strike.catalogue.uncertaintyName,
+      activityDisplay.strike.catalogue.uncertainty,
     ]);
   return facts;
 }

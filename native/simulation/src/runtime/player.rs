@@ -46,6 +46,81 @@ struct PlayerInteractionInput {
     utterance_event_id: Option<String>,
 }
 
+pub struct RuntimeStrikeMenu<'a> {
+    state: &'a crate::simulation::SimulationState,
+    source: &'a crate::state::Entity,
+    target: &'a crate::state::Entity,
+    body: &'a crate::reception::ObservedBody,
+    health: Option<&'a crate::reception::AttributeView>,
+    pub name: &'a crate::text::JsText,
+}
+
+impl<'a> RuntimeStrikeMenu<'a> {
+    pub fn paused(&self) -> bool {
+        self.state.physical.header.paused
+    }
+
+    pub fn sequence(&self) -> u64 {
+        self.state.physical.header.sequence
+    }
+
+    pub fn profile(&self) -> (&'a str, u64) {
+        let profile = &self.state.installed.content.profile;
+        (&profile.id, profile.version)
+    }
+
+    /// Render the selected actor's received target facts. Only the matching
+    /// public attribute from this read may appear in the returned view.
+    pub fn view(
+        &self,
+        definition: &crate::worlds::base_decision_offers::NativeStrikeRead,
+    ) -> Option<crate::activity::ActivityView> {
+        use crate::worlds::activity_display as display;
+        display::format(
+            self.profile(),
+            display::OrdinaryAction::Strike(Some(display::StrikeRead::from(definition))),
+            None,
+            None,
+            Some(display::ObservedActor {
+                position: self.source.world_position()?,
+                heading: self.source.spatial.heading,
+            }),
+            Some(display::ObservedTarget {
+                position: self.body.position,
+                name: self.name.clone(),
+                health: self.health.cloned(),
+            }),
+        )
+    }
+
+    /// Prepare the existing interaction-anchor sight query, only when the
+    /// selected strike can already reach its target without walking.
+    pub fn reach_line(
+        &self,
+        definition: &crate::worlds::base_decision_offers::NativeStrikeRead,
+        budget: &ByteBudget,
+    ) -> Result<Option<crate::geometry::SightRay>, RuntimeError> {
+        crate::geometry::interaction_reach(
+            self.source,
+            self.target,
+            definition.approach_range.unwrap_or(definition.range),
+            budget,
+        )
+        .map_err(failure)
+    }
+
+    pub fn definitions(
+        &self,
+    ) -> impl Iterator<Item = &'a crate::worlds::base_decision_offers::NativeStrikeRead> + '_ {
+        let installed = &self.state.installed;
+        installed
+            .retained
+            .native_strike_read
+            .keys()
+            .filter_map(|id| crate::contact::profile(installed, self.source, id))
+    }
+}
+
 pub struct RuntimePlayerRead {
     account: String,
     actor: String,
@@ -457,6 +532,12 @@ impl NativeWorldSession {
             .and_then(|n| n.checked_add(4096))
             .ok_or(CapacityError)?;
         let _workspace = self.budget.reserve(bytes)?;
+        let strike = match command {
+            RuntimePlayerCommand::Strike { permission, .. } => {
+                Some(crate::contact::review::PlayerStrike { permission })
+            }
+            _ => None,
+        };
         let (command, signature) = command.bind(id, actor).map_err(failure)?;
         self.session
             .begin_command_with_plan(
@@ -470,6 +551,7 @@ impl NativeWorldSession {
                 },
                 crate::construction_gather::ConstructionGather::for_command(materials),
                 plan,
+                strike,
             )
             .map_err(session_failure)
     }
@@ -709,6 +791,81 @@ impl NativeWorldSession {
                     quantity: quantity as u64,
                     sequence,
                 })));
+                true
+            })
+            .map_err(failure)?;
+        result.transpose()
+    }
+
+    /// Admit a menu for a single currently observed combat target. The
+    /// synchronous callback borrows installed offers and the permitted name.
+    /// Final action selection repeats exact sight, reach and review checks.
+    pub fn with_player_strike_menu<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        mut matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+        use_menu: impl FnOnce(RuntimeStrikeMenu<'_>) -> Result<T, RuntimeError>,
+    ) -> Result<Option<T>, RuntimeError> {
+        self.require_active()?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        let state = &simulation.state;
+        let Some(source) = state.physical.entities.get(actor) else {
+            return Ok(None);
+        };
+        if !source
+            .actor
+            .as_ref()
+            .is_some_and(|a| a.controller == "player")
+            || state
+                .installed
+                .capabilities
+                .capability_blocked(Some(source), "actions")
+                .map_err(failure)?
+        {
+            return Ok(None);
+        }
+        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        let mut result = None;
+        let mut use_menu = Some(use_menu);
+        simulation
+            .visit_accepted_player_contacts(account, actor, &self.budget, |observed| {
+                let name = &observed.name.name;
+                let Some(target) = state.physical.entities.get(observed.source_id) else {
+                    return false;
+                };
+                if !observed.actor
+                    || !observed.physical_life.is_some_and(|life| {
+                        crate::contact::may_target(&state.installed, source, target, life)
+                    })
+                {
+                    return false;
+                }
+                use crate::reception::SensoryFacet;
+                let Some(SensoryFacet::Body { body }) = observed.body_facet().map(|f| &f.value)
+                else {
+                    return false;
+                };
+                let health = observed.facets().find_map(|facet| match &facet.value {
+                    SensoryFacet::PublicAttributes { attributes } => attributes
+                        .iter()
+                        .find(|value| value.body_health == Some(true)),
+                    _ => None,
+                });
+                if !matches(observed) {
+                    return false;
+                }
+                let choice = RuntimeStrikeMenu {
+                    state,
+                    source,
+                    target,
+                    body,
+                    health,
+                    name,
+                };
+                if choice.definitions().next().is_some() {
+                    result = Some(use_menu.take().expect("one selected contact")(choice));
+                }
                 true
             })
             .map_err(failure)?;

@@ -242,6 +242,7 @@ impl Director {
         selected: String,
         _request: ByteReservation,
     ) -> Result<Option<axum::body::Bytes>, WorldError> {
+        use openlegend_simulation::runtime::RuntimeError;
         let authority = self.authority.clone();
         let game = self.game.clone();
         Ok(self
@@ -250,22 +251,61 @@ impl Director {
             .capture(move |session| {
                 let budget = game.host.budget();
                 Ok(
-                    authority.current(&scope, Capability::Play, false, |fields, _| {
-                        let target = speech::target_in_world(
+                    authority.current(&scope, Capability::Play, false, |fields, controls| {
+                        let talk = speech::target_in_world(
                             session,
                             fields,
                             &refs,
                             Some(&selected),
                             budget,
+                        )?
+                        .ok();
+                        let reference = refs
+                            .scoped(fields)
+                            .map_err(RuntimeError::application_refused)?;
+                        let mut alias_error = None;
+                        let choices = session.with_player_strike_menu(
+                            &fields.account_id,
+                            &fields.actor_id,
+                            |body| match reference.contact(
+                                body.source_id,
+                                body.physical_life.unwrap_or(0),
+                                body.lease_id,
+                            ) {
+                                Ok(alias) => alias == selected,
+                                Err(problem) => {
+                                    alias_error = Some(problem);
+                                    false
+                                }
+                            },
+                            |menu| {
+                                crate::player_http::actions::contact_choices(
+                                    menu.sequence(),
+                                    &selected,
+                                    talk.as_ref().map(|target| &target.name),
+                                    Some(menu),
+                                    |ray| game.spatial.clear_interaction_line(ray),
+                                    controls,
+                                    budget,
+                                )
+                            },
                         )?;
-                        let Ok(target) = target else {
+                        if let Some(error) = alias_error {
+                            return Err(RuntimeError::application_refused(error));
+                        }
+                        if choices.is_some() {
+                            return Ok(choices);
+                        }
+                        let Some(talk) = talk else {
                             return Ok(None);
                         };
-                        let revision = session.accepted_progress()?.sequence;
-                        crate::player_http::actions::conversation(
-                            revision,
+                        crate::player_http::actions::contact_choices(
+                            session.accepted_progress()?.sequence,
                             &selected,
-                            &target.name,
+                            Some(&talk.name),
+                            None,
+                            |ray| game.spatial.clear_interaction_line(ray),
+                            controls,
                             budget,
                         )
                         .map(Some)

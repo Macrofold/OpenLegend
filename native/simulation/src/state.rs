@@ -642,13 +642,13 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub requires_lethal_review: Option<UnconvertedField>,
+    pub requires_lethal_review: Option<bool>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub lethal_permission: Option<UnconvertedField>,
+    pub lethal_permission: Option<Box<crate::contact::StrikePermission>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -945,8 +945,8 @@ impl Action {
             || (self.material_permission.is_some() && !self.is_gathering())
             || self.material_origin_ids.is_some()
             || self.material_contribution_ids.is_some()
-            || self.requires_lethal_review.is_some()
-            || self.lethal_permission.is_some()
+            || (!self.is_natural_contact()
+                && (self.requires_lethal_review.is_some() || self.lethal_permission.is_some()))
             || self.scar_id.is_some()
             || self.recipe_pin.is_some() != self.is_manufacturing()
             || self.manufacture_tools.is_some() != self.is_manufacturing()

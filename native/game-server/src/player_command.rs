@@ -31,6 +31,7 @@ use serde_json::value::RawValue;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
+mod contact;
 mod typed;
 pub(crate) use typed::{ActionAttempt, AttemptRecovery};
 
@@ -150,7 +151,17 @@ struct CommandInput {
     volume: Option<SpeechVolume>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     definition_id: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    lethal_review_id: Option<Uuid>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     effect_operation: Option<StatusOperation>,
     #[serde(rename = "facing", default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     facing_heading: Option<f64>,
@@ -284,6 +295,7 @@ impl SelectedKnownPlace {
 #[serde(rename_all = "lowercase")]
 enum CommandKind {
     Move,
+    Strike,
     Follow,
     Cancel,
     Gather,
@@ -325,10 +337,12 @@ pub(crate) struct PlayerCommands {
     references: Arc<ReferenceIssuer>,
     identity: Arc<Mutex<RequestIdentity>>,
     maintenance: Arc<crate::operator_maintenance::OperatorMaintenance>,
+    reviews: Arc<contact::Reviews>,
 }
 
 enum ResultOwner {
     Accepted(Arc<AcceptedSaveInput>),
+    WithReview(Arc<AcceptedSaveInput>, contact::Update),
     Durable(AdmittedReceipt),
     Refused(&'static str, &'static str),
 }
@@ -336,7 +350,7 @@ enum ResultOwner {
 impl ResultOwner {
     fn receipt(&self) -> Option<&GameplayReceipt> {
         match self {
-            Self::Accepted(value) => value.receipt(),
+            Self::Accepted(value) | Self::WithReview(value, _) => value.receipt(),
             Self::Durable(value) => Some(value.receipt()),
             Self::Refused(_, _) => None,
         }
@@ -351,6 +365,7 @@ impl PlayerCommands {
         references: Arc<ReferenceIssuer>,
         identity: Arc<Mutex<RequestIdentity>>,
         maintenance: Arc<crate::operator_maintenance::OperatorMaintenance>,
+        capacity: usize,
     ) -> Self {
         Self {
             game,
@@ -359,6 +374,7 @@ impl PlayerCommands {
             references,
             identity,
             maintenance,
+            reviews: Arc::new(contact::Reviews::new(capacity)),
         }
     }
 
@@ -555,6 +571,17 @@ impl PlayerCommands {
                 let finish_authority = permits.clone();
                 let place_world = self.game.world.clone();
                 let finish_world = place_world.clone();
+                let strike = matches!(facts.request.command.kind, CommandKind::Strike);
+                let supplied_review = facts.request.command.lethal_review_id.is_some();
+                let begin_reviews = supplied_review.then(|| self.reviews.clone());
+                let stage_reviews = (strike || supplied_review).then(|| self.reviews.clone());
+                let publish_reviews = stage_reviews.clone();
+                let stage_scope = strike.then(|| scope.clone());
+                // A selected approval is carried forward only by this exact
+                // admitted candidate. Ordinary commands allocate no carrier.
+                let selected_review = supplied_review
+                    .then(|| Arc::new(std::sync::OnceLock::<Arc<contact::Pending>>::new()));
+                let stage_selected = selected_review.clone();
                 self.game.world.request_advance_publication();
                 prior = self
                     .game
@@ -573,6 +600,17 @@ impl PlayerCommands {
                                 return Ok(ApplicationStart::Existing(ResultOwner::Accepted(
                                     value,
                                 )));
+                            }
+                            let raw = &begin_facts.request.command;
+                            if let Some(id) = raw.lethal_review_id {
+                                let scope = &begin_scope.scope;
+                                let key = scope.key().map_err(|_| StoreError::InvalidRecord)?;
+                                let reviews = begin_reviews.as_ref().expect("selected review has an owner");
+                                let Some(approval) = reviews.selected(&scope.actor_id, &key, id, raw)? else {
+                                    let (code, message) = contact::STALE;
+                                    return Ok(ApplicationStart::Existing(ResultOwner::Refused(code, message)));
+                                };
+                                let _ = selected_review.as_ref().expect("selected review owns a carrier").set(approval);
                             }
                             let clock = world.clock()?;
                             if clock.paused
@@ -610,7 +648,6 @@ impl PlayerCommands {
                             } else {
                                 begin_facts.request.command.position.as_ref()
                             };
-                            let raw = &begin_facts.request.command;
                             let inspected_world = matches!(raw.kind, CommandKind::InspectItem) && raw.item_id.is_none();
                             let target_ref = if inspected_world { raw.container_id.as_deref() } else { raw.target_id.as_deref() };
                             let own_status = matches!(raw.kind, CommandKind::StatusEffect)
@@ -664,7 +701,7 @@ impl PlayerCommands {
                                         return Ok(ApplicationStart::Existing(
                                             ResultOwner::Refused(
                                                 "stale-contact",
-                                                if matches!(raw.kind, CommandKind::StatusEffect | CommandKind::Follow) {
+                                                if matches!(raw.kind, CommandKind::StatusEffect | CommandKind::Follow | CommandKind::Strike) {
                                                     "Choose a target you can see now."
                                                 } else {
                                                     "Choose a resource you can see now."
@@ -693,6 +730,7 @@ impl PlayerCommands {
                                     .or(own_status.then_some(begin_scope.scope.actor_id.as_str())),
                                 speech_target.as_ref().map(|value| (value.id.as_str(), value.role)),
                                 travel_destination.as_ref().map(|value| value.id.as_str()),
+                                selected_review.as_ref().and_then(|slot| slot.get()).map(|review| &review.permission),
                             )?;
                             Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
                                 &begin_facts.id,
@@ -706,12 +744,28 @@ impl PlayerCommands {
                             let game = game.clone();
                             async move { game.answer_operation(question).await }
                         },
-                        move |output, _| {
+                        move |output, budget| {
                             let RuntimeDirectOutput::Prepared(product) = output else {
                                 unreachable!("ordinary command cannot preview")
                             };
-                            let value = json_record(product.outcome())
-                                .map_err(RuntimeError::application_refused)?;
+                            let (value, _temporary, review) =
+                                if let Some(offer) = product.strike_review() {
+                                    let reviews = stage_reviews.as_ref()
+                                        .ok_or_else(|| RuntimeError::application_refused("Attack review has no owner."))?;
+                                    let scope = stage_scope.as_ref()
+                                        .ok_or_else(|| RuntimeError::application_refused("Attack review has no scope."))?;
+                                    let pending = reviews.prepare(
+                                        &scope.scope, &prepare.request.command, offer, budget,
+                                    ).map_err(RuntimeError::application_refused)?;
+                                    let (value, custody) = pending.result(offer, product.outcome(), budget)?;
+                                    (value, Some(custody), Some(contact::Update::Offer(pending)))
+                                } else {
+                                    let review = stage_selected.as_ref().and_then(|slot| slot.get())
+                                        .filter(|_| product.outcome().ok)
+                                        .map(|entry| contact::Update::Consume(entry.clone()));
+                                    (json_record(product.outcome())
+                                        .map_err(RuntimeError::application_refused)?, None, review)
+                                };
                             let receipt = GameplayReceipt {
                                 id: prepare.id.clone(),
                                 epoch: prepare.epoch,
@@ -721,9 +775,19 @@ impl PlayerCommands {
                                 result: RawValue::from_string(value)
                                     .map_err(RuntimeError::application_refused)?,
                             };
-                            Ok(ResultOwner::Accepted(stage.stage(&product, Some(receipt))?))
+                            let accepted = stage.stage(&product, Some(receipt))?;
+                            Ok(match review {
+                                Some(update) => ResultOwner::WithReview(accepted, update),
+                                None => ResultOwner::Accepted(accepted),
+                            })
                         },
-                        move |fence, key, _| {
+                        move |fence, key, staged| {
+                            if matches!(
+                                staged, ResultOwner::WithReview(_, contact::Update::Consume(approval))
+                                    if !approval.current()
+                            ) {
+                                return Err(AccessError::Changed.into());
+                            }
                             finish_authority.current(
                                 &finish_scope,
                                 Capability::Play,
@@ -741,8 +805,13 @@ impl PlayerCommands {
                             )?
                         },
                         move |result| {
-                            if let ResultOwner::Accepted(value) = result {
-                                accept.accept(value);
+                            match result {
+                                ResultOwner::Accepted(value) => accept.accept(value),
+                                ResultOwner::WithReview(value, update) => {
+                                    publish_reviews.as_ref().expect("accepted attack review owns its publisher").publish(update);
+                                    accept.accept(value);
+                                }
+                                _ => {}
                             }
                         },
                     )
@@ -797,9 +866,14 @@ impl CommandRequest {
                 && (command.distance.is_some() || command.follow_until.is_some() || command.complete_follow.is_some()))
             || (!matches!(command.kind, CommandKind::Say)
                 && (command.text.is_some() || command.volume.is_some()))
+            || (!matches!(
+                command.kind,
+                CommandKind::StatusEffect | CommandKind::Strike
+            ) && command.definition_id.is_some())
             || (!matches!(command.kind, CommandKind::StatusEffect)
-                && (command.definition_id.is_some() || command.effect_operation.is_some()
-                    || command.facing_heading.is_some()))
+                && (command.effect_operation.is_some() || command.facing_heading.is_some()))
+            || (!matches!(command.kind, CommandKind::Strike | CommandKind::Cancel)
+                && command.lethal_review_id.is_some())
             || (!matches!(command.kind, CommandKind::Cook)
                 && (command.preparation_id.is_some()
                     || command.preparation_version.is_some()
@@ -889,6 +963,17 @@ impl CommandRequest {
                                 id(&point.surface_id)
                                     && [point.x, point.y, point.z].iter().all(|n| n.is_finite())
                             })) =>
+            {
+                Ok(())
+            }
+            CommandKind::Strike
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.item_id.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.definition_id.as_deref().is_some_and(id) =>
             {
                 Ok(())
             }
@@ -1080,6 +1165,7 @@ impl PreparedRequest {
         target: Option<&'a str>,
         speech_target: Option<(&'a str, SpeechTargetRole)>,
         travel_destination: Option<&'a str>,
+        strike_permission: Option<&'a openlegend_simulation::runtime::StrikePermission>,
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
         match input.kind {
@@ -1128,9 +1214,20 @@ impl PreparedRequest {
                 until: input.follow_until,
                 complete: input.complete_follow,
             }),
+            CommandKind::Strike => Ok(RuntimePlayerCommand::Strike {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                definition: input
+                    .definition_id
+                    .as_deref()
+                    .ok_or(StoreError::InvalidRecord)?,
+                permission: strike_permission,
+            }),
             CommandKind::Move => Ok(RuntimePlayerCommand::Move(
                 destination.ok_or(StoreError::InvalidRecord)?,
             )),
+            CommandKind::Cancel if input.lethal_review_id.is_some() => {
+                Ok(RuntimePlayerCommand::DismissStrikeReview)
+            }
             CommandKind::Cancel => Ok(RuntimePlayerCommand::Cancel(
                 input.expected_action_id.as_deref(),
             )),

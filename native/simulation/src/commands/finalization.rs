@@ -18,6 +18,7 @@ pub(crate) struct PendingCommandCompletion {
     at: f64,
     exposure: Option<super::exposure::CommandExposure>,
     native_movement: Option<super::NativeMovementInput>,
+    strike_review: Option<Box<crate::contact::StrikeReviewOffer>>,
     _reservation: ByteReservation,
 }
 impl PendingCommandCompletion {
@@ -29,6 +30,7 @@ impl PendingCommandCompletion {
         finalize: bool,
         exposure: Option<super::exposure::CommandExposure>,
         native_movement: Option<super::NativeMovementInput>,
+        strike_review: Option<Box<crate::contact::StrikeReviewOffer>>,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let reservation = budget.reserve(
@@ -52,6 +54,7 @@ impl PendingCommandCompletion {
             at: core.state.physical.header.sim_time,
             exposure,
             native_movement,
+            strike_review,
             _reservation: reservation,
         })
     }
@@ -62,6 +65,9 @@ pub(crate) struct CompletedCommand(PendingCommandCompletion);
 impl CompletedCommand {
     pub(crate) fn outcome(&self) -> &Outcome {
         &self.0.outcome
+    }
+    pub(crate) fn strike_review(&self) -> Option<&crate::contact::StrikeReviewOffer> {
+        self.0.strike_review.as_deref()
     }
     pub(crate) fn actor_id(&self) -> &str {
         &self.0.actor_id

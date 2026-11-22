@@ -6,7 +6,7 @@ use super::{
     reach,
 };
 use crate::activity::PendingActivityResult;
-use crate::body::{BodyAnswer, BodyStep, HealthChangeCursor, ScarEffect, scar_factor};
+use crate::body::{BodyAnswer, BodyStep, HealthChangeCursor};
 use crate::events::{
     AudienceSelection, CompletedOccurrence, EmissionText, EventEmissionIntent, EventScope,
 };
@@ -75,6 +75,7 @@ enum Phase {
     ApproachEndpoint,
     ApproachRoute,
     Reach,
+    ReviewRefused,
     Body,
     Interrupt,
     BodyEvent,
@@ -819,6 +820,7 @@ impl ImpactCursor {
                         return Ok(ContactStep::Invalidated);
                     }
                 }
+                Phase::ReviewRefused => return Ok(ContactStep::Invalidated),
                 Phase::Body => {
                     let answer = match answer.take() {
                         None => None,
@@ -948,13 +950,26 @@ impl ImpactCursor {
             .get(&self.target)
             .ok_or(ExecutionError::Invariant)?;
         let actor = target.actor.as_ref().ok_or(ExecutionError::Invariant)?;
-        let body = actor.body.as_ref().ok_or(ExecutionError::MissingBody)?;
-        let policy = installed.body_policy.as_ref().map(|policy| policy.value());
         let accuracy = definition.accuracy.unwrap_or(1.0);
-        let raw_injury = definition.damage
-            * scar_factor(policy, source, ScarEffect::OutgoingInjury)
-            * body.susceptibility.injury
-            * scar_factor(policy, target, ScarEffect::IncomingInjury);
+        let injury = super::ContactInjury::read(installed, source, target)?;
+        if action.requires_lethal_review == Some(true)
+            && !matches!(
+                super::review::check(
+                    installed,
+                    source,
+                    target,
+                    definition,
+                    injury,
+                    action.lethal_permission.as_deref(),
+                    &self.budget,
+                )?,
+                super::review::Review::Allowed
+            )
+        {
+            self.phase = Phase::ReviewRefused;
+            return Ok(());
+        }
+        let raw_injury = injury.maximum(definition.damage);
         let health_before = actor.health;
         // Match the selected Source guaranteed-contact path. Ineligible sight
         // or reach never spends a draw. See AC09.6 for the shared RNG follow-up.

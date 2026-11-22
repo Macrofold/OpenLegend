@@ -19,9 +19,9 @@ static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod account_retention;
 mod control;
 pub use crate::commands::{PlayerTravelDestination, PlayerTravelIntent};
-pub use crate::plans::PlanMode;
-pub use player::{CoordinateRefusal, DirectInventory, InventoryContainer, InventoryCrumb, InspectedRecipeRecord, RuntimeWorldStorage, TypedWalk};
+pub use crate::contact::{StrikePermission, StrikeReviewOffer};
 pub use crate::outings::view::{OutingViews, PlayerOuting};
+pub use crate::plans::PlanMode;
 pub use crate::worlds::base_outings::TravelOperation;
 pub use account_retention::RuntimeAccountRetention;
 pub use control::RuntimeClock;
@@ -118,12 +118,15 @@ pub use npc::{
     RuntimeNpcPresentedBody, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
     RuntimeNpcHistoricalPose, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
 };
+pub use player::{InspectedRecipeRecord, RuntimeWorldStorage};
 pub use player::{
-    RuntimeHearthCatalogue, RuntimeHearthShape,
-    InteractionMode, PlayerInteractionFacts, RuntimePlayerCommand, RuntimePlayerInputState,
-    RuntimePlayerPublication, RuntimePlayerRead, RuntimeGatherOffer,
-    RuntimeFishOffer, RuntimeFishTool, RuntimePickupOffer, RuntimePickupLot, RuntimeResourceOffer, RuntimeHeatContact, RuntimeFoodMenu, RuntimePreparation,
-    RuntimeStatusMenu, RuntimeStatusChoice, FireOperation, VisibleFuel, RuntimeFireMenu, RuntimeFireChoice,
+    CoordinateRefusal, DirectInventory, FireOperation, InteractionMode, InventoryContainer,
+    InventoryCrumb, PlayerInteractionFacts, RuntimeFireChoice, RuntimeFireMenu, RuntimeFishOffer,
+    RuntimeFishTool, RuntimeFoodMenu, RuntimeGatherOffer, RuntimeHearthCatalogue,
+    RuntimeHearthShape, RuntimeHeatContact, RuntimePickupLot, RuntimePickupOffer,
+    RuntimePlayerCommand, RuntimePlayerInputState, RuntimePlayerPublication, RuntimePlayerRead,
+    RuntimePreparation, RuntimeResourceOffer, RuntimeStatusChoice, RuntimeStatusMenu,
+    RuntimeStrikeMenu, TypedWalk, VisibleFuel,
 };
 pub use reply_preview::{
     RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,
@@ -1826,6 +1829,13 @@ pub struct RuntimePreparedProducts<'a> {
 impl RuntimePreparedProducts<'_> {
     pub fn outcome(&self) -> &crate::commands::Outcome {
         self.operation.outcome()
+    }
+
+    pub fn strike_review(&self) -> Option<&StrikeReviewOffer> {
+        match self.operation {
+            CompletedOperation::Command(command) => command.command.strike_review(),
+            _ => None,
+        }
     }
 
     pub fn events(&self) -> impl Iterator<Item = &crate::events::WorldEvent> + Clone {

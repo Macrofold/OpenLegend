@@ -182,7 +182,9 @@ pub(crate) struct CommandCursor {
     preparation_mode: Option<super::WorkTransitionMode>,
     discovery_approaching: bool,
     discovery_starts_work: bool,
-    chosen_contact: bool,
+    chosen_contact: Option<crate::contact::review::ChosenContact>,
+    strike_confirmation: Option<Box<(crate::contact::StrikePermission, ByteReservation)>>,
+    strike_review: Option<Box<crate::contact::StrikeReviewOffer>>,
     phase: Phase,
     queries: Option<GeometryQueries>,
     contact_route: Option<crate::contact::StrikeRoute>,
@@ -244,10 +246,21 @@ impl CommandCursor {
         binding: GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        let decoded: NativeCommand =
-            serde_json::from_str(&canonical).map_err(|_| ExecutionError::Invariant)?;
-        if decoded != command {
-            return Err(ExecutionError::Invariant);
+        // The authenticated typed player binder is the only producer of
+        // review dismissals. Its signature binds the application receipt;
+        // there is no public command decoder for this no-effect operation.
+        if !matches!(
+            command,
+            NativeCommand::Cancel {
+                dismiss_review: true,
+                ..
+            }
+        ) {
+            let decoded: NativeCommand =
+                serde_json::from_str(&canonical).map_err(|_| ExecutionError::Invariant)?;
+            if decoded != command {
+                return Err(ExecutionError::Invariant);
+            }
         }
         let bytes = std::mem::size_of::<Self>()
             + canonical.capacity()
@@ -274,7 +287,9 @@ impl CommandCursor {
             preparation_mode: None,
             discovery_approaching: false,
             discovery_starts_work: false,
-            chosen_contact: false,
+            chosen_contact: None,
+            strike_confirmation: None,
+            strike_review: None,
             phase: Phase::Start,
             queries: None,
             contact_route: None,
@@ -448,8 +463,30 @@ impl CommandCursor {
     /// Only an accepted plan can activate a chosen contact. Caller-provided
     /// command fields cannot turn discovery into execution.
     pub(crate) fn for_planned_contact(mut self) -> Self {
-        self.chosen_contact = matches!(self.command, NativeCommand::Strike { .. });
+        self.chosen_contact = matches!(self.command, NativeCommand::Strike { .. })
+            .then_some(crate::contact::review::ChosenContact::Npc);
         self
+    }
+
+    /// This argument comes from the signed-in application command owner, never
+    /// from the submitted command text or an NPC operation.
+    pub(crate) fn for_player_contact(
+        mut self,
+        permission: Option<&crate::contact::StrikePermission>,
+    ) -> Result<Self, ExecutionError> {
+        self.reserve(
+            permission
+                .map_or(Some(0), |value| {
+                    value
+                        .heap_bytes()?
+                        .checked_add(std::mem::size_of_val(value))
+                })
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.chosen_contact = Some(crate::contact::review::ChosenContact::Player(
+            permission.map(|permit| Box::new(permit.clone())),
+        ));
+        Ok(self)
     }
 
     pub(super) fn for_preparation(mut self, mode: super::WorkTransitionMode) -> Self {
@@ -1122,7 +1159,7 @@ impl CommandCursor {
                     if self.typed_plan_mode.is_some() {
                         return self.prepare_typed_walk(core);
                     }
-                    if self.chosen_contact {
+                    if self.chosen_contact.is_some() {
                         if self.start_discovery(core)? {
                             return Ok(Progress::Geometry);
                         }
@@ -1206,8 +1243,22 @@ impl CommandCursor {
                             return Ok(Progress::Geometry);
                         }
                         NativeCommand::Cancel {
-                            expected_action_id, ..
+                            expected_action_id,
+                            dismiss_review,
+                            ..
                         } => {
+                            if *dismiss_review {
+                                // The application owns the pending review. Record
+                                // its accepted dismissal without stopping physical work.
+                                self.reserve(128)?;
+                                self.outcome = Some(outcome(
+                                    true,
+                                    "cancelled",
+                                    "Attack preparation cancelled.",
+                                ));
+                                self.phase = Phase::Done;
+                                continue;
+                            }
                             let current = core
                                 .state
                                 .physical
@@ -1534,6 +1585,25 @@ impl CommandCursor {
                         return Ok(Progress::Display);
                     }
                     let (view, storage) = self.take_prepared_view(ordinary)?;
+                    if let Some(confirmation) = self.strike_confirmation.take() {
+                        let (permission, custody) = *confirmation;
+                        let rule = core
+                            .state
+                            .installed
+                            .body_policy
+                            .as_ref()
+                            .and_then(|policy| policy.value().lethal_attack_review.as_ref())
+                            .ok_or(ExecutionError::Invariant)?;
+                        let offered = crate::contact::StrikeReviewOffer::new(
+                            permission, custody, view, storage, rule,
+                        )?;
+                        self.strike_review = Some(Box::new(offered));
+                        self.reserve(rule.description.len() + "lethal-review-required".len())?;
+                        self.outcome =
+                            Some(outcome(false, "lethal-review-required", &rule.description));
+                        self.phase = Phase::Done;
+                        continue;
+                    }
                     let problem = crate::activity::check_activity_start(
                         &core.state.activity,
                         &core.state.physical.entities,
@@ -2402,7 +2472,16 @@ impl CommandCursor {
                         )));
                     }
                     let exposure = self.exposure.take();
-                    self.finalize = result.ok && !self.duplicate && !self.options.preview;
+                    self.finalize = result.ok
+                        && !self.duplicate
+                        && !self.options.preview
+                        && !matches!(
+                            self.command,
+                            NativeCommand::Cancel {
+                                dismiss_review: true,
+                                ..
+                            }
+                        );
                     self.abort(core)?;
                     return Ok(Progress::Complete(super::PendingCommandCompletion::new(
                         core,
@@ -2412,6 +2491,7 @@ impl CommandCursor {
                         self.finalize,
                         exposure,
                         self.options.native_movement.take(),
+                        self.strike_review.take(),
                         &self.budget,
                     )?));
                 }

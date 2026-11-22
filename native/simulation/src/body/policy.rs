@@ -155,6 +155,17 @@ pub(crate) struct ZeroHealthPolicy {
     pub death_narration: String,
 }
 
+impl ZeroHealthPolicy {
+    pub(crate) fn outcome(&self, controller: &str) -> Option<ZeroHealthOutcome> {
+        match controller {
+            "player" => Some(self.player),
+            "npc" => Some(self.npc),
+            "native" => Some(self.native),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ZeroHealthOutcome {

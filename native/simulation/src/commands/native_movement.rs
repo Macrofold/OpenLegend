@@ -117,6 +117,7 @@ pub(crate) fn begin_native_stop(
     let encoded = json_record(&input).map_err(|_| ExecutionError::Invariant)?;
     let command = NativeCommand::Cancel {
         expected_action_id: None,
+        dismiss_review: false,
         envelope: CommandEnvelope {
             encoding: CommandEncoding::decode(&encoded).map_err(|_| ExecutionError::Invariant)?,
             id,

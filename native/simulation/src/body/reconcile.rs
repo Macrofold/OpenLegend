@@ -267,12 +267,10 @@ impl BodyReconcileCursor {
                         .as_ref()
                         .ok_or(ExecutionError::Invariant)?
                         .value();
-                    let outcome = match actor.controller.as_str() {
-                        "player" => policy.zero_health.player,
-                        "npc" => policy.zero_health.npc,
-                        "native" => policy.zero_health.native,
-                        _ => return Err(ExecutionError::Invariant),
-                    };
+                    let outcome = policy
+                        .zero_health
+                        .outcome(&actor.controller)
+                        .ok_or(ExecutionError::Invariant)?;
                     core.physical().replace_action(
                         &self.actor,
                         None,

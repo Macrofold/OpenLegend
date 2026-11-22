@@ -209,14 +209,19 @@ impl CommandCursor {
             .entities
             .get(&envelope.actor_id)
             .ok_or(ExecutionError::MissingActor)?;
-        if envelope.human_initiated == Some(true)
-            || !source
-                .actor
-                .as_ref()
-                .is_some_and(|actor| actor.controller == "npc")
-        {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
+        let source_actor = source.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+        use crate::contact::review::ChosenContact;
+        let (player, permission) = match (&self.chosen_contact, source_actor.controller.as_str()) {
+            (Some(ChosenContact::Npc), "npc") if envelope.human_initiated != Some(true) => {
+                (false, None)
+            }
+            (Some(ChosenContact::Player(permission)), "player")
+                if envelope.human_initiated == Some(true) =>
+            {
+                (true, permission.as_deref())
+            }
+            _ => return Err(ExecutionError::UnsupportedFamily),
+        };
         let installed = &core.state.installed;
         let definition =
             profile(installed, source, definition_id).ok_or(ExecutionError::UnsupportedFamily)?;
@@ -230,14 +235,60 @@ impl CommandCursor {
             .physical_life()
             .filter(|life| may_target(installed, source, target, *life))
             .ok_or(ExecutionError::InvalidCheckpoint)?;
+        if player {
+            use crate::contact::review::{self, Review};
+            let injury = crate::contact::ContactInjury::read(installed, source, target)?;
+            match review::check(
+                installed,
+                source,
+                target,
+                definition,
+                injury,
+                permission,
+                &self.budget,
+            )? {
+                Review::Allowed => {}
+                Review::Required => {
+                    let (permission, mut custody) =
+                        review::prepare(source, target, definition, injury, &self.budget)?;
+                    custody.resize(
+                        custody
+                            .bytes()
+                            .checked_add(std::mem::size_of::<crate::host::ByteReservation>())
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    self.strike_confirmation = Some(Box::new((permission, custody)));
+                    self.phase = Phase::Choice;
+                    return Ok(());
+                }
+                Review::Changed => {
+                    let rule = installed
+                        .body_policy
+                        .as_ref()
+                        .and_then(|body| body.value().lethal_attack_review.as_ref())
+                        .ok_or(ExecutionError::InvalidCheckpoint)?;
+                    return self.discovery_result(false, "lethal-review-stale", &rule.description);
+                }
+            }
+        }
+        let permission_bytes = permission
+            .map_or(Some(0), |permit| {
+                permit
+                    .heap_bytes()?
+                    .checked_add(std::mem::size_of_val(permit))
+            })
+            .ok_or(ExecutionError::Capacity)?;
         let mut storage = self.budget.reserve(
             envelope.id.len()
                 + target_id.len()
                 + definition.id.len()
-                + "strikeapproachingentity".len(),
+                + "strikeapproachingentity".len()
+                + permission_bytes,
         )?;
         let mut action =
             Action::natural_contact(envelope.id.clone(), target_id.clone(), life, definition);
+        action.requires_lethal_review = player.then_some(true);
+        action.lethal_permission = permission.map(|permit| Box::new(permit.clone()));
         if let Some(route) = route {
             let crate::geometry::GuardedRoutePlan(plan, guard) =
                 crate::geometry::route_plan(route, &self.budget)?;
@@ -267,7 +318,7 @@ impl CommandCursor {
         core: &mut CoreMutation<'_>,
         source: &str,
     ) -> Result<Progress, ExecutionError> {
-        let after = if self.chosen_contact {
+        let after = if self.chosen_contact.is_some() {
             Phase::AfterDeparture
         } else {
             Phase::Tail

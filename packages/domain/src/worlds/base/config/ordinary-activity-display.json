@@ -29,7 +29,12 @@
     "attackName": "attack",
     "approachName": "approach",
     "approachPrefix": "Move to within ",
-    "approachSuffix": " m; route length is not known"
+    "approachSuffix": " m; route length is not known",
+    "catalogue": {
+      "approachPrefix": "Approach and ",
+      "uncertaintyName": "Uncertainty",
+      "uncertainty": "An attempt, not a promised hit or kill; range and line of effect are checked at impact"
+    }
   },
   "observed": {
     "distanceName": "distance",

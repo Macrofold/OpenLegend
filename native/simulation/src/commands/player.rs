@@ -14,13 +14,36 @@ use serde::Serialize;
 #[derive(Clone, Copy)]
 pub enum RuntimePlayerCommand<'a> {
     Move(&'a SurfacePoint),
-    Follow { target: &'a str, distance: Option<f64>, until: Option<f64>, complete: Option<bool> },
+    Strike {
+        target: &'a str,
+        definition: &'a str,
+        permission: Option<&'a crate::contact::StrikePermission>,
+    },
+    Follow {
+        target: &'a str,
+        distance: Option<f64>,
+        until: Option<f64>,
+        complete: Option<bool>,
+    },
     Travel(PlayerTravelIntent<'a>),
     Cancel(Option<&'a str>),
-    Gather { target: &'a str, tool: Option<&'a str>, mode: Option<GatheringMode> },
-    Fish { target: &'a str, tool: &'a str },
-    Handover { target: &'a str, gift: &'a crate::handover::GiftIntent },
-    Craft { recipe: &'a str },
+    DismissStrikeReview,
+    Gather {
+        target: &'a str,
+        tool: Option<&'a str>,
+        mode: Option<GatheringMode>,
+    },
+    Fish {
+        target: &'a str,
+        tool: &'a str,
+    },
+    Handover {
+        target: &'a str,
+        gift: &'a crate::handover::GiftIntent,
+    },
+    Craft {
+        recipe: &'a str,
+    },
     Say {
         text: &'a JsText,
         target: Option<(&'a str, SpeechTargetRole)>,
@@ -54,9 +77,13 @@ impl RuntimePlayerCommand<'_> {
     pub(crate) fn selected_text_bytes(self) -> usize {
         match self {
             Self::Move(point) => point.surface_id.len(),
+            Self::Strike {
+                target, definition, ..
+            } => target.len() + definition.len(),
             Self::Follow { target, .. } => target.len(),
             Self::Travel(intent) => intent.text_bytes(),
             Self::Cancel(action) => action.map_or(0, str::len),
+            Self::DismissStrikeReview => 0,
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } => target.len() + tool.len(),
             Self::Pickup { target, item, .. } => target.len() + item.map_or(0, str::len),
@@ -82,7 +109,19 @@ impl RuntimePlayerCommand<'_> {
         id: &str,
         actor: &str,
     ) -> Result<(NativeCommand, String), serde_json::Error> {
-        if let Self::Follow { target, distance, until, complete } = self {
+        if let Self::Strike {
+            target, definition, ..
+        } = self
+        {
+            return bind_strike(id, actor, target, definition);
+        }
+        if let Self::Follow {
+            target,
+            distance,
+            until,
+            complete,
+        } = self
+        {
             return bind_follow(id, actor, target, distance, until, complete);
         }
         if let Self::Cook {
@@ -192,13 +231,23 @@ impl RuntimePlayerCommand<'_> {
         let (kind, destination, expected_action_id, target_id, item_id, gathering_mode) = match self {
             Self::Move(point) => ("move", Some(point), None, None, None, None),
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
+            Self::DismissStrikeReview => ("dismiss-strike-review", None, None, None, None, None),
             Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
             Self::Pickup { target, item, .. } => ("pickup", None, None, Some(target), item, None),
             Self::Drop { item, .. } => ("drop", None, None, None, Some(item), None),
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::InspectStorage { .. } | Self::Follow { .. } | Self::Handover { .. } | Self::Travel(_) => {
+            Self::Cook { .. }
+            | Self::Status { .. }
+            | Self::TendFire { .. }
+            | Self::PlaceHearth { .. }
+            | Self::InspectItem { .. }
+            | Self::InspectStorage { .. }
+            | Self::Follow { .. }
+            | Self::Handover { .. }
+            | Self::Travel(_)
+            | Self::Strike { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => ("eat", None, None, None, Some(item), None),
@@ -293,6 +342,12 @@ impl RuntimePlayerCommand<'_> {
             Self::Cancel(action) => NativeCommand::Cancel {
                 envelope,
                 expected_action_id: action.map(str::to_owned),
+                dismiss_review: false,
+            },
+            Self::DismissStrikeReview => NativeCommand::Cancel {
+                envelope,
+                expected_action_id: None,
+                dismiss_review: true,
             },
             Self::Gather { target, tool, mode } => NativeCommand::Gather {
                 envelope,
@@ -325,7 +380,16 @@ impl RuntimePlayerCommand<'_> {
                 target_id: target.into(),
                 item_id: tool.into(),
             },
-            Self::Cook { .. } | Self::Status { .. } | Self::TendFire { .. } | Self::PlaceHearth { .. } | Self::InspectItem { .. } | Self::InspectStorage { .. } | Self::Follow { .. } | Self::Handover { .. } | Self::Travel(_) => {
+            Self::Cook { .. }
+            | Self::Status { .. }
+            | Self::TendFire { .. }
+            | Self::PlaceHearth { .. }
+            | Self::InspectItem { .. }
+            | Self::InspectStorage { .. }
+            | Self::Follow { .. }
+            | Self::Handover { .. }
+            | Self::Travel(_)
+            | Self::Strike { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
             Self::Eat(item) => NativeCommand::Eat { envelope, item_id: item.into() },
@@ -366,14 +430,72 @@ fn bind_gift(
     if !headers.valid() || !crate::values::is_safe_record_id(target) || !gift.valid() {
         return Err(serde::ser::Error::custom("Invalid handover binding."));
     }
-    let input = Binding { actor_id: actor, gift, human_initiated: true, id, target_id: target, kind: "handover" };
-    let encoding = CommandEncoding::from_ordered(&input, 6 + usize::from(gift.offered_items.is_some()) * 2
-        + usize::from(gift.offer_id.is_some()) * 2)?;
-    Ok((NativeCommand::Handover {
-        envelope: headers.envelope(encoding),
-        target_id: target.to_owned(),
-        gift: gift.clone(),
-    }, json_record(&input)?))
+    let input = Binding {
+        actor_id: actor,
+        gift,
+        human_initiated: true,
+        id,
+        target_id: target,
+        kind: "handover",
+    };
+    let encoding = CommandEncoding::from_ordered(
+        &input,
+        6 + usize::from(gift.offered_items.is_some()) * 2
+            + usize::from(gift.offer_id.is_some()) * 2,
+    )?;
+    Ok((
+        NativeCommand::Handover {
+            envelope: headers.envelope(encoding),
+            target_id: target.to_owned(),
+            gift: gift.clone(),
+        },
+        json_record(&input)?,
+    ))
+}
+
+fn bind_strike(
+    id: &str,
+    actor: &str,
+    target: &str,
+    definition: &str,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Binding<'a> {
+        actor_id: &'a str,
+        definition_id: &'a str,
+        human_initiated: bool,
+        id: &'a str,
+        target_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid()
+        || ![target, definition]
+            .into_iter()
+            .all(crate::values::is_safe_record_id)
+    {
+        return Err(serde::ser::Error::custom("Invalid strike binding."));
+    }
+    let binding = Binding {
+        actor_id: actor,
+        definition_id: definition,
+        human_initiated: true,
+        id,
+        target_id: target,
+        kind: "strike",
+    };
+    Ok((
+        NativeCommand::Strike {
+            envelope: headers.envelope(CommandEncoding::from_ordered(&binding, 6)?),
+            target_id: target.into(),
+            definition_id: definition.into(),
+            weapon_item_id: None,
+            auto_equip: None,
+        },
+        json_record(&binding)?,
+    ))
 }
 
 fn bind_follow(
