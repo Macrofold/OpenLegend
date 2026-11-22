@@ -51,6 +51,7 @@ pub(crate) fn begin_native_feed(
     core: &mut CoreMutation<'_>,
     actor_id: &str,
     target_id: &str,
+    item_id: Option<&str>,
     candidate: CandidateKey,
     budget: &ByteBudget,
 ) -> Result<CommandOperation, CommandOperationError> {
@@ -60,16 +61,20 @@ pub(crate) fn begin_native_feed(
         id: &'a str,
         actor_id: &'a str,
         target_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        item_id: Option<&'a str>,
         #[serde(rename = "type")]
         kind: &'static str,
     }
     let _scratch = budget
-        .reserve((actor_id.len() + target_id.len() + 64) * 12 + size_of::<NativeCommand>())?;
+        .reserve((actor_id.len() + target_id.len() + item_id.map_or(0, str::len) + 64) * 12
+            + size_of::<NativeCommand>())?;
     let id = format!("native-forage-{}", core.state.physical.identity.next_id());
     let encoded = json_record(&FeedInput {
         id: &id,
         actor_id,
         target_id,
+        item_id,
         kind: "feed",
     })
     .map_err(|_| ExecutionError::Invariant)?;

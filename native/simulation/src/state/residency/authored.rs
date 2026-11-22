@@ -43,7 +43,10 @@ pub(super) fn bytes(entity: &Entity) -> Option<usize> {
         entity.appearance.heap_bytes()?,
         entity.spatial.body.heap_bytes()?,
         entity.spatial.inactive_body.heap_bytes()?,
-        entity.threat.as_ref().map_or(Some(0), |threat| threat.policy.heap_bytes())?,
+        entity
+            .threat
+            .as_ref()
+            .map_or(Some(0), |threat| threat.policy.authored_bytes())?,
         entity
             .replenisher
             .as_ref()

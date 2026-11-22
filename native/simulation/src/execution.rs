@@ -36,6 +36,7 @@ mod conditions;
 mod contact;
 use contact::ContactPhase;
 mod heat;
+mod inventory;
 mod participation;
 mod practice;
 mod rates;
@@ -650,8 +651,12 @@ impl CandidateJournal {
             _ => return Err(ExecutionError::OwnerRollback),
         }
         self.pending = frame.pending;
-        self.physical
-            .rollback_to(&mut state.physical, frame.physical)?;
+        self.physical.rollback_to(
+            &mut state.physical,
+            &mut state.inventory,
+            &mut state.administration.object_membership,
+            frame.physical,
+        )?;
         self.memory.rollback(frame.memory)?;
         Ok(())
     }
@@ -715,7 +720,11 @@ impl CandidateJournal {
         }
         self.frames.clear();
         self.pending.clear();
-        self.physical.rollback_all(&mut state.physical)?;
+        self.physical.rollback_all(
+            &mut state.physical,
+            &mut state.inventory,
+            &mut state.administration.object_membership,
+        )?;
         self.memory.rollback(self.root_memory)?;
         Ok(())
     }
@@ -1181,6 +1190,7 @@ enum UndoKey {
     Heading(usize, u64),
     Heat(usize, u64),
     Territorial(usize, u64),
+    TerritorialPlace(usize, u64),
     Health(usize, u64),
     CombatReady(usize, u64),
     ContactPhase(usize, u64),
@@ -1271,6 +1281,11 @@ enum Undo {
         entity: EntityHandle,
         before: crate::native_controller::territorial::Progress,
     },
+    TerritorialPlace {
+        entity: EntityHandle,
+        home: crate::state::SurfacePoint,
+        refuge: crate::state::SurfacePoint,
+    },
     Heat {
         entity: EntityHandle,
         before: crate::state::Heat,
@@ -1337,6 +1352,7 @@ enum Undo {
         before: u64,
     },
     AddedEntity(crate::state::EntityInsertion),
+    Inventory(Box<inventory::InventoryUndo>),
     BodyRevision {
         entity: EntityHandle,
         before: u64,
@@ -1763,15 +1779,22 @@ impl PhysicalJournal {
     pub(crate) fn rollback_to(
         &mut self,
         state: &mut PhysicalState,
+        inventory: &mut crate::install::Inventory,
+        membership: &mut crate::administration::ObjectMembership,
         checkpoint: PhysicalCheckpoint,
     ) -> Result<(), ExecutionError> {
         self.check_top(checkpoint)?;
         let child = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
-        self.rollback_frame(state, child)
+        self.rollback_frame(state, inventory, membership, child)
     }
-    pub(crate) fn rollback_all(&mut self, state: &mut PhysicalState) -> Result<(), ExecutionError> {
+    pub(crate) fn rollback_all(
+        &mut self,
+        state: &mut PhysicalState,
+        inventory: &mut crate::install::Inventory,
+        membership: &mut crate::administration::ObjectMembership,
+    ) -> Result<(), ExecutionError> {
         while let Some(frame) = self.frames.pop() {
-            self.rollback_frame(state, frame)?;
+            self.rollback_frame(state, inventory, membership, frame)?;
         }
         state
             .bodies
@@ -1781,6 +1804,8 @@ impl PhysicalJournal {
     fn rollback_frame(
         &mut self,
         state: &mut PhysicalState,
+        inventory: &mut crate::install::Inventory,
+        membership: &mut crate::administration::ObjectMembership,
         frame: Frame,
     ) -> Result<(), ExecutionError> {
         while self.undo.len() > frame.undo_start {
@@ -1902,6 +1927,9 @@ impl PhysicalJournal {
                         .ok_or(ExecutionError::Invariant)?
                         .plan_generation = before;
                 }
+                Undo::Inventory(before) => {
+                    before.restore(state, inventory, membership, &mut self.reservation)?;
+                }
                 Undo::AddedEntity(before) => {
                     let (id, renumbered) = state
                         .entities
@@ -1941,12 +1969,13 @@ impl PhysicalJournal {
                     state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::Remains { entity, before } => {
-                    let entity = state
+                    let current = state
                         .entities
                         .resolve_mut(entity)
                         .ok_or(ExecutionError::Invariant)?;
-                    entity.remains = before;
-                    let id = entity.id.clone();
+                    current.remains = before;
+                    let id = current.id.clone();
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
                     state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::PendingDeath {
@@ -2223,6 +2252,14 @@ impl PhysicalJournal {
                         &mut self.reservation,
                         true,
                     )?;
+                }
+                Undo::TerritorialPlace { entity, home, refuge } => {
+                    let policy = &mut state.entities.resolve_mut(entity)
+                        .and_then(|entity| entity.threat.as_mut())
+                        .ok_or(ExecutionError::Invariant)?.policy;
+                    policy.home = home;
+                    policy.refuge = refuge;
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
                 }
                 Undo::RestoreActor {
                     entity,
@@ -2828,13 +2865,13 @@ impl PhysicalMutation<'_> {
         )
     }
 
-    /// Debit one exposed unit only at the admitted stock revision. The caller
-    /// owns the food/access/reach checks and joins the matched nutrition write
-    /// in the same mutation checkpoint.
-    pub(crate) fn debit_resource_unit(
+    /// Debit an admitted amount at the exact stock revision. The caller owns
+    /// access and reach and joins the result in this mutation checkpoint.
+    pub(crate) fn debit_resource(
         &mut self,
         id: &str,
         expected_revision: u64,
+        amount: u64,
     ) -> Result<bool, ExecutionError> {
         let Some(entity) = self.state.entities.handle(id) else {
             return Ok(false);
@@ -2848,7 +2885,7 @@ impl PhysicalMutation<'_> {
             return Ok(false);
         };
         let (quantity, revision) = (stock.quantity, stock.revision);
-        if quantity == 0 || revision.unwrap_or(0) != expected_revision {
+        if amount == 0 || quantity < amount || revision.unwrap_or(0) != expected_revision {
             return Ok(false);
         }
         let next = expected_revision
@@ -2873,7 +2910,7 @@ impl PhysicalMutation<'_> {
             .resolve_mut(entity)
             .and_then(|value| value.resource.as_mut())
             .ok_or(ExecutionError::Invariant)?;
-        stock.quantity = quantity - 1;
+        stock.quantity = quantity - amount;
         stock.revision = Some(next);
         // The permitted visual body includes the quantity, including every
         // nonempty change. Invalidate current sight at the actual stock write.

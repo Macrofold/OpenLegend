@@ -390,12 +390,11 @@ pub(crate) fn capture_actor_perception(
             if player.is_some()
                 && current[first..].iter().any(|field| {
                     matches!(&field.facet().value, crate::reception::SensoryFacet::Body { body }
-                    if body.storage.is_some() || body.assembly.is_some())
+                    if body.assembly.is_some())
                 })
             {
-                // These controls need real inventory/assembly reader products.
-                // Refusing the positive unconverted family is safer than an
-                // apparently complete contact with its controls silently gone.
+                // Assembly still needs geometry and its own controls. The
+                // storage hint already has a scoped public projection.
                 return Err(ExecutionError::UnsupportedFamily);
             }
             let subject = names.current_body_subject(id)?;

@@ -51,7 +51,7 @@ pub(crate) struct Policy {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     version: u64,
     pub(crate) home: SurfacePoint,
-    refuge: SurfacePoint,
+    pub(crate) refuge: SurfacePoint,
     entry_radius: f64,
     pub(crate) territory_radius: f64,
     arrival_radius: f64,
@@ -160,12 +160,10 @@ impl HeapBytes for Progress {
     }
 }
 
-impl HeapBytes for Policy {
-    fn heap_bytes(&self) -> Option<usize> {
+impl Policy {
+    pub(crate) fn authored_bytes(&self) -> Option<usize> {
         heap_sum([
             self.id.heap_bytes()?,
-            self.home.heap_bytes()?,
-            self.refuge.heap_bytes()?,
             self.strike_definition_id.heap_bytes()?,
             self.target_controllers.heap_bytes()?,
             self.target_body_plans.heap_bytes()?,
@@ -173,6 +171,12 @@ impl HeapBytes for Policy {
             self.withdrawal_text.heap_bytes()?,
             self.stop_text.heap_bytes()?,
         ])
+    }
+
+    pub(crate) fn place_bytes(&self) -> Option<usize> {
+        self.home
+            .heap_bytes()?
+            .checked_add(self.refuge.heap_bytes()?)
     }
 }
 
@@ -201,6 +205,34 @@ impl Threat {
 
     pub(crate) fn needs_feeding_location(&self) -> bool {
         self.policy.activation.is_some()
+    }
+
+    pub(crate) fn use_current_place(&self, entity: &Entity) -> bool {
+        self.needs_feeding_location()
+            && self.progress.mode == Mode::Idle
+            && entity
+                .actor
+                .as_ref()
+                .is_some_and(|actor| match actor.action.as_ref() {
+                    Some(action) => action.kind == "feed",
+                    None => entity
+                        .animal
+                        .as_ref()
+                        .and_then(|animal| animal.foraging.as_ref())
+                        .is_some_and(|forage| {
+                            forage.mode == crate::native_response::ForagingMode::Resting
+                        }),
+                })
+    }
+
+    pub(crate) fn stop_pursuit(progress: &mut Progress) {
+        progress.mode = Mode::Idle;
+        progress.target_id = None;
+        progress.target_life = None;
+        progress.last_seen = None;
+        progress.search_until = None;
+        progress.episode_until = None;
+        progress.detours_spent = 0;
     }
 
     pub(crate) fn defends(&self) -> bool {
@@ -308,6 +340,11 @@ impl Threat {
             || !actor.alive
             || actor.incapacitated
             || !entity.actively_participates()
+            || (self.needs_feeding_location()
+                && entity
+                    .animal
+                    .as_ref()
+                    .is_some_and(|animal| animal.episode.is_some()))
             || self.progress.relinquished && self.progress.mode == Mode::Idle
         {
             return None;

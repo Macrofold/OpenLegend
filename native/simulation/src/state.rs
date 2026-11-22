@@ -10,7 +10,7 @@ mod agency;
 mod goal_storage;
 mod intent_storage;
 mod inventory;
-pub(crate) use inventory::{ContainerState, DeclaredOwner, Individuality, ItemLot};
+pub(crate) use inventory::{ContainerState, DeclaredOwner, Individuality, ItemLot, ItemRetirement, LineageKind, ObjectLineage};
 mod recorded_surface_point;
 pub use recorded_surface_point::RecordedSurfacePoint;
 mod residency;
@@ -1331,7 +1331,7 @@ pub struct Entity {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub retirement: Option<UnconvertedField>,
+    pub(crate) retirement: Option<ItemRetirement>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -1596,11 +1596,9 @@ impl EntityStore {
         entity: Entity,
         budget: &crate::host::ByteBudget,
     ) -> Result<EntityInsertion, &'static str> {
-        // The scoped installation's actor-only proof remains true across every
-        // selected creation. A new actorless family needs its actual owners and
-        // a changed installation closure before this store may admit it.
-        if entity.actor.is_none() {
-            return Err("The installed physical family requires an actor.");
+        // The physical and inventory owners validate the full inserted shape.
+        if entity.actor.is_none() && entity.item.is_none() {
+            return Err("No installed insertion owner for this entity.");
         }
         if entity
             .actor

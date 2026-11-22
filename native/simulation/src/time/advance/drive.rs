@@ -1211,10 +1211,11 @@ impl AdvanceCursor {
                         }
                         NativeIntention::Forage(intention) => {
                             let operation = match intention {
-                                ForageIntention::Feed(target, _allowance) => begin_native_feed(
+                                ForageIntention::Feed(target, item, _allowance) => begin_native_feed(
                                     core,
                                     &actor,
                                     &target,
+                                    item.as_deref(),
                                     self.candidate,
                                     budget,
                                 )?,

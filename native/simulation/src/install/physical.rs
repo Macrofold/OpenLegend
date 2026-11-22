@@ -653,7 +653,6 @@ fn validate_entity(
         (entity.hearth.is_some(), "placed hearth"),
         (entity.practice_target.is_some(), "practice target"),
         (entity.assembly.is_some(), "assembly"),
-        (entity.retirement.is_some(), "retired entity"),
         (entity.replenisher.is_some(), "replenishment source"),
         (
             entity
@@ -697,6 +696,13 @@ fn validate_entity(
         )
     {
         return Err(InstallError::CurrentFormat);
+    }
+    if let Some(retirement) = &entity.retirement {
+        if !retirement.valid(now) || entity.item.is_some() || entity.placement.is_some()
+            || entity.actor.is_some() || entity.container.is_some()
+        {
+            return Err(InstallError::CurrentFormat);
+        }
     }
     if entity.actor.is_none() {
         validate_plain_entity(entity)?;
@@ -931,7 +937,7 @@ fn validate_entity(
 /// installed subset; positive mechanical families retain their own refusal:
 /// docs/maintainers/native-simulation-core-coverage.md#candidate-implementation-ledger
 fn validate_plain_entity(entity: &Entity) -> Result<(), InstallError> {
-    if entity.placement.is_none()
+    if (entity.placement.is_none() && entity.retirement.is_none())
         || entity.animal.is_some()
         || entity.remains.is_some()
         || entity.sensory_progress.is_some()
@@ -942,7 +948,7 @@ fn validate_plain_entity(entity: &Entity) -> Result<(), InstallError> {
         // Stored attributes on material lots use the same typed attribute
         // validation as every other entity. Active material changes still
         // require the installed exposure and condition transitions.
-        || (entity.item.is_none()
+        || (entity.item.is_none() && entity.retirement.is_none()
             && entity
                 .attributes
                 .as_ref()
@@ -1051,11 +1057,6 @@ pub(super) fn validate_physical_item_references(
                 || !stock.work_seconds.is_finite()
                 || stock.work_seconds <= 0.0
                 || entity.supported_position().is_none()
-                || retained
-                    .foraging
-                    .food
-                    .get(&stock.definition_id)
-                    .is_some_and(|food| food.definition.portable != Some(false))
             {
                 return Err(InstallError::UnsupportedFamily(
                     "resource stock placement or use",
@@ -1143,12 +1144,11 @@ fn validate_resource_foraging(
             .ok_or(InstallError::DefinitionBody)?;
         let diet = profile
             .profile
-            .diet
-            .iter()
-            .find(|meal| meal.definition_id == definition.pin.id)
+            .diet_for(&definition.pin.id, binding.source.kind())
             .ok_or(InstallError::DefinitionBody)?;
         if binding.profile != saved.profile
             || binding.food != definition.pin
+            || !binding.source.valid()
             || actor.controller != "native"
             || !actor.alive
             || actor.incapacitated

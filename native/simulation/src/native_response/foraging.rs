@@ -98,19 +98,57 @@ pub struct ResourceFeeding {
     pub source: FoodStock,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum FoodSourceKind {
+    Resource,
+    Item,
+    Remains,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "lowercase", deny_unknown_fields)]
 pub enum FoodStock {
     Resource {
         #[serde(deserialize_with = "deserialize_safe_integer")]
         revision: u64,
     },
+    Item {
+        #[serde(rename = "itemId")]
+        item_id: String,
+        #[serde(deserialize_with = "deserialize_safe_integer")]
+        revision: u64,
+    },
+    Remains {
+        digest: String,
+    },
 }
 
 impl FoodStock {
-    pub(crate) fn revision(self) -> u64 {
-        let Self::Resource { revision } = self;
-        revision
+    pub(crate) fn kind(&self) -> FoodSourceKind {
+        match self {
+            Self::Resource { .. } => FoodSourceKind::Resource,
+            Self::Item { .. } => FoodSourceKind::Item,
+            Self::Remains { .. } => FoodSourceKind::Remains,
+        }
+    }
+
+    pub(crate) fn valid(&self) -> bool {
+        match self {
+            Self::Resource { .. } => true,
+            Self::Item { item_id, .. } => is_safe_record_id(item_id),
+            Self::Remains { digest } => !digest.is_empty(),
+        }
+    }
+}
+
+impl HeapBytes for FoodStock {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Resource { .. } => Some(0),
+            Self::Item { item_id, .. } => item_id.heap_bytes(),
+            Self::Remains { digest } => digest.heap_bytes(),
+        }
     }
 }
 
@@ -183,4 +221,8 @@ heap_record!(ForagingWork {
     last_point,
     source_id
 });
-heap_record!(ResourceFeeding { profile, food });
+heap_record!(ResourceFeeding {
+    profile,
+    food,
+    source
+});

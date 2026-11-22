@@ -461,6 +461,8 @@ fn assemble_selected_core(
     let inventory = super::inventory::install_inventory(
         &mut import,
         child(&mut children, "resourceReservations", false)?,
+        child(&mut children, "objectLineage", false)?,
+        physical.header.sim_time,
         &physical.entities,
         &installed.retained,
         &installed.observation_rules.value().pile_kind,
@@ -479,12 +481,6 @@ fn assemble_selected_core(
         if let Some(threat) = &entity.threat {
             if !threat.valid(entity, &installed.retained.native_strike_read) {
                 return Err(InstallError::CurrentFormat.into());
-            }
-            if threat.needs_feeding_location() {
-                return Err(InstallError::UnsupportedFamily(
-                    "territory follows an active feeding or resting place",
-                )
-                .into());
             }
             if entity
                 .actor

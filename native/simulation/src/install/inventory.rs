@@ -181,6 +181,7 @@ heap_record!(PackingLoad { definition });
 
 pub(crate) struct Inventory {
     resource_reservations: OwnerCoverage,
+    pub(crate) lineage: OwnerCoverage,
     children: IndexMap<String, Children>,
     _custody: ResidentReservation,
 }
@@ -189,6 +190,18 @@ pub(crate) struct Inventory {
 struct Children {
     items: Vec<EntityHandle>,
     equipped: Vec<EntityHandle>,
+}
+
+/// Inverse for removing one exposed item. Moving the last list into this
+/// value keeps its capacity funded until acceptance or exact rollback.
+pub(crate) enum RemovedInventoryChild {
+    Member(usize),
+    Last {
+        position: usize,
+        parent: String,
+        items: Vec<EntityHandle>,
+        storage: ResidentReservation,
+    },
 }
 
 /// A loan from one player's accepted state. The raw item ID is only for the
@@ -219,6 +232,216 @@ pub struct OwnedContainer {
 }
 
 impl Inventory {
+    /// Add a validated contained lot to the already installed direct-contents
+    /// index. Only this parent's list can grow. The existing entity owner keeps
+    /// the lot itself. Insertion reserves backing before changing membership.
+    pub(crate) fn add_item(
+        &mut self,
+        entities: &EntityStore,
+        parent: &str,
+        child: EntityHandle,
+        budget: &ByteBudget,
+    ) -> Result<(), crate::execution::ExecutionError> {
+        use crate::execution::ExecutionError;
+        let id = &entities.resolve(child).ok_or(ExecutionError::Invariant)?.id;
+        if let Some(kids) = self.children.get_mut(parent) {
+            let position = kids
+                .items
+                .binary_search_by(|handle| {
+                    let existing = entities
+                        .resolve(*handle)
+                        .map_or("", |entity| entity.id.as_str());
+                    crate::encoding::js_string_cmp(existing, id)
+                })
+                .err()
+                .ok_or(ExecutionError::Invariant)?;
+            if kids.items.len() == kids.items.capacity() {
+                let before = kids.items.capacity();
+                let mut admitted = budget.reserve(
+                    before
+                        .checked_mul(2)
+                        .map(|n| n.max(4))
+                        .and_then(|n| n.checked_mul(size_of::<EntityHandle>()))
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
+                kids.items
+                    .try_reserve(1)
+                    .map_err(|_| ExecutionError::Capacity)?;
+                admitted.resize((kids.items.capacity() - before) * size_of::<EntityHandle>())?;
+                budget.fund_backing(&mut self._custody, admitted)?;
+            }
+            kids.items.insert(position, child);
+        } else {
+            let before = map_storage::<String, Children>(self.children.capacity())
+                .ok_or(ExecutionError::Capacity)?;
+            let target = if self.children.len() == self.children.capacity() {
+                self.children
+                    .capacity()
+                    .checked_mul(2)
+                    .map(|n| n.max(4))
+                    .ok_or(ExecutionError::Capacity)?
+            } else {
+                0
+            };
+            let mut admitted = budget.reserve(
+                map_storage::<String, Children>(target)
+                    .and_then(|n| n.checked_add(parent.len() + size_of::<EntityHandle>()))
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            self.children
+                .try_reserve(1)
+                .map_err(|_| ExecutionError::Capacity)?;
+            let after = map_storage::<String, Children>(self.children.capacity())
+                .ok_or(ExecutionError::Capacity)?;
+            let parent = parent.to_owned();
+            let kids = Children {
+                items: vec![child],
+                equipped: Vec::new(),
+            };
+            admitted.resize(after - before + parent.capacity() + size_of::<EntityHandle>())?;
+            budget.fund_backing(&mut self._custody, admitted)?;
+            self.children.insert(parent, kids);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn undo_add_item(
+        &mut self,
+        parent: &str,
+        child: EntityHandle,
+    ) -> Result<(), crate::execution::ExecutionError> {
+        use crate::execution::ExecutionError;
+        let kids = self
+            .children
+            .get_mut(parent)
+            .ok_or(ExecutionError::Invariant)?;
+        let at = kids
+            .items
+            .iter()
+            .position(|entry| *entry == child)
+            .ok_or(ExecutionError::Invariant)?;
+        kids.items.remove(at);
+        if kids.items.is_empty() {
+            let (key, kids) = self
+                .children
+                .shift_remove_entry(parent)
+                .ok_or(ExecutionError::Invariant)?;
+            let removed = key.capacity() + kids.items.capacity() * size_of::<EntityHandle>();
+            self._custody.resize(
+                self._custody
+                    .bytes()
+                    .checked_sub(removed)
+                    .ok_or(ExecutionError::Invariant)?,
+            )?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn detach_loose_item(
+        &mut self,
+        parent: &str,
+        child: EntityHandle,
+    ) -> Result<RemovedInventoryChild, crate::execution::ExecutionError> {
+        use crate::execution::ExecutionError;
+        let kids = self
+            .children
+            .get_mut(parent)
+            .ok_or(ExecutionError::Invariant)?;
+        let at = kids
+            .items
+            .iter()
+            .position(|entry| *entry == child)
+            .ok_or(ExecutionError::Invariant)?;
+        if kids.equipped.contains(&child) {
+            return Err(ExecutionError::Invariant);
+        }
+        if kids.items.len() > 1 {
+            kids.items.remove(at);
+            return Ok(RemovedInventoryChild::Member(at));
+        }
+        if kids.equipped.capacity() != 0 {
+            return Err(ExecutionError::Invariant);
+        }
+        let (key, kids) = self
+            .children
+            .get_key_value(parent)
+            .ok_or(ExecutionError::Invariant)?;
+        let bytes = key.capacity() + kids.items.capacity() * size_of::<EntityHandle>();
+        let storage = self._custody.split_off(bytes)?;
+        let (position, parent, kids) = self
+            .children
+            .shift_remove_full(parent)
+            .ok_or(ExecutionError::Invariant)?;
+        Ok(RemovedInventoryChild::Last {
+            position,
+            parent,
+            items: kids.items,
+            storage,
+        })
+    }
+
+    pub(crate) fn restore_loose_item(
+        &mut self,
+        parent: &str,
+        child: EntityHandle,
+        removed: RemovedInventoryChild,
+    ) -> Result<(), crate::execution::ExecutionError> {
+        use crate::execution::ExecutionError;
+        match removed {
+            RemovedInventoryChild::Member(position) => {
+                self.children
+                    .get_mut(parent)
+                    .ok_or(ExecutionError::Invariant)?
+                    .items
+                    .insert(position, child);
+            }
+            RemovedInventoryChild::Last {
+                position,
+                parent,
+                items,
+                storage,
+            } => {
+                self._custody.merge(storage)?;
+                self.children.shift_insert(
+                    position,
+                    parent,
+                    Children {
+                        items,
+                        equipped: Vec::new(),
+                    },
+                );
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn has_direct_item(
+        &self,
+        entities: &EntityStore,
+        parent: &str,
+        item: &Entity,
+    ) -> bool {
+        self.children.get(parent).is_some_and(|kids| {
+            kids.items
+                .binary_search_by(|handle| {
+                    let existing = entities
+                        .resolve(*handle)
+                        .map_or("", |entity| entity.id.as_str());
+                    crate::encoding::js_string_cmp(existing, &item.id)
+                })
+                .is_ok()
+        })
+    }
+
+    pub(crate) fn detached_item_bytes(&self, parent: &str) -> usize {
+        self.children
+            .get_key_value(parent)
+            .filter(|(_, kids)| kids.items.len() == 1)
+            .map_or(0, |(key, kids)| {
+                key.capacity() + kids.items.capacity() * size_of::<EntityHandle>()
+            })
+    }
+
     /// Installation still closes resource holds. The next activity owner must
     /// replace this result when it starts issuing claims.
     pub(crate) fn work_allocation(&self) -> crate::values::WorkVector {
@@ -365,6 +588,8 @@ fn project_owned<'a>(
 pub(super) fn install_inventory(
     import: &mut RowImport,
     present: bool,
+    has_lineage: bool,
+    through: f64,
     entities: &EntityStore,
     definitions: &RetainedDefinitions,
     pile_kind: &str,
@@ -379,6 +604,43 @@ pub(super) fn install_inventory(
     )?;
     if !reservations.rows.is_empty() {
         return Err(InstallError::UnsupportedFamily("resourceReservations"));
+    }
+    let lineage = take_collection(
+        import,
+        "sim_object_lineage",
+        "[\"world\"]",
+        has_lineage,
+        false,
+    )?;
+    for row in lineage.rows {
+        crate::install::rows::validate_map_row(
+            &row,
+            "[\"world\"]",
+            "objectLineage",
+            &row.slot,
+            lineage.coverage.next_ordinal,
+        )?;
+        let _parse = crate::install::reserve_typed_parse::<crate::state::ObjectLineage>(
+            &row.payload,
+            0,
+            None,
+            budget,
+        )?;
+        let item: crate::state::ObjectLineage =
+            serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+        let [source, target] = row.extra.as_slice() else {
+            return Err(InstallError::CurrentFormat);
+        };
+        if row.slot != item.id
+            || !item.valid(through)
+            || source.as_str() != Some(item.source_id.as_str())
+            || match &item.target_id {
+                Some(id) => target.as_str() != Some(id.as_str()),
+                None => !matches!(target, crate::records::SqlCell::Null),
+            }
+        {
+            return Err(InstallError::CurrentFormat);
+        }
     }
     let mut children = IndexMap::<String, Children>::new();
     let mut storage = budget.reserve(0).map_err(|_| InstallError::Capacity)?;
@@ -561,9 +823,10 @@ pub(super) fn install_inventory(
     storage.resize(bytes).map_err(|_| InstallError::Capacity)?;
     Ok(Inventory {
         resource_reservations: reservations.coverage,
+        lineage: lineage.coverage,
         children,
         _custody: budget
-            .adopt_record(storage)
+            .adopt_backing(storage)
             .map_err(|_| InstallError::Capacity)?,
     })
 }
@@ -608,7 +871,7 @@ fn validate_ancestors(entities: &EntityStore, entity: &Entity) -> Result<(), Ins
     Err(InstallError::CurrentFormat)
 }
 
-fn validate_item(
+pub(crate) fn validate_item(
     entities: &EntityStore,
     definitions: &RetainedDefinitions,
     entity: &Entity,

@@ -119,22 +119,12 @@ impl PhysicalMutation<'_> {
             .resolve(handle)
             .ok_or(ExecutionError::MissingEntity)?;
         let before = entity.remains.as_ref();
-        self.journal.reserve(
-            heap_sum([
-                2 * size_of::<Undo>(),
-                before.map_or(0, |v| {
-                    v.source_id.len()
-                        + v.phase.len()
-                        + v.yields.len() * size_of::<crate::state::Yield>()
-                        + v.yields
-                            .iter()
-                            .map(|y| y.definition_id.len())
-                            .sum::<usize>()
-                }),
-                id.len(),
-            ])
-            .ok_or(ExecutionError::Capacity)?,
-        )?;
+        self.journal.reserve(heap_sum([
+            2 * size_of::<Undo>(),
+            entity.remains.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            after.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            id.len(),
+        ]).ok_or(ExecutionError::Capacity)?)?;
         let key = UndoKey::Remains(handle.slot, handle.generation);
         if self.journal.first(&key)? {
             self.journal.retain(
@@ -150,6 +140,7 @@ impl PhysicalMutation<'_> {
             .resolve_mut(handle)
             .ok_or(ExecutionError::Invariant)?
             .remains = after;
+        self.state.entities.settle_operational_memory(handle, &mut self.journal.reservation, false)?;
         self.state.bodies.refresh(&self.state.entities, id)?;
         Ok(())
     }
@@ -282,9 +273,18 @@ impl PhysicalMutation<'_> {
         Ok(())
     }
     pub(crate) fn insert_corpse(&mut self, corpse: Entity) -> Result<(), ExecutionError> {
-        // Only this typed constructor uses insertion. IDs have the saved body-
-        // prefix, so the source collection's numeric-key branch cannot apply.
-        let id = &corpse.id;
+        self.insert_entity(corpse, true).map(|_| ())
+    }
+
+    /// Callers have already validated the complete new entity and own its
+    /// independent construction allocation. The journal tracks insertion and
+    /// store order. Only a positioned body joins the physical observer index.
+    pub(super) fn insert_entity(
+        &mut self,
+        entity: Entity,
+        body: bool,
+    ) -> Result<EntityHandle, ExecutionError> {
+        let id = &entity.id;
         let bounds = self
             .state
             .entities
@@ -299,12 +299,13 @@ impl PhysicalMutation<'_> {
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let id = id.clone();
-        let after = corpse.world_position();
+        let after = entity.world_position();
         let before = self
             .state
             .entities
-            .insert_new(corpse, &self.journal.budget)
+            .insert_new(entity, &self.journal.budget)
             .map_err(|_| ExecutionError::Capacity)?;
+        let handle = before.handle;
         let renumbered = before.renumbered();
         self.journal.undo.push(Undo::AddedEntity(before));
         self.state
@@ -313,12 +314,15 @@ impl PhysicalMutation<'_> {
         if renumbered {
             self.state.bodies.refresh_ordering(&self.state.entities)?;
         }
-        self.state.bodies.refresh(&self.state.entities, &id)?;
-        self.journal.change(PhysicalChange::Membership {
-            entity_id: id,
-            before: None,
-            after,
-        })
+        if body {
+            self.state.bodies.refresh(&self.state.entities, &id)?;
+            self.journal.change(PhysicalChange::Membership {
+                entity_id: id,
+                before: None,
+                after,
+            })?;
+        }
+        Ok(handle)
     }
     pub(crate) fn membership_changed(&mut self, id: &str) -> Result<(), ExecutionError> {
         let handle = self

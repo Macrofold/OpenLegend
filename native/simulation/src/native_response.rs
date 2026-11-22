@@ -11,6 +11,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
 mod foraging;
+pub(crate) use foraging::FoodSourceKind;
 pub use foraging::{
     AnchorFood, EmptyFoodSource, FoodStock, ForagingContinuation, ForagingMode, ForagingWork,
     ForagingWorkKind, ResourceFeeding,

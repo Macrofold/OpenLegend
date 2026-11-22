@@ -21,7 +21,7 @@ mod coaching;
 mod content;
 pub(crate) use coaching::ClosedCoachingState;
 mod inventory;
-pub(crate) use inventory::Inventory;
+pub(crate) use inventory::{Inventory, RemovedInventoryChild, validate_item as validate_native_item};
 pub(crate) use inventory::inventory_display_limit;
 pub(crate) use inventory::owned_by;
 pub use inventory::{OwnedContainer, OwnedItem, shortcut_limit};

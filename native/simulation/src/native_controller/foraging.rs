@@ -10,11 +10,11 @@ use crate::reception::{SightBatch, SightResults, vision_parameters};
 use crate::simulation::PhysicalState;
 use crate::state::{Entity, FundedForaging, SurfacePoint};
 use crate::values::AttributeValue;
-use crate::worlds::base_foraging::{ResourceSighting, foraging_night, perceive_resources};
+use crate::worlds::base_foraging::{FoodSighting, foraging_night, perceive_food};
 use std::mem::size_of;
 
 pub(crate) enum ForageIntention {
-    Feed(String, ByteReservation),
+    Feed(String, Option<String>, ByteReservation),
     Move(SurfacePoint, ByteReservation),
 }
 
@@ -42,6 +42,9 @@ pub(crate) fn review_at(
         || !actor.alive
         || actor.incapacitated
         || state.episode.is_some()
+        || animal.threat.as_ref().is_some_and(|threat| {
+            threat.progress.mode != crate::native_controller::territorial::Mode::Idle
+        })
         || !animal.actively_participates()
         || installed
             .capabilities
@@ -139,13 +142,14 @@ impl ForageChoice {
                 .entities
                 .resolve(subject)
                 .ok_or(ExecutionError::Invariant)?;
-            if target.resource.as_ref().is_some_and(|stock| {
-                installed
-                    .retained
-                    .foraging
-                    .food
-                    .contains_key(&stock.definition_id)
-            }) {
+            if id != animal.id
+                && (super::feeding::source_candidate(core.state, target)
+                    || forage
+                        .anchor_food
+                        .iter()
+                        .flatten()
+                        .any(|food| food.source_id == id))
+            {
                 ids.push(id);
             }
         }
@@ -262,19 +266,16 @@ impl ForageChoice {
                 .ok_or(ExecutionError::Capacity)?,
         )
         .ok_or(ExecutionError::Capacity)?;
-        let bytes = rated.clone().try_fold(body_bytes, |bytes, id| {
-            let target = core
-                .state
-                .physical
-                .entities
-                .get(id)
-                .ok_or(ExecutionError::Invariant)?;
-            let stock = target.resource.as_ref().ok_or(ExecutionError::Invariant)?;
-            let pin_bytes = choices
+        let pin_bytes = profile.diet.iter().try_fold(0, |maximum, diet| {
+            let food = choices
                 .food
-                .get(&stock.definition_id)
-                .map_or(Some(0), |food| food.pin.heap_bytes())
-                .ok_or(ExecutionError::Capacity)?;
+                .get(&diet.definition_id)
+                .ok_or(ExecutionError::Invariant)?;
+            Ok::<_, ExecutionError>(
+                maximum.max(food.pin.heap_bytes().ok_or(ExecutionError::Capacity)?),
+            )
+        })?;
+        let bytes = rated.clone().try_fold(body_bytes, |bytes, id| {
             bytes
                 .checked_add(4 * (id.len() + pin_bytes + size_of::<AnchorFood>()))
                 .ok_or(ExecutionError::Capacity)
@@ -297,7 +298,7 @@ impl ForageChoice {
         )?;
         let _scan = budget.reserve(
             count
-                .checked_mul(size_of::<ResourceSighting>())
+                .checked_mul(size_of::<FoodSighting>())
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         core.journal
@@ -311,12 +312,46 @@ impl ForageChoice {
                 .entities
                 .get(id)
                 .ok_or(ExecutionError::Invariant)?;
-            seen.push(ResourceSighting {
+            let position = subject
+                .world_position()
+                .ok_or(ExecutionError::InvalidPosition)?;
+            let needed = hungry
+                || before
+                    .anchors
+                    .iter()
+                    .any(|point| crate::spatial::distance(point.point(), position) <= reach);
+            let meal = if !needed {
+                None
+            } else if subject.kind == installed.observation_rules.value().pile_kind {
+                let mut best = None;
+                for child in core
+                    .state
+                    .inventory
+                    .children(&core.state.physical.entities, id, false)
+                {
+                    core.journal.meters.charge(&[(WorkUnit::Candidates, 1)])?;
+                    let Some(meal) =
+                        super::feeding::meal(core.state, animal, subject, Some(&child.id))
+                    else {
+                        continue;
+                    };
+                    let rank = profile
+                        .diet_rank(&meal.food.pin.id)
+                        .ok_or(ExecutionError::Invariant)?;
+                    if best.as_ref().is_none_or(|(_, prior)| rank < *prior) {
+                        best = Some((meal, rank));
+                    }
+                }
+                best.map(|(meal, _)| meal)
+            } else {
+                super::feeding::meal(core.state, animal, subject, None)
+            };
+            seen.push(FoodSighting {
                 id,
-                stock: subject.resource.as_ref().ok_or(ExecutionError::Invariant)?,
-                position: subject
-                    .world_position()
-                    .ok_or(ExecutionError::InvalidPosition)?,
+                stock: subject.resource.as_ref(),
+                position,
+                food: meal.as_ref().map(|meal| meal.food),
+                item_id: meal.as_ref().and_then(|meal| meal.source.item_id()),
             });
         }
         let action = animal
@@ -329,14 +364,16 @@ impl ForageChoice {
         if action.is_none() {
             next.work = None;
         }
-        let food = perceive_resources(
-            choices, profile, &mut next, &seen, at, here, reach, hungry, &ranks,
-        )?;
-        let decision = if let Some(id) = food {
-            let allowance = budget.reserve(id.len())?;
+        let food = perceive_food(profile, &mut next, &seen, at, here, reach, hungry, &ranks)?;
+        let decision = if let Some((id, item)) = food {
+            let allowance = budget.reserve(id.len() + item.map_or(0, str::len))?;
             next.mode = ForagingMode::Feeding;
             next.review_at = at + profile.routine.choice_game_seconds;
-            Some(ForageIntention::Feed(id.into(), allowance))
+            Some(ForageIntention::Feed(
+                id.into(),
+                item.map(str::to_owned),
+                allowance,
+            ))
         } else if action.is_none() {
             next.review_at = at + profile.routine.choice_game_seconds;
             let anchors = profile.routine_choices(&next, here, hungry, night, reach);
@@ -379,7 +416,8 @@ fn save(
     let _name = budget.reserve(actor.id.len())?;
     let id = actor.id.clone();
     core.physical()
-        .replace_foraging(&id, FundedForaging::adopt(next, storage, budget)?)
+        .replace_foraging(&id, FundedForaging::adopt(next, storage, budget)?)?;
+    core.physical().refresh_territorial_place(handle)
 }
 
 fn replace(
@@ -460,8 +498,15 @@ pub(crate) fn admitted(
             .ok_or(ExecutionError::InvalidPosition)?,
         source_id: action.target_id.clone(),
     };
+    let handle = core
+        .state
+        .physical
+        .entities
+        .handle(actor)
+        .ok_or(ExecutionError::Invariant)?;
     core.physical()
-        .change_foraging(actor, grow, |next| next.work = Some(work))
+        .change_foraging(actor, grow, |next| next.work = Some(work))?;
+    core.physical().refresh_territorial_place(handle)
 }
 
 pub(crate) fn work_failed(

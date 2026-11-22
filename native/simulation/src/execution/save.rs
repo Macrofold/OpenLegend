@@ -127,6 +127,8 @@ struct EntityRows<'a> {
     remains_before: Option<bool>,
     root: bool,
     placement: bool,
+    item: bool,
+    retirement: bool,
     geometry_heading: Option<f64>,
     geometry_lifecycle: Option<(Option<f64>, Option<f64>)>,
     actor: bool,
@@ -221,22 +223,20 @@ fn created<T: Serialize + ?Sized>(
     };
     output.write(table, &placement, value, cells, true, RowEffects::default())
 }
-fn write_corpse(
+fn write_created_entity(
     entity: &crate::state::Entity,
     position: u64,
+    ledger: &RecordLedger,
     output: &mut RowEncoder<'_>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
     let id = entity.id.as_str();
     let parent = ["world", "entities", id];
-    let actor_parent = ["world", "entities", id, "actor"];
-    let agency_parent = ["world", "entities", id, "actor", "agency"];
-    let actor = entity.actor.as_ref().ok_or_else(error)?;
+    let placement = entity.placement.as_ref();
     let _cells = budget
         .reserve(
             heap_sum([
-                placement_cell_bound(id, entity.placement.as_ref().ok_or_else(error)?)
-                    .ok_or_else(error)?,
+                placement.map_or(Some(0), |value| placement_cell_bound(id, value)).ok_or_else(error)?,
                 entity.name.storage_bytes(),
                 id.len(),
                 entity.kind.len(),
@@ -263,17 +263,19 @@ fn write_corpse(
         ],
         budget,
     )?;
-    created(
-        output,
-        "sim_placements",
-        &["world", "entities", id, "placement"],
-        &parent,
-        "placement",
-        0,
-        entity.placement.as_ref().ok_or_else(error)?,
-        &placement_cells(id, entity.placement.as_ref().ok_or_else(error)?),
-        budget,
-    )?;
+    if let Some(placement) = placement {
+        created(
+            output,
+            "sim_placements",
+            &["world", "entities", id, "placement"],
+            &parent,
+            "placement",
+            0,
+            placement,
+            &placement_cells(id, placement),
+            budget,
+        )?;
+    }
     created(
         output,
         "sim_entity_geometry",
@@ -285,6 +287,34 @@ fn write_corpse(
         &[],
         budget,
     )?;
+    if entity.item.is_some() || entity.retirement.is_some() {
+        if let Some(retirement) = &entity.retirement {
+            created(
+                output, "sim_object_retirements",
+                &["world", "entities", id, "retirement"],
+                &parent, "retirement", 0, retirement, &[], budget,
+            )?;
+        } else {
+            write_item(ledger, entity, true, output, budget)?;
+        }
+        if let Some(attributes) = &entity.attributes {
+            for (ordinal, field, value) in OrderedMapRows::new(attributes, budget)?.iter() {
+                created(
+                    output, "sim_attributes",
+                    &["world", "entities", id, "attributes", field],
+                    &parent, field, ordinal, value, &[], budget,
+                )?;
+            }
+        }
+        observe(
+            output, "sim_attributes", &parent, entity.attributes.is_some(),
+            entity.attributes.as_ref().map_or(0, |rows| rows.len() as u64), budget,
+        )?;
+        return observe_entity_children(entity, &parent, output, budget);
+    }
+    let actor_parent = ["world", "entities", id, "actor"];
+    let agency_parent = ["world", "entities", id, "actor", "agency"];
+    let actor = entity.actor.as_ref().ok_or_else(error)?;
     created(
         output,
         "sim_actors",
@@ -318,27 +348,8 @@ fn write_corpse(
         &[],
         budget,
     )?;
-    for (table, present) in [
-        ("sim_placements", true),
-        ("sim_entity_geometry", true),
-        ("sim_actors", true),
-        ("sim_remains", true),
-        ("sim_assemblies", false),
-        ("sim_items", false),
-        ("sim_containers", false),
-        ("sim_declared_owners", false),
-        ("sim_object_retirements", false),
-        ("sim_territorial_threat", false),
-        ("sim_resources", false),
-        ("sim_heat", false),
-        ("sim_reservoirs", false),
-        ("sim_animal_behavior", false),
-        ("sim_status_effects", false),
-        ("sim_attributes", false),
-        ("sim_mechanism_fields", false),
-    ] {
-        observe(output, table, &parent, present, u64::from(present), budget)?;
-    }
+    observe_entity_children(entity, &parent, output, budget)?;
+    observe(output, "sim_attributes", &parent, false, 0, budget)?;
     for (table, present) in [
         ("sim_agency", true),
         ("sim_processes", false),
@@ -366,6 +377,73 @@ fn write_corpse(
         observe(output, table, &agency_parent, present, 0, budget)?;
     }
     Ok(())
+}
+
+fn observe_entity_children(
+    entity: &crate::state::Entity,
+    parent: &[&str],
+    output: &mut RowEncoder<'_>,
+    budget: &ByteBudget,
+) -> Result<(), RecordEncodingError> {
+    for (table, present) in [
+        ("sim_placements", entity.placement.is_some()),
+        ("sim_entity_geometry", true),
+        ("sim_actors", entity.actor.is_some()),
+        ("sim_remains", entity.remains.is_some()),
+        ("sim_assemblies", false),
+        ("sim_items", entity.item.is_some()),
+        ("sim_containers", false),
+        ("sim_declared_owners", false),
+        ("sim_object_retirements", entity.retirement.is_some()),
+        ("sim_territorial_threat", false),
+        ("sim_resources", false),
+        ("sim_heat", false),
+        ("sim_reservoirs", false),
+        ("sim_animal_behavior", false),
+        ("sim_status_effects", false),
+        ("sim_mechanism_fields", false),
+    ] {
+        observe(output, table, parent, present, u64::from(present), budget)?;
+    }
+    Ok(())
+}
+
+fn write_item(
+    ledger: &RecordLedger,
+    entity: &crate::state::Entity,
+    newly_inserted: bool,
+    output: &mut RowEncoder<'_>,
+    budget: &ByteBudget,
+) -> Result<(), RecordEncodingError> {
+    let id = entity.id.as_str();
+    let address = SelectedPlacement::new(
+        ledger,
+        "sim_items",
+        &["world", "entities", id, "item"],
+        &["world", "entities", id],
+        "item",
+        0,
+        newly_inserted,
+        budget,
+    )?;
+    if let Some(item) = &entity.item {
+        let _cells = budget.reserve(
+            heap_sum([id.len(), item.definition_pin.id.len(), 3 * size_of::<SqlCell>()])
+                .ok_or_else(error)?,
+        ).map_err(|_| error())?;
+        output.write(
+            "sim_items",
+            address.value(),
+            item,
+            &[id.into(), item.definition_pin.id.as_str().into(), item.quantity.into()],
+            address.create(),
+            RowEffects::default(),
+        )
+    } else if address.create() {
+        Ok(())
+    } else {
+        output.delete("sim_items", &address.value().id, false)
+    }
 }
 fn map<T: Serialize>(
     ledger: &RecordLedger,
@@ -547,25 +625,25 @@ impl PhysicalJournal {
     /// presence. Its exact changed IDs join this one parent projection.
     pub(crate) fn encode_changes(
         &self,
-        state: &PhysicalState,
-        ledger: &RecordLedger,
-        extra_entity_roots: &[&str],
+        simulation: &SimulationState,
         output: &mut RowEncoder<'_>,
         budget: &ByteBudget,
     ) -> Result<(), RecordEncodingError> {
-        let maximum = self
-            .undo
-            .len()
-            .checked_add(extra_entity_roots.len())
-            .ok_or_else(error)?;
-        let keys = self
-            .undo
-            .iter()
-            .try_fold(maximum, |count, undo| match undo {
-                Undo::Episode(episode) => count.checked_add(episode.attributes.len()),
-                _ => Some(count),
-            })
-            .ok_or_else(error)?;
+        let state = &simulation.physical;
+        let ledger = &simulation.records;
+        let (maximum, details) = self.undo.iter().try_fold(
+            (self.undo.len(), 0usize),
+            |(maximum, details), undo| match undo {
+                Undo::Inventory(before) if before.edited_item() => {
+                    Some((maximum.checked_add(1)?, details))
+                }
+                Undo::Episode(episode) => {
+                    Some((maximum, details.checked_add(episode.attributes.len())?))
+                }
+                _ => Some((maximum, details)),
+            },
+        ).ok_or_else(error)?;
+        let keys = maximum.checked_add(details).ok_or_else(error)?;
         let bytes = heap_sum([
             map_storage::<(usize, u64), EntityRows<'_>>(maximum).ok_or_else(error)?,
             map_storage::<&str, bool>(keys)
@@ -587,6 +665,8 @@ impl PhysicalJournal {
         let mut subject_changes: IndexMap<&str, Vec<&Undo>> = IndexMap::with_capacity(maximum);
         let mut window = false;
         let mut coaching = false;
+        let mut object_membership = false;
+        let mut object_lineage = false;
         let mut added = 0u64;
         participation::encode_exposures(self, state, ledger, output, budget)?;
         for change in &self.undo {
@@ -598,6 +678,36 @@ impl PhysicalJournal {
                         .entry((before.handle.slot, before.handle.generation))
                         .or_default();
                     rows.added = true;
+                }
+                Undo::Inventory(before) => {
+                    selected
+                        .entry((before.parent.slot, before.parent.generation))
+                        .or_default()
+                        .root = true;
+                    object_membership |= before.changed_membership();
+                    if before.edited_item() {
+                        let rows = selected
+                            .entry((before.child.slot, before.child.generation))
+                            .or_default();
+                        rows.item = true;
+                        if before.retired() {
+                            rows.retirement = true;
+                            rows.placement = true;
+                            rows.root = true;
+                        }
+                    }
+                    if let Some((ordinal, entry)) = &before.lineage {
+                        object_lineage = true;
+                        let _cells = budget.reserve(
+                            entry.source_id.len() + 2 * size_of::<SqlCell>(),
+                        ).map_err(|_| error())?;
+                        created(
+                            output, "sim_object_lineage",
+                            &["world", "objectLineage", &entry.id],
+                            &["world"], &entry.id, *ordinal, entry,
+                            &[entry.source_id.as_str().into(), SqlCell::Null], budget,
+                        )?;
+                    }
                 }
                 Undo::Work(undo) => {
                     work.entry(undo.id()).or_insert(undo.was_present());
@@ -665,6 +775,7 @@ impl PhysicalJournal {
                         | Undo::ContactPhase { entity, .. }
                         | Undo::Heat { entity, .. }
                         | Undo::Territorial { entity, .. }
+                        | Undo::TerritorialPlace { entity, .. }
                         | Undo::Action { entity, .. }
                         | Undo::ActionPath { entity, .. }
                         | Undo::ActionRoute { entity, .. }
@@ -722,7 +833,7 @@ impl PhysicalJournal {
                         }
                         Undo::Health { .. } | Undo::CombatReady { .. } => rows.actor = true,
                         Undo::Heat { .. } => rows.heat = true,
-                        Undo::Territorial { .. } => rows.territorial = true,
+                        Undo::Territorial { .. } | Undo::TerritorialPlace { .. } => rows.territorial = true,
                         Undo::Action { .. } => {
                             rows.actor = true;
                             rows.action = true;
@@ -812,12 +923,15 @@ impl PhysicalJournal {
                 }
             }
         }
-        for id in extra_entity_roots {
-            let handle = state.entities.handle(id).ok_or_else(error)?;
-            selected
-                .entry((handle.slot, handle.generation))
-                .or_default()
-                .root = true;
+        if object_membership {
+            one(
+                ledger, output, "sim_object_state",
+                &["world", "objectState"], &["world"], "objectState",
+                Some(&simulation.administration.object_membership), budget,
+            )?;
+        }
+        if object_lineage {
+            output.observe_owner(&simulation.inventory.lineage)?;
         }
         if coaching {
             observe(
@@ -846,7 +960,7 @@ impl PhysicalJournal {
                     .filter(|n| *n < MAX_SAFE_INTEGER)
                     .ok_or_else(error)?;
                 added += 1;
-                write_corpse(entity, ordinal, output, budget)?;
+                write_created_entity(entity, ordinal, ledger, output, budget)?;
                 continue;
             }
             if rows.root
@@ -888,13 +1002,30 @@ impl PhysicalJournal {
                 )?;
             }
             if rows.placement {
-                write_placement(
-                    ledger,
-                    output,
-                    id,
-                    entity.placement.as_ref().ok_or_else(error)?,
-                    budget,
+                if let Some(placement) = &entity.placement {
+                    write_placement(ledger, output, id, placement, budget)?;
+                } else {
+                    let address = SelectedPlacement::new(
+                        ledger, "sim_placements", &["world", "entities", id, "placement"],
+                        &parent, "placement", 0, false, budget,
+                    )?;
+                    output.delete("sim_placements", &address.value().id, false)?;
+                    observe(output, "sim_placements", &parent, false, 0, budget)?;
+                }
+            }
+            if rows.item {
+                write_item(ledger, entity, false, output, budget)?;
+                if entity.item.is_none() {
+                    observe(output, "sim_items", &parent, false, 0, budget)?;
+                }
+            }
+            if rows.retirement {
+                one(
+                    ledger, output, "sim_object_retirements",
+                    &["world", "entities", id, "retirement"],
+                    &parent, "retirement", entity.retirement.as_ref(), budget,
                 )?;
+                observe(output, "sim_object_retirements", &parent, true, 1, budget)?;
             }
             if rows
                 .geometry_heading

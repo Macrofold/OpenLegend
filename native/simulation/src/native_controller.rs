@@ -516,6 +516,7 @@ pub(crate) fn acquire_sound(
         moving,
     };
     if !repeated {
+        mutation.interrupt_territorial_alarm(handle, &awareness.actor_id)?;
         foraging::relinquish(mutation, &awareness.actor_id)?;
         mutation.reserve_response_growth(
             std::mem::size_of::<NativeResponseEpisode>()

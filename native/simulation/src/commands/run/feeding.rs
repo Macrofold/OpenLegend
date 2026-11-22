@@ -12,6 +12,7 @@ impl CommandCursor {
         let NativeCommand::Feed {
             envelope,
             target_id,
+            item_id,
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);
@@ -27,11 +28,11 @@ impl CommandCursor {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
         };
-        let Some(meal) = feeding::meal(installed, animal, target) else {
+        let Some(meal) = feeding::meal(core.state, animal, target, item_id.as_deref()) else {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
         };
-        let (binding, mut storage) = feeding::binding(meal, target, &self.budget)?;
+        let (binding, mut storage) = meal.binding(&self.budget)?;
         storage.resize(
             storage
                 .bytes()
@@ -41,7 +42,7 @@ impl CommandCursor {
         self.action = Some(Action::resource_feed(
             envelope.id.clone(),
             target_id.clone(),
-            meal.2.work_seconds,
+            meal.diet.work_seconds,
             binding,
         ));
         self.action_storage = Some(storage);
@@ -64,6 +65,7 @@ impl CommandCursor {
         let NativeCommand::Feed {
             envelope,
             target_id,
+            ..
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);

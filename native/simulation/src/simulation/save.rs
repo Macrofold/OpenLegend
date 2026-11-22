@@ -34,7 +34,7 @@ pub(crate) fn encode_candidate_changes(
         .encode_changes(state, &mut output, budget)?;
     journal
         .physical
-        .encode_changes(&state.physical, &state.records, &[], &mut output, budget)?;
+        .encode_changes(state, &mut output, budget)?;
     journal
         .activity
         .encode_changes(&state.activity, &state.records, &mut output, budget)?;
@@ -155,6 +155,7 @@ pub(crate) fn encode_root_changes(
         "appraisalProcesses",
         "responseReceipts",
         "exitExposures",
+        "objectLineage",
     ];
     let extra = map_storage::<String, SqlCell>(
         body.len()
@@ -209,6 +210,11 @@ pub(crate) fn encode_root_changes(
         state.physical.participation.is_present(),
     );
     marker(&mut body, "outings", state.outings.is_present());
+    marker(
+        &mut body,
+        "objectLineage",
+        state.inventory.lineage.parent_present,
+    );
     marker(
         &mut body,
         "workState",

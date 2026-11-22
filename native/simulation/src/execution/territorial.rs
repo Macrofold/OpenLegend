@@ -2,9 +2,138 @@
 //! controller's small mutable state. The installed law is never cloned here.
 use super::*;
 use crate::host::retained_size::{HeapBytes, heap_sum};
-use crate::native_controller::territorial::Progress;
+use crate::native_controller::territorial::{Mode, Progress, Threat};
 
 impl PhysicalMutation<'_> {
+    /// Capture the actual supported location after an admitted feeding or
+    /// resting transition. An unsettled route cannot move an active territory.
+    pub(crate) fn refresh_territorial_place(
+        &mut self,
+        handle: EntityHandle,
+    ) -> Result<(), ExecutionError> {
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let Some(threat) = entity
+            .threat
+            .as_ref()
+            .filter(|threat| threat.use_current_place(entity))
+        else {
+            return Ok(());
+        };
+        let Some(Placement::World {
+            position,
+            support_surface_id: Some(support),
+            ..
+        }) = entity.placement.as_ref()
+        else {
+            return Ok(());
+        };
+        if *position == threat.policy.home.point() {
+            return Ok(());
+        }
+        let key = UndoKey::TerritorialPlace(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        let before = threat
+            .policy
+            .place_bytes()
+            .ok_or(ExecutionError::Capacity)?;
+        let after = support
+            .len()
+            .checked_mul(2)
+            .ok_or(ExecutionError::Capacity)?;
+        self.journal.reserve(
+            heap_sum([
+                2 * size_of::<Undo>(),
+                if first { before } else { 0 },
+                after,
+                size_of::<PhysicalChange>() + entity.id.len(),
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let home = crate::state::SurfacePoint {
+            x: position.x,
+            y: position.y,
+            z: position.z,
+            surface_id: support.clone(),
+        };
+        let refuge = home.clone();
+        self.journal.change(PhysicalChange::Behavior {
+            entity_id: entity.id.clone(),
+            outward_change: false,
+        })?;
+        let policy = &mut self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|entity| entity.threat.as_mut())
+            .ok_or(ExecutionError::Invariant)?
+            .policy;
+        let old_home = std::mem::replace(&mut policy.home, home);
+        let old_refuge = std::mem::replace(&mut policy.refuge, refuge);
+        if first {
+            self.journal.retain(
+                key,
+                Undo::TerritorialPlace {
+                    entity: handle,
+                    home: old_home,
+                    refuge: old_refuge,
+                },
+            )?;
+        }
+        self.state
+            .entities
+            .settle_operational_memory(handle, &mut self.journal.reservation, false)
+    }
+
+    pub(crate) fn interrupt_territorial_alarm(
+        &mut self,
+        handle: EntityHandle,
+        id: &str,
+    ) -> Result<(), ExecutionError> {
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let Some(threat) = entity.threat.as_ref().filter(|threat| {
+            threat.progress.mode != Mode::Idle
+                && entity
+                    .animal
+                    .as_ref()
+                    .is_some_and(|animal| animal.foraging.is_some())
+        }) else {
+            return Ok(());
+        };
+        let action = entity
+            .actor
+            .as_ref()
+            .and_then(|actor| actor.action.as_ref());
+        let _work = self.journal.budget.reserve(
+            threat
+                .progress
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?
+                + action.map_or(0, |action| action.id.len()),
+        )?;
+        let mut next = threat.progress.clone();
+        Threat::stop_pursuit(&mut next);
+        if let Some(action_id) = action.map(|action| action.id.clone()) {
+            self.release_work(&action_id)?;
+            self.replace_action(
+                id,
+                None,
+                ActionWrite {
+                    generation: PlanGenerationWrite::Advance,
+                    behavior: Some(false),
+                },
+            )?;
+        }
+        self.replace_territorial_progress(handle, next, true)
+    }
+
     pub(crate) fn admit_territorial_detour(
         &mut self,
         actor: &str,

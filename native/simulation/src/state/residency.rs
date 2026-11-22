@@ -37,6 +37,7 @@ heap_record!(Participation {
     exit_attempt_id,
     return_anchor
 });
+heap_record!(super::Remains { phase, source_id, yields });
 
 pub(super) struct EntityMetadata {
     _authored: ResidentReservation,
@@ -119,7 +120,9 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
         })
         .and_then(|actor| {
             actor.checked_add(
-                entity.threat.as_ref().map_or(Some(0), |threat| threat.progress.heap_bytes())?,
+                entity.threat.as_ref().map_or(Some(0), |threat| {
+                    threat.progress.heap_bytes()?.checked_add(threat.policy.place_bytes()?)
+                })?,
             )
         })
         .and_then(|bytes| {
@@ -128,6 +131,8 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
                 entity.item.heap_bytes()?,
                 entity.container.heap_bytes()?,
                 entity.declared_owner.heap_bytes()?,
+                entity.retirement.heap_bytes()?,
+                entity.remains.heap_bytes()?,
             ])
         })
         .ok_or(ExecutionError::Capacity)

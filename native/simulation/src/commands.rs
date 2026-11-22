@@ -191,6 +191,7 @@ pub(crate) enum NativeCommand {
     Feed {
         envelope: CommandEnvelope,
         target_id: String,
+        item_id: Option<String>,
     },
     Say {
         envelope: CommandEnvelope,
@@ -253,7 +254,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -281,6 +282,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         };
         if !headers.valid() {
             return Err(D::Error::custom("Invalid selected native command binding."));
+        }
+        if input.kind != "feed" && input.item_id.is_some() {
+            return Err(D::Error::custom("Unexpected item selection."));
         }
         let discovery_fields = input.distance.is_some()
             || input.attempt_id.is_some()
@@ -378,7 +382,8 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     && envelope.cooperation.is_none()
                     && envelope.combat_help_id.is_none()
                     && envelope.purpose.is_none()
-                    && envelope.chosen_purpose.is_none() =>
+                    && envelope.chosen_purpose.is_none()
+                    && input.item_id.as_deref().is_none_or(is_safe_record_id) =>
             {
                 Ok(Self::Feed {
                     envelope,
@@ -386,8 +391,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
                         .target_id
                         .filter(|id| is_safe_record_id(id))
                         .ok_or_else(|| {
-                            D::Error::custom("Feeding requires its selected resource.")
+                            D::Error::custom("Feeding requires its selected source.")
                         })?,
+                    item_id: input.item_id,
                 })
             }
             "say" if !extras_for_say => Ok(Self::Say {

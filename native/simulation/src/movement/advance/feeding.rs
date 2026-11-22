@@ -1,10 +1,18 @@
-//! Resource feed advances through the same action timer, body motion, result
+//! Feed advances through the same action timer, body motion, result
 //! and receipt owners. Each working cut verifies current reach, sight and stock
 //! before advancing the actual timer or applying a meal.
 use super::*;
+use crate::host::retained_size::HeapBytes;
 use crate::native_controller::feeding;
+use crate::native_response::FoodStock;
 use crate::reception::{EventScalar, SightBatch};
 use crate::worlds::base_foraging::feeding_terms;
+
+enum MealDebit {
+    Resource { revision: u64 },
+    Item { id: String, revision: u64 },
+    Remains(crate::state::Remains),
+}
 
 impl MoveAdvanceCursor {
     fn meal_target<'a>(
@@ -129,24 +137,23 @@ impl MoveAdvanceCursor {
         let installed = core.state.installed.clone();
         let (actor, action, target) = self.meal_target(core)?;
         let binding = action.feeding.as_ref().ok_or(ExecutionError::Invariant)?;
-        let current = target.and_then(|target| {
-            feeding::meal(&installed, actor, target).and_then(|meal| {
-                (sight.seen(&target.id) == Some(true)
-                    && meal.0.pin == binding.profile
-                    && meal.1.pin == binding.food
-                    && target
-                        .resource
-                        .as_ref()
-                        .and_then(|stock| stock.revision)
-                        .unwrap_or(0)
-                        == binding.source.revision())
-                .then_some((target, meal))
+        let item = match &binding.source {
+            FoodStock::Item { item_id, .. } => Some(item_id.as_str()),
+            _ => None,
+        };
+        let Some((target, meal)) = target
+            .filter(|target| sight.seen(&target.id) == Some(true))
+            .and_then(|target| {
+                feeding::meal(core.state, actor, target, item).map(|meal| (target, meal))
             })
-        });
-        let Some((target, (profile, food, _))) = current else {
+        else {
             self.fail(&feeding_terms().unavailable)?;
             return self.drive(core, None);
         };
+        if !meal.matches(binding, &self.budget)? {
+            self.fail(&feeding_terms().unavailable)?;
+            return self.drive(core, None);
+        }
         let id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
         if action.stage == "approaching" {
             let replans = action.replans;
@@ -165,11 +172,24 @@ impl MoveAdvanceCursor {
                     &self.budget,
                 )?,
             )?;
+            let handle = core
+                .state
+                .physical
+                .entities
+                .handle(&self.actor_id)
+                .ok_or(ExecutionError::Invariant)?;
+            core.physical().refresh_territorial_place(handle)?;
             self.phase = Phase::Done;
             return Ok(Progress::Complete);
         }
         let terms = feeding_terms();
-        let attribute_id = &profile.profile.fullness.attribute_id;
+        let food = installed
+            .retained
+            .foraging
+            .food
+            .get(&meal.food.pin.id)
+            .ok_or(ExecutionError::Invariant)?;
+        let attribute_id = &meal.profile.profile.fullness.attribute_id;
         let definition = installed
             .attributes
             .get(attribute_id)
@@ -185,13 +205,19 @@ impl MoveAdvanceCursor {
             self.fail(&terms.cannot_consume)?;
             return self.drive(core, None);
         };
-        let stock_revision = binding.source.revision();
         let parameters = installed
             .account_law()
             .affects_observation(actor, attribute_id);
         let remaining = action.remaining_seconds;
         let will_finish = remaining <= self.seconds + installed.time_epsilon;
-        let target_id = if will_finish {
+        let prepared = if will_finish {
+            let source_bytes = match meal.source {
+                feeding::MealSource::Resource(_) => 0,
+                feeding::MealSource::Item(id, _) => id.len(),
+                feeding::MealSource::Remains(value) => {
+                    value.heap_bytes().ok_or(ExecutionError::Capacity)?
+                }
+            };
             self._reservation.resize(
                 self._reservation
                     .bytes()
@@ -204,11 +230,35 @@ impl MoveAdvanceCursor {
                             + terms.description_prefix.len()
                             + terms.description_suffix.len()
                             + terms.event_type.len())
+                            + source_bytes
                             + 1024,
                     )
                     .ok_or(ExecutionError::Capacity)?,
             )?;
-            Some(target.id.clone())
+            let debit = match meal.source {
+                feeding::MealSource::Resource(stock) => MealDebit::Resource {
+                    revision: stock.revision.unwrap_or_default(),
+                },
+                feeding::MealSource::Item(id, lot) => MealDebit::Item {
+                    id: id.into(),
+                    revision: lot.revision,
+                },
+                feeding::MealSource::Remains(value) => {
+                    let mut after = value.clone();
+                    let position = after
+                        .yields
+                        .iter()
+                        .position(|row| row.definition_id == food.pin.id && row.quantity > 0)
+                        .ok_or(ExecutionError::Invariant)?;
+                    after.yields[position].quantity -= 1;
+                    if after.yields[position].quantity == 0 {
+                        after.yields.remove(position);
+                    }
+                    after.harvested = after.yields.is_empty();
+                    MealDebit::Remains(after)
+                }
+            };
+            Some((target.id.clone(), debit))
         } else {
             None
         };
@@ -221,11 +271,21 @@ impl MoveAdvanceCursor {
             self.phase = Phase::Done;
             return Ok(Progress::Complete);
         }
-        let target_id = target_id.ok_or(ExecutionError::Invariant)?;
-        if !core
-            .physical()
-            .debit_resource_unit(&target_id, stock_revision)?
-        {
+        let (target_id, debit) = prepared.ok_or(ExecutionError::Invariant)?;
+        let changed = match debit {
+            MealDebit::Resource { revision } => {
+                core.physical().debit_resource(&target_id, revision, 1)?
+            }
+            MealDebit::Item {
+                id: item_id,
+                revision,
+            } => core.debit_ground_lot(&target_id, &item_id, &food.pin, revision, id)?,
+            MealDebit::Remains(after) => {
+                core.physical().set_remains(&target_id, Some(after))?;
+                true
+            }
+        };
+        if !changed {
             self.fail(&terms.consumed_first)?;
             return self.drive(core, None);
         }

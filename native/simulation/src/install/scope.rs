@@ -16,7 +16,6 @@ pub(crate) fn finish_selected_installation(
 ) -> Result<SelectedInstallation, InstallError> {
     for (field, table, empty_map) in [
         ("finiteRain", "sim_finite_rain", false),
-        ("objectLineage", "sim_object_lineage", true),
         ("projectiles", "sim_projectiles", true),
         ("familyTree", "sim_family_tree", false),
         ("declarationReceipts", "declaration_receipts", true),
