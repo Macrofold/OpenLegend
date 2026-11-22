@@ -350,14 +350,7 @@ pub(crate) async fn prepare_view(
                     };
                     let projected = (|| {
                         let scoped = references.scoped(&scope)?;
-                        prepare_self(
-                            facts,
-                            &policy.scene.self_view,
-                            &scoped,
-                            false,
-                            false,
-                            budget,
-                        )
+                        prepare_self(facts, &policy.scene, &scoped, false, false, budget)
                     })();
                     Ok((projected, input_facts, revision, save_failed))
                 }

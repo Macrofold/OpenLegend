@@ -28,7 +28,7 @@ pub struct ObservedPolicy {
     #[serde(default)]
     portraits: IndexMap<String, PublicArt>,
     #[serde(default)]
-    item_art: IndexMap<String, PublicArt>,
+    pub(super) item_art: IndexMap<String, PublicArt>,
     talk_unavailable: Arc<str>,
     trade_title: Arc<str>,
 }
@@ -101,8 +101,14 @@ struct TradeLabels {
     title: Arc<str>,
 }
 
+#[derive(PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StorageHint {
+    container_id: String,
+    placement_revision: u64,
+}
+
 /// The exact ordinary `EntityView` fields backed by permitted capture families.
-/// An unknown positive storage or assembly family refuses at its owner.
 #[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ObservedEntity {
@@ -124,6 +130,8 @@ pub struct ObservedEntity {
     icon: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     art: Option<PublicArt>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    storage: Option<StorageHint>,
     #[serde(skip_serializing_if = "Option::is_none")]
     portrait: Option<PublicArt>,
     status_effects: Vec<StatusEffectProjection>,
@@ -229,10 +237,8 @@ fn project_contact(
     let SensoryFacet::Body { body } = &received.value else {
         return Err(SceneError::Capture);
     };
-    if body.storage.is_some() || body.assembly.is_some() {
-        return Err(SceneError::Unsupported(
-            "the installed storage/assembly contact",
-        ));
+    if body.assembly.is_some() {
+        return Err(SceneError::Unsupported("the installed assembly contact"));
     }
     let time = |at| (Some(at) != sight).then_some(at);
     let (measured, acquired, confirmed, source) = received.description_support.as_ref().map_or(
@@ -328,6 +334,10 @@ fn project_contact(
     } else {
         None
     };
+    let storage = body.storage.as_ref().map(|storage| StorageHint {
+        container_id: id.clone(),
+        placement_revision: storage.placement_revision,
+    });
     Ok(ObservedEntity {
         id,
         body_reference,
@@ -360,6 +370,7 @@ fn project_contact(
             None
         },
         portrait,
+        storage,
         status_effects: body.effects.clone().unwrap_or_default(),
         attributes,
         health,
@@ -461,7 +472,7 @@ impl EntityFields<'_> {
         removed!(before,after;
             "nameForm"=>display.name_form,"indefiniteArticle"=>display.indefinite_article,
             "identity"=>identity,"attentionPreference"=>attention_preference,"bodyPlan"=>body_plan,
-            "icon"=>icon,"art"=>art,"portrait"=>portrait,"attributes"=>attributes,"health"=>health,
+            "icon"=>icon,"art"=>art,"storage"=>storage,"portrait"=>portrait,"attributes"=>attributes,"health"=>health,
             "description"=>description,"quantity"=>quantity,"heat"=>heat,"bodyState"=>body_state,
             "contents"=>contents,"observedCarried"=>observed_carried,"canTalk"=>can_talk,
             "talkRequiresAi"=>talk_requires_ai,"talkUnavailableReason"=>talk_unavailable_reason,
@@ -484,7 +495,7 @@ impl Serialize for EntityFields<'_> {
         } optional {
           "nameForm"=>display.name_form,"indefiniteArticle"=>display.indefinite_article,
           "identity"=>identity,"attentionPreference"=>attention_preference,"bodyPlan"=>body_plan,
-          "icon"=>icon,"art"=>art,"portrait"=>portrait,"attributes"=>attributes,"health"=>health,
+          "icon"=>icon,"art"=>art,"storage"=>storage,"portrait"=>portrait,"attributes"=>attributes,"health"=>health,
           "description"=>description,"quantity"=>quantity,"heat"=>heat,"bodyState"=>body_state,
           "contents"=>contents,"observedCarried"=>observed_carried,"canTalk"=>can_talk,
           "talkRequiresAi"=>talk_requires_ai,"talkUnavailableReason"=>talk_unavailable_reason,

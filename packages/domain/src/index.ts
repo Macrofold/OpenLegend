@@ -328,7 +328,12 @@ export * from './appraisals.js';
 export { markPartialAppraisals, completeAppraisalHistory } from './appraisal-residency.js';
 export { BASE_APPRAISAL_POLICY, appraiseEvent } from './worlds/base/appraisals.js';
 
-export { MAX_CONTAINMENT_DEPTH, ITEM_COUNT_PIN } from './objects.js';
+export {
+  MAX_CONTAINMENT_DEPTH,
+  ITEM_COUNT_PIN,
+  OWNED_ITEM_SHORTCUT_LIMIT,
+  OWNED_ITEM_VIEW_LIMIT,
+} from './objects.js';
 export type { ObjectLineage, ObjectRetirement } from './objects.js';
 export * from './contribution-residency.js';
 

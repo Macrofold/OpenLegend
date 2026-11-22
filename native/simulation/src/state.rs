@@ -9,6 +9,8 @@ mod action_storage;
 mod agency;
 mod goal_storage;
 mod intent_storage;
+mod inventory;
+pub(crate) use inventory::{ContainerState, DeclaredOwner, Individuality, ItemLot};
 mod recorded_surface_point;
 pub use recorded_surface_point::RecordedSurfacePoint;
 mod residency;
@@ -1302,28 +1304,28 @@ pub struct Entity {
     pub assembly: Option<UnconvertedField>,
     #[serde(
         default,
-        deserialize_with = "deserialize_present_option",
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
         skip_serializing_if = "Option::is_none"
     )]
-    pub inventory_revision: Option<UnconvertedField>,
+    pub inventory_revision: Option<u64>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub item: Option<UnconvertedField>,
+    pub(crate) item: Option<ItemLot>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub container: Option<UnconvertedField>,
+    pub(crate) container: Option<ContainerState>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub declared_owner: Option<UnconvertedField>,
+    pub(crate) declared_owner: Option<DeclaredOwner>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

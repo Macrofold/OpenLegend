@@ -2,6 +2,7 @@
 //! checks. Retaining an unused definition never enables its action family.
 //! Dynamic state cannot enter this finite owner or be changed through it.
 
+use super::inventory::{ItemDefinitionFields, ItemDefinitionRead, PackingLoad};
 use super::rows::{take_collection, take_one_row, validate_map_row};
 use super::{CanonicalInput, InstallError, RowImport, WorldChildren};
 use crate::host::retained_size::{HeapBytes, heap_record, map_storage};
@@ -116,7 +117,7 @@ pub(crate) struct RetainedDefinitions {
     pub invention_policy: RetainedOne,
     pub story_policy: Option<RetainedOne>,
     pub item_definitions: RetainedMap,
-    pub item_icons: IndexMap<String, Option<String>>,
+    pub items: IndexMap<String, ItemDefinitionRead>,
     pub recipes: RetainedMap,
     pub flight_routes: RetainedMap,
     pub places: RetainedMap,
@@ -131,6 +132,8 @@ pub(crate) struct ItemHandlingReadPolicy {
     enabled: bool,
     actor_body_profiles: Vec<String>,
     pub reach: f64,
+    #[serde(default)]
+    packing_loads: Vec<PackingLoad>,
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -173,6 +176,13 @@ impl SocialOfferReadPolicy {
     }
 }
 impl ItemHandlingReadPolicy {
+    pub(super) fn packing_load(&self, pin: &crate::values::DefinitionPin) -> Option<u64> {
+        self.packing_loads
+            .iter()
+            .find(|entry| &entry.definition == pin)
+            .map(|entry| entry.load)
+    }
+
     pub(crate) fn can_handle(&self, profile: &str) -> bool {
         self.enabled && self.actor_body_profiles.iter().any(|id| id == profile)
     }
@@ -555,7 +565,7 @@ pub(crate) fn install_retained(
         .ok_or(InstallError::ParentPresence)?;
     let (foraging, _foraging_preparation) =
         foraging::prepare(foraging_input.as_ref(), &item_input, budget)?;
-    let (item_icons, _icon_preparation) = prepare_item_icons(&item_definitions, budget)?;
+    let (items, _item_preparation) = prepare_items(&item_definitions, &item_input, budget)?;
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
@@ -627,7 +637,7 @@ pub(crate) fn install_retained(
         invention_policy,
         story_policy: r.one("storyPolicy", "config_story", input.story_policy)?,
         item_definitions,
-        item_icons,
+        items,
         recipes: r
             .map("recipes", "definition_recipes", Some(input.recipes))?
             .ok_or(InstallError::ParentPresence)?,
@@ -650,48 +660,70 @@ pub(crate) fn install_retained(
     Ok(installed)
 }
 
-/// Read the same immutable icon used by Source once at installation. Visible
-/// stock borrows these admitted facts instead of parsing an item definition
-/// per observer or treating every material as a food candidate.
-fn prepare_item_icons(
+/// Compile the facts used by custody and visible stock from the already
+/// verified release. Each nested canonical record has the exact Source pin.
+fn prepare_items(
     definitions: &RetainedMap,
+    input: &CanonicalInput,
     budget: &crate::host::ByteBudget,
 ) -> Result<
     (
-        IndexMap<String, Option<String>>,
+        IndexMap<String, ItemDefinitionRead>,
         crate::host::ByteReservation,
     ),
     InstallError,
 > {
-    #[derive(Deserialize)]
-    struct Presentation {
-        icon: Option<String>,
-    }
-    let mut workspace = budget
+    let _canonical = budget
         .reserve(
-            map_storage::<String, Option<String>>(definitions.len())
+            input
+                .canonical
+                .len()
+                .checked_add(
+                    map_storage::<String, &RawValue>(
+                        definitions
+                            .len()
+                            .checked_mul(2)
+                            .ok_or(InstallError::Capacity)?,
+                    )
+                    .ok_or(InstallError::Capacity)?,
+                )
                 .ok_or(InstallError::Capacity)?,
         )
         .map_err(|_| InstallError::Capacity)?;
-    let mut icons = IndexMap::new();
-    icons
+    let canonical: IndexMap<String, &RawValue> =
+        serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionBody)?;
+    let mut workspace = budget
+        .reserve(
+            map_storage::<String, ItemDefinitionRead>(definitions.len())
+                .ok_or(InstallError::Capacity)?,
+        )
+        .map_err(|_| InstallError::Capacity)?;
+    let mut items = IndexMap::new();
+    items
         .try_reserve(definitions.len())
         .map_err(|_| InstallError::Capacity)?;
     for (id, source) in definitions.entries() {
-        let mut preparation = super::reserve_typed_parse::<Presentation>(source, 0, None, budget)?;
-        let value: Presentation =
+        let mut preparation = super::reserve_typed_parse::<ItemDefinitionFields>(
+            source,
+            size_of::<String>(),
+            None,
+            budget,
+        )?;
+        let value: ItemDefinitionFields =
             serde_json::from_str(source).map_err(|_| InstallError::DefinitionBody)?;
+        let exact = canonical.get(id).ok_or(InstallError::DefinitionBody)?.get();
+        let value = ItemDefinitionRead::from_verified(id, exact, value)?;
         preparation
             .resize(
                 id.len()
-                    .checked_add(value.icon.as_ref().map_or(0, String::capacity))
+                    .checked_add(value.heap_bytes().ok_or(InstallError::Capacity)?)
                     .ok_or(InstallError::Capacity)?,
             )
             .map_err(|_| InstallError::Capacity)?;
         workspace
             .merge(preparation)
             .map_err(|_| InstallError::Capacity)?;
-        icons.insert(id.to_owned(), value.icon);
+        items.insert(id.to_owned(), value);
     }
-    Ok((icons, workspace))
+    Ok((items, workspace))
 }

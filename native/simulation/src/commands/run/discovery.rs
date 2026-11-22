@@ -51,12 +51,11 @@ impl CommandCursor {
         let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
         match &self.command {
             NativeCommand::InspectInventory { .. } => {
-                // This capability was minted from consumed complete item and
-                // resource-claim owners, and reads their actual revision.
-                let _projection = core
-                    .state
-                    .inventory
-                    .project(&core.state.administration.object_membership);
+                // The explicit inspection operation is still the empty
+                // branch. The authorized ordinary view has its own item read.
+                if core.state.inventory.has_children(&entity.id) {
+                    return Err(ExecutionError::UnsupportedFamily);
+                }
                 self.discovery_result(
                     true,
                     "available",

@@ -32,7 +32,7 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
-import type { EntityView, GameView } from '@open-legend/protocol';
+import type { EntityView, GameView, InventoryItemBinding } from '@open-legend/protocol';
 import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
 import { scopeKey, type RequestScope } from './authority.js';
 import {
@@ -541,8 +541,8 @@ export interface NativePlayerActorSelf extends NativeActorSelf {
     readonly spatialRevision: number;
     readonly body?: BodyEligibilityWitness['body'];
     readonly heldStock: readonly (readonly [string, number])[];
-    /** The supported closed inventory installation proves this is absent. */
-    readonly inventoryRevision?: number;
+    readonly inventoryRevision: number;
+    readonly inventory: readonly InventoryItemBinding[];
     readonly equipped: readonly { readonly id: string; readonly definitionId: string }[];
     readonly knowledgeRevision: number;
     readonly agency: PlayerActor['agency'];
@@ -736,7 +736,13 @@ export async function nativePlayerOwnedView(
     ),
     action,
     traits: self.identity.traits?.map((trait) => ({ ...trait })),
-    inventory: [],
+    inventory: self.player.inventory.map((row) => ({
+      ...row,
+      art:
+        definitions.itemArt && Object.hasOwn(definitions.itemArt, row.definitionId)
+          ? definitions.itemArt[row.definitionId]
+          : undefined,
+    })),
     equipmentPorts: projectPlayerEquipment(
       self.player.body?.equipmentPorts ?? [],
       self.player.equipped,

@@ -229,6 +229,49 @@ impl NativeWorldSession {
             .map_err(failure)?;
         Ok(consume(facts))
     }
+    /// Look up the exact requested owned lots without constructing a player
+    /// view. The callback must finish encoding/handoff within this lease.
+    pub fn with_player_inventory<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        ids: &[String],
+        consume: impl FnOnce(&[crate::install::OwnedItem<'_>], &ByteBudget) -> T,
+    ) -> Result<T, RuntimeError> {
+        self.require_active()?;
+        if ids.len() > crate::install::shortcut_limit()
+            || ids.iter().any(|id| !crate::values::is_safe_record_id(id))
+        {
+            return Err(failure("invalid owned shortcut selection"));
+        }
+        let simulation = self.session.accepted().map_err(failure)?;
+        simulation
+            .require_player_read(account, actor)
+            .map_err(failure)?;
+        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        let bytes = ids
+            .len()
+            .checked_mul(std::mem::size_of::<crate::install::OwnedItem<'_>>())
+            .ok_or(crate::host::CapacityError)?;
+        let _custody = self.budget.reserve(bytes)?;
+        let mut items = Vec::with_capacity(ids.len());
+        let state = &simulation.state;
+        for (index, id) in ids.iter().enumerate() {
+            if !ids[..index].contains(id)
+                && let Some(item) = crate::install::owned_by(
+                    &state.physical.entities,
+                    &state.installed.retained,
+                    actor,
+                    id,
+                )
+                .map_err(failure)?
+            {
+                items.push(item);
+            }
+        }
+        Ok(consume(&items, &self.budget))
+    }
+
     pub fn read_player(
         &mut self,
         account: &str,

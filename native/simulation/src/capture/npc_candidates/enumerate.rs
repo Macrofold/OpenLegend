@@ -73,10 +73,9 @@ impl NpcCandidateCursor {
             }
             Enumerate::Inventory => {
                 self.stage = Enumerate::Continue;
-                let _closed = core
-                    .state
-                    .inventory
-                    .project(&core.state.administration.object_membership);
+                if core.state.inventory.has_children(&self.actor) {
+                    return Ok(true);
+                }
                 let input =
                     CommandInput::new(&self.actor, preparation_id, &rules.inspection_command);
                 let (command, guard) = self.command(&input)?;

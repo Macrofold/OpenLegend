@@ -131,6 +131,7 @@ import { worldInputSchema } from './world-input-schema.js';
 import { projectPatch, projectView, ViewChangedError } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { INVENTORY_FILTERS, INVENTORY_SORTS } from '@open-legend/protocol';
+import { OWNED_ITEM_SHORTCUT_LIMIT } from '@open-legend/domain';
 import { actionCatalogue, ActionCatalogueUnavailable } from './action-catalogue.js';
 import {
   containerPage,
@@ -2202,7 +2203,7 @@ async function initializeGameServer(
             case '/api/inventory/bindings': {
               const value = z
                 // This read has one exact ID per displayed hotbar slot, never a full inventory.
-                .object({ itemIds: z.array(requestIdSchema).max(10) })
+                .object({ itemIds: z.array(requestIdSchema).max(OWNED_ITEM_SHORTCUT_LIMIT) })
                 .strict()
                 .parse(body);
               return send(response, 200, inventoryBindings(service, scope, value.itemIds));

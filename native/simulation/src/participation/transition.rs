@@ -763,7 +763,7 @@ impl ParticipationCursor {
                     }
                 }
                 Phase::ClearWork => {
-                    // ClosedInventory proves the actual resource-reservation
+                    // Inventory installation proves the actual resource-reservation
                     // owner is complete and empty; these selected actions
                     // cannot create held resources. No release is fabricated.
                     let id = &self.request.actor_id;

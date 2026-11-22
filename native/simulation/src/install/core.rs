@@ -458,10 +458,13 @@ fn assemble_selected_core(
         &physical.entities,
         budget,
     )?;
-    let inventory = super::inventory::install_closed_inventory(
+    let inventory = super::inventory::install_inventory(
         &mut import,
         child(&mut children, "resourceReservations", false)?,
         &physical.entities,
+        &installed.retained,
+        &installed.observation_rules.value().pile_kind,
+        budget,
     )?;
     let learned_capabilities = install_learned_capabilities(
         &mut import,

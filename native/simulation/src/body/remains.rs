@@ -215,10 +215,13 @@ impl RemainsCursor {
                     } else {
                         Phase::Next
                     };
-                    // The installed inventory capability proves no possessions
-                    // exist and selected writers cannot create a hidden lot.
-                    // A nonempty installed inventory needs its actual release
-                    // owner before this family may be admitted.
+                    // Removal with possessions needs the item release owner
+                    // before this corpse can cease being accessible.
+                    if matches!(self.phase, Phase::RemoveEvent)
+                        && core.state.inventory.has_children(id)
+                    {
+                        return Err(ExecutionError::UnsupportedFamily);
+                    }
                 }
                 Phase::RemoveEvent => {
                     self.phase = Phase::RemoveWrite;

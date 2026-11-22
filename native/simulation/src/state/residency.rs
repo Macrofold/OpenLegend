@@ -122,6 +122,14 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
                 entity.threat.as_ref().map_or(Some(0), |threat| threat.progress.heap_bytes())?,
             )
         })
+        .and_then(|bytes| {
+            heap_sum([
+                bytes,
+                entity.item.heap_bytes()?,
+                entity.container.heap_bytes()?,
+                entity.declared_owner.heap_bytes()?,
+            ])
+        })
         .ok_or(ExecutionError::Capacity)
 }
 fn participation_bytes(entity: &Entity) -> Result<usize, ExecutionError> {

@@ -480,7 +480,7 @@ pub struct ReceivedLocationSample {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CarriedItem {
-    pub item_kind_as_observed: String,
+    pub item_kind_as_observed: crate::text::JsText,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -488,7 +488,7 @@ pub struct CarriedItem {
 pub struct ObservedPileItem {
     pub id: String,
     pub definition_id: String,
-    pub name: String,
+    pub name: crate::text::JsText,
     pub quantity: f64,
     pub portable: bool,
 }
@@ -931,7 +931,7 @@ impl SensoryFacet {
             Self::Body { body } => body.validate(),
             Self::Carried { items } => items
                 .iter()
-                .all(|item| !crate::encoding::js_trim(&item.item_kind_as_observed).is_empty()),
+                .all(|item| !item.item_kind_as_observed.trim_is_empty()),
             Self::PileContents { items } => items
                 .iter()
                 .all(|item| item.quantity.is_finite() && item.quantity > 0.0),

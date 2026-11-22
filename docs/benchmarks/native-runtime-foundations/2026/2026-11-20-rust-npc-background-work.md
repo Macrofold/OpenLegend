@@ -166,9 +166,11 @@ Frozen source `1fe672d64eef254647f7595d9d7245e19a7020d8` also passes identity, p
 
 Chromium `157.0.8103.79` inspected Camp hearth through the remembered-place list, moved once and recovered the exact position after restart. That run used release source `db0bcbeaa2ec0469081e0230a066855411f87036`, executable `7f5b76ead348b90ab605d1600f6915b4235e2e7c1d011ca3056defbf37e6d3d6` and the same storage hash. Raw result `r3-shared-launch-place-3/result.json`.
 
-Positive appraisal and plan fields, paused cancel, the overlapping final-source comparison and isolated managed runs still require separate witnesses. These are correctness results.
+Positive appraisal and plan fields, paused cancel and isolated managed runs still require separate witnesses. These are correctness results.
 
 The next direct handoff also keeps response aliases, offered ordinals and selected evidence in Rust values through the binding turn. The queued input holds its own storage until the existing original/current checks finish. At `aa39b3cc16dd27e5b06cb93e7a43b89b07a99a41` (executable `5c77b000702c4437a4bf5c695a7caf21cb9de068f39b3de19b91bf0ed487c523`), the three `direct-bindings-*` cases repeated the moving, withdrawal and cancellation journeys with saved receipt recovery. The completing request made three actual controlled judgments and one generation. It applied one reply. The two unsuccessful cases applied none. All three databases were removed after clean shutdown. The bridge still uses the shared validated selection through its byte API.
+
+At the same identities, `direct-bindings-final-move-3/result.json` holds the PostgreSQL dispatch-intent write after reply preparation and before the final generation request. An unrelated walk from x=24.35 to x=24.05 was visible while that write was held. The permission and source check allowed the request after release, and one controlled answer applied, saved and recovered on a cold process. The browser, server and database cleaned up. The actual disclosure itself remains synchronous with current authority.
 
 ### Shutdown during an automatic NPC commit
 

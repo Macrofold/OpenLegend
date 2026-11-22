@@ -36,6 +36,7 @@ mod checkpoint;
 mod dialogue;
 mod event_history;
 mod history;
+mod inventory;
 mod known_places;
 mod operations;
 mod preview;
@@ -122,6 +123,7 @@ pub(crate) fn router(
         .route("/api/saves/settings", post(checkpoint::settings))
         .route("/api/saves/acknowledge", post(checkpoint::ack))
         .route("/api/known-places", post(known_places::list))
+        .route("/api/inventory/bindings", post(inventory::bindings))
         .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))
         .route("/api/narration/regenerate", post(history::regenerate))

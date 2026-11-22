@@ -1,0 +1,11 @@
+{
+  "countPin": {
+    "id": "native-item-count",
+    "version": 1,
+    "digest": "positive-safe-integer-units-v1"
+  },
+  "maximumDepth": 16,
+  "maximumContainerGrantees": 100,
+  "ordinaryViewEntries": 60,
+  "shortcutEntries": 10
+}

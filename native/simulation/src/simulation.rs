@@ -157,7 +157,7 @@ pub(crate) struct SimulationState {
     pub responses: crate::response::ResponseState,
     pub minds: crate::cognition::MindState,
     pub administration: crate::administration::AdministrationState,
-    pub inventory: crate::install::ClosedInventory,
+    pub inventory: crate::install::Inventory,
     pub learned_capabilities: crate::install::LearnedCapabilities,
     pub appraisals: crate::appraisals::AppraisalState,
 }

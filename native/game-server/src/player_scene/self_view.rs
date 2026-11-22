@@ -2,7 +2,7 @@
 //! fields the ordinary browser needs after the accepted capture ends.
 
 use super::PublicArt;
-use super::{SceneError, observed::BodySize};
+use super::{PlayerScenePolicy, SceneError, observed::BodySize};
 use crate::player_references::PlayerReferences;
 use indexmap::IndexMap;
 use openlegend_simulation::{
@@ -10,7 +10,7 @@ use openlegend_simulation::{
     host::{ByteBudget, ByteReservation},
     narration::{NameArticle, name_phrase},
     reception::{AcousticPolicy, AttributeView},
-    state::{CharacterTrait, EquipmentPort, Named, Point},
+    state::{CharacterTrait, Named, Point},
     text::JsText,
     worlds::base_observed::{ObservedActionAnimation, SpeechVolume, StatusEffectProjection},
 };
@@ -18,6 +18,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use std::sync::Arc;
 
+mod inventory;
+use inventory::{EquipmentBinding, ItemBinding};
 mod practice;
 use practice::{PracticePolicy, PracticeView, project_practice};
 
@@ -165,9 +167,9 @@ pub struct PlayerBodyView {
     action_animation: Option<ObservedActionAnimation>,
     #[serde(skip_serializing_if = "Option::is_none")]
     traits: Option<Vec<CharacterTrait>>,
-    inventory: [(); 0],
+    inventory: Vec<ItemBinding>,
     inventory_revision: u64,
-    equipment_ports: Vec<EquipmentPort>,
+    equipment_ports: Vec<EquipmentBinding>,
     action_attempts: Vec<Attempt>,
     outings: [(); 0],
     action_wording: PublicArt,
@@ -368,7 +370,7 @@ impl PreparedSelf {
 /// keeps the originating player read for final transport authorization.
 pub fn prepare_self(
     facts: PlayerSelfFacts<'_>,
-    policy: &OwnPolicy,
+    scene: &PlayerScenePolicy,
     references: &PlayerReferences<'_>,
     paused: bool,
     fresh_world_review: bool,
@@ -377,11 +379,10 @@ pub fn prepare_self(
     if !references.matches_reader(facts.world_id, facts.actor_id) {
         return Err(SceneError::Capture);
     }
-    if facts.has_activity_plan() || !facts.equipped.is_empty() {
-        return Err(SceneError::Unsupported(
-            "an unconverted activity graph or equipment",
-        ));
+    if facts.has_activity_plan() {
+        return Err(SceneError::Unsupported("an unconverted activity graph"));
     }
+    let policy = &scene.self_view;
     let output = facts.projection_bytes().ok_or(SceneError::Capacity)?;
     let output = output
         .checked_add(
@@ -393,6 +394,8 @@ pub fn prepare_self(
         )
         .ok_or(SceneError::Capacity)?;
     let mut custody = budget.reserve(output)?;
+    let (inventory, equipment_ports) =
+        inventory::prepare(&facts, &scene.observed.item_art, &mut custody)?;
     let mut recipes = Vec::with_capacity(facts.known_recipes.len());
     for recipe in facts.known_recipes {
         recipes.push(
@@ -620,11 +623,9 @@ pub fn prepare_self(
             action: display,
             action_animation: facts.action_animation.cloned(),
             traits: facts.identity.traits.map(<[_]>::to_vec),
-            inventory: [],
-            inventory_revision: 0,
-            equipment_ports: facts
-                .body
-                .map_or_else(Vec::new, |body| body.equipment_ports.clone()),
+            inventory,
+            inventory_revision: facts.inventory_revision,
+            equipment_ports,
             action_attempts: attempts,
             outings: [],
             action_wording: policy.action_wording.clone(),

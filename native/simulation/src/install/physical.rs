@@ -653,13 +653,6 @@ fn validate_entity(
         (entity.hearth.is_some(), "placed hearth"),
         (entity.practice_target.is_some(), "practice target"),
         (entity.assembly.is_some(), "assembly"),
-        (
-            entity.inventory_revision.is_some()
-                || entity.item.is_some()
-                || entity.container.is_some()
-                || entity.declared_owner.is_some(),
-            "live inventory",
-        ),
         (entity.retirement.is_some(), "retired entity"),
         (entity.replenisher.is_some(), "replenishment source"),
         (
@@ -697,6 +690,14 @@ fn validate_entity(
             return Err(InstallError::CurrentFormat);
         }
     }
+    if entity.actor.is_some()
+        && !matches!(
+            entity.placement,
+            Some(crate::state::Placement::World { .. })
+        )
+    {
+        return Err(InstallError::CurrentFormat);
+    }
     if entity.actor.is_none() {
         validate_plain_entity(entity)?;
     }
@@ -725,16 +726,21 @@ fn validate_entity(
             ) {
                 return Err(InstallError::CurrentFormat);
             }
-            match (&definition.schema, &state.value) {
+            let initial = match (&definition.schema, &state.value) {
                 (
-                    crate::status::AttributeSchema::Number { min, max, .. },
+                    crate::status::AttributeSchema::Number {
+                        min, max, initial, ..
+                    },
                     crate::values::AttributeValue::Number(value),
-                ) if value.is_finite() && value >= min && value <= max => {}
+                ) if value.is_finite() && value >= min && value <= max => value == initial,
                 (
-                    crate::status::AttributeSchema::Category { choices, .. },
+                    crate::status::AttributeSchema::Category { choices, initial },
                     crate::values::AttributeValue::Category(value),
-                ) if choices.contains(value) => {}
+                ) if choices.contains(value) => value == initial,
                 _ => return Err(InstallError::CurrentFormat),
+            };
+            if entity.item.is_some() && !initial {
+                return Err(InstallError::UnsupportedFamily("active material condition"));
             }
             let latched = definition
                 .concern
@@ -925,20 +931,22 @@ fn validate_entity(
 /// installed subset; positive mechanical families retain their own refusal:
 /// docs/maintainers/native-simulation-core-coverage.md#candidate-implementation-ledger
 fn validate_plain_entity(entity: &Entity) -> Result<(), InstallError> {
-    if !matches!(
-        entity.placement,
-        Some(crate::state::Placement::World { .. })
-    ) || entity.animal.is_some()
+    if entity.placement.is_none()
+        || entity.animal.is_some()
         || entity.remains.is_some()
         || entity.sensory_progress.is_some()
         || entity
             .status_effects
             .as_ref()
             .is_some_and(|values| !values.is_empty())
-        || entity
-            .attributes
-            .as_ref()
-            .is_some_and(|values| !values.is_empty())
+        // Stored attributes on material lots use the same typed attribute
+        // validation as every other entity. Active material changes still
+        // require the installed exposure and condition transitions.
+        || (entity.item.is_none()
+            && entity
+                .attributes
+                .as_ref()
+                .is_some_and(|values| !values.is_empty()))
         || entity.spatial.fall_velocity.is_some()
         || entity.spatial.local_avoidance_ready_at.is_some()
     {
@@ -1034,7 +1042,7 @@ pub(super) fn validate_physical_item_references(
     for id in state.entities.ordered_ids() {
         let entity = state.entities.get(id).ok_or(InstallError::CurrentFormat)?;
         if let Some(stock) = entity.resource.as_ref() {
-            if !retained.item_icons.contains_key(&stock.definition_id) {
+            if !retained.items.contains_key(&stock.definition_id) {
                 return Err(InstallError::DefinitionPin);
             }
             if entity.actor.is_some()

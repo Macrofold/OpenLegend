@@ -13,7 +13,8 @@ impl HeapBytes for RetainedOne {
 }
 heap_record!(RetainedMap { rows });
 heap_record!(ItemHandlingReadPolicy {
-    actor_body_profiles
+    actor_body_profiles,
+    packing_loads
 });
 heap_record!(ParticipationReadPolicy { safe_return_anchor });
 heap_record!(SharedPhysicalSlots {});
@@ -51,7 +52,7 @@ heap_record!(RetainedDefinitions {
     invention_policy,
     story_policy,
     item_definitions,
-    item_icons,
+    items,
     recipes,
     flight_routes,
     places,

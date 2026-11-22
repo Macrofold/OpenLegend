@@ -52,9 +52,6 @@ fn one(
     if let Some((row, mut value)) =
         rows::take_one::<RawRecord>(import, table, parent_id, field, present)?
     {
-        if table != "sim_placements" && !row.extra.is_empty() {
-            return Err(InstallError::CurrentFormat);
-        }
         if table == "sim_placements" {
             let path: Vec<String> =
                 serde_json::from_str(&row.id).map_err(|_| InstallError::RowIdentity)?;
@@ -89,6 +86,42 @@ fn one(
             {
                 return Err(InstallError::CurrentFormat);
             }
+        } else if table == "sim_items" {
+            // PostgreSQL's search columns must index the same exact lot as
+            // the canonical child. The typed entity read owns the full lot.
+            #[derive(Deserialize)]
+            struct DefinitionId {
+                id: String,
+            }
+            #[derive(Deserialize)]
+            struct Quantity(
+                #[serde(deserialize_with = "crate::values::deserialize_safe_integer")] u64,
+            );
+            let path: Vec<String> =
+                serde_json::from_str(&row.id).map_err(|_| InstallError::RowIdentity)?;
+            let item = path.get(2).ok_or(InstallError::RowIdentity)?;
+            let definition: DefinitionId = serde_json::from_str(
+                value
+                    .get("definitionPin")
+                    .ok_or(InstallError::CurrentFormat)?
+                    .get(),
+            )
+            .map_err(|_| InstallError::CurrentFormat)?;
+            let quantity = value
+                .get("quantity")
+                .and_then(|raw| serde_json::from_str::<Quantity>(raw.get()).ok())
+                .ok_or(InstallError::CurrentFormat)?;
+            let [stored_item, stored_definition, stored_quantity] = row.extra.as_slice() else {
+                return Err(InstallError::CurrentFormat);
+            };
+            if stored_item.as_str() != Some(item)
+                || stored_definition.as_str() != Some(definition.id.as_str())
+                || stored_quantity.as_u64() != Some(quantity.0)
+            {
+                return Err(InstallError::CurrentFormat);
+            }
+        } else if !row.extra.is_empty() {
+            return Err(InstallError::CurrentFormat);
         }
         join(import, &mut value, &row.id)?;
         parent.insert(field.to_owned(), encode(&value)?);
@@ -416,8 +449,8 @@ fn value_decode(value: &RawRecord, budget: &ByteBudget) -> Result<ValueDecode, I
                 .map_err(|_| InstallError::CurrentFormat)
         })
         .transpose()?;
-    let point_entry = RecordedSurfacePoint::decode_map_entry_bytes()
-        .ok_or(InstallError::Capacity)?;
+    let point_entry =
+        RecordedSurfacePoint::decode_map_entry_bytes().ok_or(InstallError::Capacity)?;
     let action = actor
         .as_ref()
         .and_then(|actor| actor.action)

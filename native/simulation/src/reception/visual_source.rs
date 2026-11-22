@@ -43,7 +43,7 @@ pub(super) fn prepare_visual_source(
     else {
         return Err(invalid());
     };
-    if subject.assembly.is_some() || subject.container.is_some() || subject.item.is_some() {
+    if subject.assembly.is_some() {
         return Err(invalid());
     }
     let resource = subject
@@ -53,9 +53,9 @@ pub(super) fn prepare_visual_source(
             state
                 .installed
                 .retained
-                .item_icons
+                .items
                 .get(&stock.definition_id)
-                .map(|icon| (stock, icon))
+                .map(|definition| (stock, &definition.icon))
                 .ok_or_else(invalid)
         })
         .transpose()?;
@@ -79,9 +79,6 @@ pub(super) fn prepare_visual_source(
         subject,
     );
     let rules = state.installed.observation_rules.value();
-    let inventory = state
-        .inventory
-        .project(&state.administration.object_membership);
     let description = subject
         .actor
         .as_ref()
@@ -210,11 +207,12 @@ pub(super) fn prepare_visual_source(
                 .map_err(|_| invalid())
             })
             .transpose()?,
-        storage: (subject.remains.is_some() || subject.kind == rules.pile_kind).then_some(
-            ObservedStorage {
+        storage: (subject.container.is_some()
+            || subject.remains.is_some()
+            || subject.kind == rules.pile_kind)
+            .then_some(ObservedStorage {
                 placement_revision: *revision,
-            },
-        ),
+            }),
         description: None,
         position,
         heading: pose.heading,
@@ -234,18 +232,62 @@ pub(super) fn prepare_visual_source(
     });
     facets.push(SensoryFacet::Body { body });
     if detailed {
-        facets.push(SensoryFacet::Carried {
-            items: inventory.equipped.to_vec(),
-        });
+        let mut equipped = Vec::new();
+        let mut pile = Vec::new();
+        let exposed_pile = subject.kind == rules.pile_kind || subject.remains.is_some();
+        for item in state
+            .inventory
+            .children(&state.physical.entities, subject_id, !exposed_pile)
+        {
+            let attached = matches!(item.placement, Some(Placement::Attached { .. }));
+            if !attached && !exposed_pile {
+                continue;
+            }
+            let lot = item.item.as_ref().ok_or(ExecutionError::Invariant)?;
+            let definition = state
+                .installed
+                .retained
+                .items
+                .get(&lot.definition_pin.id)
+                .ok_or(ExecutionError::Invariant)?;
+            let name = &definition.named.name;
+            if attached {
+                admit_item(
+                    &mut reservation,
+                    size_of::<CarriedItem>(),
+                    name.storage_bytes(),
+                )?;
+                equipped
+                    .try_reserve_exact(1)
+                    .map_err(|_| ExecutionError::Capacity)?;
+                equipped.push(CarriedItem {
+                    item_kind_as_observed: name.clone(),
+                });
+            }
+            if exposed_pile {
+                let bytes =
+                    heap_sum([name.storage_bytes(), item.id.len(), definition.pin.id.len()])
+                        .ok_or(ExecutionError::Capacity)?;
+                admit_item(&mut reservation, size_of::<ObservedPileItem>(), bytes)?;
+                pile.try_reserve_exact(1)
+                    .map_err(|_| ExecutionError::Capacity)?;
+                pile.push(ObservedPileItem {
+                    id: item.id.clone(),
+                    definition_id: definition.pin.id.clone(),
+                    name: name.clone(),
+                    quantity: lot.quantity as f64,
+                    portable: definition.portable,
+                });
+            }
+        }
+        facets.push(SensoryFacet::Carried { items: equipped });
         if let Some(text) = description.filter(|text| !text.is_empty()) {
             facets.push(SensoryFacet::Description {
                 text: text.clone().into(),
             });
         }
-        if subject.kind == rules.pile_kind || subject.remains.is_some() {
-            facets.push(SensoryFacet::PileContents {
-                items: inventory.pile.to_vec(),
-            });
+        if exposed_pile {
+            facets.push(SensoryFacet::PileContents { items: pile });
         }
         let (attributes, guard) = project_attributes(
             subject,
@@ -305,8 +347,18 @@ pub(super) fn prepare_visual_source(
         location,
         pose,
         facets,
-        inventory_revision: inventory.revision,
+        inventory_revision: state.administration.object_membership.revision,
         token,
         reservation,
     })
+}
+
+fn admit_item(
+    reservation: &mut ByteReservation,
+    element: usize,
+    body: usize,
+) -> Result<(), ExecutionError> {
+    let size = heap_sum([reservation.bytes(), element, body]).ok_or(ExecutionError::Capacity)?;
+    reservation.resize(size)?;
+    Ok(())
 }

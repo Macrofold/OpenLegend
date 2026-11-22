@@ -44,6 +44,7 @@ import {
 import type { Entity, ItemInstance, RecipeDefinition, WorldState } from './types.js';
 import { isAssemblyPlacement } from './spatial-state.js';
 import { equipmentConflicts, equipmentProblem } from './equipment.js';
+import objectStorage from './object-storage.json' with { type: 'json' };
 
 /** Container capacity is authored by its exact current item definition. */
 export function itemContainerCapacity(world: WorldState, entity: Entity): number | undefined {
@@ -98,12 +99,10 @@ export interface ObjectLineage {
   quantity: number;
   unitPin: DefinitionPin;
 }
-export const ITEM_COUNT_PIN: Readonly<DefinitionPin> = Object.freeze({
-  id: 'native-item-count',
-  version: 1,
-  digest: 'positive-safe-integer-units-v1',
-});
-export const MAX_CONTAINMENT_DEPTH = 16;
+export const ITEM_COUNT_PIN: Readonly<DefinitionPin> = Object.freeze(objectStorage.countPin);
+export const MAX_CONTAINMENT_DEPTH = objectStorage.maximumDepth;
+export const OWNED_ITEM_VIEW_LIMIT = objectStorage.ordinaryViewEntries;
+export const OWNED_ITEM_SHORTCUT_LIMIT = objectStorage.shortcutEntries;
 type Children = ObjectIndexNode<number> | undefined;
 type ChildIndex = ObjectIndexNode<Children> | undefined;
 interface MaterialMembership {
@@ -1634,7 +1633,7 @@ export function validateObjects(world: WorldState): void {
         entity.container.access &&
         (!hasRecordFields(entity.container.access, ['actors']) ||
           !Array.isArray(entity.container.access.actors) ||
-          entity.container.access.actors.length > 100 ||
+          entity.container.access.actors.length > objectStorage.maximumContainerGrantees ||
           entity.container.access.actors.some(
             (id) => !isSafeRecordId(id) || !entityGet(world.entities, id)?.actor,
           ))

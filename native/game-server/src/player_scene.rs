@@ -31,6 +31,46 @@ pub struct PlayerScenePolicy {
     pub observed: ObservedPolicy,
 }
 
+impl PlayerScenePolicy {
+    pub(crate) fn encode_inventory_bindings(
+        &self,
+        items: &[openlegend_simulation::install::OwnedItem<'_>],
+        budget: &openlegend_simulation::host::ByteBudget,
+    ) -> Result<axum::body::Bytes, crate::wire::WireError> {
+        #[derive(Serialize)]
+        struct Binding<'a> {
+            #[serde(flatten)]
+            item: openlegend_simulation::install::OwnedItem<'a>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            art: Option<&'a PublicArt>,
+        }
+        #[derive(Serialize)]
+        struct View<'a> {
+            ok: bool,
+            items: &'a [Binding<'a>],
+        }
+        let _custody = budget
+            .reserve(items.len() * std::mem::size_of::<Binding<'_>>())
+            .map_err(|_| crate::wire::WireError::Capacity)?;
+        let values: Vec<_> = items
+            .iter()
+            .map(|item| Binding {
+                item: *item,
+                art: self.observed.item_art.get(item.definition_id),
+            })
+            .collect();
+        crate::wire::encode(
+            &View {
+                ok: true,
+                items: &values,
+            },
+            b"",
+            b"",
+            budget,
+        )
+    }
+}
+
 #[derive(Debug)]
 pub enum SceneError {
     Capture,

@@ -39,6 +39,7 @@ import {
   currentInventoryInspection,
   entityChangesBetween,
   custodian,
+  OWNED_ITEM_VIEW_LIMIT,
 } from '@open-legend/domain';
 import { receivedEventAccounts } from './received-event-accounts.js';
 import { attackSourceView } from './attack-execution-view.js';
@@ -390,7 +391,7 @@ export async function projectView(
     () => equippedItems(world, player.id),
   );
   const inventoryItems = memo('inventoryItems', [observation.inventory], () =>
-    observation.inventory.slice(0, 60),
+    observation.inventory.slice(0, OWNED_ITEM_VIEW_LIMIT),
   );
   const ownedDetailsRevision = observation.inventory.length
     ? ownedInventoryDetailRevision(cache, world, player.id, revision)

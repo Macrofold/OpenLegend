@@ -35,6 +35,7 @@ mod npc;
 mod recall_maintenance;
 pub(crate) use npc::NpcBinding;
 mod player_history;
+mod player_inventory;
 pub(crate) mod narrator;
 pub(crate) use player_history::PlayerHistoryRead;
 

@@ -20,6 +20,7 @@ pub use direct_player::{
     PlayerActionFacts, PlayerCommunicationSubject, PlayerIdentityFacts, PlayerMapMarker,
     PlayerObservedBody, PlayerPerception, PlayerSelfAttribution, PlayerSelfFacts,
 };
+mod inventory;
 pub(crate) mod maintenance;
 mod metadata;
 mod validity;
@@ -787,9 +788,7 @@ pub(crate) fn with_actor_self<T>(
     } else {
         OwnReferenceAttribution::Sequence(state.physical.header.sequence)
     };
-    let inventory = state
-        .inventory
-        .project(&state.administration.object_membership);
+    let inventory = inventory::capture(state, actor_id, private, budget)?;
     let (practice_records, _practice_guard) = if private {
         (Vec::new(), budget.reserve(0)?)
     } else {
@@ -907,7 +906,7 @@ pub(crate) fn with_actor_self<T>(
                     .iter()
                     .any(|plan| *plan == body.plan)
             }),
-            inventory_count: inventory.held_stock.len(),
+            inventory_count: inventory.count,
             known_recipes_count: state.learned_capabilities.known_recipes(actor_id).len(),
             forgotten: state
                 .experience
@@ -933,8 +932,10 @@ pub(crate) fn with_actor_self<T>(
                 module_revision: state.installed.manifest.revision,
                 spatial_revision: state.installed.geometry.spatial.revision,
                 body: actor.body.as_ref(),
-                held_stock: inventory.held_stock,
-                equipped: inventory.equipped,
+                inventory_revision: entity.inventory_revision.unwrap_or_default(),
+                inventory: &inventory.items,
+                held_stock: &inventory.held,
+                equipped: &inventory.equipped,
                 knowledge_revision: state
                     .reception
                     .knowledge_revisions

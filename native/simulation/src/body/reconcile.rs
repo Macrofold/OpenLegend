@@ -353,10 +353,12 @@ impl BodyReconcileCursor {
                     }) else {
                         continue;
                     };
-                    // Physical installation and selected command writers close
-                    // the genuinely empty custody branch; no item lot can be
-                    // invented or silently abandoned by this constructor.
-                    if actor.agency.plan.is_some() || actor.agency.suspended_plan().is_some() {
+                    // Closing an equipped life needs the inventory transfer
+                    // and loss report in the same candidate as the new corpse.
+                    if core.state.inventory.has_children(&self.actor)
+                        || actor.agency.plan.is_some()
+                        || actor.agency.suspended_plan().is_some()
+                    {
                         return Err(ExecutionError::UnsupportedFamily);
                     }
                     let growth = super::corpse::allocation_bound(entity)

@@ -96,12 +96,8 @@ impl NpcActivityPreparation {
         {
             return Err(ExecutionError::UnsupportedFamily);
         }
-        // These owners were minted from complete current entity/resource/social
-        // collections; no selected writer creates a positive member here.
-        let _inventory = core
-            .state
-            .inventory
-            .project(&core.state.administration.object_membership);
+        // The selected activity options below use only the admitted social
+        // and movement owners. They never claim or offer an item.
         core.state.physical.participation.require_closed_social();
         let count = targets.len();
         let storage = budget.reserve(
