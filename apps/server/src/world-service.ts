@@ -1891,6 +1891,7 @@ export class WorldService {
         : this.store.prepareCommit?.(this.persistedRevision, saved, {
             before: transitionBefore,
             after: historyWorld,
+            sourceDeletions: retention.sourceDeletions,
           });
       const revision = await timed('world.commit', () =>
         this.store.commit(this.persistedRevision, saved, invalidatedMemoryIds, appendEventCount, {

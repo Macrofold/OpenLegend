@@ -69,7 +69,7 @@ import {
   compactAppraisalHistory,
   compactContributionHistory,
 } from './history-residency.js';
-import { MemoryRepository } from './memory-repository.js';
+import { MEMORY_SOURCE_TABLES, MemoryRepository } from './memory-repository.js';
 import {
   nativeRestoredArchives,
   nativeRestoredSourceBatches,
@@ -476,7 +476,11 @@ export interface GameRepository extends WorldStore {
   prepareCommit?(
     expectedRevision: number,
     state: SavedWorld,
-    history: { before?: WorldState; after: WorldState },
+    history: {
+      before?: WorldState;
+      after: WorldState;
+      sourceDeletions?: ReadonlyMap<string, readonly string[]>;
+    },
     pending?: { changes: RecordChanges; history?: ReturnType<typeof prepareHistory> },
   ): PreparedCommit;
   adoptHistory?(original: SavedWorld, prepared: SavedWorld): void;
@@ -583,7 +587,12 @@ export class SqlGameRepository implements GameRepository {
       const planned = await this.memories.prepareSourceVersionRetention(state, changes, {
         before: metadata.withChanges(beforeChanges),
       });
-      return { state: planned.state, rows: new Map(), versions: planned.plan };
+      const sourceDeletions = new Map<string, readonly string[]>();
+      for (const table of Object.values(MEMORY_SOURCE_TABLES)) {
+        const deleted = changes.deletes.get(table);
+        if (deleted?.length) sourceDeletions.set(table, deleted);
+      }
+      return { state: planned.state, rows: new Map(), versions: planned.plan, sourceDeletions };
     });
   }
   async prepareRetainedSourceClosure(
@@ -1125,7 +1134,11 @@ export class SqlGameRepository implements GameRepository {
   prepareCommit(
     expectedRevision: number,
     state: SavedWorld,
-    history: { before?: WorldState; after: WorldState },
+    history: {
+      before?: WorldState;
+      after: WorldState;
+      sourceDeletions?: ReadonlyMap<string, readonly string[]>;
+    },
     pending?: { changes: RecordChanges; history?: ReturnType<typeof prepareHistory> },
   ): PreparedCommit {
     if (this.acceptedRevision !== expectedRevision)
@@ -1136,10 +1149,20 @@ export class SqlGameRepository implements GameRepository {
       baseline,
       revision: expectedRevision,
       state,
-      changes: timedSync(
-        'persistence.prepareRecords',
-        () => pending?.changes ?? this.records.prepare(baseline ?? undefined, state),
-      ),
+      changes: timedSync('persistence.prepareRecords', () => {
+        const changes = pending?.changes ?? this.records.prepare(baseline ?? undefined, state);
+        // A protected flush may release selected original memories before this
+        // resident diff. Keep the exact semantic deletions from the protected
+        // preparation with its archive plan. Recreated rows still belong to the
+        // final candidate. docs/memory-architecture.md#maintenance-storage-failures
+        for (const [table, prepared] of history.sourceDeletions ?? []) {
+          const writes = new Set(changes.writes.get(table)?.map((row) => row.id));
+          const deleted = new Set(changes.deletes.get(table));
+          for (const id of prepared) if (!writes.has(id)) deleted.add(id);
+          if (deleted.size) changes.deletes.set(table, [...deleted]);
+        }
+        return changes;
+      }),
       history:
         pending?.history ??
         this.prepareHistoryWrite(

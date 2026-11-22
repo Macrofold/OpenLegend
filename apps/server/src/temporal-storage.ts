@@ -70,6 +70,8 @@ export interface PreparedMemoryRetention {
   positions?: Map<string, Map<string, number>>;
   /** Selected canonical predecessors for exact archival and cold-owner diffs. */
   previous?: Map<string, Map<string, unknown>>;
+  /** Exact accepted personal-source removals that must survive residency release. */
+  sourceDeletions?: ReadonlyMap<string, readonly string[]>;
   versions?: SourceVersionPlan;
 }
 /** Several retention stages may edit one account. Preserve its first selected
