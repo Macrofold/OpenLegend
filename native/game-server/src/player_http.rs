@@ -207,6 +207,8 @@ pub(crate) fn router(
         .route("/api/chat", post(dialogue::chat))
         .route("/api/chat/retry", post(dialogue::chat))
         .route("/api/chat/receipt", post(dialogue::receipt))
+        // Preserve existing invention reads and reuse. New World Agent and invention
+        // work is deferred in docs/projects/rust-server-completion-feature-spec.md#rust-cutover-scope.
         .route("/api/inventions/list", post(inventions::list))
         .route("/api/inventions/receipt", post(inventions::receipt))
         .route("/api/world-agent/messages", post(inventions::reuse::submit))
