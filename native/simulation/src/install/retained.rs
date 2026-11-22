@@ -138,8 +138,8 @@ impl RetainedDefinitions {
     }
 }
 
-/// Derived once from the same validated immutable definition body. Read-only
-/// trade presentation needs these fields; item effects remain unsupported.
+/// Derived once from the immutable handling policy. Discovery and physical
+/// item transitions use the same installed fields.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ItemHandlingReadPolicy {
@@ -149,9 +149,23 @@ pub(crate) struct ItemHandlingReadPolicy {
     pub pickup_seconds: f64,
     pub pickup_label: String,
     pub pickup_narration: String,
+    pub drop: ItemDropPolicy,
     pub object_body: crate::state::BodyProfile,
     #[serde(default)]
     packing_loads: Vec<PackingLoad>,
+}
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ItemDropPolicy {
+    pub pile_name: crate::text::JsText,
+    pub same_pile_distance: f64,
+    pub label: String,
+    pub narration: String,
+    pub success: String,
+    pub unavailable: String,
+    pub quantity: String,
+    pub needed: String,
+    pub support: String,
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -449,8 +463,14 @@ pub(crate) fn install_retained(
     )?;
     let item_handling_read: ItemHandlingReadPolicy =
         serde_json::from_str(item_handling.payload()).map_err(|_| InstallError::CurrentFormat)?;
+    let drop = &item_handling_read.drop;
     if !(0.0..=3600.0).contains(&item_handling_read.pickup_seconds)
+        || !(drop.same_pile_distance > 0.0 && drop.same_pile_distance <= item_handling_read.reach)
+        || drop.pile_name.trim_is_empty()
         || [&item_handling_read.pickup_label, &item_handling_read.pickup_narration]
+            .into_iter().any(|text| text.trim().is_empty())
+        || [&drop.label, &drop.narration, &drop.success, &drop.unavailable,
+            &drop.quantity, &drop.needed, &drop.support]
             .into_iter().any(|text| text.trim().is_empty())
     {
         return Err(InstallError::CurrentFormat);

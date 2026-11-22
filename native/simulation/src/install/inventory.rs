@@ -373,6 +373,12 @@ pub struct InventoryDetail<'a> {
     pub equipment_ports: Option<&'a [String]>,
     pub equipment_fits: bool,
     pub eating: Option<crate::consumption::EatingOffer<'a>>,
+    pub drop: Option<DropOffer<'a>>,
+}
+
+pub struct DropOffer<'a> {
+    pub label: &'a str,
+    pub reason: Option<&'a str>,
 }
 
 pub struct DirectInventory<'a> {

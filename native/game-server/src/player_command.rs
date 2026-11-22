@@ -261,6 +261,7 @@ enum CommandKind {
     #[serde(rename = "place-hearth")]
     PlaceHearth,
     Pickup,
+    Drop,
     Cook,
     Craft,
     Eat,
@@ -719,7 +720,10 @@ impl CommandRequest {
                 && command.expected_revision.is_some())
             || (!matches!(command.kind, CommandKind::Unequip) && command.placement_revision.is_some())
             || (!matches!(command.kind, CommandKind::InspectItem) && command.container_id.is_some())
-            || command.quantity.is_some_and(|quantity| !matches!(command.kind, CommandKind::Pickup) || quantity == 0)
+            || command.quantity.is_some_and(|quantity| {
+                !matches!(command.kind, CommandKind::Pickup | CommandKind::Drop)
+                    || quantity == 0 || quantity > openlegend_simulation::identity::MAX_SAFE_INTEGER
+            })
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
             || (!matches!(command.kind, CommandKind::PlaceHearth) && command.hearth_plan.is_some())
@@ -826,6 +830,13 @@ impl CommandRequest {
             {
                 Ok(())
             }
+            CommandKind::Drop if command.position.is_none()
+                && command.known_place.is_none()
+                && command.expected_action_id.is_none()
+                && command.target_id.is_none()
+                && command.item_id.as_deref().is_some_and(id)
+                && command.quantity.is_some()
+                && command.gathering_mode.is_none() => Ok(()),
             CommandKind::Craft
                 if command.position.is_none() && command.known_place.is_none()
                     && command.target_id.is_none() && command.item_id.is_none()
@@ -999,6 +1010,10 @@ impl PreparedRequest {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 quantity: input.quantity,
+            }),
+            CommandKind::Drop => Ok(RuntimePlayerCommand::Drop {
+                item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                quantity: input.quantity.ok_or(StoreError::InvalidRecord)?,
             }),
             CommandKind::Fish => Ok(RuntimePlayerCommand::Fish {
                 target: target.ok_or(StoreError::InvalidRecord)?,

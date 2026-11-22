@@ -1187,7 +1187,15 @@ export function inventoryItemChoices(
   if (definition.portable === true && accessiblePossession(world, player.id, item.id)) {
     const command = { type: 'drop' as const, itemId: item.id, quantity: item.quantity };
     const reason = dropItemReason(world, player, item.id, item.quantity);
-    actions.push(action(`drop-${item.id}`, 'Drop', command, !reason, reason ?? undefined));
+    actions.push(
+      action(
+        `drop-${item.id}`,
+        world.itemHandling.drop.label,
+        command,
+        !reason,
+        reason ?? undefined,
+      ),
+    );
   }
   if (definition.equipment && accessiblePossession(world, player.id, item.id)) {
     const command: CommandInput = { type: 'equip', itemId: item.id };

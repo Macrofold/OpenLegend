@@ -21,7 +21,13 @@ pub(crate) fn pickup_pile<'a>(
         .retained
         .item_handling_read
         .can_handle(&actor.spatial.body.id)
-        && pile.kind == state.installed.observation_rules.value().pile_kind
+        && is_item_pile(&state.installed.observation_rules.value().pile_kind, pile))
+    .then_some(pile)
+}
+
+/// The finite root shared by pickup, placement and the current row writer.
+pub(crate) fn is_item_pile(kind: &str, pile: &Entity) -> bool {
+    pile.kind == kind
         && pile.actor.is_none()
         && pile.container.is_none()
         // This selected owner can retire a bare pile. Other physical members
@@ -37,8 +43,7 @@ pub(crate) fn pickup_pile<'a>(
         && pile.attributes.is_none()
         && pile.status_effects.is_none()
         && pile.mechanism_fields.is_none()
-        && pile.world_position().is_some())
-    .then_some(pile)
+        && pile.world_position().is_some()
 }
 
 fn portable_lot<'a>(

@@ -16,9 +16,11 @@ heap_record!(ItemHandlingReadPolicy {
     actor_body_profiles,
     pickup_label,
     pickup_narration,
+    drop,
     object_body,
     packing_loads
 });
+heap_record!(ItemDropPolicy { pile_name, label, narration, success, unavailable, quantity, needed, support });
 heap_record!(ParticipationReadPolicy { safe_return_anchor });
 heap_record!(SharedPhysicalSlots {});
 heap_record!(SocialOfferReadMessages {

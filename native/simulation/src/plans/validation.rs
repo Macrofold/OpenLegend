@@ -87,6 +87,7 @@ pub(crate) fn valid_command(
         | NativeCommand::TendFire { .. }
         | NativeCommand::Feed { .. }
         | NativeCommand::Gather { .. }
+        | NativeCommand::Drop { .. }
         | NativeCommand::Equipment { .. }
         | NativeCommand::Eat { .. }
         | NativeCommand::Cancel { .. }

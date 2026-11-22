@@ -227,6 +227,7 @@ fn created<T: Serialize + ?Sized>(
 }
 fn write_created_entity(
     entity: &crate::state::Entity,
+    pile_kind: &str,
     position: u64,
     ledger: &RecordLedger,
     output: &mut RowEncoder<'_>,
@@ -330,6 +331,10 @@ fn write_created_entity(
     if let Some(heat) = &entity.heat {
         created(output, "sim_heat", &["world", "entities", id, "heat"], &parent, "heat", 0,
             heat, &[], budget)?;
+        observe(output, "sim_attributes", &parent, false, 0, budget)?;
+        return observe_entity_children(entity, &parent, output, budget);
+    }
+    if crate::ground_items::is_item_pile(pile_kind, entity) {
         observe(output, "sim_attributes", &parent, false, 0, budget)?;
         return observe_entity_children(entity, &parent, output, budget);
     }
@@ -1040,7 +1045,10 @@ impl PhysicalJournal {
                     .filter(|n| *n < MAX_SAFE_INTEGER)
                     .ok_or_else(error)?;
                 added += 1;
-                write_created_entity(entity, ordinal, ledger, output, budget)?;
+                write_created_entity(
+                    entity, &simulation.installed.observation_rules.value().pile_kind,
+                    ordinal, ledger, output, budget,
+                )?;
                 continue;
             }
             if rows.root

@@ -29,7 +29,7 @@ pub(crate) use inventory::inventory_display_limit;
 pub(crate) use inventory::item_count_pin;
 pub use crate::consumption::EatingOffer;
 pub(crate) use inventory::{owned_by, accessible_bag as inventory_bag_access, parent_id as inventory_parent};
-pub use inventory::{DirectInventory, InventoryDetail, OwnedContainer, OwnedItem, equipment_ports_conflict, shortcut_limit};
+pub use inventory::{DirectInventory, DropOffer, InventoryDetail, OwnedContainer, OwnedItem, equipment_ports_conflict, shortcut_limit};
 pub(crate) use inventory::{accessible_bag, project_owned};
 mod knowledge;
 mod retained;

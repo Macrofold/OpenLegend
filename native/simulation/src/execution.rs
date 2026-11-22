@@ -44,6 +44,7 @@ mod inventory;
 pub(crate) mod gift;
 mod item_holds;
 pub(crate) use inventory::partitionable_stock;
+pub(crate) use inventory::drop_item_problem;
 pub(crate) use inventory::{OwnedDebits, can_debit_lot, can_debit_lot_after_hold};
 mod participation;
 pub(crate) use inventory::{EquipmentDecision, EquipmentRequest, equipment_fits};

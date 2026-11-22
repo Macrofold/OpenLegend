@@ -231,6 +231,7 @@ pub(crate) enum NativeCommand {
         item_id: Option<String>,
     },
     Pickup { envelope: CommandEnvelope, target_id: String, item_id: String, quantity: Option<u64> },
+    Drop { envelope: CommandEnvelope, item_id: String, quantity: u64 },
     Eat { envelope: CommandEnvelope, item_id: String },
     Equipment {
         envelope: CommandEnvelope,
@@ -500,9 +501,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
         if (input.kind != "gather" && input.gathering_mode.is_some())
-            || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "pickup" | "eat" | "equip" | "unequip") && input.item_id.is_some())
+            || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "pickup" | "drop" | "eat" | "equip" | "unequip") && input.item_id.is_some())
             || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
-            || input.quantity.is_some_and(|n| input.kind != "pickup" || n == 0 || n > crate::identity::MAX_SAFE_INTEGER)
+            || input.quantity.is_some_and(|n| !matches!(input.kind.as_str(), "pickup" | "drop") || n == 0 || n > crate::identity::MAX_SAFE_INTEGER)
             || (input.kind != "craft" && input.recipe_id.is_some())
             || (input.kind != "cook" && (input.heat_id.is_some() || input.preparation_id.is_some()
                 || input.preparation_version.is_some() || input.preparation_digest.is_some() || input.inputs.is_some()))
@@ -740,6 +741,14 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     quantity: input.quantity,
                 })
             }
+            "drop" if !extras_for_move && input.destination.is_none() => {
+                let invalid = || D::Error::custom("Drop requires an exact item and quantity.");
+                Ok(Self::Drop {
+                    envelope,
+                    item_id: input.item_id.filter(|id| is_safe_record_id(id)).ok_or_else(invalid)?,
+                    quantity: input.quantity.ok_or_else(invalid)?,
+                })
+            }
             "eat" if !extras_for_move && input.destination.is_none() => Ok(Self::Eat {
                 envelope,
                 item_id: input.item_id.filter(|id| is_safe_record_id(id))
@@ -804,6 +813,7 @@ impl NativeCommand {
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
             | Self::Pickup { envelope, .. }
+            | Self::Drop { envelope, .. }
             | Self::TendFire { envelope, .. }
             | Self::PlaceHearth { envelope, .. }
             | Self::Cook { envelope, .. }
@@ -835,6 +845,7 @@ impl NativeCommand {
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
             | Self::Pickup { envelope, .. }
+            | Self::Drop { envelope, .. }
             | Self::TendFire { envelope, .. }
             | Self::PlaceHearth { envelope, .. }
             | Self::Cook { envelope, .. }
@@ -860,6 +871,7 @@ impl NativeCommand {
             Self::Gather { .. } => "gather",
             Self::Fish { .. } => "fish",
             Self::Pickup { .. } => "pickup",
+            Self::Drop { .. } => "drop",
             Self::TendFire { .. } => "tend-fire",
             Self::PlaceHearth { .. } => "place-hearth",
             Self::Cook { .. } => "cook",

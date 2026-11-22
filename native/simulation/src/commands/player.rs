@@ -40,6 +40,7 @@ pub enum RuntimePlayerCommand<'a> {
     PlaceHearth { definition: &'a DefinitionPin, site: &'a SurfacePoint },
     TendFire { target: &'a str, operation: crate::fire_care::FireOperation, item: Option<&'a str> },
     Pickup { target: &'a str, item: &'a str, quantity: Option<u64> },
+    Drop { item: &'a str, quantity: u64 },
     InspectItem { item: &'a str, container: &'a str, expected_revision: u64 },
     Eat(&'a str),
     Equip(&'a str),
@@ -54,6 +55,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Cancel(action) => action.map_or(0, str::len),
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } | Self::Pickup { target, item: tool, .. } => target.len() + tool.len(),
+            Self::Drop { item, .. } => item.len(),
             Self::Craft { recipe } => recipe.len(),
             Self::Handover { target, gift } => target.len() + gift.retained_text_bytes(),
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
@@ -180,6 +182,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
             Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
             Self::Pickup { target, item, .. } => ("pickup", None, None, Some(target), Some(item), None),
+            Self::Drop { item, .. } => ("drop", None, None, None, Some(item), None),
             Self::Fish { target, tool } => ("fish", None, None, Some(target), Some(tool), None),
             Self::Craft { .. } => ("craft", None, None, None, None, None),
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
@@ -197,6 +200,7 @@ impl RuntimePlayerCommand<'_> {
         };
         let quantity = match self {
             Self::Pickup { quantity, .. } => quantity,
+            Self::Drop { quantity, .. } => Some(quantity),
             _ => None,
         };
         let recipe_id = match self {
@@ -298,6 +302,11 @@ impl RuntimePlayerCommand<'_> {
             },
             Self::Pickup { target, item, quantity } => NativeCommand::Pickup {
                 envelope, target_id: target.into(), item_id: item.into(), quantity,
+            },
+            Self::Drop { item, quantity } => NativeCommand::Drop {
+                envelope,
+                item_id: item.to_owned(),
+                quantity,
             },
             Self::Fish { target, tool } => NativeCommand::Fish {
                 envelope,

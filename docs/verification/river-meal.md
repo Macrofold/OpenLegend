@@ -194,6 +194,14 @@ Two signed-in characters each started taking three from the same pile of five. O
 
 An earlier Rust build saved the correct quantity while the visible pile still showed eight. Piles and remains now check their own public contents revision when reusing a measurement. The Source whole merge initially failed on the old placement's PostgreSQL foreign key. Source now deletes that exact retired placement before deleting the empty pile, after applying surviving moves. Repaired Source tree `ef27978e8cb9` and stand-alone Rust tree `44d386b6f667` passed the matched browser checks. The Rust executable hash was `9ef938c8b61a`. All eight warm and cold Rust shutdowns released their tracked allocations. The failed attempts and exact evidence are retained under `nsc04-partial-pickup-20261122`.
 
+## Stand-alone Rust inventory drop
+
+A signed-in player used the inventory quantity control to put two units of raw fish on the ground. The same request returned its original result. A second drop of one unit at the same position used that pile and merged with the first ground lot. The browser stream showed the pile and its three units. PostgreSQL stored two drop events, two splits and one merge. A submitted ID for another character's carried stock moved nothing. Cold reopening preserved the ground and carried quantities and the original receipt. The player walked back and used the actual pile action to collect the dropped units. The original carried lot again held all eight units and the empty pile disappeared.
+
+The selected world supplies the pile footprint, same-location distance and wording. Rust checks that the actor can place that footprint on their supported surface, then commits the pile and custody changes through the existing physical journal. An early request was refused by the live entity store's list of allowed constructors. After that list was removed, the save writer still expected an actor record for the new root. The recorded diagnostics identify both refusals. The qualified writer recognizes the same ground pile used by pickup and saves its current root and placement in the existing transaction.
+
+The local archive `nsc04-ordinary-drop-20261122` retains `bcb937419bea` for Source and `cc12aca78b89` and `ef0291ac9107` for Rust on tree `61e816df47f2`, executable `28c818de3183`. The browser used separately owned disposable PostgreSQL databases and the Rust process ran without Node. The scoped build, type and network checks passed. The NPC offer and composed and grouped inventory callers have their own proof requirements.
+
 ## Maintained records
 
 - Scope/status: [AV05](../maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking).

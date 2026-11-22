@@ -3861,7 +3861,7 @@ function executeCommandNative(
               !!command.cooperation,
             );
         if (reason) return reject('cannot-drop', reason);
-        result = outcome(true, 'dropped', 'Items dropped on the ground.');
+        result = outcome(true, 'dropped', world.itemHandling.drop.success);
         break;
       }
       case 'inspect-activities': {

@@ -876,11 +876,24 @@ impl NativeWorldSession {
                 state.physical.holds.quantity(&entry.id),
             ).map_err(failure)?;
             let definition = definitions.items.get(item.definition_id).ok_or_else(|| failure("inventory definition unavailable"))?;
+            let drop = &definitions.item_handling_read.drop;
+            let drop = if definition.portable && definitions.item_handling_read.can_handle(&entity.spatial.body.id) {
+                let reason = if let Some(problem) = action_problem {
+                    Some(problem.message.as_str())
+                } else {
+                    crate::execution::drop_item_problem(state, entity, item.id, item.quantity, || Ok(()))
+                        .map_err(failure)?
+                };
+                Some(crate::install::DropOffer { label: &drop.label, reason })
+            } else {
+                None
+            };
             items.push(crate::install::InventoryDetail {
                 item, category: definition.category, description: definition.description.as_ref(), properties: &definition.properties,
                 equipment_ports: definition.equipment_ports(),
                 equipment_fits: crate::execution::equipment_fits(state, entity, entry),
                 eating: eater.as_ref().and_then(|eater| eater.offer(definition, action_problem)),
+                drop,
             });
         }
         Ok(consume(crate::install::DirectInventory {

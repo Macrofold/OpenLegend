@@ -410,6 +410,7 @@ impl ActivityDisplayCursor {
             | NativeCommand::Gather { .. }
             | NativeCommand::Fish { .. }
             | NativeCommand::Pickup { .. }
+            | NativeCommand::Drop { .. }
             | NativeCommand::TendFire { .. }
                 | NativeCommand::PlaceHearth { .. }
             | NativeCommand::Cook { .. }

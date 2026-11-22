@@ -34,7 +34,7 @@ pub(crate) fn partitionable_stock(
         })
 }
 
-fn compatible_lots(
+pub(super) fn compatible_lots(
     source: &Entity,
     target: &Entity,
     definition: &crate::install::ItemDefinitionRead,
@@ -166,7 +166,7 @@ impl CoreMutation<'_> {
         } else {
             item.to_owned()
         };
-        self.relocate_direct_loose_lot(actor, source, &moving)?;
+        self.move_contained_lot(source, actor, &moving)?;
         if let Some(receiver) = receiver {
             self.transfer_activity_sources(&moving, &receiver, quantity, quantity)?;
             self.grow_direct_lot(actor, &receiver, quantity, false)?;
@@ -186,7 +186,7 @@ impl CoreMutation<'_> {
         }
     }
 
-    fn transfer_activity_sources(
+    pub(super) fn transfer_activity_sources(
         &mut self,
         source: &str,
         target: &str,
@@ -197,113 +197,6 @@ impl CoreMutation<'_> {
             .activity
             .transfer_item_sources(&mut self.state.activity, source, target, before, quantity)
             .map_err(ExecutionError::Activity)
-    }
-
-    fn relocate_direct_loose_lot(
-        &mut self,
-        actor: &str,
-        pile: &str,
-        item: &str,
-    ) -> Result<(), ExecutionError> {
-        let entities = &self.state.physical.entities;
-        let (Some(source), Some(destination), Some(child)) = (
-            entities.handle(pile),
-            entities.handle(actor),
-            entities.handle(item),
-        ) else {
-            return Err(ExecutionError::Invariant);
-        };
-        let body = entities
-            .resolve(destination)
-            .ok_or(ExecutionError::Invariant)?;
-        let pile_body = entities.resolve(source).ok_or(ExecutionError::Invariant)?;
-        let selected = entities.resolve(child).ok_or(ExecutionError::Invariant)?;
-        let selected_lot = selected.item.as_ref().ok_or(ExecutionError::Invariant)?;
-        if !self
-            .state
-            .inventory
-            .has_direct_item(entities, pile, selected)
-        {
-            return Err(ExecutionError::Invariant);
-        }
-        let Some(Placement::Contained { revision, .. }) = &selected.placement else {
-            return Err(ExecutionError::Invariant);
-        };
-        let next_placement = next_revision(*revision)?;
-        let item_before = selected_lot.revision;
-        let next_item = next_revision(item_before)?;
-        let source_before = pile_body.inventory_revision;
-        let source_after = next_revision(source_before.unwrap_or_default())?;
-        let destination_before = body.inventory_revision;
-        let destination_after = next_revision(destination_before.unwrap_or_default())?;
-        let prior_membership = self.state.administration.object_membership.revision;
-        let next_membership = next_revision(prior_membership)?;
-        self.journal.physical.reserve(
-            heap_sum([
-                size_of::<Undo>(),
-                size_of::<InventoryUndo>(),
-                size_of::<ContentsBefore>(),
-                actor.len(),
-                pile.len(),
-            ])
-            .ok_or(ExecutionError::Capacity)?,
-        )?;
-        let detached = self.state.inventory.detach_loose_item(pile, child)?;
-        self.journal
-            .physical
-            .undo
-            .push(Undo::Inventory(Box::new(InventoryUndo {
-                parent: source,
-                previous_contents: source_before,
-                previous_membership: prior_membership,
-                child,
-                edit: ItemEdit::Move {
-                    destination,
-                    detached,
-                    old_placement: None,
-                    item_before,
-                },
-                lineage: None,
-                prior_lineage_presence: false,
-                extra_contents: vec![ContentsBefore {
-                    handle: destination,
-                    revision: destination_before,
-                    bag: None,
-                }],
-            })));
-        self.state
-            .inventory
-            .add_item(entities, actor, child, &self.journal.budget)?;
-        let entities = &mut self.state.physical.entities;
-        let lot = entities
-            .resolve_mut(child)
-            .ok_or(ExecutionError::Invariant)?;
-        let replaced = lot
-            .placement
-            .replace(Placement::Contained {
-                parent_entity_id: actor.into(),
-                revision: next_placement,
-            })
-            .ok_or(ExecutionError::Invariant)?;
-        let Some(Undo::Inventory(moved)) = self.journal.physical.undo.last_mut() else {
-            return Err(ExecutionError::Invariant);
-        };
-        let ItemEdit::Move { old_placement, .. } = &mut moved.edit else {
-            return Err(ExecutionError::Invariant);
-        };
-        *old_placement = Some(replaced);
-        lot.item.as_mut().ok_or(ExecutionError::Invariant)?.revision = next_item;
-        entities
-            .resolve_mut(source)
-            .ok_or(ExecutionError::Invariant)?
-            .inventory_revision = Some(source_after);
-        entities
-            .resolve_mut(destination)
-            .ok_or(ExecutionError::Invariant)?
-            .inventory_revision = Some(destination_after);
-        self.state.administration.object_membership.revision = next_membership;
-        entities.settle_operational_memory(child, &mut self.journal.physical.reservation, false)?;
-        Ok(())
     }
 
     pub(crate) fn retire_empty_pickup_pile(&mut self, pile: &str) -> Result<(), ExecutionError> {

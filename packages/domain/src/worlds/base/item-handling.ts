@@ -11,6 +11,17 @@ export const BASE_ITEM_HANDLING: ItemHandlingPolicy = {
   pickupSeconds: 1,
   pickupLabel: 'Pick Up',
   pickupNarration: '{actor.subject} picked up {items.name} from {source.name:definite}.',
+  drop: {
+    pileName: 'Items on the ground',
+    samePileDistance: 0.01,
+    label: 'Drop',
+    narration: '{actor.subject} dropped {items.name}.',
+    success: 'Items dropped on the ground.',
+    unavailable: 'Choose a portable item in this inventory.',
+    quantity: 'Choose an available whole quantity.',
+    needed: 'This item or its contents are needed by ongoing work.',
+    support: 'There is no room to drop this here.',
+  },
   actorBodyProfiles: ['person'],
   objectBody: BASE_BODY_PROFILES.object,
 };

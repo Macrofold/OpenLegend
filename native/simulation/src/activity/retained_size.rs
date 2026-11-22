@@ -184,7 +184,8 @@ impl HeapBytes for NativeCommand {
                 target_id,
                 ..
             } => heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?]),
-            Self::Eat { envelope, item_id } | Self::Equipment { envelope, item_id, .. } =>
+            Self::Eat { envelope, item_id } | Self::Equipment { envelope, item_id, .. }
+            | Self::Drop { envelope, item_id, .. } =>
                 heap_sum([envelope.heap_bytes()?, item_id.heap_bytes()?]),
             Self::Gather {
                 envelope,

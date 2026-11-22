@@ -1767,10 +1767,8 @@ impl EntityStore {
         budget: &crate::host::ByteBudget,
     ) -> Result<EntityInsertion, crate::execution::ExecutionError> {
         use crate::execution::ExecutionError;
-        // The physical and inventory owners validate the full inserted shape.
-        if entity.actor.is_none() && entity.item.is_none() && entity.hearth.is_none() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
+        // Action owners validate the inserted shape. The store owns identity,
+        // ordering and backing for every admitted entity.
         if entity
             .actor
             .as_ref()

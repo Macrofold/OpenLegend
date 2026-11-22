@@ -31,6 +31,7 @@ mod hearth;
 mod manufacture;
 mod equipment;
 mod eating;
+mod drop;
 mod pickup;
 mod inspect_item;
 mod feeding;
@@ -91,6 +92,7 @@ enum Phase {
     CookSight,
     FireSight,
     HearthGeometry,
+    DropStanding,
     HearthRoutes,
     HearthNavigation,
     CookReach,
@@ -801,6 +803,9 @@ impl CommandCursor {
                                     };
                             }
                             Phase::HearthGeometry => return self.hearth_geometry(core, answer),
+                            Phase::DropStanding => return self.finish_drop(core,
+                                answer.standing.pop().ok_or(ExecutionError::Invariant)?,
+                            ),
                             Phase::HearthRoutes => return self.hearth_routes(core, answer),
                             Phase::HearthNavigation => return self.hearth_navigation(core, answer),
                             Phase::GiftReach => return self.accept_gift_reach(
@@ -988,7 +993,8 @@ impl CommandCursor {
                         && matches!(
                             self.command,
                             NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
-                                | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. } | NativeCommand::Handover { .. }
+                                | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
+                                | NativeCommand::Drop { .. } | NativeCommand::Handover { .. }
                         )
                     {
                         self.reserve(128)?;
@@ -1135,6 +1141,11 @@ impl CommandCursor {
                         NativeCommand::Eat { .. } => {
                             if let Some(event) = self.eat(core, &actor_id)? {
                                 return Ok(Progress::Occurrence(event));
+                            }
+                        }
+                        NativeCommand::Drop { .. } => {
+                            if self.prepare_drop(core, &actor_id)? {
+                                return Ok(Progress::Geometry);
                             }
                         }
                         NativeCommand::Equipment { .. } => {
@@ -2282,6 +2293,7 @@ impl CommandCursor {
                 | Phase::CastLine
                 | Phase::FireSight
                 | Phase::HearthGeometry
+                | Phase::DropStanding
                 | Phase::HearthRoutes
                 | Phase::HearthNavigation
                 | Phase::CookSight

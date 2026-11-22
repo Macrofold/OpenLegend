@@ -171,6 +171,8 @@ struct ItemCommand<'a> {
     expected_revision: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     placement_revision: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    quantity: Option<u64>,
 }
 
 #[derive(Serialize)]
@@ -360,6 +362,7 @@ impl PlayerScenePolicy {
                             item_id: item.id,
                             expected_revision: item.equipped.then_some(item.revision),
                             placement_revision: item.equipped.then_some(item.placement_revision),
+                            quantity: None,
                         },
                         reason,
                     }
@@ -380,6 +383,25 @@ impl PlayerScenePolicy {
                         item_id: item.id,
                         expected_revision: None,
                         placement_revision: None,
+                        quantity: None,
+                    },
+                });
+            }
+            if let Some(drop) = &entry.drop {
+                custody.resize(custody.bytes().checked_add(item.id.len() + 5).ok_or(Capacity)?)
+                    .map_err(|_| Capacity)?;
+                let reason = if controlling { drop.reason } else { Some(COPY.control_required.as_str()) };
+                actions.push(Action {
+                    id: format!("drop-{}", item.id),
+                    label: drop.label,
+                    enabled: reason.is_none(),
+                    reason,
+                    command: ItemCommand {
+                        kind: "drop",
+                        item_id: item.id,
+                        expected_revision: None,
+                        placement_revision: None,
+                        quantity: Some(item.quantity),
                     },
                 });
             }
