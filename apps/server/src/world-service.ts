@@ -3341,10 +3341,11 @@ export class WorldService {
     actorId: string,
     permitted: () => boolean,
     report?: DecisionRefusalReporter,
+    readRevision = () => this.store.memories?.actorRevision(actorId),
   ): () => boolean {
     const worldId = this.world.id,
       generation = this.generation,
-      sourceRevision = this.store.memories?.actorRevision(actorId),
+      sourceRevision = readRevision(),
       scope = { worldId, actorId },
       accessRevision = this.store.memories?.sourceAccessRevision(scope);
     return () => {
@@ -3362,7 +3363,7 @@ export class WorldService {
         });
         return false;
       }
-      const currentSource = this.store.memories?.actorRevision(actorId);
+      const currentSource = readRevision();
       if (currentSource !== sourceRevision) {
         report?.({
           condition: 'actor-private-revision',
@@ -7164,6 +7165,10 @@ export class WorldService {
     if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
     await this.refreshCommandEpoch();
     let tradeDisclosures: TradeDisclosureContext | undefined;
+    const permitted = () => !scope || this.currentScope(scope, 'play', true);
+    let preparedSourcesCurrent = input.knownPlace
+      ? this.privateReadFence(actor, permitted)
+      : undefined;
     const prepare = async () => {
       let currentInput: CommandInput & {
         targetRole?: import('@open-legend/domain').SpeechTargetRole;
@@ -7208,6 +7213,11 @@ export class WorldService {
             message: 'Choose fewer items for one trade.',
           };
         const itemIds = currentInput.requestedItems.map((lot) => lot.itemId);
+        // This exact read depends on retained item-offer awareness, corrections
+        // and forgetting. Recognition and sensory support cannot change its lots.
+        preparedSourcesCurrent = this.privateReadFence(actor, permitted, undefined, () =>
+          this.store.memories?.actorNonReceptionRevision(actor),
+        );
         const lots = scope
           ? await retainedTradeDisclosureReferences(this, scope, currentInput.targetId, itemIds)
           : await retainedNativeTradeDisclosureReferences(
@@ -7233,10 +7243,6 @@ export class WorldService {
 
     const generation = this.generation,
       timeline = this.timelineId;
-    const preparedSourcesCurrent = this.privateReadFence(
-      actor,
-      () => !scope || this.currentScope(scope, 'play', true),
-    );
     const id =
       epoch === undefined || !this.store.commands
         ? commandId
@@ -7302,7 +7308,7 @@ export class WorldService {
           };
         if (!this.pendingAdmissionOpen())
           return { ok: false, code: 'busy', message: 'Saving is catching up. Try again shortly.' };
-        if ((input.knownPlace || tradeDisclosures) && !preparedSourcesCurrent())
+        if (preparedSourcesCurrent && !preparedSourcesCurrent())
           return {
             ok: false,
             code: 'stale-source',
