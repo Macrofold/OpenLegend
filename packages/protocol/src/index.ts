@@ -1817,6 +1817,13 @@ export interface ContainerPageRequest {
   filter?: InventoryFilter;
 }
 
+/** A definitive refusal clears the old page. A failed transport can still be retried. */
+export interface ContainerPageRefusal {
+  ok: false;
+  code: 'inventory-unavailable' | 'stale-inventory';
+  message: string;
+}
+
 export interface ContainerPage {
   ok: boolean;
   message?: string;

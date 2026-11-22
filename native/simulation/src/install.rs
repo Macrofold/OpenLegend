@@ -21,16 +21,22 @@ mod coaching;
 mod content;
 pub(crate) use coaching::ClosedCoachingState;
 mod inventory;
+pub use crate::consumption::EatingOffer;
 pub(crate) use inventory::Inventory;
-pub(crate) use inventory::RemovedInventoryChild;
 pub(crate) use inventory::ItemDefinitionRead;
-pub(crate) use inventory::validate_item as validate_native_item;
+pub(crate) use inventory::RemovedInventoryChild;
 pub(crate) use inventory::inventory_display_limit;
 pub(crate) use inventory::item_count_pin;
-pub use crate::consumption::EatingOffer;
-pub(crate) use inventory::{owned_by, accessible_bag as inventory_bag_access, parent_id as inventory_parent};
-pub use inventory::{DirectInventory, DropOffer, InventoryDetail, OwnedContainer, OwnedItem, equipment_ports_conflict, shortcut_limit};
-pub(crate) use inventory::{accessible_bag, project_owned};
+pub(crate) use inventory::validate_item as validate_native_item;
+pub use inventory::{
+    DropOffer, InventoryDetail, OwnedContainer, OwnedItem, equipment_ports_conflict, shortcut_limit,
+};
+pub(crate) use inventory::{
+    accessible_bag, inventory_ancestor_limit, owned_item_ancestry, project_owned,
+};
+pub(crate) use inventory::{
+    accessible_bag as inventory_bag_access, owned_by, parent_id as inventory_parent,
+};
 mod knowledge;
 mod retained;
 pub(crate) use knowledge::{LearnedCapabilities, install_learned_capabilities};

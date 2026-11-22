@@ -436,6 +436,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         (detailOpen && moveDestination?.target === 'container')),
     connected,
     expectedRootId: worldRoot?.id ?? view.player.id,
+    carriedRevision: worldRoot ? undefined : view.player.inventoryRevision,
     blockedReason:
       primaryBag?.invalid || !worldRootValid
         ? 'This container moved or is no longer within permitted reach. Open it again from the world.'
@@ -1445,6 +1446,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
               visible: readerVisible,
               connected,
               expectedRootId: bag.root?.id ?? view.player.id,
+              carriedRevision: bag.root ? undefined : view.player.inventoryRevision,
               blockedReason,
             }}
           >
@@ -1774,7 +1776,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                             <>
                               <Button
                                 variant="quiet"
-                                disabled={busy}
+                                disabled={busy || !selectedCollection?.current}
                                 onPress={() => navigate(selection.side, item.id)}
                               >
                                 Open {namePhrase(item, 'definite')}
@@ -1782,7 +1784,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                               {selection.side === 'belongings' && !right.location.id && (
                                 <Button
                                   variant="quiet"
-                                  disabled={busy}
+                                  disabled={busy || !selectedCollection?.current}
                                   onPress={() => {
                                     navigate('belongings', item.id);
                                   }}

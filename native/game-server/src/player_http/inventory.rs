@@ -17,25 +17,67 @@ pub(super) async fn page(State(state): State<PlayerRoutes>, request: Request) ->
             Ok(result) => result,
             Err(response) => return response,
         };
-    let Some(language) = state.game.language() else { return busy() };
-    match state.game.world.disclose_inventory_read(
-        &state.authority, &authorized,
-        |session, scope, controlling| {
-            if !input.accepts(&scope.actor_id) {
-                return Ok(refusal(StatusCode::BAD_REQUEST, "inventory-unavailable", "Open your carried inventory first."));
-            }
-            session.with_player_direct_inventory(&scope.account_id, &scope.actor_id, |inventory, budget| {
-                state.game.view_policy().scene.encode_inventory_page(inventory, scope, controlling, input, language, budget)
-                    .map_or_else(
-                        |error| match error {
-                            crate::player_scene::InventoryPageError::Stale => refusal(StatusCode::CONFLICT, "stale-inventory", "Contents or access changed. Refresh your inventory."),
-                            crate::player_scene::InventoryPageError::Capacity => busy(),
-                        },
-                        |bytes| json_response(StatusCode::OK, bytes),
-                    )
-            })
-        },
-    ).await {
+    let Some(language) = state.game.language() else {
+        return busy();
+    };
+    match state
+        .game
+        .world
+        .disclose_inventory_read(
+            &state.authority,
+            &authorized,
+            |session, scope, controlling| {
+                if !input.accepts() {
+                    return Ok(refusal(
+                        StatusCode::BAD_REQUEST,
+                        "inventory-unavailable",
+                        "Choose a valid carried inventory.",
+                    ));
+                }
+                session.with_player_direct_inventory(
+                    &scope.account_id,
+                    &scope.actor_id,
+                    input.container(),
+                    |inventory, budget| {
+                        use crate::player_scene::InventoryPageError;
+                        let result = match inventory {
+                            Some(inventory) => {
+                                state.game.view_policy().scene.encode_inventory_page(
+                                    inventory,
+                                    scope,
+                                    controlling,
+                                    &input,
+                                    language,
+                                    budget,
+                                )
+                            }
+                            None if input.continued() => Err(InventoryPageError::Stale),
+                            // Unknown or no longer carried/openable. Neither case discloses
+                            // any part of that bag, and the browser clears its old page.
+                            None => {
+                                return refusal(
+                                    StatusCode::OK,
+                                    "inventory-unavailable",
+                                    "This container is unavailable.",
+                                );
+                            }
+                        };
+                        match result {
+                            Ok(bytes) => json_response(StatusCode::OK, bytes),
+                            Err(InventoryPageError::Stale) => refusal(
+                                StatusCode::OK,
+                                "stale-inventory",
+                                "Contents or access changed. Refresh your inventory.",
+                            ),
+                            Err(InventoryPageError::Capacity) => busy(),
+                            Err(InventoryPageError::Read(error)) => failed(WorldError::from(error)),
+                        }
+                    },
+                )
+            },
+        )
+        .await
+    {
         Ok(response) => response,
         Err(error) => failed(error),
     }

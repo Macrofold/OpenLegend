@@ -3,6 +3,7 @@ import {
   DEFAULT_INVENTORY_FILTER,
   DEFAULT_INVENTORY_SORT,
   type ContainerPage,
+  type ContainerPageRefusal,
   type CommandInput,
   type InventoryFilter,
   type InventorySort,
@@ -20,6 +21,7 @@ export function useInventoryCollection({
   visible,
   connected,
   expectedRootId,
+  carriedRevision,
   blockedReason,
   nativeInspection = false,
   inspect,
@@ -32,6 +34,8 @@ export function useInventoryCollection({
   visible: boolean;
   connected: boolean;
   expectedRootId: string;
+  /** Only a carried bag needs a fresh custody proof when the root stock changes. */
+  carriedRevision?: number;
   blockedReason?: string;
   nativeInspection?: boolean;
   inspect?(input: CommandInput): void;
@@ -48,6 +52,7 @@ export function useInventoryCollection({
   if (availability.available !== available)
     setAvailability({ available, revision: availability.revision + 1 });
   const queryIdentity = JSON.stringify([query, sort, filter]);
+  const custodyRevision = location.id === expectedRootId ? undefined : carriedRevision;
   const paginationContext = JSON.stringify([
     scope,
     revisionKey,
@@ -67,6 +72,7 @@ export function useInventoryCollection({
     refreshNumber,
     availability.revision,
     expectedRootId,
+    custodyRevision,
   ]);
   const [result, setResult] = useState<{
     key: string;
@@ -75,6 +81,7 @@ export function useInventoryCollection({
     displayOwner: string;
     disclosureRevision: string;
     rootId: string;
+    custodyRevision?: number;
     page?: ContainerPage;
     error?: string;
   }>();
@@ -86,7 +93,7 @@ export function useInventoryCollection({
     const controller = new AbortController();
     const timer = window.setTimeout(
       () => {
-        void postContactRead<ContainerPage>(
+        void postContactRead<ContainerPage | ContainerPageRefusal>(
           '/api/inventory',
           { containerId: location.id, cursor, query, sort, filter },
           [location.id, expectedRootId],
@@ -103,6 +110,7 @@ export function useInventoryCollection({
                 displayOwner,
                 disclosureRevision,
                 rootId: expectedRootId,
+                custodyRevision,
                 queryIdentity,
                 error: 'This container moved. Open it again from its current location.',
               });
@@ -114,6 +122,7 @@ export function useInventoryCollection({
               displayOwner,
               disclosureRevision,
               rootId: expectedRootId,
+              custodyRevision,
               queryIdentity,
               ...(page.ok
                 ? { page }
@@ -128,10 +137,12 @@ export function useInventoryCollection({
                 displayOwner,
                 disclosureRevision,
                 rootId: expectedRootId,
+                custodyRevision,
                 queryIdentity,
                 ...(previous?.displayOwner === displayOwner &&
                 previous.disclosureRevision === disclosureRevision &&
                 previous.rootId === expectedRootId &&
+                previous.custodyRevision === custodyRevision &&
                 previous.locationId === location.id &&
                 previous.queryIdentity === queryIdentity
                   ? { page: previous.page }
@@ -158,6 +169,7 @@ export function useInventoryCollection({
     result?.displayOwner === displayOwner &&
     result.disclosureRevision === disclosureRevision &&
     result.rootId === expectedRootId &&
+    result.custodyRevision === custodyRevision &&
     result.locationId === location.id &&
     result.queryIdentity === queryIdentity
       ? result

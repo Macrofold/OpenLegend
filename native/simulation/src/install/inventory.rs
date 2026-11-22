@@ -277,6 +277,10 @@ impl ItemDefinitionRead {
     pub(crate) fn is_container(&self) -> bool {
         self.container.is_some()
     }
+
+    pub(crate) fn container_capacity(&self) -> Option<u64> {
+        self.container.as_ref().map(|definition| definition.capacity)
+    }
 }
 
 heap_record!(ItemDefinitionRead {
@@ -379,15 +383,6 @@ pub struct InventoryDetail<'a> {
 pub struct DropOffer<'a> {
     pub label: &'a str,
     pub reason: Option<&'a str>,
-}
-
-pub struct DirectInventory<'a> {
-    pub id: &'a str,
-    pub name: &'a crate::text::JsText,
-    pub revision: u64,
-    pub can_act: bool,
-    pub body_ports: &'a [crate::state::EquipmentPort],
-    pub items: &'a [InventoryDetail<'a>],
 }
 
 /// Both the native attachment owner and the explicit inventory preview use
@@ -676,6 +671,12 @@ impl Inventory {
         self.children.contains_key(parent)
     }
 
+    pub(crate) fn direct_items(&self, parent: &str) -> &[EntityHandle] {
+        self.children
+            .get(parent)
+            .map_or(&[], |kids| kids.items.as_slice())
+    }
+
     pub(crate) fn children<'a>(
         &'a self,
         entities: &'a EntityStore,
@@ -741,6 +742,32 @@ pub(crate) fn owned_by<'a>(
     actor: &str,
     id: &str,
 ) -> Result<Option<OwnedItem<'a>>, ExecutionError> {
+    owned_item_ancestry(physical, actor, id, |_| {})?
+        .map(|entity| {
+            project_owned(
+                definitions,
+                actor,
+                entity,
+                accessible_bag(entity, actor),
+                physical.holds.quantity(id),
+            )
+        })
+        .transpose()
+}
+
+pub(crate) fn inventory_ancestor_limit() -> usize {
+    LIMITS.maximum_depth + 1
+}
+
+/// Read the exact live item and its accessible enclosing bags. Parents are
+/// visited nearest first, excluding the actor. Only success with the required
+/// actor root permits any of the visited facts to be used.
+pub(crate) fn owned_item_ancestry<'a>(
+    physical: &'a crate::simulation::PhysicalState,
+    actor: &str,
+    id: &str,
+    mut parent_bag: impl FnMut(&'a Entity),
+) -> Result<Option<&'a Entity>, ExecutionError> {
     let entities = &physical.entities;
     let Some(entity) = entities
         .get(id)
@@ -749,13 +776,12 @@ pub(crate) fn owned_by<'a>(
         return Ok(None);
     };
     let mut parent = parent_id(entity);
-    for _ in 0..=LIMITS.maximum_depth {
+    for _ in 0..inventory_ancestor_limit() {
         let Some(current) = parent else {
             return Ok(None);
         };
         if current == actor {
-            return project_owned(definitions, actor, entity, accessible_bag(entity, actor), physical.holds.quantity(id))
-                .map(Some);
+            return Ok(Some(entity));
         }
         let Some(container) = entities
             .get(current)
@@ -763,6 +789,7 @@ pub(crate) fn owned_by<'a>(
         else {
             return Ok(None);
         };
+        parent_bag(container);
         parent = parent_id(container);
     }
     Err(ExecutionError::Invariant)
