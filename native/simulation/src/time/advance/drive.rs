@@ -93,7 +93,9 @@ impl AdvanceCursor {
             EventDestination::Endpoint => {
                 self.endpoint_answer = Some(EndpointAnswer::Occurrence(receipt))
             }
-            EventDestination::Appraisal | EventDestination::Territorial => {}
+            EventDestination::Appraisal
+            | EventDestination::Territorial
+            | EventDestination::Flight => {}
         }
         self.retain(EventBatch::Event {
             event,
@@ -945,7 +947,7 @@ impl AdvanceCursor {
                 }
                 Phase::AnimalChoices => {
                     let Some(handle) = self.choices.get(self.next).copied() else {
-                        self.phase = Phase::SenseStart;
+                        self.phase = Phase::FlightStart;
                         continue;
                     };
                     let has_episode = core
@@ -1110,6 +1112,48 @@ impl AdvanceCursor {
                     }
                     core.sync_sensory_changes()?;
                 }
+                Phase::FlightStart | Phase::FlightMove => {
+                    let start = self.phase == Phase::FlightStart;
+                    if !self
+                        .roster
+                        .as_ref()
+                        .ok_or_else(invalid)?
+                        .flyers()
+                        .is_empty()
+                    {
+                        if self.flight.is_none() {
+                            self.flight =
+                                Some(FlightCursor::new(if start { 0.0 } else { self.seconds }));
+                        }
+                        let binding = self.binding(core)?;
+                        let geometry = match answer.take() {
+                            Some(AdvanceAnswer::Geometry(geometry)) => Some(geometry),
+                            None => None,
+                            _ => return Err(invalid().into()),
+                        };
+                        let flyers = self.roster.as_ref().ok_or_else(invalid)?.flyers();
+                        let result = self
+                            .flight
+                            .as_mut()
+                            .ok_or_else(invalid)?
+                            .step(core, flyers, binding, geometry, budget)?;
+                        core.sync_sensory_changes()?;
+                        match result {
+                            FlightStep::Geometry => return Ok(Progress::Geometry),
+                            FlightStep::Event(event) => {
+                                self.stage_event(core, event, EventDestination::Flight, budget)?;
+                                return Ok(Progress::Event);
+                            }
+                            FlightStep::Done => self.flight = None,
+                        }
+                    }
+                    if start {
+                        self.phase = Phase::SenseStart;
+                    } else {
+                        self.select_wanderers(core)?;
+                        self.phase = Phase::Wander;
+                    }
+                }
                 Phase::SenseStart | Phase::SenseEnd => {
                     let destination = self.phase;
                     if destination == Phase::SenseEnd && !self.boundary_recorded {
@@ -1212,14 +1256,16 @@ impl AdvanceCursor {
                         }
                         NativeIntention::Forage(intention) => {
                             let operation = match intention {
-                                ForageIntention::Feed(target, item, _allowance) => begin_native_feed(
-                                    core,
-                                    &actor,
-                                    &target,
-                                    item.as_deref(),
-                                    self.candidate,
-                                    budget,
-                                )?,
+                                ForageIntention::Feed(target, item, _allowance) => {
+                                    begin_native_feed(
+                                        core,
+                                        &actor,
+                                        &target,
+                                        item.as_deref(),
+                                        self.candidate,
+                                        budget,
+                                    )?
+                                }
                                 ForageIntention::Move(point, _allowance) => {
                                     begin_native_foraging_move(
                                         core,

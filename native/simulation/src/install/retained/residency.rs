@@ -56,6 +56,7 @@ heap_record!(RetainedDefinitions {
     items,
     recipes,
     flight_routes,
+    flight_corridors,
     places,
     places_read
 });

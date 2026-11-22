@@ -10,7 +10,7 @@ use crate::status::StatusOperation;
 use crate::values::AttributeValue;
 use std::mem::size_of;
 
-const GROUPS: usize = 12;
+const GROUPS: usize = 13;
 const ROOT_ORDER: u16 = (1 << 5) | (1 << 8) | (1 << 9);
 const SORTED: u16 = ((1 << GROUPS) - 1) & !ROOT_ORDER;
 
@@ -102,6 +102,7 @@ fn membership(
             .actor
             .as_ref()
             .is_some_and(|actor| actor.controller == "player"),
+        entity.spatial.flight.is_some() || entity.spatial.fall_velocity.is_some(),
     ];
     Ok(flags
         .into_iter()
@@ -164,6 +165,9 @@ impl NativeParticipants {
     }
     pub(crate) fn players(&self) -> &[EntityHandle] {
         &self.shared.groups[11]
+    }
+    pub(crate) fn flyers(&self) -> &[EntityHandle] {
+        &self.shared.groups[12]
     }
 }
 impl ParticipantPreparation {

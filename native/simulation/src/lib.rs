@@ -18,6 +18,7 @@ pub mod encoding;
 pub mod events;
 pub mod execution;
 pub mod experience;
+mod flight;
 pub mod gathering;
 pub mod geometry;
 pub mod host;

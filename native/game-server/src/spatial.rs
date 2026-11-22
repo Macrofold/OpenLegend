@@ -203,6 +203,17 @@ impl SpatialProvider {
         {
             return Err(SpatialError::InvalidQuery);
         }
+        if q.flight.iter().any(|leg| {
+            !finite(leg.from)
+                || !finite(leg.to)
+                || leg.supports.len() > 2
+                || leg
+                    .supports
+                    .iter()
+                    .any(|surface| self.scene.named(surface).is_none())
+        }) {
+            return Err(SpatialError::InvalidQuery);
+        }
         let (allocation, _scratch) = self.reserve_answers(q, budget)?;
         let sight = {
             // Support, movement and routes can arrive without any sight rays.
@@ -222,6 +233,7 @@ impl SpatialProvider {
             .iter()
             .map(|r| self.can_walk(&r.from, &r.to, &r.body))
             .collect();
+        let flight = q.flight.iter().map(|leg| self.can_fly(leg)).collect();
         let support = q
             .support
             .iter()
@@ -312,6 +324,7 @@ impl SpatialProvider {
             binding: q.binding,
             sight,
             walking,
+            flight,
             support,
             standing,
             surface_lines,
@@ -343,6 +356,7 @@ impl SpatialProvider {
         let mut bytes = size_of::<GeometryAnswers>()
             + q.sight.len()
             + q.walking.len()
+            + q.flight.len()
             + q.standing.len()
             + 8 * q.sound.len()
             + size_of::<BodySweepAnswer>() * q.body_sweeps.len()

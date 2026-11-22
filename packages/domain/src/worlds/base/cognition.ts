@@ -6,6 +6,16 @@ import { freeze } from 'immer';
 import { BASE_RESPONSE_RULES } from './response-rules.js';
 
 const fireOut = { eventType: 'fire-out', message: 'The campfire ran out of fuel.' };
+const flight = {
+  fallAcceleration: 0.04,
+  terminalFallSpeed: 3,
+  minimumFallHeight: -16,
+  takeoffEvent: 'takeoff',
+  landingEvent: 'landed',
+  takeoffSuffix: ' took flight.',
+  landingBeforeSurface: ' landed on ',
+  fallSuffix: ' came to rest on the surface below.',
+};
 
 export const BASE_OCCURRENCE_RULES = freeze(
   {
@@ -18,6 +28,7 @@ export const BASE_OCCURRENCE_RULES = freeze(
     encounterEvent: 'encounter',
     contactEvent: 'contact',
     fireOut,
+    flight,
     speechImportance: 7,
     soundImportance: 3,
     receivedUrgency: 4,

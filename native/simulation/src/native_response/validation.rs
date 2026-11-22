@@ -58,9 +58,6 @@ pub(crate) fn validate_native_response(
     epsilon: f64,
 ) -> Result<(), ResponseValidationError> {
     use ResponseValidationError::{Continuation, UnconvertedFamily};
-    if entity.spatial.flight.is_some() {
-        return Err(UnconvertedFamily);
-    }
     let Some(state) = &entity.animal else {
         return if entity
             .actor
@@ -73,9 +70,6 @@ pub(crate) fn validate_native_response(
             Ok(())
         };
     };
-    if state.aerial_route_id.is_some() {
-        return Err(UnconvertedFamily);
-    }
     let actor = entity.actor.as_ref().ok_or(Continuation)?;
     let profile = selected(profiles, &state.profile)?;
     if !profile.locomotion.contains_key(&state.locomotion)

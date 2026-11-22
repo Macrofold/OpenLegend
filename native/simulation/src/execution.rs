@@ -35,6 +35,7 @@ mod body;
 mod conditions;
 mod contact;
 use contact::ContactPhase;
+mod flight;
 mod heat;
 mod inventory;
 mod participation;
@@ -1189,6 +1190,7 @@ enum UndoKey {
     Scar(usize, u64, String),
     Contacts(usize, u64),
     Placement(usize, u64),
+    Flight(usize, u64),
     Heading(usize, u64),
     Heat(usize, u64),
     Territorial(usize, u64),
@@ -1280,6 +1282,11 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    Flight {
+        entity: EntityHandle,
+        before: Option<crate::flight::FlightProgress>,
+        fall_velocity: Option<f64>,
+    },
     Territorial {
         entity: EntityHandle,
         before: crate::native_controller::territorial::Progress,
@@ -2129,6 +2136,12 @@ impl PhysicalJournal {
                         .and_then(|actor| actor.practice.as_mut())
                         .and_then(|practice| practice.get_mut(&key))
                         .ok_or(ExecutionError::Invariant)? = before;
+                }
+                Undo::Flight { entity, before, fall_velocity } => {
+                    let current = state.entities.resolve_mut(entity).ok_or(ExecutionError::Invariant)?;
+                    current.spatial.flight = before;
+                    current.spatial.fall_velocity = fall_velocity;
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
                 }
                 Undo::Placement {
                     entity,
@@ -3139,6 +3152,30 @@ impl PhysicalMutation<'_> {
         support: Option<String>,
         movement: Option<MovementWrite>,
     ) -> Result<(), ExecutionError> {
+        self.set_position_inner(id, point, support, movement, false)
+    }
+
+    pub(crate) fn set_flight_position(
+        &mut self,
+        id: &str,
+        point: Point,
+        support: Option<String>,
+    ) -> Result<(), ExecutionError> {
+        self.set_position_inner(id, point, support, Some(MovementWrite {
+            steps: 1,
+            heading: None,
+            continuity: Continuity::Physical,
+        }), true)
+    }
+
+    fn set_position_inner(
+        &mut self,
+        id: &str,
+        point: Point,
+        support: Option<String>,
+        movement: Option<MovementWrite>,
+        flight_owned: bool,
+    ) -> Result<(), ExecutionError> {
         if ![point.x, point.y, point.z].into_iter().all(f64::is_finite) {
             return Err(ExecutionError::InvalidPosition);
         }
@@ -3152,8 +3189,8 @@ impl PhysicalMutation<'_> {
             .entities
             .resolve(handle)
             .ok_or(ExecutionError::MissingEntity)?;
-        // An unported live flight must refuse, never disappear on a ground write.
-        if entity.spatial.flight.is_some() {
+        // Ground travel cannot overwrite a current air corridor or falling body.
+        if !flight_owned && (entity.spatial.flight.is_some() || entity.spatial.fall_velocity.is_some()) {
             return Err(ExecutionError::UnsupportedFamily);
         }
         let Some(Placement::World {

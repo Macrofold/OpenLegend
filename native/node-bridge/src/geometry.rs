@@ -52,6 +52,14 @@ pub struct NativeWalkingSegment {
 }
 
 #[napi(object, object_from_js = false)]
+pub struct NativeFlightSegment {
+    pub from: NativePoint,
+    pub to: NativePoint,
+    pub body: NativeBodyProfile,
+    pub supports: Vec<String>,
+}
+
+#[napi(object, object_from_js = false)]
 pub struct NativeSupportQuery {
     pub point: NativePoint,
     pub surface_id: Option<String>,
@@ -219,6 +227,7 @@ pub struct NativeGeometryQueries {
     pub binding: NativeGeometryBinding,
     pub sight: Vec<NativeSightRay>,
     pub walking: Vec<NativeWalkingSegment>,
+    pub flight: Option<Vec<NativeFlightSegment>>,
     pub support: Vec<NativeSupportQuery>,
     pub standing: Vec<NativeStandingQuery>,
     pub surface_lines: Vec<NativeSurfaceLineQuery>,
@@ -262,6 +271,7 @@ pub struct NativeGeometryAnswers {
     pub binding: NativeGeometryBinding,
     pub sight: Vec<bool>,
     pub walking: Vec<bool>,
+    pub flight: Option<Vec<bool>>,
     pub support: Vec<Option<NativeSurfacePoint>>,
     pub standing: Vec<bool>,
     // A small object distinguishes a missing line from a present empty path
@@ -439,6 +449,18 @@ impl TryFrom<core::GeometryQueries> for NativeGeometryQueries {
                     body: value.body.into(),
                 })
                 .collect(),
+            flight: (!value.flight.is_empty()).then(|| {
+                value
+                    .flight
+                    .into_iter()
+                    .map(|leg| NativeFlightSegment {
+                        from: leg.from.into(),
+                        to: leg.to.into(),
+                        body: leg.body.into(),
+                        supports: leg.supports,
+                    })
+                    .collect()
+            }),
             support: value
                 .support
                 .into_iter()
@@ -598,6 +620,7 @@ impl TryFrom<NativeGeometryAnswers> for core::GeometryAnswers {
             binding: value.binding.try_into()?,
             sight: value.sight,
             walking: value.walking,
+            flight: value.flight.unwrap_or_default(),
             support: value
                 .support
                 .into_iter()

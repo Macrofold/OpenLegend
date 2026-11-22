@@ -131,6 +131,7 @@ struct EntityRows<'a> {
     retirement: bool,
     geometry_heading: Option<f64>,
     geometry_lifecycle: Option<(Option<f64>, Option<f64>)>,
+    flight_before: Option<(&'a Option<crate::flight::FlightProgress>, Option<f64>)>,
     actor: bool,
     action: bool,
     agency: bool,
@@ -752,6 +753,7 @@ impl PhysicalJournal {
                 _ => {
                     let handle = match change {
                         Undo::Placement { entity, .. }
+                        | Undo::Flight { entity, .. }
                         | Undo::RestoreActor { entity, .. }
                         | Undo::Participation { entity, .. }
                         | Undo::Contact { entity, .. }
@@ -820,6 +822,9 @@ impl PhysicalJournal {
                             rows.actor = true;
                             rows.geometry_lifecycle
                                 .get_or_insert((*fall_velocity, *local_avoidance_ready_at));
+                        }
+                        Undo::Flight { before, fall_velocity, .. } => {
+                            rows.flight_before.get_or_insert((before, *fall_velocity));
                         }
                         Undo::Remains { before, .. } => {
                             rows.remains_before.get_or_insert(before.is_some());
@@ -1035,6 +1040,9 @@ impl PhysicalJournal {
                 || rows.geometry_lifecycle.is_some_and(|(fall, avoidance)| {
                     fall != entity.spatial.fall_velocity
                         || avoidance != entity.spatial.local_avoidance_ready_at
+                })
+                || rows.flight_before.is_some_and(|(before, fall)| {
+                    before != &entity.spatial.flight || fall != entity.spatial.fall_velocity
                 })
             {
                 one(

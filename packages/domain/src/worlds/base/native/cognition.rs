@@ -20,6 +20,8 @@ pub struct OccurrenceRules {
     pub contact_event: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fire_out: Option<FireOutRule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flight: Option<FlightRules>,
     pub speech_importance: f64,
     pub sound_importance: f64,
     pub received_urgency: f64,
@@ -44,6 +46,19 @@ pub struct OccurrenceRules {
 pub struct FireOutRule {
     pub event_type: String,
     pub message: crate::text::JsText,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FlightRules {
+    pub fall_acceleration: f64,
+    pub terminal_fall_speed: f64,
+    pub minimum_fall_height: f64,
+    pub takeoff_event: String,
+    pub landing_event: String,
+    pub takeoff_suffix: crate::text::JsText,
+    pub landing_before_surface: crate::text::JsText,
+    pub fall_suffix: crate::text::JsText,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

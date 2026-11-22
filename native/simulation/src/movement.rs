@@ -155,6 +155,22 @@ impl BodyIndex {
             .map(|(id, point)| (id, point.handle))
             .collect()
     }
+    /// Test the resident broad phase without sorting or cloning a candidate
+    /// list. The caller checks the exact physical overlap of each candidate.
+    pub(crate) fn any_body(
+        &self,
+        origin: Point,
+        radius: f64,
+        mut test: impl FnMut(EntityHandle) -> bool,
+    ) -> bool {
+        let mut found = false;
+        self.visit_candidates(origin, radius, |_, entry| {
+            if !found {
+                found = test(entry.handle);
+            }
+        });
+        found
+    }
     /// Look up a unique set of requested IDs twice: first to fund the exact
     /// admitted subset, then to order that subset without walking other bodies
     /// in the envelope. The caller holds the returned charge while it uses the

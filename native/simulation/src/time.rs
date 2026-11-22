@@ -6,6 +6,7 @@ mod travel;
 use travel::MotionTravelBounds;
 mod prediction;
 pub(crate) use prediction::MechanicalForecast;
+mod flight;
 mod motion;
 pub(crate) use motion::{next_animal_review, private_motion_seconds};
 mod actions;

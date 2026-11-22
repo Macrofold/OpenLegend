@@ -11,6 +11,7 @@ heap_record!(OccurrenceRules {
     encounter_event,
     contact_event,
     fire_out,
+    flight,
     speech_importance,
     sound_importance,
     received_urgency,
@@ -33,6 +34,13 @@ heap_record!(OccurrenceRules {
 heap_record!(FireOutRule {
     event_type,
     message
+});
+heap_record!(FlightRules {
+    takeoff_event,
+    landing_event,
+    takeoff_suffix,
+    landing_before_surface,
+    fall_suffix
 });
 heap_record!(ResponseRules {
     offers,

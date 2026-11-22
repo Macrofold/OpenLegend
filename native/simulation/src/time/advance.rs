@@ -1,6 +1,7 @@
 //! One ordered elapsed transition over the selected installed family closure.
 //! Provider work and child commands return sealed completions. Time, effects,
 //! receiving and publication remain in this one rollback-owned candidate.
+use super::flight::{FlightCursor, FlightStep};
 use super::input::{AdmittedWorldInput, PreparedSteering, SteeringPreparation, input_boundary};
 use super::navigation::{NavigationGate, NavigationGateStep};
 use super::reconcile::{ReconcileAnswer, ReconcileCursor, ReconcileStep};
@@ -319,10 +320,12 @@ enum Phase {
     AnimalClocks,
     WanderEndClocks,
     AnimalChoices,
+    FlightStart,
     SenseStart,
     Predict,
     Steering,
     Move,
+    FlightMove,
     Wander,
     Endpoint,
     StatusEnd,
@@ -350,6 +353,7 @@ enum NavigationAfter {
 enum EventDestination {
     Reconcile,
     Motion,
+    Flight,
     Endpoint,
     Appraisal,
     Territorial,
@@ -408,6 +412,7 @@ pub(crate) struct AdvanceCursor {
     rates_deferred: bool,
     working: Option<SliceActions>,
     motion: Option<MotionSliceCursor>,
+    flight: Option<FlightCursor>,
     endpoint: Option<EndpointCursor>,
     endpoint_answer: Option<EndpointAnswer>,
     motion_answer: Option<MoveAdvanceAnswer>,
@@ -505,6 +510,7 @@ impl AdvanceCursor {
                     .as_ref()
                     .and_then(MotionSliceCursor::geometry_request)
             })
+            .or_else(|| self.flight.as_ref().and_then(FlightCursor::questions))
             .or_else(|| {
                 self.endpoint
                     .as_ref()
@@ -591,6 +597,7 @@ impl AdvanceCursor {
             rates_deferred: false,
             working: None,
             motion: None,
+            flight: None,
             endpoint: None,
             endpoint_answer: None,
             motion_answer: None,

@@ -26,6 +26,7 @@ import { readNativeDangers, nativeDangersClearAt } from './native-response-dange
 import { TIME_EPSILON } from './simulation-time.js';
 import { recordSemanticChange } from './dependencies.js';
 import { chargeWork } from './work-budget.js';
+import { selectedOccurrenceRules } from './world-composition.js';
 import type { FlightRoute, FlightConnection } from './spatial-state.js';
 import type { NativeFlightLocomotion } from './native-response.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
@@ -118,26 +119,34 @@ export class LandingOccupancy {
 
 /** A small native locomotion family: explicit corridors, not free-flight physics or AI per frame.
  * docs/spatial-world.md#flying-creatures. Gravity is a game-time tuning value, not Earth physics. */
-export const FALL_ACCELERATION = 0.04;
-export const TERMINAL_FALL_SPEED = 3;
+type FallingRules = Pick<
+  ReturnType<typeof selectedOccurrenceRules>['flight'],
+  'fallAcceleration' | 'terminalFallSpeed'
+>;
 /** Closed-form displacement keeps falling independent of host interval size. */
-export function fallingDisplacement(velocity: number, seconds: number): number {
-  const v = Math.max(0, Math.min(TERMINAL_FALL_SPEED, -velocity));
-  const accelerating = Math.min(seconds, (TERMINAL_FALL_SPEED - v) / FALL_ACCELERATION);
+export function fallingDisplacement(
+  rules: FallingRules,
+  velocity: number,
+  seconds: number,
+): number {
+  const { fallAcceleration, terminalFallSpeed } = rules;
+  const v = Math.max(0, Math.min(terminalFallSpeed, -velocity));
+  const accelerating = Math.min(seconds, (terminalFallSpeed - v) / fallAcceleration);
   return (
     v * accelerating +
-    (FALL_ACCELERATION * accelerating * accelerating) / 2 +
-    TERMINAL_FALL_SPEED * (seconds - accelerating)
+    (fallAcceleration * accelerating * accelerating) / 2 +
+    terminalFallSpeed * (seconds - accelerating)
   );
 }
-export function fallingDuration(velocity: number, distance: number): number {
+export function fallingDuration(rules: FallingRules, velocity: number, distance: number): number {
   if (distance <= 0) return 0;
-  const v = Math.max(0, Math.min(TERMINAL_FALL_SPEED, -velocity));
-  const accelerationTime = (TERMINAL_FALL_SPEED - v) / FALL_ACCELERATION;
-  const accelerationDistance = ((v + TERMINAL_FALL_SPEED) * accelerationTime) / 2;
+  const { fallAcceleration, terminalFallSpeed } = rules;
+  const v = Math.max(0, Math.min(terminalFallSpeed, -velocity));
+  const accelerationTime = (terminalFallSpeed - v) / fallAcceleration;
+  const accelerationDistance = ((v + terminalFallSpeed) * accelerationTime) / 2;
   return distance <= accelerationDistance
-    ? (Math.sqrt(v * v + 2 * FALL_ACCELERATION * distance) - v) / FALL_ACCELERATION
-    : accelerationTime + (distance - accelerationDistance) / TERMINAL_FALL_SPEED;
+    ? (Math.sqrt(v * v + 2 * fallAcceleration * distance) - v) / fallAcceleration
+    : accelerationTime + (distance - accelerationDistance) / terminalFallSpeed;
 }
 export function flightSpeed(
   from: WorldPoint,
@@ -494,6 +503,7 @@ export function landingDue(world: WorldState, entity: Entity, seconds: number): 
     return (
       !!support &&
       fallingDuration(
+        selectedOccurrenceRules(world).flight,
         entity.spatial.fallVelocity,
         Math.max(0, worldPosition(entity).y - support.y),
       ) <= seconds
@@ -524,6 +534,7 @@ export function advanceFlight(
 ): void {
   const state = entity.spatial;
   if (!state.flight && state.fallVelocity === undefined) return;
+  const rules = selectedOccurrenceRules(world).flight;
   const map = spatialMap(world),
     body = effectiveBodyProfile(world, entity);
   if (
@@ -537,12 +548,12 @@ export function advanceFlight(
   }
   if (state.fallVelocity !== undefined) {
     const velocity = Math.max(
-      -TERMINAL_FALL_SPEED,
-      state.fallVelocity - FALL_ACCELERATION * seconds,
+      -rules.terminalFallSpeed,
+      state.fallVelocity - rules.fallAcceleration * seconds,
     );
     const destination = {
       ...worldPosition(entity),
-      y: worldPosition(entity).y - fallingDisplacement(state.fallVelocity, seconds),
+      y: worldPosition(entity).y - fallingDisplacement(rules, state.fallVelocity, seconds),
     };
     const support = supportBelow(map, worldPosition(entity));
     if (support && destination.y <= support.y) {
@@ -551,14 +562,15 @@ export function advanceFlight(
       emitOccurrence(
         world,
         events,
-        'landed',
-        `${namePhrase(entity, 'definite', { capitalize: true })} came to rest on the surface below.`,
+        rules.landingEvent,
+        `${namePhrase(entity, 'definite', { capitalize: true })}${rules.fallSuffix}`,
         entity,
       );
     } else {
       // The finite starter's ground always bounds its corridors. A missing support remains
       // a technical unsupported state; do not delete a body or fabricate a landing.
-      if (destination.y < -16) throw new Error('Falling actor left the supported spatial world.');
+      if (destination.y < rules.minimumFallHeight)
+        throw new Error('Falling actor left the supported spatial world.');
       setSpatialPosition(world, entity, destination, null, { continuity: 'physical' });
       state.fallVelocity = velocity;
     }
@@ -660,8 +672,8 @@ export function advanceFlight(
         emitOccurrence(
           world,
           events,
-          'takeoff',
-          `${namePhrase(entity, 'definite', { capitalize: true })} took flight.`,
+          rules.takeoffEvent,
+          `${namePhrase(entity, 'definite', { capitalize: true })}${rules.takeoffSuffix}`,
           entity,
         );
       }
@@ -700,8 +712,8 @@ export function advanceFlight(
       emitOccurrence(
         world,
         events,
-        'takeoff',
-        `${namePhrase(entity, 'definite', { capitalize: true })} took flight.`,
+        rules.takeoffEvent,
+        `${namePhrase(entity, 'definite', { capitalize: true })}${rules.takeoffSuffix}`,
         entity,
       );
     if (fraction !== 1) return;
@@ -732,8 +744,8 @@ export function advanceFlight(
       emitOccurrence(
         world,
         events,
-        'landed',
-        `${namePhrase(entity, 'definite', { capitalize: true })} landed on ${namePhrase(surfaceById(map, landing.surfaceId)!, 'definite')}.`,
+        rules.landingEvent,
+        `${namePhrase(entity, 'definite', { capitalize: true })}${rules.landingBeforeSurface}${namePhrase(surfaceById(map, landing.surfaceId)!, 'definite')}.`,
         entity,
       );
     if (waypoint.landingSurfaceId || waypoint.waitSeconds > 0) return;

@@ -419,9 +419,6 @@ pub(crate) fn acquire_sound(
     {
         return Ok(());
     }
-    if animal.spatial.flight.is_some() {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
     let profile = selected_profile(installed, state)?;
     let Some(minimum) = profile.sound_alarm_minimum_band else {
         return Ok(());
@@ -431,6 +428,9 @@ pub(crate) fn acquire_sound(
         .floor();
     if band < minimum {
         return Ok(());
+    }
+    if animal.spatial.flight.is_some() {
+        return Err(ExecutionError::UnsupportedFamily);
     }
     let handle = mutation
         .state

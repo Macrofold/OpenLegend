@@ -51,7 +51,13 @@ pub(crate) fn private_motion_seconds(
     forecast: &MechanicalForecast,
     requested: f64,
 ) -> Result<f64, ExecutionError> {
-    let mut bound = requested;
+    let mut bound = super::flight::boundary(
+        physical,
+        installed,
+        participants.flyers(),
+        forecast,
+        requested,
+    )?;
     let epsilon = installed.time_epsilon;
     for handle in participants.ambient() {
         let entity = physical
@@ -91,7 +97,7 @@ pub(crate) fn private_motion_seconds(
             }
         }
         if entity.spatial.fall_velocity.is_some() || entity.spatial.flight.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
+            continue;
         }
         if !entity
             .actor

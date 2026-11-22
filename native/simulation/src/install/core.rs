@@ -297,6 +297,18 @@ fn assemble_selected_core(
     )?;
     content.fund(budget)?;
     let retained = install_retained(&mut import, &mut children, retained, &schema, budget)?;
+    crate::flight::validate_corridors(
+        &retained.flight_corridors,
+        maximum_candidates,
+        spatial.epsilon,
+    )?;
+    crate::flight::validate_flyers(
+        &physical.entities,
+        &retained.flight_corridors,
+        &geometry.spatial.surfaces,
+        occurrence_rules.value().flight.as_ref(),
+        spatial.epsilon,
+    )?;
     retained
         .places_read
         .validate_physical(&physical, &geometry, &spatial)?;
@@ -477,7 +489,10 @@ fn assemble_selected_core(
         budget,
     )?;
     for id in physical.entities.ordered_ids() {
-        let entity = physical.entities.get(id).ok_or(InstallError::CurrentFormat)?;
+        let entity = physical
+            .entities
+            .get(id)
+            .ok_or(InstallError::CurrentFormat)?;
         if let Some(threat) = &entity.threat {
             if !threat.valid(entity, &installed.retained.native_strike_read) {
                 return Err(InstallError::CurrentFormat.into());

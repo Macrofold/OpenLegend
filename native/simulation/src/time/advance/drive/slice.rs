@@ -255,14 +255,13 @@ impl AdvanceCursor {
                 }
                 MoveAdvanceStep::Complete => {
                     self.working = Some(self.motion.take().ok_or_else(invalid)?.into_actions()?);
-                    self.select_wanderers(core)?;
-                    self.phase = Phase::Wander;
+                    self.phase = Phase::FlightMove;
                     return Ok(Progress::Continue);
                 }
             }
         }
     }
-    fn select_wanderers(&mut self, core: &CoreMutation<'_>) -> Result<(), AdvanceError> {
+    pub(super) fn select_wanderers(&mut self, core: &CoreMutation<'_>) -> Result<(), AdvanceError> {
         self.choices.clear();
         let count = self.roster.as_ref().ok_or_else(invalid)?.animals().len();
         let needed = count.saturating_sub(self.choices.capacity());

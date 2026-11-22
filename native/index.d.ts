@@ -493,10 +493,18 @@ export interface NativeConvexViewQuery {
   allowance: number;
 }
 
+export interface NativeFlightSegment {
+  from: NativePoint;
+  to: NativePoint;
+  body: NativeBodyProfile;
+  supports: Array<string>;
+}
+
 export interface NativeGeometryAnswers {
   binding: NativeGeometryBinding;
   sight: Array<boolean>;
   walking: Array<boolean>;
+  flight?: Array<boolean>;
   support: Array<NativeSurfacePoint | undefined | null>;
   standing: Array<boolean>;
   surfaceLines: Array<NativeSurfaceLine | undefined | null>;
@@ -523,6 +531,7 @@ export interface NativeGeometryQueries {
   binding: NativeGeometryBinding;
   sight: Array<NativeSightRay>;
   walking: Array<NativeWalkingSegment>;
+  flight?: Array<NativeFlightSegment>;
   support: Array<NativeSupportQuery>;
   standing: Array<NativeStandingQuery>;
   surfaceLines: Array<NativeSurfaceLineQuery>;

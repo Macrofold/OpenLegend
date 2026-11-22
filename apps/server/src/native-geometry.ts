@@ -6,6 +6,7 @@ import type {
   NativeWorld,
 } from '@open-legend/native-simulation';
 import {
+  canFlySegment,
   canStand,
   bodySweepFraction,
   distanceBounds,
@@ -115,6 +116,16 @@ export class NativeGeometryProviders {
           : resolveSupport(this.map, point, surfaceId),
       );
       const standing = queries.standing.map(({ point, body }) => canStand(this.map, point, body));
+      const flight = queries.flight?.map(({ from, to, body, supports }) => {
+        const departure = resolveSupport(this.map, from)?.surfaceId;
+        return canFlySegment(
+          this.map,
+          from,
+          to,
+          body,
+          departure ? [departure, ...supports] : supports,
+        );
+      });
       const standingColumns = queries.standingColumns.map((query) => {
         const direction = { x: Math.cos(query.angle), z: Math.sin(query.angle) };
         for (let index = 0; index < query.distances.length; index++) {
@@ -175,6 +186,7 @@ export class NativeGeometryProviders {
           binding: queries.binding,
           sight,
           walking,
+          ...(flight ? { flight } : {}),
           support,
           standing,
           surfaceLines,
@@ -263,7 +275,7 @@ export class NativeGeometryProviders {
     if (this.closed || queries.binding.geometryRevision !== this.map.spatial.revision)
       throw new Error('Native navigation preparation names unavailable geometry.');
     for (const key of Object.keys(queries) as (keyof NativeGeometryQueries)[]) {
-      if (key !== 'binding' && key !== 'routes' && key !== 'navigation' && queries[key].length)
+      if (key !== 'binding' && key !== 'routes' && key !== 'navigation' && queries[key]?.length)
         throw new Error('Entity-local preparation contains another physical phase.');
     }
     const allocation = this.allocation.prepare(queries);

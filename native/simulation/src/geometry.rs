@@ -391,6 +391,17 @@ pub struct BodySweepAnswer {
     pub tested: u64,
 }
 
+/// An actual swept air leg. The named departure/arrival supports allow top
+/// contact only and never grant permission to pass through a surface.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FlightSegment {
+    pub from: Point,
+    pub to: Point,
+    pub body: BodyProfile,
+    pub supports: Vec<String>,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HorizontalDirection {
@@ -511,6 +522,8 @@ pub struct GeometryQueries {
     pub binding: GeometryBinding,
     pub sight: Vec<SightRay>,
     pub walking: Vec<WalkingSegment>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub flight: Vec<FlightSegment>,
     pub support: Vec<SupportQuery>,
     pub standing: Vec<StandingQuery>,
     pub surface_lines: Vec<SurfaceLineQuery>,
@@ -531,6 +544,8 @@ pub struct GeometryAnswers {
     pub binding: GeometryBinding,
     pub sight: Vec<bool>,
     pub walking: Vec<bool>,
+    #[serde(default)]
+    pub flight: Vec<bool>,
     pub support: Vec<Option<SurfacePoint>>,
     pub standing: Vec<bool>,
     pub surface_lines: Vec<Option<SurfaceLineAnswer>>,
@@ -649,6 +664,7 @@ mod query_custody {
     });
     heap_record!(ConvexViewQuery { target });
     heap_record!(BodySweepGroup { bounds, body });
+    heap_record!(FlightSegment { body, supports });
     heap_record!(StandingColumnsQuery { distances, body });
     impl HeapBytes for RouteQuery {
         fn heap_bytes(&self) -> Option<usize> {
@@ -675,6 +691,7 @@ mod query_custody {
     heap_record!(GeometryQueries {
         sight,
         walking,
+        flight,
         support,
         standing,
         surface_lines,
@@ -694,6 +711,7 @@ impl GeometryQueries {
     pub fn is_empty(&self) -> bool {
         self.sight.is_empty()
             && self.walking.is_empty()
+            && self.flight.is_empty()
             && self.support.is_empty()
             && self.standing.is_empty()
             && self.surface_lines.is_empty()
@@ -712,6 +730,7 @@ impl GeometryQueries {
             binding,
             sight: Vec::new(),
             walking: Vec::new(),
+            flight: Vec::new(),
             support: Vec::new(),
             standing: Vec::new(),
             surface_lines: Vec::new(),
@@ -736,6 +755,7 @@ impl GeometryQueries {
         }
         if self.sight.len() != answer.sight.len()
             || self.walking.len() != answer.walking.len()
+            || self.flight.len() != answer.flight.len()
             || self.support.len() != answer.support.len()
             || self.standing.len() != answer.standing.len()
             || self.surface_lines.len() != answer.surface_lines.len()

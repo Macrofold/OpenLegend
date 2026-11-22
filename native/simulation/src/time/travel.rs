@@ -28,8 +28,8 @@ fn reach(installed: &InstalledWorld, entity: &Entity, seconds: f64) -> Result<f6
     {
         return Ok(0.0);
     }
-    if entity.spatial.fall_velocity.is_some() || entity.spatial.flight.is_some() {
-        return Err(ExecutionError::UnsupportedFamily);
+    if let Some(reach) = super::flight::motion_reach(installed, entity, seconds)? {
+        return Ok(reach);
     }
     let Some(actor) = entity
         .actor

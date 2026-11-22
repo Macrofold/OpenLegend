@@ -148,6 +148,7 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
                 entity.declared_owner.heap_bytes()?,
                 entity.retirement.heap_bytes()?,
                 entity.remains.heap_bytes()?,
+                entity.spatial.flight.heap_bytes()?,
             ])
         })
         .ok_or(ExecutionError::Capacity)

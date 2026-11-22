@@ -661,7 +661,7 @@ fn validate_entity(
             "mechanism fields",
         ),
         (
-            entity.spatial.flight.is_some() || entity.spatial.local_pose.is_some(),
+            entity.spatial.local_pose.is_some(),
             "non-ground physical placement",
         ),
         (
@@ -723,8 +723,11 @@ fn validate_entity(
         return Err(InstallError::CurrentFormat);
     }
     if let Some(retirement) = &entity.retirement {
-        if !retirement.valid(now) || entity.item.is_some() || entity.placement.is_some()
-            || entity.actor.is_some() || entity.container.is_some()
+        if !retirement.valid(now)
+            || entity.item.is_some()
+            || entity.placement.is_some()
+            || entity.actor.is_some()
+            || entity.container.is_some()
         {
             return Err(InstallError::CurrentFormat);
         }

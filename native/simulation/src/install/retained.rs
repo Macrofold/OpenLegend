@@ -121,6 +121,7 @@ pub(crate) struct RetainedDefinitions {
     pub items: IndexMap<String, ItemDefinitionRead>,
     pub recipes: RetainedMap,
     pub flight_routes: RetainedMap,
+    pub flight_corridors: crate::flight::Corridors,
     pub places: RetainedMap,
     pub places_read: crate::reception::InstalledPlaces,
 }
@@ -567,9 +568,22 @@ pub(crate) fn install_retained(
         .ok_or(InstallError::ParentPresence)?;
     let (foraging, _foraging_preparation) =
         foraging::prepare(foraging_input.as_ref(), &item_input, budget)?;
-    let assembly_families = r.map("assemblyFamilies", "config_assembly_families", input.assembly_families)?;
-    let (items, _item_preparation) = prepare_items(&item_definitions, &item_input, assembly_families.as_ref(), budget)?;
-    let gathering_policy = r.one("gatheringPolicy", "config_gathering", input.gathering_policy)?;
+    let assembly_families = r.map(
+        "assemblyFamilies",
+        "config_assembly_families",
+        input.assembly_families,
+    )?;
+    let (items, _item_preparation) = prepare_items(
+        &item_definitions,
+        &item_input,
+        assembly_families.as_ref(),
+        budget,
+    )?;
+    let gathering_policy = r.one(
+        "gatheringPolicy",
+        "config_gathering",
+        input.gathering_policy,
+    )?;
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
     struct GatheringRead {
@@ -579,14 +593,37 @@ pub(crate) fn install_retained(
     let bare_hand_gathering = match gathering_policy.as_ref().map(RetainedOne::payload) {
         None | Some("null") => None,
         Some(policy) => {
-            let policy: GatheringRead = serde_json::from_str(policy)
-                .map_err(|_| InstallError::DefinitionBody)?;
+            let policy: GatheringRead =
+                serde_json::from_str(policy).map_err(|_| InstallError::DefinitionBody)?;
             if policy.bare_hand_quantity == 0 {
                 return Err(InstallError::DefinitionBody);
             }
             Some(policy.bare_hand_quantity)
         }
     };
+    let flight_routes = r
+        .map(
+            "flightRoutes",
+            "sim_flight_routes",
+            Some(input.flight_routes),
+        )?
+        .ok_or(InstallError::ParentPresence)?;
+    let mut flight_preparation = budget
+        .reserve(
+            map_storage::<String, crate::flight::Corridor>(flight_routes.len())
+                .ok_or(InstallError::Capacity)?,
+        )
+        .map_err(|_| InstallError::Capacity)?;
+    let mut flight_corridors = IndexMap::with_capacity(flight_routes.len());
+    for (id, body) in flight_routes.entries() {
+        let storage =
+            super::reserve_typed_parse::<crate::flight::Corridor>(body, id.len(), None, budget)?;
+        flight_preparation
+            .merge(storage)
+            .map_err(|_| InstallError::Capacity)?;
+        let route = serde_json::from_str(body).map_err(|_| InstallError::CurrentFormat)?;
+        flight_corridors.insert(id.to_owned(), route);
+    }
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
@@ -655,13 +692,8 @@ pub(crate) fn install_retained(
         recipes: r
             .map("recipes", "definition_recipes", Some(input.recipes))?
             .ok_or(InstallError::ParentPresence)?,
-        flight_routes: r
-            .map(
-                "flightRoutes",
-                "sim_flight_routes",
-                Some(input.flight_routes),
-            )?
-            .ok_or(InstallError::ParentPresence)?,
+        flight_routes,
+        flight_corridors,
         places,
         places_read,
     };

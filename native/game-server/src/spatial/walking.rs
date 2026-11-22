@@ -3,12 +3,46 @@
 use super::scene::StandardSupport;
 use super::{Bounds, EPS, Point, SpatialProvider, SurfacePoint, distance, finite, lerp};
 use openlegend_simulation::{
-    geometry::{RoutePlan, RouteQuery},
+    geometry::{FlightSegment, RoutePlan, RouteQuery},
     state::{BodyProfile, NavigationRequest},
 };
 
 const SUPPORT: f64 = 0.015;
 const MAX_PATH_POINTS: usize = 2048;
+
+/// Clamping a sloped patch at its edges makes its height piecewise linear.
+/// Test both ends and every crossed edge of the actual contact interval.
+fn above_support(
+    surface: &StandardSupport,
+    from: Point,
+    to: Point,
+    (enter, exit): (f64, f64),
+    allowance: f64,
+) -> bool {
+    let above = |t| {
+        let point = lerp(from, to, t);
+        point.y + allowance + SUPPORT
+            >= surface.y_at(
+                point.x.clamp(surface.min_x, surface.max_x),
+                point.z.clamp(surface.min_z, surface.max_z),
+            )
+    };
+    above(enter)
+        && above(exit)
+        && [
+            (from.x, to.x, surface.min_x, surface.max_x),
+            (from.z, to.z, surface.min_z, surface.max_z),
+        ]
+        .into_iter()
+        .all(|(a, b, min, max)| {
+            let delta = b - a;
+            delta.abs() < EPS
+                || [min, max].into_iter().all(|edge| {
+                    let t = (edge - a) / delta;
+                    t <= enter || t >= exit || above(t)
+                })
+        })
+}
 
 impl SpatialProvider {
     pub(super) fn support(&self, point: Point, surface: Option<&str>) -> Option<SurfacePoint> {
@@ -127,30 +161,41 @@ impl SpatialProvider {
                 }
                 let s = &self.scene.supports[index];
                 let allowance = body.radius * support.slope_x.hypot(support.slope_z);
-                let above = |t| {
-                    let p = lerp(a, b, t);
-                    p.y + allowance + SUPPORT
-                        >= s.y_at(p.x.clamp(s.min_x, s.max_x), p.z.clamp(s.min_z, s.max_z))
-                };
-                let clear = above(enter)
-                    && above(exit)
-                    && [(a.x, b.x, s.min_x, s.max_x), (a.z, b.z, s.min_z, s.max_z)]
-                        .into_iter()
-                        .all(|(a, b, min, max)| {
-                            let delta = b - a;
-                            delta.abs() < EPS
-                                || [min, max].into_iter().all(|edge| {
-                                    let t = (edge - a) / delta;
-                                    t <= enter || t >= exit || above(t)
-                                })
-                        });
-                if clear {
+                if above_support(s, a, b, (enter, exit), allowance) {
                     return false;
                 }
             }
             solid.sweep(a, b, body).is_some()
         };
         !self.scene.visit_segment(a, b, Some(body), &mut blocks)
+    }
+
+    pub(super) fn can_fly(&self, leg: &FlightSegment) -> bool {
+        let departure = self.support(leg.from, None);
+        let mut blocks = |shape: &super::scene::Shape, contact| {
+            let Some(solid) = &shape.solid else {
+                return false;
+            };
+            if let Some(surface) = shape.surface
+                && (leg.supports.contains(&shape.id)
+                    || departure
+                        .as_ref()
+                        .is_some_and(|support| support.surface_id == shape.id))
+                && above_support(
+                    &self.scene.supports[surface],
+                    leg.from,
+                    leg.to,
+                    contact,
+                    0.0,
+                )
+            {
+                return false;
+            }
+            solid.sweep(leg.from, leg.to, &leg.body).is_some()
+        };
+        !self
+            .scene
+            .visit_segment(leg.from, leg.to, Some(&leg.body), &mut blocks)
     }
 
     pub(super) fn can_walk(&self, a: &SurfacePoint, b: &SurfacePoint, body: &BodyProfile) -> bool {

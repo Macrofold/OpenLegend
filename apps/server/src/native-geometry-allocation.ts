@@ -224,6 +224,7 @@ export class NativeGeometryAllocation implements GeometryPreparationAllocation {
       const slots =
         queries.sight.length +
         queries.walking.length +
+        (queries.flight?.length ?? 0) +
         queries.support.length +
         queries.standing.length +
         queries.surfaceLines.length +
@@ -236,7 +237,7 @@ export class NativeGeometryAllocation implements GeometryPreparationAllocation {
         queries.convexViews.length +
         queries.bodySweeps.length +
         queries.standingColumns.length;
-      array(s, slots, 14);
+      array(s, slots, queries.flight ? 15 : 14);
       point(s, queries.support.length + queries.standingColumns.length, this.surfaceUnits);
       object(s, 2, queries.bodySweeps.length);
       object(s, 3, queries.standingColumns.length);

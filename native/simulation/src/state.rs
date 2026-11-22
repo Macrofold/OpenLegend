@@ -10,7 +10,10 @@ mod agency;
 mod goal_storage;
 mod intent_storage;
 mod inventory;
-pub(crate) use inventory::{ContainerState, DeclaredOwner, Individuality, ItemLot, ItemRetirement, LineageKind, ObjectLineage};
+pub(crate) use inventory::{
+    ContainerState, DeclaredOwner, Individuality, ItemLot, ItemRetirement, LineageKind,
+    ObjectLineage,
+};
 mod recorded_surface_point;
 pub use recorded_surface_point::RecordedSurfacePoint;
 mod residency;
@@ -265,7 +268,7 @@ pub struct EntitySpatial {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub flight: Option<UnconvertedField>,
+    pub(crate) flight: Option<crate::flight::FlightProgress>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -830,7 +833,9 @@ pub struct Action {
 
 impl Action {
     pub(crate) fn has_ground_motion(&self) -> bool {
-        self.kind == "move" || (self.kind == "feed" && self.feeding.is_some()) || self.is_gathering()
+        self.kind == "move"
+            || (self.kind == "feed" && self.feeding.is_some())
+            || self.is_gathering()
     }
 
     pub(crate) fn owns_ground_route(&self) -> bool {

@@ -36,10 +36,10 @@ import {
   motionTrackPosition as poseAt,
   LandingOccupancy,
   routeLapSeconds,
-  TERMINAL_FALL_SPEED,
   type MotionTrack,
 } from './flight.js';
 import { worldRootEntities } from './entity-index.js';
+import { selectedOccurrenceRules } from './world-composition.js';
 import { hasMemory } from './living.js';
 import { nextPerceptionWorkAt } from './perception-evidence.js';
 import { activelyParticipates } from './participation-state.js';
@@ -76,7 +76,8 @@ const IMMINENT_LANDING_SECONDS = 1;
  */
 export function motionReach(world: WorldState, entity: Entity, seconds: number): number {
   if (capabilityBlocked(world, entity, 'locomotion')) return 0;
-  if (entity.spatial.fallVelocity !== undefined) return TERMINAL_FALL_SPEED * seconds;
+  if (entity.spatial.fallVelocity !== undefined)
+    return selectedOccurrenceRules(world).flight.terminalFallSpeed * seconds;
   if (!entity.actor?.alive || entity.actor.incapacitated) return 0;
   if (entity.actor.action)
     return actionHasMotion(entity.actor.action) ? nativeMovementSpeed(world, entity) * seconds : 0;
@@ -206,6 +207,7 @@ export function nativeMotionInterval(
       bound = Math.min(
         bound,
         fallingDuration(
+          selectedOccurrenceRules(world).flight,
           entity.spatial.fallVelocity,
           Math.min(travel, support ? Math.max(0, worldPosition(entity).y - support.y) : travel),
         ),
