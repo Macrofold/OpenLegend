@@ -115,6 +115,35 @@ The cold-source check covers a second issue. The Source protected commit prepare
 
 The Source archive is `b99919940b843f9dd3832c9a9639284167e1c01e` with the scoped foreground and exact-deletion fixes. The local evidence under `/private/tmp/openlegend-memory-rehearsal.vbmUoxYt/` includes `source-final-r13` (`ac957dc2c283` result), `source-final-pause-r14` (`b0448defa323`) and `source-final-rollback-r15` (`7189749d73ea`). `source-diagnostic-r6` preserves the original cancellation, and `source-deletions-r12` preserves the prepared and actual mutation identities. The same-actor case is `source-final-same-actor-r18` (`af062c91881d`). The Rust overlap on executable `6ffe8826624f` is retained as `rust-final-r16` (`2792866129f7`). The cases used controlled loopback HTTPS, committed to independent disposable databases, released the owned resources and incurred no provider charge. They establish the connected behavior and its refusal paths. Managed performance and Source optional Worktree preemption remain separate.
 
+#### Managed active memory comparison — November 22, 2026
+
+All six runs completed on one standard 16 GiB `m7i.xlarge` worker. Three interleaved runs per server used independent PostgreSQL databases and the same small authored opening with one player, two human NPCs and three hares. Each timed window offered 3,600 game seconds over 60 wall seconds and used one-second ordinary saves. The Rust server used one simulation worker and the 2 GiB transient profile. Every run approved the same one hourly and three daily summaries, saved the dream and its original evidence, archived the selected originals, and preserved the protected accounts. The daily response stayed held for 15 seconds while an unrelated directed conversation and a walk completed and saved. Cold opening recovered the exact walk, one saved reply and both private search results for the authorized creator. The ordinary player's cross-character search was refused. Rust logged one generic maintenance deferral in each run; the required hourly and daily records and both recorded maintenance attempts completed. The archived logs retain the deferral; they do not identify its separate operation.
+
+Each row gives the median / average / p95 of three runs per server. The p95 interpolates three observations and describes this comparison only. Movement latency ends at the first changed position delivered to the stream client. Durability ends when the fixture observes the committed record in PostgreSQL.
+
+| Measure                                                 |                     TypeScript |               Stand-alone Rust |
+| ------------------------------------------------------- | -----------------------------: | -----------------------------: |
+| Server CPU, % of one logical core                       |          27.33 / 27.76 / 29.87 |             8.12 / 7.98 / 8.93 |
+| PostgreSQL CPU, % of one logical core                   |             1.12 / 1.12 / 1.16 |             3.89 / 3.87 / 4.24 |
+| Achieved game speed, % of intended                      |       99.937 / 99.936 / 99.961 |       99.890 / 99.891 / 99.893 |
+| Server and PostgreSQL CPU, % of one logical core        |          28.41 / 28.88 / 31.02 |          12.01 / 11.85 / 13.16 |
+| Client and fixture CPU, % of one logical core           |             1.12 / 1.21 / 1.39 |             1.42 / 1.37 / 1.54 |
+| Completed game seconds                                  | 3,597.73 / 3,597.70 / 3,598.61 | 3,596.04 / 3,596.08 / 3,596.16 |
+| Command response, ms                                    |          14.29 / 14.78 / 16.21 |             5.89 / 5.84 / 7.26 |
+| First movement in stream, ms                            |       111.19 / 109.34 / 116.46 |       107.75 / 101.93 / 107.90 |
+| Walk to durable observation, ms                         | 1,122.16 / 1,090.38 / 1,124.58 | 1,116.79 / 1,116.01 / 1,120.05 |
+| Conversation request to saved reply, ms                 | 4,191.59 / 4,484.02 / 4,992.19 | 2,028.81 / 2,028.81 / 2,035.91 |
+| Peak concurrent server and PostgreSQL memory, MiB       |       689.43 / 689.97 / 694.13 |       243.68 / 240.23 / 244.85 |
+| PostgreSQL committed transactions                       |                550 / 532 / 552 |          2,310 / 2,314 / 2,324 |
+| PostgreSQL tuples returned                              |       62,679 / 61,313 / 64,222 |       63,002 / 61,541 / 63,685 |
+| Database growth, MiB                                    |             3.21 / 3.29 / 3.63 |             2.53 / 2.61 / 2.78 |
+| WAL growth, MiB                                         |             4.29 / 4.35 / 4.57 |             4.27 / 4.26 / 4.42 |
+| Server and PostgreSQL CPU per completed game second, ms |          4.737 / 4.816 / 5.175 |          2.004 / 1.978 / 2.196 |
+
+Rust used 53.2–61.8% less combined CPU per completed game second across the three pairs. Its extra transactions and PostgreSQL CPU remain relevant to scale. Transaction counters include the fixture's observations and do not count individual SQL statements, payload bytes or caller attribution. Server CPU includes its descendants and threads once. Sampled memory uses concurrent application RSS plus exclusive PostgreSQL memory. Including the client and launcher, median sampled peaks were 1,042.07 MiB and 621.20 MiB. The last stream sample accounts for part of the 1.30–3.98 game-second shortfall. The fixture did not separately observe accumulated simulation debt, reservation peaks, socket-to-pixel latency or isolated recovery cost. This compares the complete small active journey across the two servers. An isolated typed transfer, idle scheduler overhead and the full-game cutover have separate gates.
+
+Campaign `5b6b1d45-af0c-401a-8a19-4d8eb9f6e579` used common source `aa025ae29a438786afaf3cd7b01332e1e6ae92cb`, archive SHA-256 `a730ab20c736e4f41f24f4f0ef9369fe31333bf28642838c8c94b2782caf805a`, worker generation 590 and result manifest SHA-256 `5ea296a1a148d0d023bbffdcbe04f3eaed6a88ee8f2f19212599b443104da39d`. All 65 reported files, 6,117,205 bytes, matched their manifest. Each case stores its exact binary and toolchain identity. The result reported clean processes and databases, and AWS confirmed the worker stopped. Reconciliation recorded $0.355604 in estimated run costs. The controlled provider incurred $0 scoped and cumulative.
+
 Idle maintenance cost remains unmeasured. A separate comparison needs the same Rust opening and completed ordinary work while no maintenance is due. The disabled arm must exclude both the review task and its accepted-change wake preparation while keeping ordinary NPC work, spending, indexing and saving equivalent. The disposable trial adds no product setting.
 
 ### Scheduled intentional reflection on the Rust listener — November 21, 2026
