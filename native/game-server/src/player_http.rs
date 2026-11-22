@@ -36,6 +36,7 @@ pub(crate) mod assets;
 mod checkpoint;
 mod dialogue;
 mod event_history;
+mod expression;
 mod history;
 pub(crate) mod hearth;
 mod inventory;
@@ -136,6 +137,7 @@ pub(crate) fn router(
         .route("/api/construction/hearth-preview", post(hearth::preview))
         .route("/api/command", post(command))
         .route("/api/command/receipt", post(command))
+        .route("/api/expression", post(expression::submit))
         .route("/api/action-attempt", post(typed_actions::access))
         .route("/api/action-attempt/receipt", post(typed_actions::access))
         .route("/api/embodiment", post(control))

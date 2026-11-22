@@ -63,6 +63,8 @@ pub use participation::{
     RuntimeRestoredPlayers,
 };
 mod player;
+mod player_expression;
+pub use player_expression::PlayerExpressionBinding;
 mod manufacture;
 pub use manufacture::RuntimeManufactureOffer;
 pub use crate::food_preparation::valid_inputs as valid_preparation_inputs;

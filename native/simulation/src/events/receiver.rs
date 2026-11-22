@@ -142,7 +142,20 @@ pub(super) fn prepare_receiver_awareness(
                 && truth(event.data.as_ref(), "acquisition")
                 && selection.target_id() == Some(id.as_str()) =>
         {
-            Some((id.as_str(), label))
+            Some((id.as_str(), crate::worlds::base_knowledge::PersonalName {
+                name: label.into(), name_form: None, indefinite_article: None,
+            }))
+        }
+        _ if own && truth(event.data.as_ref(), "descriptive")
+            && event.event_type == installed.occurrence_rules.value().response.expression.event_type =>
+        {
+            // The sender can name their currently accessible item even when
+            // it is in a bag. Other witnesses use normal external reception.
+            selection.target_id().map(|id| {
+                crate::install::owned_by(
+                    &core.state.physical, &installed.retained, &receiver.actor_id, id,
+                ).map(|item| item.map(|item| (id, item.named.into())))
+            }).transpose()?.flatten()
         }
         _ => None,
     };

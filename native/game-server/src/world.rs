@@ -1336,6 +1336,35 @@ impl HostedWorld {
 }
 
 impl NpcDisclosureTurn<'_> {
+    pub(crate) fn disclose_player_expression(
+        self,
+        account: &str,
+        actor: &str,
+        binding: &openlegend_simulation::runtime::PlayerExpressionBinding,
+        start: impl FnOnce(),
+    ) -> Result<Result<(), NpcDisclosure>, WorldError> {
+        let world = self.world;
+        if world.closing.load(Ordering::Acquire) {
+            return Err(HostError::Closed.into());
+        }
+        let pending = world.pending_source_edits.lock().map_err(|_| HostError::Poisoned)?;
+        if pending.contains(actor) {
+            return Ok(Err(NpcDisclosure::Refused("source-edit-pending")));
+        }
+        let session = match world.session.try_lock() {
+            Ok(session) => session,
+            Err(std::sync::TryLockError::WouldBlock) => return Ok(Err(NpcDisclosure::Busy)),
+            Err(std::sync::TryLockError::Poisoned(_)) => return Err(HostError::Poisoned.into()),
+        };
+        match session.player_expression_current(account, actor, binding)? {
+            Ok(()) => {
+                start();
+                Ok(Ok(()))
+            },
+            Err(reason) => Ok(Err(NpcDisclosure::Refused(reason))),
+        }
+    }
+
     pub(crate) fn disclose<T>(
         self,
         ticket: &RuntimeNpcResponseTicket,

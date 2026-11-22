@@ -293,6 +293,11 @@ pub(crate) enum NativeCommand {
         selected: Option<InspectedItem>,
         world: Option<InspectedStorage>,
     },
+    DescriptiveAct {
+        envelope: CommandEnvelope,
+        predicate: crate::text::JsText,
+        target: Option<String>,
+    },
     InspectActivities {
         envelope: CommandEnvelope,
         history_after: i64,
@@ -911,6 +916,7 @@ impl NativeCommand {
             | Self::Eat { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
+            | Self::DescriptiveAct { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
             | Self::WithdrawAttempt { envelope, .. }
@@ -944,6 +950,7 @@ impl NativeCommand {
             | Self::Eat { envelope, .. }
             | Self::Equipment { envelope, .. }
             | Self::Say { envelope, .. }
+            | Self::DescriptiveAct { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
             | Self::WithdrawAttempt { envelope, .. }
@@ -974,6 +981,7 @@ impl NativeCommand {
                 crate::execution::EquipmentRequest::Unequip { .. } => "unequip",
             },
             Self::Say { .. } => "say",
+            Self::DescriptiveAct { .. } => "descriptive-act",
             Self::StatusEffect { .. } => "status-effect",
             Self::Cancel { .. } => "cancel",
             Self::WithdrawAttempt { .. } => "withdraw-attempt",

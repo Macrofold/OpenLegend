@@ -128,6 +128,7 @@ pub(crate) fn valid_command(
         | NativeCommand::InspectInventory { .. }
         | NativeCommand::InspectActivities { .. }
         | NativeCommand::LearnRecord { .. }
+        | NativeCommand::DescriptiveAct { .. }
         | NativeCommand::PlaceHearth { .. } => false,
     }
 }

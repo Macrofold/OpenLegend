@@ -284,6 +284,26 @@ pub(super) fn summary_model(
     budget_usd: f64,
     output_tokens: usize,
 ) -> Result<Option<SummaryModel>, Error> {
+    nano_model(models, budget_usd, output_tokens, true)
+}
+
+pub(super) fn expression_model(
+    models: Option<&ConfiguredModels>,
+    budget_usd: f64,
+    output_tokens: usize,
+) -> Result<Option<SummaryModel>, Error> {
+    let Some(models) = models.filter(|models| models.interactive_allowance().is_some()) else {
+        return Ok(None);
+    };
+    nano_model(Some(models), budget_usd, output_tokens, false)
+}
+
+fn nano_model(
+    models: Option<&ConfiguredModels>,
+    budget_usd: f64,
+    output_tokens: usize,
+    background: bool,
+) -> Result<Option<SummaryModel>, Error> {
     if budget_usd == 0.0 || setting("AI_JEV_ONLY", "false")? == "true" {
         return Ok(None);
     }
@@ -321,7 +341,7 @@ pub(super) fn summary_model(
             Model {
                 destination: ProviderDestination::new(ProviderRoute::OpenAi, None, &token)?,
                 requested: setting("COGNITION_SUMMARY_MODEL", "gpt-5-nano")?,
-                amount_micro_usd: reserve(500_000.0)?,
+                amount_micro_usd: reserve(if background { 500_000.0 } else { 8_192.0 })?,
                 output_tokens,
                 effort: Some("low"),
                 macrofold: None,
@@ -329,7 +349,7 @@ pub(super) fn summary_model(
             interactive_allowance(judgment_allowance(false)?, reserve(120_000.0)?)?,
         )
     };
-    let ceiling = micro_usd(budget_usd)?.saturating_sub(interactive);
+    let ceiling = micro_usd(budget_usd)?.saturating_sub(if background { interactive } else { 0 });
     if ceiling < model.amount_micro_usd {
         return Ok(None);
     }

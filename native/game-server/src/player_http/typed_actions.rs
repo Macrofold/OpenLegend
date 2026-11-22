@@ -19,6 +19,11 @@ pub(super) async fn access(State(state): State<PlayerRoutes>, request: Request) 
             Ok(input) => input,
             Err(response) => return response,
         };
+        let input = match input.expression() {
+            Ok(Ok(input)) => input,
+            Ok(Err((timeline, input))) => return super::expression::receipt(&state, access, timeline, input, custody).await,
+            Err(error) => return access_failure(error),
+        };
         state
             .commands
             .recover_action_attempt(access, input, custody)

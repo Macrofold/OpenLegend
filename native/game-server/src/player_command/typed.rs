@@ -41,6 +41,24 @@ pub(crate) struct AttemptRecovery {
     expression: Option<bool>,
 }
 
+impl AttemptRecovery {
+    pub(crate) fn expression(
+        self,
+    ) -> Result<Result<Self, (String, crate::npc::ExpressionRequest)>, AccessError> {
+        match self.expression {
+            None => Ok(Ok(self)),
+            Some(true) if self.mode == PlanMode::Enqueue && self.slots.is_none() => {
+                Ok(Err((self.timeline, crate::npc::ExpressionRequest {
+                    request_id: self.request_id,
+                    text: self.text,
+                    target_id: self.target_id,
+                })))
+            }
+            _ => Err(AccessError::Forbidden),
+        }
+    }
+}
+
 #[derive(Deserialize)]
 struct StopGrammar {
     verbs: Vec<String>,
@@ -219,20 +237,13 @@ impl PlayerCommands {
         let budget = self.game.host.budget();
         self.authority
             .current(&scope, Capability::Play, false, |_, _| ())?;
-        if !valid_request_id(&input.timeline) || input.expression == Some(false) {
+        if !valid_request_id(&input.timeline) {
             return Err(AccessError::Forbidden.into());
         }
         if input.timeline != scope.scope.timeline_id {
             return refuse(
                 "stale-world",
                 "This action belongs to an earlier world timeline.",
-                budget,
-            );
-        }
-        if input.expression == Some(true) {
-            return refuse(
-                "ai-unavailable",
-                "This server cannot recover expression requests yet.",
                 budget,
             );
         }

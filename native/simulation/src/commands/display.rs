@@ -489,6 +489,7 @@ impl ActivityDisplayCursor {
             | NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. }
             | NativeCommand::LearnRecord { .. }
+            | NativeCommand::DescriptiveAct { .. }
             | NativeCommand::Handover { .. } => {
                 return Err(ExecutionError::UnsupportedFamily);
             }

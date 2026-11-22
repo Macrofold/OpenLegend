@@ -361,6 +361,19 @@ impl<'a> PersonalNameReader<'a> {
             .and_then(|owners| owners.get(self.observer_id))
             .map(|identities| &**identities)
     }
+    /// An authored identity can recognize the same person after a lapse in
+    /// sight. Anonymous references belong to their original observation.
+    pub(crate) fn subject_reference_current(&self, id: &str, episode: Option<&str>) -> bool {
+        self.observer_id == id
+            || self.episode(id).map(String::as_str) == episode
+            || self.identities().is_some_and(|identities| {
+                identities.values().any(|identity| {
+                    identity.authored && identity.seed_only != Some(true)
+                        && identity.canonical_id.as_deref() == Some(id)
+                })
+            })
+    }
+
     fn episode(&self, id: &str) -> Option<&'a String> {
         self.reception
             .perception_episodes
@@ -767,21 +780,16 @@ impl<'a> PersonalNameReader<'a> {
         self.capture_names_with_acquisition(ids, None, budget)
     }
 
-    /// A deliberate private acquisition can already have admitted its item's
-    /// exact label. Reuse that observation rather than request external sight
-    /// of an item carried inside the observer's inventory.
+    /// A current owner can already have permission to know an inventory
+    /// item's name. Reuse that selected name without requesting external sight.
     pub(crate) fn capture_names_with_acquisition(
         &self,
         ids: &[&str],
-        acquired: Option<(&str, &crate::text::JsText)>,
+        acquired: Option<(&str, PersonalName<'_>)>,
         budget: &ByteBudget,
     ) -> Result<CapturedNames, ReceivedError> {
         let name = |id: &str| match acquired {
-            Some((item, label)) if item == id => Ok(PersonalName {
-                name: label.into(),
-                name_form: None,
-                indefinite_article: None,
-            }),
+            Some((item, label)) if item == id => Ok(label),
             _ => self.observer_name(id),
         };
         let mut bytes = heap_sum([

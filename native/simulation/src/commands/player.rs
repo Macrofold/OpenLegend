@@ -883,3 +883,38 @@ fn bind_record_learning(
         record: record.clone(),
     }, canonical))
 }
+
+
+impl NativeCommand {
+    /// Internal only. Provider words can reach this binding after native
+    /// eligibility and the exact selected target have been checked.
+    pub(crate) fn bind_player_expression(
+        id: &str, actor: &str, predicate: &JsText, target: Option<&str>,
+    ) -> Result<(Self, String), serde_json::Error> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Expression<'a> {
+            actor_id: &'a str,
+            id: &'a str,
+            predicate: &'a JsText,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            target_id: Option<&'a str>,
+            #[serde(rename = "type")]
+            kind: &'static str,
+        }
+        let headers = player_headers(id, actor);
+        let marker: JsText = "{target}".into();
+        if !headers.valid() || predicate.trim_is_empty() || predicate.units_len() > 240
+            || predicate.contains(&marker) != target.is_some()
+        {
+            return Err(serde::ser::Error::custom("Invalid descriptive expression."));
+        }
+        let input = Expression { actor_id: actor, id, predicate, target_id: target, kind: "descriptive-act" };
+        let encoding = CommandEncoding::from_ordered(&input, 4 + usize::from(target.is_some()))?;
+        Ok((Self::DescriptiveAct {
+            envelope: headers.envelope(encoding),
+            predicate: predicate.clone(),
+            target: target.map(str::to_owned),
+        }, json_record(&input)?))
+    }
+}

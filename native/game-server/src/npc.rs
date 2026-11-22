@@ -9,6 +9,8 @@ mod retry;
 pub(crate) use retry::ChatRetryRequest;
 pub(crate) mod schedule;
 pub(crate) mod semantic_index;
+mod player_expression;
+pub(crate) use player_expression::ExpressionRequest;
 mod settings;
 pub(crate) use settings::creation_model_settings;
 mod slots;
@@ -49,6 +51,7 @@ pub(crate) struct Director {
     models: Option<settings::ConfiguredModels>,
     embedding: Option<Arc<semantic_index::EmbeddingModel>>,
     summary_model: Option<settings::SummaryModel>,
+    expression_model: Option<settings::SummaryModel>,
     reflection_model: Option<settings::ReflectionModel>,
     dispatch: Arc<DecisionDispatch>,
     slots: Arc<Slots>,
@@ -159,6 +162,9 @@ impl Director {
             limit_usd,
             game.store.schema.recall.maintenance.output_tokens,
         )?;
+        let expression_model = settings::expression_model(
+            models.as_ref(), limit_usd, player_expression::policy().max_output_tokens,
+        )?;
         let reflection_model =
             settings::reflection_model(models.as_ref(), &game.cognition.reflection.default_model)?;
         let budget = game.host.budget().clone();
@@ -170,6 +176,7 @@ impl Director {
             models,
             embedding,
             summary_model,
+            expression_model,
             reflection_model,
             dispatch,
             slots: Arc::new(Slots::new(budget, maximum)),
@@ -841,6 +848,15 @@ impl Director {
             .when_durable(cut, Instant::now() + ADMISSION_WAIT)
             .await?;
         let (dispatched, received) = self.game.store.conversation_transfers(&job.job.id).await?;
+        let message = if job.job.kind == "action" {
+            match status {
+                SpeechReplyStatus::Cancelled => "The action was cancelled.",
+                SpeechReplyStatus::Stale => "The action or its selected target changed before it could be shown.",
+                _ => "The action description could not be used. Your action was not shown.",
+            }
+        } else {
+            message
+        };
         let terminal = job.advance(
             status,
             message.into(),

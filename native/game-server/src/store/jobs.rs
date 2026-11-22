@@ -188,7 +188,7 @@ impl Store {
         let id = id.to_owned();
         self.read_operational(move |tx| Box::pin(async move {
             let (_transfer, rows) = admitted_query(
-                tx, "SELECT payload FROM jobs WHERE id=$1 AND selection->>'kind' IN ('chat','thought')",
+                tx, "SELECT payload FROM jobs WHERE id=$1 AND selection->>'kind' IN ('chat','thought','action')",
                 &[&id], &budget,
             ).await?;
             rows.first().map(|row| {

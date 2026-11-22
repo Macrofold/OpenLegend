@@ -136,6 +136,8 @@ impl HeapBytes for NativeCommand {
                 envelope,
                 destination,
             } => heap_sum([envelope.heap_bytes()?, destination.heap_bytes()?]),
+            Self::DescriptiveAct { envelope, predicate, target } =>
+                heap_sum([envelope.heap_bytes()?, predicate.heap_bytes()?, target.heap_bytes()?]),
             Self::Say {
                 envelope,
                 text,

@@ -36,6 +36,7 @@ mod eating;
 mod drop;
 mod pickup;
 mod inspect_activities;
+mod descriptive_act;
 mod inspect_item;
 mod inspect_storage;
 mod learn_record;
@@ -249,15 +250,14 @@ impl CommandCursor {
         binding: GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        // The authenticated typed player binder is the only producer of
-        // review dismissals. Its signature binds the application receipt;
-        // there is no public command decoder for this no-effect operation.
+        // These internal operations come from the authenticated player
+        // binder. Public command decoding cannot issue either operation.
         if !matches!(
             command,
             NativeCommand::Cancel {
                 dismiss_review: true,
                 ..
-            }
+            } | NativeCommand::DescriptiveAct { .. }
         ) {
             let decoded: NativeCommand =
                 serde_json::from_str(&canonical).map_err(|_| ExecutionError::Invariant)?;
@@ -1155,6 +1155,9 @@ impl CommandCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
+                    if matches!(self.command, NativeCommand::DescriptiveAct { .. }) {
+                        return self.stage_descriptive_act(core).map(Progress::Occurrence);
+                    }
                     if let Some(problem) =
                         actor_problem(core, &self.command, self.options.native_controller)?
                     {
@@ -1353,6 +1356,7 @@ impl CommandCursor {
                             return Err(ExecutionError::Invariant);
                         }
                         NativeCommand::StatusEffect { .. } => self.phase = Phase::Deactivate,
+                        NativeCommand::DescriptiveAct { .. } => return Err(ExecutionError::Invariant),
                         NativeCommand::Say { .. } => self.phase = Phase::Speech,
                     }
                 }
@@ -2491,7 +2495,7 @@ impl CommandCursor {
                             NativeCommand::Cancel {
                                 dismiss_review: true,
                                 ..
-                            }
+                            } | NativeCommand::DescriptiveAct { .. }
                         );
                     self.abort(core)?;
                     return Ok(Progress::Complete(super::PendingCommandCompletion::new(

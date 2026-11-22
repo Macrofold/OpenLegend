@@ -71,7 +71,7 @@ impl CommandExposure {
                 }
                 &envelope.actor_id
             }
-            NativeCommand::Say { .. } | NativeCommand::WithdrawAttempt { .. }
+            NativeCommand::Say { .. } | NativeCommand::DescriptiveAct { .. } | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
             | NativeCommand::Handover { .. }
             | NativeCommand::LearnRecord { .. }
