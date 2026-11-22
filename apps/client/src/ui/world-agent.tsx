@@ -26,7 +26,7 @@ type Props = {
   allowanceLimitUsd: number;
   usage: PlayerAiUsage;
   actorId: string;
-  godMode?: boolean;
+  enabled?: boolean;
   saveTimeline?: string;
   inventionSeed: { id: string; text: string } | null;
   recoveryRequest?: string | null;
@@ -58,6 +58,7 @@ function conversationDate(timestamp: number): string {
 /** Ordinary invention and owner editing have separate entrances and retained state.
  * A presentation mode never grants the authority checked by the native handlers. */
 export function WorldAgent(props: Props) {
+  if (props.mode !== 'invent' && !props.enabled) return null;
   return (
     <WorldAgentPanel
       key={authoringKey(
@@ -82,7 +83,6 @@ function WorldAgentPanel(props: Props) {
     allowanceLimitUsd,
     usage,
     actorId,
-    godMode,
     saveTimeline,
     inventionSeed,
     visible,
@@ -143,7 +143,7 @@ function WorldAgentPanel(props: Props) {
     if (mode === 'author') writeLocal(selectionKey, active);
   }, [selectionKey, active, mode]);
   async function list(next?: WorldAgentSessionCursor) {
-    if (mode !== 'author' || !godMode || !connected || listing.current) return;
+    if (mode !== 'author' || !connected || listing.current) return;
     listing.current = true;
     setBusy(true);
     try {
@@ -174,7 +174,7 @@ function WorldAgentPanel(props: Props) {
   }
   useEffect(() => {
     if (visible) void list();
-  }, [visible, connected, godMode, mode]);
+  }, [visible, connected, mode]);
   function create(purpose?: 'invention' | 'creation', native = false) {
     const id = crypto.randomUUID();
     setActive(id);
@@ -281,7 +281,6 @@ function WorldAgentPanel(props: Props) {
         />
       </div>
     );
-  if (!godMode) return <p>God mode is required to open these tools.</p>;
   if (mode === 'inspect')
     return (
       <div className="ol-creator-workspace">

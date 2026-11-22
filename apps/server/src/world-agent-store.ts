@@ -180,6 +180,17 @@ export class WorldAgentStore {
       .get(id);
     return row ? (JSON.parse(String(row['payload'])) as AgentSession) : undefined;
   }
+  /** Indexed session lookup for a browser's admitted owner. Foreign payloads stay in storage. */
+  async sessionForOwner(id: string, scope: RequestScope): Promise<AgentSession | undefined> {
+    const row = await this.db
+      .prepare(
+        `SELECT payload FROM world_agent_sessions
+         WHERE id=? AND world_id=? AND payload::jsonb #>> '{principal}'=?
+           AND payload::jsonb #>> '{actorId}'=?`,
+      )
+      .get(id, scope.worldId, scope.accountId, scope.actorId);
+    return row ? (JSON.parse(String(row['payload'])) as AgentSession) : undefined;
+  }
   async byContext(hash: string): Promise<AgentSession | undefined> {
     const row = await this.db
       .prepare('SELECT payload FROM world_agent_sessions WHERE context_hash=?')

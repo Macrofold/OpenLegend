@@ -1055,15 +1055,13 @@ export class WorldAuthoringService {
     return (
       this.available() &&
       !this.service.storageError &&
-      this.service.config.godMode &&
       !s.closed &&
       s.expiresAt > Date.now() &&
       !!scope &&
       s.principal === scope.accountId &&
       s.actorId === scope.actorId &&
       s.authority.grantRevision === scope.grantRevision &&
-      this.service.currentScope(scope, 'create') &&
-      this.service.currentScope(scope, 'inspect') &&
+      this.service.mayUseWorldAgent(scope) &&
       s.worldId === this.service.world.id &&
       s.timeline === this.service.timelineId &&
       s.credential === this.credential() &&
@@ -1111,13 +1109,13 @@ export class WorldAuthoringService {
   async sessions(before?: WorldAgentSessionCursor, scope = this.service.localScope) {
     this.service.assertScope(scope, 'create');
     this.service.assertScope(scope, 'inspect');
-    if (!this.service.config.godMode)
+    if (!this.service.mayUseWorldAgent(scope))
       throw new AuthoringRequestError('World-owner authoring is unavailable.');
     const rows = await this.records.sessions(this.service.world.id, scope.accountId, before);
     // Conversation titles remain private when authority changes during the storage read.
     this.service.assertScope(scope, 'create');
     this.service.assertScope(scope, 'inspect');
-    if (!this.service.config.godMode)
+    if (!this.service.mayUseWorldAgent(scope))
       throw new AuthoringRequestError('World-owner authoring is unavailable.');
     const sessions: WorldAgentSessionSummary[] = rows.slice(0, 20).map((s) => ({
       sessionId: s.id,
@@ -1142,7 +1140,7 @@ export class WorldAuthoringService {
   ) {
     this.service.assertScope(scope, 'create');
     this.service.assertScope(scope, 'inspect');
-    if (!this.service.config.godMode || worldId !== this.service.world.id)
+    if (!this.service.mayUseWorldAgent(scope) || worldId !== this.service.world.id)
       throw new AuthoringRequestError('World-owner authoring is unavailable.');
     return this.serial(id, () =>
       this.records.db.transaction(async () => {
@@ -1219,19 +1217,21 @@ export class WorldAuthoringService {
       await this.records.saveSession(s);
     });
   }
-  private async ownedSession(id: string, scope: RequestScope) {
-    const s = await this.records.session(id);
-    if (
-      !s ||
-      !this.service.config.godMode ||
-      s.principal !== scope.accountId ||
-      s.actorId !== scope.actorId ||
-      !this.service.currentScope(scope, 'create') ||
-      !this.service.currentScope(scope, 'inspect') ||
-      s.worldId !== this.service.world.id
-    )
+  /** Select saved status without acquiring a write session or reading another owner's data. */
+  async savedSession(id: string, scope: RequestScope) {
+    this.assertSessionScope(scope);
+    const session = await this.records.sessionForOwner(id, scope);
+    this.assertSessionScope(scope);
+    return session;
+  }
+  private assertSessionScope(scope: RequestScope) {
+    if (!this.service.mayUseWorldAgent(scope))
       throw new AuthoringRequestError('Session unavailable.', 'forbidden');
-    return s;
+  }
+  private async ownedSession(id: string, scope: RequestScope) {
+    const session = await this.savedSession(id, scope);
+    if (!session) throw new AuthoringRequestError('Session unavailable.', 'forbidden');
+    return session;
   }
   async turns(id: string, before?: WorldAgentTurnCursor, scope = this.service.localScope) {
     const session = await this.ownedSession(id, scope);

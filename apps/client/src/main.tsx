@@ -894,7 +894,15 @@ function App({
     id,
     label: inspectedEntities.get(id)?.name ?? 'Out of sight',
   }));
+  const canUseWorldAgent = view?.access?.canUseWorldAgent ?? false;
+  useEffect(() => {
+    if (!canUseWorldAgent)
+      setOpen((panels) =>
+        panels.includes('world-editor') ? panels.filter((id) => id !== 'world-editor') : panels,
+      );
+  }, [canUseWorldAgent]);
   const panelVisible = (id: PanelId) =>
+    (id !== 'world-editor' || canUseWorldAgent) &&
     open.includes(id) &&
     (!narrow || (open.at(-1) === id && !inspectorSheetVisible && !bagSheetShowing));
   const inventoryFeedbackVisible = useRef(false);
@@ -1017,6 +1025,7 @@ function App({
     return hasGame ? [...result, 'game' as const] : result;
   }
   function show(id: PanelId) {
+    if (id === 'world-editor' && !canUseWorldAgent) return;
     if (id === 'inventory') id = 'character';
     if (!panelVisible(id) && document.activeElement)
       panelOpeners.current.set(id, document.activeElement);
@@ -2571,7 +2580,7 @@ function App({
             inspectionScope={JSON.stringify([view.access?.scope, view.historyEpoch])}
             allowanceLimitUsd={view.ai.allowanceLimitUsd}
             usage={aiUsage}
-            godMode={view.godMode}
+            enabled={id === 'world-editor' ? canUseWorldAgent : view.godMode}
             saveTimeline={view.saveTimeline}
             key={view.worldId}
             worldId={view.worldId}
@@ -2740,15 +2749,19 @@ function App({
                 Describe an idea, find learned recipes, or revisit a request.
               </p>
             </Section>
-            {(view.godMode || view.access?.canOperate) && (
+            {(canUseWorldAgent || view.godMode || view.access?.canOperate) && (
               <Section title="World tools">
-                {view.godMode && (
+                {canUseWorldAgent && (
                   <>
                     <Button onPress={() => openGameTask('world-editor')}>World Agent</Button>
-                    <Button onPress={() => openGameTask('time')}>Time</Button>
                     <p className="ol-caption">
                       Chat about changes to the world, then review and apply them.
                     </p>
+                  </>
+                )}
+                {view.godMode && (
+                  <>
+                    <Button onPress={() => openGameTask('time')}>Time</Button>
                     <Button onPress={() => openGameTask('world-inspection')}>Inspect world</Button>
                     <Button onPress={() => openGameTask('intelligence')}>
                       Intelligence diagnostics

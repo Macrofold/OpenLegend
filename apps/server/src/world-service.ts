@@ -807,6 +807,18 @@ export class WorldService {
       !!this.store.authority?.current(scope, capability, controlling, this.now())
     );
   }
+  /** The embodied creator workspace uses both current grants and the host's owner opt-in. */
+  mayUseWorldAgent(scope: RequestScope): boolean {
+    if (
+      !this.config.godMode ||
+      scope.audience !== 'embodied' ||
+      scope.worldId !== this.world.id ||
+      scope.timelineId !== this.timelineId
+    )
+      return false;
+    const grants = this.store.authority?.currentCapabilities(scope, this.now());
+    return !!grants?.includes('create') && grants.includes('inspect');
+  }
   controlsElsewhere(scope: RequestScope): boolean {
     const controller = this.store.authority?.currentController(scope, this.now());
     return (

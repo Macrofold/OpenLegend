@@ -1073,6 +1073,8 @@ export interface GameView {
     canManageSaves: boolean;
     /** Creator or access manager: may open the separate World operations console. */
     canOperate?: boolean;
+    /** May open the World Agent with both current creator and inspection grants. */
+    canUseWorldAgent?: boolean;
     /** May open the read-only creator mind inspector for a permitted NPC. */
     canInspectMind?: boolean;
     /** May edit the importance of a permitted personal memory. */

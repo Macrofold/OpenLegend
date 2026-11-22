@@ -1019,6 +1019,7 @@ export async function projectView(
       controlledElsewhere: service.controlsElsewhere(scope),
       canOperate:
         service.currentScope(scope, 'create') || service.currentScope(scope, 'manage-access'),
+      canUseWorldAgent: service.mayUseWorldAgent(scope),
       mode: service.config.authentication.mode,
     },
     maintenance: service.maintenanceNotice,
@@ -1526,6 +1527,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
     previous.access?.scope !== next.access?.scope ||
     previous.access?.controlling !== next.access?.controlling ||
     previous.access?.controlledElsewhere !== next.access?.controlledElsewhere ||
+    previous.access?.canUseWorldAgent !== next.access?.canUseWorldAgent ||
     previous.worldId !== next.worldId ||
     previous.saveTimeline !== next.saveTimeline ||
     previous.schemaVersion !== next.schemaVersion ||

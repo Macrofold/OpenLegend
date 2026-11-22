@@ -1549,11 +1549,7 @@ async function initializeGameServer(
             const stream = new PrivateSnapshotStream(
               response,
               () => authoring.progressSnapshot(sessionId, scope),
-              () =>
-                config.godMode &&
-                !loadingSave &&
-                service.currentScope(scope, 'create') &&
-                service.currentScope(scope, 'inspect'),
+              () => !loadingSave && service.mayUseWorldAgent(scope),
               (notify) => authoring.watchProgress(sessionId, notify),
               () => privateStreams.delete(stream),
               (snapshot) => `${snapshot.turn?.id ?? 'none'}:${snapshot.turn?.revision ?? 0}`,
@@ -3466,14 +3462,15 @@ async function initializeGameServer(
             }
             case '/api/world-agent/session/status': {
               const value = sessionStatusRequest.parse(body);
-              if (!config.godMode)
+              service.assertScope(scope, 'inspect');
+              if (!service.mayUseWorldAgent(scope))
                 return send(response, 403, {
                   ok: false,
                   message: 'World-owner authoring is unavailable.',
                 });
               if (value.worldId !== service.world.id)
                 return send(response, 409, { ok: false, message: 'World mismatch.' });
-              const exists = await authoring.records.session(value.sessionId);
+              const exists = await authoring.savedSession(value.sessionId, scope);
               if (exists?.recoveryTurn) {
                 try {
                   await authoring.reconcileQuestion(
@@ -3492,11 +3489,13 @@ async function initializeGameServer(
                   // The unchanged uncertain outcome remains visible; status never redispatches.
                 }
               }
+              const data = exists
+                ? await authoring.view(value.sessionId, value.afterDraft, value.afterPlan, scope)
+                : null;
+              service.assertScope(scope, 'inspect');
               return send(response, 200, {
                 ok: true,
-                data: exists
-                  ? await authoring.view(value.sessionId, value.afterDraft, value.afterPlan, scope)
-                  : null,
+                data,
                 availability: authoring.availability(),
                 enabled:
                   !!config.mcpRead?.allowWrites &&
