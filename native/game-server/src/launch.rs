@@ -44,6 +44,7 @@ struct ListenerSettings {
     port: u16,
     loopback_http: bool,
     public_origin: String,
+    mcp: Option<Arc<crate::mcp_http::Configuration>>,
 }
 
 impl ListenerSettings {
@@ -68,6 +69,7 @@ impl ListenerSettings {
             port,
             loopback_http,
             public_origin,
+            mcp: crate::mcp_http::Configuration::read()?.map(Arc::new),
         })
     }
 }
@@ -305,6 +307,17 @@ impl PreparedGame {
         };
         let (end_http, http_stop) = watch::channel(false);
         let (request_owner, requests_released) = watch::channel(());
+        let mcp = settings.mcp.as_ref().map(|settings| {
+            crate::mcp_http::router(
+                settings.clone(),
+                &world_id,
+                identity.timeline.as_str(),
+                game.world.clone(),
+                custody.clone(),
+                http_stop.clone(),
+                request_owner.clone(),
+            )
+        });
         let requests = crate::player_http::router(
             authority.clone(),
             identity,
@@ -363,6 +376,7 @@ impl PreparedGame {
                 }),
             )
         };
+        let routes = routes.merge(mcp.unwrap_or_else(crate::mcp_http::disabled));
         clock.initialize().await?;
         Ok(Self {
             routes,
@@ -583,7 +597,7 @@ async fn run(
     Ok(load)
 }
 
-async fn stopped(mut receiver: watch::Receiver<bool>) {
+pub(crate) async fn stopped(mut receiver: watch::Receiver<bool>) {
     while !*receiver.borrow() && receiver.changed().await.is_ok() {}
 }
 

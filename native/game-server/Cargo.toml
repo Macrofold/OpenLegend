@@ -25,6 +25,8 @@ ring = "=0.17.14"
 httpdate = "=1.0.3"
 libloading = "=0.9.0"
 axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "query", "tokio"] }
+rmcp = { version = "=3.11.0", default-features = false, features = ["server", "transport-streamable-http-server"] }
+subtle = "=2.6.1"
 chrono = { version = "=0.4.45", default-features = false, features = ["clock"] }
 http-body = "=1.1.0"
 tower-http = { version = "=0.6.11", features = ["fs"] }

@@ -25,6 +25,8 @@ pub use direct_history::{
     RuntimeMetadataPersistence, RuntimeRecallDecoder, RuntimeRecallRead, metadata_rows,
 };
 mod handoff;
+mod inspection;
+pub use inspection::{RuntimeItemDefinitionInspection, RuntimeWorldInspection};
 mod knowledge;
 mod learning;
 mod maintenance;

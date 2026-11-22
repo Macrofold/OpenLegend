@@ -15,6 +15,7 @@ pub mod language;
 pub mod launch;
 mod lexical_maintenance;
 pub mod live_save;
+mod mcp_http;
 mod network;
 mod npc;
 mod narrator;
