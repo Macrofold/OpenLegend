@@ -16,26 +16,26 @@ use std::{mem::size_of, sync::Arc};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct NpcAliasOrdinal {
+pub struct NpcAliasOrdinal {
     pub alias: String,
     pub ordinal: usize,
 }
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) enum NpcCatalogueSource {
+pub enum NpcCatalogueSource {
     Original,
     Current,
 }
 #[derive(Clone, Copy, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) enum NpcBindingPurpose {
+pub enum NpcBindingPurpose {
     Decision,
     Reflection,
     Recall,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct NpcActionOrdinal {
+pub struct NpcActionOrdinal {
     pub alias: String,
     pub ordinal: usize,
     pub source: NpcCatalogueSource,
@@ -49,7 +49,7 @@ pub(crate) use actions::prepare_ordinary_actions;
     rename_all_fields = "camelCase",
     deny_unknown_fields
 )]
-pub(crate) enum NpcEntityOrdinal {
+pub enum NpcEntityOrdinal {
     Myself,
     Body {
         ordinal: usize,
@@ -71,7 +71,7 @@ pub(crate) enum NpcEntityOrdinal {
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct NpcEntityAlias {
+pub struct NpcEntityAlias {
     pub alias: String,
     pub source: NpcEntityOrdinal,
 }
@@ -138,7 +138,7 @@ pub(crate) struct NpcReceiptAlias {
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct NpcPersonalEvidence {
+pub struct NpcPersonalEvidence {
     pub inventory: usize,
     pub ordinal: usize,
 }

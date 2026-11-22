@@ -168,6 +168,8 @@ Chromium `157.0.8103.79` inspected Camp hearth through the remembered-place list
 
 Positive appraisal and plan fields, paused cancel, the overlapping final-source comparison and isolated managed runs still require separate witnesses. These are correctness results.
 
+The next direct handoff also keeps response aliases, offered ordinals and selected evidence in Rust values through the binding turn. The queued input holds its own storage until the existing original/current checks finish. At `aa39b3cc16dd27e5b06cb93e7a43b89b07a99a41` (executable `5c77b000702c4437a4bf5c695a7caf21cb9de068f39b3de19b91bf0ed487c523`), the three `direct-bindings-*` cases repeated the moving, withdrawal and cancellation journeys with saved receipt recovery. The completing request made three actual controlled judgments and one generation. It applied one reply. The two unsuccessful cases applied none. All three databases were removed after clean shutdown. The bridge still uses the shared validated selection through its byte API.
+
 ### Shutdown during an automatic NPC commit
 
 An advisory lock on an isolated PostgreSQL fixture held the automatic scheduler at the actual `COMMIT`. The player’s accepted movement was visible and still needed the final save. On `a782ad14f45b`, stopping the server dropped the scheduler's transaction future. The writer closed admission as designed for an unknown outcome. The final save failed with `WriterUnavailable` and the process exited with status 1.

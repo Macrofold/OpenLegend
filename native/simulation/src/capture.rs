@@ -33,10 +33,13 @@ pub(crate) mod npc_intake;
 mod npc_references;
 pub(crate) mod npc_self;
 mod npc_subject;
+pub use npc_bindings::{
+    NpcActionOrdinal, NpcAliasOrdinal, NpcBindingPurpose, NpcCatalogueSource, NpcEntityAlias,
+    NpcEntityOrdinal, NpcPersonalEvidence,
+};
 pub(crate) use npc_bindings::{
-    NpcActionOrdinal, NpcAliasOrdinal, NpcBindingMaps, NpcBindingPurpose, NpcBindingRead,
-    NpcBindingSelection, NpcCatalogueSource, NpcPerspectiveOrdinal, npc_perspectives_current,
-    prepare_ordinary_actions,
+    NpcBindingMaps, NpcBindingRead, NpcBindingSelection, NpcPerspectiveOrdinal,
+    npc_perspectives_current, prepare_ordinary_actions,
 };
 pub(crate) use npc_references::NpcReferenceFacts;
 mod npc_history;

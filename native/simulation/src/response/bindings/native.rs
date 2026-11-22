@@ -11,14 +11,14 @@ use std::sync::Arc;
 
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) enum ResponseConsumer {
+pub enum ResponseConsumer {
     Inspection,
     Chat,
     Thought,
     Reflection,
 }
 impl ResponseConsumer {
-    pub(crate) fn as_str(self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Inspection => "inspection",
             Self::Chat => "chat",

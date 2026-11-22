@@ -17,12 +17,13 @@ mod envelope;
 mod save;
 pub(crate) use envelope::{ActorResponse, ResponseEnvelopeError, ResponseKind, ResponseOperation};
 mod bindings;
+pub use bindings::ResponseConsumer;
 pub(crate) use bindings::{
     AppraisalCreatesAnswer, AppraisalCreatesRequest, AppraisalSelection,
     PreparedResponseAppraisals, ResponseActionChoice, ResponseAttemptBinding,
-    ResponseAttemptCandidate, ResponseBindingInput, ResponseBindings, ResponseConsumer,
-    ResponseNativeGuard, ResponseObservation, ResponseReads, ResponseSemanticCause,
-    ResponseSituation, ResponseValidityRoute, ResponseWorkIdentity, capture_attempt_candidates,
+    ResponseAttemptCandidate, ResponseBindingInput, ResponseBindings, ResponseNativeGuard,
+    ResponseObservation, ResponseReads, ResponseSemanticCause, ResponseSituation,
+    ResponseValidityRoute, ResponseWorkIdentity, capture_attempt_candidates,
 };
 mod aliases;
 pub(crate) use aliases::ResponseAliases;

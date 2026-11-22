@@ -6,6 +6,10 @@ use crate::{
     world::WorldError,
 };
 use openlegend_simulation::{
+    capture::{
+        NpcActionOrdinal, NpcAliasOrdinal, NpcBindingPurpose as ProjectionPurpose,
+        NpcCatalogueSource, NpcEntityAlias, NpcEntityOrdinal, NpcPersonalEvidence,
+    },
     encoding::{json_record, sha256_hex},
     experience::{PersonalSourceKind, PersonalSourceRef},
     host::{ByteBudget, ByteReservation, CapacityError},
@@ -13,9 +17,10 @@ use openlegend_simulation::{
     reception::{AttributeDisplay, AttributeKnowledge, KnowledgeDocument},
     records::SqlCell,
     runtime::{
-        NpcActivityFacts, RuntimeError, RuntimeNpcFeelings, RuntimeNpcObservedBody,
-        RuntimeNpcPersonalSource as PersonalSource, RuntimeNpcPersonalSources as PersonalSources,
-        RuntimeNpcRead, RuntimeNpcResponseTicket, RuntimeNpcSelf, RuntimeNpcSelfPrompt,
+        NpcActivityFacts, RuntimeError, RuntimeNpcBindingInput, RuntimeNpcConsumer,
+        RuntimeNpcFeelings, RuntimeNpcObservedBody, RuntimeNpcPersonalSource as PersonalSource,
+        RuntimeNpcPersonalSources as PersonalSources, RuntimeNpcRead, RuntimeNpcResponseTicket,
+        RuntimeNpcSelf, RuntimeNpcSelfPrompt,
     },
     state::Goal,
     text::JsText,
@@ -28,12 +33,6 @@ use std::{borrow::Cow, collections::HashMap, fmt::Write as _, sync::Arc};
 mod recall;
 pub(super) use openlegend_simulation::runtime::RuntimeNpcDecisionFrame as ReceivedFrame;
 pub(super) use recall::{Collected, RecallReview, collect};
-
-#[derive(Clone, Copy)]
-enum ProjectionPurpose {
-    Recall,
-    Decision,
-}
 
 pub(super) struct Prepared {
     pub(super) through: u64,
@@ -118,10 +117,11 @@ pub(super) async fn finish(
 ) -> Result<Prepared, CallFailure> {
     ensure_running(work)?;
     let budget = game.host.budget();
-    let current = capture_offers(game, work, consumer(work), "current-offers").await?;
+    let current = capture_offers(game, work, consumer(work).as_str(), "current-offers").await?;
     let through = collected.through.max(current.accepted_cut());
     // The projection has separate custody from the captured evidence it renders.
-    let projection = collected.projection_custody(&current, ProjectionPurpose::Decision, budget)?;
+    let mut projection =
+        collected.projection_custody(&current, ProjectionPurpose::Decision, budget)?;
     let (binding, context, addressed, speech_trigger) = project(
         game,
         work,
@@ -143,8 +143,7 @@ pub(super) async fn finish(
         )
         .map_err(invalid)?;
     ensure_running(work)?;
-    let request = crate::wire::encode(&binding, b"", b"", budget).map_err(wire_failure)?;
-    drop(binding);
+    let request = binding.fund(&mut projection).map_err(packet_failure)?;
     let origin = work.automatic.as_ref().map(|trigger| trigger.read.clone());
     let ticket = game
         .world
@@ -177,11 +176,11 @@ fn binding_failure(error: WorldError) -> CallFailure {
     CallFailure::World(error).at("response-binding")
 }
 
-fn consumer(work: &Work) -> &'static str {
+fn consumer(work: &Work) -> RuntimeNpcConsumer {
     if work.permit.is_some() {
-        "chat"
+        RuntimeNpcConsumer::Chat
     } else {
-        "thought"
+        RuntimeNpcConsumer::Thought
     }
 }
 
@@ -218,7 +217,7 @@ fn project(
     selected: Option<&PersonalSources>,
     rows: &[usize],
     purpose: ProjectionPurpose,
-) -> Result<(Value, Projection, bool, bool), CallFailure> {
+) -> Result<(RuntimeNpcBindingInput, Projection, bool, bool), CallFailure> {
     let consumer = consumer(work);
     let decision = matches!(purpose, ProjectionPurpose::Decision);
     let self_facts = read.current_self().map_err(packet_failure)?;
@@ -231,7 +230,10 @@ fn project(
     let mut refs = vec![self_reference.clone()];
     let mut canonical = HashMap::from([(work.actor.as_str(), self_reference.clone())]);
     let mut physical = Vec::new();
-    let mut entities = vec![json!({"alias":self_reference,"source":{"kind":"myself"}})];
+    let mut entities = vec![NpcEntityAlias {
+        alias: self_reference.clone(),
+        source: NpcEntityOrdinal::Myself,
+    }];
     let mut descriptions = Vec::new();
     if decision {
         descriptions.push(format!("Myself: {own_name} (ID:{self_reference})"));
@@ -244,7 +246,7 @@ fn project(
     for &ordinal in original_attention {
         let id = alias(&reference_key, "attention", ordinal);
         attention_aliases.push(id.clone());
-        attention.push(json!({"alias":id,"ordinal":ordinal}));
+        attention.push(NpcAliasOrdinal { alias: id, ordinal });
         presented.push(ordinal);
     }
     for &ordinal in read.selected_body_ordinals().map_err(packet_failure)? {
@@ -252,7 +254,10 @@ fn project(
         let key = alias(&reference_key, "body", ordinal);
         canonical.insert(body.source_id, key.clone());
         refs.push(key.clone());
-        entities.push(json!({"alias":key,"source":{"kind":"body","ordinal":ordinal}}));
+        entities.push(NpcEntityAlias {
+            alias: key.clone(),
+            source: NpcEntityOrdinal::Body { ordinal },
+        });
         if decision {
             let name = name_phrase(body.name, NameArticle::Definite, false);
             let name = prompt_text(&name);
@@ -298,7 +303,7 @@ fn project(
             .as_ref()
             .is_none_or(|trigger| trigger.causes.is_empty())
         && speech_only(&work.source, &source_entries);
-    if consumer == "chat" && !addressed {
+    if consumer == RuntimeNpcConsumer::Chat && !addressed {
         return Err(CallFailure::Stale("decision-heard-addressing"));
     }
     let world = &game.view_policy().world;
@@ -383,7 +388,11 @@ fn project(
         for (ordinal, offer) in read.decision_offers().map_err(packet_failure)?.enumerate() {
             let id = format!("a{ordinal}");
             let caption = prompt_text(offer.description.ok_or(CallFailure::Invalid)?);
-            actions.push(json!({"alias":id,"ordinal":ordinal,"source":"current"}));
+            actions.push(NpcActionOrdinal {
+                alias: id.clone(),
+                ordinal,
+                source: NpcCatalogueSource::Current,
+            });
             offers.push(NativeOffer {
                 id,
                 caption: caption.into_owned(),
@@ -434,21 +443,25 @@ fn project(
         }
     }
     project_markers(&mut fields, &canonical, &refs);
-    let (purpose, validity, evidence) = if decision {
-        (
-            "decision",
-            "decision",
-            personal_evidence(selected, rows.iter().copied()),
-        )
+    let evidence = if decision {
+        personal_evidence(selected, rows.iter().copied())?
     } else {
-        ("recall", "prepared-response", json!([]))
+        Vec::new()
     };
-    let binding = json!({"decisionId":work.job.job.id,"selection":{
-        "consumer":consumer,"purpose":purpose,"validity":validity,"actions":actions,
-        "prototypeSource":"current","perspectives":[],"semanticCauses":work.automatic.as_ref().map_or(&[][..],|trigger|trigger.causes.as_slice()),"intents":[],
-        "evidence":evidence,"entities":entities,"identities":[],"knowledge":[],
-        "observations":[],"current":[],"receipts":[],"attention":attention,"presented":presented,"appraisals":null,
-    }});
+    let binding = RuntimeNpcBindingInput {
+        decision_id: work.job.job.id.clone(),
+        consumer,
+        purpose,
+        actions,
+        semantic_causes: work
+            .automatic
+            .as_ref()
+            .map_or_else(Vec::new, |trigger| trigger.causes.clone()),
+        evidence,
+        entities,
+        attention,
+        presented,
+    };
     Ok((
         binding,
         Projection {
@@ -491,12 +504,14 @@ fn speech_only(causes: &[PersonalSourceRef], entries: &[&PersonalSource]) -> boo
 fn personal_evidence(
     sources: Option<&PersonalSources>,
     rows: impl Iterator<Item = usize>,
-) -> Value {
-    let ordinal = sources.map(|data| data.ordinal);
-    Value::Array(
-        rows.map(|row| json!({"inventory":ordinal,"ordinal":row}))
-            .collect(),
-    )
+) -> Result<Vec<NpcPersonalEvidence>, CallFailure> {
+    rows.map(|ordinal| {
+        Ok(NpcPersonalEvidence {
+            inventory: sources.ok_or(CallFailure::Invalid)?.ordinal,
+            ordinal,
+        })
+    })
+    .collect()
 }
 
 fn describe_experience(
@@ -543,13 +558,6 @@ fn capacity(error: CapacityError) -> CallFailure {
 
 fn packet_failure(error: RuntimeError) -> CallFailure {
     CallFailure::World(WorldError::Simulation(error)).at("context-preparation")
-}
-
-fn wire_failure(error: crate::wire::WireError) -> CallFailure {
-    match error {
-        crate::wire::WireError::Capacity => capacity(CapacityError),
-        crate::wire::WireError::Encoding(error) => invalid(error),
-    }
 }
 
 /// Prompts use UTF-8. Escape isolated UTF-16 units visibly, and distinguish

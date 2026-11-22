@@ -20,7 +20,10 @@ mod perspectives;
 mod presentation;
 pub use crate::appraisals::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
 pub(super) use bindings::ActiveNpcResponse;
-pub use bindings::{RuntimeNpcOperations, RuntimeNpcResponseTicket};
+pub use bindings::{
+    RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcConsumer, RuntimeNpcOperations,
+    RuntimeNpcResponseTicket,
+};
 pub(super) use held_sources::HeldReceiptRegistry;
 pub(crate) use held_sources::HeldSourceProof;
 pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};

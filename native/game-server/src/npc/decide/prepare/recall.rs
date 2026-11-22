@@ -4,7 +4,7 @@ use super::{
     Arc, ByteBudget, ByteReservation, CallFailure, CapacityError, CurrentServer, PersonalSources,
     ProjectionPurpose, ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket, Work, capacity,
     capture_origin, consumer, describe_experience, ensure_running, invalid, json, packet_failure,
-    personal_description, personal_evidence, project, project_markers, wire_failure,
+    personal_description, personal_evidence, project, project_markers,
 };
 use crate::{
     decision_render::{BoundAttention, RenderError},
@@ -46,7 +46,7 @@ pub(in crate::npc::decide) async fn collect(
     ensure_running(work)?;
     let budget = game.host.budget();
     let consumer = consumer(work);
-    let mut original = capture_origin(game, work, consumer).await?;
+    let mut original = capture_origin(game, work, consumer.as_str()).await?;
     let frame = original.take_origin_frame().map_err(packet_failure)?;
     let origin = original.decision_origin();
     let through = origin.accepted_cut;
@@ -224,11 +224,11 @@ impl Collected {
         let budget = game.host.budget();
         let mut fresh = game
             .world
-            .capture_npc_recall(game.clone(), &work.actor, consumer(work))
+            .capture_npc_recall(game.clone(), &work.actor, consumer(work).as_str())
             .await
             .map_err(|error| CallFailure::World(error).at("recall-current-context"))?;
         let through = self.through.max(fresh.accepted_cut());
-        let projection_custody =
+        let mut projection_custody =
             self.projection_custody(&fresh, ProjectionPurpose::Recall, budget)?;
         let source_data = self.sources.as_ref();
         let mut ranked = Vec::new();
@@ -280,11 +280,10 @@ impl Collected {
                     questions.contains_key(&format!("c{index}")).then_some(row)
                 }),
         );
-        let selection = &mut binding["selection"];
-        selection["evidence"] = personal_evidence(source_data, disclosed);
-        let request_bytes =
-            crate::wire::encode(&binding, b"", b"", budget).map_err(wire_failure)?;
-        drop(binding);
+        binding.evidence = personal_evidence(source_data, disclosed)?;
+        let binding_request = binding
+            .fund(&mut projection_custody)
+            .map_err(packet_failure)?;
         drop(ranked);
         drop(context);
         drop(projection_custody);
@@ -294,7 +293,7 @@ impl Collected {
             .bind_npc_preserving_read(
                 self.original.take().ok_or(CallFailure::Invalid)?,
                 fresh,
-                request_bytes,
+                binding_request,
                 origin,
             )
             .await
@@ -339,8 +338,8 @@ impl Collected {
         purpose: ProjectionPurpose,
         budget: &ByteBudget,
     ) -> Result<ByteReservation, CallFailure> {
-        // A selected ordinal produces two 24-byte aliases, a two-field JSON
-        // object, and vector entries for the reference and presentation.
+        // A selected ordinal produces two 24-byte aliases and several vector
+        // entries for the reference, presented ordinal and owned selection.
         // Cover their growth and alias generation apart from the origin read.
         let attention = self
             .attention

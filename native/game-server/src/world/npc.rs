@@ -4,9 +4,8 @@
 use super::*;
 use crate::authority::{Authority, AuthorizedScope, Capability};
 use crate::boot::CurrentServer;
-use axum::body::Bytes;
 use openlegend_simulation::runtime::{
-    RuntimeNpcPreparationStep, RuntimeNpcRead, RuntimeNpcTrigger,
+    RuntimeNpcBindingRequest, RuntimeNpcPreparationStep, RuntimeNpcRead, RuntimeNpcTrigger,
 };
 use openlegend_simulation::{capture::NpcSourceSelection, host::ByteReservation};
 
@@ -238,7 +237,7 @@ impl HostedWorld {
         self: &Arc<Self>,
         original: RuntimeNpcRead,
         current: RuntimeNpcRead,
-        request: Bytes,
+        request: RuntimeNpcBindingRequest,
         trigger: Option<Arc<RuntimeNpcTrigger>>,
     ) -> Result<RuntimeNpcResponseTicket, WorldError> {
         match self
@@ -256,18 +255,17 @@ impl HostedWorld {
         self: &Arc<Self>,
         original: RuntimeNpcRead,
         current: RuntimeNpcRead,
-        request: Bytes,
+        request: RuntimeNpcBindingRequest,
         trigger: Option<Arc<RuntimeNpcTrigger>>,
     ) -> Result<NpcBinding, WorldError> {
         let _turn = self.enter().await?;
         self.call(move |session| {
             let mut original = Some(original);
-            match session.bind_npc_response(
+            match session.bind_npc_response_direct(
                 &mut original,
                 &mut Some(current),
-                &request,
+                request,
                 trigger.as_deref(),
-                None,
             ) {
                 Ok(ticket) => Ok(NpcBinding::Issued(ticket)),
                 Err(reason) => Ok(NpcBinding::Refused {

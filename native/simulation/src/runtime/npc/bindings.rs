@@ -1,14 +1,95 @@
 //! Issuance consumes the genuine originating reads. Node supplies only the
 //! displayed aliases and ordinals, never commands or permission-bearing maps.
 use super::*;
-use crate::capture::{
-    NpcActionOrdinal, NpcBindingMaps, NpcBindingPurpose, NpcBindingRead, NpcBindingSelection,
-    NpcCatalogueSource,
-};
+use crate::capture::{NpcBindingMaps, NpcBindingRead, NpcBindingSelection};
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::response::ResponseEnvelopeError;
 use std::sync::atomic::AtomicU8;
 mod copies;
+
+pub use crate::capture::{
+    NpcActionOrdinal, NpcAliasOrdinal, NpcBindingPurpose, NpcCatalogueSource, NpcEntityAlias,
+    NpcEntityOrdinal, NpcPersonalEvidence,
+};
+use crate::host::retained_size::heap_record;
+pub use crate::response::ResponseConsumer as RuntimeNpcConsumer;
+
+heap_record!(NpcAliasOrdinal { alias });
+heap_record!(NpcActionOrdinal { alias });
+heap_record!(NpcEntityAlias { alias });
+heap_record!(NpcPersonalEvidence {});
+
+/// The stand-alone director's choices and displayed aliases. Identity
+/// authority stays in the original and current read, just as at the bridge.
+pub struct RuntimeNpcBindingInput {
+    pub decision_id: String,
+    pub consumer: crate::response::ResponseConsumer,
+    pub purpose: NpcBindingPurpose,
+    pub actions: Vec<NpcActionOrdinal>,
+    pub semantic_causes: Vec<usize>,
+    pub evidence: Vec<NpcPersonalEvidence>,
+    pub entities: Vec<NpcEntityAlias>,
+    pub attention: Vec<NpcAliasOrdinal>,
+    pub presented: Vec<usize>,
+}
+
+pub struct RuntimeNpcBindingRequest {
+    request: BindingRequest,
+    _custody: ByteReservation,
+}
+
+impl RuntimeNpcBindingInput {
+    /// The producer funded these buffers before building them. Transfer
+    /// their actual backing independently through queued/cancelled binding.
+    pub fn fund(
+        self,
+        workspace: &mut ByteReservation,
+    ) -> Result<RuntimeNpcBindingRequest, RuntimeError> {
+        let bytes = heap_sum([
+            self.decision_id.capacity(),
+            self.actions.heap_bytes().ok_or(CapacityError)?,
+            self.semantic_causes.heap_bytes().ok_or(CapacityError)?,
+            self.evidence.heap_bytes().ok_or(CapacityError)?,
+            self.entities.heap_bytes().ok_or(CapacityError)?,
+            self.attention.heap_bytes().ok_or(CapacityError)?,
+            self.presented.heap_bytes().ok_or(CapacityError)?,
+        ])
+        .ok_or(CapacityError)?;
+        let custody = workspace.split_off(bytes)?;
+        use crate::response::ResponseValidityRoute;
+        let validity = if self.purpose == NpcBindingPurpose::Recall {
+            ResponseValidityRoute::PreparedResponse
+        } else {
+            ResponseValidityRoute::Decision
+        };
+        Ok(RuntimeNpcBindingRequest {
+            request: BindingRequest {
+                decision_id: self.decision_id,
+                selection: NpcBindingSelection {
+                    consumer: self.consumer,
+                    purpose: self.purpose,
+                    validity,
+                    actions: self.actions,
+                    prototype_source: NpcCatalogueSource::Current,
+                    perspectives: Vec::new(),
+                    semantic_causes: self.semantic_causes,
+                    intents: Vec::new(),
+                    evidence: self.evidence,
+                    entities: self.entities,
+                    identities: Vec::new(),
+                    knowledge: Vec::new(),
+                    observations: Vec::new(),
+                    current: Vec::new(),
+                    receipts: Vec::new(),
+                    attention: self.attention,
+                    presented: self.presented,
+                    appraisals: None,
+                },
+            },
+            _custody: custody,
+        })
+    }
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -521,11 +602,34 @@ impl NativeWorldSession {
         current: &mut Option<RuntimeNpcRead>,
         request: &[u8],
         trigger: Option<&RuntimeNpcTrigger>,
-        mut action_read: Option<&mut Option<RuntimeNpcRead>>,
+        action_read: Option<&mut Option<RuntimeNpcRead>>,
     ) -> Result<RuntimeNpcResponseTicket, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(request, &self.budget)?;
         let request: BindingRequest = serde_json::from_slice(request).map_err(failure)?;
+        self.bind_npc_response_selected(original, current, request, trigger, action_read)
+    }
+
+    pub fn bind_npc_response_direct(
+        &mut self,
+        original: &mut Option<RuntimeNpcRead>,
+        current: &mut Option<RuntimeNpcRead>,
+        request: RuntimeNpcBindingRequest,
+        trigger: Option<&RuntimeNpcTrigger>,
+    ) -> Result<RuntimeNpcResponseTicket, RuntimeError> {
+        self.require_active()?;
+        let RuntimeNpcBindingRequest { request, _custody } = request;
+        self.bind_npc_response_selected(original, current, request, trigger, None)
+    }
+
+    fn bind_npc_response_selected(
+        &mut self,
+        original: &mut Option<RuntimeNpcRead>,
+        current: &mut Option<RuntimeNpcRead>,
+        request: BindingRequest,
+        trigger: Option<&RuntimeNpcTrigger>,
+        mut action_read: Option<&mut Option<RuntimeNpcRead>>,
+    ) -> Result<RuntimeNpcResponseTicket, RuntimeError> {
         if !crate::values::is_safe_record_id(&request.decision_id)
             || request.decision_id.encode_utf16().count() > 100
         {
