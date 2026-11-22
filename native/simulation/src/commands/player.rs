@@ -2,7 +2,10 @@
 
 use super::outings_input::PlayerTravelIntent;
 pub use crate::execution::{OwnedArrangement, OwnedMove, OwnedStockSelection};
-use super::{CommandEncoding, CommandHeaders, NativeCommand, SpeechTargetRole, StatusOperation};
+use super::{
+    CommandEncoding, CommandEnvelope, CommandHeaders, NativeCommand, SpeechTargetRole,
+    StatusOperation,
+};
 use crate::encoding::json_record;
 use crate::gathering::{GatheringMode, ToolChoice};
 use crate::state::SurfacePoint;
@@ -50,6 +53,12 @@ pub enum RuntimePlayerCommand<'a> {
         text: &'a JsText,
         target: Option<(&'a str, SpeechTargetRole)>,
         volume: Option<SpeechVolume>,
+    },
+    DirectedSpeech {
+        text: &'a JsText,
+        target: &'a str,
+        role: SpeechTargetRole,
+        volume: SpeechVolume,
     },
     Status {
         target: &'a str,
@@ -100,6 +109,7 @@ impl RuntimePlayerCommand<'_> {
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
             Self::TendFire { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
+            Self::DirectedSpeech { text, target, .. } => text.storage_bytes() + target.len(),
             Self::Status { target, definition, .. } => target.len() + definition.len(),
             Self::Cook { heat, preparation_id, preparation_digest, inputs, .. } => {
                 heat.len() + preparation_id.len() + preparation_digest.len()
@@ -121,6 +131,15 @@ impl RuntimePlayerCommand<'_> {
         id: &str,
         actor: &str,
     ) -> Result<(NativeCommand, String), serde_json::Error> {
+        if let Self::DirectedSpeech {
+            text,
+            target,
+            role,
+            volume,
+        } = self
+        {
+            return bind_directed_speech(id, actor, target, role, text, volume);
+        }
         if let Self::Strike {
             target, definition, ..
         } = self
@@ -272,6 +291,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::TransferItem(_)
             | Self::MoveGroup(..)
             | Self::DropGroup { .. }
+            | Self::DirectedSpeech { .. }
             | Self::Strike { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
@@ -384,14 +404,7 @@ impl RuntimePlayerCommand<'_> {
                 })?,
             },
             Self::Craft { recipe } => NativeCommand::Craft { envelope, recipe_id: recipe.into() },
-            Self::Say { text, target, volume } => NativeCommand::Say {
-                envelope,
-                text: text.clone(),
-                target_id: target.map(|(id, _)| id.to_owned()),
-                target_role,
-                self_introduction: None,
-                volume: volume.map(|volume| volume.id().to_owned()),
-            },
+            Self::Say { text, target, volume } => bound_speech(envelope, text, target, volume),
             Self::Pickup { target, item, quantity } => NativeCommand::Pickup {
                 envelope, target_id: target.into(), item_id: item.map(str::to_owned), quantity,
             },
@@ -419,6 +432,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::TransferItem(_)
             | Self::MoveGroup(..)
             | Self::DropGroup { .. }
+            | Self::DirectedSpeech { .. }
             | Self::Strike { .. } => {
                 unreachable!("specialized commands bind their own fields")
             }
@@ -435,6 +449,72 @@ impl RuntimePlayerCommand<'_> {
             },
         };
         Ok((command, signature))
+    }
+}
+
+/// Encode the conversation's existing receipt and activity facts once. The
+/// already authorized caller passes the exact text and target to the command.
+fn bind_directed_speech(
+    id: &str,
+    actor: &str,
+    target: &str,
+    role: SpeechTargetRole,
+    text: &JsText,
+    volume: SpeechVolume,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Operation<'a> {
+        actor_id: &'a str,
+        id: &'a str,
+        target_id: &'a str,
+        target_role: SpeechTargetRole,
+        text: &'a JsText,
+        #[serde(rename = "type")]
+        kind: &'static str,
+        volume: SpeechVolume,
+    }
+    let mut headers = player_headers(id, actor);
+    if !headers.valid() {
+        return Err(serde::ser::Error::custom("Invalid conversation command."));
+    }
+    // Match the original directed speech record, including omission and order.
+    headers.human_initiated = None;
+    let encoding = CommandEncoding::from_ordered(
+        &Operation {
+            actor_id: actor,
+            id,
+            target_id: target,
+            target_role: role,
+            text,
+            kind: "say",
+            volume,
+        },
+        7,
+    )?;
+    let signature = encoding.json.get().to_owned();
+    let command = bound_speech(
+        headers.envelope(encoding),
+        text,
+        Some((target, role)),
+        Some(volume),
+    );
+    Ok((command, signature))
+}
+
+fn bound_speech(
+    envelope: CommandEnvelope,
+    text: &JsText,
+    target: Option<(&str, SpeechTargetRole)>,
+    volume: Option<SpeechVolume>,
+) -> NativeCommand {
+    NativeCommand::Say {
+        envelope,
+        text: text.clone(),
+        target_id: target.map(|(id, _)| id.to_owned()),
+        target_role: target.map(|(_, role)| role),
+        self_introduction: None,
+        volume: volume.map(|value| value.id().to_owned()),
     }
 }
 

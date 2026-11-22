@@ -243,8 +243,8 @@ impl CommandCursor {
     pub(crate) fn needs_known_places(&self) -> bool {
         !self.options.preview && matches!(self.command, NativeCommand::Say { .. })
     }
-    /// Canonical command bytes come from the existing Node canonicalJson input
-    /// encoder. They are the current receipt's digest, not a writable world.
+    /// Admit the command with the exact bytes used for its receipt digest.
+    /// A separately supplied canonical form must describe the same command.
     pub(crate) fn new(
         command: NativeCommand,
         canonical: String,
@@ -252,17 +252,23 @@ impl CommandCursor {
         binding: GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        // Speech binds its text and recipient together with the source encoding.
+        // Matching bytes already establish the canonical form for this command.
+        let same_speech_encoding =
+            matches!(command, NativeCommand::Say { .. }) && command.source_encoding() == canonical;
         // The authenticated binder constructs these typed operations directly.
         // Raw command decoding does not grant their private authority.
-        if !matches!(
-            command,
-            NativeCommand::Cancel {
-                dismiss_review: true,
-                ..
-            } | NativeCommand::DescriptiveAct { .. }
-                | NativeCommand::TransferItem { .. }
-                | NativeCommand::Drop { group: Some(_), .. }
-        ) {
+        if !same_speech_encoding
+            && !matches!(
+                command,
+                NativeCommand::Cancel {
+                    dismiss_review: true,
+                    ..
+                } | NativeCommand::DescriptiveAct { .. }
+                    | NativeCommand::TransferItem { .. }
+                    | NativeCommand::Drop { group: Some(_), .. }
+            )
+        {
             let decoded: NativeCommand =
                 serde_json::from_str(&canonical).map_err(|_| ExecutionError::Invariant)?;
             if decoded != command {

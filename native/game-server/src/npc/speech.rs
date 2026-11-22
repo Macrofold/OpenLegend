@@ -17,7 +17,9 @@ use openlegend_simulation::{
     host::ByteReservation,
     narration::{NameArticle, name_phrase},
     reception::EventScalar,
-    runtime::{InteractionMode, NativeWorldSession, RuntimeDirectOutput, RuntimeError},
+    runtime::{
+        InteractionMode, NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimePlayerCommand,
+    },
     text::JsText,
     values::deserialize_present_option,
     worlds::base_observed::SpeechVolume,
@@ -309,24 +311,15 @@ pub(super) async fn speak(
                 if !current.reply || current.actor != first_target.actor || current.role != first_target.role {
                     return Ok(ApplicationStart::Existing(Spoken::Refused(SpeechRefusal::InvalidRecipient)));
                 }
-                // Canonical member order is the existing native receipt
-                // signature. The untrusted text remains only a text field.
-                #[derive(Serialize)]
-                #[serde(rename_all = "camelCase")]
-                struct Operation<'a> {
-                    actor_id: &'a str,
-                    id: &'a str,
-                    target_id: &'a str,
-                    target_role: SpeechTargetRole,
-                    text: &'a JsText,
-                    #[serde(rename = "type")]
-                    kind: &'static str,
-                    volume: SpeechVolume,
-                }
-                let operation = encode(&Operation { actor_id: &scope.actor_id, id: &utterance,
-                    target_id: &current.actor, target_role: current.role, text: &begin.request.text,
-                    kind: "say", volume: begin.request.volume })?;
-                Ok(ApplicationStart::Candidate(session.begin_command(operation.as_bytes(), operation.clone(), true)?))
+                let command = RuntimePlayerCommand::DirectedSpeech {
+                    text: &begin.request.text,
+                    target: &current.actor,
+                    role: current.role,
+                    volume: begin.request.volume,
+                };
+                Ok(ApplicationStart::Candidate(session.begin_player_command(
+                    &utterance, &scope.actor_id, command, false,
+                )?))
             })?
         },
         move |question| { let provider = provider.clone(); async move { provider.answer_operation(question).await } },
