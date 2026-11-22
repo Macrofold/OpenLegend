@@ -262,6 +262,8 @@ export class MaintenanceIntakeInputs {
   }
 }
 
+type MaintenanceKind = 'consolidation' | 'activity-learning' | 'reflection';
+
 export class CognitionMaintenance {
   private readonly work = new ActorWork('maintenance', () => this.now(), {
     capture: () => this.host.durabilityTicket(),
@@ -272,6 +274,7 @@ export class CognitionMaintenance {
   private active: AbortController | null = null;
   private pending: Promise<void> | null = null;
   private queuedId?: string;
+  private selectedWork?: { actorId: string; kind: MaintenanceKind };
   private dispatching?: Promise<void>;
   private executionLease?: ExecutionLease;
   private budgetJob?: string;
@@ -407,15 +410,7 @@ export class CognitionMaintenance {
     }
   }
   private async schedule(interactiveBusy: boolean): Promise<void> {
-    if (
-      this.scheduling ||
-      this.active ||
-      this.queuedId ||
-      this.dispatching ||
-      this.stopped ||
-      this.host.paused ||
-      interactiveBusy
-    )
+    if (this.scheduling || this.selectedWork || this.stopped || this.host.paused || interactiveBusy)
       return;
     this.scheduling = true;
     try {
@@ -663,7 +658,7 @@ export class CognitionMaintenance {
               return;
             await this.start(
               actorId,
-              queued.reason,
+              'reflection',
               generation,
               current,
               this.reflect.bind(this, queued),
@@ -694,22 +689,32 @@ export class CognitionMaintenance {
   }
   private async start(
     actorId: string,
-    reason: string,
+    kind: MaintenanceKind,
     generation: string,
     current: () => boolean,
     execute: (controller: AbortController) => Promise<void>,
   ) {
     if (!current()) return;
+    const selected = { actorId, kind };
+    this.selectedWork = selected;
+    const release = () => {
+      if (this.selectedWork === selected) this.selectedWork = undefined;
+    };
     if (!this.execution) {
-      await this.startNow(actorId, reason, generation, current, execute);
-      if (reason === 'activity-learning') await this.pending;
+      try {
+        await this.startNow(actorId, kind, generation, current, execute);
+        if (kind === 'activity-learning') await this.pending;
+      } finally {
+        if (this.pending) void this.pending.then(release, release);
+        else release();
+      }
       return;
     }
     const start = async (lease: ExecutionLease) => {
       if (!current()) return;
       this.executionLease = lease;
       const work = (async () => {
-        await this.startNow(actorId, reason, generation, current, execute);
+        await this.startNow(actorId, kind, generation, current, execute);
         await this.pending;
       })();
       this.dispatching = work;
@@ -720,11 +725,15 @@ export class CognitionMaintenance {
         this.executionLease = undefined;
       }
     };
-    if (reason === 'activity-learning') {
+    if (kind === 'activity-learning') {
       // The caller already prepared the batch. Try the shared lease now instead
       // of retaining that batch in a queue intended for small descriptors.
-      const lease = await this.execution.background();
-      if (lease) await start(lease).finally(() => lease.release());
+      try {
+        const lease = await this.execution.background();
+        if (lease) await start(lease).finally(() => lease.release());
+      } finally {
+        release();
+      }
       return;
     }
     const id = `maintenance-admission-${randomUUID()}`;
@@ -739,19 +748,26 @@ export class CognitionMaintenance {
       dispatchBy: at + 2000,
       metadataBytes: Buffer.byteLength(id) + Buffer.byteLength(actorId) + 128,
       start: async (lease) => {
-        if (this.queuedId !== id) return;
+        if (this.queuedId !== id) {
+          release();
+          return;
+        }
         this.queuedId = undefined;
-        await start(lease);
+        await start(lease).finally(release);
       },
       declined: async () => {
         if (this.queuedId === id) this.queuedId = undefined;
+        release();
       },
     });
-    if (!accepted && this.queuedId === id) this.queuedId = undefined;
+    if (!accepted) {
+      this.queuedId = undefined;
+      release();
+    }
   }
   private async startNow(
     actorId: string,
-    reason: string,
+    kind: MaintenanceKind,
     generation: string,
     current: () => boolean,
     execute: (controller: AbortController) => Promise<void>,
@@ -760,8 +776,8 @@ export class CognitionMaintenance {
     const admission = await this.host.admission(
       actorId,
       generation,
-      ['consolidation', 'activity-learning'].includes(reason) ? 'maintenance' : 'reflection',
-      reason !== 'consolidation',
+      kind === 'reflection' ? 'reflection' : 'maintenance',
+      kind !== 'consolidation',
     );
     if (!admission) return;
     // The descriptor may already have left the execution queue while this
@@ -780,7 +796,7 @@ export class CognitionMaintenance {
       const recorded = await this.writeSchedule(generation, async () => {
         await this.host.store.putIntegration(
           `maintenance-kind:${this.host.worldId}:${actorId}`,
-          reason === 'consolidation' ? 'consolidation' : 'reflection',
+          kind === 'consolidation' ? 'consolidation' : 'reflection',
         );
         await this.host.store.putIntegration(key, startedAt);
       });
@@ -1409,6 +1425,13 @@ export class CognitionMaintenance {
         prepared.dispose();
       }
     });
+  }
+  /** An admitted foreground request supersedes its own actor's work and
+   * optional reflection. Independent memory or learning stays funded and live.
+   * docs/ai-providers.md#admission-and-cancellation */
+  interruptForForeground(actorId: string | undefined): void {
+    const work = this.selectedWork;
+    if (!work || work.kind === 'reflection' || work.actorId === actorId) this.cancel();
   }
   cancel(): void {
     this.cancellationRevision++;

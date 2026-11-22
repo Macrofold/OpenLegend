@@ -718,7 +718,7 @@ export class AiDirector {
                 : 'Act needs language-model access and an AI allowance.'
               : `This wording needs configured Jev and language-model access with an allowance. ${typedActionForms(this.service.world)}`,
           };
-        this.maintenance.cancel();
+        this.maintenance.interruptForForeground(actorId);
         const job: JobRecord = {
           id,
           kind: 'action',
@@ -1851,14 +1851,14 @@ export class AiDirector {
     // Invalid/busy requests cannot discard another mind's funded decision.
     // Reflection cleanup remains asynchronous once admission has actually succeeded.
     // docs/ai-providers.md#admission-and-cancellation
+    const actorId = this.selectedActorId(job);
     if (job.authority && (job.kind === 'chat' || job.kind === 'invention'))
-      this.maintenance.cancel();
+      this.maintenance.interruptForForeground(actorId);
     job = {
       ...job,
       startedAt: this.now(),
       queueLatencyMs: Math.max(0, this.now() - job.createdAt),
     };
-    const actorId = this.selectedActorId(job);
     if (
       (job.kind === 'chat' || job.kind === 'thought') &&
       actorId &&

@@ -23,8 +23,10 @@ A directed Send can wait briefly for its own admission, with no speech or model
 request accepted during the wait. The player retains the draft if speech was refused.
 Each job owns its watcher,
 cancellation, preview, reservations and completion. Being admitted does not cancel
-another funded character decision. The separate optional reflection scheduler
-keeps its existing foreground-interruption policy. Historical [combat checks](verification/combat-and-threat-responses.md)
+another funded character decision. Foreground admission can interrupt optional
+reflection or maintenance owned by the same actor. A different actor's funded
+hourly or daily review and activity learning keep their original attempts.
+Pausing or closing the world still cancels its pending maintenance. Historical [combat checks](verification/combat-and-threat-responses.md)
 qualify their original scheduling profile, not this allowance.
 
 The stand-alone host admits provider work outside the world writer and rechecks the exact selected evidence before dispatch and before applying a response. Once a funded reply body arrives, its owner can wait for an existing decode permit before the original deadline. A late or cancelled decode keeps the correct usage settlement separately from the outcome stored for the request. Replaying a completed request recovers its existing result. [NPC caller evidence](benchmarks/native-runtime-foundations/2026/2026-11-18-rust-game-server.md#funded-reply-decode-admission)

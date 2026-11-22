@@ -139,7 +139,7 @@ import {
 export interface NativeNpcMaintenance {
   enqueue(actorId: string, origin: string, reason: string, generation: string): Promise<void>;
   tick(interactiveBusy: boolean): Promise<void>;
-  cancel(): void;
+  interruptForForeground(actorId: string | undefined): void;
   close(): Promise<void>;
 }
 export interface NativeNpcMaintenancePorts {
@@ -531,7 +531,7 @@ export class NativeNpcDirector {
             this.service.notifyTelemetry();
             return { ok: true, code: 'spoken', message: job.message, jobId };
           }
-          this.maintenance.cancel();
+          this.maintenance.interruptForForeground(spoken.actorId);
           const read = await this.service.captureNpcIntake(spoken.actorId, 0);
           let transferred = false;
           try {
@@ -612,7 +612,7 @@ export class NativeNpcDirector {
         };
       const available = await this.service.retryNpcInteraction(target, scope);
       if (!available.ok) return available.outcome;
-      this.maintenance.cancel();
+      this.maintenance.interruptForForeground(target);
       const job: JobRecord = {
         authority: scope,
         id: jobId,
