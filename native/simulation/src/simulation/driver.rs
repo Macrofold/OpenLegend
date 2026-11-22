@@ -389,10 +389,54 @@ enum AnswerBody {
     Utterance(Box<UtteranceAnswer>),
     Words(Box<WordsAnswer>),
     Collation(Box<CollationAnswer>),
+    LocalFormat(Box<LocalFormat>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
     ActivityLearningFormat(Box<crate::activity::LearningFormatAnswer>),
+}
+
+/// Output from a pure, in-process formatter. The host owns the temporary
+/// renderer workspace. Only the selected value outlives that call.
+pub enum LocalFormat {
+    Display(ActivityView),
+    Control(JsText),
+    Canonical(String),
+    Digest(String),
+}
+
+impl LocalFormat {
+    pub(crate) fn answer_bytes(&self) -> Option<usize> {
+        use crate::host::retained_size::HeapBytes;
+        let value = match self {
+            Self::Display(view) => view.heap_bytes()?,
+            Self::Control(message) => message.storage_bytes(),
+            Self::Canonical(canonical) | Self::Digest(canonical) => canonical.capacity(),
+        };
+        value.checked_add(size_of::<Self>())
+    }
+
+    fn matches(&self, kind: ProviderKind) -> bool {
+        matches!(
+            (self, kind),
+            (Self::Display(_), ProviderKind::Display)
+                | (Self::Control(_), ProviderKind::Control)
+                | (Self::Canonical(_), ProviderKind::Canonical)
+                | (Self::Digest(_), ProviderKind::Digest))
+    }
+
+    fn into_answer(self, binding: GeometryBinding) -> Answer {
+        match self {
+            Self::Display(view) => Answer::Display(Formatted { binding, view }),
+            Self::Control(message) => {
+                Answer::Control(super::host_control::ControlAnswer { binding, message })
+            }
+            Self::Digest(canonical) => {
+                Answer::Digest(crate::language::CanonicalJsonAnswer { binding, canonical })
+            }
+            Self::Canonical(canonical) => Answer::Canonical(Canonical { binding, canonical }),
+        }
+    }
 }
 
 /// The host funds construction before moving the incoming allocation here.
@@ -482,6 +526,23 @@ impl ProviderResponse {
             kind: ProviderKind::Collation,
             binding,
             body: AnswerBody::Collation(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn local_format(
+        kind: ProviderKind,
+        binding: GeometryBinding,
+        output: Box<LocalFormat>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if !output.matches(kind) {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind,
+            binding,
+            body: AnswerBody::LocalFormat(output),
             _reservation: reservation,
         })
     }
@@ -1739,6 +1800,9 @@ impl OperationDriver {
                     }
                     AnswerBody::Collation(value) => {
                         (Some(Answer::Collation(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::LocalFormat(value) => {
+                        (Some(value.into_answer(binding)), Some(_reservation), None)
                     }
                     AnswerBody::Words(value) => {
                         (Some(Answer::Words(*value)), Some(_reservation), None)

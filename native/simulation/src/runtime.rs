@@ -9,6 +9,7 @@ use crate::host::{
 use crate::simulation::{
     CompletedOperation, ProviderQuestion, ProviderResponse, Session, SessionStep,
 };
+pub use crate::simulation::LocalFormat;
 use serde::ser::{SerializeMap, SerializeSeq};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -322,6 +323,7 @@ enum RuntimeAnswerBody {
     Utterance(Box<crate::speech::UtteranceAnswer>),
     Words(Box<crate::language::WordsAnswer>),
     Collation(Box<crate::language::CollationAnswer>),
+    LocalFormat(crate::geometry::GeometryBinding, Box<LocalFormat>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
@@ -421,6 +423,20 @@ impl RuntimeProviderInput {
                 order,
                 groups,
             })),
+            custody,
+        })
+    }
+
+    /// Adopt only the formatter's own retained result. The caller funds
+    /// rendering before construction and may release its other workspace.
+    pub fn local_format(
+        binding: crate::geometry::GeometryBinding,
+        output: LocalFormat,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        custody.resize(output.answer_bytes().ok_or(CapacityError)?)?;
+        Ok(Self {
+            body: RuntimeAnswerBody::LocalFormat(binding, Box::new(output)),
             custody,
         })
     }
@@ -531,6 +547,12 @@ fn provider_response(
                         return Err(failure("collation ranks require the actual strings request"));
                     }
                     ProviderResponse::collation(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::LocalFormat(binding, output) => {
+                    if binding != question.binding() {
+                        return Err(failure("local formatter answer belongs to another request"));
+                    }
+                    ProviderResponse::local_format(question.kind(), binding, output, input.custody)
                 }
                 RuntimeAnswerBody::Words(answer) => {
                     if question.words().is_none() {

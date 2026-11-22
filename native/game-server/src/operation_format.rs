@@ -7,16 +7,14 @@ use crate::{
     world::WorldError,
 };
 use openlegend_simulation::{
-    activity::ActivityView,
     encoding::{json_record, json_record_len, json_tree_allocation_bound},
     geometry::GeometryBinding,
     host::ByteBudget,
     records::SqlCell,
-    runtime::{RuntimeProvider, RuntimeProviderInput},
-    text::JsText,
+    runtime::{LocalFormat, RuntimeProvider, RuntimeProviderInput},
 };
 use openlegend_world_host::pool::HostError;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::value::RawValue;
 
 #[derive(Deserialize)]
@@ -27,24 +25,8 @@ struct Envelope<'a> {
     value: &'a RawValue,
 }
 
-#[derive(Serialize)]
-struct Answer {
-    binding: GeometryBinding,
-    #[serde(flatten)]
-    value: Formatted,
-}
-
-#[derive(Serialize)]
-#[serde(untagged)]
-enum Formatted {
-    Activity { view: ActivityView },
-    Control { message: JsText },
-    Canonical { canonical: String },
-}
-
-/// Borrow the funded request and admit the output and workspace. Mind
-/// formatting and utterances use typed replies. The remaining bridge-formatted
-/// operations still hand the candidate independently funded encoded results.
+/// Borrow the funded request and return only the rendered value. The existing
+/// cursors still check the ticket and own the result's meaning and effects.
 pub(crate) fn answer(
     request: &RuntimeProvider,
     budget: &ByteBudget,
@@ -123,14 +105,10 @@ pub(crate) fn answer(
         } else {
             bytes
         };
-        let mut workspace = budget.reserve(bytes).map_err(HostError::from)?;
+        let workspace = budget.reserve(bytes).map_err(HostError::from)?;
         let value = match envelope.kind {
-            "display" => Formatted::Activity {
-                view: activity_format::format(envelope.value)?,
-            },
-            "control" => Formatted::Control {
-                message: control_format::format(envelope.value)?,
-            },
+            "display" => LocalFormat::Display(activity_format::format(envelope.value)?),
+            "control" => LocalFormat::Control(control_format::format(envelope.value)?),
             "canonical" | "digest" => {
                 #[derive(Deserialize)]
                 struct Command<'a> {
@@ -157,21 +135,20 @@ pub(crate) fn answer(
                     &mut encoded,
                 )
                 .map_err(WorldError::Language)?;
-                Formatted::Canonical {
-                    canonical: String::from_utf8(encoded).map_err(|_| WorldError::ProviderKind)?,
+                let canonical = String::from_utf8(encoded).map_err(|_| WorldError::ProviderKind)?;
+                if envelope.kind == "canonical" {
+                    LocalFormat::Canonical(canonical)
+                } else {
+                    LocalFormat::Digest(canonical)
                 }
             }
             _ => unreachable!("validated provider kind"),
         };
-        let answer = json_record(&Answer {
-            binding: envelope.binding,
+        Ok(Some(RuntimeProviderInput::local_format(
+            envelope.binding,
             value,
-        })
-        .map_err(|_| WorldError::ProviderKind)?;
-        let custody = workspace
-            .split_off(answer.capacity())
-            .map_err(HostError::from)?;
-        Ok(Some(RuntimeProviderInput::new(answer, custody)))
+            workspace,
+        )?))
     })?
 }
 
