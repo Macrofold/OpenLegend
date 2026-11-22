@@ -1,0 +1,490 @@
+//! The actual person editor's memory page, exact body and protected save.
+//! Creator permission is checked separately from an actor's private boundary.
+use super::*;
+use crate::{
+    store::recall::{browse::MemoryPosition, ranking_edit::PreparedRanking},
+    world::{PlayerDisclosure, ProtectedCommit},
+};
+use openlegend_simulation::{
+    encoding::{json_record, json_tree_allocation_bound, sha256_hex},
+    experience::{PersonalSourceKind, PersonalSourceRef},
+    runtime::{PersonEditorCut, RuntimeDirectOutput, RuntimeError},
+    text::JsText,
+    values::is_safe_record_id,
+};
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Read {
+    actor_id: String,
+    before: Option<String>,
+    entry_id: Option<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Save {
+    actor_id: String,
+    cut: PersonEditorCut<'static>,
+    entry_id: String,
+    expected_hash: String,
+    importance: f64,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Memory<'a> {
+    id: String,
+    hash: &'a str,
+    time: f64,
+    text: JsText,
+    tags: Vec<String>,
+    source: &'static str,
+    label: &'static str,
+}
+
+#[derive(Serialize)]
+struct Page<'a> {
+    ok: bool,
+    #[serde(flatten)]
+    cut: PersonEditorCut<'a>,
+    name: &'a JsText,
+    memories: Vec<Memory<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    before: Option<String>,
+}
+
+#[derive(Serialize)]
+struct BodyView<'a> {
+    ok: bool,
+    hash: &'a str,
+    json: &'a str,
+}
+
+#[derive(Serialize)]
+struct ResultView {
+    ok: bool,
+    code: String,
+    message: JsText,
+}
+
+struct Staged {
+    result: ResultView,
+    ranking: Option<PreparedRanking>,
+    _custody: ByteReservation,
+}
+
+async fn actor(
+    state: &PlayerRoutes,
+    selected: &Arc<AuthorizedScope>,
+    reference: String,
+) -> Result<String, WorldError> {
+    state.authority.current_recall_operator(
+        selected,
+        reference != selected.scope.actor_id,
+        |_| (),
+    )?;
+    if reference == selected.scope.actor_id {
+        return Ok(reference);
+    }
+    let authority = state.authority.clone();
+    let selected = selected.clone();
+    let references = state.references.clone();
+    let budget = state.game.host.budget().clone();
+    state
+        .game
+        .world
+        .capture(move |session| {
+            match authority.current_private_view(&selected, true, |scope, _| {
+                references.resolve_contact(session, scope, &reference, &budget)
+            }) {
+                Ok(result) => result.map(|contact| {
+                    contact
+                        .map(|contact| contact.id)
+                        .ok_or(AccessError::Changed)
+                }),
+                Err(error) => Ok(Err(error)),
+            }
+        })
+        .await?
+        .map_err(WorldError::Access)
+}
+
+fn memory_id(id: &str) -> Option<&str> {
+    let id = id.strip_prefix("memory:")?;
+    is_safe_record_id(id).then_some(id)
+}
+
+fn changed() -> Response {
+    refusal(
+        StatusCode::CONFLICT,
+        "stale",
+        "Person or memory changed. Refresh before editing.",
+    )
+}
+
+pub(super) async fn read(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    let Ok(_slot) = state.capacity.try_acquire() else {
+        return busy();
+    };
+    let (parts, body) = request.into_parts();
+    let selected = match scope(&state.authority, &parts.headers, None).await {
+        Ok(scope) => Arc::new(scope),
+        Err(error) => return access_failure(error),
+    };
+    let (input, _custody): (Read, _) =
+        match json(&parts.headers, body, state.game.host.budget()).await {
+            Ok(input) => input,
+            Err(error) => return error,
+        };
+    let detail = parts.uri.path().ends_with("/memory");
+    let exact = match (detail, input.entry_id.as_deref()) {
+        (false, None) => None,
+        (true, Some(id)) if input.before.is_none() => match memory_id(id) {
+            Some(id) => Some(id),
+            None => return changed(),
+        },
+        _ => return changed(),
+    };
+    let actor = match actor(&state, &selected, input.actor_id).await {
+        Ok(actor) => actor,
+        Err(problem) => return failed(problem),
+    };
+    for _ in 0..2 {
+        match read_cut(&state, &selected, &actor, input.before.as_deref(), exact).await {
+            Ok(PlayerDisclosure::Published(bytes)) => return json_response(StatusCode::OK, bytes),
+            Ok(PlayerDisclosure::Busy) | Err(WorldError::Storage(StoreError::StaleCut)) => (),
+            Ok(_) | Err(WorldError::ProjectionChanged) => break,
+            Err(problem) => return failed(problem),
+        }
+    }
+    changed()
+}
+
+async fn read_cut(
+    state: &PlayerRoutes,
+    selected: &Arc<AuthorizedScope>,
+    actor: &str,
+    before: Option<&str>,
+    exact: Option<&str>,
+) -> Result<PlayerDisclosure, WorldError> {
+    let world = &state.game.world;
+    let (history, cut) = world
+        .capture_recollections(state.authority.clone(), selected.clone(), actor.into())
+        .await?;
+    let key = selected
+        .scope
+        .key()
+        .map_err(|_| StoreError::InvalidRecord)?;
+    let fence = json_record(&(
+        &key,
+        &cut.world,
+        &cut.generation,
+        actor,
+        cut.privacy_revision,
+    ))
+    .map(|json| sha256_hex(json.as_bytes()))
+    .map_err(|_| StoreError::InvalidRecord)?;
+    let position = before
+        .map(|cursor| {
+            let (reading, json) = cursor
+                .split_once('.')
+                .ok_or(WorldError::ProjectionChanged)?;
+            if reading != fence {
+                return Err(WorldError::ProjectionChanged);
+            }
+            let position: MemoryPosition =
+                serde_json::from_str(json).map_err(|_| WorldError::ProjectionChanged)?;
+            if position.kind != PersonalSourceKind::Memory
+                || !position.at.is_finite()
+                || !is_safe_record_id(&position.id)
+            {
+                return Err(WorldError::ProjectionChanged);
+            }
+            Ok(position)
+        })
+        .transpose()?;
+    let mut rows = state
+        .game
+        .store
+        .editor_memory_rows(cut, position, exact.map(str::to_owned))
+        .await?;
+    let count = rows.references.len();
+    if exact.is_some() && count != 1 {
+        return Err(WorldError::ProjectionChanged);
+    }
+    let next = rows.next.take();
+    let history = world
+        .admit_recollections(state.game.clone(), history, rows)
+        .await?;
+    world
+        .disclose_private_notes(&state.authority, selected, actor, |session, budget, _| {
+            let Some(_lease) = session.history_publication(history.sources())? else {
+                return Err(WorldError::ProjectionChanged);
+            };
+            session
+                .inspect_person_editor(actor, |name, cut| {
+                    history.sources().with_personal_sources(|sources| {
+                        if exact.is_some() {
+                            let (_, reference, payload) =
+                                sources.next().ok_or(WorldError::ProjectionChanged)?;
+                            return wire::encode(
+                                &BodyView {
+                                    ok: true,
+                                    hash: &reference.revision,
+                                    json: payload,
+                                },
+                                b"",
+                                b"",
+                                budget,
+                            )
+                            .map_err(WorldError::Wire);
+                        }
+                        let mut held = budget
+                            .reserve(4096 + count * std::mem::size_of::<Memory<'_>>())
+                            .map_err(|_| StoreError::Capacity)?;
+                        let mut memories = Vec::with_capacity(count);
+                        for (_, reference, payload) in sources {
+                            let decode =
+                                json_tree_allocation_bound(payload).ok_or(StoreError::Capacity)?;
+                            held.resize(
+                                held.bytes()
+                                    .checked_add(decode)
+                                    .ok_or(StoreError::Capacity)?,
+                            )
+                            .map_err(|_| StoreError::Capacity)?;
+                            memories.push(memory(reference, payload)?);
+                        }
+                        if memories.len() != count {
+                            return Err(WorldError::ProjectionChanged);
+                        }
+                        let before = next
+                            .map(|position| {
+                                json_record(&position).map(|body| format!("{fence}.{body}"))
+                            })
+                            .transpose()
+                            .map_err(|_| StoreError::InvalidRecord)?;
+                        wire::encode(
+                            &Page {
+                                ok: true,
+                                cut,
+                                name,
+                                memories,
+                                before,
+                            },
+                            b"",
+                            b"",
+                            budget,
+                        )
+                        .map_err(WorldError::Wire)
+                    })?
+                })?
+                .ok_or(WorldError::ProjectionChanged)?
+        })
+        .await
+}
+
+fn memory<'a>(reference: &'a PersonalSourceRef, payload: &str) -> Result<Memory<'a>, StoreError> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Summary {
+        at: f64,
+        kind: String,
+        source: String,
+        summary: JsText,
+        entity_ids: Vec<String>,
+    }
+    let Summary {
+        at,
+        kind,
+        source,
+        summary,
+        mut entity_ids,
+    } = serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
+    let mut tags = Vec::with_capacity(2 + entity_ids.len());
+    tags.extend([kind, source]);
+    tags.append(&mut entity_ids);
+    Ok(Memory {
+        id: format!("memory:{}", reference.id),
+        hash: &reference.revision,
+        time: at,
+        text: summary,
+        tags,
+        source: "memory",
+        label: "Raw",
+    })
+}
+
+pub(super) async fn save(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    let Ok(_slot) = state.capacity.try_acquire() else {
+        return busy();
+    };
+    let (parts, body) = request.into_parts();
+    let scope = match scope(&state.authority, &parts.headers, None).await {
+        Ok(scope) => Arc::new(scope),
+        Err(error) => return access_failure(error),
+    };
+    let (input, custody): (Save, _) =
+        match json(&parts.headers, body, state.game.host.budget()).await {
+            Ok(input) => input,
+            Err(error) => return error,
+        };
+    let Some(id) = memory_id(&input.entry_id) else {
+        return changed();
+    };
+    let reference = PersonalSourceRef {
+        kind: PersonalSourceKind::Memory,
+        id: id.into(),
+        revision: input.expected_hash,
+    };
+    if !reference.validate() || !(0.0..=10.0).contains(&input.importance) {
+        return refusal(
+            StatusCode::BAD_REQUEST,
+            "invalid-memory",
+            "Use a memory importance from 0 to 10.",
+        );
+    }
+    let actor = match actor(&state, &scope, input.actor_id).await {
+        Ok(actor) => actor,
+        Err(problem) => return failed(problem),
+    };
+    match save_cut(
+        &state,
+        scope,
+        actor,
+        input.cut,
+        reference,
+        input.importance,
+        custody,
+    )
+    .await
+    {
+        Ok(result) => reply(
+            &state,
+            if result.result.ok {
+                StatusCode::OK
+            } else {
+                StatusCode::CONFLICT
+            },
+            &result.result,
+        ),
+        Err(WorldError::ProjectionChanged) => changed(),
+        Err(WorldError::Simulation(error)) if error.stale_reason() == Some("person-editor-cut") => {
+            changed()
+        }
+        Err(problem) => failed(problem),
+    }
+}
+
+async fn save_cut(
+    state: &PlayerRoutes,
+    scope: Arc<AuthorizedScope>,
+    actor: String,
+    cut: PersonEditorCut<'static>,
+    reference: PersonalSourceRef,
+    importance: f64,
+    custody: ByteReservation,
+) -> Result<Staged, WorldError> {
+    let game = &state.game;
+    let grant = state.authority.clone();
+    let needs_inspect = actor != scope.scope.actor_id;
+    grant.current_recall_operator(&scope, needs_inspect, |_| ())?;
+    let _barrier = state.saves.enter_protected().await?;
+    grant.current_recall_operator(&scope, needs_inspect, |_| ())?;
+    let durable = game
+        .store
+        .protected_edit_head()
+        .await?
+        .ok_or(StoreError::StaleCut)?;
+    let cut_world = durable.world_id.clone();
+    let cut_generation = durable.generation.clone();
+    let actor_owner = scope.scope.actor_id.clone();
+    let account = scope.scope.account_id.clone();
+    let accepted_cut = game
+        .world
+        .capture(move |world| Ok(world.accepted_progress()?.through_cut))
+        .await?;
+    let provider = game.clone();
+    let preparer = game.store.clone();
+    let writer = game.store.clone();
+    let saves = state.saves.clone();
+    game.world
+        .execute_protected_then(
+            move |world| {
+                // The protected task retains the decoded draft until it is either
+                // rejected or transferred to the separately funded native cursor.
+                let _input = custody;
+                let progress = world.accepted_progress()?;
+                if progress.through_cut != accepted_cut
+                    || progress.world_id != cut_world
+                    || progress.generation != cut_generation
+                {
+                    return Err(RuntimeError::application_refused(StoreError::StaleCut));
+                }
+                if !world.private_history_permitted(&account, &actor_owner, &actor)?
+                    || !world.may_edit_recall(&actor_owner, &actor)?
+                {
+                    return Err(RuntimeError::application_refused(AccessError::Forbidden));
+                }
+                world.begin_memory_ranking(&actor, &cut, reference, importance)
+            },
+            move |question| {
+                let game = provider.clone();
+                let durable = durable.clone();
+                async move {
+                    if question.asks_personal_history()? {
+                        let answer = game
+                            .store
+                            .read_live_personal_history(&question, durable, accepted_cut)
+                            .await?;
+                        Ok((question, answer))
+                    } else {
+                        game.answer_operation(question).await
+                    }
+                }
+            },
+            move |output, budget| {
+                let RuntimeDirectOutput::Prepared(product) = output else {
+                    unreachable!("memory editor does not preview")
+                };
+                let outcome = product.outcome();
+                let custody =
+                    budget.reserve(512 + outcome.code.len() + outcome.message.storage_bytes())?;
+                let ranking = preparer.prepare_ranking(&product)?;
+                if outcome.ok != ranking.is_some() {
+                    return Err(RuntimeError::application_refused(
+                        StoreError::DerivedProjectionRequired,
+                    ));
+                }
+                Ok(Staged {
+                    result: ResultView {
+                        ok: outcome.ok,
+                        code: outcome.code.clone(),
+                        message: outcome.message.clone(),
+                    },
+                    ranking,
+                    _custody: custody,
+                })
+            },
+            move || {
+                grant.current_recall_operator(&scope, needs_inspect, |_| ())?;
+                grant.current_private_view(&scope, needs_inspect, |_, _| ())?;
+                Ok(())
+            },
+            move |staged, prefix| -> ProtectedCommit<'_> {
+                Box::pin(async move {
+                    let ranking = staged.ranking.as_ref().ok_or(CommitError::RolledBack(
+                        StoreError::DerivedProjectionRequired,
+                    ))?;
+                    writer.commit_ranking(ranking, prefix).await
+                })
+            },
+            move |_| {
+                saves.signal_view();
+                saves.signal_recall_change();
+                Ok(())
+            },
+        )
+        .await?
+        .ok_or(WorldError::ProjectionChanged)
+}

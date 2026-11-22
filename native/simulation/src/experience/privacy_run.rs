@@ -12,6 +12,7 @@ use crate::worlds::RecognitionPrivacyPreparation;
 
 pub(crate) enum PrivacyEditMode {
     Forget,
+    Rank { revision: String, importance: f64 },
     Correct { event_id: String },
 }
 pub(crate) enum PrivacyEditAnswer {
@@ -55,6 +56,15 @@ pub(crate) struct PrivacyEditCursor {
     done: bool,
     _storage: ByteReservation,
 }
+impl PrivacyEditMode {
+    pub(super) fn retained_bytes(&self) -> usize {
+        match self {
+            Self::Forget => 0,
+            Self::Correct { event_id } => event_id.capacity(),
+            Self::Rank { revision, .. } => revision.capacity(),
+        }
+    }
+}
 impl PrivacyEditCursor {
     pub(super) fn from_prepared(
         core: &mut CoreMutation<'_>,
@@ -65,10 +75,7 @@ impl PrivacyEditCursor {
     ) -> Result<Self, ExecutionError> {
         let storage = budget.reserve(
             std::mem::size_of::<Self>()
-                .checked_add(match &mode {
-                    PrivacyEditMode::Forget => 0,
-                    PrivacyEditMode::Correct { event_id } => event_id.capacity(),
-                })
+                .checked_add(mode.retained_bytes())
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let checkpoint = core.journal.checkpoint(core.state)?;
@@ -129,10 +136,7 @@ impl PrivacyEditCursor {
     ) -> Result<Self, ExecutionError> {
         let storage = budget.reserve(
             std::mem::size_of::<Self>()
-                .checked_add(match &mode {
-                    PrivacyEditMode::Forget => 0,
-                    PrivacyEditMode::Correct { event_id } => event_id.capacity(),
-                })
+                .checked_add(mode.retained_bytes())
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let checkpoint = core.journal.checkpoint(core.state)?;
@@ -352,6 +356,7 @@ fn begin(
     )?;
     for id in &consequences.revoked_facts {
         match mode {
+            PrivacyEditMode::Rank { .. } => return Err(ExecutionError::Invariant),
             PrivacyEditMode::Forget => {
                 core.journal
                     .experience

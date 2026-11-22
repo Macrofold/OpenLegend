@@ -58,6 +58,8 @@ mod player_places;
 mod privacy;
 pub use privacy::RuntimePrivacyEdit;
 mod private_history;
+mod person_editor;
+pub use person_editor::PersonEditorCut;
 mod private_notes;
 pub use private_notes::{
     RuntimeCreatorMind, RuntimeMindFile, RuntimePersonPage, RuntimePersonPosition,

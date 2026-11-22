@@ -90,6 +90,7 @@ pub(crate) async fn capture_host(
             can_manage_saves: access.can_save,
             can_operate: access.can_operate,
             can_inspect_mind: (god_mode && access.can_inspect).then_some(true),
+            can_edit_person_memory: (god_mode && access.can_create).then_some(true),
             mode: if access.local {
                 AuthenticationMode::Local
             } else {

@@ -80,6 +80,7 @@ mod privacy_run;
 pub(crate) use privacy_run::{
     CompletedPrivacyEdit, PrivacyEditAnswer, PrivacyEditCursor, PrivacyEditMode, PrivacyEditStep,
 };
+mod ranking_edit;
 mod recall_edit;
 mod retained_source;
 pub(crate) use recall_edit::{

@@ -15,6 +15,7 @@ import type {
   AttributeView,
   GodMemoryEditorEntry,
   GodPersonEditorView,
+  GodPersonMemoryEditorView,
   GodPersonFields,
   GodWorldEventEditorEntry,
   GodWorldEventsEditorView,
@@ -501,13 +502,15 @@ function MemoryEditor({
   update,
   remove,
   drafts,
+  ranking,
 }: {
-  drafts: Map<string, string>;
+  drafts?: Map<string, string>;
+  ranking?: { value: string; change(value: string): void };
   entries: GodMemoryEditorEntry[];
   selected: string | null;
   select(id: string): void;
-  update(id: string, json: string): void;
-  remove(id: string): void;
+  update?(id: string, json: string): void;
+  remove?(id: string): void;
 }) {
   const current = entries.find((entry) => entry.id === selected);
   return (
@@ -525,7 +528,9 @@ function MemoryEditor({
               <strong>{entry.text}</strong>
               <small>{entry.tags.join(' · ')}</small>
             </button>
-            <IconButton icon="ui.close" label="Delete memory" onPress={() => remove(entry.id)} />
+            {remove && (
+              <IconButton icon="ui.close" label="Delete memory" onPress={() => remove(entry.id)} />
+            )}
           </article>
         ))}
         {!entries.length && <p className="ol-caption">No memory entries.</p>}
@@ -538,17 +543,222 @@ function MemoryEditor({
           </div>
           {current.json === undefined ? (
             <LoadingIndicator active label="Loading JSON" className="ol-json-loading" />
+          ) : ranking ? (
+            <>
+              <label>
+                Memory importance
+                <input
+                  aria-label="Memory importance"
+                  type="number"
+                  min={0}
+                  max={10}
+                  step="any"
+                  value={ranking.value}
+                  onChange={(event) => ranking.change(event.target.value)}
+                />
+              </label>
+              <textarea readOnly aria-label="Memory JSON" value={current.json} />
+            </>
           ) : (
-            <JsonDraft
-              key={current.id}
-              initial={drafts.get(current.id) ?? current.json}
-              label="Memory JSON"
-              update={(json) => update(current.id, json)}
-            />
+            update && (
+              <JsonDraft
+                key={current.id}
+                initial={drafts?.get(current.id) ?? current.json}
+                label="Memory JSON"
+                update={(json) => update(current.id, json)}
+              />
+            )
           )}
         </div>
       )}
     </div>
+  );
+}
+
+export function PersonMemoryEditor({
+  actorId,
+  opener,
+  close,
+}: {
+  actorId: string;
+  opener: HTMLElement;
+  close(): void;
+}) {
+  const generation = useRef(0);
+  const busy = useRef(false);
+  const [loaded, setLoaded] = useState<GodPersonMemoryEditorView | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selected, setSelected] = useState<GodMemoryEditorEntry | null>(null);
+  const [importance, setImportance] = useState('');
+  const [previous, setPrevious] = useState('');
+  const [refreshAt, setRefreshAt] = useState<Date | null>(null);
+  const dirty = !!selected?.json && importance !== previous;
+  const valid = !!importance.trim() && Number(importance) >= 0 && Number(importance) <= 10;
+  const load = useCallback(
+    async (before?: string) => {
+      const attempt = ++generation.current;
+      setLoading(true);
+      setError('');
+      try {
+        const result = await post<GodPersonMemoryEditorView | ApiResult>('/api/god/editor/person', {
+          actorId,
+          before,
+        });
+        if (generation.current !== attempt) return;
+        if (!result.ok || !('memories' in result))
+          throw new Error(result.message || 'Person memories could not be read.');
+        setLoaded((current) =>
+          before && current
+            ? {
+                ...result,
+                memories: [
+                  ...current.memories,
+                  ...result.memories.filter(
+                    (entry) => !current.memories.some((row) => row.id === entry.id),
+                  ),
+                ],
+              }
+            : result,
+        );
+        if (!before) setSelected(null);
+        setRefreshAt(new Date());
+      } catch (problem) {
+        if (generation.current === attempt) setError(String(problem));
+      } finally {
+        if (generation.current === attempt) setLoading(false);
+      }
+    },
+    [actorId],
+  );
+  useEffect(() => {
+    void load();
+    return () => {
+      generation.current++;
+    };
+  }, [load]);
+  const select = async (id: string) => {
+    if (busy.current || loading) return;
+    if (dirty) {
+      setError('Save or discard this memory change first.');
+      return;
+    }
+    const attempt = ++generation.current;
+    const entry = loaded?.memories.find((item) => item.id === id) ?? null;
+    setSelected(entry);
+    setError('');
+    if (!entry) return;
+    try {
+      const result = await post<{ ok: boolean; message?: string; hash?: string; json?: string }>(
+        '/api/god/editor/person/memory',
+        { actorId, entryId: id },
+      );
+      if (generation.current !== attempt) return;
+      if (!result.ok || !result.json || result.hash !== entry.hash)
+        throw new Error(result.message || 'This memory changed. Refresh and try again.');
+      const record = JSON.parse(result.json) as { importance: number };
+      setSelected({ ...entry, json: JSON.stringify(record, null, 2) });
+      setPrevious(String(record.importance));
+      setImportance(String(record.importance));
+    } catch (problem) {
+      if (generation.current === attempt) {
+        setSelected(null);
+        setError(String(problem));
+      }
+    }
+  };
+  const save = async () => {
+    if (!loaded || !selected || !valid || busy.current || loading) return false;
+    const attempt = generation.current;
+    busy.current = true;
+    setLoading(true);
+    setError('');
+    try {
+      const result = await post('/api/god/editor/person/save', {
+        actorId,
+        entryId: selected.id,
+        expectedHash: selected.hash,
+        importance: Number(importance),
+        cut: {
+          generation: loaded.generation,
+          manifestRevision: loaded.manifestRevision,
+          bodyPolicyPin: loaded.bodyPolicyPin,
+          life: loaded.life,
+        },
+      });
+      if (generation.current !== attempt) return false;
+      if (!result.ok) throw new Error(result.message);
+      setPrevious(importance);
+      await load();
+      return true;
+    } catch (problem) {
+      if (generation.current === attempt) setError(String(problem));
+      return false;
+    } finally {
+      busy.current = false;
+      if (generation.current === attempt) setLoading(false);
+    }
+  };
+  if (!loaded)
+    return (
+      <EditorReload
+        title="Edit Person"
+        opener={opener}
+        loading={loading}
+        saved={false}
+        error={error}
+        reload={() => load()}
+        close={close}
+      />
+    );
+  const refresh = () => {
+    if (dirty) setError('Save or discard your changes before refreshing.');
+    else void load();
+  };
+  return (
+    <EditorPanel
+      title={`Edit ${loaded.name}`}
+      opener={opener}
+      scope="Importance affects which memories come to mind. Saving keeps the original account and its wording."
+      saveLabel="Save person changes"
+      dirty={dirty}
+      saving={loading}
+      error={error}
+      saveReason={dirty && !valid ? 'Use an importance from 0 to 10.' : undefined}
+      onSave={save}
+      onDiscard={() => {
+        setImportance(previous);
+        setError('');
+      }}
+      onClose={close}
+      tabs={[
+        {
+          id: 'memories',
+          label: 'Memories',
+          icon: 'ui.journal',
+          content: (
+            <div className="ol-editor-fixed-tab">
+              <div>
+                <RefreshHead refreshedAt={refreshAt} refresh={refresh} />
+                {loaded.before && (
+                  <Button disabled={loading || dirty} onPress={() => void load(loaded.before)}>
+                    Older memories
+                  </Button>
+                )}
+              </div>
+              <MemoryEditor
+                entries={loaded.memories.map((entry) =>
+                  entry.id === selected?.id ? selected : entry,
+                )}
+                selected={selected?.id ?? null}
+                select={(id) => void select(id)}
+                ranking={{ value: importance, change: setImportance }}
+              />
+            </div>
+          ),
+        },
+      ]}
+    />
   );
 }
 

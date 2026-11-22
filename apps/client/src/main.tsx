@@ -132,6 +132,7 @@ import { ActionPicker, type PickerContext } from './ui/action-picker';
 import {
   PersonCreationModal,
   PersonEditor,
+  PersonMemoryEditor,
   WorldEventsEditor,
   type PersonDraft,
 } from './ui/god-tools';
@@ -194,7 +195,13 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
   mind: { title: 'Private mind', side: 'right', wide: true },
 };
 type GodEditorWindow =
-  | { id: string; type: 'person'; actorId: string; opener: HTMLElement }
+  | {
+      id: string;
+      type: 'person' | 'person-memory';
+      actorId: string;
+      opener: HTMLElement;
+      scope?: string;
+    }
   | { id: string; type: 'world-events'; opener: HTMLElement }
   | { id: string; type: 'family'; actorId: string };
 const mainWorkspaces: PanelId[] = [
@@ -2092,9 +2099,26 @@ function App({
   }
   function characterGodControls(target: EntityView) {
     if (!view?.godMode) {
-      return view?.access?.canInspectMind && target.kind === 'actor' && target.id !== view.player.id
-        ? { inspectMind: () => openMind(target.id) }
-        : undefined;
+      if (!view || target.kind !== 'actor') return undefined;
+      const access = view.access;
+      const ownPerson = target.id === view.player.id;
+      const inspectMind =
+        access?.canInspectMind && !ownPerson ? () => openMind(target.id) : undefined;
+      const editPerson =
+        access?.canEditPersonMemory && (ownPerson || access.canInspectMind)
+          ? (opener: HTMLElement) =>
+              setGodEditors((current) => [
+                ...current,
+                {
+                  id: crypto.randomUUID(),
+                  type: 'person-memory',
+                  actorId: target.id,
+                  opener,
+                  scope: access.scope,
+                },
+              ])
+          : undefined;
+      return inspectMind || editPerson ? { inspectMind, editPerson } : undefined;
     }
     return {
       revive,
@@ -3423,9 +3447,21 @@ function App({
               />
             )}
             {!tabPaused &&
-              view.godMode &&
               godEditors.map((editor) =>
-                editor.type === 'family' ? (
+                editor.type === 'person-memory' ? (
+                  view.access?.canEditPersonMemory &&
+                  editor.scope === view.access.scope &&
+                  (editor.actorId === view.player.id || view.access.canInspectMind) && (
+                    <PersonMemoryEditor
+                      key={editor.id}
+                      actorId={editor.actorId}
+                      opener={editor.opener}
+                      close={() =>
+                        setGodEditors((current) => current.filter((item) => item.id !== editor.id))
+                      }
+                    />
+                  )
+                ) : !view.godMode ? null : editor.type === 'family' ? (
                   <FamilyEditor
                     title={view.godTools?.familyLabel ?? 'Relationships'}
                     key={editor.id}

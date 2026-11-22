@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 mod inspection;
+mod person_editor;
 
 const PAGE: usize = 20;
 const CHUNK: usize = 250;

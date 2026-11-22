@@ -25,6 +25,7 @@ pub(crate) mod browse;
 mod checkpoint_accounts;
 pub(crate) mod consolidation;
 pub(crate) mod maintenance_scan;
+pub(crate) mod ranking_edit;
 mod recovery;
 pub(crate) mod semantic;
 

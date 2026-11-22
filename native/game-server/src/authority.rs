@@ -163,6 +163,7 @@ pub(crate) struct ViewAccess {
     pub can_save: bool,
     pub can_operate: bool,
     pub can_inspect: bool,
+    pub can_create: bool,
     pub local: bool,
 }
 
@@ -613,6 +614,7 @@ impl Authority {
                 can_operate: grant.capabilities.contains(&Capability::Create)
                     || grant.capabilities.contains(&Capability::ManageAccess),
                 can_inspect: grant.capabilities.contains(&Capability::Inspect),
+                can_create: grant.capabilities.contains(&Capability::Create),
                 local: self.local,
             },
         )

@@ -41,6 +41,7 @@ mod inventory;
 mod notes;
 mod known_places;
 mod operations;
+mod person_editor;
 mod preview;
 mod recall;
 mod save_access;
@@ -172,6 +173,9 @@ pub(crate) fn router(
         operations
             .route("/api/god/memories", post(recall::recollections))
             .route("/api/god/mind", post(notes::get))
+            .route("/api/god/editor/person", post(person_editor::read))
+            .route("/api/god/editor/person/memory", post(person_editor::read))
+            .route("/api/god/editor/person/save", post(person_editor::save))
             .route("/api/god/activity-history", post(activity_history::read))
             .route("/api/god/mind/subjects", post(notes::subjects::read))
             .route("/api/god/forget-memory", post(edit_recall))

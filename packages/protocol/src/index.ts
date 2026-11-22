@@ -1073,6 +1073,8 @@ export interface GameView {
     canOperate?: boolean;
     /** May open the read-only creator mind inspector for a permitted NPC. */
     canInspectMind?: boolean;
+    /** May edit the importance of a permitted personal memory. */
+    canEditPersonMemory?: boolean;
     mode: 'local' | 'oidc';
   };
   /** Latest operational maintenance window for this world, if any. */
@@ -1385,6 +1387,20 @@ export interface GodMemoryEditorEntry {
   hash: string;
   eventType?: string;
   json?: string;
+}
+
+export interface GodPersonMemoryEditorCut {
+  generation: string;
+  manifestRevision: number;
+  bodyPolicyPin: { id: string; version: number; digest: string } | null;
+  life: number;
+}
+
+export interface GodPersonMemoryEditorView extends GodPersonMemoryEditorCut {
+  ok: true;
+  name: string;
+  memories: GodMemoryEditorEntry[];
+  before?: string;
 }
 
 export interface GodPersonEditorView {

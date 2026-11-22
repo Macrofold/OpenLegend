@@ -1,0 +1,206 @@
+//! The actor's canonical replacement and its retrieval placement commit in
+//! the same prefix. The old exact body stays available to admitted dependents.
+use super::checkpoint_accounts::{AccountImage, Placement, compile_placement};
+use super::*;
+use crate::store::{CommitError, PrefixProjection};
+use openlegend_simulation::{
+    records::SqlCell,
+    runtime::{RuntimePreparedProducts, RuntimeSave},
+};
+
+const KIND: PersonalSourceKind = PersonalSourceKind::Memory;
+
+pub(crate) struct PreparedRanking {
+    world: String,
+    generation: String,
+    through: u64,
+    actor: String,
+    id: String,
+    previous: String,
+    record: String,
+    placement: Placement,
+    hard_bytes: i64,
+    _custody: ByteReservation,
+}
+
+impl Store {
+    pub(crate) fn prepare_ranking(
+        &self,
+        product: &RuntimePreparedProducts<'_>,
+    ) -> Result<Option<PreparedRanking>, openlegend_simulation::runtime::RuntimeError> {
+        let Some((actor, id, previous, decoder)) = product.memory_ranking(&self.budget)? else {
+            return Ok(None);
+        };
+        (|| -> StoreResult<_> {
+            let progress = product.progress();
+            let records = product.changes();
+            let table = KIND.table();
+            let [row] = records.writes.get(table).map_or(&[][..], Vec::as_slice) else {
+                return Err(StoreError::DerivedProjectionRequired);
+            };
+            if row.create
+                || ["mind_awareness", "mind_summaries"]
+                    .into_iter()
+                    .any(|name| records.writes.contains_key(name))
+                || [
+                    table,
+                    "mind_awareness",
+                    "mind_summaries",
+                    "mind_forgotten",
+                    "mind_corrections",
+                ]
+                .into_iter()
+                .any(|name| records.deletes.contains_key(name))
+            {
+                return Err(StoreError::DerivedProjectionRequired);
+            }
+            let columns = self
+                .schema
+                .tables
+                .iter()
+                .find(|entry| entry.name == table)
+                .ok_or(StoreError::Schema)?;
+            let read = |name: &str| {
+                let column = columns
+                    .columns
+                    .iter()
+                    .position(|entry| entry.name == name)
+                    .ok_or(StoreError::Schema)?;
+                row.extra
+                    .get(column)
+                    .and_then(SqlCell::as_str)
+                    .ok_or(StoreError::InvalidRecord)
+            };
+            let next = read("account_revision")?;
+            if read("actor_id")? != actor || read("source_id")? != id || next == previous {
+                return Err(StoreError::InvalidRecord);
+            }
+            let decode =
+                SqlCell::json_decode_bound(&row.payload).ok_or(StoreError::InvalidRecord)?;
+            let header = 1024
+                + progress.world_id.len()
+                + progress.generation.len()
+                + actor.len()
+                + id.len()
+                + row.id.len()
+                + previous.len();
+            let mut custody = self
+                .budget
+                .reserve(
+                    decode
+                        .checked_mul(8)
+                        .and_then(|bytes| bytes.checked_add(header))
+                        .ok_or(StoreError::Capacity)?,
+                )
+                .map_err(|_| StoreError::Capacity)?;
+            let placement = compile_placement(
+                progress.world_id,
+                KIND,
+                AccountImage {
+                    record: &row.id,
+                    actor,
+                    id,
+                    revision: next,
+                    payload: &row.payload,
+                },
+                &decoder,
+            )?;
+            custody
+                .resize(
+                    placement
+                        .retained_bytes()
+                        .and_then(|bytes| bytes.checked_add(header))
+                        .ok_or(StoreError::Capacity)?,
+                )
+                .map_err(|_| StoreError::Capacity)?;
+            Ok(Some(PreparedRanking {
+                world: progress.world_id.into(),
+                generation: progress.generation.into(),
+                through: progress.through_cut,
+                actor: actor.into(),
+                id: id.into(),
+                previous: previous.into(),
+                record: row.id.clone(),
+                placement,
+                hard_bytes: sql_ordinal(decoder.hard_bytes)?,
+                _custody: custody,
+            }))
+        })()
+        .map_err(openlegend_simulation::runtime::RuntimeError::application_refused)
+    }
+
+    pub(crate) async fn commit_ranking(
+        &self,
+        prepared: &PreparedRanking,
+        save: &RuntimeSave,
+    ) -> Result<openlegend_simulation::runtime::RuntimeSaveAcknowledgement, CommitError> {
+        self.commit_save(
+            save,
+            &[],
+            &RankingProjection {
+                store: self,
+                prepared,
+            },
+        )
+        .await
+    }
+}
+
+struct RankingProjection<'a> {
+    store: &'a Store,
+    prepared: &'a PreparedRanking,
+}
+
+impl PrefixProjection for RankingProjection<'_> {
+    async fn before_records(
+        &self,
+        tx: &Transaction<'_>,
+        save: &SaveRows,
+        _revision: u64,
+    ) -> StoreResult<()> {
+        let row = self.prepared;
+        if save.world_id != row.world
+            || save.generation != row.generation
+            || save.through_cut != row.through
+        {
+            return Err(StoreError::StaleCut);
+        }
+        let current: bool = tx.query_one(
+            "SELECT EXISTS(SELECT 1 FROM recall_sources WHERE world_id=$1 AND actor_id=$2 AND id=$3 AND source_kind='memory' AND record_id=$4 AND revision=$5)",
+            &[&row.world, &row.actor, &row.id, &row.record, &row.previous],
+        ).await?.try_get(0)?;
+        if !current {
+            return Err(StoreError::StaleCut);
+        }
+        tx.query_opt(
+            &self.store.schema.lexical.remove_accounts,
+            &[
+                &row.world,
+                &std::slice::from_ref(&row.record),
+                &"memory",
+                &Some(row.actor.as_str()),
+            ],
+        )
+        .await?;
+        // Only the source's current placement changes. Its exact old version,
+        // independent dependents and accepted narrative retain their own links.
+        Ok(())
+    }
+    async fn after_records(
+        &self,
+        tx: &Transaction<'_>,
+        _save: &SaveRows,
+        _revision: u64,
+    ) -> StoreResult<()> {
+        let row = self.prepared;
+        self.store
+            .insert_retained_accounts(
+                tx,
+                &row.world,
+                "memory",
+                row.hard_bytes,
+                std::slice::from_ref(&row.placement),
+            )
+            .await
+    }
+}
