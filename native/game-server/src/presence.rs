@@ -31,8 +31,15 @@ struct Page {
     scope: Arc<AuthorizedScope>,
     order: Option<u64>,
     visible: bool,
+    pending_return: bool,
     at: Instant,
     _custody: ByteReservation,
+}
+
+pub(crate) struct ControlPresence {
+    owner: Arc<Presence>,
+    returning: Option<Arc<AuthorizedScope>>,
+    inserted: bool,
 }
 
 impl Presence {
@@ -73,15 +80,58 @@ impl Presence {
     /// Hold the presence lock through fencing so the latest valid heartbeat
     /// decides whether an ordinary acquisition may replace an unattended tab.
     pub(crate) fn fence_control(
-        &self,
+        self: &Arc<Self>,
         authorized: &AuthorizedScope,
         request: ControlRequest,
-    ) -> Result<ControlChange, AccessError> {
-        let state = self.state.lock().map_err(|_| AccessError::Availability)?;
-        let unattended = request.operation == ControlOperation::Acquire
-            && !self.has_controller(&state, &authorized.scope.actor_id);
-        self.authority
-            .fence_control(authorized, request, unattended)
+    ) -> Result<(ControlChange, ControlPresence), AccessError> {
+        let mut state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        let acquire = request.operation == ControlOperation::Acquire;
+        let unattended = acquire && !self.has_controller(&state, &authorized.scope.actor_id);
+        if acquire
+            && !unattended
+            && !self
+                .authority
+                .current(authorized, Capability::Play, false, |_, controls| controls)?
+        {
+            return Err(AccessError::Changed);
+        }
+        let change = self
+            .authority
+            .fence_control(authorized, request, unattended)?;
+        let returning = change.returning_scope().cloned();
+        let inserted = if let Some(scope) = &returning {
+            let key = page_key(scope);
+            if let Some(page) = state.pages.get_mut(&key) {
+                page.pending_return = true;
+                false
+            } else {
+                let now = Instant::now();
+                self.admit_page(&mut state, now)?;
+                let custody = self.budget.reserve(8192).map_err(|_| AccessError::Busy)?;
+                state.pages.insert(
+                    key,
+                    Page {
+                        scope: scope.clone(),
+                        order: None,
+                        visible: false,
+                        pending_return: true,
+                        at: now,
+                        _custody: custody,
+                    },
+                );
+                true
+            }
+        } else {
+            false
+        };
+        Ok((
+            change,
+            ControlPresence {
+                owner: self.clone(),
+                returning,
+                inserted,
+            },
+        ))
     }
 
     fn has_controller(&self, state: &State, actor: &str) -> bool {
@@ -93,11 +143,33 @@ impl Presence {
     }
 
     fn current(&self, page: &Page, now: Instant) -> bool {
-        now.saturating_duration_since(page.at) <= LIVE
+        !page.pending_return
+            && now.saturating_duration_since(page.at) <= LIVE
             && self
                 .authority
                 .current(&page.scope, Capability::Play, true, |_, _| ())
                 .is_ok()
+    }
+
+    fn admit_page(&self, state: &mut State, now: Instant) -> Result<(), AccessError> {
+        if state.pages.len() >= self.capacity {
+            state.pages.retain(|_, page| {
+                page.pending_return || now.saturating_duration_since(page.at) <= LIVE
+            });
+            if state.pages.len() >= self.capacity {
+                return Err(AccessError::Busy);
+            }
+        }
+        if state.pages.len() == state.pages.capacity() {
+            let limit = state.pages.len().saturating_mul(2).saturating_add(4);
+            let bytes = map_storage::<(String, String), Page>(limit)
+                .ok_or(AccessError::Busy)?
+                .max(state.custody.bytes());
+            let funded = self.budget.reserve(bytes).map_err(|_| AccessError::Busy)?;
+            state.pages.try_reserve(1).map_err(|_| AccessError::Busy)?;
+            state.custody = funded;
+        }
+        Ok(())
     }
 
     pub(crate) fn report(
@@ -110,7 +182,7 @@ impl Presence {
         self.authority
             .current(&authorized, Capability::Play, true, |scope, _| {
                 let now = Instant::now();
-                let key = (scope.session_id.clone(), scope.connection_id.clone());
+                let key = page_key(&authorized);
                 if let Some(page) = state.pages.get_mut(&key) {
                     if page.scope.scope.control_generation == scope.control_generation
                         && order
@@ -132,23 +204,7 @@ impl Presence {
                     page.at = now;
                     return Ok(transition);
                 }
-                if state.pages.len() >= self.capacity {
-                    state
-                        .pages
-                        .retain(|_, page| now.saturating_duration_since(page.at) <= LIVE);
-                    if state.pages.len() >= self.capacity {
-                        return Err(AccessError::Busy);
-                    }
-                }
-                if state.pages.len() == state.pages.capacity() {
-                    let limit = state.pages.len().saturating_mul(2).saturating_add(4);
-                    let bytes = map_storage::<(String, String), Page>(limit)
-                        .ok_or(AccessError::Busy)?
-                        .max(state.custody.bytes());
-                    let funded = self.budget.reserve(bytes).map_err(|_| AccessError::Busy)?;
-                    state.pages.try_reserve(1).map_err(|_| AccessError::Busy)?;
-                    state.custody = funded;
-                }
+                self.admit_page(&mut state, now)?;
                 let custody = self.budget.reserve(8192).map_err(|_| AccessError::Busy)?;
                 state.pages.insert(
                     key,
@@ -156,11 +212,60 @@ impl Presence {
                         scope: authorized.clone(),
                         order,
                         visible: shown,
+                        pending_return: false,
                         at: now,
                         _custody: custody,
                     },
                 );
                 Ok(true)
             })?
+    }
+}
+
+fn page_key(authorized: &AuthorizedScope) -> (String, String) {
+    (
+        authorized.scope.session_id.clone(),
+        authorized.scope.connection_id.clone(),
+    )
+}
+
+impl ControlPresence {
+    /// Activate the preadmitted page after the protected commit. This blocks
+    /// automatic replacement during LA233's first-heartbeat grace, without
+    /// counting the page as visible or starting the clock.
+    pub(crate) fn confirmed(mut self, change: ControlChange) -> Result<(), AccessError> {
+        let mut state = self
+            .owner
+            .state
+            .lock()
+            .map_err(|_| AccessError::Availability)?;
+        if let Some(scope) = change.confirmed()? {
+            let page = state
+                .pages
+                .get_mut(&page_key(&scope))
+                .ok_or(AccessError::Availability)?;
+            page.scope = scope;
+            page.order = None;
+            page.visible = false;
+            page.pending_return = false;
+            page.at = Instant::now();
+            self.returning = None;
+        }
+        Ok(())
+    }
+}
+
+impl Drop for ControlPresence {
+    fn drop(&mut self) {
+        if let Some(scope) = &self.returning
+            && let Ok(mut state) = self.owner.state.lock()
+        {
+            let key = page_key(scope);
+            if self.inserted {
+                state.pages.swap_remove(&key);
+            } else if let Some(page) = state.pages.get_mut(&key) {
+                page.pending_return = false;
+            }
+        }
     }
 }

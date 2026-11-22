@@ -40,7 +40,15 @@ pub struct ControlChange {
     request: ControlRequest,
     fingerprint: String,
     unattended: bool,
+    returning: Option<ReturningControl>,
+    finished: bool,
     _custody: ByteReservation,
+}
+
+struct ReturningControl {
+    scope: Arc<AuthorizedScope>,
+    before: Arc<Access>,
+    after: Arc<Access>,
 }
 
 impl Authority {
@@ -71,6 +79,48 @@ impl Authority {
             .map_err(|_| StoreError::Capacity)?;
         let fingerprint = fingerprint(&scope, &request)?;
         let mut cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        let (grant, _) = self.selected(&cache, authorized, Capability::Play, false)?;
+        if request.expected_generation != scope.control_generation
+            || request.expected_generation == MAX_SAFE_INTEGER
+        {
+            return Err(AccessError::Changed);
+        }
+        let returning = if request.operation == ControlOperation::Release {
+            None
+        } else {
+            let custody = self
+                .budget
+                .reserve(8192)
+                .map_err(|_| StoreError::Capacity)?;
+            let before = cache.tokens[&authorized.key].clone();
+            let generation = request.expected_generation + 1;
+            let after = Arc::new(Access {
+                session: before.session.clone(),
+                account: before.account.clone(),
+                session_revision: before.session_revision,
+                expires_at: before.expires_at,
+                grant: Some(grant.clone()),
+                control: Some(Control {
+                    generation,
+                    account_id: scope.account_id.clone(),
+                    session_id: scope.session_id.clone(),
+                    connection_id: scope.connection_id.clone(),
+                }),
+                _custody: custody,
+            });
+            let scope = Arc::new(AuthorizedScope {
+                scope: RequestScope {
+                    control_generation: generation,
+                    ..scope.clone()
+                },
+                key: authorized.key,
+            });
+            Some(ReturningControl {
+                scope,
+                before,
+                after,
+            })
+        };
         if !cache.changing_control.insert(scope.actor_id.clone()) {
             return Err(AccessError::Busy);
         }
@@ -80,6 +130,8 @@ impl Authority {
             request,
             fingerprint,
             unattended,
+            returning,
+            finished: false,
             _custody: custody,
         })
     }
@@ -111,6 +163,55 @@ impl Authority {
 }
 
 impl ControlChange {
+    pub(crate) fn returning_scope(&self) -> Option<&Arc<AuthorizedScope>> {
+        self.returning.as_ref().map(|next| &next.scope)
+    }
+
+    /// Publish the already funded successor only after both PostgreSQL and
+    /// simulation accept. The original token must still be current after the
+    /// wait. A concurrent logout or grant edit cannot create foreground grace.
+    pub(crate) fn confirmed(mut self) -> Result<Option<Arc<AuthorizedScope>>, AccessError> {
+        let authority = self.owner.clone();
+        let mut cache = authority
+            .cache
+            .lock()
+            .map_err(|_| AccessError::Availability)?;
+        let returning = self.returning.take().filter(|next| {
+            let key = &next.scope.key;
+            !cache.revoking.contains(key)
+                && cache.changing_grant.as_deref() != Some(self.scope.account_id.as_str())
+                && next.after.expires_at > now_ms()
+                && cache
+                    .tokens
+                    .get(key)
+                    .is_some_and(|current| Arc::ptr_eq(current, &next.before))
+        });
+        self.invalidate(&mut cache);
+        if let Some(next) = returning {
+            cache.tokens.insert(next.scope.key, next.after);
+            Ok(Some(next.scope))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn invalidate(&mut self, cache: &mut Cache) {
+        // An older operational read must not install its old controller
+        // after this fence. Keep unrelated actors' cached authority current.
+        cache.revision = cache
+            .revision
+            .checked_add(1)
+            .expect("access revision exhausted");
+        cache.tokens.retain(|_, row| {
+            row.grant
+                .as_ref()
+                .and_then(|grant| grant.actor_id.as_deref())
+                != Some(&self.scope.actor_id)
+        });
+        cache.changing_control.remove(&self.scope.actor_id);
+        self.finished = true;
+    }
+
     /// Runs inside the prefix transaction after the native rows. Its session,
     /// grant, generation and idempotency checks refer to that exact snapshot.
     pub(crate) async fn write(&self, tx: &Transaction<'_>) -> StoreResult<()> {
@@ -261,20 +362,11 @@ pub(crate) async fn apply_exit(
 
 impl Drop for ControlChange {
     fn drop(&mut self) {
-        if let Ok(mut cache) = self.owner.cache.lock() {
-            // A pre-change read that is still in flight cannot install its
-            // old controller. Other actors' cached authority remains usable.
-            cache.revision = cache
-                .revision
-                .checked_add(1)
-                .expect("access revision exhausted");
-            cache.tokens.retain(|_, row| {
-                row.grant
-                    .as_ref()
-                    .and_then(|grant| grant.actor_id.as_deref())
-                    != Some(&self.scope.actor_id)
-            });
-            cache.changing_control.remove(&self.scope.actor_id);
+        if !self.finished {
+            let authority = self.owner.clone();
+            if let Ok(mut cache) = authority.cache.lock() {
+                self.invalidate(&mut cache);
+            }
         }
     }
 }

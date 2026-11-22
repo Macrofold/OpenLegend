@@ -8,24 +8,17 @@ use crate::{
     },
     boot::CurrentServer,
     live_save::{LiveSaves, ProtectedGameplaySave},
-    store::{
-        CommitError, OrdinaryProjection, PrefixProjection, StoreError, StoreResult,
-    },
+    store::{CommitError, OrdinaryProjection, PrefixProjection, StoreError, StoreResult},
     world::{ProtectedCommit, WorldError},
 };
 use openlegend_simulation::{
     commands::Outcome,
     host::ByteReservation,
     records::SaveRows,
-    runtime::{
-        RuntimeDirectOutput, RuntimeError, RuntimeParticipation,
-    },
+    runtime::{RuntimeDirectOutput, RuntimeError, RuntimeParticipation},
     text::JsText,
 };
-use std::{
-    sync::Arc,
-    time::Duration,
-};
+use std::{sync::Arc, time::Duration};
 use tokio_postgres::Transaction;
 use uuid::Uuid;
 
@@ -83,7 +76,7 @@ pub(crate) async fn change(
     authority: &Arc<Authority>,
     authorized: &AuthorizedScope,
     request: ControlRequest,
-    presence: &crate::presence::Presence,
+    presence: &Arc<crate::presence::Presence>,
     grace: Duration,
 ) -> Result<EmbodimentChange, WorldError> {
     let _barrier = saves.enter_protected().await?;
@@ -105,15 +98,17 @@ pub(crate) async fn change(
         None => RuntimeParticipation::Return,
     };
     let release = exit.is_some();
-    let control = Arc::new(presence.fence_control(authorized, request)?);
+    let (control, reserved_presence) = presence.fence_control(authorized, request)?;
+    let control = Arc::new(control);
     let write = control.clone();
     let provider = game.clone();
     let language = game.language().cloned();
     let store = game.store.clone();
     let candidate_store = store.clone();
+    let settled_saves = saves.clone();
     let candidate = game
         .world
-        .execute_protected(
+        .execute_protected_then(
             move |world| {
                 world.begin_participation_direct(&scope.account_id, scope.actor_id, operation)
             },
@@ -157,6 +152,16 @@ pub(crate) async fn change(
                     Ok(acknowledgement)
                 })
             },
+            move |candidate| {
+                let change = Arc::try_unwrap(control).map_err(|_| AccessError::Availability)?;
+                reserved_presence.confirmed(change)?;
+                candidate
+                    .save
+                    .as_ref()
+                    .ok_or(StoreError::InvalidRecord)?
+                    .acknowledged(&settled_saves);
+                Ok(())
+            },
         )
         .await?
         .ok_or(AccessError::Changed)?;
@@ -166,11 +171,6 @@ pub(crate) async fn change(
             _custody: candidate._custody,
         });
     }
-    candidate
-        .save
-        .as_ref()
-        .ok_or(StoreError::InvalidRecord)?
-        .acknowledged(saves);
     Ok(if release {
         EmbodimentChange::Released
     } else {

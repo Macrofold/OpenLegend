@@ -60,7 +60,7 @@ An existing unexpired foreground lease may renew independently of an unrelated d
 
 **Reason / tradeoff:** Keep departure detection while ensuring ordinary browser timer delays do not unexpectedly pause active play.
 
-[Presence, ordering and pause owner](../../apps/server/src/world-service.ts).
+[Source presence, ordering and pause](../../apps/server/src/world-service.ts) · [Rust presence and first-heartbeat grace](../../native/game-server/src/presence.rs).
 
 Original recommendation: **Review**.
 

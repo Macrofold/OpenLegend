@@ -1094,6 +1094,31 @@ impl HostedWorld {
         V: FnOnce() -> Result<(), WorldError> + Send + 'static,
         C: for<'a> FnOnce(&'a T, &'a RuntimeSave) -> ProtectedCommit<'a> + Send + 'static,
     {
+        self.execute_protected_then(begin, answer, stage, validate, commit, |_| Ok(()))
+            .await
+    }
+
+    /// Run the preadmitted application publication inside the same accepted
+    /// turn, even if the original response socket closes after SQL dispatch.
+    pub(crate) async fn execute_protected_then<T, B, Q, A, R, V, C, P>(
+        self: &Arc<Self>,
+        begin: B,
+        answer: Q,
+        stage: A,
+        validate: V,
+        commit: C,
+        publish: P,
+    ) -> Result<Option<T>, WorldError>
+    where
+        T: Send + Sync + 'static,
+        B: FnOnce(&mut NativeWorldSession) -> Result<CandidateKey, RuntimeError> + Send + 'static,
+        Q: FnMut(RuntimeProvider) -> R + Send + 'static,
+        R: Future<Output = Result<(RuntimeProvider, RuntimeProviderInput), WorldError>> + Send,
+        A: Fn(RuntimeDirectOutput<'_>, &ByteBudget) -> Result<T, RuntimeError> + Send + Sync + 'static,
+        V: FnOnce() -> Result<(), WorldError> + Send + 'static,
+        C: for<'a> FnOnce(&'a T, &'a RuntimeSave) -> ProtectedCommit<'a> + Send + 'static,
+        P: FnOnce(&T) -> Result<(), WorldError> + Send + 'static,
+    {
         self.execute_inner(
             #[cfg(feature = "profile-campaign")]
             openlegend_simulation::profile::sites::TURN_OTHER,
@@ -1125,7 +1150,7 @@ impl HostedWorld {
                     }
                     world.acknowledge_owned(acknowledgement).await
                 };
-                if accepted.await.is_err() {
+                if accepted.await.is_err() || publish(prepared.output()).is_err() {
                     return Err(world.hold_protected(prepared));
                 }
                 Ok(Some(prepared.into_output()))
