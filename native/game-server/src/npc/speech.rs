@@ -6,12 +6,12 @@ use crate::{
     boot::CurrentServer,
     live_save::{AcceptedSaveInput, LiveSaves},
     player_events::SpeechReplyStatus,
-    player_references::ReferenceIssuer,
+    player_references::{ReferenceIssuer, ResolvedSpeechTarget},
     store::{AdmittedJob, ConversationJob, JobRequest, StoreError},
     world::{ApplicationStart, WorldError},
 };
 use openlegend_simulation::{
-    commands::Outcome,
+    commands::{Outcome, SpeechTargetRole},
     encoding::{json_record, sha256_hex},
     experience::PersonalSourceRef,
     host::ByteReservation,
@@ -24,7 +24,7 @@ use openlegend_simulation::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
-use std::{cell::RefCell, sync::Arc};
+use std::sync::Arc;
 use tokio::{sync::watch, time::Instant};
 
 #[derive(Deserialize)]
@@ -138,16 +138,10 @@ impl Speech {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "lowercase")]
-enum TargetRole {
-    Body,
-    Remembered,
-}
-
 pub(super) struct Target {
     pub(super) actor: String,
-    role: TargetRole,
+    role: SpeechTargetRole,
+    pub(super) reply: bool,
     pub(super) name: JsText,
     _custody: ByteReservation,
 }
@@ -197,44 +191,11 @@ pub(super) fn target_in_world(
     if session.clock()?.paused {
         return Ok(Err(SpeechRefusal::Paused));
     }
-    let scoped = refs
-        .scoped(scope)
-        .map_err(RuntimeError::application_refused)?;
-    let matched = RefCell::new(None);
-    let resolve = |result: Result<String, _>, actor: &str, role| match result {
-        Ok(value) if value == selected => {
-            let target = budget
-                .reserve(actor.len())
-                .map(|charge| (actor.to_owned(), role, charge));
-            matched.replace(Some(target.map_err(RuntimeError::from)));
-            true
-        }
-        Ok(_) => false,
-        Err(error) => {
-            matched.replace(Some(Err(RuntimeError::application_refused(error))));
-            true
-        }
-    };
-    session.with_player_targets(
-        &scope.account_id,
-        &scope.actor_id,
-        |body| {
-            resolve(
-                scoped.contact(
-                    body.source_id,
-                    body.physical_life.unwrap_or(0),
-                    body.lease_id,
-                ),
-                body.source_id,
-                TargetRole::Body,
-            )
-        },
-        |person| resolve(scoped.person(person), person, TargetRole::Remembered),
-    )?;
-    let Some((actor, role, mut custody)) = matched.into_inner().transpose()? else {
+    let Some(ResolvedSpeechTarget { id: actor, role, mut custody }) =
+        refs.resolve_speech_target(session, scope, selected, budget)? else {
         return Ok(Err(SpeechRefusal::InvalidRecipient));
     };
-    let name = session.with_player_interaction(
+    let facts = session.with_player_interaction(
         &scope.account_id,
         &scope.actor_id,
         InteractionMode::Speak,
@@ -244,7 +205,7 @@ pub(super) fn target_in_world(
             if !facts.actor_available {
                 return Ok(Err(SpeechRefusal::Actor));
             }
-            if !facts.recipient_available || !facts.reply || facts.funding_actor_id != actor {
+            if !facts.recipient_available || (facts.reply && facts.funding_actor_id != actor) {
                 return Ok(Err(SpeechRefusal::Unavailable));
             }
             let description = facts.recipient_description().ok_or_else(|| {
@@ -252,12 +213,13 @@ pub(super) fn target_in_world(
             })?;
             let name = name_phrase(description, NameArticle::Definite, true);
             custody.resize(actor.len().saturating_add(name.storage_bytes()))?;
-            Ok(Ok(name))
+            Ok(Ok((name, facts.reply)))
         },
     )??;
-    Ok(name.map(|name| Target {
+    Ok(facts.map(|(name, reply)| Target {
         actor,
         role,
+        reply,
         name,
         _custody: custody,
     }))
@@ -286,7 +248,9 @@ pub(super) async fn target(
             )
         })
         .await???;
-    Ok(result)
+    Ok(result.and_then(|target| {
+        if target.reply { Ok(target) } else { Err(SpeechRefusal::Unavailable) }
+    }))
 }
 
 pub(super) enum Spoken {
@@ -342,7 +306,7 @@ pub(super) async fn speak(
                     Ok(current) => current,
                     Err(refusal) => return Ok(ApplicationStart::Existing(Spoken::Refused(refusal))),
                 };
-                if current.actor != first_target.actor || current.role != first_target.role {
+                if !current.reply || current.actor != first_target.actor || current.role != first_target.role {
                     return Ok(ApplicationStart::Existing(Spoken::Refused(SpeechRefusal::InvalidRecipient)));
                 }
                 // Canonical member order is the existing native receipt
@@ -353,7 +317,7 @@ pub(super) async fn speak(
                     actor_id: &'a str,
                     id: &'a str,
                     target_id: &'a str,
-                    target_role: TargetRole,
+                    target_role: SpeechTargetRole,
                     text: &'a JsText,
                     #[serde(rename = "type")]
                     kind: &'static str,

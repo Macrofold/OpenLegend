@@ -144,11 +144,7 @@ impl SpeechPlan<'_> {
         ])
     }
     pub(crate) fn emission(&self) -> EventEmissionIntent {
-        let volume = match self.volume {
-            SpeechVolume::Whisper => "whisper",
-            SpeechVolume::Normal => "normal",
-            SpeechVolume::Shout => "shout",
-        };
+        let volume = self.volume.id();
         let mut data = IndexMap::with_capacity(8);
         data.insert(
             "text".to_owned(),

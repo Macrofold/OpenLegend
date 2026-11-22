@@ -6,6 +6,7 @@ use crate::{
     boot::CurrentServer,
     command_epoch::{RETRY_MS, RequestIdentity},
     live_save::{AcceptedSaveInput, LiveSaves},
+    npc::Director,
     player_references::ReferenceIssuer,
     store::{AdmittedReceipt, GameplayReceipt, KnownPlaceViewPage, PlaceViewRequest, StoreError},
     wire,
@@ -13,13 +14,16 @@ use crate::{
 };
 use axum::body::Bytes;
 use openlegend_simulation::{
+    commands::SpeechTargetRole,
     encoding::{json_record, sha256_hex},
     gathering::GatheringMode,
     host::{ByteBudget, ByteReservation},
     reception::EncounterExposure,
-    runtime::{NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimePlayerCommand},
+    runtime::{InteractionMode, NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimePlayerCommand},
     state::SurfacePoint,
+    text::JsText,
     values::deserialize_present_option,
+    worlds::base_observed::SpeechVolume,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
@@ -105,6 +109,10 @@ struct CommandInput {
     inputs: Option<indexmap::IndexMap<String, String>>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     recipe_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    text: Option<JsText>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    volume: Option<SpeechVolume>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -211,6 +219,7 @@ enum CommandKind {
     Cook,
     Craft,
     Eat,
+    Say,
     Equip,
     Unequip,
 }
@@ -327,6 +336,7 @@ impl PlayerCommands {
         input: CommandRequest,
         recovery: bool,
         body: ByteReservation,
+        decisions: &Director,
     ) -> Result<Bytes, WorldError> {
         openlegend_simulation::profile_body!(
             COMMAND,
@@ -380,6 +390,30 @@ impl PlayerCommands {
                     })?;
                 }
                 self.saves.check_admission(tokio::time::Instant::now())?;
+                // A recovered receipt above grants no new speech. For a new
+                // utterance, use the same allowance gate as the Speak control.
+                let speech_reply = if matches!(facts.request.command.kind, CommandKind::Say) {
+                    let available = decisions
+                        .availability(
+                            scope.clone(),
+                            self.references.clone(),
+                            InteractionMode::Speak,
+                            facts.request.command.target_id.clone(),
+                        )
+                        .await?;
+                    if !available.available {
+                        let refused = ResultOwner::Refused(
+                            available.code,
+                            available.reason.unwrap_or("Your character cannot speak now."),
+                        );
+                        return permits.current(&scope, Capability::Play, true, |scope, _| {
+                            report(Some(&refused), &facts, scope, true, false, budget)
+                        })?;
+                    }
+                    Some(available.reply)
+                } else {
+                    None
+                };
                 let materials = if matches!(facts.request.command.kind, CommandKind::Gather) {
                     Some(self.game.store.construction_materials(
                         world_id, Some(&scope.scope.actor_id),
@@ -470,7 +504,40 @@ impl PlayerCommands {
                             } else {
                                 begin_facts.request.command.position.as_ref()
                             };
-                            let target = match begin_facts.request.command.target_id.as_deref() {
+                            let raw = &begin_facts.request.command;
+                            let target_ref = raw.target_id.as_deref();
+                            let speech_target = match (raw.kind, target_ref) {
+                                (CommandKind::Say, Some(contact)) => {
+                                    let Some(target) = begin_references.resolve_speech_target(
+                                        world, &begin_scope.scope, contact, &begin_budget,
+                                    )? else {
+                                        return Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                            "invalid-recipient",
+                                            "Choose a known person or a person currently in sight.",
+                                        )));
+                                    };
+                                    let current = world.with_player_interaction(
+                                        &begin_scope.scope.account_id,
+                                        &begin_scope.scope.actor_id,
+                                        InteractionMode::Speak,
+                                        Some(&target.id),
+                                        None,
+                                        |facts| {
+                                            facts.actor_available
+                                                && facts.recipient_available
+                                                && Some(facts.reply) == speech_reply
+                                        },
+                                    )?;
+                                    if !current {
+                                        return Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                            "stale", "The selected interaction changed. Refresh it.",
+                                        )));
+                                    }
+                                    Some(target)
+                                }
+                                _ => None,
+                            };
+                            let target = match target_ref.filter(|_| !matches!(raw.kind, CommandKind::Say)) {
                                 None => None,
                                 Some(contact) => {
                                     let Some(target) = begin_references.resolve_contact(
@@ -493,6 +560,7 @@ impl PlayerCommands {
                             let command = begin_facts.command(
                                 position,
                                 target.as_ref().map(|value| value.id.as_str()),
+                                speech_target.as_ref().map(|value| (value.id.as_str(), value.role)),
                             )?;
                             Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
                                 &begin_facts.id,
@@ -572,6 +640,8 @@ impl CommandRequest {
             || (!matches!(command.kind, CommandKind::Unequip)
                 && (command.expected_revision.is_some() || command.placement_revision.is_some()))
             || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
+            || (!matches!(command.kind, CommandKind::Say)
+                && (command.text.is_some() || command.volume.is_some()))
             || (!matches!(command.kind, CommandKind::Cook)
                 && (command.preparation_id.is_some()
                     || command.preparation_version.is_some()
@@ -643,6 +713,14 @@ impl CommandRequest {
                     && command.expected_action_id.is_none() && command.gathering_mode.is_none()
                     && command.recipe_id.as_deref().is_some_and(openlegend_simulation::values::is_safe_record_id)
                 => Ok(()),
+            CommandKind::Say
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.item_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.target_id.as_deref().is_none_or(id)
+                    && command.text.is_some() => Ok(()),
             CommandKind::Cook
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -679,7 +757,10 @@ impl CommandRequest {
         mut custody: ByteReservation,
         budget: &ByteBudget,
     ) -> Result<PreparedRequest, WorldError> {
-        let additional = budget.reserve(8192).map_err(|_| StoreError::Capacity)?;
+        let digest_bytes = self.command.text.as_ref().map_or(0, JsText::units_len)
+            .checked_mul(6).and_then(|bytes| bytes.checked_add(8192))
+            .ok_or(StoreError::Capacity)?;
+        let additional = budget.reserve(digest_bytes).map_err(|_| StoreError::Capacity)?;
         custody
             .merge(additional)
             .map_err(|_| StoreError::Capacity)?;
@@ -729,6 +810,7 @@ impl PreparedRequest {
         &'a self,
         destination: Option<&'a SurfacePoint>,
         target: Option<&'a str>,
+        speech_target: Option<(&'a str, SpeechTargetRole)>,
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
         match input.kind {
@@ -749,6 +831,11 @@ impl PreparedRequest {
             }),
             CommandKind::Craft => Ok(RuntimePlayerCommand::Craft {
                 recipe: input.recipe_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+            }),
+            CommandKind::Say => Ok(RuntimePlayerCommand::Say {
+                text: input.text.as_ref().ok_or(StoreError::InvalidRecord)?,
+                target: speech_target,
+                volume: input.volume,
             }),
             CommandKind::Cook => Ok(RuntimePlayerCommand::Cook {
                 heat: target.ok_or(StoreError::InvalidRecord)?,

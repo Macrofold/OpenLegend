@@ -222,6 +222,8 @@ async fn edit_recall(State(state): State<PlayerRoutes>, request: Request) -> Res
 }
 
 async fn command(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    use http_body::Body as _;
+
     let Ok(_request) = state.capacity.try_acquire() else {
         return busy();
     };
@@ -231,13 +233,19 @@ async fn command(State(state): State<PlayerRoutes>, request: Request) -> Respons
         Ok(scope) => scope,
         Err(error) => return access_failure(error),
     };
-    let (input, custody) = match json(&parts.headers, body, state.game.host.budget()).await {
+    // An allowed utterance may use six JSON bytes per UTF-16 unit. Keep
+    // the ordinary admission for short bodies with a known transport length.
+    const COMMAND_LIMIT: usize = 16_384;
+    let limit = body.size_hint().exact()
+        .and_then(|bytes| usize::try_from(bytes).ok())
+        .map_or(COMMAND_LIMIT, |bytes| bytes.clamp(REQUEST_LIMIT, COMMAND_LIMIT));
+    let (input, custody) = match read_json(&parts.headers, body, state.game.host.budget(), false, limit).await {
         Ok(input) => input,
         Err(error) => return error,
     };
     match state
         .commands
-        .command(Arc::new(scope), input, recovery, custody)
+        .command(Arc::new(scope), input, recovery, custody, &state.decisions)
         .await
     {
         Ok(bytes) => json_response(StatusCode::OK, bytes),

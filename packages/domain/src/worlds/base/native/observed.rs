@@ -374,6 +374,16 @@ pub enum SpeechVolume {
     Shout,
 }
 
+impl SpeechVolume {
+    pub(crate) fn id(self) -> &'static str {
+        match self {
+            Self::Whisper => "whisper",
+            Self::Normal => "normal",
+            Self::Shout => "shout",
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ClaimPresence {

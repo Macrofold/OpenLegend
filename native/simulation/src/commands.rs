@@ -174,7 +174,7 @@ pub(crate) enum StatusOperation {
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum SpeechTargetRole {
+pub enum SpeechTargetRole {
     Body,
     Remembered,
 }

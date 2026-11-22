@@ -4,6 +4,7 @@
 use crate::authority::RequestScope;
 use openlegend_simulation::{
     capture::ContextActionWitness,
+    commands::SpeechTargetRole,
     encoding::{append_hex, json_record, sha256_hex, write_json_record},
     host::{ByteBudget, ByteReservation},
     received::TemporalReceiptLocator,
@@ -12,7 +13,10 @@ use openlegend_simulation::{
 };
 use ring::{aead, hmac};
 use serde::{Serialize, de::DeserializeOwned};
-use std::io::{self, Write};
+use std::{
+    cell::RefCell,
+    io::{self, Write},
+};
 
 pub struct ReferenceIssuer {
     body: hmac::Key,
@@ -39,6 +43,12 @@ pub(crate) struct RecentEditReference<Text, Receipt> {
 pub(crate) struct ResolvedContact {
     pub(crate) id: String,
     _custody: ByteReservation,
+}
+
+pub(crate) struct ResolvedSpeechTarget {
+    pub(crate) id: String,
+    pub(crate) role: SpeechTargetRole,
+    pub(crate) custody: ByteReservation,
 }
 
 pub struct PlayerReferences<'a> {
@@ -218,6 +228,58 @@ impl ReferenceIssuer {
             }
         })?;
         selected_source.transpose()
+    }
+
+    /// Read only the current speech targets and return the selected public
+    /// reference's independently funded body or remembered-person role.
+    pub(crate) fn resolve_speech_target(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedSpeechTarget>, RuntimeError> {
+        if !selected.starts_with("contact-") && !selected.starts_with("person-") {
+            return Ok(None);
+        }
+        let _workspace = budget.reserve(2048)?;
+        let scoped = self
+            .scoped(scope)
+            .map_err(RuntimeError::application_refused)?;
+        let matched = RefCell::new(None);
+        let resolve = |reference: Result<String, _>, actor: &str, role| match reference {
+            Ok(value) if value == selected => {
+                matched.replace(Some(
+                    budget
+                        .reserve(actor.len())
+                        .map(|custody| ResolvedSpeechTarget {
+                            id: actor.to_owned(),
+                            role,
+                            custody,
+                        })
+                        .map_err(RuntimeError::from),
+                ));
+                true
+            }
+            Ok(_) => false,
+            Err(error) => {
+                matched.replace(Some(Err(RuntimeError::application_refused(error))));
+                true
+            }
+        };
+        session.with_player_targets(
+            &scope.account_id,
+            &scope.actor_id,
+            |body| {
+                resolve(
+                    scoped.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id),
+                    body.source_id,
+                    SpeechTargetRole::Body,
+                )
+            },
+            |person| resolve(scoped.person(person), person, SpeechTargetRole::Remembered),
+        )?;
+        matched.into_inner().transpose()
     }
 }
 

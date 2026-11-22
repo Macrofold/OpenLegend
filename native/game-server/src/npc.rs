@@ -67,10 +67,10 @@ pub(crate) enum SubmitResult {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct InteractionAvailability {
-    available: bool,
-    code: &'static str,
-    reason: Option<&'static str>,
-    reply: bool,
+    pub(crate) available: bool,
+    pub(crate) code: &'static str,
+    pub(crate) reason: Option<&'static str>,
+    pub(crate) reply: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     recipient_name: Option<openlegend_simulation::text::JsText>,
     #[serde(skip)]
@@ -382,11 +382,11 @@ impl Director {
                             )? {
                                 Ok(target) => {
                                     let _custody = budget.reserve(
-                                        256 + target.actor.len() + target.name.storage_bytes(),
+                                        256 + target.actor.len().max(fields.actor_id.len()) + target.name.storage_bytes(),
                                     )?;
                                     Ok(Ok(EligibleInteraction {
-                                        payer: target.actor,
-                                        reply: true,
+                                        payer: if target.reply { target.actor } else { fields.actor_id.to_owned() },
+                                        reply: target.reply,
                                         name: Some(target.name),
                                         _custody,
                                     }))
