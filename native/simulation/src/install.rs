@@ -39,7 +39,7 @@ pub(crate) use inventory::{
 };
 mod knowledge;
 mod retained;
-pub(crate) use knowledge::{LearnedCapabilities, install_learned_capabilities};
+pub(crate) use knowledge::{Grant, GrantSource, LearnedCapabilities, LearnedJournal, MethodProof, RecipeAuthority, grant_bound, install_learned_capabilities};
 pub(crate) use retained::{
     ParticipationReadPolicy, RetainedDefinitionInputs, RetainedDefinitions, RetainedMap,
     RetainedOne, install_retained,

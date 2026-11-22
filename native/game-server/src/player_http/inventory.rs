@@ -38,7 +38,7 @@ pub(super) async fn page(State(state): State<PlayerRoutes>, request: Request) ->
                     ));
                 }
                 if let Some(contact) = input.container().filter(|id| id.starts_with("contact-")) {
-                    return world_storage::page(&state, session, scope, &input, contact, language);
+                    return world_storage::page(&state, session, scope, &input, contact, controlling, language);
                 }
                 session.with_player_direct_inventory(
                     &scope.account_id,

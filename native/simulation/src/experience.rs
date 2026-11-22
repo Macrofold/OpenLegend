@@ -60,6 +60,7 @@ pub(crate) use obligation::{
 };
 mod commitments;
 mod receipt;
+pub(crate) use receipt::append_personal_receipt;
 pub(crate) use commitments::{advance_commitments, next_commitment_deadline};
 mod impression;
 pub(crate) mod retention;

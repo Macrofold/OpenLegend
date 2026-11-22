@@ -364,6 +364,7 @@ impl RecognitionJournal {
                 physical,
                 state,
                 receiving.experience,
+                receiving.learned,
                 temporal,
                 installed,
                 observer,

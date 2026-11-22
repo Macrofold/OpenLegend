@@ -6,7 +6,7 @@ use crate::execution::{CoreMutation, ExecutionError};
 use crate::received::{TemporalCaptureInput, TemporalReceiptLocator};
 use std::sync::Arc;
 
-pub(super) fn append_personal_receipt(
+pub(crate) fn append_personal_receipt(
     core: &mut CoreMutation<'_>,
     actor_id: &str,
     physical_life: u64,

@@ -142,6 +142,7 @@ pub(crate) fn maintain_recognition(
     }
     let mut receiving = ReceivingMutation {
         experience: &core.state.experience,
+        learned: &core.state.learned_capabilities,
         cognition: &mut core.journal.cognition,
         current: &mut core.journal.current,
         acquisitions: &mut core.journal.acquisitions,

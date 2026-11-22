@@ -1,3 +1,4 @@
+import recordCopy from './recipe-record-copy.json' with { type: 'json' };
 import { temporalFacetValueReferences } from './temporal-evidence.js';
 import { entityGet } from './entity-collection.js';
 import type { Outcome, WorldState } from './types.js';
@@ -136,7 +137,7 @@ export function learnRecipe(
                 kind: 'personal-account',
                 source: 'memory',
                 id: evidenceId,
-                text: 'I acquired a validated method.',
+                text: recordCopy.proof,
                 eventType: 'method-learned',
                 data: {
                   recipeId,

@@ -14,6 +14,7 @@ mod state;
 pub(crate) use state::{KnowledgeCheckpoint, KnowledgeEntry, KnowledgeJournal, KnowledgeState};
 mod edit;
 mod revoke;
+pub(crate) mod recipe_grants;
 mod save;
 pub(crate) use edit::{CompletedKnowledgeEdit, KnowledgeEdit, KnowledgeEditCursor, edit_knowledge};
 pub(crate) use revoke::revoke_knowledge_documents;

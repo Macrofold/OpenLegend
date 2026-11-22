@@ -129,6 +129,7 @@ pub(super) fn page(
     scope: &crate::authority::RequestScope,
     input: &crate::player_scene::InventoryPageRequest,
     contact: &str,
+    controlling: bool,
     language: &crate::language::LanguageProvider,
 ) -> Result<Response, RuntimeError> {
     use crate::player_scene::InventoryPageError;
@@ -143,7 +144,7 @@ pub(super) fn page(
                     .game
                     .view_policy()
                     .scene
-                    .encode_inspected_inventory(read, input, contact, language, budget)
+                    .encode_inspected_inventory(read, input, contact, controlling, language, budget)
                 {
                     Ok(bytes) => json_response(StatusCode::OK, bytes),
                     Err(InventoryPageError::Stale) => refusal(

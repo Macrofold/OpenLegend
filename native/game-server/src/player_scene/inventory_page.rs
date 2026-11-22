@@ -208,6 +208,8 @@ struct ItemCommand<'a> {
     placement_revision: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     quantity: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    record_pin: Option<&'a openlegend_simulation::values::DefinitionPin>,
 }
 
 #[derive(Serialize)]
@@ -416,6 +418,7 @@ impl PlayerScenePolicy {
                             expected_revision: item.equipped.then_some(item.revision),
                             placement_revision: item.equipped.then_some(item.placement_revision),
                             quantity: None,
+                            record_pin: None,
                         },
                         reason,
                     }
@@ -447,6 +450,7 @@ impl PlayerScenePolicy {
                         expected_revision: None,
                         placement_revision: None,
                         quantity: None,
+                        record_pin: None,
                     },
                 });
             }
@@ -475,6 +479,7 @@ impl PlayerScenePolicy {
                         expected_revision: None,
                         placement_revision: None,
                         quantity: Some(item.quantity),
+                        record_pin: None,
                     },
                 });
             }

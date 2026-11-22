@@ -133,6 +133,8 @@ struct CommandInput {
     gathering_mode: Option<GatheringMode>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     preparation_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    record_pin: Option<openlegend_simulation::values::DefinitionPin>,
     #[serde(
         default,
         deserialize_with = "openlegend_simulation::values::deserialize_present_safe_integer",
@@ -317,6 +319,8 @@ enum CommandKind {
     Unequip,
     #[serde(rename = "inspect-inventory")]
     InspectItem,
+    #[serde(rename = "learn-record")]
+    LearnRecord,
     Handover,
 }
 
@@ -326,6 +330,7 @@ struct PreparedRequest {
     recovery_fingerprint: String,
     request: CommandRequest,
     gift: Option<openlegend_simulation::handover::GiftIntent>,
+    record: Option<openlegend_simulation::commands::RecipeRecordSelection>,
     epoch: u64,
     _custody: ByteReservation,
 }
@@ -846,13 +851,14 @@ impl CommandRequest {
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
             || Uuid::parse_str(&self.command_epoch).is_err()
-            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing)
+            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing | CommandKind::LearnRecord)
                 && command.expected_revision.is_some())
             || (!matches!(command.kind, CommandKind::Outing)
                 && (command.outing_operation.is_some() || command.outing_mode.is_some()
                     || command.outing_id.is_some() || command.destination_id.is_some()
                     || command.purpose.is_some()))
-            || (!matches!(command.kind, CommandKind::Unequip) && command.placement_revision.is_some())
+            || (!matches!(command.kind, CommandKind::Unequip | CommandKind::LearnRecord) && command.placement_revision.is_some())
+            || (!matches!(command.kind, CommandKind::LearnRecord) && command.record_pin.is_some())
             || (!matches!(command.kind, CommandKind::InspectItem)
                 && (command.container_id.is_some() || command.after.is_some() || command.expected_scope.is_some()))
             || command.quantity.is_some_and(|quantity| {
@@ -1077,6 +1083,16 @@ impl CommandRequest {
             {
                 Ok(())
             }
+            CommandKind::LearnRecord
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.target_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.item_id.as_deref().is_some_and(id)
+                    && command.expected_revision.is_some()
+                    && command.placement_revision.is_some()
+                    && command.record_pin.as_ref().is_some_and(|pin| pin.is_valid()) => Ok(()),
             CommandKind::Eat | CommandKind::Equip | CommandKind::Unequip
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -1139,6 +1155,14 @@ impl CommandRequest {
             fingerprint,
             recovery_fingerprint,
             gift: self.command.gift(),
+            record: if matches!(self.command.kind, CommandKind::LearnRecord) {
+                Some(openlegend_simulation::commands::RecipeRecordSelection {
+                    item_id: self.command.item_id.clone().ok_or(StoreError::InvalidRecord)?,
+                    expected_revision: self.command.expected_revision.ok_or(StoreError::InvalidRecord)?,
+                    placement_revision: self.command.placement_revision.ok_or(StoreError::InvalidRecord)?,
+                    record_pin: self.command.record_pin.clone().ok_or(StoreError::InvalidRecord)?,
+                })
+            } else { None },
             request: self,
             epoch,
             _custody: custody,
@@ -1197,6 +1221,9 @@ impl PreparedRequest {
                 };
                 Ok(RuntimePlayerCommand::Travel(input))
             }
+            CommandKind::LearnRecord => Ok(RuntimePlayerCommand::LearnRecord(
+                self.record.as_ref().ok_or(StoreError::InvalidRecord)?,
+            )),
             CommandKind::InspectItem if input.item_id.is_none() => Ok(RuntimePlayerCommand::InspectStorage {
                 root: target.ok_or(StoreError::InvalidRecord)?,
                 after: input.after.as_deref(),

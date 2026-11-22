@@ -377,10 +377,11 @@ fn begin(
     core.journal
         .experience
         .invalidate_known_places(&mut core.state.experience, &actor)?;
-    // Learned recipes, inspection and combat acquisitions are closed empty
-    // families in the selected installer; its admitted writers create none.
     let released =
         invalidate_temporal_evidence(core, &actor, &selection.affected, &selection.scope, budget)?;
+    crate::knowledge::recipe_grants::withdraw_record_grants(
+        core, &actor, &selection.affected, &released.sources, budget,
+    )?;
     crate::reception::revoke_received_geometry_evidence(core, &actor, &selection.affected, budget)?;
     crate::reception::revoke_attention_evidence(core, &actor, &selection.affected, budget)?;
     let consequences = continue_privacy_selection(

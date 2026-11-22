@@ -38,6 +38,7 @@ mod pickup;
 mod inspect_activities;
 mod inspect_item;
 mod inspect_storage;
+mod learn_record;
 mod feeding;
 mod gathering;
 mod natural_contact;
@@ -122,6 +123,8 @@ enum Phase {
     ContactReach,
     StorageSight,
     StorageReach,
+    LearnRecordSight,
+    LearnRecordReach,
     StoragePage,
     ContactRoute,
     FeedApproach,
@@ -848,6 +851,9 @@ impl CommandCursor {
                             self.finish_discovery_geometry(core, answer)?;
                             return self.drive(core, None);
                         }
+                        if matches!(self.phase, Phase::LearnRecordSight | Phase::LearnRecordReach) {
+                            return self.record_learning_geometry(core, answer);
+                        }
                         if matches!(self.phase, Phase::StorageSight) {
                             let actor = self.command.envelope().actor_id.clone();
                             return self.storage_sight(core, &actor, answer);
@@ -1184,6 +1190,9 @@ impl CommandCursor {
                                 return Ok(Progress::Geometry);
                             }
                         }
+                        NativeCommand::LearnRecord { .. } => {
+                            if self.start_record_learning(core, &actor_id)? { return Ok(Progress::Geometry); }
+                        }
                         NativeCommand::InspectInventory { world: Some(_), .. } => {
                             if self.start_storage_inspection(core, &actor_id)? { return Ok(Progress::Geometry); }
                         }
@@ -1348,7 +1357,9 @@ impl CommandCursor {
                     }
                 }
                 Phase::StoragePage => return self.storage_occurrence(core, &actor_id),
-                Phase::StorageSight | Phase::StorageReach => return Err(ExecutionError::Invariant),
+                Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach => {
+                    return Err(ExecutionError::Invariant);
+                }
                 Phase::Standing => {
                     let body = core
                         .state

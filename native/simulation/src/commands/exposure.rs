@@ -74,6 +74,7 @@ impl CommandExposure {
             NativeCommand::Say { .. } | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
             | NativeCommand::Handover { .. }
+            | NativeCommand::LearnRecord { .. }
             | NativeCommand::InspectActivities { .. } => return Ok(None),
             NativeCommand::InspectInventory { .. } => {
                 return Err(ExecutionError::UnsupportedFamily);

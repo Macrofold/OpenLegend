@@ -127,6 +127,7 @@ pub(crate) fn valid_command(
         | NativeCommand::WithdrawAttempt { .. }
         | NativeCommand::InspectInventory { .. }
         | NativeCommand::InspectActivities { .. }
+        | NativeCommand::LearnRecord { .. }
         | NativeCommand::PlaceHearth { .. } => false,
     }
 }

@@ -512,6 +512,7 @@ fn assemble_selected_core(
         child(&mut children, "knowledge", true)?,
         &physical.entities,
         &installed.retained.recipes,
+        &temporal,
         physical.header.sim_time,
         budget,
     )?;

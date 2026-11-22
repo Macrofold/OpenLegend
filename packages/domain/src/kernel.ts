@@ -1,3 +1,4 @@
+import recordCopy from './recipe-record-copy.json' with { type: 'json' };
 import activityLearningCopy from './activity-learning-copy.json' with { type: 'json' };
 import inspectionCopy from './inventory-inspection-copy.json' with { type: 'json' };
 import { selectedOccurrenceRules } from './world-composition.js';
@@ -4385,7 +4386,7 @@ function executeCommandNative(
         if (learned === 'capacity')
           return reject(
             'knowledge-capacity',
-            'There is no room to retain this method and its exact learning proof.',
+            recordCopy.capacity,
           );
         emit(
           world,

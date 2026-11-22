@@ -284,6 +284,10 @@ pub(crate) enum NativeCommand {
         weapon_item_id: Option<String>,
         auto_equip: Option<bool>,
     },
+    LearnRecord {
+        envelope: CommandEnvelope,
+        record: RecipeRecordSelection,
+    },
     InspectInventory {
         envelope: CommandEnvelope,
         selected: Option<InspectedItem>,
@@ -308,6 +312,45 @@ macro_rules! optional {
     }
 }
 optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String);
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RecipeRecordSelection {
+    pub item_id: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub expected_revision: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub placement_revision: u64,
+    pub record_pin: crate::values::DefinitionPin,
+}
+impl RecipeRecordSelection {
+    pub fn valid(&self) -> bool {
+        is_safe_record_id(&self.item_id) && self.record_pin.is_valid()
+            && self.expected_revision <= crate::identity::MAX_SAFE_INTEGER
+            && self.placement_revision <= crate::identity::MAX_SAFE_INTEGER
+    }
+}
+
+fn record_learning_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Input {
+        #[serde(rename = "type")]
+        _kind: String,
+        #[serde(flatten)]
+        headers: CommandHeaders,
+        #[serde(flatten)]
+        record: RecipeRecordSelection,
+    }
+    let input: Input = serde_json::from_str(raw)?;
+    if !input.headers.valid() || !input.record.valid() {
+        return Err(serde::de::Error::custom("Invalid recipe record binding."));
+    }
+    Ok(NativeCommand::LearnRecord {
+        envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
+        record: input.record,
+    })
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct InspectedItem {
@@ -519,6 +562,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         }
         if tag.kind == "tend-fire" {
             return fire_care_input(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if tag.kind == "learn-record" {
+            return record_learning_input(raw.get()).map_err(serde::de::Error::custom);
         }
         if tag.kind == "inspect-inventory" {
             return inventory_inspection_input(raw.get()).map_err(serde::de::Error::custom);
@@ -870,6 +916,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::LearnRecord { envelope, .. }
             | Self::InspectInventory { envelope, .. }
             | Self::InspectActivities { envelope, .. } => envelope,
         }
@@ -902,6 +949,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::LearnRecord { envelope, .. }
             | Self::InspectInventory { envelope, .. }
             | Self::InspectActivities { envelope, .. } => envelope,
         }
@@ -931,6 +979,7 @@ impl NativeCommand {
             Self::WithdrawAttempt { .. } => "withdraw-attempt",
             Self::Follow { .. } => "follow",
             Self::Strike { .. } => "strike",
+            Self::LearnRecord { .. } => "learn-record",
             Self::InspectInventory { .. } => "inspect-inventory",
             Self::InspectActivities { .. } => "inspect-activities",
         }

@@ -6,6 +6,7 @@ use openlegend_simulation::{
     runtime::{InspectedRecipeRecord, RuntimeWorldStorage},
     state::Named,
 };
+use std::sync::LazyLock;
 
 #[derive(Serialize)]
 struct ReadPage<'a> {
@@ -41,12 +42,28 @@ struct InspectionCommand<'a> {
     expected_scope: &'a JsText,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RecordCopy {
+    learn_label: &'static str,
+    control_required: &'static str,
+    paused: &'static str,
+    unavailable: &'static str,
+}
+static RECORD_COPY: LazyLock<RecordCopy> = LazyLock::new(|| {
+    serde_json::from_str(include_str!(
+        "../../../../../packages/domain/src/recipe-record-copy.json"
+    ))
+    .expect("recipe record wording")
+});
+
 impl PlayerScenePolicy {
     pub(crate) fn encode_inspected_inventory(
         &self,
         read: RuntimeWorldStorage<'_>,
         input: &InventoryPageRequest,
         contact: &str,
+        controlling: bool,
         language: &LanguageProvider,
         budget: &ByteBudget,
     ) -> Result<Bytes, InventoryPageError> {
@@ -67,6 +84,7 @@ impl PlayerScenePolicy {
         let blank = JsText::default();
         let mut items = Vec::new();
         let mut selected_methods = Vec::new();
+        let mut can_learn = None;
         for index in 0..inspected.item_ids.len() {
             let item = read.item(index).map_err(Read)?;
             if (matches!(input.filter, Filter::Equipped) && !item.lot.equipped)
@@ -75,14 +93,48 @@ impl PlayerScenePolicy {
             {
                 continue;
             }
+            let mut actions = Vec::new();
             let recipe_record = match item.recipe_record {
-                Some(InspectedRecipeRecord::Available { recipe_id, known }) => {
+                Some(InspectedRecipeRecord::Available {
+                    recipe_id,
+                    known,
+                    record_pin,
+                }) => {
                     let template = self.self_view.authored_recipe(recipe_id).ok_or_else(|| {
                         Read(RuntimeError::application_refused(
                             "Installed recipe presentation unavailable",
                         ))
                     })?;
                     selected_methods.push((items.len(), template, known));
+                    let reason = if read.paused {
+                        Some(RECORD_COPY.paused)
+                    } else if !controlling {
+                        Some(RECORD_COPY.control_required)
+                    } else {
+                        let eligible = match can_learn {
+                            Some(eligible) => eligible,
+                            None => {
+                                let eligible = read.can_learn().map_err(Read)?;
+                                can_learn = Some(eligible);
+                                eligible
+                            }
+                        };
+                        (!eligible).then_some(RECORD_COPY.unavailable)
+                    };
+                    actions.push(Action {
+                        id: format!("learn-record-{}", item.lot.id),
+                        label: RECORD_COPY.learn_label,
+                        command: ItemCommand {
+                            kind: "learn-record",
+                            item_id: item.lot.id,
+                            expected_revision: Some(item.lot.revision),
+                            placement_revision: Some(item.lot.placement_revision),
+                            quantity: None,
+                            record_pin: Some(record_pin),
+                        },
+                        enabled: reason.is_none(),
+                        reason,
+                    });
                     None
                 }
                 Some(InspectedRecipeRecord::Unavailable) => Some(RecipeRecord {
@@ -97,7 +149,7 @@ impl PlayerScenePolicy {
                 category: item.category,
                 description: item.description.unwrap_or(&blank),
                 tags: item.properties,
-                actions: Vec::new(),
+                actions,
                 characteristics: None,
                 equipment_conflicts: Vec::new(),
                 recipe_record,

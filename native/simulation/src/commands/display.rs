@@ -189,6 +189,7 @@ impl ActivityDisplayCursor {
                 | NativeCommand::Eat { .. }
                 | NativeCommand::Cancel { .. }
                 | NativeCommand::WithdrawAttempt { .. }
+                | NativeCommand::LearnRecord { .. }
                 | NativeCommand::InspectInventory { .. }
                 | NativeCommand::InspectActivities { .. }
         ) {
@@ -487,6 +488,7 @@ impl ActivityDisplayCursor {
             | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. }
+            | NativeCommand::LearnRecord { .. }
             | NativeCommand::Handover { .. } => {
                 return Err(ExecutionError::UnsupportedFamily);
             }

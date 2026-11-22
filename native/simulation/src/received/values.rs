@@ -177,6 +177,9 @@ impl<'de> Deserialize<'de> for PersonalAccountData {
     }
 }
 impl PersonalAccountData {
+    pub(crate) fn decode<'a, T: Deserialize<'a>>(&'a self) -> Result<T, serde_json::Error> {
+        serde_json::from_str(self.0.get())
+    }
     pub(crate) fn from_encoded(encoded: String) -> Result<Self, ReceivedError> {
         let raw = serde_json::value::RawValue::from_string(encoded)
             .map_err(|_| ReceivedError("Personal event data encoding failed."))?;

@@ -41,6 +41,7 @@ pub(crate) fn commit_observer_identity(
 ) -> Result<bool, ExecutionError> {
     let mut receiving = ReceivingMutation {
         experience: &core.state.experience,
+        learned: &core.state.learned_capabilities,
         cognition: &mut core.journal.cognition,
         current: &mut core.journal.current,
         acquisitions: &mut core.journal.acquisitions,
@@ -74,6 +75,7 @@ pub(crate) fn retire_observer_identity(
 ) -> Result<(), ExecutionError> {
     let mut receiving = ReceivingMutation {
         experience: &core.state.experience,
+        learned: &core.state.learned_capabilities,
         cognition: &mut core.journal.cognition,
         current: &mut core.journal.current,
         acquisitions: &mut core.journal.acquisitions,

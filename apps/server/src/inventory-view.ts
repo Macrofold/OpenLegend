@@ -28,6 +28,7 @@ import {
   currentObservedFacetValues,
   worldPosition,
   readRecipeRecord,
+  recipeRecordCopy,
   definitionPin,
   visionRadius,
   canAccessContainer,
@@ -1175,7 +1176,7 @@ export function inventoryItemChoices(
       actions.push(
         action(
           `learn-record-${item.id}`,
-          'Learn this method',
+          recipeRecordCopy.learnLabel,
           command,
           availability.ok,
           availability.ok ? undefined : availability.message,

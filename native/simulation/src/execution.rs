@@ -151,6 +151,7 @@ struct CandidateFrame {
     restore_metadata: usize,
     memory: crate::host::MemoryCheckpoint,
     knowledge: crate::knowledge::KnowledgeCheckpoint,
+    learned: usize,
     markers: crate::knowledge::cartography::MarkerCheckpoint,
     encounters: crate::events::EncounterCheckpoint,
     appraisals: crate::appraisals::AppraisalCheckpoint,
@@ -187,6 +188,7 @@ pub(crate) struct CandidateJournal {
     pub(crate) outings: crate::outings::OutingJournal,
     pub(crate) restore_metadata: crate::restore::MetadataJournal,
     pub knowledge: crate::knowledge::KnowledgeJournal,
+    pub learned: crate::install::LearnedJournal,
     pub markers: crate::knowledge::cartography::MarkerJournal,
     owner: Arc<()>,
     base_cut: u64,
@@ -267,6 +269,7 @@ impl CandidateJournal {
         )?;
         let schema = &state.installed.schema;
         let records = &state.records;
+        self.learned.encode(&state.learned_capabilities, records, output, budget)?;
         crate::reception::encode_perception_owner_changes(
             reception,
             schema,
@@ -494,6 +497,7 @@ impl CandidateJournal {
             experience,
             commands,
             knowledge,
+            learned: Default::default(),
             markers,
             outings,
             responses,
@@ -561,6 +565,7 @@ impl CandidateJournal {
             restore_metadata: self.restore_metadata.checkpoint(),
             memory: self.memory.checkpoint()?,
             knowledge: self.knowledge.checkpoint(&state.reception.actor_knowledge),
+            learned: self.learned.checkpoint(),
             markers: self.markers.checkpoint(),
             encounters,
             appraisals: state.appraisals.checkpoint(),
@@ -639,6 +644,7 @@ impl CandidateJournal {
             .rollback_to(&mut state.commands, frame.commands)?;
         self.knowledge
             .rollback_to(&mut state.reception.actor_knowledge, frame.knowledge)?;
+        self.learned.rollback_to(&mut state.learned_capabilities, frame.learned)?;
         self.markers.rollback_to(&mut state.reception.map_markers, frame.markers)?;
         self.outings
             .rollback_to(&mut state.outings, frame.outings)?;
@@ -708,6 +714,7 @@ impl CandidateJournal {
             .rollback_to(&mut state.commands, self.root_commands)?;
         self.knowledge
             .rollback_to(&mut state.reception.actor_knowledge, self.root_knowledge)?;
+        self.learned.rollback_to(&mut state.learned_capabilities, 0)?;
         self.markers.rollback_to(&mut state.reception.map_markers, self.root_markers)?;
         self.outings
             .rollback_to(&mut state.outings, self.root_outings)?;

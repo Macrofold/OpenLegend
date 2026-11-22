@@ -8,13 +8,15 @@ import { sameDefinitionPin } from './state-owners.js';
 import { recipeMechanicalPin, validateInstalledRecipe } from './invention-families.js';
 import type { Command, WorldState } from './types.js';
 import { WorkBudgetError } from './work-budget.js';
+import recordCopy from './recipe-record-copy.json' with { type: 'json' };
+export const recipeRecordCopy = recordCopy;
 
 /** Resolve access before method facts: knowing a record's ID never opens its container.
  * docs/worlds/base/rewarding-expeditions.md#rewards-worth-using */
 export function readRecipeRecord(world: WorldState, actorId: string, itemId: string) {
   const item = itemFor(world, itemId);
   if (!item || !canAccessContainer(world, actorId, item.ownerId))
-    return outcome(false, 'record-unavailable', 'Reach and inspect an accessible recipe record.');
+    return outcome(false, 'record-unavailable', recordCopy.unavailable);
   const definition = getOwn(world.itemDefinitions, item.definitionId);
   const record = definition?.recipeRecord;
   if (!record || record.disclosure !== 'method')
@@ -24,7 +26,7 @@ export function readRecipeRecord(world: WorldState, actorId: string, itemId: str
     return outcome(
       false,
       'method-unavailable',
-      'The exact method on this record is no longer installed.',
+      recordCopy.definitionUnavailable,
     );
   try {
     validateInstalledRecipe(world, recipe);
@@ -68,12 +70,12 @@ export function prepareRecipeLearning(
     read.item.placementRevision !== command.placementRevision ||
     !sameDefinitionPin(definitionPin(read.definition), command.recordPin)
   )
-    return outcome(false, 'stale-record', 'The selected record changed. Inspect it again.');
+    return outcome(false, 'stale-record', recordCopy.stale);
   if (!currentInventoryInspection(world, command.actorId)?.itemIds.includes(command.itemId))
     return outcome(
       false,
       'record-uninspected',
-      'Inspect this accessible record before learning its method.',
+      recordCopy.uninspected,
     );
   return read;
 }

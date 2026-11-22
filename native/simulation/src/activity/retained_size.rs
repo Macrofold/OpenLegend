@@ -226,6 +226,9 @@ impl HeapBytes for NativeCommand {
                     page.root.heap_bytes()?, page.after.heap_bytes()?, page.expected_scope.heap_bytes()?,
                 ]))?,
             ]),
+            Self::LearnRecord { envelope, record } => heap_sum([
+                envelope.heap_bytes()?, record.item_id.heap_bytes()?, record.record_pin.heap_bytes()?,
+            ]),
             Self::InspectActivities { envelope, .. } => envelope.heap_bytes(),
         }
     }

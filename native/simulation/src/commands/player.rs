@@ -66,6 +66,7 @@ pub enum RuntimePlayerCommand<'a> {
     TendFire { target: &'a str, operation: crate::fire_care::FireOperation, item: Option<&'a str> },
     Pickup { target: &'a str, item: Option<&'a str>, quantity: Option<u64> },
     Drop { item: &'a str, quantity: u64 },
+    LearnRecord(&'a super::RecipeRecordSelection),
     InspectItem { item: &'a str, container: &'a str, expected_revision: u64 },
     InspectStorage { root: &'a str, after: Option<&'a str>, expected_scope: Option<&'a crate::text::JsText>, expected_revision: Option<u64> },
     Eat(&'a str),
@@ -98,6 +99,7 @@ impl RuntimePlayerCommand<'_> {
                 heat.len() + preparation_id.len() + preparation_digest.len()
                     + inputs.iter().map(|(role, item)| role.len() + item.len()).sum::<usize>()
             }
+            Self::LearnRecord(record) => record.item_id.len() + record.record_pin.id.len() + record.record_pin.digest.len(),
             Self::InspectItem { item, container, .. } => item.len() + container.len(),
             Self::InspectStorage { root, after, expected_scope, .. } => root.len() + after.map_or(0, str::len) + expected_scope.map_or(0, crate::text::JsText::storage_bytes),
             Self::Eat(item) | Self::Equip(item) | Self::Unequip { item, .. } => item.len(),
@@ -147,6 +149,9 @@ impl RuntimePlayerCommand<'_> {
         }
         if let Self::Handover { target, gift } = self {
             return bind_gift(id, actor, target, gift);
+        }
+        if let Self::LearnRecord(record) = self {
+            return bind_record_learning(id, actor, record);
         }
         if let Self::InspectItem { item, container, expected_revision } = self {
             return bind_inspection(id, actor, item, container, expected_revision);
@@ -242,6 +247,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::Status { .. }
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
+            | Self::LearnRecord(_)
             | Self::InspectItem { .. }
             | Self::InspectStorage { .. }
             | Self::Follow { .. }
@@ -384,6 +390,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::Status { .. }
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
+            | Self::LearnRecord(_)
             | Self::InspectItem { .. }
             | Self::InspectStorage { .. }
             | Self::Follow { .. }
@@ -842,4 +849,37 @@ fn bind_hearth(
     Ok((NativeCommand::PlaceHearth {
         envelope: headers.envelope(encoding), definition: definition.clone(), site: site.clone(),
     }, signature))
+}
+
+
+fn bind_record_learning(
+    id: &str,
+    actor: &str,
+    record: &super::RecipeRecordSelection,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    let headers = player_headers(id, actor);
+    if !headers.valid() || !record.valid() {
+        return Err(serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData, "Invalid recipe record binding.",
+        )));
+    }
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Operation<'a> {
+        id: &'a str,
+        actor_id: &'a str,
+        human_initiated: bool,
+        #[serde(rename = "type")]
+        kind: &'static str,
+        #[serde(flatten)]
+        record: &'a super::RecipeRecordSelection,
+    }
+    let encoding = CommandEncoding::from_ordered(&Operation {
+        id, actor_id: actor, human_initiated: true, kind: "learn-record", record,
+    }, 8)?;
+    let canonical = encoding.json.get().to_owned();
+    Ok((NativeCommand::LearnRecord {
+        envelope: headers.envelope(encoding),
+        record: record.clone(),
+    }, canonical))
 }

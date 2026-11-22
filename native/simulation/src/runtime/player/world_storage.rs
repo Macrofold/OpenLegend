@@ -13,6 +13,7 @@ pub struct RuntimeWorldStorage<'a> {
     pub placement_revision: u64,
     pub geometry_revision: u64,
     pub ready: bool,
+    pub paused: bool,
     pub stance: Option<&'a SurfacePoint>,
     pub inspection: Option<&'a InventoryInspection>,
     actor: &'a str,
@@ -29,11 +30,37 @@ pub struct InspectedItemRead<'a> {
 }
 
 pub enum InspectedRecipeRecord<'a> {
-    Available { recipe_id: &'a str, known: bool },
+    Available {
+        recipe_id: &'a str,
+        known: bool,
+        record_pin: &'a crate::values::DefinitionPin,
+    },
     Unavailable,
 }
 
 impl<'a> RuntimeWorldStorage<'a> {
+    /// Eligibility for the selected record button. The actual command repeats
+    /// the authoritative check after binding its exact item and current page.
+    pub fn can_learn(&self) -> Result<bool, RuntimeError> {
+        let actor = self
+            .state
+            .physical
+            .entities
+            .get(self.actor)
+            .ok_or_else(|| failure("Inspection actor unavailable."))?;
+        Ok(actor.has_memory()
+            && actor
+                .actor
+                .as_ref()
+                .is_some_and(|actor| actor.alive && !actor.incapacitated)
+            && !self
+                .state
+                .installed
+                .capabilities
+                .capability_blocked(Some(actor), "actions")
+                .map_err(failure)?)
+    }
+
     /// Fill only the requested material definitions from this actor's current
     /// accessible possessions. Caller holds the selected page and its funding.
     pub fn tally_recipe_stock(
@@ -118,6 +145,7 @@ impl<'a> RuntimeWorldStorage<'a> {
                     let id = &record.method.id;
                     InspectedRecipeRecord::Available {
                         recipe_id: id,
+                        record_pin: &definition.pin,
                         known: self
                             .state
                             .learned_capabilities
@@ -228,6 +256,7 @@ impl NativeWorldSession {
                             placement_revision: root.placement_revision,
                             geometry_revision: root.geometry_revision,
                             ready,
+                            paused: simulation.state.physical.header.paused,
                             stance,
                             inspection: if ready {
                                 root.inspection(&self.budget).map_err(failure)?

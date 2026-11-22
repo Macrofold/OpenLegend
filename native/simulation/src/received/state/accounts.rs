@@ -23,6 +23,7 @@ pub(crate) fn ensure_experience_accounting(
         &mut core.state.physical,
         &core.state.reception,
         &core.state.experience,
+        &core.state.learned_capabilities,
         &mut core.state.temporal,
         &core.state.installed,
         actor_id,
@@ -36,6 +37,7 @@ pub(crate) fn bootstrap_personal_accounts(
     physical: &mut crate::simulation::PhysicalState,
     reception: &crate::reception::ReceptionState,
     experience: &crate::experience::ExperienceState,
+    learned: &crate::install::LearnedCapabilities,
     temporal: &mut TemporalState,
     installed: &crate::simulation::InstalledWorld,
     actor_id: &str,
@@ -178,8 +180,10 @@ pub(crate) fn bootstrap_personal_accounts(
         .filter(|n| *n <= MAX_SAFE_INTEGER)
         .ok_or(ExecutionError::Capacity)?;
     accounts.knowledge_due = due;
-    // This selected install rejects nonempty learned-capability collections;
-    // there are no nonauthored discovery records to charge at this boundary.
+    for grant in learned.acquired_grants(actor_id) {
+        add(&mut accounts.required,
+            json_record_len(grant).map_err(|_| ExecutionError::Invariant)? as u64)?;
+    }
     if accounts.required.bytes as f64
         >= (policy.required.max_bytes as f64 * policy.required_pressure_start).floor()
         || accounts.required.count as f64
