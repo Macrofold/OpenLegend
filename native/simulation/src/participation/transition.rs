@@ -3,7 +3,9 @@
 use super::*;
 use crate::commands::Outcome;
 use crate::events::{CompletedEvent, EventAccountPlacement, EventCursor, begin_staged_occurrence};
-use crate::execution::{ActionWrite, CoreMutation, ExecutionError, PlanGenerationWrite};
+use crate::execution::{
+    ActionFinish, ActionWrite, CoreMutation, ExecutionError, PlanGenerationWrite,
+};
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, StandingQuery};
 use crate::host::retained_size::{heap_sum, map_storage};
 use crate::host::{ByteReservation, CandidateKey};
@@ -837,10 +839,38 @@ impl ParticipationCursor {
                     }
                 }
                 Phase::ClearWork => {
-                    // Inventory installation proves the actual resource-reservation
-                    // owner is complete and empty; these selected actions
-                    // cannot create held resources. No release is fabricated.
                     let id = &self.request.actor_id;
+                    // The plan owners already ended their steps. A direct
+                    // action still owes the same terminal activity result.
+                    if let Some(action) = core
+                        .state
+                        .physical
+                        .entities
+                        .get(id)
+                        .and_then(|entity| entity.actor.as_ref())
+                        .and_then(|actor| actor.action.as_ref())
+                    {
+                        let cancelled = &installed.ordinary_actions.value().cancelled_by_choice;
+                        let _copy = budget.reserve(
+                            action.id.len() + cancelled.code.len() + cancelled.message.len(),
+                        )?;
+                        let action = action.id.clone();
+                        if let ActionFinish::Personal(pending) =
+                            core.begin_finish_action(id, &action, cancelled.outcome(false))?
+                        {
+                            let result = crate::experience::prepare_activity_result(
+                                core,
+                                pending.personal(),
+                                budget,
+                            )?;
+                            let acquired = crate::experience::acquire_activity_result(
+                                core,
+                                result,
+                                &installed.schema,
+                            )?;
+                            core.complete_finish_action(pending, &acquired)?;
+                        }
+                    }
                     core.physical().replace_action(
                         id,
                         None,

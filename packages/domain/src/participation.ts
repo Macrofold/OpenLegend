@@ -8,8 +8,7 @@ import { canStand, finitePoint } from '@open-legend/spatial';
 import { draftWorld, readOnlyDraftView } from './draft.js';
 import { finish, emit, outcome } from './events.js';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
-import { releaseInvocationResources } from './resource-claims.js';
-import { cancelPlan, discardSuspended } from './agency.js';
+import { cancelPlan, discardSuspended, finishPlanAction } from './agency.js';
 import { isSafeRecordId } from './records.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { forgetProjectileBodyEncounters } from './ranged.js';
@@ -23,9 +22,17 @@ export { activelyParticipates, type ParticipationState } from './participation-s
 
 function interruptDepartureWork(world: WorldState, entity: Entity): void {
   const actor = entity.actor!;
-  if (actor.action) releaseInvocationResources(world, actor.action.id);
   cancelPlan(world, actor, entity.id);
   discardSuspended(world, actor, entity.id);
+  if (actor.action) {
+    const cancelled = selectedOrdinaryActionRules(world).cancelledByChoice;
+    finishPlanAction(
+      world,
+      entity.id,
+      actor.action.id,
+      outcome(false, cancelled.code, cancelled.message),
+    );
+  }
   actor.action = null;
   delete actor.encounters;
   actor.planGeneration++;
