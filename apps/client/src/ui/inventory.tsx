@@ -117,6 +117,8 @@ function sameItem(left: InventoryItemView, right: InventoryItemView) {
     left.revision === right.revision &&
     left.placementRevision === right.placementRevision &&
     left.group?.members === right.group?.members &&
+    left.group?.representativeQuantity === right.group?.representativeQuantity &&
+    left.group?.representativeAvailableQuantity === right.group?.representativeAvailableQuantity &&
     left.quantity === right.quantity &&
     left.container?.revision === right.container?.revision &&
     left.availableQuantity === right.availableQuantity
@@ -635,6 +637,8 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   }
   const selectedCollection = selection && collection(selection.side);
   const item = selectedCollection?.page?.items.find((entry) => entry.id === selection?.itemId);
+  const stackQuantity = item?.group?.representativeQuantity ?? item?.quantity;
+  const stackAvailable = item?.group?.representativeAvailableQuantity ?? item?.availableQuantity;
   const target = selection && opposite(selection.side)?.page?.container;
   const amountTarget = amountDraft?.targetSide
     ? collection(amountDraft.targetSide)?.page?.container
@@ -653,8 +657,8 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   )
     inspectedSelection.current = undefined;
   const amountMaximum =
-    amountDraft?.operation === 'offer' && item?.group
-      ? item.group.representativeAvailableQuantity
+    amountDraft?.operation === 'offer' || amountDraft?.operation === 'split'
+      ? stackAvailable
       : item?.availableQuantity;
   const amount = amountDraft && exactQuantity(amountDraft.value, amountMaximum);
   const draftStale =
@@ -668,6 +672,11 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         (!amountTarget ||
           amountTarget.id !== amountDraft.target?.id ||
           amountTarget.revision !== amountDraft.target?.revision)));
+  const canSubmitAmount =
+    canAct &&
+    !draftStale &&
+    (amountDraft?.operation !== 'move' ||
+      (!!amountDraft.targetSide && !!collection(amountDraft.targetSide)?.current));
 
   const tradeRecipientId = amountDraft?.operation === 'offer' ? amountDraft.recipientId : undefined;
   useLayoutEffect(() => {
@@ -1116,7 +1125,9 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     stopDrag();
   }
   function chooseAmount(operation: AmountDraft['operation'], action?: ActionOption) {
-    if (!item || !selectedContainer || !selection) return;
+    // Opening the editor is local. A same-owner refresh can hold the write
+    // without interrupting the player's click or discarding the draft.
+    if (!canTrade || !item || !selectedContainer || !selection) return;
     setQuantityError('');
     setAmountDraft({
       operation,
@@ -1136,10 +1147,11 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     });
   }
   function submitAmount() {
-    if (!selection || !amountDraft || draftStale) return;
+    if (!selection || !amountDraft || !canSubmitAmount) return;
     if (
       amount === undefined ||
-      (amountDraft.operation === 'split' && amount >= amountDraft.item.quantity)
+      (amountDraft.operation === 'split' &&
+        amount >= (amountDraft.item.group?.representativeQuantity ?? amountDraft.item.quantity))
     ) {
       setQuantityError(
         amountDraft.operation === 'split'
@@ -1691,7 +1703,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                         )}
                         <div className="ol-actions">
                           {amountDraft.operation !== 'offer' && (
-                            <Button disabled={!canAct || draftStale} onPress={submitAmount}>
+                            <Button disabled={!canSubmitAmount} onPress={submitAmount}>
                               {amountDraft.operation === 'move'
                                 ? 'Move amount'
                                 : amountDraft.operation === 'split'
@@ -1772,7 +1784,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                                 {!item.individual && item.quantity > 1 && (
                                   <Button
                                     variant="quiet"
-                                    disabled={!canAct}
+                                    disabled={!canTrade}
                                     onPress={() => chooseAmount('move')}
                                   >
                                     Move an amount…
@@ -1805,9 +1817,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                           <Button
                             variant="quiet"
                             disabled={
-                              !canAct ||
-                              item.availableQuantity === undefined ||
-                              item.availableQuantity < 1
+                              !canTrade || stackAvailable === undefined || stackAvailable < 1
                             }
                             onPress={() => chooseAmount('offer')}
                             aria-description={
@@ -1867,30 +1877,38 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                               {item.workBatch.label}
                             </Button>
                           )}
-                          {item.actions.map((action) => (
-                            <div key={action.id}>
-                              <Button
-                                variant="quiet"
-                                disabled={!canAct || !action.enabled}
-                                onPress={() =>
-                                  action.command.type === 'split-item'
-                                    ? chooseAmount('split', action)
-                                    : action.command.type === 'drop' && item.quantity > 1
-                                      ? chooseAmount('drop', action)
+                          {item.actions.map((action) => {
+                            const amountOperation =
+                              action.command.type === 'split-item'
+                                ? 'split'
+                                : action.command.type === 'drop' && item.quantity > 1
+                                  ? 'drop'
+                                  : undefined;
+                            return (
+                              <div key={action.id}>
+                                <Button
+                                  variant="quiet"
+                                  disabled={
+                                    !(amountOperation ? canTrade : canAct) || !action.enabled
+                                  }
+                                  onPress={() =>
+                                    amountOperation
+                                      ? chooseAmount(amountOperation, action)
                                       : send(action, selection.side)
-                                }
-                              >
-                                {action.command.type === 'split-item'
-                                  ? 'Split stack…'
-                                  : action.command.type === 'drop' && item.quantity > 1
-                                    ? 'Drop an amount…'
-                                    : action.label}
-                              </Button>
-                              {!action.enabled && action.reason && (
-                                <p className="ol-caption">{action.reason}</p>
-                              )}
-                            </div>
-                          ))}
+                                  }
+                                >
+                                  {amountOperation === 'split'
+                                    ? 'Split stack…'
+                                    : amountOperation === 'drop'
+                                      ? 'Drop an amount…'
+                                      : action.label}
+                                </Button>
+                                {!action.enabled && action.reason && (
+                                  <p className="ol-caption">{action.reason}</p>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                         <details open={!selection.actions}>
                           <summary>Known details</summary>
@@ -1982,29 +2000,37 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                             </details>
                           ) : null;
                         })}
-                        {!item.group && !item.individual && !item.container && !item.equipped && (
-                          <MergeTargets
-                            key={item.id}
-                            item={item}
-                            containerId={selectedContainer.id}
-                            pageKey={selectedCollection?.key ?? ''}
-                            canAct={canAct && item.availableQuantity === item.quantity}
-                            visible={workspaceVisible && connected}
-                            onMerge={(match) =>
-                              send(
-                                arrange(
-                                  'merge-item',
-                                  item,
-                                  match.id,
-                                  match.revision,
-                                  item.quantity,
-                                  'Merge stacks',
-                                ),
-                                selection.side,
-                              )
-                            }
-                          />
-                        )}
+                        {!item.individual &&
+                          !item.container &&
+                          !item.equipped &&
+                          stackQuantity !== undefined && (
+                            <MergeTargets
+                              key={item.id}
+                              item={item}
+                              containerId={selectedContainer.id}
+                              containerRevision={selectedContainer.revision}
+                              readScope={JSON.stringify([
+                                scope,
+                                view.player.inventoryReadRevision.disclosure,
+                              ])}
+                              pageKey={selectedCollection?.key ?? ''}
+                              canAct={canAct && stackAvailable === stackQuantity}
+                              visible={workspaceVisible && connected}
+                              onMerge={(match) =>
+                                send(
+                                  arrange(
+                                    'merge-item',
+                                    item,
+                                    match.id,
+                                    match.revision,
+                                    stackQuantity,
+                                    'Merge stacks',
+                                  ),
+                                  selection.side,
+                                )
+                              }
+                            />
+                          )}
                         {view.godMode && (
                           <details>
                             <summary>Declare ownership (God mode)</summary>

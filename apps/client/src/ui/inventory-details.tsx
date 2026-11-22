@@ -77,6 +77,8 @@ export function InventoryHistory({
 type MergeTargetProps = {
   item: InventoryItemView;
   containerId: string;
+  containerRevision: number;
+  readScope: string;
   pageKey: string;
   canAct: boolean;
   visible: boolean;
@@ -88,25 +90,44 @@ export function MergeTargets(props: MergeTargetProps) {
   return (
     <details onToggle={(event) => setOpen(event.currentTarget.open)}>
       <summary>Merge matching stacks</summary>
-      {open && <MatchingLots {...props} />}
+      {open && (
+        <>
+          {props.item.group && (
+            <p className="ol-caption">
+              Merge the selected stack of {props.item.group.representativeQuantity} into another.
+            </p>
+          )}
+          {props.visible && (
+            <MatchingLots
+              key={JSON.stringify([
+                props.readScope,
+                props.containerId,
+                props.containerRevision,
+                props.item.id,
+                props.item.revision,
+                props.item.placementRevision,
+              ])}
+              {...props}
+            />
+          )}
+        </>
+      )}
     </details>
   );
 }
 
-function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: MergeTargetProps) {
+function MatchingLots({ item, containerId, pageKey, canAct, onMerge }: MergeTargetProps) {
   const [refresh, setRefresh] = useState(0);
-  const context = JSON.stringify([pageKey, containerId, item.id, item.revision, visible, refresh]);
-  const [continuation, setContinuation] = useState<{ context: string; cursor?: string }>({
-    context,
-  });
-  if (continuation.context !== context) setContinuation({ context });
-  const cursor = continuation.context === context ? continuation.cursor : undefined;
-  const setCursor = (value?: string) => setContinuation({ context, cursor: value });
+  const [cursor, setCursor] = useState<string>();
   const [targetId, setTargetId] = useState('');
-  const [result, setResult] = useState<{ key: string; page?: ContainerPage; error?: string }>();
-  const key = JSON.stringify([context, cursor]);
+  const [result, setResult] = useState<{
+    key: string;
+    cursor?: string;
+    page?: ContainerPage;
+    error?: string;
+  }>();
+  const key = JSON.stringify([pageKey, cursor, refresh]);
   useEffect(() => {
-    if (!visible) return;
     const controller = new AbortController();
     void postContactRead<ContainerPage>(
       '/api/inventory',
@@ -118,30 +139,27 @@ function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: 
         if (!controller.signal.aborted)
           setResult({
             key,
+            cursor,
             ...(page.ok ? { page } : { error: page.message ?? 'Matching lots are unavailable.' }),
           });
       })
       .catch((error) => {
-        if (!controller.signal.aborted) setResult({ key, error: String(error) });
+        if (!controller.signal.aborted) setResult({ key, cursor, error: String(error) });
       });
     return () => {
       controller.abort();
     };
-  }, [key, visible]);
-  // A permission or revision change hides stale matching lots immediately.
+  }, [key]);
+  // Replacing a read for the same scope should not unmount the player's
+  // selector. A custody, disclosure or selection change hides it immediately.
   const loading = result?.key !== key;
-  const current = result?.key === key && visible ? result : undefined;
-  if (!current) return <LoadingIndicator active={visible} label="Finding matching lots" />;
+  const current = result?.cursor === cursor ? result : undefined;
+  if (!current) return <LoadingIndicator active label="Finding matching lots" />;
   if (current.error && !loading)
     return (
       <>
         <p role="alert">{current.error}</p>
-        <Button
-          size="sm"
-          variant="quiet"
-          disabled={!visible}
-          onPress={() => setRefresh((value) => value + 1)}
-        >
+        <Button size="sm" variant="quiet" onPress={() => setRefresh((value) => value + 1)}>
           Refresh matching stacks
         </Button>
       </>
@@ -184,7 +202,12 @@ function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: 
         <LoadingIndicator active={loading} label="Finding matching lots" />
       </span>
       {current.page?.next && (
-        <Button size="sm" variant="quiet" onPress={() => setCursor(current.page!.next)}>
+        <Button
+          size="sm"
+          variant="quiet"
+          disabled={loading}
+          onPress={() => setCursor(current.page!.next)}
+        >
           Search more lots
         </Button>
       )}

@@ -516,28 +516,26 @@ export function containerPage(
           representativeQuantity: item.quantity,
           representativeAvailableQuantity: item.availableQuantity ?? 0,
         },
-        actions: item.actions
-          .filter((action) => action.command.type !== 'split-item')
-          .map((action) =>
-            action.command.type === 'drop'
-              ? {
-                  ...action,
-                  enabled: active && drop.ok,
-                  command: {
-                    ...action.command,
-                    inventoryGroup: token,
-                    quantity: availableQuantity,
-                  },
-                  reason: !active
-                    ? service.paused
-                      ? 'Resume the world to act.'
-                      : 'Current character control is required.'
-                    : !drop.ok
-                      ? drop.message
-                      : undefined,
-                }
-              : action,
-          ),
+        actions: item.actions.map((action) =>
+          action.command.type === 'drop'
+            ? {
+                ...action,
+                enabled: active && drop.ok,
+                command: {
+                  ...action.command,
+                  inventoryGroup: token,
+                  quantity: availableQuantity,
+                },
+                reason: !active
+                  ? service.paused
+                    ? 'Resume the world to act.'
+                    : 'Current character control is required.'
+                  : !drop.ok
+                    ? drop.message
+                    : undefined,
+              }
+            : action,
+        ),
       };
     });
     return response(items, next);
