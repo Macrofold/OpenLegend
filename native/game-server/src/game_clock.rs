@@ -315,6 +315,15 @@ impl GameClock {
                 move |save| accept.accept(save),
             )
             .await?;
+        if let Some(presence) = &self.presence {
+            crate::embodiment::reconcile_startup(
+                &self.game,
+                &self.saves,
+                presence,
+                self.exit_grace,
+            )
+            .await?;
+        }
         Ok(())
     }
 

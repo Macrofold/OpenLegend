@@ -16,7 +16,10 @@ use openlegend_simulation::{
     commands::Outcome,
     host::ByteReservation,
     records::SaveRows,
-    runtime::{NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimeParticipation},
+    runtime::{
+        NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimeParticipation,
+        RuntimeRestoredPlayer,
+    },
     text::JsText,
 };
 use std::{sync::Arc, time::Duration};
@@ -202,23 +205,66 @@ pub(crate) async fn reconcile_restored(
     }
     let restored = game
         .world
-        .capture(NativeWorldSession::restored_players)
+        .capture(|session| session.restored_players(false))
         .await?;
-    for (actor, account) in restored.players {
-        let Some(control) = presence.fence_unattended(actor, account)? else {
+    for player in restored.players {
+        let Some(control) = presence.fence_unattended(player.actor, player.account)? else {
             continue;
         };
-        let exit = control
-            .previous_attempt()
-            .await?
-            .map(|(id, deadline)| Exit { id, deadline })
-            .unwrap_or_else(|| Exit::new(grace));
+        let exit = Exit::restore(control.previous_attempt().await?, grace);
         let candidate = begin_absence(game, saves, presence, control, exit).await?;
         if !candidate.outcome.ok {
             return Err(StoreError::InvalidRecord.into());
         }
     }
     presence.restored_checked()?;
+    Ok(())
+}
+
+/// Restore historical actor phases against today's operational authority
+/// before opening a listener. Matching attempts keep both saved deadlines.
+/// Unattended active players without an exit can still reconnect normally.
+pub(crate) async fn reconcile_startup(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    presence: &Arc<Presence>,
+    grace: Duration,
+) -> Result<(), WorldError> {
+    let restored = game
+        .world
+        .capture(|session| session.restored_players(true))
+        .await?;
+    if restored.players.is_empty() {
+        return Ok(());
+    }
+    let (restored, current) = presence.restored_exit_attempts(restored).await?;
+    let mismatch = |saved: &RuntimeRestoredPlayer, current: &Option<(String, i64)>| {
+        saved.exit_attempt.as_deref() != current.as_ref().map(|(id, _)| id.as_str())
+    };
+    if !restored
+        .players
+        .iter()
+        .zip(&current.attempts)
+        .any(|(saved, current)| mismatch(saved, current))
+    {
+        return Ok(());
+    }
+    // The startup publisher has not admitted any listener or clock callers.
+    // Drain paused-startup writes now, only when a new protected change needs them.
+    let _protected = saves.enter_protected().await?;
+    for (player, prior) in restored.players.into_iter().zip(current.attempts) {
+        if !mismatch(&player, &prior) {
+            continue;
+        }
+        let control = presence
+            .fence_unattended(player.actor, player.account)?
+            .ok_or(StoreError::StaleCut)?;
+        let exit = Exit::restore(prior, grace);
+        let candidate = begin_absence(game, saves, presence, control, exit).await?;
+        if !candidate.outcome.ok {
+            return Err(StoreError::InvalidRecord.into());
+        }
+    }
     Ok(())
 }
 
@@ -247,6 +293,7 @@ async fn begin_absence(
 struct Exit {
     id: String,
     deadline: i64,
+    previous: bool,
 }
 
 impl Exit {
@@ -254,6 +301,18 @@ impl Exit {
         Self {
             id: Uuid::new_v4().to_string(),
             deadline: now_ms().saturating_add(grace.as_millis().try_into().unwrap_or(i64::MAX)),
+            previous: false,
+        }
+    }
+
+    fn restore(prior: Option<(String, i64)>, grace: Duration) -> Self {
+        match prior {
+            Some((id, deadline)) => Self {
+                id,
+                deadline,
+                previous: true,
+            },
+            None => Self::new(grace),
         }
     }
 
@@ -286,7 +345,9 @@ impl HostParticipation {
                     .write_exit(tx, exit.as_ref().map(Exit::fields))
                     .await
             }
-            Self::Loss { control, exit, .. } => control.write(tx, exit.fields()).await,
+            Self::Loss { control, exit, .. } => {
+                control.write(tx, exit.fields(), exit.previous).await
+            }
             Self::Elapsed(attempt) => attempt.validate(tx).await,
         }
     }

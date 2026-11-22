@@ -18,7 +18,7 @@ use uuid::Uuid;
 mod control;
 pub(crate) mod invites;
 mod managed_access;
-pub(crate) use control::{DepartureControl, PendingExit};
+pub(crate) use control::{DepartureControl, PendingExit, RestoredExitAttempts};
 pub use control::{ControlChange, ControlOperation, ControlRequest};
 pub(crate) use managed_access::{AccessUpdateError, UpdateGrant, assert_saved_grant};
 

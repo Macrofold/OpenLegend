@@ -17,8 +17,14 @@ pub struct InvitationActors {
 /// Owned after-startup roster of current human bodies that still need a
 /// verified return or departure. It exposes only the saved bindings to the host.
 pub struct RuntimeRestoredPlayers {
-    pub players: Vec<(String, String)>,
+    pub players: Vec<RuntimeRestoredPlayer>,
     _custody: ByteReservation,
+}
+
+pub struct RuntimeRestoredPlayer {
+    pub actor: String,
+    pub account: String,
+    pub exit_attempt: Option<String>,
 }
 
 pub enum RuntimeParticipation {
@@ -43,7 +49,12 @@ impl NativeWorldSession {
             .is_some())
     }
 
-    pub fn restored_players(&self) -> Result<RuntimeRestoredPlayers, RuntimeError> {
+    /// Capture only current player bindings and their saved exit IDs. Startup
+    /// includes fading bodies. Resume needs only still-active bodies.
+    pub fn restored_players(
+        &self,
+        include_exiting: bool,
+    ) -> Result<RuntimeRestoredPlayers, RuntimeError> {
         let current = self.session.accepted().map_err(failure)?;
         let players = || {
             let entities = &current.state.physical.entities;
@@ -51,29 +62,47 @@ impl NativeWorldSession {
             entities.ordered_ids().filter_map(move |id| {
                 let account = owners.get(id)?;
                 let actor = entities.get(id)?.actor.as_ref()?;
-                (actor.controller == "player"
-                    && actor
-                        .participation
-                        .as_ref()
-                        .is_none_or(|phase| phase.phase == "active"))
-                .then_some((id, account))
+                if actor.controller != "player" {
+                    return None;
+                }
+                let participation = actor.participation.as_ref();
+                match participation.map(|phase| phase.phase.as_str()) {
+                    None | Some("active") => Some(Ok((id, account, None))),
+                    Some("exiting") if include_exiting => Some(
+                        participation
+                            .and_then(|phase| phase.exit_attempt_id.as_deref())
+                            .map(|attempt| (id, account, Some(attempt)))
+                            .ok_or_else(|| failure("saved exit participation has no attempt")),
+                    ),
+                    _ => None,
+                }
             })
         };
-        let (count, bytes) = players()
-            .try_fold((0_usize, 0_usize), |(count, bytes), (actor, account)| {
-                Some((
-                    count.checked_add(1)?,
-                    bytes
-                        .checked_add(actor.len())?
-                        .checked_add(account.len())?
-                        .checked_add(std::mem::size_of::<(String, String)>())?,
-                ))
-            })
-            .ok_or_else(|| failure("restored-player custody"))?;
+        let mut count = 0_usize;
+        let mut bytes = 0_usize;
+        for player in players() {
+            let (actor, account, attempt) = player?;
+            count = count
+                .checked_add(1)
+                .ok_or_else(|| failure("restored-player custody"))?;
+            bytes = bytes
+                .checked_add(actor.len())
+                .and_then(|bytes| bytes.checked_add(account.len()))
+                .and_then(|bytes| bytes.checked_add(attempt.map_or(0, str::len)))
+                .and_then(|bytes| bytes.checked_add(std::mem::size_of::<RuntimeRestoredPlayer>()))
+                .ok_or_else(|| failure("restored-player custody"))?;
+        }
         let custody = self.budget.reserve(bytes)?;
         let mut rows = Vec::new();
         rows.try_reserve_exact(count).map_err(failure)?;
-        rows.extend(players().map(|(actor, account)| (actor.to_owned(), account.clone())));
+        for player in players() {
+            let (actor, account, exit_attempt) = player?;
+            rows.push(RuntimeRestoredPlayer {
+                actor: actor.to_owned(),
+                account: account.clone(),
+                exit_attempt: exit_attempt.map(str::to_owned),
+            });
+        }
         Ok(RuntimeRestoredPlayers {
             players: rows,
             _custody: custody,

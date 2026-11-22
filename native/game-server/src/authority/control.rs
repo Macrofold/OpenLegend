@@ -4,7 +4,9 @@
 
 use super::*;
 use crate::store::StoreResult;
-use openlegend_simulation::{encoding::json_record, identity::MAX_SAFE_INTEGER};
+use openlegend_simulation::{
+    encoding::json_record, identity::MAX_SAFE_INTEGER, runtime::RuntimeRestoredPlayers,
+};
 use tokio_postgres::Transaction;
 
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
@@ -320,7 +322,59 @@ pub(crate) struct PendingExit {
     _custody: ByteReservation,
 }
 
+pub(crate) struct RestoredExitAttempts {
+    pub(crate) attempts: Vec<Option<(String, i64)>>,
+    _custody: ByteReservation,
+}
+
 impl Authority {
+    /// At paused startup, match the accepted native roster to current, non-rewindable
+    /// exit attempts in one read. Keep both results funded through the protected writes.
+    pub(crate) async fn restored_exit_attempts(
+        &self,
+        players: RuntimeRestoredPlayers,
+    ) -> StoreResult<(RuntimeRestoredPlayers, RestoredExitAttempts)> {
+        let count = players.players.len();
+        // Includes the actor parameter, bounded stored payload, driver row and
+        // retained result. The native roster keeps its own reservation.
+        let bytes = players
+            .players
+            .iter()
+            .try_fold(0_usize, |bytes, player| {
+                bytes
+                    .checked_add(player.actor.len())?
+                    .checked_add(4 * ACCESS_COLUMN_BYTES as usize)
+            })
+            .ok_or(StoreError::Capacity)?;
+        let custody = self
+            .budget
+            .reserve(bytes)
+            .map_err(|_| StoreError::Capacity)?;
+        let world = self.world_id.clone();
+        self.store.read_simulation_cut(move |tx| Box::pin(async move {
+            let mut attempts = Vec::new();
+            attempts.try_reserve_exact(count).map_err(|_| StoreError::Capacity)?;
+            attempts.resize_with(count, || None);
+            let mut actors = Vec::new();
+            actors.try_reserve_exact(count).map_err(|_| StoreError::Capacity)?;
+            actors.extend(players.players.iter().map(|player| player.actor.as_str()));
+            let rows = tx.query(
+                "SELECT p.position, CASE WHEN octet_length(e.payload)<=$3 THEN e.payload::jsonb->>'id' END, \
+                   CASE WHEN octet_length(e.payload)<=$3 THEN (e.payload::jsonb->>'deadline')::bigint END \
+                 FROM unnest($2::text[]) WITH ORDINALITY p(actor_id,position) \
+                 JOIN auth_exits e ON e.world_id=$1 AND e.actor_id=p.actor_id",
+                &[&world, &actors, &ACCESS_COLUMN_BYTES],
+            ).await?;
+            for row in rows {
+                let position: i64 = row.try_get(0)?;
+                let index = usize::try_from(position - 1).map_err(|_| StoreError::InvalidRecord)?;
+                let slot = attempts.get_mut(index).ok_or(StoreError::InvalidRecord)?;
+                *slot = Some((row.try_get(1)?, row.try_get(2)?));
+            }
+            Ok((players, RestoredExitAttempts { attempts, _custody: custody }))
+        })).await
+    }
+
     /// Used only by a world with no installed game-time exit rule, at a known
     /// due time or on startup. Inactive departures keep their saved attempt.
     pub(crate) async fn next_elapsed_exit(&self) -> StoreResult<Option<PendingExit>> {
@@ -492,6 +546,7 @@ impl DepartureControl {
         &self,
         tx: &Transaction<'_>,
         attempt: (&str, i64),
+        previous: bool,
     ) -> StoreResult<()> {
         let world = &self.owner.world_id;
         match &self.subject {
@@ -508,6 +563,14 @@ impl DepartureControl {
                 }
             }
             Departing::Restored { actor, account } => {
+                let current = tx.query_opt(
+                    "SELECT 1 FROM auth_exits WHERE world_id=$1 AND actor_id=$2 \
+                     AND (NOT $5 OR (payload::jsonb->>'id'=$3 AND (payload::jsonb->>'deadline')::bigint=$4))",
+                    &[world, actor, &attempt.0, &attempt.1, &previous],
+                ).await?.is_some();
+                if current != previous {
+                    return Err(StoreError::StaleCut);
+                }
                 tx.execute(
                     "UPDATE auth_controls SET generation=generation+1,session_id='',connection_id='' \
                      WHERE world_id=$1 AND actor_id=$2 AND account_id=$3 AND generation<$4 AND session_id<>''",

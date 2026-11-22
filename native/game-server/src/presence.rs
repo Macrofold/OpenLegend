@@ -402,6 +402,16 @@ impl Presence {
         Ok(())
     }
 
+    pub(crate) async fn restored_exit_attempts(
+        &self,
+        players: openlegend_simulation::runtime::RuntimeRestoredPlayers,
+    ) -> crate::store::StoreResult<(
+        openlegend_simulation::runtime::RuntimeRestoredPlayers,
+        crate::authority::RestoredExitAttempts,
+    )> {
+        self.authority.restored_exit_attempts(players).await
+    }
+
     pub(crate) fn fence_unattended(
         &self,
         actor: String,

@@ -49,7 +49,10 @@ pub use npc_intake::{
 };
 mod npc_labels;
 mod participation;
-pub use participation::{InvitationActor, InvitationActors, RuntimeParticipation};
+pub use participation::{
+    InvitationActor, InvitationActors, RuntimeParticipation, RuntimeRestoredPlayer,
+    RuntimeRestoredPlayers,
+};
 mod player;
 mod manufacture;
 pub use manufacture::RuntimeManufactureOffer;
