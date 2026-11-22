@@ -510,6 +510,9 @@ function mapContactReferences<T>(
         : undefined;
     return Object.fromEntries(
       Object.entries(command).map(([key, part]) => {
+        // A requested trade lot names retained personal evidence. The handover
+        // owner looks it up before inspecting another person's current stock.
+        if (command.type === 'handover' && key === 'requestedItems') return [key, part];
         if (
           command.type === 'inspect-inventory' &&
           key === 'expectedScope' &&
