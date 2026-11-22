@@ -95,6 +95,8 @@ pub struct PlayerAccess {
     pub controlled_elsewhere: bool,
     pub can_manage_saves: bool,
     pub can_operate: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub can_inspect_mind: Option<bool>,
     pub mode: AuthenticationMode,
 }
 

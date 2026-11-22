@@ -21,6 +21,7 @@ struct Views {
     lane: Mutex<()>,
     streams: Arc<Semaphore>,
     display: AiDisplay,
+    god_mode: bool,
     stop: watch::Receiver<bool>,
 }
 
@@ -28,6 +29,7 @@ pub(super) fn router(
     routes: PlayerRoutes,
     streams: Arc<Semaphore>,
     display: AiDisplay,
+    god_mode: bool,
     stop: watch::Receiver<bool>,
 ) -> Router {
     let state = Arc::new(Views {
@@ -35,6 +37,7 @@ pub(super) fn router(
         lane: Mutex::new(()),
         streams,
         display,
+        god_mode,
         stop,
     });
     Router::new()
@@ -121,6 +124,7 @@ impl Views {
                 &self.routes.presence,
                 telemetry,
                 narrator,
+                self.god_mode,
                 budget,
             )
             .await?;

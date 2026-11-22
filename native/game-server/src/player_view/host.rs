@@ -44,6 +44,7 @@ pub(crate) async fn capture_host(
     presence: &Presence,
     telemetry: ViewTelemetry,
     narrator: Option<NarrationBanner>,
+    god_mode: bool,
     budget: &ByteBudget,
 ) -> Result<ViewHostInput, ViewError> {
     let scope = &grant.scope;
@@ -88,6 +89,7 @@ pub(crate) async fn capture_host(
             controlled_elsewhere,
             can_manage_saves: access.can_save,
             can_operate: access.can_operate,
+            can_inspect_mind: (god_mode && access.can_inspect).then_some(true),
             mode: if access.local {
                 AuthenticationMode::Local
             } else {

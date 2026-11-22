@@ -1,6 +1,7 @@
 //! One native request binds selected SQL witnesses to an originating NPC read.
 use super::*;
 use crate::execution::CoreMutation;
+use crate::experience::ExperienceError;
 use crate::geometry::GeometryBinding;
 use crate::host::CandidateKey;
 
@@ -129,8 +130,10 @@ impl NpcSourcesCursor {
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        if !scope.still_permitted(core.state)
-            || !scope.allows_selection(selection.receipts.is_empty())
+        if !scope.still_permitted(core.state) {
+            return Err(ExecutionError::Experience(ExperienceError::Revoked));
+        }
+        if !scope.allows_selection(selection.receipts.is_empty())
             || selection.consolidation_job.as_ref().is_some_and(|job| {
                 !scope.allows_consolidation() || !crate::values::is_safe_record_id(job)
             })

@@ -12,11 +12,92 @@ pub(crate) fn learning_signatures<'a>(
     actor: &str,
     budget: &ByteBudget,
 ) -> Result<(Vec<&'a str>, ByteReservation), ExecutionError> {
-    let owner = state.activity.library.acquisitions.get(actor);
-    let storage = budget.reserve(owner.map_or(0, IndexMap::len) * size_of::<&str>())?;
+    let count = state
+        .activity
+        .library
+        .acquisitions
+        .get(actor)
+        .map_or(0, IndexMap::len);
+    let storage = budget.reserve(count * size_of::<&str>())?;
+    let mut signatures = Vec::with_capacity(count);
+    visit_current(state, actor, budget, |method, _| {
+        signatures.push(method.signature());
+        Ok(())
+    })?;
+    Ok((signatures, storage))
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuntimeInspectedSkill {
+    pub name: crate::text::JsText,
+    pub source: String,
+    pub learned_at: f64,
+}
+
+pub(crate) fn inspected_activities(
+    state: &SimulationState,
+    actor: &str,
+    budget: &ByteBudget,
+) -> Result<(Vec<RuntimeInspectedSkill>, ByteReservation), ExecutionError> {
+    let count = state
+        .activity
+        .library
+        .acquisitions
+        .get(actor)
+        .map_or(0, IndexMap::len);
+    let mut storage = budget.reserve(count * size_of::<RuntimeInspectedSkill>())?;
+    let mut skills = Vec::with_capacity(count);
+    visit_current(state, actor, budget, |method, acquisition| {
+        let name = method
+            .body()
+            .get("name")
+            .and_then(SqlCell::as_text)
+            .ok_or(ExecutionError::Invariant)?;
+        storage.resize(storage.bytes() + name.storage_bytes() * 4 + 128)?;
+        let mut name = name.clone();
+        name.push_str(
+            if method.body().get("executable").and_then(SqlCell::as_bool) == Some(true) {
+                " (tentative)"
+            } else {
+                " (incomplete; cannot execute)"
+            },
+        );
+        let learned_at = acquisition
+            .body()
+            .get("at")
+            .and_then(SqlCell::as_f64)
+            .ok_or(ExecutionError::Invariant)?;
+        skills.push(RuntimeInspectedSkill {
+            name,
+            source: "My own connected actions".into(),
+            learned_at,
+        });
+        Ok(())
+    })?;
+    Ok((skills, storage))
+}
+
+fn visit_current<'a>(
+    state: &'a SimulationState,
+    actor: &str,
+    budget: &ByteBudget,
+    mut visit: impl FnMut(
+        &'a models::LearningMethod,
+        &'a models::LearningAcquisition,
+    ) -> Result<(), ExecutionError>,
+) -> Result<(), ExecutionError> {
+    let Some(owner) = state
+        .activity
+        .library
+        .acquisitions
+        .get(actor)
+        .filter(|owner| !owner.is_empty())
+    else {
+        return Ok(());
+    };
     let (manifest, _manifest) = super::format::manifest_shape(state, budget)?;
-    let mut signatures = Vec::with_capacity(owner.map_or(0, IndexMap::len));
-    for acquisition in owner.into_iter().flat_map(|owner| owner.values()) {
+    for acquisition in owner.values() {
         if !acquisition
             .body()
             .get("supports")
@@ -103,8 +184,8 @@ pub(crate) fn learning_signatures<'a>(
             }
         }
         if current {
-            signatures.push(method.signature());
+            visit(method, acquisition)?;
         }
     }
-    Ok((signatures, storage))
+    Ok(())
 }

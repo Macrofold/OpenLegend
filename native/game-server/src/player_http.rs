@@ -114,8 +114,14 @@ pub(crate) fn router(
         _request_owner: request_owner,
     };
     let streams = Arc::new(Semaphore::new(streams));
-    let reads = view::router(state.clone(), streams.clone(), ai_display, stop.clone())
-        .merge(preview::router(state.clone(), streams, stop));
+    let reads = view::router(
+        state.clone(),
+        streams.clone(),
+        ai_display,
+        god_mode,
+        stop.clone(),
+    )
+    .merge(preview::router(state.clone(), streams, stop));
     let operations = Router::new()
         .route("/api/command", post(command))
         .route("/api/command/receipt", post(command))
@@ -163,6 +169,8 @@ pub(crate) fn router(
     let operations = if god_mode {
         operations
             .route("/api/god/memories", post(recall::recollections))
+            .route("/api/god/mind", post(notes::get))
+            .route("/api/god/mind/subjects", post(notes::subjects::read))
             .route("/api/god/forget-memory", post(edit_recall))
             .route("/api/god/correct-memory", post(edit_recall))
     } else {

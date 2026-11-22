@@ -48,7 +48,7 @@ pub(in crate::player_http) async fn read(
             Ok(value) => value,
             Err(error) => return error,
         };
-    if request.actor_id != selected.scope.actor_id {
+    if parts.uri.path() != "/api/god/mind/subjects" && request.actor_id != selected.scope.actor_id {
         return access_failure(AccessError::Forbidden);
     }
     if request
@@ -69,7 +69,9 @@ pub(in crate::player_http) async fn read(
     ) {
         (None, None, _) => None,
         (Some(contact), Some(body), None)
-            if is_safe_record_id(contact) && is_safe_record_id(body) =>
+            if request.actor_id == selected.scope.actor_id
+                && is_safe_record_id(contact)
+                && is_safe_record_id(body) =>
         {
             Some((contact, body))
         }

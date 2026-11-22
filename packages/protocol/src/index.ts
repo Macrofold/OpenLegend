@@ -1069,6 +1069,8 @@ export interface GameView {
     canManageSaves: boolean;
     /** Creator or access manager: may open the separate World operations console. */
     canOperate?: boolean;
+    /** May open the read-only creator mind inspector for a permitted NPC. */
+    canInspectMind?: boolean;
     mode: 'local' | 'oidc';
   };
   /** Latest operational maintenance window for this world, if any. */

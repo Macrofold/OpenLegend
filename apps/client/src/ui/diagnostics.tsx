@@ -102,10 +102,12 @@ export function KnowledgeEditor({
   fixedSubject,
   editIdentity = true,
   compact = false,
+  readOnly = false,
 }: {
   fixedSubject?: MindSubject | null;
   editIdentity?: boolean;
   compact?: boolean;
+  readOnly?: boolean;
   owned?: boolean;
   visible: boolean;
   readScope?: string;
@@ -214,6 +216,49 @@ export function KnowledgeEditor({
     !unavailable &&
     (base.revision !== (document?.revision ?? 0) ||
       (editIdentity && base.nameRevision !== (identity?.revision ?? 0)));
+  const picker = fixedSubject === undefined && (
+    <SubjectPicker
+      actorId={mind.actorId}
+      owned={owned}
+      label="Person or general knowledge"
+      none="General knowledge"
+      value={subject}
+      onSelect={(next) => {
+        if (!dirty && !saving) setSubject(next);
+      }}
+      disabled={saving || dirty || !readCurrent}
+    />
+  );
+  const loadingState = (
+    <>
+      <LoadingIndicator active={loading} label="Loading notes" />
+      {failed && (
+        <Button
+          size="sm"
+          onPress={() => {
+            setMessage('');
+            setReload((value) => value + 1);
+          }}
+        >
+          Retry loading notes
+        </Button>
+      )}
+    </>
+  );
+  if (readOnly) {
+    return (
+      <div hidden={!readCurrent}>
+        <Section title="Knowledge notepads">
+          {picker}
+          {loadingState}
+          {message && <p role="status">{message}</p>}
+          {!loading && !unavailable && (
+            <p className="ol-prose">{document?.text || 'No saved note text.'}</p>
+          )}
+        </Section>
+      </div>
+    );
+  }
   const explanation = (
     <p className="ol-caption">
       {readCurrent
@@ -235,19 +280,7 @@ export function KnowledgeEditor({
         ) : (
           explanation
         )}
-        {fixedSubject === undefined && (
-          <SubjectPicker
-            actorId={mind.actorId}
-            owned={owned}
-            label="Person or general knowledge"
-            none="General knowledge"
-            value={subject}
-            onSelect={(next) => {
-              if (!dirty && !saving) setSubject(next);
-            }}
-            disabled={saving || dirty || !readCurrent}
-          />
-        )}
+        {picker}
         {dirty && (
           <p role="status" className="ol-caption">
             Unsaved notes. Save or discard before choosing another subject or page.
@@ -288,18 +321,7 @@ export function KnowledgeEditor({
             </Button>
           </details>
         )}
-        <LoadingIndicator active={loading} label="Loading notes" />
-        {failed && (
-          <Button
-            size="sm"
-            onPress={() => {
-              setMessage('');
-              setReload((value) => value + 1);
-            }}
-          >
-            Retry loading notes
-          </Button>
-        )}
+        {loadingState}
         {subject && editIdentity && !unavailable && (
           <label>
             {owned ? 'Your nickname' : 'Given name known by this observer'}
@@ -591,6 +613,7 @@ export function PersonKnowledge(props: {
 export function Mind({
   actorId,
   owned = false,
+  readOnly = false,
   visible = true,
   readScope,
   memoryScope,
@@ -599,6 +622,7 @@ export function Mind({
 }: {
   actorId: string;
   owned?: boolean;
+  readOnly?: boolean;
   visible?: boolean;
   readScope?: string;
   memoryScope: string;
@@ -764,7 +788,9 @@ export function Mind({
                   <details key={JSON.stringify(doc.subjectId)}>
                     <summary>{doc.label}</summary>
                     <p className="ol-prose">{doc.text}</p>
-                    <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
+                    {!readOnly && (
+                      <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
+                    )}
                   </details>
                 ))}
             </Section>
@@ -775,6 +801,7 @@ export function Mind({
             mind={mind}
             onSaved={setMind}
             owned={owned}
+            readOnly={readOnly}
             visible={visible && currentSnapshot}
             readScope={snapshotKey}
             readCurrent={currentSnapshot}
@@ -788,7 +815,7 @@ export function Mind({
                   const cursor = mind.continuity!.cursor!;
                   void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
                     owned ? '/api/mind' : '/api/god/mind',
-                    { actorId, cursor },
+                    { actorId: mind.actorId, cursor },
                   )
                     .then((result) => {
                       if (latestSnapshotKey.current !== snapshotKey) return;
@@ -803,11 +830,13 @@ export function Mind({
                 More feelings and notes
               </Button>
             )}
-            <ActivityHistory
-              key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
-              actorId={mind.actorId}
-              owned={owned}
-            />
+            {!readOnly && (
+              <ActivityHistory
+                key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
+                actorId={mind.actorId}
+                owned={owned}
+              />
+            )}
             {!owned && (
               <Section title="Memory and thought history">
                 <MemoryHistory

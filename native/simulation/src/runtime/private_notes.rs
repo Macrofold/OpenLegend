@@ -13,7 +13,9 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::mem::size_of;
 
+mod inspection;
 mod subjects;
+pub use inspection::RuntimeCreatorMind;
 pub use subjects::{RuntimePersonPage, RuntimePersonPosition, RuntimePersonRead};
 pub(super) use subjects::{person_note_subject, person_notepad};
 
@@ -97,6 +99,28 @@ impl NativeWorldSession {
         consume: impl FnOnce(RuntimePrivateNotes<'_>) -> T,
     ) -> Result<Option<T>, RuntimeError> {
         let state = &self.session.accepted().map_err(failure)?.state;
+        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        self.project_private_notes(
+            state,
+            actor,
+            scope,
+            notes_after,
+            appraisals_after,
+            expected_fence,
+            consume,
+        )
+    }
+
+    fn project_private_notes<T>(
+        &self,
+        state: &crate::simulation::SimulationState,
+        actor: &str,
+        scope: &str,
+        notes_after: Option<&str>,
+        appraisals_after: Option<&str>,
+        expected_fence: Option<&str>,
+        consume: impl FnOnce(RuntimePrivateNotes<'_>) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
         let entity = state
             .physical
             .entities
@@ -138,7 +162,6 @@ impl NativeWorldSession {
             + ACTIVE_PAGE * size_of::<RuntimePrivateFeeling<'_>>()
             + mind.map_or(0, |mind| mind.documents.len()) * size_of::<RuntimeMindFile<'_>>();
         let _scratch = self.budget.reserve(scratch)?;
-        let _lease = self.session.fence().begin_publication().map_err(failure)?;
         let names = InstalledPersonalNameReader::prepare(
             &state.physical,
             &state.reception,

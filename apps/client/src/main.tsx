@@ -2091,7 +2091,11 @@ function App({
     }
   }
   function characterGodControls(target: EntityView) {
-    if (!view?.godMode) return undefined;
+    if (!view?.godMode) {
+      return view?.access?.canInspectMind && target.kind === 'actor' && target.id !== view.player.id
+        ? { inspectMind: () => openMind(target.id) }
+        : undefined;
+    }
     return {
       revive,
       enableCognition,
@@ -2620,13 +2624,15 @@ function App({
           <p>God inspection is disabled.</p>
         );
       case 'mind':
-        return mindId && (view.godMode || mindId === view.player.id) ? (
+        return mindId &&
+          (view.godMode || view.access?.canInspectMind || mindId === view.player.id) ? (
           <>
             {mindSwitchMessage && <p role="status">{mindSwitchMessage}</p>}
             <Mind
               key={`${taskScope(view)}:${mindId}`}
               actorId={mindId}
               owned={mindId === view.player.id}
+              readOnly={!view.godMode && mindId !== view.player.id}
               visible={visible}
               onDirtyChange={setMindDirty}
               readScope={view.access?.scope}

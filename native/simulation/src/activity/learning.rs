@@ -28,6 +28,7 @@ pub(crate) use publication::{
     CompletedActivityLearning, LearningPublicationAnswer, LearningPublicationCursor,
     LearningPublicationRequest, LearningPublicationStep,
 };
-pub(crate) use read::learning_signatures;
+pub use read::RuntimeInspectedSkill;
+pub(crate) use read::{inspected_activities, learning_signatures};
 
 pub(super) use models::{LearningAcquisition, LearningMethod};

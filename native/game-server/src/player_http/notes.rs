@@ -17,6 +17,7 @@ use openlegend_simulation::{
     values::is_safe_record_id,
 };
 use std::borrow::Cow;
+mod inspection;
 pub(super) mod nickname;
 pub(super) mod subjects;
 
@@ -92,7 +93,7 @@ pub(super) async fn get(State(state): State<PlayerRoutes>, request: Request) -> 
     };
     let (parts, body) = request.into_parts();
     let selected = match scope(&state.authority, &parts.headers, None).await {
-        Ok(selected) => selected,
+        Ok(selected) => Arc::new(selected),
         Err(error) => return access_failure(error),
     };
     let (request, _custody): (NotesRequest, _) =
@@ -100,7 +101,10 @@ pub(super) async fn get(State(state): State<PlayerRoutes>, request: Request) -> 
             Ok(value) => value,
             Err(error) => return error,
         };
-    if !is_safe_record_id(&request.actor_id) || request.actor_id != selected.scope.actor_id {
+    let creator = parts.uri.path() == "/api/god/mind";
+    if !is_safe_record_id(&request.actor_id)
+        || (!creator && request.actor_id != selected.scope.actor_id)
+    {
         return access_failure(AccessError::Forbidden);
     }
     // The browser forwards a cursor unchanged. Bind both continuation keys
@@ -113,7 +117,40 @@ pub(super) async fn get(State(state): State<PlayerRoutes>, request: Request) -> 
         },
         Some(_) => return invalid_cursor(),
     };
-    page(&state, &selected, &request.actor_id, cursor.as_ref(), None).await
+    let contact = if creator && request.actor_id.starts_with("contact-") {
+        let authority = state.authority.clone();
+        let permit = selected.clone();
+        let references = state.references.clone();
+        let contact = request.actor_id.clone();
+        let funding = state.game.host.budget().clone();
+        match state
+            .game
+            .world
+            .capture(move |session| {
+                match authority.current_private_view(&permit, true, |scope, _| {
+                    references.resolve_contact(session, scope, &contact, &funding)
+                }) {
+                    Ok(resolved) => resolved.map(Ok),
+                    Err(error) => Ok(Err(error)),
+                }
+            })
+            .await
+        {
+            Ok(Ok(Some(contact))) => Some(contact),
+            Ok(Ok(None)) => return access_failure(AccessError::Changed),
+            Ok(Err(error)) => return access_failure(error),
+            Err(error) => return failed(error),
+        }
+    } else {
+        None
+    };
+    let actor = contact
+        .as_ref()
+        .map_or(request.actor_id.as_str(), |contact| contact.id.as_str());
+    if creator && cursor.is_none() {
+        return inspection::inspect(&state, &selected, actor).await;
+    }
+    page(&state, &selected, actor, cursor.as_ref(), None).await
 }
 
 pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) -> Response {
@@ -353,17 +390,6 @@ fn encode_page(
         message: Option<&'a JsText>,
         mind: Mind<'a>,
     }
-    let next = if page.next_notes.is_some() || page.next_appraisals.is_some() {
-        let body = json_record(&Cursor {
-            fence: Cow::Borrowed(&page.fence),
-            notes: page.next_notes.map(Cow::Borrowed),
-            feelings: page.next_appraisals.map(Cow::Borrowed),
-        })
-        .map_err(|_| StoreError::InvalidRecord)?;
-        Some(body)
-    } else {
-        None
-    };
     let (accepted_text, _storage) = accepted_text(&page.files, language, budget)?;
     wire::encode(
         &NotesResponse {
@@ -377,7 +403,7 @@ fn encode_page(
                 records: [],
                 thoughts: [],
                 continuity: Continuity {
-                    cursor: next,
+                    cursor: continuation(page)?,
                     appraisals: &page.appraisals,
                 },
             },
@@ -387,6 +413,19 @@ fn encode_page(
         budget,
     )
     .map_err(WorldError::Wire)
+}
+
+fn continuation(page: &RuntimePrivateNotes<'_>) -> Result<Option<String>, StoreError> {
+    (page.next_notes.is_some() || page.next_appraisals.is_some())
+        .then(|| {
+            json_record(&Cursor {
+                fence: Cow::Borrowed(&page.fence),
+                notes: page.next_notes.map(Cow::Borrowed),
+                feelings: page.next_appraisals.map(Cow::Borrowed),
+            })
+        })
+        .transpose()
+        .map_err(|_| StoreError::InvalidRecord)
 }
 
 fn accepted_text(

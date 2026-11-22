@@ -22,7 +22,8 @@ mod install;
 mod learning;
 mod residency;
 pub(crate) use learning::LearningLanguage;
-pub use learning::{LearningHistoryRequest, LearningJudgment};
+pub use learning::{LearningHistoryRequest, LearningJudgment, RuntimeInspectedSkill};
+pub(crate) use learning::inspected_activities;
 pub(crate) use learning::{
     CompletedActivityLearning, LearningFormatAnswer, LearningFormatRequest, LearningHistoryAnswer,
     LearningPreparationAnswer, LearningPreparationCursor,

@@ -15,6 +15,8 @@ use openlegend_simulation::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+mod inspection;
+
 const PAGE: usize = 20;
 const CHUNK: usize = 250;
 const SCAN: usize = 2000;

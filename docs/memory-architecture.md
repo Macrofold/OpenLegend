@@ -569,6 +569,8 @@ Private thought-history and inner-world debug inspection remain god-gated and sc
 
 The debug character profile exposes inner-world text, relationships/beliefs and short Thoughts only when both creator-inspection capability and that target's private-mind scope allow it; another human's private mind remains denied. Include an experience timeline, active promises and learned skills so continuity can be inspected alongside prose. Thoughts do not appear over avatars; public action labels are separate. Enforce the same access in responses and any future streams, not merely hidden UI controls.
 
+The stand-alone browser opens the read-only mind inspector from a currently visible NPC's profile when the host enables God inspection and the viewer has Inspect permission. The game view carries that permission and an ordinary scoped contact reference. The private request resolves the contact and checks the exact permitted actor again when returning the result. Notes and their subject search use this same actor scope.
+
 Record routes, attention coverage, prompt/schema/response size, reasoning tokens, queue/provider latency and actual usage separately. Include all Jev, summarizer and harness costs per real hour at each game speed. Also measure recall/attribution errors, missed commitments, retained bytes and cost per simulated day. Compare executor or retrieval alternatives on the same character histories and workload; fluent narration alone is not acceptance. Keep diagnostic storage server-side; expose scoped detail only through authorized god inspection, avoiding bulk whole-mind exports. No observability vendor or new SDK is required by this design.
 
 ### Named and generic memory subjects

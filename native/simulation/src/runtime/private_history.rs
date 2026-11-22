@@ -496,7 +496,16 @@ impl NativeWorldSession {
         let key = self
             .session
             .begin_npc_sources(Arc::clone(&read.scope), selection)
-            .map_err(failure)?;
+            .map_err(|error| match error {
+                crate::simulation::SessionError::Drive(
+                    crate::simulation::DriveError::Semantic(crate::time::AdvanceError::Execution(
+                        crate::execution::ExecutionError::Experience(
+                            crate::experience::ExperienceError::Revoked,
+                        ),
+                    )),
+                ) => stale("private-history-scope"),
+                error => session_failure(error),
+            })?;
         read.candidate = Some(key);
         Ok(key)
     }

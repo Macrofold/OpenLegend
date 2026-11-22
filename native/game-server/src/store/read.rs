@@ -262,6 +262,20 @@ impl Store {
         })
     }
 
+    /// Explicit diagnostic reads can wait on PostgreSQL without occupying the
+    /// ordinary receipt reader or a simulation cut. The admitted HTTP request
+    /// owns this read-only session through the fixed snapshot, including cancellation.
+    pub(crate) async fn read_isolated<R>(
+        &self,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
+    ) -> StoreResult<R> {
+        let (database, tls) = &self.checkpoint_connection;
+        let mut reader = Self::read_only_session(database, tls.clone()).await?;
+        openlegend_simulation::profile_body!(READ_OP, {
+            Self::read_fixed_snapshot(&mut reader, work).await
+        })
+    }
+
     /// Read the exact cut required by a caller holding the world turn or
     /// protected save barrier. Keep this snapshot independent of operational
     /// readers that cannot advance the caller's operation.
@@ -283,7 +297,21 @@ impl Store {
         let mut hold = openlegend_simulation::profile::begin(
             openlegend_simulation::profile::sites::READER_HOLD,
         );
-        let result = openlegend_simulation::profile_body!(TRANSACTION, {
+        let result = Self::read_fixed_snapshot(&mut reader, work).await;
+        #[cfg(feature = "profile-campaign")]
+        hold.outcome(if result.is_ok() {
+            openlegend_simulation::profile::Outcome::Completed
+        } else {
+            openlegend_simulation::profile::Outcome::Failed
+        });
+        result
+    }
+
+    async fn read_fixed_snapshot<R>(
+        reader: &mut Session,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
+    ) -> StoreResult<R> {
+        openlegend_simulation::profile_body!(TRANSACTION, {
             let transaction = reader
                 .client
                 .build_transaction()
@@ -294,14 +322,7 @@ impl Store {
             let result = work(&transaction).await?;
             transaction.commit().await?;
             Ok(result)
-        });
-        #[cfg(feature = "profile-campaign")]
-        hold.outcome(if result.is_ok() {
-            openlegend_simulation::profile::Outcome::Completed
-        } else {
-            openlegend_simulation::profile::Outcome::Failed
-        });
-        result
+        })
     }
 
     /// Read one durable header under the caller's protected save barrier.

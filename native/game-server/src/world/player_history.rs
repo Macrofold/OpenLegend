@@ -152,6 +152,14 @@ impl HostedWorld {
             },
         )
         .await
+        .map_err(|error| match &error {
+            WorldError::Simulation(runtime)
+                if runtime.stale_reason() == Some("private-history-scope") =>
+            {
+                WorldError::ProjectionChanged
+            }
+            _ => error,
+        })
     }
 
     /// A requested HTTP page can wait for the bounded world turn after its
