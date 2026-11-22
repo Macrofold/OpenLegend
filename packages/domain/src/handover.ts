@@ -815,7 +815,7 @@ export function executeHandover(
       events,
       'offer-own-ending',
       actor,
-      'You ended your own participation in the last received offer. No other person’s current choice is reported.',
+      BASE_HANDOVER.copy.ownEnding,
       actor,
       command.targetId,
       {
@@ -825,11 +825,7 @@ export function executeHandover(
         importance: EXPERIENCE_LIMITS.protectedImportance,
       },
     );
-    return outcome(
-      true,
-      'offer-own-ending',
-      'Your remembered offer participation ended; nothing moved.',
-    );
+    return outcome(true, 'offer-own-ending', BASE_HANDOVER.copy.ownEndingReceipt);
   }
   const offer = world.itemOffers![command.offerId]!;
   if (command.operation === 'withdraw' || command.operation === 'decline') {

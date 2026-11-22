@@ -46,6 +46,12 @@ impl CommandCursor {
                 .offer_id
                 .as_deref()
                 .and_then(|id| core.state.physical.gifts.get(id));
+            if row.is_none()
+                && matches!(gift.handover_operation, GiftOperation::Decline | GiftOperation::Withdraw)
+            {
+                self.phase = Phase::GiftApply;
+                return Ok(false);
+            }
             let Some(row) = row.filter(|offer| {
                 if gift.handover_operation == GiftOperation::Counter {
                     offer.party(self.actor_id()) && offer.party(target_id)
@@ -351,6 +357,9 @@ impl CommandCursor {
         let op = gift.handover_operation;
         let preview = self.options.preview || self.preparation_mode.is_some();
         let prior = gift.offer_id.as_deref().and_then(|id| pending.get(id));
+        if prior.is_none() && matches!(op, GiftOperation::Decline | GiftOperation::Withdraw) {
+            return self.end_received_gift(core, preview);
+        }
         let _selection = self.budget.reserve(
             gift.retained_text_bytes()
                 .checked_mul(6)
@@ -629,6 +638,56 @@ impl CommandCursor {
         self.reserve(event.id.len())?;
         self.event = Some(event.id.clone());
         self.after_event = Phase::GiftPrivate;
+        Ok(Some(event))
+    }
+
+    /// Let a participant close the exact offer they still remember. The
+    /// record describes their own choice and does not discover the other
+    /// person's ending or alter anyone's stock.
+    fn end_received_gift(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        preview: bool,
+    ) -> Result<Option<StagedOccurrence>, ExecutionError> {
+        self.reserve(copy.own_ending_receipt.len() * 2 + 128)?;
+        let NativeCommand::Handover {
+            envelope, target_id, gift, ..
+        } = &self.command else {
+            return Err(ExecutionError::Invariant);
+        };
+        let owner = &envelope.actor_id;
+        let received = crate::handover::ReceivedGifts::from_player(core.state, owner, &self.budget)?;
+        let remembered = gift.offer_id.as_deref().zip(gift.expected_offer_revision)
+            .and_then(|(id, revision)| received.find(id, revision))
+            .filter(|known| {
+                let offer = &known.offer;
+                match gift.handover_operation {
+                    GiftOperation::Withdraw => offer.offerer_id == *owner && offer.recipient_id == *target_id,
+                    GiftOperation::Decline => offer.recipient_id == *owner && offer.offerer_id == *target_id,
+                    GiftOperation::Accept | GiftOperation::Offer | GiftOperation::Counter => false,
+                }
+            });
+        let Some(remembered) = remembered else {
+            self.gift_refusal("no-offer", copy.unavailable)?;
+            return Ok(None);
+        };
+        const KIND: &str = "offer-own-ending";
+        self.outcome = Some(outcome(true, KIND, copy.own_ending_receipt));
+        if preview {
+            self.phase = Phase::Done;
+            return Ok(None);
+        }
+        let event = stage_gift_notice(
+            core,
+            &remembered.offer,
+            &remembered.descriptions,
+            owner,
+            KIND,
+            GiftMessenger::OwnEnding { target: target_id },
+        )?;
+        self.reserve(event.id.len())?;
+        self.event = Some(event.id.clone());
+        self.after_event = Phase::Tail;
         Ok(Some(event))
     }
 

@@ -142,6 +142,7 @@ pub(crate) enum GiftMessenger<'a> {
         verb: &'static str,
     },
     Expiry,
+    OwnEnding { target: &'a str },
 }
 
 pub(crate) fn stage_gift_notice(
@@ -168,7 +169,11 @@ pub(crate) fn stage_gift_notice(
         offer,
         descriptions,
         status: if pending { "pending" } else { "ended" },
-        cause: (!pending).then_some(kind),
+        cause: (!pending).then_some(if matches!(&messenger, GiftMessenger::OwnEnding { .. }) {
+            "own-ending"
+        } else {
+            kind
+        }),
     };
     let bytes = crate::encoding::json_record_len(&body).map_err(|_| ExecutionError::Invariant)?;
     let _storage = core.journal.budget.reserve(
@@ -211,6 +216,11 @@ pub(crate) fn stage_gift_notice(
             let text = gift_terms(&template, offer, descriptions)?;
             (gift_narration(source, text), source, Some(target.into()))
         }
+        GiftMessenger::OwnEnding { target } => (
+            Narration { parts: vec![NarrationPart::Literal(GIFT_COPY.own_ending.into())] },
+            receiver,
+            Some(target.into()),
+        ),
         GiftMessenger::Expiry => {
             let template = format!("{} {{terms}}", GIFT_COPY.deadline);
             (

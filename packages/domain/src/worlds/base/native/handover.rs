@@ -25,6 +25,8 @@ pub(crate) struct GiftCopy {
     pub expired: &'static str,
     pub declined: &'static str,
     pub withdrawn: &'static str,
+    pub own_ending: &'static str,
+    pub own_ending_receipt: &'static str,
     pub witness_exchange: &'static str,
     pub participant_exchange: &'static str,
     pub deadline: &'static str,

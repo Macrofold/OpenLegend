@@ -23,6 +23,8 @@
   "unavailable": "These offer terms are no longer available.",
   "expired": "That offer has expired.",
   "declined": "Offer declined; nothing moved.",
+  "ownEnding": "You ended your own participation in the last received offer. No other person’s current choice is reported.",
+  "ownEndingReceipt": "Your remembered offer participation ended; nothing moved.",
   "withdrawn": "Offer withdrawn; nothing moved.",
   "witnessExchange": "{verb} an item exchange with someone nearby.",
   "participantExchange": "{verb} an exchange of {terms}.",
