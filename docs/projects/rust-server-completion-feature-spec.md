@@ -1,8 +1,8 @@
 # Complete game on the Rust server
 
-| Status      | Current progress                                                                                            | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The first direct Rust conversation slice works through the previously qualified opening and a cold restart. | 2026-11-21   |
+| Status      | Current progress                                                                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The reviewed River Camp opens and reopens in Rust. Separate checks cover direct conversation, memory, Journal and recovery. Full Main and Solo remain open. | 2026-11-21   |
 
 ## What a player should be able to do
 

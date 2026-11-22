@@ -7,11 +7,12 @@ use crate::{
     player_http::assets::InstalledAssets,
     player_view::PlayerViewPolicy,
     spatial::SpatialProvider,
-    store::{StorageSchema, Store, StoreResult},
+    store::{CurrentOpening, StorageSchema, Store, StoreError, StoreResult},
     world::{HostedWorld, WorldHost},
 };
 use openlegend_simulation::runtime::{
-    RuntimeActivation, RuntimeInstallDefinitions, RuntimeInstallSources,
+    NativeWorldSession, RuntimeActivation, RuntimeError, RuntimeInstallDefinitions,
+    RuntimeInstallSources,
 };
 use openlegend_simulation::{
     encoding::sha256_hex,
@@ -50,6 +51,13 @@ fn read_manifest(release: &Path) -> Result<ReleaseManifest, BootError> {
     )?)?)
 }
 
+pub(crate) fn release_digest(release: &Path) -> Result<String, BootError> {
+    Ok(sha256_hex(&read_bounded(
+        &release.join("manifest.json"),
+        4 * 1024,
+    )?))
+}
+
 async fn open_store(
     release: &Path,
     manifest: &ReleaseManifest,
@@ -74,7 +82,10 @@ async fn open_store(
 
 /// Explicitly prepare only the current PostgreSQL layout. Gameplay and
 /// authority still require the separate exact starting-world activation.
-pub async fn initialize_storage(release: &Path, database: Config) -> Result<&'static str, BootError> {
+pub async fn initialize_storage(
+    release: &Path,
+    database: Config,
+) -> Result<&'static str, BootError> {
     let manifest = read_manifest(release)?;
     let budget = ByteBudget::new(TRANSIENT_BYTES);
     let store = open_store(release, &manifest, database, &budget, true).await?;
@@ -175,6 +186,116 @@ pub struct CurrentServer {
     pub verified: VerifiedOpening,
 }
 
+pub(crate) struct StartupStorage {
+    manifest: ReleaseManifest,
+    host: Arc<WorldHost>,
+    pub(crate) store: Arc<Store>,
+}
+
+impl StartupStorage {
+    /// Keep this Store and its exclusive database writer when entry becomes
+    /// available. The empty target carries no live world or scheduled gameplay.
+    pub(crate) async fn open(
+        release: &Path,
+        database: Config,
+        workers: usize,
+        initialize: bool,
+    ) -> Result<Self, BootError> {
+        let manifest = read_manifest(release)?;
+        let players = match std::env::var("OPEN_LEGEND_PLAYER_CAPACITY") {
+            Ok(value) => value.parse::<usize>().ok(),
+            Err(std::env::VarError::NotPresent) => Some(100),
+            Err(_) => None,
+        };
+        let players = players
+            .filter(|players| (1..=10_000).contains(players))
+            .ok_or("OPEN_LEGEND_PLAYER_CAPACITY must be between 1 and 10000")?;
+        let host = WorldHost::new(workers, TRANSIENT_BYTES, players * 4)?;
+        let store = open_store(release, &manifest, database, host.budget(), initialize).await?;
+        Ok(Self {
+            manifest,
+            host,
+            store,
+        })
+    }
+
+    pub(crate) fn validate_creation_opening(
+        &self,
+        release: &Path,
+        opening: CurrentOpening,
+        account: &str,
+        actor: &str,
+    ) -> StoreResult<NativeWorldSession> {
+        let validate = || -> Result<NativeWorldSession, BootError> {
+            let (session, _, _) = self.install(release, opening, true)?;
+            session.check_initial_player(account, actor)?;
+            session.check_current_work()?;
+            session.with_geometry(|map| {
+                SpatialProvider::from_release(map, &release.join("navigation"), self.host.budget())
+            })??;
+            Ok(session)
+        };
+        validate().map_err(|error| match error.downcast_ref::<openlegend_simulation::host::CapacityError>() {
+            Some(_) => StoreError::Capacity,
+            None if matches!(error.downcast_ref::<RuntimeError>(), Some(error) if error.is_capacity()) => StoreError::Capacity,
+            None => {
+                eprintln!("OpenLegend rejected the configured opening: {error}");
+                StoreError::InvalidRecord
+            }
+        })
+    }
+
+    /// Consume the exact current rows. Startup and pending activation use the
+    /// same native validator, with no fallback opening or constructed overlay.
+    fn install(
+        &self,
+        release: &Path,
+        mut opening: CurrentOpening,
+        require_language: bool,
+    ) -> Result<
+        (
+            NativeWorldSession,
+            RuntimeActivation,
+            Option<Arc<LanguageProvider>>,
+        ),
+        BootError,
+    > {
+        let budget = self.host.budget();
+        let (definitions, definition_custody) = read_definitions(release, &self.manifest, budget)?;
+        let language = (require_language || opening.has_intentions())
+            .then(|| LanguageProvider::open(&release.join("language"), budget).map(Arc::new))
+            .transpose()?;
+        if let Some(language) = &language {
+            opening.prepare_intentions(language, budget)?;
+        }
+        let receipt = RuntimeActivation {
+            world_id: opening.records.world_id.clone(),
+            generation: opening.records.generation.clone(),
+            revision: opening.records.durable_revision,
+            accepted_cut: 0,
+        };
+        let mut custody = opening.custody;
+        custody.merge(definition_custody)?;
+        let session = definitions.install_current(
+            RuntimeInstallSources {
+                records: opening.records,
+                originals: opening.originals,
+                cold_directories: None,
+                working_set: None,
+                accepted_cut: receipt.accepted_cut,
+            },
+            &self.store.schema.version,
+            budget.clone(),
+            custody,
+        )?;
+        Ok((session, receipt, language))
+    }
+
+    pub(crate) fn base_clock_rate(&self, release: &Path) -> Result<f64, BootError> {
+        Ok(admitted_view(release, &self.manifest.view_sha256, self.host.budget())?.base_ratio())
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VerifiedOpening {
@@ -224,22 +345,23 @@ impl CurrentServer {
         database: Config,
         workers: usize,
     ) -> Result<Self, BootError> {
-        let manifest = read_manifest(release)?;
-        // Match the existing server's configured request envelope. The
-        // world writer's wait queue does not introduce a smaller player cap.
-        let players = match std::env::var("OPEN_LEGEND_PLAYER_CAPACITY") {
-            Ok(value) => value.parse::<usize>().ok(),
-            Err(std::env::VarError::NotPresent) => Some(100),
-            Err(_) => None,
-        };
-        let players = players
-            .filter(|players| (1..=10_000).contains(players))
-            .ok_or("OPEN_LEGEND_PLAYER_CAPACITY must be between 1 and 10000")?;
-        let host = WorldHost::new(workers, TRANSIENT_BYTES, players * 4)?;
+        let storage = StartupStorage::open(release, database, workers, false).await?;
+        Self::from_storage(release, navigation, &storage).await
+    }
+
+    pub(crate) async fn from_storage(
+        release: &Path,
+        navigation: Option<&Path>,
+        startup: &StartupStorage,
+    ) -> Result<Self, BootError> {
+        let StartupStorage {
+            manifest,
+            host,
+            store,
+        } = startup;
         let budget = host.budget();
         // These are finite trusted build products. Retain their independent
         // construction charge across deserialization and cold adoption.
-        let (definitions, definition_custody) = read_definitions(release, &manifest, budget)?;
         let view = admitted_view(release, &manifest.view_sha256, budget)?;
         let cognition_custody = budget.reserve(4 * 1024 * 1024)?;
         let cognition = Arc::new(artifact(
@@ -259,35 +381,10 @@ impl CurrentServer {
                 )
             })
             .transpose()?;
-        let store = open_store(release, &manifest, database, budget, false).await?;
-        let mut opening = store.current_opening().await?;
-        let open_language =
-            || LanguageProvider::open(&release.join("language"), budget).map(Arc::new);
-        let mut language = opening.has_intentions().then(open_language).transpose()?;
-        if let Some(language) = &language {
-            opening.prepare_intentions(language, budget)?;
-        }
-        let receipt = RuntimeActivation {
-            world_id: opening.records.world_id.clone(),
-            generation: opening.records.generation.clone(),
-            revision: opening.records.durable_revision,
-            accepted_cut: 0,
-        };
+        let opening = store.current_opening().await?;
+        let (session, receipt, language) =
+            startup.install(release, opening, navigation.is_some())?;
         let revision = receipt.revision;
-        let mut custody = opening.custody;
-        custody.merge(definition_custody)?;
-        let session = definitions.install_current(
-            RuntimeInstallSources {
-                records: opening.records,
-                originals: opening.originals,
-                cold_directories: None,
-                working_set: None,
-                accepted_cut: receipt.accepted_cut,
-            },
-            &store.schema.version,
-            budget.clone(),
-            custody,
-        )?;
         let (retained_release, asset_revision) = session.saved_presentation_release();
         if let Some(retained_release) = retained_release {
             if asset_revision.is_none_or(|revision| revision == 0) {
@@ -306,9 +403,6 @@ impl CurrentServer {
                 None => Ok(SpatialProvider::new(map, budget)?),
             }
         })??;
-        if language.is_none() && navigation.is_some() {
-            language = Some(open_language()?);
-        }
         let cut = session.accepted_progress()?;
         let verified = VerifiedOpening {
             world_id: cut.world_id.to_owned(),
@@ -319,10 +413,10 @@ impl CurrentServer {
             sequence: cut.sequence,
             paused: cut.paused,
         };
-        let world = host.adopt(session, receipt, Arc::clone(&store))?;
+        let world = host.adopt(session, receipt, Arc::clone(store))?;
         Ok(Self {
-            host,
-            store,
+            host: Arc::clone(host),
+            store: Arc::clone(store),
             world,
             spatial: Arc::new(spatial),
             language,

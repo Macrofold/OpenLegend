@@ -58,18 +58,36 @@ pub(crate) fn oidc_router(authority: Arc<Authority>, oidc: Arc<Oidc>, game: Rout
 }
 
 fn access_router(state: AccessRoutes, game: Router) -> Router {
-    Router::new()
+    let origin = match &state.identity {
+        IdentityMode::Local(port) => BrowserOrigin::Loopback(*port),
+        IdentityMode::Oidc(oidc) => BrowserOrigin::Configured(oidc.origin().into()),
+    };
+    let routes = Router::new()
         .route("/auth/login", get(login))
         .route("/auth/callback", get(callback))
         .route("/api/session", get(session))
         .route("/api/session/logout", post(logout))
         .layer(DefaultBodyLimit::max(1024))
         .with_state(state.clone())
-        .merge(game)
-        .layer(middleware::from_fn_with_state(state.clone(), check_origin))
+        .merge(game);
+    guard_origin(routes, origin)
 }
 
-async fn check_origin(State(state): State<AccessRoutes>, request: Request, next: Next) -> Response {
+#[derive(Clone)]
+pub(crate) enum BrowserOrigin {
+    Loopback(u16),
+    Configured(Arc<str>),
+}
+
+pub(crate) fn guard_origin(router: Router, origin: BrowserOrigin) -> Router {
+    router.layer(middleware::from_fn_with_state(origin, check_origin))
+}
+
+async fn check_origin(
+    State(origin): State<BrowserOrigin>,
+    request: Request,
+    next: Next,
+) -> Response {
     let headers = request.headers();
     let Some(host) = headers
         .get(header::HOST)
@@ -81,19 +99,18 @@ async fn check_origin(State(state): State<AccessRoutes>, request: Request, next:
             "Use the configured game host.",
         );
     };
-    let expected = match &state.identity {
-        IdentityMode::Local(port) => host
+    let expected = match &origin {
+        BrowserOrigin::Loopback(port) => host
             .rsplit_once(':')
             .filter(|(addr, value)| {
                 matches!(*addr, "127.0.0.1" | "localhost" | "[::1]")
                     && value.parse::<u16>().ok() == Some(*port)
             })
             .map(|_| format!("http://{host}")),
-        IdentityMode::Oidc(oidc) => oidc
-            .origin()
+        BrowserOrigin::Configured(origin) => origin
             .split_once("://")
             .filter(|(_, configured)| *configured == host)
-            .map(|_| oidc.origin().to_owned()),
+            .map(|_| origin.to_string()),
     };
     let Some(expected) = expected else {
         return refusal(
@@ -108,7 +125,7 @@ async fn check_origin(State(state): State<AccessRoutes>, request: Request, next:
     // The issuer redirects from its own site. This GET is authorized by the
     // one-use browser-bound transaction. Ordinary API calls keep their origin
     // check, including authenticated logout.
-    let issuer_callback = matches!(state.identity, IdentityMode::Oidc(_))
+    let issuer_callback = matches!(origin, BrowserOrigin::Configured(_))
         && request.method() == axum::http::Method::GET
         && request.uri().path() == "/auth/callback";
     if !issuer_callback

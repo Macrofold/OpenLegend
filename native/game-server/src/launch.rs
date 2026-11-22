@@ -17,9 +17,12 @@ use std::{
     time::Duration,
 };
 use tokio::{net::TcpListener, sync::watch};
+use tokio_postgres::Config as DatabaseConfig;
 use tower_http::services::{ServeDir, ServeFile};
 
 type LaunchError = Box<dyn Error + Send + Sync>;
+
+mod creation;
 
 struct JournalLaunch {
     authority: Arc<Authority>,
@@ -28,24 +31,58 @@ struct JournalLaunch {
     batch_ms: u64,
 }
 
-pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(), LaunchError> {
+struct ListenerSettings {
+    local: bool,
+    host: String,
+    port: u16,
+    loopback_http: bool,
+    public_origin: String,
+}
+
+impl ListenerSettings {
+    fn read() -> Result<Self, LaunchError> {
+        let mode = setting("OPEN_LEGEND_AUTH_MODE", "local")?;
+        if !matches!(mode.as_str(), "local" | "oidc") {
+            return Err("Unsupported OPEN_LEGEND_AUTH_MODE".into());
+        }
+        let local = mode == "local";
+        let host = setting("OPEN_LEGEND_HOST", "127.0.0.1")?;
+        let port = setting("PORT", "3210")?.parse()?;
+        let loopback_http = setting("OPEN_LEGEND_OIDC_LOOPBACK_HTTP", "false")? == "true";
+        let public_origin = setting("OPEN_LEGEND_PUBLIC_ORIGIN", "")?;
+        if (local || public_origin.starts_with("http:"))
+            && !matches!(host.as_str(), "127.0.0.1" | "::1" | "localhost")
+        {
+            return Err("Local HTTP authentication requires a loopback bind address".into());
+        }
+        Ok(Self {
+            local,
+            host,
+            port,
+            loopback_http,
+            public_origin,
+        })
+    }
+}
+
+struct PreparedGame {
+    routes: Router,
+    game: Arc<CurrentServer>,
+    clock: Arc<GameClock>,
+    saves: Arc<LiveSaves>,
+    decisions: Arc<crate::npc::Director>,
+    schedule: Arc<crate::npc::schedule::ScheduleInbox>,
+    checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
+    journal: JournalLaunch,
+    end_http: watch::Sender<bool>,
+    requests_released: watch::Receiver<()>,
+}
+
+pub async fn serve(release: &Path, database: DatabaseConfig) -> Result<(), LaunchError> {
     #[cfg(feature = "profile-campaign")]
     let _profile = crate::profile::start_from_operator();
-    let mode = setting("OPEN_LEGEND_AUTH_MODE", "local")?;
-    if !matches!(mode.as_str(), "local" | "oidc") {
-        return Err("Unsupported OPEN_LEGEND_AUTH_MODE".into());
-    }
-    let local = mode == "local";
-    let host = setting("OPEN_LEGEND_HOST", "127.0.0.1")?;
-    let port = setting("PORT", "3210")?.parse::<u16>()?;
-    let loopback_http = setting("OPEN_LEGEND_OIDC_LOOPBACK_HTTP", "false")?.as_str() == "true";
-    let public_origin = setting("OPEN_LEGEND_PUBLIC_ORIGIN", "")?;
-    if (local || public_origin.starts_with("http:"))
-        && !matches!(host.as_str(), "127.0.0.1" | "::1" | "localhost")
-    {
-        return Err("Local HTTP authentication requires a loopback bind address".into());
-    }
-    let listen = TcpListener::bind((host.as_str(), port)).await?;
+    let settings = ListenerSettings::read()?;
+    let listen = TcpListener::bind((settings.host.as_str(), settings.port)).await?;
     let bound = listen.local_addr()?;
     let browser = release.join("browser");
     if !tokio::fs::metadata(browser.join("index.html"))
@@ -54,184 +91,236 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
     {
         return Err("The operator release has no browser build".into());
     }
+    match setting("OPEN_LEGEND_STARTUP_MODE", "ordinary")?.as_str() {
+        "ordinary" => (),
+        "awaiting-creation" => {
+            return creation::serve(release, browser, database, listen, settings).await;
+        }
+        _ => return Err("Unsupported OPEN_LEGEND_STARTUP_MODE".into()),
+    }
     let game = Arc::new(
         CurrentServer::open_game(release, &release.join("navigation"), database, 1).await?,
     );
-    let custody = game.host.budget().clone();
-    let duration = setting("OPEN_LEGEND_SESSION_HOURS", "8")?.parse::<f64>()?;
-    let players = setting("OPEN_LEGEND_PLAYER_CAPACITY", "100")?.parse::<i64>()?;
-    if !(0.1..=24.0).contains(&duration) {
-        return Err("OPEN_LEGEND_SESSION_HOURS must be between 0.1 and 24".into());
-    }
-    let world_id = game
-        .world
-        .capture(|world| Ok(world.world_id()?.to_owned()))
-        .await?;
-    let (authority, identity) = Authority::for_world(
-        game.store.clone(),
-        world_id.clone(),
-        Duration::from_secs_f64(duration * 3600.0),
-        4096_i64.max(16 * players),
-        local,
-        custody.clone(),
-    )
-    .await?;
-    let authority = Arc::new(authority);
-    let presence = Arc::new(crate::presence::Presence::new(
-        authority.clone(),
-        usize::try_from(6 * players)?,
-        custody.clone(),
-    )?);
-    let inputs = Arc::new(crate::world_input::WorldInputs::new(
-        authority.clone(),
-        custody.clone(),
-        usize::try_from(6 * players)?,
-    )?);
-    let grace = setting("OPEN_LEGEND_EXIT_GRACE_SECONDS", "15")?.parse::<f64>()?;
-    if !(1.0..=60.0).contains(&grace) {
-        return Err("OPEN_LEGEND_EXIT_GRACE_SECONDS must be between 1 and 60".into());
-    }
-    let limit_usd = setting("AI_BUDGET_USD", "50")?.parse::<f64>()?;
-    if !(0.0..=100.0).contains(&limit_usd) {
-        return Err("AI_BUDGET_USD must be between 0 and 100".into());
-    }
-    let macrofold = !setting("MACROFOLD_API_KEY", "")?.is_empty();
-    let jev = !setting("TYPESAFE_API_KEY", &setting("JEV_API_KEY", "")?)?.is_empty();
-    let language = !setting("OPENAI_API_KEY", "")?.is_empty();
-    let display = crate::store::AiDisplay {
-        jev_configured: macrofold || jev,
-        llm_configured: macrofold || language,
-        limit_usd,
-    };
-    let schedule = Arc::new(crate::npc::schedule::ScheduleInbox::new(
-        game.cognition.clone(),
-        custody.clone(),
-        display.jev_configured && limit_usd > 0.0,
-    ));
-    let saves = LiveSaves::new(
-        game.world.clone(),
-        game.store.clone(),
-        custody.clone(),
-        game.language().cloned(),
-    )?;
-    let saves = Arc::new(saves.with_schedule(schedule.clone()));
-    let checkpoints = Arc::new(crate::store::checkpoint::CheckpointSchedule::new(
-        game.store.clone(),
-        saves.clone(),
-        world_id.clone(),
-        PathBuf::from(setting("OPEN_LEGEND_DATA_DIR", ".data")?).join("saves"),
-    ));
-    let clock = Arc::new(
-        GameClock::new(
-            game.clone(),
-            saves.clone(),
-            checkpoints.clone(),
-            game.view_policy().base_ratio(),
+    let game = PreparedGame::open(game, browser, &settings, bound.port()).await?;
+    println!("OpenLegend listening on {bound}");
+    game.serve(listen, None).await
+}
+
+impl PreparedGame {
+    async fn open(
+        game: Arc<CurrentServer>,
+        browser: PathBuf,
+        settings: &ListenerSettings,
+        port: u16,
+    ) -> Result<Self, LaunchError> {
+        let local = settings.local;
+        let custody = game.host.budget().clone();
+        let duration = setting("OPEN_LEGEND_SESSION_HOURS", "8")?.parse::<f64>()?;
+        let players = setting("OPEN_LEGEND_PLAYER_CAPACITY", "100")?.parse::<i64>()?;
+        if !(0.1..=24.0).contains(&duration) {
+            return Err("OPEN_LEGEND_SESSION_HOURS must be between 0.1 and 24".into());
+        }
+        let world_id = game
+            .world
+            .capture(|world| Ok(world.world_id()?.to_owned()))
+            .await?;
+        let (authority, identity) = Authority::for_world(
+            game.store.clone(),
+            world_id.clone(),
+            Duration::from_secs_f64(duration * 3600.0),
+            4096_i64.max(16 * players),
+            local,
+            custody.clone(),
         )
-        .with_inputs(presence.clone(), inputs.clone()),
-    );
-    let decisions = Arc::new(crate::npc::Director::new(
-        game.clone(),
-        saves.clone(),
-        authority.clone(),
-        limit_usd,
-    )?);
-    let batch_ms = setting("NARRATION_BATCH_MS", "750")?.parse::<u64>()?;
-    if batch_ms > 10_000 {
-        return Err("NARRATION_BATCH_MS must be between 0 and 10000".into());
-    }
-    let journal = JournalLaunch {
-        authority: authority.clone(),
-        model: decisions.narrator_model(limit_usd)?,
-        world: world_id.clone(),
-        batch_ms,
-    };
-    let (end_http, http_stop) = watch::channel(false);
-    let (request_owner, mut requests_released) = watch::channel(());
-    let requests = crate::player_http::router(
-        authority.clone(),
-        identity,
-        game.clone(),
-        saves.clone(),
-        presence,
-        inputs,
-        clock.clone(),
-        decisions.clone(),
-        world_id,
-        usize::try_from(4 * players)?,
-        Duration::from_secs_f64(grace),
-        usize::try_from(3 * players)?,
-        display,
-        setting("OPEN_LEGEND_GOD_MODE", "false")? == "true",
-        http_stop.clone(),
-        request_owner,
-        checkpoints.clone(),
-    )
-    .map_err(|_| "Could not establish per-process player reference keys")?;
-    let game_routes = Router::new()
-        .route_service("/", ServeFile::new(browser.join("index.html")))
-        .fallback_service(ServeDir::new(browser).append_index_html_on_directories(false))
-        .layer(middleware::from_fn(build_cache))
-        .merge(requests);
-    let game_routes = match game.installed_assets() {
-        Some(assets) => game_routes.merge(crate::player_http::assets::router(
-            assets.clone(),
+        .await?;
+        let authority = Arc::new(authority);
+        let presence = Arc::new(crate::presence::Presence::new(
             authority.clone(),
+            usize::try_from(6 * players)?,
+            custody.clone(),
+        )?);
+        let inputs = Arc::new(crate::world_input::WorldInputs::new(
+            authority.clone(),
+            custody.clone(),
+            usize::try_from(6 * players)?,
+        )?);
+        let grace = setting("OPEN_LEGEND_EXIT_GRACE_SECONDS", "15")?.parse::<f64>()?;
+        if !(1.0..=60.0).contains(&grace) {
+            return Err("OPEN_LEGEND_EXIT_GRACE_SECONDS must be between 1 and 60".into());
+        }
+        let limit_usd = setting("AI_BUDGET_USD", "50")?.parse::<f64>()?;
+        if !(0.0..=100.0).contains(&limit_usd) {
+            return Err("AI_BUDGET_USD must be between 0 and 100".into());
+        }
+        let macrofold = !setting("MACROFOLD_API_KEY", "")?.is_empty();
+        let jev = !setting("TYPESAFE_API_KEY", &setting("JEV_API_KEY", "")?)?.is_empty();
+        let language = !setting("OPENAI_API_KEY", "")?.is_empty();
+        let display = crate::store::AiDisplay {
+            jev_configured: macrofold || jev,
+            llm_configured: macrofold || language,
+            limit_usd,
+        };
+        let schedule = Arc::new(crate::npc::schedule::ScheduleInbox::new(
+            game.cognition.clone(),
+            custody.clone(),
+            display.jev_configured && limit_usd > 0.0,
+        ));
+        let saves = LiveSaves::new(
+            game.world.clone(),
             game.store.clone(),
             custody.clone(),
-            http_stop,
-        )),
-        None => game_routes,
-    };
-    let routes = if local {
-        access_http::local_router(authority, bound.port(), game_routes)
-    } else {
-        let secret = setting("OPEN_LEGEND_OIDC_CLIENT_SECRET", "")?;
-        let oidc = Oidc::new(
-            public_origin,
-            setting("OPEN_LEGEND_OIDC_ISSUER", "")?,
-            setting("OPEN_LEGEND_OIDC_CLIENT_ID", "")?,
-            (!secret.is_empty()).then_some(secret),
-            loopback_http,
-            custody.clone(),
+            game.language().cloned(),
         )?;
-        access_http::oidc_router(authority, oidc, game_routes)
-    };
-    clock.initialize().await?;
-    println!("OpenLegend listening on {bound}");
-    let run = run(
-        listen,
-        routes,
-        clock,
-        saves,
-        decisions,
-        schedule,
-        checkpoints,
-        journal,
-        end_http,
-        game.clone(),
-    )
-    .await;
-    // Axum can report a finished connection before Hyper drops its
-    // service and response body. Wait for their player owners as well.
-    let _ = requests_released.changed().await;
-    game.world.drain_operations().await;
-    let close = Arc::try_unwrap(game)
-        .map_err(|_| "The listener left a running world owner")?
-        .close()
-        .await;
-    println!(
-        "OpenLegend native memory {}",
-        serde_json::json!({
-            "transientBytes": custody.used(),
-            "transientPeakBytes": custody.peak(),
-            "residentBytes": custody.resident().used(),
-            "residentPeakBytes": custody.resident().peak(),
-            "pendingSaveBytes": custody.pending_save_used(),
-            "pendingSavePeakBytes": custody.pending_save_peak(),
+        let saves = Arc::new(saves.with_schedule(schedule.clone()));
+        let checkpoints = Arc::new(crate::store::checkpoint::CheckpointSchedule::new(
+            game.store.clone(),
+            saves.clone(),
+            world_id.clone(),
+            PathBuf::from(setting("OPEN_LEGEND_DATA_DIR", ".data")?).join("saves"),
+        ));
+        let clock = Arc::new(
+            GameClock::new(
+                game.clone(),
+                saves.clone(),
+                checkpoints.clone(),
+                game.view_policy().base_ratio(),
+            )
+            .with_inputs(presence.clone(), inputs.clone()),
+        );
+        let decisions = Arc::new(crate::npc::Director::new(
+            game.clone(),
+            saves.clone(),
+            authority.clone(),
+            limit_usd,
+        )?);
+        let batch_ms = setting("NARRATION_BATCH_MS", "750")?.parse::<u64>()?;
+        if batch_ms > 10_000 {
+            return Err("NARRATION_BATCH_MS must be between 0 and 10000".into());
+        }
+        let journal = JournalLaunch {
+            authority: authority.clone(),
+            model: decisions.narrator_model(limit_usd)?,
+            world: world_id.clone(),
+            batch_ms,
+        };
+        let (end_http, http_stop) = watch::channel(false);
+        let (request_owner, requests_released) = watch::channel(());
+        let requests = crate::player_http::router(
+            authority.clone(),
+            identity,
+            game.clone(),
+            saves.clone(),
+            presence,
+            inputs,
+            clock.clone(),
+            decisions.clone(),
+            world_id,
+            usize::try_from(4 * players)?,
+            Duration::from_secs_f64(grace),
+            usize::try_from(3 * players)?,
+            display,
+            setting("OPEN_LEGEND_GOD_MODE", "false")? == "true",
+            http_stop.clone(),
+            request_owner,
+            checkpoints.clone(),
+        )
+        .map_err(|_| "Could not establish per-process player reference keys")?;
+        let game_routes = Router::new()
+            .route_service("/", ServeFile::new(browser.join("index.html")))
+            .fallback_service(ServeDir::new(browser).append_index_html_on_directories(false))
+            .layer(middleware::from_fn(build_cache))
+            .merge(requests);
+        let game_routes = match game.installed_assets() {
+            Some(assets) => game_routes.merge(crate::player_http::assets::router(
+                assets.clone(),
+                authority.clone(),
+                game.store.clone(),
+                custody.clone(),
+                http_stop,
+            )),
+            None => game_routes,
+        };
+        let routes = if local {
+            access_http::local_router(authority, port, game_routes)
+        } else {
+            let secret = setting("OPEN_LEGEND_OIDC_CLIENT_SECRET", "")?;
+            let oidc = Oidc::new(
+                settings.public_origin.clone(),
+                setting("OPEN_LEGEND_OIDC_ISSUER", "")?,
+                setting("OPEN_LEGEND_OIDC_CLIENT_ID", "")?,
+                (!secret.is_empty()).then_some(secret),
+                settings.loopback_http,
+                custody.clone(),
+            )?;
+            access_http::oidc_router(authority, oidc, game_routes)
+        };
+        clock.initialize().await?;
+        Ok(Self {
+            routes,
+            clock,
+            saves,
+            decisions,
+            schedule,
+            checkpoints,
+            journal,
+            end_http,
+            requests_released,
+            game,
         })
-    );
-    run.and(close)
+    }
+
+    async fn serve(self, listen: TcpListener, extra: Option<Router>) -> Result<(), LaunchError> {
+        let Self {
+            routes,
+            clock,
+            saves,
+            decisions,
+            schedule,
+            checkpoints,
+            journal,
+            end_http,
+            mut requests_released,
+            game,
+        } = self;
+        let routes = match extra {
+            Some(extra) => routes.merge(extra),
+            None => routes,
+        };
+        let custody = game.host.budget().clone();
+        let run = run(
+            listen,
+            routes,
+            clock,
+            saves,
+            decisions,
+            schedule,
+            checkpoints,
+            journal,
+            end_http,
+            game.clone(),
+        )
+        .await;
+        // Axum can report a finished connection before Hyper drops its
+        // service and response body. Wait for their player owners as well.
+        let _ = requests_released.changed().await;
+        game.world.drain_operations().await;
+        let close = Arc::try_unwrap(game)
+            .map_err(|_| "The listener left a running world owner")?
+            .close()
+            .await;
+        println!(
+            "OpenLegend native memory {}",
+            serde_json::json!({
+                "transientBytes": custody.used(),
+                "transientPeakBytes": custody.peak(),
+                "residentBytes": custody.resident().used(),
+                "residentPeakBytes": custody.resident().peak(),
+                "pendingSaveBytes": custody.pending_save_used(),
+                "pendingSavePeakBytes": custody.pending_save_peak(),
+            })
+        );
+        run.and(close)
+    }
 }
 
 async fn run(
