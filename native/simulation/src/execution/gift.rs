@@ -93,16 +93,25 @@ pub(crate) fn gift_terms(
         .split_once("{terms}")
         .ok_or(ExecutionError::Invariant)?;
     let mut text = JsText::from(before);
-    append_terms(&mut text, &offer.offered, &descriptions.offered)?;
-    if !offer.requested.is_empty() {
-        text.push_str(GIFT_COPY.reciprocal_separator);
-        append_terms(&mut text, &offer.requested, &descriptions.requested)?;
-    }
+    append_gift_exchange(&mut text, offer, descriptions)?;
     text.push_str(after);
     Ok(text)
 }
 
-fn append_terms(
+pub(crate) fn append_gift_exchange(
+    text: &mut JsText,
+    offer: &GiftOffer,
+    descriptions: &GiftDescriptions,
+) -> Result<(), ExecutionError> {
+    append_gift_lots(text, &offer.offered, &descriptions.offered)?;
+    if !offer.requested.is_empty() {
+        text.push_str(GIFT_COPY.reciprocal_separator);
+        append_gift_lots(text, &offer.requested, &descriptions.requested)?;
+    }
+    Ok(())
+}
+
+pub(crate) fn append_gift_lots(
     text: &mut JsText,
     lots: &[GiftLot],
     descriptions: &[GiftDescription],

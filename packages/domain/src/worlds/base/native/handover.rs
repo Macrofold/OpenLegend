@@ -39,6 +39,8 @@ pub(crate) struct GiftCopy {
     pub no_transfer: &'static str,
     pub reply_accept_gift: &'static str,
     pub reply_decline_gift: &'static str,
+    pub reply_accept_trade: &'static str,
+    pub reply_decline_trade: &'static str,
     pub reply_during_work: &'static str,
     pub decision: &'static str,
 }

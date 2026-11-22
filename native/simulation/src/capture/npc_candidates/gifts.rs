@@ -1,7 +1,8 @@
-//! The recipient may answer an actual received loose gift without stopping
+//! The recipient may answer an actual received offer without stopping
 //! current work. Preparing a reply never probes objective stock or ending state.
 use super::*;
 use crate::{
+    execution::gift::{append_gift_exchange, append_gift_lots},
     handover::{GiftDisclosure, GiftReply, ReceivedGifts, gift_participant},
     narration::{NameArticle, name_phrase},
     text::JsText,
@@ -76,19 +77,21 @@ fn describe_gift(
     budget: &ByteBudget,
 ) -> Result<(JsText, ByteReservation), ExecutionError> {
     let copy = &*GIFT_COPY;
-    let template = if accept {
-        copy.reply_accept_gift
-    } else {
-        copy.reply_decline_gift
+    let template = match (accept, gift.offer.requested.is_empty()) {
+        (true, true) => copy.reply_accept_gift,
+        (false, true) => copy.reply_decline_gift,
+        (true, false) => copy.reply_accept_trade,
+        (false, false) => copy.reply_decline_trade,
     };
-    let (prefix, terms) = template
-        .split_once("{person}")
-        .ok_or(ExecutionError::Invariant)?;
+    let described = gift
+        .descriptions
+        .offered
+        .iter()
+        .chain(&gift.descriptions.requested);
     let text_bound = casting::text_bound(
         std::iter::once(person).chain(
-            gift.descriptions
-                .offered
-                .iter()
+            described
+                .clone()
                 .flat_map(|item| [&item.name, &item.description]),
         ),
     )?;
@@ -96,24 +99,43 @@ fn describe_gift(
         .offer
         .offered
         .len()
-        .checked_mul(32)
+        .checked_add(gift.offer.requested.len())
+        .and_then(|count| count.checked_mul(64))
         .and_then(|n| n.checked_add(template.len()))
+        .and_then(|n| n.checked_add(copy.reciprocal_separator.len()))
         .and_then(|n| n.checked_add(copy.reply_during_work.len() + copy.decision.len()))
         .ok_or(ExecutionError::Capacity)?;
     let mut storage = budget.reserve(
         text_bound
-            .checked_add(overhead.checked_mul(12).ok_or(ExecutionError::Capacity)?)
+            .checked_mul(2)
+            .and_then(|bytes| bytes.checked_add(overhead.checked_mul(12)?))
             .ok_or(ExecutionError::Capacity)?,
     )?;
-    let mut description = JsText::from(prefix);
-    description.push_text(person);
-    description.push_text(&crate::execution::gift::gift_terms(
-        terms,
-        &gift.offer,
-        &gift.descriptions,
-    )?);
+    let mut description = JsText::default();
+    let mut suffix = template;
+    while let Some((literal, slot)) = suffix.split_once('{') {
+        description.push_str(literal);
+        let (name, rest) = slot.split_once('}').ok_or(ExecutionError::Invariant)?;
+        suffix = rest;
+        match name {
+            "person" => description.push_text(person),
+            "receive" => append_gift_lots(
+                &mut description,
+                &gift.offer.offered,
+                &gift.descriptions.offered,
+            )?,
+            "give" => append_gift_lots(
+                &mut description,
+                &gift.offer.requested,
+                &gift.descriptions.requested,
+            )?,
+            "terms" => append_gift_exchange(&mut description, &gift.offer, &gift.descriptions)?,
+            _ => return Err(ExecutionError::Invariant),
+        }
+    }
+    description.push_str(suffix);
     if accept {
-        for item in &gift.descriptions.offered {
+        for item in described {
             if !item.description.is_empty() {
                 description.push_str(" ");
                 description.push_text(&item.description);

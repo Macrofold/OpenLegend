@@ -45,10 +45,14 @@ export const BASE_HANDOVER = {
       ),
     actionLabel: (verb: string, terms: string, person: string, incoming: boolean) =>
       `${verb} ${terms} ${incoming ? 'from' : 'to'} ${person}`,
-    acceptDescription: (receive: string, give?: string) =>
-      `Receive ${receive}${give ? ` and give ${give}; both move together or neither.` : ' into my possession now.'}`,
-    declineDescription: (person: string, terms: string, give?: string) =>
-      `Decline ${person}'s offer of ${terms}. Close this proposal${give ? ` while keeping my ${give}` : ''}; receive nothing and transfer nothing.`,
+    acceptDescription: (receive: string, give: string) =>
+      copy.replyAcceptTrade.replace(/\{(receive|give)\}/g, (_slot, key) =>
+        key === 'receive' ? receive : give,
+      ),
+    declineDescription: (person: string, terms: string, give: string) =>
+      copy.replyDeclineTrade.replace(/\{(person|terms|give)\}/g, (_slot, key) =>
+        key === 'person' ? person : key === 'terms' ? terms : give,
+      ),
     withdrawDescription: (terms: string) => `Withdraw my offer of ${terms}; nothing moves.`,
     counterDescription: (give: string, receive: string) =>
       `Counteroffer: give ${give} to receive ${receive}. This replaces the earlier terms; they must accept the new revision.`,

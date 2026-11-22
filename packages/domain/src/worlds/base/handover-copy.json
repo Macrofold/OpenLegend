@@ -61,6 +61,8 @@
   "unknown": "No item has been disclosed. They can offer an item first.",
   "replyAcceptGift": "Accept {person}'s gift of {terms}. Receive it into my possession now.",
   "replyDeclineGift": "Decline {person}'s offer of {terms}. Close this proposal; receive nothing and transfer nothing.",
+  "replyAcceptTrade": "Receive {receive} and give {give}; both move together or neither.",
+  "replyDeclineTrade": "Decline {person}'s offer of {terms}. Close this proposal while keeping my {give}; receive nothing and transfer nothing.",
   "rememberedReply": {
     "accept": "Accept these offered terms",
     "decline": "Decline these offered terms",

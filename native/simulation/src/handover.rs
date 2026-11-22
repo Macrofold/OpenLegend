@@ -1316,18 +1316,15 @@ impl ReceivedGifts {
             .filter(move |gift| gift.offer.party(other))
     }
 
-    /// The ordinary NPC menu grants replies only to the actual recipient of
-    /// loose one-way gifts. It never consults private physical consent state.
+    /// The ordinary NPC menu grants replies only to the actual recipient.
+    /// It never consults private physical consent state.
     pub(crate) fn npc_incoming<'a>(
         &'a self,
         actor: &'a str,
     ) -> impl Iterator<Item = (&'a GiftDisclosure, &'a crate::experience::PersonalSourceRef)> {
         self.pending.values().filter_map(move |record| {
             let gift = &record.disclosure;
-            (gift.offer.recipient_id == actor
-                && gift.offer.requested.is_empty()
-                && gift.offer.offered.iter().all(|lot| lot.capacity.is_none()))
-            .then_some((gift, &record.original.header().reference))
+            (gift.offer.recipient_id == actor).then_some((gift, &record.original.header().reference))
         })
     }
 }
