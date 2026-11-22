@@ -19,7 +19,7 @@ use crate::reception::{
     ObserverReceptionStep, PerceptionAnswer, PerceptionCursor, PerceptionStep,
     PersonalVisualAnswer,
 };
-use crate::speech::SpeechWord;
+use crate::speech::{SpeechWord, UtteranceAnswer};
 use crate::state::SurfacePoint;
 use crate::text::JsText;
 use crate::time::{AdvanceAnswer, AdvanceCursor, AdvanceError, AdvanceStep, CompletedAdvance};
@@ -139,9 +139,16 @@ pub(crate) struct ProviderQuestion {
 enum QuestionBody {
     Json(String),
     Geometry(Box<GeometryQueries>),
+    Utterance(UtteranceRequest),
     Maintenance(crate::cognition::format::MaintenanceFormatRequest),
     ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
     ActivityLearningFormat(Arc<crate::activity::LearningFormatRequest>),
+}
+
+#[derive(Serialize)]
+pub(crate) struct UtteranceRequest {
+    pub(crate) binding: GeometryBinding,
+    pub(crate) text: JsText,
 }
 
 #[derive(Serialize)]
@@ -176,6 +183,21 @@ impl ProviderQuestion {
 
     pub(crate) fn geometry_envelope(&self) -> Option<QuestionEnvelope<'_, GeometryQueries>> {
         self.geometry().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
+    pub(crate) fn utterance(&self) -> Option<&UtteranceRequest> {
+        match &self.body {
+            QuestionBody::Utterance(ask) => Some(ask),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn utterance_envelope(&self) -> Option<QuestionEnvelope<'_, UtteranceRequest>> {
+        self.utterance().map(|value| QuestionEnvelope {
             kind: self.kind,
             binding: self.binding,
             value,
@@ -320,6 +342,7 @@ impl ProviderQuestion {
 enum AnswerBody {
     Json(String),
     Geometry(Box<GeometryAnswers>),
+    Utterance(Box<UtteranceAnswer>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
@@ -365,6 +388,22 @@ impl ProviderResponse {
             kind: ProviderKind::Geometry,
             binding,
             body: AnswerBody::Geometry(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn utterance(
+        binding: GeometryBinding,
+        answer: Box<UtteranceAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::Utterance,
+            binding,
+            body: AnswerBody::Utterance(answer),
             _reservation: reservation,
         })
     }
@@ -428,13 +467,6 @@ impl ProviderResponse {
             _reservation: reservation,
         })
     }
-}
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Utterance {
-    binding: GeometryBinding,
-    words: Vec<SpeechWord>,
-    lowercase: JsText,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -569,7 +601,7 @@ impl DecodeShape {
 }
 enum Answer {
     Geometry(GeometryAnswers),
-    Utterance(Utterance),
+    Utterance(UtteranceAnswer),
     Collation(CollationAnswer),
     Words(WordsAnswer),
     Display(Formatted),
@@ -1590,6 +1622,9 @@ impl OperationDriver {
                     AnswerBody::Geometry(value) => {
                         (Some(Answer::Geometry(*value)), Some(_reservation), None)
                     }
+                    AnswerBody::Utterance(value) => {
+                        (Some(Answer::Utterance(*value)), Some(_reservation), None)
+                    }
                     AnswerBody::NpcSources(value) => {
                         (Some(Answer::Sources(*value)), Some(_reservation), None)
                     }
@@ -1781,19 +1816,24 @@ fn poll_event(
             return geometry_question(answer, q, budget, EventReply::Geometry);
         }
         EventStep::Utterance { binding, text } => {
-            #[derive(Serialize)]
-            struct Request<'a> {
-                binding: GeometryBinding,
-                text: &'a JsText,
+            if answer.is_some() {
+                return Err(DriveError::StaleResponse);
             }
-            return question(
-                answer,
-                ProviderKind::Utterance,
+            let reservation = budget
+                .reserve(text.storage_bytes())
+                .map_err(|_| DriveError::Capacity)?;
+            let backing = ProviderQuestion::reserve_backing(budget)?;
+            let question = Arc::new(ProviderQuestion {
+                kind: ProviderKind::Utterance,
                 binding,
-                &Request { binding, text },
-                budget,
-                EventReply::Utterance,
-            );
+                body: QuestionBody::Utterance(UtteranceRequest {
+                    binding,
+                    text: text.clone(),
+                }),
+                _reservation: reservation,
+                backing,
+            });
+            return Ok(Poll::Question(question, EventReply::Utterance));
         }
         EventStep::Collation(q) => {
             return question(

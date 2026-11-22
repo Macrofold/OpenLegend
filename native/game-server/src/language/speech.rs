@@ -4,7 +4,10 @@
 use super::{LanguageError, LanguageProvider, symbol};
 use libloading::Library;
 use openlegend_simulation::{
+    geometry::GeometryBinding,
     host::{ByteBudget, ByteReservation},
+    runtime::{RuntimeError, RuntimeProviderInput},
+    speech::SpeechWord,
     text::JsText,
 };
 use serde::Serialize;
@@ -49,18 +52,24 @@ impl Drop for BreakIterator {
     }
 }
 
-#[derive(Clone, Copy, Serialize)]
-pub(crate) struct WordSpan {
-    pub(crate) start: usize,
-    pub(crate) end: usize,
+struct WordSpan {
+    start: usize,
+    end: usize,
 }
 
-#[derive(Serialize)]
 pub(crate) struct PreparedUtterance {
-    pub(crate) words: Vec<WordSpan>,
-    pub(crate) lowercase: JsText,
-    #[serde(skip)]
-    _custody: ByteReservation,
+    words: Vec<SpeechWord>,
+    lowercase: JsText,
+    custody: ByteReservation,
+}
+
+impl PreparedUtterance {
+    pub(crate) fn into_answer(
+        self,
+        binding: GeometryBinding,
+    ) -> Result<RuntimeProviderInput, RuntimeError> {
+        RuntimeProviderInput::utterance(binding, self.words, self.lowercase, self.custody)
+    }
 }
 
 #[derive(Serialize)]
@@ -85,14 +94,19 @@ impl LanguageProvider {
             .map_err(|_| LanguageError::Capacity)?;
         let input: Vec<_> = text.units().collect();
         let output = length
-            .checked_mul(size_of::<WordSpan>())
+            .checked_mul(size_of::<SpeechWord>())
             .and_then(|n| n.checked_add(512))
             .ok_or(LanguageError::Capacity)?;
         let mut custody = budget
             .reserve(output)
             .map_err(|_| LanguageError::Capacity)?;
         let mut words = Vec::with_capacity(length);
-        self.speech_boundaries(&input, budget, |span| words.push(span))?;
+        self.speech_boundaries(&input, budget, |span| {
+            words.push(SpeechWord {
+                start: span.start as u64,
+                end: span.end as u64,
+            })
+        })?;
         let (lower, lowering) = self.lowercase_units(&input, budget)?;
         let proof = lower.len().checked_mul(12).ok_or(LanguageError::Capacity)?;
         custody
@@ -101,12 +115,12 @@ impl LanguageProvider {
         let lowercase = JsText::from_units(lower);
         drop(lowering);
         custody
-            .resize(512 + words.capacity() * size_of::<WordSpan>() + lowercase.storage_bytes())
+            .resize(512 + words.capacity() * size_of::<SpeechWord>() + lowercase.storage_bytes())
             .map_err(|_| LanguageError::Capacity)?;
         Ok(PreparedUtterance {
             words,
             lowercase,
-            _custody: custody,
+            custody,
         })
     }
 

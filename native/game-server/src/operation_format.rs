@@ -3,9 +3,7 @@
 
 use crate::{
     activity_format, control_format,
-    language::{
-        LanguageProvider, PreparedUtterance, PreparedWordLists, canonical::write_canonical,
-    },
+    language::{LanguageProvider, PreparedWordLists, canonical::write_canonical},
     world::WorldError,
 };
 use openlegend_simulation::{
@@ -43,12 +41,11 @@ enum Formatted {
     Control { message: JsText },
     Collation { order: Vec<u32>, groups: Vec<u32> },
     Canonical { canonical: String },
-    Utterance(PreparedUtterance),
     Words(PreparedWordLists),
 }
 
 /// Borrow the funded request and admit the output and workspace. Mind
-/// formatting and geometry use typed replies. The remaining bridge-formatted
+/// formatting and utterances use typed replies. The remaining bridge-formatted
 /// operations still hand the candidate independently funded encoded results.
 pub(crate) fn answer(
     request: &RuntimeProvider,
@@ -57,6 +54,15 @@ pub(crate) fn answer(
 ) -> Result<Option<RuntimeProviderInput>, WorldError> {
     if let Some(answer) = request.format_activity_learning(budget)? {
         return Ok(Some(answer));
+    }
+    if let Some(answer) = request.with_utterance(|binding, text| {
+        let prepared = language
+            .ok_or(WorldError::ProviderKind)?
+            .utterance(text, budget)
+            .map_err(WorldError::Language)?;
+        Ok::<_, WorldError>(prepared.into_answer(binding)?)
+    })? {
+        return answer.map(Some);
     }
     if let Some(answer) = request.with_maintenance_format(|binding, publication| {
         format_maintenance(
@@ -73,7 +79,7 @@ pub(crate) fn answer(
             serde_json::from_str(request).map_err(|_| WorldError::ProviderKind)?;
         if !matches!(
             envelope.kind,
-            "display" | "control" | "collation" | "utterance" | "words" | "canonical" | "digest"
+            "display" | "control" | "collation" | "words" | "canonical" | "digest"
         ) {
             return Ok(None);
         }
@@ -113,20 +119,6 @@ pub(crate) fn answer(
                     .collate(&input.strings)
                     .map_err(WorldError::Language)?;
                 Formatted::Collation { order, groups }
-            }
-            "utterance" => {
-                #[derive(Deserialize)]
-                struct Input {
-                    text: JsText,
-                }
-                let input: Input = serde_json::from_str(envelope.value.get())
-                    .map_err(|_| WorldError::ProviderKind)?;
-                Formatted::Utterance(
-                    language
-                        .ok_or(WorldError::ProviderKind)?
-                        .utterance(&input.text, budget)
-                        .map_err(WorldError::Language)?,
-                )
             }
             "words" => {
                 #[derive(Deserialize)]

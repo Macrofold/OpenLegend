@@ -794,8 +794,8 @@ impl EventCursor {
                     self.words = Some(
                         SpeechWords::prepare(
                             event_text(self.event()?, "text").ok_or_else(invalid)?,
-                            &words,
-                            &lowercase,
+                            words,
+                            lowercase,
                             budget,
                         )
                         .map_err(|_| ExecutionError::Invariant)?,

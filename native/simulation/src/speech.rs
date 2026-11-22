@@ -2,6 +2,7 @@
 //! boundaries. Its saved mask uses the source local stream, never world RNG.
 
 use crate::encoding::content_hash;
+use crate::geometry::GeometryBinding;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::reception::SpeechSegment;
 use crate::text::JsText;
@@ -19,11 +20,19 @@ pub(crate) use receiver::*;
 
 #[derive(Clone, Copy, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct SpeechWord {
+pub struct SpeechWord {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub start: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub end: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct UtteranceAnswer {
+    pub binding: GeometryBinding,
+    pub words: Vec<SpeechWord>,
+    pub lowercase: JsText,
 }
 
 #[derive(Debug)]
@@ -65,12 +74,12 @@ impl SpeechWords {
     }
     pub(crate) fn prepare(
         text: &JsText,
-        words: &[SpeechWord],
-        lowercase: &JsText,
+        words: Vec<SpeechWord>,
+        lowercase: JsText,
         budget: &ByteBudget,
     ) -> Result<Self, SpeechError> {
         let mut previous = 0;
-        for word in words {
+        for word in &words {
             let start = usize::try_from(word.start).map_err(|_| SpeechError::InvalidWords)?;
             let end = usize::try_from(word.end).map_err(|_| SpeechError::InvalidWords)?;
             if start < previous || end <= start || end > text.units_len() {
@@ -79,22 +88,17 @@ impl SpeechWords {
             previous = end;
         }
         let bytes = words
-            .len()
+            .capacity()
             .checked_mul(size_of::<SpeechWord>())
             .and_then(|bytes| bytes.checked_add(text.storage_bytes()))
             .and_then(|bytes| bytes.checked_add(lowercase.storage_bytes()))
             .and_then(|bytes| bytes.checked_add(size_of::<Self>() + 2 * size_of::<usize>()))
             .ok_or(SpeechError::Capacity)?;
         let reservation = budget.reserve(bytes).map_err(|_| SpeechError::Capacity)?;
-        let mut owned = Vec::new();
-        owned
-            .try_reserve_exact(words.len())
-            .map_err(|_| SpeechError::Capacity)?;
-        owned.extend_from_slice(words);
         Ok(Self {
             text: Arc::new(text.clone()),
-            lowercase: lowercase.clone(),
-            words: owned,
+            lowercase,
+            words,
             _reservation: reservation,
         })
     }

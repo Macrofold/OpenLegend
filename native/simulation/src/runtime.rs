@@ -304,6 +304,7 @@ pub struct RuntimeProviderInput {
 enum RuntimeAnswerBody {
     Json(String),
     Geometry(Box<crate::geometry::GeometryAnswers>),
+    Utterance(Box<crate::speech::UtteranceAnswer>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
@@ -330,6 +331,32 @@ impl RuntimeProviderInput {
         custody.resize(bytes).map_err(failure)?;
         Ok(Self {
             body: RuntimeAnswerBody::Geometry(Box::new(answers)),
+            custody,
+        })
+    }
+
+    /// Adopt the funded output of the local utterance provider. The receiving
+    /// event still checks the exact ticket and validates the word offsets.
+    pub fn utterance(
+        binding: crate::geometry::GeometryBinding,
+        words: Vec<crate::speech::SpeechWord>,
+        lowercase: crate::text::JsText,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        use std::mem::size_of;
+        let bytes = words
+            .capacity()
+            .checked_mul(size_of::<crate::speech::SpeechWord>())
+            .and_then(|bytes| bytes.checked_add(lowercase.storage_bytes()))
+            .and_then(|bytes| bytes.checked_add(size_of::<crate::speech::UtteranceAnswer>()))
+            .ok_or_else(|| failure("capacity"))?;
+        custody.resize(bytes)?;
+        Ok(Self {
+            body: RuntimeAnswerBody::Utterance(Box::new(crate::speech::UtteranceAnswer {
+                binding,
+                words,
+                lowercase,
+            })),
             custody,
         })
     }
@@ -428,6 +455,12 @@ fn provider_response(
                         ));
                     }
                     ProviderResponse::geometry(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::Utterance(answer) => {
+                    if question.utterance().is_none() {
+                        return Err(failure("speech words require the actual utterance request"));
+                    }
+                    ProviderResponse::utterance(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::NpcSources(answer) => {
                     if question.kind() != crate::simulation::ProviderKind::Sources {
@@ -708,6 +741,18 @@ impl RuntimeProvider {
         Ok(self.question()?.kind() == crate::simulation::ProviderKind::KnownPlaces)
     }
 
+    /// Borrow the exact authorized speech string for local ICU preparation.
+    /// Any retained result needs its own admitted storage.
+    pub fn with_utterance<T>(
+        &self,
+        prepare: impl FnOnce(crate::geometry::GeometryBinding, &crate::text::JsText) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question
+            .utterance()
+            .map(|ask| prepare(ask.binding, &ask.text)))
+    }
+
     /// Lend the active mind publication to the pure ICU formatter. A provider
     /// can only return separately funded text facts for this exact question.
     pub fn with_maintenance_format<T>(
@@ -742,6 +787,9 @@ impl RuntimeProvider {
         let question = self.question()?;
         if let Some(geometry) = question.geometry_envelope() {
             return RuntimeJson::encode(&geometry, budget);
+        }
+        if let Some(utterance) = question.utterance_envelope() {
+            return RuntimeJson::encode(&utterance, budget);
         }
         if let Some(maintenance) = question.maintenance_envelope() {
             return RuntimeJson::encode(&maintenance, budget);
