@@ -25,9 +25,7 @@ use std::{
 };
 use subtle::ConstantTimeEq;
 use tokio::sync::{OwnedSemaphorePermit, Semaphore, watch};
-pub(crate) use tools::{
-    DefinitionReads, Failure as ReadFailure, publish_live_entity, select_live_entity,
-};
+pub(crate) use tools::{DefinitionReads, Failure as ReadFailure, LiveReadRequest};
 
 const REQUEST_BYTES: usize = 128 * 1024;
 const REPLY_BYTES: usize = 160 * 1024;

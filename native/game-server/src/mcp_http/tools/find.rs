@@ -254,8 +254,8 @@ impl CatalogueSearch {
                 .ok_or(Failure::Unavailable)?;
             with_label(&definition, budget, |label| {
                 if !query.is_empty()
-                    && !self.contains(label, &query, budget)?
-                    && !self.contains(id.into(), &query, budget)?
+                    && !folded_contains(&self.language, label, &query, budget)?
+                    && !folded_contains(&self.language, id.into(), &query, budget)?
                 {
                     return Ok(());
                 }
@@ -289,19 +289,21 @@ impl CatalogueSearch {
             recipient,
         )
     }
+}
 
-    fn contains(
-        &self,
-        text: TextRef<'_>,
-        query: &[u16],
-        budget: &ByteBudget,
-    ) -> Result<bool, Failure> {
-        let (lower, _lower) = self
-            .language
-            .lowercase_text(text, budget)
-            .map_err(language_failure)?;
-        Ok(lower.windows(query.len()).any(|part| part == query))
+pub(super) fn folded_contains(
+    language: &LanguageProvider,
+    text: TextRef<'_>,
+    query: &[u16],
+    budget: &ByteBudget,
+) -> Result<bool, Failure> {
+    if query.is_empty() {
+        return Ok(true);
     }
+    let (lower, _lower) = language
+        .lowercase_text(text, budget)
+        .map_err(language_failure)?;
+    Ok(lower.windows(query.len()).any(|part| part == query))
 }
 
 pub(super) fn ensure_current(stopped: &CancellationToken) -> Result<(), Failure> {
@@ -312,7 +314,7 @@ pub(super) fn ensure_current(stopped: &CancellationToken) -> Result<(), Failure>
     }
 }
 
-fn language_failure(error: LanguageError) -> Failure {
+pub(super) fn language_failure(error: LanguageError) -> Failure {
     if matches!(error, LanguageError::Capacity) {
         Failure::Capacity
     } else {

@@ -238,7 +238,7 @@ const LIVE_LIMITATIONS: &[&str] = &[
 pub(super) fn live_entity(
     input: &InspectInput,
     read: RuntimeLiveInspection<'_>,
-    timeline: &str,
+    snapshot: Snapshot<'_>,
     budget: &ByteBudget,
     recipient: &Recipient,
 ) -> Result<PreparedReply, Failure> {
@@ -253,12 +253,6 @@ pub(super) fn live_entity(
     }
     let Recipient::Signed(account) = recipient else {
         return Err(Failure::Forbidden);
-    };
-    let snapshot = Snapshot {
-        world_id: read.progress.world_id,
-        generation: timeline,
-        sequence: read.progress.sequence,
-        sim_time: read.progress.at,
     };
     let mut links = Links::new(
         &read.definitions,

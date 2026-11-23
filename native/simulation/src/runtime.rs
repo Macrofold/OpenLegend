@@ -35,8 +35,9 @@ pub use direct_history::{
 mod handoff;
 mod inspection;
 pub use inspection::{
-    RuntimeDefinitionCatalogue, RuntimeDefinitionInspection, RuntimeDefinitionKind, RuntimeLiveEntity,
-    RuntimeLiveInspection, RuntimeLiveSupport, RuntimeWorldInspection,
+    RuntimeDefinitionCatalogue, RuntimeDefinitionInspection, RuntimeDefinitionKind,
+    RuntimeLiveActivity, RuntimeLiveEntity, RuntimeLiveInspection, RuntimeLiveRead,
+    RuntimeLiveSelection, RuntimeLiveSupport, RuntimeWorldInspection,
 };
 mod knowledge;
 pub use crate::knowledge::cartography::{MapMarkerEdit, MarkerChange};

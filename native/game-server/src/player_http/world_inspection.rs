@@ -2,7 +2,7 @@
 //! current Inspect grant when reading and handing off the response.
 
 use super::*;
-use crate::mcp_http::{ReadFailure, publish_live_entity, select_live_entity};
+use crate::mcp_http::{LiveReadRequest, ReadFailure};
 use serde_json::{Map, Value, json as object};
 use tokio_util::sync::CancellationToken;
 
@@ -40,10 +40,11 @@ pub(super) async fn read(State(state): State<PlayerRoutes>, request: Request) ->
             Ok(request) => request,
             Err(error) => return error,
         };
-    if request.name == "ol_inspect"
-        && request.arguments.get("kind").and_then(Value::as_str) == Some("entity")
+    if matches!(request.name.as_str(), "ol_entities" | "ol_activity")
+        || (request.name == "ol_inspect"
+            && request.arguments.get("kind").and_then(Value::as_str) == Some("entity"))
     {
-        return inspect_entity(state, scope, request.arguments, (slot, input)).await;
+        return read_live(state, scope, request, (slot, input)).await;
     }
     let stopped = CancellationToken::new();
     let _cancel = stopped.clone().drop_guard();
@@ -81,10 +82,10 @@ pub(super) async fn read(State(state): State<PlayerRoutes>, request: Request) ->
     }
 }
 
-async fn inspect_entity(
+async fn read_live(
     state: PlayerRoutes,
     scope: Arc<AuthorizedScope>,
-    arguments: Map<String, Value>,
+    input: RequestBody,
     custody: (tokio::sync::OwnedSemaphorePermit, ByteReservation),
 ) -> Response {
     if let Err(error) = state
@@ -93,7 +94,7 @@ async fn inspect_entity(
     {
         return access_failure(error);
     }
-    let request = match select_live_entity(arguments) {
+    let request = match LiveReadRequest::select(&input.name, input.arguments) {
         Ok(request) => request,
         Err(error) => return unavailable(&state, error),
     };
@@ -112,22 +113,19 @@ async fn inspect_entity(
         let result = state
             .authority
             .current_private_view(&scope, true, |selected, _| {
-                let account = Arc::from(selected.account_id.as_str());
-                session.inspect_live_entity(
-                    &selected.account_id,
-                    &selected.actor_id,
-                    request.id(),
-                    |read| match publish_live_entity(
-                        &request,
-                        read,
-                        &selected.timeline_id,
-                        account,
-                        state.game.host.budget(),
-                    ) {
-                        Ok(bytes) => json_response(StatusCode::OK, bytes),
-                        Err(error) => unavailable(&state, error),
-                    },
-                )
+                session.with_live_inspection(&selected.account_id, &selected.actor_id, |read| {
+                    Ok(
+                        match request.publish(
+                            read,
+                            selected,
+                            state.game.language().map(Arc::as_ref),
+                            state.game.host.budget(),
+                        ) {
+                            Ok(bytes) => json_response(StatusCode::OK, bytes),
+                            Err(error) => unavailable(&state, error),
+                        },
+                    )
+                })
             });
         match result {
             Ok(Ok(Some(response))) => Ok(response),

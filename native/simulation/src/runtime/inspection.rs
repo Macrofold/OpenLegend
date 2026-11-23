@@ -5,7 +5,10 @@ use crate::{simulation::InstalledWorld, text::TextRef, values::DefinitionPin};
 use std::sync::Arc;
 
 mod live;
-pub use live::{RuntimeLiveEntity, RuntimeLiveInspection, RuntimeLiveSupport};
+pub use live::{
+    RuntimeLiveActivity, RuntimeLiveEntity, RuntimeLiveInspection, RuntimeLiveRead,
+    RuntimeLiveSelection, RuntimeLiveSupport,
+};
 
 pub struct RuntimeWorldInspection<'a> {
     pub progress: RuntimeProgress<'a>,

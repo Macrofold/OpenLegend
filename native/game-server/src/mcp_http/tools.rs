@@ -12,7 +12,7 @@ use openlegend_simulation::{
     host::{ByteBudget, ByteReservation},
     runtime::{
         RuntimeDefinitionCatalogue, RuntimeDefinitionInspection, RuntimeDefinitionKind,
-        RuntimeLiveInspection, RuntimeWorldInspection,
+        RuntimeWorldInspection,
     },
     text::{JsText, TextRef},
     values::DefinitionPin,
@@ -33,8 +33,11 @@ use std::{borrow::Cow, sync::Arc};
 use tokio::sync::watch;
 use tokio_util::sync::CancellationToken;
 
+mod directory;
 mod find;
 mod graph;
+mod live;
+pub(crate) use live::Request as LiveReadRequest;
 
 const CONTEXT: &str = "ol_context";
 const INSPECT: &str = "ol_inspect";
@@ -114,13 +117,9 @@ impl DefinitionReads {
     ) -> Result<Bytes, Failure> {
         let recipient = Recipient::Signed(account);
         let selected = read_selection(name, arguments, &recipient)?;
-        match self
-            .prepare(selected, recipient, custody, current, stopped)
+        self.prepare(selected, recipient, custody, current, stopped)
             .await?
-        {
-            PreparedReply::Signed(bytes) => Ok(bytes),
-            PreparedReply::Connector(..) => Err(Failure::Unavailable),
-        }
+            .signed()
     }
 
     async fn prepare(
@@ -433,35 +432,6 @@ fn inspect_selection(arguments: JsonObject) -> Result<InspectInput, Failure> {
     Ok(input)
 }
 
-pub(crate) fn select_live_entity(arguments: JsonObject) -> Result<InspectInput, Failure> {
-    let input = inspect_selection(arguments)?;
-    if input.kind != "entity" {
-        return Err(Failure::Invalid);
-    }
-    Ok(input)
-}
-
-impl InspectInput {
-    pub(crate) fn id(&self) -> &str {
-        &self.id
-    }
-}
-
-/// Prepare the signed response only while the caller holds both the accepted
-/// live read and its current application disclosure grant.
-pub(crate) fn publish_live_entity(
-    input: &InspectInput,
-    read: RuntimeLiveInspection<'_>,
-    timeline: &str,
-    account: Arc<str>,
-    budget: &ByteBudget,
-) -> Result<Bytes, Failure> {
-    match graph::live_entity(input, read, timeline, budget, &Recipient::Signed(account))? {
-        PreparedReply::Signed(bytes) => Ok(bytes),
-        PreparedReply::Connector(..) => Err(Failure::Unavailable),
-    }
-}
-
 fn read_selection(
     name: &str,
     mut arguments: JsonObject,
@@ -511,7 +481,7 @@ fn read_selection(
         "ol_graph" if matches!(recipient, Recipient::Signed(_)) => Ok(Selection::Relationships(
             graph::Request::Page(graph::Input::parse(arguments)?),
         )),
-        "ol_entities" | "ol_trace" | "ol_activity" | "ol_evidence" | "ol_instances"
+        "ol_entities" | "ol_trace" | "ol_evidence" | "ol_instances"
             if matches!(recipient, Recipient::Signed(_)) =>
         {
             Err(Failure::Unavailable)
@@ -773,6 +743,15 @@ struct ResultData<'a, T> {
 enum PreparedReply {
     Connector(CallToolResult, ByteReservation),
     Signed(Bytes),
+}
+
+impl PreparedReply {
+    fn signed(self) -> Result<Bytes, Failure> {
+        match self {
+            Self::Signed(bytes) => Ok(bytes),
+            Self::Connector(..) => Err(Failure::Unavailable),
+        }
+    }
 }
 
 fn result<T: Serialize>(
