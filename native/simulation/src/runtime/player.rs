@@ -304,6 +304,11 @@ pub struct TypedWalk<'a> {
 }
 
 pub struct RuntimeGatherOffer<'a> {
+    pub target: &'a str,
+    pub actor_life: Option<u64>,
+    pub material_pin: &'a crate::values::DefinitionPin,
+    pub bare_hand_quantity: u64,
+    pub paused: bool,
     pub name: &'a crate::text::JsText,
     pub material: &'a crate::text::JsText,
     pub label: Option<&'a crate::text::JsText>,
@@ -973,15 +978,23 @@ impl NativeWorldSession {
                 else {
                     return false;
                 };
-                let retained = &state.installed.retained;
-                let Some(item) = retained.items.get(definition).filter(|item| item.portable) else {
+                let Some(gathering) = crate::gathering::source(state, id)
+                    .filter(|source| &source.stock.definition_id == definition)
+                else {
                     return false;
                 };
-                if retained.bare_hand_gathering.is_none() {
-                    return false;
-                }
+                let item = gathering.definition;
                 let encode = encode.take().expect("one selected source");
                 result = Some(encode(RuntimeResourceOffer::Gather(RuntimeGatherOffer {
+                    target: id,
+                    actor_life: state
+                        .physical
+                        .entities
+                        .get(actor)
+                        .and_then(|actor| actor.physical_life()),
+                    material_pin: &item.pin,
+                    bare_hand_quantity: gathering.base_yield,
+                    paused: state.physical.header.paused,
                     name,
                     material: &item.named.name,
                     label: item.gather_label.as_ref(),

@@ -7,8 +7,8 @@ use crate::{
     command_epoch::{RETRY_MS, RequestIdentity},
     live_save::{AcceptedSaveInput, LiveSaves},
     npc::Director,
-    player_http::REQUEST_TIMEOUT,
-    player_references::ReferenceIssuer,
+    player_http::{REQUEST_TIMEOUT, actions},
+    player_references::{PrimaryActionSelection, ReferenceIssuer},
     spatial::AimGeometry,
     store::{AdmittedReceipt, GameplayReceipt, KnownPlaceViewPage, PlaceViewRequest, StoreError},
     wire,
@@ -86,6 +86,12 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     target_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    primary_action: Option<PrimaryActionSelection<String>>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     scar_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
@@ -970,14 +976,27 @@ impl PlayerCommands {
                             };
                             let world_destination = exact_move
                                 && (nested.is_some() || target_ref.is_some_and(|id| id.starts_with("contact-")));
-                            let target = match target_ref.filter(|_| {
+                            let target = match (raw.primary_action.as_ref(), target_ref.filter(|_| {
                                 // Contained bags bind through the inspected page and its
                                 // root. Bare world storage needs the exact body reference.
                                 nested.is_none() && !own_status && !matches!(raw.kind, CommandKind::Say)
                                     && (raw.kind.arrangement().is_none() || world_destination)
-                            }) {
-                                None => None,
-                                Some(contact) => {
+                            })) {
+                                (Some(selection), _) => match actions::fresh_gather_selection(
+                                    world, &begin_scope.scope, &begin_references, selection, &begin_budget,
+                                )? {
+                                    actions::GatherSelection::Current(target) => Some(target),
+                                    actions::GatherSelection::Unavailable(message) => {
+                                        return Ok(ApplicationStart::Existing(ResultOwner::Refused("unavailable", message)));
+                                    }
+                                    actions::GatherSelection::Stale => {
+                                        return Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                            "stale-primary-action", "The preferred action for this object changed. Choose it again.",
+                                        )));
+                                    }
+                                },
+                                (None, None) => None,
+                                (None, Some(contact)) => {
                                     let selected = if matches!(raw.kind, CommandKind::Pickup) {
                                         begin_references.resolve_ground_pickup(
                                             world, &begin_scope.scope, contact, raw.item_id.as_deref(), &begin_budget,
@@ -1294,6 +1313,14 @@ impl CommandRequest {
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
             || !point_binding_valid
+            || command.primary_action.as_ref().is_some_and(|selection| {
+                !matches!(command.kind, CommandKind::Gather)
+                    || command.target_id.as_ref() != Some(&selection.target_id)
+                    || !id(&selection.action_id)
+                    || !valid_body_reference(&selection.reference)
+                    || command.item_id.is_some()
+                    || command.gathering_mode.is_some()
+            })
             || command.execution.as_ref().is_some_and(|execution| {
                 !execution.valid(id) || !match execution {
                     AttackControl::Begin { .. } =>

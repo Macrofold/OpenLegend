@@ -60,6 +60,29 @@ pub(crate) struct ResolvedContact {
     _custody: ByteReservation,
 }
 
+impl ResolvedContact {
+    pub(crate) fn new(
+        id: &str,
+        life: Option<u64>,
+        budget: &ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        let custody = budget.reserve(id.len())?;
+        Ok(Self {
+            id: id.to_owned(),
+            life,
+            _custody: custody,
+        })
+    }
+}
+
+#[derive(serde::Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct PrimaryActionSelection<Text> {
+    pub(crate) target_id: Text,
+    pub(crate) action_id: Text,
+    pub(crate) reference: Text,
+}
+
 pub(crate) struct ResolvedSpeechTarget {
     pub(crate) id: String,
     pub(crate) role: SpeechTargetRole,
@@ -305,16 +328,11 @@ impl ReferenceIssuer {
                             }
                         }
                     }
-                    selected_source = Some(
-                        budget
-                            .reserve(body.source_id.len())
-                            .map(|custody| ResolvedContact {
-                                id: body.source_id.to_owned(),
-                                life: body.actor.then(|| body.physical_life.unwrap_or(0)),
-                                _custody: custody,
-                            })
-                            .map_err(RuntimeError::from),
-                    );
+                    selected_source = Some(ResolvedContact::new(
+                        body.source_id,
+                        body.actor.then(|| body.physical_life.unwrap_or(0)),
+                        budget,
+                    ));
                     true
                 }
                 Ok(_) => false,
@@ -383,6 +401,19 @@ impl ReferenceIssuer {
 impl PlayerReferences<'_> {
     pub fn matches_reader(&self, world: &str, actor: &str) -> bool {
         self.origin.world_id == world && self.origin.actor_id == actor
+    }
+
+    /// Stream the exact presented choice and its current dependency facts to the
+    /// signer. The caller owns the admitted choice and short encoded reference.
+    pub(crate) fn primary_action(
+        &self,
+        witness: &impl Serialize,
+    ) -> Result<String, serde_json::Error> {
+        sign(
+            &self.issuer.body,
+            "",
+            &("primary-action", &self.scope, witness),
+        )
     }
 
     pub fn context_action(

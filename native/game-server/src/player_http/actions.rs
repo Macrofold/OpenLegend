@@ -2,10 +2,17 @@
 //! on-demand menu spends nothing and never starts an action.
 
 use super::*;
+use crate::{
+    authority::RequestScope,
+    player_references::{PlayerReferences, PrimaryActionSelection, ResolvedContact},
+};
 use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
     host::CapacityError,
-    runtime::{RuntimeError, RuntimeFishOffer, RuntimeGatherOffer, RuntimeResourceOffer},
+    runtime::{
+        NativeWorldSession, RuntimeError, RuntimeFishOffer, RuntimeGatherOffer,
+        RuntimeResourceOffer,
+    },
     text::JsText,
 };
 use std::sync::LazyLock;
@@ -15,6 +22,9 @@ mod practice;
 mod manufacture;
 mod status;
 mod fire;
+
+const TAKE_CONTROL: &str = "Take control of your character to act here.";
+const RESUME_WORLD: &str = "Resume the world to act.";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -149,24 +159,11 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                     let selected = for_menu.as_deref().ok_or_else(|| {
                         RuntimeError::application_refused("missing selected menu target")
                     })?;
-                    let mut error = None;
-                    let offered = session.with_player_resource_offer(
-                        &scope.account_id,
-                        &scope.actor_id,
-                        |body| match references.contact(
-                            body.source_id,
-                            body.physical_life.unwrap_or(0),
-                            body.lease_id,
-                        ) {
-                            Ok(reference) => reference == selected,
-                            Err(problem) => {
-                                error = Some(problem);
-                                false
-                            }
-                        },
+                    let offered = with_selected_resource(
+                        session, scope, &references, selected,
                         |offer| match offer {
                             RuntimeResourceOffer::Gather(offer) => {
-                                gathering(selected, offer, budget)
+                                gathering(selected, &offer, &references, controls, budget)
                             }
                             RuntimeResourceOffer::Pickup(offer) => pickup::render(selected, offer, controls, budget),
                             RuntimeResourceOffer::Practice(offer) => {
@@ -174,9 +171,9 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                             }
                             RuntimeResourceOffer::Fish(offer) => {
                                 let available = if !controls {
-                                    Some("Take control of your character to act here.")
+                                    Some(TAKE_CONTROL)
                                 } else if offer.paused {
-                                    Some("Resume the world to act.")
+                                    Some(RESUME_WORLD)
                                 } else if !offer.tools.is_empty() && !offer.exhausted {
                                     offer.geometry_problem(|queries| {
                                         game.spatial
@@ -191,9 +188,6 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                             }
                         },
                     )?;
-                    if let Some(error) = error {
-                        return Err(RuntimeError::application_refused(error));
-                    }
                     if offered.is_some() {
                         return Ok(offered);
                     }
@@ -230,6 +224,38 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
         Ok(None) => access_failure(AccessError::Changed),
         Err(error) => failed(error),
     }
+}
+
+/// Visit the permitted player contacts and prepare the matching resource offer
+/// under its disclosure lease. Callers retain only independently funded data.
+fn with_selected_resource<T>(
+    session: &NativeWorldSession,
+    scope: &RequestScope,
+    references: &PlayerReferences<'_>,
+    selected: &str,
+    use_offer: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
+) -> Result<Option<T>, RuntimeError> {
+    let mut error = None;
+    let offered = session.with_player_resource_offer(
+        &scope.account_id,
+        &scope.actor_id,
+        |body| match references.contact(
+            body.source_id,
+            body.physical_life.unwrap_or(0),
+            body.lease_id,
+        ) {
+            Ok(reference) => reference == selected,
+            Err(problem) => {
+                error = Some(problem);
+                false
+            }
+        },
+        use_offer,
+    )?;
+    if let Some(error) = error {
+        return Err(RuntimeError::application_refused(error));
+    }
+    Ok(offered)
 }
 
 #[derive(Serialize)]
@@ -281,11 +307,26 @@ fn resource_menu_categories<T: Serialize>(
     categories: &[&str],
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
+    resource_menu_selection(revision, actions, categories, None, budget)
+}
+
+fn resource_menu_selection<T: Serialize>(
+    revision: u64,
+    actions: &[T],
+    categories: &[&str],
+    primary_action: Option<PrimaryActionSelection<&str>>,
+    budget: &ByteBudget,
+) -> Result<Bytes, RuntimeError> {
     #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
     struct Catalogue<'a, T> {
         revision: u64,
         actions: &'a [T],
         categories: &'a [&'a str],
+        #[serde(skip_serializing_if = "Option::is_none")]
+        default_action_id: Option<&'a str>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        primary_action: Option<PrimaryActionSelection<&'a str>>,
     }
     #[derive(Serialize)]
     struct Menu<'a, T> {
@@ -299,6 +340,8 @@ fn resource_menu_categories<T: Serialize>(
                 revision,
                 actions,
                 categories,
+                default_action_id: primary_action.as_ref().map(|selection| selection.action_id),
+                primary_action,
             },
         },
         b"",
@@ -327,10 +370,42 @@ static GATHER: LazyLock<GatherMenuCopy> = LazyLock::new(|| {
 
 fn gathering(
     selected: &str,
-    offer: RuntimeGatherOffer<'_>,
+    offer: &RuntimeGatherOffer<'_>,
+    references: &PlayerReferences<'_>,
+    controlling: bool,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
-    let _workspace = budget.reserve(
+    static TAKE_CONTROL_TEXT: LazyLock<JsText> = LazyLock::new(|| JsText::from(TAKE_CONTROL));
+    static RESUME_WORLD_TEXT: LazyLock<JsText> = LazyLock::new(|| JsText::from(RESUME_WORLD));
+    let reason = if !controlling {
+        Some(&*TAKE_CONTROL_TEXT)
+    } else if offer.paused {
+        Some(&*RESUME_WORLD_TEXT)
+    } else {
+        None
+    };
+    let (action, reference, _workspace) = gather_choice(selected, offer, references, reason, budget)?;
+    resource_menu_selection(
+        offer.sequence,
+        std::slice::from_ref(&action),
+        &[GATHER.name],
+        Some(PrimaryActionSelection {
+            target_id: selected,
+            action_id: &action.id,
+            reference: &reference,
+        }),
+        budget,
+    )
+}
+
+fn gather_choice<'a>(
+    selected: &'a str,
+    offer: &RuntimeGatherOffer<'a>,
+    references: &PlayerReferences<'_>,
+    reason: Option<&'static JsText>,
+    budget: &ByteBudget,
+) -> Result<(ResourceAction<'a>, String, ByteReservation), RuntimeError> {
+    let workspace = budget.reserve(
         4096 + 8 * (offer.name.storage_bytes() + offer.material.storage_bytes() + selected.len())
             + offer.label.map_or(0, |label| 8 * label.storage_bytes()),
     )?;
@@ -338,6 +413,7 @@ fn gathering(
         .label
         .cloned()
         .unwrap_or_else(|| JsText::concat(&[&GATHER.fallback_prefix, offer.name]));
+    let reason = reason.or_else(|| (offer.quantity == 0).then_some(&GATHER.menu_empty));
     let action = ResourceAction {
         id: format!("gather-{selected}"),
         label,
@@ -345,8 +421,8 @@ fn gathering(
         description: &GATHER.menu_description,
         keywords: [offer.material, &GATHER.menu_keyword],
         target_id: selected,
-        enabled: offer.quantity != 0,
-        reason: (offer.quantity == 0).then_some(&GATHER.menu_empty),
+        enabled: reason.is_none(),
+        reason,
         facts: None,
         intent: ResourceIntent::Command {
             command: ResourceCommand {
@@ -356,7 +432,61 @@ fn gathering(
             },
         },
     };
-    resource_menu(offer.sequence, &[action], GATHER.name, budget)
+    // Exact contact, installed material and authored yield define this choice.
+    // Unrelated accepted updates and remaining stock above zero leave it usable.
+    let reference = references
+        .primary_action(&(
+            offer.target,
+            offer.actor_life,
+            offer.material_pin,
+            offer.bare_hand_quantity,
+            &action,
+        ))
+        .map_err(RuntimeError::application_refused)?;
+    Ok((action, reference, workspace))
+}
+
+pub(crate) enum GatherSelection {
+    Current(ResolvedContact),
+    Unavailable(&'static str),
+    Stale,
+}
+
+/// Re-prepare just the exact resource choice at command admission. No menu
+/// packet is encoded. The caller already checked control and pause in this
+/// turn. The returned source ID keeps its own allocation.
+pub(crate) fn fresh_gather_selection(
+    session: &NativeWorldSession,
+    scope: &RequestScope,
+    issuer: &ReferenceIssuer,
+    requested: &PrimaryActionSelection<String>,
+    budget: &ByteBudget,
+) -> Result<GatherSelection, RuntimeError> {
+    let _workspace = budget.reserve(2048)?;
+    let references = issuer
+        .scoped(scope)
+        .map_err(RuntimeError::application_refused)?;
+    let result =
+        with_selected_resource(session, scope, &references, &requested.target_id, |offer| {
+            let RuntimeResourceOffer::Gather(offer) = offer else {
+                return Ok(GatherSelection::Stale);
+            };
+            let (action, reference, _workspace) =
+                gather_choice(&requested.target_id, &offer, &references, None, budget)?;
+            if action.id != requested.action_id || reference != requested.reference {
+                return Ok(GatherSelection::Stale);
+            }
+            if !action.enabled {
+                return Ok(GatherSelection::Unavailable(
+                    GATHER
+                        .menu_empty
+                        .as_unicode()
+                        .unwrap_or("This action is unavailable now."),
+                ));
+            }
+            ResolvedContact::new(offer.target, None, budget).map(GatherSelection::Current)
+        })?;
+    Ok(result.unwrap_or(GatherSelection::Stale))
 }
 
 fn fishing(
@@ -535,9 +665,9 @@ pub(crate) fn contact_choices(
     if let Some(menu) = &strike_menu {
         let before = actions.len();
         let reason = if !controlling {
-            Some("Take control of your character to act here.")
+            Some(TAKE_CONTROL)
         } else if menu.paused() {
-            Some("Resume the world to act.")
+            Some(RESUME_WORLD)
         } else {
             None
         };
