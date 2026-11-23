@@ -21,7 +21,7 @@ impl CommandCursor {
         self.phase = Phase::Done;
         Ok(())
     }
-    fn discovery_refuse(
+    pub(super) fn discovery_refuse(
         &mut self,
         rule: &crate::worlds::InstalledActionMessage,
     ) -> Result<(), ExecutionError> {

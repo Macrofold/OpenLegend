@@ -1,5 +1,8 @@
 //! Exact shield and facing for current-format commands and activity records.
 use super::{CommandEncoding, CommandHeaders, NativeCommand, RuntimeGuardFacing};
+use crate::execution::ExecutionError;
+use crate::host::retained_size::{HeapBytes, heap_sum};
+use crate::host::{ByteBudget, ByteReservation};
 use crate::values::{
     deserialize_present_option, deserialize_present_safe_integer, is_safe_record_id,
 };
@@ -72,6 +75,54 @@ pub(super) fn bind(
     facing: RuntimeGuardFacing<'_>,
     auto_equip: bool,
 ) -> Result<(NativeCommand, String), serde_json::Error> {
+    let command = bind_exact(headers, item_id, facing, auto_equip)?;
+    let canonical = command.source_encoding().to_owned();
+    Ok((command, canonical))
+}
+
+/// Fund one typed resident choice. Only the canonical activity/receipt
+/// representation is encoded; the held command is never decoded to apply it.
+pub(crate) fn bind_npc(
+    id: &str,
+    actor_id: &str,
+    item_id: &str,
+    target_id: &str,
+    target_life: u64,
+    budget: &ByteBudget,
+) -> Result<(NativeCommand, ByteReservation), ExecutionError> {
+    let mut storage = budget.reserve(
+        heap_sum([id.len(), actor_id.len(), item_id.len(), target_id.len()])
+            .and_then(|bytes| bytes.checked_mul(32)?.checked_add(1024))
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let command = bind_exact(
+        CommandHeaders {
+            id: id.to_owned(),
+            actor_id: actor_id.to_owned(),
+            cooperation: None,
+            combat_help_id: None,
+            human_initiated: None,
+            purpose: None,
+            chosen_purpose: None,
+        },
+        item_id,
+        RuntimeGuardFacing::Subject {
+            id: target_id,
+            life: target_life,
+        },
+        true,
+    )
+    .map_err(|_| ExecutionError::Invariant)?;
+    storage.resize(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+    Ok((command, storage))
+}
+
+fn bind_exact(
+    headers: CommandHeaders,
+    item_id: &str,
+    facing: RuntimeGuardFacing<'_>,
+    auto_equip: bool,
+) -> Result<NativeCommand, serde_json::Error> {
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
     struct Binding<'a> {
@@ -80,7 +131,8 @@ pub(super) fn bind(
         auto_equip: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
         facing: Option<f64>,
-        human_initiated: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        human_initiated: Option<bool>,
         id: &'a str,
         item_id: &'a str,
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -117,7 +169,7 @@ pub(super) fn bind(
         actor_id: &headers.actor_id,
         auto_equip,
         facing: heading,
-        human_initiated: true,
+        human_initiated: headers.human_initiated,
         id: &headers.id,
         item_id,
         target_id,
@@ -126,16 +178,14 @@ pub(super) fn bind(
     };
     let encoding = CommandEncoding::from_ordered(
         &input,
-        5 + usize::from(auto_equip) + if target_id.is_some() { 2 } else { 1 },
+        4 + usize::from(headers.human_initiated.is_some())
+            + usize::from(auto_equip)
+            + if target_id.is_some() { 2 } else { 1 },
     )?;
-    let canonical = encoding.json.get().to_owned();
-    Ok((
-        NativeCommand::Guard {
-            envelope: headers.envelope(encoding),
-            item_id: item_id.into(),
-            facing: bound,
-            auto_equip,
-        },
-        canonical,
-    ))
+    Ok(NativeCommand::Guard {
+        envelope: headers.envelope(encoding),
+        item_id: item_id.into(),
+        facing: bound,
+        auto_equip,
+    })
 }

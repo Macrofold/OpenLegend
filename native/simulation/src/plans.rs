@@ -214,17 +214,21 @@ impl HeapBytes for ActorPlan {
 /// The selected commands have one finite entity-target slot. Missing objects
 /// remain normal command-admission work; actual actor references retain the
 /// existing creator-authored/perception-episode boundary.
+fn command_episode_subject(command: &NativeCommand) -> Option<&str> {
+    match command {
+        NativeCommand::Say { target_id, .. } => target_id.as_deref(),
+        NativeCommand::StatusEffect { target_id, .. } => Some(target_id.as_str()),
+        NativeCommand::Guard { facing, .. } => facing.subject_id(),
+        _ => None,
+    }
+}
+
 fn targets_current(
     core: &crate::execution::CoreMutation<'_>,
     actor: &str,
     step: &PlanStep,
 ) -> bool {
-    let target = match &step.command {
-        NativeCommand::Say { target_id, .. } => target_id.as_deref(),
-        NativeCommand::StatusEffect { target_id, .. } => Some(target_id.as_str()),
-        _ => None,
-    };
-    target
+    command_episode_subject(&step.command)
         .filter(|target| *target != actor)
         .is_none_or(|target| {
             !core

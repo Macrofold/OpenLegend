@@ -107,12 +107,7 @@ impl PlanEditCursor {
     }
     fn captured_step(core: &CoreMutation<'_>, command: NativeCommand) -> PlanStep {
         let mut target_episodes = IndexMap::new();
-        let target = match &command {
-            NativeCommand::Say { target_id, .. } => target_id.as_deref(),
-            NativeCommand::StatusEffect { target_id, .. } => Some(target_id.as_str()),
-            _ => None,
-        };
-        if let Some(target) = target.filter(|target| {
+        if let Some(target) = super::command_episode_subject(&command).filter(|target| {
             *target != command.envelope().actor_id
                 && core
                     .state

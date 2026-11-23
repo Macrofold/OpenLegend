@@ -3,6 +3,8 @@ import { namePhrase } from '@open-legend/language';
 import {
   decisionOfferDescription,
   formatObservedBodyHealth,
+  guardChoiceLabel,
+  guardDescription,
   type ActivityView,
   type Outcome,
   type ProspectiveWork,
@@ -44,6 +46,20 @@ export type NativeNpcOfferMeaning =
     }
   | { readonly kind: 'probe'; readonly probe: number }
   | { readonly kind: 'fish' | 'cook' | 'fire-care' | 'handover'; readonly body: number }
+  | {
+      readonly kind: 'guard';
+      readonly body: number;
+      readonly tool: {
+        readonly label: string;
+        readonly shield: string;
+        readonly equipment: string;
+        readonly preparation: number;
+        readonly ready: number;
+        readonly reduction: number;
+        readonly coverage: number;
+        readonly recovery: number;
+      };
+    }
   | {
       readonly kind: 'strike';
       readonly body: number;
@@ -305,6 +321,29 @@ export function formatNativeNpcCandidateDescriptions(
         const probe = definitions.probes[meaning.probe];
         if (!probe) throw new Error('The native movement probe is unavailable.');
         base = decisionOfferDescription({ kind: 'probe', direction: probe.direction });
+        break;
+      }
+      case 'guard': {
+        const tool = meaning.tool;
+        const observed = body(meaning.body);
+        const firstActionDescription = guardChoiceLabel(
+          tool.shield,
+          observed.name.name,
+          tool.label,
+        );
+        const equip = tool.equipment ? `${tool.equipment} ` : '';
+        const detail = guardDescription({
+          preparationSeconds: tool.preparation,
+          readySeconds: tool.ready,
+          coverageDegrees: tool.coverage,
+          reduction: tool.reduction,
+          recoverySeconds: tool.recovery,
+        });
+        base = {
+          firstActionDescription,
+          description: `${equip}${firstActionDescription}. ${detail}`,
+        };
+        subjectIds = [observed.sourceId];
         break;
       }
       case 'strike': {

@@ -69,6 +69,7 @@ pub(super) fn command(
                 | "fish"
                 | "cook"
                 | "tend-fire"
+                | "guard"
                 | "strike"
                 | "cancel"
                 | "withdraw-attempt"

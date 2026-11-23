@@ -62,7 +62,7 @@ pub(crate) use npc_selection::NpcObservationSelection;
 mod npc_candidates;
 pub use npc_candidates::{
     NpcActivityChoice, NpcActivityFacts, NpcDescriptionOffer, NpcDescriptionSubject,
-    NpcDescriptionsRequest, NpcOfferMeaning,
+    NpcDescriptionsRequest, NpcGuardTool, NpcOfferMeaning,
 };
 pub use crate::worlds::base_decision_offers::ActivityChoiceLabel as NpcActivityLabel;
 pub(crate) use npc_candidates::{

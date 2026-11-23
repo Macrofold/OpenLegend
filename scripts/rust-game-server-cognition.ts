@@ -1,6 +1,7 @@
 import {
   activityRequestDescriptors,
   appraisalPin,
+  BASE_GUARD_CHOICE_COPY,
   decisionOfferDescription,
   formatObservedBodyHealth,
   itemOutputFamilies,
@@ -97,6 +98,7 @@ function choiceText(world: WorldState) {
       reach: 19759,
     }).replace('19759', '@reach'),
     probe: description({ kind: 'probe', direction: '@direction' }),
+    guard: BASE_GUARD_CHOICE_COPY,
     strikes: Object.values(world.nativeStrikes ?? {}).map((definition) =>
       [false, true].map((hunting) =>
         description({ kind: 'natural-strike', target: name, definition, hunting }),

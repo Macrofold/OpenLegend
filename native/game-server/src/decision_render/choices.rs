@@ -1,7 +1,7 @@
 use super::DecisionPolicy;
 use crate::world::WorldError;
 use openlegend_simulation::{
-    capture::{NpcActivityLabel, NpcDescriptionOffer, NpcDescriptionsRequest, NpcOfferMeaning},
+    capture::{NpcActivityLabel, NpcDescriptionOffer, NpcDescriptionsRequest, NpcGuardTool, NpcOfferMeaning},
     commands::WorkTransitionMode,
     encoding::json_record,
     host::ByteBudget,
@@ -9,7 +9,7 @@ use openlegend_simulation::{
     reception::AttributeView,
     runtime::{LocalFormat, RuntimeProvider, RuntimeProviderInput},
     state::Named,
-    text::JsText,
+    text::{JsText, TextRef, substitute_fields},
     values::AttributeValue,
 };
 use openlegend_world_host::pool::HostError;
@@ -40,7 +40,7 @@ impl DecisionPolicy {
                 let descriptions = request
                     .offers()
                     .iter()
-                    .map(|offer| self.offer(request, offer).map(JsText::from))
+                    .map(|offer| self.offer(request, offer))
                     .collect::<Result<Vec<_>, _>>()?;
                 let activity_labels = request
                     .activity_labels()
@@ -63,16 +63,17 @@ impl DecisionPolicy {
         &self,
         input: &NpcDescriptionsRequest,
         offer: &NpcDescriptionOffer,
-    ) -> Result<String, WorldError> {
+    ) -> Result<JsText, WorldError> {
         use NpcOfferMeaning as Meaning;
         if matches!(offer.meaning, Meaning::Handover { .. }) {
-            return Ok(String::new());
+            return Ok(JsText::default());
         }
         let words = &self.choices;
         let body = match offer.meaning {
             Meaning::Follow { body }
             | Meaning::Approach { body, .. }
             | Meaning::Strike { body, .. }
+            | Meaning::Guard { body, .. }
             | Meaning::Fish { body }
             | Meaning::Cook { body }
             | Meaning::FireCare { body } => Some(body),
@@ -140,6 +141,7 @@ impl DecisionPolicy {
                 text(&words["strikes"][*definition][usize::from(*hunting)])?,
                 &[("name", &name(target.name, NameArticle::Definite)?)],
             ),
+            Meaning::Guard { .. } => String::new(),
             // Their core actions supplied an installed activity description.
             Meaning::Fish { .. } | Meaning::Cook { .. } | Meaning::FireCare { .. }
             | Meaning::Handover { .. } => String::new(),
@@ -190,6 +192,39 @@ impl DecisionPolicy {
                 ],
             ));
         }
+        if let Meaning::Guard { tool, .. } = &offer.meaning {
+            let mut description = self.guard(tool, &target.name.name)?;
+            description.push_str(&result);
+            return Ok(description);
+        }
+        Ok(result.into())
+    }
+
+    fn guard(&self, tool: &NpcGuardTool, target: &JsText) -> Result<JsText, WorldError> {
+        let choice = &self.choices["guard"];
+        let mut result = tool.equipment.clone();
+        if !result.is_empty() {
+            result.push_str(" ");
+        }
+        result.push_text(&substitute_fields(
+            text(&choice["facing"])?,
+            &[
+                ("label", TextRef::Unicode(&tool.label)),
+                ("shield", TextRef::Text(&tool.shield)),
+                ("name", TextRef::Text(target)),
+            ],
+        ));
+        result.push_str(". ");
+        result.push_text(&substitute_fields(
+            text(&choice["detail"])?,
+            &[
+                ("preparation", TextRef::Unicode(&number_text(tool.preparation)?)),
+                ("ready", TextRef::Unicode(&number_text(tool.ready)?)),
+                ("reduction", TextRef::Unicode(&number_text(tool.reduction * 100.0)?)),
+                ("coverage", TextRef::Unicode(&number_text(tool.coverage)?)),
+                ("recovery", TextRef::Unicode(&number_text(tool.recovery)?)),
+            ],
+        ));
         Ok(result)
     }
 

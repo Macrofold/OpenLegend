@@ -42,6 +42,9 @@ mod fire;
 use fire::FuelChoices;
 mod gifts;
 use gifts::GiftProposals;
+mod defense;
+use defense::GuardChoices;
+pub use defense::NpcGuardTool;
 
 struct Target {
     body: usize,
@@ -70,6 +73,7 @@ enum Enumerate {
     Fire(usize, usize),
     Cook(usize, usize),
     Strike(usize, usize),
+    Guard(usize, usize),
     CurrentWork(usize),
     PausedWork(usize),
     Done,
@@ -115,6 +119,7 @@ pub(crate) struct NpcCandidateCursor {
     cooking: Option<CookingChoices>,
     fuels: Option<FuelChoices>,
     gift_proposals: Option<GiftProposals>,
+    guard_choices: Option<GuardChoices>,
 }
 
 #[derive(Serialize)]
@@ -281,6 +286,7 @@ impl NpcCandidateCursor {
             cooking: None,
             fuels: None,
             gift_proposals: None,
+            guard_choices: None,
         })
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {

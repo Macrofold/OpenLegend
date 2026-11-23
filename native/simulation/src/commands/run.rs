@@ -1852,12 +1852,6 @@ impl CommandCursor {
                     self.phase = Phase::Done;
                 }
                 Phase::RecordPrepared => {
-                    if matches!(self.command, NativeCommand::Guard { .. })
-                        && !self.source_scope_started
-                        && !self.equip_guard(core)?
-                    {
-                        continue;
-                    }
                     if matches!(self.command, NativeCommand::Ranged { .. })
                         && !self.source_scope_started
                         && !self.prepare_ranged_equipment(core)?
@@ -2043,6 +2037,9 @@ impl CommandCursor {
                             behavior: Some(false),
                         },
                     )?;
+                    if guard_heading.is_some() && !self.equip_guard(core)? {
+                        continue;
+                    }
                     if place_hearth { core.reserve_hearth_holds(&actor_id)?; }
                     if projectile { core.reserve_projectile(&actor_id)?; }
                     if let Some(heading) = guard_heading {

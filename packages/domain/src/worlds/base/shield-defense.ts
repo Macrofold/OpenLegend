@@ -31,11 +31,41 @@ export const BASE_GUARD_TEXT = {
   recovery: 'Finish recovering before guarding or attacking again. Movement remains available.',
   keywords: ['guard', 'shield', 'defend'],
 };
-export function guardChoiceLabel(shieldName: string, targetName?: string): string {
-  return `${BASE_GUARD_PROFILE.label} with ${shieldName} ${targetName ? `facing ${targetName}` : 'in this direction'}`;
+export const BASE_GUARD_CHOICE_COPY = {
+  facing: '{label} with {shield} facing {name}',
+  direction: '{label} with {shield} in this direction',
+  detail:
+    'Prepare for {preparation} game seconds, then guard one connecting melee blow or supported projectile for up to {ready} game seconds. Reduces injury by {reduction}% within the front {coverage}°; then recover for {recovery} game seconds. Facing stays fixed. A late or rear blow still hurts. Other hazards are not blocked. Movement ends readiness and remains available during recovery.',
+} as const;
+function guardCopy(template: string, fields: Readonly<Record<string, string | number>>) {
+  return template.replace(/\{([a-z]+)\}/gu, (marker, key: string) =>
+    Object.hasOwn(fields, key) ? String(fields[key]) : marker,
+  );
 }
-export function guardDescription(profile: ContactDefenseProfile): string {
-  return `Prepare for ${profile.preparationSeconds} game seconds, then guard one connecting melee blow or supported projectile for up to ${profile.readySeconds} game seconds. Reduces injury by ${profile.reduction * 100}% within the front ${profile.coverageDegrees}°; then recover for ${profile.recoverySeconds} game seconds. Facing stays fixed. A late or rear blow still hurts. Other hazards are not blocked. Movement ends readiness and remains available during recovery.`;
+export function guardChoiceLabel(
+  shieldName: string,
+  targetName?: string,
+  label = BASE_GUARD_PROFILE.label,
+): string {
+  return guardCopy(targetName ? BASE_GUARD_CHOICE_COPY.facing : BASE_GUARD_CHOICE_COPY.direction, {
+    label,
+    shield: shieldName,
+    name: targetName ?? '',
+  });
+}
+export function guardDescription(
+  profile: Pick<
+    ContactDefenseProfile,
+    'preparationSeconds' | 'readySeconds' | 'reduction' | 'coverageDegrees' | 'recoverySeconds'
+  >,
+): string {
+  return guardCopy(BASE_GUARD_CHOICE_COPY.detail, {
+    preparation: profile.preparationSeconds,
+    ready: profile.readySeconds,
+    reduction: profile.reduction * 100,
+    coverage: profile.coverageDegrees,
+    recovery: profile.recoverySeconds,
+  });
 }
 export function guardContactResult(
   result: {

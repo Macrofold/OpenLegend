@@ -110,8 +110,7 @@ impl NpcWorkContext {
                 .as_ref()
                 .map_or_else(Vec::new, |action| action.consumed.clone()),
             has_plan: actor.agency.plan.is_some(),
-            // The selected physical installer refuses contact guards; ordinary
-            // readiness still survives after its original action is gone.
+            // Committed readiness survives after its original action is gone.
             combat_until: actor.combat_ready_at.unwrap_or(0.0),
             evade_until: actor.evasion_ready_at.unwrap_or(0.0),
             suspension_problem: pause.outcome,

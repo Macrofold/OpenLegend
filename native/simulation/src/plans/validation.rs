@@ -80,6 +80,17 @@ pub(crate) fn valid_command(
                 && weapon_item_id.is_none()
                 && envelope.human_initiated != Some(true)
         }
+        NativeCommand::Guard {
+            envelope,
+            facing: crate::commands::guard_input::GuardFacing::Subject { id, life },
+            item_id,
+            ..
+        } => {
+            envelope.human_initiated.is_none()
+                && is_safe_record_id(id)
+                && *life <= crate::identity::MAX_SAFE_INTEGER
+                && is_safe_record_id(item_id)
+        }
         NativeCommand::StatusEffect {
             target_id,
             definition_id,

@@ -69,7 +69,7 @@ impl TextRef<'_> {
 
 /// Replace only placeholders in the installed template. Substituted names can
 /// carry exact UTF-16 and are never interpreted as template input themselves.
-pub(crate) fn substitute_fields(template: &str, fields: &[(&str, TextRef<'_>)]) -> JsText {
+pub fn substitute_fields(template: &str, fields: &[(&str, TextRef<'_>)]) -> JsText {
     let mut result = JsText::from("");
     let mut rest = template;
     while let Some(start) = rest.find('{') {

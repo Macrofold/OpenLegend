@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct DefenseProfile {
     pub reduction: f64,
-    coverage_degrees: f64,
+    pub(crate) coverage_degrees: f64,
     pub preparation_seconds: f64,
     pub ready_seconds: f64,
     pub recovery_seconds: f64,

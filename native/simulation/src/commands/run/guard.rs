@@ -37,9 +37,7 @@ impl CommandCursor {
         }
         let Some(lot) =
             crate::install::owned_by(&state.physical, &installed.retained, &source.id, item_id)?
-                .filter(|lot| {
-                    lot.equipped || *auto_equip && lot.available_quantity == 1 && lot.quantity == 1
-                })
+                .filter(|lot| lot.equipped || *auto_equip)
         else {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
@@ -59,6 +57,20 @@ impl CommandCursor {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
         };
+        if !crate::execution::equipment_can_equip(
+            state,
+            source,
+            state
+                .physical
+                .entities
+                .get(item_id)
+                .ok_or(ExecutionError::Invariant)?,
+            true,
+            &self.budget,
+        )? {
+            self.refuse(&ordinary.not_applicable);
+            return Ok(false);
+        }
         let (heading, target) = match facing {
             GuardFacing::Direction(heading) => (*heading, None),
             GuardFacing::Subject { id, life } => {
@@ -156,7 +168,8 @@ impl CommandCursor {
             .finish(answer)
             .map_err(ExecutionError::Sensor)?;
         if result.seen(id) != Some(true) {
-            self.refuse(&core.state.installed.ordinary_actions.value().not_applicable);
+            let installed = core.state.installed.clone();
+            self.discovery_refuse(&installed.occurrence_rules.value().response.offers.availability.unperceived)?;
         } else {
             self.phase = Phase::Prepared;
         }
@@ -182,11 +195,7 @@ impl CommandCursor {
         if equipped {
             return Ok(true);
         }
-        let decision = core.change_equipment(
-            &envelope.actor_id,
-            item_id,
-            crate::execution::EquipmentRequest::Equip,
-        )?;
+        let decision = core.equip_for_action(&envelope.actor_id, item_id)?;
         if matches!(
             decision,
             crate::execution::EquipmentDecision::Applied { .. }
