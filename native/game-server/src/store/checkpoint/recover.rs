@@ -730,53 +730,20 @@ impl Store {
         if let Some(request) = provider.restore_support().map_err(runtime)? {
             return self.answer_checkpoint_support(tx, candidate, &request).await;
         }
-        #[derive(Deserialize)]
-        struct Request<'a> {
-            kind: &'a str,
-            value: RequestValue<'a>,
+        if let Some(request) = provider.restore_accounts().map_err(runtime)? {
+            return self.answer_checkpoint_account_retention(tx, candidate, &request).await;
         }
-        #[derive(Deserialize)]
-        struct RequestValue<'a> {
-            phase: Option<&'a str>,
-        }
-        enum Selection {
-            Members,
-            Accounts,
-        }
-        let selected = provider
-            .with_request(|text| {
-                let request: Request =
-                    serde_json::from_str(text).map_err(|_| StoreError::InvalidRecord)?;
-                Ok::<_, StoreError>(match (request.kind, request.value.phase) {
-                    ("restore-retention", Some("membership")) => Selection::Members,
-                    ("restore-retention", Some("metadata" | "records")) => Selection::Accounts,
-                    _ => return Err(StoreError::InvalidRecord),
-                })
-            })
-            .map_err(runtime)??;
-        match selected {
-            Selection::Members => {
-                let request = provider
-                    .prepare_restore_membership(&self.budget)
-                    .map_err(runtime)?;
-                let matched = self
-                    .checkpoint_retention_membership(tx, candidate, &request)
-                    .await?;
-                session
-                    .complete_restore_membership(
-                        &request,
-                        &matched.aliases,
-                        &matched.individuals,
-                        matched.max_pages,
-                        matched.max_bytes,
-                    )
-                    .map_err(runtime)
-            }
-            Selection::Accounts => {
-                self.answer_checkpoint_account_retention(tx, candidate, provider)
-                    .await
-            }
-        }
+        // The existing packet decoder still joins the candidate's recent
+        // directory with the prospective SQL read.
+        let request = provider.prepare_restore_membership(&self.budget).map_err(runtime)?;
+        let matched = self.checkpoint_retention_membership(tx, candidate, &request).await?;
+        session.complete_restore_membership(
+            &request,
+            &matched.aliases,
+            &matched.individuals,
+            matched.max_pages,
+            matched.max_bytes,
+        ).map_err(runtime)
     }
 
     pub(super) async fn current_recovery_privacy(

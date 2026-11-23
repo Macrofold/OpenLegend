@@ -170,6 +170,8 @@ With 36 overdue and 2,044 still-current optional accounts, both servers loaded t
 
 A separate fixture made all 2,080 optional accounts overdue at once. Both servers refused when complete retirement exceeded the existing four rounds of up to 64 selected accounts. Rust kept the previous generation, revision and memory bodies, and replay returned the same refusal. The prior encoded and typed stopped attempts both returned `RolledBack(InvalidRecord)`. All six disposable databases were removed. Results and diagnostic source are in `pressure-caller-evidence.tar.gz` (`625c01a7a6a8`) in the same evidence directory.
 
+The Rust server now passes account selection and the selected saved records directly through the recovery transaction. The same signed cases passed on executable `ee2f1c6feb32` (base `99a68778e`, patch `bf5fb331d8f0`). The bounded case retired 36 and reopened with the other actor’s protected account. The over-limit case kept the exact prior memory bodies and returned the same refusal on replay. Both databases were removed and final native reservations reached zero. Locked Rust and addon checks, TypeScript build type checking and the network boundary check passed. Evidence is `nsc04-typed-restore-accounts-20261122/caller-evidence.tar.gz` (`61ae805427b2`).
+
 ### Observation support in Rust checkpoint restore
 
 The running Rust server now passes the selected observation references and funded checkpoint rows directly to the PostgreSQL reader. It sends back the selected positions under the original request. The same native retention owner decides what stays. Each reader holds its exact candidate until its work ends.

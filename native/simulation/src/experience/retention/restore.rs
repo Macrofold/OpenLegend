@@ -8,21 +8,40 @@ use serde_json::value::RawValue;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Binding {
-    world_id: String,
-    generation: String,
-    actor_id: String,
+pub struct RestoreAccountBinding {
+    pub world_id: String,
+    pub generation: String,
+    pub actor_id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    accepted_cut: u64,
+    pub accepted_cut: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    identity_through: u64,
+    pub identity_through: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    candidate_id: u64,
+    pub candidate_id: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    candidate_generation: u64,
+    pub candidate_generation: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    request_serial: u64,
+    pub request_serial: u64,
 }
+impl RestoreAccountBinding {
+    fn provider_binding(&self, revision: u64) -> GeometryBinding {
+        GeometryBinding::new(
+            CandidateKey {
+                id: self.candidate_id,
+                base_cut: self.accepted_cut,
+                generation: self.candidate_generation,
+            },
+            revision,
+            self.request_serial,
+        )
+    }
+}
+heap_record!(RestoreAccountBinding {
+    world_id,
+    generation,
+    actor_id
+});
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 enum Phase {
@@ -30,42 +49,132 @@ enum Phase {
     Records,
     Membership,
 }
+
+#[derive(Clone, Copy)]
+pub enum RestoreAccountQuery<'a> {
+    Metadata {
+        at: f64,
+        due: bool,
+        pressured: PressuredAccounts,
+    },
+    Records {
+        at: f64,
+        selected: &'a [AccountCandidate],
+    },
+}
+
+pub struct RestoreAccountRequest<'a> {
+    pub binding: &'a RestoreAccountBinding,
+    pub query: RestoreAccountQuery<'a>,
+    pub maximum_transfer_bytes: usize,
+}
+
+enum QuestionData {
+    Metadata {
+        at: f64,
+        due: bool,
+        pressured: PressuredAccounts,
+    },
+    Records {
+        at: f64,
+        selected: Vec<AccountCandidate>,
+    },
+    Membership(Box<RawValue>),
+}
+impl QuestionData {
+    fn phase(&self) -> Phase {
+        match self {
+            Self::Metadata { .. } => Phase::Metadata,
+            Self::Records { .. } => Phase::Records,
+            Self::Membership(_) => Phase::Membership,
+        }
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Request<'a, T: Serialize + ?Sized> {
-    binding: &'a Binding,
+struct Request<'a, T> {
+    binding: &'a RestoreAccountBinding,
     phase: Phase,
-    data: &'a T,
+    data: T,
     maximum_transfer_bytes: usize,
 }
+
 pub(crate) struct RestoreRetentionQuestion {
-    binding: Binding,
-    phase: Phase,
-    data: Box<RawValue>,
+    binding: RestoreAccountBinding,
+    data: QuestionData,
     maximum_transfer_bytes: usize,
     _storage: ByteReservation,
 }
+impl Serialize for RestoreRetentionQuestion {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.value().serialize(serializer)
+    }
+}
 impl RestoreRetentionQuestion {
+    pub(crate) fn accounts(&self) -> Option<RestoreAccountRequest<'_>> {
+        let query = match &self.data {
+            QuestionData::Metadata { at, due, pressured } => RestoreAccountQuery::Metadata {
+                at: *at,
+                due: *due,
+                pressured: *pressured,
+            },
+            QuestionData::Records { at, selected } => {
+                RestoreAccountQuery::Records { at: *at, selected }
+            }
+            QuestionData::Membership(_) => return None,
+        };
+        Some(RestoreAccountRequest {
+            binding: &self.binding,
+            query,
+            maximum_transfer_bytes: self.maximum_transfer_bytes,
+        })
+    }
+
+    /// Compatibility with the active Node host. The stand-alone reader borrows
+    /// the typed question and the canonical changes through its SQL await.
     pub(crate) fn value(&self) -> impl Serialize + '_ {
-        // The projection wrapper flattens this typed envelope. Flattening a
-        // whole RawValue instead would expose serde's private raw-value key.
+        struct Body<'a>(&'a RestoreRetentionQuestion);
+        impl Serialize for Body<'_> {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                #[derive(Serialize)]
+                #[serde(rename_all = "camelCase")]
+                struct Records<'a> {
+                    actor_id: &'a str,
+                    at: f64,
+                    selected: &'a [AccountCandidate],
+                }
+                let binding = &self.0.binding;
+                match &self.0.data {
+                    QuestionData::Metadata { at, due, pressured } => AccountMetadataQuery {
+                        world_id: &binding.world_id,
+                        generation: &binding.generation,
+                        accepted_cut: binding.accepted_cut,
+                        actor_id: &binding.actor_id,
+                        at: *at,
+                        due: *due,
+                        pressured: *pressured,
+                    }
+                    .serialize(serializer),
+                    QuestionData::Records { at, selected } => Records {
+                        actor_id: &binding.actor_id,
+                        at: *at,
+                        selected,
+                    }
+                    .serialize(serializer),
+                    QuestionData::Membership(raw) => raw.serialize(serializer),
+                }
+            }
+        }
         Request {
             binding: &self.binding,
-            phase: self.phase,
-            data: self.data.as_ref(),
+            phase: self.data.phase(),
+            data: Body(self),
             maximum_transfer_bytes: self.maximum_transfer_bytes,
         }
     }
     pub(crate) fn provider_binding(&self, revision: u64) -> GeometryBinding {
-        GeometryBinding::new(
-            CandidateKey {
-                id: self.binding.candidate_id,
-                base_cut: self.binding.accepted_cut,
-                generation: self.binding.candidate_generation,
-            },
-            revision,
-            self.binding.request_serial,
-        )
+        self.binding.provider_binding(revision)
     }
     pub(crate) fn membership<T: Serialize + ?Sized>(
         core: &CoreMutation<'_>,
@@ -75,17 +184,53 @@ impl RestoreRetentionQuestion {
         data: &T,
         budget: &ByteBudget,
     ) -> Result<Arc<Self>, ExecutionError> {
-        Self::new(core, actor, key, serial, Phase::Membership, data, budget)
+        let (binding, maximum_transfer_bytes, mut storage) =
+            Self::bind(core, actor, key, serial, budget)?;
+        let request = Request {
+            binding: &binding,
+            phase: Phase::Membership,
+            data,
+            maximum_transfer_bytes,
+        };
+        let encoded =
+            crate::encoding::json_record_len(&request).map_err(|_| ExecutionError::Invariant)?;
+        storage.merge(budget.reserve(encoded.checked_mul(2).ok_or(ExecutionError::Capacity)?)?)?;
+        let encoded = json_record(data).map_err(|_| ExecutionError::Invariant)?;
+        let data = RawValue::from_string(encoded).map_err(|_| ExecutionError::Invariant)?;
+        Ok(Arc::new(Self {
+            binding,
+            data: QuestionData::Membership(data),
+            maximum_transfer_bytes,
+            _storage: storage,
+        }))
     }
-    fn new<T: Serialize + ?Sized>(
+    fn new(
         core: &CoreMutation<'_>,
         actor: &str,
         key: CandidateKey,
         serial: u64,
-        phase: Phase,
-        data: &T,
+        data_bytes: usize,
         budget: &ByteBudget,
+        prepare: impl FnOnce() -> QuestionData,
     ) -> Result<Arc<Self>, ExecutionError> {
+        let (binding, maximum_transfer_bytes, mut storage) =
+            Self::bind(core, actor, key, serial, budget)?;
+        storage.merge(budget.reserve(data_bytes)?)?;
+        let data = prepare();
+        Ok(Arc::new(Self {
+            binding,
+            data,
+            maximum_transfer_bytes,
+            _storage: storage,
+        }))
+    }
+    fn bind(
+        core: &CoreMutation<'_>,
+        actor: &str,
+        key: CandidateKey,
+        serial: u64,
+        budget: &ByteBudget,
+    ) -> Result<(RestoreAccountBinding, usize, ByteReservation), ExecutionError> {
         let bytes = heap_sum([
             size_of::<Self>() + 2 * size_of::<usize>(),
             core.state.physical.header.id.len(),
@@ -93,8 +238,8 @@ impl RestoreRetentionQuestion {
             actor.len(),
         ])
         .ok_or(ExecutionError::Capacity)?;
-        let mut storage = budget.reserve(bytes)?;
-        let binding = Binding {
+        let storage = budget.reserve(bytes)?;
+        let binding = RestoreAccountBinding {
             world_id: core.state.physical.header.id.clone(),
             generation: core.state.generation.clone(),
             actor_id: actor.to_owned(),
@@ -108,26 +253,14 @@ impl RestoreRetentionQuestion {
         if maximum_transfer_bytes == 0 {
             return Err(ExecutionError::Capacity);
         }
-        let request = Request {
-            binding: &binding,
-            phase,
-            data,
-            maximum_transfer_bytes,
-        };
-        let encoded =
-            crate::encoding::json_record_len(&request).map_err(|_| ExecutionError::Invariant)?;
-        storage.merge(budget.reserve(encoded.checked_mul(2).ok_or(ExecutionError::Capacity)?)?)?;
-        let data = RawValue::from_string(json_record(data).map_err(|_| ExecutionError::Invariant)?)
-            .map_err(|_| ExecutionError::Invariant)?;
-        Ok(Arc::new(Self {
-            binding,
-            phase,
-            data,
-            maximum_transfer_bytes,
-            _storage: storage,
-        }))
+        Ok((binding, maximum_transfer_bytes, storage))
     }
 }
+pub enum RestoreAccountAnswer {
+    Metadata(AccountMetadataReply),
+    Records(AccountBodiesReply),
+}
+
 enum Data {
     Metadata(AccountMetadataReply),
     Records(AccountBodiesReply),
@@ -142,23 +275,79 @@ pub(crate) struct RestoreMembershipAnswer {
     _storage: Option<ByteReservation>,
 }
 pub(crate) struct RestoreRetentionAnswer {
-    binding: Binding,
+    binding: RestoreAccountBinding,
     data: Data,
     wire_bytes: usize,
     _binding_storage: ByteReservation,
     _data_storage: ByteReservation,
 }
 impl RestoreRetentionAnswer {
-    pub(crate) fn provider_binding(&self, revision: u64) -> GeometryBinding {
-        GeometryBinding::new(
-            CandidateKey {
-                id: self.binding.candidate_id,
-                base_cut: self.binding.accepted_cut,
-                generation: self.binding.candidate_generation,
+    /// Continue under the original finite transfer allowance without building
+    /// the retired application packet. The answer owns its selected SQL rows.
+    pub(crate) fn from_accounts(
+        question: &RestoreRetentionQuestion,
+        answer: RestoreAccountAnswer,
+        mut custody: ByteReservation,
+    ) -> Result<(Self, ByteReservation), HistoryPreparationError> {
+        #[derive(Serialize)]
+        struct Envelope<'a, T> {
+            binding: &'a RestoreAccountBinding,
+            phase: Phase,
+            data: &'a T,
+        }
+        fn measure<T: Serialize + HeapBytes>(
+            binding: &RestoreAccountBinding,
+            phase: Phase,
+            value: &T,
+        ) -> Result<(usize, usize), HistoryPreparationError> {
+            let wire_bytes = crate::encoding::json_record_len(&Envelope {
+                binding,
+                phase,
+                data: value,
+            })
+            .map_err(|_| HistoryPreparationError::MalformedResponse)?;
+            let heap = value
+                .heap_bytes()
+                .ok_or(HistoryPreparationError::Capacity)?;
+            Ok((wire_bytes, heap))
+        }
+        let binding = &question.binding;
+        let (data, wire_bytes, heap) = match (question.data.phase(), answer) {
+            (Phase::Metadata, RestoreAccountAnswer::Metadata(value)) => {
+                let (wire_bytes, heap) = measure(binding, Phase::Metadata, &value)?;
+                (Data::Metadata(value), wire_bytes, heap)
+            }
+            (Phase::Records, RestoreAccountAnswer::Records(value)) => {
+                let (wire_bytes, heap) = measure(binding, Phase::Records, &value)?;
+                (Data::Records(value), wire_bytes, heap)
+            }
+            _ => return Err(HistoryPreparationError::StaleResponse),
+        };
+        if wire_bytes > question.maximum_transfer_bytes {
+            return Err(HistoryPreparationError::Capacity);
+        }
+        let binding_bytes = binding
+            .heap_bytes()
+            .ok_or(HistoryPreparationError::Capacity)?;
+        let bytes = heap_sum([size_of::<Self>(), binding_bytes, heap])
+            .ok_or(HistoryPreparationError::Capacity)?;
+        custody.resize(bytes)?;
+        let wrapper = custody.split_off(size_of::<Self>())?;
+        let binding_storage = custody.split_off(binding_bytes)?;
+        Ok((
+            Self {
+                binding: binding.clone(),
+                data,
+                wire_bytes,
+                _binding_storage: binding_storage,
+                _data_storage: custody,
             },
-            revision,
-            self.binding.request_serial,
-        )
+            wrapper,
+        ))
+    }
+
+    pub(crate) fn provider_binding(&self, revision: u64) -> GeometryBinding {
+        self.binding.provider_binding(revision)
     }
 
     pub(crate) fn into_membership(
@@ -197,12 +386,16 @@ impl RestoreRetentionAnswer {
         let envelope: Envelope<'_> =
             serde_json::from_str(text).map_err(|_| HistoryPreparationError::MalformedResponse)?;
         drop(envelope_storage);
-        let binding_storage =
-            crate::install::reserve_typed_parse::<Binding>(envelope.binding.get(), 0, None, budget)
-                .map_err(|error| match error {
-                    crate::install::InstallError::Capacity => HistoryPreparationError::Capacity,
-                    _ => HistoryPreparationError::MalformedResponse,
-                })?;
+        let binding_storage = crate::install::reserve_typed_parse::<RestoreAccountBinding>(
+            envelope.binding.get(),
+            0,
+            None,
+            budget,
+        )
+        .map_err(|error| match error {
+            crate::install::InstallError::Capacity => HistoryPreparationError::Capacity,
+            _ => HistoryPreparationError::MalformedResponse,
+        })?;
         let binding = serde_json::from_str(envelope.binding.get())
             .map_err(|_| HistoryPreparationError::MalformedResponse)?;
         let (data, data_storage) = match envelope.phase {
@@ -323,32 +516,27 @@ impl RestoreAccountCursor {
                 return Err(HistoryPreparationError::StaleResponse);
             }
             let read = self.read.as_mut().ok_or(ExecutionError::Invariant)?;
-            match (question.phase, answer.data) {
+            match (question.data.phase(), answer.data) {
                 (Phase::Metadata, Data::Metadata(metadata)) => {
                     let selection = read
                         .prepare_selection(metadata, budget)
                         .map_err(import_error)?;
-                    #[derive(Serialize)]
-                    #[serde(rename_all = "camelCase")]
-                    struct Records<'a> {
-                        actor_id: &'a str,
-                        at: f64,
-                        selected: &'a [AccountCandidate],
-                    }
-                    let data = Records {
-                        actor_id: &read.actor,
-                        at: read.at,
-                        selected: &selection.candidates,
-                    };
+                    let bytes = selection
+                        .candidates
+                        .heap_bytes()
+                        .ok_or(ExecutionError::Capacity)?;
                     let serial = core.journal.next_provider_serial()?;
                     let pending = RestoreRetentionQuestion::new(
                         core,
                         &read.actor,
                         self.key,
                         serial,
-                        Phase::Records,
-                        &data,
+                        bytes,
                         budget,
+                        || QuestionData::Records {
+                            at: read.at,
+                            selected: selection.candidates.clone(),
+                        },
                     )?;
                     read.selection = Some(selection);
                     self.pending = Some(pending);
@@ -375,17 +563,8 @@ impl RestoreAccountCursor {
                 return Err(HistoryPreparationError::StaleResponse);
             }
             let read = self.read.as_ref().ok_or(ExecutionError::Invariant)?;
-            let due = read.accounts.next_due.is_some_and(|at| at <= read.at);
-            let policy = &read.installed.attention.value().retention;
-            let mut needed = due;
-            for class in [
-                AccountClass::Optional,
-                AccountClass::Required,
-                AccountClass::Speech,
-            ] {
-                needed |= pressure(&read.accounts, policy, class, !due)?;
-            }
-            if !needed {
+            let (due, pressured) = read.metadata_filter()?;
+            if !due && pressured.classes().next().is_none() {
                 self.read = None;
                 self.done = true;
                 return Ok(RestoreAccountStep::Complete);
@@ -396,9 +575,13 @@ impl RestoreAccountCursor {
                 &read.actor,
                 self.key,
                 serial,
-                Phase::Metadata,
-                &read.packet()?,
+                0,
                 budget,
+                || QuestionData::Metadata {
+                    at: read.at,
+                    due,
+                    pressured,
+                },
             )?);
         }
         Ok(RestoreAccountStep::Question(Arc::clone(

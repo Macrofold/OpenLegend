@@ -13,6 +13,9 @@ mod apply;
 pub(crate) use apply::{AccountRetentionCursor, CompletedAccountRetention};
 mod recollection;
 mod restore;
+pub use restore::{
+    RestoreAccountAnswer, RestoreAccountBinding, RestoreAccountQuery, RestoreAccountRequest,
+};
 pub(crate) use restore::{
     RestoreAccountCursor, RestoreAccountStep, RestoreRetentionAnswer, RestoreRetentionQuestion,
 };
@@ -26,44 +29,53 @@ pub(crate) struct RetentionPreparation {
 }
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct AccountCandidate {
-    kind: PersonalSourceKind,
-    id: String,
-    record_id: String,
-    position: u64,
-    revision: String,
-    at: f64,
-    bytes: u64,
-    class: AccountClass,
-    due: Option<f64>,
-    rank: u64,
-    protected: bool,
+pub struct AccountCandidate {
+    pub kind: PersonalSourceKind,
+    pub id: String,
+    pub record_id: String,
+    pub position: u64,
+    pub revision: String,
+    pub at: f64,
+    pub bytes: u64,
+    pub class: AccountClass,
+    pub due: Option<f64>,
+    pub rank: u64,
+    pub protected: bool,
 }
 heap_record!(AccountCandidate {
     id,
     record_id,
     revision
 });
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct AccountMetadataReply {
+pub struct AccountMetadataReply {
     pub metadata: Vec<AccountCandidate>,
     pub next_due: Option<f64>,
     pub more: bool,
 }
-#[derive(Deserialize)]
+heap_record!(AccountMetadataReply { metadata });
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct AccountBodyRow {
+pub struct AccountBodyRow {
     pub kind: PersonalSourceKind,
     pub row: InstalledRow,
     pub rendered_summary: Option<crate::text::JsText>,
 }
-#[derive(Deserialize)]
+heap_record!(AccountBodyRow {
+    row,
+    rendered_summary
+});
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct AccountBodiesReply {
+pub struct AccountBodiesReply {
     pub rows: Vec<AccountBodyRow>,
     pub occupied_memory_ids: Vec<String>,
 }
+heap_record!(AccountBodiesReply {
+    rows,
+    occupied_memory_ids
+});
 struct Selection {
     candidates: Vec<AccountCandidate>,
     next_due: Option<f64>,
@@ -178,22 +190,35 @@ fn candidate(record: &PersonalSourceRecord, installed: &InstalledWorld) -> Accou
         protected: header.protected,
     }
 }
-struct Classes([bool; 3]);
-impl Serialize for Classes {
-    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        use serde::ser::SerializeSeq;
-        let mut seq = s.serialize_seq(None)?;
-        for (yes, class) in self.0.iter().zip([
-            AccountClass::Optional,
-            AccountClass::Required,
-            AccountClass::Speech,
-        ]) {
-            if *yes {
-                seq.serialize_element(&class)?;
-            }
-        }
-        seq.end()
+#[derive(Clone, Copy)]
+pub struct PressuredAccounts([bool; 3]);
+impl PressuredAccounts {
+    pub fn classes(self) -> impl Iterator<Item = AccountClass> {
+        self.0
+            .into_iter()
+            .zip([
+                AccountClass::Optional,
+                AccountClass::Required,
+                AccountClass::Speech,
+            ])
+            .filter_map(|(needed, class)| needed.then_some(class))
     }
+}
+impl Serialize for PressuredAccounts {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.collect_seq(self.classes())
+    }
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AccountMetadataQuery<'a> {
+    world_id: &'a str,
+    generation: &'a str,
+    accepted_cut: u64,
+    actor_id: &'a str,
+    at: f64,
+    due: bool,
+    pressured: PressuredAccounts,
 }
 impl AccountRetentionRead {
     pub(crate) fn capture(
@@ -299,40 +324,21 @@ impl AccountRetentionRead {
         read.complete_checkpoint = true;
         Ok(read)
     }
-    pub(crate) fn packet(&self) -> Result<impl Serialize + '_, ExecutionError> {
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Packet<'a> {
-            world_id: &'a str,
-            generation: &'a str,
-            accepted_cut: u64,
-            actor_id: &'a str,
-            at: f64,
-            due: bool,
-            pressured: Classes,
-        }
+    fn metadata_filter(&self) -> Result<(bool, PressuredAccounts), ExecutionError> {
         let due = self.accounts.next_due.is_some_and(|at| at <= self.at);
-        let pressured = Classes([
-            pressure(
-                &self.accounts,
-                &self.installed.attention.value().retention,
-                AccountClass::Optional,
-                !due,
-            )?,
-            pressure(
-                &self.accounts,
-                &self.installed.attention.value().retention,
-                AccountClass::Required,
-                !due,
-            )?,
-            pressure(
-                &self.accounts,
-                &self.installed.attention.value().retention,
-                AccountClass::Speech,
-                !due,
-            )?,
-        ]);
-        Ok(Packet {
+        let policy = &self.installed.attention.value().retention;
+        Ok((
+            due,
+            PressuredAccounts([
+                pressure(&self.accounts, policy, AccountClass::Optional, !due)?,
+                pressure(&self.accounts, policy, AccountClass::Required, !due)?,
+                pressure(&self.accounts, policy, AccountClass::Speech, !due)?,
+            ]),
+        ))
+    }
+    pub(crate) fn packet(&self) -> Result<impl Serialize + '_, ExecutionError> {
+        let (due, pressured) = self.metadata_filter()?;
+        Ok(AccountMetadataQuery {
             world_id: &self.world,
             generation: &self.generation,
             accepted_cut: self.accepted_cut,

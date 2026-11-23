@@ -166,6 +166,10 @@ enum QuestionBody {
         Arc<crate::restore::RestoreArchivesQuestion>,
         Box<super::restore::RestoreReadProjection>,
     ),
+    RestoreAccounts(
+        Arc<crate::experience::retention::RestoreRetentionQuestion>,
+        Box<super::restore::RestoreReadProjection>,
+    ),
     ActivityLearningFormat(Arc<crate::activity::LearningFormatRequest>),
 }
 
@@ -397,6 +401,23 @@ impl ProviderQuestion {
             kind: self.kind,
             binding: self.binding,
             value: restore::RestoreReadRequest { request, restore_projection },
+        })
+    }
+
+    pub(crate) fn restore_accounts(
+        &self,
+    ) -> Option<(&crate::experience::retention::RestoreRetentionQuestion, &crate::records::ChangedRows)> {
+        match &self.body {
+            QuestionBody::RestoreAccounts(request, projection) => Some((request, &projection.changes)),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn restore_accounts_envelope(&self) -> Option<impl Serialize + '_> {
+        self.restore_accounts().map(|(request, restore_projection)| restore::RestoreQuestion {
+            kind: self.kind,
+            binding: self.binding,
+            value: restore::RestoreReadRequest { request, restore_projection: Some(restore_projection) },
         })
     }
 
@@ -676,6 +697,7 @@ enum AnswerBody {
     KnownPlaces(Box<KnownPlacesAnswer>),
     RestoreArchives(Box<crate::restore::RestoreArchivesAnswer>),
     SupportMembership(Box<crate::received::SupportMembershipAnswer>),
+    RestoreAccounts(Box<crate::experience::retention::RestoreRetentionAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     SourceVersions(Box<SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
@@ -889,6 +911,22 @@ impl ProviderResponse {
             kind: ProviderKind::SupportMembership,
             binding,
             body: AnswerBody::SupportMembership(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn restore_accounts(
+        binding: GeometryBinding,
+        answer: Box<crate::experience::retention::RestoreRetentionAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.provider_binding(binding.geometry_revision) {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::RestoreRetention,
+            binding,
+            body: AnswerBody::RestoreAccounts(answer),
             _reservation: reservation,
         })
     }
@@ -2231,6 +2269,9 @@ impl OperationDriver {
                     }
                     AnswerBody::RestoreArchives(value) => {
                         (Some(Answer::RestoreArchives(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::RestoreAccounts(value) => {
+                        (Some(Answer::RestoreRetention(*value)), Some(_reservation), None)
                     }
                     AnswerBody::PersonalHistory(value) => {
                         (Some(Answer::History(*value)), Some(_reservation), None)

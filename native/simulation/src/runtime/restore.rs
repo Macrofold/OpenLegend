@@ -1,6 +1,10 @@
 //! Restoration alone can reconcile an inactive installation. Until a genuine
 //! whole-install receipt is adopted, it cannot admit gameplay or private reads.
 use super::*;
+pub use crate::experience::retention::{
+    AccountBodiesReply, AccountBodyRow, AccountCandidate, AccountMetadataReply, RestoreAccountAnswer,
+    RestoreAccountBinding, RestoreAccountQuery, RestoreAccountRequest,
+};
 pub use crate::{
     experience::RestorePrivacyInput,
     restore::{
@@ -37,6 +41,41 @@ impl RuntimeProviderInput {
         let header = custody.split_off(size_of::<crate::restore::RestoreArchivesAnswer>())?;
         let answer = crate::restore::RestoreArchivesAnswer::from_rows(request.parts().0, selected, custody).map_err(failure)?;
         Ok(Self { body: RuntimeAnswerBody::RestoreArchives(Box::new(answer)), custody: header })
+    }
+}
+
+/// Retains the actual inactive candidate's selected accounts and prospective
+/// SQL changes across that read. It grants no access to the live world.
+pub struct RuntimeRestoreAccounts(Arc<ProviderQuestion>);
+
+impl RuntimeRestoreAccounts {
+    pub fn parts(&self) -> (RestoreAccountRequest<'_>, &crate::records::ChangedRows) {
+        let (question, changes) = self.0.restore_accounts().expect("checked restore account request");
+        (question.accounts().expect("checked account selection"), changes)
+    }
+}
+
+impl RuntimeProvider {
+    pub fn restore_accounts(&self) -> Result<Option<RuntimeRestoreAccounts>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question.restore_accounts().is_some().then_some(RuntimeRestoreAccounts(question)))
+    }
+}
+
+impl RuntimeProviderInput {
+    /// Adopt the selected account metadata or bodies under their own custody.
+    /// The inactive cursor validates the exact binding and row semantics.
+    pub fn restore_accounts(
+        request: &RuntimeRestoreAccounts,
+        answer: RestoreAccountAnswer,
+        custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        let (question, _) = request.0.restore_accounts().expect("checked restore account request");
+        let (answer, custody) = crate::experience::retention::RestoreRetentionAnswer::from_accounts(question, answer, custody).map_err(|error| match error {
+            crate::experience::HistoryPreparationError::Capacity => RuntimeError::from(CapacityError),
+            _ => failure(error),
+        })?;
+        Ok(Self { body: RuntimeAnswerBody::RestoreAccounts(Box::new(answer)), custody })
     }
 }
 

@@ -76,6 +76,20 @@ impl<'a> From<&'a Binding> for HeaderRef<'a> {
     }
 }
 
+impl<'a> From<&'a openlegend_simulation::runtime::RestoreAccountBinding> for HeaderRef<'a> {
+    fn from(binding: &'a openlegend_simulation::runtime::RestoreAccountBinding) -> Self {
+        Self {
+            world_id: &binding.world_id,
+            generation: &binding.generation,
+            accepted_cut: binding.accepted_cut,
+            identity_through: binding.identity_through,
+            candidate_id: binding.candidate_id,
+            candidate_generation: binding.candidate_generation,
+            request_serial: binding.request_serial,
+        }
+    }
+}
+
 impl<'a> From<&'a HistoryBinding> for HeaderRef<'a> {
     fn from(binding: &'a HistoryBinding) -> Self {
         Self {

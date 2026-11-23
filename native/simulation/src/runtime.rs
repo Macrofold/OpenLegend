@@ -100,6 +100,8 @@ pub use read_cut::{
 };
 mod restore;
 pub use restore::{
+    AccountBodiesReply, AccountBodyRow, AccountCandidate, AccountMetadataReply, RestoreAccountAnswer,
+    RestoreAccountBinding, RestoreAccountQuery, RestoreAccountRequest, RuntimeRestoreAccounts,
     RestoreArchive, RestoreArchiveCategory, RestoreArchiveMatch, RestoreArchiveSelection, RestoreBinding, RestoreGrant, RestoreInput,
     RestoreMetadataInput, RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreArchives, RuntimeRestoreMembership, RuntimeRestoreSupport,
     RuntimeRestorePlacement,
@@ -343,6 +345,7 @@ enum RuntimeAnswerBody {
     KnownPlaces(Box<crate::simulation::KnownPlacesAnswer>),
     RestoreArchives(Box<crate::restore::RestoreArchivesAnswer>),
     SupportMembership(Box<crate::received::SupportMembershipAnswer>),
+    RestoreAccounts(Box<crate::experience::retention::RestoreRetentionAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     SourceVersions(Box<crate::simulation::SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
@@ -674,6 +677,12 @@ fn provider_response(
                         return Err(failure("archive selection requires its original restore request"));
                     }
                     ProviderResponse::restore_archives(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::RestoreAccounts(answer) => {
+                    if question.restore_accounts().is_none() {
+                        return Err(failure("account selection requires its original restore request"));
+                    }
+                    ProviderResponse::restore_accounts(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::PersonalHistory(answer) => {
                     if question.personal_history().is_none() {
@@ -1133,6 +1142,9 @@ impl RuntimeProvider {
         }
         if let Some(support) = question.support_membership_envelope() {
             return RuntimeJson::encode(&support, budget);
+        }
+        if let Some(accounts) = question.restore_accounts_envelope() {
+            return RuntimeJson::encode(&accounts, budget);
         }
         if let Some(archives) = question.restore_archives_envelope() {
             return RuntimeJson::encode(&archives, budget);

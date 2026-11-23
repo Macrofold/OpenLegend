@@ -1,31 +1,26 @@
-//! The stopped candidate selects complete, private canonical accounts using
-//! the same bounded metadata and selected-body rules as the Source reader.
+//! The inactive candidate selects complete private accounts using the same
+//! bounded metadata and body reads as the Source reader.
 
 use super::archives::Category;
-use super::provider::{self, Binding};
-use crate::store::read::{admitted_query_bounded, append_current_record_fields, installed_row};
+use super::provider;
+use crate::store::read::admitted_query_bounded;
 use crate::store::{DurableHead, Store, StoreError, StoreResult, ordinal};
-use openlegend_simulation::experience::PersonalSourceKind as Kind;
+use openlegend_simulation::experience::{AccountClass, PersonalSourceKind as Kind};
 use openlegend_simulation::host::ByteReservation;
-use openlegend_simulation::records::{InstalledRow, SqlCell};
-use openlegend_simulation::runtime::{RuntimeProvider, RuntimeProviderInput};
+use openlegend_simulation::records::SqlCell;
+use openlegend_simulation::runtime::{
+    AccountBodiesReply, AccountBodyRow, AccountCandidate, AccountMetadataReply,
+    RestoreAccountAnswer, RestoreAccountBinding, RestoreAccountQuery, RuntimeProviderInput,
+    RuntimeRestoreAccounts,
+};
 use openlegend_simulation::text::{JsText, TextRef};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::value::RawValue;
 use std::collections::BTreeMap;
+use std::mem::size_of;
 use tokio_postgres::{Transaction, types::Json};
 
 const KINDS: [Kind; 3] = [Kind::Awareness, Kind::Memory, Kind::Summary];
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Request {
-    binding: Binding,
-    phase: String,
-    data: Box<RawValue>,
-    maximum_transfer_bytes: usize,
-    restore_projection: Box<RawValue>,
-}
 
 #[derive(Deserialize)]
 struct Limits {
@@ -36,20 +31,8 @@ struct Limits {
 #[serde(rename_all = "camelCase")]
 struct AccountLimits {
     rows: usize,
-    bytes: usize,
+    bytes: u64,
     metadata_rows: usize,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct MetadataRequest {
-    world_id: String,
-    generation: String,
-    accepted_cut: u64,
-    actor_id: String,
-    at: f64,
-    due: bool,
-    pressured: Vec<Category>,
 }
 
 #[derive(Deserialize)]
@@ -57,132 +40,75 @@ struct Columns {
     source_id: String,
     account_revision: String,
     at: f64,
-    logical_bytes: usize,
+    logical_bytes: u64,
     retention_class: Category,
     next_due_at: Option<f64>,
     policy_priority: u64,
     active_or_protected: u8,
 }
 
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Account {
-    kind: Kind,
-    id: String,
-    record_id: String,
-    position: u64,
-    revision: String,
-    at: f64,
-    bytes: usize,
-    class: Category,
-    due: Option<f64>,
-    rank: u64,
-    protected: bool,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Metadata {
-    metadata: Vec<Account>,
-    next_due: Option<f64>,
-    more: bool,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct RecordsRequest {
-    actor_id: String,
-    at: f64,
-    selected: Vec<Account>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct AccountRow {
-    kind: Kind,
-    row: InstalledRow,
-    rendered_summary: Option<JsText>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Records {
-    rows: Vec<AccountRow>,
-    occupied_memory_ids: Vec<String>,
-}
-
-#[derive(Serialize)]
-struct Answer<'a, T> {
-    binding: &'a Binding,
-    phase: &'a str,
-    data: T,
-}
-
 impl Store {
-    /// Apply the exact projection inside a savepoint before selecting the
-    /// actor's retained rows. Only the independently funded answer survives.
+    /// Select accounts in the exact inactive cut. Only the independently
+    /// funded answer survives the rollback of the prospective SQL savepoint.
     pub(crate) async fn answer_checkpoint_account_retention(
         &self,
         tx: &Transaction<'_>,
         prospective: &DurableHead,
-        request: &RuntimeProvider,
+        request: &RuntimeRestoreAccounts,
     ) -> StoreResult<RuntimeProviderInput> {
-        let (question, _custody): (Request, _) =
-            provider::prepare(self, request, "restore-retention")?;
-        let actor = question
-            .binding
-            .actor_id
-            .as_deref()
-            .ok_or(StoreError::InvalidRecord)?;
+        let (question, rows) = request.parts();
         let limits = serde_json::from_str::<Limits>(self.restore_retention_preparation().get())
             .map_err(|_| StoreError::Schema)?
             .accounts;
-        self.with_checkpoint_projection(tx, prospective, &question.restore_projection, async {
-            match question.phase.as_str() {
-                "metadata" => {
-                    let data: MetadataRequest = serde_json::from_str(question.data.get())
-                        .map_err(|_| StoreError::InvalidRecord)?;
-                    if data.world_id != prospective.world_id
-                        || data.generation != prospective.generation
-                        || data.accepted_cut != 0
-                        || data.actor_id != actor
-                        || !data.at.is_finite()
-                        || data.pressured.len() > 3
-                    {
-                        return Err(StoreError::StaleCut);
-                    }
-                    provider::verify_header(
-                        self,
-                        tx,
-                        prospective,
-                        0,
-                        &question.binding,
-                        Some(data.at),
-                    )
-                    .await?;
-                    self.checkpoint_account_metadata(tx, &question, data, &limits)
-                        .await
+        self.with_checkpoint_rows(tx, prospective, rows, None, None, async {
+            let at = match question.query {
+                RestoreAccountQuery::Metadata { at, .. }
+                | RestoreAccountQuery::Records { at, .. } => at,
+            };
+            provider::verify_header(self, tx, prospective, 0, question.binding, Some(at)).await?;
+            let (answer, custody) = match question.query {
+                RestoreAccountQuery::Metadata { at, due, pressured } => {
+                    let pressure = pressured
+                        .classes()
+                        .filter_map(|class| match class {
+                            AccountClass::Optional => Some(Category::Optional.as_str()),
+                            AccountClass::Required => Some(Category::Required.as_str()),
+                            AccountClass::Speech => Some(Category::Speech.as_str()),
+                            AccountClass::Sensory => None,
+                        })
+                        .collect::<Vec<_>>();
+                    let (reply, custody) = self
+                        .checkpoint_account_metadata(
+                            tx,
+                            question.binding,
+                            at,
+                            due,
+                            &pressure,
+                            &limits,
+                        )
+                        .await?;
+                    (RestoreAccountAnswer::Metadata(reply), custody)
                 }
-                "records" => {
-                    let data: RecordsRequest = serde_json::from_str(question.data.get())
-                        .map_err(|_| StoreError::InvalidRecord)?;
-                    if data.actor_id != actor || !data.at.is_finite() {
-                        return Err(StoreError::StaleCut);
-                    }
-                    provider::verify_header(
-                        self,
-                        tx,
-                        prospective,
-                        0,
-                        &question.binding,
-                        Some(data.at),
-                    )
-                    .await?;
-                    self.checkpoint_account_records(tx, &question, data, &limits)
-                        .await
+                RestoreAccountQuery::Records { selected, .. } => {
+                    let (reply, custody) = self
+                        .checkpoint_account_records(
+                            tx,
+                            question.binding,
+                            selected,
+                            &limits,
+                            question.maximum_transfer_bytes,
+                        )
+                        .await?;
+                    (RestoreAccountAnswer::Records(reply), custody)
                 }
-                _ => Err(StoreError::InvalidRecord),
-            }
+            };
+            RuntimeProviderInput::restore_accounts(request, answer, custody).map_err(|error| {
+                if error.is_capacity() {
+                    StoreError::Capacity
+                } else {
+                    StoreError::InvalidRecord
+                }
+            })
         })
         .await
     }
@@ -190,32 +116,35 @@ impl Store {
     async fn checkpoint_account_metadata(
         &self,
         tx: &Transaction<'_>,
-        question: &Request,
-        data: MetadataRequest,
+        binding: &RestoreAccountBinding,
+        at: f64,
+        due: bool,
+        pressure: &[&str],
         limits: &AccountLimits,
-    ) -> StoreResult<RuntimeProviderInput> {
-        let pressure: Vec<_> = data.pressured.into_iter().map(Category::as_str).collect();
+    ) -> StoreResult<(AccountMetadataReply, ByteReservation)> {
         let mut result = BTreeMap::new();
-        let mut custody = Vec::with_capacity(KINDS.len());
+        let mut custody = self.budget.reserve(0).map_err(|_| StoreError::Capacity)?;
         let mut next_due: Option<f64> = None;
         let mut more = false;
         for kind in KINDS {
-            let (funds, rows) = admitted_query_bounded(
+            let (_wire, rows) = admitted_query_bounded(
                 tx,
                 &self.schema.checkpoint.account_metadata[kind.table()],
-                &[
-                    &data.actor_id,
-                    &data.at,
-                    &data.due,
-                    &pressure,
-                    &data.world_id,
-                ],
+                &[&binding.actor_id, &at, &due, &pressure, &binding.world_id],
                 &self.budget,
                 None,
             )
             .await?;
-            custody.push(funds);
-            let mut due = 0;
+            // Own the private tree while SQL rows and the decoded metadata
+            // coexist. The reply later retains only the selected vector.
+            let tree = rows
+                .len()
+                .checked_mul(
+                    11 * size_of::<((Kind, String), AccountCandidate)>() + 16 * size_of::<usize>(),
+                )
+                .ok_or(StoreError::Capacity)?;
+            Self::fund_restore_accounts(&mut custody, tree)?;
+            let mut due_rows = 0;
             for row in rows {
                 match row.try_get::<_, &str>(7)? {
                     "deadline" => {
@@ -228,67 +157,106 @@ impl Store {
                         }
                         continue;
                     }
-                    "due" => due += 1,
+                    "due" => due_rows += 1,
                     "pressure" => {}
                     _ => return Err(StoreError::InvalidRecord),
                 }
-                let fields = row.try_get::<_, Json<Columns>>(5)?.0;
-                let record_id: String = row.try_get(1)?;
+                let raw = row.try_get::<_, Json<&RawValue>>(5)?.0.get();
+                let record_id: &str = row.try_get(1)?;
+                let bound = SqlCell::json_decode_bound(raw).ok_or(StoreError::InvalidRecord)?;
+                let mut decode = self
+                    .budget
+                    .reserve(bound)
+                    .map_err(|_| StoreError::Capacity)?;
+                let fields: Columns =
+                    serde_json::from_str(raw).map_err(|_| StoreError::InvalidRecord)?;
+                let fields_bytes = fields
+                    .source_id
+                    .capacity()
+                    .checked_add(fields.source_id.len())
+                    .and_then(|bytes| bytes.checked_add(fields.account_revision.capacity()))
+                    .and_then(|bytes| bytes.checked_add(record_id.len()))
+                    .ok_or(StoreError::Capacity)?;
+                decode
+                    .resize(fields_bytes)
+                    .map_err(|_| StoreError::Capacity)?;
+                custody.merge(decode).map_err(|_| StoreError::Capacity)?;
                 result.insert(
                     (kind, fields.source_id.clone()),
-                    Account {
+                    AccountCandidate {
                         kind,
                         id: fields.source_id,
-                        record_id,
+                        record_id: record_id.to_owned(),
                         position: ordinal(row.try_get(3)?)?,
                         revision: fields.account_revision,
                         at: fields.at,
                         bytes: fields.logical_bytes,
-                        class: fields.retention_class,
+                        class: match fields.retention_class {
+                            Category::Optional => AccountClass::Optional,
+                            Category::Required => AccountClass::Required,
+                            Category::Speech => AccountClass::Speech,
+                        },
                         due: fields.next_due_at,
                         rank: fields.policy_priority,
                         protected: fields.active_or_protected == 1,
                     },
                 );
             }
-            more |= due > limits.rows;
+            more |= due_rows > limits.rows;
             if result.len() > limits.metadata_rows {
                 return Err(StoreError::Capacity);
             }
         }
-        self.encode_account_retention(
-            question,
-            Metadata {
+        let vector = result
+            .len()
+            .checked_mul(size_of::<AccountCandidate>())
+            .ok_or(StoreError::Capacity)?;
+        Self::fund_restore_accounts(&mut custody, vector)?;
+        Ok((
+            AccountMetadataReply {
                 metadata: result.into_values().collect(),
                 next_due,
                 more,
             },
-        )
+            custody,
+        ))
     }
 
     async fn checkpoint_account_records(
         &self,
         tx: &Transaction<'_>,
-        question: &Request,
-        data: RecordsRequest,
+        binding: &RestoreAccountBinding,
+        requested: &[AccountCandidate],
         limits: &AccountLimits,
-    ) -> StoreResult<RuntimeProviderInput> {
-        if data.selected.len() > limits.rows
-            || data
-                .selected
+        mut wire: usize,
+    ) -> StoreResult<(AccountBodiesReply, ByteReservation)> {
+        if requested.len() > limits.rows
+            || requested
                 .iter()
-                .try_fold(0usize, |n, account| n.checked_add(account.bytes))
+                .try_fold(0u64, |n, account| n.checked_add(account.bytes))
                 .is_none_or(|bytes| bytes > limits.bytes)
         {
             return Err(StoreError::Capacity);
         }
-        let world = question.binding.world_id.as_str();
-        let mut rows = Vec::with_capacity(data.selected.len());
-        let mut custody: Vec<ByteReservation> = Vec::with_capacity(KINDS.len() + 1);
-        let mut wire = question.maximum_transfer_bytes;
+        let workspace = requested
+            .len()
+            .checked_mul(11 * size_of::<(&str, &AccountCandidate)>() + 18 * size_of::<usize>())
+            .ok_or(StoreError::Capacity)?;
+        let _workspace = self
+            .budget
+            .reserve(workspace)
+            .map_err(|_| StoreError::Capacity)?;
+        let row_slots = requested
+            .len()
+            .checked_mul(size_of::<AccountBodyRow>())
+            .ok_or(StoreError::Capacity)?;
+        let mut custody = self
+            .budget
+            .reserve(row_slots)
+            .map_err(|_| StoreError::Capacity)?;
+        let mut rows = Vec::with_capacity(requested.len());
         for kind in KINDS {
-            let wanted: BTreeMap<_, _> = data
-                .selected
+            let wanted: BTreeMap<_, _> = requested
                 .iter()
                 .filter(|account| account.kind == kind)
                 .map(|account| (account.record_id.as_str(), account))
@@ -303,28 +271,23 @@ impl Store {
                 .iter()
                 .find(|table| table.name == kind.table())
                 .ok_or(StoreError::Schema)?;
-            let mut sql = String::from("SELECT ");
-            append_current_record_fields(&mut sql, table, "");
-            sql.push_str(" FROM ");
-            sql.push_str(&table.name);
-            sql.push_str(" WHERE world_id=$1 AND actor_id=$2 AND id=ANY($3::text[])");
-            let (funds, selected) = admitted_query_bounded(
-                tx,
-                &sql,
-                &[&world, &data.actor_id, &ids],
-                &self.budget,
-                Some(&mut wire),
-            )
-            .await?;
-            custody.push(funds);
+            let selected = self
+                .select_current_rows_bounded(
+                    tx,
+                    table,
+                    "world_id=$1 AND actor_id=$2 AND id=ANY($3::text[])",
+                    &[&binding.world_id, &binding.actor_id, &ids],
+                    &mut custody,
+                    Some(&mut wire),
+                )
+                .await?;
             if selected.len() != wanted.len() {
                 return Err(StoreError::StaleCut);
             }
             for row in selected {
-                let row = installed_row(table, row)?;
                 if wanted
                     .get(row.id.as_str())
-                    .is_none_or(|asked| asked.bytes != row.payload.len())
+                    .is_none_or(|asked| asked.bytes != row.payload.len() as u64)
                 {
                     return Err(StoreError::StaleCut);
                 }
@@ -333,75 +296,90 @@ impl Store {
                     struct Text {
                         text: JsText,
                     }
+                    let decode = SqlCell::json_decode_bound(&row.payload)
+                        .ok_or(StoreError::InvalidRecord)?;
                     let _parser = self
                         .budget
-                        .reserve(
-                            SqlCell::json_decode_bound(&row.payload)
-                                .ok_or(StoreError::InvalidRecord)?,
-                        )
+                        .reserve(decode)
                         .map_err(|_| StoreError::Capacity)?;
                     let body: Text = serde_json::from_str(&row.payload)
                         .map_err(|_| StoreError::InvalidRecord)?;
-                    let mut summary =
-                        JsText::from(self.schema.checkpoint.summary_memory_prefix.as_str());
+                    let prefix = self.schema.checkpoint.summary_memory_prefix.as_str();
+                    // An isolated UTF-16 unit can require both the growing
+                    // code-unit vector and its escaped JSON representation.
+                    let factor = if body.text.as_unicode().is_some() {
+                        2
+                    } else {
+                        20
+                    };
+                    let rendered = prefix
+                        .len()
+                        .checked_add(body.text.storage_bytes())
+                        .and_then(|bytes| bytes.checked_mul(factor))
+                        .and_then(|bytes| bytes.checked_add(64))
+                        .ok_or(StoreError::Capacity)?;
+                    let mut rendered = self
+                        .budget
+                        .reserve(rendered)
+                        .map_err(|_| StoreError::Capacity)?;
+                    let mut summary = JsText::from(prefix);
                     TextRef::from(&body.text).append_to(&mut summary);
+                    rendered
+                        .resize(summary.storage_bytes())
+                        .map_err(|_| StoreError::Capacity)?;
+                    custody.merge(rendered).map_err(|_| StoreError::Capacity)?;
                     Some(summary)
                 } else {
                     None
                 };
-                rows.push(AccountRow {
+                rows.push(AccountBodyRow {
                     kind,
                     row,
                     rendered_summary,
                 });
             }
         }
-        if rows.len() != data.selected.len() {
+        if rows.len() != requested.len() {
             return Err(StoreError::InvalidRecord);
         }
-        let ids: Vec<_> = data
-            .selected
+        let ids: Vec<_> = requested
             .iter()
             .filter(|row| row.kind != Kind::Memory)
             .map(|row| row.id.as_str())
             .collect();
-        let occupied = if ids.is_empty() {
+        let occupied_memory_ids = if ids.is_empty() {
             Vec::new()
         } else {
-            let (funds, selected) = admitted_query_bounded(
-                tx,
-                "SELECT source_id FROM mind_memories WHERE world_id=$1 AND actor_id=$2 AND source_id=ANY($3::text[])",
-                &[&world, &data.actor_id, &ids],
-                &self.budget,
-                Some(&mut wire),
+            let (_wire, selected) = admitted_query_bounded(
+                tx, "SELECT source_id FROM mind_memories WHERE world_id=$1 AND actor_id=$2 AND source_id=ANY($3::text[])",
+                &[&binding.world_id, &binding.actor_id, &ids], &self.budget, Some(&mut wire),
             ).await?;
-            custody.push(funds);
+            let bytes = selected.iter().try_fold(0usize, |bytes, row| {
+                let value: &str = row.try_get(0)?;
+                bytes
+                    .checked_add(size_of::<String>() + value.len())
+                    .ok_or(StoreError::Capacity)
+            })?;
+            Self::fund_restore_accounts(&mut custody, bytes)?;
             selected
                 .into_iter()
                 .map(|row| row.try_get(0).map_err(StoreError::from))
                 .collect::<StoreResult<_>>()?
         };
-        self.encode_account_retention(
-            question,
-            Records {
+        Ok((
+            AccountBodiesReply {
                 rows,
-                occupied_memory_ids: occupied,
+                occupied_memory_ids,
             },
-        )
+            custody,
+        ))
     }
 
-    fn encode_account_retention(
-        &self,
-        request: &Request,
-        data: impl Serialize,
-    ) -> StoreResult<RuntimeProviderInput> {
-        let answer = Answer {
-            binding: &request.binding,
-            phase: &request.phase,
-            data,
-        };
-        let (json, custody) =
-            self.encode_restore_output(&answer, request.maximum_transfer_bytes)?;
-        Ok(RuntimeProviderInput::new(json, custody))
+    fn fund_restore_accounts(custody: &mut ByteReservation, extra: usize) -> StoreResult<()> {
+        let bytes = custody
+            .bytes()
+            .checked_add(extra)
+            .ok_or(StoreError::Capacity)?;
+        custody.resize(bytes).map_err(|_| StoreError::Capacity)
     }
 }

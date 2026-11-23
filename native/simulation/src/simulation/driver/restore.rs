@@ -84,16 +84,25 @@ pub(super) fn poll_restore(
         RestoreStep::SourceVersions(request) => {
             Ok(Poll::Question(request, RestoreReply::SourceVersions))
         }
-        RestoreStep::Retention(request) => projected_question(
-            core,
-            answer,
-            ProviderKind::RestoreRetention,
-            request.provider_binding(core.state.installed.geometry.spatial.revision),
-            &request.value(),
-            settings,
-            budget,
-            RestoreReply::Retention,
-        ),
+        RestoreStep::Retention(request) => {
+            let binding = request.provider_binding(core.state.installed.geometry.spatial.revision);
+            if request.accounts().is_none() {
+                // Recent membership still joins the candidate's private directory.
+                return projected_question(core, answer, ProviderKind::RestoreRetention,
+                    binding, &request.value(), settings, budget, RestoreReply::Retention);
+            }
+            if answer.is_some() {
+                return Err(DriveError::StaleResponse);
+            }
+            let projection = capture_projection(core, binding, settings, budget)?;
+            let question = ProviderQuestion::prepare_bound(
+                ProviderKind::RestoreRetention,
+                binding,
+                QuestionBody::RestoreAccounts(request, Box::new(projection)),
+                budget,
+            )?;
+            Ok(Poll::Question(question, RestoreReply::Retention))
+        }
         RestoreStep::Support(request) => {
             if answer.is_some() {
                 return Err(DriveError::StaleResponse);
