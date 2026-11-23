@@ -27,6 +27,7 @@ struct QueryDisclosure {
     read: Arc<RuntimeNpcRead>,
     consumer: RuntimeNpcConsumer,
     player: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
+    discovery: Option<Arc<crate::npc::discovery::DiscoveryDispatch>>,
 }
 
 impl QueryDisclosure {
@@ -41,6 +42,10 @@ impl QueryDisclosure {
 }
 
 impl ProviderDisclosure for QueryDisclosure {
+    fn discovery(&self) -> Option<&crate::npc::discovery::DiscoveryDispatch> {
+        self.discovery.as_deref()
+    }
+
     fn start(
         &self,
         turn: NpcDisclosureTurn<'_>,
@@ -252,6 +257,7 @@ async fn query_vector(
         read: Arc::new(read),
         consumer,
         player: work.permit.clone(),
+        discovery: work.discovery(),
     };
     if let Some(cached) = game
         .store

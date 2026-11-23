@@ -47,7 +47,7 @@ impl Store {
     /// a definitely unsubmitted reservation can be made available again.
     pub(crate) async fn discovery_spent(&self, job: String) -> StoreResult<bool> {
         self.read_operational(move |tx| Box::pin(async move {
-            let row = tx.query_one("SELECT coalesce(bool_or(CASE WHEN a.receipt IS NULL THEN l.dispatch_intent ELSE coalesce((a.receipt::jsonb->>'dispatched')::bool,false) OR coalesce((a.receipt::jsonb->>'completionUncertain')::bool,false) END),false) FROM cognition_attempt_links l JOIN attempts a ON a.id=l.attempt_id WHERE l.root_job_id=$1", &[&job]).await?;
+            let row = tx.query_one("SELECT coalesce(bool_or(CASE WHEN a.receipt IS NULL THEN l.dispatch_intent ELSE coalesce((a.receipt::jsonb->>'transportStarted')::bool,false) OR coalesce((a.receipt::jsonb->>'dispatched')::bool,false) OR coalesce((a.receipt::jsonb->>'completionUncertain')::bool,false) END),false) FROM cognition_attempt_links l JOIN attempts a ON a.id=l.attempt_id WHERE l.root_job_id=$1", &[&job]).await?;
             Ok(row.try_get(0)?)
         })).await
     }

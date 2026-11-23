@@ -1380,6 +1380,23 @@ impl NpcDisclosureTurn<'_> {
         }
     }
 
+    /// Check the selected free interval under the same turn as the final
+    /// synchronous provider disclosure. No database work can extend this check.
+    pub(crate) fn discovery_current(
+        &self,
+        trigger: &openlegend_simulation::runtime::RuntimeNpcTrigger,
+        actor: &str,
+        generation: &str,
+        reservation: &str,
+        interval: u64,
+    ) -> Result<bool, WorldError> {
+        let session = self.world.session.try_lock().map_err(|error| match error {
+            std::sync::TryLockError::WouldBlock => HostError::Busy,
+            std::sync::TryLockError::Poisoned(_) => HostError::Poisoned,
+        })?;
+        Ok(session.npc_discovery_current(trigger, actor, generation, reservation, interval)?)
+    }
+
     pub(crate) fn disclose<T>(
         self,
         ticket: &RuntimeNpcResponseTicket,

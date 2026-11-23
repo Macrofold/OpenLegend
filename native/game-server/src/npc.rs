@@ -3,6 +3,7 @@
 
 mod apply;
 mod decide;
+pub(crate) mod discovery;
 mod maintenance;
 pub(crate) mod preview;
 mod retry;

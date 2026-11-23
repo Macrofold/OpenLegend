@@ -46,8 +46,12 @@ pub(super) fn embedding_model(
         amount,
         ceiling,
         background_ceiling: ceiling.saturating_sub(interactive),
-        timeout: Duration::from_secs_f64(number("AI_TIMEOUT_SECONDS", 15.0, 5.0, 120.0)?),
+        timeout: ai_timeout()?,
     }))
+}
+
+fn ai_timeout() -> Result<Duration, Error> {
+    Ok(Duration::from_secs_f64(number("AI_TIMEOUT_SECONDS", 35.0, 5.0, 120.0)?))
 }
 
 fn embedding_price(model: &str) -> Result<(Option<f64>, std::sync::Arc<[String]>), Error> {
@@ -353,7 +357,7 @@ fn nano_model(
     if ceiling < model.amount_micro_usd {
         return Ok(None);
     }
-    let timeout = Duration::from_secs_f64(number("AI_TIMEOUT_SECONDS", 35.0, 5.0, 120.0)?);
+    let timeout = ai_timeout()?;
     Ok(Some(SummaryModel {
         model,
         ceiling,
@@ -462,7 +466,7 @@ pub(super) fn narrator_model(
         return Ok(None);
     }
     let ceiling = micro_usd(budget_usd)?;
-    let timeout = Duration::from_secs_f64(number("AI_TIMEOUT_SECONDS", 35.0, 5.0, 120.0)?);
+    let timeout = ai_timeout()?;
     if let Some(fast) = models.and_then(|models| models.routes.fast.as_ref())
         && let Some(route) = fast.macrofold.as_ref()
     {

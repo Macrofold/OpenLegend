@@ -47,6 +47,7 @@ pub(crate) struct PreparedCall {
 pub(crate) struct CallAuthority {
     pub source: Arc<RuntimeNpcResponseTicket>,
     pub speaker: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
+    pub discovery: Option<Arc<crate::npc::discovery::DiscoveryDispatch>>,
 }
 
 pub(crate) struct ProviderObservation<T> {
@@ -170,6 +171,10 @@ pub(crate) trait ProviderDisclosure: Send + Sync + 'static {
         async { Ok(None) }
     }
 
+    fn discovery(&self) -> Option<&crate::npc::discovery::DiscoveryDispatch> {
+        None
+    }
+
     fn start(
         &self,
         turn: NpcDisclosureTurn<'_>,
@@ -179,6 +184,10 @@ pub(crate) trait ProviderDisclosure: Send + Sync + 'static {
 }
 
 impl ProviderDisclosure for CallAuthority {
+    fn discovery(&self) -> Option<&crate::npc::discovery::DiscoveryDispatch> {
+        self.discovery.as_deref()
+    }
+
     fn start(
         &self,
         turn: NpcDisclosureTurn<'_>,
@@ -354,6 +363,15 @@ impl DecisionDispatch {
                 estimated_cost_usd: None,
             };
         let result = if intent.is_ok() {
+            let permit = &permit;
+            let discovery = permit.discovery().filter(|ticket| ticket.first_send_pending());
+            let (first, settlement) = match discovery {
+                Some(ticket) => {
+                    let (first, notified) = tokio::sync::oneshot::channel();
+                    (Some(first), Some((ticket, notified)))
+                }
+                None => (None, None),
+            };
             let transfer = async {
                 let grant = tokio::time::timeout_at(deadline, permit.grant_for_send())
                     .await
@@ -362,15 +380,25 @@ impl DecisionDispatch {
                     .await
                     .map_err(|_| CallFailure::Transport(NetworkError::Deadline))?
                     .map_err(CallFailure::World)?;
+                let mut first = first;
                 let timeout = deadline.saturating_duration_since(Instant::now());
                 let stop = &stopped;
                 let did_transmit = &transmitted;
                 let stream = preview.is_some();
                 let exchange =
                     ProviderExchange::start(&operation, request, stream, timeout, move |start| {
+                        if let Some(ticket) = discovery
+                            && !ticket.current(&turn).map_err(CallFailure::World)?
+                        {
+                            return Err(CallFailure::Stale("discovery-free-interval"));
+                        }
                         let admitted = permit.start(turn, stop, &mut || {
                             did_transmit.store(true, Ordering::Release);
                             start();
+                            if let Some((ticket, notify)) = discovery.zip(first.take()) {
+                                ticket.mark_sent();
+                                let _ = notify.send(());
+                            }
                         });
                         drop(grant);
                         admitted
@@ -380,10 +408,24 @@ impl DecisionDispatch {
                 Ok(exchange)
             };
             let mut cancel = stopped.clone();
-            let response = tokio::select! {
-                biased;
-                result = transfer => result,
-                _ = cancelled(&mut cancel) => Err(CallFailure::Cancelled),
+            let transfer = async {
+                tokio::select! {
+                    biased;
+                    result = transfer => result,
+                    _ = cancelled(&mut cancel) => Err(CallFailure::Cancelled),
+                }
+            };
+            let response = if let Some((ticket, notified)) = settlement {
+                // Publish the ordinary spent state as soon as the client has
+                // the request, while the remote headers/body can still wait.
+                let (response, ()) = tokio::join!(transfer, async {
+                    if notified.await.is_ok() {
+                        ticket.publish_sent().await;
+                    }
+                });
+                response
+            } else {
+                transfer.await
             };
             let budget = self.game.host.budget();
             let response = match response {

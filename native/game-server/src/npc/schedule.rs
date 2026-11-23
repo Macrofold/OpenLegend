@@ -4,6 +4,7 @@
 use super::{
     Director,
     decide::AutomaticTrigger,
+    discovery::{self, DiscoveryDispatch, Operation},
     slots::{Admission, SlotPriority},
 };
 use crate::{
@@ -11,15 +12,14 @@ use crate::{
     decision_render::SchedulingPolicy,
     player_events::SpeechReplyStatus,
     store::{AdmittedJob, CommitError, ConversationJob, JobRequest, StoreError},
-    world::{ApplicationStart, WorldError},
+    world::WorldError,
 };
 use indexmap::IndexMap;
 use openlegend_simulation::{
     host::{ByteBudget, ByteReservation, CapacityError},
     records::ChangedRows,
-    runtime::{NpcQueueInputs, RuntimeDirectOutput, RuntimeError},
+    runtime::{NpcQueueInputs, RuntimeError},
 };
-use serde_json::json;
 use std::{
     borrow::Cow,
     cmp::Ordering,
@@ -431,7 +431,10 @@ impl Director {
                 && self.slots.available(&inputs.actor_id)?
             {
                 let dispatched = self.game.store.discovery_spent(reservation.clone()).await?;
-                self.change_discovery(&inputs.actor_id, &inputs.generation, json!({"type":"settle-discovery","reservation":reservation,"dispatched":dispatched})).await?;
+                discovery::change(
+                    &self.game, &self.saves, &inputs.actor_id, &inputs.generation, reservation,
+                    Operation::Settle { dispatched },
+                ).await?;
             }
             queue.refresh(inputs, policy, &inbox.budget)?;
             queue.dirty.shift_remove_index(0);
@@ -598,17 +601,6 @@ impl Director {
         else {
             return Ok(None);
         };
-        if let Some(interval) = proposal.discovery
-            && !self
-                .change_discovery(
-                    &actor,
-                    &generation,
-                    json!({"type":"reserve-discovery","interval":interval,"reservation":id}),
-                )
-                .await?
-        {
-            return Ok(None);
-        }
         let job = AdmittedJob::new(
             ConversationJob {
                 id: id.clone(),
@@ -658,16 +650,19 @@ impl Director {
         if cue.is_some() && self.reflection_model.is_some() {
             reflection_wake = inbox.reflection_wake(&actor)?;
         }
+        let discovery = if let Some(interval) = proposal.discovery {
+            let ticket = DiscoveryDispatch::new(
+                self.game.clone(), self.saves.clone(), &actor, &generation, &id, interval, trigger.clone(),
+            )?;
+            if !ticket.reserve().await? {
+                return Ok(None);
+            }
+            Some(Arc::new(ticket))
+        } else {
+            None
+        };
         store
-            .accept_thought(
-                world,
-                generation.clone(),
-                actor.clone(),
-                prior,
-                cursor,
-                Some(job.clone()),
-                cue,
-            )
+            .accept_thought(world, generation, actor, prior, cursor, Some(job.clone()), cue)
             .await
             .map_err(WorldError::Commit)?;
         inbox.notify_maintenance(reflection_wake);
@@ -679,6 +674,7 @@ impl Director {
             read: trigger,
             evidence: proposal.evidence,
             causes: proposal.causes,
+            discovery: discovery.clone(),
         };
         self.start_job(async move {
             controller
@@ -692,73 +688,12 @@ impl Director {
                 )
                 .await;
             drop(sources);
-            if proposal.discovery.is_some()
-                && let Ok(dispatched) = controller.game.store.discovery_spent(id.clone()).await
-            {
-                // A failed admission leaves the accepted reservation under
-                // the next sparse recovery pass, with the same attempt ID.
-                let _ = controller
-                    .change_discovery(
-                        &actor,
-                        &generation,
-                        json!({"type":"settle-discovery","reservation":id,"dispatched":dispatched}),
-                    )
-                    .await;
+            if let Some(ticket) = discovery {
+                // If the in-flight publication rolled back, the existing
+                // scheduler also reconciles the exact reservation on cold open.
+                ticket.finish().await;
             }
         })?;
         Ok(Some(wake))
-    }
-
-    async fn change_discovery(
-        &self,
-        actor: &str,
-        generation: &str,
-        operation: serde_json::Value,
-    ) -> Result<bool, WorldError> {
-        let _ordinary = self.saves.enter_ordinary().await;
-        self.saves.check_admission(Instant::now())?;
-        let generation = generation.to_owned();
-        let request = serde_json::to_vec(&json!({"actorId": actor,"operation":operation}))
-            .map_err(RuntimeError::application_refused)?;
-        let game = self.game.clone();
-        let stage = self.saves.clone();
-        let accepted = self.saves.clone();
-        self.game.world.request_advance_publication();
-        let published = self
-            .game
-            .world
-            .execute_and_publish(
-                #[cfg(feature = "profile-campaign")]
-                openlegend_simulation::profile::sites::TURN_NPC,
-                move |session| {
-                    let scope = session.accepted_progress()?;
-                    if scope.generation != generation || scope.paused {
-                        return Ok(ApplicationStart::Existing((false, None)));
-                    }
-                    Ok(ApplicationStart::Candidate(
-                        session.begin_npc_intake(&request)?,
-                    ))
-                },
-                move |question| {
-                    let game = game.clone();
-                    async move { game.answer_operation(question).await }
-                },
-                move |output, _| {
-                    let RuntimeDirectOutput::Prepared(products) = output else {
-                        return Err(RuntimeError::application_refused(
-                            "NPC discovery prepared no result",
-                        ));
-                    };
-                    Ok((products.outcome().ok, Some(stage.stage(&products, None)?)))
-                },
-                |fence, key, _| Ok(fence.settle(key, true)?),
-                move |(_, save)| {
-                    if let Some(save) = save {
-                        accepted.accept(save);
-                    }
-                },
-            )
-            .await?;
-        Ok(published.is_some_and(|(accepted, _)| accepted))
     }
 }

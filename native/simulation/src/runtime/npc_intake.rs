@@ -119,6 +119,36 @@ impl NativeWorldSession {
         let state = &self.session.accepted().map_err(session_failure)?.state;
         trigger.read.current(state, &self.budget).map_err(failure)
     }
+    /// Check the exact existing free-interval reservation at the first
+    /// provider poll. This only looks up one actor in the accepted state.
+    pub fn npc_discovery_current(
+        &self,
+        trigger: &RuntimeNpcTrigger,
+        actor: &str,
+        generation: &str,
+        reservation: &str,
+        interval: u64,
+    ) -> Result<bool, RuntimeError> {
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
+        Ok(state.generation == generation
+            && trigger.read.matches_actor(actor)
+            && !state.physical.header.paused
+            && state.physical.entities.get(actor).is_some_and(|entity| {
+                entity.has_memory()
+                    && entity.actor.as_ref().is_some_and(|actor| {
+                        actor.alive
+                            && trigger.read.matches_life(actor.physical_life)
+                            && actor.controller == "npc"
+                            && actor.agency.semantic.as_ref().is_some_and(|semantic| {
+                                semantic.interval == interval
+                                    && semantic.occupied_purpose.is_none()
+                                    && semantic.discovery == "reserved"
+                                    && semantic.reservation.as_deref() == Some(reservation)
+                            })
+                    })
+            }))
+    }
     pub fn begin_npc_intake(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;

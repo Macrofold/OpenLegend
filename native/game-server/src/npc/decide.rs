@@ -96,6 +96,13 @@ pub(super) struct AutomaticTrigger {
     pub(super) read: Arc<openlegend_simulation::runtime::RuntimeNpcTrigger>,
     pub(super) evidence: Option<String>,
     pub(super) causes: Vec<usize>,
+    pub(super) discovery: Option<Arc<super::discovery::DiscoveryDispatch>>,
+}
+
+impl Work {
+    fn discovery(&self) -> Option<Arc<super::discovery::DiscoveryDispatch>> {
+        self.automatic.as_ref().and_then(|automatic| automatic.discovery.clone())
+    }
 }
 
 pub(super) async fn run(
@@ -210,6 +217,7 @@ pub(super) async fn run(
                     CallAuthority {
                         source,
                         speaker: work.permit.clone(),
+                        discovery: work.discovery(),
                     },
                     work.cancellation.clone(),
                     decode_provider(
@@ -623,6 +631,7 @@ async fn generate(
             CallAuthority {
                 source: view.ticket.clone(),
                 speaker: work.permit.clone(),
+                discovery: work.discovery(),
             },
             work.cancellation.clone(),
             decode_provider(macrofold, parse_budget.clone(), move |value| {
@@ -752,6 +761,7 @@ async fn recall_attention(
             CallAuthority {
                 source: review.ticket.clone(),
                 speaker: work.permit.clone(),
+                discovery: work.discovery(),
             },
             work.cancellation.clone(),
             decode_provider(
@@ -830,6 +840,7 @@ async fn action_attention(
             CallAuthority {
                 source: prepared.ticket.clone(),
                 speaker: work.permit.clone(),
+                discovery: work.discovery(),
             },
             work.cancellation.clone(),
             decode_provider(

@@ -83,6 +83,9 @@ impl NpcIntakeCapture {
     pub(crate) fn matches_actor(&self, actor: &str) -> bool {
         self.request.actor_id == actor
     }
+    pub(crate) fn matches_life(&self, life: Option<u64>) -> bool {
+        self.life == life
+    }
     pub(crate) fn semantic_causes(&self) -> &[crate::response::ResponseSemanticCause] {
         self.semantic_causes.values()
     }
