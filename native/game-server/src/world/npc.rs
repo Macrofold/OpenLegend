@@ -7,7 +7,9 @@ use crate::boot::CurrentServer;
 use openlegend_simulation::runtime::{
     RuntimeNpcBindingRequest, RuntimeNpcPreparationStep, RuntimeNpcRead, RuntimeNpcTrigger,
 };
-use openlegend_simulation::{capture::NpcSourceSelection, host::ByteReservation};
+use openlegend_simulation::{
+    capture::NpcSourceSelection, host::ByteReservation, worlds::base_observed::SpeechVolume,
+};
 
 type ActorPreparationStep<T> = fn(
     &mut NativeWorldSession,
@@ -132,7 +134,7 @@ impl HostedWorld {
         authority: Arc<Authority>,
         scope: Arc<AuthorizedScope>,
         npc: String,
-        volume: String,
+        volume: SpeechVolume,
     ) -> Result<openlegend_simulation::runtime::RuntimeReplyPreviewRead, WorldError> {
         let _turn = self.enter().await?;
         self.call(move |session| {
@@ -142,7 +144,7 @@ impl HostedWorld {
                         &selected.account_id,
                         &selected.actor_id,
                         &npc,
-                        Some(&volume),
+                        Some(volume.id()),
                     )
                 })
                 .map_err(WorldError::Access)

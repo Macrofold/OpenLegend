@@ -375,7 +375,8 @@ pub enum SpeechVolume {
 }
 
 impl SpeechVolume {
-    pub(crate) fn id(self) -> &'static str {
+    /// The installed acoustics lookup key for this accepted delivery.
+    pub fn id(self) -> &'static str {
         match self {
             Self::Whisper => "whisper",
             Self::Normal => "normal",

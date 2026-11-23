@@ -116,6 +116,8 @@ Two signed-in browsers in the 163-entity Main world received movement and one sp
 
 Three controlled HTTPS conversations also passed. Movement during a held valid request allowed one saved reply. Withdrawal stopped final generation and cancellation during settlement prevented reply effects. All disposable databases were removed. The locked stand-alone build, addon compilation and network policy check passed. The tree is `801b03e137b3` and the Rust executable is `f5e5c205ee0c6`. The Main and exact-text results are `07ffb73a4e67` and `5eef404e7d6b`. The conversation results are `d79b75df9956`, `4f127687897f` and `08c796b75645` under `nsc04-typed-utterance-20261122`. Provider traffic was entirely local. There is no speed comparison for this edge.
 
+The early reply preview passes the selected volume directly to the installed hearing rules. The signed preview stream received the expected words during the held response. A request with a forged scope received HTTP 403 with none of those words. The player moved while the reply was held, and retry recovered the original saved reply. This untimed local check used tree `152b42e2d20c` and executable `6e845de24e11` after a locked Rust build. The fixture database was removed and provider charges were $0. The `nsc04-typed-reply-preview-volume-20261122` archive has manifest `5e8af54155eb9914309fb2eeb08803aeda71eb04c18b8cc4d3e81a073b2b7919`.
+
 ## Spoken introductions on the Rust listener — November 22, 2026
 
 The local language library receives the selected name and the words each listener actually heard. It returns typed word lists to the same event's exact ticket. The installed world still decides whether that hearing is enough to name a recognized subject. Only the Node addon encodes this internal exchange.

@@ -154,8 +154,6 @@ pub(crate) async fn read_disclosure(
     let _inputs = budget
         .reserve(1024 + npc.len())
         .map_err(RuntimeError::from)?;
-    let volume = serde_json::to_value(volume).map_err(RuntimeError::application_refused)?;
-    let volume = volume.as_str().ok_or(WorldError::ProviderKind)?.to_owned();
     let read = game
         .world
         .capture_reply_preview(authority, scope, npc.to_owned(), volume)
