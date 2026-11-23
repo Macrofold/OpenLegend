@@ -35,6 +35,7 @@ export function nativeResponseSelection(input: {
 }): NativeNpcBindingSelection {
   const { original, current, situation } = input;
   const metadata = current.facts.referenceFacts;
+  const selectedBodies = new Set(current.candidates().bodyOrdinals);
   const personal = original
     .sources()
     .flatMap((source, inventory) =>
@@ -47,8 +48,14 @@ export function nativeResponseSelection(input: {
       return { kind: 'received-body', ordinal };
     }
     if (id === current.facts.self.actorId) return { kind: 'myself' };
-    const body = current.facts.perception.bodies.findIndex((body) => body.sourceId === id);
-    if (body >= 0) return { kind: 'body', ordinal: body };
+    // A displayed remembered alias has no physical grant. Resolve it through
+    // the same remembered or personally acquired sources that can outlive contact.
+    if (input.references.physicalEntityReferences[alias] === id) {
+      const body = current.facts.perception.bodies.findIndex((body) => body.sourceId === id);
+      if (!selectedBodies.has(body))
+        throw new Error('The native physical reference has no selected body.');
+      return { kind: 'body', ordinal: body };
+    }
     for (const kind of ['knowledge', 'social'] as const) {
       const ordinal = metadata[kind].findIndex(
         (fact) =>
@@ -93,10 +100,12 @@ export function nativeResponseSelection(input: {
     }
     if (subjectKey(metadata.myself.subject) === key) return { kind: 'myself' };
     for (const body of metadata.bodies) {
-      if (body.subject && subjectKey(body.subject.subject) === key)
-        return { kind: 'body', ordinal: body.ordinal };
-      const index = body.subjects.findIndex((fact) => subjectKey(fact.subject) === key);
-      if (index >= 0) return { kind: 'body-subject', ordinal: body.ordinal, subject: index };
+      if (selectedBodies.has(body.ordinal)) {
+        if (body.subject && subjectKey(body.subject.subject) === key)
+          return { kind: 'body', ordinal: body.ordinal };
+        const index = body.subjects.findIndex((fact) => subjectKey(fact.subject) === key);
+        if (index >= 0) return { kind: 'body-subject', ordinal: body.ordinal, subject: index };
+      }
       if (
         body.entity.identityPresent &&
         !body.entity.seedOnly &&

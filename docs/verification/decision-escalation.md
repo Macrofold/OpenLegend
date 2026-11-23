@@ -81,6 +81,14 @@ A signed-in conversation on the original release reproduced an advertised propos
 
 The local archive `nsc04-standalone-proposal-offer-20261122` preserves the original failure, exact exporter source at `cc319036b` plus the verified patch, and the same Node-free executable in both arms (SHA-256 `a4950d9c15471591f16ed5849fb4d3b63300a1a653142548434d3dc83708ddf4`). The archive records original and corrected release manifest hashes and confirms the corrected cognition SHA-256 `ca539de594e5c6b9582d7e6954cb716fc58edae952b4f6eea5ce86469587234e`. Controlled HTTPS incurred $0 in new and cumulative Jev cost for these checks. TypeScript, formatting and network checks passed. All 12 disposable fixture databases were removed. No speed comparison or live model-quality claim was made.
 
+## Remembered aliases in Node-hosted Rust replies — November 22, 2026
+
+An ordinary player conversation reproduced a reply refusal before generation. The bridge classified a remembered person as a visible body because the person existed in its wider perception roster. Rust correctly refused that body because the reply had not selected it. The bridge now uses the current visible selection for physical references. Remembered aliases still resolve through their permitted evidence or recognized identity.
+
+With the same authored opening and controlled HTTPS, the player walked to Rina and used the ordinary conversation route. Rina’s exact reply saved once, and the receipt and identical request recovered the result without another generation. An independent creator-authorized case withdrew the exact acquired speech while generation was held. The original attempt settled as stale and applied no reply or other effect. Its saved receipt and retry agreed. The separate refusals of autonomous responses with outdated required outcomes remained in the diagnostic logs.
+
+Local archive `nsc04-node-response-alias-20261122` records corrected app tree `eba867e39b64e1fb49deb99e5131124d3bc8e5b2`, unchanged addon SHA-256 `5f77cf677afd2b8bd1661488dd744a52e501f67e6b5133d1911cb88b73107b6c`, and the original refusal. Both focused listeners exited cleanly and their databases were removed. The withdrawal harness reached its one-conversation stop but missed the browser worker’s stop acknowledgment. Controlled calls incurred $0 of Jev cost. These cases establish reply and privacy behavior. They do not qualify the longer workload or performance.
+
 ## Live policy comparison
 
 All **48/48 fresh cases received an answer and delivered it**. Jev chose an accepted answer in every case, so the enabled policy correctly bought **zero** stronger-model calls. The comparison is complete; it shows no measured benefit on this small, straightforward sample.
