@@ -229,12 +229,18 @@ impl ReferenceIssuer {
         expected_body: Option<&str>,
         budget: &ByteBudget,
     ) -> Result<Option<ResolvedContact>, RuntimeError> {
-        self.resolve_contact_matching(session, scope, selected, expected_body, |_| true, budget)
+        self.resolve_contact_matching(
+            session,
+            scope,
+            selected,
+            expected_body,
+            |_| Ok(true),
+            budget,
+        )
     }
 
-    /// Pickup requires current detail about the selected pile. A named lot
-    /// must appear in the observation, and a whole-pile command needs at
-    /// least one observed portable lot. Execution selects the current stock.
+    /// An exact pile contact grants only already observed stock or a still
+    /// current inspection member. The native owner checks both read paths.
     pub(crate) fn resolve_ground_pickup(
         &self,
         session: &NativeWorldSession,
@@ -243,13 +249,14 @@ impl ReferenceIssuer {
         item: Option<&str>,
         budget: &ByteBudget,
     ) -> Result<Option<ResolvedContact>, RuntimeError> {
-        self.resolve_contact_matching(session, scope, selected, None, |body| {
-            body.facets().any(|facet| match &facet.value {
-                openlegend_simulation::reception::SensoryFacet::PileContents { items } =>
-                    items.iter().any(|witness| witness.portable && item.is_none_or(|id| witness.id == id)),
-                _ => false,
-            })
-        }, budget)
+        self.resolve_contact_matching(
+            session,
+            scope,
+            selected,
+            None,
+            |body| session.pickup_contact_allows(&scope.actor_id, body, item),
+            budget,
+        )
     }
 
     fn resolve_contact_matching(
@@ -258,7 +265,9 @@ impl ReferenceIssuer {
         scope: &RequestScope,
         selected: &str,
         expected_body: Option<&str>,
-        matches: impl Fn(&openlegend_simulation::capture::PlayerObservedBody<'_>) -> bool,
+        matches: impl Fn(
+            &openlegend_simulation::capture::PlayerObservedBody<'_>,
+        ) -> Result<bool, RuntimeError>,
         budget: &ByteBudget,
     ) -> Result<Option<ResolvedContact>, RuntimeError> {
         if !selected.starts_with("contact-") {
@@ -276,8 +285,13 @@ impl ReferenceIssuer {
                 body.lease_id,
             ) {
                 Ok(current) if current == selected => {
-                    if !matches(&body) {
-                        return true;
+                    match matches(&body) {
+                        Ok(true) => {}
+                        Ok(false) => return true,
+                        Err(error) => {
+                            selected_source = Some(Err(error));
+                            return true;
+                        }
                     }
                     if let Some(expected) = expected_body {
                         match scoped.body(body.source_id, body.physical_life.unwrap_or(0)) {

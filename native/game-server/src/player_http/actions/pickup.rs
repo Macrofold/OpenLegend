@@ -47,7 +47,8 @@ pub(super) fn render(
     } else {
         Some("Take control of your character to act here.")
     };
-    let all = offer.items.len() > 1;
+    let multiple = offer.items.len() > 1;
+    let all = multiple && offer.all_available;
     let group_bytes = if all {
         size_of::<Action>() + target.len() + offer.all_label.len() + 32
     } else {
@@ -56,8 +57,7 @@ pub(super) fn render(
     let bytes = offer
         .items
         .iter()
-        .try_fold(group_bytes, |sum, row| {
-            let item = row.item;
+        .try_fold(group_bytes, |sum, item| {
             sum.checked_add(size_of::<Action>() + item.id.len() + 32)?
                 .checked_add(3 * item.name.storage_bytes() + 4 * offer.label.len())
         })
@@ -85,10 +85,9 @@ pub(super) fn render(
             intent: intent(None),
         });
     }
-    actions.extend(offer.items.iter().map(|row| {
-        let item = row.item;
-        let label = if all {
-            JsText::concat(&[&item.name, &format!(" × {}", item.quantity as u64).into()])
+    actions.extend(offer.items.iter().map(|item| {
+        let label = if multiple {
+            JsText::concat(&[item.name, &format!(" × {}", item.quantity).into()])
         } else {
             offer.label.into()
         };
@@ -96,12 +95,12 @@ pub(super) fn render(
             id: format!("pickup-{}", item.id),
             label,
             category: offer.label,
-            description: (&item.name).into(),
-            item_id: Some(&item.id),
-            pickup_limit: row.partial_limit,
+            description: item.name.into(),
+            item_id: Some(item.id),
+            pickup_limit: item.partial_limit,
             enabled: reason.is_none(),
             reason,
-            intent: intent(Some(&item.id)),
+            intent: intent(Some(item.id)),
         }
     }));
     resource_menu(offer.sequence, &actions, offer.label, budget)

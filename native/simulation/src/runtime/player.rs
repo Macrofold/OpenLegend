@@ -2,6 +2,7 @@
 //! read borrow survives a provider/SQL await; the immutable evidence owner does.
 use super::*;
 mod inventory;
+mod pickup;
 mod object_history;
 mod world_storage;
 mod offer_recipients;
@@ -239,51 +240,17 @@ pub struct RuntimePickupOffer<'a> {
     pub label: &'a str,
     pub all_label: &'a str,
     pub all_description: &'a str,
+    pub all_available: bool,
     pub reason: Option<&'a str>,
     pub items: &'a [RuntimePickupLot<'a>],
     pub sequence: u64,
 }
 
 pub struct RuntimePickupLot<'a> {
-    pub item: &'a crate::reception::ObservedPileItem,
+    pub id: &'a str,
+    pub name: &'a crate::text::JsText,
+    pub quantity: u64,
     pub partial_limit: Option<u64>,
-}
-
-fn render_pickup<T>(
-    state: &crate::simulation::SimulationState,
-    actor: &str,
-    target: &str,
-    observed: &[crate::reception::ObservedPileItem],
-    budget: &ByteBudget,
-    encode: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
-) -> Result<T, RuntimeError> {
-    let actor = state.physical.entities.get(actor).ok_or_else(|| failure("pickup actor unavailable"))?;
-    let _items = budget.reserve(observed.len().checked_mul(size_of::<RuntimePickupLot>())
-        .ok_or_else(|| failure("pickup offer capacity"))?)?;
-    let mut items = Vec::with_capacity(observed.len());
-    if let Some(pile) = crate::ground_items::pickup_pile(state, actor, target) {
-        items.extend(observed.iter().filter_map(|witness| {
-            if !witness.portable {
-                return None;
-            }
-            let item = crate::ground_items::pickup_lot(state, pile, &witness.id)?;
-            (item.lot.definition_pin.id == witness.definition_id
-                && item.lot.quantity as f64 == witness.quantity).then(|| RuntimePickupLot {
-                    item: witness, partial_limit: item.partial_limit(),
-                })
-        }));
-    }
-    let policy = &state.installed.retained.item_handling_read;
-    let reason = crate::consumption::action_problem(&state.installed, actor, state.physical.header.paused)
-        .map_err(failure)?.map(|blocked| blocked.message.as_str());
-    encode(RuntimeResourceOffer::Pickup(RuntimePickupOffer {
-        label: &policy.pickup_label,
-        all_label: &policy.pickup_all_label,
-        all_description: &policy.pickup_all_description,
-        reason,
-        items: &items,
-        sequence: state.physical.header.sequence,
-    }))
 }
 
 pub struct RuntimeFishOffer<'a> {
@@ -791,7 +758,7 @@ impl NativeWorldSession {
         &self,
         account: &str,
         actor: &str,
-        mut matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+        mut matches: impl FnMut(&crate::capture::PlayerObservedBody<'_>) -> bool,
         use_offer: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
     ) -> Result<Option<T>, RuntimeError> {
         self.require_active()?;
@@ -812,20 +779,20 @@ impl NativeWorldSession {
                 let state = &simulation.state;
                 let pile_kind = &state.installed.observation_rules.value().pile_kind;
                 if observed.kind == *pile_kind {
-                    let Some(items) = body.facets().find_map(|facet| match &facet.value {
-                        crate::reception::SensoryFacet::PileContents { items } => Some(items.as_slice()),
-                        _ => None,
-                    }) else {
-                        return false;
-                    };
-                    if !matches(body) {
+                    if !matches(&body) {
                         return false;
                     }
-                    let encode = encode.take().expect("one selected source");
-                    result = Some(render_pickup(state, actor, id, items, &self.budget, encode));
+                    match pickup::PickupRead::current(state, actor, &body, &self.budget) {
+                        Ok(Some(read)) => {
+                            let encode = encode.take().expect("one selected source");
+                            result = Some(read.render(&self.budget, encode));
+                        }
+                        Ok(None) => {}
+                        Err(error) => result = Some(Err(error)),
+                    }
                     return true;
                 }
-                if observed.kind != "resource" || !matches(body) {
+                if observed.kind != "resource" || !matches(&body) {
                     return false;
                 }
                 if let Some(source) = crate::casts::source(state, id) {
@@ -873,6 +840,22 @@ impl NativeWorldSession {
             })
             .map_err(failure)?;
         result.transpose()
+    }
+
+    /// Check stock only for the exact contact already matched by the caller
+    /// in this actor's current contact read. No second view or inspection is
+    /// acquired. Final movement, reach and transfer checks remain in Pickup.
+    pub fn pickup_contact_allows(
+        &self,
+        actor: &str,
+        contact: &crate::capture::PlayerObservedBody<'_>,
+        item: Option<&str>,
+    ) -> Result<bool, RuntimeError> {
+        let accepted = self.session.accepted().map_err(failure)?;
+        Ok(
+            pickup::PickupRead::current(&accepted.state, actor, contact, &self.budget)?
+                .is_some_and(|read| read.allows(item)),
+        )
     }
 
     /// Admit a menu for a single currently observed combat target. The

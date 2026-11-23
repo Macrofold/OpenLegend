@@ -36,7 +36,7 @@ Visible piles expose their contents and quantities through ordinary perception. 
 
 ## Pickup and drop
 
-Right-click a visible pile. With one portable stack, **Pick Up** directly selects that stack. With multiple portable stacks, **Pick Up ▸** opens a searchable right-side pullout containing **Pick Up All** first, followed by each stack and its quantity. Nonportable contents remain visible but cannot be collected. Submenus support hover, click and keyboard interaction, with viewport-aware placement.
+Right-click a visible pile. **Pick Up** lists portable stacks from its current detailed sight or current opened inspection page. With one permitted stack, **Pick Up** directly selects it. With multiple permitted stacks, **Pick Up ▸** opens a searchable pullout with each stack and quantity. **Pick Up All** appears first when the player has permission to see every portable stack in the pile. Nonportable contents remain visible but cannot be collected. Submenus support hover, click and keyboard interaction, with viewport-aware placement.
 
 Pickup approaches through the existing supported movement path, then transfers the eligible selection. A single-stack request names its exact stack. Pick Up All selects all portable contents still in the pile at completion. If someone took one stack first, the remaining portable stacks can still move. Completion rechecks visibility, reach and availability. If none remain or any selected stack cannot transfer, the pickup moves nothing. Canceling movement does not transfer items. Loss of handling or action capability cancels pending pickup; loss of locomotion cancels a required approach but does not prevent collection already within reach.
 
