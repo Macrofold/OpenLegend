@@ -13,10 +13,10 @@ import {
 } from './generation-config.js';
 import { resolve } from 'node:path';
 import {
-  configuredCreationTargetSchema,
   creationDestinationSchema,
+  readCreationSourceConfig,
 } from './creation-target-contracts.js';
-import { BASE_STARTING_WORLD_PRESETS, isSafeRecordId } from '@open-legend/domain';
+import { BASE_STARTING_WORLD_PRESETS } from '@open-legend/domain';
 
 /** Trusted operator configuration. Secrets and arbitrary endpoints never come from the browser. */
 export function readConfig(env: NodeJS.ProcessEnv = process.env) {
@@ -93,20 +93,10 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   const creationStartup = z
     .enum(['ordinary', 'awaiting-creation'])
     .parse(env['OPEN_LEGEND_STARTUP_MODE'] ?? 'ordinary');
-  const creationInstallationId = env['OPEN_LEGEND_INSTALLATION_ID']?.trim();
-  const creationTargets = z
-    .array(configuredCreationTargetSchema)
-    .max(256)
-    .parse(JSON.parse(env['OPEN_LEGEND_CREATION_TARGETS_JSON'] ?? '[]'));
+  const creationSource = readCreationSourceConfig(env);
   const creationDestination = env['OPEN_LEGEND_CREATION_DESTINATION_JSON']
     ? creationDestinationSchema.parse(JSON.parse(env['OPEN_LEGEND_CREATION_DESTINATION_JSON']))
     : undefined;
-  if (creationTargets.length && !creationInstallationId)
-    throw new Error('Configured creation targets require OPEN_LEGEND_INSTALLATION_ID.');
-  if (creationInstallationId)
-    z.string().min(1).max(100).refine(isSafeRecordId).parse(creationInstallationId);
-  if (new Set(creationTargets.map((target) => target.id)).size !== creationTargets.length)
-    throw new Error('Configured creation target identities must be unique.');
   if (creationStartup === 'awaiting-creation' && !creationDestination)
     throw new Error('Awaiting creation requires OPEN_LEGEND_CREATION_DESTINATION_JSON.');
   if (creationDestination) {
@@ -145,8 +135,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     ...generation,
     creation: {
       startup: creationStartup,
-      installationId: creationInstallationId,
-      targets: creationTargets,
+      ...creationSource,
       destination: creationDestination,
     },
     capacity: {

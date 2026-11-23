@@ -1,3 +1,4 @@
+import { HARD_CONTEXT_LIMITS } from './cognition-contracts.js';
 import { retrieveRecall } from './recall-retrieval.js';
 import { selectRecall } from './recall-selection.js';
 import { formatEntityRecallCandidate } from './recall-entity.js';
@@ -112,15 +113,6 @@ export interface AttentionCandidate {
   attention?: JudgmentAnswer;
   reason?: string;
 }
-// Hard-query baselines survive unavailable optional retrieval; never expand actor scope.
-// docs/memory-architecture.md#4-jev-attention-before-context-inclusion
-export const HARD_CONTEXT_LIMITS = {
-  actors: 16,
-  objects: 16,
-  possessions: 16,
-  knowledge: 16,
-  memories: 8,
-};
 /** Calendar labels read the installed world's clock offset and optional unit name. */
 export function gameTime(at: number, offsetHours: number, dayLabel?: string): string {
   return worldClockText(at, offsetHours, dayLabel);

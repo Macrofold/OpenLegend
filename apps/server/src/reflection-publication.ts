@@ -1,5 +1,4 @@
 import {
-  EXPERIENCE_LIMITS,
   entityGet,
   publishInnerWorld,
   subjectKey,
@@ -7,7 +6,7 @@ import {
   type WorldState,
   type Transition,
 } from '@open-legend/domain';
-import { boundReflectionSchema } from './cognition-contracts.js';
+import { REFLECTION_DOWNTIME, boundReflectionSchema } from './cognition-contracts.js';
 import { resolveResponseEntities, resolveIntentionMarkers } from './entity-references.js';
 import { resolveInterpretationRecords } from './reflection-records.js';
 import type { prepareDecision } from './decision-context.js';
@@ -144,12 +143,6 @@ export function prepareReflectionPublication(
     );
   };
 }
-
-export const REFLECTION_DOWNTIME = {
-  daySeconds: EXPERIENCE_LIMITS.reviewDaySeconds,
-  minimumIntervalSeconds: 3600,
-  stimulus: 'Safe idle time to reconsider remembered experience',
-};
 
 /** Existing downtime cadence; caller separately owns safety and model admission. */
 export function reflectionTimeDue(

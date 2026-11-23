@@ -1,3 +1,4 @@
+import { INTAKE_LIMITS } from './thought-trigger.js';
 import type {
   DecisionDependencyFailure,
   DecisionStopEvidence,
@@ -68,7 +69,7 @@ import {
   type JudgmentAnswer,
 } from '@open-legend/ai';
 import type { ApiResult } from '@open-legend/protocol';
-import { ActorWork, INTAKE_LIMITS } from './actor-work.js';
+import { ActorWork } from './actor-work.js';
 import { actionResponse } from './action-response.js';
 import { requestRoutes, chooseActivityRequest } from './activity-request-choice.js';
 import { CognitionExecution } from './cognition-execution.js';

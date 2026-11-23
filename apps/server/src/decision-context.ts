@@ -79,7 +79,6 @@ import { type CognitionBinding, mindFor } from '@open-legend/domain';
 import type { JudgeRequest, JudgeValue } from '@open-legend/ai';
 import {
   ContextBudgetError,
-  CONTEXT_BYTE_LIMIT,
   npcCandidates,
   planningCandidates,
   candidateChoice,
@@ -88,7 +87,11 @@ import {
 import { domainCommand } from './domain-command.js';
 import { candidateSet, gameTime, captureRecallSelection, type RecallService } from './recall.js';
 import type { WorldService } from './world-service.js';
-import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
+import {
+  CONTEXT_BYTE_LIMIT,
+  COGNITION_VERSION,
+  RESPONSE_INSTRUCTIONS,
+} from './cognition-contracts.js';
 import {
   readableDecisionContext,
   measureReadableDecisionContext,

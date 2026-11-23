@@ -2,6 +2,7 @@ import playerExpression from './player-expression.json' with { type: 'json' };
 import type { HttpPublication } from '@open-legend/network';
 import { sourceMaintenanceHost } from './source-maintenance-host.js';
 import {
+  INTAKE_LIMITS,
   THOUGHT_RESPONSE_INTERRUPTION as RESPONSE_INTERRUPTION,
   thoughtEvidenceFromRead,
   thoughtMeaningFromRead,
@@ -135,7 +136,7 @@ import { projectAttributes } from '@open-legend/domain';
 import { bodyReconsiderationInputs, bodyPolicy } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
-import { INTAKE_LIMITS, ActorWork } from './actor-work.js';
+import { ActorWork } from './actor-work.js';
 import {
   decisionQuestions,
   activityRouteCriterion,
@@ -163,6 +164,7 @@ import {
 } from './decision-context.js';
 import { responseTrigger } from './response-context.js';
 import {
+  CONTEXT_BYTE_LIMIT,
   RESPONSE_INSTRUCTIONS,
   LEVEL_LIMITS,
   boundResponseSchema,
@@ -190,7 +192,7 @@ import {
 } from '@open-legend/ai';
 import type { DeclarationProvenance, WorldState } from '@open-legend/domain';
 import type { ApiResult } from '@open-legend/protocol';
-import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
+import { ContextBudgetError } from './context.js';
 import { digest, type JobRecord } from './store.js';
 import { pendingResponseSave, type WorldService } from './world-service.js';
 import { LIVE_SAVE_MAX_AGE_MS } from './pending-world-save.js';

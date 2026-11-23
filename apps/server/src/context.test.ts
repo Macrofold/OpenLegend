@@ -1,3 +1,4 @@
+import { CONTEXT_BYTE_LIMIT } from './cognition-contracts.js';
 import { advanceWithNavigation } from '../../../tests/fixtures/navigation.js';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
@@ -39,7 +40,6 @@ import { continuitySubjects } from './continuity-view.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
 import {
   buildContext,
-  CONTEXT_BYTE_LIMIT,
   ContextBudgetError,
   npcCandidates,
   type CandidateAction,

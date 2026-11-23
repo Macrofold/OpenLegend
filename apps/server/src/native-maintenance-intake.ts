@@ -1,4 +1,5 @@
-import { ActorWork, INTAKE_LIMITS, type WorkRead } from './actor-work.js';
+import { INTAKE_LIMITS } from './thought-trigger.js';
+import { ActorWork, type WorkRead } from './actor-work.js';
 import type { MaintenanceAdmission, MaintenanceInspection } from './maintenance-host.js';
 import type { NativeWorldService } from './native-world-service.js';
 import { NativeMaintenanceRead } from './native-maintenance-read.js';

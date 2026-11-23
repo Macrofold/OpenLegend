@@ -22,6 +22,9 @@ import {
   boundReflectionJsonSchema,
   boundResponseSchema,
   COGNITION_VERSION,
+  CONTEXT_BYTE_LIMIT,
+  HARD_CONTEXT_LIMITS,
+  REFLECTION_DOWNTIME,
   decisionAppraisalSchema,
   REFLECTION_WORKSPACE_GUIDANCE,
   REFLECTION_WORKSPACE_INSTRUCTIONS,
@@ -32,8 +35,6 @@ import {
   DEFAULT_MACROFOLD_MODEL,
   macrofoldModelParameters,
 } from '../apps/server/src/macrofold-model.js';
-import { REFLECTION_DOWNTIME } from '../apps/server/src/reflection-publication.js';
-import { CONTEXT_BYTE_LIMIT } from '../apps/server/src/context.js';
 import { APPRAISAL_SOURCE_BINDINGS } from '../apps/server/src/memory-repository.js';
 import {
   attentionRequest,
@@ -56,9 +57,7 @@ import {
   LEVEL1_POLICY,
 } from '../apps/server/src/jev-questions.js';
 import { navigationInstructions } from '../apps/server/src/navigation-contracts.js';
-import { INTAKE_LIMITS } from '../apps/server/src/actor-work.js';
-import { HARD_CONTEXT_LIMITS } from '../apps/server/src/recall.js';
-import { NPC_INTAKE_SELECTION } from '../apps/server/src/native-npc-intake.js';
+import { INTAKE_LIMITS, NPC_INTAKE_SELECTION } from '../apps/server/src/thought-trigger.js';
 import { RECORD_ACTOR_PATHS } from '../apps/server/src/world-record-schema.js';
 
 // These build-time tokens are replaced by request-scoped aliases issued by

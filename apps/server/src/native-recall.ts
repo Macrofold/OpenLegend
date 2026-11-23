@@ -1,3 +1,4 @@
+import { HARD_CONTEXT_LIMITS } from './cognition-contracts.js';
 import { namePhrase, personalPronoun, type Named } from '@open-legend/language';
 import {
   experienceEntryKey,
@@ -13,7 +14,7 @@ import { presentationSubjects } from './experience-context.js';
 import type { NativeNpcCapture } from './native-npc-capture.js';
 import type { NativeDefinitionCapture } from './native-definition-capture.js';
 import { formatMemoryCandidate, groupMemoryCandidates } from './recall-memory.js';
-import { gameTime, HARD_CONTEXT_LIMITS, summaryProjector } from './recall.js';
+import { gameTime, summaryProjector } from './recall.js';
 import {
   experienceEmbeddingText,
   experienceForModel,

@@ -131,6 +131,22 @@ Extract the necessary fresh startup preparation from `WorldService.initialize` s
 
 Creation project records, target registration and activation receipts are operational data outside gameplay rewind. Include them in current-format operational backup/recovery under their existing stores. Gameplay save/load preserves the resulting world with ordinary current-format validation; it cannot make an occupied target empty or authorize creation again. No development-save migration, legacy candidate reader, automatic deletion or whole-world replacement is introduced.
 
+### Activate a reviewed Rust opening from the operator workstation
+
+Use the existing [release preparation tool](../../scripts/rust-game-server-opening.ts) to review and publish the exact candidate. Start the destination Rust listener with the reviewed release, `OPEN_LEGEND_STARTUP_MODE=awaiting-creation`, its configured source and account mappings, and the published `OPEN_LEGEND_CREATION_OPENING_SHA256`. The destination owns its PostgreSQL connection and activation writes.
+
+On the operator workstation, set `OPEN_LEGEND_INSTALLATION_ID` and `OPEN_LEGEND_CREATION_TARGETS_JSON` to the configured source identity and allowed targets. Keep the target credential in that environment. Use the [creation command](../../scripts/rust-game-server-creation.ts) with the source creator account, the exact reviewed candidate and its approved compiled digest. Check the target's current opening, account mapping and operating profile before approving it.
+
+```sh
+node --import tsx scripts/rust-game-server-creation.ts check "$target_id" "$creator_account" "$candidate_json"
+(umask 077; set -C; node --import tsx scripts/rust-game-server-creation.ts \
+  approve "$target_id" "$creator_account" "$candidate_json" "$reviewed_compiled_digest" "$expiry_unix_ms" > "$approval_file")
+node --import tsx scripts/rust-game-server-creation.ts start "$approval_file"
+node --import tsx scripts/rust-game-server-creation.ts receipt "$approval_file"
+```
+
+Choose an expiration in Unix milliseconds within the destination's existing seven-day acceptance window. Approval checks the exact compiled digest and writes the operation identity without starting the world. Preserve that original file. After a lost response, use **receipt** with the original file to resolve the outcome. Both the original operation and its receipt retain the same candidate, account, target generation and approval identity. The command runs on the operator workstation. The destination serves and reopens the world from the Rust executable.
+
 ## Performance and growth
 
 Cost grows with candidate entities/geometry, explicit definitions, required action/material checks, retained revisions and configured targets; it does not need recurring work proportional to the source world's history or every account's creations. Select permitted targets before hydration. Reuse a candidate's compiled definitions and geometry across its rows/checks rather than revalidating every visible object independently. Candidate construction and checks happen after explicit edits/check/start, never every simulation tick or keystroke.

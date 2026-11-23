@@ -1,3 +1,4 @@
+import { CONTEXT_BYTE_LIMIT } from './cognition-contracts.js';
 import type {
   NativeWorldConsumer,
   NativeWorldNpcResponseTicket,
@@ -24,7 +25,7 @@ import {
   nativeDecisionJsonSize,
   joinNativeDecisionText,
 } from './native-decision-prompt.js';
-import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
+import { ContextBudgetError } from './context.js';
 import { StopJob } from './decision-dispatch.js';
 import { attachNativeConsumer } from './native-consumer.js';
 import {

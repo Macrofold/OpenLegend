@@ -7,7 +7,6 @@ import type {
   NativeWorldNpcTrigger,
 } from '@open-legend/native-simulation';
 import {
-  EXPERIENCE_LIMITS,
   STIMULUS_POLICY,
   activeStimuliFromRead,
   awarenessMemory,
@@ -41,7 +40,7 @@ import type { NativeActorSelf } from './native-perception.js';
 import type { NativeCurrentCaptureSeed } from './native-current-capture.js';
 import type { NativeDefinitionCapture } from './native-definition-capture.js';
 import {
-  THOUGHT_RESPONSE_INTERRUPTION,
+  NPC_INTAKE_SELECTION,
   priorityThoughtEvidence,
   thoughtEvidenceFromRead,
   thoughtMeaningFromRead,
@@ -145,13 +144,6 @@ export interface NativeNpcQueueInputs {
   readonly facts: NativeNpcInputFacts;
   readonly input: IntakeInputs & { owner: ReturnType<typeof nativeProductOwner> };
 }
-export const NPC_INTAKE_SELECTION = {
-  limit: 256,
-  protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
-  preferredImportance: 6,
-  interruptionImportance: THOUGHT_RESPONSE_INTERRUPTION.importance,
-  interruptionUrgency: THOUGHT_RESPONSE_INTERRUPTION.urgency,
-};
 
 function intakeRequest(actorId: string, afterSequence: number, weighedThrough?: number) {
   return {

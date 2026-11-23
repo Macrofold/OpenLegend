@@ -1,4 +1,5 @@
 import {
+  EXPERIENCE_LIMITS,
   activeGoalTexts,
   type ActorAgency,
   type ActorComponent,
@@ -8,7 +9,26 @@ import {
 } from '@open-legend/domain';
 import { digest } from './content-digest.js';
 
+/** Fairness bounds for choosing which pending characters to inspect. Scheduling hints only:
+ * they never raise model concurrency or spending (docs/limits/native-work.md#nw14). */
+export const INTAKE_LIMITS = {
+  /** Bound schedule reads before any asynchronous fan-out. */
+  readsPerPass: 64,
+  /** Producer urgency at or above this value is inspected before ordinary waiting work. */
+  urgent: 7,
+  /** Ordinary work waiting this long competes with urgent work by wait time, so a stream
+   * of urgent characters cannot starve the others. */
+  agingMs: 10_000,
+} as const;
+
 export const THOUGHT_RESPONSE_INTERRUPTION = { importance: 8, urgency: 8 } as const;
+export const NPC_INTAKE_SELECTION = {
+  limit: 256,
+  protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
+  preferredImportance: 6,
+  interruptionImportance: THOUGHT_RESPONSE_INTERRUPTION.importance,
+  interruptionUrgency: THOUGHT_RESPONSE_INTERRUPTION.urgency,
+};
 
 export interface ThoughtEventRead {
   readonly type: string;

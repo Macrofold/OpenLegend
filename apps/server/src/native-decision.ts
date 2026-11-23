@@ -70,7 +70,7 @@ import type {
   DecisionRefusalReporter,
 } from './decision-failure.js';
 import { ViewChangedError } from './player-view-async.js';
-import { ContextBudgetError, CONTEXT_BYTE_LIMIT } from './context.js';
+import { ContextBudgetError } from './context.js';
 import {
   nativeDecisionPrompt,
   nativeDecisionPromptSize,
@@ -80,6 +80,7 @@ import {
   type NativeDecisionText,
 } from './native-decision-prompt.js';
 import {
+  CONTEXT_BYTE_LIMIT,
   COGNITION_VERSION,
   RESPONSE_INSTRUCTIONS,
   boundResponseSchema,

@@ -1,3 +1,4 @@
+import { CONTEXT_BYTE_LIMIT } from './cognition-contracts.js';
 import { nativeText, decisionOfferDescription, selectedOccurrenceRules } from '@open-legend/domain';
 import { formatCandidateDetails, formatCandidateTemporary } from './candidate-description.js';
 import { entityHandle, permittedSourceHandle } from './entity-references.js';
@@ -221,7 +222,6 @@ function describeTargets(
   });
 }
 
-export const CONTEXT_BYTE_LIMIT = 100_000;
 export class ContextBudgetError extends Error {
   constructor(
     message = 'Required actor facts exceed the 100KB context budget; this context was not sent.',

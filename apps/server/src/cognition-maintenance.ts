@@ -5,7 +5,7 @@ import type {
   MaintenanceInspection,
 } from './maintenance-host.js';
 import type { HttpPublication } from '@open-legend/network';
-import { REFLECTION_DOWNTIME, reflectionTimeDueFromRead } from './reflection-publication.js';
+import { reflectionTimeDueFromRead } from './reflection-publication.js';
 import {
   recordMapChangesBetween,
   nativeThinkingTimeChanges,
@@ -49,6 +49,7 @@ import { decisionAllowance, interactiveAllowance } from './cognition-budget.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
+  REFLECTION_DOWNTIME,
   hourlySummarySchema,
   LEVEL_LIMITS,
   REFLECTION_WORKSPACE_INSTRUCTIONS,

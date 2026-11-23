@@ -9,9 +9,8 @@ import {
   type TokenUsage,
 } from '@open-legend/ai';
 import { MIND_LIMITS, RESPONSE_LIMITS } from '@open-legend/domain';
-import { LEVEL_LIMITS } from './cognition-contracts.js';
+import { CONTEXT_BYTE_LIMIT, LEVEL_LIMITS } from './cognition-contracts.js';
 import type { AppConfig } from './config.js';
-import { CONTEXT_BYTE_LIMIT } from './context.js';
 import {
   assertAttemptReceiptContinuity,
   retainKnownAttemptCost,
