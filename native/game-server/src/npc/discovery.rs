@@ -10,7 +10,7 @@ use openlegend_simulation::{
     host::{ByteReservation, CapacityError},
     runtime::{RuntimeDirectOutput, RuntimeError, RuntimeNpcTrigger},
 };
-use serde_json::json;
+pub(super) use openlegend_simulation::runtime::RuntimeDiscoveryOperation as Operation;
 use std::{
     mem::size_of,
     sync::{
@@ -137,11 +137,6 @@ impl DiscoveryDispatch {
     }
 }
 
-pub(super) enum Operation {
-    Reserve { interval: u64 },
-    Settle { dispatched: bool },
-}
-
 pub(super) async fn change(
     game: &Arc<CurrentServer>,
     saves: &Arc<LiveSaves>,
@@ -152,18 +147,16 @@ pub(super) async fn change(
 ) -> Result<bool, WorldError> {
     let _ordinary = saves.enter_ordinary().await;
     saves.check_admission(Instant::now())?;
+    let bytes = [actor.len(), generation.len(), reservation.len()]
+        .into_iter()
+        .try_fold(0usize, usize::checked_add)
+        .ok_or(CapacityError)
+        .map_err(RuntimeError::from)?;
+    let input_storage = game.host.budget().reserve(bytes).map_err(RuntimeError::from)?;
+    let actor = actor.to_owned();
     let generation = generation.to_owned();
+    let reservation = reservation.to_owned();
     let reserving = matches!(operation, Operation::Reserve { .. });
-    let operation = match operation {
-        Operation::Reserve { interval } => {
-            json!({"type":"reserve-discovery","interval":interval,"reservation":reservation})
-        }
-        Operation::Settle { dispatched } => {
-            json!({"type":"settle-discovery","reservation":reservation,"dispatched":dispatched})
-        }
-    };
-    let request = serde_json::to_vec(&json!({"actorId": actor,"operation":operation}))
-        .map_err(RuntimeError::application_refused)?;
     let provider = game.clone();
     let stage = saves.clone();
     let accepted = saves.clone();
@@ -174,12 +167,13 @@ pub(super) async fn change(
             #[cfg(feature = "profile-campaign")]
             openlegend_simulation::profile::sites::TURN_NPC,
             move |session| {
+                let _input_storage = input_storage;
                 let scope = session.accepted_progress()?;
                 if scope.generation != generation || (reserving && scope.paused) {
                     return Ok(ApplicationStart::Existing((false, None)));
                 }
                 Ok(ApplicationStart::Candidate(
-                    session.begin_npc_intake(&request)?,
+                    session.begin_npc_discovery(actor, reservation, operation)?,
                 ))
             },
             move |question| {

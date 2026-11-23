@@ -51,7 +51,8 @@ mod npc;
 mod npc_intake;
 pub use npc_intake::{
     NpcQueueInputs, NpcScheduleCause, NpcScheduleFacts, NpcSchedulePopulation, NpcScheduleSources,
-    RuntimeNpcInspection, RuntimeNpcIntakeSelection, RuntimeNpcTrigger, ScheduleBodyInput,
+    RuntimeDiscoveryOperation, RuntimeNpcInspection, RuntimeNpcIntakeSelection, RuntimeNpcTrigger,
+    ScheduleBodyInput,
     ScheduleEvidence,
 };
 mod npc_labels;

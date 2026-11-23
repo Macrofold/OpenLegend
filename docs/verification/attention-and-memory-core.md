@@ -216,6 +216,8 @@ Background memory indexing now uses the same `AI_TIMEOUT_SECONDS` default as the
 
 The common current-format storage artifact is `177475c5ace3`. The old executable is `29e852c23822`, and the locked production candidate tree and executable are `5d8d58d2f494` and `cbf56727ad72`. Results under `nsc04-discovery-dispatch-20261122/` preserve the controlled requests, original timeout fixture with expired presence, live retries and shutdown reports. All owned databases closed. External provider cost was $0. These local checks establish correctness.
 
+The scheduler now passes the reservation and settlement directly to the Rust writer. On combined tree `73163af50765` and executable `7615365ce63a`, the server saved the interval as spent while holding the reply and recovered one completed job after restart. The spending refusal left the interval available, dispatched zero requests, and recovered one failed job on restart. Both disposable databases closed and native reservations reached zero. Evidence is `nsc04-typed-discovery-20261122/caller-evidence.tar.gz` (`f1bd4a5160af`).
+
 ### Selected NPC evidence requests in Rust — November 22, 2026
 
 Recall, reply revalidation, reflection and consolidation share the original funded request for selected personal evidence. The stand-alone SQL reader borrows this typed request for its exact actor and simulation cut, then admits its own rows and any necessary pending-save records before waiting on PostgreSQL. The original request binding and the answer validation still apply. The Node addon can still encode its request at its own boundary.

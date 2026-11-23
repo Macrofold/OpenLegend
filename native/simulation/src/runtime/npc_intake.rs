@@ -7,6 +7,11 @@ pub use crate::capture::npc_intake::{
 pub use crate::experience::intake::IntakeSelection as RuntimeNpcIntakeSelection;
 mod direct;
 pub use direct::{NpcScheduleCause, NpcSchedulePopulation, NpcScheduleSources};
+pub enum RuntimeDiscoveryOperation {
+    Reserve { interval: u64 },
+    Settle { dispatched: bool },
+}
+
 pub struct RuntimeNpcTrigger {
     read: crate::capture::npc_intake::NpcIntakeCapture,
 }
@@ -149,6 +154,32 @@ impl NativeWorldSession {
                     })
             }))
     }
+    /// The application owns the funded actor and reservation through queue
+    /// admission. The native intake cursor still validates and journals them.
+    pub fn begin_npc_discovery(
+        &mut self,
+        actor_id: String,
+        reservation: String,
+        operation: RuntimeDiscoveryOperation,
+    ) -> Result<CandidateKey, RuntimeError> {
+        use crate::simulation::npc_intake::{NpcIntakeOperation, NpcIntakeRequest};
+        self.require_active()?;
+        let operation = match operation {
+            RuntimeDiscoveryOperation::Reserve { interval } => {
+                if interval > crate::identity::MAX_SAFE_INTEGER {
+                    return Err(failure("NPC discovery interval exceeds the supported range"));
+                }
+                NpcIntakeOperation::ReserveDiscovery { interval, reservation }
+            }
+            RuntimeDiscoveryOperation::Settle { dispatched } => {
+                NpcIntakeOperation::SettleDiscovery { reservation, dispatched }
+            }
+        };
+        self.session
+            .begin_npc_intake(NpcIntakeRequest { actor_id, operation })
+            .map_err(session_failure)
+    }
+
     pub fn begin_npc_intake(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
