@@ -22,6 +22,8 @@ Settlement estimated $11.509684 for the campaign, including $11.011270 in comput
 
 VW01 recovery and VW03 settlement need a check that sums verified running intervals across recovery. If a stop or start remains uncertain, retain the outstanding hold and record the uncertainty. Preserve separately charged interval-specific storage and the original failure evidence.
 
+The separate interrupted `slot-3` campaign `13a3ef8f-ad65-4c61-a152-6660f3a28ebf` is quarantined and its instance is stopped. Its last recorded run failed export at the `base/release/language` symlink. Its original recovery allowance is exhausted and the runner cannot fund another recovery from that allocation. Its manifest and $0.685064 hold remain open. The separate final Rust comparison allocation does not change those records.
+
 ## Delivery order
 
 - [ ] **VW01 — Atomic ownership and bounded lifecycle.** Implement the controller/table, fixed slots, cloud-allocation admission, fenced run/case claims, supervisor and independent deadlines/recovery through the [shared contracts](../projects/verification-workers-tech-design.md#runner-input-and-output). **Required pass:** concurrent claim has one winner; duplicate or changed-payload retries do not replay; stale run/case commands cannot affect successors; cleanup after expiry can stop a long-running child without lock deadlock; controller/laptop loss and stop/claim races recover or quarantine. Allocation/create/retire uncertainty cannot exceed the slot cap or reset spending. Exercise owned disposable fault scenarios, never active temporary workers.
