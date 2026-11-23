@@ -331,6 +331,7 @@ enum Phase {
     ProjectileBoundary,
     Move,
     FlightMove,
+    AimMotion,
     ProjectileSettle,
     Wander,
     Endpoint,
@@ -531,6 +532,7 @@ impl AdvanceCursor {
                     .and_then(MotionSliceCursor::geometry_request)
             })
             .or_else(|| self.flight.as_ref().and_then(FlightCursor::questions))
+            .or_else(|| self.working.as_ref()?.aims.as_deref()?.question())
             .or_else(|| self.travel.as_ref().and_then(SettleTravel::geometry))
             .or_else(|| {
                 self.endpoint

@@ -217,12 +217,7 @@ pub(super) fn projectile_motion(
     let Some(flight) = &entity.spatial.flight else {
         return Ok(None);
     };
-    if support(entity).is_some()
-        || !can_advance(entity, installed)?
-        || flight.at_rest.is_some()
-        || flight.awaiting_choice.is_some()
-        || flight.wait_seconds > 0.0
-    {
+    if !moving_airborne(installed, entity)? {
         return Ok(None);
     }
     let route = corridor(installed, flight)?;
@@ -236,6 +231,21 @@ pub(super) fn projectile_motion(
         to: leg.position,
         can_stay: true,
     }))
+}
+
+/// The next elapsed slice can contain real movement on the current route.
+pub(super) fn moving_airborne(
+    installed: &InstalledWorld,
+    entity: &Entity,
+) -> Result<bool, ExecutionError> {
+    let Some(flight) = &entity.spatial.flight else {
+        return Ok(false);
+    };
+    Ok(support(entity).is_none()
+        && flight.at_rest.is_none()
+        && flight.awaiting_choice.is_none()
+        && flight.wait_seconds <= 0.0
+        && can_advance(entity, installed)?)
 }
 
 struct FlightDestination {

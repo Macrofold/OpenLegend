@@ -49,14 +49,12 @@ pub(in crate::time) struct AimTracks {
     next: usize,
     pending: Option<SightWork>,
     before_finished: bool,
-    finished: bool,
     text_bytes: usize,
     storage: ByteReservation,
 }
 
-fn grounded(body: &Entity) -> Option<Point> {
+fn observable_position(body: &Entity) -> Option<Point> {
     if !body.actively_participates()
-        || body.spatial.flight.is_some()
         || body.spatial.fall_velocity.is_some()
         || body.spatial.local_pose.is_some()
         || !body.actor.as_ref().is_some_and(|actor| actor.alive)
@@ -83,7 +81,7 @@ impl AimTracks {
         else {
             return Ok(());
         };
-        let Some(from) = grounded(body) else {
+        let Some(from) = observable_position(body) else {
             return Ok(());
         };
         let entities = &core.state.physical.entities;
@@ -96,11 +94,12 @@ impl AimTracks {
         else {
             return Ok(());
         };
-        let Some(target_from) = grounded(target_body) else {
+        let Some(target_from) = observable_position(target_body) else {
             return Ok(());
         };
-        // An idle subject cannot contribute a newly observed ground leg.
+        // An idle subject cannot contribute a newly observed movement leg.
         if !steering.routes.contains_key(&target_handle)
+            && !crate::time::flight::moving_airborne(&core.state.installed, target_body)?
             && !target_body
                 .actor
                 .as_ref()
@@ -123,7 +122,6 @@ impl AimTracks {
                 next: 0,
                 pending: None,
                 before_finished: false,
-                finished: false,
                 text_bytes: 0,
                 storage: budget.reserve(size_of::<Self>())?,
             }));
@@ -226,11 +224,11 @@ impl AimTracks {
         Ok(())
     }
 
-    pub(super) fn recording(&self, handle: EntityHandle) -> bool {
+    pub(in crate::time) fn recording(&self, handle: EntityHandle) -> bool {
         self.bodies.contains_key(&handle)
     }
 
-    pub(super) fn record(&mut self, handle: EntityHandle, track: Arc<ExecutedMotion>) {
+    pub(in crate::time) fn record(&mut self, handle: EntityHandle, track: Arc<ExecutedMotion>) {
         if let Some(record) = self.bodies.get_mut(&handle) {
             if record.actual.is_some() {
                 record.ambiguous = true;
@@ -244,11 +242,7 @@ impl AimTracks {
     pub(super) fn before_finished(&self) -> bool {
         self.before_finished
     }
-    pub(super) fn finished(&self) -> bool {
-        self.finished
-    }
-
-    pub(super) fn question(&self) -> Option<&GeometryQueries> {
+    pub(in crate::time) fn question(&self) -> Option<&GeometryQueries> {
         match self.pending.as_ref()? {
             SightWork::Before(sight) | SightWork::After(sight) => Some(sight.queries()),
             SightWork::Sweep(sweep) => Some(sweep.request()),
@@ -326,7 +320,7 @@ impl AimTracks {
         let Some((receiver, Some(target))) = self.bound(core) else {
             return Ok(None);
         };
-        let Some((receiver_at, target_at)) = grounded(receiver).zip(grounded(target)) else {
+        let Some((receiver_at, target_at)) = observable_position(receiver).zip(observable_position(target)) else {
             return Ok(None);
         };
         let watch = &self.watches[self.next];
@@ -366,7 +360,7 @@ impl AimTracks {
         )
     }
 
-    pub(super) fn run(
+    pub(in crate::time) fn run(
         &mut self,
         core: &mut CoreMutation<'_>,
         answer: Option<GeometryAnswers>,
@@ -451,9 +445,7 @@ impl AimTracks {
             }
             self.next += 1;
         }
-        if self.before_finished {
-            self.finished = true;
-        } else {
+        if !self.before_finished {
             self.before_finished = true;
             self.next = 0;
         }

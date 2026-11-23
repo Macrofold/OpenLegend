@@ -19,7 +19,7 @@ use std::mem::size_of;
 pub(crate) struct SliceActions {
     pub working: IndexMap<EntityHandle, String>,
     pub approaching: Vec<EntityHandle>,
-    pub(super) aims: Option<Box<super::movement::AimTracks>>,
+    pub(in crate::time) aims: Option<Box<super::movement::AimTracks>>,
     _reservation: ByteReservation,
 }
 impl SliceActions {

@@ -560,7 +560,9 @@ impl PassageTracks {
         track: std::sync::Arc<crate::time::movement::ExecutedMotion>,
     ) -> Result<(), ExecutionError> {
         if let Some(observer) = self.watched.get_mut(&handle) {
-            if observer.actual.is_some() {
+            if observer.actual.is_some()
+                || track.forecast.track.pose.first() != Some(&observer.observer.feet)
+            {
                 return Err(ExecutionError::Invariant);
             }
             observer.actual = Some(track);
@@ -570,43 +572,6 @@ impl PassageTracks {
 
     /// The flight owner supplies the actually placed leg. It calls this
     /// after its geometry check and only for a positive elapsed slice.
-    pub(in crate::time) fn record_air(
-        &mut self,
-        handle: EntityHandle,
-        from: Point,
-        to: Point,
-        seconds: f64,
-        budget: &ByteBudget,
-    ) -> Result<(), ExecutionError> {
-        let Some(entry) = self.watched.get_mut(&handle) else {
-            return Ok(());
-        };
-        if entry.observer.feet != from
-            || entry.actual.is_some()
-            || seconds <= 0.0
-            || !seconds.is_finite()
-        {
-            return Err(ExecutionError::Invariant);
-        }
-        if from == to {
-            return Ok(());
-        }
-        let reservation = budget.reserve(2 * (size_of::<f64>() + size_of::<Point>()))?;
-        let track = crate::movement::MotionTrack {
-            at: vec![0.0, seconds],
-            pose: vec![from, to],
-        };
-        entry.actual = Some(crate::time::movement::ExecutedMotion::share(
-            crate::movement::MotionForecast {
-                track,
-                complete: true,
-                reservation,
-            },
-            budget,
-        )?);
-        Ok(())
-    }
-
     pub(super) fn prepare_actual(
         &self,
         core: &mut crate::execution::CoreMutation<'_>,

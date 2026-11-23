@@ -29,6 +29,28 @@ pub(super) struct ExecutedMotion {
 }
 
 impl ExecutedMotion {
+    /// Retain a straight leg already committed by the flight writer. Both
+    /// sight consumers may borrow it until their own answers settle.
+    pub(super) fn straight(
+        from: Point,
+        to: Point,
+        seconds: f64,
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, ExecutionError> {
+        let reservation = budget.reserve(2 * (size_of::<Point>() + size_of::<f64>()))?;
+        Self::share(
+            MotionForecast {
+                track: crate::movement::MotionTrack {
+                    at: vec![0.0, seconds],
+                    pose: vec![from, to],
+                },
+                complete: true,
+                reservation,
+            },
+            budget,
+        )
+    }
+
     pub(super) fn share(forecast: MotionForecast, budget: &ByteBudget) -> Result<Arc<Self>, ExecutionError> {
         let _header = budget.reserve(size_of::<Self>() + 2 * size_of::<usize>())?;
         Ok(Arc::new(Self { forecast, _header }))
@@ -221,17 +243,6 @@ impl MotionSliceCursor {
         }
         loop {
             let Some(handle) = self.actions.approaching.get(self.next).copied() else {
-                if self
-                    .actions
-                    .aims
-                    .as_ref()
-                    .is_some_and(|aims| !aims.finished())
-                {
-                    if self.aim_sight(core, answer.take())? {
-                        return Ok(Progress::Geometry);
-                    }
-                    self.actions.aims = None;
-                }
                 if answer.is_some() {
                     return Err(ExecutionError::UnfinishedOccurrence);
                 }

@@ -2,6 +2,16 @@ use super::*;
 use crate::execution::PhysicalChange;
 
 impl AdvanceCursor {
+    fn after_motion(&mut self, core: &CoreMutation<'_>) -> Result<(), AdvanceError> {
+        if self.projectile_settlement.is_some() {
+            self.phase = Phase::ProjectileSettle;
+        } else {
+            self.select_wanderers(core)?;
+            self.phase = Phase::Wander;
+        }
+        Ok(())
+    }
+
     fn perceives(core: &CoreMutation<'_>, handle: EntityHandle) -> Result<bool, ExecutionError> {
         let entity = core
             .state
@@ -1173,10 +1183,11 @@ impl AdvanceCursor {
                         };
                         let flyers = self.roster.as_ref().ok_or_else(invalid)?.flyers();
                         let seconds = self.seconds;
-                        let mut tracks = self
+                        let mut passages = self
                             .projectile_settlement
                             .as_mut()
                             .and_then(ProjectileSettle::passage_tracks_mut);
+                        let mut aims = self.working.as_mut().and_then(|work| work.aims.as_deref_mut());
                         let result = self.flight.as_mut().ok_or_else(invalid)?.step(
                             core,
                             flyers,
@@ -1184,8 +1195,19 @@ impl AdvanceCursor {
                             geometry,
                             budget,
                             |handle, from, to| {
-                                if let Some(tracks) = tracks.as_deref_mut() {
-                                    tracks.record_air(handle, from, to, seconds, budget)?;
+                                let watched_aim = aims.as_ref().is_some_and(|aims| aims.recording(handle));
+                                let watched_passage = passages.as_ref()
+                                    .is_some_and(|passages| passages.recording(handle));
+                                if watched_aim || watched_passage {
+                                    let track = crate::time::movement::ExecutedMotion::straight(
+                                        from, to, seconds, budget,
+                                    )?;
+                                    if let Some(aims) = aims.as_deref_mut().filter(|_| watched_aim) {
+                                        aims.record(handle, Arc::clone(&track));
+                                    }
+                                    if let Some(passages) = passages.as_deref_mut().filter(|_| watched_passage) {
+                                        passages.record(handle, track)?;
+                                    }
                                 }
                                 Ok(())
                             },
@@ -1202,12 +1224,26 @@ impl AdvanceCursor {
                     }
                     if start {
                         self.phase = Phase::SenseStart;
-                    } else if self.projectile_settlement.is_some() {
-                        self.phase = Phase::ProjectileSettle;
+                    } else if self.working.as_ref().is_some_and(|work| work.aims.is_some()) {
+                        self.phase = Phase::AimMotion;
                     } else {
-                        self.select_wanderers(core)?;
-                        self.phase = Phase::Wander;
+                        self.after_motion(core)?;
                     }
+                }
+                Phase::AimMotion => {
+                    let geometry = match answer.take() {
+                        Some(AdvanceAnswer::Geometry(geometry)) => Some(geometry),
+                        None => None,
+                        _ => return Err(invalid().into()),
+                    };
+                    let binding = self.binding(core)?;
+                    let work = self.working.as_mut().ok_or_else(invalid)?;
+                    let aims = work.aims.as_mut().ok_or_else(invalid)?;
+                    if aims.run(core, geometry, self.seconds, binding, budget)? {
+                        return Ok(Progress::Geometry);
+                    }
+                    work.aims = None;
+                    self.after_motion(core)?;
                 }
                 Phase::SenseStart | Phase::SenseEnd => {
                     let destination = self.phase;
