@@ -124,8 +124,6 @@ struct CommandInput<'a> {
     id: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
     purpose: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    auto_equip: Option<bool>,
     #[serde(rename = "type")]
     kind: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -149,7 +147,6 @@ impl<'a> CommandInput<'a> {
             actor_id: actor,
             id,
             purpose: None,
-            auto_equip: None,
             kind,
             target_id: None,
             definition_id: None,
@@ -323,7 +320,6 @@ impl NpcCandidateCursor {
     ) -> Result<(NativeCommand, ByteReservation), ExecutionError> {
         let fields = 3
             + usize::from(input.purpose.is_some())
-            + usize::from(input.auto_equip.is_some())
             + usize::from(input.target_id.is_some())
             + usize::from(input.definition_id.is_some())
             + usize::from(input.item_id.is_some())
@@ -374,7 +370,7 @@ impl NpcCandidateCursor {
                     target_id: target()?,
                     definition_id: definition()?,
                     weapon_item_id: None,
-                    auto_equip: input.auto_equip,
+                    auto_equip: None,
                 },
                 _ => return Err(ExecutionError::UnsupportedFamily),
             })

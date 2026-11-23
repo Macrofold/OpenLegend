@@ -435,7 +435,6 @@ impl NpcCandidateCursor {
                     CommandInput::new(&self.actor, preparation_id, &rules.strike_command);
                 input.target_id = Some(&target.id);
                 input.definition_id = Some(definition_id);
-                input.auto_equip = Some(true);
                 if hunting {
                     input.purpose = Some(&rules.hunting_purpose)
                 }
