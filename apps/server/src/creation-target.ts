@@ -6,7 +6,6 @@ import {
   freezeWorld,
   type WorldCreationCandidate,
   type InitialWorldPreparation,
-  type ConstructionPermission,
 } from '@open-legend/domain';
 import { accountBindingSchema, type AccountBinding } from './authority.js';
 import { digest } from './content-digest.js';
@@ -23,12 +22,10 @@ import {
   type CreationReceiptRequest,
   type CreationRegistration,
 } from './creation-target-contracts.js';
-import { BACKUP_TABLES } from './operational-backup-format.js';
-import { ASSET_TABLES } from './asset-repository.js';
-import { WORLD_RECORD_TABLES } from './world-record-schema.js';
+import { creationTargetOccupiedSql } from './game-storage-schema.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import type { SqlGameRepository } from './store.js';
-import type { SavedWorld } from './saved-world.js';
+import type { CreationStartupPreparation } from './initial-world-preparation.js';
 import type { SqlDatabase } from './sql-database.js';
 
 export class CreationTargetError extends Error {
@@ -52,54 +49,11 @@ interface StoredReceipt {
   receipt: CreationActivationReceipt;
 }
 
-/** Detect gameplay or operational leftovers without counting their rows. An
- * external art catalog and the creation registration may predate a world. */
-export function creationTargetOccupiedSql(): string {
-  const assetTables = new Set<string>(ASSET_TABLES);
-  const tables = [
-    ...new Set([
-      ...WORLD_RECORD_TABLES,
-      ...BACKUP_TABLES,
-      'recall_vectors',
-      'recall_sources',
-      'recall_place_capsules',
-      'mind_source_dependencies',
-      'memory_index_models',
-      'memory_index_queue',
-      'memory_vectors',
-    ]),
-  ].filter(
-    (table) =>
-      table !== 'meta' && table !== 'creation_target_registration' && !assetTables.has(table),
-  );
-  return `SELECT EXISTS(
-    ${tables.map((table) => `SELECT 1 FROM ${table}`).join(' UNION ALL ')}
-    UNION ALL SELECT 1 FROM meta WHERE key<>'schema'
-  ) AS occupied`;
-}
-
 /** Target admission and operational outcomes share the destination's sole SQL writer.
  * These tables never enter gameplay checkpoints. docs/projects/parallel-batch-07-playable-world-creation-tech-design.md#one-destination-commit-recoverable-source-status
  */
 export class CreationTargetRepository {
   constructor(readonly db: SqlDatabase) {}
-
-  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS creation_target_registration (
-        id BIGINT PRIMARY KEY CHECK(id=1), target_id TEXT NOT NULL UNIQUE,
-        generation BIGINT NOT NULL CHECK(generation>0),
-        configuration_digest TEXT NOT NULL, profile_digest TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS creation_activation_receipts (
-        source_installation_id TEXT NOT NULL, operation_id TEXT NOT NULL,
-        target_id TEXT NOT NULL UNIQUE REFERENCES creation_target_registration(target_id),
-        target_generation BIGINT NOT NULL CHECK(target_generation>0),
-        fingerprint TEXT NOT NULL, payload TEXT NOT NULL,
-        PRIMARY KEY(source_installation_id,operation_id)
-      );
-    `);
-  }
 
   async registration(lock = false): Promise<CreationRegistration | null> {
     const row = await this.db
@@ -204,15 +158,6 @@ export class CreationTargetRepository {
         'This target contains retained world or operational data. No existing data was changed.',
       );
   }
-}
-
-export interface CreationStartupPreparation {
-  savedWorld: SavedWorld;
-  authorityBindings: readonly AccountBinding[];
-  authorityOwners: ReadonlyMap<string, string>;
-  constructionSeeds: readonly ConstructionPermission[];
-  ready: boolean;
-  findings: readonly string[];
 }
 
 export interface CreationTargetOptions {

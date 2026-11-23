@@ -34,6 +34,7 @@ import {
   DATABASE_SCHEMA,
   JOB_UPSERT_SQL,
   PERMITTED_UNMARKED_TABLES,
+  creationTargetOccupiedSql,
   initializeGameSchema,
 } from '../apps/server/src/game-storage-schema.js';
 import { WorldRecords } from '../apps/server/src/world-records.js';
@@ -42,7 +43,6 @@ import { receivedCurrentOwnerTables } from '../apps/server/src/received-record-r
 import { receivedOwnershipAuditSql } from '../apps/server/src/received-value-ownership.js';
 import { retainedEvidenceRowSql } from '../apps/server/src/retained-evidence-selection.js';
 import { readAssetConfiguration, readAssetIndex } from '../apps/server/src/asset-configuration.js';
-import { creationTargetOccupiedSql } from '../apps/server/src/creation-target.js';
 import { RESTORED_HISTORY_POSITION_TABLES } from '../apps/server/src/history-residency.js';
 import {
   AUTOSAVE_DEFAULTS,

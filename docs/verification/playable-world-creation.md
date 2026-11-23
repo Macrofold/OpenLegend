@@ -90,6 +90,8 @@ The release source tree was `add03d209c70`, executable `bc6115bb85f7`, and the o
 
 The Main cognition export stayed byte-identical after its five preparation constants moved to their existing shared owners. Both exported policies have SHA-256 `e01e0de373a85c2f5cea5d418f7d89a4f16ce9efe8e0ac649c4423dd6884c595`. Build type and network checks passed.
 
+The release exporter uses the shared creation tables and occupied-target query. The reviewed opening builder owns navigation readiness and its existing route reuse. The actual schema-only export matched `177475c5ace3`, and the current Main review matched `6185f000b263` byte for byte. Full and build type checks, formatting and the network boundary check passed.
+
 ## October 14 main world and solo testing ground
 
 This separately authorized correction was implemented in `/Users/mzw/Documents/ChatGPT/OpenLegend` on local `main`, starting at `efabdcb3f9825378fbc20ce9c36a6e3d04b3d7a7`, with refreshed `origin/main` at `1cf678802d62652d8dd466776d4b95a9d0d19166` in `https://github.com/Macrofold/OpenLegend.git`. No branch or checkout changed. Main already contains `codex/rivals-and-contested-ground` at `15de70bca8df9acd3e8588f9cfda05de5efb44e0`, recorded by integrated commit `33810803e`; no second merge was needed. [OC06](../maintainers/parallel-batch-07-playable-world-creation.md#oc01--construct-the-selected-fresh-opening) owns this correction. Older whole-project acceptance and costs below retain their historical scope.

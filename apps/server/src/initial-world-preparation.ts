@@ -8,6 +8,7 @@ import {
   hasMemory,
   initializeActorTraits,
   initializePerception,
+  spatialMap,
   migrateCognition,
   mindFor,
   reconcileConditions,
@@ -16,16 +17,27 @@ import {
   updateWorld,
   validateStoryPolicy,
   type WorldCreationCandidate,
+  type WorldState,
   type InitialWorldPreparation,
   type ConstructionPermission,
   type CampAssetPermission,
 } from '@open-legend/domain';
 import type { AccountBinding } from './authority.js';
-import type { CreationStartupPreparation } from './creation-target.js';
 import type { SavedWorld } from './saved-world.js';
 import type { AssetRevisionReference } from '@open-legend/assets';
 import { validateCurrentWorldState } from './upgrade-world.js';
-import { prepareOpeningReadiness } from './world-opening-authoring.js';
+import { fingerprint } from './relationship-index.js';
+import { countMetric } from './performance.js';
+import { prepareCandidateNavigation } from './navigation/preparation.js';
+
+export interface CreationStartupPreparation {
+  savedWorld: SavedWorld;
+  authorityBindings: readonly AccountBinding[];
+  authorityOwners: ReadonlyMap<string, string>;
+  constructionSeeds: readonly ConstructionPermission[];
+  ready: boolean;
+  findings: readonly string[];
+}
 
 /** Initial selection only; the publication transaction still checks current
  * permission and retains this exact release through AssetRepository.bindWorld. */
@@ -109,6 +121,47 @@ export function prepareWorldForStartup(
   // branches; an editable predecessor cannot certify unchanged sensory inputs.
   // docs/save-and-load.md#continuation-and-identity
   return { ...saved, world: freezeWorld(world, { completedTransition: true }) };
+}
+
+// One recent physical batch can serve repeated checks and wording-only edits. Its
+// key covers native geometry, body, endpoints and policy; no private actor history.
+// Incomplete native work is evicted so an explicit check can retry it honestly.
+let recentRoutes: { key: string; value: ReturnType<typeof prepareCandidateNavigation> } | undefined;
+
+/** Validate authored readiness and share only an identical geometry/body/navigation
+ * batch. It may prepare routes off-thread and hold their result until completion.
+ * Callers retain independent grants and any exact opening approval. */
+export async function prepareOpeningReadiness(
+  candidate: WorldCreationCandidate,
+  world: WorldState,
+) {
+  const { profile } = selectedCreationProfileForCandidate(candidate);
+  const initial = profile.readiness(candidate, world);
+  if (!initial.navigation.length) return initial;
+  const map = spatialMap(world);
+  const key = fingerprint([map, initial.navigation]);
+  let batch = recentRoutes;
+  if (batch?.key === key) countMetric('creation.navigation.reused');
+  else {
+    countMetric('creation.navigation.prepared');
+    batch = { key, value: prepareCandidateNavigation(map, initial.navigation) };
+    recentRoutes = batch;
+  }
+  let routes: Awaited<typeof batch.value>;
+  try {
+    routes = await batch.value;
+  } catch (error) {
+    if (recentRoutes === batch) recentRoutes = undefined;
+    throw error;
+  }
+  if (
+    [...routes.values()].some(
+      (route) => route.status === 'unavailable' || route.status === 'budget-exceeded',
+    ) &&
+    recentRoutes === batch
+  )
+    recentRoutes = undefined;
+  return profile.readiness(candidate, world, routes);
 }
 
 /** Prepare the exact native starting world before its destination publishes a receipt.

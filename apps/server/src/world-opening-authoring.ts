@@ -1,11 +1,9 @@
 import {
   selectedCreationProfileForCandidate,
   freezeWorld,
-  spatialMap,
   type WorldCreationCandidate,
   type InitialWorldPreparation,
   type OpeningReadiness,
-  type WorldState,
 } from '@open-legend/domain';
 import type {
   WorldAgentDraftEditorView,
@@ -19,8 +17,7 @@ import type { AuthoringDraft } from './world-authoring-kinds.js';
 import type { WorldService } from './world-service.js';
 import { fingerprint } from './relationship-index.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
-import { countMetric } from './performance.js';
-import { prepareCandidateNavigation } from './navigation/preparation.js';
+import { prepareOpeningReadiness } from './initial-world-preparation.js';
 
 export const OPENING_CHECKER_VERSION = 'initial-opening-native-1';
 export interface PreparedOpening {
@@ -64,44 +61,6 @@ export function inspectOpening(
     prepared.set(service, result);
   }
   return result;
-}
-
-// One recent physical batch can serve repeated checks and wording-only edits. Its
-// key covers native geometry, body, endpoints and policy; no private actor history.
-// Incomplete native work is evicted so an explicit check can retry it honestly.
-let recentRoutes: { key: string; value: ReturnType<typeof prepareCandidateNavigation> } | undefined;
-
-export async function prepareOpeningReadiness(
-  candidate: WorldCreationCandidate,
-  world: WorldState,
-) {
-  const { profile } = selectedCreationProfileForCandidate(candidate);
-  const initial = profile.readiness(candidate, world);
-  if (!initial.navigation.length) return initial;
-  const map = spatialMap(world);
-  const key = fingerprint([map, initial.navigation]);
-  let batch = recentRoutes;
-  if (batch?.key === key) countMetric('creation.navigation.reused');
-  else {
-    countMetric('creation.navigation.prepared');
-    batch = { key, value: prepareCandidateNavigation(map, initial.navigation) };
-    recentRoutes = batch;
-  }
-  let routes: Awaited<typeof batch.value>;
-  try {
-    routes = await batch.value;
-  } catch (error) {
-    if (recentRoutes === batch) recentRoutes = undefined;
-    throw error;
-  }
-  if (
-    [...routes.values()].some(
-      (route) => route.status === 'unavailable' || route.status === 'budget-exceeded',
-    ) &&
-    recentRoutes === batch
-  )
-    recentRoutes = undefined;
-  return profile.readiness(candidate, world, routes);
 }
 
 export async function settleOpeningReadiness(
