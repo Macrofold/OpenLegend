@@ -2,8 +2,6 @@
 
 **G193 · Research cutoff: November 22, 2026 (America/New_York).** [Scope and completion](../research-progress-four-games-2026-11-22.md) · [Requirements](../research-requirements.md) · [Economics, enjoyment, lore and creation amendment](../research-economics-engagement-and-creation.md). This study covers the released premium game identified by Mike's Steam app **3259780**, with dated demo, platform and patch boundaries. It is independent of the existing numbered Final Fantasy dossiers. Research and proposed applications do not establish OpenLegend implementation or accepted product decisions.
 
-**Research checkpoint: substantive sections assembled; final mechanics gap review, application mapping, source register and coverage/link review remain in progress.**
-
 ## Identity, promise and reading routes
 
 Square Enix and Lancarse's single-player RPG combines an authored travelling party, turn-based fights, a navigable fantasy world and configurable powers called Visions. Steam dates its release October 22, 2026; the Asian publisher notice dates that region's Steam release October 23. The official feature list identifies single-player: a user-applied multiplayer tag is not evidence of a cooperative mode. [Steam product page](https://store.steampowered.com/app/3259780/FINAL_FANTASY_RESONANCE/) · [Regional release notice](https://www.square-enix.com/asia/newsportal/en/topics/FFRS/post07.html)
@@ -65,6 +63,32 @@ The documented loss menu offers retry, loading a save or returning to the title,
 Casual, Normal and Expert can be changed outside battle. The difficulty guide reports higher Mastery Point rewards on Expert but unchanged experience and no difficulty-specific trophy requirement. These facts matter separately: harder fights can make builds relevant, while reward differences can tempt someone to choose a pace they enjoy less. Whether that happened is a player-evidence question, not something the modifier proves. [Difficulty guide](https://lum.gg/final-fantasy-resonance/guides/difficulty)
 
 After the ending, a cleared save returns to the final-area boundary for optional completion. The postgame guide distinguishes the newly available Ultima Weapon from other challenges that players may have left unfinished: Cave Masters, Legendary Arms, higher Colosseum leagues, Espers and collections. It also identifies extensive mastery completion as optional. This is a finite adventure with additional challenge, not a seasonal service demanding perpetual resets. [Postgame guide](https://lum.gg/final-fantasy-resonance/guides/post-game)
+
+### Party reserves and the late-story Last Resonance
+
+Normal party selection becomes consequential when Nichol joins as the fifth member: four can fight, and the **Party** menu replaces an active member with someone benched. The screenshot-based guide shows reserves continuing to receive EXP while keeping their own equipment. This reduces the level penalty for changing companions; it does not establish that benching trains every other progression track equally. [AllThingsHow, party changes, October 28](https://allthings.how/how-to-change-party-members-final-fantasy-resonance/)
+
+**Final-battle mechanic spoiler.** **Last Resonance** is different from an ordinary Vision Resonance or Limit Burst. The reproduced tutorial describes a large character attack followed by the equipped Vision's Resonance; its user then withdraws and a reserve takes that person's place. A chapter-specific guide locates it in the climactic **All-Out Battle** against Chaotic Darkness. It should not be described as a freely available command throughout the campaign. **Constructed decision:** spend a nearly exhausted character's last contribution now, or keep their healing/control available longer. The incoming reserve's equipment matters, and an exciting finisher also removes someone useful. [Atma, reproduced All-Out Battle tutorial](https://atma.gg/final-fantasy-resonance/articles/gameplay-tutorials) · [Kingy, Chapter 8 encounter account](https://kingy.wiki/games/final-fantasy-resonance/guides/chapter-8-beyond-hope)
+
+### Encounter pacing, withdrawal and learning without lost exploration
+
+Ordinary roaming encounters are random, with the minimap sensor changing to red before one begins; its display can be disabled. Save points operate in towns/dungeons, while field-map saving is available away from those points. A warning lets the player prepare but does not mean all enemies are visible, individually navigating world creatures. [AllThingsHow, beginner tutorial screenshots](https://allthings.how/final-fantasy-resonance-beginner-tips/)
+
+Escapable battles allow an **Escape** attempt that may fail. A **Smoke Bomb** or Lid's **Mechabo Escape** provides a guaranteed route only where escape is permitted; they do not bypass boss restrictions. The firsthand guide's Alluvion example also makes **Retry** precise: it restores the battle's opening HP, MP and consumables without replaying the preceding long scene. Items collected before entering that fight remain obtained. This is a tighter learning loop than reloading an older dungeon save, and a different cost from fleeing. [AllThingsHow, escape and retry, October 28](https://allthings.how/how-to-escape-battle-final-fantasy-resonance/)
+
+### Exploration includes route puzzles and timing activities
+
+The RPG Site walkthrough documents actual interaction types beyond walking to markers:
+
+- **Cave of Waters:** switches change boat access; the player follows routes to progress or reach optional treasure.
+- **Arcane Library:** numbered movement platforms provide routes to items; Magic Pots request a particular consumable.
+- **Olderion jump rope:** repeated correctly timed jumps reach reward thresholds; ten initially awards a Magicite Shard. Later challenges extend the activity.
+- **Mysidia Mog Tag:** successive rounds require finding/catching moogles in different locations and award increasingly useful materials.
+- **Medicinal Mission:** three available methods produce medicine; the guide reports the same broad result with a different reaction to the cure. This is bounded expressive choice, not evidence of major branching consequences.
+
+These diversify the action vocabulary, while timed diversions and the Mobliz escape sequence mean that “turn-based combat” should not become “no timing demands anywhere.” The main decision rhythm and optional activity accessibility need separate evaluation. [RPG Site, inspected Chapters 3–5 walkthrough sections](https://www.rpgsite.net/guide/21486-final-fantasy-resonance-walkthrough-100-items-all-achievements-tablet-shards-step-by-step-guide) · [Mobliz timed-escape observations](https://allthings.how/how-to-escape-battle-final-fantasy-resonance/)
+
+**Source boundary:** retrieved November 22, 2026. Atma reproduces tutorial text/screens; the other sources are community/guide accounts with described screenshots or gameplay evidence. Relevant sections were read, not every section of the long walkthrough. No commands or examples were personally executed. No new core-game mechanic is inferred from an optional mod.
 
 ### Major-system coverage and meaningful absences
 
@@ -339,3 +363,66 @@ All sources were accessed November 22, 2026. Dates below describe publication or
 | [Randomizer](https://www.nexusmods.com/finalfantasyresonance/mods/287), [Fantasia](https://www.nexusmods.com/finalfantasyresonance/mods/351?tab=description), [Refilo framework](https://www.nexusmods.com/finalfantasyresonance/mods/270) | Primary creator descriptions accessible as substantial indexed bodies; direct opens blocked. Author-reported features, dependencies, permissions and limits. |
 | [FFRS QoL repository](https://github.com/LeiGaoRobot/FFRS-QoL) | Primary open-project documentation, including installation/removal; code not audited or run. |
 | [UE4SS overview](https://docs.ue4ss.com/dev/), [Lua authoring guide](https://docs.ue4ss.com/dev/guides/creating-a-lua-mod.html) | Primary developer documentation; identifies experimental API boundary and author workflow. No game-specific compatibility inferred solely from engine support. |
+
+## OpenLegend applications and limits
+
+These are **research interpretations and concrete possibilities**, not approved feature contracts or newly assigned implementation tasks. The named routes identify where an eventual decision belongs. They do not claim that the current OpenLegend implementation already supplies the behavior.
+
+| Pattern to consider | Concrete OpenLegend situation | Dependency, tradeoff and reason to omit | Existing reading / decision route |
+| --- | --- | --- | --- |
+| Practice leaves a useful capability after changing equipment | A character who learned to brace an injured companion can retain that method after switching from a healer's kit to a travel kit. New equipment adds possibilities without erasing the person's experience. | Keep bodily ability, knowledge, equipment affordance and learned technique distinct. A universal progression incentive to repeatedly wear weaker gear would recreate the administration described in the reception evidence. | [Action experience](../../../../docs/action-experience.md); [progression synthesis](../synthesis/progression-and-builds.md). |
+| An opening is something the player can understand and create | A foe visibly commits to a heavy strike; an ally distracts it and the player exploits the resulting exposure. | Translate legible cause and effect, not a universal stagger gauge or turn-based rules. Enemy responses must remain variable enough that one rehearsed sequence does not solve all combat. | [Actions](../../../../docs/action-capabilities.md); [combat synthesis](../synthesis/combat-and-encounters.md). |
+| A relationship can change the value of an object | A trader remembers earlier help and identifies the damaged relic the player has carried. Restoring it requires another meaningful expedition. | The useful chain is encounter → memory → changed opportunity → action. Requiring a large collectathon or attaching lore text to useless objects would not reproduce it. The relic's rules belong to its authored world. | [Memory](../../../../docs/memory-architecture.md); [loot and rewards](../synthesis/loot-and-rewards.md). |
+| One place has several valid meanings | A local shrine protects fields, legitimizes a ruler and contains someone another community regards as a captive. Learning the history changes possible alliances and obligations. | Preserve uncertainty about what each person knows; do not give everyone the hidden truth. Make at least one discovered implication actionable. This can be a small local story, not a mandate for an enormous cosmology. | [Knowledge](../../../../docs/knowledge.md); [lore synthesis](../synthesis/lore-culture-and-world-identity.md); [world constitution](../../../../docs/world-constitution.md). |
+| New transport changes both reach and preparation | A boat grants access to an island and carries tools, supplies and a companion; a successful expedition enables another interesting trip. | Faster travel alone is not new gameplay. An elaborate maintenance checklist can erase the benefit; a simple shared vehicle may suffice. | [Exploration](../synthesis/exploration-and-world-design.md); [movement and travel](../synthesis/movement-and-travel.md). |
+| A person remains relevant after an introduction | A rescued craftsperson later disagrees with how the player uses their invention, offers a repair, or shares an ordinary enjoyable evening. | Continued relevance need not mean repetitive demands or constant danger. Check both actual interaction and the reason to care; biography cannot rescue every dull errand. | [Situation-aware context](../../../../docs/features/situation-aware-cognition-context.md); [characters and relationships](../synthesis/characters-companions-and-relationships.md). |
+| A demonstration carries a useful achievement forward | A first playable experience lets someone build one relationship, solve one local problem and retain that result when continuing. | Resonance's demo evidence is an analogy, not proof of a conversion uplift for OpenLegend. The initial experience must demonstrate the particular promise, and continuation rules must match the actual product. | [Audience discovery](../synthesis/audience-discovery-and-sharing.md); [save/load](../../../../docs/save-and-load.md). |
+| Creator tools expose what changes and what persists | Before using a shared creation, an author can inspect whether it alters appearance, a definition or existing world state, and see the required components. | Do not adopt native executable mod loading or permanent backward compatibility from this PC ecosystem. Preserve [root policies](../../../../AGENTS.md) and reviewed supported definitions. | [Invention foundation](../../../../docs/invention-foundation.md); [creator-tool synthesis](../synthesis/creator-tools-and-content.md). |
+
+The strongest practical lesson is to connect **an appealing discovery to a new usable choice**, then check how much work the player must do before enjoying it. A configuration system can be deep and still impose too much maintenance; a beautiful town can still have uninteresting traversal; a familiar character can still become irrelevant. Evaluate those parts independently instead of using the game's overall recommendation rate to approve every component.
+
+The appropriate next design action, if one of these patterns is selected, is to inspect its existing owner and [needs-design register](../../../../docs/maintainers/needs-design.md), compare a small complete player situation, and record the chosen tradeoff there. This research pass creates no duplicate design specification or engine-maintainer backlog.
+
+## Coverage, preservation and evidence register
+
+### R01–R15 coverage map
+
+| Requirement | Substantive coverage | Evidence limit |
+| --- | --- | --- |
+| R01 Identity and promise | Identity, premium adaptation, platform/release boundaries, opening-to-late-play account. | Storefront/date region distinguished; earlier FF games are comparison, not mechanic authority. |
+| R02 Major mechanics | Combat, character growth, traversal, quests, activities, crafting, detailed mechanics addendum. | Community rules documented; no firsthand execution or exhaustive item-stat transcription. |
+| R03 Items and composition | Visions, AP, Awakening, equipment tradeoffs, consumables, materials and ancient equipment. | Representative combinations rather than every possible build. |
+| R04 Progression/economy/time | Multiple advancement tracks, resource sources/sinks, loss, difficulty, clear-save goals and completion. | No private player economy or retention dataset inferred. |
+| R05 Concrete interactions | Eight rules-based worked situations plus the specific quest, preparation and late-battle examples. | Constructed scenarios labeled; attributed play is separately identified. |
+| R06 People/AI/social | Named authored party, institutions, substories, party control and explicit single-player boundary. | No inferred autonomous NPC schedules, social simulation or native co-op. |
+| R07 Presentation | Art production and staging, music catalog/intent, interface and platform-specific accessibility. | Written descriptions and firsthand critic evidence; no invented video inspection or audio audition. |
+| R08 Narrative and lore | Regional cultures, named history, dimensional exile, Crystal beliefs and companion stories. | Major spoilers marked; relevant in-game dialogue via community transcription. |
+| R09 Production | Proposal/concept chronology, named leads, adaptation constraints, known tooling and dated plans. | Budget, team size and publisher/developer terms remain unknown. |
+| R10 Marketing | Reveal/demo/launch sequence, creator interviews, platform breadth and identifiable sharing material. | Intent and plausible mechanism distinguished from attribution or controlled conversion effect. |
+| R11 Commercial results | Metric/period/coverage table, original sales estimate, missing revenue inputs and sustainability judgment. | Modeled early partial-platform sales; all-platform lifetime revenue and profit not estimable. |
+| R12 Reception/enjoyment | Five written-review bodies; 20 contrasting helpful Steam accounts; detailed appeal, friction and stopping limits. | Qualitative, English-only, deliberately balanced sample; no prevalence or retention inference. |
+| R13 Transfer | Specific OpenLegend situations, counterpoints, omission criteria and routes into existing owners. | Hypotheses, not accepted product decisions or implementation. |
+| R14 Evidence/navigation | Adjacent source links, registers, source-type/date/access limits, worked-example labels and scoped ledger. | No claim to have re-audited the unrelated historical packet. |
+| R15 Conditional modding | Affirmative PC screen and substantive tools, workflow, examples, composition, rights, incentives and limits. | Documented/author-reported behavior; blocked direct pages identified; no installed mods or code audit. |
+
+### Mechanics and identity source register
+
+Accessed November 22, 2026. Named guide sections and tutorial descriptions were read; sources without a publication date retain that uncertainty. Community guides are useful for rules and acquisition routes but are not publisher documentation, measured balance studies or independently reproduced tests. Adjacent links above are the source anchors; the following table describes their evidentiary role.
+
+| Source | Date/version and inspected contribution |
+| --- | --- |
+| Steam app 3259780; Square Enix regional demo notice | Live listing / September 4 notice; exact product, single-player features and regional release-date boundary. |
+| Square Enix PlayStation blog; Latest Updates Vol. 2 | September 3 / June 24, 2026; primary battle, Vision, Resonance and summon explanations. |
+| AllThingsHow Vision, ability and sidequest pages | October 26–28, 2026; screenshot-supported equipment/mastery/UI and concrete quest rewards. |
+| Kingy shops/equipment | October 31, 2026; explicitly attributed demo/full-game 1.0.1.0 play through the described early chapters, not the whole campaign. |
+| LUM combat, Limit Burst, multicasting and status guides | Undated live community guides; action relationships and counters, not native tests. |
+| LUM Awakening, crafting and airship guides | Undated live community guides; prerequisites, resources, services and specific availability boundaries. |
+| LUM failure, difficulty and postgame guides | Undated live community guides; retry/menu options and continued-play structure. No claim to settle every player's interface complaint. |
+| Batil and Chaotic Crikit Steam walkthrough | Posted October 22, updated November 15, 2026; selected Chamber of Arms passages inspected. Generic warning text appeared on the retrieved Steam guide surface; no unsupported explanation of its moderation status is inferred. |
+| Further reading: LUM activity index | Navigation to optional arena, jump-rope, travel and collection guides; indexed descriptions alone are not treated as personally executed activities. |
+
+The lore/art evidence table and business/creation register retain their own source dates and access qualifications; the review and Steam tables are the annotated reception record. Videos linked in press releases are **viewing routes only**, unless a written source independently supports the associated claim. Official soundtrack previews are **audition routes**, not a completed music assessment.
+
+### Preservation and completion boundary
+
+The base tree and canonical roster had no dedicated Resonance dossier. Existing Final Fantasy I–XVI research, the original packet, earlier essays and their evidence limits remain intact. This file adds an independent G193 subject rather than replacing a franchise study. It does not certify earlier whole-library audits or turn this source material into approved OpenLegend behavior.
