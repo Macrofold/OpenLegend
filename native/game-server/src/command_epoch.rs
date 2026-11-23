@@ -2,7 +2,7 @@
 //! restarts. They grant no authority to recover a receipt or start an action.
 
 use crate::{
-    authority::now_ms,
+    authority::{Authority, now_ms},
     store::{CommitError, Store, StoreError, StoreResult},
 };
 use openlegend_simulation::{encoding::json_record, identity::MAX_SAFE_INTEGER};
@@ -32,7 +32,8 @@ impl RequestIdentity {
     }
 
     /// Create the first timeline, or keep the exact existing one. Start a new
-    /// durable epoch before accepting any requests with the new writer.
+    /// durable epoch and retire the stopped writer's tab control before
+    /// accepting any requests with the new writer.
     pub async fn open(store: &Store, world: &str) -> Result<Self, CommitError> {
         store
             .operational(move |tx| {
@@ -49,6 +50,7 @@ impl RequestIdentity {
                         }
                     };
                     let epoch = rotate(tx, &world, now_ms()).await?;
+                    Authority::retire_stopped_control(tx, &world).await?;
                     Ok(Self { timeline, epoch })
                 })
             })

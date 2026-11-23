@@ -1247,7 +1247,7 @@ export class WorldService {
       ((await store.getIntegration(`world-timeline:${this.world.id}`)) as string) ||
       this.timelineId;
     await store.putIntegration(`world-timeline:${this.world.id}`, this.timelineId);
-    if (!store.authority) throw new Error('Current authority repository is required.');
+    if (existing) await store.authority.retireStoppedControl(this.world.id);
     if (config.authentication.mode === 'local') {
       await this.signInLocal();
     }

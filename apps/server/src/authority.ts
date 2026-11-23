@@ -836,6 +836,20 @@ export class AuthorityRepository {
     if (this.db.afterCommit) this.db.afterCommit(publish);
     else publish();
   }
+  /** Before the new listener starts, retire tab leases that lost their transport with the
+   * previous writer. The indexed world update preserves sessions and saved departures. */
+  async retireStoppedControl(worldId: string): Promise<void> {
+    await this.db
+      .prepare(
+        `UPDATE auth_controls SET generation=CASE WHEN generation<? THEN generation+1 ELSE generation END,
+         session_id='',connection_id='' WHERE world_id=? AND (session_id<>'' OR connection_id<>'')`,
+      )
+      .run(Number.MAX_SAFE_INTEGER, worldId);
+    this.changed(() => {
+      for (const [id, control] of this.controls)
+        if (control.worldId === worldId) this.controls.delete(id);
+    });
+  }
   async account(identity: VerifiedIdentity, explicitId?: string): Promise<string> {
     return this.db.transaction(async () => {
       const prior = await this.db

@@ -266,6 +266,14 @@ A session that reached its saved expiry started one fade while its hidden stream
 
 Cold walk and return passed on `4b11b7480653` / `7e144f6c732d`. The installed wall fallback, cold second player, held write, session expiry, all six live regressions and Chromium passed on `125b69df42c0` / `d49593416e84`. The pinned cases are under `nsc04-disconnect-20261122/live-1-cold-fade`, `source-fallback`, `source-cold-other`, `full-1-fallback`, `full-1-cold-other`, `full-1-held-loss`, `full-1-session-expiry-cut`, `full-1-live-regression` and `full-1-chromium`. The Rust listener used no Node process and no paid provider. All disposable databases were removed.
 
+### A delayed tab release after restart
+
+In Solo, Chromium started Sleep and saw it save. After a clean stop, closing the old page queued a release that reached the restarted listener before a new page acquired control. The older Rust listener accepted the old tab's release. PostgreSQL recorded a departure and ended the saved sleep episode. The older TypeScript listener also accepted a deliberately delayed release and saved a departure after restart.
+
+The new listener retires the stopped process's tab control before serving requests. With the change, the signed-in Solo player reopened in the same Chromium process. The old release returned HTTP 403. The same sleep episode remained active, the original Sleep receipt resolved, and the player could wake up through the ordinary action. A current tab then released control, and another restart preserved the new departure's exact attempt and deadline. The fixed TypeScript listener refused the old release and acquire and accepted a current release with the same saved continuation.
+
+The checked source uses `326762a9b063` with patch `33eea95edee3`. The standalone executable is `0aa5a520fb93`. The local `nsc04-stopped-tab-control-20261122` archive preserves the failed old-browser trace, the two Rust runs and the two TypeScript runs. The locked build, affected formatting, production TypeScript check and network checks passed. The repaired Rust listeners reported zero transient, resident and pending-save reservations at shutdown. The checks used disposable local databases and sent no paid requests.
+
 ### Loading a historical departure
 
 On November 22, 2026, a signed-in player closed the controlling stream, saved during the fade, then took control again. Loading the saved point through the actual HTTP caller left the previous Rust body assigned to the canceled attempt with no current operational record. TypeScript assigned a new attempt. The Rust server now reconciles the two records while paused before opening its listener.

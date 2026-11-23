@@ -589,6 +589,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           if (startup) releaseNativeProduct(startup);
         }
         await service.flush();
+        await store.authority.retireStoppedControl(installation.worldId);
         for (const attempt of await store.authority.exitAttempts(installation.worldId))
           service.exits.set(attempt.actorId, attempt);
         if (service.progress.paused)

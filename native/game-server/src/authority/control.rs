@@ -54,6 +54,22 @@ struct ReturningControl {
 }
 
 impl Authority {
+    /// A new writer has no live tabs from the stopped process. Clear their
+    /// control without beginning a departure or changing any existing exit.
+    pub(crate) async fn retire_stopped_control(
+        tx: &Transaction<'_>,
+        world: &str,
+    ) -> StoreResult<()> {
+        tx.execute(
+            "UPDATE auth_controls SET generation=CASE WHEN generation<$2 THEN generation+1 ELSE generation END, \
+             session_id='',connection_id='' \
+             WHERE world_id=$1 AND (session_id<>'' OR connection_id<>'')",
+            &[&world, &(MAX_SAFE_INTEGER as i64)],
+        )
+        .await?;
+        Ok(())
+    }
+
     /// Begin only inside the application's protected control lane, with the
     /// selected actor and its actual presence already established.
     pub fn fence_control(
