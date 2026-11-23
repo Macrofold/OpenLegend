@@ -1781,21 +1781,25 @@ export class WorldRecords {
       )
       .all(maximum, worldId);
   }
-  /** Recent visible originals plus actual independently retained dependencies.
-   * Keep pointer bytes separate from original occurrence bytes for native import. */
-  async readActiveHotEvents(worldId: string, dependencies: readonly string[]) {
+  /** Read hot pointers and their exact original bodies at the caller's fixed cut.
+   * Source startup supplies dependencies to select its recent and pinned rows.
+   * Native startup and Load omit that filter and admit the complete hot family. */
+  async readHotEvents(worldId: string, dependencies?: readonly string[]) {
     const missing = await this.db
       .prepare(
         `SELECT 1 AS missing FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND h.id IS NULL LIMIT 1`,
       )
       .get(worldId);
     if (missing) throw new Error('Active history references a missing source; recovery refused.');
-    const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';
+    const selection =
+      dependencies === undefined
+        ? ''
+        : `AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT ${HOT_EVENT_RECENT_ROWS}) OR h.id IN (SELECT value FROM jsonb_array_elements_text(?::jsonb)))`;
     const rows = await this.db
       .prepare(
-        `SELECT t.id,t.parent_id,t.slot,t.position,t.payload AS pointer_payload,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT ${HOT_EVENT_RECENT_ROWS}) OR h.id IN (${selector})) ORDER BY t.position`,
+        `SELECT t.id,t.parent_id,t.slot,t.position,t.payload AS pointer_payload,h.id AS event_id,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? ${selection} ORDER BY t.position`,
       )
-      .all(worldId, worldId, JSON.stringify(dependencies));
+      .all(worldId, ...(dependencies === undefined ? [] : [worldId, JSON.stringify(dependencies)]));
     const count = Number(
       (
         await this.db
@@ -1858,7 +1862,7 @@ export class WorldRecords {
     if (active) {
       await this.validateHistoricalMaterialOrigins(state);
       markPartialObjectHistory(state.world.entities);
-      const { rows, count } = await this.readActiveHotEvents(head.worldId, [
+      const { rows, count } = await this.readHotEvents(head.worldId, [
         ...hotEventDependencies(state.world),
       ]);
       state.world.events = rows.map((row) => JSON.parse(String(row['payload'])));

@@ -5,7 +5,7 @@ import {
   temporalPageReferences,
 } from '@open-legend/domain';
 import { HISTORY_TABLES, HISTORY_MAP_TABLES, HOT_TEMPORAL_BYTES } from './history-residency.js';
-import { hotEventRecordDependencies, HOT_EVENT_RECENT_ROWS } from './hot-events.js';
+import { HOT_EVENT_RECENT_ROWS } from './hot-events.js';
 import {
   receivedRecordReferences,
   receivedCurrentOwnerTables,
@@ -372,7 +372,7 @@ function currentRecordMetadata(
   };
 }
 
-/** The actual Source startup working set at one committed snapshot. Selection
+/** The Node-hosted native working set at one committed snapshot. Selection
  * witnesses describe only the indexed subsets actually queried: they never
  * relabel partial personal history as complete. Native installation must consume
  * them before admitting a read/mutation that relies on a negative result. */
@@ -465,17 +465,11 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
         siblings.sort((a, b) => ordinal(a['position']) - ordinal(b['position']));
       groups.set('mind_perception_values', values);
     }
-    const dependencies = new Set<string>();
-    for (const table of ['mind_awareness', 'mind_memories', 'mind_learned_capabilities'] as const)
-      for (const row of rows(table)) {
-        const ids = prepareNativeSourceSync(() =>
-          retainPreparedSource([
-            ...hotEventRecordDependencies(table, parseSourceJson(String(row['payload']))),
-          ]),
-        );
-        for (const id of ids) dependencies.add(id);
-      }
-    const hot = await records.readActiveHotEvents(head.worldId, [...dependencies]);
+    // The native writer has no startup prune transaction. Keep every existing
+    // hot pointer and the original it references at this same committed cut.
+    const hot = await records.readHotEvents(head.worldId);
+    const removedHotEvents = hot.count - hot.rows.length;
+    if (removedHotEvents !== 0) throw new Error('Incomplete native hot event coverage.');
     const pointers = new Map<string, typeof hot.rows>();
     const originals: { eventId: string; payload: string }[] = [];
     for (const row of hot.rows) {
@@ -484,8 +478,7 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
       const siblings = pointers.get(parent) ?? [];
       siblings.push(pointer);
       pointers.set(parent, siblings);
-      const id = (parseSourceJson(String(row['pointer_payload'])) as { id: string }).id;
-      originals.push({ eventId: id, payload: String(row['payload']) });
+      originals.push({ eventId: String(row['event_id']), payload: String(row['payload']) });
     }
     groups.set('world_hot_events', pointers);
     const tables: Record<string, CurrentRow[]> = {};
@@ -502,18 +495,12 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
       });
       highwaters.set(table, owners);
     }
-    const partial = new Set([
-      ...HISTORY_TABLES,
-      ...HISTORY_MAP_TABLES,
-      'world_hot_events',
-      'mind_perception_values',
-    ]);
+    const partial = new Set([...HISTORY_TABLES, ...HISTORY_MAP_TABLES, 'mind_perception_values']);
     // With no retired entities the shared current-entity predicate omits none.
     // Status selection is complete only when actual physical counts prove it.
     if (physicalCounts.get('sim_status_effects') === rows('sim_status_effects').length)
       partial.delete('sim_status_effects');
     for (const [owner, next] of await records.readOrdinalHighwaters(head.worldId, [
-      'world_hot_events',
       'mind_perception_values',
       'sim_entities',
       'sim_object_lineage',
@@ -529,9 +516,6 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
       nextPositions,
     );
     const actorOwners = (table: string) => rows(table).map((row) => String(row['slot']));
-    const removedHotEvents = hot.count - hot.rows.length;
-    if (!Number.isSafeInteger(removedHotEvents) || removedHotEvents < 0)
-      throw new Error('Invalid active event coverage.');
     return {
       records: current,
       originals,

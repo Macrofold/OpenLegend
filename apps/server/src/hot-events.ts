@@ -54,21 +54,6 @@ const memories = dependencies<WorldState['memories'][string]>(function* (rows) {
 const knowledge = dependencies<WorldState['knowledge'][string]>(function* (rows) {
   for (const row of rows) yield* knowledgeReferences(row);
 });
-/** The startup row selector uses the same dependencies before constructing an
- * authority. These are actual current account bodies, never a synthetic world. */
-export function hotEventRecordDependencies(
-  table: 'mind_awareness' | 'mind_memories' | 'mind_learned_capabilities',
-  row: Record<string, unknown>,
-): Iterable<string> {
-  switch (table) {
-    case 'mind_awareness':
-      return awarenessReferences(row as unknown as AwarenessRow);
-    case 'mind_memories':
-      return memoryReferences(row as unknown as MemoryRow);
-    case 'mind_learned_capabilities':
-      return knowledgeReferences(row as unknown as KnowledgeRow);
-  }
-}
 const empty = Object.freeze({});
 type EventPinRoots = {
   memories: WorldState['memories'];
