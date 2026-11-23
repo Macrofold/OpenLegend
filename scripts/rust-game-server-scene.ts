@@ -97,6 +97,8 @@ export function rustGameServerScenePolicy(world: WorldState) {
               cancelLabel: BASE_RANGED_TEXT.cancelName,
               notReady: BASE_RANGED_TEXT.notReady,
               ready: BASE_RANGED_TEXT.ready,
+              ammunitionUnavailable: BASE_RANGED_TEXT.ammunitionUnavailable,
+              supported: nativeCommandSupported(world, 'shoot-once'),
             }
           : undefined,
         statusTypes: rules.actionStatusTypes,
