@@ -21,7 +21,6 @@ import {
   type CampAssetPermission,
 } from '@open-legend/domain';
 import type { AccountBinding } from './authority.js';
-import type { AppConfig } from './config.js';
 import type { CreationStartupPreparation } from './creation-target.js';
 import type { SavedWorld } from './store.js';
 import type { AssetRevisionReference } from '@open-legend/assets';
@@ -43,7 +42,6 @@ export function initialWorldArtwork(reference: AssetRevisionReference) {
  */
 export function prepareWorldForStartup(
   saved: SavedWorld,
-  config: AppConfig,
   actorOwners: ReadonlyMap<string, string>,
   constructionPermissions: readonly ConstructionPermission[],
   fresh: boolean,
@@ -119,14 +117,33 @@ export function prepareWorldForStartup(
 export async function prepareCreatedWorld(
   initial: InitialWorldPreparation,
   binding: AccountBinding,
-  config: AppConfig,
   candidate: WorldCreationCandidate,
   installedRelease: AssetRevisionReference,
 ): Promise<CreationStartupPreparation> {
-  const selected = selectedCreationProfileForCandidate(candidate);
-  if (!binding.actorId || binding.actorId !== selected.profile.controlledActor(selected.candidate))
+  if (!binding.actorId)
     throw new Error('The prepared account must control the selected starting person.');
   const authorityOwners = new Map([[binding.actorId, binding.accountId]]);
+  return {
+    ...(await prepareReviewedOpening(initial, authorityOwners, candidate, installedRelease)),
+    authorityBindings: [binding],
+    authorityOwners,
+    constructionSeeds: initial.constructionSeeds,
+  };
+}
+
+/** Compile an authored opening and verify its physical readiness without a live
+ * world or destination account access. Callers separately authenticate and
+ * commit any actual grant. */
+export async function prepareReviewedOpening(
+  initial: InitialWorldPreparation,
+  authorityOwners: ReadonlyMap<string, string>,
+  candidate: WorldCreationCandidate,
+  installedRelease: AssetRevisionReference,
+) {
+  const selected = selectedCreationProfileForCandidate(candidate);
+  const actor = selected.profile.controlledActor(selected.candidate);
+  if (authorityOwners.size !== 1 || !authorityOwners.has(actor))
+    throw new Error('The prepared account must control the selected starting person.');
   const savedWorld = prepareWorldForStartup(
     {
       world: initial.world,
@@ -134,7 +151,6 @@ export async function prepareCreatedWorld(
       manuallyPaused: true,
       ...(initial.useInstalledArtwork ? initialWorldArtwork(installedRelease) : {}),
     },
-    config,
     authorityOwners,
     initial.constructionSeeds,
     false,
@@ -143,9 +159,6 @@ export async function prepareCreatedWorld(
   const readiness = await prepareOpeningReadiness(candidate, savedWorld.world);
   return {
     savedWorld,
-    authorityBindings: [binding],
-    authorityOwners,
-    constructionSeeds: initial.constructionSeeds,
     ready: readiness.findings.every((finding) => finding.status === 'ready'),
     findings: readiness.findings.map((finding) => finding.message),
   };

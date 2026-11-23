@@ -591,7 +591,7 @@ async function initializeGameServer(
       now: options.now,
       closeStore: !options.store,
       prepare: (initial, binding, candidate) =>
-        prepareCreatedWorld(initial, binding, config, candidate, assetIndex.release),
+        prepareCreatedWorld(initial, binding, candidate, assetIndex.release),
       adopt: (receipt, publicServer) =>
         createGameServer({
           ...options,

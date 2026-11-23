@@ -4,9 +4,11 @@ import {
   tradeDisclosureReferencesSql,
 } from '../apps/server/src/trade-disclosure-sql.js';
 import { STOCK_TRANSFER_LIMITS } from '../packages/domain/src/stock-transfer.js';
+import type { AssetIndex } from '@open-legend/assets';
 import { createHash } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   dreamSummaryTemplates,
   hourlySummaryJsonSchema,
@@ -316,60 +318,72 @@ async function openingArtifacts(url: string, includeNavigation: boolean) {
   }
 }
 
-const args = process.argv.slice(2);
-const includeNavigation = args.at(-1) === '--with-navigation';
-if (includeNavigation) args.pop();
-const [output, openingUrl, browserAssetIndex, ...unknown] = args;
-if (!output || unknown.length || (includeNavigation && !openingUrl))
-  throw new Error(
-    'Usage: node --import tsx scripts/rust-game-server-storage.ts OUTPUT [CURRENT_OPENING_URL [BROWSER_ASSET_INDEX] [--with-navigation]]',
-  );
-
-const storage = JSON.stringify(await storageSchema());
-if (openingUrl) {
-  const [artifacts, assetIndex, { maxObjectBytes }] = await Promise.all([
-    openingArtifacts(openingUrl, includeNavigation),
-    readAssetIndex(browserAssetIndex),
-    readAssetConfiguration(),
-  ]);
-  const definitions = JSON.stringify(artifacts.definitions);
-  const view = JSON.stringify(artifacts.view);
-  const cognition = JSON.stringify(artifacts.cognition);
-  const assets = JSON.stringify(assetIndex);
-  const sha256 = (body: string) => createHash('sha256').update(body).digest('hex');
-  await mkdir(output);
-  try {
-    await writeFile(join(output, 'storage.json'), storage, { flag: 'wx' });
-    await writeFile(join(output, 'definitions.json'), definitions, { flag: 'wx' });
-    await writeFile(join(output, 'view.json'), view, { flag: 'wx' });
-    await writeFile(join(output, 'cognition.json'), cognition, { flag: 'wx' });
-    await writeFile(join(output, 'assets.json'), assets, { flag: 'wx' });
-    // Build against the same opening as the installed definitions. Do the
-    // expensive bake after releasing the database snapshot.
-    if (artifacts.navigation) {
-      const { writeRustNavigationRelease } = await import('./rust-game-server-navigation.js');
-      await writeRustNavigationRelease(
-        join(output, 'navigation'),
-        artifacts.navigation.map,
-        artifacts.navigation.profiles,
+/** Export the exact current schema, or a complete release from one prepared read-only cut.
+ * With no opening URL, write schema only and make no database connection. */
+export async function writeRustGameServerStorage(
+  output: string,
+  openingUrl?: string,
+  browserAssetIndex?: string | AssetIndex,
+  includeNavigation = false,
+) {
+  const storage = JSON.stringify(await storageSchema());
+  if (openingUrl) {
+    const [artifacts, assetIndex, { maxObjectBytes }] = await Promise.all([
+      openingArtifacts(openingUrl, includeNavigation),
+      typeof browserAssetIndex === 'object' ? browserAssetIndex : readAssetIndex(browserAssetIndex),
+      readAssetConfiguration(),
+    ]);
+    const definitions = JSON.stringify(artifacts.definitions);
+    const view = JSON.stringify(artifacts.view);
+    const cognition = JSON.stringify(artifacts.cognition);
+    const assets = JSON.stringify(assetIndex);
+    const sha256 = (body: string) => createHash('sha256').update(body).digest('hex');
+    await mkdir(output);
+    try {
+      await writeFile(join(output, 'storage.json'), storage, { flag: 'wx' });
+      await writeFile(join(output, 'definitions.json'), definitions, { flag: 'wx' });
+      await writeFile(join(output, 'view.json'), view, { flag: 'wx' });
+      await writeFile(join(output, 'cognition.json'), cognition, { flag: 'wx' });
+      await writeFile(join(output, 'assets.json'), assets, { flag: 'wx' });
+      // Build against the same opening as the installed definitions. Do the
+      // expensive bake after releasing the database snapshot.
+      if (artifacts.navigation) {
+        const { writeRustNavigationRelease } = await import('./rust-game-server-navigation.js');
+        await writeRustNavigationRelease(
+          join(output, 'navigation'),
+          artifacts.navigation.map,
+          artifacts.navigation.profiles,
+        );
+      }
+      await writeFile(
+        join(output, 'manifest.json'),
+        JSON.stringify({
+          storageSha256: sha256(storage),
+          definitionsSha256: sha256(definitions),
+          viewSha256: sha256(view),
+          cognitionSha256: sha256(cognition),
+          assetsSha256: sha256(assets),
+          assetMaxObjectBytes: maxObjectBytes,
+        }),
+        { flag: 'wx' },
       );
+    } catch (error) {
+      await rm(output, { recursive: true, force: true });
+      throw error;
     }
-    await writeFile(
-      join(output, 'manifest.json'),
-      JSON.stringify({
-        storageSha256: sha256(storage),
-        definitionsSha256: sha256(definitions),
-        viewSha256: sha256(view),
-        cognitionSha256: sha256(cognition),
-        assetsSha256: sha256(assets),
-        assetMaxObjectBytes: maxObjectBytes,
-      }),
-      { flag: 'wx' },
-    );
-  } catch (error) {
-    await rm(output, { recursive: true, force: true });
-    throw error;
+  } else {
+    await writeFile(output, storage, { flag: 'wx' });
   }
-} else {
-  await writeFile(output, storage, { flag: 'wx' });
+}
+
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  const args = process.argv.slice(2);
+  const includeNavigation = args.at(-1) === '--with-navigation';
+  if (includeNavigation) args.pop();
+  const [output, openingUrl, browserAssetIndex, ...unknown] = args;
+  if (!output || unknown.length || (includeNavigation && !openingUrl))
+    throw new Error(
+      'Usage: node --import tsx scripts/rust-game-server-storage.ts OUTPUT [CURRENT_OPENING_URL [BROWSER_ASSET_INDEX] [--with-navigation]]',
+    );
+  await writeRustGameServerStorage(output, openingUrl, browserAssetIndex, includeNavigation);
 }

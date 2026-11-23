@@ -33,7 +33,6 @@ test('the player can read and search actual recent observations on desktop and a
   }).world;
   const prepared = prepareWorldForStartup(
     { world: initial, speed: 1, manuallyPaused: false },
-    config,
     new Map(),
     [],
     true,

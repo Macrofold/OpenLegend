@@ -1159,7 +1159,6 @@ export class WorldService {
     } else {
       this.saved = prepareWorldForStartup(
         this.saved,
-        config,
         actorOwners,
         store.authority.constructionPermissions(this.saved.world.id),
         !existing,

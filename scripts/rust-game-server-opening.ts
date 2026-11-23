@@ -1,155 +1,141 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { selectedCreationProfileForCandidate } from '../packages/domain/src/index.js';
+import {
+  entityKeys,
+  isSafeRecordId,
+  selectedCreationProfileForCandidate,
+} from '../packages/domain/src/index.js';
 import { constructionPermissionSchema } from '../apps/server/src/authority.js';
+import { readAssetIndex } from '../apps/server/src/asset-configuration.js';
 import { digest } from '../apps/server/src/content-digest.js';
-import { CreationTargetRepository } from '../apps/server/src/creation-target.js';
+import { prepareReviewedOpening } from '../apps/server/src/initial-world-preparation.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { SAVE_FORMAT } from '../apps/server/src/game-saves.js';
 import { SaveFiles } from '../apps/server/src/save-files.js';
 import { writeCheckpoint } from '../apps/server/src/checkpoint.js';
-import { WorldRecords } from '../apps/server/src/world-records.js';
-import { prepareOpeningReadiness } from '../apps/server/src/world-opening-authoring.js';
+import { SqlGameRepository } from '../apps/server/src/store.js';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
+import { createDisposableDatabase } from './disposable-postgres.mjs';
+import { writeRustGameServerStorage } from './rust-game-server-storage.js';
 
-// Publish build-time data from the actual, independently reviewed fresh
-// opening. This never initializes or writes the server's destination DB.
-const [databaseUrl, reviewedCandidate, output, approvedDigest, ...rest] = process.argv.slice(2);
-if (
-  !databaseUrl ||
-  !reviewedCandidate ||
-  !output ||
-  !/^[a-f0-9]{64}$/.test(approvedDigest ?? '') ||
-  rest.length
-)
+const [operation, input, account, artworkIndex, output, approved, ...rest] = process.argv.slice(2);
+const review = operation === 'review' && !output && !approved;
+const publish = operation === 'publish' && output && /^[a-f0-9]{64}$/.test(approved ?? '');
+if (!input || !account || !artworkIndex || rest.length || (!review && !publish))
   throw new Error(
-    'Usage: node --import tsx scripts/rust-game-server-opening.ts PREPARED_BUILD_DB CANDIDATE_JSON RELEASE_DIRECTORY APPROVED_COMPILED_DIGEST',
+    'Usage: rust-game-server-opening.ts review CANDIDATE_JSON CONTROL_ACCOUNT ARTWORK_INDEX\n' +
+      '       rust-game-server-opening.ts publish CANDIDATE_JSON CONTROL_ACCOUNT ARTWORK_INDEX NEW_RELEASE_DIRECTORY APPROVED_COMPILED_DIGEST\n' +
+      'Publish requires an explicit loopback OPENLEGEND_BUILD_DATABASE_ADMIN_URL.',
   );
+if (!isSafeRecordId(account) || account.length > 100 || account.includes('\0'))
+  throw new Error('The reviewed opening requires a valid destination account ID.');
 
-const candidateFile = await readFile(reviewedCandidate, 'utf8');
+const candidateFile = await readFile(input, 'utf8');
 const { candidate, profile } = selectedCreationProfileForCandidate(JSON.parse(candidateFile));
 if (Buffer.byteLength(JSON.stringify(candidate)) > 24_000)
   throw new Error('The selected candidate exceeds the supported creation allowance.');
+await initializeCollisionRuntime();
 const actorId = profile.controlledActor(candidate);
-const database = new PostgresDatabase(databaseUrl, true);
-try {
-  await initializeCollisionRuntime();
-  const records = new WorldRecords(database);
-  const initial = await database.readTransaction(async () => {
-    // The Source activation records the digest before the SQL codec reorders
-    // object fields. A reconstructed world cannot reproduce that byte digest.
-    const approved = await new CreationTargetRepository(database).activation();
-    const current = await records.load(true);
-    if (
-      !approved ||
-      approved.candidateDigest !== digest(candidate) ||
-      approved.compiledWorldDigest !== approvedDigest ||
-      approved.worldId !== candidate.worldId ||
-      !current ||
-      current.revision !== 1 ||
-      current.state.world.id !== candidate.worldId ||
-      current.state.world.simTime !== 0 ||
-      !current.state.manuallyPaused ||
-      !current.state.world.paused
-    )
-      throw new Error('Prepare the exact approved paused opening before exporting it.');
-    const world = current.state.world;
-    const account = world.authorship.playerAccountIds[actorId];
-    if (
-      !account ||
-      account !== approved.controlAccountId ||
-      account !== approved.creatorAccountIdAtDestination ||
-      Object.keys(world.authorship.playerAccountIds).length !== 1 ||
-      (
-        await database
-          .prepare('SELECT EXISTS(SELECT 1 FROM auth_camp_asset_grants) AS initial')
-          .get()
-      )?.initial
-    )
-      throw new Error('This opening needs destination camp asset provisioning.');
-    const grant = await database
-      .prepare('SELECT account_id FROM auth_grants WHERE world_id=? AND actor_id=?')
-      .get(world.id, actorId);
-    if (grant?.account_id !== account)
-      throw new Error('The prepared world and its reviewed initial account disagree.');
-    const rows = await database
-      .prepare(
-        'SELECT id,revision,payload FROM auth_construction_grants WHERE world_id=? ORDER BY id',
-      )
-      .all(world.id);
-    const constructionGrants = rows.map((row) => {
-      const permission = constructionPermissionSchema.parse(JSON.parse(String(row['payload'])));
-      if (
-        permission.id !== row['id'] ||
-        permission.worldId !== world.id ||
-        permission.actorId !== actorId ||
-        permission.revision !== 1 ||
-        Number(row['revision']) !== 1 ||
-        permission.revoked
-      )
-        throw new Error('The prepared world contains a changed initial construction grant.');
-      return permission;
-    });
-    return { world, account, constructionGrants };
-  });
-  const expectedGrants =
-    profile.build(candidate, {
-      creatorAccountIds: [initial.account],
-      playerAccountId: initial.account,
-    }).constructionSeeds ?? [];
-  const expectedById = new Map(
-    expectedGrants.map((permission) => [
-      permission.id,
-      digest(constructionPermissionSchema.parse(permission)),
-    ]),
-  );
-  if (
-    expectedById.size !== initial.constructionGrants.length ||
-    initial.constructionGrants.some(
-      (permission) => digest(permission) !== expectedById.get(permission.id),
-    )
-  )
-    throw new Error('The saved construction grants differ from the exact authored opening.');
-  const readiness = await prepareOpeningReadiness(candidate, initial.world);
-  if (readiness.findings.some((finding) => finding.status !== 'ready'))
-    throw new Error('Resolve the opening readiness checks before exporting it.');
-  const files = new SaveFiles(join(output, 'opening-records'));
-  const slotId = randomUUID();
-  await writeCheckpoint(
-    database,
-    files,
-    {
-      id: slotId,
-      worldId: initial.world.id,
-      label: 'Reviewed opening',
-      format: SAVE_FORMAT,
-      kind: 'manual',
-      sequence: 1,
-    },
-    { expectedRevision: 1 },
-  );
-  const checkpoint = await files.metadata(slotId);
-  if (!checkpoint) throw new Error('The prepared opening file disappeared.');
-  const descriptor = JSON.stringify({
-    candidate,
-    candidateDigest: digest(candidate),
-    compiledWorldDigest: approvedDigest,
-    checkpointSha256: checkpoint.checksum,
-    slotId,
-    worldId: initial.world.id,
-    actorId,
-    controlAccountId: initial.account,
-    constructionGrants: initial.constructionGrants,
-    findings: readiness.findings.map((finding) => finding.message),
-  });
-  await writeFile(join(output, 'opening.json'), descriptor, { flag: 'wx' });
-  console.log(
-    JSON.stringify({
-      openingSha256: createHash('sha256').update(descriptor).digest('hex'),
-      worldId: initial.world.id,
-    }),
-  );
-} finally {
-  await database.close();
+const initial = profile.build(candidate, {
+  creatorAccountIds: [account],
+  playerAccountId: account,
+});
+const selectedArtwork = await readAssetIndex(artworkIndex);
+const { savedWorld, ready, findings } = await prepareReviewedOpening(
+  initial,
+  new Map([[actorId, account]]),
+  candidate,
+  selectedArtwork.release,
+);
+if (!ready) throw new Error('Resolve the opening readiness checks before exporting it.');
+const compiledWorldDigest = digest(savedWorld);
+const candidateDigest = digest(candidate);
+const constructionGrants = initial.constructionSeeds.map((grant) =>
+  constructionPermissionSchema.parse(grant),
+);
+const summary = {
+  worldId: candidate.worldId,
+  actorId,
+  controlAccountId: account,
+  candidateDigest,
+  compiledWorldDigest,
+  entities: entityKeys(savedWorld.world.entities).length,
+  constructionGrants,
+  findings,
+};
+
+if (review) {
+  console.log(JSON.stringify(summary));
+} else {
+  if (!output || approved !== compiledWorldDigest)
+    throw new Error('The compiled initial world differs from the approved opening.');
+  const admin = process.env['OPENLEGEND_BUILD_DATABASE_ADMIN_URL'];
+  if (!admin) throw new Error('Publish requires OPENLEGEND_BUILD_DATABASE_ADMIN_URL.');
+  const work = await mkdtemp(join(tmpdir(), 'openlegend-reviewed-opening-'));
+  let ownsOutput = false;
+  try {
+    // Reuse the first-save codec only in our own temporary database. No
+    // listener, model, gameplay tick, access grant or destination writer runs.
+    const temporary = await createDisposableDatabase(admin);
+    let openingSha256: string;
+    try {
+      const repository = new SqlGameRepository(work, new PostgresDatabase(temporary.url));
+      try {
+        await repository.ready;
+        await repository.commit(0, savedWorld);
+      } finally {
+        await repository.close();
+      }
+      // Export all release inputs and the checkpoint before dropping the same
+      // immutable opening. The tool owns the directory after this succeeds.
+      await writeRustGameServerStorage(output, temporary.url, selectedArtwork, true);
+      ownsOutput = true;
+      const records = new PostgresDatabase(temporary.url, true);
+      const files = new SaveFiles(join(output, 'opening-records'));
+      const slotId = randomUUID();
+      try {
+        await writeCheckpoint(
+          records,
+          files,
+          {
+            id: slotId,
+            worldId: candidate.worldId,
+            label: 'Reviewed opening',
+            format: SAVE_FORMAT,
+            kind: 'manual',
+            sequence: 1,
+          },
+          { expectedRevision: 1 },
+        );
+      } finally {
+        await records.close();
+      }
+      const checkpoint = await files.metadata(slotId);
+      if (!checkpoint) throw new Error('The prepared opening file disappeared.');
+      const descriptor = JSON.stringify({
+        candidate,
+        candidateDigest,
+        compiledWorldDigest,
+        checkpointSha256: checkpoint.checksum,
+        slotId,
+        worldId: candidate.worldId,
+        actorId,
+        controlAccountId: account,
+        constructionGrants,
+        findings,
+      });
+      await writeFile(join(output, 'opening.json'), descriptor, { flag: 'wx' });
+      openingSha256 = createHash('sha256').update(descriptor).digest('hex');
+    } finally {
+      await temporary.close();
+    }
+    console.log(JSON.stringify({ openingSha256, worldId: candidate.worldId }));
+  } catch (error) {
+    if (ownsOutput) await rm(output, { recursive: true, force: true });
+    throw error;
+  } finally {
+    await rm(work, { recursive: true, force: true });
+  }
 }
