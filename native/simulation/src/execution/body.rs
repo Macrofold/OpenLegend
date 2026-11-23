@@ -103,7 +103,6 @@ impl PhysicalMutation<'_> {
             .entities
             .resolve(handle)
             .ok_or(ExecutionError::MissingEntity)?;
-        let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
         if entity.spatial.flight.is_some() {
             return Err(ExecutionError::UnsupportedFamily);
         }

@@ -160,6 +160,7 @@ pub(crate) fn valid_command(
         | NativeCommand::Guard { .. }
         | NativeCommand::Evade { .. }
         | NativeCommand::PracticeShot { .. }
+        | NativeCommand::ReleaseStrike { .. }
         | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }
         | NativeCommand::InspectInventory { .. }

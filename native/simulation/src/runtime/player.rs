@@ -625,12 +625,24 @@ impl NativeWorldSession {
             .ok_or(CapacityError)?;
         let _workspace = self.budget.reserve(bytes)?;
         let strike = match command {
-            RuntimePlayerCommand::Strike { permission, equipment_revision, .. } => {
-                Some(crate::contact::review::PlayerStrike { permission, equipment_revision })
+            RuntimePlayerCommand::Strike { permission, equipment_revision, timed_begin, .. } => {
+                Some(crate::contact::review::PlayerStrike {
+                    permission, equipment_revision,
+                    execution: timed_begin.then_some(crate::attack_execution::PlayerAttackInput::Begin),
+                })
             }
-            RuntimePlayerCommand::RangedStart { permission, .. }
-            | RuntimePlayerCommand::RangedRelease { permission, .. } => {
-                Some(crate::contact::review::PlayerStrike { permission, equipment_revision: None })
+            RuntimePlayerCommand::RangedStart { permission, timed_begin, .. } => {
+                Some(crate::contact::review::PlayerStrike {
+                    permission, equipment_revision: None,
+                    execution: timed_begin.then_some(crate::attack_execution::PlayerAttackInput::Begin),
+                })
+            }
+            RuntimePlayerCommand::RangedRelease { permission, input, may_wait, .. }
+            | RuntimePlayerCommand::ReleaseStrike { permission, input, may_wait, .. } => {
+                Some(crate::contact::review::PlayerStrike {
+                    permission, equipment_revision: None,
+                    execution: Some(crate::attack_execution::PlayerAttackInput::Release { input, may_wait }),
+                })
             }
             _ => None,
         };
@@ -688,6 +700,20 @@ impl NativeWorldSession {
             .player_input(account, actor)
             .map_err(failure)
     }
+    /// Borrow the current controlled preparation without any presentation,
+    /// inventory, sensory work or allocation.
+    pub fn with_player_attack<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        read: impl FnOnce(Option<(&str, bool)>) -> T,
+    ) -> Result<T, RuntimeError> {
+        self.require_active()?;
+        self.session.accepted().map_err(failure)?
+            .with_player_attack(account, actor, read)
+            .map_err(failure)
+    }
+
     pub fn player_interaction(
         &self,
         read: &RuntimePlayerRead,

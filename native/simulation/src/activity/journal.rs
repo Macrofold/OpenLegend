@@ -135,6 +135,11 @@ enum ActivityUndo {
         id: String,
         before: ReleaseBefore,
     },
+    AttackExecution {
+        actor: String,
+        id: String,
+        no_learning_control: Option<bool>,
+    },
     Insert {
         actor: String,
         id: String,
@@ -510,6 +515,45 @@ impl ActivityJournal {
             before: MutableRecord::capture(entry),
         })
     }
+    /// Retain one accepted human-input sample on the active attack. It is
+    /// historical evidence only and owns an independent copy of its profile.
+    pub(crate) fn install_attack_execution(
+        &mut self,
+        state: &mut ActivityState,
+        actor: &str,
+        action: &str,
+        evidence: &crate::attack_execution::AttackExecutionEvidence,
+        point_only: bool,
+    ) -> Result<(), ActivityError> {
+        let entry = state.active(action)?.ok_or(ActivityError::InvalidStructure)?;
+        if entry.actor_id != actor
+            || !matches!(entry.command.kind(), "aim" | "strike")
+            || entry.attack_execution.is_some()
+        {
+            return Err(ActivityError::InvalidStructure);
+        }
+        self.reserve(heap_sum([
+            evidence.heap_bytes().ok_or(ActivityError::Capacity)?,
+            std::mem::size_of_val(evidence),
+            actor.len(),
+            entry.id.len() * 2,
+        ]).ok_or(ActivityError::Capacity)?)?;
+        let id = entry.id.clone();
+        self.push(ActivityUndo::AttackExecution {
+            actor: actor.to_owned(),
+            id: id.clone(),
+            no_learning_control: entry.no_learning_control,
+        })?;
+        let entry = &mut state.collections.get_mut(actor)
+            .and_then(|owner| owner.records.get_mut(&id))
+            .ok_or(ActivityError::InvalidStructure)?.occurrence;
+        entry.attack_execution = Some(Box::new(evidence.clone()));
+        if evidence.timed() || point_only {
+            entry.no_learning_control = Some(true);
+        }
+        self.settle_record(state, actor, &id)
+    }
+
     /// Bind the release that actually completed while the actor's exact work
     /// is active. Return its already-authorized occurrence ID for skill credit.
     pub(crate) fn install_practice_release(
@@ -773,6 +817,14 @@ impl ActivityJournal {
                                 .hit = None;
                         }
                     }
+                    self.settle_record(state, &actor, &id)?;
+                }
+                ActivityUndo::AttackExecution { actor, id, no_learning_control } => {
+                    let entry = &mut state.collections.get_mut(&actor)
+                        .and_then(|owner| owner.records.get_mut(&id))
+                        .ok_or(ActivityError::InvalidStructure)?.occurrence;
+                    entry.attack_execution = None;
+                    entry.no_learning_control = no_learning_control;
                     self.settle_record(state, &actor, &id)?;
                 }
                 ActivityUndo::Insert {

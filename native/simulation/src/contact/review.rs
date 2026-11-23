@@ -79,7 +79,7 @@ impl StrikePermission {
     }
 }
 
-fn digest(
+pub(crate) fn strike_digest(
     definition: ContactRead<'_>,
     injury: ContactInjury,
     budget: &ByteBudget,
@@ -110,6 +110,20 @@ fn digest(
     Ok((crate::encoding::sha256_hex(canonical.as_bytes()), custody))
 }
 
+pub(crate) fn timed_strike_digest(
+    definition: ContactRead<'_>,
+    injury: ContactInjury,
+    input: crate::attack_execution::TimedReleaseInput,
+    budget: &ByteBudget,
+) -> Result<(String, ByteReservation), ExecutionError> {
+    let (bound, _base) = strike_digest(definition, injury, budget)?;
+    let meaning = (bound, input);
+    let size = crate::encoding::json_record_len(&meaning).map_err(|_| ExecutionError::Invariant)?;
+    let custody = budget.reserve(size.checked_add(128).ok_or(ExecutionError::Capacity)?)?;
+    let encoded = crate::encoding::json_record(&meaning).map_err(|_| ExecutionError::Invariant)?;
+    Ok((crate::encoding::sha256_hex(encoded.as_bytes()), custody))
+}
+
 pub(crate) fn prepare(
     source: &Entity,
     target: &Entity,
@@ -117,7 +131,7 @@ pub(crate) fn prepare(
     injury: ContactInjury,
     budget: &ByteBudget,
 ) -> Result<(StrikePermission, ByteReservation), ExecutionError> {
-    let (attack_digest, _temporary) = digest(definition, injury, budget)?;
+    let (attack_digest, _temporary) = strike_digest(definition, injury, budget)?;
     prepare_digest(source, target, &attack_digest, budget)
 }
 
@@ -163,7 +177,7 @@ pub(crate) fn check(
         target,
         injury.maximum(definition.damage),
         permission,
-        || digest(definition, injury, budget),
+        || strike_digest(definition, injury, budget),
     )
 }
 
@@ -265,4 +279,5 @@ pub(crate) enum ChosenContact {
 pub(crate) struct PlayerStrike<'a> {
     pub permission: Option<&'a StrikePermission>,
     pub equipment_revision: Option<u64>,
+    pub execution: Option<crate::attack_execution::PlayerAttackInput>,
 }

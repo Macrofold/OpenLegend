@@ -1,5 +1,15 @@
 # Skilled action execution — implementation evidence
 
+## Held releases on the stand-alone Rust server
+
+An authenticated Chromium player held the timing ring, moved the pointer to a new ground point and released. The sling shot followed the point chosen at release, spent one stone and saved the exact timing sample. This action was excluded from reusable learning. Both command results returned unchanged after reopening. A separate signed case renewed a release requested before the weapon was ready. Readiness committed one shot without another command. When renewals expired, the preparation stayed ready and a fresh explicit release worked after reopening.
+
+The signed melee case used the exact equipped Camp hammer. The target was out of reach. The committed timing sample and recovery were saved, the player did not approach, and the target lost no health. Reopening returned the original Begin and Release results. The focused executable is `af20cfbd715c`. The browser, early, expired and melee results are `86fe06b94f02`, `49f1132e`, `47355a1d` and `af98adeaa637`.
+
+An initial exact point approval used to reject even the unchanged choice because it was bound to an action ID that did not yet exist. The repaired Begin binds the original meaning, and the later release binds the actual held action. A changed point was refused. The identical confirmed point prepared the weapon, and a separate confirmed release spent one stone and retained its frozen strong sample. All four exact results were recovered after restart. Manifest `7db4ca9124227`, executable `98243e0b0246` and result `1638c475d5cf`. These are local gameplay checks.
+
+The same build turned Combat mode on in the live Chromium browser after a signed Aim while it was off. A forged input token was refused. Switching the mode off and retrying the original request left it off. The later real release produced a new notice and spent one stone. After restart, the returning browser kept its mode off and recovered both results unchanged. Result `6f127b4278f9` records the rendered check and complete database cleanup. Earlier attempts timed out in local database setup or matched only part of the receipt's saved identity.
+
 ## October 25, 2026 UTC — remove the aggregate injury meter
 
 The overall injury field, its event delta and movement coefficient are removed from body state, response profiles, history and story selection. Damage/healing still use the shared health owner; defense, susceptibility, interruptions, death, scars and independent status effects remain. Body-part wounds are not implemented. The [current body contract](../architecture.md#actor-means-any-living-being) and [care proposal](../projects/recovery-and-care-feature-spec.md) distinguish these retained foundations from future injuries.

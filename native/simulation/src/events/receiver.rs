@@ -105,6 +105,38 @@ pub(super) fn prepare_receiver_awareness(
         sight,
     )
     .map_err(|_| ExecutionError::Invariant)?;
+    let target = receiver.actor_id.as_str();
+    let rules = installed.occurrence_rules.value();
+    if selection.target_id() == Some(target) {
+        let contact = event.event_type == rules.projectile_contact_event
+            || event.event_type == rules.contact_event
+                && installed.event_disclosure.value().felt_target(event) == Some(target);
+        let directed = selection.source_id() != Some(target)
+            && (selection.event_type() == rules.contact_event
+                || rules
+                    .ranged
+                    .as_ref()
+                    .is_some_and(|ranged| selection.event_type() == ranged.shot_released));
+        if (contact || directed)
+            && installed
+                .body_policy
+                .as_ref()
+                .and_then(|body| body.value().combat.as_ref())
+                .is_some_and(|combat| combat.encounters.is_some())
+            && core.state.physical.entities.get(target).is_some_and(|entity| {
+                entity.actively_participates()
+                    && entity.actor.as_ref().is_some_and(|actor| actor.alive)
+            })
+        {
+            // Receiving is authoritative even when retention later omits the
+            // account. The notice borrows no identifying source from the event.
+            core.physical().note_attack_mode(
+                target,
+                &event.id,
+                crate::state::AttackModeNoticeKind::PersonallyExperiencedAssault,
+            )?;
+        }
+    }
     let reason = law.recording_reason(RecordingInput {
         source: RecordingSource::Awareness,
         event_type: Some(selection.event_type()),

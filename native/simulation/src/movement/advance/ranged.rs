@@ -2,6 +2,7 @@
 //! release a funded independent flight at the current clock boundary.
 use super::*;
 use crate::item_holds::ClaimState;
+use crate::attack_execution::TimedReleaseInput;
 use crate::projectile::ProjectileFlight;
 use indexmap::IndexMap;
 
@@ -75,6 +76,9 @@ impl PointWork {
 pub(super) struct ReleaseRequest {
     permit: Option<Box<crate::contact::StrikePermission>>,
     target: Option<RangedTarget>,
+    input: TimedReleaseInput,
+    may_wait: bool,
+    pending: bool,
     review: Option<Box<(crate::contact::StrikePermission, ByteReservation)>>,
     _custody: ByteReservation,
 }
@@ -85,7 +89,9 @@ impl MoveAdvanceCursor {
         action: &Action,
         binding: GeometryBinding,
         permit: Option<&crate::contact::StrikePermission>,
-        target: Option<&RangedTarget>,
+        target: Option<RuntimeRangedTarget<'_>>,
+        input: TimedReleaseInput,
+        may_wait: bool,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let mut cursor = Self::new(actor, 0.0, binding, budget)?;
@@ -94,9 +100,7 @@ impl MoveAdvanceCursor {
             heap_sum([
                 size_of::<ReleaseRequest>(),
                 action.id.len(),
-                target
-                    .map_or(Some(0), HeapBytes::heap_bytes)
-                    .ok_or(ExecutionError::Capacity)?,
+                target.map_or(0, RuntimeRangedTarget::selected_text_bytes),
                 permit
                     .map_or(Some(0), |permit| {
                         permit.heap_bytes()?.checked_add(size_of_val(permit))
@@ -109,11 +113,44 @@ impl MoveAdvanceCursor {
         cursor.physical_life = aim.source_life;
         cursor.requested_ranged_release = Some(Box::new(ReleaseRequest {
             permit: permit.map(|value| Box::new(value.clone())),
-            target: target.cloned(),
+            target: target.map(RangedTarget::bound),
+            input,
+            may_wait,
+            pending: false,
             review: None,
             _custody: custody,
         }));
         Ok(cursor)
+    }
+
+    pub(super) fn requested_timing(&self) -> Option<TimedReleaseInput> {
+        self.requested_ranged_release.as_ref().map(|request| request.input)
+    }
+
+    /// The launch owner has completed the current target/review checks. If
+    /// the timed preparation is still winding up, save only this one choice.
+    pub(super) fn prepare_early_ranged_release(
+        &self,
+        selection: RuntimeRangedTarget<'_>,
+    ) -> Result<(Box<crate::attack_execution::PendingRelease>, ByteReservation), ExecutionError> {
+        let request = self.requested_ranged_release.as_ref()
+            .filter(|request| request.may_wait).ok_or(ExecutionError::Invariant)?;
+        crate::attack_execution::PendingRelease::prepare(
+            request.input, Some(selection), request.permit.as_deref(), &self.budget,
+        )
+    }
+
+    pub(super) fn retain_early_ranged_release(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        pending: Box<crate::attack_execution::PendingRelease>,
+        storage: ByteReservation,
+    ) -> Result<Progress, ExecutionError> {
+        let action = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
+        core.physical().hold_attack_release(&self.actor_id, action, pending, storage)?;
+        self.requested_ranged_release.as_mut().ok_or(ExecutionError::Invariant)?.pending = true;
+        self.phase = Phase::Done;
+        Ok(Progress::Complete)
     }
 
     fn selected_shot<'a>(
@@ -144,6 +181,7 @@ impl MoveAdvanceCursor {
         (
             Option<crate::text::JsText>,
             Option<Box<(crate::contact::StrikePermission, ByteReservation)>>,
+            bool,
         ),
         ExecutionError,
     > {
@@ -151,7 +189,7 @@ impl MoveAdvanceCursor {
             .requested_ranged_release
             .take()
             .ok_or(ExecutionError::Invariant)?;
-        Ok((self.failure.take(), requested.review))
+        Ok((self.failure.take(), requested.review, requested.pending))
     }
 
     fn ranged_fail(
@@ -290,6 +328,13 @@ impl MoveAdvanceCursor {
         }) else {
             return self.ranged_fail(&rules.not_applicable.message, core);
         };
+        if self.requested_ranged_release.as_ref().is_some_and(|request| !aim.ready
+            && (!request.may_wait || action.attack_execution.as_ref().is_none_or(|execution| {
+                execution.pending_release.is_some()
+            })))
+        {
+            return self.ranged_fail(&rules.not_applicable.message, core);
+        }
         let (weapon, _) = installed_loadout(&installed, aim)?;
         let tool_id = action
             .weapon_item_id
@@ -484,12 +529,19 @@ impl MoveAdvanceCursor {
         let _event = self
             .budget
             .reserve(768 + 3 * actor.id.len() + id.len() + words.prepared.storage_bytes())?;
-        core.physical().advance_timed_work(
+        let timing = action.attack_execution.is_some();
+        if !core.physical().advance_timed_work(
             &self.actor_id,
             id,
             self.seconds,
             installed.time_epsilon,
-        )?;
+        )? {
+            self.phase = Phase::Done;
+            return Ok(Progress::Complete);
+        }
+        if timing {
+            core.physical().mark_attack_ready(&self.actor_id, id)?;
+        }
         let staged = core.stage_event(EventEmissionIntent {
             event_type: words.aim_ready.clone(),
             text: EmissionText::Narration(Narration {
@@ -594,6 +646,10 @@ impl MoveAdvanceCursor {
             _ => None,
         };
         let nominal = (weapon.damage + ammunition.damage_bonus).max(0.0);
+        let timing = action.attack_execution.as_deref().zip(self.requested_timing());
+        let assessment = timing.map(|(timing, input)| timing.assess(input)).transpose()?;
+        let reviewed_injury = nominal * assessment.as_ref().map_or(1.0, |release| release.injury_factor);
+        let sample = timing.map(|(_, input)| input);
         let outgoing = scar_factor(
             combat.map(crate::install::VerifiedDefinition::value),
             actor,
@@ -616,9 +672,11 @@ impl MoveAdvanceCursor {
                 &installed,
                 actor,
                 action,
+                aim.manual.then_some(action.id.as_str()),
                 selection,
                 [original, final_subject],
-                nominal,
+                reviewed_injury,
+                sample,
                 permission,
                 &self.budget,
             )? {
@@ -640,9 +698,9 @@ impl MoveAdvanceCursor {
             }
         } else if let Some((target, identity)) = subject.zip(aim.aim_target.as_ref()) {
             let injury = crate::contact::ContactInjury::read(&installed, actor, target)?;
-            let maximum = injury.maximum(nominal);
+            let maximum = injury.maximum(reviewed_injury);
             let current_digest =
-                || review_digest(action, aim, identity, injury, maximum, &self.budget);
+                || review_digest(action, aim, identity, injury, maximum, sample, &self.budget);
             if self.requested_ranged_release.is_some()
                 || action.requires_lethal_review == Some(true)
             {
@@ -693,7 +751,19 @@ impl MoveAdvanceCursor {
                 core,
             );
         };
+        if !aim.ready && let Some((timing, _)) = timing {
+            if timing.pending_release.is_some()
+                || requested.is_none_or(|request| !request.may_wait)
+            {
+                return self.ranged_fail(&installed.ordinary_actions.value().not_applicable.message, core);
+            }
+            let (pending, storage) = self.prepare_early_ranged_release(selection)?;
+            return self.retain_early_ranged_release(core, pending, storage);
+        }
         let now = state.physical.header.sim_time;
+        let committed = timing.zip(assessment).map(|((timing, _), assessment)| {
+            timing.commit(assessment, now, &self.budget)
+        }).transpose()?;
         let from = origin(actor)?;
         let observed = directed.and_then(|(id, life)| {
             aim.aim_target.as_ref().filter(|target| target.id == id && target.life == life)
@@ -705,7 +775,7 @@ impl MoveAdvanceCursor {
         let line = aim_line(from, aimed, weapon.range).or_else(|| aim_line(from, point, weapon.range))
             .ok_or(ExecutionError::Invariant)?;
         let recovery = now + weapon.recovery_seconds;
-        let shot_storage = self.budget.reserve(
+        let mut shot_storage = self.budget.reserve(
             4096 + 8
                 * (id.len()
                     + actor.id.len()
@@ -729,7 +799,7 @@ impl MoveAdvanceCursor {
             .ok_or(ExecutionError::Invariant)?;
         let hold = aim.reservation_id.clone();
         let kind = weapon.ammunition_kind.clone();
-        let flight = ProjectileFlight::from_action(
+        let mut flight = ProjectileFlight::from_action(
             actor,
             action,
             reviewed,
@@ -749,6 +819,16 @@ impl MoveAdvanceCursor {
             nominal * outgoing,
             weapon.accuracy,
         )?;
+        if let Some((evidence, mut storage)) = committed {
+            let point_only = directed.is_none() && indicated.is_none();
+            core.journal.activity.install_attack_execution(
+                &mut core.state.activity, &self.actor_id, id, &evidence, point_only,
+            ).map_err(ExecutionError::Activity)?;
+            storage.resize(storage.bytes().checked_add(size_of_val(&evidence))
+                .ok_or(ExecutionError::Capacity)?)?;
+            shot_storage.merge(storage)?;
+            flight.execution = Some(Box::new(evidence));
+        }
         let projectile =
             self.commit_projectile(core, &hold, ammo, recovery, flight, shot_storage)?;
         let staged = crate::native_controller::feeding::stage_subject(

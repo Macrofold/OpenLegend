@@ -54,6 +54,8 @@ pub struct PlayerActionFacts<'a> {
     pub ranged_ready: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub guard_label: Option<&'a str>,
+    #[serde(skip)]
+    pub execution: Option<crate::attack_execution::AttackExecutionView<'a>>,
 }
 
 /// Self-only facts loaned inside the accepted-read lane. Detached application
@@ -66,6 +68,15 @@ pub struct PlayerRangedSource<'a> {
     pub label: &'a JsText,
     pub point_fire: bool,
     pub target_rule: &'static str,
+    pub profile: Option<&'a crate::attack_execution::TimedReleaseProfile>,
+}
+
+#[derive(Clone, Copy)]
+pub struct PlayerMeleeSource<'a> {
+    pub item: &'a str,
+    pub definition: &'a str,
+    pub label: &'a JsText,
+    pub profile: Option<&'a crate::attack_execution::TimedReleaseProfile>,
 }
 
 pub struct PlayerSelfFacts<'a> {
@@ -105,6 +116,7 @@ pub struct PlayerSelfFacts<'a> {
     pub craft_stock: &'a indexmap::IndexMap<&'a str, u64>,
     pub equipped: &'a [crate::install::OwnedItem<'a>],
     pub ranged_source: Option<PlayerRangedSource<'a>>,
+    pub melee_source: Option<PlayerMeleeSource<'a>>,
     pub knowledge_revision: u64,
     pub agency: &'a ActorAgency,
     pub practice: Option<&'a indexmap::IndexMap<String, crate::state::PracticeProgress>>,
@@ -114,6 +126,7 @@ pub struct PlayerSelfFacts<'a> {
     pub remains_phase: Option<&'a str>,
     pub evasion_ready_at: Option<f64>,
     pub combat_ready_at: Option<f64>,
+    pub attack_mode_notice: Option<&'a crate::state::AttackModeNotice>,
     pub natural_strike_ids: Option<&'a [String]>,
     pub action_animation: Option<&'a ObservedActionAnimation>,
     pub senses_enabled: bool,
@@ -266,6 +279,10 @@ impl<'a> PlayerSelfFacts<'a> {
         }
         bytes
             .checked_add(self.agency.attempts.heap_bytes()?)?
+            .checked_add(
+                self.attack_mode_notice
+                    .map_or(Some(0), HeapBytes::heap_bytes)?,
+            )?
             .checked_add(self.scars.map_or(Some(0), HeapBytes::heap_bytes)?)?
             .checked_add(self.body.map_or(Some(0), HeapBytes::heap_bytes)?)
     }
@@ -384,6 +401,7 @@ impl OwnActorProduct<'_> {
             craft_stock: player.craft_stock,
             equipped: player.equipped,
             ranged_source: player.ranged_source,
+            melee_source: player.melee_source,
             knowledge_revision: player.knowledge_revision,
             agency: player.agency,
             practice: player.practice,
@@ -393,6 +411,7 @@ impl OwnActorProduct<'_> {
             remains_phase: player.remains_phase,
             evasion_ready_at: player.evasion_ready_at,
             combat_ready_at: player.combat_ready_at,
+            attack_mode_notice: player.attack_mode_notice,
             natural_strike_ids: player.natural_strike_ids,
             action_animation: player.action_animation.as_ref(),
             senses_enabled: player.senses.enabled,

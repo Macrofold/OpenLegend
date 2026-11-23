@@ -503,4 +503,6 @@ Two separately signed players used an ordinary sling shot and the live player st
 
 The shooter kept the last standing observation during the pause and saw the shorter 0.7875 m body at the next scheduled sight sample. The defender returned to its ordinary 1.75 m height at its saved deadline. The shooter received that standing measurement at a later sight sample. The low shot hit the defender for 14 health and spent one stone. The defender stayed upright with unchanged randomness and no duck recovery deadline.
 
-Tree `0c0e5d8c25c2`, source manifest `595e3d71cf65` and executable `5bd51325e343` identify the focused local build. Results `ac42b5a45d28` and `40a3b02ee349` record the high and low checks. Both listeners released their tracked reservations and the disposable databases were removed.
+A third signed player walked onto a raised walkway beside the defender. The taller body was still blocked when the duck ended, after the projectile had stopped. When that player walked away, the defender stood once and the shooter received the next standing observation. The original recovery deadline, shot receipt and single stone debit survived.
+
+Tree `0c0e5d8c25c2`, source manifest `595e3d71cf65` and executable `5bd51325e343` identify the focused local build. Results `ac42b5a45d28`, `40a3b02ee349` and `5e1f669228e5` record the high shot, low shot and blocked return. The listeners released their tracked reservations and the disposable databases were removed.

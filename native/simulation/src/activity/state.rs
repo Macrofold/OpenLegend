@@ -186,7 +186,7 @@ pub(crate) struct ActivityOccurrence {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub attack_execution: Option<UnconvertedField>,
+    pub(crate) attack_execution: Option<Box<crate::attack_execution::AttackExecutionEvidence>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -286,9 +286,7 @@ impl ActivityOccurrence {
         limits: &ActivityLimits,
         display: &ActivityDisplayLimits,
     ) -> Result<(), ActivityError> {
-        if self.attack_execution.is_some()
-            || self.stock_resolution.is_some()
-            || self.method_id.is_some()
+        if self.stock_resolution.is_some() || self.method_id.is_some()
         {
             return Err(ActivityError::UnsupportedFamily);
         }
@@ -297,7 +295,13 @@ impl ActivityOccurrence {
         if matches!(self.command, NativeCommand::InspectActivities { .. }) {
             return Err(ActivityError::InvalidStructure);
         }
-        if self
+        if self.attack_execution.as_ref().is_some_and(|evidence| {
+            !matches!(self.command.kind(), "aim" | "strike")
+                || !evidence.valid()
+                || evidence.committed_at() < self.at
+                || self.ended_at.is_some_and(|at| evidence.committed_at() > at)
+                || evidence.timed() && self.no_learning_control != Some(true)
+        }) || self
             .release
             .as_ref()
             .is_some_and(|release| !release.valid_for(&self.command))

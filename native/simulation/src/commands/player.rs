@@ -41,6 +41,13 @@ pub enum RuntimePlayerCommand<'a> {
         auto_equip: bool,
         equipment_revision: Option<u64>,
         permission: Option<&'a crate::contact::StrikePermission>,
+        timed_begin: bool,
+    },
+    ReleaseStrike {
+        action: &'a str,
+        permission: Option<&'a crate::contact::StrikePermission>,
+        input: crate::attack_execution::TimedReleaseInput,
+        may_wait: bool,
     },
     Follow {
         target: &'a str,
@@ -108,11 +115,14 @@ pub enum RuntimePlayerCommand<'a> {
         ammunition: Option<&'a str>,
         auto_equip: bool,
         permission: Option<&'a crate::contact::StrikePermission>,
+        timed_begin: bool,
     },
     RangedRelease {
         action: &'a str,
         target: Option<crate::projectile::RuntimeRangedTarget<'a>>,
         permission: Option<&'a crate::contact::StrikePermission>,
+        input: crate::attack_execution::TimedReleaseInput,
+        may_wait: bool,
     },
     PracticeShot {
         target: &'a str,
@@ -179,6 +189,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Guard { item, facing, .. } => item.len() + facing.text_bytes(),
             Self::RangedStart { target, weapon, ammunition, .. } =>
                 target.selected_text_bytes() + weapon.map_or(0, str::len) + ammunition.map_or(0, str::len),
+            Self::ReleaseStrike { action, .. } => action.len(),
             Self::RangedRelease { action, target, .. } =>
                 action.len() + target.map_or(0, crate::projectile::RuntimeRangedTarget::selected_text_bytes),
             Self::PracticeShot { target, weapon, ammunition } => {
@@ -393,6 +404,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Evade(point) => ("evade", Some(point), None, None, None, None),
             Self::Respawn => ("respawn", None, None, None, None, None),
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
+            Self::ReleaseStrike { action, .. } => ("release-strike", None, Some(action), None, None, None),
             Self::DismissStrikeReview => ("dismiss-strike-review", None, None, None, None, None),
             Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
             Self::Pickup { target, item, .. } => ("pickup", None, None, Some(target), item, None),
@@ -544,6 +556,9 @@ impl RuntimePlayerCommand<'_> {
                 envelope,
                 expected_action_id: action.map(str::to_owned),
                 dismiss_review: false,
+            },
+            Self::ReleaseStrike { action, .. } => NativeCommand::ReleaseStrike {
+                envelope, expected_action_id: action.into(),
             },
             Self::DismissStrikeReview => NativeCommand::Cancel {
                 envelope,

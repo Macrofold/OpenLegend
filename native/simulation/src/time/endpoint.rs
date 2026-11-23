@@ -2,6 +2,7 @@
 //! Motion and the later zero-time arrival remain separate phase owners.
 //! See docs/simulation-time.md#native-interval-contract.
 use super::gifts::{GiftAnswer, GiftStep};
+use super::input::AdmittedWorldInput;
 use super::{NativeParticipants, SliceActions};
 use crate::activity::PendingActivityResult;
 use crate::body::{BodyAnswer, BodyRateCursor, BodyStep};
@@ -45,6 +46,7 @@ enum Phase {
     Body,
     Conditions,
     Work,
+    TimedRelease,
     Next,
     Heat,
     Gifts,
@@ -59,6 +61,7 @@ pub(crate) struct EndpointCursor {
     body: Option<BodyRateCursor>,
     conditions: Option<ConditionReconcileCursor>,
     work: Option<MoveAdvanceCursor>,
+    check_pending_release: bool,
     heat: Option<HeatCursor>,
     gifts: super::gifts::DueGifts,
     phase: Phase,
@@ -191,6 +194,7 @@ impl EndpointCursor {
             body: None,
             conditions: None,
             work: None,
+            check_pending_release: false,
             heat,
             gifts: super::gifts::DueGifts::default(),
             phase: if rate_seconds > 0.0 {
@@ -208,8 +212,9 @@ impl EndpointCursor {
         &'a mut self,
         core: &mut CoreMutation<'_>,
         answer: Option<EndpointAnswer>,
+        inputs: &[AdmittedWorldInput],
     ) -> Result<EndpointStep<'a>, ExecutionError> {
-        Ok(match self.progress(core, answer)? {
+        Ok(match self.progress(core, answer, inputs)? {
             Progress::Participation => EndpointStep::Participation(
                 self.exits
                     .as_ref()
@@ -238,6 +243,7 @@ impl EndpointCursor {
         &mut self,
         core: &mut CoreMutation<'_>,
         mut answer: Option<EndpointAnswer>,
+        inputs: &[AdmittedWorldInput],
     ) -> Result<Progress, ExecutionError> {
         loop {
             match self.phase {
@@ -332,7 +338,8 @@ impl EndpointCursor {
                         self.phase = Phase::Work;
                     }
                 },
-                Phase::Work => {
+                Phase::Work | Phase::TimedRelease => {
+                    let timed = self.phase == Phase::TimedRelease;
                     if self.exits.is_some() && !self.work_after_exits {
                         self.phase = Phase::Next;
                         continue;
@@ -346,27 +353,42 @@ impl EndpointCursor {
                         let work = self.actions.as_ref().and_then(|(actions, seconds)| {
                             actions.working.get(&handle).map(|id| (id, *seconds))
                         });
-                        let eligible = entity.is_some_and(|entity| {
-                            entity.actively_participates()
-                                && entity.actor.as_ref().is_some_and(|actor| {
-                                    actor.alive
-                                        && !actor.incapacitated
-                                        && actor.action.as_ref().is_some_and(|action| {
-                                            work.is_some_and(|(id, _)| id == &action.id)
-                                        })
-                                })
-                        });
-                        if !eligible {
+                        let Some((entity, action, elapsed)) = entity.zip(work)
+                            .and_then(|(entity, (id, elapsed))| {
+                                let actor = entity.actor.as_ref()?;
+                                let action = actor.action.as_ref()?;
+                                (entity.actively_participates() && actor.alive
+                                    && !actor.incapacitated && id == &action.id)
+                                    .then_some((entity, action, elapsed))
+                            }) else {
                             self.phase = Phase::Next;
                             continue;
-                        }
+                        };
                         self.binding.serial = core.journal.next_provider_serial()?;
-                        self.work = Some(MoveAdvanceCursor::new(
-                            &entity.ok_or(ExecutionError::Invariant)?.id,
-                            work.ok_or(ExecutionError::Invariant)?.1,
-                            self.binding,
-                            &self.budget,
-                        )?);
+                        if timed {
+                            let at = core.state.physical.header.sim_time;
+                            let window = inputs.iter().find_map(|input| {
+                                (input.actor_id == entity.id).then_some(input.release.as_ref()).flatten()
+                                    .filter(|release| release.action_id == action.id && release.ends_at > release.starts_at)
+                            });
+                            if window.is_none_or(|release| release.ends_at < at) {
+                                self.disarm_pending_release(core, handle)?;
+                            } else if window.is_some_and(|release| release.starts_at <= at) {
+                                self.work = MoveAdvanceCursor::pending_timed_release(
+                                    &entity.id, action, self.binding, &self.budget,
+                                )?;
+                            }
+                            if self.work.is_none() {
+                                self.phase = Phase::Next;
+                                continue;
+                            }
+                        } else {
+                            self.check_pending_release = action.attack_execution.as_ref()
+                                .is_some_and(|timing| timing.pending_release.is_some());
+                            self.work = Some(MoveAdvanceCursor::new(
+                                &entity.id, elapsed, self.binding, &self.budget,
+                            )?);
+                        }
                     }
                     let answer = answer.take().map(|answer| match answer {
                         EndpointAnswer::Occurrence(done) => MoveAdvanceAnswer::Occurrence(done),
@@ -386,7 +408,14 @@ impl EndpointCursor {
                         MoveAdvanceStep::Geometry(_) => return Ok(Progress::Geometry),
                         MoveAdvanceStep::Complete => {
                             self.work = None;
-                            self.phase = Phase::Next;
+                            if timed {
+                                self.disarm_pending_release(core, self.actors[self.next])?;
+                            }
+                            self.phase = if std::mem::take(&mut self.check_pending_release) {
+                                Phase::TimedRelease
+                            } else {
+                                Phase::Next
+                            };
                         }
                     }
                 }
@@ -454,6 +483,23 @@ impl EndpointCursor {
                 }
             }
         }
+    }
+
+    fn disarm_pending_release(
+        &self,
+        core: &mut CoreMutation<'_>,
+        handle: EntityHandle,
+    ) -> Result<(), ExecutionError> {
+        let expected = self.actions.as_ref().and_then(|(actions, _)| actions.working.get(&handle));
+        let Some((entity, action)) = core.state.physical.entities.resolve(handle).and_then(|entity| {
+            let action = entity.actor.as_ref()?.action.as_ref()?;
+            (expected == Some(&action.id)
+                && action.attack_execution.as_ref().is_some_and(|timing| timing.pending_release.is_some()))
+                .then_some((entity, action))
+        }) else { return Ok(()); };
+        let _names = self.budget.reserve(entity.id.len() + action.id.len())?;
+        let (actor, action) = (entity.id.clone(), action.id.clone());
+        core.physical().disarm_attack_release(&actor, &action)
     }
     fn after_work(&self) -> Phase {
         if self.heat.is_some() {

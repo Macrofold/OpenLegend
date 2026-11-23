@@ -234,6 +234,8 @@ impl HeapBytes for NativeCommand {
             ]),
             Self::Guard { envelope, item_id, facing, .. } =>
                 heap_sum([envelope.heap_bytes()?, item_id.heap_bytes()?, facing.heap_bytes()?]),
+            Self::ReleaseStrike { envelope, expected_action_id } =>
+                heap_sum([envelope.heap_bytes()?, expected_action_id.heap_bytes()?]),
             Self::Ranged { envelope, intent } =>
                 envelope.heap_bytes()?.checked_add(intent.heap_bytes()?),
             Self::PracticeShot { envelope, target_id, weapon_item_id, ammo_item_id } => heap_sum([
@@ -257,13 +259,12 @@ impl HeapBytes for NativeCommand {
 }
 impl ActivityOccurrence {
     pub(super) fn live_heap_bytes(&self) -> Option<usize> {
-        if self.attack_execution.is_some()
-            || self.stock_resolution.is_some()
-        {
+        if self.stock_resolution.is_some() {
             return None;
         }
         heap_sum([
             self.cooperation.heap_bytes()?,
+            self.attack_execution.heap_bytes()?,
             self.release.heap_bytes()?,
             self.id.heap_bytes()?,
             self.actor_id.heap_bytes()?,

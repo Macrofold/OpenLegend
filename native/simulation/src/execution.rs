@@ -31,6 +31,8 @@ use std::sync::Arc;
 mod action_storage;
 mod agency;
 mod attributes;
+mod attack_notice;
+mod attack_timing;
 mod combat_observation;
 mod body;
 mod conditions;
@@ -1242,9 +1244,11 @@ enum UndoKey {
     Health(usize, u64),
     CombatReady(usize, u64),
     EvasionReady(usize, u64),
+    AttackModeNotice(usize, u64),
     ContactPhase(usize, u64),
     StrikeMotion(usize, u64),
     AttackObservers(usize, u64),
+    AttackExecution(usize, u64),
     Action(usize, u64),
     ActionPath(usize, u64),
     ActionRoute(usize, u64),
@@ -1516,6 +1520,10 @@ enum Undo {
         entity: EntityHandle,
         before: Option<f64>,
     },
+    AttackModeNotice {
+        entity: EntityHandle,
+        before: Option<crate::state::AttackModeNotice>,
+    },
     ContactPhase {
         entity: EntityHandle,
         action_id: String,
@@ -1525,6 +1533,11 @@ enum Undo {
         entity: EntityHandle,
         action_id: String,
         before: Option<crate::state::FundedAttackObservers>,
+    },
+    AttackExecution {
+        entity: EntityHandle,
+        action_id: String,
+        before: crate::state::FundedAttackExecution,
     },
     StrikeMotion {
         entity: EntityHandle,
@@ -2378,6 +2391,19 @@ impl PhysicalJournal {
                         .ok_or(ExecutionError::Invariant)?
                         .evasion_ready_at = before;
                 }
+                Undo::AttackModeNotice { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .attack_mode_notice = before;
+                    state.entities.settle_operational_memory(
+                        entity,
+                        &mut self.reservation,
+                        true,
+                    )?;
+                }
                 Undo::ContactPhase {
                     entity,
                     action_id,
@@ -2394,6 +2420,9 @@ impl PhysicalJournal {
                 }
                 Undo::AttackObservers { entity, action_id, before } => {
                     drop(state.entities.swap_attack_observers(entity, &action_id, before, &self.budget)?);
+                }
+                Undo::AttackExecution { entity, action_id, before } => {
+                    drop(state.entities.swap_attack_execution(entity, &action_id, before, &self.budget)?);
                 }
                 Undo::StrikeMotion {
                     entity,

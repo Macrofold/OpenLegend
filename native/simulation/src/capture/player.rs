@@ -240,6 +240,8 @@ pub(super) struct OwnPlayerView<'a> {
     pub equipped: &'a [crate::install::OwnedItem<'a>],
     #[serde(skip)]
     pub ranged_source: Option<super::PlayerRangedSource<'a>>,
+    #[serde(skip)]
+    pub melee_source: Option<super::PlayerMeleeSource<'a>>,
     pub knowledge_revision: u64,
     pub agency: &'a crate::state::ActorAgency,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -257,6 +259,8 @@ pub(super) struct OwnPlayerView<'a> {
     pub evasion_ready_at: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub combat_ready_at: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attack_mode_notice: Option<&'a crate::state::AttackModeNotice>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub natural_strike_ids: Option<&'a [String]>,
     pub action_animation: Option<crate::worlds::base_observed::ObservedActionAnimation>,

@@ -90,6 +90,8 @@ export function rustGameServerScenePolicy(world: WorldState) {
       action: {
         preparingRoute: rules.preparingRoute,
         working: rules.working,
+        attackNormally: rules.attackNormally,
+        cancelLabel: rules.cancelLabel,
         ranged: world.moduleManifest.rangedPolicy
           ? {
               readyLabel: BASE_RANGED_TEXT.readyLabel,

@@ -827,8 +827,14 @@ fn validate_entity(
                 }
             }
         }
-        if actor.attack_mode_notice.is_some()
-            || actor.encounters.is_some()
+        if actor.attack_mode_notice.as_ref().is_some_and(|notice| {
+            notice.notice_sequence == 0
+                || notice.notice_sequence > crate::identity::MAX_SAFE_INTEGER
+                || !crate::values::is_safe_record_id(&notice.occurrence_id)
+                || !notice.occurred_at.is_finite()
+                || notice.occurred_at < 0.0
+                || notice.occurred_at > now
+        }) || actor.encounters.is_some()
             || actor.coaching_episode_id.is_some()
         {
             return Err(InstallError::CurrentFormat);
@@ -1176,7 +1182,9 @@ pub(super) fn validate_physical_item_references(
             return Err(InstallError::CurrentFormat);
         }
         if entity.actor.as_ref().and_then(|actor| actor.action.as_ref()).is_some_and(|action| {
-            action.is_placing_hearth() && !crate::hearth::valid_saved(state, installed, entity, action)
+            action.attack_execution.is_some()
+                && !crate::attack_execution::valid_saved(state, installed, entity, action)
+                || action.is_placing_hearth() && !crate::hearth::valid_saved(state, installed, entity, action)
                 || action.is_cooking() && !crate::food_preparation::valid_saved(action, state, retained)
                 || action.is_treating_scar() && !crate::body::scar_treatment::valid_saved(
                     entity, action, installed.body_policy.as_ref().map(super::VerifiedDefinition::value),

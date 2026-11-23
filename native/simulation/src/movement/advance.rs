@@ -56,6 +56,7 @@ enum Progress {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
     Start,
+    PendingRangedRelease,
     Follow,
     ContactMotionStart,
     ContactMotion,
@@ -200,6 +201,35 @@ impl MoveAdvanceCursor {
             budget: budget.clone(),
             _reservation: reservation,
         })
+    }
+    /// Borrow the still-current native preparation after ordinary endpoint
+    /// work. The caller has already checked this action's live input window.
+    pub(crate) fn pending_timed_release(
+        source: &str,
+        action: &Action,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Option<Self>, ExecutionError> {
+        let Some(pending) = action.attack_execution.as_deref()
+            .filter(|execution| execution.ready)
+            .and_then(|execution| execution.pending_release.as_deref())
+        else { return Ok(None); };
+        if action.ranged.is_some() {
+            let mut cursor = Self::release_request(
+                source, action, binding, pending.lethal_permission.as_ref(),
+                pending.selection(), pending.input, false, budget,
+            )?;
+            cursor.phase = Phase::PendingRangedRelease;
+            return Ok(Some(cursor));
+        }
+        let mut cursor = Self::new(source, 0.0, binding, budget)?;
+        cursor.reserve(action.id.len().checked_add(size_of::<ImpactCursor>())
+            .ok_or(ExecutionError::Capacity)?)?;
+        cursor.action_id = Some(action.id.clone());
+        cursor.contact = Some(Box::new(ImpactCursor::request_release(
+            source, action, pending.input, false, pending.lethal_permission.as_ref(), binding, budget,
+        )?));
+        Ok(Some(cursor))
     }
     pub(crate) fn moving_contact(
         actor_id: &str,
@@ -647,6 +677,7 @@ impl MoveAdvanceCursor {
                         Phase::ContactMotion,
                     )?;
                 }
+                Phase::PendingRangedRelease => return self.check_ranged(core),
                 Phase::Start => {
                     let entity = core
                         .state

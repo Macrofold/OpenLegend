@@ -587,7 +587,7 @@ impl AdvanceCursor {
                     Some(AdvanceAnswer::Geometry(value)) => Some(EndpointAnswer::Geometry(value)),
                     _ => return Err(invalid().into()),
                 };
-                match cursor.step(core, input)? {
+                match cursor.step(core, input, &self.inputs)? {
                     EndpointStep::Participation(actor) => {
                         self.participation = Some(crate::participation::ParticipationCursor::due(
                             core,

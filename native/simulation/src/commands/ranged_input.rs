@@ -229,6 +229,7 @@ pub(crate) fn review_digest(
     target: &crate::projectile::AimedLife,
     injury: crate::contact::ContactInjury,
     maximum: f64,
+    timing: Option<crate::attack_execution::TimedReleaseInput>,
     budget: &crate::host::ByteBudget,
 ) -> Result<(String, crate::host::ByteReservation), crate::execution::ExecutionError> {
     use crate::execution::ExecutionError;
@@ -242,6 +243,7 @@ pub(crate) fn review_digest(
         injury.susceptibility,
         injury.incoming,
         maximum,
+        timing,
     );
     let bytes =
         crate::encoding::json_record_len(&bindings).map_err(|_| ExecutionError::Invariant)?;
@@ -256,7 +258,9 @@ pub(crate) fn review_digest(
 
 /// The one approval covers the exact former and final visible subjects, as
 /// well as the chosen point and equipment. Hidden bodies cannot change the
-/// offer. Their later collision remains physical after release.
+/// offer. Their later collision remains physical after release. Only a held
+/// release binds a native action ID. Before preparation, the next command
+/// will allocate that ID after its separately bound review is approved.
 pub(crate) struct LaunchReview {
     pub digest: String,
     pub _workspace: crate::host::ByteReservation,
@@ -275,9 +279,11 @@ pub(crate) fn check_launch_review(
     installed: &crate::simulation::InstalledWorld,
     source: &crate::state::Entity,
     action: &crate::state::Action,
+    existing_action: Option<&str>,
     selection: RuntimeRangedTarget<'_>,
     subjects: [Option<&crate::state::Entity>; 2],
     ammunition_injury: f64,
+    timing: Option<crate::attack_execution::TimedReleaseInput>,
     permission: Option<&crate::contact::StrikePermission>,
     budget: &crate::host::ByteBudget,
 ) -> Result<LaunchApproval, crate::execution::ExecutionError> {
@@ -305,7 +311,7 @@ pub(crate) fn check_launch_review(
         RuntimeRangedTarget::Subject { id, life } => (None, Some((id, life))),
     };
     let bindings = (
-        aim.manual.then_some(action.id.as_str()),
+        existing_action,
         &aim.tool,
         &aim.ammunition,
         action.weapon_item_id.as_deref(),
@@ -313,6 +319,7 @@ pub(crate) fn check_launch_review(
         point,
         direct,
         facts,
+        timing,
     );
     let digest = || {
         let size =

@@ -204,6 +204,26 @@ impl Simulation {
             can_steer: crate::time::can_steer(&self.state, entity)?,
         })
     }
+    pub(crate) fn with_player_attack<T>(
+        &self,
+        account_id: &str,
+        actor_id: &str,
+        read: impl FnOnce(Option<(&str, bool)>) -> T,
+    ) -> Result<T, ActorReadError> {
+        self.require_player_read(account_id, actor_id)?;
+        let action = self.state.physical.entities.get(actor_id)
+            .and_then(|entity| entity.actor.as_ref())
+            .filter(|actor| actor.alive && !actor.incapacitated)
+            .and_then(|actor| actor.action.as_ref())
+            .and_then(|action| {
+                let execution = action.attack_execution.as_deref()?;
+                execution.input.is_none().then_some((
+                    action.id.as_str(), execution.pending_release.is_some(),
+                ))
+            });
+        Ok(read(action))
+    }
+
     pub(crate) fn require_player_read(
         &self,
         account_id: &str,

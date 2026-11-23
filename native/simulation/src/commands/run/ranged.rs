@@ -180,7 +180,7 @@ impl CommandCursor {
                 aim.aim_point_subject = subject.clone();
             }
         }
-        self.action = Some(Action::ranged_attack(
+        let mut action = Action::ranged_attack(
             envelope.id.clone(),
             *mode,
             aim,
@@ -188,7 +188,19 @@ impl CommandCursor {
             stock.id.into(),
             pin.clone(),
             policy.windup_seconds,
-        ));
+        );
+        if self.timed_begin() {
+            let Some(timing) = tool_type.execution.as_deref().filter(|_| *mode == RuntimeRangedMode::Aim) else {
+                self.refuse(&ordinary.not_applicable);
+                return Ok(false);
+            };
+            let (execution, storage) = crate::attack_execution::AttackExecutionState::prepare(
+                timing, &tool_type.pin, &self.budget,
+            )?;
+            action.attack_execution = Some(execution);
+            self.action_storage.as_mut().ok_or(ExecutionError::Invariant)?.merge(storage)?;
+        }
+        self.action = Some(action);
         let ids = [seen_body.map_or("", |body| body.id.as_str())];
         self.binding.serial = core.journal.next_provider_serial()?;
         self.sight = Some(
@@ -372,19 +384,26 @@ impl CommandCursor {
             self.refuse(&ordinary.out_of_reach);
             return Ok(());
         }
-        let next = if aim.aim_target.is_some() && distance > policy.approach_range(weapon.range) {
+        let next = if !self.timed_begin() && aim.aim_target.is_some() && distance > policy.approach_range(weapon.range) {
             Phase::FeedApproach
         } else {
             Phase::Prepared
         };
         let aim_point = aim.aim_point;
         if let Some((subject, target)) = looked_at.zip(aim.aim_target.as_ref()) {
-            if *mode != RuntimeRangedMode::Aim
+            if (*mode != RuntimeRangedMode::Aim || self.timed_begin())
                 && let Some(ChosenContact::Player(value)) = &self.chosen_contact
             {
                 let chosen = value.as_deref();
                 let injury = crate::contact::ContactInjury::read(installed, source, subject)?;
-                let maximum = injury.maximum((weapon.damage + ammunition.damage_bonus).max(0.0));
+                let factor = if self.timed_begin() {
+                    installed.retained.items.get(&aim.tool.id)
+                        .and_then(|tool| tool.execution.as_deref())
+                        .ok_or(ExecutionError::Invariant)?.maximum_injury_factor()
+                } else {
+                    1.0
+                };
+                let maximum = injury.maximum((weapon.damage + ammunition.damage_bonus).max(0.0) * factor);
                 let digest = || {
                     super::super::ranged_input::review_digest(
                         action,
@@ -392,6 +411,7 @@ impl CommandCursor {
                         target,
                         injury,
                         maximum,
+                        None,
                         &self.budget,
                     )
                 };
@@ -435,7 +455,7 @@ impl CommandCursor {
                 action.lethal_permission = chosen.map(|permit| Box::new(permit.clone()));
             }
         }
-        if *mode == RuntimeRangedMode::ShootOnce {
+        if *mode == RuntimeRangedMode::ShootOnce || self.timed_begin() {
             if let Some(point) = aim_point {
                 let mut binding = self.binding;
                 binding.serial = core.journal.next_provider_serial()?;
@@ -516,13 +536,22 @@ impl CommandCursor {
         let Some(ChosenContact::Player(permission)) = self.chosen_contact.as_ref() else {
             return Err(ExecutionError::UnsupportedFamily);
         };
+        let factor = if self.timed_begin() {
+            installed.retained.items.get(&aim.tool.id)
+                .and_then(|tool| tool.execution.as_deref())
+                .ok_or(ExecutionError::Invariant)?.maximum_injury_factor()
+        } else {
+            1.0
+        };
         match check_launch_review(
             &installed,
             source,
             action,
+            None,
             selection,
             [None, subject],
-            (weapon.damage + ammunition.damage_bonus).max(0.0),
+            (weapon.damage + ammunition.damage_bonus).max(0.0) * factor,
+            None,
             permission.as_deref(),
             &self.budget,
         )? {
@@ -574,12 +603,19 @@ impl CommandCursor {
             .entities
             .get(self.actor_id())
             .ok_or(ExecutionError::MissingActor)?;
+        let (input, may_wait) = self.release_sample();
         let Some(action) = actor
             .actor
             .as_ref()
             .filter(|body| body.controller == "player")
             .and_then(|body| body.action.as_ref())
-            .filter(|action| action.id == *id && action.holds_ready_aim())
+            .filter(|action| action.id == *id
+                && (action.holds_ready_aim() || may_wait
+                    && action.stage=="working"
+                    && action.ranged.as_ref().is_some_and(|aim| aim.manual)
+                    && action.attack_execution.as_ref().is_some_and(|execution| execution.pending_release.is_none()))
+                && (input == crate::attack_execution::TimedReleaseInput::Ordinary
+                    || action.attack_execution.is_some()))
         else {
             self.refuse(&ordinary.not_applicable);
             return self.drive(core, None);
@@ -589,7 +625,9 @@ impl CommandCursor {
             action,
             self.binding,
             permission.as_deref(),
-            target.as_ref(),
+            target.as_ref().map(RangedTarget::selected),
+            input,
+            may_wait,
             &self.budget,
         )?;
         self.ranged_release = Some(Box::new(release));
@@ -634,7 +672,7 @@ impl CommandCursor {
                 MoveAdvanceStep::Complete => break,
             }
         }
-        let (failure, review) = child.requested_release_result()?;
+        let (failure, review, pending) = child.requested_release_result()?;
         self.ranged_release = None;
         if let Some(review) = review {
             self.strike_confirmation = Some(review);
@@ -645,6 +683,18 @@ impl CommandCursor {
             result.message = message;
             self.outcome = Some(result);
             self.phase = Phase::Done;
+        } else if pending {
+            let NativeCommand::Ranged { intent: RangedIntent::Release { action, .. }, .. } =
+                &self.command else { return Err(ExecutionError::Invariant); };
+            let words = core.state.installed.ordinary_actions.value();
+            let mut result = words.accepted.outcome(true);
+            self._reservation.resize(heap_sum([
+                self._reservation.bytes(), "release-requested".len(), result.message.storage_bytes(), action.len(),
+            ]).ok_or(ExecutionError::Capacity)?)?;
+            result.code = "release-requested".into();
+            result.action_id = Some(action.clone());
+            self.outcome = Some(result);
+            self.phase = Phase::Tail;
         } else {
             let released = &core
                 .state

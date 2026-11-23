@@ -91,7 +91,9 @@ impl ActivityJournal {
         let mut header = false;
         for change in &self.undo {
             match change {
-                ActivityUndo::Record { actor, id, .. } | ActivityUndo::Release { actor, id, .. } => {
+                ActivityUndo::Record { actor, id, .. }
+                | ActivityUndo::Release { actor, id, .. }
+                | ActivityUndo::AttackExecution { actor, id, .. } => {
                     records
                         .entry((actor.as_str(), id.as_str()))
                         .or_insert(false);

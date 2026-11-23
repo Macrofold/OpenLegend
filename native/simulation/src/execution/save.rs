@@ -920,9 +920,11 @@ impl PhysicalJournal {
                         | Undo::Health { entity, .. }
                         | Undo::CombatReady { entity, .. }
                         | Undo::EvasionReady { entity, .. }
+                        | Undo::AttackModeNotice { entity, .. }
                         | Undo::ContactPhase { entity, .. }
                         | Undo::StrikeMotion { entity, .. }
                         | Undo::AttackObservers { entity, .. }
+                        | Undo::AttackExecution { entity, .. }
                         | Undo::Heat { entity, .. }
                         | Undo::Territorial { entity, .. }
                         | Undo::TerritorialPlace { entity, .. }
@@ -989,7 +991,10 @@ impl PhysicalJournal {
                         Undo::Heading { before, .. } => {
                             rows.geometry_heading.get_or_insert(*before);
                         }
-                        Undo::Health { .. } | Undo::CombatReady { .. } | Undo::EvasionReady { .. } => rows.actor = true,
+                        Undo::Health { .. }
+                        | Undo::CombatReady { .. }
+                        | Undo::EvasionReady { .. }
+                        | Undo::AttackModeNotice { .. } => rows.actor = true,
                         Undo::Heat { .. } => rows.heat = true,
                         Undo::Territorial { .. } | Undo::TerritorialPlace { .. } => rows.territorial = true,
                         Undo::Action { .. } => {
@@ -1005,6 +1010,7 @@ impl PhysicalJournal {
                         | Undo::ContactPhase { .. }
                         | Undo::StrikeMotion { .. }
                         | Undo::AttackObservers { .. }
+                        | Undo::AttackExecution { .. }
                         | Undo::ActionSample { .. }
                         | Undo::ActionAimMotion { .. } => rows.action = true,
                         Undo::AnimalEpisode { before, .. } => {

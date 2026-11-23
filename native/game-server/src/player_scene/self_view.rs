@@ -6,6 +6,7 @@ use super::{PlayerScenePolicy, SceneError, observed::BodySize};
 use crate::player_references::PlayerReferences;
 use indexmap::IndexMap;
 use openlegend_simulation::{
+    attack_execution::{AttackExecutionView, ExecutionAssessment, TimedReleaseProfile},
     capture::PlayerSelfFacts,
     host::{ByteBudget, ByteReservation},
     narration::{NameArticle, name_phrase},
@@ -81,6 +82,8 @@ struct MeleeDefinition {
 struct ActionPolicy {
     preparing_route: Arc<str>,
     working: Arc<str>,
+    attack_normally: Arc<str>,
+    cancel_label: Arc<str>,
     #[serde(default)]
     ranged: Option<RangedCopy>,
     status_types: Vec<String>,
@@ -183,6 +186,8 @@ pub struct PlayerBodyView {
     evasion: Option<Evasion>,
     #[serde(skip_serializing_if = "Option::is_none")]
     attack_source: Option<AttackSource>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    attack_mode_notice: Option<openlegend_simulation::state::AttackModeNotice>,
     pub action: Option<OwnAction>,
     action_animation: Option<ObservedActionAnimation>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -243,7 +248,9 @@ struct Evasion {
 #[serde(tag = "kind", rename_all = "lowercase", rename_all_fields = "camelCase")]
 enum AttackSource {
     Melee {
-        label: Arc<str>,
+        label: JsText,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        profile: Option<TimedReleaseProfile>,
         enabled: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
         reason: Option<Arc<str>>,
@@ -251,6 +258,8 @@ enum AttackSource {
     },
     Ranged {
         label: JsText,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        profile: Option<TimedReleaseProfile>,
         enabled: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
         reason: Option<Arc<str>>,
@@ -276,6 +285,18 @@ struct StrikeCommand {
     #[serde(rename = "type")]
     kind: &'static str,
     definition_id: Arc<str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    item_id: Option<String>,
+}
+
+#[derive(PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OwnAttackExecution {
+    profile: TimedReleaseProfile,
+    ready: bool,
+    release_requested: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    assessment: Option<ExecutionAssessment>,
 }
 
 #[derive(PartialEq, Serialize)]
@@ -290,6 +311,8 @@ pub struct OwnAction {
     advancing: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     detail: Option<Arc<str>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    execution: Option<OwnAttackExecution>,
     #[serde(skip_serializing_if = "Option::is_none")]
     controls: Option<[AimControl; 2]>,
 }
@@ -308,6 +331,7 @@ struct AimControl {
 #[serde(tag = "type", rename_all = "kebab-case", rename_all_fields = "camelCase")]
 enum AimCommand {
     ReleaseShot { aim_id: Arc<str> },
+    ReleaseStrike { expected_action_id: Arc<str> },
     Cancel { expected_action_id: Arc<str> },
 }
 
@@ -442,6 +466,17 @@ impl PreparedSelf {
         }
         Ok(())
     }
+}
+
+fn copy_profile(
+    profile: Option<&TimedReleaseProfile>,
+    custody: &mut ByteReservation,
+) -> Result<Option<TimedReleaseProfile>, SceneError> {
+    profile.map(|profile| {
+        let bytes = profile.retained_bytes().ok_or(SceneError::Capacity)?;
+        custody.resize(custody.bytes().checked_add(bytes).ok_or(SceneError::Capacity)?)?;
+        Ok(profile.clone())
+    }).transpose()
 }
 
 /// Prepare a detached first-person view from the actual borrowed accepted
@@ -582,33 +617,74 @@ pub fn prepare_self(
             labels.get(action.kind).unwrap_or(&rules.working)
         };
         let working = action.stage == "working";
-        let (detail, controls) = if let Some((ready, copy)) = ranged {
-            // These own only the current action reference; target, loadout and
-            // release authority stay with native execution.
-            let bytes = action.id.len().checked_mul(3)
-                .and_then(|n| n.checked_add("release:".len() + "cancel:".len() + 128))
+        let (detail, controls) =
+            if let Some(execution) = action.execution.filter(|state| state.assessment.is_none()) {
+                let bytes = action.id.len().checked_mul(3)
+                    .and_then(|n| n.checked_add(256)).ok_or(SceneError::Capacity)?;
+                custody.resize(custody.bytes().checked_add(bytes).ok_or(SceneError::Capacity)?)?;
+                let id: Arc<str> = Arc::from(action.id);
+                let release = if ranged.is_some() {
+                    AimCommand::ReleaseShot { aim_id: id.clone() }
+                } else {
+                    AimCommand::ReleaseStrike { expected_action_id: id.clone() }
+                };
+                let controls = [
+                    AimControl {
+                        id: format!("release:{}", action.id),
+                        label: rules.attack_normally.clone(),
+                        enabled: execution.ready && !paused,
+                        reason: None,
+                        command: release,
+                    },
+                    AimControl {
+                        id: format!("cancel:{}", action.id),
+                        label: rules.cancel_label.clone(),
+                        enabled: true,
+                        reason: None,
+                        command: AimCommand::Cancel { expected_action_id: id },
+                    },
+                ];
+                let detail = ranged.map(|(ready, copy)| {
+                    if ready { copy.ready.clone() } else { copy.not_ready.clone() }
+                });
+                (detail, Some(controls))
+            } else if let Some((ready, copy)) = ranged {
+                // These own only the current action reference. Native keeps
+                // the target, loadout and release authority.
+                let bytes = action.id.len().checked_mul(3)
+                    .and_then(|n| n.checked_add("release:".len() + "cancel:".len() + 128))
+                    .ok_or(SceneError::Capacity)?;
+                custody.resize(custody.bytes().checked_add(bytes).ok_or(SceneError::Capacity)?)?;
+                let aim_id: Arc<str> = Arc::from(action.id);
+                let release = AimControl {
+                    id: format!("release:{}", action.id),
+                    label: copy.release_label.clone(),
+                    enabled: ready && !paused,
+                    reason: (!ready).then(|| copy.not_ready.clone()),
+                    command: AimCommand::ReleaseShot { aim_id: aim_id.clone() },
+                };
+                let cancel = AimControl {
+                    id: format!("cancel:{}", action.id),
+                    label: copy.cancel_label.clone(),
+                    enabled: true,
+                    reason: None,
+                    command: AimCommand::Cancel { expected_action_id: aim_id },
+                };
+                let detail = if ready { &copy.ready } else { &copy.not_ready };
+                (Some(detail.clone()), Some([release, cancel]))
+            } else {
+                (None, None)
+            };
+        let execution = action.execution.map(|execution: AttackExecutionView<'_>| {
+            let profile = copy_profile(Some(execution.profile), &mut custody)?
                 .ok_or(SceneError::Capacity)?;
-            custody.resize(custody.bytes().checked_add(bytes).ok_or(SceneError::Capacity)?)?;
-            let aim_id: Arc<str> = Arc::from(action.id);
-            let release = AimControl {
-                id: format!("release:{}", action.id),
-                label: copy.release_label.clone(),
-                enabled: ready && !paused,
-                reason: (!ready).then(|| copy.not_ready.clone()),
-                command: AimCommand::ReleaseShot { aim_id: aim_id.clone() },
-            };
-            let cancel = AimControl {
-                id: format!("cancel:{}", action.id),
-                label: copy.cancel_label.clone(),
-                enabled: true,
-                reason: None,
-                command: AimCommand::Cancel { expected_action_id: aim_id },
-            };
-            let detail = if ready { &copy.ready } else { &copy.not_ready };
-            (Some(detail.clone()), Some([release, cancel]))
-        } else {
-            (None, None)
-        };
+            Ok::<_, SceneError>(OwnAttackExecution {
+                profile,
+                ready: execution.ready,
+                release_requested: execution.release_requested,
+                assessment: execution.assessment,
+            })
+        }).transpose()?;
         if let Some(label) = action.guard_label {
             let bytes = label.len().checked_mul(2).ok_or(SceneError::Capacity)?;
             custody.resize(custody.bytes().checked_add(bytes).ok_or(SceneError::Capacity)?)?;
@@ -634,8 +710,10 @@ pub fn prepare_self(
             } else {
                 0.0
             },
-            advancing: !paused && working && action.ranged_ready != Some(true),
+            advancing: !paused && working && action.ranged_ready != Some(true)
+                && execution.as_ref().is_none_or(|execution| !execution.ready),
             detail,
+            execution,
             controls,
         })
     }).transpose()?;
@@ -660,14 +738,39 @@ pub fn prepare_self(
         };
         Some(AttackSource::Ranged {
             label: source.label.clone(),
+            profile: copy_profile(source.profile, &mut custody)?,
             enabled: reason.is_none(),
             reason,
             point_fire: source.point_fire,
             target_rule: source.target_rule,
             command: RangedPointerCommand {
-                kind: "shoot-once",
+                kind: if source.profile.is_some() { "aim" } else { "shoot-once" },
                 item_id: source.weapon.to_owned(),
                 ammunition_id: source.ammunition.map(str::to_owned),
+            },
+        })
+    } else if let Some(source) = facts.melee_source {
+        let reason = if !policy.melee.supported || !facts.alive || facts.incapacitated
+            || facts.actions_blocked {
+            Some(policy.melee.unavailable.clone())
+        } else if recovering {
+            Some(policy.melee.recovering.clone())
+        } else {
+            None
+        };
+        let bytes = source.label.storage_bytes()
+            .checked_add(source.item.len()).and_then(|n| n.checked_add(source.definition.len() + 64))
+            .ok_or(SceneError::Capacity)?;
+        custody.resize(custody.bytes().checked_add(bytes).ok_or(SceneError::Capacity)?)?;
+        Some(AttackSource::Melee {
+            label: source.label.clone(),
+            profile: copy_profile(source.profile, &mut custody)?,
+            enabled: reason.is_none(),
+            reason,
+            command: StrikeCommand {
+                kind: "strike",
+                definition_id: source.definition.into(),
+                item_id: Some(source.item.to_owned()),
             },
         })
     } else {
@@ -691,12 +794,14 @@ pub fn prepare_self(
                 None
             };
             Some(AttackSource::Melee {
-                label: definition.label.clone(),
+                label: definition.label.as_ref().into(),
+                profile: None,
                 enabled: reason.is_none(),
                 reason,
                 command: StrikeCommand {
                     kind: "strike",
                     definition_id: definition.id.clone(),
+                    item_id: None,
                 },
             })
         })
@@ -766,6 +871,7 @@ pub fn prepare_self(
                 ready_in: (facts.evasion_ready_at.unwrap_or(0.0) - facts.at).max(0.0),
             }),
             attack_source,
+            attack_mode_notice: facts.attack_mode_notice.cloned(),
             action: display,
             action_animation: facts.action_animation.cloned(),
             traits: facts.identity.traits.map(<[_]>::to_vec),
@@ -852,7 +958,7 @@ impl BodyFields<'_> {
         removed!(before,after;
           "nameForm"=>name.name_form, "indefiniteArticle"=>name.indefinite_article,"portrait"=>portrait,
           "departureNotice"=>departure_notice,"bodyState"=>body_state,"evasion"=>evasion,
-          "attackSource"=>attack_source,"traits"=>traits,"activity"=>activity,
+          "attackSource"=>attack_source,"attackModeNotice"=>attack_mode_notice,"traits"=>traits,"activity"=>activity,
         )
     }
     pub(crate) fn entries<S: serde::ser::SerializeMap>(&self, map: &mut S) -> Result<(), S::Error> {
@@ -869,7 +975,7 @@ impl BodyFields<'_> {
         } optional {
           "nameForm"=>name.name_form, "indefiniteArticle"=>name.indefinite_article,"portrait"=>portrait,
           "departureNotice"=>departure_notice,"bodyState"=>body_state,"evasion"=>evasion,
-          "attackSource"=>attack_source,"traits"=>traits,"activity"=>activity,
+          "attackSource"=>attack_source,"attackModeNotice"=>attack_mode_notice,"traits"=>traits,"activity"=>activity,
         });
         Ok(())
     }

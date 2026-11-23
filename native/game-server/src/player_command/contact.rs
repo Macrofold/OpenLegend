@@ -1,6 +1,7 @@
 //! One pending browser confirmation per controlled actor. The saved command
 //! receipt owns its displayed outcome; the world owns impact and body facts.
 use super::*;
+use crate::world_input::ReviewedAttack;
 use openlegend_simulation::{
     activity::{ActivityDetail, ActivityScalar},
     runtime::{StrikePermission, StrikeReviewOffer},
@@ -28,6 +29,8 @@ pub(super) struct Pending {
     target: Option<String>,
     definition: Option<String>,
     aim: Option<String>,
+    expected_action: Option<String>,
+    pub(super) attack: Option<ReviewedAttack>,
     point: Option<Point>,
     basis: Option<AimBasis>,
     body_reference: Option<String>,
@@ -67,9 +70,14 @@ impl Reviews {
                     && entry.scope == scope
                     && entry.current()
                     && if matches!(command.kind, CommandKind::Cancel) {
-                        command.expected_action_id.is_none()
+                        command.expected_action_id.as_ref()
+                            == entry.aim.as_ref().or(entry.expected_action.as_ref())
                     } else {
                         entry.kind == command.kind
+                            && entry.expected_action == command.expected_action_id
+                            && entry.attack.is_some() == matches!(
+                                command.execution, Some(AttackControl::ConfirmReview { .. })
+                            )
                             && entry.target == command.target_id
                             && entry.definition == command.definition_id
                             && entry.aim == command.aim_id
@@ -90,6 +98,7 @@ impl Reviews {
         &self,
         scope: &RequestScope,
         command: &CommandInput,
+        turn: Option<&AttackTurn>,
         offer: &StrikeReviewOffer,
         budget: &ByteBudget,
     ) -> Result<Arc<Pending>, WorldError> {
@@ -107,6 +116,8 @@ impl Reviews {
         }
         let basis = command.aim_basis.as_ref();
         let selected_text = [
+            turn.map(|turn| &turn.begin),
+            command.expected_action_id.as_ref(),
             command.target_id.as_ref(),
             command.definition_id.as_ref(),
             command.aim_id.as_ref(),
@@ -137,6 +148,10 @@ impl Reviews {
             target: command.target_id.clone(),
             definition: command.definition_id.clone(),
             aim: command.aim_id.clone(),
+            expected_action: command.expected_action_id.clone(),
+            attack: turn.map(|turn| ReviewedAttack {
+                operation: turn.operation, begin: turn.begin.clone(),
+            }),
             point: command.aim_point,
             basis: command.aim_basis.clone(),
             body_reference: command.body_reference.clone(),
@@ -176,6 +191,7 @@ impl Pending {
         &self,
         offer: &StrikeReviewOffer,
         result: &openlegend_simulation::commands::Outcome,
+        scope: Option<&InputScope>,
         budget: &ByteBudget,
     ) -> Result<(String, ByteReservation), RuntimeError> {
         #[derive(Serialize)]
@@ -206,6 +222,8 @@ impl Pending {
             ok: bool,
             code: &'a str,
             message: &'a JsText,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            input_scope: Option<&'a InputScope>,
             lethal_review: Review<'a>,
         }
         let mut storage = budget.reserve(
@@ -243,6 +261,7 @@ impl Pending {
             ok: result.ok,
             code: &result.code,
             message: &result.message,
+            input_scope: scope,
             lethal_review: Review {
                 id: self.id,
                 title: &offer.title,

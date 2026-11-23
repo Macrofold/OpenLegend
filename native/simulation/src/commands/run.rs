@@ -29,6 +29,7 @@ mod fire;
 mod scar_treatment;
 mod practice;
 mod ranged;
+mod attack_timing;
 mod guard;
 mod evasion;
 mod respawn;
@@ -111,6 +112,7 @@ enum Phase {
     RangedSight,
     RangedPointReview,
     RangedRelease,
+    MeleeRelease,
     RespawnSupport,
     RespawnStanding,
     RespawnConditions,
@@ -210,12 +212,14 @@ pub(crate) struct CommandCursor {
     discovery_starts_work: bool,
     chosen_contact: Option<crate::contact::review::ChosenContact>,
     selected_equipment_revision: Option<u64>,
+    attack_execution: Option<crate::attack_execution::PlayerAttackInput>,
     strike_confirmation: Option<Box<(crate::contact::StrikePermission, ByteReservation)>>,
     strike_review: Option<Box<crate::contact::StrikeReviewOffer>>,
     phase: Phase,
     queries: Option<GeometryQueries>,
     contact_route: Option<crate::contact::StrikeRoute>,
     ranged_release: Option<Box<crate::movement::MoveAdvanceCursor>>,
+    melee_release: Option<Box<crate::contact::ImpactCursor>>,
     ranged_point_review: Option<Box<(crate::projectile::point_review::PointReview, ByteReservation)>>,
     follow: Option<crate::movement::follow::FollowCursor>,
     evasion_path: Option<Box<crate::movement::MotionOperation>>,
@@ -401,12 +405,14 @@ impl CommandCursor {
             discovery_starts_work: false,
             chosen_contact: None,
             selected_equipment_revision: None,
+            attack_execution: None,
             strike_confirmation: None,
             strike_review: None,
             phase: Phase::Start,
             queries: None,
             contact_route: None,
             ranged_release: None,
+            melee_release: None,
             ranged_point_review: None,
             follow: None,
             evasion_path: None,
@@ -461,6 +467,9 @@ impl CommandCursor {
             return self.travel.as_ref()?.queries();
         }
         if let Some(release) = &self.ranged_release {
+            return release.queries().ok();
+        }
+        if let Some(release) = &self.melee_release {
             return release.queries().ok();
         }
         self.sight
@@ -533,6 +542,10 @@ impl CommandCursor {
     }
     fn needs_display(&mut self, core: &mut CoreMutation<'_>) -> Result<bool, ExecutionError> {
         if self.options.native_controller || self.view.is_some() {
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::ReleaseStrike { .. }) {
+            self.prepare_melee_release_view(core)?;
             return Ok(false);
         }
         if matches!(self.command, NativeCommand::Gather { .. }) {
@@ -618,6 +631,7 @@ impl CommandCursor {
     ) -> Result<Self, ExecutionError> {
         let permission = strike.permission;
         self.selected_equipment_revision = strike.equipment_revision;
+        self.attack_execution = strike.execution;
         self.reserve(
             permission
                 .map_or(Some(0), |value| {
@@ -892,6 +906,7 @@ impl CommandCursor {
     ) -> Result<Progress, ExecutionError> {
         if matches!(self.phase, Phase::TypedPlan) { return self.typed_walk_step(core, answer); }
         if matches!(self.phase, Phase::RangedRelease) { return self.drive_ranged_release(core, answer); }
+        if matches!(self.phase, Phase::MeleeRelease) { return self.drive_melee_release(core, answer); }
         let installed = core.state.installed.clone();
         let ordinary = installed.ordinary_actions.value();
         let mut answer = answer;
@@ -1577,6 +1592,7 @@ impl CommandCursor {
                             }
                         }
                         NativeCommand::Ranged { .. } => return self.begin_ranged_release(core),
+                        NativeCommand::ReleaseStrike { .. } => return self.begin_melee_release(core),
                         NativeCommand::PracticeShot { .. } => {
                             if self.prepare_practice_shot(core)? {
                                 return Ok(Progress::Geometry);
@@ -1592,7 +1608,7 @@ impl CommandCursor {
                 }
                 Phase::StoragePage => return self.storage_occurrence(core, &actor_id),
                 Phase::RespawnSupport | Phase::RespawnStanding
-                | Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach | Phase::ScarReach | Phase::PracticeReach | Phase::GuardSight | Phase::RangedSight | Phase::RangedPointReview | Phase::RangedRelease => {
+                | Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach | Phase::ScarReach | Phase::PracticeReach | Phase::GuardSight | Phase::RangedSight | Phase::RangedPointReview | Phase::RangedRelease | Phase::MeleeRelease => {
                     return Err(ExecutionError::Invariant);
                 }
                 Phase::Standing => {
@@ -2719,6 +2735,21 @@ impl CommandCursor {
                     }
                     self.begin_chosen_work(core)?;
                     let result = self.outcome.as_ref().ok_or(ExecutionError::Invariant)?;
+                    if result.ok
+                        && !self.duplicate
+                        && matches!(
+                            self.command,
+                            NativeCommand::Strike { .. }
+                                | NativeCommand::ReleaseStrike { .. }
+                                | NativeCommand::Ranged { .. }
+                        )
+                    {
+                        core.physical().note_attack_mode(
+                            &actor_id,
+                            &self.command.envelope().id,
+                            crate::state::AttackModeNoticeKind::OwnOffensiveActionAdmitted,
+                        )?;
+                    }
                     // Public commands stage their exact retry receipt with the
                     // SQL prefix. Keep one owner, as in Source's command writer.
                     if result.ok

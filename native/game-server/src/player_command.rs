@@ -12,10 +12,12 @@ use crate::{
     spatial::AimGeometry,
     store::{AdmittedReceipt, GameplayReceipt, KnownPlaceViewPage, PlaceViewRequest, StoreError},
     wire,
+    world_input::{AttackControl, AttackOperation, AttackTurn, InputScope, WorldInputs},
     world::{ApplicationStart, PlayerHistoryRead, WorldError},
 };
 use axum::body::Bytes;
 use openlegend_simulation::{
+    attack_execution::{AttackExecutionView, PlayerAttackInput, TimedReleaseInput},
     commands::{OwnedArrangement, OwnedMove, OwnedStockSelection, SpeechTargetRole, StatusOperation},
     encoding::{json_record, sha256_hex},
     gathering::GatheringMode,
@@ -36,6 +38,7 @@ use serde_json::value::RawValue;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
+mod attack_result;
 mod contact;
 mod typed;
 pub(crate) use typed::{ActionAttempt, AttemptRecovery};
@@ -69,6 +72,8 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     expected_action_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    execution: Option<AttackControl>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -351,6 +356,8 @@ enum CommandKind {
     Move,
     Evade,
     Strike,
+    #[serde(rename = "release-strike")]
+    ReleaseStrike,
     #[serde(rename = "practice-shot")]
     PracticeShot,
     Aim,
@@ -406,7 +413,7 @@ impl CommandKind {
     }
 
     fn may_offer_lethal_review(self) -> bool {
-        matches!(self, Self::Strike | Self::ShootOnce | Self::Hunt | Self::ReleaseShot)
+        matches!(self, Self::Strike | Self::Aim | Self::ShootOnce | Self::Hunt | Self::ReleaseShot | Self::ReleaseStrike)
     }
 
     fn binds_target_life(self) -> bool {
@@ -424,6 +431,7 @@ impl CommandKind {
 }
 
 struct PreparedRequest {
+    actor_id: String,
     id: String,
     fingerprint: String,
     recovery_fingerprint: String,
@@ -442,11 +450,17 @@ pub(crate) struct PlayerCommands {
     identity: Arc<Mutex<RequestIdentity>>,
     maintenance: Arc<crate::operator_maintenance::OperatorMaintenance>,
     reviews: Arc<contact::Reviews>,
+    inputs: Arc<WorldInputs>,
 }
 
 enum ResultOwner {
     Accepted(Arc<AcceptedSaveInput>),
     WithReview(Arc<AcceptedSaveInput>, contact::Update),
+    WithAttack {
+        value: Arc<AcceptedSaveInput>,
+        review: Option<contact::Update>,
+        result: attack_result::AcceptedAttack,
+    },
     Durable(AdmittedReceipt),
     Refused(&'static str, &'static str),
 }
@@ -454,7 +468,7 @@ enum ResultOwner {
 impl ResultOwner {
     fn receipt(&self) -> Option<&GameplayReceipt> {
         match self {
-            Self::Accepted(value) | Self::WithReview(value, _) => value.receipt(),
+            Self::Accepted(value) | Self::WithReview(value, _) | Self::WithAttack { value, .. } => value.receipt(),
             Self::Durable(value) => Some(value.receipt()),
             Self::Refused(_, _) => None,
         }
@@ -469,6 +483,7 @@ impl PlayerCommands {
         references: Arc<ReferenceIssuer>,
         identity: Arc<Mutex<RequestIdentity>>,
         maintenance: Arc<crate::operator_maintenance::OperatorMaintenance>,
+        inputs: Arc<WorldInputs>,
         capacity: usize,
     ) -> Self {
         Self {
@@ -479,6 +494,7 @@ impl PlayerCommands {
             identity,
             maintenance,
             reviews: Arc::new(contact::Reviews::new(capacity)),
+            inputs,
         }
     }
 
@@ -670,6 +686,11 @@ impl PlayerCommands {
                         report(prior.as_ref(), &facts, scope, fresh_epoch, recovery, budget)
                     })?;
                 }
+                if let Some(control @ AttackControl::Cancel { .. }) = &facts.request.command.execution {
+                    self.inputs.cancel_gesture(
+                        &scope, control, facts.request.command.expected_action_id.as_deref(),
+                    )?;
+                }
                 self.maintenance.allow_ordinary(permits, &scope)?;
                 self.saves.check_admission(tokio::time::Instant::now())?;
                 // A recovered receipt above grants no new speech. For a new
@@ -791,6 +812,13 @@ impl PlayerCommands {
                 let selected_review = supplied_review
                     .then(|| Arc::new(std::sync::OnceLock::<Arc<contact::Pending>>::new()));
                 let stage_selected = selected_review.clone();
+                let finish_selected = selected_review.clone();
+                let begin_inputs = self.inputs.clone();
+                let finish_inputs = self.inputs.clone();
+                let attack_turn = facts.request.command.execution.as_ref()
+                    .map(|_| Arc::new(std::sync::OnceLock::<AttackTurn>::new()));
+                let stage_attack = attack_turn.clone();
+                let finish_attack = attack_turn.clone();
                 self.game.world.request_advance_publication();
                 prior = self
                     .game
@@ -831,10 +859,37 @@ impl PlayerCommands {
                                     "Resume the world to act.",
                                 )));
                             }
-                            world.player_input_direct(
+                            let player = world.player_input_direct(
                                 &begin_scope.scope.account_id,
                                 &begin_scope.scope.actor_id,
                             )?;
+                            if let Some(control) = &raw.execution {
+                                let approved = selected_review.as_ref().and_then(|slot| slot.get());
+                                let admitted = world.with_player_attack(
+                                    &begin_scope.scope.account_id,
+                                    &begin_scope.scope.actor_id,
+                                    |current| begin_inputs.attack_turn(
+                                        &begin_scope, player, clock, control,
+                                        approved.and_then(|review| review.attack.as_ref()),
+                                        &begin_facts.request.command_id,
+                                        raw.aim_id.as_deref().or(raw.expected_action_id.as_deref()),
+                                        current.map(|(id, _)| id),
+                                    ),
+                                )?;
+                                let turn = match admitted {
+                                    Ok(turn) => turn,
+                                    Err(AccessError::Changed) => {
+                                        return Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                            "input-stale",
+                                            "These attack controls expired. Use a fresh deliberate input.",
+                                        )));
+                                    }
+                                    Err(error) => return Err(error.into()),
+                                };
+                                if attack_turn.as_ref().expect("attack has a current carrier").set(turn).is_err() {
+                                    return Err(StoreError::InvalidRecord.into());
+                                }
+                            }
                             if let Some((point, basis)) = raw.aim_point.zip(raw.aim_basis.as_ref()) {
                                 let spatial = begin_spatial.as_ref().expect("point request owns geometry");
                                 let admitted = world.with_geometry(|map| {
@@ -1033,6 +1088,7 @@ impl PlayerCommands {
                                 trade_evidence.as_ref(),
                                 group.as_ref().map(|group| &group.selection),
                                 world_source.as_ref().map(|(root, _)| root.as_str()),
+                                attack_turn.as_ref().and_then(|turn| turn.get()),
                             )?;
                             Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
                                 &begin_facts.id,
@@ -1050,6 +1106,7 @@ impl PlayerCommands {
                             let RuntimeDirectOutput::Prepared(product) = output else {
                                 unreachable!("ordinary command cannot preview")
                             };
+                            let timing = stage_attack.as_ref().and_then(|turn| turn.get());
                             let (value, _temporary, review) =
                                 if let Some(offer) = product.strike_review() {
                                     let reviews = stage_reviews.as_ref()
@@ -1057,16 +1114,21 @@ impl PlayerCommands {
                                     let scope = stage_scope.as_ref()
                                         .ok_or_else(|| RuntimeError::application_refused("Attack review has no scope."))?;
                                     let pending = reviews.prepare(
-                                        &scope.scope, &prepare.request.command, offer, budget,
+                                        &scope.scope, &prepare.request.command, timing, offer, budget,
                                     ).map_err(RuntimeError::application_refused)?;
-                                    let (value, custody) = pending.result(offer, product.outcome(), budget)?;
+                                    let (value, custody) = pending.result(
+                                        offer, product.outcome(), timing.map(|turn| &turn.scope), budget,
+                                    )?;
                                     (value, Some(custody), Some(contact::Update::Offer(pending)))
                                 } else {
                                     let review = stage_selected.as_ref().and_then(|slot| slot.get())
                                         .filter(|_| product.outcome().ok)
                                         .map(|entry| contact::Update::Consume(entry.clone()));
-                                    (json_record(product.outcome())
-                                        .map_err(RuntimeError::application_refused)?, None, review)
+                                    let execution = timing.map(|turn| &turn.scope);
+                                    let (value, custody) = attack_result::encode(
+                                        &product, &prepare.actor_id, execution, budget,
+                                    )?;
+                                    (value, custody, review)
                                 };
                             let receipt = GameplayReceipt {
                                 id: prepare.id.clone(),
@@ -1078,39 +1140,64 @@ impl PlayerCommands {
                                     .map_err(RuntimeError::application_refused)?,
                             };
                             let accepted = stage.stage(&product, Some(receipt))?;
-                            Ok(match review {
-                                Some(update) => ResultOwner::WithReview(accepted, update),
-                                None => ResultOwner::Accepted(accepted),
+                            Ok(if timing.is_some() {
+                                ResultOwner::WithAttack {
+                                    value: accepted,
+                                    result: attack_result::AcceptedAttack::prepare(product.outcome(), budget)?,
+                                    review,
+                                }
+                            } else if let Some(update) = review {
+                                ResultOwner::WithReview(accepted, update)
+                            } else {
+                                ResultOwner::Accepted(accepted)
                             })
                         },
                         move |fence, key, staged| {
-                            if matches!(
-                                staged, ResultOwner::WithReview(_, contact::Update::Consume(approval))
-                                    if !approval.current()
-                            ) {
-                                return Err(AccessError::Changed.into());
-                            }
-                            finish_authority.current(
-                                &finish_scope,
-                                Capability::Play,
-                                true,
-                                |scope, _| {
-                                    if remembered || private_trade {
-                                        return finish_world
-                                            .with_unedited_history(&scope.actor_id, || {
+                            let settle = || {
+                                let consumes_review = matches!(staged,
+                                    ResultOwner::WithReview(_, contact::Update::Consume(_))
+                                    | ResultOwner::WithAttack { review: Some(contact::Update::Consume(_)), .. }
+                                );
+                                if consumes_review
+                                    && finish_selected.as_ref().and_then(|selected| selected.get())
+                                        .is_none_or(|approval| !approval.current())
+                                {
+                                    return Err(AccessError::Changed.into());
+                                }
+                                finish_authority.current(
+                                    &finish_scope, Capability::Play, true, |scope, _| {
+                                        if remembered || private_trade {
+                                            return finish_world.with_unedited_history(&scope.actor_id, || {
                                                 Ok(fence.settle(key, true)?)
-                                            })?
-                                            .ok_or(WorldError::ProjectionChanged);
-                                    }
-                                    Ok(fence.settle(key, true)?)
-                                },
-                            )?
+                                            })?.ok_or(WorldError::ProjectionChanged);
+                                        }
+                                        Ok(fence.settle(key, true)?)
+                                    },
+                                )?
+                            };
+                            if let Some(turn) = finish_attack.as_ref().and_then(|turn| turn.get()) {
+                                let ResultOwner::WithAttack { result, review, .. } = staged else {
+                                    return Err(StoreError::InvalidRecord.into());
+                                };
+                                finish_inputs.accept_attack(
+                                    &finish_scope, turn, result.action(), result.pending(),
+                                    matches!(review, Some(contact::Update::Offer(_))), settle,
+                                )
+                            } else {
+                                settle()
+                            }
                         },
                         move |result| {
                             match result {
                                 ResultOwner::Accepted(value) => accept.accept(value),
                                 ResultOwner::WithReview(value, update) => {
                                     publish_reviews.as_ref().expect("accepted attack review owns its publisher").publish(update);
+                                    accept.accept(value);
+                                }
+                                ResultOwner::WithAttack { value, review, .. } => {
+                                    if let Some(update) = review {
+                                        publish_reviews.as_ref().expect("accepted attack review owns its publisher").publish(update);
+                                    }
                                     accept.accept(value);
                                 }
                                 _ => {}
@@ -1207,6 +1294,22 @@ impl CommandRequest {
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
             || !point_binding_valid
+            || command.execution.as_ref().is_some_and(|execution| {
+                !execution.valid(id) || !match execution {
+                    AttackControl::Begin { .. } =>
+                        matches!(command.kind, CommandKind::Aim | CommandKind::Strike)
+                            && command.lethal_review_id.is_none() && command.auto_equip != Some(true),
+                    AttackControl::Release { .. } =>
+                        matches!(command.kind, CommandKind::ReleaseShot | CommandKind::ReleaseStrike)
+                            && command.lethal_review_id.is_none(),
+                    AttackControl::ConfirmReview { .. } =>
+                        matches!(command.kind, CommandKind::Aim | CommandKind::Strike | CommandKind::ReleaseShot | CommandKind::ReleaseStrike)
+                            && command.lethal_review_id.is_some(),
+                    AttackControl::Cancel { .. } =>
+                        command.kind == CommandKind::Cancel && command.lethal_review_id.is_none(),
+                }
+            })
+            || command.kind == CommandKind::Aim && command.lethal_review_id.is_some() && command.execution.is_none()
             || Uuid::parse_str(&self.command_epoch).is_err()
             || (!arrangement && !equip_strike && !matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing | CommandKind::LearnRecord)
                 && command.expected_revision.is_some())
@@ -1386,6 +1489,13 @@ impl CommandRequest {
                         (None, Some(heading)) => heading.is_finite(),
                         _ => false,
                     } => Ok(()),
+            CommandKind::ReleaseStrike
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.item_id.is_none()
+                    && command.target_id.is_none()
+                    && command.expected_action_id.as_deref().is_some_and(id) => Ok(()),
             CommandKind::ReleaseShot
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -1618,6 +1728,7 @@ impl CommandRequest {
             .as_bytes(),
         );
         Ok(PreparedRequest {
+            actor_id: scope.actor_id.clone(),
             id: format!("gameplay:{}:{}:{id}", scope.account_id, self.command_epoch),
             fingerprint,
             recovery_fingerprint,
@@ -1675,8 +1786,15 @@ impl PreparedRequest {
         trade_evidence: Option<&'a Arc<openlegend_simulation::handover::TradeEvidence>>,
         group: Option<&'a OwnedStockSelection>,
         world_source: Option<&'a str>,
+        attack: Option<&'a AttackTurn>,
     ) -> Result<RuntimePlayerCommand<'a>, WorldError> {
         let input = &self.request.command;
+        let timing = attack.and_then(AttackTurn::native_input);
+        let timed_begin = timing == Some(PlayerAttackInput::Begin);
+        let (sample, may_wait) = match timing {
+            Some(PlayerAttackInput::Release { input, may_wait }) => (input, may_wait),
+            _ => (TimedReleaseInput::Ordinary, false),
+        };
         if let Some(group) = group {
             return match input.kind {
                 CommandKind::Drop => Ok(RuntimePlayerCommand::DropGroup {
@@ -1748,6 +1866,7 @@ impl PreparedRequest {
                 auto_equip: input.auto_equip == Some(true),
                 equipment_revision: input.expected_revision,
                 permission: strike_permission,
+                timed_begin,
             }),
             CommandKind::Aim | CommandKind::ShootOnce | CommandKind::Hunt => {
                 Ok(RuntimePlayerCommand::RangedStart {
@@ -1757,6 +1876,7 @@ impl PreparedRequest {
                     ammunition: input.ammunition_id.as_deref(),
                     auto_equip: input.auto_equip.unwrap_or(false),
                     permission: strike_permission,
+                    timed_begin,
                 })
             }
             CommandKind::Guard => {
@@ -1772,10 +1892,18 @@ impl PreparedRequest {
                     auto_equip: input.auto_equip.unwrap_or(false),
                 })
             }
+            CommandKind::ReleaseStrike => Ok(RuntimePlayerCommand::ReleaseStrike {
+                action: input.expected_action_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                permission: strike_permission,
+                input: sample,
+                may_wait,
+            }),
             CommandKind::ReleaseShot => Ok(RuntimePlayerCommand::RangedRelease {
                 action: input.aim_id.as_deref().ok_or(StoreError::InvalidRecord)?,
                 target: ranged_target,
                 permission: strike_permission,
+                input: sample,
+                may_wait,
             }),
             CommandKind::PracticeShot => Ok(RuntimePlayerCommand::PracticeShot {
                 target: target.ok_or(StoreError::InvalidRecord)?,
@@ -1788,7 +1916,11 @@ impl PreparedRequest {
             CommandKind::Move => Ok(RuntimePlayerCommand::Move(
                 destination.ok_or(StoreError::InvalidRecord)?,
             )),
-            CommandKind::Cancel if input.lethal_review_id.is_some() => {
+            CommandKind::Cancel if attack.is_some_and(|turn| turn.operation == AttackOperation::Cancel) => {
+                Ok(attack.and_then(|turn| turn.action.as_deref())
+                    .map_or(RuntimePlayerCommand::DismissStrikeReview, |id| RuntimePlayerCommand::Cancel(Some(id))))
+            }
+            CommandKind::Cancel if input.lethal_review_id.is_some() && input.expected_action_id.is_none() => {
                 Ok(RuntimePlayerCommand::DismissStrikeReview)
             }
             CommandKind::Respawn => Ok(RuntimePlayerCommand::Respawn),

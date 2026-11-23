@@ -6,6 +6,7 @@ use super::{
     may_target, reach,
 };
 use crate::activity::PendingActivityResult;
+use crate::attack_execution::{AttackExecutionEvidence, PendingRelease, TimedReleaseInput};
 use crate::body::{BodyAnswer, BodyStep, HealthChangeCursor};
 use crate::events::{
     AudienceSelection, CompletedOccurrence, EmissionText, EventEmissionIntent, EventScope,
@@ -43,9 +44,19 @@ pub(crate) enum ContactStep {
     Invalidated,
 }
 
+struct RequestedStrike {
+    input: TimedReleaseInput,
+    may_wait: bool,
+    permit: Option<Box<super::StrikePermission>>,
+    review: Option<Box<(super::StrikePermission, ByteReservation)>>,
+    pending: bool,
+    committed: Option<(AttackExecutionEvidence, ByteReservation)>,
+}
+
 pub(crate) struct ImpactCursor {
     source: String,
     action: String,
+    requested: Option<Box<RequestedStrike>>,
     target: String,
     seconds: f64,
     binding: GeometryBinding,
@@ -101,6 +112,7 @@ impl ImpactCursor {
         Ok(Self {
             source: source.into(),
             action: action.id.clone(),
+            requested: None,
             target: target.into(),
             seconds,
             binding,
@@ -641,6 +653,19 @@ impl ImpactCursor {
                     if !valid {
                         return Ok(ContactStep::Invalidated);
                     }
+                    if let Some(timing) = action.attack_execution.as_ref()
+                        && self.requested.is_none()
+                    {
+                        let epsilon = installed.time_epsilon;
+                        if !timing.ready
+                            && core.physical().advance_timed_work(
+                                &self.source, &self.action, self.seconds, epsilon,
+                            )?
+                        {
+                            core.physical().mark_attack_ready(&self.source, &self.action)?;
+                        }
+                        return Ok(ContactStep::AdvanceComplete);
+                    }
                     self.binding.serial = core.journal.next_provider_serial()?;
                     self.sight = Some(
                         SightBatch::prepare(
@@ -677,7 +702,12 @@ impl ImpactCursor {
                         return self.check_start_range(core);
                     }
                     let epsilon = core.state.installed.time_epsilon;
-                    if !core.physical().advance_timed_work(
+                    if self.requested.is_some() {
+                        if !self.admit_manual_release(core)? {
+                            self.phase = Phase::Done;
+                            return Ok(ContactStep::AdvanceComplete);
+                        }
+                    } else if !core.physical().advance_timed_work(
                         &self.source,
                         &self.action,
                         self.seconds,
@@ -718,7 +748,7 @@ impl ImpactCursor {
                         self.phase = Phase::Reach;
                         return Ok(ContactStep::Geometry);
                     }
-                    if !self.automatic(core)? {
+                    if self.requested.is_none() && !self.automatic(core)? {
                         return Ok(ContactStep::Invalidated);
                     }
                     self.hit_reason = Some("out-of-range");
@@ -790,7 +820,7 @@ impl ImpactCursor {
                     self.phase = Phase::Result;
                     if reach.sight.pop() == Some(true) {
                         self.begin_impact(core)?;
-                    } else if !self.automatic(core)? {
+                    } else if self.requested.is_none() && !self.automatic(core)? {
                         return Ok(ContactStep::Invalidated);
                     }
                 }
@@ -885,6 +915,90 @@ impl ImpactCursor {
         }
     }
 
+    pub(crate) fn request_release(
+        source: &str,
+        action: &Action,
+        input: TimedReleaseInput,
+        may_wait: bool,
+        permit: Option<&super::StrikePermission>,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let mut cursor = Self::new(source, action, 0.0, binding, budget)?;
+        let permit_bytes = permit.map_or(Some(0), |permit| {
+            permit.heap_bytes()?.checked_add(size_of_val(permit))
+        }).ok_or(ExecutionError::Capacity)?;
+        cursor.reserve(size_of::<RequestedStrike>() + permit_bytes)?;
+        cursor.requested = Some(Box::new(RequestedStrike {
+            input,
+            may_wait,
+            permit: permit.map(|permit| Box::new(permit.clone())),
+            review: None,
+            pending: false,
+            committed: None,
+        }));
+        Ok(cursor)
+    }
+
+    pub(crate) fn requested_result(&mut self) -> (
+        bool,
+        bool,
+        Option<Box<(super::StrikePermission, ByteReservation)>>,
+    ) {
+        let Some(request) = self.requested.as_mut() else {
+            return (false, false, None);
+        };
+        (request.pending, request.committed.is_some(), request.review.take())
+    }
+
+    /// Share the current sight, reach, impact and recovery cursors. Only a
+    /// signed explicit release (or its already checked live clock input) can
+    /// commit the personal timing evidence.
+    fn admit_manual_release(&mut self, core: &mut CoreMutation<'_>) -> Result<bool, ExecutionError> {
+        use super::review::{self, Review};
+        let (source, action) = self.source(&core.state.physical.entities)?;
+        let timing = action.attack_execution.as_deref().ok_or(ExecutionError::Invariant)?;
+        let request = self.requested.as_ref().ok_or(ExecutionError::Invariant)?;
+        let target = core.state.physical.entities.get(&self.target).ok_or(ExecutionError::Invariant)?;
+        let installed = &core.state.installed;
+        let definition = ContactRead::action(installed, &core.state.physical.entities, source, action)
+            .ok_or(ExecutionError::Invariant)?;
+        let injury = super::ContactInjury::read(installed, source, target)?;
+        let release = timing.assess(request.input)?;
+        let digest = || review::timed_strike_digest(definition, injury, request.input, &self.budget);
+        match review::check_damage(
+            installed, source, target, injury.maximum(definition.damage * release.injury_factor),
+            request.permit.as_deref(), digest,
+        )? {
+            Review::Allowed => {}
+            Review::Required => {
+                let (digest, _scratch) = digest()?;
+                let (permission, mut storage) = review::prepare_digest(source, target, &digest, &self.budget)?;
+                storage.resize(storage.bytes().checked_add(size_of::<ByteReservation>())
+                    .ok_or(ExecutionError::Capacity)?)?;
+                self.requested.as_mut().ok_or(ExecutionError::Invariant)?.review =
+                    Some(Box::new((permission, storage)));
+                return Ok(false);
+            }
+            Review::Changed => return Ok(false),
+        }
+        if !timing.ready {
+            if !request.may_wait || timing.pending_release.is_some() {
+                return Ok(false);
+            }
+            let (pending, storage) = PendingRelease::prepare(request.input, None, request.permit.as_deref(), &self.budget)?;
+            core.physical().hold_attack_release(&self.source, &self.action, pending, storage)?;
+            self.requested.as_mut().ok_or(ExecutionError::Invariant)?.pending = true;
+            return Ok(false);
+        }
+        let committed = timing.commit(release, core.state.physical.header.sim_time, &self.budget)?;
+        core.journal.activity.install_attack_execution(
+            &mut core.state.activity, &self.source, &self.action, &committed.0, false,
+        ).map_err(ExecutionError::Activity)?;
+        self.requested.as_mut().ok_or(ExecutionError::Invariant)?.committed = Some(committed);
+        Ok(true)
+    }
+
     fn automatic(&self, core: &CoreMutation<'_>) -> Result<bool, ExecutionError> {
         Ok(self
             .source(&core.state.physical.entities)?
@@ -917,9 +1031,12 @@ impl ImpactCursor {
             .get(&self.target)
             .ok_or(ExecutionError::Invariant)?;
         let actor = target.actor.as_ref().ok_or(ExecutionError::Invariant)?;
-        let accuracy = definition.accuracy.unwrap_or(1.0);
+        let execution = self.requested.as_ref().and_then(|request| request.committed.as_ref())
+            .map(|(evidence, _)| evidence);
+        let accuracy = (definition.accuracy.unwrap_or(1.0) *
+            execution.map_or(1.0, AttackExecutionEvidence::contact_factor)).clamp(0.0, 1.0);
         let injury = super::ContactInjury::read(installed, source, target)?;
-        if action.requires_lethal_review == Some(true)
+        if execution.is_none() && action.requires_lethal_review == Some(true)
             && !matches!(
                 super::review::check(
                     installed,
@@ -936,7 +1053,9 @@ impl ImpactCursor {
             self.phase = Phase::ReviewRefused;
             return Ok(());
         }
-        let raw_injury = injury.maximum(definition.damage);
+        let raw_injury = injury.maximum(
+            definition.damage * execution.map_or(1.0, AttackExecutionEvidence::injury_factor)
+        );
         let health_before = actor.health;
         let source_position = source.world_position().ok_or(ExecutionError::InvalidPosition)?;
         let target_position = target.world_position().ok_or(ExecutionError::InvalidPosition)?;
@@ -1184,6 +1303,9 @@ impl ImpactCursor {
             },
             recovery,
         )?;
+        if let Some(request) = self.requested.as_ref() {
+            core.physical().retain_committed_strike_input(&self.source, &self.action, request.input)?;
+        }
         let mut prefix = crate::text::JsText::from(" ");
         crate::text::TextRef::from(&verb).append_to(&mut prefix);
         crate::text::TextRef::from(" ").append_to(&mut prefix);

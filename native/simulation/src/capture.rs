@@ -18,7 +18,8 @@ mod direct_player;
 pub(crate) use definitions::write_installed_definitions;
 pub use direct_player::{
     PlayerActionFacts, PlayerCommunicationSubject, PlayerIdentityFacts, PlayerMapMarker,
-    PlayerObservedBody, PlayerPerception, PlayerRangedSource, PlayerSelfAttribution, PlayerSelfFacts,
+    PlayerMeleeSource, PlayerObservedBody, PlayerPerception, PlayerRangedSource, PlayerSelfAttribution,
+    PlayerSelfFacts,
 };
 mod inventory;
 pub(crate) mod maintenance;
@@ -962,6 +963,7 @@ pub(crate) fn with_actor_self<T>(
                 crate::contact::guard::current_profile(&state.physical, &state.installed, entity, action)
                     .map(|profile| profile.phase_label(guard.phase))
             }),
+            execution: action.attack_execution.as_deref().map(|execution| execution.player_view()),
             ranged_ready: action.ranged.as_ref()
                 .filter(|aim| action.is_ranged_attack() && aim.manual)
                 .map(|aim| aim.ready),
@@ -1049,6 +1051,7 @@ pub(crate) fn with_actor_self<T>(
                 craft_stock: &inventory.craft_stock,
                 equipped: &inventory.equipped,
                 ranged_source: inventory.ranged_source,
+                melee_source: inventory.melee_source,
                 knowledge_revision: state
                     .reception
                     .knowledge_revisions
@@ -1068,6 +1071,7 @@ pub(crate) fn with_actor_self<T>(
                     .map(|remains| remains.phase.as_str()),
                 evasion_ready_at: actor.evasion_ready_at,
                 combat_ready_at: actor.combat_ready_at,
+                attack_mode_notice: actor.attack_mode_notice.as_ref(),
                 natural_strike_ids: actor.natural_strike_ids.as_deref(),
                 action_animation,
                 senses: &player_metadata

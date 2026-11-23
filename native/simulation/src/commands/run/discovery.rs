@@ -234,6 +234,9 @@ impl CommandCursor {
                 {
                     return Err(ExecutionError::UnsupportedFamily);
                 }
+                if self.timed_begin() {
+                    return self.install_chosen_contact(core, None);
+                }
                 let actor_profile = crate::status::effective_body_profile(actor, &self.budget)?;
                 let target_profile = crate::status::effective_body_profile(target, &self.budget)?;
                 let mut from = actor

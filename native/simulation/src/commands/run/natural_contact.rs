@@ -235,17 +235,30 @@ impl CommandCursor {
             .physical_life()
             .filter(|life| may_target(installed, source, target, *life))
             .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let timing = if self.timed_begin() {
+            let ContactKind::Equipped { definition, .. } = definition.kind else {
+                return self.discovery_refuse(&installed.occurrence_rules.value().response.offers.availability.unsupported_strike);
+            };
+            let Some(timing) = definition.execution.as_deref() else {
+                return self.discovery_refuse(&installed.occurrence_rules.value().response.offers.availability.unsupported_strike);
+            };
+            Some((timing, &definition.pin))
+        } else {
+            None
+        };
         if player {
             use crate::contact::review::{self, Review};
             let injury = crate::contact::ContactInjury::read(installed, source, target)?;
-            match review::check(
+            let maximum = injury.maximum(
+                definition.damage * timing.map_or(1.0, |(timing, _)| timing.maximum_injury_factor()),
+            );
+            match review::check_damage(
                 installed,
                 source,
                 target,
-                definition,
-                injury,
+                maximum,
                 permission,
-                &self.budget,
+                || review::strike_digest(definition, injury, &self.budget),
             )? {
                 Review::Allowed => {}
                 Review::Required => {
@@ -295,6 +308,13 @@ impl CommandCursor {
         let mut action = Action::contact(envelope.id.clone(), target_id.clone(), life, definition);
         action.requires_lethal_review = player.then_some(true);
         action.lethal_permission = permission.map(|permit| Box::new(permit.clone()));
+        if let Some((timing, tool)) = timing {
+            let (execution, capacity) = crate::attack_execution::AttackExecutionState::prepare(
+                timing, tool, &self.budget,
+            )?;
+            action.attack_execution = Some(execution);
+            storage.merge(capacity)?;
+        }
         if let Some(route) = route {
             let crate::geometry::GuardedRoutePlan(plan, guard) =
                 crate::geometry::route_plan(route, &self.budget)?;

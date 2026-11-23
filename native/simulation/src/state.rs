@@ -25,7 +25,7 @@ use crate::values::{
     deserialize_safe_integer,
 };
 pub(crate) use action_storage::{
-    FundedAction, FundedActionFollow, FundedActionNavigation, FundedActionPath, FundedActionRoute, FundedAttackObservers,
+    FundedAction, FundedActionFollow, FundedActionNavigation, FundedActionPath, FundedActionRoute, FundedAttackExecution, FundedAttackObservers,
     FundedStrikeMotion,
 };
 pub(crate) use agency::AgencyOrder;
@@ -575,7 +575,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub attack_execution: Option<UnconvertedField>,
+    pub(crate) attack_execution: Option<Box<crate::attack_execution::AttackExecutionState>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -1089,7 +1089,7 @@ impl Action {
                 && !self.is_natural_contact())
             || (self.contact_weapon_digest.is_some()
                 != (self.weapon_item_id.is_some() && self.is_natural_contact()))
-            || self.attack_execution.is_some()
+            || self.attack_execution.is_some() && !(self.kind == "aim" || self.is_natural_contact())
             || self.coaching_episode_id.is_some()
             || self.assembly_phase.is_some()
             || self.assembly_exit_pending.is_some()
@@ -1387,6 +1387,24 @@ pub struct PracticeProgress {
     pub coaching: Option<CoachingSupport>,
 }
 
+/// One accepted offensive occurrence for this actor's own control view.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct AttackModeNotice {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub notice_sequence: u64,
+    pub occurrence_id: String,
+    pub occurred_at: f64,
+    pub kind: AttackModeNoticeKind,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum AttackModeNoticeKind {
+    OwnOffensiveActionAdmitted,
+    PersonallyExperiencedAssault,
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ActorState {
@@ -1395,7 +1413,7 @@ pub struct ActorState {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub attack_mode_notice: Option<UnconvertedField>,
+    pub attack_mode_notice: Option<AttackModeNotice>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

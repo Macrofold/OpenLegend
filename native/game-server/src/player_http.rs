@@ -107,6 +107,7 @@ pub(crate) fn router(
         references.clone(),
         identity,
         clock.maintenance().clone(),
+        inputs.clone(),
         capacity,
     ));
     let state = PlayerRoutes {

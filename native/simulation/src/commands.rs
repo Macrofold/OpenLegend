@@ -333,6 +333,10 @@ pub(crate) enum NativeCommand {
         weapon_item_id: Option<String>,
         auto_equip: Option<bool>,
     },
+    ReleaseStrike {
+        envelope: CommandEnvelope,
+        expected_action_id: String,
+    },
     Ranged {
         envelope: CommandEnvelope,
         intent: ranged_input::RangedIntent,
@@ -938,6 +942,11 @@ impl<'de> Deserialize<'de> for NativeCommand {
                 expected_action_id: input.expected_action_id,
                 dismiss_review: false,
             }),
+            "release-strike" if !extras_for_cancel => Ok(Self::ReleaseStrike {
+                envelope,
+                expected_action_id: input.expected_action_id.filter(|id| is_safe_record_id(id))
+                    .ok_or_else(|| D::Error::custom("Release requires the exact prepared strike."))?,
+            }),
             "strike"
                 if !discovery_extras
                     && input.attempt_id.is_none()
@@ -1089,6 +1098,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::ReleaseStrike { envelope, .. }
             | Self::Guard { envelope, .. }
             | Self::Ranged { envelope, .. }
             | Self::PracticeShot { envelope, .. }
@@ -1130,6 +1140,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::ReleaseStrike { envelope, .. }
             | Self::Guard { envelope, .. }
             | Self::Ranged { envelope, .. }
             | Self::PracticeShot { envelope, .. }
@@ -1168,6 +1179,7 @@ impl NativeCommand {
             Self::WithdrawAttempt { .. } => "withdraw-attempt",
             Self::Follow { .. } => "follow",
             Self::Strike { .. } => "strike",
+            Self::ReleaseStrike { .. } => "release-strike",
             Self::Ranged { intent, .. } => intent.kind(),
             Self::Guard { .. } => "guard",
             Self::PracticeShot { .. } => "practice-shot",

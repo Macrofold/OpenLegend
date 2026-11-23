@@ -549,6 +549,7 @@ export interface NativePlayerActorSelf extends NativeActorSelf {
     readonly remainsPhase?: string;
     readonly evasionReadyAt?: number;
     readonly combatReadyAt?: number;
+    readonly attackModeNotice?: GameView['player']['attackModeNotice'];
     readonly naturalStrikeIds?: readonly string[];
     readonly actionAnimation: GameView['player']['actionAnimation'];
     readonly senses: {
@@ -707,7 +708,7 @@ export async function nativePlayerOwnedView(
         remainsPhase: self.player.remainsPhase,
         statusEffects: self.statusEffects,
         evasionReadyAt: self.player.evasionReadyAt,
-        attackModeNotice: undefined,
+        attackModeNotice: self.player.attackModeNotice,
         at: self.at,
       },
       {

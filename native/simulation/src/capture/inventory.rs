@@ -1,7 +1,7 @@
 //! Accepted item reads. NPC context counts private possessions without
 //! constructing the browser's list or retaining item names.
 
-use super::PlayerRangedSource;
+use super::{PlayerMeleeSource, PlayerRangedSource};
 use crate::{
     execution::ExecutionError,
     host::{ByteBudget, ByteReservation},
@@ -20,6 +20,7 @@ pub(super) struct OwnInventory<'a> {
     pub(super) craft_stock: IndexMap<&'a str, u64>,
     pub(super) equipped: Vec<OwnedItem<'a>>,
     pub(super) ranged_source: Option<PlayerRangedSource<'a>>,
+    pub(super) melee_source: Option<PlayerMeleeSource<'a>>,
     custody: ByteReservation,
 }
 
@@ -53,6 +54,7 @@ pub(super) fn capture<'a>(
                     label: &definition.named.name,
                     point_fire: policy.point_fire,
                     target_rule: policy.target_rule(),
+                    profile: definition.execution.as_ref().map(|timing| &timing.profile),
                 },
                 weapon.ammunition_kind.as_str(),
             ))
@@ -65,6 +67,7 @@ pub(super) fn capture<'a>(
         craft_stock: IndexMap::new(),
         equipped: Vec::new(),
         ranged_source,
+        melee_source: None,
         custody: budget.reserve(0)?,
     };
     let reads_recipes = !npc
@@ -126,6 +129,19 @@ pub(super) fn capture<'a>(
                     push(&mut read.items, item, &mut read.custody)?;
                 }
                 if item.equipped {
+                    if read.ranged_source.is_none() && read.melee_source.is_none()
+                        && let Some(strike) = crate::contact::ContactRead::equipped(
+                            installed, &state.physical.entities, actor, item.id,
+                        )
+                        && let crate::contact::ContactKind::Equipped { definition, .. } = strike.kind
+                    {
+                        read.melee_source = Some(PlayerMeleeSource {
+                            item: item.id,
+                            definition: strike.id,
+                            label: &definition.named.name,
+                            profile: definition.execution.as_ref().map(|timing| &timing.profile),
+                        });
+                    }
                     push(&mut read.equipped, item, &mut read.custody)?;
                 }
             }

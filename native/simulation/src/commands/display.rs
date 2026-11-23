@@ -203,6 +203,7 @@ impl ActivityDisplayCursor {
                 | NativeCommand::Eat { .. }
                 | NativeCommand::Guard { .. }
                 | NativeCommand::Ranged { .. }
+                | NativeCommand::ReleaseStrike { .. }
                 | NativeCommand::PracticeShot { .. }
                 | NativeCommand::Cancel { .. }
                 | NativeCommand::WithdrawAttempt { .. }
@@ -535,6 +536,7 @@ impl ActivityDisplayCursor {
             | NativeCommand::Craft { .. }
             | NativeCommand::Eat { .. }
             | NativeCommand::Ranged { .. }
+                | NativeCommand::ReleaseStrike { .. }
             | NativeCommand::Guard { .. }
             | NativeCommand::PracticeShot { .. }
             | NativeCommand::Equipment { .. }

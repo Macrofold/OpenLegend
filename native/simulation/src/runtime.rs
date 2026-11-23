@@ -1990,6 +1990,18 @@ impl RuntimePreparedProducts<'_> {
         }
     }
 
+    /// The actual current controlled preparation admitted in this exact
+    /// candidate, available to its result owner before disclosure.
+    pub fn attack_execution(
+        &self,
+        actor: &str,
+    ) -> Option<crate::attack_execution::AttackExecutionView<'_>> {
+        let id = self.outcome().action_id.as_deref()?;
+        self.state.physical.entities.get(actor)?.actor.as_ref()?.action.as_ref()
+            .filter(|action| action.id == id)?
+            .attack_execution.as_ref().map(|execution| execution.player_view())
+    }
+
     pub fn strike_review(&self) -> Option<&StrikeReviewOffer> {
         match self.operation {
             CompletedOperation::Command(command) => command.command.strike_review(),

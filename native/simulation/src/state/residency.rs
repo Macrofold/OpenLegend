@@ -21,6 +21,7 @@ heap_record!(SemanticContinuation {
     occupied_purpose,
     resolved
 });
+heap_record!(AttackModeNotice { occurrence_id });
 heap_record!(InventoryInspection {
     revision,
     scope,
@@ -167,7 +168,8 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
                 .controller
                 .capacity()
                 .checked_add(actor.inventory_inspection.heap_bytes()?)?
-                .checked_add(actor.pending_death.heap_bytes()?)
+                .checked_add(actor.pending_death.heap_bytes()?)?
+                .checked_add(actor.attack_mode_notice.heap_bytes()?)
         })
         .and_then(|actor| {
             actor.checked_add(
