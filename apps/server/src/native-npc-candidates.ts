@@ -51,7 +51,7 @@ export type NativeNpcOfferMeaning =
     }
   | {
       readonly kind: 'guard';
-      readonly body: number;
+      readonly body: number | null;
       readonly tool: {
         readonly label: string;
         readonly shield: string;
@@ -328,10 +328,10 @@ export function formatNativeNpcCandidateDescriptions(
       }
       case 'guard': {
         const tool = meaning.tool;
-        const observed = body(meaning.body);
+        const observed = meaning.body === null ? undefined : body(meaning.body);
         const firstActionDescription = guardChoiceLabel(
           tool.shield,
-          observed.name.name,
+          observed?.name.name,
           tool.label,
         );
         const equip = tool.equipment ? `${tool.equipment} ` : '';
@@ -346,7 +346,7 @@ export function formatNativeNpcCandidateDescriptions(
           firstActionDescription,
           description: `${equip}${firstActionDescription}. ${detail}`,
         };
-        subjectIds = [observed.sourceId];
+        if (observed) subjectIds = [observed.sourceId];
         break;
       }
       case 'strike': {

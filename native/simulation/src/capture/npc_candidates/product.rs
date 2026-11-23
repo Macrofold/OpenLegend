@@ -91,7 +91,7 @@ pub enum NpcOfferMeaning {
         body: usize,
     },
     Guard {
-        body: usize,
+        body: Option<usize>,
         tool: std::sync::Arc<NpcGuardTool>,
     },
     Strike {

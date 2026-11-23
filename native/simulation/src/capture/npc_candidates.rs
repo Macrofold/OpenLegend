@@ -125,6 +125,7 @@ pub(crate) struct NpcCandidateCursor {
     cooking: Option<CookingChoices>,
     fuels: Option<FuelChoices>,
     gift_proposals: Option<GiftProposals>,
+    guard_threat: Option<crate::runtime::RuntimeNpcGuardThreat>,
     guard_choices: Option<GuardChoices>,
     melee_choices: Option<MeleeChoices>,
     ranged_choices: Option<RangedChoices>,
@@ -181,6 +182,7 @@ impl NpcCandidateCursor {
         expanded: &[usize],
         coverage: Option<NpcOfferCoverage>,
         inspection: Option<crate::activity::ActivityInspectionNavigation>,
+        guard_threat: Option<crate::runtime::RuntimeNpcGuardThreat>,
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
@@ -246,13 +248,19 @@ impl NpcCandidateCursor {
         let description_context = coverage
             .map(|_| DescriptionContext::prepare(core, read, offered_bodies, budget))
             .transpose()?;
-        let actor = core
+        let receiver = core
             .state
             .physical
             .entities
             .get(&read.perception.actor_id)
-            .and_then(|entity| entity.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;
+        let actor = receiver
+            .actor
+            .as_ref()
+            .ok_or(ExecutionError::MissingActor)?;
+        let guard_threat = guard_threat.filter(|threat| {
+            threat.for_receiver(core.state, &receiver.id, receiver.physical_life())
+        });
         let stage = if !actor.alive || actor.incapacitated || core.state.physical.header.paused {
             Enumerate::Done
         } else if coverage.is_none() {
@@ -294,6 +302,7 @@ impl NpcCandidateCursor {
             cooking: None,
             fuels: None,
             gift_proposals: None,
+            guard_threat,
             guard_choices: None,
             melee_choices: None,
             ranged_choices: None,

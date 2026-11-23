@@ -75,11 +75,10 @@ impl DecisionPolicy {
             | Meaning::Strike { body, .. }
             | Meaning::EquippedStrike { body, .. }
             | Meaning::Ranged { body }
-            | Meaning::Guard { body, .. }
             | Meaning::Fish { body }
             | Meaning::Cook { body }
             | Meaning::FireCare { body } => Some(body),
-            Meaning::Status { body, .. } => body,
+            Meaning::Status { body, .. } | Meaning::Guard { body, .. } => body,
             _ => None,
         };
         let target = match body {
@@ -198,25 +197,31 @@ impl DecisionPolicy {
             ));
         }
         if let Meaning::Guard { tool, .. } = &offer.meaning {
-            let mut description = self.guard(tool, &target.name.name)?;
+            let mut description = self.guard(tool, body.map(|_| &target.name.name))?;
             description.push_str(&result);
             return Ok(description);
         }
         Ok(result.into())
     }
 
-    fn guard(&self, tool: &NpcGuardTool, target: &JsText) -> Result<JsText, WorldError> {
+    fn guard(&self, tool: &NpcGuardTool, target: Option<&JsText>) -> Result<JsText, WorldError> {
         let choice = &self.choices["guard"];
         let mut result = tool.equipment.clone();
         if !result.is_empty() {
             result.push_str(" ");
         }
         result.push_text(&substitute_fields(
-            text(&choice["facing"])?,
+            text(
+                &choice[if target.is_some() {
+                    "facing"
+                } else {
+                    "direction"
+                }],
+            )?,
             &[
                 ("label", TextRef::Unicode(&tool.label)),
                 ("shield", TextRef::Text(&tool.shield)),
-                ("name", TextRef::Text(target)),
+                ("name", target.map_or(TextRef::Unicode(""), TextRef::Text)),
             ],
         ));
         result.push_str(". ");

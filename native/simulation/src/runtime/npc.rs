@@ -41,7 +41,7 @@ pub use bindings::{
 pub(super) use held_sources::HeldReceiptRegistry;
 pub(crate) use held_sources::HeldSourceProof;
 pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};
-pub use personal::{RuntimeNpcPersonalSource, RuntimeNpcPersonalSources};
+pub use personal::{RuntimeNpcGuardThreat, RuntimeNpcPersonalSource, RuntimeNpcPersonalSources};
 pub use presentation::{RuntimeNpcObservedBody, RuntimeNpcPresentedBody};
 pub use queries::{RuntimeNpcBoundaryFact, RuntimeNpcHistoricalPose, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence};
 
@@ -739,6 +739,7 @@ impl NativeWorldSession {
             &request.expanded_body_ordinals,
             Some(request.coverage),
             None,
+            None,
         )
     }
 
@@ -747,10 +748,17 @@ impl NativeWorldSession {
         &mut self,
         read: &mut RuntimeNpcRead,
         inspection: Option<crate::activity::ActivityInspectionNavigation>,
+        guard_threat: Option<RuntimeNpcGuardThreat>,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         read.require_unprepared()?;
-        self.begin_npc_context(read, &[], Some(NpcOfferCoverage::Suggestions), inspection)
+        self.begin_npc_context(
+            read,
+            &[],
+            Some(NpcOfferCoverage::Suggestions),
+            inspection,
+            guard_threat,
+        )
     }
 
     /// Prepare remaining work and bind current presented bodies for recall.
@@ -761,7 +769,7 @@ impl NativeWorldSession {
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         read.require_unprepared()?;
-        self.begin_npc_context(read, &[], None, None)
+        self.begin_npc_context(read, &[], None, None, None)
     }
 
     fn begin_npc_context(
@@ -770,10 +778,11 @@ impl NativeWorldSession {
         expanded: &[usize],
         coverage: Option<NpcOfferCoverage>,
         inspection: Option<crate::activity::ActivityInspectionNavigation>,
+        guard_threat: Option<RuntimeNpcGuardThreat>,
     ) -> Result<CandidateKey, RuntimeError> {
         let key = self
             .session
-            .begin_npc_candidates(&read.read, expanded, coverage, inspection)
+            .begin_npc_candidates(&read.read, expanded, coverage, inspection, guard_threat)
             .map_err(failure)?;
         read.candidate_key = Some(key);
         Ok(key)

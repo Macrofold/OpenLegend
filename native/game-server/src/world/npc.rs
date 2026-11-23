@@ -5,7 +5,8 @@ use super::*;
 use crate::authority::{Authority, AuthorizedScope, Capability};
 use crate::boot::CurrentServer;
 use openlegend_simulation::runtime::{
-    RuntimeNpcBindingRequest, RuntimeNpcPreparationStep, RuntimeNpcRead, RuntimeNpcTrigger,
+    RuntimeNpcBindingRequest, RuntimeNpcGuardThreat, RuntimeNpcPreparationStep, RuntimeNpcRead,
+    RuntimeNpcTrigger,
 };
 use openlegend_simulation::{
     capture::NpcSourceSelection, host::ByteReservation, worlds::base_observed::SpeechVolume,
@@ -173,15 +174,17 @@ impl HostedWorld {
         actor: &str,
         consumer: &'static str,
         inspection: Option<openlegend_simulation::activity::ActivityInspectionNavigation>,
+        guard_threat: Option<RuntimeNpcGuardThreat>,
     ) -> Result<RuntimeNpcRead, WorldError> {
         let input = NpcReadInput::new(&self.host, actor, consumer)?;
-        let read = self.prepare_actor_read(
-            game,
-            move |session| input.current(session),
-            move |session, read| session.begin_npc_suggestions(read, inspection),
-            NativeWorldSession::step_npc_context_with_notes,
-        )
-        .await?;
+        let read = self
+            .prepare_actor_read(
+                game,
+                move |session| input.current(session),
+                move |session, read| session.begin_npc_suggestions(read, inspection, guard_threat),
+                NativeWorldSession::step_npc_context_with_notes,
+            )
+            .await?;
         self.attach_trade_prospects(read).await
     }
 

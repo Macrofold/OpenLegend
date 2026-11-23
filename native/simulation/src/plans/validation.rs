@@ -102,6 +102,17 @@ pub(crate) fn valid_command(
                 && *life <= crate::identity::MAX_SAFE_INTEGER
                 && is_safe_record_id(item_id)
         }
+        NativeCommand::Guard {
+            envelope,
+            facing: crate::commands::guard_input::GuardFacing::Recent(threat),
+            item_id,
+            auto_equip,
+        } => {
+            envelope.human_initiated.is_none()
+                && *auto_equip
+                && is_safe_record_id(item_id)
+                && threat.valid(world)
+        }
         NativeCommand::StatusEffect {
             target_id,
             definition_id,

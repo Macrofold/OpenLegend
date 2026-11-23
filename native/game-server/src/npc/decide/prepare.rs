@@ -19,9 +19,9 @@ use openlegend_simulation::{
     records::SqlCell,
     runtime::{
         NpcActivityFacts, RuntimeError, RuntimeNpcBindingInput, RuntimeNpcConsumer,
-        RuntimeNpcFeelings, RuntimeNpcObservedBody, RuntimeNpcPersonalSource as PersonalSource,
-        RuntimeNpcPersonalSources as PersonalSources, RuntimeNpcRead, RuntimeNpcResponseTicket,
-        RuntimeNpcSelf, RuntimeNpcSelfPrompt,
+        RuntimeNpcFeelings, RuntimeNpcGuardThreat, RuntimeNpcObservedBody,
+        RuntimeNpcPersonalSource as PersonalSource, RuntimeNpcPersonalSources as PersonalSources,
+        RuntimeNpcRead, RuntimeNpcResponseTicket, RuntimeNpcSelf, RuntimeNpcSelfPrompt,
     },
     state::Goal,
     text::JsText,
@@ -228,11 +228,21 @@ async fn finish_prepared(
     } else {
         None
     };
+    let guard_threat = if let Some(sources) = &collected.sources {
+        sources
+            .guard_threat(&collected.required, budget)
+            .map_err(capacity)?
+    } else {
+        None
+    };
     let current = capture_offers(
         game,
         work,
         consumer(work).as_str(),
-        inspection.as_ref().map(RuntimeActivityDecisionPage::navigation),
+        inspection
+            .as_ref()
+            .map(RuntimeActivityDecisionPage::navigation),
+        guard_threat,
         "current-offers",
     ).await?;
     let through = collected.through.max(current.accepted_cut());
@@ -345,10 +355,17 @@ async fn capture_offers(
     work: &Work,
     consumer: &'static str,
     inspection: Option<openlegend_simulation::activity::ActivityInspectionNavigation>,
+    guard_threat: Option<RuntimeNpcGuardThreat>,
     stage: &'static str,
 ) -> Result<RuntimeNpcRead, CallFailure> {
     game.world
-        .capture_npc_offers(game.clone(), &work.actor, consumer, inspection)
+        .capture_npc_offers(
+            game.clone(),
+            &work.actor,
+            consumer,
+            inspection,
+            guard_threat,
+        )
         .await
         .map_err(|error| CallFailure::World(error).at(stage))
 }

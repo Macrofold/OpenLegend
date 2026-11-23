@@ -1,6 +1,7 @@
-//! A defense offer binds only a seen attack preparation and an exact shield.
-//! The ordinary guard checks current sight, equipment and replacement again.
+//! Defense binds an exact shield and either received personal danger or a
+//! presently observed preparation. The guard command rechecks its own binding.
 use super::*;
+use crate::commands::guard_input::{GuardFacing, bind_npc};
 use crate::contact::StrikePhase;
 use crate::state::{Action, Entity, EntityHandle};
 use crate::text::JsText;
@@ -140,22 +141,36 @@ impl NpcCandidateCursor {
         preparation_id: &str,
     ) -> Result<(), ExecutionError> {
         self.stage = Enumerate::Guard(index + 1, 0);
-        let Some(target) = self.targets.get(index) else {
-            self.guard_choices = None;
-            self.stage = Enumerate::CurrentWork(0);
-            return Ok(());
-        };
         let state = &core.state;
         let entities = &state.physical.entities;
-        let Some(source) = target
-            .visible
-            .then(|| entities.get(&target.id))
-            .flatten()
-            .filter(|entity| observed_preparation(entity))
-        else {
-            return Ok(());
+        let (facing, body) = if let (0, Some(recent)) = (index, self.guard_threat.as_ref()) {
+            (recent.facing(), None)
+        } else {
+            let Some(target) = self
+                .targets
+                .get(index - usize::from(self.guard_threat.is_some()))
+            else {
+                self.guard_choices = None;
+                self.stage = Enumerate::CurrentWork(0);
+                return Ok(());
+            };
+            let Some(source) = target
+                .visible
+                .then(|| entities.get(&target.id))
+                .flatten()
+                .filter(|entity| observed_preparation(entity))
+            else {
+                return Ok(());
+            };
+            let life = source.physical_life().ok_or(ExecutionError::MissingActor)?;
+            (
+                GuardFacing::Subject {
+                    id: source.id.as_str(),
+                    life,
+                },
+                Some(target.body),
+            )
         };
-        let life = source.physical_life().ok_or(ExecutionError::MissingActor)?;
         let actor = entities
             .get(&self.actor)
             .ok_or(ExecutionError::MissingActor)?;
@@ -189,17 +204,14 @@ impl NpcCandidateCursor {
             return Ok(());
         };
         let item = entities.resolve(*item).ok_or(ExecutionError::Invariant)?;
-        let (command, guard) = crate::commands::guard_input::bind_npc(
-            preparation_id,
-            &self.actor,
-            &item.id,
-            &source.id,
-            life,
-            &self.budget,
-        )?;
-        let id = self.id(&["guard:", &item.id, ":", &source.id])?;
+        let (command, guard) =
+            bind_npc(preparation_id, &self.actor, &item.id, facing, &self.budget)?;
+        let id = match facing {
+            GuardFacing::Subject { id, .. } => self.id(&["guard:", &item.id, ":", id])?,
+            _ => self.id(&["guard-current-facing:", &item.id])?,
+        };
         let meaning = NpcOfferMeaning::Guard {
-            body: target.body,
+            body,
             tool: Arc::clone(tool),
         };
         self.stage = Enumerate::Guard(index, shield + 1);

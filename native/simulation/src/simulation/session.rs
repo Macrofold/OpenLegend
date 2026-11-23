@@ -736,6 +736,7 @@ impl Session {
         expanded: &[usize],
         coverage: Option<crate::capture::NpcOfferCoverage>,
         inspection: Option<crate::activity::ActivityInspectionNavigation>,
+        guard_threat: Option<crate::runtime::RuntimeNpcGuardThreat>,
     ) -> Result<CandidateKey, SessionError> {
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
@@ -749,6 +750,7 @@ impl Session {
                 expanded,
                 coverage,
                 inspection,
+                guard_threat,
                 key,
                 &self.budget,
             )?;

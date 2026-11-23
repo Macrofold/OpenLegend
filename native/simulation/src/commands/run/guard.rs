@@ -73,6 +73,13 @@ impl CommandCursor {
         }
         let (heading, target) = match facing {
             GuardFacing::Direction(heading) => (*heading, None),
+            GuardFacing::Recent(threat) => {
+                if !threat.current(state, &source.id, source.physical_life()) {
+                    self.refuse(&ordinary.stale_action);
+                    return Ok(false);
+                }
+                (source.spatial.heading, None)
+            }
             GuardFacing::Subject { id, life } => {
                 let Some(target) = state.physical.entities.get(id).filter(|target| {
                     target.id != source.id
