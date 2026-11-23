@@ -8,7 +8,7 @@ use super::{
 use crate::language::{LanguageError, LanguageProvider, canonical::write_canonical};
 use openlegend_simulation::encoding::{json_record, json_tree_allocation_bound, sha256_hex};
 use openlegend_simulation::events::OriginalOccurrenceInput;
-use openlegend_simulation::host::{ByteBudget, ByteReservation};
+use openlegend_simulation::host::{ByteBudget, ByteReservation, CapacityError};
 use openlegend_simulation::records::{
     ActivityMethodSignature, CurrentRecords, EntityOrdering, EntityOrderingEntry, InstalledRow,
     NormalizedIntent, OwnerCoverage, SqlCell,
@@ -21,6 +21,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::future::Future;
 use std::mem::size_of;
 use std::pin::Pin;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_postgres::types::ToSql;
 use tokio_postgres::{IsolationLevel, Row, Transaction};
@@ -181,7 +182,7 @@ impl CurrentOpening {
 
 /// These are the existing receipt fields, including the distinct read-only
 /// recovery fingerprint. The public result is retained as its original bytes.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GameplayReceipt {
     pub id: String,
@@ -199,8 +200,39 @@ pub struct AdmittedReceipt {
 }
 
 impl AdmittedReceipt {
+    /// Fund the already prepared receipt once. Its accepted cut and detached
+    /// SQL prefix can keep the same bytes until both have released them.
+    pub(crate) fn share_live(
+        receipt: GameplayReceipt,
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, CapacityError> {
+        let retained = Self::retained_bytes(&receipt)
+            .and_then(|bytes| bytes.checked_add(2 * size_of::<usize>()))
+            .ok_or(CapacityError)?;
+        let custody = budget.reserve(retained)?;
+        Ok(Arc::new(Self {
+            receipt,
+            _custody: custody,
+        }))
+    }
+
     pub fn receipt(&self) -> &GameplayReceipt {
         &self.receipt
+    }
+
+    fn retained_bytes(receipt: &GameplayReceipt) -> Option<usize> {
+        [
+            size_of::<Self>(),
+            receipt.id.capacity(),
+            receipt.fingerprint.capacity(),
+            receipt
+                .recovery_fingerprint
+                .as_ref()
+                .map_or(0, String::capacity),
+            receipt.result.get().len(),
+        ]
+        .into_iter()
+        .try_fold(0usize, usize::checked_add)
     }
 }
 
@@ -604,19 +636,7 @@ impl Store {
         }
         drop(row);
         drop(rows);
-        let retained = [
-            size_of::<AdmittedReceipt>(),
-            receipt.id.capacity(),
-            receipt.fingerprint.capacity(),
-            receipt
-                .recovery_fingerprint
-                .as_ref()
-                .map_or(0, String::capacity),
-            receipt.result.get().len(),
-        ]
-        .into_iter()
-        .try_fold(0usize, usize::checked_add)
-        .ok_or(StoreError::Capacity)?;
+        let retained = AdmittedReceipt::retained_bytes(&receipt).ok_or(StoreError::Capacity)?;
         release_workspace(&mut custody, retained)?;
         Ok(Some(AdmittedReceipt {
             receipt,

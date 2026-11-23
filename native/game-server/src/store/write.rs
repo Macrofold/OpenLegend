@@ -1,7 +1,7 @@
 //! One exact SQL transaction per detached native prefix. PostgreSQL sees typed
 //! parameters derived from the actual immutable row bodies, with no addon packet.
 
-use super::read::GameplayReceipt;
+use super::read::{AdmittedReceipt, GameplayReceipt};
 use super::schema::{FIXED_COLUMNS, SqlType, Table};
 use super::{Session, Store, StoreError, StoreResult, durable_head, sql_ordinal};
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
@@ -13,6 +13,7 @@ use std::fmt;
 use std::fmt::Write as _;
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
@@ -139,7 +140,7 @@ impl Store {
     pub async fn commit_save(
         &self,
         save: &RuntimeSave,
-        receipts: &[GameplayReceipt],
+        receipts: &[Arc<AdmittedReceipt>],
         projection: &impl PrefixProjection,
     ) -> Result<RuntimeSaveAcknowledgement, CommitError> {
         self.commit_rows(save.rows(), Some(save), receipts, projection)
@@ -151,7 +152,7 @@ impl Store {
     pub async fn commit_prefix(
         &self,
         rows: &SaveRows,
-        receipts: &[GameplayReceipt],
+        receipts: &[Arc<AdmittedReceipt>],
         projection: &impl PrefixProjection,
     ) -> Result<RuntimeSaveAcknowledgement, CommitError> {
         self.commit_rows(rows, None, receipts, projection).await
@@ -161,7 +162,7 @@ impl Store {
         &self,
         rows: &SaveRows,
         save: Option<&RuntimeSave>,
-        receipts: &[GameplayReceipt],
+        receipts: &[Arc<AdmittedReceipt>],
         projection: &impl PrefixProjection,
     ) -> Result<RuntimeSaveAcknowledgement, CommitError> {
         self.assert_write_admission()
@@ -255,7 +256,7 @@ impl Store {
     pub async fn reconcile_prefix(
         &self,
         rows: &SaveRows,
-        receipts: &[GameplayReceipt],
+        receipts: &[Arc<AdmittedReceipt>],
     ) -> StoreResult<Option<RuntimeSaveAcknowledgement>> {
         let mut session = self.writer.lock().await;
         if self.admitted.load(Ordering::Acquire)
@@ -302,6 +303,7 @@ impl Store {
             let mut ids = Vec::with_capacity(chunk.len());
             let mut payloads = Vec::with_capacity(chunk.len());
             for receipt in chunk {
+                let receipt = receipt.receipt();
                 let payload = receipt_payload(receipt, &mut digest)?;
                 ids.push(receipt.id.as_str());
                 payloads.push(payload);
@@ -444,7 +446,7 @@ impl Store {
         &self,
         transaction: &Transaction<'_>,
         world_id: &str,
-        receipts: &[GameplayReceipt],
+        receipts: &[Arc<AdmittedReceipt>],
     ) -> StoreResult<[u8; 32]> {
         let mut digest = Sha256::new();
         for chunk in receipts.chunks(128) {
@@ -454,6 +456,7 @@ impl Store {
             let mut epochs = Vec::with_capacity(chunk.len());
             let mut expiry = Vec::with_capacity(chunk.len());
             for receipt in chunk {
+                let receipt = receipt.receipt();
                 payloads.push(receipt_payload(receipt, &mut digest)?);
                 ids.push(receipt.id.as_str());
                 epochs.push(sql_ordinal(receipt.epoch)?);
@@ -480,10 +483,11 @@ fn receipt_payload(receipt: &GameplayReceipt, digest: &mut Sha256) -> StoreResul
 
 fn reserve_receipts(
     budget: &ByteBudget,
-    receipts: &[GameplayReceipt],
+    receipts: &[Arc<AdmittedReceipt>],
 ) -> StoreResult<ByteReservation> {
     let bytes = receipts
         .iter()
+        .map(|receipt| receipt.receipt())
         .try_fold(0usize, |size, receipt| {
             size.checked_add(receipt.result.get().len())?
                 .checked_add(receipt.id.len())?

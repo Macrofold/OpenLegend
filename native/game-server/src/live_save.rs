@@ -5,8 +5,8 @@ use crate::{
     language::LanguageProvider,
     npc::schedule::{ScheduleInbox, ScheduleWake},
     store::{
-        AdmittedJob, CommitError, GameplayReceipt, OrdinaryProjection, PreparedMemoryWrites,
-        PreparedRecall, Store, StoreError,
+        AdmittedJob, AdmittedReceipt, CommitError, GameplayReceipt, OrdinaryProjection,
+        PreparedMemoryWrites, PreparedRecall, Store, StoreError,
     },
     world::{HostedWorld, WorldError},
 };
@@ -35,7 +35,7 @@ const MAX_SAVE_AGE: Duration = Duration::from_secs(5);
 pub struct AcceptedSaveInput {
     through: u64,
     history: RuntimeHistory,
-    receipt: Option<GameplayReceipt>,
+    receipt: Option<Arc<AdmittedReceipt>>,
     job: Option<Arc<AdmittedJob>>,
     memory_writes: Option<Arc<PreparedMemoryWrites>>,
     wake: Option<ScheduleWake>,
@@ -139,7 +139,7 @@ struct Detached {
 struct PreparedPrefix {
     through: u64,
     histories: Vec<RuntimeHistory>,
-    receipts: Vec<GameplayReceipt>,
+    receipts: Vec<Arc<AdmittedReceipt>>,
     jobs: Vec<Arc<AdmittedJob>>,
     eligibility: Option<RuntimeHistoryCuts>,
     recall: Option<PreparedRecall>,
@@ -330,14 +330,10 @@ impl LiveSaves {
         receipt: Option<GameplayReceipt>,
         job: Option<Arc<AdmittedJob>>,
     ) -> Result<Arc<AcceptedSaveInput>, RuntimeError> {
-        let receipt_body = receipt
-            .as_ref()
-            .map(receipt_bytes)
-            .transpose()?
-            .unwrap_or(0);
-        let total = (std::mem::size_of::<AcceptedSaveInput>() + 2 * std::mem::size_of::<usize>())
-            .checked_add(receipt_body)
-            .ok_or(CapacityError)?;
+        let receipt = receipt
+            .map(|receipt| AdmittedReceipt::share_live(receipt, &self.budget))
+            .transpose()?;
+        let total = std::mem::size_of::<AcceptedSaveInput>() + 2 * std::mem::size_of::<usize>();
         let custody = self.budget.reserve(total)?;
         let mut pending = self.pending.lock().map_err(|_| CapacityError)?;
         if pending.fault {
@@ -390,7 +386,7 @@ impl LiveSaves {
             "ordinary save receipt is out of order"
         );
         let was_empty = pending.queue.is_empty();
-        if let Some(receipt) = input.receipt.as_ref()
+        if let Some(receipt) = input.receipt()
             && let Some(readers) = pending.receipt_reads.get_mut(&receipt.id)
         {
             readers.accepted = Some(input.clone());
@@ -455,8 +451,7 @@ impl LiveSaves {
             }
             let accepted = pending.queue.iter().rev().find_map(|(_, input)| {
                 input
-                    .receipt
-                    .as_ref()
+                    .receipt()
                     .is_some_and(|receipt| receipt.id == id)
                     .then(|| input.clone())
             });
@@ -730,11 +725,12 @@ impl LiveSaves {
             bytes = bytes
                 .checked_add(std::mem::size_of::<RuntimeHistory>())
                 .ok_or(StoreError::Capacity)?;
-            if let Some(receipt) = input.receipt.as_ref() {
+            if input.receipt.is_some() {
                 receipts_count += 1;
+                // The detached prefix only owns another reference to the
+                // exact receipt, independently funded before acceptance.
                 bytes = bytes
-                    .checked_add(std::mem::size_of::<GameplayReceipt>())
-                    .and_then(|size| size.checked_add(receipt_bytes(receipt).ok()?))
+                    .checked_add(std::mem::size_of::<Arc<AdmittedReceipt>>())
                     .ok_or(StoreError::Capacity)?;
             }
             if input.job.is_some() {
@@ -806,7 +802,7 @@ fn capture_can_wait(error: &WorldError) -> bool {
 
 impl AcceptedSaveInput {
     pub fn receipt(&self) -> Option<&GameplayReceipt> {
-        self.receipt.as_ref()
+        self.receipt.as_deref().map(AdmittedReceipt::receipt)
     }
 }
 
@@ -830,20 +826,4 @@ impl Drop for ReceiptRead<'_> {
             }
         }
     }
-}
-
-fn receipt_bytes(receipt: &GameplayReceipt) -> Result<usize, CapacityError> {
-    [
-        receipt.id.capacity(),
-        receipt.fingerprint.capacity(),
-        receipt
-            .recovery_fingerprint
-            .as_ref()
-            .map_or(0, String::capacity),
-        receipt.result.get().len(),
-    ]
-    .into_iter()
-    .try_fold(0usize, |total, next| {
-        total.checked_add(next).ok_or(CapacityError)
-    })
 }
