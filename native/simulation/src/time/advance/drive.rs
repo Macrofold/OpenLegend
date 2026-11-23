@@ -1172,11 +1172,24 @@ impl AdvanceCursor {
                             _ => return Err(invalid().into()),
                         };
                         let flyers = self.roster.as_ref().ok_or_else(invalid)?.flyers();
-                        let result = self
-                            .flight
+                        let seconds = self.seconds;
+                        let mut tracks = self
+                            .projectile_settlement
                             .as_mut()
-                            .ok_or_else(invalid)?
-                            .step(core, flyers, binding, geometry, budget)?;
+                            .and_then(ProjectileSettle::passage_tracks_mut);
+                        let result = self.flight.as_mut().ok_or_else(invalid)?.step(
+                            core,
+                            flyers,
+                            binding,
+                            geometry,
+                            budget,
+                            |handle, from, to| {
+                                if let Some(tracks) = tracks.as_deref_mut() {
+                                    tracks.record_air(handle, from, to, seconds, budget)?;
+                                }
+                                Ok(())
+                            },
+                        )?;
                         core.sync_sensory_changes()?;
                         match result {
                             FlightStep::Geometry => return Ok(Progress::Geometry),

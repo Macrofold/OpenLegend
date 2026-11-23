@@ -147,7 +147,7 @@ impl AdvanceCursor {
             PredictionStep::Done(seconds) if seconds == 0.0 => {
                 let prediction = self.projectile_prediction.take().ok_or_else(invalid)?;
                 self.projectile_steering = None;
-                self.projectile_settlement = Some(prediction.into_settlement(0.0));
+                self.projectile_settlement = Some(prediction.into_settlement(0.0, budget)?);
                 self.projectile_before_move = true;
                 self.phase = Phase::ProjectileSettle;
                 Ok(Progress::Continue)
@@ -238,7 +238,7 @@ impl AdvanceCursor {
             landing = false;
         }
         if let Some(prediction) = self.projectile_prediction.take() {
-            self.projectile_settlement = Some(prediction.into_settlement(seconds));
+            self.projectile_settlement = Some(prediction.into_settlement(seconds, budget)?);
         }
         if !(seconds > 0.0) || !seconds.is_finite() {
             return Err(ExecutionError::Invariant.into());
@@ -305,9 +305,11 @@ impl AdvanceCursor {
         self.slice_events = self.event_count();
         self.slice_invalidated = false;
         self.boundary_recorded = false;
+        let passages = self.projectile_settlement.as_mut().and_then(ProjectileSettle::take_passage_tracks);
         self.motion = Some(MotionSliceCursor::new(
             self.working.take().ok_or_else(invalid)?,
             steering,
+            passages,
             self.input_seconds,
             seconds,
             self.binding(core)?,
@@ -348,7 +350,11 @@ impl AdvanceCursor {
                         )?));
                 }
                 MoveAdvanceStep::Complete => {
-                    self.working = Some(self.motion.take().ok_or_else(invalid)?.into_actions()?);
+                    let (working, passages) = self.motion.take().ok_or_else(invalid)?.into_actions()?;
+                    self.working = Some(working);
+                    if let Some(passages) = passages {
+                        self.projectile_settlement.as_mut().ok_or_else(invalid)?.receive_passage_tracks(passages)?;
+                    }
                     self.phase = Phase::FlightMove;
                     return Ok(Progress::Continue);
                 }

@@ -61,6 +61,52 @@ pub(crate) fn vision_parameters(installed: &InstalledWorld, observer: &Entity) -
         })
 }
 
+/// Add the range and cone boundaries for a point and a receiver moving along
+/// one linear segment. The caller supplies any occlusion cuts separately.
+pub(crate) fn moving_point_sight_cuts(
+    feet: [Point; 2],
+    heading: f64,
+    ray: &crate::geometry::SightSweepQuery,
+    vision: VisionParameters,
+    cuts: &mut Vec<f64>,
+) {
+    let relative = |point: Point, receiver: Point| Point {
+        x: point.x - receiver.x,
+        y: point.y - receiver.y,
+        z: point.z - receiver.z,
+    };
+    let from = relative(ray.point_from, feet[0]);
+    let to = relative(ray.point_to, feet[1]);
+    let delta = relative(to, from);
+    let dot = |a: Point, b: Point| a.x * b.x + a.y * b.y + a.z * b.z;
+    let inside = |fraction: &f64| *fraction > 0.0 && *fraction < 1.0;
+    cuts.extend(
+        crate::spatial::quadratic_roots(
+            dot(delta, delta),
+            2.0 * dot(from, delta),
+            dot(from, from) - vision.radius * vision.radius,
+        )
+        .into_iter()
+        .flatten()
+        .filter(inside),
+    );
+    if vision.field_of_view < std::f64::consts::TAU {
+        let zero = Point {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        crate::spatial::cone_roots(zero, from, to, heading, vision.field_of_view, cuts);
+        let (x, z) = heading.sin_cos();
+        let crossing = -(x * from.x + z * from.z) / (x * delta.x + z * delta.z);
+        if inside(&crossing) {
+            cuts.push(crossing);
+        }
+    }
+    cuts.extend([0.0, 1.0]);
+}
+
+
 pub(crate) fn hearing_floor(installed: &InstalledWorld, observer: &Entity) -> Option<f64> {
     selected_senses(installed, observer).find_map(|sense| match sense {
         SenseDefinition::HearingDb {

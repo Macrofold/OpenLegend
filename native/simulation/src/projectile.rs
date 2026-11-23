@@ -5,6 +5,7 @@ mod aim;
 mod definition;
 pub(crate) mod loadout;
 pub(crate) mod point_review;
+pub(crate) mod passages;
 pub(crate) mod observed_motion;
 pub(crate) mod leading;
 mod policy;

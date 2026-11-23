@@ -1,4 +1,5 @@
 use crate::body::ProjectileContact;
+use super::passages::{NearPassages, TABLE};
 use crate::execution::ExecutionError;
 use crate::experience::EmptyChildOwner;
 use crate::host::retained_size::{HeapBytes, heap_record, heap_sum, map_storage};
@@ -189,6 +190,14 @@ impl ProjectileFlight {
         })
     }
 
+    pub(crate) fn has_passages(&self) -> bool {
+        self.near_pass_observed_lives.is_some()
+    }
+
+    pub(crate) fn set_passages(&mut self, present: bool) {
+        self.near_pass_observed_lives = present.then_some(EmptyChildOwner {});
+    }
+
     fn validate(&self, at: f64) -> Result<(), InstallError> {
         let length = [self.direction.x, self.direction.y, self.direction.z]
             .into_iter()
@@ -301,7 +310,7 @@ heap_record!(ProjectileFlight {
 
 pub(crate) struct FundedProjectile {
     pub flight: ProjectileFlight,
-    pub passage_owner: bool,
+    pub passages: NearPassages,
     pub(crate) resident: ResidentReservation,
 }
 
@@ -376,7 +385,7 @@ impl ProjectileState {
             flight.id.clone(),
             Box::new(FundedProjectile {
                 flight,
-                passage_owner: false,
+                passages: NearPassages::default(),
                 resident,
             }),
         );
@@ -452,19 +461,14 @@ impl ProjectileState {
             if !actions.insert(flight.action_id.clone()) {
                 return Err(InstallError::CurrentFormat);
             }
-            let passage_owner = flight.near_pass_observed_lives.is_some();
             let receipts = rows::take_collection(
                 rows_import,
-                "sim_projectile_passages",
+                TABLE,
                 &row.id,
-                passage_owner,
+                flight.has_passages(),
                 true,
             )?;
-            if !receipts.rows.is_empty() {
-                return Err(InstallError::UnsupportedFamily(
-                    "projectile passage receipts",
-                ));
-            }
+            let passages = NearPassages::install(&row.id, receipts, budget)?;
             let bytes = flight
                 .heap_bytes()
                 .and_then(|size| {
@@ -480,7 +484,7 @@ impl ProjectileState {
                 row.slot,
                 Box::new(FundedProjectile {
                     flight,
-                    passage_owner,
+                    passages,
                     resident,
                 }),
             );

@@ -9,8 +9,8 @@ use crate::geometry::{
 };
 use crate::host::{ByteBudget, ByteReservation};
 use crate::movement::MotionTrack;
-use crate::reception::{VisionParameters, horizontal_cone};
-use crate::spatial::{atan2, cone_roots, distance, interpolate, quadratic_roots};
+use crate::reception::{VisionParameters, horizontal_cone, moving_point_sight_cuts};
+use crate::spatial::{atan2, distance, interpolate};
 use crate::state::Point;
 use crate::work::{WorkMeters, WorkUnit};
 use std::mem::size_of;
@@ -298,7 +298,9 @@ impl AimMotionSweep {
                 .ok_or(ExecutionError::Capacity)?;
             let _cuts = budget.reserve(bytes)?;
             reserve(&mut fractions, 7)?;
-            sight_cuts(piece, &ray, self.vision, &mut fractions);
+            moving_point_sight_cuts(
+                [piece.feet.from, piece.feet.to], piece.heading, &ray, self.vision, &mut fractions,
+            );
             fractions.sort_unstable_by(f64::total_cmp);
             let width = piece.feet.ends - piece.feet.starts;
             for pair in fractions.windows(2) {
@@ -379,47 +381,6 @@ fn lift(point: Point, height: f64) -> Point {
     }
 }
 
-fn sight_cuts(
-    piece: ReceiverPiece,
-    ray: &SightSweepQuery,
-    vision: VisionParameters,
-    cuts: &mut Vec<f64>,
-) {
-    let relative = |point: Point, receiver: Point| Point {
-        x: point.x - receiver.x,
-        y: point.y - receiver.y,
-        z: point.z - receiver.z,
-    };
-    let from = relative(ray.point_from, piece.feet.from);
-    let to = relative(ray.point_to, piece.feet.to);
-    let delta = relative(to, from);
-    let dot = |a: Point, b: Point| a.x * b.x + a.y * b.y + a.z * b.z;
-    let inside = |fraction: &f64| *fraction > 0.0 && *fraction < 1.0;
-    cuts.extend(
-        quadratic_roots(
-            dot(delta, delta),
-            2.0 * dot(from, delta),
-            dot(from, from) - vision.radius * vision.radius,
-        )
-        .into_iter()
-        .flatten()
-        .filter(inside),
-    );
-    if vision.field_of_view < std::f64::consts::TAU {
-        let zero = Point {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        };
-        cone_roots(zero, from, to, piece.heading, vision.field_of_view, cuts);
-        let (x, z) = piece.heading.sin_cos();
-        let crossing = -(x * from.x + z * from.z) / (x * delta.x + z * delta.z);
-        if inside(&crossing) {
-            cuts.push(crossing);
-        }
-    }
-    cuts.extend([0.0, 1.0]);
-}
 
 fn reserve_rows<A, B, Owner>(
     count: usize,

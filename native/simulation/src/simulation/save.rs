@@ -159,6 +159,7 @@ pub(crate) fn encode_root_changes(
         "exitExposures",
         "objectLineage",
         "resourceReservations",
+        "projectiles",
     ];
     let extra = map_storage::<String, SqlCell>(
         body.len()
@@ -225,6 +226,7 @@ pub(crate) fn encode_root_changes(
         "resourceReservations",
         state.physical.holds.coverage.parent_present,
     );
+    marker(&mut body, "projectiles", state.physical.projectiles.present);
     marker(
         &mut body,
         "workState",

@@ -2,6 +2,7 @@
 //! snapshot/diff or TypeScript reconstruction decides what must be persisted.
 use super::*;
 use crate::host::retained_size::map_storage;
+use crate::projectile::passages::{FIELD as PASSAGE_FIELD, TABLE as PASSAGE_TABLE};
 use crate::records::{
     OrderedMapRows, OwnerCoverage, RecordEncodingError, RecordLedger, RowEffects, RowEncoder,
     SelectedPlacement, SqlCell,
@@ -225,6 +226,56 @@ fn created<T: Serialize + ?Sized>(
     };
     output.write(table, &placement, value, cells, true, RowEffects::default())
 }
+fn projectile_passage_slot(
+    animal: &str,
+    life: u64,
+    budget: &ByteBudget,
+) -> Result<(String, ByteReservation), RecordEncodingError> {
+    let identity = (animal, life);
+    let bytes = crate::encoding::json_record_len(&identity).map_err(|_| error())?;
+    let custody = budget.reserve(bytes).map_err(|_| error())?;
+    Ok((crate::encoding::json_record(&identity).map_err(|_| error())?, custody))
+}
+
+fn write_projectile_passage(
+    output: &mut RowEncoder<'_>,
+    shot: &str,
+    animal: &str,
+    life: u64,
+    ordinal: u64,
+    budget: &ByteBudget,
+) -> Result<(), RecordEncodingError> {
+    let (slot, _funded) = projectile_passage_slot(animal, life, budget)?;
+    let owner = ["world", "projectiles", shot];
+    let path = ["world", "projectiles", shot, PASSAGE_FIELD, &slot];
+    created(output, PASSAGE_TABLE, &path, &owner, &slot, ordinal, &true, &[], budget)
+}
+
+fn retire_projectile_passages(
+    ledger: &RecordLedger,
+    output: &mut RowEncoder<'_>,
+    shot: &str,
+    old: &crate::projectile::FundedProjectile,
+    budget: &ByteBudget,
+) -> Result<(), RecordEncodingError> {
+    if old.flight.has_passages() {
+        for (key, _) in old.passages.entries() {
+            let (slot, _funded) = projectile_passage_slot(&key.id, key.life, budget)?;
+            let path = ["world", "projectiles", shot, PASSAGE_FIELD, &slot];
+            let bytes = crate::encoding::json_record_len(&path).map_err(|_| error())?;
+            let _key = budget.reserve(bytes).map_err(|_| error())?;
+            let id = crate::encoding::json_record(&path).map_err(|_| error())?;
+            // A whole flight can start, acquire a passage and stop in this
+            // candidate. Only previously accepted child rows need deletion.
+            if ledger.placement(PASSAGE_TABLE, &id).is_some() {
+                output.delete(PASSAGE_TABLE, &id, false)?;
+            }
+        }
+        observe(output, PASSAGE_TABLE, &["world", "projectiles", shot], false, 0, budget)?;
+    }
+    Ok(())
+}
+
 fn write_created_entity(
     entity: &crate::state::Entity,
     pile_kind: &str,
@@ -666,7 +717,7 @@ impl PhysicalJournal {
                 Undo::Episode(episode) => {
                     Some((maximum, details.checked_add(episode.attributes.len())?, flights))
                 }
-                Undo::ProjectileLaunch { .. } | Undo::ProjectileProgress { .. } | Undo::ProjectileRetire { .. } => {
+                Undo::ProjectileLaunch { .. } | Undo::ProjectileProgress { .. } | Undo::ProjectilePassage { .. } | Undo::ProjectileRetire { .. } => {
                     Some((maximum, details, flights.checked_add(1)?))
                 }
                 _ => Some((maximum, details, flights)),
@@ -680,6 +731,7 @@ impl PhysicalJournal {
                 .ok_or_else(error)?,
             map_storage::<&str, bool>(maximum).ok_or_else(error)?,
             map_storage::<&str, bool>(flight_changes).ok_or_else(error)?,
+            map_storage::<&str, ()>(flight_changes).ok_or_else(error)?,
             map_storage::<&str, Vec<&Undo>>(maximum).ok_or_else(error)?,
             self.undo
                 .len()
@@ -700,6 +752,7 @@ impl PhysicalJournal {
         let mut claims = IndexMap::with_capacity(maximum);
         let mut added = 0u64;
         let mut flights = IndexMap::with_capacity(flight_changes);
+        let mut passage_owners = IndexSet::with_capacity(flight_changes);
         participation::encode_exposures(self, state, ledger, output, budget)?;
         for change in &self.undo {
             match change {
@@ -720,11 +773,21 @@ impl PhysicalJournal {
                 Undo::ProjectileProgress { id, .. } => {
                     flights.entry(id.as_str()).or_insert(true);
                 }
+                Undo::ProjectilePassage { id, receiver, life, ordinal, present } => {
+                    if let Some(flight) = state.projectiles.flights.get(id) {
+                        if flight.passages.ordinal(receiver, *life) != Some(*ordinal) {
+                            return Err(error());
+                        }
+                        if !present {
+                            flights.entry(id.as_str()).or_insert(true);
+                        }
+                        passage_owners.insert(id.as_str());
+                        write_projectile_passage(output, id, receiver, *life, *ordinal, budget)?;
+                    }
+                }
                 Undo::ProjectileRetire { id, before, .. } => {
                     flights.entry(id.as_str()).or_insert(true);
-                    if before.passage_owner {
-                        observe(output, "sim_projectile_passages", &["world", "projectiles", id], false, 0, budget)?;
-                    }
+                    retire_projectile_passages(ledger, output, id, before, budget)?;
                 }
                 Undo::CoachingPresence { .. } => coaching = true,
                 Undo::RemovedPhysicalRoot(before) => {
@@ -1018,6 +1081,11 @@ impl PhysicalJournal {
         }
         if !flights.is_empty() {
             map(ledger, output, "sim_projectiles", &["world"], "projectiles", state.projectiles.present.then_some(&state.projectiles.flights), &flights, false, budget)?;
+        }
+        for shot in passage_owners {
+            let flight = state.projectiles.flights.get(shot).ok_or_else(error)?;
+            observe(output, PASSAGE_TABLE, &["world", "projectiles", shot], true,
+                flight.passages.next_ordinal(), budget)?;
         }
         if !claims.is_empty() {
             let table = "sim_resource_reservations";

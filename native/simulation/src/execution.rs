@@ -1338,6 +1338,13 @@ enum Undo {
         id: String,
         before: crate::projectile::FlightPosition,
     },
+    ProjectilePassage {
+        id: String,
+        receiver: String,
+        life: u64,
+        ordinal: u64,
+        present: bool,
+    },
     ProjectileRetire {
         position: usize,
         id: String,
@@ -1930,6 +1937,11 @@ impl PhysicalJournal {
                 }
                 Undo::ProjectileProgress { id, before } => {
                     state.projectiles.flights.get_mut(&id).ok_or(ExecutionError::Invariant)?.flight.set_progress(before);
+                }
+                Undo::ProjectilePassage { id, receiver, life, ordinal, present } => {
+                    let flight = state.projectiles.flights.get_mut(&id).ok_or(ExecutionError::Invariant)?;
+                    flight.passages.rollback_add(&receiver, life, ordinal)?;
+                    flight.flight.set_passages(present);
                 }
                 Undo::ProjectileRetire { position, id, before } => {
                     if state.projectiles.flights.shift_insert(position, id, before).is_some() {

@@ -2,15 +2,15 @@
 //! The same action must survive before its private sampling remainder changes.
 //! See docs/simulation-time.md#native-interval-contract.
 use super::input::{PreparedSteering, can_steer};
-use super::{MechanicalForecast, SliceActions};
+use super::{MechanicalForecast, SliceActions, projectiles::PassageTracks};
 use crate::execution::{CoreMutation, ExecutionError, StagedOccurrence};
 use crate::geometry::{GeometryBinding, GeometryQueries};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::movement::{
-    MotionOperation, MotionStep, MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep,
+    MotionForecast, MotionOperation, MotionStep, MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep,
 };
 use crate::state::Point;
-use std::mem::size_of;
+use std::{mem::size_of, sync::Arc};
 
 mod aim;
 pub(super) use aim::AimTracks;
@@ -21,8 +21,23 @@ enum Progress {
     Personal,
     Complete,
 }
+/// The motion owner funds one body track. Aim and passage can both keep
+/// that exact executed path through their separate sight checks.
+pub(super) struct ExecutedMotion {
+    pub(super) forecast: MotionForecast,
+    _header: ByteReservation,
+}
+
+impl ExecutedMotion {
+    pub(super) fn share(forecast: MotionForecast, budget: &ByteBudget) -> Result<Arc<Self>, ExecutionError> {
+        let _header = budget.reserve(size_of::<Self>() + 2 * size_of::<usize>())?;
+        Ok(Arc::new(Self { forecast, _header }))
+    }
+}
+
 pub(crate) struct MotionSliceCursor {
     actions: SliceActions,
+    passages: Option<PassageTracks>,
     steering: PreparedSteering,
     steering_next: usize,
     steering_current: Option<MotionOperation>,
@@ -49,9 +64,10 @@ impl MotionSliceCursor {
                     .and_then(|cursor| cursor.queries().ok())
             })
     }
-    pub(crate) fn new(
+    pub(super) fn new(
         actions: SliceActions,
         steering: PreparedSteering,
+        passages: Option<PassageTracks>,
         input_seconds: f64,
         seconds: f64,
         binding: GeometryBinding,
@@ -66,6 +82,7 @@ impl MotionSliceCursor {
         }
         Ok(Self {
             actions,
+            passages,
             steering,
             steering_next: 0,
             steering_current: None,
@@ -79,7 +96,7 @@ impl MotionSliceCursor {
             _reservation: budget.reserve(size_of::<Self>())?,
         })
     }
-    pub(crate) fn into_actions(self) -> Result<SliceActions, ExecutionError> {
+    pub(super) fn into_actions(self) -> Result<(SliceActions, Option<PassageTracks>), ExecutionError> {
         if self.current.is_some()
             || self.next != self.actions.approaching.len()
             || self.steering_current.is_some()
@@ -87,7 +104,23 @@ impl MotionSliceCursor {
         {
             return Err(ExecutionError::UnfinishedOccurrence);
         }
-        Ok(self.actions)
+        Ok((self.actions, self.passages))
+    }
+
+    fn recording(&self, handle: crate::state::EntityHandle) -> bool {
+        self.actions.aims.as_ref().is_some_and(|aims| aims.recording(handle))
+            || self.passages.as_ref().is_some_and(|passages| passages.recording(handle))
+    }
+
+    fn record(&mut self, handle: crate::state::EntityHandle, forecast: MotionForecast) -> Result<(), ExecutionError> {
+        let track = ExecutedMotion::share(forecast, &self.budget)?;
+        if let Some(aims) = self.actions.aims.as_mut() {
+            aims.record(handle, Arc::clone(&track));
+        }
+        if let Some(passages) = self.passages.as_mut() {
+            passages.record(handle, track)?;
+        }
+        Ok(())
     }
     pub(crate) fn step<'a>(
         &'a mut self,
@@ -132,11 +165,12 @@ impl MotionSliceCursor {
         // All steering prefixes commit in admitted input order before action
         // movement. Later movers therefore see each earlier occupied placement.
         while let Some((handle, route)) = self.steering.routes.get_index(self.steering_next) {
+            let handle = *handle;
             if self.steering_current.is_none() {
                 if answer.is_some() {
                     return Err(ExecutionError::UnfinishedOccurrence);
                 }
-                let entity = core.state.physical.entities.resolve(*handle);
+                let entity = core.state.physical.entities.resolve(handle);
                 if let Some(entity) = entity {
                     if can_steer(core.state, entity)? {
                         self.binding.serial = core.journal.next_provider_serial()?;
@@ -149,13 +183,7 @@ impl MotionSliceCursor {
                             self.binding,
                             &self.budget,
                         )?;
-                        if distance > 0.0
-                            && self
-                                .actions
-                                .aims
-                                .as_ref()
-                                .is_some_and(|aims| aims.recording(*handle))
-                        {
+                        if distance > 0.0 && self.recording(handle) {
                             motion.record_execution(self.seconds, distance)?;
                         }
                         self.steering_current = Some(motion);
@@ -184,9 +212,7 @@ impl MotionSliceCursor {
                         .as_mut()
                         .and_then(MotionOperation::take_executed_track)
                     {
-                        if let Some(aims) = self.actions.aims.as_mut() {
-                            aims.record(*handle, track);
-                        }
+                        self.record(handle, track)?;
                     }
                     self.steering_current = None;
                     self.steering_next += 1;
@@ -255,12 +281,7 @@ impl MotionSliceCursor {
                     MoveAdvanceCursor::new
                 };
                 let mut mover = start(&entity.id, self.seconds, self.binding, &self.budget)?;
-                if self
-                    .actions
-                    .aims
-                    .as_ref()
-                    .is_some_and(|aims| aims.recording(handle))
-                {
+                if self.recording(handle) {
                     mover.record_movement();
                 }
                 self.current = Some(mover);
@@ -314,9 +335,7 @@ impl MotionSliceCursor {
                 .as_mut()
                 .and_then(MoveAdvanceCursor::take_executed_track)
             {
-                if let Some(aims) = self.actions.aims.as_mut() {
-                    aims.record(handle, track);
-                }
+                self.record(handle, track)?;
             }
             self.current = None;
             self.next += 1;

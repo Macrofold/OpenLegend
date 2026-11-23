@@ -4,7 +4,8 @@
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries};
 use crate::host::{ByteBudget, ByteReservation, retained_size::map_storage};
-use crate::movement::MotionForecast;
+use super::ExecutedMotion;
+use std::sync::Arc;
 use crate::projectile::{
     ObservedMotion,
     observed_motion::{AimMotionRays, AimMotionSweep, AimObservation, ExecutedTrack},
@@ -30,7 +31,7 @@ struct Watch {
 
 struct BodyTrack {
     from: Point,
-    actual: Option<MotionForecast>,
+    actual: Option<Arc<ExecutedMotion>>,
     ambiguous: bool,
 }
 
@@ -229,7 +230,7 @@ impl AimTracks {
         self.bodies.contains_key(&handle)
     }
 
-    pub(super) fn record(&mut self, handle: EntityHandle, track: MotionForecast) {
+    pub(super) fn record(&mut self, handle: EntityHandle, track: Arc<ExecutedMotion>) {
         if let Some(record) = self.bodies.get_mut(&handle) {
             if record.actual.is_some() {
                 record.ambiguous = true;
@@ -307,7 +308,7 @@ impl AimTracks {
             return None;
         }
         if let Some(motion) = body.actual.as_ref() {
-            let track = &motion.track;
+            let track = &motion.forecast.track;
             (*track.pose.first()? == body.from && *track.pose.last()? == at)
                 .then_some(ExecutedTrack::Moving(track))
         } else {

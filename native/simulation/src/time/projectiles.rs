@@ -2,7 +2,7 @@
 //! contact resolves later, after those bodies and the endpoint owners settle.
 
 use super::input::{PreparedSteering, can_steer};
-use super::{NativeParticipants, travel};
+use super::{NativeParticipants, flight, travel};
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::geometry::{
     GeometryAnswers, GeometryBinding, GeometryQueries, MovementRayHit, SightRay,
@@ -16,7 +16,10 @@ use crate::state::{Entity, EntityHandle, Point};
 use crate::work::WorkUnit;
 use std::mem::size_of;
 
+mod passage;
 mod settle;
+pub(super) use passage::PassageTracks;
+use passage::{PassageKey, PassageObserver, PassagePath, PassageScan, PassageSight};
 pub(super) use settle::{ProjectileSettle, ProjectileSettleStep};
 
 struct Candidate {
@@ -24,6 +27,8 @@ struct Candidate {
     point: Point,
     extent: Extent,
     motion: Option<MotionForecast>,
+    air: Option<flight::ProjectileAirMotion>,
+    passage: Option<PassageObserver>,
 }
 
 pub(super) struct ProjectilePrediction {
@@ -31,8 +36,10 @@ pub(super) struct ProjectilePrediction {
     bound: f64,
     query: Option<GeometryQueries>,
     solid_hits: Vec<Option<MovementRayHit>>,
+    solid_bytes: usize,
     candidates: Vec<Candidate>,
     current: Option<MotionOperation>,
+    passage_scan: Option<PassageScan>,
     next: usize,
     _reservation: ByteReservation,
 }
@@ -114,24 +121,41 @@ impl ProjectilePrediction {
                 .world_position()
                 .ok_or(ExecutionError::InvalidPosition)?;
             let extent: Extent = entity.body_profile().as_ref().into();
-            let travel = travel::reach(installed, entity, horizon)?;
+            // A fall is physical even if the body cannot choose locomotion.
+            let travel = if entity.spatial.fall_velocity.is_some() {
+                flight::motion_reach(installed, entity, horizon)?
+                    .ok_or(ExecutionError::Invariant)?
+            } else {
+                travel::reach(installed, entity, horizon)?
+            };
             let travel = steering.routes.get(&handle).map_or(travel, |route| {
                 travel.max(route.distance * horizon / input_seconds)
             });
             core.journal.meters.charge(&[(WorkUnit::Candidates, 1)])?;
-            if !intersects_a_flight(
-                flights.values().map(|row| &row.flight),
-                horizon,
-                point,
-                extent.height + extent.radius + travel + installed.time_epsilon,
+            let envelope = extent.height + extent.radius + travel + installed.time_epsilon;
+            let passage = PassageObserver::prepare(installed, entity, budget)?.filter(|observer| {
+                intersects_a_flight(
+                    flights.values()
+                        .filter(|row| !row.passages.contains(&entity.id, observer.life))
+                        .map(|row| &row.flight),
+                    horizon,
+                    point,
+                    observer.extent.height + observer.extent.radius + travel
+                        + observer.separation + installed.time_epsilon,
+                )
+            });
+            if passage.is_none() && !intersects_a_flight(
+                flights.values().map(|row| &row.flight), horizon, point, envelope,
             ) {
                 continue;
             }
-            if travel > 0.0
+            let air = if travel > 0.0
                 && (entity.spatial.flight.is_some() || entity.spatial.fall_velocity.is_some())
             {
-                return Err(ExecutionError::UnsupportedFamily);
-            }
+                flight::projectile_motion(installed, entity, horizon)?
+            } else {
+                None
+            };
             if candidates.len() == candidates.capacity() {
                 let capacity = candidates
                     .capacity()
@@ -156,6 +180,8 @@ impl ProjectilePrediction {
                 point,
                 extent,
                 motion: None,
+                air,
+                passage,
             });
         }
         Ok(Self {
@@ -163,8 +189,10 @@ impl ProjectilePrediction {
             bound,
             query: Some(query),
             solid_hits: Vec::new(),
+            solid_bytes: 0,
             candidates,
             current: None,
+            passage_scan: None,
             next: 0,
             _reservation: reservation,
         })
@@ -174,6 +202,7 @@ impl ProjectilePrediction {
         self.query
             .as_ref()
             .or_else(|| self.current.as_ref().and_then(MotionOperation::queries))
+            .or_else(|| self.passage_scan.as_ref().and_then(PassageScan::request))
     }
 
     pub(super) fn step(
@@ -238,7 +267,20 @@ impl ProjectilePrediction {
                     .ok_or(ExecutionError::Capacity)?,
             )?;
             self.solid_hits = answer.movement_rays;
+            self.solid_bytes = returned_bytes;
             self.query = None;
+        }
+        if let Some(scan) = &mut self.passage_scan {
+            if scan.step(answer.take(), binding, core.state.installed.time_epsilon,
+                budget, &mut core.journal.meters)? {
+                return Ok(PredictionStep::Geometry);
+            }
+            if let Some(hits) = self.passage_scan.take().and_then(PassageScan::into_hits) {
+                for hit in hits.iter() {
+                    self.bound = self.bound.min(hit.at);
+                }
+            }
+            return Ok(PredictionStep::Done(self.bound));
         }
         while let Some(candidate) = self.candidates.get_mut(self.next) {
             let state = &core.state;
@@ -315,11 +357,64 @@ impl ProjectilePrediction {
             self.next += 1;
         }
         self.bound = self.body_boundary(core)?;
+        if self.bound > 0.0 && self.candidates.iter().any(|body| body.passage.is_some()) {
+            let mut sweep = PassageSight::new(binding, budget)?;
+            let installed = &core.state.installed;
+            let bodies = &core.state.physical.entities;
+            // Only the still-traversable part of each flight can start an
+            // animal reaction. Earlier solid/body impacts already cut bound.
+            for (flight_index, row) in core.state.physical.projectiles.flights.values().enumerate() {
+                let flight = &row.flight;
+                let path = PassagePath {
+                    from: flight.position, to: flight.travel(self.bound).0, seconds: self.bound,
+                };
+                for candidate in &self.candidates {
+                    let Some(observer) = candidate.passage else { continue };
+                    let entity = bodies.resolve(candidate.handle).ok_or(ExecutionError::Invariant)?;
+                    if row.passages.contains(&entity.id, observer.life)
+                        || launch_overlap(flight, entity, candidate.point, candidate.extent)
+                    {
+                        continue;
+                    }
+                    let key = PassageKey { flight: flight_index, animal: candidate.handle, life: observer.life };
+                    if let Some(air) = &candidate.air {
+                        if air.until > 0.0 {
+                            let to = interpolate(observer.feet, air.to, (self.bound / air.until).min(1.0));
+                            sweep.add_air_leg(key, observer, path, to,
+                                installed.spatial.epsilon, &mut core.journal.meters)?;
+                        }
+                        if !air.can_stay && air.until > 0.0 {
+                            continue;
+                        }
+                    }
+                    sweep.add_path(
+                        key, observer, path, candidate.motion.as_ref().map(|motion| &motion.track),
+                        installed.spatial.epsilon, &mut core.journal.meters,
+                    )?;
+                }
+            }
+            if sweep.request().is_some() {
+                self.passage_scan = Some(PassageScan::Sweep(sweep));
+                return Ok(PredictionStep::Geometry);
+            }
+        }
         Ok(PredictionStep::Done(self.bound))
     }
 
-    pub(super) fn into_settlement(self, seconds: f64) -> ProjectileSettle {
-        ProjectileSettle::new(self.horizon, seconds, self.solid_hits, self._reservation)
+    pub(super) fn into_settlement(mut self, seconds: f64, budget: &ByteBudget) -> Result<ProjectileSettle, ExecutionError> {
+        let observers = self.candidates.iter().filter_map(|candidate| {
+            candidate.passage.map(|observer| (candidate.handle, observer))
+        });
+        let tracks = if seconds > 0.0 {
+            PassageTracks::capture(observers.clone(), observers.count(), budget)?
+        } else {
+            None
+        };
+        drop(self.candidates);
+        let bytes = self.solid_bytes.checked_add(size_of::<ProjectileSettle>())
+            .ok_or(ExecutionError::Capacity)?;
+        self._reservation.resize(bytes)?;
+        Ok(ProjectileSettle::new(self.horizon, seconds, self.solid_hits, tracks, self._reservation))
     }
 
     fn body_boundary(&self, core: &mut CoreMutation<'_>) -> Result<f64, ExecutionError> {
@@ -335,27 +430,42 @@ impl ProjectilePrediction {
                 if launch_overlap(flight, entity, candidate.point, candidate.extent) {
                     continue;
                 }
-                let first_motion = candidate.motion.as_ref().and_then(|motion| {
-                    motion
-                        .track
-                        .at
-                        .get(1)
-                        .copied()
-                        .zip(motion.track.pose.get(1))
-                });
+                let first_motion = candidate
+                    .air
+                    .as_ref()
+                    .filter(|motion| motion.until > 0.0)
+                    .map(|motion| (motion.until, motion.to))
+                    .or_else(|| {
+                        let motion = candidate.motion.as_ref()?;
+                        Some((*motion.track.at.get(1)?, *motion.track.pose.get(1)?))
+                    });
                 let first_turn = first_motion.map_or(self.horizon, |(at, _)| at);
                 let until = bound.min(first_turn);
                 let to = flight.travel(until).0;
                 let at = first_motion
                     .filter(|(at, _)| *at > 0.0)
                     .map_or(candidate.point, |(_, pose)| {
-                        interpolate(candidate.point, *pose, until / first_turn)
+                        interpolate(candidate.point, pose, until / first_turn)
                     });
                 core.journal.meters.charge(&[(WorkUnit::Tests, 1)])?;
                 if let Some(contact) =
                     moving_point_contact(flight.position, to, candidate.point, at, candidate.extent)
                 {
                     bound = bound.min(until * contact.enter);
+                }
+                // The actual flight owner can decline a blocked or unsafe
+                // leg. Bound either possibility, then test the actual body.
+                if candidate.air.as_ref().is_some_and(|motion| motion.can_stay) {
+                    core.journal.meters.charge(&[(WorkUnit::Tests, 1)])?;
+                    if let Some(contact) = moving_point_contact(
+                        flight.position,
+                        to,
+                        candidate.point,
+                        candidate.point,
+                        candidate.extent,
+                    ) {
+                        bound = bound.min(until * contact.enter);
+                    }
                 }
                 bound = bound.min(first_turn);
             }

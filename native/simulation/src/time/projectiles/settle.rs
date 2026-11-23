@@ -1,6 +1,7 @@
 //! The interval prediction admits a clock boundary. Resolve its actual
 //! contact after motion, with current physical participation and sight.
 use super::*;
+use super::passage::{PassageHit, PassageHits};
 use crate::body::{
     BodyAnswer, BodyStep, HealthChangeCursor, ProjectileContact, ScarEffect, scar_factor,
 };
@@ -26,6 +27,12 @@ pub(in super::super) struct ProjectileSettle {
     solids: Vec<Option<MovementRayHit>>,
     order: Option<Vec<(String, usize)>>,
     next: usize,
+    started: bool,
+    tracks: Option<PassageTracks>,
+    scan: Option<PassageScan>,
+    passages: Option<PassageHits>,
+    next_passage: usize,
+    expected_passage: Option<String>,
     terminal: Option<Terminal>,
     _reservation: ByteReservation,
 }
@@ -67,6 +74,7 @@ impl ProjectileSettle {
         horizon: f64,
         seconds: f64,
         solids: Vec<Option<MovementRayHit>>,
+        tracks: Option<PassageTracks>,
         reservation: ByteReservation,
     ) -> Self {
         Self {
@@ -75,17 +83,36 @@ impl ProjectileSettle {
             solids,
             order: None,
             next: 0,
+            started: false,
+            tracks,
+            scan: None,
+            passages: None,
+            next_passage: 0,
+            expected_passage: None,
             terminal: None,
             _reservation: reservation,
         }
     }
 
     pub(in super::super) fn question(&self) -> Option<&GeometryQueries> {
-        self.terminal
-            .as_ref()?
-            .sight
-            .as_ref()
-            .map(SightBatch::queries)
+        self.scan.as_ref().and_then(PassageScan::request).or_else(|| {
+            self.terminal.as_ref()?.sight.as_ref().map(SightBatch::queries)
+        })
+    }
+
+    pub(in super::super) fn take_passage_tracks(&mut self) -> Option<PassageTracks> {
+        self.tracks.take()
+    }
+
+    pub(in super::super) fn passage_tracks_mut(&mut self) -> Option<&mut PassageTracks> {
+        self.tracks.as_mut()
+    }
+
+    pub(in super::super) fn receive_passage_tracks(&mut self, tracks: PassageTracks) -> Result<(), ExecutionError> {
+        if self.tracks.replace(tracks).is_some() || self.order.is_some() {
+            return Err(ExecutionError::Invariant);
+        }
+        Ok(())
     }
 
     pub(in super::super) fn step(
@@ -96,6 +123,16 @@ impl ProjectileSettle {
         mut event: Option<CompletedOccurrence>,
         budget: &ByteBudget,
     ) -> Result<ProjectileSettleStep, ExecutionError> {
+        if let Some(tracks) = self.tracks.take() {
+            self.scan = Some(tracks.prepare_actual(core, self.seconds, binding, budget)?);
+        }
+        if let Some(scan) = &mut self.scan {
+            if scan.step(geometry.take(), binding, core.state.installed.time_epsilon,
+                budget, &mut core.journal.meters)? {
+                return Ok(ProjectileSettleStep::Geometry);
+            }
+            self.passages = self.scan.take().and_then(PassageScan::into_hits);
+        }
         if self.order.is_none() {
             let flights = &core.state.physical.projectiles.flights;
             if flights.len() != self.solids.len() {
@@ -122,7 +159,39 @@ impl ProjectileSettle {
             order.sort_unstable_by(|left, right| left.0.cmp(&right.0));
             self.order = Some(order);
         }
+        if let Some(expected) = self.expected_passage.take() {
+            if event.take().is_none_or(|receipt| receipt.event_id() != expected) {
+                return Err(ExecutionError::UnfinishedOccurrence);
+            }
+        }
         loop {
+            let Some((id, ordinal)) = self.order.as_ref().and_then(|order| order.get(self.next))
+            else {
+                if geometry.is_some() || event.is_some() {
+                    return Err(ExecutionError::UnfinishedOccurrence);
+                }
+                return Ok(ProjectileSettleStep::Done);
+            };
+            if !self.started {
+                let solid = self.solids.get(*ordinal).and_then(Option::as_ref);
+                self.terminal = self.advance_flight(core, id, solid, budget)?;
+                self.started = true;
+                self.next_passage = 0;
+            }
+            if let Some(hits) = &self.passages {
+                let hits = hits.for_flight(*ordinal);
+                while let Some(&witness) = hits.get(self.next_passage) {
+                    self.next_passage += 1;
+                    if let Some(staged) = stage_passage(core, id, witness, budget)? {
+                        self._reservation.resize(
+                            self._reservation.bytes().checked_add(staged.id.len())
+                                .ok_or(ExecutionError::Capacity)?,
+                        )?;
+                        self.expected_passage = Some(staged.id.clone());
+                        return Ok(ProjectileSettleStep::Event(staged));
+                    }
+                }
+            }
             if let Some(terminal) = &mut self.terminal {
                 if let Some(next) =
                     terminal.step(core, binding, geometry.take(), event.take(), budget)?
@@ -130,21 +199,12 @@ impl ProjectileSettle {
                     return Ok(next);
                 }
                 self.terminal = None;
-                self.next += 1;
-                continue;
             }
             if geometry.is_some() || event.is_some() {
                 return Err(ExecutionError::UnfinishedOccurrence);
             }
-            let Some((id, ordinal)) = self.order.as_ref().and_then(|order| order.get(self.next))
-            else {
-                return Ok(ProjectileSettleStep::Done);
-            };
-            let solid = self.solids.get(*ordinal).and_then(Option::as_ref);
-            self.terminal = self.advance_flight(core, id, solid, budget)?;
-            if self.terminal.is_none() {
-                self.next += 1;
-            }
+            self.started = false;
+            self.next += 1;
         }
     }
 
@@ -163,11 +223,12 @@ impl ProjectileSettle {
             .ok_or(ExecutionError::Invariant)?
             .flight;
         let at = state.header.sim_time;
-        let stretch = core.state.installed.time_epsilon;
+        let time_epsilon = core.state.installed.time_epsilon;
+        let space_epsilon = core.state.installed.spatial.epsilon;
         let (point, travel) = flight.travel(self.seconds);
         let solid = solid.and_then(|hit| {
             let hit_at = hit.fraction * self.horizon.min(flight.remaining_range / flight.speed);
-            (hit_at <= self.seconds + stretch)
+            (hit_at <= self.seconds + time_epsilon)
                 .then(|| hit.collider_ids.iter().min())
                 .flatten()
         });
@@ -176,7 +237,7 @@ impl ProjectileSettle {
         let mut tested = 0;
         state
             .bodies
-            .any_body(point, state.bodies.maximum_extent() + stretch, |handle| {
+            .any_body(point, state.bodies.maximum_extent() + space_epsilon, |handle| {
                 let Some(candidate) = state.entities.resolve(handle).filter(|entry| {
                     entry.actively_participates()
                         && (entry.actor.is_some() || entry.practice_target.is_some())
@@ -191,12 +252,12 @@ impl ProjectileSettle {
                     return false;
                 }
                 let low = Point {
-                    y: origin.y - stretch,
+                    y: origin.y - space_epsilon,
                     ..origin
                 };
                 let expanded = Extent {
-                    radius: extent.radius + stretch,
-                    height: extent.height + stretch * 2.0,
+                    radius: extent.radius + space_epsilon,
+                    height: extent.height + space_epsilon * 2.0,
                 };
                 tested += 1;
                 if moving_point_contact(point, point, low, low, expanded).is_some()
@@ -224,7 +285,7 @@ impl ProjectileSettle {
                     && moving_point_contact(point, point, origin, origin, extent).is_some()
             });
         let source_exited = flight.source_exited || !origin_overlap;
-        let terminal = if body.is_some() || solid.is_some() || after <= stretch {
+        let terminal = if body.is_some() || solid.is_some() || after <= space_epsilon {
             let _storage = budget.reserve(
                 size_of::<Terminal>()
                     + 2 * id.len()
@@ -696,6 +757,60 @@ impl Terminal {
             return Ok(Some(ProjectileSettleStep::Event(staged)));
         }
     }
+}
+
+fn stage_passage(
+    core: &mut CoreMutation<'_>,
+    id: &str,
+    witness: PassageHit,
+    budget: &ByteBudget,
+) -> Result<Option<StagedOccurrence>, ExecutionError> {
+    let Some(animal) = core.state.physical.entities.resolve(witness.key.animal).filter(|animal| {
+        animal.actively_participates()
+            && animal.physical_life() == Some(witness.key.life)
+            && animal.actor.as_ref().is_some_and(|actor| actor.alive && actor.controller == "native")
+    }) else {
+        return Ok(None);
+    };
+    if core.state.installed.capabilities.capability_blocked(Some(animal), "perception")? {
+        return Ok(None);
+    }
+    let life = animal.physical_life().ok_or(ExecutionError::Invariant)?;
+    let native = animal.animal.as_ref().ok_or(ExecutionError::Invariant)?;
+    let row = core.state.physical.projectiles.flights.get(id).ok_or(ExecutionError::Invariant)?;
+    let direction = row.flight.direction;
+    let installed = &core.state.installed;
+    let words = &crate::native_controller::selected_profile(installed, native)?.presentation.projectile_passage;
+    let event_type = &installed.occurrence_rules.value().projectile_passage_event;
+    let bytes = animal.id.len().checked_mul(5).and_then(|bytes| {
+        words.len().checked_mul(4)?.checked_add(bytes)?.checked_add(id.len())
+                ?.checked_add(event_type.len())?.checked_add(1024)
+    }).ok_or(ExecutionError::Capacity)?;
+    let _stage = budget.reserve(bytes)?;
+    let receiver = animal.id.clone();
+    let narration = subject(&receiver, &JsText::from(words.as_str()));
+    let event_type = event_type.clone();
+    if !core.physical().record_projectile_passage(id, &receiver, life)? {
+        return Ok(None);
+    }
+    // Only this exact animal saw the projectile. The shot's source is
+    // deliberately absent from the event and the resulting danger region.
+    core.stage_event(EventEmissionIntent {
+        event_type,
+        text: EmissionText::Narration(narration),
+        audience: AudienceSelection::Explicit(vec![receiver.clone()]),
+        source_id: Some(receiver.clone()),
+        target_id: Some(receiver),
+        data: Some([
+            ("projectileId".into(), EventScalar::Text(id.into())),
+            ("incomingX".into(), EventScalar::Number(-direction.x)),
+            ("incomingY".into(), EventScalar::Number(-direction.y)),
+            ("incomingZ".into(), EventScalar::Number(-direction.z)),
+        ].into_iter().collect()),
+        scope: EventScope::External,
+        origin: Some(witness.origin),
+        exposure: None,
+    }).map(Some)
 }
 
 fn subject(id: &str, clause: &JsText) -> Narration {

@@ -110,6 +110,10 @@ enum ProjectileCue<'a> {
         point: Point,
         contact_life: f64,
     },
+    Passage {
+        flight: &'a str,
+        point: Point,
+    },
 }
 
 /// Prove the event came from the current flight. Source coordinates are read
@@ -122,7 +126,8 @@ fn current_projectile_event<'a>(
     let words = rules.ranged.as_ref()?;
     if event.scope != Some(EventScope::External)
         || (event.event_type != words.shot_released
-            && event.event_type != rules.projectile_contact_event)
+            && event.event_type != rules.projectile_contact_event
+            && event.event_type != rules.projectile_passage_event)
     {
         return None;
     }
@@ -131,13 +136,8 @@ fn current_projectile_event<'a>(
         Some(EventScalar::Text(value)) => value.as_unicode(),
         _ => None,
     };
-    let flight = &core
-        .state
-        .physical
-        .projectiles
-        .flights
-        .get(text("projectileId")?)?
-        .flight;
+    let row = core.state.physical.projectiles.flights.get(text("projectileId")?)?;
+    let flight = &row.flight;
     if event.event_type == words.shot_released {
         let source = core.state.physical.entities.get(&flight.source_id)?;
         (event.at == flight.launched_at
@@ -150,6 +150,14 @@ fn current_projectile_event<'a>(
             source_life: flight.source_life,
             target_life: flight.target_life,
         })
+    } else if event.event_type == rules.projectile_passage_event {
+        let target = event.target_id.as_deref()?;
+        let animal = core.state.physical.entities.get(target)?;
+        let life = animal.physical_life()?;
+        (event.at == flight.advanced_at
+            && event.actor_id.as_deref() == Some(target)
+            && row.passages.contains(target, life))
+            .then_some(ProjectileCue::Passage { flight: &flight.id, point: event.origin? })
     } else {
         let EventScalar::Number(contact_life) = data.get("contactLife")? else {
             return None;
@@ -411,6 +419,20 @@ fn directed_evidence<'a>(
                 && animal
                     .physical_life()
                     .is_some_and(|life| life as f64 == contact_life) =>
+            {
+                Some(DirectedEvidence {
+                    preparation: None,
+                    source: None,
+                    region: Some(ContactRegion {
+                        kind: RegionKind::Projectile,
+                        id: flight,
+                        point,
+                        incoming: incoming_bearing(received),
+                    }),
+                })
+            }
+            ProjectileCue::Passage { flight, point }
+                if observed && received.target_id.as_deref() == Some(animal.id.as_str()) =>
             {
                 Some(DirectedEvidence {
                     preparation: None,

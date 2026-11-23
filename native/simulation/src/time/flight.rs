@@ -183,6 +183,108 @@ fn falling(rules: &FlightRules, velocity: f64, seconds: f64) -> f64 {
         + rules.terminal_fall_speed * (seconds - accelerating)
 }
 
+/// One straight piece for a nearby shot's read-only boundary. A flight leg
+/// can remain at its start if physical clearance or landing admission fails.
+pub(super) struct ProjectileAirMotion {
+    pub until: f64,
+    pub to: Point,
+    pub can_stay: bool,
+}
+
+/// Read the same speeds and positions as the actual flight writer. Call only
+/// after the shot's broad phase and within the existing next-waypoint bound.
+/// Falling needs a shorter chord to stay within the installed spatial error.
+/// The result carries no authority or borrowed allocation beyond this read.
+pub(super) fn projectile_motion(
+    installed: &InstalledWorld,
+    entity: &Entity,
+    horizon: f64,
+) -> Result<Option<ProjectileAirMotion>, ExecutionError> {
+    let Some(from) = entity.world_position() else {
+        return Err(ExecutionError::InvalidPosition);
+    };
+    if let Some(velocity) = entity.spatial.fall_velocity {
+        let rules = rules(installed)?;
+        // A constant-acceleration chord differs by at most a * dt² / 8.
+        let until = horizon.min((installed.spatial.epsilon / rules.fall_acceleration).sqrt());
+        let (to, _) = fall_destination(installed, rules, from, velocity, until);
+        return Ok(Some(ProjectileAirMotion {
+            until,
+            to,
+            can_stay: false,
+        }));
+    }
+    let Some(flight) = &entity.spatial.flight else {
+        return Ok(None);
+    };
+    if support(entity).is_some()
+        || !can_advance(entity, installed)?
+        || flight.at_rest.is_some()
+        || flight.awaiting_choice.is_some()
+        || flight.wait_seconds > 0.0
+    {
+        return Ok(None);
+    }
+    let route = corridor(installed, flight)?;
+    let target = route
+        .points
+        .get(flight.next)
+        .ok_or(ExecutionError::Invariant)?;
+    let leg = flight_destination(installed, entity, route, from, target, horizon, false)?;
+    Ok(Some(ProjectileAirMotion {
+        until: leg.seconds.min(horizon),
+        to: leg.position,
+        can_stay: true,
+    }))
+}
+
+struct FlightDestination {
+    seconds: f64,
+    position: Point,
+    arrived: bool,
+}
+
+fn flight_destination(
+    installed: &InstalledWorld,
+    entity: &Entity,
+    route: &Corridor,
+    from: Point,
+    target: &FlightWaypoint,
+    seconds: f64,
+    grounded: bool,
+) -> Result<FlightDestination, ExecutionError> {
+    let duration = travel(installed, entity, route, from, target.position)?;
+    let arrived = seconds > 0.0 && duration <= seconds;
+    let fraction = if duration == 0.0 || arrived {
+        1.0
+    } else if grounded {
+        (0.001 / distance(from, target.position)).min(1.0)
+    } else {
+        seconds / duration
+    };
+    Ok(FlightDestination {
+        seconds: duration,
+        position: interpolate(from, target.position, fraction),
+        arrived,
+    })
+}
+
+fn fall_destination<'a>(
+    installed: &'a InstalledWorld,
+    rules: &FlightRules,
+    point: Point,
+    velocity: f64,
+    seconds: f64,
+) -> (Point, Option<&'a str>) {
+    let y = point.y - falling(rules, velocity, seconds);
+    let lower =
+        below(installed, point).filter(|(height, _)| y <= *height + installed.spatial.epsilon);
+    match lower {
+        Some((height, surface)) => (Point { y: height, ..point }, Some(surface)),
+        None => (Point { y, ..point }, None),
+    }
+}
+
 fn fall_time(rules: &FlightRules, velocity: f64, distance: f64) -> f64 {
     let speed = (-velocity).clamp(0.0, rules.terminal_fall_speed);
     let accelerating = (rules.terminal_fall_speed - speed) / rules.fall_acceleration;
@@ -286,6 +388,7 @@ impl FlightCursor {
         binding: GeometryBinding,
         mut answers: Option<GeometryAnswers>,
         budget: &ByteBudget,
+        mut record_motion: impl FnMut(EntityHandle, Point, Point) -> Result<(), ExecutionError>,
     ) -> Result<FlightStep, ExecutionError> {
         while let Some(&handle) = flyers.get(self.next) {
             let entity = core
@@ -410,6 +513,9 @@ impl FlightCursor {
                 let landed = surface.is_some();
                 core.physical()
                     .set_flight_position(&id, plan.destination, surface)?;
+                if position != plan.destination {
+                    record_motion(handle, position, plan.destination)?;
+                }
                 if let Some((next, _held)) = next {
                     let reconsider = next.awaiting_choice.is_some()
                         || next.at_rest.is_some() && next.native_locomotion.is_some();
@@ -434,8 +540,11 @@ impl FlightCursor {
             if let Some(velocity) = entity.spatial.fall_velocity {
                 self.next += 1;
                 if self.seconds > 0.0 {
-                    if let Some(event) = advance_fall(core, handle, velocity, self.seconds, budget)?
-                    {
+                    let (next, event) = advance_fall(core, handle, velocity, self.seconds, budget)?;
+                    if position != next {
+                        record_motion(handle, position, next)?;
+                    }
+                    if let Some(event) = event {
                         return Ok(FlightStep::Event(event));
                     }
                 }
@@ -515,30 +624,21 @@ impl FlightCursor {
                 .points
                 .get(flight.next)
                 .ok_or(ExecutionError::Invariant)?;
-            let duration = travel(
+            let leg = flight_destination(
                 &core.state.installed,
                 entity,
                 route,
                 position,
-                target.position,
+                target,
+                self.seconds,
+                grounded,
             )?;
-            let arrived = self.seconds > 0.0 && duration <= self.seconds;
-            let fraction = if duration == 0.0 {
-                1.0
-            } else if grounded {
-                (0.001 / distance(position, target.position)).min(1.0)
-            } else if arrived {
-                1.0
-            } else {
-                self.seconds / duration
-            };
-            let destination = interpolate(position, target.position, fraction);
             self.pending = Some(prepare_leg(
                 entity,
                 target,
                 position,
-                destination,
-                arrived,
+                leg.position,
+                leg.arrived,
                 binding,
                 budget,
             )?);
@@ -727,7 +827,7 @@ fn advance_fall(
     velocity: f64,
     seconds: f64,
     budget: &ByteBudget,
-) -> Result<Option<StagedOccurrence>, ExecutionError> {
+) -> Result<(Point, Option<StagedOccurrence>), ExecutionError> {
     let entity = core
         .state
         .physical
@@ -738,28 +838,23 @@ fn advance_fall(
         .world_position()
         .ok_or(ExecutionError::InvalidPosition)?;
     let rules = rules(&core.state.installed)?;
-    let y = point.y - falling(rules, velocity, seconds);
-    let lower = below(&core.state.installed, point)
-        .filter(|(height, _)| y <= *height + core.state.installed.spatial.epsilon);
-    if lower.is_none() && y < rules.minimum_fall_height {
+    let (next, support) = fall_destination(&core.state.installed, rules, point, velocity, seconds);
+    if support.is_none() && next.y < rules.minimum_fall_height {
         return Err(ExecutionError::InvalidPosition);
     }
-    let _storage =
-        budget.reserve(entity.id.len() + lower.map_or(0, |(_, surface)| surface.len()))?;
+    let _storage = budget.reserve(entity.id.len() + support.map_or(0, str::len))?;
     let id = entity.id.clone();
-    let (next, surface, fall) = match lower {
-        Some((height, surface)) => (Point { y: height, ..point }, Some(surface.to_owned()), None),
-        None => (
-            Point { y, ..point },
-            None,
-            Some((velocity - rules.fall_acceleration * seconds).max(-rules.terminal_fall_speed)),
-        ),
-    };
+    let surface = support.map(str::to_owned);
+    let fall = support
+        .is_none()
+        .then(|| (velocity - rules.fall_acceleration * seconds).max(-rules.terminal_fall_speed));
     core.physical().set_flight_position(&id, next, surface)?;
     core.physical().replace_flight(handle, None, fall)?;
-    fall.is_none()
+    let event = fall
+        .is_none()
         .then(|| occurrence(core, handle, FlightEvent::Fall, budget))
-        .transpose()
+        .transpose()?;
+    Ok((next, event))
 }
 
 enum FlightEvent {
