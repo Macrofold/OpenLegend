@@ -6,8 +6,8 @@ use std::sync::Arc;
 
 mod live;
 pub use live::{
-    RuntimeLiveActivity, RuntimeLiveEntity, RuntimeLiveInspection, RuntimeLiveRead,
-    RuntimeLiveSelection, RuntimeLiveSupport,
+    RuntimeLiveActivity, RuntimeLiveEntity, RuntimeLiveInspection, RuntimeLiveItem,
+    RuntimeLiveItemInspection, RuntimeLiveRead, RuntimeLiveSelection, RuntimeLiveSupport,
 };
 
 pub struct RuntimeWorldInspection<'a> {

@@ -481,7 +481,10 @@ fn read_selection(
         "ol_graph" if matches!(recipient, Recipient::Signed(_)) => Ok(Selection::Relationships(
             graph::Request::Page(graph::Input::parse(arguments)?),
         )),
-        "ol_entities" | "ol_trace" | "ol_evidence" | "ol_instances"
+        "ol_trace" if matches!(recipient, Recipient::Signed(_)) => Ok(Selection::Relationships(
+            graph::Request::Trace(graph::TraceInput::parse(arguments)?),
+        )),
+        "ol_entities" | "ol_evidence" | "ol_instances"
             if matches!(recipient, Recipient::Signed(_)) =>
         {
             Err(Failure::Unavailable)

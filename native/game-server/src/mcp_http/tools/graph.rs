@@ -8,27 +8,35 @@ use super::{
 };
 use indexmap::IndexMap;
 use openlegend_simulation::{
-    encoding::{json_tree_allocation_bound, sha256_hex},
+    encoding::{json_record, sha256_hex},
     host::{ByteBudget, ByteReservation},
     runtime::{
-        RuntimeDefinitionCatalogue, RuntimeDefinitionKind, RuntimeLiveEntity,
-        RuntimeLiveInspection, RuntimeLiveSupport,
+        RuntimeDefinitionCatalogue, RuntimeDefinitionInspection, RuntimeDefinitionKind,
+        RuntimeLiveInspection, RuntimeLiveItemInspection, RuntimeLiveSupport,
     },
     text::{JsText, TextRef},
-    values::DefinitionPin,
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 use serde_json::{Map, Value, value::RawValue};
-use std::{borrow::Cow, collections::HashSet, mem::size_of};
+use std::{borrow::Cow, mem::size_of};
 use tokio_util::sync::CancellationToken;
+
+mod index;
+mod recipes;
+mod trace;
+pub(super) use trace::Input as TraceInput;
 
 const DEFAULT_PAGE: usize = 40;
 const MAX_PAGE: usize = 100;
 const MAX_LINKS: usize = 1024;
+const MAX_EXAMINED: usize = 1024;
+const MAX_DEFINITIONS: usize = 50_000;
+const MAX_RECIPE_CANDIDATES: usize = 200_000;
 const LIMITATIONS: &[&str] = &[
-    "Direct outgoing recipe inputs, outputs, installed dependencies and recorded bases only.",
-    "A family with no retained inspection body and a historical base are reference-only.",
-    "This page does not evaluate impact, live relationships or interaction validity.",
+    "This neighborhood covers installed recipe inputs, outputs, compiled dependencies and exact bases.",
+    "Recipe families, compiled assembly dependencies and historical bases without inspection bodies are reference-only.",
+    "Host, body, status, cognition, assembly internals and other unavailable relationships are outside this projection.",
+    "Impact, live relationships and interaction validity require separate reads.",
 ];
 
 #[derive(Deserialize)]
@@ -39,7 +47,24 @@ struct RootReference {
     version: String,
 }
 
-#[derive(Default, Deserialize)]
+impl RootReference {
+    fn validate(&self) -> Result<(), Failure> {
+        if !valid(&self.kind, 1, 200) || !valid(&self.id, 1, 500) || !valid(&self.version, 1, 100) {
+            return Err(Failure::Invalid);
+        }
+        if !supported(&self.kind)
+            && !matches!(
+                self.kind.as_str(),
+                "family" | "recipe-base" | "assembly-family"
+            )
+        {
+            return Err(Failure::Unavailable);
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy, Default, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum Direction {
     Out,
@@ -70,33 +95,22 @@ impl Input {
     pub(super) fn parse(arguments: Map<String, Value>) -> Result<Self, Failure> {
         let mut input: Self =
             serde_json::from_value(Value::Object(arguments)).map_err(|_| Failure::Invalid)?;
-        if !valid(&input.root.kind, 1, 200)
-            || !valid(&input.root.id, 1, 500)
-            || !valid(&input.root.version, 1, 100)
-            || input
-                .cursor
-                .as_ref()
-                .is_some_and(|cursor| !valid(cursor, 1, 512))
+        input.root.validate()?;
+        if input
+            .cursor
+            .as_ref()
+            .is_some_and(|cursor| !valid(cursor, 1, 512))
             || !(1.0..=MAX_PAGE as f64).contains(&input.limit)
             || input.limit.fract() != 0.0
-            || input.relations.len() > RELATIONS.len()
-            || input
-                .relations
-                .iter()
-                .any(|relation| !RELATIONS.contains(&relation.as_str()))
         {
             return Err(Failure::Invalid);
         }
-        if !matches!(input.direction, Direction::Out) || !supported(&input.root.kind) {
-            return Err(Failure::Unavailable);
-        }
-        input.relations.sort_unstable();
-        input.relations.dedup();
+        validate_relations(&mut input.relations)?;
         Ok(input)
     }
 }
 
-// Public protocol vocabulary. Only actual outgoing relations are emitted.
+// Public protocol vocabulary. Each emitted relationship retains its original direction.
 const RELATIONS: &[&str] = &[
     "requires",
     "produces",
@@ -118,6 +132,19 @@ const RELATIONS: &[&str] = &[
     "reads",
 ];
 
+fn validate_relations(relations: &mut Vec<String>) -> Result<(), Failure> {
+    if relations.len() > RELATIONS.len()
+        || relations
+            .iter()
+            .any(|relation| !RELATIONS.contains(&relation.as_str()))
+    {
+        return Err(Failure::Invalid);
+    }
+    relations.sort_unstable();
+    relations.dedup();
+    Ok(())
+}
+
 pub(super) fn supported(kind: &str) -> bool {
     matches!(kind, "recipe" | "item-definition" | "item-handling-policy")
 }
@@ -125,6 +152,7 @@ pub(super) fn supported(kind: &str) -> bool {
 pub(super) enum Request {
     Inspect(InspectInput),
     Page(Input),
+    Trace(TraceInput),
 }
 
 impl Request {
@@ -136,96 +164,146 @@ impl Request {
         recipient: &Recipient,
         stopped: &CancellationToken,
     ) -> Result<PreparedReply, Failure> {
-        let (kind, id, expected, relations, cursor, limit) = match &self {
-            Self::Inspect(input) => (
-                input.kind.as_str(),
-                input.id.as_str(),
-                input.version.as_deref(),
-                &[][..],
-                None,
-                DEFAULT_PAGE,
-            ),
-            Self::Page(input) => (
-                input.root.kind.as_str(),
-                input.root.id.as_str(),
-                Some(input.root.version.as_str()),
-                input.relations.as_slice(),
-                input.cursor.as_deref(),
-                input.limit as usize,
-            ),
+        let Recipient::Signed(account) = recipient else {
+            return Err(Failure::Forbidden);
         };
-        let (kind_name, definition_kind) = KINDS
-            .iter()
-            .copied()
-            .find(|(name, _)| *name == kind)
-            .ok_or(Failure::Unavailable)?;
-        let definition = catalogue
-            .definition(definition_kind, id)
-            .ok_or(Failure::Unavailable)?;
-        let source = if matches!(definition_kind, RuntimeDefinitionKind::Recipe) {
-            let openlegend_simulation::runtime::RuntimeDefinitionInspection::Recipe(source) =
-                &definition
-            else {
-                return Err(Failure::Unavailable);
-            };
-            Some(*source)
-        } else {
-            None
+        let scope = index::Scope {
+            world: snapshot.world_id,
+            timeline: snapshot.generation,
+            account,
         };
-        with_public_definition(definition, budget, |name, payload| {
-            let version = sha256_hex(payload.as_bytes());
-            if expected.is_some_and(|expected| expected != version) {
-                return Err(Failure::Stale);
-            }
-            let account = match recipient {
-                Recipient::Signed(account) => account,
-                Recipient::Connector => return Err(Failure::Forbidden),
-            };
-            let _workspace = if let Some(source) = source {
-                let bound = json_tree_allocation_bound(source).ok_or(Failure::Capacity)?;
-                Some(budget.reserve(bound).map_err(|_| Failure::Capacity)?)
+        if let Self::Inspect(input) = &self {
+            return inspect_definition(
+                input, catalogue, snapshot, budget, recipient, scope, stopped,
+            );
+        }
+        let (root, target) = match &self {
+            Self::Page(input) => (&input.root, None),
+            Self::Trace(input) => (&input.root, input.target.as_ref()),
+            Self::Inspect(_) => unreachable!(),
+        };
+        let local = matches!(&self, Self::Page(page) if matches!(page.direction, Direction::Out))
+            && supported(&root.kind);
+        let mut links = Links::empty(
+            catalogue,
+            budget,
+            if local {
+                MAX_LINKS
             } else {
-                None
-            };
-            let recipe: Option<Recipe<'_>> = source
-                .map(serde_json::from_str)
-                .transpose()
-                .map_err(|_| Failure::Unavailable)?;
-            let mut links = Links::new(catalogue, budget, kind_name, id, &version, name)?;
-            if let Some(recipe) = &recipe {
-                links.recipe(recipe, stopped)?;
+                MAX_RECIPE_CANDIDATES
+            },
+        )?;
+        if supported(&root.kind) {
+            links.current(&root.kind, &root.id)?;
+        }
+        if let Some(target) = target.filter(|target| supported(&target.kind)) {
+            links.current(&target.kind, &target.id)?;
+        }
+        if local {
+            if root.kind == "recipe" {
+                let index = links.resolve(root)?;
+                links.recipe(index, recipe_source(catalogue, &root.id)?, stopped)?;
             }
-            let page = links.page(&snapshot, account, relations, cursor, limit)?;
-            match &self {
-                Self::Inspect(_) => {
-                    let reference = DefinitionRef {
-                        kind: kind_name,
-                        id,
-                        version: &version,
-                    };
-                    let definition = Definition {
-                        node: Node {
-                            reference: &reference,
-                            label: name,
-                            layer: "definition",
-                            can_inspect: true,
-                        },
-                        reference: &reference,
-                        data: raw(payload)?,
-                    };
-                    result(
-                        snapshot,
-                        Inspected {
-                            definition,
-                            relationships: page,
-                        },
-                        budget,
-                        recipient,
-                    )
-                }
-                Self::Page(_) => result(snapshot, page, budget, recipient),
+        } else {
+            links.definitions(stopped)?;
+        }
+        let selected_root = links.resolve(root)?;
+        let selected_target = target.map(|target| links.resolve(target)).transpose()?;
+        let graph = index::Projection::new(links)?;
+        match &self {
+            Self::Page(input) => {
+                let page = graph
+                    .neighborhood(selected_root, input.direction, &input.relations)
+                    .page(scope, input.cursor.as_deref(), input.limit as usize)?;
+                result(snapshot, page, budget, recipient)
             }
-        })
+            Self::Trace(input) => input.read(
+                &graph,
+                selected_root,
+                selected_target,
+                snapshot,
+                scope,
+                budget,
+                recipient,
+                stopped,
+            ),
+            Self::Inspect(_) => unreachable!(),
+        }
+    }
+}
+
+fn inspect_definition(
+    input: &InspectInput,
+    catalogue: &RuntimeDefinitionCatalogue,
+    snapshot: Snapshot<'_>,
+    budget: &ByteBudget,
+    recipient: &Recipient,
+    scope: index::Scope<'_>,
+    stopped: &CancellationToken,
+) -> Result<PreparedReply, Failure> {
+    let (kind, definition_kind) = KINDS
+        .iter()
+        .copied()
+        .find(|(name, _)| *name == input.kind)
+        .ok_or(Failure::Unavailable)?;
+    let definition = catalogue
+        .definition(definition_kind, &input.id)
+        .ok_or(Failure::Unavailable)?;
+    let source = match &definition {
+        RuntimeDefinitionInspection::Recipe(source) => Some(*source),
+        _ => None,
+    };
+    with_public_definition(definition, budget, |name, payload| {
+        let version = sha256_hex(payload.as_bytes());
+        if input
+            .version
+            .as_deref()
+            .is_some_and(|expected| expected != version)
+        {
+            return Err(Failure::Stale);
+        }
+        let mut links = Links::new(catalogue, budget, kind, &input.id, &version, name)?;
+        if let Some(source) = source {
+            links.recipe(0, source, stopped)?;
+        }
+        let graph = index::Projection::new(links)?;
+        let page = graph
+            .neighborhood(0, Direction::Out, &[])
+            .page(scope, None, DEFAULT_PAGE)?;
+        let reference = DefinitionRef {
+            kind,
+            id: &input.id,
+            version: &version,
+        };
+        let definition = Definition {
+            node: Node {
+                reference: &reference,
+                label: name,
+                layer: "definition",
+                can_inspect: true,
+            },
+            reference: &reference,
+            data: raw(payload)?,
+        };
+        result(
+            snapshot,
+            Inspected {
+                definition,
+                relationships: page,
+            },
+            budget,
+            recipient,
+        )
+    })
+}
+
+fn recipe_source<'a>(
+    catalogue: &'a RuntimeDefinitionCatalogue,
+    id: &str,
+) -> Result<&'a str, Failure> {
+    match catalogue.definition(RuntimeDefinitionKind::Recipe, id) {
+        Some(RuntimeDefinitionInspection::Recipe(source)) => Ok(source),
+        _ => Err(Failure::Unavailable),
     }
 }
 
@@ -233,6 +311,11 @@ const LIVE_LIMITATIONS: &[&str] = &[
     "Current support and installed attribute and sense bindings only.",
     "Action and equipped object relationships continue in the separate live arrangement read.",
     "This page does not evaluate impact or interaction validity.",
+];
+
+const ITEM_LIMITATIONS: &[&str] = &[
+    "Current item definition and immediate inventory owner only.",
+    "The link reports custody in this view and does not establish title.",
 ];
 
 pub(super) fn live_entity(
@@ -251,7 +334,7 @@ pub(super) fn live_entity(
     {
         return Err(Failure::Stale);
     }
-    let Recipient::Signed(account) = recipient else {
+    let Recipient::Signed(_) = recipient else {
         return Err(Failure::Forbidden);
     };
     let mut links = Links::new(
@@ -262,14 +345,6 @@ pub(super) fn live_entity(
         &version,
         entity.name.into(),
     )?;
-    let count = entity
-        .attribute_ids
-        .len()
-        .checked_add(entity.sense_ids.len())
-        .and_then(|count| count.checked_add(1))
-        .filter(|count| *count <= MAX_LINKS)
-        .ok_or(Failure::Capacity)?;
-    links.claim(count * (4 * size_of::<Link>() + 256))?;
     match read.support {
         Some(RuntimeLiveSupport::Surface(surface)) => {
             let reference = Version::Exact(Cow::Owned(find::fingerprint(surface)?));
@@ -317,33 +392,95 @@ pub(super) fn live_entity(
         let target = links.current(kind, id)?;
         links.link(target, "uses", Some(role), None)?;
     }
-    links.finish();
-    let page = links.page(&snapshot, account, &[], None, DEFAULT_PAGE)?;
+    live_reply(links, entity, snapshot, recipient)
+}
+
+pub(super) fn live_item(
+    input: &InspectInput,
+    read: RuntimeLiveItemInspection<'_>,
+    snapshot: Snapshot<'_>,
+    budget: &ByteBudget,
+    recipient: &Recipient,
+) -> Result<PreparedReply, Failure> {
+    let Recipient::Signed(_) = recipient else {
+        return Err(Failure::Forbidden);
+    };
+    let item = &read.item;
+    let version = find::fingerprint(item)?;
+    if input
+        .version
+        .as_deref()
+        .is_some_and(|expected| expected != version)
+    {
+        return Err(Failure::Stale);
+    }
+    let owner = read.owner.facts().map_err(super::live::runtime_failure)?;
+    let mut links = Links::new(
+        &read.definitions,
+        budget,
+        "item",
+        item.id,
+        &version,
+        read.name.into(),
+    )?;
+    let definition = links.current("item-definition", item.definition_id)?;
+    links.link(definition, "instance_of", None, None)?;
+    let holder = links.add_node(
+        "entity",
+        owner.id,
+        Version::Exact(Cow::Owned(find::fingerprint(&owner)?)),
+        owner.name.into(),
+        true,
+    )?;
+    links.link(holder, "inventory_owner", None, None)?;
+    live_reply(links, item, snapshot, recipient)
+}
+
+fn live_reply<T: Serialize>(
+    links: Links<'_>,
+    data: &T,
+    snapshot: Snapshot<'_>,
+    recipient: &Recipient,
+) -> Result<PreparedReply, Failure> {
+    let Recipient::Signed(account) = recipient else {
+        return Err(Failure::Forbidden);
+    };
+    let graph = index::Projection::new(links)?;
+    let root = &graph.links.nodes[0];
+    let page = graph.neighborhood(0, Direction::Out, &[]).page(
+        index::Scope {
+            world: snapshot.world_id,
+            timeline: snapshot.generation,
+            account,
+        },
+        None,
+        DEFAULT_PAGE,
+    )?;
     result(
         snapshot,
         LiveInspection {
-            node: &links.nodes[0],
-            reference: &links.nodes[0].reference,
-            data: entity,
+            node: root,
+            reference: &root.reference,
+            data,
             relationships: LivePage {
                 page,
                 subject: LiveSubject {
-                    kind: "entity",
-                    id: entity.id,
+                    kind: root.reference.kind,
+                    id: root.reference.id,
                 },
             },
         },
-        budget,
+        graph.links.budget,
         recipient,
     )
 }
 
 #[derive(Serialize)]
-struct LiveInspection<'a> {
+struct LiveInspection<'a, T> {
     node: &'a LinkedNode<'a>,
     #[serde(rename = "ref")]
     reference: &'a Reference<'a>,
-    data: &'a RuntimeLiveEntity<'a>,
+    data: &'a T,
     relationships: LivePage<'a>,
 }
 
@@ -356,80 +493,8 @@ struct LivePage<'a> {
 
 #[derive(Serialize)]
 struct LiveSubject<'a> {
-    kind: &'static str,
-    id: &'a str,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Recipe<'a> {
-    #[serde(borrow)]
-    inputs: Vec<InputMaterial<'a>>,
-    #[serde(borrow)]
-    outputs: Vec<OutputMaterial<'a>>,
-    #[serde(borrow, rename = "dependencyReferences")]
-    dependencies: Vec<Dependency<'a>>,
-    source: RecipeSource,
-    #[serde(borrow)]
-    provenance: Provenance<'a>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct InputMaterial<'a> {
-    definition_id: &'a str,
-    role: &'a str,
-    quantity: u64,
-}
-
-#[derive(Deserialize)]
-struct OutputMaterial<'a> {
-    #[serde(borrow)]
-    definition: Id<'a>,
-    port: &'a str,
-    quantity: u64,
-}
-
-#[derive(Deserialize)]
-struct Id<'a> {
-    id: &'a str,
-}
-
-#[derive(Deserialize)]
-struct Dependency<'a> {
     kind: &'a str,
-    #[serde(borrow)]
-    pin: Id<'a>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct RecipeSource {
-    family_pin: Option<DefinitionPin>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Provenance<'a> {
-    source: &'a str,
-    #[serde(borrow)]
-    derived_from: Option<Base<'a>>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Base<'a> {
-    recipe_id: &'a str,
-    version: u64,
-    #[serde(borrow)]
-    digest: &'a RawValue,
-}
-
-#[derive(Deserialize)]
-struct SavedBase<'a> {
-    version: u64,
-    #[serde(borrow)]
-    digest: &'a RawValue,
+    id: &'a str,
 }
 
 #[derive(Serialize)]
@@ -470,6 +535,7 @@ struct Reference<'a> {
 #[serde(untagged)]
 enum Version<'a> {
     Exact(Cow<'a, str>),
+    Pinned(&'a str),
     Recorded(&'a RawValue),
 }
 
@@ -509,6 +575,7 @@ struct Fact<'a> {
 
 struct Link<'a> {
     id: String,
+    source: usize,
     target: usize,
     relation: &'static str,
     role: Option<&'a str>,
@@ -520,11 +587,31 @@ struct Links<'a> {
     budget: &'a ByteBudget,
     nodes: Vec<LinkedNode<'a>>,
     places: IndexMap<(&'a str, &'a str), usize>,
+    reference_only: IndexMap<(&'a str, &'a str, &'a str), usize>,
     edges: Vec<Link<'a>>,
+    link_limit: usize,
     memory: ByteReservation,
 }
 
 impl<'a> Links<'a> {
+    fn empty(
+        catalogue: &'a RuntimeDefinitionCatalogue,
+        budget: &'a ByteBudget,
+        link_limit: usize,
+    ) -> Result<Self, Failure> {
+        let memory = budget.reserve(2048).map_err(|_| Failure::Capacity)?;
+        Ok(Self {
+            catalogue,
+            budget,
+            nodes: Vec::new(),
+            places: IndexMap::new(),
+            reference_only: IndexMap::new(),
+            edges: Vec::new(),
+            link_limit,
+            memory,
+        })
+    }
+
     fn new(
         catalogue: &'a RuntimeDefinitionCatalogue,
         budget: &'a ByteBudget,
@@ -533,15 +620,7 @@ impl<'a> Links<'a> {
         version: &'a str,
         label: TextRef<'_>,
     ) -> Result<Self, Failure> {
-        let memory = budget.reserve(2048).map_err(|_| Failure::Capacity)?;
-        let mut result = Self {
-            catalogue,
-            budget,
-            memory,
-            nodes: Vec::new(),
-            places: IndexMap::new(),
-            edges: Vec::new(),
-        };
+        let mut result = Self::empty(catalogue, budget, MAX_LINKS)?;
         result.add_node(
             kind,
             id,
@@ -552,103 +631,129 @@ impl<'a> Links<'a> {
         Ok(result)
     }
 
-    fn recipe(
-        &mut self,
-        recipe: &'a Recipe<'a>,
-        stopped: &CancellationToken,
-    ) -> Result<(), Failure> {
-        let count = recipe
-            .inputs
-            .len()
-            .checked_add(recipe.outputs.len())
-            .and_then(|count| count.checked_add(recipe.dependencies.len()))
-            .and_then(|count| count.checked_add(2))
-            .filter(|count| *count <= MAX_LINKS)
-            .ok_or(Failure::Capacity)?;
-        self.claim(count * (4 * size_of::<Link>() + 256))?;
-        let inputs: HashSet<_> = recipe
-            .inputs
-            .iter()
-            .map(|input| input.definition_id)
-            .collect();
-        for input in &recipe.inputs {
-            find::ensure_current(stopped)?;
-            let node = self.current("item-definition", input.definition_id)?;
-            self.link(node, "requires", Some(input.role), Some(input.quantity))?;
+    fn resolve(&self, exact: &RootReference) -> Result<usize, Failure> {
+        let id = exact.id.as_str();
+        if exact.kind == "recipe-base" {
+            let version = json_record(&exact.version).map_err(|_| Failure::Invalid)?;
+            return self
+                .reference_only
+                .get(&(exact.kind.as_str(), id, version.as_str()))
+                .copied()
+                .ok_or(Failure::Unavailable);
         }
-        for output in &recipe.outputs {
-            find::ensure_current(stopped)?;
-            let node = self.current("item-definition", output.definition.id)?;
-            self.link(node, "produces", Some(output.port), Some(output.quantity))?;
+        if exact.kind == "assembly-family" {
+            return self
+                .reference_only
+                .get(&(exact.kind.as_str(), id, exact.version.as_str()))
+                .copied()
+                .ok_or(Failure::Unavailable);
         }
-        for dependency in &recipe.dependencies {
-            find::ensure_current(stopped)?;
-            if dependency.kind == "item-definition" && inputs.contains(dependency.pin.id) {
-                continue;
-            }
-            let node = self.current(dependency.kind, dependency.pin.id)?;
-            self.link(node, "uses", Some("family-dependency"), None)?;
+        let index = *self
+            .places
+            .get(&(exact.kind.as_str(), id))
+            .ok_or(Failure::Unavailable)?;
+        let Version::Exact(version) = &self.nodes[index].reference.version else {
+            return Err(Failure::Unavailable);
+        };
+        if version.as_ref() != exact.version {
+            return Err(Failure::Stale);
         }
-        if let Some(pin) = &recipe.source.family_pin {
-            let catalogue = self.catalogue;
-            let admitted = catalogue
-                .recipe_family_pin(&pin.id)
-                .filter(|current| *current == pin)
-                .ok_or(Failure::Unavailable)?;
-            let node = self.add_node(
-                "family",
-                &admitted.id,
-                Version::Exact(Cow::Borrowed(&admitted.digest)),
-                admitted.id.as_str().into(),
-                false,
-            )?;
-            self.link(node, "implements", None, None)?;
-        }
-        if let Some(base) = recipe
-            .provenance
-            .derived_from
-            .as_ref()
-            .filter(|_| recipe.provenance.source != "authored-world")
-        {
-            let installed = match self
-                .catalogue
-                .definition(RuntimeDefinitionKind::Recipe, base.recipe_id)
-            {
-                Some(openlegend_simulation::runtime::RuntimeDefinitionInspection::Recipe(
-                    payload,
-                )) => {
-                    let exact: SavedBase<'_> =
-                        serde_json::from_str(payload).map_err(|_| Failure::Unavailable)?;
-                    exact.version == base.version && exact.digest.get() == base.digest.get()
-                }
-                _ => false,
-            };
-            let node = if installed {
-                self.current("recipe", base.recipe_id)?
-            } else {
-                // Only the recorded base binding is public. Do not expose
-                // the rest of the provenance or the old record body.
-                if !base.digest.get().starts_with('"') {
-                    return Err(Failure::Unavailable);
-                }
-                self.add_node(
-                    "recipe-base",
-                    base.recipe_id,
-                    Version::Recorded(base.digest),
-                    "Historical recipe base".into(),
-                    false,
-                )?
-            };
-            self.link(node, "derives_from", None, None)?;
-        }
-        self.finish();
-        Ok(())
+        Ok(index)
     }
 
-    fn finish(&mut self) {
-        self.edges
-            .sort_unstable_by(|left, right| left.id.cmp(&right.id));
-        self.edges.dedup_by(|left, right| left.id == right.id);
+    fn recipe(
+        &mut self,
+        source_index: usize,
+        source: &'a str,
+        stopped: &CancellationToken,
+    ) -> Result<usize, Failure> {
+        let catalogue = self.catalogue;
+        let budget = self.budget;
+        recipes::visit(source, budget, stopped, |edge| {
+            let target = match edge.target {
+                recipes::Target::Definition(kind, id) => self.current(kind, id)?,
+                // The admitted recipe owns this exact declared pin. Show
+                // its dependency without inventing an assembly body reader.
+                recipes::Target::Dependency("assembly-family", pin) => self.add_node(
+                    "assembly-family",
+                    pin.id,
+                    Version::Pinned(pin.digest),
+                    pin.id.into(),
+                    false,
+                )?,
+                recipes::Target::Dependency(kind, pin) => self.current(kind, pin.id)?,
+                recipes::Target::Family(pin) => {
+                    let admitted = catalogue
+                        .recipe_family_pin(pin.id)
+                        .filter(|current| {
+                            current.version == pin.version && current.digest == pin.digest
+                        })
+                        .ok_or(Failure::Unavailable)?;
+                    self.add_node(
+                        "family",
+                        &admitted.id,
+                        Version::Exact(Cow::Borrowed(&admitted.digest)),
+                        admitted.id.as_str().into(),
+                        false,
+                    )?
+                }
+                recipes::Target::Base(base) => {
+                    let installed =
+                        match catalogue.definition(RuntimeDefinitionKind::Recipe, base.recipe_id) {
+                            Some(RuntimeDefinitionInspection::Recipe(payload)) => {
+                                base.matches(&recipes::exact_base(payload)?)
+                            }
+                            _ => false,
+                        };
+                    if installed {
+                        self.current("recipe", base.recipe_id)?
+                    } else {
+                        if !base.digest.get().starts_with('"') {
+                            return Err(Failure::Unavailable);
+                        }
+                        // This is the recorded reference only. Private
+                        // provenance and its old body stay with their owner.
+                        self.add_node(
+                            "recipe-base",
+                            base.recipe_id,
+                            Version::Recorded(base.digest),
+                            "Historical recipe base".into(),
+                            false,
+                        )?
+                    }
+                }
+            };
+            self.link_between(
+                source_index,
+                target,
+                edge.relation,
+                edge.role,
+                edge.quantity,
+            )
+        })
+    }
+
+    /// Prepare a request-local definition graph. This runs on the existing
+    /// off-turn capture and visits every installed recipe at most once.
+    fn definitions(&mut self, stopped: &CancellationToken) -> Result<(), Failure> {
+        let catalogue = self.catalogue;
+        let count = catalogue.count(RuntimeDefinitionKind::Recipe);
+        if count > MAX_DEFINITIONS {
+            return Err(Failure::Capacity);
+        }
+        let mut examined = 0;
+        for index in 0..count {
+            find::ensure_current(stopped)?;
+            let source_id = catalogue
+                .id_at(RuntimeDefinitionKind::Recipe, index)
+                .ok_or(Failure::Unavailable)?;
+            let source = self.current("recipe", source_id)?;
+            examined += self.recipe(source, recipe_source(catalogue, source_id)?, stopped)?;
+            if examined > MAX_RECIPE_CANDIDATES {
+                return Err(Failure::Capacity);
+            }
+        }
+        Ok(())
     }
 
     fn claim(&mut self, bytes: usize) -> Result<(), Failure> {
@@ -694,8 +799,21 @@ impl<'a> Links<'a> {
         label: TextRef<'_>,
         current: bool,
     ) -> Result<usize, Failure> {
-        if let Some(index) = self.places.get(&(kind, id)) {
+        let reference_only = match &version {
+            Version::Recorded(digest) => Some((*digest).get()),
+            Version::Pinned(digest) => Some(*digest),
+            Version::Exact(_) => None,
+        };
+        let existing = if let Some(digest) = reference_only {
+            self.reference_only.get(&(kind, id, digest))
+        } else {
+            self.places.get(&(kind, id))
+        };
+        if let Some(index) = existing {
             return Ok(*index);
+        }
+        if self.nodes.len() >= MAX_DEFINITIONS {
+            return Err(Failure::Capacity);
         }
         self.claim(
             4 * (size_of::<LinkedNode>() + size_of::<((&str, &str), usize)>())
@@ -705,7 +823,7 @@ impl<'a> Links<'a> {
         self.nodes.push(LinkedNode {
             reference: Reference { kind, id, version },
             label: label.to_owned(),
-            layer: if matches!(kind, "entity" | "surface" | "support") {
+            layer: if matches!(kind, "entity" | "item" | "surface" | "support") {
                 "live"
             } else {
                 "definition"
@@ -718,7 +836,11 @@ impl<'a> Links<'a> {
             availability: (!current && !matches!(kind, "surface" | "support"))
                 .then_some("reference-only"),
         });
-        self.places.insert((kind, id), index);
+        if let Some(digest) = reference_only {
+            self.reference_only.insert((kind, id, digest), index);
+        } else {
+            self.places.insert((kind, id), index);
+        }
         Ok(index)
     }
 
@@ -729,8 +851,24 @@ impl<'a> Links<'a> {
         role: Option<&'a str>,
         quantity: Option<u64>,
     ) -> Result<(), Failure> {
+        self.link_between(0, target, relation, role, quantity)
+    }
+
+    fn link_between(
+        &mut self,
+        source: usize,
+        target: usize,
+        relation: &'static str,
+        role: Option<&'a str>,
+        quantity: Option<u64>,
+    ) -> Result<(), Failure> {
+        if self.edges.len() >= self.link_limit {
+            return Err(Failure::Capacity);
+        }
+        self.claim(4 * size_of::<Link>() + 128)?;
         let mut link = Link {
             id: String::new(),
+            source,
             target,
             relation,
             role,
@@ -742,82 +880,31 @@ impl<'a> Links<'a> {
     }
 
     fn fact(&self, link: &Link<'a>) -> Fact<'_> {
-        let source = &self.nodes[0].reference;
+        let source = &self.nodes[link.source];
         Fact {
-            source,
+            source: &source.reference,
             target: &self.nodes[link.target].reference,
             relation: link.relation,
-            assertion: if self.nodes[0].layer == "live" {
+            assertion: if source.layer == "live" {
                 "observed"
             } else {
                 "compiler-derived"
             },
-            source_record: source,
+            source_record: &source.reference,
             role: link.role,
             quantity: link.quantity,
         }
     }
+}
 
-    fn page(
-        &self,
-        snapshot: &Snapshot<'_>,
-        account: &str,
-        relations: &[String],
-        cursor: Option<&str>,
-        limit: usize,
-    ) -> Result<Page<'_>, Failure> {
-        let topology = find::fingerprint(&(
-            snapshot.world_id,
-            snapshot.generation,
-            "outgoing-definition",
-            &self.nodes,
-            self.edges
-                .iter()
-                .map(|edge| edge.id.as_str())
-                .collect::<Vec<_>>(),
-        ))?;
-        let binding = find::fingerprint(&(&topology, account, relations))?;
-        let mut offset = find::page_offset(cursor, &binding, self.edges.len())?;
-        let storage = self
-            .budget
-            .reserve((limit + 1) * (4 * size_of::<Edge>() + 64))
-            .map_err(|_| Failure::Capacity)?;
-        let mut nodes = IndexMap::new();
-        nodes.insert(0, &self.nodes[0]);
-        let mut edges = Vec::with_capacity(limit);
-        while offset < self.edges.len() && edges.len() < limit {
-            let link = &self.edges[offset];
-            offset += 1;
-            if !relations.is_empty() && !relations.iter().any(|relation| relation == link.relation)
-            {
-                continue;
-            }
-            nodes.insert(link.target, &self.nodes[link.target]);
-            edges.push(Edge {
-                id: &link.id,
-                fact: self.fact(link),
-            });
+struct LinkIds<'a>(&'a [Link<'a>]);
+
+impl Serialize for LinkIds<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut rows = serializer.serialize_seq(Some(self.0.len()))?;
+        for edge in self.0 {
+            rows.serialize_element(&edge.id)?;
         }
-        let more = offset < self.edges.len();
-        if more && self.nodes[0].layer == "live" {
-            return Err(Failure::Capacity);
-        }
-        Ok(Page {
-            snapshot: topology,
-            nodes: nodes.into_values().collect(),
-            edges,
-            coverage: Coverage {
-                scope: "projected-neighborhood",
-                status: if more { "page" } else { "complete" },
-                impact: "not-evaluated",
-                limitations: if self.nodes[0].layer == "live" {
-                    LIVE_LIMITATIONS
-                } else {
-                    LIMITATIONS
-                },
-            },
-            next_cursor: more.then(|| format!("{binding}.{offset}")),
-            _storage: storage,
-        })
+        rows.end()
     }
 }

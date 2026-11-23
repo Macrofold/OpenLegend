@@ -36,8 +36,9 @@ mod handoff;
 mod inspection;
 pub use inspection::{
     RuntimeDefinitionCatalogue, RuntimeDefinitionInspection, RuntimeDefinitionKind,
-    RuntimeLiveActivity, RuntimeLiveEntity, RuntimeLiveInspection, RuntimeLiveRead,
-    RuntimeLiveSelection, RuntimeLiveSupport, RuntimeWorldInspection,
+    RuntimeLiveActivity, RuntimeLiveEntity, RuntimeLiveInspection, RuntimeLiveItem,
+    RuntimeLiveItemInspection, RuntimeLiveRead, RuntimeLiveSelection, RuntimeLiveSupport,
+    RuntimeWorldInspection,
 };
 mod knowledge;
 pub use crate::knowledge::cartography::{MapMarkerEdit, MarkerChange};
@@ -103,7 +104,7 @@ pub use crate::capture::{
 pub use navigation::RuntimeNavigationRead;
 pub use read_cut::{
     RuntimeActivityHistoryRead, RuntimeActivityRowsRead, RuntimeAppraisalOutcomesRead,
-    RuntimeKnownPlaceRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead,
+    RuntimeKnownPlaceRead, RuntimeMemoryPageRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead,
 };
 mod restore;
 pub use restore::{

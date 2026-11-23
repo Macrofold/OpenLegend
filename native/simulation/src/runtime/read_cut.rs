@@ -1,5 +1,8 @@
 //! Scoped unsaved temporal rows share the actual save packer and accepted cut.
 //! This is an internal indexed-read product, not a model/HTTP disclosure grant.
+mod memory_page;
+pub use memory_page::RuntimeMemoryPageRead;
+
 use super::*;
 use std::borrow::Cow;
 

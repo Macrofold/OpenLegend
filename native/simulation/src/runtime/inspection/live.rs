@@ -5,6 +5,8 @@
 use super::*;
 
 mod activity;
+mod item;
+pub use item::{RuntimeLiveItem, RuntimeLiveItemInspection};
 use crate::{
     geometry::WalkableSurface,
     host::{ByteBudget, ByteReservation},

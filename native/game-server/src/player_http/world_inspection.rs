@@ -40,9 +40,15 @@ pub(super) async fn read(State(state): State<PlayerRoutes>, request: Request) ->
             Ok(request) => request,
             Err(error) => return error,
         };
+    if request.name == "ol_evidence" {
+        return read_evidence(state, scope, request.arguments, (slot, input)).await;
+    }
     if matches!(request.name.as_str(), "ol_entities" | "ol_activity")
         || (request.name == "ol_inspect"
-            && request.arguments.get("kind").and_then(Value::as_str) == Some("entity"))
+            && matches!(
+                request.arguments.get("kind").and_then(Value::as_str),
+                Some("entity" | "item")
+            ))
     {
         return read_live(state, scope, request, (slot, input)).await;
     }
@@ -79,6 +85,37 @@ pub(super) async fn read(State(state): State<PlayerRoutes>, request: Request) ->
         }) {
         Ok(response) => response,
         Err(error) => access_failure(error),
+    }
+}
+
+async fn read_evidence(
+    state: PlayerRoutes,
+    scope: Arc<AuthorizedScope>,
+    arguments: Map<String, Value>,
+    custody: (tokio::sync::OwnedSemaphorePermit, ByteReservation),
+) -> Response {
+    let input: evidence::Arguments = match serde_json::from_value(Value::Object(arguments)) {
+        Ok(input) => input,
+        Err(_) => return unavailable(&state, ReadFailure::Invalid),
+    };
+    if !input.valid() {
+        return unavailable(&state, ReadFailure::Invalid);
+    }
+    let stop = state.definitions.stop_signal();
+    let custody = Arc::new((custody.0, custody.1, state._request_owner.clone()));
+    match tokio::select! {
+        biased;
+        _ = crate::launch::stopped(stop.clone()) => return access_failure(AccessError::Changed),
+        result = tokio::time::timeout(REQUEST_TIMEOUT, evidence::read(&state, scope, &input, stop, custody)) => result,
+    } {
+        Ok(Ok(crate::world::PlayerDisclosure::Published(bytes))) => {
+            json_response(StatusCode::OK, bytes)
+        }
+        Ok(Ok(crate::world::PlayerDisclosure::Busy)) | Err(_) => busy(),
+        Ok(Ok(
+            crate::world::PlayerDisclosure::Changed | crate::world::PlayerDisclosure::Unchanged,
+        )) => access_failure(AccessError::Changed),
+        Ok(Err(error)) => failed(error),
     }
 }
 

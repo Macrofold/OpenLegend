@@ -37,6 +37,7 @@ mod checkpoint;
 mod diagnostics;
 mod dialogue;
 mod event_history;
+mod evidence;
 mod expression;
 mod history;
 pub(crate) mod hearth;

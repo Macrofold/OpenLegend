@@ -16,6 +16,7 @@ use std::sync::Arc;
 
 pub(crate) enum Request {
     Entity(InspectInput),
+    Item(InspectInput),
     Directory(directory::Input),
     Activity(ActivityInput),
 }
@@ -40,10 +41,11 @@ impl Request {
             }
             "ol_inspect" => {
                 let input = inspect_selection(arguments)?;
-                if input.kind != "entity" {
-                    return Err(Failure::Invalid);
+                match input.kind.as_str() {
+                    "entity" => Ok(Self::Entity(input)),
+                    "item" => Ok(Self::Item(input)),
+                    _ => Err(Failure::Invalid),
                 }
-                Ok(Self::Entity(input))
             }
             _ => Err(Failure::Invalid),
         }
@@ -72,6 +74,13 @@ impl Request {
                     .inspection()
                     .map_err(runtime_failure)?;
                 graph::live_entity(request, entity, snapshot, budget, &recipient)
+            }
+            Self::Item(request) => {
+                let item = read
+                    .inspect_item(&request.id)
+                    .map_err(runtime_failure)?
+                    .ok_or(Failure::Forbidden)?;
+                graph::live_item(request, item, snapshot, budget, &recipient)
             }
             Self::Directory(input) => input.read(&read, selected, language, budget, &recipient),
             Self::Activity(input) => {
