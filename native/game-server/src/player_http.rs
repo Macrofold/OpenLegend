@@ -54,6 +54,7 @@ mod save_access;
 mod trade;
 mod typed_actions;
 mod view;
+mod world_inspection;
 
 const REQUEST_LIMIT: usize = 4096;
 pub(crate) const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
@@ -75,6 +76,7 @@ struct PlayerRoutes {
     grace: Duration,
     checkpoints: Arc<CheckpointSchedule>,
     loads: Arc<crate::launch::checkpoint_load::LoadInbox>,
+    definitions: Arc<crate::mcp_http::DefinitionReads>,
     // Declared last so the clone releases its world owners before this signal.
     _request_owner: tokio::sync::watch::Sender<()>,
 }
@@ -98,6 +100,7 @@ pub(crate) fn router(
     request_owner: tokio::sync::watch::Sender<()>,
     checkpoints: Arc<CheckpointSchedule>,
     loads: Arc<crate::launch::checkpoint_load::LoadInbox>,
+    definitions: Arc<crate::mcp_http::DefinitionReads>,
 ) -> Result<Router, getrandom::Error> {
     let references = Arc::new(ReferenceIssuer::new()?);
     let commands = Arc::new(PlayerCommands::new(
@@ -125,6 +128,7 @@ pub(crate) fn router(
         grace,
         checkpoints,
         loads,
+        definitions,
         _request_owner: request_owner,
     };
     let streams = Arc::new(Semaphore::new(streams));
@@ -221,6 +225,7 @@ pub(crate) fn router(
         .route("/api/inventions/list", post(inventions::list))
         .route("/api/inventions/receipt", post(inventions::receipt))
         .route("/api/world-agent/messages", post(inventions::reuse::submit))
+        .route("/api/world-agent/inspect", post(world_inspection::read))
         .route("/api/ai/cancel", post(dialogue::cancel))
         .route(
             "/api/player-interaction/availability",

@@ -4,6 +4,9 @@ use super::{NativeWorldSession, RuntimeError, RuntimeProgress, failure};
 use crate::{simulation::InstalledWorld, text::TextRef, values::DefinitionPin};
 use std::sync::Arc;
 
+mod live;
+pub use live::{RuntimeLiveEntity, RuntimeLiveInspection, RuntimeLiveSupport};
+
 pub struct RuntimeWorldInspection<'a> {
     pub progress: RuntimeProgress<'a>,
     pub profile_id: &'a str,
@@ -64,6 +67,16 @@ impl RuntimeDefinitionCatalogue {
                 (index == 0).then_some(installed.retained.item_handling_pin.id.as_str())
             }
         }
+    }
+
+    /// Check the existing exact family pin without exposing a recipe compiler
+    /// or an authoring capability. A definition view can project this binding.
+    pub fn recipe_family_pin(&self, id: &str) -> Option<&DefinitionPin> {
+        self.0
+            .manifest
+            .recipe_families
+            .iter()
+            .find(|pin| pin.id == id)
     }
 
     pub fn definition(

@@ -3,7 +3,6 @@
 
 mod tools;
 
-use crate::world::HostedWorld;
 use axum::{
     Router,
     body::{Body, Bytes, to_bytes},
@@ -26,6 +25,9 @@ use std::{
 };
 use subtle::ConstantTimeEq;
 use tokio::sync::{OwnedSemaphorePermit, Semaphore, watch};
+pub(crate) use tools::{
+    DefinitionReads, Failure as ReadFailure, publish_live_entity, select_live_entity,
+};
 
 const REQUEST_BYTES: usize = 128 * 1024;
 const REPLY_BYTES: usize = 160 * 1024;
@@ -149,9 +151,7 @@ struct Connector {
 pub(crate) fn router(
     config: Arc<Configuration>,
     world_id: &str,
-    timeline: &str,
-    world: Arc<HostedWorld>,
-    language: Option<Arc<crate::language::LanguageProvider>>,
+    reads: Arc<DefinitionReads>,
     budget: ByteBudget,
     stop: watch::Receiver<bool>,
     request_owner: watch::Sender<()>,
@@ -161,13 +161,7 @@ pub(crate) fn router(
         config,
         stop,
     });
-    let tools = tools::WorldTools::new(
-        access.clone(),
-        world,
-        timeline.into(),
-        budget.clone(),
-        language,
-    );
+    let tools = tools::WorldTools::new(access.clone(), reads);
     let transport = StreamableHttpService::new(
         move || Ok(tools.clone()),
         LocalSessionManager::default().into(),

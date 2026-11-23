@@ -319,13 +319,19 @@ impl PreparedGame {
         };
         let (end_http, http_stop) = watch::channel(false);
         let (request_owner, requests_released) = watch::channel(());
+        let definitions = Arc::new(crate::mcp_http::DefinitionReads::new(
+            game.world.clone(),
+            &world_id,
+            &timeline,
+            custody.clone(),
+            game.language().cloned(),
+            http_stop.clone(),
+        ));
         let mcp = settings.mcp.as_ref().map(|settings| {
             crate::mcp_http::router(
                 settings.clone(),
                 &world_id,
-                timeline.as_str(),
-                game.world.clone(),
-                game.language().cloned(),
+                definitions.clone(),
                 custody.clone(),
                 http_stop.clone(),
                 request_owner.clone(),
@@ -350,6 +356,7 @@ impl PreparedGame {
             request_owner,
             checkpoints.clone(),
             loads.clone(),
+            definitions,
         )
         .map_err(|_| "Could not establish per-process player reference keys")?;
         let game_routes = Router::new()

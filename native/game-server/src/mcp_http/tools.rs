@@ -1,15 +1,19 @@
-//! Select existing public inspection products. The connector can never
-//! read actors or submit actions, even when a context handle is supplied.
+//! Public authored definitions for signed inspection and MCP. Each ingress
+//! retains its own grants and final disclosure.
 
 use super::{Access, REPLY_BYTES, RequestLease};
-use crate::world::HostedWorld;
+use crate::{wire, world::HostedWorld};
+use axum::body::Bytes;
 use indexmap::IndexMap;
 use openlegend_simulation::{
     encoding::{
         json_record, json_record_len, json_tree_allocation_bound, sha256_hex, write_json_record,
     },
     host::{ByteBudget, ByteReservation},
-    runtime::{RuntimeDefinitionInspection, RuntimeDefinitionKind, RuntimeWorldInspection},
+    runtime::{
+        RuntimeDefinitionCatalogue, RuntimeDefinitionInspection, RuntimeDefinitionKind,
+        RuntimeLiveInspection, RuntimeWorldInspection,
+    },
     text::{JsText, TextRef},
     values::DefinitionPin,
 };
@@ -26,7 +30,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json, value::RawValue};
 use std::{borrow::Cow, sync::Arc};
 
+use tokio::sync::watch;
+use tokio_util::sync::CancellationToken;
+
 mod find;
+mod graph;
 
 const CONTEXT: &str = "ol_context";
 const INSPECT: &str = "ol_inspect";
@@ -45,27 +53,191 @@ const INSPECT_DESCRIPTION: &str = "Read an exact installed item, attribute, sens
 #[derive(Clone)]
 pub(super) struct WorldTools {
     access: Arc<Access>,
-    world: Arc<HostedWorld>,
-    timeline: Arc<str>,
-    budget: ByteBudget,
-    find: Option<Arc<find::CatalogueSearch>>,
+    reads: Arc<DefinitionReads>,
 }
 
 impl WorldTools {
-    pub(super) fn new(
-        access: Arc<Access>,
+    pub(super) fn new(access: Arc<Access>, reads: Arc<DefinitionReads>) -> Self {
+        Self { access, reads }
+    }
+}
+
+/// Own the same immutable catalogue ordering for both transports.
+/// A new running timeline creates a new owner and cursor scope.
+pub(crate) struct DefinitionReads {
+    world: Arc<HostedWorld>,
+    world_id: Arc<str>,
+    timeline: Arc<str>,
+    budget: ByteBudget,
+    stop: watch::Receiver<bool>,
+    find: Option<Arc<find::CatalogueSearch>>,
+}
+
+enum Recipient {
+    Connector,
+    Signed(Arc<str>),
+}
+
+impl DefinitionReads {
+    pub(crate) fn new(
         world: Arc<HostedWorld>,
-        timeline: Arc<str>,
+        world_id: &str,
+        timeline: &str,
         budget: ByteBudget,
         language: Option<Arc<crate::language::LanguageProvider>>,
+        stop: watch::Receiver<bool>,
     ) -> Self {
         Self {
-            access,
             world,
-            timeline,
+            world_id: world_id.into(),
+            timeline: timeline.into(),
             budget,
+            stop,
             find: language.map(|language| Arc::new(find::CatalogueSearch::new(language))),
         }
+    }
+
+    pub(crate) fn stop_signal(&self) -> watch::Receiver<bool> {
+        self.stop.clone()
+    }
+
+    /// Borrow the accepted definition source and prepare independently funded
+    /// response bytes. The caller retains and rechecks its own disclosure grant.
+    pub(crate) async fn signed(
+        &self,
+        name: &str,
+        arguments: JsonObject,
+        account: Arc<str>,
+        custody: impl Send + 'static,
+        current: impl Fn() -> bool + Clone + Send + Sync + 'static,
+        stopped: CancellationToken,
+    ) -> Result<Bytes, Failure> {
+        let recipient = Recipient::Signed(account);
+        let selected = read_selection(name, arguments, &recipient)?;
+        match self
+            .prepare(selected, recipient, custody, current, stopped)
+            .await?
+        {
+            PreparedReply::Signed(bytes) => Ok(bytes),
+            PreparedReply::Connector(..) => Err(Failure::Unavailable),
+        }
+    }
+
+    async fn prepare(
+        &self,
+        selected: Selection,
+        recipient: Recipient,
+        custody: impl Send + 'static,
+        current: impl Fn() -> bool + Clone + Send + Sync + 'static,
+        stopped: CancellationToken,
+    ) -> Result<PreparedReply, Failure> {
+        if !current() || stopped.is_cancelled() {
+            return Err(Failure::Expired);
+        }
+        let selected = match selected {
+            Selection::Find(input) => {
+                let owner = self.find.clone().ok_or(Failure::Unavailable)?;
+                return self
+                    .prepare_catalogue(
+                        custody,
+                        current,
+                        stopped,
+                        move |catalogue, revision, snapshot, budget, stopped| {
+                            owner.page(
+                                input, catalogue, revision, snapshot, &recipient, budget, stopped,
+                            )
+                        },
+                    )
+                    .await;
+            }
+            Selection::Relationships(request) => {
+                return self
+                    .prepare_catalogue(
+                        custody,
+                        current,
+                        stopped,
+                        move |catalogue, _, snapshot, budget, stopped| {
+                            request.read(&catalogue, snapshot, budget, &recipient, stopped)
+                        },
+                    )
+                    .await;
+            }
+            selected => selected,
+        };
+        let world_id = self.world_id.clone();
+        let timeline = self.timeline.clone();
+        let budget = self.budget.clone();
+        let find_available = self.find.is_some();
+        self.world
+            .capture(move |world| {
+                let _custody = custody;
+                world.inspect_world(selected.definition(), |read| {
+                    if !current() || stopped.is_cancelled() || &*world_id != read.progress.world_id
+                    {
+                        return Err(Failure::Expired);
+                    }
+                    selected.reply(read, &timeline, &budget, &recipient, find_available)
+                })
+            })
+            .await
+            .map_err(|_| Failure::Unavailable)?
+    }
+
+    /// Capture the exact installed catalogue under the world turn, then do
+    /// optional operator inspection work off-turn. Detached work keeps the
+    /// same captured catalogue and all of its own request custody.
+    async fn prepare_catalogue(
+        &self,
+        custody: impl Send + 'static,
+        current: impl Fn() -> bool + Clone + Send + Sync + 'static,
+        stopped: CancellationToken,
+        prepare: impl FnOnce(
+            RuntimeDefinitionCatalogue,
+            u64,
+            Snapshot<'_>,
+            &ByteBudget,
+            &CancellationToken,
+        ) -> Result<PreparedReply, Failure>
+        + Send
+        + 'static,
+    ) -> Result<PreparedReply, Failure> {
+        let accepted = current.clone();
+        let expected_world = self.world_id.clone();
+        let (sequence, sim_time, revision, catalogue) = self
+            .world
+            .capture(move |world| {
+                world.capture_definition_catalogue(|progress, revision, catalogue| {
+                    if !accepted() || &*expected_world != progress.world_id {
+                        return Err(Failure::Expired);
+                    }
+                    Ok((progress.sequence, progress.at, revision, catalogue))
+                })
+            })
+            .await
+            .map_err(|_| Failure::Unavailable)??;
+        let world_id = self.world_id.clone();
+        let timeline = self.timeline.clone();
+        let budget = self.budget.clone();
+        tokio::task::spawn_blocking(move || {
+            let _custody = custody;
+            if !current() || stopped.is_cancelled() {
+                return Err(Failure::Expired);
+            }
+            prepare(
+                catalogue,
+                revision,
+                Snapshot {
+                    world_id: &world_id,
+                    generation: &timeline,
+                    sequence,
+                    sim_time,
+                },
+                &budget,
+                &stopped,
+            )
+        })
+        .await
+        .map_err(|_| Failure::Unavailable)?
     }
 }
 
@@ -134,7 +306,7 @@ impl ServerHandler for WorldTools {
                 }),
             ),
         ];
-        if self.find.is_some() {
+        if self.reads.find.is_some() {
             tools.push(find::tool(context_handle));
         }
         Ok(ListToolsResult {
@@ -159,46 +331,39 @@ impl ServerHandler for WorldTools {
                 None,
             ));
         };
-        let selected = match read_selection(&request.name, request.arguments.unwrap_or_default()) {
+        let recipient = Recipient::Connector;
+        let selected = match read_selection(
+            &request.name,
+            request.arguments.unwrap_or_default(),
+            &recipient,
+        ) {
             Ok(selected) => selected,
             Err(failure) => return Ok(failure.result().into()),
         };
-        if !self.access.current() {
-            return Ok(Failure::Expired.result().into());
-        }
         let access = self.access.clone();
-        let budget = self.budget.clone();
-        let timeline = self.timeline.clone();
-        let find_available = self.find.is_some();
         let prepared = tokio::select! {
             biased;
             _ = context.ct.cancelled() => return Ok(Failure::Expired.result().into()),
-            result = async {
-                if let Selection::Find(input) = selected {
-                    let search = self.find.clone().ok_or(Failure::Unavailable)?;
-                    return find::search(search, &self.world, access, timeline, input, budget, lease.clone(), context.ct.clone()).await;
-                }
-                self.world.capture(move |world| {
-                    world.inspect_world(selected.definition(), |read| {
-                        if !access.current() || access.config.world_id != read.progress.world_id {
-                            return Err(Failure::Expired);
-                        }
-                        selected.reply(read, &timeline, &budget, find_available)
-                    })
-                }).await.map_err(|_| Failure::Unavailable)?
-            } => result,
+            result = self.reads.prepare(
+                selected,
+                recipient,
+                lease.clone(),
+                move || access.current(),
+                context.ct.clone(),
+            ) => result,
         };
         if !self.access.current() || context.ct.is_cancelled() {
             return Ok(Failure::Expired.result().into());
         }
         match prepared {
-            Ok(reply) => {
+            Ok(PreparedReply::Connector(result, custody)) => {
                 let mut memory = lease.reply.lock().map_err(|_| {
                     ErrorData::internal_error("Connector reply custody is unavailable.", None)
                 })?;
-                *memory = Some(reply.memory);
-                Ok(reply.result.into())
+                *memory = Some(custody);
+                Ok(result.into())
             }
+            Ok(PreparedReply::Signed(_)) => Ok(Failure::Unavailable.result().into()),
             Err(failure) => Ok(failure.result().into()),
         }
     }
@@ -206,7 +371,7 @@ impl ServerHandler for WorldTools {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct InspectInput {
+pub(crate) struct InspectInput {
     kind: String,
     id: String,
     #[serde(default, deserialize_with = "present")]
@@ -233,6 +398,7 @@ enum Selection {
     Context,
     Inspect(InspectInput, RuntimeDefinitionKind),
     Find(find::Input),
+    Relationships(graph::Request),
 }
 
 const KINDS: [(&str, RuntimeDefinitionKind); 6] = [
@@ -248,7 +414,59 @@ fn valid(value: &str, min: usize, max: usize) -> bool {
     (min..=max).contains(&value.encode_utf16().count())
 }
 
-fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Failure> {
+fn inspect_selection(arguments: JsonObject) -> Result<InspectInput, Failure> {
+    let input: InspectInput =
+        serde_json::from_value(Value::Object(arguments)).map_err(|_| Failure::Invalid)?;
+    if !valid(&input.kind, 1, 200)
+        || !valid(&input.id, 1, 500)
+        || input
+            .version
+            .as_ref()
+            .is_some_and(|value| !valid(value, 1, 100))
+        || input
+            .sections
+            .as_ref()
+            .is_some_and(|sections| !(1..=3).contains(&sections.len()))
+    {
+        return Err(Failure::Invalid);
+    }
+    Ok(input)
+}
+
+pub(crate) fn select_live_entity(arguments: JsonObject) -> Result<InspectInput, Failure> {
+    let input = inspect_selection(arguments)?;
+    if input.kind != "entity" {
+        return Err(Failure::Invalid);
+    }
+    Ok(input)
+}
+
+impl InspectInput {
+    pub(crate) fn id(&self) -> &str {
+        &self.id
+    }
+}
+
+/// Prepare the signed response only while the caller holds both the accepted
+/// live read and its current application disclosure grant.
+pub(crate) fn publish_live_entity(
+    input: &InspectInput,
+    read: RuntimeLiveInspection<'_>,
+    timeline: &str,
+    account: Arc<str>,
+    budget: &ByteBudget,
+) -> Result<Bytes, Failure> {
+    match graph::live_entity(input, read, timeline, budget, &Recipient::Signed(account))? {
+        PreparedReply::Signed(bytes) => Ok(bytes),
+        PreparedReply::Connector(..) => Err(Failure::Unavailable),
+    }
+}
+
+fn read_selection(
+    name: &str,
+    mut arguments: JsonObject,
+    recipient: &Recipient,
+) -> Result<Selection, Failure> {
     if let Some(handle) = arguments.remove("contextHandle") {
         return Err(
             if handle.as_str().is_some_and(|value| valid(value, 32, 256)) {
@@ -259,32 +477,28 @@ fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Fa
         );
     }
     match name {
-        CONTEXT if arguments.is_empty() => Ok(Selection::Context),
+        CONTEXT if arguments.is_empty() && matches!(recipient, Recipient::Connector) => {
+            Ok(Selection::Context)
+        }
         INSPECT => {
-            let input: InspectInput =
-                serde_json::from_value(Value::Object(arguments)).map_err(|_| Failure::Invalid)?;
-            if !valid(&input.kind, 1, 200)
-                || !valid(&input.id, 1, 500)
-                || input
-                    .version
-                    .as_ref()
-                    .is_some_and(|value| !valid(value, 1, 100))
-                || input
-                    .sections
-                    .as_ref()
-                    .is_some_and(|sections| !(1..=3).contains(&sections.len()))
-            {
-                return Err(Failure::Invalid);
-            }
+            let input = inspect_selection(arguments)?;
             if matches!(input.kind.as_str(), "entity" | "item" | "memory-record") {
-                return Err(Failure::Forbidden);
+                return Err(match recipient {
+                    Recipient::Connector => Failure::Forbidden,
+                    Recipient::Signed(_) => Failure::Unavailable,
+                });
             }
             if input.sections.as_ref().is_some_and(|sections| {
                 sections
                     .iter()
                     .any(|section| matches!(section, Section::Relationships))
             }) {
-                return Err(Failure::Unavailable);
+                return match recipient {
+                    Recipient::Signed(_) if graph::supported(&input.kind) => {
+                        Ok(Selection::Relationships(graph::Request::Inspect(input)))
+                    }
+                    _ => Err(Failure::Unavailable),
+                };
             }
             let kind = KINDS
                 .iter()
@@ -294,6 +508,14 @@ fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Fa
             Ok(Selection::Inspect(input, kind))
         }
         find::NAME => find::Input::parse(arguments).map(Selection::Find),
+        "ol_graph" if matches!(recipient, Recipient::Signed(_)) => Ok(Selection::Relationships(
+            graph::Request::Page(graph::Input::parse(arguments)?),
+        )),
+        "ol_entities" | "ol_trace" | "ol_activity" | "ol_evidence" | "ol_instances"
+            if matches!(recipient, Recipient::Signed(_)) =>
+        {
+            Err(Failure::Unavailable)
+        }
         _ => Err(Failure::Invalid),
     }
 }
@@ -301,7 +523,7 @@ fn read_selection(name: &str, mut arguments: JsonObject) -> Result<Selection, Fa
 impl Selection {
     fn definition(&self) -> Option<(RuntimeDefinitionKind, &str)> {
         match self {
-            Self::Context | Self::Find(_) => None,
+            Self::Context | Self::Find(_) | Self::Relationships(_) => None,
             Self::Inspect(input, kind) => Some((*kind, &input.id)),
         }
     }
@@ -311,6 +533,7 @@ impl Selection {
         read: RuntimeWorldInspection<'_>,
         timeline: &str,
         budget: &ByteBudget,
+        recipient: &Recipient,
         find_available: bool,
     ) -> Result<PreparedReply, Failure> {
         let snapshot = Snapshot {
@@ -337,23 +560,15 @@ impl Selection {
                     ],
                 },
                 budget,
+                recipient,
             ),
-            Self::Inspect(input, _) => match read.definition.ok_or(Failure::Unavailable)? {
-                RuntimeDefinitionInspection::Complete { name, payload } => {
-                    definition_reply(snapshot, input, name, payload, budget)
-                }
-                RuntimeDefinitionInspection::Recipe(source) => {
-                    projected_reply(snapshot, input, source, Projection::Recipe, budget)
-                }
-                RuntimeDefinitionInspection::ItemHandling { payload, pin } => projected_reply(
-                    snapshot,
-                    input,
-                    payload,
-                    Projection::ItemHandling(pin),
-                    budget,
-                ),
-            },
-            Self::Find(_) => Err(Failure::Unavailable),
+            Self::Inspect(input, _) => {
+                let definition = read.definition.ok_or(Failure::Unavailable)?;
+                with_public_definition(definition, budget, |name, payload| {
+                    definition_reply(snapshot, input, name, payload, budget, recipient)
+                })
+            }
+            Self::Find(_) | Self::Relationships(_) => Err(Failure::Unavailable),
         }
     }
 }
@@ -363,16 +578,21 @@ enum Projection<'a> {
     ItemHandling(&'a DefinitionPin),
 }
 
-/// Prepare one independently funded public record in Source property order.
-/// Nested values borrow the installed data for this request only.
+/// Read the exact public body in its canonical Source order. A projected
+/// recipe or item-handling policy owns its copied bytes only for this callback.
 /// docs/world-agent-mcp.md#stand-alone-rust-read-scope
-fn projected_reply(
-    snapshot: Snapshot<'_>,
-    input: &InspectInput,
-    source: &str,
-    projection: Projection<'_>,
+fn with_public_definition<T>(
+    definition: RuntimeDefinitionInspection<'_>,
     budget: &ByteBudget,
-) -> Result<PreparedReply, Failure> {
+    read: impl FnOnce(TextRef<'_>, &str) -> Result<T, Failure>,
+) -> Result<T, Failure> {
+    let (source, projection) = match definition {
+        RuntimeDefinitionInspection::Complete { name, payload } => return read(name, payload),
+        RuntimeDefinitionInspection::Recipe(source) => (source, Projection::Recipe),
+        RuntimeDefinitionInspection::ItemHandling { payload, pin } => {
+            (payload, Projection::ItemHandling(pin))
+        }
+    };
     with_projection(source, projection, budget, |name, fields| {
         let bytes = json_record_len(fields).map_err(|_| Failure::Unavailable)?;
         if bytes > RESULT_BYTES {
@@ -382,7 +602,7 @@ fn projected_reply(
         let mut output = Vec::with_capacity(bytes);
         write_json_record(fields, &mut output).map_err(|_| Failure::Unavailable)?;
         let payload = std::str::from_utf8(&output).map_err(|_| Failure::Unavailable)?;
-        definition_reply(snapshot, input, name, payload, budget)
+        read(name, payload)
     })
 }
 
@@ -431,6 +651,7 @@ fn definition_reply(
     name: TextRef<'_>,
     payload: &str,
     budget: &ByteBudget,
+    recipient: &Recipient,
 ) -> Result<PreparedReply, Failure> {
     // Source inspection versions hash the public fields in authored order.
     // A native installation or manufacturing pin may hash different fields.
@@ -460,6 +681,7 @@ fn definition_reply(
             data: raw(payload)?,
         },
         budget,
+        recipient,
     )
 }
 
@@ -548,15 +770,16 @@ struct ResultData<'a, T> {
     cost: &'static str,
 }
 
-struct PreparedReply {
-    result: CallToolResult,
-    memory: ByteReservation,
+enum PreparedReply {
+    Connector(CallToolResult, ByteReservation),
+    Signed(Bytes),
 }
 
 fn result<T: Serialize>(
     snapshot: Snapshot<'_>,
     data: T,
     budget: &ByteBudget,
+    recipient: &Recipient,
 ) -> Result<PreparedReply, Failure> {
     let value = ResultData {
         status: "ok",
@@ -567,6 +790,15 @@ fn result<T: Serialize>(
     let bytes = json_record_len(&value).map_err(|_| Failure::Unavailable)?;
     if bytes > RESULT_BYTES {
         return Err(Failure::Capacity);
+    }
+    if matches!(recipient, Recipient::Signed(_)) {
+        // Direct HTTP needs one funded body and no SDK JSON conversion.
+        return wire::encode(&value, br#"{"ok":true,"result":"#, b"}", budget)
+            .map(PreparedReply::Signed)
+            .map_err(|error| match error {
+                wire::WireError::Capacity => Failure::Capacity,
+                wire::WireError::Encoding(_) => Failure::Unavailable,
+            });
     }
     let mut memory = budget.reserve(bytes + 512).map_err(|_| Failure::Capacity)?;
     let text = json_record(&value).map_err(|_| Failure::Unavailable)?;
@@ -582,10 +814,10 @@ fn result<T: Serialize>(
     if json_record_len(&result).map_err(|_| Failure::Unavailable)? > REPLY_BYTES {
         return Err(Failure::Capacity);
     }
-    Ok(PreparedReply { result, memory })
+    Ok(PreparedReply::Connector(result, memory))
 }
 
-enum Failure {
+pub(crate) enum Failure {
     Invalid,
     Stale,
     ListingChanged,
@@ -597,7 +829,14 @@ enum Failure {
 
 impl Failure {
     fn result(self) -> CallToolResult {
-        let (status, message) = match self {
+        let (status, message) = self.details();
+        CallToolResult::structured_error(
+            json!({ "status": status, "message": message, "cost": "no-paid-work" }),
+        )
+    }
+
+    pub(crate) fn details(self) -> (&'static str, &'static str) {
+        match self {
             Self::Invalid => ("invalid", "Arguments do not match the tool."),
             Self::Stale => ("stale", "Definition changed. Read its current version."),
             Self::ListingChanged => (
@@ -617,9 +856,6 @@ impl Failure {
                 "capacity",
                 "The selected result exceeds the available read space.",
             ),
-        };
-        CallToolResult::structured_error(
-            json!({ "status": status, "message": message, "cost": "no-paid-work" }),
-        )
+        }
     }
 }

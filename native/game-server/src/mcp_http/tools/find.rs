@@ -2,13 +2,10 @@
 //! world turn; an explicit request borrows only the exact installed catalogue.
 
 use super::{
-    Access, Failure, ITEM_HANDLING_LABEL, KINDS, PreparedReply, Projection, RequestLease, Snapshot,
-    present, result, with_projection,
+    Failure, ITEM_HANDLING_LABEL, KINDS, PreparedReply, Projection, Recipient, Snapshot, present,
+    result, with_projection,
 };
-use crate::{
-    language::{LanguageError, LanguageProvider},
-    world::HostedWorld,
-};
+use crate::language::{LanguageError, LanguageProvider};
 use openlegend_simulation::{
     encoding::{hex_bytes, json_record, sha256_hex, write_json_record},
     host::{ByteBudget, ResidentReservation},
@@ -206,12 +203,13 @@ impl CatalogueSearch {
         Ok(ordered)
     }
 
-    fn page(
+    pub(super) fn page(
         &self,
         input: Input,
         public: RuntimeDefinitionCatalogue,
         revision: u64,
         snapshot: Snapshot<'_>,
+        recipient: &Recipient,
         budget: &ByteBudget,
         stopped: &CancellationToken,
     ) -> Result<PreparedReply, Failure> {
@@ -226,7 +224,12 @@ impl CatalogueSearch {
             revision,
             &ordered.version,
         ))?;
-        let binding = fingerprint(&(&source, &query, &input.kinds))?;
+        let binding = match recipient {
+            Recipient::Connector => fingerprint(&(&source, &query, &input.kinds))?,
+            Recipient::Signed(account) => {
+                fingerprint(&(&source, &query, &input.kinds, "signed", &**account))?
+            }
+        };
         let mut offset = page_offset(input.cursor.as_deref(), &binding, ordered.order.len())?;
         let end = ordered.order.len().min(offset + EXAMINED);
         let limit = input.limit as usize;
@@ -283,6 +286,7 @@ impl CatalogueSearch {
                 coverage: "Current projected definitions; lexical matching only.",
             },
             budget,
+            recipient,
         )
     }
 
@@ -300,55 +304,7 @@ impl CatalogueSearch {
     }
 }
 
-pub(super) async fn search(
-    owner: Arc<CatalogueSearch>,
-    world: &Arc<HostedWorld>,
-    access: Arc<Access>,
-    timeline: Arc<str>,
-    input: Input,
-    budget: ByteBudget,
-    lease: Arc<RequestLease>,
-    stopped: CancellationToken,
-) -> Result<PreparedReply, Failure> {
-    let accepted = access.clone();
-    let (sequence, sim_time, revision, catalogue) = world
-        .capture(move |world| {
-            world.capture_definition_catalogue(|progress, revision, catalogue| {
-                if !accepted.current() || accepted.config.world_id != progress.world_id {
-                    return Err(Failure::Expired);
-                }
-                Ok((progress.sequence, progress.at, revision, catalogue))
-            })
-        })
-        .await
-        .map_err(|_| Failure::Unavailable)??;
-    // Keep request custody until detached work ends even if the HTTP caller
-    // disconnects. The caller still checks the world grant before delivery.
-    tokio::task::spawn_blocking(move || {
-        let _lease = lease;
-        ensure_current(&stopped)?;
-        if !access.current() {
-            return Err(Failure::Expired);
-        }
-        owner.page(
-            input,
-            catalogue,
-            revision,
-            Snapshot {
-                world_id: &access.config.world_id,
-                generation: &timeline,
-                sequence,
-                sim_time,
-            },
-            &budget,
-            &stopped,
-        )
-    })
-    .await
-    .map_err(|_| Failure::Unavailable)?
-}
-
-fn ensure_current(stopped: &CancellationToken) -> Result<(), Failure> {
+pub(super) fn ensure_current(stopped: &CancellationToken) -> Result<(), Failure> {
     if stopped.is_cancelled() {
         Err(Failure::Expired)
     } else {
@@ -364,7 +320,7 @@ fn language_failure(error: LanguageError) -> Failure {
     }
 }
 
-fn fingerprint(value: &impl Serialize) -> Result<String, Failure> {
+pub(super) fn fingerprint(value: &impl Serialize) -> Result<String, Failure> {
     let mut sink = DigestSink(Sha256::new());
     write_json_record(value, &mut sink).map_err(|_| Failure::Unavailable)?;
     Ok(hex_bytes(&sink.0.finalize()))
@@ -429,7 +385,11 @@ fn with_label<T>(
     }
 }
 
-fn page_offset(cursor: Option<&str>, binding: &str, total: usize) -> Result<usize, Failure> {
+pub(super) fn page_offset(
+    cursor: Option<&str>,
+    binding: &str,
+    total: usize,
+) -> Result<usize, Failure> {
     let Some(cursor) = cursor else {
         return Ok(0);
     };
