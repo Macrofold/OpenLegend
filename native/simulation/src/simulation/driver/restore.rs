@@ -86,8 +86,8 @@ pub(super) fn poll_restore(
         }
         RestoreStep::Retention(request) => {
             let binding = request.provider_binding(core.state.installed.geometry.spatial.revision);
-            if request.accounts().is_none() {
-                // Recent membership still joins the candidate's private directory.
+            if request.requires_membership_packet() {
+                // The mixed host needs the full directory in its actual packet.
                 return projected_question(core, answer, ProviderKind::RestoreRetention,
                     binding, &request.value(), settings, budget, RestoreReply::Retention);
             }
@@ -98,7 +98,7 @@ pub(super) fn poll_restore(
             let question = ProviderQuestion::prepare_bound(
                 ProviderKind::RestoreRetention,
                 binding,
-                QuestionBody::RestoreAccounts(request, Box::new(projection)),
+                QuestionBody::RestoreRetention(request, Box::new(projection)),
                 budget,
             )?;
             Ok(Poll::Question(question, RestoreReply::Retention))

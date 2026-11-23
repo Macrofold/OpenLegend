@@ -129,7 +129,7 @@ impl Store {
             .reserve(workspace)
             .map_err(|_| StoreError::Capacity)?;
         let (aliases, individuals) = self
-            .with_checkpoint_projection(tx, prospective, request.projection(), async {
+            .with_checkpoint_rows(tx, prospective, request.projection(), None, None, async {
                 let (_transfer, rows) = admitted_query(
                     tx,
                     &self.schema.checkpoint.retention_membership,

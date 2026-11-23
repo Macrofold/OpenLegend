@@ -345,7 +345,7 @@ enum RuntimeAnswerBody {
     KnownPlaces(Box<crate::simulation::KnownPlacesAnswer>),
     RestoreArchives(Box<crate::restore::RestoreArchivesAnswer>),
     SupportMembership(Box<crate::received::SupportMembershipAnswer>),
-    RestoreAccounts(Box<crate::experience::retention::RestoreRetentionAnswer>),
+    RestoreRetention(Box<crate::experience::retention::RestoreRetentionAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     SourceVersions(Box<crate::simulation::SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
@@ -678,11 +678,11 @@ fn provider_response(
                     }
                     ProviderResponse::restore_archives(question.binding(), answer, input.custody)
                 }
-                RuntimeAnswerBody::RestoreAccounts(answer) => {
-                    if question.restore_accounts().is_none() {
+                RuntimeAnswerBody::RestoreRetention(answer) => {
+                    if question.restore_retention().is_none() {
                         return Err(failure("account selection requires its original restore request"));
                     }
-                    ProviderResponse::restore_accounts(question.binding(), answer, input.custody)
+                    ProviderResponse::restore_retention(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::PersonalHistory(answer) => {
                     if question.personal_history().is_none() {
@@ -950,17 +950,6 @@ impl RuntimeProvider {
             .upgrade()
             .ok_or_else(|| failure("native provider question is no longer pending"))
     }
-    /// Lend the same funded request to an in-process provider without a bridge
-    /// buffer copy. The active candidate owns its body; the callback may only
-    /// retain independently admitted data.
-    pub fn with_request<T>(&self, use_request: impl FnOnce(&str) -> T) -> Result<T, RuntimeError> {
-        let request = self.question()?;
-        let json = request
-            .json()
-            .ok_or_else(|| failure("this request needs a typed provider"))?;
-        Ok(use_request(json))
-    }
-
     /// The pending simulator owns this immutable geometry request through the
     /// callback. A direct provider takes no bridge encoding or mutable state.
     pub fn with_geometry<T>(
@@ -1143,7 +1132,7 @@ impl RuntimeProvider {
         if let Some(support) = question.support_membership_envelope() {
             return RuntimeJson::encode(&support, budget);
         }
-        if let Some(accounts) = question.restore_accounts_envelope() {
+        if let Some(accounts) = question.restore_retention_envelope() {
             return RuntimeJson::encode(&accounts, budget);
         }
         if let Some(archives) = question.restore_archives_envelope() {

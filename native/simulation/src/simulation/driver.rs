@@ -166,7 +166,7 @@ enum QuestionBody {
         Arc<crate::restore::RestoreArchivesQuestion>,
         Box<super::restore::RestoreReadProjection>,
     ),
-    RestoreAccounts(
+    RestoreRetention(
         Arc<crate::experience::retention::RestoreRetentionQuestion>,
         Box<super::restore::RestoreReadProjection>,
     ),
@@ -404,17 +404,17 @@ impl ProviderQuestion {
         })
     }
 
-    pub(crate) fn restore_accounts(
+    pub(crate) fn restore_retention(
         &self,
     ) -> Option<(&crate::experience::retention::RestoreRetentionQuestion, &crate::records::ChangedRows)> {
         match &self.body {
-            QuestionBody::RestoreAccounts(request, projection) => Some((request, &projection.changes)),
+            QuestionBody::RestoreRetention(request, projection) => Some((request, &projection.changes)),
             _ => None,
         }
     }
 
-    pub(crate) fn restore_accounts_envelope(&self) -> Option<impl Serialize + '_> {
-        self.restore_accounts().map(|(request, restore_projection)| restore::RestoreQuestion {
+    pub(crate) fn restore_retention_envelope(&self) -> Option<impl Serialize + '_> {
+        self.restore_retention().map(|(request, restore_projection)| restore::RestoreQuestion {
             kind: self.kind,
             binding: self.binding,
             value: restore::RestoreReadRequest { request, restore_projection: Some(restore_projection) },
@@ -697,7 +697,7 @@ enum AnswerBody {
     KnownPlaces(Box<KnownPlacesAnswer>),
     RestoreArchives(Box<crate::restore::RestoreArchivesAnswer>),
     SupportMembership(Box<crate::received::SupportMembershipAnswer>),
-    RestoreAccounts(Box<crate::experience::retention::RestoreRetentionAnswer>),
+    RestoreRetention(Box<crate::experience::retention::RestoreRetentionAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     SourceVersions(Box<SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
@@ -915,7 +915,7 @@ impl ProviderResponse {
         })
     }
 
-    pub(crate) fn restore_accounts(
+    pub(crate) fn restore_retention(
         binding: GeometryBinding,
         answer: Box<crate::experience::retention::RestoreRetentionAnswer>,
         reservation: ByteReservation,
@@ -926,7 +926,7 @@ impl ProviderResponse {
         Ok(Self {
             kind: ProviderKind::RestoreRetention,
             binding,
-            body: AnswerBody::RestoreAccounts(answer),
+            body: AnswerBody::RestoreRetention(answer),
             _reservation: reservation,
         })
     }
@@ -2270,7 +2270,7 @@ impl OperationDriver {
                     AnswerBody::RestoreArchives(value) => {
                         (Some(Answer::RestoreArchives(*value)), Some(_reservation), None)
                     }
-                    AnswerBody::RestoreAccounts(value) => {
+                    AnswerBody::RestoreRetention(value) => {
                         (Some(Answer::RestoreRetention(*value)), Some(_reservation), None)
                     }
                     AnswerBody::PersonalHistory(value) => {

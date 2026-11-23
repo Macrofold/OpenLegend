@@ -69,6 +69,15 @@ pub struct RestoreAccountRequest<'a> {
     pub maximum_transfer_bytes: usize,
 }
 
+pub(crate) struct RestoreMembershipRead {
+    pub(crate) at: f64,
+    pub(crate) max_age_seconds: f64,
+    pub(crate) aliases: Vec<String>,
+    pub(crate) individual_ids: Vec<String>,
+    pub(crate) recent_bytes: u64,
+    pub(crate) recent_count: u64,
+}
+
 enum QuestionData {
     Metadata {
         at: f64,
@@ -79,14 +88,15 @@ enum QuestionData {
         at: f64,
         selected: Vec<AccountCandidate>,
     },
-    Membership(Box<RawValue>),
+    Membership(RestoreMembershipRead),
+    MembershipPacket(Box<RawValue>),
 }
 impl QuestionData {
     fn phase(&self) -> Phase {
         match self {
             Self::Metadata { .. } => Phase::Metadata,
             Self::Records { .. } => Phase::Records,
-            Self::Membership(_) => Phase::Membership,
+            Self::Membership(_) | Self::MembershipPacket(_) => Phase::Membership,
         }
     }
 }
@@ -122,7 +132,7 @@ impl RestoreRetentionQuestion {
             QuestionData::Records { at, selected } => {
                 RestoreAccountQuery::Records { at: *at, selected }
             }
-            QuestionData::Membership(_) => return None,
+            QuestionData::Membership(_) | QuestionData::MembershipPacket(_) => return None,
         };
         Some(RestoreAccountRequest {
             binding: &self.binding,
@@ -162,7 +172,10 @@ impl RestoreRetentionQuestion {
                         selected,
                     }
                     .serialize(serializer),
-                    QuestionData::Membership(raw) => raw.serialize(serializer),
+                    QuestionData::MembershipPacket(raw) => raw.serialize(serializer),
+                    QuestionData::Membership(_) => Err(serde::ser::Error::custom(
+                        "Rust restore membership has no Node packet",
+                    )),
                 }
             }
         }
@@ -176,6 +189,49 @@ impl RestoreRetentionQuestion {
     pub(crate) fn provider_binding(&self, revision: u64) -> GeometryBinding {
         self.binding.provider_binding(revision)
     }
+    pub(crate) fn requires_membership_packet(&self) -> bool {
+        matches!(self.data, QuestionData::MembershipPacket(_))
+    }
+
+    pub(crate) fn membership_read(&self) -> Option<(&RestoreAccountBinding, &RestoreMembershipRead)> {
+        let QuestionData::Membership(read) = &self.data else {
+            return None;
+        };
+        Some((&self.binding, read))
+    }
+
+    /// Own only the keys the SQL reader uses. Recent receipts and privacy
+    /// remain with the inactive candidate and are checked on return.
+    pub(crate) fn direct_membership(
+        core: &CoreMutation<'_>,
+        actor: &str,
+        key: CandidateKey,
+        serial: u64,
+        max_age_seconds: f64,
+        recent: &crate::received::ReceivedRecentDirectory,
+        aliases: &[&str],
+        individual_ids: &[&str],
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, ExecutionError> {
+        let bytes = [aliases, individual_ids]
+            .into_iter()
+            .flatten()
+            .try_fold(0usize, |bytes, id| {
+                bytes.checked_add(size_of::<String>())?.checked_add(id.len())
+            })
+            .ok_or(ExecutionError::Capacity)?;
+        Self::new(core, actor, key, serial, bytes, budget, || {
+            QuestionData::Membership(RestoreMembershipRead {
+                at: core.state.physical.header.sim_time,
+                max_age_seconds,
+                aliases: aliases.iter().map(|id| (*id).to_owned()).collect(),
+                individual_ids: individual_ids.iter().map(|id| (*id).to_owned()).collect(),
+                recent_bytes: recent.bytes(),
+                recent_count: recent.count(),
+            })
+        })
+    }
+
     pub(crate) fn membership<T: Serialize + ?Sized>(
         core: &CoreMutation<'_>,
         actor: &str,
@@ -199,7 +255,7 @@ impl RestoreRetentionQuestion {
         let data = RawValue::from_string(encoded).map_err(|_| ExecutionError::Invariant)?;
         Ok(Arc::new(Self {
             binding,
-            data: QuestionData::Membership(data),
+            data: QuestionData::MembershipPacket(data),
             maximum_transfer_bytes,
             _storage: storage,
         }))
@@ -266,7 +322,7 @@ enum Data {
     Records(AccountBodiesReply),
     Membership(RestoreMembershipAnswer),
 }
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct RestoreMembershipAnswer {
     pub(crate) aliases: Vec<usize>,
@@ -274,6 +330,7 @@ pub(crate) struct RestoreMembershipAnswer {
     #[serde(skip)]
     _storage: Option<ByteReservation>,
 }
+heap_record!(RestoreMembershipAnswer { aliases, individuals });
 pub(crate) struct RestoreRetentionAnswer {
     binding: RestoreAccountBinding,
     data: Data,
@@ -287,48 +344,62 @@ impl RestoreRetentionAnswer {
     pub(crate) fn from_accounts(
         question: &RestoreRetentionQuestion,
         answer: RestoreAccountAnswer,
+        custody: ByteReservation,
+    ) -> Result<(Self, ByteReservation), HistoryPreparationError> {
+        let data = match (question.data.phase(), answer) {
+            (Phase::Metadata, RestoreAccountAnswer::Metadata(value)) => Data::Metadata(value),
+            (Phase::Records, RestoreAccountAnswer::Records(value)) => Data::Records(value),
+            _ => return Err(HistoryPreparationError::StaleResponse),
+        };
+        Self::from_direct(question, data, custody)
+    }
+
+    pub(crate) fn from_membership(
+        question: &RestoreRetentionQuestion,
+        aliases: Vec<usize>,
+        individuals: Vec<usize>,
+        custody: ByteReservation,
+    ) -> Result<(Self, ByteReservation), HistoryPreparationError> {
+        if question.membership_read().is_none() {
+            return Err(HistoryPreparationError::StaleResponse);
+        }
+        Self::from_direct(question,
+            Data::Membership(RestoreMembershipAnswer { aliases, individuals, _storage: None }),
+            custody)
+    }
+
+    fn from_direct(
+        question: &RestoreRetentionQuestion,
+        data: Data,
         mut custody: ByteReservation,
     ) -> Result<(Self, ByteReservation), HistoryPreparationError> {
-        #[derive(Serialize)]
-        struct Envelope<'a, T> {
-            binding: &'a RestoreAccountBinding,
-            phase: Phase,
-            data: &'a T,
-        }
         fn measure<T: Serialize + HeapBytes>(
             binding: &RestoreAccountBinding,
             phase: Phase,
-            value: &T,
+            data: &T,
         ) -> Result<(usize, usize), HistoryPreparationError> {
-            let wire_bytes = crate::encoding::json_record_len(&Envelope {
-                binding,
-                phase,
-                data: value,
-            })
-            .map_err(|_| HistoryPreparationError::MalformedResponse)?;
-            let heap = value
-                .heap_bytes()
-                .ok_or(HistoryPreparationError::Capacity)?;
-            Ok((wire_bytes, heap))
+            #[derive(Serialize)]
+            struct Envelope<'a, T> {
+                binding: &'a RestoreAccountBinding,
+                phase: Phase,
+                data: &'a T,
+            }
+            let wire = crate::encoding::json_record_len(&Envelope { binding, phase, data })
+                .map_err(|_| HistoryPreparationError::MalformedResponse)?;
+            let heap = data.heap_bytes().ok_or(HistoryPreparationError::Capacity)?;
+            Ok((wire, heap))
         }
         let binding = &question.binding;
-        let (data, wire_bytes, heap) = match (question.data.phase(), answer) {
-            (Phase::Metadata, RestoreAccountAnswer::Metadata(value)) => {
-                let (wire_bytes, heap) = measure(binding, Phase::Metadata, &value)?;
-                (Data::Metadata(value), wire_bytes, heap)
-            }
-            (Phase::Records, RestoreAccountAnswer::Records(value)) => {
-                let (wire_bytes, heap) = measure(binding, Phase::Records, &value)?;
-                (Data::Records(value), wire_bytes, heap)
-            }
-            _ => return Err(HistoryPreparationError::StaleResponse),
+        let phase = question.data.phase();
+        let (wire_bytes, heap) = match &data {
+            Data::Metadata(value) => measure(binding, phase, value)?,
+            Data::Records(value) => measure(binding, phase, value)?,
+            Data::Membership(value) => measure(binding, phase, value)?,
         };
         if wire_bytes > question.maximum_transfer_bytes {
             return Err(HistoryPreparationError::Capacity);
         }
-        let binding_bytes = binding
-            .heap_bytes()
-            .ok_or(HistoryPreparationError::Capacity)?;
+        let binding_bytes = binding.heap_bytes().ok_or(HistoryPreparationError::Capacity)?;
         let bytes = heap_sum([size_of::<Self>(), binding_bytes, heap])
             .ok_or(HistoryPreparationError::Capacity)?;
         custody.resize(bytes)?;

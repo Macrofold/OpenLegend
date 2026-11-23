@@ -15,24 +15,6 @@ use tokio_postgres::Transaction;
 use tokio_postgres::types::Type;
 
 impl Store {
-    /// Run a bounded canonical read at the actual private candidate cut.
-    /// The savepoint ends before the independently funded answer leaves.
-    pub(super) async fn with_checkpoint_projection<R>(
-        &self,
-        tx: &Transaction<'_>,
-        prospective: &DurableHead,
-        projection: &RawValue,
-        consume: impl std::future::Future<Output = StoreResult<R>>,
-    ) -> StoreResult<R> {
-        let _workspace = self
-            .budget
-            .reserve(SqlCell::json_decode_bound(projection.get()).ok_or(StoreError::InvalidRecord)?)
-            .map_err(|_| StoreError::Capacity)?;
-        let changes: ChangedRows =
-            serde_json::from_str(projection.get()).map_err(|_| StoreError::InvalidRecord)?;
-        self.with_checkpoint_rows(tx, prospective, &changes, None, None, consume).await
-    }
-
     /// Run read-only recovery preparation through the actual typed private
     /// record cut and selected archives before rolling its SQL savepoint back.
     pub(crate) async fn with_checkpoint_rows<R>(

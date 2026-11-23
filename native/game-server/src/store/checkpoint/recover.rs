@@ -733,9 +733,8 @@ impl Store {
         if let Some(request) = provider.restore_accounts().map_err(runtime)? {
             return self.answer_checkpoint_account_retention(tx, candidate, &request).await;
         }
-        // The existing packet decoder still joins the candidate's recent
-        // directory with the prospective SQL read.
-        let request = provider.prepare_restore_membership(&self.budget).map_err(runtime)?;
+        let request = provider.restore_membership().map_err(runtime)?
+            .ok_or(StoreError::InvalidRecord)?;
         let matched = self.checkpoint_retention_membership(tx, candidate, &request).await?;
         session.complete_restore_membership(
             &request,

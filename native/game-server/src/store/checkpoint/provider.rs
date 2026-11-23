@@ -3,55 +3,11 @@
 
 use crate::store::read::admitted_query;
 use crate::store::{DurableHead, MAX_SAFE_INTEGER, Store, StoreError, StoreResult, durable_head};
-use openlegend_simulation::{
-    experience::HistoryBinding, host::ByteReservation, records::SqlCell, runtime::RuntimeProvider,
-};
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use openlegend_simulation::experience::HistoryBinding;
+use serde::Deserialize;
 use tokio_postgres::Transaction;
 
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct Binding {
-    pub(super) world_id: String,
-    pub(super) generation: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub(super) actor_id: Option<String>,
-    pub(super) accepted_cut: u64,
-    pub(super) identity_through: u64,
-    candidate_id: u64,
-    candidate_generation: u64,
-    request_serial: u64,
-}
-
-pub(super) fn prepare<T: DeserializeOwned>(
-    store: &Store,
-    provider: &RuntimeProvider,
-    kind: &str,
-) -> StoreResult<(T, ByteReservation)> {
-    #[derive(Deserialize)]
-    struct Envelope<T> {
-        kind: String,
-        value: T,
-    }
-    provider
-        .with_request(|request| {
-            let workspace = SqlCell::json_decode_bound(request).ok_or(StoreError::InvalidRecord)?;
-            let custody = store
-                .budget
-                .reserve(workspace)
-                .map_err(|_| StoreError::Capacity)?;
-            let envelope: Envelope<T> =
-                serde_json::from_str(request).map_err(|_| StoreError::InvalidRecord)?;
-            if envelope.kind != kind {
-                return Err(StoreError::InvalidRecord);
-            }
-            Ok((envelope.value, custody))
-        })
-        .map_err(|_| StoreError::InvalidRecord)?
-}
-
-/// The same SQL fence checks an encoded restore request or an admitted
-/// typed personal-history request without copying either set of identities.
+/// Lend request identities to the shared SQL fence without copying them.
 pub(super) struct HeaderRef<'a> {
     world_id: &'a str,
     generation: &'a str,
@@ -60,20 +16,6 @@ pub(super) struct HeaderRef<'a> {
     candidate_id: u64,
     candidate_generation: u64,
     request_serial: u64,
-}
-
-impl<'a> From<&'a Binding> for HeaderRef<'a> {
-    fn from(binding: &'a Binding) -> Self {
-        Self {
-            world_id: &binding.world_id,
-            generation: &binding.generation,
-            accepted_cut: binding.accepted_cut,
-            identity_through: binding.identity_through,
-            candidate_id: binding.candidate_id,
-            candidate_generation: binding.candidate_generation,
-            request_serial: binding.request_serial,
-        }
-    }
 }
 
 impl<'a> From<&'a openlegend_simulation::runtime::RestoreAccountBinding> for HeaderRef<'a> {

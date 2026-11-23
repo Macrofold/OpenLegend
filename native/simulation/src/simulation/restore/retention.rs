@@ -20,6 +20,9 @@ pub struct RestoreRetentionPreparation {
     pub(super) accounts: crate::experience::RetentionPreparation,
     pub(super) support: SupportPreparation,
     pub(super) rounds: usize,
+    // Only the in-process Rust entry point can skip the Node packet.
+    #[serde(skip)]
+    pub(crate) direct_membership: bool,
 }
 enum Phase {
     Knowledge,
@@ -228,6 +231,7 @@ impl RestoreRetentionCursor {
                         self.experience_before,
                         self.temporal_before,
                         self.preparation.support,
+                        self.preparation.direct_membership,
                         budget,
                     )?);
                     self.phase = Phase::Individuals;
@@ -281,6 +285,7 @@ struct RetiredIndividualsCursor {
     requested: Option<(Arc<RestoreRetentionQuestion>, usize, usize)>,
     pruning: Option<crate::worlds::base_recognition::PreparedIndividualRetirement>,
     actor_storage: Option<ByteReservation>,
+    direct_membership: bool,
     key: CandidateKey,
     preparation: SupportPreparation,
     _storage: ByteReservation,
@@ -325,6 +330,7 @@ impl RetiredIndividualsCursor {
         experience: crate::experience::ExperienceCheckpoint,
         temporal: crate::received::TemporalCheckpoint,
         preparation: SupportPreparation,
+        direct_membership: bool,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let mut storage = budget.reserve(size_of::<Self>())?;
@@ -390,6 +396,7 @@ impl RetiredIndividualsCursor {
             requested: None,
             pruning: None,
             actor_storage: None,
+            direct_membership,
             key,
             preparation,
             _storage: storage,
@@ -623,6 +630,16 @@ impl RetiredIndividualsCursor {
             .temporal
             .actor(&group.actor)
             .ok_or(ExecutionError::Invariant)?;
+        let serial = core.journal.next_provider_serial()?;
+        let max_age_seconds = core.state.installed.attention.value().retention.recent.max_age_seconds;
+        if self.direct_membership {
+            let question = RestoreRetentionQuestion::direct_membership(
+                core, &group.actor, self.key, serial, max_age_seconds,
+                history.recent(), &aliases, &individual_ids, budget,
+            )?;
+            self.requested = Some((Arc::clone(&question), aliases_end, individuals_end));
+            return Ok(IndividualStep::Question(question));
+        }
         let privacy = &core
             .state
             .experience
@@ -658,14 +675,7 @@ impl RetiredIndividualsCursor {
         let data = Membership {
             actor_id: &group.actor,
             at: core.state.physical.header.sim_time,
-            max_age_seconds: core
-                .state
-                .installed
-                .attention
-                .value()
-                .retention
-                .recent
-                .max_age_seconds,
+            max_age_seconds,
             frontier: history.header().frontier.as_ref(),
             recent_directories: Directories(history.recent()),
             recent_bytes: history.recent().bytes(),
@@ -675,7 +685,6 @@ impl RetiredIndividualsCursor {
             aliases,
             individual_ids,
         };
-        let serial = core.journal.next_provider_serial()?;
         let question = RestoreRetentionQuestion::membership(
             core,
             &group.actor,
