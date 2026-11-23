@@ -10,6 +10,10 @@ An initial exact point approval used to reject even the unchanged choice because
 
 The same build turned Combat mode on in the live Chromium browser after a signed Aim while it was off. A forged input token was refused. Switching the mode off and retrying the original request left it off. The later real release produced a new notice and spent one stone. After restart, the returning browser kept its mode off and recovered both results unchanged. Result `6f127b4278f9` records the rendered check and complete database cleanup. Earlier attempts timed out in local database setup or matched only part of the receipt's saved identity.
 
+Two separately signed players streamed the same low shot. The attacker received an own-action notice on admission. The defender received one personal notice at actual contact, after the shot had already left the sling. The defender’s notice identified only the contact occurrence, without naming its source. A permitted read after the last stream closed returned the same notice. Result `be0bf849` records both streams, one 14-point injury and complete local cleanup.
+
+The results and source identities are archived outside Git in `nsc04-timed-combat-20261123`. The manifest SHA-256 begins `cb88400bf455`.
+
 ## October 25, 2026 UTC — remove the aggregate injury meter
 
 The overall injury field, its event delta and movement coefficient are removed from body state, response profiles, history and story selection. Damage/healing still use the shared health owner; defense, susceptibility, interruptions, death, scars and independent status effects remain. Body-part wounds are not implemented. The [current body contract](../architecture.md#actor-means-any-living-being) and [care proposal](../projects/recovery-and-care-feature-spec.md) distinguish these retained foundations from future injuries.
