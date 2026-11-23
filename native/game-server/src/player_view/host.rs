@@ -149,7 +149,7 @@ impl ViewHostInput {
         let disclosure = references
             .personal_source(&(
                 "inventory-disclosure",
-                Option::<()>::None,
+                input.inventory_inspection.as_ref(),
                 input.privacy_revision,
                 &epoch,
             ))

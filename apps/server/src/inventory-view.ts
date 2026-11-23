@@ -169,10 +169,15 @@ export function inventoryStorageHint(
   const target = entityGet(service.world.entities, id);
   if (!storage || !target) return;
   const inspection = currentInventoryInspection(service.world, scope.actorId);
+  const inspectionRoot = inspection?.containerId
+    ? objectAncestors(service.world, inspection.containerId).at(-1)
+    : undefined;
   return {
     containerId: currentContactReference(service.world, scope, target, reads),
     placementRevision: storage.placementRevision,
-    ...(inspection?.containerId === id ? { revision: inspection.revision } : {}),
+    // A deliberately inspected inner bag keeps its outer world window anchored.
+    // The page, not this anchor, still owns permission to read selected contents.
+    ...(inspectionRoot?.id === id ? { revision: inspectionRoot.inventoryRevision ?? 0 } : {}),
   };
 }
 

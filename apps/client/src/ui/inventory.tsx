@@ -448,7 +448,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     inspect: inspectWorldContents,
   });
   function inspectWorldContents(input: CommandInput) {
-    void operations.dispatch({
+    return operations.dispatch({
       id: 'inspect-container-contents',
       label: 'Inspect container contents',
       enabled: workspaceVisible && connected && view.player.canUseInventory,
@@ -835,7 +835,15 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     else if (selection && amountDraft) setDetailOpen(true);
   }, [workspaceVisible, connected]);
 
-  function navigate(side: InventorySide, id: string, opener?: HTMLElement) {
+  function navigationPage(side: InventorySide) {
+    const state = collection(side);
+    const worldPage = bags.some((bag) => bag.side === side && !!bag.root);
+    // A same-owner refresh can leave a permitted world page on screen. Its
+    // item selection may request inspection; the server checks current access.
+    return !busy && state?.available && (worldPage || state.current) ? state.page : undefined;
+  }
+
+  async function navigate(side: InventorySide, id: string, opener?: HTMLElement) {
     if (busy) return;
     if (!id) {
       closeBag(side);
@@ -845,21 +853,23 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
       onShowBelongings();
       return;
     }
-    const state = collection(side);
-    if (!state?.current || !state.page) return;
+    const page = navigationPage(side);
+    if (!page) return;
     const name =
-      state.page.items.find((item) => item.id === id)?.name ??
-      state.page.breadcrumbs.find((parent) => parent.id === id)?.name ??
+      page.items.find((item) => item.id === id)?.name ??
+      page.breadcrumbs.find((parent) => parent.id === id)?.name ??
       'Container';
     const input = opener ?? anchor.current;
+    const root = bags.find((bag) => bag.side === side)?.root;
+    // Opening a child of a world container is a deliberate inspection, just
+    // like opening the outer container. Keep the original navigation on refusal.
+    if (root && id !== page.container.id) {
+      const result = await inspectWorldContents({ type: 'inspect-inventory', containerId: id });
+      if (!result.ok) return;
+    }
     closeDetail(false);
     stopDrag();
-    openBag(
-      id,
-      name,
-      side === 'belongings' ? undefined : bags.find((bag) => bag.side === side)?.root,
-      input,
-    );
+    openBag(id, name, root, input);
   }
   function choose(
     side: InventorySide,
@@ -1796,7 +1806,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                             <>
                               <Button
                                 variant="quiet"
-                                disabled={busy || !selectedCollection?.current}
+                                disabled={!navigationPage(selection.side)}
                                 onPress={() => navigate(selection.side, item.id)}
                               >
                                 Open {namePhrase(item, 'definite')}

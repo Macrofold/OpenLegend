@@ -38,7 +38,7 @@ pub struct OwnedMove<I> {
     pub expected_contents_revision: Option<u64>,
     pub target_revision: u64,
     // A signed world transfer binds exactly one already observed storage
-    // root. Its current inspection and final physical reach are checked again.
+    // container. Its current inspection and the physical root's reach are checked again.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub world_storage: Option<I>,
 }
@@ -173,9 +173,9 @@ impl CoreMutation<'_> {
                 return Ok(Err(Refuse::Unavailable));
             }
             if request.target_id == id {
-                (None, Some(storage.root))
+                (None, Some(storage))
             } else if page.item_ids.iter().any(|item| item == request.item_id) {
-                (Some(storage.root), None)
+                (Some(storage), None)
             } else {
                 return Ok(Err(Refuse::Unavailable));
             }
@@ -183,13 +183,15 @@ impl CoreMutation<'_> {
             (None, None)
         };
         let actor_handle = entities.handle(actor).ok_or(ExecutionError::Invariant)?;
-        let item = if let Some(root) = world_source {
+        let item = if let Some(storage) = &world_source {
             let Some(item) = entities.get(request.item_id).filter(|item| {
-                item.item.is_some() && state.inventory.has_direct_item(entities, &root.id, item)
+                item.item.is_some() && state.inventory.has_direct_item(entities, &storage.container.id, item)
             }) else {
                 return Ok(Err(Refuse::Unavailable));
             };
-            source_path.push(entities.handle(&root.id).ok_or(ExecutionError::Invariant)?);
+            for parent in storage.ancestry() {
+                source_path.push(entities.handle(&parent.id).ok_or(ExecutionError::Invariant)?);
+            }
             item
         } else {
             let Some(item) =
@@ -217,9 +219,11 @@ impl CoreMutation<'_> {
             None
         };
         let destination_id = if merge_target.is_some() { source } else { request.target_id };
-        let destination = if let Some(root) = world_destination {
-            destination_path.push(entities.handle(&root.id).ok_or(ExecutionError::Invariant)?);
-            root
+        let destination = if let Some(storage) = &world_destination {
+            for parent in storage.ancestry() {
+                destination_path.push(entities.handle(&parent.id).ok_or(ExecutionError::Invariant)?);
+            }
+            storage.container
         } else {
             let destination = if destination_id == actor {
                 body

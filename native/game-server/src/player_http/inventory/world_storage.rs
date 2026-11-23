@@ -59,9 +59,7 @@ pub(in crate::player_http) async fn access(
             Ok(value) => value,
             Err(response) => return response,
         };
-    if !input.container_id.starts_with("contact-")
-        || !crate::npc::valid_request_id(&input.container_id)
-    {
+    if !crate::npc::valid_request_id(&input.container_id) {
         return refusal(StatusCode::BAD_REQUEST, "request", UNAVAILABLE);
     }
     match state
@@ -75,14 +73,14 @@ pub(in crate::player_http) async fn access(
                 scope,
                 &input.container_id,
                 input.approach,
-                |read, budget| {
+                |read, root, budget| {
                     let access = AccessBody {
                         ok: true,
                         scope: &key,
                         status: if read.ready { "ready" } else { "out-of-reach" },
                         container: Some(ContainerAccess {
                             id: &input.container_id,
-                            root_id: &input.container_id,
+                            root_id: root,
                             name: &read.name.name,
                             location: &read.name.name,
                             placement_revision: read.placement_revision,
@@ -134,18 +132,26 @@ pub(super) fn page(
 ) -> Result<Response, RuntimeError> {
     use crate::player_scene::InventoryPageError;
     let unavailable = || refusal(StatusCode::OK, "inventory-unavailable", UNAVAILABLE);
-    Ok(
-        with_selected(state, session, scope, contact, false, |read, budget| {
+    Ok(with_selected(
+        state,
+        session,
+        scope,
+        contact,
+        false,
+        |read, root, budget| {
             if !read.ready || read.inspection.is_none() {
                 return Ok(unavailable());
             }
             Ok(
-                match state
-                    .game
-                    .view_policy()
-                    .scene
-                    .encode_inspected_inventory(read, input, contact, controlling, language, budget)
-                {
+                match state.game.view_policy().scene.encode_inspected_inventory(
+                    read,
+                    input,
+                    contact,
+                    root,
+                    controlling,
+                    language,
+                    budget,
+                ) {
                     Ok(bytes) => json_response(StatusCode::OK, bytes),
                     Err(InventoryPageError::Stale) => refusal(
                         StatusCode::OK,
@@ -156,9 +162,9 @@ pub(super) fn page(
                     Err(InventoryPageError::Read(error)) => failed(WorldError::from(error)),
                 },
             )
-        })?
-        .unwrap_or_else(unavailable),
-    )
+        },
+    )?
+    .unwrap_or_else(unavailable))
 }
 
 fn with_selected<T>(
@@ -167,16 +173,18 @@ fn with_selected<T>(
     scope: &crate::authority::RequestScope,
     contact: &str,
     approach: bool,
-    respond: impl FnOnce(RuntimeWorldStorage<'_>, &ByteBudget) -> Result<T, RuntimeError>,
+    respond: impl FnOnce(RuntimeWorldStorage<'_>, &str, &ByteBudget) -> Result<T, RuntimeError>,
 ) -> Result<Option<T>, RuntimeError> {
     let scoped = state
         .references
         .scoped(scope)
         .map_err(RuntimeError::application_refused)?;
+    let selected = (!contact.starts_with("contact-")).then_some(contact);
     session.with_player_world_storage(
         &scope.account_id,
         &scope.actor_id,
         approach,
+        selected,
         |current| {
             scoped
                 .contact(
@@ -194,6 +202,18 @@ fn with_selected<T>(
                 .map(|result| result.into_parts())
                 .map_err(RuntimeError::application_refused)
         },
-        respond,
+        |read, budget| {
+            if selected.is_some() {
+                let _reference = budget
+                    .reserve(512)
+                    .map_err(RuntimeError::application_refused)?;
+                let root = scoped
+                    .contact(read.root_id, read.root_life, read.root_lease)
+                    .map_err(RuntimeError::application_refused)?;
+                respond(read, &root, budget)
+            } else {
+                respond(read, contact, budget)
+            }
+        },
     )
 }

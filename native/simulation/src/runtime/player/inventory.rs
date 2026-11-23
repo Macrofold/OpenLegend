@@ -63,6 +63,16 @@ pub struct InventoryContainer {
     restricted: bool,
 }
 
+impl InventoryContainer {
+    pub(super) fn new(capacity: u64, state: &crate::state::ContainerState) -> Self {
+        Self {
+            capacity,
+            load: state.load,
+            restricted: state.access.is_some(),
+        }
+    }
+}
+
 /// A borrowed exact inventory cut. Default pages seek directly into the
 /// selected container's ordered children. Only emitted rows need action offers.
 pub struct DirectInventory<'a> {
@@ -413,11 +423,7 @@ impl NativeWorldSession {
             (
                 bag,
                 Some(&definition.named),
-                Some(InventoryContainer {
-                    capacity,
-                    load: contents.load,
-                    restricted: contents.access.is_some(),
-                }),
+                Some(InventoryContainer::new(capacity, contents)),
             )
         } else {
             (actor, None, None)

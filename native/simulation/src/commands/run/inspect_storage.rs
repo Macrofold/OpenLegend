@@ -4,7 +4,11 @@ use super::inspect_item::{ItemEvidence, ItemPlace, prepare_item_evidence};
 use super::*;
 use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
 use crate::ground_items::inspection::{PAGE_DESCRIPTION_BYTES, PAGE_ITEMS, WorldStorage};
-use crate::narration::{NameArticle, Narration, NarrationPart, PersonRole};
+use crate::host::retained_size::HeapBytes;
+use crate::narration::{
+    CapturedKind, CapturedNarration, GrammaticalPerson, NameArticle, Narration, NarrationPart,
+    PersonRole,
+};
 use crate::reception::{EncounterExposure, EventScalar, SightBatch};
 use crate::state::InventoryInspection;
 use crate::text::JsText;
@@ -34,7 +38,7 @@ impl PreparedStorage {
 }
 
 impl CommandCursor {
-    fn storage_root(&self) -> Result<&str, ExecutionError> {
+    fn storage_container(&self) -> Result<&str, ExecutionError> {
         match &self.command {
             NativeCommand::InspectInventory {
                 world: Some(selected),
@@ -65,17 +69,25 @@ impl CommandCursor {
         core: &mut CoreMutation<'_>,
         actor: &str,
     ) -> Result<bool, ExecutionError> {
-        if WorldStorage::selected(&core.state, actor, self.storage_root()?).is_none() {
+        let id = self.storage_container()?;
+        let Some(storage) = WorldStorage::selected(&core.state, actor, id) else {
+            self.refuse_storage_access()?;
+            return Ok(false);
+        };
+        if storage.root.id != id
+            && WorldStorage::disclosed(&core.state, actor, id, false, &self.budget)?.is_none()
+        {
             self.refuse_storage_access()?;
             return Ok(false);
         }
+        let root = storage.root.id.as_str();
         self.binding.serial = core.journal.next_provider_serial()?;
         self.sight = Some(
             SightBatch::prepare(
                 &core.state.physical,
                 &core.state.installed,
                 actor,
-                &[self.storage_root()?],
+                &[root],
                 self.binding,
                 &self.budget,
             )
@@ -97,15 +109,11 @@ impl CommandCursor {
             .ok_or(ExecutionError::Invariant)?
             .finish(answer)
             .map_err(|_| ExecutionError::Invariant)?;
-        let root = self.storage_root()?;
-        let ray = if sight.seen(root) == Some(true) {
-            WorldStorage::selected(&core.state, actor, root)
-                .map(|root| root.reach(&self.budget))
-                .transpose()?
-                .flatten()
-        } else {
-            None
-        };
+        let ray = WorldStorage::selected(&core.state, actor, self.storage_container()?)
+            .filter(|storage| sight.seen(&storage.root.id) == Some(true))
+            .map(|storage| storage.reach(&self.budget))
+            .transpose()?
+            .flatten();
         if let Some(ray) = ray {
             self.reserve(size_of::<crate::geometry::SightRay>())?;
             self.question(core, Phase::StorageReach)?.sight.push(ray);
@@ -244,9 +252,52 @@ impl CommandCursor {
             });
         }
         parts.push(NarrationPart::Literal(summary));
+        let narration = Narration { parts };
+        let contained = core
+            .state
+            .physical
+            .entities
+            .get(target)
+            .is_some_and(|container| crate::install::inventory_parent(container).is_some());
+        let text = if contained {
+            // The page acquired the exact contained name. Its private summary
+            // must not look for a separately visible body for that bag.
+            let reader = crate::worlds::InstalledPersonalNameReader::prepare(
+                &core.state.physical,
+                &core.state.reception,
+                &core.state.installed,
+                &core.state.experience,
+                actor,
+            )
+            .map_err(ExecutionError::Received)?;
+            let owner = reader
+                .capture_observer_name(actor, &self.budget)
+                .map_err(ExecutionError::Received)?;
+            self.reserve(
+                1024 + actor.len()
+                    + target.len()
+                    + owner.name().heap_bytes().ok_or(ExecutionError::Capacity)?
+                    + page
+                        .container_name
+                        .heap_bytes()
+                        .ok_or(ExecutionError::Capacity)?,
+            )?;
+            EmissionText::Captured(CapturedNarration {
+                kind: CapturedKind::CapturedNarration,
+                narration,
+                names: IndexMap::from([
+                    (actor.to_owned(), owner.name().clone()),
+                    (target.to_owned(), page.container_name.clone()),
+                ]),
+                self_id: None,
+                person: GrammaticalPerson::Third,
+            })
+        } else {
+            EmissionText::Narration(narration)
+        };
         let event = core.stage_event(EventEmissionIntent {
             event_type: "inventory-inspected".into(),
-            text: EmissionText::Narration(Narration { parts }),
+            text,
             audience: AudienceSelection::Explicit(vec![actor.to_owned()]),
             source_id: Some(actor.to_owned()),
             target_id: None,
@@ -284,10 +335,30 @@ fn prepare_storage(
         actor,
     )
     .map_err(ExecutionError::Received)?;
-    let name = names
+    let root_name = names
         .capture_observer_name(&root.root.id, budget)
         .map_err(ExecutionError::Received)?;
-    let (mut page, mut custody) = root.prepare(name.name(), budget)?;
+    let captured = root.disclosed_name();
+    let nested_name = if root.container.id != root.root.id && captured.is_none() {
+        Some(
+            names
+                .capture_observer_name(&root.container.id, budget)
+                .map_err(ExecutionError::Received)?,
+        )
+    } else {
+        None
+    };
+    let name = captured
+        .or(nested_name.as_ref().map(|name| name.name()))
+        .unwrap_or_else(|| root_name.name());
+    let (mut page, mut custody) = root.prepare(name, budget)?;
+    let _location =
+        budget.reserve(name.name.storage_bytes() + root_name.name().name.storage_bytes() + 32)?;
+    let place = if root.container.id != root.root.id {
+        JsText::concat(&[&name.name, &" at ".into(), &root_name.name().name])
+    } else {
+        name.name.clone()
+    };
     custody.resize(
         custody
             .bytes()
@@ -317,7 +388,7 @@ fn prepare_storage(
             lot,
             ItemPlace::World {
                 parent: root.root,
-                label: &name.name().name,
+                label: &place,
             },
             budget,
         )?

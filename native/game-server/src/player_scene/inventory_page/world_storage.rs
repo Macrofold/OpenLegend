@@ -12,7 +12,7 @@ use std::sync::LazyLock;
 struct ReadPage<'a> {
     ok: bool,
     container: ReadRoot<'a>,
-    breadcrumbs: [ReadRoot<'a>; 1],
+    breadcrumbs: &'a [ReadRoot<'a>],
     items: Vec<Item<'a>>,
     inspection: Inspection<'a>,
 }
@@ -23,6 +23,10 @@ struct ReadRoot<'a> {
     #[serde(flatten)]
     name: &'a Named,
     revision: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    location: Option<&'a JsText>,
+    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    packing: Option<InventoryContainer>,
 }
 
 #[derive(Serialize)]
@@ -134,12 +138,13 @@ impl PlayerScenePolicy {
         read: RuntimeWorldStorage<'_>,
         input: &InventoryPageRequest,
         contact: &str,
+        root_contact: &str,
         controlling: bool,
         language: &LanguageProvider,
         budget: &ByteBudget,
     ) -> Result<Bytes, InventoryPageError> {
         use InventoryPageError::{Capacity, Read, Stale};
-        if input.cursor.is_some() {
+        if input.cursor.is_some() || input.merge_source_id.is_some() {
             return Err(Stale);
         }
         let inspected = read.inspection.ok_or(Stale)?;
@@ -241,16 +246,33 @@ impl PlayerScenePolicy {
                 items = items_rank.into_iter().map(|(item, _)| item).collect();
             }
         }
-        let root = ReadRoot {
+        let selected = ReadRoot {
             id: contact,
             name: &inspected.container_name,
             revision: inspected.revision,
+            location: (contact != root_contact).then_some(&read.root_name.name),
+            packing: read.packing,
+        };
+        let path = [
+            ReadRoot {
+                id: root_contact,
+                name: read.root_name,
+                revision: read.root_revision,
+                location: None,
+                packing: None,
+            },
+            selected,
+        ];
+        let breadcrumbs = if contact == root_contact {
+            &path[1..]
+        } else {
+            &path[..]
         };
         crate::wire::encode(
             &ReadPage {
                 ok: true,
-                container: root,
-                breadcrumbs: [root],
+                container: selected,
+                breadcrumbs,
                 items,
                 inspection: Inspection {
                     next: inspected.more.then_some(InspectionCommand {

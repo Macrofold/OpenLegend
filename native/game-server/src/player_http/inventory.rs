@@ -40,7 +40,7 @@ pub(super) async fn page(State(state): State<PlayerRoutes>, request: Request) ->
                 if let Some(contact) = input.container().filter(|id| id.starts_with("contact-")) {
                     return world_storage::page(&state, session, scope, &input, contact, controlling, language);
                 }
-                session.with_player_direct_inventory(
+                let carried = session.with_player_direct_inventory(
                     &scope.account_id,
                     &scope.actor_id,
                     input.container(),
@@ -59,17 +59,9 @@ pub(super) async fn page(State(state): State<PlayerRoutes>, request: Request) ->
                                 )
                             }
                             None if input.continued() => Err(InventoryPageError::Stale),
-                            // Unknown or no longer carried/openable. Neither case discloses
-                            // any part of that bag, and the browser clears its old page.
-                            None => {
-                                return refusal(
-                                    StatusCode::OK,
-                                    "inventory-unavailable",
-                                    "This container is unavailable.",
-                                );
-                            }
+                            None => return None,
                         };
-                        match result {
+                        Some(match result {
                             Ok(bytes) => json_response(StatusCode::OK, bytes),
                             Err(InventoryPageError::Stale) => refusal(
                                 StatusCode::OK,
@@ -78,9 +70,18 @@ pub(super) async fn page(State(state): State<PlayerRoutes>, request: Request) ->
                             ),
                             Err(InventoryPageError::Capacity) => busy(),
                             Err(InventoryPageError::Read(error)) => failed(WorldError::from(error)),
-                        }
+                        })
                     },
-                )
+                )?;
+                // The carried reader's native disclosure lease ends before
+                // checking an exact world page under the same application cut.
+                if let Some(response) = carried {
+                    Ok(response)
+                } else if let Some(reference) = input.container() {
+                    world_storage::page(&state, session, scope, &input, reference, controlling, language)
+                } else {
+                    Ok(refusal(StatusCode::OK, "inventory-unavailable", "This container is unavailable."))
+                }
             },
         )
         .await

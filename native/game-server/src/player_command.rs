@@ -829,12 +829,19 @@ impl PlayerCommands {
                             };
                             let exact_move = matches!(raw.kind, CommandKind::TransferItem)
                                 && raw.inventory_group.is_none();
+                            let nested = match target_ref {
+                                Some(id) if !id.starts_with("contact-") && (exact_move || inspected_world)
+                                   && world.disclosed_world_container(
+                                        &begin_scope.scope.account_id, &begin_scope.scope.actor_id, id, exact_move,
+                                   )? => Some(id),
+                                _ => None,
+                            };
                             let world_destination = exact_move
-                                && target_ref.is_some_and(|id| id.starts_with("contact-"));
+                                && (nested.is_some() || target_ref.is_some_and(|id| id.starts_with("contact-")));
                             let target = match target_ref.filter(|_| {
-                                // Owned endpoints bind by owned identity. A world deposit
-                                // requires the current public contact from the open page.
-                                !own_status && !matches!(raw.kind, CommandKind::Say)
+                                // Contained bags bind through the inspected page and its
+                                // root. Bare world storage needs the exact body reference.
+                                nested.is_none() && !own_status && !matches!(raw.kind, CommandKind::Say)
                                     && (raw.kind.arrangement().is_none() || world_destination)
                             }) {
                                 None => None,
@@ -925,6 +932,7 @@ impl PlayerCommands {
                             let command = begin_facts.command(
                                 position,
                                 target.as_ref().map(|value| value.id.as_str())
+                                    .or(nested)
                                     .or(own_status.then_some(begin_scope.scope.actor_id.as_str())),
                                 speech_target.as_ref().map(|value| (value.id.as_str(), value.role)),
                                 travel_destination.as_ref().map(|value| value.id.as_str()),
@@ -1146,12 +1154,13 @@ impl CommandRequest {
                     && match command.item_id.as_deref() {
                         Some(item) => id(item) && command.expected_revision.is_some()
                             && command.after.is_none() && command.expected_scope.is_none(),
-                        None => command.container_id.as_deref().is_some_and(|id| id.starts_with("contact-"))
-                            && match (command.after.as_deref(), command.expected_scope.as_ref(), command.expected_revision) {
-                                (None, None, None) => true,
-                                (Some(after), Some(scope), Some(_)) => id(after) && scope.units_len() == 64,
-                                _ => false,
-                            },
+                        // The caller binds an opaque body contact or a bag
+                        // disclosed by the current native inspection.
+                        None => match (command.after.as_deref(), command.expected_scope.as_ref(), command.expected_revision) {
+                            (None, None, None) => true,
+                            (Some(after), Some(scope), Some(_)) => id(after) && scope.units_len() == 64,
+                            _ => false,
+                        },
                     } => Ok(()),
             CommandKind::Follow
                 if command.position.is_none()

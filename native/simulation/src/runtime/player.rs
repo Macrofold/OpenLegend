@@ -161,6 +161,7 @@ pub struct RuntimePlayerViewSource {
     pub inventory_revision: u64,
     pub inventory_detail_revision: [u64; 3],
     pub world_storage: Option<(String, u64)>,
+    pub inventory_inspection: Option<(crate::text::JsText, String)>,
     recent_story_age: f64,
     presentation_release: Option<Box<RawValue>>,
     pub presentation_release_revision: Option<u64>,
@@ -1488,26 +1489,30 @@ fn capture_view_source(
         .actor_milestones
         .as_ref()
         .and_then(|rows| rows.get(actor));
-    let inspected_root = state.physical.entities.get(actor)
-        .and_then(|body| body.actor.as_ref())
-        .and_then(|body| body.inventory_inspection.as_ref())
-        .and_then(|page| page.container_id.as_deref());
-    let storage = if let Some(root) = inspected_root {
-        // A retained page does not disclose live details after its current
-        // contact is lost. Match the contact already prepared for this view.
-        PlayerPerception::new(&read.perception)
+    let storage = crate::ground_items::inspection::WorldStorage::inspected_selection(state, actor);
+    let world_storage = if let Some(storage) = storage {
+        // An inner page stays anchored to the previously received root and
+        // does not take a fresh presentation or reveal that root's contents.
+        let current = PlayerPerception::new(&read.perception)
             .map_err(failure)?
             .bodies()
             .flatten()
-            .find(|contact| contact.source_id == root)
-            .and_then(|contact| world_storage::observed_world_storage(state, actor, &contact))
+            .find(|contact| contact.source_id == storage.root.id)
+            .is_some_and(|contact| world_storage::observed_storage_matches(&storage, &contact));
+        if current {
+            storage.inspection(budget).map_err(failure)?.map(|page| {
+                (
+                    storage.root.id.as_str(),
+                    storage.root.inventory_revision.unwrap_or_default(),
+                    storage.container.id.as_str(),
+                    page,
+                )
+            })
+        } else {
+            None
+        }
     } else {
         None
-    };
-    let world_storage = match storage {
-        Some(storage) => storage.inspection(budget).map_err(failure)?
-            .map(|page| (storage.root.id.as_str(), page.revision)),
-        None => None,
     };
     let inventory_revision = state.administration.object_membership.revision;
     // The inspected root is already bound to this reader's current page,
@@ -1515,7 +1520,9 @@ fn capture_view_source(
     let inventory_detail_revision = [
         inventory_revision,
         state.inventory.material_detail_revision(actor),
-        world_storage.map_or(0, |(root, _)| state.inventory.material_detail_revision(root)),
+        world_storage.map_or(0, |(_, _, container, _)| {
+            state.inventory.material_detail_revision(container)
+        }),
     ];
     let bytes = milestones
         .map_or(Some(0), |rows| {
@@ -1531,7 +1538,11 @@ fn capture_view_source(
                     .map_or(0, |release| release.get().len()),
             )
         })
-        .and_then(|bytes| bytes.checked_add(world_storage.map_or(0, |(root, _)| root.len())))
+        .and_then(|bytes| {
+            bytes.checked_add(world_storage.map_or(0, |(root, _, _, page)| {
+                root.len() + page.scope.storage_bytes() + page.after.len()
+            }))
+        })
         .ok_or_else(|| failure("capacity"))?;
     let custody = budget.reserve(bytes).map_err(failure)?;
     Ok(RuntimePlayerViewSource {
@@ -1547,7 +1558,9 @@ fn capture_view_source(
         place_note_revision: state.reception.actor_knowledge.place_revision(actor),
         inventory_revision,
         inventory_detail_revision,
-        world_storage: world_storage.map(|(root, revision)| (root.to_owned(), revision)),
+        world_storage: world_storage.map(|(root, revision, _, _)| (root.to_owned(), revision)),
+        inventory_inspection: world_storage
+            .map(|(_, _, _, page)| (page.scope.clone(), page.after.clone())),
         recent_story_age: state
             .installed
             .attention

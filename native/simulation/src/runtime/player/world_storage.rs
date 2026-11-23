@@ -10,6 +10,12 @@ use indexmap::IndexMap;
 
 pub struct RuntimeWorldStorage<'a> {
     pub name: &'a Named,
+    pub root_id: &'a str,
+    pub root_name: &'a Named,
+    pub root_life: u64,
+    pub root_lease: &'a str,
+    pub root_revision: u64,
+    pub packing: Option<InventoryContainer>,
     pub placement_revision: u64,
     pub geometry_revision: u64,
     pub ready: bool,
@@ -161,7 +167,7 @@ impl<'a> RuntimeWorldStorage<'a> {
             &self.state.installed.retained,
             "",
             body,
-            false,
+            crate::install::inventory_bag_access(body, self.actor),
             self.state.physical.holds.quantity(id),
         )
         .map_err(failure)?;
@@ -175,8 +181,11 @@ impl<'a> RuntimeWorldStorage<'a> {
             description: definition.description.as_ref(),
             properties: &definition.properties,
             material_condition: crate::material_exposure::material_condition(
-                self.state, body, definition.exposure.as_ref(),
-            ).map_err(failure)?,
+                self.state,
+                body,
+                definition.exposure.as_ref(),
+            )
+            .map_err(failure)?,
             container: definition.is_container(),
             recipe_record: InspectedRecipeRecord::from_definition(
                 self.state, self.actor, definition,
@@ -185,28 +194,34 @@ impl<'a> RuntimeWorldStorage<'a> {
     }
 }
 
-pub(super) fn observed_world_storage<'a>(
-    state: &'a SimulationState,
-    actor: &str,
+pub(super) fn observed_storage_matches(
+    root: &WorldStorage<'_>,
     contact: &PlayerObservedBody<'_>,
-) -> Option<WorldStorage<'a>> {
-    let root = WorldStorage::selected(state, actor, contact.source_id)?;
-    let SensoryFacet::Body { body } = &contact.body_facet()?.value else {
-        return None;
+) -> bool {
+    if contact.source_id != root.root.id {
+        return false;
+    }
+    let Some(facet) = contact.body_facet() else {
+        return false;
     };
-    let storage = body.storage.as_ref()?;
-    let (position, surface) = root.root.world_support()?;
-    (storage.placement_revision == root.placement_revision
+    let SensoryFacet::Body { body } = &facet.value else {
+        return false;
+    };
+    let Some(storage) = body.storage.as_ref() else {
+        return false;
+    };
+    let Some((position, surface)) = root.root.world_support() else {
+        return false;
+    };
+    storage.placement_revision == root.placement_revision
         && body.position == position
-        && body.support_surface_id.as_deref() == Some(surface))
-    .then_some(root)
+        && body.support_surface_id.as_deref() == Some(surface)
 }
 
 impl NativeWorldSession {
-    /// A transfer out of a world pile names only its exact item. Bind its
-    /// source through the actor's admitted page and current received contact,
-    /// without following a guessed item ID into someone else's storage. The
-    /// candidate rechecks the page and actual reach before custody changes.
+    /// A world transfer binds one selected container and its already acquired
+    /// root. A withdrawal obtains its container only from the actor's current
+    /// inspection; an exact raw bag in a deposit must also be inspected.
     pub fn inspected_move_source(
         &self,
         account: &str,
@@ -216,30 +231,48 @@ impl NativeWorldSession {
         self.require_active()?;
         let accepted = self.session.accepted().map_err(failure)?;
         let state = &accepted.state;
-        let Some(page) = state
-            .physical
-            .entities
-            .get(actor)
-            .and_then(|body| body.actor.as_ref())
-            .and_then(|body| body.inventory_inspection.as_ref())
-            .filter(|page| page.item_ids.iter().any(|id| id == item))
-        else {
+        let Some(storage) = WorldStorage::inspected_selection(state, actor) else {
             return Ok(None);
         };
-        let Some(root) = page.container_id.as_deref() else {
-            return Ok(None);
-        };
-        let current = accepted
-            .visit_accepted_player_contacts(account, actor, &self.budget, |contact| {
-                contact.source_id == root
-                    && observed_world_storage(state, actor, &contact).is_some()
-            })
-            .map_err(failure)?;
-        if !current {
+        if !storage
+            .inspection(&self.budget)
+            .map_err(failure)?
+            .is_some_and(|page| page.item_ids.iter().any(|id| id == item))
+            || !accepted
+                .visit_accepted_player_contacts(account, actor, &self.budget, |contact| {
+                    observed_storage_matches(&storage, &contact)
+                })
+                .map_err(failure)?
+        {
             return Ok(None);
         }
-        let custody = self.budget.reserve(root.len())?;
-        Ok(Some((root.to_owned(), custody)))
+        let id = &storage.container.id;
+        let custody = self.budget.reserve(id.len())?;
+        Ok(Some((id.clone(), custody)))
+    }
+
+    /// A contained bag uses a disclosed raw item reference, while the outer
+    /// physical contact still owns sight, placement and geometry admission.
+    pub fn disclosed_world_container(
+        &self,
+        account: &str,
+        actor: &str,
+        id: &str,
+        require_page: bool,
+    ) -> Result<bool, RuntimeError> {
+        self.require_active()?;
+        let accepted = self.session.accepted().map_err(failure)?;
+        let Some(storage) =
+            WorldStorage::disclosed(&accepted.state, actor, id, require_page, &self.budget)
+                .map_err(failure)?
+        else {
+            return Ok(false);
+        };
+        accepted
+            .visit_accepted_player_contacts(account, actor, &self.budget, |contact| {
+                observed_storage_matches(&storage, &contact)
+            })
+            .map_err(failure)
     }
 
     /// Perform at most a single reach check and an explicitly requested
@@ -250,6 +283,7 @@ impl NativeWorldSession {
         account: &str,
         actor: &str,
         approach: bool,
+        selected_id: Option<&str>,
         mut matching: impl FnMut(&PlayerObservedBody<'_>) -> bool,
         compute: impl Fn(&GeometryQueries) -> Result<(GeometryAnswers, ByteReservation), RuntimeError>,
         respond: impl FnOnce(RuntimeWorldStorage<'_>, &ByteBudget) -> Result<T, RuntimeError>,
@@ -260,15 +294,37 @@ impl NativeWorldSession {
             .require_player_read(account, actor)
             .map_err(failure)?;
         let _publication = self.session.fence().begin_publication().map_err(failure)?;
+        let nested = if let Some(id) = selected_id {
+            let Some(storage) =
+                WorldStorage::disclosed(&simulation.state, actor, id, false, &self.budget)
+                    .map_err(failure)?
+            else {
+                return Ok(None);
+            };
+            Some(storage)
+        } else {
+            None
+        };
         let mut respond = Some(respond);
         let mut result = None;
         simulation
             .visit_accepted_player_contacts(account, actor, &self.budget, |contact| {
-                if !matching(&contact) {
-                    return false;
-                }
-                let Some(root) = observed_world_storage(&simulation.state, actor, &contact) else {
-                    return true;
+                let root = if let Some(storage) = nested {
+                    if !observed_storage_matches(&storage, &contact) {
+                        return false;
+                    }
+                    storage
+                } else {
+                    if !matching(&contact) {
+                        return false;
+                    }
+                    let Some(storage) =
+                        WorldStorage::selected(&simulation.state, actor, contact.source_id)
+                            .filter(|storage| observed_storage_matches(storage, &contact))
+                    else {
+                        return true;
+                    };
+                    storage
                 };
                 let encode = respond.take().expect("one exact storage contact");
                 result = Some((|| {
@@ -312,19 +368,46 @@ impl NativeWorldSession {
                             _ => None,
                         }
                     });
+                    let inspection = if ready {
+                        root.inspection(&self.budget).map_err(failure)?
+                    } else {
+                        None
+                    };
+                    let definitions = &simulation.state.installed.retained;
+                    let bag = root.container.container.as_ref().and_then(|bag| {
+                        let definition = definitions.items.get(&bag.definition_pin.id)?;
+                        Some((bag, definition))
+                    });
+                    let name = if root.container.id == root.root.id {
+                        contact.name
+                    } else {
+                        root.disclosed_name()
+                            .or_else(|| bag.map(|(_, definition)| &definition.named))
+                            .ok_or_else(|| failure("Selected storage name unavailable"))?
+                    };
+                    let packing = inspection.and_then(|_| {
+                        bag.and_then(|(bag, definition)| {
+                            Some(InventoryContainer::new(
+                                definition.container_capacity()?,
+                                bag,
+                            ))
+                        })
+                    });
                     encode(
                         RuntimeWorldStorage {
-                            name: contact.name,
+                            name,
+                            root_id: contact.source_id,
+                            root_name: contact.name,
+                            root_life: contact.physical_life.unwrap_or(0),
+                            root_lease: contact.lease_id,
+                            root_revision: root.root.inventory_revision.unwrap_or_default(),
+                            packing,
                             placement_revision: root.placement_revision,
                             geometry_revision: root.geometry_revision,
                             ready,
                             paused: simulation.state.physical.header.paused,
                             stance,
-                            inspection: if ready {
-                                root.inspection(&self.budget).map_err(failure)?
-                            } else {
-                                None
-                            },
+                            inspection,
                             actor: &root.actor.id,
                             state: &simulation.state,
                         },
