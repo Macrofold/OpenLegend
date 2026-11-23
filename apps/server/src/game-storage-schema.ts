@@ -2,7 +2,7 @@ import { AssetRepository, ASSET_TABLES } from './asset-repository.js';
 import { AuthorityRepository, AUTHORITY_TABLES } from './authority.js';
 import { CommandReceipts } from './command-receipts.js';
 import { CreationTargetRepository } from './creation-target.js';
-import { GameSaves } from './game-saves.js';
+import { initializeCheckpointSchema } from './checkpoint-format.js';
 import { HistoryRepository } from './history.js';
 import { InviteRepository } from './invites.js';
 import { MaintenanceRepository } from './maintenance.js';
@@ -14,6 +14,13 @@ import { WorldAgentStore } from './world-agent-store.js';
 import { WorldRecords } from './world-records.js';
 
 export const DATABASE_SCHEMA = '65';
+
+/** Publish the marker only after complete initialization in the caller's transaction. */
+export async function markGameSchema(db: Pick<SqlDatabase, 'prepare'>): Promise<void> {
+  await db
+    .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
+    .run('schema', DATABASE_SCHEMA);
+}
 export const PERMITTED_UNMARKED_TABLES = [...ASSET_TABLES, ...AUTHORITY_TABLES] as const;
 
 /** Refuse incompatible or unmarked gameplay storage before any table initialization. */
@@ -110,7 +117,7 @@ export async function initializeGameSchema(
   await WorldAgentStore.initializeSchema(db);
   await HistoryRepository.initializeSchema(db);
   await live?.prepareCheckpointDirectory();
-  await GameSaves.initializeSchema(db);
+  await initializeCheckpointSchema(db);
   await CommandReceipts.initializeSchema(db);
   await AuthorityRepository.initializeSchema(db);
   await AssetRepository.initializeSchema(db);

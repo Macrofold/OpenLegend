@@ -4,6 +4,7 @@ import { validateCurrentWorldState } from './upgrade-world.js';
 import { restoredSourceVersions } from './source-version-retention.js';
 import { HISTORY_TABLES, validateHistoryEvidence } from './history.js';
 import { digest } from './content-digest.js';
+import { AUTOSAVE_LIMITS, AUTOSAVE_DEFAULTS, SAVE_FORMAT } from './checkpoint-format.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { AutosaveSettings, CheckpointFailure, GameSaveSummary } from '@open-legend/protocol';
 import { SaveFiles, compareSaves, type SavePosition, type SaveFileMetadata } from './save-files.js';
@@ -37,12 +38,6 @@ export class GameSaveError extends Error {}
 /** The capture slot is taken; an automatic save simply waits for its next opportunity. */
 export class CheckpointBusyError extends GameSaveError {}
 
-/** Operator policy, outside gameplay rewind (docs/limits/persistence.md#sv01). */
-export const AUTOSAVE_DEFAULTS = { enabled: true, intervalMinutes: 5, retain: 3 } as const;
-export const AUTOSAVE_LIMITS = {
-  intervalMinutes: { min: 1, max: 1440 },
-  retain: { min: 1, max: 20 },
-} as const;
 const settingsSchema = z
   .object({
     enabled: z.boolean(),
@@ -84,7 +79,6 @@ export function recoveryFile(payload: unknown, checksum: unknown): string {
     throw new GameSaveError('Recovery pointer integrity check failed.');
   return pointer.data.file;
 }
-export const SAVE_FORMAT = 'development-2026-11-07-personal-result-evidence';
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
   format: string;
@@ -366,13 +360,6 @@ export class GameSaves {
   async prepareStartup(cleanInterruptedStages = true) {
     await this.worker?.ready;
     if (cleanInterruptedStages) await this.files.cleanInterruptedStages();
-  }
-  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
-    await db.exec(`CREATE TABLE IF NOT EXISTS game_saves (
-      id TEXT PRIMARY KEY, world_id TEXT NOT NULL, label TEXT NOT NULL,
-      created_at TEXT NOT NULL, sim_time REAL NOT NULL, format TEXT NOT NULL,
-      checksum TEXT NOT NULL, payload TEXT NOT NULL
-    )`);
   }
   /** Inspect only the original capture. Existing publication verification also finishes
    * directory synchronization after an ambiguous acknowledgement; it never captures again.

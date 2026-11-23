@@ -4,7 +4,12 @@ import {
   coldEntityOrdering,
   temporalPageReferences,
 } from '@open-legend/domain';
-import { HISTORY_TABLES, HISTORY_MAP_TABLES, HOT_TEMPORAL_BYTES } from './history-residency.js';
+import {
+  HISTORY_TABLES,
+  HISTORY_MAP_TABLES,
+  HOT_TEMPORAL_BYTES,
+  RESTORED_HISTORY_POSITION_TABLES,
+} from './history-residency.js';
 import { HOT_EVENT_RECENT_ROWS } from './hot-events.js';
 import {
   receivedRecordReferences,
@@ -226,14 +231,6 @@ export function checkpointCurrentSources(
 
 type CurrentRow = ReturnType<typeof nativeCurrentRow>;
 type CurrentHead = NonNullable<Awaited<ReturnType<WorldRecords['head']>>>;
-
-/** These canonical lists retain their abandoned allocation tail on rewind.
- * Other collections keep their existing ordering contract. */
-export const RESTORED_HISTORY_POSITION_TABLES = [
-  'activity_occurrences',
-  'mind_awareness',
-  'world_hot_events',
-] as const;
 
 /** Source restores against the complete abandoned history list: matching
  * identities keep their slots, new identities append after its last position.

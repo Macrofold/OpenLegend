@@ -43,19 +43,21 @@ import { receivedOwnershipAuditSql } from '../apps/server/src/received-value-own
 import { retainedEvidenceRowSql } from '../apps/server/src/retained-evidence-selection.js';
 import { readAssetConfiguration, readAssetIndex } from '../apps/server/src/asset-configuration.js';
 import { creationTargetOccupiedSql } from '../apps/server/src/creation-target.js';
+import { RESTORED_HISTORY_POSITION_TABLES } from '../apps/server/src/history-residency.js';
 import {
-  captureCurrentSources,
-  RESTORED_HISTORY_POSITION_TABLES,
-} from '../apps/server/src/native-current-sources.js';
-import { CHECKPOINT_ENCODING, CHECKPOINT_LIMITS } from '../apps/server/src/checkpoint-format.js';
+  AUTOSAVE_DEFAULTS,
+  AUTOSAVE_LIMITS,
+  CHECKPOINT_ENCODING,
+  CHECKPOINT_LIMITS,
+  SAVE_FORMAT,
+} from '../apps/server/src/checkpoint-format.js';
 import {
   BACKUP_FORMAT,
   BACKUP_MANIFEST_BYTES,
   BACKUP_OPERATIONS_FORMAT,
   MAX_BACKUP_SLOTS,
   OPERATION_TABLES,
-} from '../apps/server/src/operational-backup.js';
-import { AUTOSAVE_DEFAULTS, AUTOSAVE_LIMITS, SAVE_FORMAT } from '../apps/server/src/game-saves.js';
+} from '../apps/server/src/operational-backup-format.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { storyAccountAvailableSql, storyAccountSql } from '../apps/server/src/personal-accounts.js';
 import { ACCOUNT_RETENTION_PREPARATION } from '../apps/server/src/account-retention.js';
@@ -79,8 +81,8 @@ import {
   correctionPageRows,
   correctionSourceBytes,
 } from '../apps/server/src/temporal-correction-selection.js';
-import { nativeDefinitionSources } from '../apps/server/src/native-definition-sources.js';
 import {
+  nativeDefinitionInputs,
   nativeRecordLayouts,
   nativeStorageSettings,
 } from '../apps/server/src/native-install-inputs.js';
@@ -288,11 +290,8 @@ async function openingArtifacts(url: string, includeNavigation: boolean) {
       const marker = await database.prepare("SELECT value FROM meta WHERE key='schema'").get();
       if (marker?.value !== DATABASE_SCHEMA) throw new Error('Opening has an incompatible schema.');
       const records = new WorldRecords(database);
-      const opening = await captureCurrentSources(records, DATABASE_SCHEMA);
-      if (!opening) throw new Error('The selected opening is empty.');
       const selected = await records.load(true);
-      if (!selected || selected.revision !== opening.records.durableRevision)
-        throw new Error('The public view artifact needs the same installed opening.');
+      if (!selected) throw new Error('The selected opening is empty.');
       const world = selected.state.world;
       return {
         navigation: includeNavigation
@@ -307,7 +306,7 @@ async function openingArtifacts(url: string, includeNavigation: boolean) {
           settings: nativeSetupSettings,
           storage: nativeStorageSettings,
           layouts: nativeRecordLayouts(),
-          definitions: nativeDefinitionSources(opening),
+          definitions: nativeDefinitionInputs(world),
         },
         view: rustGameServerViewPolicy(world),
         cognition: rustGameServerDecisionPolicy(world),

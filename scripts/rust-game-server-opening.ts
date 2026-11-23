@@ -1,6 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   entityKeys,
@@ -12,13 +11,13 @@ import { readAssetIndex } from '../apps/server/src/asset-configuration.js';
 import { digest } from '../apps/server/src/content-digest.js';
 import { prepareReviewedOpening } from '../apps/server/src/initial-world-preparation.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
-import { SAVE_FORMAT } from '../apps/server/src/game-saves.js';
+import { SAVE_FORMAT } from '../apps/server/src/checkpoint-format.js';
 import { SaveFiles } from '../apps/server/src/save-files.js';
 import { writeCheckpoint } from '../apps/server/src/checkpoint.js';
-import { SqlGameRepository } from '../apps/server/src/store.js';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { writeRustGameServerStorage } from './rust-game-server-storage.js';
+import { writeOpeningRecords } from './rust-opening-records.js';
 
 const [operation, input, account, artworkIndex, output, approved, ...rest] = process.argv.slice(2);
 const review = operation === 'review' && !output && !approved;
@@ -73,7 +72,6 @@ if (review) {
     throw new Error('The compiled initial world differs from the approved opening.');
   const admin = process.env['OPENLEGEND_BUILD_DATABASE_ADMIN_URL'];
   if (!admin) throw new Error('Publish requires OPENLEGEND_BUILD_DATABASE_ADMIN_URL.');
-  const work = await mkdtemp(join(tmpdir(), 'openlegend-reviewed-opening-'));
   let ownsOutput = false;
   try {
     // Reuse the first-save codec only in our own temporary database. No
@@ -81,12 +79,11 @@ if (review) {
     const temporary = await createDisposableDatabase(admin);
     let openingSha256: string;
     try {
-      const repository = new SqlGameRepository(work, new PostgresDatabase(temporary.url));
+      const seed = new PostgresDatabase(temporary.url);
       try {
-        await repository.ready;
-        await repository.commit(0, savedWorld);
+        await writeOpeningRecords(seed, savedWorld);
       } finally {
-        await repository.close();
+        await seed.close();
       }
       // Export all release inputs and the checkpoint before dropping the same
       // immutable opening. The tool owns the directory after this succeeds.
@@ -135,7 +132,5 @@ if (review) {
   } catch (error) {
     if (ownsOutput) await rm(output, { recursive: true, force: true });
     throw error;
-  } finally {
-    await rm(work, { recursive: true, force: true });
   }
 }

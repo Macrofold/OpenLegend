@@ -1,7 +1,11 @@
-import { WORLD_AGENT_TABLES } from './world-agent-store.js';
-import { ASSET_TABLES } from './asset-repository.js';
-import { AUTHORITY_TABLES } from './authority.js';
-import { CREATION_TARGET_TABLES } from './creation-target-contracts.js';
+import {
+  BACKUP_FORMAT,
+  BACKUP_MANIFEST_BYTES,
+  BACKUP_OPERATIONS_FORMAT,
+  BACKUP_TABLES,
+  MAX_BACKUP_SLOTS,
+  OPERATION_TABLES,
+} from './operational-backup-format.js';
 import { constants } from 'node:fs';
 import { copyFile, mkdir, open, readFile, rename, rm, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -16,37 +20,8 @@ import {
 } from './save-files.js';
 import { tableRows } from './record-pages.js';
 import { WorldRecords } from './world-records.js';
-import { COMMAND_TABLES } from './command-receipts.js';
-import { MEMORY_CACHE_TABLES, MEMORY_HISTORY_TABLES } from './memory-repository.js';
-import { HISTORY_TABLES } from './history.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 
-export const BACKUP_FORMAT = 'openlegend-backup-records-1';
-export const BACKUP_OPERATIONS_FORMAT = 'operations-1';
-export const MAX_BACKUP_SLOTS = 10_000;
-export const BACKUP_MANIFEST_BYTES = 1024 * 1024;
-
-export const OPERATION_TABLES = [
-  'jobs',
-  'attempts',
-  'intelligence_calls',
-  'meta',
-  'player_profiles',
-  'game_saves',
-  ...COMMAND_TABLES,
-  'memory_index_attempts',
-  ...MEMORY_CACHE_TABLES,
-  'attempt_scopes',
-  'attempt_budgets',
-  'cognition_attempt_links',
-  ...WORLD_AGENT_TABLES,
-  ...AUTHORITY_TABLES,
-  ...ASSET_TABLES,
-  ...CREATION_TARGET_TABLES,
-];
-// Import/restore consume this same catalog so new external owners cannot silently
-// disappear between backup publication and installation.
-export const BACKUP_TABLES = [...OPERATION_TABLES, ...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES];
 const manifestSchema = z
   .object({
     format: z.literal(BACKUP_FORMAT),

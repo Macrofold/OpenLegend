@@ -17,7 +17,7 @@ import { expect, it, vi } from 'vitest';
 import { advanceWorld } from '@open-legend/domain';
 import type { GameView } from '@open-legend/protocol';
 import { createGameServer } from './http.js';
-import { SAVE_FORMAT } from './game-saves.js';
+import { SAVE_FORMAT } from './checkpoint-format.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
 
 // Cold participation reconciliation may write out already-earned native meter

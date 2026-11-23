@@ -43,6 +43,13 @@ export const HISTORY_TABLES = new Set([
   'activity_occurrences',
   'mind_temporal_pages',
 ]);
+/** These canonical lists retain their abandoned allocation tail on rewind.
+ * Other collections keep their existing ordering contract. */
+export const RESTORED_HISTORY_POSITION_TABLES = [
+  'activity_occurrences',
+  'mind_awareness',
+  'world_hot_events',
+] as const;
 // Awareness consumers needing more than the presentation tail use SQL source IDs.
 // This is placement, not eligibility: important incidents remain fully recallable.
 export const HOT_AWARENESS_ROWS = 256;

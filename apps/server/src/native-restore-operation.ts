@@ -1,3 +1,4 @@
+import { RESTORED_HISTORY_POSITION_TABLES } from './history-residency.js';
 import { nativeMilestoneUpdates } from './native-milestones.js';
 import type {
   NativeHost,
@@ -41,10 +42,7 @@ import type {
   NativeRestorePublication,
   NativeRestoreStage,
 } from './native-restore.js';
-import {
-  withAdmittedWorkingSources,
-  RESTORED_HISTORY_POSITION_TABLES,
-} from './native-current-sources.js';
+import { withAdmittedWorkingSources } from './native-current-sources.js';
 import { fundNativeSourceWorkspace } from './native-source-preparation.js';
 import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';

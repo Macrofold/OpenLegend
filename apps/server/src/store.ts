@@ -68,6 +68,7 @@ import {
   compactObjectHistory,
   compactAppraisalHistory,
   compactContributionHistory,
+  RESTORED_HISTORY_POSITION_TABLES,
 } from './history-residency.js';
 import { MEMORY_SOURCE_TABLES, MemoryRepository } from './memory-repository.js';
 import {
@@ -82,7 +83,6 @@ import {
   type NativeRestoreStage,
 } from './native-restore.js';
 import { nativeRecordChanges } from './native-records.js';
-import { RESTORED_HISTORY_POSITION_TABLES } from './native-current-sources.js';
 import type { DerivedMemoryAllowance } from './memory-derivatives.js';
 import {
   materializeTemporalChanges,
@@ -105,7 +105,12 @@ import {
   uncertainAttemptMicroUsd,
   type AttemptBudgetSnapshot,
 } from './attempt-budget.js';
-import { DATABASE_SCHEMA, assertGameSchema, initializeGameSchema } from './game-storage-schema.js';
+import {
+  DATABASE_SCHEMA,
+  assertGameSchema,
+  initializeGameSchema,
+  markGameSchema,
+} from './game-storage-schema.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { CreationTargetRepository } from './creation-target.js';
 import {
@@ -116,6 +121,7 @@ import {
 } from './game-saves.js';
 import { timed, timedSync, countMetric, recordBackgroundFailure } from './performance.js';
 import { HistoryRepository } from './history.js';
+import { writeCanonicalWorldRows, writeHistoryProjection } from './world-record-publication.js';
 import { prepareHistory, captureHistoryProjection } from './history-preparation.js';
 import type { CommitInputs } from './commit-inputs.js';
 import { insertRows, SqlWriteBatch, sqlTextKey } from './sql-rows.js';
@@ -1034,6 +1040,7 @@ export class SqlGameRepository implements GameRepository {
   }
 
   readonly history: HistoryRepository;
+  private readonly recordPublication: Parameters<typeof writeCanonicalWorldRows>[0];
   readonly saves: GameSaves;
   readonly assets: AssetRepository;
   constructor(
@@ -1056,6 +1063,12 @@ export class SqlGameRepository implements GameRepository {
       ),
     );
     this.history = new HistoryRepository(this.db);
+    this.recordPublication = {
+      records: this.records,
+      history: this.history,
+      memories: this.memories,
+      receivedOwnership: this.receivedOwnership,
+    };
     this.history.setSourceAccess(
       (worldId, actorId) => !this.memories.sourceEditPending({ worldId, actorId }),
       (worldId, actorId) => this.memories.sourceAccessRevision({ worldId, actorId }),
@@ -1085,9 +1098,7 @@ export class SqlGameRepository implements GameRepository {
           this.saves.prepareStartup(!this.initialization.preserveSaveStages),
       });
       this.vectors = new VectorStore(this.db);
-      await this.db
-        .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
-        .run('schema', DATABASE_SCHEMA);
+      await markGameSchema(this.db);
     });
     // Resume persisted cleanup hints without hydrating history or value bodies.
     const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
@@ -2210,12 +2221,9 @@ export class SqlGameRepository implements GameRepository {
     revision: number,
     options?: { deferSources: true },
   ): Promise<void> {
-    const { worldId, changes, restore } = inputs;
+    const { worldId, restore } = inputs;
     const sharedWrites = new SqlWriteBatch(this.db);
-    await timed('history.project', () =>
-      this.history.project(inputs.history, sharedWrites, changes),
-    );
-    if (inputs.history.initial) await this.integrationValues.put(`history-schema:${worldId}`, 1);
+    await writeHistoryProjection(this.history, this.integrationValues, inputs, sharedWrites);
     {
       for (const { id, outcome: result } of restore ? [] : inputs.outcomes) {
         const status = result.ok ? 'completed' : 'failed';
@@ -2248,43 +2256,7 @@ export class SqlGameRepository implements GameRepository {
         } else this.invalidateRead(this.recentJobReads, this.db);
       }
     }
-    const sources = inputs.sources;
-    this.memories.configureAllowance(sources.allowance);
-    const affected = await this.memories.project(
-      worldId,
-      changes,
-      !restore,
-      sharedWrites,
-      sources.versions,
-    );
-    if (sources.versions)
-      await this.memories.applySourceVersionPlan(worldId, revision, sources.versions);
-    await this.records.write(worldId, revision, changes, sharedWrites);
-    await this.history.revokeTemporalAccounts(worldId, changes);
-    if (!options?.deferSources)
-      await this.memories.writeSources(worldId, changes, affected, sources);
-    // A whole restore has already replaced the complete hot-record family;
-    // an old cold-open prune request cannot prune the new tentative timeline.
-    if (!options?.deferSources && this.records.needsHotPrune)
-      await this.records.pruneActiveEvents(worldId, inputs.hotEventIds);
-    if (options?.deferSources) return;
-    await this.memories.reconcile(worldId, affected);
-    await this.receivedOwnership.project(worldId, revision, changes, !!restore);
-    if (restore || inputs.initial) await this.memories.reuseVectors(worldId);
-    else {
-      const revisedSources = new Map<string, Set<string>>();
-      for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries'])
-        for (const row of changes.writes.get(table) ?? []) {
-          if (row.create) continue;
-          const path = JSON.parse(row.id) as string[],
-            actor = path[table === 'mind_memories' ? 2 : 3]!;
-          const ids = revisedSources.get(actor) ?? new Set<string>();
-          const source = JSON.parse(row.payload) as Record<string, unknown>;
-          ids.add(String(source[table === 'mind_awareness' ? 'eventId' : 'id']));
-          revisedSources.set(actor, ids);
-        }
-      if (revisedSources.size) await this.memories.reuseVectors(worldId, revisedSources);
-    }
+    await writeCanonicalWorldRows(this.recordPublication, inputs, revision, sharedWrites, options);
   }
 
   /** UI preferences live outside world snapshots, so restoring a world cannot rewind them. */

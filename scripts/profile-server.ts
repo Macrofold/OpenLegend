@@ -32,7 +32,7 @@ import { createGameServer } from '../apps/server/src/http.js';
 import { readConfig } from '../apps/server/src/config.js';
 import { SqlGameRepository } from '../apps/server/src/store.js';
 import { SaveFiles } from '../apps/server/src/save-files.js';
-import { SAVE_FORMAT } from '../apps/server/src/game-saves.js';
+import { SAVE_FORMAT } from '../apps/server/src/checkpoint-format.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { CognitionMaintenance } from '../apps/server/src/cognition-maintenance.js';
 import { WorkLane, OverloadError } from '../apps/server/src/work-lane.js';

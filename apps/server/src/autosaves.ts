@@ -1,5 +1,6 @@
 import type { AutosaveSettings, AutosaveStatus, GameSaveSummary } from '@open-legend/protocol';
-import { AUTOSAVE_DEFAULTS, CheckpointBusyError, GameSaveError } from './game-saves.js';
+import { CheckpointBusyError, GameSaveError } from './game-saves.js';
+import { AUTOSAVE_DEFAULTS } from './checkpoint-format.js';
 import { isOverloadError } from './work-lane.js';
 import type { GameRepository } from './store.js';
 import { CheckpointAllowanceError, type CheckpointAllowanceDetails } from './save-files.js';

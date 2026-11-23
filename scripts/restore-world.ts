@@ -11,8 +11,8 @@ import { sameRecoveredSavedWorld } from '../apps/server/src/recovery-state-compa
 import {
   readOperationalBackup,
   restoreBackupSlots,
-  BACKUP_TABLES,
 } from '../apps/server/src/operational-backup.js';
+import { BACKUP_TABLES } from '../apps/server/src/operational-backup-format.js';
 import {
   beginRestoreAttempt,
   markRestoreInstalled,
@@ -23,8 +23,8 @@ import {
   restoreDirectoryOwner,
   type RestoreAttempt,
 } from '../apps/server/src/operational-restore-attempt.js';
-import { recoveryFile, SAVE_FORMAT, type SavePayload } from '../apps/server/src/game-saves.js';
-import { GameSaves } from '../apps/server/src/game-saves.js';
+import { GameSaves, recoveryFile, type SavePayload } from '../apps/server/src/game-saves.js';
+import { SAVE_FORMAT } from '../apps/server/src/checkpoint-format.js';
 import { SaveFiles } from '../apps/server/src/save-files.js';
 import { readConfig } from '../apps/server/src/config.js';
 import { DATABASE_SCHEMA } from '../apps/server/src/game-storage-schema.js';
