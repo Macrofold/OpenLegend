@@ -852,6 +852,12 @@ impl Action {
             || self.is_placing_hearth()
     }
 
+    /// Only an ordinary approaching move may retain a private motion sample
+    /// across a shared interval. Other approaches run on shared bounds.
+    pub(crate) fn keeps_motion_sample(&self) -> bool {
+        self.kind == "move" && self.stage == "approaching"
+    }
+
     pub(crate) fn owns_ground_route(&self) -> bool {
         self.has_ground_motion() || self.strike_motion.is_some() || self.awaiting_moving_contact()
     }

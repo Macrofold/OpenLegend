@@ -227,7 +227,9 @@ impl MotionSliceCursor {
                     .and_then(|entity| entity.actor.as_ref())
                     .and_then(|actor| actor.action.as_ref());
                 let captured = self.current.as_ref().and_then(MoveAdvanceCursor::action_id);
-                if let Some(action) = action.filter(|action| Some(action.id.as_str()) == captured) {
+                if let Some(action) = action.filter(|action| {
+                    action.keeps_motion_sample() && Some(action.id.as_str()) == captured
+                }) {
                     let entity = entity.ok_or(ExecutionError::Invariant)?;
                     let limit = mechanics.travel_for(handle);
                     let left = action

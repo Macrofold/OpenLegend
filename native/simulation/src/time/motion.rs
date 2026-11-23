@@ -76,9 +76,7 @@ pub(crate) fn private_motion_seconds(
             .and_then(|actor| actor.action.as_ref());
         if forecast.private_walkers.contains(handle) {
             if let Some(action) = action.filter(|action| {
-                action.has_ground_motion()
-                    && action.stage == "approaching"
-                    && !action.path.is_empty()
+                action.keeps_motion_sample() && !action.path.is_empty()
             }) {
                 let speed = installed.movement_speed(entity)?;
                 bound = bound.min(

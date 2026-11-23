@@ -419,7 +419,7 @@ impl MechanicalForecast {
                 continue;
             }
             let speed = installed.movement_speed(entity)?;
-            if !action.has_contact_approach()
+            if action.keeps_motion_sample()
                 && action.navigation.is_none()
                 && !referenced.contains(&entity.id)
             {

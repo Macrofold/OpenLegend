@@ -858,6 +858,9 @@ fn validate_entity(
         }
         if actor.action.as_ref().is_some_and(|a| {
             a.has_unconverted_fields()
+                || a.motion_sample_remaining_metres.is_some_and(|remaining| {
+                    !a.keeps_motion_sample() || !remaining.is_finite() || remaining <= 0.0
+                })
                 || a.attack_observers.as_ref().is_some_and(|receipts| {
                     installed.body_policy.and_then(|body| body.combat.as_ref())
                         .and_then(|combat| combat.encounters.as_ref()).is_none()

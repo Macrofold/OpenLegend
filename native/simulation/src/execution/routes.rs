@@ -10,7 +10,7 @@ impl PhysicalMutation<'_> {
         action_id: &str,
         remaining: f64,
     ) -> Result<(), ExecutionError> {
-        if !remaining.is_finite() || remaining < 0.0 {
+        if !remaining.is_finite() || remaining <= 0.0 {
             return Err(ExecutionError::Invariant);
         }
         let action = self
@@ -19,7 +19,7 @@ impl PhysicalMutation<'_> {
             .resolve(handle)
             .and_then(|entity| entity.actor.as_ref())
             .and_then(|actor| actor.action.as_ref())
-            .filter(|action| action.id == action_id && action.owns_ground_route())
+            .filter(|action| action.id == action_id && action.keeps_motion_sample())
             .ok_or(ExecutionError::Invariant)?;
         let before = action.motion_sample_remaining_metres;
         if before == Some(remaining) {
