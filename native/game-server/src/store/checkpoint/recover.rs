@@ -19,7 +19,7 @@ use openlegend_simulation::encoding::json_record;
 use openlegend_simulation::host::{ByteReservation, CandidateKey};
 use openlegend_simulation::runtime::{
     NativeWorldSession, RuntimeActivation, RuntimeDirectOutput, RuntimeDirectStep, RuntimeHistory,
-    RuntimeInstallDefinitions, RuntimeInstallSources, RuntimeJson, RuntimeProvider,
+    RestoreArchivePlacement, RuntimeInstallDefinitions, RuntimeInstallSources, RuntimeProvider,
     RuntimeProviderInput,
 };
 use openlegend_world_host::pool::HostError;
@@ -98,8 +98,7 @@ impl Receipt {
 struct FinalPlacement {
     history: RuntimeHistory,
     privacy: String,
-    initial_archives: RuntimeJson,
-    final_archives: RuntimeJson,
+    archives: Arc<RestoreArchivePlacement>,
     receipt: Receipt,
     _storage: ByteReservation,
 }
@@ -575,13 +574,10 @@ impl Store {
                     let privacy = json_record(&privacy).map_err(
                         openlegend_simulation::runtime::RuntimeError::application_refused,
                     )?;
-                    let (initial_archives, final_archives) =
-                        placement.encode_archive_placement(budget)?;
                     Ok(FinalPlacement {
                         history: products.retain_history(),
                         privacy,
-                        initial_archives,
-                        final_archives,
+                        archives: placement.retain_archives(),
                         receipt: Receipt {
                             save_id: requested_slot.to_owned(),
                             world_id: placement.world_id.to_owned(),
@@ -629,10 +625,14 @@ impl Store {
         if output.history.accounts().next().is_some() {
             return Err(StoreError::DerivedProjectionRequired);
         }
-        let initial = archive_metadata(&output.initial_archives)?;
-        let final_archives = archive_metadata(&output.final_archives)?;
-        self.apply_checkpoint_archive_baseline(tx, &replacement, initial)
-            .await?;
+        let initial = output.archives.initial();
+        self.apply_checkpoint_archive_selection(
+            tx,
+            &replacement,
+            initial.len(),
+            initial.iter().map(|row| (row, row.category)),
+        )
+        .await?;
         self.apply_archives_at(tx, save, sql_ordinal(replacement.revision)?)
             .await?;
         self.write_records(
@@ -644,8 +644,14 @@ impl Store {
         .await?;
         self.project_support_places(tx, &replacement.world_id, &rows.changes)
             .await?;
-        self.apply_checkpoint_archive_baseline(tx, &replacement, final_archives)
-            .await?;
+        let kept = output.archives.kept();
+        self.apply_checkpoint_archive_selection(
+            tx,
+            &replacement,
+            kept.len(),
+            kept.iter().map(|row| (row, row.category)),
+        )
+        .await?;
         self.append_originals(tx, rows, std::slice::from_ref(&output.history))
             .await?;
         self.finish_checkpoint_privacy(tx, &replacement, &output.privacy)
@@ -860,10 +866,6 @@ impl Store {
         tx.execute("DELETE FROM meta WHERE EXISTS (SELECT 1 FROM unnest($1::text[]) q(prefix) WHERE starts_with(key,q.prefix))", &[&roots.as_slice()]).await?;
         Ok(())
     }
-}
-
-fn archive_metadata(value: &RuntimeJson) -> StoreResult<&str> {
-    std::str::from_utf8(value.bytes()).map_err(|_| StoreError::InvalidRecord)
 }
 
 fn runtime(error: openlegend_simulation::runtime::RuntimeError) -> StoreError {

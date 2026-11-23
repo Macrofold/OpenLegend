@@ -2,7 +2,7 @@
 //! identity survive the gameplay rewind; no public semantic setter is exposed.
 mod metadata;
 pub use metadata::{
-    ArchiveCategory, RestoreArchive, RestoreArchiveMatch, RestoreArchiveSelection,
+    ArchiveCategory, RestoreArchive, RestoreArchiveMatch, RestoreArchivePlacement, RestoreArchiveSelection,
     RestoreArchivesRequest, RestoreBinding, RestoreGrant, RestoreMetadataInput,
 };
 pub(crate) use metadata::{

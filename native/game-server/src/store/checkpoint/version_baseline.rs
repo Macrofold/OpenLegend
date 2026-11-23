@@ -5,33 +5,12 @@ use super::archives::{Archive, Category};
 use crate::store::read::admitted_query;
 use crate::store::{DurableHead, Store, StoreError, StoreResult, ordinal, sql_ordinal};
 use openlegend_simulation::received::{AccountClass, SourceVersionArchiveChange};
-use openlegend_simulation::records::SqlCell;
 use std::collections::BTreeMap;
 use tokio_postgres::Transaction;
 
 impl Store {
-    /// Reconstruct only the archive entries admitted by this stopped native
-    /// candidate. Payloads stay in the staged checkpoint rows throughout.
-    pub(crate) async fn apply_checkpoint_archive_baseline(
-        &self,
-        tx: &Transaction<'_>,
-        head: &DurableHead,
-        selection: &str,
-    ) -> StoreResult<()> {
-        let _input = self
-            .budget
-            .reserve(
-                SqlCell::json_decode_bound(selection)
-                    .and_then(|n| n.checked_mul(2))
-                    .ok_or(StoreError::Capacity)?,
-            )
-            .map_err(|_| StoreError::Capacity)?;
-        let admitted: Vec<Archive> =
-            serde_json::from_str(selection).map_err(|_| StoreError::InvalidRecord)?;
-        self.apply_checkpoint_archive_selection(tx, head, admitted.len(), admitted.iter().map(|row| (row, row.category)))
-            .await
-    }
-
+    /// Place the selected original archive identities in the existing checkpoint
+    /// transaction. The borrowed selection owns the private read's custody.
     pub(crate) async fn apply_checkpoint_archive_selection<'a>(
         &self,
         tx: &Transaction<'_>,

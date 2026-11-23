@@ -8,7 +8,7 @@ pub use crate::experience::retention::{
 pub use crate::{
     experience::RestorePrivacyInput,
     restore::{
-        ArchiveCategory as RestoreArchiveCategory, RestoreArchive, RestoreArchiveMatch, RestoreArchiveSelection,
+        ArchiveCategory as RestoreArchiveCategory, RestoreArchive, RestoreArchiveMatch, RestoreArchivePlacement, RestoreArchiveSelection,
         RestoreBinding, RestoreGrant, RestoreMetadataInput,
     },
     simulation::restore::{RestoreInput, RestoreRetentionPreparation},
@@ -133,21 +133,14 @@ pub struct RuntimeRestorePlacement<'a> {
     pub accepted_cut: u64,
     pub forgotten: &'a indexmap::IndexMap<String, Vec<String>>,
     pub corrections: &'a indexmap::IndexMap<String, indexmap::IndexMap<String, String>>,
-    archive_baseline: &'a [crate::restore::RestoreArchive],
-    kept_archives: &'a [crate::restore::RestoreArchive],
+    archives: &'a Arc<RestoreArchivePlacement>,
 }
 
 impl RuntimeRestorePlacement<'_> {
-    /// Fund the two finite archive ledgers for SQL. Bodies remain in the
-    /// checkpoint writer and the actual native save plan.
-    pub fn encode_archive_placement(
-        &self,
-        budget: &ByteBudget,
-    ) -> Result<(RuntimeJson, RuntimeJson), RuntimeError> {
-        Ok((
-            RuntimeJson::encode(&self.archive_baseline, budget)?,
-            RuntimeJson::encode(&self.kept_archives, budget)?,
-        ))
+    /// The writer can retain this funded archive metadata across its SQL
+    /// awaits. The loan holds only the two selected identity lists.
+    pub fn retain_archives(&self) -> Arc<RestoreArchivePlacement> {
+        Arc::clone(self.archives)
     }
 }
 
@@ -164,8 +157,7 @@ impl RuntimePreparedProducts<'_> {
             accepted_cut: facts.accepted_cut,
             forgotten: &result.metadata.privacy.forgotten,
             corrections: &result.metadata.privacy.corrections,
-            archive_baseline: &result.metadata.archive_baseline,
-            kept_archives: &result.metadata.kept_archives,
+            archives: &result.metadata.archives,
         })
     }
 }

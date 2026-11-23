@@ -102,7 +102,7 @@ mod restore;
 pub use restore::{
     AccountBodiesReply, AccountBodyRow, AccountCandidate, AccountMetadataReply, RestoreAccountAnswer,
     RestoreAccountBinding, RestoreAccountQuery, RestoreAccountRequest, RuntimeRestoreAccounts,
-    RestoreArchive, RestoreArchiveCategory, RestoreArchiveMatch, RestoreArchiveSelection, RestoreBinding, RestoreGrant, RestoreInput,
+    RestoreArchive, RestoreArchiveCategory, RestoreArchiveMatch, RestoreArchivePlacement, RestoreArchiveSelection, RestoreBinding, RestoreGrant, RestoreInput,
     RestoreMetadataInput, RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreArchives, RuntimeRestoreMembership, RuntimeRestoreSupport,
     RuntimeRestorePlacement,
 };

@@ -156,6 +156,8 @@ The ordinary clock completed a real hourly review that archived four original NP
 
 The local correctness build also passed [remembered movement and Trade](character-and-map-additions.md#remembered-movement-during-an-ordinary-save). Source tree `dbf5d386c39e83085870d088faddac238f4c8305` and executable SHA-256 `ca1fe99961913474b3fe888291f8c70a6e3adc7868809b03214208d00906c9fd` identify the build. The archive `nsc04-archive-and-remembered-move-20261122` has manifest `d65bb1d160719ae2d67a0b16051c5b529f22c69b0cac29f69c46a69f1dc96f92`. Locked Rust and addon checks, TypeScript and the network check passed. Local fixture cleanup completed with no provider charges.
 
+The final database write now takes both archive lists directly from the prepared Rust recovery. The combined build (`73163af50765`, binary `7615365ce63a`) kept all four original records in the first run. In the second run, Forget left exactly three after live Load and after a fresh sign-in on cold restart. The permitted summary and original Load receipt survived with one controlled review attempt. Shutdown released all native reservations and the disposable databases closed. Evidence is `nsc04-typed-archive-placement-20261122/caller-evidence.tar.gz` (`74f25e4a52a0`).
+
 [Retained artwork recovery](game-asset-storage.md#stand-alone-world-artwork-selection) now covers a mismatched installed release and restoring exact saved pins after catalog permission was withdrawn. Other World operations sections and the managed due-capture comparison remain open under [NSC04-R5](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
 
 ### Exact memory versions in Rust — November 22, 2026

@@ -105,14 +105,43 @@ pub(crate) struct PreparedRestoreArchives {
     rows: Vec<RestoreArchive>,
     storage: ByteReservation,
 }
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct RestoreMetadataResult {
-    pub kept_archives: Vec<RestoreArchive>,
-    pub privacy: RestorePrivacy,
-    pub archive_baseline: Vec<RestoreArchive>,
-    #[serde(skip)]
+/// The accepted archive identities for SQL immediately before and after the
+/// restored canonical writes. The archive bodies remain with their SQL owner.
+pub struct RestoreArchivePlacement {
+    initial: Vec<RestoreArchive>,
+    kept: Vec<RestoreArchive>,
     _storage: ByteReservation,
+}
+impl RestoreArchivePlacement {
+    pub fn initial(&self) -> &[RestoreArchive] {
+        &self.initial
+    }
+    pub fn kept(&self) -> &[RestoreArchive] {
+        &self.kept
+    }
+}
+
+pub(crate) struct RestoreMetadataResult {
+    pub archives: Arc<RestoreArchivePlacement>,
+    pub privacy: RestorePrivacy,
+    _storage: ByteReservation,
+}
+impl Serialize for RestoreMetadataResult {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Published<'a> {
+            kept_archives: &'a [RestoreArchive],
+            privacy: &'a RestorePrivacy,
+            archive_baseline: &'a [RestoreArchive],
+        }
+        Published {
+            kept_archives: self.archives.kept(),
+            privacy: &self.privacy,
+            archive_baseline: self.archives.initial(),
+        }
+        .serialize(serializer)
+    }
 }
 
 struct BindingBefore {
@@ -710,32 +739,36 @@ pub(crate) fn finish_restore_metadata(
         storage: final_storage,
     } = final_archives;
     storage.merge(final_storage)?;
-    // Alias expansion and retention have finished. Capture the actual current
-    // constraints; no operational epoch or archive total is reset here.
+    let bytes = crate::host::retained_size::heap_sum([
+        size_of::<RestoreArchivePlacement>() + 2 * size_of::<usize>(),
+        before.heap_bytes().ok_or(ExecutionError::Capacity)?,
+        rows.heap_bytes().ok_or(ExecutionError::Capacity)?,
+    ])
+    .ok_or(ExecutionError::Capacity)?;
+    storage.resize(bytes)?;
+    let archives = Arc::new(RestoreArchivePlacement {
+        initial: before,
+        kept: rows,
+        _storage: storage,
+    });
+    // Alias expansion and retention have finished. Capture the exact current
+    // constraints under their own reservation for the metadata writer.
     let bytes = core
         .state
         .experience
         .privacy_metadata_bound()
+        .and_then(|size| size.checked_add(size_of::<RestoreMetadataResult>()))
         .ok_or(ExecutionError::Capacity)?;
-    storage.resize(
-        storage
-            .bytes()
-            .checked_add(bytes)
-            .ok_or(ExecutionError::Capacity)?,
-    )?;
+    let mut storage = budget.reserve(bytes)?;
     let privacy = core.state.experience.restore_privacy_metadata();
-    let bytes = crate::host::retained_size::heap_sum([
-        size_of::<RestoreMetadataResult>(),
-        before.heap_bytes().ok_or(ExecutionError::Capacity)?,
-        rows.heap_bytes().ok_or(ExecutionError::Capacity)?,
-        privacy.heap_bytes().ok_or(ExecutionError::Capacity)?,
-    ])
-    .ok_or(ExecutionError::Capacity)?;
+    let bytes = privacy
+        .heap_bytes()
+        .and_then(|size| size.checked_add(size_of::<RestoreMetadataResult>()))
+        .ok_or(ExecutionError::Capacity)?;
     storage.resize(bytes)?;
     Ok(RestoreMetadataResult {
-        kept_archives: rows,
+        archives,
         privacy,
-        archive_baseline: before,
         _storage: storage,
     })
 }

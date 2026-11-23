@@ -5,7 +5,7 @@ use super::provider;
 use super::{CheckpointHistory, RecoveryAuthority};
 use crate::store::read::admitted_query_bounded;
 use crate::store::{DurableHead, MAX_SAFE_INTEGER, Store, StoreError, StoreResult};
-use openlegend_simulation::encoding::{json_record, json_record_len, sha256_hex};
+use openlegend_simulation::encoding::{json_record, sha256_hex};
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::records::SqlCell;
 use openlegend_simulation::runtime::{
@@ -224,26 +224,5 @@ impl Store {
             retention_preparation,
         };
         Ok((input, [current.storage, budget]))
-    }
-
-    pub(super) fn encode_restore_output(
-        &self,
-        value: &impl Serialize,
-        limit: usize,
-    ) -> StoreResult<(String, ByteReservation)> {
-        let length = json_record_len(value).map_err(|_| StoreError::InvalidRecord)?;
-        let bytes = length
-            .checked_mul(4)
-            .filter(|_| length <= limit)
-            .ok_or(StoreError::Capacity)?;
-        let mut custody = self
-            .budget
-            .reserve(bytes)
-            .map_err(|_| StoreError::Capacity)?;
-        let encoded = json_record(value).map_err(|_| StoreError::InvalidRecord)?;
-        custody
-            .resize(encoded.capacity())
-            .map_err(|_| StoreError::Capacity)?;
-        Ok((encoded, custody))
     }
 }
