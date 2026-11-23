@@ -995,16 +995,32 @@ impl RuntimeProvider {
         )?))
     }
 
-    /// Use the exact already prepared command text for canonical ordering.
-    /// The plan owns the input. The formatter must fund its own result.
-    pub fn with_plan_command<T>(
+    /// Prepare the exact stored receipt bytes from the admitted plan command.
+    /// The host supplies only its locale order. The bound answer keeps its
+    /// own storage after the temporary sorting workspace is released.
+    pub fn format_plan_command(
         &self,
-        format: impl FnOnce(crate::geometry::GeometryBinding, &str) -> T,
-    ) -> Result<Option<T>, RuntimeError> {
+        budget: &ByteBudget,
+        compare: impl Fn(&str, &str) -> Option<std::cmp::Ordering>,
+    ) -> Result<Option<RuntimeProviderInput>, RuntimeError> {
         let question = self.question()?;
-        Ok(question
-            .plan_command()
-            .map(|request| format(request.binding, request.command.source_encoding())))
+        let Some(request) = question.plan_command() else {
+            return Ok(None);
+        };
+        let source = request.command.source_encoding();
+        let bytes = crate::encoding::json_tree_allocation_bound(source)
+            .and_then(|scratch| scratch.checked_add(source.len().checked_mul(12)?))
+            .and_then(|scratch| scratch.checked_add(4096))
+            .ok_or(CapacityError)?;
+        let custody = budget.reserve(bytes)?;
+        let mut encoded = Vec::with_capacity(source.len());
+        crate::language::write_canonical_record(source, &compare, &mut encoded).map_err(failure)?;
+        let canonical = String::from_utf8(encoded).map_err(failure)?;
+        Ok(Some(RuntimeProviderInput::local_format(
+            request.binding,
+            LocalFormat::Canonical(canonical),
+            custody,
+        )?))
     }
 
     pub fn asks_known_places(&self) -> Result<bool, RuntimeError> {

@@ -3,14 +3,11 @@
 
 use crate::{
     control_format,
-    language::{
-        LanguageProvider,
-        canonical::{write_canonical, write_canonical_cell},
-    },
+    language::{LanguageProvider, canonical::write_canonical_cell},
     world::WorldError,
 };
 use openlegend_simulation::{
-    encoding::{json_record_len, json_tree_allocation_bound},
+    encoding::json_record_len,
     geometry::GeometryBinding,
     host::{ByteBudget, ByteReservation},
     records::SqlCell,
@@ -35,10 +32,10 @@ pub(crate) fn answer(
     })? {
         return answer.map(Some);
     }
-    if let Some(answer) = request.with_plan_command(|binding, command| {
-        canonical_answer(binding, command, budget, language, LocalFormat::Canonical)
+    if let Some(answer) = request.format_plan_command(budget, |left, right| {
+        language.and_then(|provider| provider.compare_utf8(left, right).ok())
     })? {
-        return answer.map(Some);
+        return Ok(Some(answer));
     }
     if let Some(answer) = request.with_utterance(|binding, text| {
         let prepared = language
@@ -157,42 +154,6 @@ fn canonical_cell(
         .map_err(WorldError::Language)?;
     let canonical = String::from_utf8(encoded).map_err(|_| WorldError::ProviderKind)?;
     Ok((canonical, custody))
-}
-
-fn format_workspace(input: &str) -> Result<usize, WorldError> {
-    input
-        .len()
-        .checked_mul(12)
-        .and_then(|bytes| bytes.checked_add(4096))
-        .ok_or(HostError::Capacity.into())
-}
-
-fn canonical_answer(
-    binding: GeometryBinding,
-    input: &str,
-    budget: &ByteBudget,
-    language: Option<&LanguageProvider>,
-    answer: impl FnOnce(String) -> LocalFormat,
-) -> Result<RuntimeProviderInput, WorldError> {
-    let language = language.ok_or(WorldError::ProviderKind)?;
-    let bound = format_workspace(input)?;
-    let bytes = json_tree_allocation_bound(input)
-        .and_then(|scratch| scratch.checked_add(bound))
-        .ok_or(HostError::Capacity)?;
-    let workspace = budget.reserve(bytes).map_err(HostError::from)?;
-    let mut encoded = Vec::with_capacity(input.len());
-    write_canonical(
-        input,
-        &|left, right| language.compare_utf8(left, right),
-        &mut encoded,
-    )
-    .map_err(WorldError::Language)?;
-    let canonical = String::from_utf8(encoded).map_err(|_| WorldError::ProviderKind)?;
-    Ok(RuntimeProviderInput::local_format(
-        binding,
-        answer(canonical),
-        workspace,
-    )?)
 }
 
 fn format_maintenance(
