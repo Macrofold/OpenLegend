@@ -193,6 +193,18 @@ pub(super) fn target_in_world(
     if session.clock()?.paused {
         return Ok(Err(SpeechRefusal::Paused));
     }
+    draft_target_in_world(session, scope, refs, selected, budget)
+}
+
+/// Opening an editable draft may preserve a preference during manual pause.
+/// It still resolves the same permitted recipient, with no transport or spend.
+pub(super) fn draft_target_in_world(
+    session: &NativeWorldSession,
+    scope: &RequestScope,
+    refs: &ReferenceIssuer,
+    selected: &str,
+    budget: &openlegend_simulation::host::ByteBudget,
+) -> Result<Result<Target, SpeechRefusal>, RuntimeError> {
     let Some(ResolvedSpeechTarget { id: actor, role, mut custody }) =
         refs.resolve_speech_target(session, scope, selected, budget)? else {
         return Ok(Err(SpeechRefusal::InvalidRecipient));

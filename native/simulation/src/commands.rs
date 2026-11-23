@@ -214,6 +214,11 @@ pub enum SpeechTargetRole {
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum NativeCommand {
+    EncounterPreference {
+        envelope: CommandEnvelope,
+        operation: crate::combat_encounters::EncounterOperation,
+        binding: Box<crate::capture::EncounterPreference>,
+    },
     Outing {
         envelope: CommandEnvelope,
         parameters: OutingParameters,
@@ -688,6 +693,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         if tag.kind == "guard" {
             return guard_input::decode(raw.get()).map_err(serde::de::Error::custom);
         }
+        if tag.kind == "encounter-preference" {
+            return encounter_input::decode(raw.get()).map_err(serde::de::Error::custom);
+        }
         if tag.kind == "handover" {
             return gift_input(raw.get()).map_err(serde::de::Error::custom);
         }
@@ -1074,6 +1082,7 @@ impl NativeCommand {
     fn envelope_mut(&mut self) -> &mut CommandEnvelope {
         match self {
             Self::Outing { envelope, .. }
+            | Self::EncounterPreference { envelope, .. }
             | Self::Handover { envelope, .. }
             | Self::Move { envelope, .. }
             | Self::Evade { envelope, .. }
@@ -1116,6 +1125,7 @@ impl NativeCommand {
     pub(crate) fn envelope(&self) -> &CommandEnvelope {
         match self {
             Self::Outing { envelope, .. }
+            | Self::EncounterPreference { envelope, .. }
             | Self::Handover { envelope, .. }
             | Self::Move { envelope, .. }
             | Self::Evade { envelope, .. }
@@ -1152,6 +1162,7 @@ impl NativeCommand {
     pub(crate) fn kind(&self) -> &'static str {
         match self {
             Self::Outing { .. } => crate::worlds::base_outings::travel_command_type(),
+            Self::EncounterPreference { .. } => "encounter-preference",
             Self::Move { .. } => "move",
             Self::Evade { .. } => "evade",
             Self::Handover { .. } => "handover",

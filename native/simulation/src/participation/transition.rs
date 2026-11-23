@@ -365,6 +365,10 @@ impl ParticipationCursor {
             physical.close_body_crossings(&self.request.actor_id, life)?;
             physical.set_local_pose(&self.request.actor_id, None, ready_at)?;
         }
+        if phase == Some("inactive") {
+            core.physical()
+                .clear_personal_encounters(&self.request.actor_id)?;
+        }
         let before = core.state.physical.entities.get(&self.request.actor_id)
             .and_then(|entity| entity.actor.as_ref()).ok_or(ExecutionError::MissingActor)?
             .participation
@@ -689,9 +693,7 @@ impl ParticipationCursor {
                         _ => {}
                     }
                     let entity = entity.ok_or(ExecutionError::MissingEntity)?;
-                    if entity.spatial.flight.is_some()
-                        || actor.is_some_and(|actor| actor.encounters.is_some())
-                    {
+                    if entity.spatial.flight.is_some() {
                         return Err(ExecutionError::UnsupportedFamily.into());
                     }
                     self.phase = if reconcile_exit {
@@ -759,6 +761,14 @@ impl ParticipationCursor {
                     // Eligibility and any required return-standing check have
                     // succeeded. Refusals and no-op returns never reach this.
                     self.materialize_edit(core)?;
+                    if matches!(
+                        self.request.operation,
+                        ParticipationOperation::BeginExit { .. }
+                            | ParticipationOperation::SettleDeparture { .. }
+                    ) {
+                        core.physical()
+                            .clear_personal_encounters(&self.request.actor_id)?;
+                    }
                     if let ParticipationOperation::SettleDeparture { assignment, .. } =
                         &self.request.operation
                     {

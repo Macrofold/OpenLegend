@@ -32,6 +32,10 @@ impl RuntimeGuardFacing<'_> {
 
 #[derive(Clone, Copy)]
 pub enum RuntimePlayerCommand<'a> {
+    EncounterPreference(
+        crate::combat_encounters::EncounterOperation,
+        &'a crate::capture::EncounterPreference,
+    ),
     Move(&'a SurfacePoint),
     Evade(&'a SurfacePoint),
     Strike {
@@ -169,6 +173,9 @@ impl RuntimePlayerCommand<'_> {
             Self::Follow { target, .. } => target.len(),
             Self::Travel(intent) => intent.text_bytes(),
             Self::Cancel(action) => action.map_or(0, str::len),
+            Self::EncounterPreference(_, selected) => {
+                selected.target_id.len() + selected.episode.as_ref().map_or(0, String::len)
+            }
             Self::DismissStrikeReview | Self::Respawn => 0,
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } => target.len() + tool.len(),
@@ -228,6 +235,9 @@ impl RuntimePlayerCommand<'_> {
         id: &str,
         actor: &str,
     ) -> Result<(NativeCommand, String), serde_json::Error> {
+        if let Self::EncounterPreference(operation, selected) = self {
+            return super::encounter_input::bind(player_headers(id, actor), operation, selected);
+        }
         if let Self::DirectedSpeech {
             text,
             target,
@@ -422,6 +432,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
             | Self::LearnRecord(_)
+            | Self::EncounterPreference(..)
             | Self::InspectItem { .. }
             | Self::InspectStorage { .. }
             | Self::Follow { .. }
@@ -604,6 +615,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
             | Self::LearnRecord(_)
+            | Self::EncounterPreference(..)
             | Self::InspectItem { .. }
             | Self::InspectStorage { .. }
             | Self::Follow { .. }

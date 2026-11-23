@@ -7,12 +7,11 @@ use crate::attention::{
     RecordingSource,
 };
 use crate::experience::{
-    AccountAfterRelease, CognitionPolicy, ExperienceState, PersonalSourceHeader,
-    PersonalSourceKind, RetentionReason,
+    AccountAfterRelease, CognitionPolicy, PersonalSourceHeader, PersonalSourceKind, RetentionReason,
 };
 use crate::install::DefinitionIdentity;
 use crate::received::ReceivedError;
-use crate::simulation::PhysicalState;
+use crate::simulation::{PhysicalState, SimulationState};
 use crate::values::deserialize_safe_integer;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
@@ -326,14 +325,12 @@ impl<'a> AccountLaw<'a> {
     }
     pub(crate) fn routine_result(
         &self,
-        physical: &PhysicalState,
-        experience: &ExperienceState,
+        state: &SimulationState,
         actor_id: &str,
         activity: ActivityRecordingContext<'_>,
     ) -> Result<bool, ReceivedError> {
         self.routine_movement(
-            physical,
-            experience,
+            state,
             actor_id,
             activity,
             MovementRecordingPhase::Result,
@@ -344,8 +341,7 @@ impl<'a> AccountLaw<'a> {
     /// audience owner when this installed world's ordinary arrival is consumed.
     pub(crate) fn routine_movement(
         &self,
-        physical: &PhysicalState,
-        experience: &ExperienceState,
+        state: &SimulationState,
         actor_id: &str,
         activity: ActivityRecordingContext<'_>,
         phase: MovementRecordingPhase,
@@ -354,30 +350,24 @@ impl<'a> AccountLaw<'a> {
         if !self.ordinary(activity) {
             return Ok(false);
         }
-        let source = physical
+        let source = state
+            .physical
             .entities
             .get(actor_id)
             .ok_or(ReceivedError("Routine movement has no physical actor."))?;
-        let actor = source
-            .actor
-            .as_ref()
-            .ok_or(ReceivedError("Routine movement has no actor."))?;
-        // The concrete encounter owner has not yet been imported. Its absence
-        // is a real fact; a supplied active family must never become false.
-        if actor.encounters.is_some() {
-            return Err(ReceivedError(
-                "Native routine movement has an unsupported encounter family.",
-            ));
-        }
-        if experience
-            .has_commitment_completion(
-                actor_id,
-                self.rules
-                    .routine_commitment_events
-                    .iter()
-                    .map(String::as_str),
-            )
-            .map_err(|_| ReceivedError("Routine movement commitment coverage is unavailable."))?
+        if crate::combat_encounters::has_personal_context(state, source)
+            || state
+                .experience
+                .has_commitment_completion(
+                    actor_id,
+                    self.rules
+                        .routine_commitment_events
+                        .iter()
+                        .map(String::as_str),
+                )
+                .map_err(|_| {
+                    ReceivedError("Routine movement commitment coverage is unavailable.")
+                })?
         {
             return Ok(false);
         }
@@ -464,12 +454,11 @@ impl crate::attention::AccountRecordingLaw for AccountLaw<'_> {
     }
     fn routine_result(
         &self,
-        physical: &PhysicalState,
-        experience: &ExperienceState,
+        state: &SimulationState,
         actor_id: &str,
         activity: ActivityRecordingContext<'_>,
     ) -> Result<bool, ReceivedError> {
-        AccountLaw::routine_result(self, physical, experience, actor_id, activity)
+        AccountLaw::routine_result(self, state, actor_id, activity)
     }
 }
 

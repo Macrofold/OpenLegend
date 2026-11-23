@@ -7,15 +7,41 @@ use crate::experience::PersonalSourceKind;
 use crate::host::retained_size::tree_node_bound;
 use std::collections::{BTreeMap, BTreeSet};
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct EncounterPreference {
+pub struct EncounterPreference<Text = String> {
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     pub actor_life: u64,
-    pub target_id: String,
+    pub target_id: Text,
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     pub target_life: u64,
-    pub episode: Option<String>,
+    pub episode: Option<Text>,
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     pub revision: u64,
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     pub hostile_revision: u64,
+}
+impl<T: AsRef<str>> EncounterPreference<T> {
+    pub(crate) fn valid(&self) -> bool {
+        use crate::values::is_safe_record_id;
+        is_safe_record_id(self.target_id.as_ref())
+            && self
+                .episode
+                .as_ref()
+                .is_none_or(|episode| is_safe_record_id(episode.as_ref()))
+    }
+}
+impl EncounterPreference<String> {
+    pub(crate) fn borrowed(&self) -> EncounterPreference<&str> {
+        EncounterPreference {
+            actor_life: self.actor_life,
+            target_id: &self.target_id,
+            target_life: self.target_life,
+            episode: self.episode.as_deref(),
+            revision: self.revision,
+            hostile_revision: self.hostile_revision,
+        }
+    }
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,11 +50,13 @@ pub struct ContextActionWitness {
     pub actor_life: Option<u64>,
     pub target_life: Option<u64>,
     pub encounter: Option<EncounterPreference>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub encounter_family: Option<crate::combat_encounters::EncounterFamily>,
     // Installed live coaching/ranged records are explicitly unsupported. These
     // nulls are proven absence at their semantic owner, not unknown witnesses.
     coaching: Option<()>,
     pub combat_ready: bool,
-    ranged_ready: Option<bool>,
+    pub ranged_ready: Option<bool>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -83,8 +111,7 @@ impl<'a> PlayerReadScope<'a> {
             .get(actor_id)
             .ok_or(ExecutionError::MissingActor)?;
         let own = actor.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
-        if own.encounters.is_some()
-            || own.coaching_episode_id.is_some()
+        if own.coaching_episode_id.is_some()
             || own
                 .action
                 .as_ref()
@@ -150,38 +177,16 @@ impl<'a> PlayerReadScope<'a> {
             .as_ref()
             .ok_or(ExecutionError::MissingActor)?;
         let other = target.actor.as_ref();
-        if other.is_some_and(|actor| actor.encounters.is_some()) {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
         let communication = names
             .current_body_association(id)?
             .and_then(|subject| names.observer_individual(subject))
             .and_then(|individual| individual.canonical_id.as_deref());
-        let episode = self
-            .state
-            .reception
-            .perception_episodes
-            .as_ref()
-            .and_then(|owners| owners.get(&self.actor.id))
-            .and_then(|episodes| episodes.get(id));
-        let encounter = self
-            .state
-            .installed
-            .body_policy
-            .as_ref()
-            .and_then(|policy| policy.value().combat.as_ref())
-            .and_then(|combat| combat.encounters.as_ref())
-            .is_some()
-            && own.alive
-            && other.is_some_and(|actor| actor.alive)
-            && self.actor.id != id
-            && self.actor.actively_participates()
-            && target.actively_participates();
+        let encounter = crate::combat_encounters::context(self.state, self.actor, target);
         let bytes = communication
             .map_or(0, str::len)
-            .checked_add(if encounter {
+            .checked_add(if let Some(encounter) = &encounter {
                 id.len()
-                    .checked_add(episode.map_or(0, String::len))
+                    .checked_add(encounter.binding.episode.map_or(0, str::len))
                     .ok_or(ExecutionError::Capacity)?
             } else {
                 0
@@ -197,18 +202,19 @@ impl<'a> PlayerReadScope<'a> {
                 module_revision: self.state.installed.manifest.revision,
                 actor_life: own.physical_life,
                 target_life: other.and_then(|actor| actor.physical_life),
-                encounter: encounter.then(|| EncounterPreference {
-                    actor_life: own.physical_life.unwrap_or(0),
-                    target_id: id.to_owned(),
-                    target_life: other.and_then(|actor| actor.physical_life).unwrap_or(0),
-                    episode: episode.cloned(),
-                    revision: 0,
-                    hostile_revision: 0,
+                encounter: encounter.as_ref().map(|read| EncounterPreference {
+                    actor_life: read.binding.actor_life,
+                    target_id: read.binding.target_id.to_owned(),
+                    target_life: read.binding.target_life,
+                    episode: read.binding.episode.map(str::to_owned),
+                    revision: read.binding.revision,
+                    hostile_revision: read.binding.hostile_revision,
                 }),
+                encounter_family: encounter.as_ref().map(|read| read.family),
                 coaching: None,
                 combat_ready: own.combat_ready_at.unwrap_or(0.0)
                     > self.state.physical.header.sim_time,
-                ranged_ready: None,
+                ranged_ready: encounter.and_then(|read| read.held.map(|shot| shot.ready)),
             },
             attention_preference: self.attention.get(id).copied(),
             communication_id: communication.map(str::to_owned),

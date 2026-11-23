@@ -9,6 +9,7 @@ use crate::records::{
 };
 use serde::Serialize;
 mod agency;
+mod encounters;
 mod participation;
 fn error() -> RecordEncodingError {
     RecordEncodingError("Physical save has no complete current owner, placement or capacity.")
@@ -148,6 +149,7 @@ struct EntityRows<'a> {
     territorial: bool,
     episode: bool,
     episode_before: Option<&'a Option<crate::native_response::NativeResponseEpisode>>,
+    encounters_before: Option<&'a Option<Box<crate::combat_encounters::PersonalEncounters>>>,
     attributes: IndexMap<&'a str, bool>,
     statuses: IndexMap<&'a str, bool>,
     conditions: IndexMap<&'a str, bool>,
@@ -921,6 +923,7 @@ impl PhysicalJournal {
                         | Undo::CombatReady { entity, .. }
                         | Undo::EvasionReady { entity, .. }
                         | Undo::AttackModeNotice { entity, .. }
+                        | Undo::PersonalEncounters { entity, .. }
                         | Undo::ContactPhase { entity, .. }
                         | Undo::StrikeMotion { entity, .. }
                         | Undo::AttackObservers { entity, .. }
@@ -995,6 +998,9 @@ impl PhysicalJournal {
                         | Undo::CombatReady { .. }
                         | Undo::EvasionReady { .. }
                         | Undo::AttackModeNotice { .. } => rows.actor = true,
+                        Undo::PersonalEncounters { before, .. } => {
+                            rows.encounters_before.get_or_insert(before);
+                        }
                         Undo::Heat { .. } => rows.heat = true,
                         Undo::Territorial { .. } | Undo::TerritorialPlace { .. } => rows.territorial = true,
                         Undo::Action { .. } => {
@@ -1274,7 +1280,15 @@ impl PhysicalJournal {
                 )?;
             }
             let actor_parent = ["world", "entities", id, "actor"];
-            if rows.actor {
+            let current_encounters = entity
+                .actor
+                .as_ref()
+                .and_then(|actor| actor.encounters.as_deref());
+            if rows.actor
+                || rows
+                    .encounters_before
+                    .is_some_and(|before| before.is_some() != current_encounters.is_some())
+            {
                 one(
                     ledger,
                     output,
@@ -1283,6 +1297,16 @@ impl PhysicalJournal {
                     &parent,
                     "actor",
                     entity.actor.as_ref(),
+                    budget,
+                )?;
+            }
+            if let Some(before) = rows.encounters_before {
+                encounters::encode(
+                    id,
+                    before.as_deref(),
+                    current_encounters,
+                    ledger,
+                    output,
                     budget,
                 )?;
             }

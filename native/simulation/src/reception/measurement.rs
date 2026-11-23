@@ -295,5 +295,10 @@ pub(crate) fn next_perception_work_at(
             .and_then(|current| current.motion_expires_at)
             .unwrap_or(f64::INFINITY),
     );
+    // Personal combat grace is a receiving deadline, even if the observer
+    // needs no eye sample. Use the same deadline pass as held perception.
+    let next = next.min(
+        crate::combat_encounters::next_encounter_work_at(state, observer).unwrap_or(f64::INFINITY),
+    );
     Ok(next.is_finite().then_some(next))
 }

@@ -169,7 +169,8 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
                 .capacity()
                 .checked_add(actor.inventory_inspection.heap_bytes()?)?
                 .checked_add(actor.pending_death.heap_bytes()?)?
-                .checked_add(actor.attack_mode_notice.heap_bytes()?)
+                .checked_add(actor.attack_mode_notice.heap_bytes()?)?
+                .checked_add(actor.encounters.heap_bytes()?)
         })
         .and_then(|actor| {
             actor.checked_add(

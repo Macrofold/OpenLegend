@@ -416,6 +416,18 @@ impl PlayerReferences<'_> {
         )
     }
 
+    pub(crate) fn encounter_control(
+        &self,
+        operation: openlegend_simulation::combat_encounters::EncounterOperation,
+        binding: &openlegend_simulation::capture::EncounterPreference<&str>,
+    ) -> Result<String, serde_json::Error> {
+        sign(
+            &self.issuer.body,
+            "",
+            &("encounter-control", &self.scope, operation, binding),
+        )
+    }
+
     pub fn context_action(
         &self,
         witness: &ContextActionWitness,
@@ -452,7 +464,8 @@ impl PlayerReferences<'_> {
                 encounter,
                 Option::<()>::None,
                 witness.combat_ready,
-                Option::<()>::None,
+                witness.ranged_ready,
+                witness.encounter_family,
             ),
         )
     }

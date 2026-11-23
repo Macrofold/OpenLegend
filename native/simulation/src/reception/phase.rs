@@ -89,6 +89,7 @@ pub(crate) fn begin_perception_phase(
 ) -> Result<(), ExecutionError> {
     expire_received_geometry_motion(core, observer, budget)?;
     retire_expired_motion(core, observer, budget)?;
+    crate::combat_encounters::expire_due(core, observer)?;
     core.journal.originals.begin_phase(
         &mut core.state.reception,
         observer,

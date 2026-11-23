@@ -116,6 +116,8 @@ pub(crate) use base_attention::{AccountLaw as InstalledAccountLaw, MovementRecor
 #[path = "../../../packages/domain/src/worlds/base/native/cognition.rs"]
 pub(crate) mod base_cognition;
 pub(crate) use base_cognition::OccurrenceRules as InstalledOccurrenceRules;
+#[path = "../../../packages/domain/src/worlds/base/native/context_actions.rs"]
+pub mod base_context_actions;
 
 pub use base_knowledge::PersonalNameRules as InstalledPersonalNameRules;
 pub(crate) use base_knowledge::{

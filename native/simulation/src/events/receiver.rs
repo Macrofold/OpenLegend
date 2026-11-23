@@ -108,11 +108,13 @@ pub(super) fn prepare_receiver_awareness(
     let target = receiver.actor_id.as_str();
     let rules = installed.occurrence_rules.value();
     if selection.target_id() == Some(target) {
+        use crate::combat_encounters::{HostileKind, field_id, receive};
+        let struck = crate::native_controller::contact_result_action(core, event);
         let contact = event.event_type == rules.projectile_contact_event
-            || event.event_type == rules.contact_event
+            || struck.is_some()
                 && installed.event_disclosure.value().felt_target(event) == Some(target);
         let directed = selection.source_id() != Some(target)
-            && (selection.event_type() == rules.contact_event
+            && (struck.is_some() && selection.event_type() == event.event_type
                 || rules
                     .ranged
                     .as_ref()
@@ -135,6 +137,28 @@ pub(super) fn prepare_receiver_awareness(
                 &event.id,
                 crate::state::AttackModeNoticeKind::PersonallyExperiencedAssault,
             )?;
+        }
+        let cue = selection.event_type() == crate::reception::combat_observation::ATTACK_CUE_EVENT;
+        let kind = if contact {
+            Some(HostileKind::Contact)
+        } else if cue {
+            Some(HostileKind::Preparation)
+        } else if directed && struck.is_some() {
+            Some(HostileKind::Attempt)
+        } else if directed {
+            Some(HostileKind::Release)
+        } else {
+            None
+        };
+        if let Some(kind) = kind {
+            let source = if event.event_type == rules.projectile_contact_event {
+                field_id(event, "contactSourceId")
+                    .filter(|id| selection.references().iter().any(|(seen, _)| seen == id))
+            } else {
+                selection.source_id()
+            }
+            .filter(|id| cue || sight.and_then(|answer| answer.seen(id)) == Some(true));
+            receive(core, target, event, kind, source, struck, budget)?;
         }
     }
     let reason = law.recording_reason(RecordingInput {

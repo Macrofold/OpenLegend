@@ -1077,7 +1077,13 @@ impl Action {
             || (!self.is_natural_contact()
                 && (self.strike_phase.is_some() || self.strike_outcome.is_some()))
             || self.gathering.is_some() != (self.kind == "gather")
-            || (self.attack_observers.is_some() && !self.is_natural_contact())
+            // An observed aim uses the same original occurrence custody as
+            // contact windup. Only a directed ranged action can have this cue.
+            || (self.attack_observers.is_some()
+                && !self.is_natural_contact()
+                && !(self.is_ranged_attack()
+                    && self.target_id.is_some()
+                    && self.target_life.is_some()))
             || self.cooperation.is_some()
             || self.combat_help_id.is_some()
             || ((self.evasion.is_some() || self.kind == "evade") && !self.is_evading())
@@ -1419,7 +1425,7 @@ pub struct ActorState {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub encounters: Option<UnconvertedField>,
+    pub encounters: Option<Box<crate::combat_encounters::PersonalEncounters>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

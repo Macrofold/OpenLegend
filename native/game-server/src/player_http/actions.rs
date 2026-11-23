@@ -7,15 +7,17 @@ use crate::{
     player_references::{PlayerReferences, PrimaryActionSelection, ResolvedContact},
 };
 use openlegend_simulation::{
+    capture::EncounterPreference,
+    combat_encounters::{EncounterContext, EncounterFamily, EncounterOperation, OffensiveKind},
     encoding::{json_record, sha256_hex},
     host::CapacityError,
     runtime::{
-        NativeWorldSession, RuntimeError, RuntimeFishOffer, RuntimeGatherOffer,
+        NativeWorldSession, RuntimeError, RuntimeFishOffer, RuntimeGatherOffer, RuntimeRangedMode,
         RuntimeResourceOffer,
     },
     text::JsText,
 };
-use std::sync::LazyLock;
+use std::{borrow::Cow, sync::LazyLock};
 mod preparation;
 mod pickup;
 mod practice;
@@ -562,102 +564,311 @@ fn fishing(
     resource_menu(offer.sequence, &actions, GATHER.name, budget)
 }
 
-pub(crate) fn contact_choices(
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct EncounterRequest {
+    pub(crate) operation: EncounterOperation,
+    pub(crate) reference: String,
+}
+
+#[derive(Serialize)]
+#[serde(tag = "kind", rename_all = "lowercase")]
+enum ContactIntent<'a> {
+    Compose {
+        mode: &'static str,
+        #[serde(rename = "npcId")]
+        npc_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        preference: Option<ContactCommand<'a>>,
+    },
+    Command {
+        command: ContactCommand<'a>,
+    },
+    Unavailable,
+}
+#[derive(Serialize)]
+#[serde(untagged, rename_all_fields = "camelCase")]
+pub(crate) enum ContactCommand<'a> {
+    Strike {
+        #[serde(rename = "type")]
+        kind: &'static str,
+        target_id: &'a str,
+        definition_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        item_id: Option<&'a str>,
+        #[serde(skip_serializing_if = "std::ops::Not::not")]
+        auto_equip: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        expected_revision: Option<u64>,
+    },
+    Guard {
+        #[serde(rename = "type")]
+        kind: &'static str,
+        target_id: &'a str,
+        item_id: &'a str,
+    },
+    Release {
+        #[serde(rename = "type")]
+        kind: &'static str,
+        aim_id: &'a str,
+    },
+    Preference {
+        #[serde(rename = "type")]
+        kind: &'static str,
+        target_id: &'a str,
+        encounter_preference: EncounterRequest,
+    },
+    Ranged {
+        #[serde(rename = "type")]
+        mode: RuntimeRangedMode,
+        target_id: &'a str,
+        item_id: &'a str,
+        ammunition_id: &'a str,
+        #[serde(skip_serializing_if = "std::ops::Not::not")]
+        auto_equip: bool,
+    },
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ContactAction<'a> {
+    id: String,
+    label: Cow<'a, JsText>,
+    category: &'a str,
+    description: Cow<'a, JsText>,
+    keywords: &'a [String],
+    target_id: &'a str,
+    enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<&'a str>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    facts: Vec<(JsText, JsText)>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    priority: Option<u32>,
+    intent: ContactIntent<'a>,
+}
+
+pub(crate) struct ContactMenu<'a> {
     revision: u64,
-    selected: &str,
-    conversant: Option<&JsText>,
-    strike_menu: Option<openlegend_simulation::runtime::RuntimeStrikeMenu<'_>>,
+    selected: &'a str,
+    actions: Vec<ContactAction<'a>>,
+    categories: Vec<&'a str>,
+    encounter: Option<EncounterContext<'a>>,
+    _storage: ByteReservation,
+}
+
+impl ContactMenu<'_> {
+    fn preferred(&self) -> Option<&ContactAction<'_>> {
+        self.actions
+            .iter()
+            .filter(|action| {
+                action.priority.is_some()
+                    && (self.encounter.is_some()
+                        || matches!(
+                            &action.intent,
+                            ContactIntent::Compose {
+                                preference: None,
+                                ..
+                            }
+                        ))
+            })
+            .enumerate()
+            .max_by_key(|(index, action)| {
+                (action.priority, action.enabled, std::cmp::Reverse(*index))
+            })
+            .map(|(_, action)| action)
+    }
+
+    fn reference(
+        &self,
+        action: &ContactAction<'_>,
+        references: &PlayerReferences<'_>,
+    ) -> Result<String, RuntimeError> {
+        struct BindingFacts<'a>(&'a [(JsText, JsText)]);
+        impl Serialize for BindingFacts<'_> {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                let facts = self.0.iter().filter(|(name, _)| {
+                    !matches!(name.as_unicode(), Some("Distance" | "Direction"))
+                });
+                serializer.collect_seq(facts)
+            }
+        }
+        references
+            .primary_action(&(
+                self.encounter
+                    .as_ref()
+                    .map(|seen| (&seen.binding, seen.family)),
+                action.id.as_str(),
+                self.selected,
+                &action.label,
+                &action.description,
+                action.enabled,
+                action.reason,
+                &action.intent,
+                BindingFacts(&action.facts),
+            ))
+            .map_err(RuntimeError::application_refused)
+    }
+
+    pub(crate) fn encode(
+        &self,
+        references: &PlayerReferences<'_>,
+        budget: &ByteBudget,
+    ) -> Result<Bytes, RuntimeError> {
+        let action = self.preferred();
+        let reference = action
+            .map(|action| self.reference(action, references))
+            .transpose()?;
+        resource_menu_selection(
+            self.revision,
+            &self.actions,
+            &self.categories,
+            action
+                .zip(reference.as_deref())
+                .map(|(action, reference)| PrimaryActionSelection {
+                    target_id: self.selected,
+                    action_id: action.id.as_str(),
+                    reference,
+                }),
+            budget,
+        )
+    }
+
+    pub(crate) fn primary_command(
+        &self,
+        reference: &PrimaryActionSelection<String>,
+        scoped: &PlayerReferences<'_>,
+    ) -> Result<Option<&ContactCommand<'_>>, RuntimeError> {
+        let Some(choice) = self
+            .preferred()
+            .filter(|row| row.enabled && row.id == reference.action_id)
+        else {
+            return Ok(None);
+        };
+        if self.reference(choice, scoped)? != reference.reference {
+            return Ok(None);
+        }
+        Ok(match &choice.intent {
+            ContactIntent::Command { command } => Some(command),
+            ContactIntent::Compose { preference, .. } => preference.as_ref(),
+            ContactIntent::Unavailable => None,
+        })
+    }
+
+    pub(crate) fn binding(&self) -> Option<&EncounterPreference<&str>> {
+        self.encounter.as_ref().map(|context| &context.binding)
+    }
+
+    pub(crate) fn control_allowed(&self, operation: EncounterOperation) -> bool {
+        self.actions.iter().any(|action| {
+            action.enabled
+                && match &action.intent {
+                    ContactIntent::Compose {
+                        preference:
+                            Some(ContactCommand::Preference {
+                                encounter_preference,
+                                ..
+                            }),
+                        ..
+                    }
+                    | ContactIntent::Command {
+                        command:
+                            ContactCommand::Preference {
+                                encounter_preference,
+                                ..
+                            },
+                    } => encounter_preference.operation == operation,
+                    _ => false,
+                }
+        })
+    }
+}
+
+fn current_control<'a>(
+    references: &PlayerReferences<'_>,
+    binding: &EncounterPreference<&str>,
+    selected: &'a str,
+    operation: EncounterOperation,
+) -> Result<ContactCommand<'a>, RuntimeError> {
+    let reference = references
+        .encounter_control(operation, binding)
+        .map_err(RuntimeError::application_refused)?;
+    Ok(ContactCommand::Preference {
+        kind: "encounter-preference",
+        target_id: selected,
+        encounter_preference: EncounterRequest {
+            operation,
+            reference,
+        },
+    })
+}
+
+pub(crate) fn contact_choices<'a>(
+    revision: u64,
+    selected: &'a str,
+    conversant: Option<&'a JsText>,
+    strike_menu: Option<openlegend_simulation::runtime::RuntimeStrikeMenu<'a>>,
     line_clear: impl Fn(&openlegend_simulation::geometry::SightRay) -> bool,
     controlling: bool,
+    manually_paused: bool,
+    references: &PlayerReferences<'_>,
     budget: &ByteBudget,
-) -> Result<Bytes, RuntimeError> {
+) -> Result<ContactMenu<'a>, RuntimeError> {
     use openlegend_simulation::activity::{ActivityDetail, ActivityScalar};
     use openlegend_simulation::runtime::RuntimeRangedMode;
     use openlegend_simulation::worlds::activity_display as display;
-    use std::{borrow::Cow, mem::size_of};
+    use std::mem::size_of;
 
-    #[derive(Serialize)]
-    #[serde(tag = "kind", rename_all = "lowercase")]
-    enum Intent<'a> {
-        Compose {
-            mode: &'static str,
-            #[serde(rename = "npcId")]
-            npc_id: &'a str,
-        },
-        Command {
-            command: Command<'a>,
-        },
-    }
-    #[derive(Serialize)]
-    #[serde(untagged, rename_all_fields = "camelCase")]
-    enum Command<'a> {
-        Strike {
-            #[serde(rename = "type")]
-            kind: &'static str,
-            target_id: &'a str,
-            definition_id: &'a str,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            item_id: Option<&'a str>,
-            #[serde(skip_serializing_if = "std::ops::Not::not")]
-            auto_equip: bool,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            expected_revision: Option<u64>,
-        },
-        Guard {
-            #[serde(rename = "type")]
-            kind: &'static str,
-            target_id: &'a str,
-            item_id: &'a str,
-        },
-        Ranged {
-            #[serde(rename = "type")]
-            mode: RuntimeRangedMode,
-            target_id: &'a str,
-            item_id: &'a str,
-            ammunition_id: &'a str,
-            #[serde(skip_serializing_if = "std::ops::Not::not")]
-            auto_equip: bool,
-        },
-    }
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Action<'a> {
-        id: String,
-        label: Cow<'a, JsText>,
-        category: &'a str,
-        description: Cow<'a, JsText>,
-        keywords: &'a [String],
-        target_id: &'a str,
-        enabled: bool,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        reason: Option<&'a str>,
-        #[serde(skip_serializing_if = "Vec::is_empty")]
-        facts: Vec<(JsText, JsText)>,
-        intent: Intent<'a>,
-    }
     let words = &*CONVERSATION;
+    let encounter = strike_menu.as_ref().and_then(|menu| menu.encounter());
+    let family = encounter
+        .as_ref()
+        .map_or(EncounterFamily::Ordinary, |seen| seen.family);
+    use openlegend_simulation::worlds::base_context_actions::{Choice, rank};
     let mut workspace =
         budget.reserve(2048 + 8 * conversant.map_or(0, JsText::storage_bytes) + selected.len())?;
     let mut actions = Vec::new();
     let mut categories = Vec::new();
     if let Some(name) = conversant {
-        actions.push(Action {
+        let custom = encounter
+            .as_ref()
+            .filter(|read| read.family != EncounterFamily::Ordinary);
+        if let Some(custom) = custom {
+            let bytes = 4 * (custom.speak.label.len() + custom.speak.description.len());
+            workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
+        }
+        let preference = encounter
+            .as_ref()
+            .filter(|_| controlling)
+            .map(|seen| {
+                current_control(
+                    references,
+                    &seen.binding,
+                    selected,
+                    EncounterOperation::Speak,
+                )
+            })
+            .transpose()?;
+        actions.push(ContactAction {
             id: format!("talk-{selected}"),
-            label: Cow::Owned(JsText::concat(&[&words.label_prefix, name])),
+            label: Cow::Owned(custom.map_or_else(
+                || JsText::concat(&[&words.label_prefix, name]),
+                |seen| JsText::from(seen.speak.label),
+            )),
             category: &words.category,
-            description: Cow::Owned(JsText::concat(&[
-                &words.description_prefix,
-                name,
-                &words.description_suffix,
-            ])),
+            description: Cow::Owned(custom.map_or_else(
+                || JsText::concat(&[&words.description_prefix, name, &words.description_suffix]),
+                |seen| JsText::from(seen.speak.description),
+            )),
             keywords: &words.keywords,
             target_id: selected,
             enabled: true,
             reason: None,
             facts: Vec::new(),
-            intent: Intent::Compose {
+            priority: rank(family, Choice::Speak),
+            intent: ContactIntent::Compose {
                 mode: "chat",
                 npc_id: selected,
+                preference,
             },
         });
         categories.push(words.category.as_str());
@@ -669,8 +880,68 @@ pub(crate) fn contact_choices(
         } else if menu.paused() {
             Some(RESUME_WORLD)
         } else {
-            None
+            menu.unavailable_reason()
         };
+        if let Some(seen) = &encounter {
+            if let Some(held) = &seen.held
+                && let Some((label, description, not_ready)) = menu.release_words()
+            {
+                let bytes = 3 * size_of::<ContactAction<'_>>() + 2 * held.action_id.len();
+                workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
+                let unavailable = reason.or((!held.ready).then_some(not_ready));
+                actions.push(ContactAction {
+                    id: format!("release-shot:{}", held.action_id),
+                    label: Cow::Borrowed(label),
+                    category: "Combat",
+                    description: Cow::Borrowed(description),
+                    keywords: &[],
+                    target_id: selected,
+                    enabled: unavailable.is_none(),
+                    reason: unavailable,
+                    facts: Vec::new(),
+                    priority: rank(family, Choice::Release),
+                    intent: ContactIntent::Command {
+                        command: ContactCommand::Release {
+                            kind: "release-shot",
+                            aim_id: held.action_id,
+                        },
+                    },
+                });
+            }
+            if seen.stop {
+                let stop_reason = if controlling && manually_paused {
+                    menu.unavailable_reason()
+                } else {
+                    reason
+                };
+                let bytes = 3 * size_of::<ContactAction<'_>>()
+                    + selected.len()
+                    + 128
+                    + 4 * (seen.stop_words.label.len() + seen.stop_words.description.len());
+                workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
+                actions.push(ContactAction {
+                    id: format!("stop-offense-{selected}"),
+                    label: Cow::Owned(JsText::from(seen.stop_words.label)),
+                    category: "Combat",
+                    description: Cow::Owned(JsText::from(seen.stop_words.description)),
+                    keywords: &[],
+                    target_id: selected,
+                    enabled: stop_reason.is_none(),
+                    reason: stop_reason,
+                    facts: Vec::new(),
+                    priority: None,
+                    intent: ContactIntent::Command {
+                        command: current_control(
+                            references,
+                            &seen.binding,
+                            selected,
+                            EncounterOperation::Stop,
+                        )?,
+                    },
+                });
+            }
+        }
+        let attack_reason = reason.or(menu.recover_reason());
         for definition in menu.definitions(budget) {
             let definition = definition?;
             let bytes = 4096_usize
@@ -723,7 +994,7 @@ pub(crate) fn contact_choices(
                     copy.uncertainty.into(),
                 )))
                 .collect();
-            actions.push(Action {
+            actions.push(ContactAction {
                 id: if let Some(item) = definition.weapon() {
                     format!("{}-{selected}-{item}", definition.id())
                 } else {
@@ -734,11 +1005,27 @@ pub(crate) fn contact_choices(
                 description: Cow::Owned(view.name),
                 keywords: &[],
                 target_id: selected,
-                enabled: reason.is_none(),
-                reason,
+                enabled: attack_reason.is_none(),
+                reason: attack_reason,
                 facts,
-                intent: Intent::Command {
-                    command: Command::Strike {
+                priority: rank(
+                    family,
+                    Choice::Strike {
+                        exact: encounter
+                            .as_ref()
+                            .and_then(|seen| seen.own)
+                            .is_some_and(|own| {
+                                own.kind == OffensiveKind::Strike
+                                    && own.definition_id.as_deref() == Some(definition.id())
+                                    && own.weapon_item_id.as_deref() == definition.weapon()
+                            }),
+                        equipped: definition.weapon().is_some()
+                            && definition.equipment_revision().is_none(),
+                        carried: definition.equipment_revision().is_some(),
+                    },
+                ),
+                intent: ContactIntent::Command {
+                    command: ContactCommand::Strike {
                         kind: "strike",
                         target_id: selected,
                         definition_id: definition.id(),
@@ -757,14 +1044,14 @@ pub(crate) fn contact_choices(
                 RuntimeRangedMode::ShootOnce => "shoot-once",
                 RuntimeRangedMode::Hunt => "hunt",
             };
-            let bytes = (2 * size_of::<Action<'_>>() + 1)
+            let bytes = (2 * size_of::<ContactAction<'_>>() + 1)
                 .checked_add(kind.len())
                 .and_then(|size| size.checked_add(selected.len()))
                 .and_then(|size| size.checked_add(choice.weapon.len() + 1))
                 .ok_or(CapacityError)?;
             workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
             let reason = reason.or(choice.reason);
-            actions.push(Action {
+            actions.push(ContactAction {
                 id: format!("{kind}-{selected}-{}", choice.weapon),
                 label: Cow::Borrowed(&choice.label),
                 category: "Combat",
@@ -774,8 +1061,28 @@ pub(crate) fn contact_choices(
                 enabled: reason.is_none(),
                 reason,
                 facts: Vec::new(),
-                intent: Intent::Command {
-                    command: Command::Ranged {
+                priority: rank(
+                    family,
+                    Choice::Ranged {
+                        kind,
+                        exact: encounter
+                            .as_ref()
+                            .and_then(|seen| seen.own)
+                            .is_some_and(|own| {
+                                let expected = match choice.mode {
+                                    RuntimeRangedMode::Aim => OffensiveKind::Aim,
+                                    RuntimeRangedMode::ShootOnce => OffensiveKind::ShootOnce,
+                                    RuntimeRangedMode::Hunt => OffensiveKind::Hunt,
+                                };
+                                own.kind == expected
+                                    && own.weapon_item_id.as_deref() == Some(choice.weapon)
+                                    && own.ammo_item_id.as_deref() == Some(choice.ammunition)
+                            }),
+                        carried: choice.auto_equip,
+                    },
+                ),
+                intent: ContactIntent::Command {
+                    command: ContactCommand::Ranged {
                         mode: choice.mode,
                         target_id: selected,
                         item_id: choice.weapon,
@@ -787,10 +1094,13 @@ pub(crate) fn contact_choices(
         }
         let guard_reason = reason.or(menu.guard_reason());
         for (item, name, verb) in menu.guard_shields() {
-            let bytes = 2 * size_of::<Action<'_>>() + 4 * (item.len() + selected.len() + verb.len())
-                + 4 * name.storage_bytes() + 4 * menu.name.storage_bytes() + 128;
+            let bytes = 2 * size_of::<ContactAction<'_>>()
+                + 4 * (item.len() + selected.len() + verb.len())
+                + 4 * name.storage_bytes()
+                + 4 * menu.name.storage_bytes()
+                + 128;
             workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
-            actions.push(Action {
+            actions.push(ContactAction {
                 id: format!("guard-{selected}-{item}"),
                 label: Cow::Owned(JsText::concat(&[&verb.into(), &" ".into(), name])),
                 category: "Combat",
@@ -800,8 +1110,13 @@ pub(crate) fn contact_choices(
                 enabled: guard_reason.is_none(),
                 reason: guard_reason,
                 facts: Vec::new(),
-                intent: Intent::Command {
-                    command: Command::Guard { kind: "guard", target_id: selected, item_id: item },
+                priority: None,
+                intent: ContactIntent::Command {
+                    command: ContactCommand::Guard {
+                        kind: "guard",
+                        target_id: selected,
+                        item_id: item,
+                    },
                 },
             });
         }
@@ -809,5 +1124,42 @@ pub(crate) fn contact_choices(
             categories.push("Combat");
         }
     }
-    resource_menu_categories(revision, &actions, &categories, budget)
+    if family == EncounterFamily::Attack && actions.iter().all(|action| action.priority.is_none()) {
+        let (label, description) =
+            openlegend_simulation::worlds::base_context_actions::unavailable();
+        workspace.resize(
+            workspace
+                .bytes()
+                .checked_add(
+                    4 * (label.len() + description.len())
+                        + selected.len()
+                        + 3 * size_of::<ContactAction<'_>>(),
+                )
+                .ok_or(CapacityError)?,
+        )?;
+        actions.push(ContactAction {
+            id: format!("unavailable-attack-{selected}"),
+            label: Cow::Owned(JsText::from(label)),
+            category: "Combat",
+            description: Cow::Owned(JsText::from(description)),
+            keywords: &[],
+            target_id: selected,
+            enabled: false,
+            reason: Some(description),
+            facts: Vec::new(),
+            priority: Some(0),
+            intent: ContactIntent::Unavailable,
+        });
+        if !categories.contains(&"Combat") {
+            categories.push("Combat");
+        }
+    }
+    Ok(ContactMenu {
+        revision,
+        selected,
+        actions,
+        categories,
+        encounter,
+        _storage: workspace,
+    })
 }

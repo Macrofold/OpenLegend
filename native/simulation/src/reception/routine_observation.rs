@@ -124,11 +124,6 @@ impl RoutineObservation {
             .actor
             .as_ref()
             .ok_or(ReceivedError("Routine observer has no body."))?;
-        // Encounter control is not converted yet; never interpret an opaque
-        // encounter as an absence of deliberate watching.
-        if actor.encounters.is_some() {
-            return Err(ReceivedError("Routine encounter control is not converted."));
-        }
         let life = actor.physical_life.unwrap_or(0);
         let mut next = SensoryProgress {
             routine_sight: stored.and_then(|p| p.routine_sight.clone()),

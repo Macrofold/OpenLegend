@@ -62,6 +62,7 @@ pub struct RuntimeStrikeMenu<'a> {
     target: &'a crate::state::Entity,
     body: &'a crate::reception::ObservedBody,
     health: Option<&'a crate::reception::AttributeView>,
+    may_act: bool,
     may_attack: bool,
     pub name: &'a crate::text::JsText,
     pub ranged: &'a [RuntimeRangedChoice<'a>],
@@ -113,6 +114,51 @@ impl<'a> RuntimeStrikeChoice<'a> {
 }
 
 impl<'a> RuntimeStrikeMenu<'a> {
+    /// A borrowed current observation, never a second view or geometry query.
+    pub fn encounter(&self) -> Option<crate::combat_encounters::EncounterContext<'a>> {
+        crate::combat_encounters::context(self.state, self.source, self.target)
+    }
+
+    pub fn release_words(
+        &self,
+    ) -> Option<(&'a crate::text::JsText, &'a crate::text::JsText, &'a str)> {
+        let words = &self
+            .state
+            .installed
+            .occurrence_rules
+            .value()
+            .ranged
+            .as_ref()?
+            .menu;
+        Some((
+            &words.release_label,
+            &words.release_description,
+            &words.release_not_ready,
+        ))
+    }
+
+    pub fn recover_reason(&self) -> Option<&'a str> {
+        let body = self.source.actor.as_ref()?;
+        let now = self.state.physical.header.sim_time;
+        (body.combat_ready_at.is_some_and(|ready| ready > now)
+            || body.action.as_ref().is_some_and(|action| {
+                action.strike_phase == Some(crate::contact::StrikePhase::Recovery)
+            }))
+        .then_some(crate::worlds::base_context_actions::recovering())
+    }
+
+    pub fn unavailable_reason(&self) -> Option<&'a str> {
+        (!self.may_act).then_some(
+            self.state
+                .installed
+                .ordinary_actions
+                .value()
+                .actions_restricted
+                .message
+                .as_str(),
+        )
+    }
+
     pub fn paused(&self) -> bool {
         self.state.physical.header.paused
     }
@@ -217,8 +263,17 @@ impl<'a> RuntimeStrikeMenu<'a> {
     }
 
     /// Borrow only equipped shields from this accepted contact cut.
-    pub fn guard_shields(&self) -> impl Iterator<Item = (&'a str, &'a crate::text::JsText, &'a str)> + '_ {
-        self.state.inventory.children(&self.state.physical.entities, &self.source.id, true)
+    pub fn guard_shields(
+        &self,
+    ) -> impl Iterator<Item = (&'a str, &'a crate::text::JsText, &'a str)> + '_ {
+        self.may_act
+            .then(|| {
+                self.state
+                    .inventory
+                    .children(&self.state.physical.entities, &self.source.id, true)
+            })
+            .into_iter()
+            .flatten()
             .filter_map(|shield| {
                 let lot = shield.item.as_ref()?;
                 let definition = self.state.installed.retained.items.get(&lot.definition_pin.id)?;
@@ -1043,14 +1098,14 @@ impl NativeWorldSession {
             .actor
             .as_ref()
             .is_some_and(|a| a.controller == "player")
-            || state
-                .installed
-                .capabilities
-                .capability_blocked(Some(source), "actions")
-                .map_err(failure)?
         {
             return Ok(None);
         }
+        let may_act = !state
+            .installed
+            .capabilities
+            .capability_blocked(Some(source), "actions")
+            .map_err(failure)?;
         let _lease = self.session.fence().begin_publication().map_err(failure)?;
         let mut result = None;
         let mut use_menu = Some(use_menu);
@@ -1082,9 +1137,10 @@ impl NativeWorldSession {
                 if !matches(observed) {
                     return false;
                 }
-                let may_attack = life.is_some_and(|life| {
-                    crate::contact::may_target(&state.installed, source, target, life)
-                });
+                let may_attack = may_act
+                    && life.is_some_and(|life| {
+                        crate::contact::may_target(&state.installed, source, target, life)
+                    });
                 let ranged = if may_attack {
                     match ranged::choices(state, source, target, observed_name, &self.budget) {
                         Ok(value) => Some(value),
@@ -1102,11 +1158,14 @@ impl NativeWorldSession {
                     target,
                     body,
                     health,
+                    may_act,
                     may_attack,
                     name,
                     ranged: ranged.as_ref().map_or(&[], |(choices, _)| choices.as_slice()),
                 };
-                if may_attack || choice.guard_shields().next().is_some()
+                if may_attack
+                    || choice.encounter().is_some()
+                    || may_act && choice.guard_shields().next().is_some()
                 {
                     result = Some(use_menu.take().expect("one selected contact")(choice));
                 }

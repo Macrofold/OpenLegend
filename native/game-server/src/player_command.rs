@@ -40,6 +40,7 @@ use tokio::sync::Mutex;
 use uuid::Uuid;
 mod attack_result;
 mod contact;
+mod context_choice;
 mod late_review;
 mod typed;
 pub(crate) use contact::Reviews as AttackReviews;
@@ -95,6 +96,12 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     primary_action: Option<PrimaryActionSelection<String>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    encounter_preference: Option<actions::EncounterRequest>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     scar_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
@@ -379,6 +386,8 @@ enum CommandKind {
     Follow,
     Respawn,
     Cancel,
+    #[serde(rename = "encounter-preference")]
+    EncounterPreference,
     Gather,
     Fish,
     #[serde(rename = "tend-fire")]
@@ -801,6 +810,10 @@ impl PlayerCommands {
                 let begin_authority = permits.clone();
                 let begin_references = self.references.clone();
                 let begin_budget = self.game.host.budget().clone();
+                let begin_contact_game = (facts.request.command.encounter_preference.is_some()
+                    || (facts.request.command.primary_action.is_some()
+                        && facts.request.command.kind != CommandKind::Gather))
+                    .then(|| self.game.clone());
                 let begin_spatial = facts
                     .request
                     .command
@@ -983,13 +996,14 @@ impl PlayerCommands {
                             };
                             let world_destination = exact_move
                                 && (nested.is_some() || target_ref.is_some_and(|id| id.starts_with("contact-")));
-                            let target = match (raw.primary_action.as_ref(), target_ref.filter(|_| {
+                            let mut encounter = None;
+                            let target = match (raw.primary_action.as_ref().filter(|_| raw.lethal_review_id.is_none()), target_ref.filter(|_| {
                                 // Contained bags bind through the inspected page and its
                                 // root. Bare world storage needs the exact body reference.
                                 nested.is_none() && !own_status && !matches!(raw.kind, CommandKind::Say)
                                     && (raw.kind.arrangement().is_none() || world_destination)
                             })) {
-                                (Some(selection), _) => match actions::fresh_gather_selection(
+                                (Some(selection), _) if raw.kind == CommandKind::Gather => match actions::fresh_gather_selection(
                                     world, &begin_scope.scope, &begin_references, selection, &begin_budget,
                                 )? {
                                     actions::GatherSelection::Current(target) => Some(target),
@@ -1002,6 +1016,23 @@ impl PlayerCommands {
                                         )));
                                     }
                                 },
+                                (primary, explicit) if primary.is_some() || raw.encounter_preference.is_some() => {
+                                    let selected = primary.map(|choice| choice.target_id.as_str()).or(explicit)
+                                        .ok_or(StoreError::InvalidRecord)?;
+                                    let accepted = raw.fresh_contact_choice(world, &begin_scope.scope, &begin_references, selected,
+                                        begin_contact_game.as_ref().expect("contact authority was captured"))?;
+                                    let Some(accepted) = accepted else {
+                                        let (code, message) = if primary.is_some() {
+                                            ("stale-primary-action", "The preferred action for this object changed. Choose it again.")
+                                        } else {
+                                            ("stale-encounter-preference", "This encounter changed. Review its current controls.")
+                                        };
+                                        return Ok(ApplicationStart::Existing(ResultOwner::Refused(code, message)));
+                                    };
+                                    encounter = accepted.control;
+                                    Some(accepted.contact)
+                                }
+                                (Some(_), _) => return Err(StoreError::InvalidRecord.into()),
                                 (None, None) => None,
                                 (None, Some(contact)) => {
                                     let selected = if matches!(raw.kind, CommandKind::Pickup) {
@@ -1102,7 +1133,10 @@ impl PlayerCommands {
                                 (None, Some((id, life))) => Some(RuntimeRangedTarget::Subject { id, life }),
                                 (None, None) => None,
                             };
-                            let command = begin_facts.command(
+                            let command = if let Some((binding, _)) = &encounter {
+                                let operation = raw.encounter_preference.as_ref().ok_or(StoreError::InvalidRecord)?.operation;
+                                RuntimePlayerCommand::EncounterPreference(operation, binding)
+                            } else { begin_facts.command(
                                 position,
                                 target.as_ref().map(|value| value.id.as_str())
                                     .or(nested)
@@ -1115,7 +1149,7 @@ impl PlayerCommands {
                                 group.as_ref().map(|group| &group.selection),
                                 world_source.as_ref().map(|(root, _)| root.as_str()),
                                 attack_turn.as_ref().and_then(|turn| turn.get()),
-                            )?;
+                            )? };
                             Ok(ApplicationStart::Candidate(world.begin_player_command_with_materials(
                                 &begin_facts.id,
                                 &begin_scope.scope.actor_id,
@@ -1282,9 +1316,16 @@ fn valid_body_reference(reference: &str) -> bool {
 
 impl CommandInput {
     fn permits_manual_pause(&self) -> bool {
-        matches!(self.kind, CommandKind::Cancel)
-            || matches!((self.kind, self.outing_operation),
-                (CommandKind::Outing, Some(TravelOperation::Decline | TravelOperation::Leave)))
+        matches!(
+            self.kind,
+            CommandKind::Cancel | CommandKind::EncounterPreference
+        ) || matches!(
+            (self.kind, self.outing_operation),
+            (
+                CommandKind::Outing,
+                Some(TravelOperation::Decline | TravelOperation::Leave)
+            )
+        )
     }
 }
 
@@ -1321,13 +1362,35 @@ impl CommandRequest {
             || self.command_id.starts_with("gameplay:")
             || !point_binding_valid
             || command.primary_action.as_ref().is_some_and(|selection| {
-                !matches!(command.kind, CommandKind::Gather)
-                    || command.target_id.as_ref() != Some(&selection.target_id)
-                    || !id(&selection.action_id)
+                !matches!(
+                    command.kind,
+                    CommandKind::Gather
+                        | CommandKind::Strike
+                        | CommandKind::Aim
+                        | CommandKind::ShootOnce
+                        | CommandKind::Hunt
+                        | CommandKind::ReleaseShot
+                        | CommandKind::EncounterPreference
+                ) || !id(&selection.target_id)
+                    || if command.kind == CommandKind::ReleaseShot {
+                        command.target_id.is_some()
+                    } else {
+                        command.target_id.as_ref() != Some(&selection.target_id)
+                    }
+                    || selection.action_id.is_empty()
                     || !valid_body_reference(&selection.reference)
-                    || command.item_id.is_some()
+                    || (command.kind == CommandKind::Gather && command.item_id.is_some())
                     || command.gathering_mode.is_some()
+                    || command.aim_point.is_some()
+                    || command.body_reference.is_some()
+                    || command.execution.is_some()
             })
+            || (command.encounter_preference.is_some()
+                != (command.kind == CommandKind::EncounterPreference))
+            || command
+                .encounter_preference
+                .as_ref()
+                .is_some_and(|request| !valid_body_reference(&request.reference))
             || command.execution.as_ref().is_some_and(|execution| {
                 !execution.valid(id) || !match execution {
                     AttackControl::Begin { .. } =>
@@ -1414,6 +1477,16 @@ impl CommandRequest {
             return Err(AccessError::Forbidden.into());
         }
         match command.kind {
+            CommandKind::EncounterPreference
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.item_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.expected_action_id.is_none() =>
+            {
+                Ok(())
+            }
             CommandKind::Handover
                 if command.position.is_none() && command.known_place.is_none()
                     && command.gathering_mode.is_none() && command.expected_action_id.is_none()
@@ -1841,6 +1914,7 @@ impl PreparedRequest {
             };
         }
         match input.kind {
+            CommandKind::EncounterPreference => Err(StoreError::InvalidRecord.into()),
             CommandKind::Handover => Ok(RuntimePlayerCommand::Handover {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 gift: self.gift.as_ref().ok_or(StoreError::InvalidRecord)?,

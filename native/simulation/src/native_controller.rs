@@ -12,7 +12,9 @@ use crate::work::{WorkMeters, WorkUnit};
 use indexmap::IndexMap;
 
 mod event;
-pub(crate) use event::{acquire_event, event_reception_needed, require_supported_event};
+pub(crate) use event::{
+    acquire_event, contact_result_action, event_reception_needed, require_supported_event,
+};
 mod ground;
 pub(crate) use ground::{GroundTurn, ground_turn, proposal_current};
 mod aerial;

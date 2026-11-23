@@ -87,6 +87,9 @@ heap_record!(super::RangedMenuWords {
     aim_description,
     shoot_label,
     shoot_description,
+    release_label,
+    release_description,
+    release_not_ready,
     hunt_label,
     hunt_species
 });

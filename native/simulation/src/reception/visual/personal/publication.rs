@@ -61,6 +61,7 @@ enum PublicationPhase {
     Receiving,
     People,
     PublishPeople,
+    CombatFlights,
     Combat,
     PublishObjects,
     Objects,
@@ -77,6 +78,7 @@ pub(crate) struct ObserverReceptionCursor {
     received: Option<ReceivedPersonalVisual>,
     candidate: CandidateKey,
     phase: PublicationPhase,
+    flights: Option<crate::combat_encounters::CheckedFlights>,
     index: usize,
     batch: Option<EncounterBatch>,
     event: Option<EventCursor>,
@@ -111,6 +113,7 @@ impl ObserverReceptionCursor {
             received: None,
             candidate,
             phase: PublicationPhase::Receiving,
+            flights: None,
             index: 0,
             batch: None,
             event: None,
@@ -129,9 +132,14 @@ impl ObserverReceptionCursor {
         let progress = self.drive(core, answer, budget)?;
         Ok(match progress {
             Progress::Geometry => ObserverReceptionStep::Geometry(
-                self.visual
+                self.flights
                     .as_ref()
-                    .and_then(PersonalVisualCursor::geometry_request)
+                    .and_then(crate::combat_encounters::CheckedFlights::request)
+                    .or_else(|| {
+                        self.visual
+                            .as_ref()
+                            .and_then(PersonalVisualCursor::geometry_request)
+                    })
                     .ok_or_else(invalid)?,
             ),
             Progress::Language => ObserverReceptionStep::Language(
@@ -330,23 +338,60 @@ impl ObserverReceptionCursor {
                         )?;
                     }
                     self.require_supported_encounter_context(core)?;
+                    let observer = &self.received.as_ref().ok_or_else(invalid)?.observer;
+                    crate::combat_encounters::settle_seen_actions(
+                        core,
+                        &observer.actor_id,
+                        budget,
+                    )?;
+                    self.flights =
+                        crate::combat_encounters::CheckedFlights::prepare(core, observer, budget)?;
+                    self.phase = PublicationPhase::CombatFlights;
+                }
+                PublicationPhase::CombatFlights => {
+                    if let Some(flights) = self.flights.as_mut() {
+                        let answers = match answer.take() {
+                            Some(ObserverReceptionAnswer::Visual(
+                                PersonalVisualAnswer::Geometry(answers),
+                            )) => Some(answers),
+                            None => None,
+                            _ => return Err(invalid().into()),
+                        };
+                        let observer = &self.received.as_ref().ok_or_else(invalid)?.observer;
+                        if flights.advance(core, observer, self.candidate, answers, budget)? {
+                            return Ok(Progress::Geometry);
+                        }
+                        self.flights = None;
+                    }
                     self.phase = PublicationPhase::Combat;
                 }
                 PublicationPhase::Combat => {
                     let observer = &self.received.as_ref().ok_or_else(invalid)?.observer;
-                    if let Some(cue) = crate::reception::combat_observation::next_attack_cue(
+                    use crate::reception::combat_observation::AttackAcquisition;
+                    if let Some(acquired) = crate::reception::combat_observation::next_attack_cue(
                         core,
                         observer,
                         &mut self.index,
                         budget,
                     )? {
+                        let cue = match acquired {
+                            AttackAcquisition::NewCue(cue) => cue,
+                            AttackAcquisition::Known(known) => {
+                                crate::combat_encounters::restore_seen_action(
+                                    core,
+                                    &observer.actor_id,
+                                    known,
+                                )?;
+                                continue;
+                            }
+                        };
                         // A cue is a new personally acquired occurrence, so the
                         // earlier visual account prefix must become available first.
                         self.batch
                             .as_ref()
                             .ok_or_else(invalid)?
                             .flush(core, budget)?;
-                        let (staged, _custody) = cue.stage(core)?;
+                        let (staged, _custody) = cue.stage(core, budget)?;
                         let reservation = self.reservation.as_mut().ok_or_else(invalid)?;
                         reservation.resize(
                             reservation
@@ -434,12 +479,8 @@ impl ObserverReceptionCursor {
             .get(id)
             .and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;
-        // Ordinary requested movement is a real frontier. Its existing
-        // capability owner still rejects other graphs before visual cues can
-        // feed an unsupported response, and encounters stay closed here.
-        if actor.encounters.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
+        // The existing capability owner still rejects other plan graphs
+        // before visual cues can feed an unsupported response.
         for plan in [actor.agency.plan.as_ref(), actor.agency.suspended_plan()]
             .into_iter()
             .flatten()

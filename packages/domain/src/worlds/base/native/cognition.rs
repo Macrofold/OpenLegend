@@ -116,6 +116,9 @@ pub struct RangedMenuWords {
     pub aim_description: crate::text::JsText,
     pub shoot_label: String,
     pub shoot_description: crate::text::JsText,
+    pub release_label: crate::text::JsText,
+    pub release_description: crate::text::JsText,
+    pub release_not_ready: String,
     pub hunt_label: String,
     pub hunt_species: Vec<String>,
 }

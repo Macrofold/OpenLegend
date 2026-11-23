@@ -34,7 +34,6 @@ mod attributes;
 mod attack_notice;
 mod attack_timing;
 mod combat_observation;
-mod body;
 mod conditions;
 mod contact;
 use contact::ContactPhase;
@@ -820,6 +819,7 @@ impl CoreMutation<'_> {
                 + result.heap_bytes().ok_or(ExecutionError::Capacity)?,
         )?;
         self.physical().finish_semantic_work(actor_id, action_id)?;
+        crate::combat_encounters::end_owned(self, actor_id, action_id)?;
         // Source finishPlanAction publishes this behavior change even when an
         // immediate command has no continuing action. It owes a sensory recheck.
         self.physical().behavior_changed(actor_id, true)?;
@@ -898,6 +898,7 @@ impl CoreMutation<'_> {
         &mut self,
         observer: &str,
     ) -> Result<(), ExecutionError> {
+        self.physical().clear_personal_encounters(observer)?;
         self.journal
             .episodes
             .remove_observer(&mut self.state.reception, observer)
@@ -1245,6 +1246,7 @@ enum UndoKey {
     CombatReady(usize, u64),
     EvasionReady(usize, u64),
     AttackModeNotice(usize, u64),
+    PersonalEncounters(usize, u64),
     ContactPhase(usize, u64),
     StrikeMotion(usize, u64),
     AttackObservers(usize, u64),
@@ -1523,6 +1525,10 @@ enum Undo {
     AttackModeNotice {
         entity: EntityHandle,
         before: Option<crate::state::AttackModeNotice>,
+    },
+    PersonalEncounters {
+        entity: EntityHandle,
+        before: Option<Box<crate::combat_encounters::PersonalEncounters>>,
     },
     ContactPhase {
         entity: EntityHandle,
@@ -2398,6 +2404,19 @@ impl PhysicalJournal {
                         .and_then(|entity| entity.actor.as_mut())
                         .ok_or(ExecutionError::Invariant)?
                         .attack_mode_notice = before;
+                    state.entities.settle_operational_memory(
+                        entity,
+                        &mut self.reservation,
+                        true,
+                    )?;
+                }
+                Undo::PersonalEncounters { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .encounters = before;
                     state.entities.settle_operational_memory(
                         entity,
                         &mut self.reservation,

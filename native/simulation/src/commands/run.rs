@@ -45,7 +45,6 @@ mod eating;
 mod drop;
 mod pickup;
 mod inspect_activities;
-mod descriptive_act;
 mod inspect_item;
 mod inspect_storage;
 mod learn_record;
@@ -164,6 +163,7 @@ enum Phase {
     AfterDeparture,
     CancelEnd,
     CancelClear,
+    EncounterControlClear,
     Deactivate,
     StatusSight,
     StatusReach,
@@ -183,12 +183,14 @@ enum PersonalTask {
     Replaced(PendingActivityResult),
     Status(PendingStatusEnd),
     Immediate(PendingActivityResult),
+    EncounterStop(crate::execution::PendingActionFinish),
 }
 impl PersonalTask {
     fn result(&self) -> &PendingActivityResult {
         match self {
             Self::Replaced(p) | Self::Immediate(p) => p,
             Self::Status(p) => p.personal(),
+            Self::EncounterStop(p) => p.personal(),
         }
     }
 }
@@ -969,6 +971,10 @@ impl CommandCursor {
                                 core.complete_activity_result(pending, &acquired)?;
                                 self.phase = Phase::Tail;
                             }
+                            PersonalTask::EncounterStop(pending) => {
+                                core.complete_finish_action(pending, &acquired)?;
+                                self.phase = Phase::EncounterControlClear;
+                            }
                             PersonalTask::Status(pending) => {
                                 let status = pending.resume(core, &acquired)?;
                                 if let Some(event) =
@@ -1500,6 +1506,9 @@ impl CommandCursor {
                             }
                             self.phase = Phase::Interrupt;
                         }
+                        NativeCommand::EncounterPreference { .. } => {
+                            self.prepare_encounter_control(core)?;
+                        }
                         NativeCommand::Feed { .. } => {
                             if self.prepare_feeding(core)? {
                                 return Ok(Progress::Geometry);
@@ -2006,6 +2015,7 @@ impl CommandCursor {
                         .and_then(|a| a.action.as_ref())
                         .map(|a| a.id.clone());
                     if let Some(old) = old {
+                        crate::combat_encounters::end_owned(core, &actor_id, &old)?;
                         if !cancelling {
                             core.physical().release_work(&old)?;
                         }
@@ -2133,8 +2143,7 @@ impl CommandCursor {
                             .installed
                             .account_law()
                             .routine_movement(
-                                &core.state.physical,
-                                &core.state.experience,
+                                core.state,
                                 &actor_id,
                                 crate::attention::ActivityRecordingContext::from_occurrence(
                                     &record.occurrence,
@@ -2266,6 +2275,9 @@ impl CommandCursor {
                     )?;
                     self.outcome = Some(ordinary.stopped.outcome(true));
                     self.phase = Phase::Tail;
+                }
+                Phase::EncounterControlClear => {
+                    self.finish_encounter_control(core, true)?;
                 }
                 Phase::Deactivate => {
                     let NativeCommand::StatusEffect {
@@ -2749,6 +2761,25 @@ impl CommandCursor {
                             &self.command.envelope().id,
                             crate::state::AttackModeNoticeKind::OwnOffensiveActionAdmitted,
                         )?;
+                        if let Some(invocation) = result.action_id.as_deref()
+                            && matches!(
+                                &self.command,
+                                NativeCommand::Strike { .. }
+                                    | NativeCommand::Ranged {
+                                        intent:
+                                            crate::commands::ranged_input::RangedIntent::Start { .. },
+                                        ..
+                                    }
+                            )
+                        {
+                            crate::combat_encounters::select_owned(
+                                core,
+                                &actor_id,
+                                &self.command.envelope().id,
+                                invocation,
+                                &self.budget,
+                            )?;
+                        }
                     }
                     // Public commands stage their exact retry receipt with the
                     // SQL prefix. Keep one owner, as in Source's command writer.
@@ -2937,7 +2968,12 @@ fn actor_problem(
         return Ok(Some(ordinary.movement_restricted.outcome(false)));
     }
     if core.state.physical.header.paused
-        && !ends_consent && !matches!(command, NativeCommand::Cancel { .. }) {
+        && !ends_consent
+        && !matches!(
+            command,
+            NativeCommand::Cancel { .. } | NativeCommand::EncounterPreference { .. }
+        )
+    {
         return Ok(Some(ordinary.paused.outcome(false)));
     }
     if !actor.alive || actor.incapacitated {
@@ -2957,6 +2993,7 @@ fn actor_problem(
     if !matches!(
         command,
         NativeCommand::Cancel { .. }
+            | NativeCommand::EncounterPreference { .. }
             | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. }

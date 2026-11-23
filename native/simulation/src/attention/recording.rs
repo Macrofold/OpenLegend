@@ -104,8 +104,7 @@ pub(crate) trait AccountRecordingLaw:
     fn result_event_type(&self, command_type: &str) -> Option<&str>;
     fn routine_result(
         &self,
-        physical: &crate::simulation::PhysicalState,
-        experience: &crate::experience::ExperienceState,
+        state: &crate::simulation::SimulationState,
         actor_id: &str,
         activity: ActivityRecordingContext<'_>,
     ) -> Result<bool, crate::received::ReceivedError>;

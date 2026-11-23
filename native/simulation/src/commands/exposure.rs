@@ -82,7 +82,8 @@ impl CommandExposure {
             | NativeCommand::TransferItem { .. }
             | NativeCommand::Handover { .. }
             | NativeCommand::LearnRecord { .. }
-            | NativeCommand::InspectActivities { .. } => return Ok(None),
+            | NativeCommand::InspectActivities { .. }
+            | NativeCommand::EncounterPreference { .. } => return Ok(None),
             NativeCommand::InspectInventory { .. } => {
                 return Err(ExecutionError::UnsupportedFamily);
             }

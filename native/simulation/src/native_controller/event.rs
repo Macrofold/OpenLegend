@@ -99,6 +99,18 @@ fn contact_cue<'a>(
         .then_some((cue, source, action))
 }
 
+/// Share the proved strike completion with personal reception. Incidental
+/// geometric contact does not end an attack or become an offensive outcome.
+pub(crate) fn contact_result_action<'a>(
+    core: &CoreMutation<'_>,
+    event: &'a WorldEvent,
+) -> Option<&'a str> {
+    let (cue, _, _) = contact_cue(core, event)?;
+    (cue == ContactCue::Attempt)
+        .then(|| crate::combat_encounters::field_id(event, "actionId"))
+        .flatten()
+}
+
 enum ProjectileCue<'a> {
     Release {
         source: &'a Entity,

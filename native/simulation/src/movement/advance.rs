@@ -1068,15 +1068,10 @@ impl MoveAdvanceCursor {
                         let mut context = ActivityRecordingContext::from_occurrence(record);
                         context.status = ActivityStatus::Completed;
                         context.outcome = Some((true, "completed"));
-                        // install/physical.rs refuses actual Actor.encounters,
-                        // and the selected writers do not create that family.
-                        // The admitted world's reciprocal audience is therefore
-                        // genuinely absent, never guessed from sight geometry.
                         installed
                             .account_law()
                             .routine_movement(
-                                &core.state.physical,
-                                &core.state.experience,
+                                core.state,
                                 &self.actor_id,
                                 context,
                                 crate::worlds::MovementRecordingPhase::Arrival,

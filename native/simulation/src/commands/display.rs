@@ -541,6 +541,7 @@ impl ActivityDisplayCursor {
             | NativeCommand::PracticeShot { .. }
             | NativeCommand::Equipment { .. }
             | NativeCommand::Cancel { .. }
+            | NativeCommand::EncounterPreference { .. }
             | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. }

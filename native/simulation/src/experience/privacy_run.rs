@@ -384,6 +384,7 @@ fn begin(
     )?;
     crate::reception::revoke_received_geometry_evidence(core, &actor, &selection.affected, budget)?;
     crate::reception::revoke_attention_evidence(core, &actor, &selection.affected, budget)?;
+    crate::combat_encounters::withdraw(core, &actor, |id| selection.affected.contains(id))?;
     let consequences = continue_privacy_selection(
         selection,
         core.state,
