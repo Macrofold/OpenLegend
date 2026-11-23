@@ -45,6 +45,8 @@ use gifts::GiftProposals;
 mod defense;
 use defense::GuardChoices;
 pub use defense::NpcGuardTool;
+mod melee;
+use melee::MeleeChoices;
 
 struct Target {
     body: usize,
@@ -73,6 +75,7 @@ enum Enumerate {
     Fire(usize, usize),
     Cook(usize, usize),
     Strike(usize, usize),
+    EquippedStrike(usize, usize),
     Guard(usize, usize),
     CurrentWork(usize),
     PausedWork(usize),
@@ -120,6 +123,7 @@ pub(crate) struct NpcCandidateCursor {
     fuels: Option<FuelChoices>,
     gift_proposals: Option<GiftProposals>,
     guard_choices: Option<GuardChoices>,
+    melee_choices: Option<MeleeChoices>,
 }
 
 #[derive(Serialize)]
@@ -287,6 +291,7 @@ impl NpcCandidateCursor {
             fuels: None,
             gift_proposals: None,
             guard_choices: None,
+            melee_choices: None,
         })
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
@@ -374,6 +379,7 @@ impl NpcCandidateCursor {
                 "strike" => NativeCommand::Strike {
                     envelope,
                     target_id: target()?,
+                    target_life: None,
                     definition_id: definition()?,
                     weapon_item_id: None,
                     auto_equip: None,
@@ -654,6 +660,7 @@ impl NpcCandidateCursor {
                         self.describe_cast(core, &mut offer)?;
                         self.describe_cooking(core, &mut offer)?;
                         self.describe_fire(core, &mut offer)?;
+                        self.describe_equipped_strike(core, &mut offer)?;
                         if let Some(proposals) = self.gift_proposals.as_mut()
                             && offer
                                 .command

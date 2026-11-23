@@ -856,6 +856,7 @@ fn bind_strike(
                 6 + usize::from(weapon.is_some()) + usize::from(auto_equip),
             )?),
             target_id: target.into(),
+            target_life: None,
             definition_id: definition.into(),
             weapon_item_id: weapon.map(str::to_owned),
             auto_equip: auto_equip.then_some(true),

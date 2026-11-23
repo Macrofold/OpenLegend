@@ -378,7 +378,7 @@ impl NpcCandidateCursor {
             }
             Enumerate::Strike(target_index, definition_index) => {
                 if target_index == self.targets.len() {
-                    self.stage = Enumerate::Guard(0, 0);
+                    self.stage = Enumerate::EquippedStrike(0, 0);
                     return Ok(true);
                 }
                 if definition_index == installed.retained.native_strike_read.len() {
@@ -452,6 +452,9 @@ impl NpcCandidateCursor {
                     guard,
                     WorkTransitionMode::Replace,
                 )?;
+            }
+            Enumerate::EquippedStrike(target, weapon) => {
+                self.offer_equipped_strike(core, target, weapon, preparation_id)?;
             }
             Enumerate::Guard(target, shield) => {
                 self.offer_guard(core, target, shield, preparation_id)?;

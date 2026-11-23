@@ -324,6 +324,7 @@ pub(crate) enum NativeCommand {
     Strike {
         envelope: CommandEnvelope,
         target_id: String,
+        target_life: Option<u64>,
         definition_id: String,
         weapon_item_id: Option<String>,
         auto_equip: Option<bool>,
@@ -373,6 +374,7 @@ macro_rules! optional {
             #[serde(rename="type")]kind:String,id:String,actor_id:String,
             $(#[serde(default,deserialize_with="deserialize_present_option")]$field:Option<$ty>,)+
             #[serde(default,deserialize_with="deserialize_present_safe_integer")]resting_bay:Option<u64>,
+            #[serde(default,deserialize_with="deserialize_present_safe_integer")]target_life:Option<u64>,
         }
     }
 }
@@ -708,7 +710,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         if !headers.valid() {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
-        if (input.kind != "gather" && input.gathering_mode.is_some())
+        if (input.target_life.is_some() && (input.kind != "strike"
+                || headers.human_initiated.is_some() || input.weapon_item_id.is_none()))
+            || (input.kind != "gather" && input.gathering_mode.is_some())
             || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "pickup" | "drop" | "eat" | "equip" | "unequip") && input.item_id.is_some())
             || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
             || input.quantity.is_some_and(|n| !matches!(input.kind.as_str(), "pickup" | "drop") || n == 0 || n > crate::identity::MAX_SAFE_INTEGER)
@@ -936,6 +940,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     target_id: input.target_id.ok_or_else(|| {
                         D::Error::custom("A strike requires its selected target.")
                     })?,
+                    target_life: input.target_life,
                     definition_id: input.definition_id.ok_or_else(|| {
                         D::Error::custom("A strike requires its selected definition.")
                     })?,

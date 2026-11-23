@@ -367,17 +367,7 @@ pub fn format(
         OrdinaryAction::Strike(strike) => {
             let display = &words.strike;
             if let Some(strike) = strike {
-                let attack = attack_words()?;
-                let damage = number(strike.damage)?;
-                let time =
-                    number(strike.work_seconds + strike.recovery_seconds.unwrap_or_default())?;
-                let range = number(strike.range)?;
-                let chance = number((strike.accuracy.unwrap_or(1.0) * 100.0 + 0.5).floor())?;
-                let text = format!(
-                    "{damage}{}{time}{}{range}{}{chance}{}",
-                    attack.injury, attack.time, attack.reach, attack.chance
-                );
-                facts.push(fact(display.attack_name, text.into()));
+                facts.push(fact(display.attack_name, contact_attack_description(strike)?.into()));
                 let approach = number(strike.approach_range.unwrap_or(strike.range))?;
                 facts.push(fact(
                     display.approach_name,
@@ -462,6 +452,51 @@ fn prepend(prefix: &str, label: &JsText) -> JsText {
 
 fn number(value: f64) -> Option<String> {
     crate::encoding::json_record(&(value + 0.0)).ok()
+}
+
+/// Format a checked single weapon offer with the same installed names,
+/// hunting labels and nominal attack facts as the ordinary strike view.
+pub(crate) fn equipped_strike_offer(
+    equipment: &JsText,
+    weapon: &crate::state::Named,
+    description: Option<&JsText>,
+    target: &crate::state::Named,
+    strike: StrikeRead,
+    hunting: Option<&super::base_decision_offers::HuntingOfferRules>,
+) -> Option<JsText> {
+    let target = crate::narration::name_phrase(target, crate::narration::NameArticle::Indefinite, false);
+    let label = if let Some(hunting) = hunting {
+        let tool = crate::narration::name_phrase(weapon, crate::narration::NameArticle::Indefinite, false);
+        JsText::concat(&[
+            &hunting.label.as_str().into(), &" ".into(), &target, &" with ".into(), &tool,
+            &" ".into(), &hunting.purpose.as_str().into(), &". ".into(), &hunting.scope.as_str().into(),
+        ])
+    } else {
+        weapon_strike_name(weapon, Some(&target))?
+    };
+    let mut offer = equipment.clone();
+    if !offer.is_empty() { offer.push_str(" "); }
+    offer.push_text(&label);
+    if hunting.is_none() { offer.push_str("."); }
+    if let Some(description) = description {
+        offer.push_str(" ");
+        offer.push_text(description);
+    }
+    offer.push_str(" ");
+    offer.push_str(&contact_attack_description(strike)?);
+    Some(offer)
+}
+
+fn contact_attack_description(strike: StrikeRead) -> Option<String> {
+    let attack = attack_words()?;
+    let damage = number(strike.damage)?;
+    let time = number(strike.work_seconds + strike.recovery_seconds.unwrap_or_default())?;
+    let range = number(strike.range)?;
+    let chance = number((strike.accuracy.unwrap_or(1.0) * 100.0 + 0.5).floor())?;
+    Some(format!(
+        "{damage}{}{time}{}{range}{}{chance}{}",
+        attack.injury, attack.time, attack.reach, attack.chance
+    ))
 }
 
 fn attack_words() -> Option<&'static AttackWords<'static>> {

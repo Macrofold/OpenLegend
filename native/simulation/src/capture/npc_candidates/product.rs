@@ -83,6 +83,10 @@ pub enum NpcOfferMeaning {
     Probe {
         probe: usize,
     },
+    EquippedStrike {
+        body: usize,
+        weapon: usize,
+    },
     Guard {
         body: usize,
         tool: std::sync::Arc<NpcGuardTool>,

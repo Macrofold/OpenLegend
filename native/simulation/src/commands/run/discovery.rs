@@ -170,8 +170,8 @@ impl CommandCursor {
                     .finish(answer)
                     .map_err(ExecutionError::Sensor)?;
                 let actor_id = &self.command.envelope().actor_id;
-                let target_id = match &self.command {
-                    NativeCommand::Strike { target_id, .. } => target_id,
+                let (target_id, life) = match &self.command {
+                    NativeCommand::Strike { target_id, target_life, .. } => (target_id, *target_life),
                     _ => return Err(ExecutionError::Invariant),
                 };
                 if seen.seen(target_id) != Some(true) {
@@ -189,6 +189,9 @@ impl CommandCursor {
                     .entities
                     .get(target_id)
                     .ok_or(ExecutionError::MissingEntity)?;
+                if life.is_some_and(|life| target.physical_life() != Some(life)) {
+                    return self.discovery_refuse(&rules.availability.unperceived);
+                }
                 let Some(source) = actor.actor.as_ref().filter(|a| a.alive && !a.incapacitated)
                 else {
                     return self.discovery_refuse(&rules.availability.attack_source);

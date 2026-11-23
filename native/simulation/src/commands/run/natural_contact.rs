@@ -113,6 +113,7 @@ impl CommandCursor {
             target_id,
             weapon_item_id,
             auto_equip,
+            ..
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);

@@ -73,6 +73,7 @@ impl DecisionPolicy {
             Meaning::Follow { body }
             | Meaning::Approach { body, .. }
             | Meaning::Strike { body, .. }
+            | Meaning::EquippedStrike { body, .. }
             | Meaning::Guard { body, .. }
             | Meaning::Fish { body }
             | Meaning::Cook { body }
@@ -141,7 +142,7 @@ impl DecisionPolicy {
                 text(&words["strikes"][*definition][usize::from(*hunting)])?,
                 &[("name", &name(target.name, NameArticle::Definite)?)],
             ),
-            Meaning::Guard { .. } => String::new(),
+            Meaning::Guard { .. } | Meaning::EquippedStrike { .. } => String::new(),
             // Their core actions supplied an installed activity description.
             Meaning::Fish { .. } | Meaning::Cook { .. } | Meaning::FireCare { .. }
             | Meaning::Handover { .. } => String::new(),
@@ -170,6 +171,7 @@ impl DecisionPolicy {
             Meaning::Follow { .. }
                 | Meaning::Status { .. }
                 | Meaning::Strike { .. }
+                | Meaning::EquippedStrike { .. }
                 | Meaning::Fish { .. }
                 | Meaning::Cook { .. }
                 | Meaning::FireCare { .. }

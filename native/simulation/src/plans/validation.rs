@@ -67,18 +67,24 @@ pub(crate) fn valid_command(
         }
         NativeCommand::Strike {
             target_id,
+            target_life,
             definition_id,
             weapon_item_id,
+            auto_equip,
             envelope,
-            ..
         } => {
             is_safe_record_id(target_id)
-                && world
-                    .retained
-                    .native_strike_read
-                    .contains_key(definition_id)
-                && weapon_item_id.is_none()
                 && envelope.human_initiated != Some(true)
+                && match (weapon_item_id, target_life, auto_equip) {
+                    (None, None, None) => world.retained.native_strike_read.contains_key(definition_id),
+                    (Some(item), Some(life), Some(true)) => {
+                        is_safe_record_id(item)
+                            && *life <= crate::identity::MAX_SAFE_INTEGER
+                            && world.retained.items.get(definition_id)
+                                .is_some_and(|definition| definition.melee_profile().is_some())
+                    }
+                    _ => false,
+                }
         }
         NativeCommand::Guard {
             envelope,
