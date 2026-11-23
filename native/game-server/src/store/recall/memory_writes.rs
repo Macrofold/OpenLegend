@@ -5,7 +5,7 @@ use super::checkpoint_accounts::{AccountImage, Placement, compile_memory_write};
 use super::*;
 use indexmap::IndexMap;
 use openlegend_simulation::{
-    experience::{AwarenessRetentionClass, ExperienceRetention},
+    experience::{AwarenessRetentionClass, ExperienceRetention, PersonalSourceKind},
     received::TemporalReceiptLocator,
     text::JsText,
 };
@@ -27,6 +27,7 @@ struct Memory {
     record_id: String,
     revision: String,
     create: bool,
+    aged_replacement: bool,
     output: Output,
 }
 
@@ -147,7 +148,11 @@ impl Store {
             };
             let revision = field(revision_column)?;
             let kind = field(kind_column)?;
-            if kind == "commitment" || row.create && kind == "impression" {
+            let aged_replacement = !row.create
+                && history
+                    .aged_account(PersonalSourceKind::Memory, &row.id)
+                    .is_some_and(|aged| !aged.removed);
+            if kind == "commitment" || (row.create || aged_replacement) && kind == "impression" {
                 let placement = Box::new(compile_memory_write(
                     history.world_id(),
                     AccountImage {
@@ -163,6 +168,7 @@ impl Store {
                     record_id: row.id.clone(),
                     revision: revision.to_owned(),
                     create: row.create,
+                    aged_replacement,
                     output: if kind == "commitment" {
                         Output::Commitment(placement)
                     } else {
@@ -224,6 +230,7 @@ impl Store {
                 record_id: row.id.clone(),
                 revision: revision.to_owned(),
                 create: true,
+                aged_replacement: false,
                 output: Output::Activity(ActivityMemory {
                     actor: body.actor_id,
                     id: body.id,
@@ -266,14 +273,19 @@ impl Store {
         save: &SaveRows,
         prepared: &[Arc<PreparedMemoryWrites>],
         hard_bytes: i64,
+        histories: &[openlegend_simulation::runtime::RuntimeHistory],
     ) -> StoreResult<()> {
-        let Some(rows) = save.changes.writes.get(TABLE) else {
-            return if prepared.is_empty() {
-                Ok(())
-            } else {
-                Err(StoreError::StaleCut)
-            };
-        };
+        let rows = save
+            .changes
+            .writes
+            .get(TABLE)
+            .map_or(&[][..], Vec::as_slice);
+        if rows.is_empty() && prepared.is_empty() {
+            return Ok(());
+        }
+        let aging = histories
+            .iter()
+            .any(|history| history.aged_accounts().is_some());
         // Native save merging keeps the first position and create flag, but
         // uses the newest canonical body. A promise can be made and fulfilled
         // within the same one-second save or advanced repeatedly in a prefix.
@@ -300,10 +312,23 @@ impl Store {
             previous = candidate.through;
             revision_column = Some(candidate.revision_column);
             for row in &candidate.rows {
+                // A legitimate later retirement can fold away this earlier
+                // unsaved create or update. No other missing placement is valid.
+                if aging
+                    && histories.iter().any(|history| {
+                        history.base_cut() >= candidate.through
+                            && history
+                                .aged_account(PersonalSourceKind::Memory, &row.record_id)
+                                .is_some_and(|aged| aged.removed)
+                    })
+                {
+                    continue;
+                }
                 if let Some((prior, _)) = folded.get_mut(row.record_id.as_str()) {
                     if row.create
-                        || !matches!(prior.output, Output::Commitment(_))
-                        || !matches!(row.output, Output::Commitment(_))
+                        || !(row.aged_replacement
+                            || matches!(prior.output, Output::Commitment(_))
+                                && matches!(row.output, Output::Commitment(_)))
                     {
                         return Err(StoreError::StaleCut);
                     }
@@ -337,7 +362,9 @@ impl Store {
             remaining = rest;
             let replacements = batch
                 .iter()
-                .filter_map(|(id, (_, create))| (!*create).then_some(*id))
+                .filter_map(|(id, (row, create))| {
+                    (!*create && !row.aged_replacement).then_some(*id)
+                })
                 .collect::<Vec<_>>();
             if !replacements.is_empty() {
                 let bytes = replacements

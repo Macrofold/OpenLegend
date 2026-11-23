@@ -42,6 +42,12 @@ pub struct AcceptedSaveInput {
     _custody: ByteReservation,
 }
 
+impl AcceptedSaveInput {
+    pub(crate) fn aged_actor(&self) -> Option<&str> {
+        self.history.aged_accounts().map(|aged| aged.actor.as_str())
+    }
+}
+
 /// History and recall belonging to a protected gameplay candidate. Use
 /// the ordinary writer and notify its workers only after the native ACK.
 pub(crate) struct ProtectedGameplaySave {
@@ -616,7 +622,14 @@ impl LiveSaves {
                     pending.queue.pop_front();
                 }
                 drop(pending);
-                if flight.prepared.recall.is_some() || !flight.prepared.memory_writes.is_empty() {
+                if flight.prepared.recall.is_some()
+                    || !flight.prepared.memory_writes.is_empty()
+                    || flight
+                        .prepared
+                        .histories
+                        .iter()
+                        .any(|history| history.aged_accounts().is_some())
+                {
                     self.signal_recall_change();
                 }
                 if flight.story_enqueued {

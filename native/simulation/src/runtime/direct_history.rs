@@ -11,7 +11,10 @@ use crate::simulation::SimulationState;
 pub use crate::experience::SensoryExpiration;
 
 #[derive(Clone)]
-pub struct RuntimeHistory(CapturedHistoryInput);
+pub struct RuntimeHistory(
+    CapturedHistoryInput,
+    Option<std::sync::Arc<crate::experience::AgedAccounts>>,
+);
 
 #[derive(Clone, Copy)]
 pub struct HistoryAccount<'a> {
@@ -32,7 +35,11 @@ impl RuntimePreparedProducts<'_> {
     /// Retain the actual exact-cut capture with its original backing guard.
     /// Authority to publish a scoped account still belongs to its reader.
     pub fn retain_history(&self) -> RuntimeHistory {
-        RuntimeHistory(self.history.clone())
+        let aged = match self.operation {
+            crate::simulation::CompletedOperation::AccountRetention(done) => done.aged.clone(),
+            _ => None,
+        };
+        RuntimeHistory(self.history.clone(), aged)
     }
 
     /// Prepare the same scoped eligibility and recall inputs as an ordinary
@@ -85,6 +92,22 @@ impl RuntimePreparedProducts<'_> {
 }
 
 impl RuntimeHistory {
+    /// Retain only metadata proving which current private rows the completed
+    /// account retention operation actually selected for natural aging.
+    pub fn aged_accounts(&self) -> Option<&crate::experience::AgedAccounts> {
+        self.1.as_deref()
+    }
+
+    pub fn aged_account(
+        &self,
+        kind: crate::experience::PersonalSourceKind,
+        record: &str,
+    ) -> Option<&crate::experience::AgedAccount> {
+        self.aged_accounts()?
+            .rows
+            .iter()
+            .find(|row| row.kind == kind && row.record == record)
+    }
     /// Exact natural deadlines whose canonical body was retired by this
     /// accepted candidate, independent of the current live history owner.
     pub fn sensory_expirations(&self) -> &[SensoryExpiration] {

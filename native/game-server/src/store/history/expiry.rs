@@ -14,6 +14,15 @@ const BATCH: usize = 128;
 pub(super) fn missing_proof(changes: &ChangedRows, history: &RuntimeHistory) -> bool {
     changes.deletes.get(TABLE).is_some_and(|ids| {
         ids.iter().any(|id| {
+            if history
+                .aged_account(
+                    openlegend_simulation::experience::PersonalSourceKind::Awareness,
+                    id,
+                )
+                .is_some_and(|aged| aged.removed)
+            {
+                return false;
+            }
             !history
                 .sensory_expirations()
                 .iter()
@@ -58,13 +67,26 @@ impl Store {
         }
         let world = save.world_id.as_str();
         for batch in deleted.chunks(BATCH) {
-            let owned = batch.iter().map(|id| {
-                selected
-                    .get(id.as_str())
-                    .copied()
-                    .ok_or(StoreError::DerivedProjectionRequired)
-            });
+            let owned =
+                batch
+                    .iter()
+                    .filter(|id| {
+                        !histories.iter().any(|history| {
+                            history.aged_account(
+                    openlegend_simulation::experience::PersonalSourceKind::Awareness, id,
+                ).is_some_and(|aged| aged.removed)
+                        })
+                    })
+                    .map(|id| {
+                        selected
+                            .get(id.as_str())
+                            .copied()
+                            .ok_or(StoreError::DerivedProjectionRequired)
+                    });
             let records = owned.collect::<StoreResult<Vec<_>>>()?;
+            if records.is_empty() {
+                continue;
+            }
             let bytes = records
                 .iter()
                 .try_fold(8192usize, |n, row| {

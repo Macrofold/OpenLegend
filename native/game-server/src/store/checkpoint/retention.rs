@@ -10,10 +10,9 @@ use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::records::SqlCell;
 use openlegend_simulation::runtime::{
     AccountBodiesReply, AccountBodyRow, AccountCandidate, AccountMetadataReply,
-    RestoreAccountAnswer, RestoreAccountBinding, RestoreAccountQuery, RuntimeProviderInput,
-    RuntimeRestoreAccounts,
+    RestoreAccountAnswer, RestoreAccountBinding, RestoreAccountQuery, RetentionPreparation,
+    RuntimeProviderInput, RuntimeRestoreAccounts, render_account_summary,
 };
-use openlegend_simulation::text::{JsText, TextRef};
 use serde::Deserialize;
 use serde_json::value::RawValue;
 use std::collections::BTreeMap;
@@ -24,15 +23,7 @@ const KINDS: [Kind; 3] = [Kind::Awareness, Kind::Memory, Kind::Summary];
 
 #[derive(Deserialize)]
 struct Limits {
-    accounts: AccountLimits,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct AccountLimits {
-    rows: usize,
-    bytes: u64,
-    metadata_rows: usize,
+    accounts: RetentionPreparation,
 }
 
 #[derive(Deserialize)]
@@ -48,6 +39,16 @@ struct Columns {
 }
 
 impl Store {
+    pub(crate) fn account_summary_prefix(&self) -> &str {
+        &self.schema.checkpoint.summary_memory_prefix
+    }
+
+    pub(crate) fn account_retention_limits(&self) -> StoreResult<RetentionPreparation> {
+        serde_json::from_str::<Limits>(self.restore_retention_preparation().get())
+            .map(|limits| limits.accounts)
+            .map_err(|_| StoreError::Schema)
+    }
+
     /// Select accounts in the exact inactive cut. Only the independently
     /// funded answer survives the rollback of the prospective SQL savepoint.
     pub(crate) async fn answer_checkpoint_account_retention(
@@ -57,9 +58,7 @@ impl Store {
         request: &RuntimeRestoreAccounts,
     ) -> StoreResult<RuntimeProviderInput> {
         let (question, rows) = request.parts();
-        let limits = serde_json::from_str::<Limits>(self.restore_retention_preparation().get())
-            .map_err(|_| StoreError::Schema)?
-            .accounts;
+        let limits = self.account_retention_limits()?;
         self.with_checkpoint_rows(tx, prospective, rows, None, None, async {
             let at = match question.query {
                 RestoreAccountQuery::Metadata { at, .. }
@@ -120,7 +119,7 @@ impl Store {
         at: f64,
         due: bool,
         pressure: &[&str],
-        limits: &AccountLimits,
+        limits: &RetentionPreparation,
     ) -> StoreResult<(AccountMetadataReply, ByteReservation)> {
         let mut result = BTreeMap::new();
         let mut custody = self.budget.reserve(0).map_err(|_| StoreError::Capacity)?;
@@ -227,14 +226,14 @@ impl Store {
         tx: &Transaction<'_>,
         binding: &RestoreAccountBinding,
         requested: &[AccountCandidate],
-        limits: &AccountLimits,
+        limits: &RetentionPreparation,
         mut wire: usize,
     ) -> StoreResult<(AccountBodiesReply, ByteReservation)> {
         if requested.len() > limits.rows
             || requested
                 .iter()
                 .try_fold(0u64, |n, account| n.checked_add(account.bytes))
-                .is_none_or(|bytes| bytes > limits.bytes)
+                .is_none_or(|bytes| bytes > limits.bytes as u64)
         {
             return Err(StoreError::Capacity);
         }
@@ -292,41 +291,16 @@ impl Store {
                     return Err(StoreError::StaleCut);
                 }
                 let rendered_summary = if kind == Kind::Summary {
-                    #[derive(Deserialize)]
-                    struct Text {
-                        text: JsText,
-                    }
-                    let decode = SqlCell::json_decode_bound(&row.payload)
-                        .ok_or(StoreError::InvalidRecord)?;
-                    let _parser = self
-                        .budget
-                        .reserve(decode)
-                        .map_err(|_| StoreError::Capacity)?;
-                    let body: Text = serde_json::from_str(&row.payload)
-                        .map_err(|_| StoreError::InvalidRecord)?;
                     let prefix = self.schema.checkpoint.summary_memory_prefix.as_str();
-                    // An isolated UTF-16 unit can require both the growing
-                    // code-unit vector and its escaped JSON representation.
-                    let factor = if body.text.as_unicode().is_some() {
-                        2
-                    } else {
-                        20
-                    };
-                    let rendered = prefix
-                        .len()
-                        .checked_add(body.text.storage_bytes())
-                        .and_then(|bytes| bytes.checked_mul(factor))
-                        .and_then(|bytes| bytes.checked_add(64))
-                        .ok_or(StoreError::Capacity)?;
-                    let mut rendered = self
-                        .budget
-                        .reserve(rendered)
-                        .map_err(|_| StoreError::Capacity)?;
-                    let mut summary = JsText::from(prefix);
-                    TextRef::from(&body.text).append_to(&mut summary);
-                    rendered
-                        .resize(summary.storage_bytes())
-                        .map_err(|_| StoreError::Capacity)?;
+                    let (summary, rendered) =
+                        render_account_summary(&row.payload, prefix, &self.budget).map_err(
+                            |error| match error {
+                                openlegend_simulation::experience::ExperienceError::Capacity => {
+                                    StoreError::Capacity
+                                }
+                                _ => StoreError::InvalidRecord,
+                            },
+                        )?;
                     custody.merge(rendered).map_err(|_| StoreError::Capacity)?;
                     Some(summary)
                 } else {

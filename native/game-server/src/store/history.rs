@@ -19,6 +19,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
 
+mod account_aging;
 pub(crate) mod banner;
 pub(crate) mod events;
 mod expiry;
@@ -98,7 +99,9 @@ impl<'a> OrdinaryProjection<'a> {
         changes: &ChangedRows,
         history: &RuntimeHistory,
     ) -> StoreResult<Option<Arc<PreparedMemoryWrites>>> {
-        if unsupported_rows(changes) || expiry::missing_proof(changes, history) {
+        if unsupported_rows(changes, std::slice::from_ref(history))
+            || expiry::missing_proof(changes, history)
+        {
             return Err(StoreError::DerivedProjectionRequired);
         }
         // A malformed authored policy must refuse before this candidate
@@ -114,7 +117,8 @@ impl<'a> OrdinaryProjection<'a> {
     }
 }
 
-fn unsupported_rows(changes: &ChangedRows) -> bool {
+fn unsupported_rows(changes: &ChangedRows, histories: &[RuntimeHistory]) -> bool {
+    use openlegend_simulation::experience::PersonalSourceKind;
     let leaf = changes
         .writes
         .keys()
@@ -122,16 +126,31 @@ fn unsupported_rows(changes: &ChangedRows) -> bool {
         .any(|table| {
             matches!(
                 table.as_str(),
-                "mind_summaries" | "mind_forgotten" | "mind_corrections" | "mind_privacy_revisions"
+                "mind_forgotten" | "mind_corrections" | "mind_privacy_revisions"
             )
         });
     let awareness_update = changes
         .writes
         .get("mind_awareness")
         .is_some_and(|rows| rows.iter().any(|row| !row.create));
-    let memory_removal = changes.deletes.contains_key(memory_writes::TABLE);
+    let unsupported_removal = [PersonalSourceKind::Memory, PersonalSourceKind::Summary]
+        .into_iter()
+        .any(|kind| {
+            changes.deletes.get(kind.table()).is_some_and(|ids| {
+                ids.iter().any(|id| {
+                    !histories.iter().any(|history| {
+                        history
+                            .aged_account(kind, id)
+                            .is_some_and(|aged| aged.removed)
+                    })
+                })
+            })
+        });
     leaf || awareness_update
-        || memory_removal
+        || changes
+            .writes
+            .contains_key(PersonalSourceKind::Summary.table())
+        || unsupported_removal
         || [
             "data_world",
             "world_settings",
@@ -162,7 +181,7 @@ impl PrefixProjection for OrdinaryProjection<'_> {
         {
             return Err(StoreError::StaleCut);
         }
-        if unsupported_rows(&rows.changes)
+        if unsupported_rows(&rows.changes, self.histories)
             || rows.changes.writes.contains_key("mind_awareness") != self.recall.is_some()
             || self
                 .histories
@@ -174,6 +193,9 @@ impl PrefixProjection for OrdinaryProjection<'_> {
         }
         self.store
             .expire_sensory(transaction, rows, self.histories)
+            .await?;
+        self.store
+            .expire_accounts(transaction, rows, self.histories)
             .await?;
         self.store
             .append_originals(transaction, rows, self.histories)
@@ -207,6 +229,7 @@ impl PrefixProjection for OrdinaryProjection<'_> {
                     rows,
                     self.memory_writes,
                     self.memory_write_hard_bytes,
+                    self.histories,
                 )
                 .await?;
         }

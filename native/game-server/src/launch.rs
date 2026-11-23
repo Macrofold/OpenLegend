@@ -27,6 +27,7 @@ use tower_http::services::{ServeDir, ServeFile};
 
 type LaunchError = Box<dyn Error + Send + Sync>;
 
+mod account_retention;
 pub(crate) mod checkpoint_load;
 mod creation;
 use checkpoint_load::{LoadInbox, LoadRequest};
@@ -520,6 +521,11 @@ async fn run(
     let (end_clock, clock_stop) = watch::channel(false);
     let (end_saves, save_stop) = watch::channel(false);
     let (end_lexical, lexical_stop) = watch::channel(false);
+    let account_retention = tokio::spawn(account_retention::run(
+        game.clone(),
+        saves.clone(),
+        end_http.subscribe(),
+    ));
     let lexical = tokio::spawn(crate::lexical_maintenance::run(
         game,
         saves.lexical_waker(),
@@ -580,12 +586,13 @@ async fn run(
     let stop_decisions = async move {
         // Let the scheduler acknowledge its in-flight PostgreSQL write and
         // register the corresponding task before draining decision owners.
-        let (scheduled, maintained, narrated, indexed, operator) = tokio::join!(
+        let (scheduled, maintained, narrated, indexed, operator, retired) = tokio::join!(
             scheduler,
             maintenance,
             narration,
             semantic,
-            operator_maintenance
+            operator_maintenance,
+            account_retention,
         );
         let settled = decisions.stop().await;
         scheduled?;
@@ -593,6 +600,7 @@ async fn run(
         narrated??;
         indexed?;
         operator?;
+        retired??;
         settled?;
         Ok::<_, LaunchError>(())
     };

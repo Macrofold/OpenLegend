@@ -213,7 +213,7 @@ async fn publish(
     let stored = state
         .game
         .store
-        .browse_resolved_promises(cut.clone(), before, resident)
+        .browse_resolved_promises(cut.clone(), before, resident, live.complete_collection)
         .await;
     let (partial, saved, _past_custody) = match stored {
         Ok(PastPromises { rows, custody }) => (false, rows, Some(custody)),

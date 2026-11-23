@@ -120,7 +120,19 @@ Native write and exact-text results use tree `44658e3135bd` and executable `94f5
 
 At 16 open obligations, the seventeenth utterance was still saved once and survived replay and restart. It did not create another obligation. Disconnecting only the request-owned PostgreSQL connection during each history page returned a partial result with 20 then 9 kept promises. The regular receipt still returned, and a fresh history request reported a complete result. These checks use result `f52bc5efe073` on the same executable.
 
-Rust loaded all 29 saved promise bodies into resident history in this world. The check exercised its indexed page selection, held SQL, restart and live pending completions. Serving a body that has left the resident set still needs separate evidence.
+Rust loaded all 29 saved promise bodies into resident history in this world. These checks exercised indexed paging, held SQL, restart and live pending completions.
+
+### Natural account retirement on the stand-alone Rust server
+
+The listener checks installed account deadlines independently of player traffic and model calls. It prepares one due actor from their current resident accounts, uses the existing exact-cut reader for preserved source versions and queues the accepted changes in the ordinary save. A complete accepted collection can supply the Journal page before PostgreSQL catches up.
+
+The Base world kept a promise after the player gathered a stone. An independently saved summary cited that exact promise. At the ordinary one-day deadline the live Rust server removed the promise from the Journal and the active search index. While the exact deletion waited in PostgreSQL, a fresh signed Journal request already withheld the retired promise and still showed a younger cancelled promise and two open ones. The same transaction preserved the retired body and its exact revision for the surviving summary. A cold reopen returned the same permitted page and preserved the archive.
+
+Cancelling the blocked source-version read left the active row, index and signed page intact. The existing maintenance retry then retired that exact row and saved the same archive. An impression separately weakened at its installed deadline, keeping its record identity and occurrence provenance while PostgreSQL and cold reopening agreed on the new revision. The combined hourly and daily review, ordinary walk, save and cold read passed on the same executable. Locked server and addon checks, new-file formatting and the network boundary check passed.
+
+The signed Journal qualifies expiry and planned retirement. Serving a still-eligible body omitted by a partial install remains separate. Above six game hours, the existing Source startup selection omitted the old resolved promise while PostgreSQL retained it and supplied both open promises. Ordinary stand-alone startup loads complete current accounts, and its signed Journal still showed the old kept result at that age. The partial-load reader retains its exact saved-body validation.
+
+Tree `7e700e63d8e8`, patch `7dbc0e7b75bd` and executable `461a14c81ad6` identify the tested code. Results under `nsc04-live-account-retention-20261122` include held save `2759c0fabdd3`, cancelled read `24678c003405`, impression `4f5fcdbf1e70` and combined review `2e496bafec42`. The first prolonged run stopped because PostgreSQL ran out of local disk. An earlier broad lock timed out the clock write, and an older review release lacked current Trade data. The focused results used separate disposable databases and released their native reservations. Controlled provider cost was $0.
 
 ### Revisioned promise amendments on the stand-alone Rust server
 

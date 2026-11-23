@@ -2,7 +2,7 @@
 //! archived originals and independent observer accounts intact.
 
 use super::checkpoint_accounts::{AccountImage, Placement, compile_placement};
-use super::{Store, StoreError, StoreResult, source_kind, sql_ordinal};
+use super::{Store, StoreError, StoreResult, sql_ordinal};
 use crate::store::PrefixProjection;
 use openlegend_simulation::{
     encoding::json_record,
@@ -227,22 +227,13 @@ impl PrefixProjection for ConsolidationProjection<'_> {
                 .reserve(wire)
                 .map_err(|_| StoreError::Capacity)?;
             let ids: Vec<_> = ids.collect();
-            let family = source_kind(kind);
-            transaction.execute(
-                "DELETE FROM mind_source_dependencies d USING recall_sources r \
-                 WHERE r.world_id=$1 AND r.actor_id=$2 AND r.source_kind=$3 AND r.record_id=ANY($4::text[]) \
-                 AND (d.world_id,d.actor_id,d.derived_kind,d.derived_id)=(r.world_id,r.actor_id,r.source_kind,r.id)",
-                &[&prepared.world, &prepared.actor, &family, &ids],
-            ).await?;
-            transaction
-                .query_opt(
-                    &self.store.schema.lexical.remove_accounts,
-                    &[
-                        &prepared.world,
-                        &ids,
-                        &family,
-                        &Some(prepared.actor.as_str()),
-                    ],
+            self.store
+                .remove_account_projections(
+                    transaction,
+                    &prepared.world,
+                    &prepared.actor,
+                    kind,
+                    &ids,
                 )
                 .await?;
         }

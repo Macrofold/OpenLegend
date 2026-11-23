@@ -68,8 +68,9 @@ mod impression;
 pub(crate) mod retention;
 pub(crate) use retention::{
     AccountBodiesReply, AccountMetadataReply, AccountRetentionCursor, AccountRetentionRead,
-    CompletedAccountRetention, RetentionPreparation,
+    CompletedAccountRetention, next_due_actor,
 };
+pub use retention::{AgedAccount, AgedAccounts, RetentionPreparation, render_account_summary};
 mod memory;
 pub(crate) use impression::{reinforce_experience, remember_interpretation};
 pub(crate) use memory::{

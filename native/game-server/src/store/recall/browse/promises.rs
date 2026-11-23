@@ -17,7 +17,9 @@ pub(crate) struct SavedPromise {
 
 impl Store {
     /// Select one page at the original durable head. Transfer a canonical
-    /// body only if the request has not already pinned that promise in Rust.
+    /// body only for a partially installed collection and a promise that
+    /// the request has not already pinned in Rust. A complete accepted
+    /// collection can have retired a row before its ordinary SQL save.
     /// The private-history owner validates the saved bodies at publication.
     /// This user-opened history read has its own connection so a slow page
     /// cannot hold up command receipts on the shared operational reader.
@@ -26,6 +28,7 @@ impl Store {
         cut: Arc<MemoryBrowseCut>,
         before: Option<MemoryPosition>,
         resident: Vec<String>,
+        complete: bool,
     ) -> StoreResult<PastPromises> {
         let budget = self.budget.clone();
         self.read_isolated(move |tx| {
@@ -49,7 +52,7 @@ impl Store {
                           AND ($4::double precision IS NULL OR (r.at,r.id)<($4,$5))
                         ORDER BY r.at DESC,r.id DESC LIMIT $6
                      ) p
-                     LEFT JOIN mind_memories m ON NOT (p.id=ANY($7::text[]))
+                     LEFT JOIN mind_memories m ON NOT $8 AND NOT (p.id=ANY($7::text[]))
                        AND m.world_id=$1 AND m.actor_id=$2 AND m.id=p.record_id
                        AND m.account_revision=p.revision
                      ORDER BY p.at DESC,p.id DESC",
@@ -61,6 +64,7 @@ impl Store {
                         &before.as_ref().map(|value| value.id.as_str()),
                         &limit,
                         &resident,
+                        &complete,
                     ],
                     &budget,
                 )
@@ -71,7 +75,7 @@ impl Store {
                 let mut rows = Vec::with_capacity(selected.len());
                 for row in &selected {
                     let id: &str = row.try_get(1)?;
-                    if resident.iter().any(|known| known == id) {
+                    if complete || resident.iter().any(|known| known == id) {
                         continue;
                     }
                     let revision: &str = row.try_get(2)?;

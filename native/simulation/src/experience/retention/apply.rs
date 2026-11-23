@@ -11,7 +11,78 @@ pub(crate) struct AccountRetentionCursor {
 }
 pub(crate) struct CompletedAccountRetention {
     pub(crate) outcome: Outcome,
+    pub(crate) aged: Option<Arc<AgedAccounts>>,
     _storage: ByteReservation,
+}
+
+/// Exact previously accepted accounts selected by the natural retention
+/// owner. The ordinary PostgreSQL fold needs their active projection keys.
+pub struct AgedAccounts {
+    pub actor: String,
+    pub rows: Vec<AgedAccount>,
+    _storage: ByteReservation,
+}
+
+pub struct AgedAccount {
+    pub kind: PersonalSourceKind,
+    pub record: String,
+    pub source: String,
+    pub removed: bool,
+}
+
+impl AgedAccounts {
+    fn prepare(
+        read: &AccountRetentionRead,
+        budget: &ByteBudget,
+    ) -> Result<Option<Self>, ExecutionError> {
+        if !read.live_complete {
+            return Ok(None);
+        }
+        let rows = &read
+            .selection
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .candidates;
+        if rows.is_empty() {
+            return Ok(None);
+        }
+        let bytes = rows
+            .iter()
+            .try_fold(
+                size_of::<Self>() + 2 * size_of::<usize>() + read.actor.len(),
+                |bytes, row| {
+                    bytes
+                        .checked_add(size_of::<AgedAccount>())?
+                        .checked_add(row.record_id.len())?
+                        .checked_add(row.id.len())
+                },
+            )
+            .ok_or(ExecutionError::Capacity)?;
+        let storage = budget.reserve(bytes)?;
+        Ok(Some(Self {
+            actor: read.actor.clone(),
+            rows: rows
+                .iter()
+                .map(|row| AgedAccount {
+                    kind: row.kind,
+                    record: row.record_id.clone(),
+                    source: row.id.clone(),
+                    removed: false,
+                })
+                .collect(),
+            _storage: storage,
+        }))
+    }
+
+    fn finish(mut self, state: &SimulationState) -> Result<Arc<Self>, ExecutionError> {
+        for row in &mut self.rows {
+            row.removed = state
+                .experience
+                .optional_collection(&self.actor, row.kind)?
+                .is_none_or(|collection| collection.resident_record(&row.source).is_none());
+        }
+        Ok(Arc::new(self))
+    }
 }
 impl AccountRetentionCursor {
     pub(super) fn prepare_storage(budget: &ByteBudget) -> Result<ByteReservation, ExecutionError> {
@@ -46,9 +117,14 @@ impl AccountRetentionCursor {
     ) -> Result<CompletedAccountRetention, ExecutionError> {
         let read = self.read.take().ok_or(ExecutionError::Invariant)?;
         let current = read.current(core)?;
-        if current {
+        let aged = if current {
+            let aged = AgedAccounts::prepare(&read, budget)?;
             read.apply(core, budget)?;
-        }
+            aged.map(|selected| selected.finish(core.state))
+                .transpose()?
+        } else {
+            None
+        };
         let storage = self
             ._storage
             .split_off(size_of::<CompletedAccountRetention>() + "account-retention".len())?;
@@ -66,6 +142,7 @@ impl AccountRetentionCursor {
                 plan_id: None,
                 action_id: None,
             },
+            aged,
             _storage: storage,
         })
     }

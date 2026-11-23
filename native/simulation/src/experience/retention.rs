@@ -11,7 +11,11 @@ use crate::simulation::{InstalledWorld, SimulationState};
 use std::{mem::size_of, sync::Arc};
 mod apply;
 pub(crate) use apply::{AccountRetentionCursor, CompletedAccountRetention};
+pub use apply::{AgedAccount, AgedAccounts};
 mod recollection;
+mod resident;
+pub(crate) use resident::next_due_actor;
+pub use resident::render_account_summary;
 mod restore;
 pub use restore::{
     RestoreAccountAnswer, RestoreAccountBinding, RestoreAccountQuery, RestoreAccountRequest,
@@ -22,7 +26,7 @@ pub(crate) use restore::{
 
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct RetentionPreparation {
+pub struct RetentionPreparation {
     pub rows: usize,
     pub bytes: usize,
     pub metadata_rows: usize,
@@ -99,6 +103,7 @@ pub(crate) struct AccountRetentionRead {
     /// The Source checkpoint reconstruction has complete logical lists even
     /// while native purpose-selected bodies remain physically cold.
     complete_checkpoint: bool,
+    live_complete: bool,
     installed: Arc<InstalledWorld>,
     preparation: RetentionPreparation,
     selection: Option<Selection>,
@@ -308,6 +313,7 @@ impl AccountRetentionRead {
             accounts: accounts.clone(),
             resident,
             complete_checkpoint: false,
+            live_complete: false,
             installed: Arc::clone(&state.installed),
             preparation,
             selection: None,

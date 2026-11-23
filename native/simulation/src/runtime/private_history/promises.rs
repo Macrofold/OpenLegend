@@ -30,6 +30,7 @@ pub struct RuntimePromiseSelection {
     pub recent_resolved: Vec<RuntimeResidentPromise>,
     pub limit: u64,
     pub unresolved: usize,
+    pub complete_collection: bool,
     _custody: ByteReservation,
 }
 
@@ -98,10 +99,12 @@ impl NativeWorldSession {
         let mut open = Vec::with_capacity(open_slots);
         let mut resolved: Vec<&Arc<PersonalSourceRecord>> = Vec::with_capacity(lookahead);
         let mut unresolved = 0;
+        let mut complete_collection = false;
         if let Some(owner) = state.experience.actor(actor) {
             let records = owner
                 .collection(PersonalSourceKind::Memory)
                 .map_err(failure)?;
+            complete_collection = records.coverage().complete;
             if !records.complete_current_obligations() {
                 return Err(failure("open commitments are not resident"));
             }
@@ -192,6 +195,7 @@ impl NativeWorldSession {
                 .collect::<Result<_, RuntimeError>>()?,
             limit,
             unresolved,
+            complete_collection,
             _custody: custody,
         }))
     }
