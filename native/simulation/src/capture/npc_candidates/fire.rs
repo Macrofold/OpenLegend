@@ -129,14 +129,29 @@ impl NpcCandidateCursor {
             (FireOperation::Fuel, Some(item.as_str()))
         };
         let body = target.body;
-        let (command, guard) = self.command(&FireCommand {
+        let input = FireCommand {
             actor_id: &self.actor,
             id: preparation_id,
             kind: "tend-fire",
             target_id: &target.id,
             operation,
             item_id,
-        })?;
+        };
+        let (command, guard) = self.bind_offer(
+            preparation_id,
+            None,
+            &input,
+            5 + usize::from(item_id.is_some()),
+            0,
+            |envelope| {
+                Ok(NativeCommand::TendFire {
+                    envelope,
+                    target_id: target.id.clone(),
+                    operation,
+                    item_id: item_id.map(str::to_owned),
+                })
+            },
+        )?;
         let _digest_storage = self.budget.reserve(64)?;
         let digest = crate::encoding::sha256_hex(command.source_encoding().as_bytes());
         let id = self.id(&["fire-care-", &digest])?;

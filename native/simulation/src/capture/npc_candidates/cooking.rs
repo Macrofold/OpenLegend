@@ -108,7 +108,7 @@ impl NpcCandidateCursor {
             .ok_or(ExecutionError::Invariant)?;
         self.stage = Enumerate::Cook(index, recipe_index + 1);
         let body = target.body;
-        let (command, guard) = self.command(&CookCommand {
+        let input = CookCommand {
             actor_id: &self.actor,
             id: preparation_id,
             kind: "cook",
@@ -117,7 +117,19 @@ impl NpcCandidateCursor {
             preparation_version: recipe.pin.version,
             preparation_digest: &recipe.pin.digest,
             inputs: &choice.ingredients,
-        })?;
+        };
+        let map =
+            crate::host::retained_size::map_storage::<String, String>(choice.ingredients.len())
+                .ok_or(ExecutionError::Capacity)?;
+        let (command, guard) =
+            self.bind_offer(preparation_id, None, &input, 8, map, |envelope| {
+                Ok(NativeCommand::Cook {
+                    envelope,
+                    heat_id: target.id.clone(),
+                    definition: recipe.pin.clone(),
+                    inputs: choice.ingredients.clone(),
+                })
+            })?;
         let _digest = self.budget.reserve(64)?;
         let digest = crate::encoding::sha256_hex(command.source_encoding().as_bytes());
         let id = self.id(&["cook-", &digest])?;

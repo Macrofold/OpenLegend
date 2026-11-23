@@ -247,7 +247,11 @@ impl NpcCandidateCursor {
                 let mut input = CommandInput::new(&self.actor, preparation_id, "status-effect");
                 input.target_id = Some(target);
                 input.definition_id = Some(&definition.id);
-                input.operation = Some(operation);
+                input.operation = Some(if active {
+                    StatusOperation::Deactivate
+                } else {
+                    StatusOperation::Activate
+                });
                 let (command, guard) = self.command(&input)?;
                 let id = self.id(&[&definition.id, ":", target, ":", operation])?;
                 self.start(

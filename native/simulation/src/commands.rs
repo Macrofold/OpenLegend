@@ -121,6 +121,33 @@ pub(crate) struct CommandEnvelope {
     pub chosen_purpose: Option<PurposeBinding>,
 }
 
+impl CommandEnvelope {
+    /// Bind a selected Rust offer with the same ordered representation used by
+    /// saved plans and exact retries. Its caller admits the retained estimate
+    /// before encoding and constructing the concrete typed command.
+    pub(crate) fn offered(
+        id: &str,
+        actor_id: &str,
+        purpose: Option<&str>,
+        input: &impl Serialize,
+        fields: usize,
+    ) -> Result<Self, serde_json::Error> {
+        let headers = CommandHeaders {
+            id: id.into(),
+            actor_id: actor_id.into(),
+            purpose: purpose.map(crate::text::JsText::from),
+            cooperation: None,
+            combat_help_id: None,
+            human_initiated: None,
+            chosen_purpose: None,
+        };
+        if !headers.valid() {
+            return Err(serde::ser::Error::custom("Invalid selected offer identity."));
+        }
+        Ok(headers.envelope(CommandEncoding::from_ordered(input, fields)?))
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CommandHeaders {

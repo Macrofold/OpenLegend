@@ -4,7 +4,8 @@
 use super::{ActorReadPurpose, NpcObservationSelection};
 use crate::commands::{
     ActivityDisplayCursor, CommandChoiceAnswer, CommandChoiceCursor, CommandChoiceStep,
-    CompletedActivityDisplay, NativeCommand, Outcome, WorkTransitionMode,
+    CommandEnvelope, CompletedActivityDisplay, NativeCommand, Outcome, StatusOperation,
+    WorkTransitionMode,
 };
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::geometry::{
@@ -134,7 +135,7 @@ struct CommandInput<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     item_id: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    operation: Option<&'a str>,
+    operation: Option<StatusOperation>,
     #[serde(skip_serializing_if = "Option::is_none")]
     destination: Option<&'a SurfacePoint>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -318,32 +319,95 @@ impl NpcCandidateCursor {
     }
     fn command(
         &self,
+        input: &CommandInput<'_>,
+    ) -> Result<(NativeCommand, ByteReservation), ExecutionError> {
+        let fields = 3
+            + usize::from(input.purpose.is_some())
+            + usize::from(input.auto_equip.is_some())
+            + usize::from(input.target_id.is_some())
+            + usize::from(input.definition_id.is_some())
+            + usize::from(input.item_id.is_some())
+            + usize::from(input.operation.is_some())
+            + usize::from(input.destination.is_some())
+            + usize::from(input.after.is_some())
+            + usize::from(input.method_after.is_some());
+        self.bind_offer(input.id, input.purpose, input, fields, 0, |envelope| {
+            let target = || input.target_id.ok_or(ExecutionError::Invariant).map(str::to_owned);
+            let definition = || input.definition_id.ok_or(ExecutionError::Invariant).map(str::to_owned);
+            Ok(match input.kind {
+                "inspect-activities" => NativeCommand::InspectActivities {
+                    envelope,
+                    history_after: input.after.ok_or(ExecutionError::Invariant)?,
+                    method_after: input.method_after.ok_or(ExecutionError::Invariant)?,
+                },
+                "inspect-inventory" => NativeCommand::InspectInventory {
+                    envelope, selected: None, world: None,
+                },
+                "follow" => NativeCommand::Follow {
+                    envelope,
+                    target_id: target()?,
+                    distance: None,
+                    parameters: crate::movement::follow::FollowParameters {
+                        relation: None, on_lost: None, until: None, complete: None,
+                    },
+                },
+                "status-effect" => NativeCommand::StatusEffect {
+                    envelope,
+                    target_id: target()?,
+                    definition_id: definition()?,
+                    operation: input.operation.ok_or(ExecutionError::Invariant)?,
+                    facing_heading: None,
+                    resting_place_id: None,
+                    resting_bay: None,
+                },
+                "move" => NativeCommand::Move {
+                    envelope,
+                    destination: input.destination.ok_or(ExecutionError::Invariant)?.clone().into(),
+                },
+                "fish" => NativeCommand::Fish {
+                    envelope,
+                    target_id: target()?,
+                    item_id: input.item_id.ok_or(ExecutionError::Invariant)?.into(),
+                },
+                "strike" => NativeCommand::Strike {
+                    envelope,
+                    target_id: target()?,
+                    definition_id: definition()?,
+                    weapon_item_id: None,
+                    auto_equip: input.auto_equip,
+                },
+                _ => return Err(ExecutionError::UnsupportedFamily),
+            })
+        })
+    }
+
+    fn bind_offer(
+        &self,
+        id: &str,
+        purpose: Option<&str>,
         input: &impl Serialize,
+        fields: usize,
+        map_storage: usize,
+        bind: impl FnOnce(CommandEnvelope) -> Result<NativeCommand, ExecutionError>,
     ) -> Result<(NativeCommand, ByteReservation), ExecutionError> {
         let length =
             crate::encoding::json_record_len(input).map_err(|_| ExecutionError::Invariant)?;
+        // The emitted form and its immutable backing may overlap. The
+        // borrowed arguments bound the copied typed text by the same length.
         let mut guard = self.budget.reserve(
             length
-                .checked_mul(2)
-                .map(|n| n.max(8))
+                .checked_mul(3)
+                .and_then(|bytes| bytes.checked_add(map_storage))
+                .and_then(|bytes| bytes.checked_add(size_of::<CommandEnvelope>()))
                 .ok_or(ExecutionError::Capacity)?,
         )?;
-        let json = crate::encoding::json_record(input).map_err(|_| ExecutionError::Invariant)?;
-        guard.resize(
-            guard
-                .bytes()
-                .checked_add(
-                    crate::experience::encoded_body_bound(&json)
-                        .map_err(|_| ExecutionError::Capacity)?,
-                )
-                .ok_or(ExecutionError::Capacity)?,
-        )?;
-        let command: NativeCommand =
-            serde_json::from_str(&json).map_err(|_| ExecutionError::Invariant)?;
-        drop(json);
+        let envelope = CommandEnvelope::offered(id, &self.actor, purpose, input, fields)
+            .map_err(|_| ExecutionError::Invariant)?;
+        let command = bind(envelope)?;
         guard.resize(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
         Ok((command, guard))
     }
+
     fn start(
         &mut self,
         core: &mut CoreMutation<'_>,

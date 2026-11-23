@@ -117,6 +117,14 @@ The candidate passed seven caller cases. Throttling, failed authentication, a 41
 
 Frozen source tree `7c99620dc50ac8c13280ad75e0aaf21f096d59f5`, executable SHA-256 `f86bdbce963c9603d0f40af3601fa6814bd1be2abe7501be71bbf064a0b35406`. Positive result SHA-256 `5a0330fb739f3c820c2fc403fcef2a41ce5e93eb6184568442333186755f373b`, control `9cecdb26`, and remaining result prefixes `9dcd8d20`, `f5e23011`, `d9fa0e27`, `6f2807c9`, `e8f98eec` and `d990509e`. Locked build, touched-line formatting and network checks passed. The controlled HTTPS calls incurred $0 external cost.
 
+### Typed commands for offered NPC actions
+
+November 23, 2026. Rust builds proposed commands from the same installed values used for their preview and execution. It keeps the ordered command bytes needed for saved plans and retry identity. It no longer parses those bytes back into a command during offer preparation.
+
+Through the signed caller, an NPC cooked while a player moved, followed, added exact carried fuel and read both pages of its permitted activity inspection. Putting out the fire during a held Cook choice prevented the debit. Automatic recovery after an out-of-reach gift refusal saved one Follow. All six cases checked their saved state after cold reopening and cleaned up. The earlier fixture openings predated a required current body policy and stopped before a Rust listener opened. The passing runs used the same gameplay assertions and current authored setup.
+
+Frozen tree `4d4b078a62b7fb78e318a1239307bee8c46b72a1` and executable SHA-256 `a698ddad5c5d96893e090489f1e5d89c52994058ab7391b82ad8efe7e2ee517f`. Result prefixes in order are `bcb588c9`, `d2c6c8ec`, `4370d9b3`, `fea6cccd`, `9e49058f` and `fa74571e`. The exact input manifest SHA-256 is `d50a4af80d972f69f41784204e1471b0c6cd20fb6d30d69785be5a5bbae4dfa3`. The locked build passed. The controlled HTTPS requests incurred $0 external cost. These checks establish correctness. The integrated release comparison measures cost.
+
 ## Remembered aliases in Node-hosted Rust replies — November 22, 2026
 
 An ordinary player conversation reproduced a reply refusal before generation. The bridge classified a remembered person as a visible body because the person existed in its wider perception roster. Rust correctly refused that body because the reply had not selected it. The bridge now uses the current visible selection for physical references. Remembered aliases still resolve through their permitted evidence or recognized identity.
