@@ -190,7 +190,7 @@ export class Narrator {
         };
       }),
       impacts: job.item.impacts.map(({ entityName, field, delta, sourceId }) => ({
-        entityName,
+        ...(entityName === undefined ? {} : { entityName }),
         field,
         delta,
         source_handle: [...handles].find(([, s]) => s.id === sourceId)?.[0],

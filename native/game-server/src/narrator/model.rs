@@ -8,10 +8,12 @@ use crate::{
     store::{AttemptRequest, ClaimedStory, InferenceClass, OptionalStorySource},
     world::narrator::StoryDisclosure,
 };
+use indexmap::{IndexMap, IndexSet};
 use openlegend_simulation::{
-    encoding::{json_record, json_record_len, sha256_hex},
+    encoding::{json_record, json_record_len, serialize_optional_js_map, sha256_hex},
     host::{ByteBudget, ByteReservation},
     narration::native_text,
+    reception::{EventScalar, ReceivedReference, ReferenceRole},
     records::SqlCell,
     runtime::RuntimeError,
     text::JsText,
@@ -61,6 +63,9 @@ struct Source {
     handle: String,
     mandatory: bool,
     experience: Experience,
+    // The selected account's decoded fields stay owned until prompt encoding.
+    #[serde(skip)]
+    _account: ByteReservation,
 }
 
 #[derive(Serialize)]
@@ -75,9 +80,28 @@ struct Experience {
     urgency: Option<SqlCell>,
     content: Option<SqlCell>,
     exposure: Option<ReadExposure>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    source: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    target: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    references: Vec<Participant>,
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        serialize_with = "serialize_optional_js_map"
+    )]
+    data: Option<IndexMap<String, EventScalar>>,
+}
+
+#[derive(Serialize)]
+struct Participant {
+    reference: String,
+    label: JsText,
+    role: ReferenceRole,
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct AccountDetails {
     modality: Option<SqlCell>,
     importance: Option<SqlCell>,
@@ -85,6 +109,33 @@ struct AccountDetails {
     content: Option<SqlCell>,
     #[serde(default, deserialize_with = "read_exposure")]
     exposure: Option<ReadExposure>,
+    source_id: Option<String>,
+    target_id: Option<String>,
+    #[serde(default)]
+    references: Vec<ReceivedReference>,
+    event_data: Option<IndexMap<String, EventScalar>>,
+}
+
+// The stored observation already owns the permitted fields. Routing fields use
+// the same occurrence-local references as participants, never native identities.
+// Keep this set in sync with Source's eventFieldsForModel while both hosts exist.
+fn event_identity(field: &str) -> bool {
+    matches!(
+        field,
+        "entityId"
+            | "actorId"
+            | "targetId"
+            | "sourceId"
+            | "recipientId"
+            | "itemId"
+            | "weaponItemId"
+            | "ammoItemId"
+            | "assemblyId"
+            | "changedMaterialId"
+            | "endingActorId"
+            | "destinationId"
+            | "contactSourceId"
+    )
 }
 
 #[derive(Serialize, Deserialize)]
@@ -213,6 +264,7 @@ impl NarratorModel {
         let mut source_ids = Vec::new();
         let mut sources = Vec::new();
         let existing = claim.sources().count();
+        let (_, observer) = claim.principal();
         for source in claim
             .sources()
             .chain(optional.iter().map(OptionalStorySource::evidence))
@@ -220,7 +272,7 @@ impl NarratorModel {
             let handle = format!("s{}", sources.len() + 1);
             source_ids.push(source.id);
             let account = source.account.get();
-            let _account = custody(
+            let account_custody = custody(
                 budget,
                 SqlCell::json_decode_bound(account).ok_or(CallFailure::Invalid)?,
             )?;
@@ -229,6 +281,35 @@ impl NarratorModel {
             }
             let details: AccountDetails =
                 serde_json::from_str(account).map_err(|_| CallFailure::Invalid)?;
+            let mut participant_ids = IndexSet::new();
+            let mut reference = |id: JsText| {
+                if id == observer {
+                    return "self".to_owned();
+                }
+                let (ordinal, _) = participant_ids.insert_full(id);
+                format!("{handle}-p{}", ordinal + 1)
+            };
+            let references = details
+                .references
+                .into_iter()
+                .map(|entry| Participant {
+                    reference: reference(entry.id.into()),
+                    label: entry.label,
+                    role: entry.role,
+                })
+                .collect();
+            let source_reference = details.source_id.map(|id| reference(id.into()));
+            let target = details.target_id.map(|id| reference(id.into()));
+            let mut data = details.event_data;
+            if let Some(fields) = &mut data {
+                for (field, value) in fields {
+                    if let EventScalar::Text(id) = value
+                        && event_identity(field)
+                    {
+                        *id = reference(std::mem::take(id)).into();
+                    }
+                }
+            }
             sources.push(Source {
                 handle,
                 mandatory: claim.mandatory_source(source.id),
@@ -242,7 +323,12 @@ impl NarratorModel {
                     urgency: details.urgency,
                     content: details.content,
                     exposure: details.exposure,
+                    source: source_reference,
+                    target,
+                    references,
+                    data,
                 },
+                _account: account_custody,
             });
         }
         let voice = match claim.voice() {
