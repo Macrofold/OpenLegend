@@ -14,6 +14,14 @@ The separately delivered runner at `b4c8f5d14235b89ae5629867b3fcedc4023144ba` ha
 
 The [hierarchical server campaign](../performance/simulation-inventory.md#hardware-and-initial-campaign-selection) explicitly requests additional hardware. The separately maintained runner at `0d9d2419a` implements profiles for `m7i.xlarge`, `m7i.2xlarge` and `r7iz.xlarge` and requires an explicit price quote for the two alternatives. That revision records source implementation only for the extension. Its deployment and hardware measurements remain unverified. [PC09](profiling-controls.md#hierarchical-server-measurements) tracks the campaign that consumes it. Supervised CPU/memory restriction work is deferred with H1C. The standard default and this tracker's ownership/recovery requirements remain unchanged.
 
+### Recovery settlement after a stopped worker
+
+The managed runner recovered and retired `slot-9` on November 22, 2026. It collected the five files from interrupted campaign `2a421d06-a2bb-4f6e-be92-78fdaf98a6b5`, frozen at `b97530bf59e0`. The result remains interrupted. The original campaign results retain manifest `aa12b4f46c41`. EC2 confirmed termination.
+
+Settlement estimated $11.509684 for the campaign, including $11.011270 in compute. The compute calculation used 53.27 hours between the original claim and termination. AWS power-event records show the worker was stopped for 44.30 of those hours, with about one minute between recovery start and termination. Applying the runner's rate to the observed power windows gives about $2.35 for this campaign, including the runner's storage and operation estimates. These are estimates, and the runner's recorded charge remains intact.
+
+VW01 recovery and VW03 settlement need a check that sums verified running intervals across recovery. If a stop or start remains uncertain, retain the outstanding hold and record the uncertainty. Preserve separately charged interval-specific storage and the original failure evidence.
+
 ## Delivery order
 
 - [ ] **VW01 — Atomic ownership and bounded lifecycle.** Implement the controller/table, fixed slots, cloud-allocation admission, fenced run/case claims, supervisor and independent deadlines/recovery through the [shared contracts](../projects/verification-workers-tech-design.md#runner-input-and-output). **Required pass:** concurrent claim has one winner; duplicate or changed-payload retries do not replay; stale run/case commands cannot affect successors; cleanup after expiry can stop a long-running child without lock deadlock; controller/laptop loss and stop/claim races recover or quarantine. Allocation/create/retire uncertainty cannot exceed the slot cap or reset spending. Exercise owned disposable fault scenarios, never active temporary workers.
