@@ -340,29 +340,6 @@ pub struct RuntimeKnownPlaceRead<'a> {
 }
 
 #[derive(Deserialize)]
-struct KnownPlacesQuestion<'a> {
-    #[serde(borrow)]
-    value: KnownPlacesRequest<'a>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct KnownPlacesRequest<'a> {
-    binding: crate::geometry::GeometryBinding,
-    #[serde(borrow)]
-    world_id: Cow<'a, str>,
-    #[serde(borrow)]
-    generation: Cow<'a, str>,
-    #[serde(borrow)]
-    actor_id: Cow<'a, str>,
-    physical_life: u64,
-    privacy_revision: u64,
-    expected_revision: u64,
-    maximum_rows: u64,
-    maximum_bytes: u64,
-}
-
-#[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ReadCutInput {
     actor_id: String,
@@ -400,24 +377,9 @@ impl NativeWorldSession {
     ) -> Result<Option<T>, RuntimeError> {
         self.require_active()?;
         let question = ticket.question()?;
-        if question.kind() != crate::simulation::ProviderKind::KnownPlaces {
+        let Some(request) = question.known_places() else {
             return Ok(None);
-        }
-        let text = question
-            .json()
-            .ok_or_else(|| failure("missing place request"))?;
-        let _header = self
-            .budget
-            .reserve(
-                text.len()
-                    .checked_mul(3)
-                    .ok_or_else(|| failure("capacity"))?,
-            )
-            .map_err(failure)?;
-        let KnownPlacesQuestion { value: request } = serde_json::from_str(text).map_err(failure)?;
-        if request.binding != question.binding() {
-            return Err(failure("place request binding changed"));
-        }
+        };
         let (save, privacy, (detached, suffix)) = self
             .session
             .known_place_read(

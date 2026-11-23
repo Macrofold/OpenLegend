@@ -10,6 +10,7 @@ use openlegend_simulation::{
     records::InstalledRow,
     text::JsText,
 };
+use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use tokio_postgres::Transaction;
@@ -163,8 +164,7 @@ impl Store {
                 let kind: &str = row.try_get(1)?;
                 let revision: &str = row.try_get(2)?;
                 let body: &str = row.try_get(3)?;
-                validate_capsule(body, &read.actor, owner, kind, revision)?;
-                let capsule = serde_json::from_str(body).map_err(|_| StoreError::InvalidRecord)?;
+                let capsule = read_capsule(body, &read.actor, owner, kind, revision)?;
                 Ok(PlaceIndex { owner: owner.to_owned(), kind: kind.to_owned(), revision: revision.to_owned(), capsule, search_text: row.try_get(4)? })
             }).collect::<StoreResult<Vec<_>>>()?;
             drop(rows);

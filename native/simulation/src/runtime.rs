@@ -340,6 +340,7 @@ enum RuntimeAnswerBody {
     Collation(Box<crate::language::CollationAnswer>),
     LocalFormat(crate::geometry::GeometryBinding, Box<LocalFormat>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
+    KnownPlaces(Box<crate::simulation::KnownPlacesAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
@@ -458,8 +459,21 @@ impl RuntimeProviderInput {
         })
     }
 
-    /// Move the independently admitted selected PostgreSQL rows directly to
-    /// the existing native NPC evidence validator.
+    /// Move the funded, actor-scoped PostgreSQL capsules to the existing
+    /// place preparation. Its ticket, actor life and privacy checks still apply.
+    pub fn known_places(
+        binding: crate::geometry::GeometryBinding,
+        capsules: Vec<crate::experience::KnownPlaceCapsule>,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        let answer = crate::simulation::KnownPlacesAnswer::from_rows(binding, capsules);
+        custody.resize(answer.retained_bytes().ok_or(CapacityError)?)?;
+        Ok(Self {
+            body: RuntimeAnswerBody::KnownPlaces(Box::new(answer)),
+            custody,
+        })
+    }
+
     /// Move the already funded selected rows into the existing private edit
     /// validator. No native mutation may use them without its original ticket.
     pub fn personal_history(
@@ -475,6 +489,7 @@ impl RuntimeProviderInput {
         })
     }
 
+    /// Move independently admitted PostgreSQL rows to the native NPC evidence validator.
     pub fn npc_sources(
         binding: crate::geometry::GeometryBinding,
         read_serial: u64,
@@ -613,6 +628,12 @@ fn provider_response(
                         ));
                     }
                     ProviderResponse::words(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::KnownPlaces(answer) => {
+                    if question.known_places().is_none() {
+                        return Err(failure("place capsules require their original request"));
+                    }
+                    ProviderResponse::known_places(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::PersonalHistory(answer) => {
                     if question.personal_history().is_none() {
@@ -944,7 +965,7 @@ impl RuntimeProvider {
     }
 
     pub fn asks_known_places(&self) -> Result<bool, RuntimeError> {
-        Ok(self.question()?.kind() == crate::simulation::ProviderKind::KnownPlaces)
+        Ok(self.question()?.known_places().is_some())
     }
 
     /// Borrow the immutable digest input. The cursor owns its separate
@@ -1066,6 +1087,9 @@ impl RuntimeProvider {
         }
         if let Some(maintenance) = question.maintenance_envelope() {
             return RuntimeJson::encode(&maintenance, budget);
+        }
+        if let Some(places) = question.known_places_envelope() {
+            return RuntimeJson::encode(&places, budget);
         }
         if let Some(history) = question.personal_history_envelope() {
             return RuntimeJson::encode(&history, budget);

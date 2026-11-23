@@ -37,7 +37,8 @@ use reflection::{ReflectionReply, poll_reflection};
 pub(super) mod source_versions;
 use source_versions::{Finalizer as SourceVersionFinalizer, SourceVersionsAnswer};
 mod known_places;
-use known_places::{KnownPlacesAnswer, KnownPlacesPreparation};
+pub(crate) use known_places::KnownPlacesAnswer;
+use known_places::{KnownPlacesPreparation, KnownPlacesRequest};
 mod learning;
 use learning::LearningReply;
 
@@ -151,6 +152,7 @@ enum QuestionBody {
     ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
     AppraisalOutcomes(Box<crate::response::AppraisalCreatesRequest>),
     NpcSources(Arc<crate::capture::NpcSourcesRequest>),
+    KnownPlaces(Box<KnownPlacesRequest>),
     PersonalHistory {
         request: Arc<crate::experience::HistoryEditQuestion>,
         projection: Option<Box<super::restore::RestoreReadProjection>>,
@@ -405,6 +407,21 @@ impl ProviderQuestion {
         })
     }
 
+    pub(crate) fn known_places(&self) -> Option<&KnownPlacesRequest> {
+        match &self.body {
+            QuestionBody::KnownPlaces(request) => Some(request),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn known_places_envelope(&self) -> Option<QuestionEnvelope<'_, KnownPlacesRequest>> {
+        self.known_places().map(|value| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value,
+        })
+    }
+
     pub(crate) fn npc_sources(&self) -> Option<&crate::capture::NpcSourcesRequest> {
         match &self.body {
             QuestionBody::NpcSources(request) => Some(request),
@@ -596,6 +613,7 @@ enum AnswerBody {
     Collation(Box<CollationAnswer>),
     LocalFormat(Box<LocalFormat>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
+    KnownPlaces(Box<KnownPlacesAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
@@ -776,6 +794,22 @@ impl ProviderResponse {
             kind: ProviderKind::Sources,
             binding,
             body: AnswerBody::NpcSources(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn known_places(
+        binding: GeometryBinding,
+        answer: Box<KnownPlacesAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::KnownPlaces,
+            binding,
+            body: AnswerBody::KnownPlaces(answer),
             _reservation: reservation,
         })
     }
@@ -2073,6 +2107,9 @@ impl OperationDriver {
                     }
                     AnswerBody::NpcSources(value) => {
                         (Some(Answer::Sources(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::KnownPlaces(value) => {
+                        (Some(Answer::KnownPlaces(*value)), Some(_reservation), None)
                     }
                     AnswerBody::PersonalHistory(value) => {
                         (Some(Answer::History(*value)), Some(_reservation), None)

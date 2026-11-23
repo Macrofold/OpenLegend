@@ -2,15 +2,11 @@
 //! SQL row is evidence only while its exact owner remains admitted.
 
 use super::{Store, StoreError, StoreResult, durable_head, ordinal, sql_ordinal};
-use openlegend_simulation::encoding::json_record;
-use openlegend_simulation::experience::{PersonalSourceKind, PersonalSourceRef};
+use openlegend_simulation::experience::{KnownPlaceCapsule, PersonalSourceKind};
 use openlegend_simulation::geometry::GeometryBinding;
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::records::ChangedRows;
 use openlegend_simulation::runtime::{RuntimeKnownPlaceRead, RuntimeProviderInput};
-use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
-use std::borrow::Cow;
 use tokio_postgres::types::ToSql;
 
 mod support;
@@ -243,27 +239,22 @@ impl Store {
                     .and_then(|bytes| bytes.checked_add(count.checked_mul(1024)?))
                     .and_then(|bytes| bytes.checked_add(512)).and_then(|bytes| usize::try_from(bytes).ok())
                     .ok_or(StoreError::Capacity)?;
-                let mut custody = budget.reserve(bound).map_err(|_| StoreError::Capacity)?;
+                let custody = budget.reserve(bound).map_err(|_| StoreError::Capacity)?;
                 let rows = if count == 0 { Vec::new() } else { transaction.query(&format!(
                     "{select} SELECT owner_id,owner_kind,owner_revision,capsule FROM retained_places ORDER BY place_id"
                 ), &params).await? };
                 if rows.len() as u64 != count { return Err(StoreError::StaleCut); }
-                let mut capsules: Vec<&RawValue> = Vec::with_capacity(rows.len());
+                let mut capsules = Vec::new();
+                capsules.try_reserve_exact(rows.len()).map_err(|_| StoreError::Capacity)?;
                 for row in &rows {
                     let owner: &str = row.try_get(0)?;
                     let kind: &str = row.try_get(1)?;
                     let revision: &str = row.try_get(2)?;
                     let body: &str = row.try_get(3)?;
-                    validate_capsule(body, &read.actor, owner, kind, revision)?;
-                    capsules.push(serde_json::from_str(body).map_err(|_| StoreError::InvalidRecord)?);
+                    capsules.push(read_capsule(body, &read.actor, owner, kind, revision)?);
                 }
-                #[derive(Serialize)]
-                struct Answer<'a> { binding: GeometryBinding, capsules: &'a [&'a RawValue] }
-                let output = json_record(&Answer { binding: read.binding, capsules: &capsules }).map_err(|_| StoreError::InvalidRecord)?;
-                drop(capsules);
                 drop(rows);
-                custody.resize(output.capacity()).map_err(|_| StoreError::Capacity)?;
-                Ok(RuntimeProviderInput::new(output, custody))
+                RuntimeProviderInput::known_places(read.binding, capsules, custody).map_err(|_| StoreError::Capacity)
             })
         }).await
     }
@@ -285,37 +276,19 @@ fn row_owner(
     Ok(path.get(actor_at).ok_or(StoreError::InvalidRecord)? == actor)
 }
 
-fn validate_capsule(
+fn read_capsule(
     body: &str,
     actor: &str,
     owner: &str,
     kind: &str,
     revision: &str,
-) -> StoreResult<()> {
-    #[derive(Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Header<'a> {
-        #[serde(borrow)]
-        source: Source<'a>,
-        personal_source: Option<PersonalSourceRef>,
-    }
-    #[derive(Deserialize)]
-    struct Source<'a> {
-        #[serde(borrow)]
-        observer: Observer<'a>,
-    }
-    #[derive(Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Observer<'a> {
-        #[serde(borrow)]
-        actor_id: Cow<'a, str>,
-    }
-    let body: Header<'_> = serde_json::from_str(body).map_err(|_| StoreError::InvalidRecord)?;
-    if body.source.observer.actor_id != actor {
+) -> StoreResult<KnownPlaceCapsule> {
+    let capsule: KnownPlaceCapsule = serde_json::from_str(body).map_err(|_| StoreError::InvalidRecord)?;
+    if capsule.source.observer.actor_id != actor {
         return Err(StoreError::InvalidRecord);
     }
-    match (kind, body.personal_source) {
-        ("support", None) => Ok(()),
+    match (kind, capsule.personal_source.as_ref()) {
+        ("support", None) => Ok(capsule),
         (kind, Some(reference))
             if reference.id == owner
                 && reference.revision == revision
@@ -325,7 +298,7 @@ fn validate_capsule(
                     PersonalSourceKind::Summary => kind == "summary",
                 } =>
         {
-            Ok(())
+            Ok(capsule)
         }
         _ => Err(StoreError::InvalidRecord),
     }

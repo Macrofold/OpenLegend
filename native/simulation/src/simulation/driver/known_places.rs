@@ -3,17 +3,29 @@
 //! its physical cursor may acquire a place or speech occurrence.
 use super::*;
 use crate::experience::{KnownPlaceCapsule, PreparedKnownPlaceEvidence};
-use crate::host::retained_size::heap_sum;
+use crate::host::retained_size::{HeapBytes, heap_sum};
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct KnownPlacesAnswer {
+pub(crate) struct KnownPlacesAnswer {
     pub(super) binding: GeometryBinding,
     capsules: Vec<KnownPlaceCapsule>,
     #[serde(skip)]
     _storage: Option<ByteReservation>,
 }
 impl KnownPlacesAnswer {
+    pub(crate) fn from_rows(binding: GeometryBinding, capsules: Vec<KnownPlaceCapsule>) -> Self {
+        Self {
+            binding,
+            capsules,
+            _storage: None,
+        }
+    }
+
+    pub(crate) fn retained_bytes(&self) -> Option<usize> {
+        size_of::<Self>().checked_add(self.capsules.heap_bytes()?)
+    }
+
     pub(super) fn decode(text: &str, budget: &ByteBudget) -> Result<Self, DriveError> {
         let storage = crate::install::reserve_typed_parse::<Self>(
             text,
@@ -39,16 +51,16 @@ struct ExpectedActor {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Request<'a> {
-    binding: GeometryBinding,
-    world_id: &'a str,
-    generation: &'a str,
-    actor_id: &'a str,
-    physical_life: u64,
-    privacy_revision: u64,
-    expected_revision: u64,
-    maximum_rows: u64,
-    maximum_bytes: u64,
+pub(crate) struct KnownPlacesRequest {
+    pub(crate) binding: GeometryBinding,
+    pub(crate) world_id: String,
+    pub(crate) generation: String,
+    pub(crate) actor_id: String,
+    pub(crate) physical_life: u64,
+    pub(crate) privacy_revision: u64,
+    pub(crate) expected_revision: u64,
+    pub(crate) maximum_rows: u64,
+    pub(crate) maximum_bytes: u64,
 }
 pub(super) struct KnownPlacesPreparation {
     actors: Vec<ExpectedActor>,
@@ -173,19 +185,35 @@ impl KnownPlacesPreparation {
             core.state.installed.geometry.spatial.revision,
             core.journal.next_provider_serial()?,
         );
-        let request = Request {
+        let world_id = &core.state.physical.header.id;
+        let generation = &core.state.generation;
+        let limits = &core.state.installed.personal_evidence_preparation;
+        let bytes = heap_sum([
+            size_of::<KnownPlacesRequest>(),
+            world_id.len(),
+            generation.len(),
+            expected.id.len(),
+        ])
+        .ok_or(DriveError::Capacity)?;
+        let reservation = budget.reserve(bytes).map_err(|_| DriveError::Capacity)?;
+        let backing = ProviderQuestion::reserve_backing(budget)?;
+        let question = Arc::new(ProviderQuestion {
+            kind: ProviderKind::KnownPlaces,
             binding,
-            world_id: &core.state.physical.header.id,
-            generation: &core.state.generation,
-            actor_id: &expected.id,
-            physical_life: expected.physical_life,
-            privacy_revision: expected.privacy_revision,
-            expected_revision: expected.revision,
-            maximum_rows: core.state.installed.personal_evidence_preparation.rows,
-            maximum_bytes: core.state.installed.personal_evidence_preparation.bytes,
-        };
-        let question =
-            ProviderQuestion::prepare(ProviderKind::KnownPlaces, binding, &request, budget)?;
+            body: QuestionBody::KnownPlaces(Box::new(KnownPlacesRequest {
+                binding,
+                world_id: world_id.clone(),
+                generation: generation.clone(),
+                actor_id: expected.id.clone(),
+                physical_life: expected.physical_life,
+                privacy_revision: expected.privacy_revision,
+                expected_revision: expected.revision,
+                maximum_rows: limits.rows,
+                maximum_bytes: limits.bytes,
+            })),
+            _reservation: reservation,
+            backing,
+        });
         self.pending = Some(binding);
         Ok(Poll::Question(question, ()))
     }
