@@ -1,5 +1,5 @@
-//! Selected Crafting-panel choice. The action binds only the already-known
-//! method; the simulation re-selects available carried ingredients at start.
+//! Selected Crafting-panel choice. The action binds the known method and
+//! exact kept tool. The simulation re-selects spendable ingredients at start.
 use super::*;
 use openlegend_simulation::runtime::RuntimeManufactureOffer;
 
@@ -15,6 +15,8 @@ pub(super) fn render(
         #[serde(rename = "type")]
         kind: &'static str,
         recipe_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        tools: Option<std::collections::BTreeMap<&'a str, &'a str>>,
     }
     #[derive(Serialize)]
     struct Intent<'a> {
@@ -46,6 +48,8 @@ pub(super) fn render(
         Some("Resume the world to act.".into())
     } else if !offer.can_act {
         Some("Your character cannot start this work now.".into())
+    } else if offer.missing_tool {
+        Some("You need an available tool for this recipe.".into())
     } else {
         offer.missing.map(|(quantity, name)| {
             let mut text: JsText = format!("Need {quantity} ").into();
@@ -74,6 +78,9 @@ pub(super) fn render(
             command: Command {
                 kind: "craft",
                 recipe_id: recipe,
+                tools: offer
+                    .tool
+                    .map(|(role, item)| std::collections::BTreeMap::from([(role, item)])),
             },
         },
     };

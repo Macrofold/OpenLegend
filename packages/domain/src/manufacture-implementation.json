@@ -1,0 +1,8 @@
+{
+  "id": "engine:finite-material-transform",
+  "inputRoles": 4,
+  "outputPorts": 4,
+  "retainedToolRoles": 2,
+  "unitsPerRole": 16,
+  "version": 1
+}

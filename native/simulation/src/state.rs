@@ -666,7 +666,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub manufacture_tools: Option<[(); 0]>,
+    pub(crate) manufacture_tools: Option<Vec<crate::manufacturing::ToolBinding>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -950,6 +950,10 @@ impl Action {
             || self.scar_id.is_some()
             || self.recipe_pin.is_some() != self.is_manufacturing()
             || self.manufacture_tools.is_some() != self.is_manufacturing()
+            || self
+                .manufacture_tools
+                .as_ref()
+                .is_some_and(|tools| tools.len() > 1)
             || self.food_preparation.is_some() != (self.kind == "cook")
             || self.fishing.is_some() != (self.kind == "fish")
             || self.guard.is_some()
@@ -1065,11 +1069,17 @@ impl Action {
         action
     }
 
-    pub(crate) fn craft(id: String, recipe: DefinitionPin, seconds: f64, consumed: Vec<Yield>) -> Self {
+    pub(crate) fn craft(
+        id: String,
+        recipe: DefinitionPin,
+        seconds: f64,
+        consumed: Vec<Yield>,
+        tool: Option<crate::manufacturing::ToolBinding>,
+    ) -> Self {
         let mut action = Self::native_action(id, "craft", "working");
         action.recipe_id = Some(recipe.id.clone());
         action.recipe_pin = Some(recipe);
-        action.manufacture_tools = Some([]);
+        action.manufacture_tools = Some(tool.into_iter().collect());
         action.remaining_seconds = seconds;
         action.total_seconds = seconds;
         action.consumed = consumed;

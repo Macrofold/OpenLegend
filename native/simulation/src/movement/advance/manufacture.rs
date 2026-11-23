@@ -37,6 +37,10 @@ impl MoveAdvanceCursor {
             self.phase = Phase::Done;
             return Ok(Progress::Complete);
         }
+        if !manufacturing::tools_current(&core.state.physical, &self.actor_id, action, method) {
+            self.fail("the tool is no longer available.")?;
+            return self.drive(core, None);
+        }
         if !manufacturing::finish_fits(core, method, &self.actor_id, id, &self.budget)? {
             self.fail("the completed work does not fit in the action record.")?;
             return self.drive(core, None);

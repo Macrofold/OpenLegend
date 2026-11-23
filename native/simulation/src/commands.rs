@@ -215,6 +215,7 @@ pub(crate) enum NativeCommand {
     Craft {
         envelope: CommandEnvelope,
         recipe_id: String,
+        tools: Option<crate::manufacturing::ToolSelection>,
     },
     Cook {
         envelope: CommandEnvelope,
@@ -327,7 +328,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String,tools:crate::manufacturing::ToolSelection);
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -604,7 +605,11 @@ impl<'de> Deserialize<'de> for NativeCommand {
             || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "pickup" | "drop" | "eat" | "equip" | "unequip") && input.item_id.is_some())
             || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
             || input.quantity.is_some_and(|n| !matches!(input.kind.as_str(), "pickup" | "drop") || n == 0 || n > crate::identity::MAX_SAFE_INTEGER)
-            || (input.kind != "craft" && input.recipe_id.is_some())
+            || (input.kind != "craft" && (input.recipe_id.is_some() || input.tools.is_some()))
+            || input
+                .tools
+                .as_ref()
+                .is_some_and(|tools| !crate::manufacturing::valid_tool_selection(tools))
             || (input.kind != "cook" && (input.heat_id.is_some() || input.preparation_id.is_some()
                 || input.preparation_version.is_some() || input.preparation_digest.is_some() || input.inputs.is_some()))
         {
@@ -756,7 +761,11 @@ impl<'de> Deserialize<'de> for NativeCommand {
             {
                 let recipe_id = input.recipe_id.filter(|id| is_safe_record_id(id))
                     .ok_or_else(|| D::Error::custom("Manufacture requires its known method."))?;
-                Ok(Self::Craft { envelope, recipe_id })
+                Ok(Self::Craft {
+                    envelope,
+                    recipe_id,
+                    tools: input.tools,
+                })
             }
             "cook"
                 if !extras_for_say && input.target_id.is_none() && input.text.is_none()

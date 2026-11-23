@@ -48,6 +48,7 @@ pub enum RuntimePlayerCommand<'a> {
     },
     Craft {
         recipe: &'a str,
+        tools: Option<&'a indexmap::IndexMap<String, String>>,
     },
     Say {
         text: &'a JsText,
@@ -104,7 +105,14 @@ impl RuntimePlayerCommand<'_> {
             Self::Pickup { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Drop { item, .. } => item.len(),
             Self::DropGroup { item, group } => item.len() + group_text_bytes(group),
-            Self::Craft { recipe } => recipe.len(),
+            Self::Craft { recipe, tools } => {
+                recipe.len()
+                    + tools
+                        .into_iter()
+                        .flat_map(|tools| tools.iter())
+                        .map(|(role, item)| role.len() + item.len())
+                        .sum::<usize>()
+            }
             Self::Handover { target, gift, .. } => target.len() + gift.retained_text_bytes(),
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
             Self::TendFire { target, item, .. } => target.len() + item.map_or(0, str::len),
@@ -221,6 +229,8 @@ impl RuntimePlayerCommand<'_> {
             #[serde(skip_serializing_if = "Option::is_none")]
             recipe_id: Option<&'a str>,
             #[serde(skip_serializing_if = "Option::is_none")]
+            tools: Option<&'a indexmap::IndexMap<String, String>>,
+            #[serde(skip_serializing_if = "Option::is_none")]
             target_role: Option<SpeechTargetRole>,
             #[serde(skip_serializing_if = "Option::is_none")]
             text: Option<&'a JsText>,
@@ -263,6 +273,8 @@ impl RuntimePlayerCommand<'_> {
             target_role: Option<SpeechTargetRole>,
             #[serde(skip_serializing_if = "Option::is_none")]
             text: Option<&'a JsText>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            tools: Option<&'a indexmap::IndexMap<String, String>>,
             #[serde(rename = "type")]
             kind: &'a str,
             #[serde(skip_serializing_if = "Option::is_none")]
@@ -309,9 +321,9 @@ impl RuntimePlayerCommand<'_> {
             Self::Drop { quantity, .. } => Some(quantity),
             _ => None,
         };
-        let recipe_id = match self {
-            Self::Craft { recipe } => Some(recipe),
-            _ => None,
+        let (recipe_id, tools) = match self {
+            Self::Craft { recipe, tools } => (Some(recipe), tools),
+            _ => (None, None),
         };
         let (text, target_role, volume) = match self {
             Self::Say { text, target, volume } => (Some(text), target.map(|(_, role)| role), volume),
@@ -320,6 +332,7 @@ impl RuntimePlayerCommand<'_> {
         let headers = player_headers(id, actor);
         if !headers.valid()
             || recipe_id.is_some_and(|id| !crate::values::is_safe_record_id(id))
+            || tools.is_some_and(|tools| !crate::manufacturing::valid_tool_selection(tools))
             || destination
                 .is_some_and(|point| ![point.x, point.y, point.z].iter().all(|n| n.is_finite()))
             || quantity.is_some_and(|n| n == 0 || n > crate::identity::MAX_SAFE_INTEGER)
@@ -348,12 +361,29 @@ impl RuntimePlayerCommand<'_> {
                 quantity,
                 gathering_mode,
                 recipe_id,
+                tools,
                 target_role,
                 text,
                 volume,
             },
-            4 + [destination.is_some(), expected_action_id.is_some(), target_id.is_some(), item_id.is_some(), gathering_mode.is_some(), recipe_id.is_some(), expected_revision.is_some(), placement_revision.is_some(), quantity.is_some(), text.is_some(), target_role.is_some(), volume.is_some()]
-                .into_iter().filter(|value| *value).count(),
+            4 + [
+                destination.is_some(),
+                expected_action_id.is_some(),
+                target_id.is_some(),
+                item_id.is_some(),
+                gathering_mode.is_some(),
+                recipe_id.is_some(),
+                tools.is_some(),
+                expected_revision.is_some(),
+                placement_revision.is_some(),
+                quantity.is_some(),
+                text.is_some(),
+                target_role.is_some(),
+                volume.is_some(),
+            ]
+            .into_iter()
+            .filter(|value| *value)
+            .count(),
         )?;
         let signature = json_record(&Signature {
             actor_id: actor,
@@ -375,6 +405,7 @@ impl RuntimePlayerCommand<'_> {
             target_id,
             target_role,
             text,
+            tools,
             kind,
             volume,
         })?;
@@ -403,7 +434,11 @@ impl RuntimePlayerCommand<'_> {
                     ))
                 })?,
             },
-            Self::Craft { recipe } => NativeCommand::Craft { envelope, recipe_id: recipe.into() },
+            Self::Craft { recipe, tools } => NativeCommand::Craft {
+                envelope,
+                recipe_id: recipe.into(),
+                tools: tools.cloned(),
+            },
             Self::Say { text, target, volume } => bound_speech(envelope, text, target, volume),
             Self::Pickup { target, item, quantity } => NativeCommand::Pickup {
                 envelope, target_id: target.into(), item_id: item.map(str::to_owned), quantity,

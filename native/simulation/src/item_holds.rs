@@ -266,15 +266,31 @@ impl ItemHolds {
         stone: &crate::hearth::Stone,
         definition: &DefinitionPin,
     ) -> bool {
-        self.rows
-            .get(&hearth_hold_id(action, index))
-            .is_some_and(|row| {
-                let (item, pin, amount) = row.stock();
-                (item, pin, amount) == (&*stone.item_id, definition, stone.quantity)
-                    && row.value.state == ClaimState::Held
-                    && row.value.actor_id == actor
-                    && row.value.invocation_id == action
-            })
+        self.matches_item(
+            actor,
+            action,
+            &hearth_hold_id(action, index),
+            &stone.item_id,
+            stone.quantity,
+            definition,
+        )
+    }
+
+    pub(crate) fn matches_item(
+        &self,
+        actor: &str,
+        action: &str,
+        id: &str,
+        item_id: &str,
+        quantity: u64,
+        definition: &DefinitionPin,
+    ) -> bool {
+        self.rows.get(id).is_some_and(|row| {
+            row.stock() == (item_id, definition, quantity)
+                && row.value.state == ClaimState::Held
+                && row.value.actor_id == actor
+                && row.value.invocation_id == action
+        })
     }
 }
 
@@ -282,11 +298,29 @@ pub(crate) fn hearth_hold_id(action_id: &str, index: usize) -> String {
     format!("{action_id}:hearth-input:{index}")
 }
 
+pub(crate) fn manufacture_hold_id(action_id: &str, index: usize) -> String {
+    format!("{action_id}:manufacture-tool:{index}")
+}
+
+pub(crate) enum ActionHoldKey {
+    HearthInput(usize),
+    ManufactureTool(usize),
+}
+
+impl ActionHoldKey {
+    pub(crate) fn id(&self, action: &str) -> String {
+        match self {
+            Self::HearthInput(index) => hearth_hold_id(action, *index),
+            Self::ManufactureTool(index) => manufacture_hold_id(action, *index),
+        }
+    }
+}
+
 pub(crate) fn prepare_hold(
     actor_id: &str,
     invocation_id: &str,
-    index: usize,
-    stone: &crate::hearth::Stone,
+    key: ActionHoldKey,
+    stock: (&str, u64),
     definition: &DefinitionPin,
     lot_revision: u64,
     ordinal: u64,
@@ -315,27 +349,28 @@ pub(crate) fn prepare_hold(
         id: &'a str,
         version: u64,
     }
+    let (item_id, quantity) = stock;
     let workspace = budget.reserve(
         512 + 6
             * (actor_id.len()
                 + invocation_id.len()
-                + stone.item_id.len()
+                + item_id.len()
                 + definition.id.len()
                 + definition.digest.len()),
     )?;
-    let id = hearth_hold_id(invocation_id, index);
+    let id = key.id(invocation_id);
     if !is_safe_record_id(&id) {
         return Err(ExecutionError::Invariant);
     }
     let resource = ResourceRef::Item {
-        item_id: stone.item_id.clone(),
+        item_id: item_id.to_owned(),
         definition: definition.clone(),
     };
     let request_digest = crate::encoding::json_record(&ClaimRequest {
         id: &id,
         invocation_id,
         actor_id,
-        amount: stone.quantity,
+        amount: quantity,
         expected_revision: lot_revision,
         resource: SortedResource {
             definition: SortedDefinition {
@@ -343,7 +378,7 @@ pub(crate) fn prepare_hold(
                 id: &definition.id,
                 version: definition.version,
             },
-            item_id: &stone.item_id,
+            item_id: item_id,
             kind: "item",
         },
     })
@@ -354,7 +389,7 @@ pub(crate) fn prepare_hold(
             invocation_id: invocation_id.into(),
             actor_id: actor_id.into(),
             resource,
-            amount: stone.quantity as f64,
+            amount: quantity as f64,
             request_digest: request_digest.into(),
             revision: 1,
             state: ClaimState::Held,
@@ -429,7 +464,24 @@ pub(crate) fn install(
         else {
             return Err(InstallError::CurrentFormat);
         };
-        let Some(work) = action.hearth_work.as_ref() else {
+        let matches_action = if let Some(work) = action.hearth_work.as_ref() {
+            work.stones.iter().enumerate().any(|(index, stone)| {
+                stone.item_id == *item_id
+                    && stone.quantity as f64 == value.amount
+                    && value.id == hearth_hold_id(&action.id, index)
+            })
+        } else if let Some(tools) = action
+            .manufacture_tools
+            .as_ref()
+            .filter(|_| action.is_manufacturing())
+        {
+            tools.iter().enumerate().any(|(index, tool)| {
+                tool.item_id == *item_id
+                    && tool.definition == *definition
+                    && tool.quantity as f64 == value.amount
+                    && value.id == manufacture_hold_id(&action.id, index)
+            })
+        } else {
             return Err(InstallError::UnsupportedFamily(
                 "active resource reservation",
             ));
@@ -443,11 +495,7 @@ pub(crate) fn install(
             || value.amount.fract() != 0.0
             || value.amount > (lot.quantity.saturating_sub(holds.quantity(item_id))) as f64
             || value.revision != 1
-            || !work.stones.iter().enumerate().any(|(index, stone)| {
-                stone.item_id == *item_id
-                    && stone.quantity as f64 == value.amount
-                    && value.id == hearth_hold_id(&action.id, index)
-            })
+            || !matches_action
         {
             return Err(InstallError::CurrentFormat);
         }

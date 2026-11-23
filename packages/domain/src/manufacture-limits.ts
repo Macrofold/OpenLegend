@@ -1,8 +1,12 @@
-/** Trusted manufacture bounds are data-only so definition compilation can read them
- * without initializing runtime item and recipe owners through an import cycle. */
+import implementation from './manufacture-implementation.json' with { type: 'json' };
+
+/** The trusted compiler and native installer consume the same finite envelope. */
+export const FIXED_TRANSFORM_IMPLEMENTATION = Object.freeze(implementation);
+
+/** Data-only limits avoid initializing the item and recipe owners through an import cycle. */
 export const MANUFACTURE_LIMITS = Object.freeze({
-  inputRoles: 4,
-  retainedToolRoles: 2,
-  outputPorts: 4,
-  unitsPerRole: 16,
+  inputRoles: implementation.inputRoles,
+  retainedToolRoles: implementation.retainedToolRoles,
+  outputPorts: implementation.outputPorts,
+  unitsPerRole: implementation.unitsPerRole,
 });

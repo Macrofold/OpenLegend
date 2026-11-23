@@ -1,7 +1,7 @@
 //! The recipe catalogue reads only one actor's current known method and
 //! its accessible materials under the ordinary disclosure lease.
 use super::*;
-use crate::manufacturing::{self, MaterialChoice};
+use crate::manufacturing::{self, MaterialChoice, ToolRequest};
 use crate::text::JsText;
 
 pub struct RuntimeManufactureOffer<'a> {
@@ -12,6 +12,8 @@ pub struct RuntimeManufactureOffer<'a> {
     pub paused: bool,
     pub can_act: bool,
     pub missing: Option<(u64, &'a JsText)>,
+    pub missing_tool: bool,
+    pub tool: Option<(&'a str, &'a str)>,
 }
 
 #[derive(serde::Deserialize)]
@@ -178,14 +180,27 @@ impl NativeWorldSession {
                 .capabilities
                 .capability_blocked(Some(body), "actions")
                 .map_err(failure)?;
-        let missing = match manufacturing::materials(state, &body.id, method, &self.budget)
-            .map_err(failure)?
-        {
-            MaterialChoice::Available(_) => None,
-            MaterialChoice::Missing(row) => Some((
-                row.quantity,
-                &installed.retained.items[&row.definition_id].named.name,
-            )),
+        let stock =
+            manufacturing::materials(state, &body.id, method, ToolRequest::Offer, &self.budget)
+                .map_err(failure)?;
+        let (missing, missing_tool, tool) = match &stock {
+            MaterialChoice::Available(stock) => (
+                None,
+                false,
+                stock
+                    .tool
+                    .as_ref()
+                    .map(|tool| (tool.role.as_str(), tool.item_id.as_str())),
+            ),
+            MaterialChoice::Missing(row) => (
+                Some((
+                    row.quantity,
+                    &installed.retained.items[&row.definition_id].named.name,
+                )),
+                false,
+                None,
+            ),
+            MaterialChoice::MissingTool => (None, true, None),
         };
         use_offer(RuntimeManufactureOffer {
             name: &method.name,
@@ -195,6 +210,8 @@ impl NativeWorldSession {
             paused: state.physical.header.paused,
             can_act,
             missing,
+            missing_tool,
+            tool,
         })
         .map(Some)
     }

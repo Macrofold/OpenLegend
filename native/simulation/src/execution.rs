@@ -3472,8 +3472,11 @@ impl PhysicalMutation<'_> {
         };
         let binding_changed = actor.action.as_ref().map(|action| action.id.as_str())
             != action.as_ref().map(|action| action.id.as_str());
-        if binding_changed && actor.action.as_ref().is_some_and(|a| a.is_placing_hearth()) {
-            self.release_hearth_holds(handle)?;
+        if binding_changed && actor.action.as_ref().is_some_and(|action| {
+            action.is_placing_hearth()
+                || action.manufacture_tools.as_ref().is_some_and(|tools| !tools.is_empty())
+        }) {
+            self.release_action_holds(handle)?;
         }
         let actor = self.state.entities.resolve(handle).and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;

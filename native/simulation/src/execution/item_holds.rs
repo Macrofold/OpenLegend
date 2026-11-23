@@ -1,7 +1,7 @@
 //! Exact action holds share the physical inverse journal with inventory and
 //! the action itself. Settled claim records survive only in the saved prefix.
 use super::*;
-use crate::item_holds::{ClaimState, hearth_hold_id, prepare_hold};
+use crate::item_holds::{ActionHoldKey, ClaimState, HeldRecord, prepare_hold};
 
 impl CoreMutation<'_> {
     /// Reserve the complete staged group before installing any claim. The
@@ -57,8 +57,8 @@ impl CoreMutation<'_> {
             prepared.push(prepare_hold(
                 actor_id,
                 &action.id,
-                index,
-                stone,
+                ActionHoldKey::HearthInput(index),
+                (&stone.item_id, stone.quantity),
                 &definition.definition.input.definition,
                 lot.revision,
                 ordinal,
@@ -67,38 +67,96 @@ impl CoreMutation<'_> {
         }
         let mut physical = self.physical();
         for (id, record) in prepared {
-            physical.journal.reserve(id.len() + size_of::<Undo>())?;
-            let coverage = &physical.state.holds.coverage;
-            let undo = Undo::ItemHoldAdded {
-                id: id.clone(),
-                ordinal: coverage.next_ordinal,
-                parent_present: coverage.parent_present,
-            };
-            physical.hold_availability(record.item_id())?;
-            physical.state.holds.put(id, record)?;
-            physical.state.holds.coverage.next_ordinal += 1;
-            physical.state.holds.coverage.parent_present = true;
-            physical.journal.undo.push(undo);
+            physical.install_item_hold(id, record)?;
         }
         Ok(())
+    }
+
+    /// The prepared craft owns both the kept tool and its already staged
+    /// input spend. The original command checkpoint rolls back either.
+    pub(crate) fn reserve_craft_tool(
+        &mut self,
+        actor: &str,
+        action: &Action,
+    ) -> Result<(), ExecutionError> {
+        let Some(tools) = action.manufacture_tools.as_deref() else {
+            return Err(ExecutionError::Invariant);
+        };
+        let tool = match tools {
+            [] => return Ok(()),
+            [tool] => tool,
+            _ => return Err(ExecutionError::Invariant),
+        };
+        let physical = &self.state.physical;
+        let lot = physical
+            .entities
+            .get(&tool.item_id)
+            .and_then(|entity| entity.item.as_ref())
+            .filter(|lot| {
+                lot.definition_pin == tool.definition
+                    && lot
+                        .quantity
+                        .saturating_sub(physical.holds.quantity(&tool.item_id))
+                        >= tool.quantity
+            })
+            .ok_or(ExecutionError::Invariant)?;
+        use crate::work::WorkUnit;
+        self.journal
+            .meters
+            .charge(&[(WorkUnit::Claims, 1), (WorkUnit::Effects, 1)])?;
+        let (id, held) = prepare_hold(
+            actor,
+            &action.id,
+            ActionHoldKey::ManufactureTool(0),
+            (&tool.item_id, tool.quantity),
+            &tool.definition,
+            lot.revision,
+            physical.holds.coverage.next_ordinal,
+            &self.journal.physical.budget,
+        )?;
+        self.physical().install_item_hold(id, held)
     }
 }
 
 impl PhysicalMutation<'_> {
-    pub(crate) fn release_hearth_holds(
+    fn install_item_hold(&mut self, id: String, record: HeldRecord) -> Result<(), ExecutionError> {
+        let coverage = &self.state.holds.coverage;
+        if coverage.next_ordinal >= MAX_SAFE_INTEGER {
+            return Err(ExecutionError::Identity);
+        }
+        self.journal.reserve(id.len() + size_of::<Undo>())?;
+        let undo = Undo::ItemHoldAdded {
+            id: id.clone(),
+            ordinal: coverage.next_ordinal,
+            parent_present: coverage.parent_present,
+        };
+        self.hold_availability(record.item_id())?;
+        self.state.holds.put(id, record)?;
+        self.state.holds.coverage.next_ordinal += 1;
+        self.state.holds.coverage.parent_present = true;
+        self.journal.undo.push(undo);
+        Ok(())
+    }
+
+    pub(crate) fn release_action_holds(
         &mut self,
         actor: EntityHandle,
     ) -> Result<(), ExecutionError> {
-        let count = self
+        let action = self
             .state
             .entities
             .resolve(actor)
             .and_then(|entity| entity.actor.as_ref())
             .and_then(|actor| actor.action.as_ref())
-            .and_then(|action| action.hearth_work.as_ref())
-            .ok_or(ExecutionError::Invariant)?
-            .stones
-            .len();
+            .ok_or(ExecutionError::Invariant)?;
+        let (count, key): (usize, fn(usize) -> ActionHoldKey) =
+            if let Some(work) = action.hearth_work.as_ref() {
+                (work.stones.len(), ActionHoldKey::HearthInput)
+            } else if let Some(tools) = action.manufacture_tools.as_ref() {
+                (tools.len(), ActionHoldKey::ManufactureTool)
+            } else {
+                return Ok(());
+            };
         for index in 0..count {
             let action = self
                 .state
@@ -107,10 +165,8 @@ impl PhysicalMutation<'_> {
                 .and_then(|entity| entity.actor.as_ref())
                 .and_then(|actor| actor.action.as_ref())
                 .ok_or(ExecutionError::Invariant)?;
-            // This key is needed only when an action ends. Entries may already
-            // have been consumed at successful completion in this candidate.
             self.journal.reserve(action.id.len() + 32)?;
-            let id = hearth_hold_id(&action.id, index);
+            let id = key(index).id(&action.id);
             self.end_item_hold(&id, ClaimState::Released)?;
         }
         Ok(())

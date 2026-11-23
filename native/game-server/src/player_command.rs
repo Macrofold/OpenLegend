@@ -164,6 +164,12 @@ struct CommandInput {
     inputs: Option<indexmap::IndexMap<String, String>>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     recipe_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    tools: Option<indexmap::IndexMap<String, String>>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     text: Option<JsText>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
@@ -1064,7 +1070,11 @@ impl CommandRequest {
                 (!arrangement && !matches!(command.kind, CommandKind::Pickup | CommandKind::Drop))
                     || quantity == 0 || quantity > openlegend_simulation::identity::MAX_SAFE_INTEGER
             })
-            || (!matches!(command.kind, CommandKind::Craft) && command.recipe_id.is_some())
+            || (!matches!(command.kind, CommandKind::Craft)
+                && (command.recipe_id.is_some() || command.tools.is_some()))
+            || command.tools.as_ref().is_some_and(|tools| {
+                tools.len() != 1 || tools.iter().any(|(role, item)| !id(role) || !id(item))
+            })
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
             || (!matches!(command.kind, CommandKind::PlaceHearth) && command.hearth_plan.is_some())
             || (!matches!(command.kind, CommandKind::Follow)
@@ -1519,6 +1529,7 @@ impl PreparedRequest {
             }),
             CommandKind::Craft => Ok(RuntimePlayerCommand::Craft {
                 recipe: input.recipe_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                tools: input.tools.as_ref(),
             }),
             CommandKind::Say => Ok(RuntimePlayerCommand::Say {
                 text: input.text.as_ref().ok_or(StoreError::InvalidRecord)?,

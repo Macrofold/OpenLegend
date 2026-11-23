@@ -1,7 +1,7 @@
 //! Verify the checked family result against the same rules as its Source
 //! compiler. A generic recipe or item description grants no native effect.
 use crate::install::{InstallError, ItemDefinitionRead};
-use crate::manufacturing::{Candidate, Input};
+use crate::manufacturing::{Candidate, FixedTransform, Input};
 use serde::Deserialize;
 use std::sync::LazyLock;
 
@@ -167,4 +167,38 @@ impl LineRules {
             && output.properties.is_empty()
             && output.material.is_none()
     }
+}
+
+/// Only the checked Base cutting-stone transform is currently executable.
+pub(crate) fn supports_fixed(
+    profile: (&str, u64),
+    candidate: &FixedTransform,
+) -> Result<bool, InstallError> {
+    const KNAPPING: &str = "base:knap-cutting-stone";
+    if profile != ("grounded-wilderness", 1) || candidate.id != KNAPPING {
+        return Ok(false);
+    }
+    static RECIPE: LazyLock<FixedTransform> = LazyLock::new(|| {
+        #[derive(Deserialize)]
+        struct Catalogue {
+            methods: Vec<Method>,
+        }
+        #[derive(Deserialize)]
+        struct Method {
+            definition: Option<FixedTransform>,
+        }
+        let authored: Catalogue =
+            serde_json::from_str(include_str!("../config/first-playable.generated.json"))
+                .expect("Base manufacture catalogue is a build input");
+        authored
+            .methods
+            .into_iter()
+            .filter_map(|method| method.definition)
+            .find(|recipe| recipe.id == KNAPPING)
+            .expect("Base catalogue contains its cutting-stone recipe")
+    });
+    if &*RECIPE != candidate {
+        return Err(InstallError::DefinitionBody);
+    }
+    Ok(true)
 }

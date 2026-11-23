@@ -35,6 +35,54 @@ pub(crate) struct Output {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct RetainedRole {
+    role: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    quantity: u64,
+    allowed_definitions: Vec<DefinitionPin>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ToolBinding {
+    pub(crate) role: String,
+    pub(crate) item_id: String,
+    pub(crate) definition: DefinitionPin,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub(crate) quantity: u64,
+}
+
+#[derive(PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct FixedTransform {
+    pub(crate) id: String,
+    version: u64,
+    name: JsText,
+    description: JsText,
+    work_seconds: f64,
+    inputs: Vec<Input>,
+    retained_tools: Vec<FixedRole>,
+    outputs: Vec<FixedOutput>,
+}
+
+#[derive(PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct FixedRole {
+    role: String,
+    quantity: u64,
+    allowed_definition_ids: Vec<String>,
+}
+
+#[derive(PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct FixedOutput {
+    port: String,
+    definition_id: String,
+    quantity: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Definition<'a> {
     id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -44,12 +92,12 @@ pub(crate) struct Definition<'a> {
     work_seconds: f64,
     inputs: Vec<Input>,
     outputs: Vec<Output>,
-    retained_tools: Vec<serde::de::IgnoredAny>,
+    retained_tools: Vec<RetainedRole>,
     dependency_references: Vec<Dependency>,
     #[serde(borrow)]
     source: &'a RawValue,
     #[serde(rename = "facts")]
-    _facts: Vec<serde::de::IgnoredAny>,
+    facts: Vec<serde::de::IgnoredAny>,
     digest: String,
     admitted_at: f64,
     #[serde(borrow)]
@@ -110,6 +158,7 @@ pub(crate) struct InstalledMethod {
     pub inputs: Vec<Input>,
     pub totals: Vec<Yield>,
     pub outputs: Vec<Output>,
+    pub retained_tool: Option<RetainedRole>,
 }
 
 /// Source has already canonicalized every nested field. Keep that exact
@@ -120,21 +169,34 @@ fn mechanical_pin(
     canonical: &str,
     candidate: &str,
 ) -> Result<DefinitionPin, InstallError> {
-    #[derive(Deserialize)]
-    struct Source<'a> {
-        #[serde(borrow)]
-        candidate: &'a RawValue,
-    }
     let mut fields: IndexMap<&str, &RawValue> =
         serde_json::from_str(canonical).map_err(|_| InstallError::DefinitionBody)?;
-    let source: Source<'_> = serde_json::from_str(
+    let source: Origin<'_> = serde_json::from_str(
         fields
             .get("source")
             .ok_or(InstallError::DefinitionBody)?
             .get(),
     )
     .map_err(|_| InstallError::DefinitionBody)?;
-    if source.candidate.get() != candidate {
+    let exact = if source.kind == "fixed-transform" {
+        #[derive(Serialize)]
+        struct TransformDigest<'a> {
+            definition: &'a RawValue,
+            kind: &'static str,
+        }
+        let definition = source.definition.ok_or(InstallError::DefinitionBody)?;
+        crate::encoding::json_record(&TransformDigest {
+            definition,
+            kind: "fixed-transform",
+        })
+        .map_err(|_| InstallError::DefinitionBody)?
+            == candidate
+    } else {
+        source
+            .candidate
+            .is_some_and(|value| value.get() == candidate)
+    };
+    if !exact {
         return Err(InstallError::DefinitionBody);
     }
     fields.shift_remove("provenance");
@@ -177,10 +239,15 @@ pub(crate) fn item_handling_pin(canonical: &str) -> Result<DefinitionPin, Instal
 }
 
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Origin<'a> {
     kind: &'a str,
     family_pin: Option<DefinitionPin>,
+    #[serde(borrow)]
+    definition: Option<&'a RawValue>,
+    #[serde(borrow)]
+    candidate: Option<&'a RawValue>,
+    implementation_pin: Option<DefinitionPin>,
 }
 
 #[derive(Deserialize)]
@@ -249,6 +316,27 @@ impl Definition<'_> {
     ) -> Result<Option<InstalledMethod>, InstallError> {
         let origin: Origin<'_> =
             serde_json::from_str(self.source.get()).map_err(|_| InstallError::DefinitionBody)?;
+        if origin.kind == "fixed-transform" {
+            let definition: FixedTransform =
+                serde_json::from_str(origin.definition.ok_or(InstallError::DefinitionBody)?.get())
+                    .map_err(|_| InstallError::DefinitionBody)?;
+            if !crate::worlds::base_manufacture::supports_fixed(profile, &definition)? {
+                return Ok(None);
+            }
+            if origin.family_pin.is_some() || origin.candidate.is_some() {
+                return Err(InstallError::DefinitionBody);
+            }
+            return self
+                .install_fixed(
+                    key,
+                    canonical,
+                    definition,
+                    origin.implementation_pin,
+                    items,
+                    policy_pin,
+                )
+                .map(Some);
+        }
         let Some(family) = origin.family_pin.filter(|_| origin.kind == "family") else {
             return Ok(None);
         };
@@ -318,6 +406,77 @@ impl Definition<'_> {
         if !self.dependencies_match(items, policy_pin) {
             return Err(InstallError::DefinitionPin);
         }
+        self.into_method(canonical).map(Some)
+    }
+
+    fn install_fixed(
+        self,
+        key: &str,
+        canonical: &str,
+        exact: FixedTransform,
+        implementation: Option<DefinitionPin>,
+        items: &IndexMap<String, ItemDefinitionRead>,
+        handling: &DefinitionPin,
+    ) -> Result<InstalledMethod, InstallError> {
+        let provenance: Provenance<'_> = serde_json::from_str(self.provenance.get())
+            .map_err(|_| InstallError::DefinitionBody)?;
+        let expected = fixed_implementation_pin()?;
+        let [out] = self.outputs.as_slice() else {
+            return Err(InstallError::DefinitionBody);
+        };
+        let [authored_out] = exact.outputs.as_slice() else {
+            return Err(InstallError::DefinitionBody);
+        };
+        let [tool] = self.retained_tools.as_slice() else {
+            return Err(InstallError::DefinitionBody);
+        };
+        let [authored_tool] = exact.retained_tools.as_slice() else {
+            return Err(InstallError::DefinitionBody);
+        };
+        let item_pin = |pin: &DefinitionPin| {
+            items.get(&pin.id).is_some_and(|item| &item.pin == pin)
+                && self
+                    .dependency_references
+                    .iter()
+                    .any(|dep| dep.kind == "item-definition" && &dep.pin == pin)
+        };
+        if self.id != key
+            || !is_safe_record_id(key)
+            || self.version != 1
+            || self.admitted_at < 0.0
+            || !self.admitted_at.is_finite()
+            || provenance.source != "authored-world"
+            || implementation.as_ref() != Some(&expected)
+            || self.name != exact.name
+            || self.description != exact.description
+            || self.inputs != exact.inputs
+            || self.work_seconds != exact.work_seconds
+            || !self.facts.is_empty()
+            || out.port != authored_out.port
+            || out.quantity != authored_out.quantity
+            || out.definition.id != authored_out.definition_id
+            || !item_pin(&out.definition)
+            || tool.role != authored_tool.role
+            || tool.quantity != authored_tool.quantity
+            || !tool
+                .allowed_definitions
+                .iter()
+                .map(|pin| pin.id.as_str())
+                .eq(authored_tool
+                    .allowed_definition_ids
+                    .iter()
+                    .map(String::as_str))
+            || !tool.allowed_definitions.iter().all(item_pin)
+            || !self.dependencies_match(items, handling)
+            || self.dependency_references.len()
+                != self.inputs.len() + tool.allowed_definitions.len() + self.outputs.len() + 1
+        {
+            return Err(InstallError::DefinitionBody);
+        }
+        self.into_method(canonical)
+    }
+
+    fn into_method(self, canonical: &str) -> Result<InstalledMethod, InstallError> {
         let mut counts = IndexMap::<&str, u64>::new();
         for input in &self.inputs {
             let count = counts.entry(input.definition_id.as_str()).or_default();
@@ -332,7 +491,7 @@ impl Definition<'_> {
                 quantity,
             })
             .collect();
-        Ok(Some(InstalledMethod {
+        Ok(InstalledMethod {
             pin: mechanical_pin(self.id, self.version, canonical, &self.digest)?,
             name: self.name,
             description: self.description,
@@ -340,8 +499,26 @@ impl Definition<'_> {
             inputs: self.inputs,
             totals,
             outputs: self.outputs,
-        }))
+            retained_tool: self.retained_tools.into_iter().next(),
+        })
     }
+}
+
+fn fixed_implementation_pin() -> Result<DefinitionPin, InstallError> {
+    let definition = include_str!("../../../packages/domain/src/manufacture-implementation.json");
+    let fields: IndexMap<&str, &RawValue> =
+        serde_json::from_str(definition).map_err(|_| InstallError::DefinitionBody)?;
+    let id: String =
+        serde_json::from_str(fields["id"].get()).map_err(|_| InstallError::DefinitionBody)?;
+    let version: u64 =
+        serde_json::from_str(fields["version"].get()).map_err(|_| InstallError::DefinitionBody)?;
+    let canonical =
+        crate::encoding::json_record(&fields).map_err(|_| InstallError::DefinitionBody)?;
+    Ok(DefinitionPin {
+        id,
+        version,
+        digest: crate::encoding::content_label(&canonical),
+    })
 }
 
 pub(crate) fn completion(
@@ -429,14 +606,30 @@ pub(crate) fn finish_fits(
         .map_err(ExecutionError::Activity)
 }
 
+pub(crate) type ToolSelection = IndexMap<String, String>;
+
+pub(crate) fn valid_tool_selection(tools: &ToolSelection) -> bool {
+    tools.len() == 1
+        && tools
+            .iter()
+            .all(|(role, item)| is_safe_record_id(role) && is_safe_record_id(item))
+}
+
+pub(crate) enum ToolRequest<'a> {
+    Offer,
+    Exact(Option<&'a ToolSelection>),
+}
+
 pub(crate) struct Stock {
     _storage: ByteReservation,
     pub amounts: IndexMap<String, u64>,
+    pub tool: Option<ToolBinding>,
 }
 
 pub(crate) enum MaterialChoice<'a> {
     Available(Stock),
     Missing(&'a Yield),
+    MissingTool,
 }
 
 /// Prepare only this method's materials from actual accessible inventory.
@@ -445,10 +638,23 @@ pub(crate) fn materials<'a>(
     state: &SimulationState,
     actor: &str,
     method: &'a InstalledMethod,
+    request: ToolRequest<'_>,
     budget: &ByteBudget,
 ) -> Result<MaterialChoice<'a>, ExecutionError> {
     let installed = &state.installed;
     let retained = &installed.retained;
+    let role = method.retained_tool.as_ref();
+    let exact = match (role, request) {
+        (_, ToolRequest::Offer) | (None, ToolRequest::Exact(None)) => None,
+        (Some(role), ToolRequest::Exact(Some(items))) if items.len() == 1 => {
+            let Some(item) = items.get(&role.role) else {
+                return Ok(MaterialChoice::MissingTool);
+            };
+            Some(item.as_str())
+        }
+        _ => return Ok(MaterialChoice::MissingTool),
+    };
+    let mut chosen: Option<(&str, &DefinitionPin)> = None;
     let mut storage =
         budget.reserve(size_of::<Vec<(&str, u64)>>() * method.totals.len() + size_of::<Stock>())?;
     let mut lots = vec![Vec::<(&str, u64)>::new(); method.totals.len()];
@@ -458,6 +664,18 @@ pub(crate) fn materials<'a>(
         actor,
         actor,
         &mut |item| {
+            if let Some(role) = role
+                && item.available_quantity >= role.quantity
+                && exact.is_none_or(|id| id == item.id)
+                && let Some(pin) = role
+                    .allowed_definitions
+                    .iter()
+                    .find(|pin| pin.id == item.definition_id)
+                && chosen
+                    .is_none_or(|(prior, _)| crate::encoding::js_string_cmp(item.id, prior).is_lt())
+            {
+                chosen = Some((item.id, pin));
+            }
             if let Some(index) = method
                 .totals
                 .iter()
@@ -474,12 +692,37 @@ pub(crate) fn materials<'a>(
             Ok(())
         },
     )?;
+    let tool = match (role, chosen) {
+        (Some(role), Some((item_id, pin))) => {
+            let bytes = role.role.len()
+                + item_id.len()
+                + pin.heap_bytes().ok_or(ExecutionError::Capacity)?;
+            storage.resize(
+                storage
+                    .bytes()
+                    .checked_add(bytes)
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            Some(ToolBinding {
+                role: role.role.clone(),
+                item_id: item_id.to_owned(),
+                definition: pin.clone(),
+                quantity: role.quantity,
+            })
+        }
+        (None, None) => None,
+        _ => return Ok(MaterialChoice::MissingTool),
+    };
     let mut amounts = IndexMap::new();
     for (need, lots) in method.totals.iter().zip(&mut lots) {
         lots.sort_by(|left, right| crate::encoding::js_string_cmp(left.0, right.0));
         let mut remaining = need.quantity;
         for (id, free) in lots.iter() {
-            let amount = remaining.min(*free);
+            let keep = tool
+                .as_ref()
+                .filter(|tool| tool.item_id == *id)
+                .map_or(0, |tool| tool.quantity);
+            let amount = remaining.min(free.saturating_sub(keep));
             if amount > 0 {
                 storage.resize(
                     storage
@@ -504,6 +747,7 @@ pub(crate) fn materials<'a>(
     Ok(MaterialChoice::Available(Stock {
         _storage: storage,
         amounts,
+        tool,
     }))
 }
 
@@ -517,6 +761,42 @@ pub(crate) fn current<'a>(
         .filter(|method| action.recipe_pin.as_ref() == Some(&method.pin))
 }
 
+/// A kept tool's exact custody and claim must still support the current action.
+pub(crate) fn tools_current(
+    physical: &PhysicalState,
+    actor: &str,
+    action: &Action,
+    method: &InstalledMethod,
+) -> bool {
+    match (
+        method.retained_tool.as_ref(),
+        action.manufacture_tools.as_deref(),
+    ) {
+        (None, Some([])) => true,
+        (Some(role), Some([tool])) => {
+            tool.role == role.role
+                && tool.quantity == role.quantity
+                && role.allowed_definitions.contains(&tool.definition)
+                && crate::install::owned_item_ancestry(physical, actor, &tool.item_id, |_| {})
+                    .ok()
+                    .flatten()
+                    .and_then(|entity| entity.item.as_ref())
+                    .is_some_and(|lot| {
+                        lot.definition_pin == tool.definition && lot.quantity >= tool.quantity
+                    })
+                && physical.holds.matches_item(
+                    actor,
+                    &action.id,
+                    &crate::item_holds::manufacture_hold_id(&action.id, 0),
+                    &tool.item_id,
+                    tool.quantity,
+                    &tool.definition,
+                )
+        }
+        _ => false,
+    }
+}
+
 pub(crate) fn valid_saved(
     physical: &PhysicalState,
     definitions: &crate::install::RetainedDefinitions,
@@ -526,7 +806,7 @@ pub(crate) fn valid_saved(
     current(definitions, action).is_some_and(|method| {
         physical.entities.get(actor).is_some()
             && action.stage == "working"
-            && action.manufacture_tools == Some([])
+            && tools_current(physical, actor, action, method)
             && action.target_id.is_none()
             && action.destination.is_none()
             && action.navigation.is_none()
@@ -549,5 +829,15 @@ heap_record!(InstalledMethod {
     description,
     inputs,
     totals,
-    outputs
+    outputs,
+    retained_tool
+});
+heap_record!(RetainedRole {
+    role,
+    allowed_definitions
+});
+heap_record!(ToolBinding {
+    role,
+    item_id,
+    definition
 });

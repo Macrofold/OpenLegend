@@ -2,7 +2,7 @@
 //! boundary as ordinary work. The read-only stock plan spends nothing.
 use super::*;
 use crate::activity::{ActivityDetail, ActivityFact, ActivityScalar};
-use crate::manufacturing::{self, MaterialChoice};
+use crate::manufacturing::{self, MaterialChoice, ToolRequest};
 use crate::text::JsText;
 
 impl CommandCursor {
@@ -13,6 +13,7 @@ impl CommandCursor {
         let NativeCommand::Craft {
             envelope,
             recipe_id,
+            tools,
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);
@@ -41,9 +42,21 @@ impl CommandCursor {
                 "This method cannot be used here yet.".into(),
             );
         };
-        let stock = manufacturing::materials(core.state, &envelope.actor_id, method, &self.budget)?;
+        let stock = manufacturing::materials(
+            core.state,
+            &envelope.actor_id,
+            method,
+            ToolRequest::Exact(tools.as_ref()),
+            &self.budget,
+        )?;
         let claims = match stock {
             MaterialChoice::Available(stock) => stock,
+            MaterialChoice::MissingTool => {
+                return self.refuse_craft(
+                    "missing-material",
+                    "Choose an available tool for this recipe.".into(),
+                );
+            }
             MaterialChoice::Missing(need) => {
                 let name = &installed.retained.items[&need.definition_id].named.name;
                 let _workspace = self.budget.reserve(64 + 2 * name.storage_bytes())?;
@@ -63,13 +76,15 @@ impl CommandCursor {
             512 + envelope.id.len()
                 + recipe_id.len()
                 + method.pin.heap_bytes().ok_or(ExecutionError::Capacity)?
-                + method.totals.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                + method.totals.heap_bytes().ok_or(ExecutionError::Capacity)?
+                + claims.tool.heap_bytes().ok_or(ExecutionError::Capacity)?,
         )?);
         self.action = Some(Action::craft(
             envelope.id.clone(),
             method.pin.clone(),
             method.work_seconds,
             method.totals.clone(),
+            claims.tool,
         ));
         self.production_debits = Some(debits);
         self.phase = Phase::Prepared;
@@ -84,6 +99,7 @@ impl CommandCursor {
         let NativeCommand::Craft {
             envelope,
             recipe_id,
+            ..
         } = &self.command
         else {
             return Err(ExecutionError::Invariant);
@@ -170,6 +186,7 @@ impl CommandCursor {
             )?;
             return Ok(false);
         }
+        core.reserve_craft_tool(actor, action)?;
         core.use_owned_lots(actor, &action.id, debits)?;
         Ok(true)
     }

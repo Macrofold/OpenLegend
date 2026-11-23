@@ -241,3 +241,11 @@ is correctness evidence, not native speed. TypeScript and production build pass,
 with the existing client bundle warning. Final lifecycle/custody/combined world
 and performance obligations remain open. No provider calls were made, and no
 participant or final-Main acceptance is claimed.
+
+## Cutting stone with a kept hammer on the stand-alone Rust server
+
+November 22, 2026. The authored Main opening's Crafting panel used one flint and held the exact Small stone as a hammer. The Rust menu submitted the ordinary Craft command. Source's existing one-batch Craft route used the same exact recipe and hammer. The Rust action and its hold survived an ordinary save and reopening. Dropping the hammer while the work was active was refused. Completed work produced one cutting stone, left the original hammer in Inventory and released its hold. An exact retry and cold receipt lookup returned the original result. Stopping a separate action released the hammer, kept the flint debit and produced no cutter.
+
+The installed Base recipe and the shared fixed-transform definition validate the exact recipe. The existing item-hold owner protects the hammer and releases it when the action ends. The prior River line and hearth callers also passed on this executable, including the hearth's active save/reopen.
+
+The correctness tree was `6c86cb3f3432abbbebed37601d92f0110f5238e7` over `4adb0598d` and executable SHA-256 was `ca125d035bdff5037d3261db427b0be5097bb3f4862ac7600d0a8a887f0ed154`. The Rust process ran without Node. Locked build, addon type check, TypeScript, affected formatting and network boundaries passed. Closing the tab before shutdown exercised the authored departure rule and saved a cancellation. The passing browser restart stopped the listener while the controlling tab was still connected. All ten identified disposable databases were verified absent. The caller records are retained in `nsc04-retained-hammer-20261122`. No paid provider work or timing comparison ran.
