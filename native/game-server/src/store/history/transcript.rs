@@ -328,16 +328,21 @@ pub(super) enum VerifiedEventBody<'a> {
 pub(super) fn retained_event<'a>(
     id: &str,
     position: i64,
-    pointer: &str,
+    pointer: &'a str,
     acquired: &'a str,
     actor: &str,
     language: &LanguageProvider,
     budget: &ByteBudget,
-) -> StoreResult<(f64, VerifiedEventBody<'a>)> {
+) -> StoreResult<(f64, &'a str, VerifiedEventBody<'a>)> {
     let source: Source<'_> = decode(pointer)?;
     if source.id != id || source.order != position || !source.time.is_finite() {
         return Err(StoreError::InvalidRecord);
     }
+    let revision = match &source.account {
+        Account::Awareness { revision }
+        | Account::Perspective { revision }
+        | Account::Temporal { revision, .. } => *revision,
+    };
     let body = match source.account {
         Account::Awareness { revision } | Account::Perspective { revision } => {
             if sha256_hex(acquired.as_bytes()) != revision {
@@ -401,7 +406,7 @@ pub(super) fn retained_event<'a>(
             }
         }
     };
-    Ok((source.time, body))
+    Ok((source.time, revision, body))
 }
 
 fn event(
@@ -413,7 +418,8 @@ fn event(
     language: &LanguageProvider,
     budget: &ByteBudget,
 ) -> StoreResult<TranscriptItem> {
-    let (at, verified) = retained_event(id, position, pointer, acquired, actor, language, budget)?;
+    let (at, _, verified) =
+        retained_event(id, position, pointer, acquired, actor, language, budget)?;
     let (kind, text, speaker_id, speaker, speech, temporal, expires_at) = match verified {
         VerifiedEventBody::Awareness(acquired) => {
             let evidence: Awareness = decode(acquired)?;

@@ -85,7 +85,7 @@ export const WorldEvents = memo(function WorldEvents({
     <ScopedComparisonOwner
       key={ownerScope}
       {...props}
-      canShowAll={!!view.godMode}
+      canShowAll={view.access?.canShowAllEvents ?? !!view.godMode}
       controlScope={view.access?.scope ?? ''}
       historyEpoch={view.historyEpoch ?? ''}
       day={view.clock.day}

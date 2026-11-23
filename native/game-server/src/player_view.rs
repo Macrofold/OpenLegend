@@ -99,6 +99,8 @@ pub struct PlayerAccess {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub can_inspect_mind: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub can_show_all_events: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub can_edit_person_memory: Option<bool>,
     pub mode: AuthenticationMode,
 }

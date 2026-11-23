@@ -10,8 +10,8 @@ use openlegend_simulation::{
     host::{ByteBudget, ByteReservation, CapacityError},
     narration::{NativeText, native_text},
     reception::{
-        EventScalar, ExperienceModality, ObserverSubject, PerceivedSound, PerceivedSpeech,
-        ReceivedReference, ReferenceRole, SensoryFacet,
+        EncounterExposure, EventScalar, ExperienceModality, ObserverSubject, PerceivedSound,
+        PerceivedSpeech, ReceivedReference, ReferenceRole, SensoryFacet,
     },
     runtime::RuntimePlayerRead,
     text::JsText,
@@ -19,7 +19,10 @@ use openlegend_simulation::{
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt};
 
+mod source;
 mod speech;
+
+pub(crate) use source::{EventSourceDetail, EventSourceReference};
 
 const JOURNAL_ROWS: usize = 60;
 const CONVERSATION_ROWS: usize = 30;
@@ -164,15 +167,26 @@ impl Evidence {
         Ok(evidence)
     }
 
-    fn facets(values: Vec<SensoryFacet>, observer: &str) -> Result<Option<Self>, PlayerEventError> {
+    fn facets(
+        values: Vec<SensoryFacet>,
+        observer: &str,
+    ) -> Result<Option<(Self, Option<EncounterExposure>)>, PlayerEventError> {
         // A selected temporal/current value is the account. It is
         // never reconstructed from the objective occurrence.
         let mut event = None;
         let mut heard = None;
+        let mut exposure = None;
+        let mut speech = None;
         for value in values {
             match value {
                 value @ SensoryFacet::Event { .. } if event.is_none() => event = Some(value),
                 SensoryFacet::Sound { sound, .. } if heard.is_none() => heard = Some(sound),
+                SensoryFacet::Speech { speech: value, .. } if speech.is_none() => {
+                    speech = Some(value)
+                }
+                SensoryFacet::EncounterExposure { exposure: value } if exposure.is_none() => {
+                    exposure = Some(value);
+                }
                 _ => {}
             }
         }
@@ -188,7 +202,7 @@ impl Evidence {
         else {
             return Ok(None);
         };
-        Ok(Some(Self::received(
+        let mut evidence = Self::received(
             observer,
             ObservedEvent {
                 event_type,
@@ -199,7 +213,9 @@ impl Evidence {
                 source_subject,
                 heard,
             },
-        )))
+        );
+        evidence.speech = speech;
+        Ok(Some((evidence, exposure)))
     }
 
     fn received(observer: &str, event: ObservedEvent) -> Self {
@@ -286,6 +302,7 @@ pub(crate) struct RetainedPlayerEvent {
     evidence: Evidence,
     rendered: JsText,
     source_body: Option<openlegend_simulation::experience::AwarenessSourceBody>,
+    exposure: Option<EncounterExposure>,
     pub expires_at: Option<f64>,
 }
 
@@ -301,6 +318,7 @@ impl RetainedPlayerEvent {
         struct ArchivedScope {
             event_id: Option<String>,
             source_body: Option<openlegend_simulation::experience::AwarenessSourceBody>,
+            exposure: Option<EncounterExposure>,
             expires_at: Option<f64>,
         }
         let archived: ArchivedScope = serde_json::from_str(payload)?;
@@ -319,6 +337,7 @@ impl RetainedPlayerEvent {
             evidence,
             rendered,
             source_body: archived.source_body,
+            exposure: archived.exposure,
             expires_at: archived.expires_at,
         })
     }
@@ -329,7 +348,8 @@ impl RetainedPlayerEvent {
         values: Vec<SensoryFacet>,
         actor: &str,
     ) -> Result<Self, PlayerEventError> {
-        let evidence = Evidence::facets(values, actor)?.ok_or(PlayerEventError::InvalidCapture)?;
+        let (evidence, exposure) =
+            Evidence::facets(values, actor)?.ok_or(PlayerEventError::InvalidCapture)?;
         let rendered = native_text(&evidence.text);
         Ok(Self {
             id,
@@ -337,6 +357,7 @@ impl RetainedPlayerEvent {
             evidence,
             rendered,
             source_body: None,
+            exposure,
             expires_at: None,
         })
     }

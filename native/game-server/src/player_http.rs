@@ -70,6 +70,7 @@ struct PlayerRoutes {
     decisions: Arc<Director>,
     references: Arc<ReferenceIssuer>,
     expected_world: String,
+    god_mode: bool,
     capacity: Arc<Semaphore>,
     grace: Duration,
     checkpoints: Arc<CheckpointSchedule>,
@@ -119,6 +120,7 @@ pub(crate) fn router(
         decisions,
         references,
         expected_world,
+        god_mode,
         capacity: Arc::new(Semaphore::new(capacity)),
         grace,
         checkpoints,
@@ -209,6 +211,7 @@ pub(crate) fn router(
             "/api/world-events",
             axum::routing::get(event_history::events),
         )
+        .route("/api/world-events/sources", post(event_history::sources))
         .route("/api/actions", post(actions::menu))
         .route("/api/chat", post(dialogue::chat))
         .route("/api/chat/retry", post(dialogue::chat))

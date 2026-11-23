@@ -530,6 +530,29 @@ impl PlayerReferences<'_> {
         )
     }
 
+    /// A selected event can be reread for the same observer and timeline.
+    /// The token identifies its original revision, never authorizes disclosure.
+    pub(crate) fn event_source(
+        &self,
+        generation: &str,
+        family: &str,
+        event: &str,
+        revision: &str,
+    ) -> Result<String, serde_json::Error> {
+        sign(
+            &self.issuer.historical,
+            "",
+            &(
+                &self.history,
+                "event-source",
+                generation,
+                family,
+                event,
+                revision,
+            ),
+        )
+    }
+
     /// The selected input is the literal self role, a captured source subject
     /// or the event identity when no subject was learned.
     pub fn speech_participant(

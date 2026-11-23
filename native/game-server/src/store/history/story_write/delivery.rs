@@ -612,7 +612,7 @@ impl StoryOptionalRows {
                 }
                 let Revision { revision } =
                     serde_json::from_str(pointer).map_err(|_| StoreError::InvalidRecord)?;
-                let (time, account) =
+                let (time, _, account) =
                     retained_event(id, order, pointer, acquired, actor, language, budget)?;
                 use openlegend_simulation::narration::NativeText;
                 let (text, event_type, evidence, content) = match account {

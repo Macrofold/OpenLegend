@@ -3,11 +3,12 @@
 
 use super::*;
 use crate::{
-    player_events::PublicEvent,
+    player_events::{EventSourceDetail, EventSourceReference, PublicEvent},
     store::{DurableHead, EventBoundary, EventFeed, EventSourceQuery},
     world::PlayerDisclosure,
 };
 use openlegend_simulation::encoding::{hex_bytes, json_record, sha256_hex};
+use tokio::time::Instant;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -32,11 +33,19 @@ struct Cursor {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct PublicFeed {
-    events: Vec<PublicEvent>,
+    events: Vec<PublicFeedEvent>,
     #[serde(skip_serializing_if = "Option::is_none")]
     next_cursor: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     newer_cursor: Option<String>,
+}
+
+#[derive(Serialize)]
+struct PublicFeedEvent {
+    #[serde(flatten)]
+    event: PublicEvent,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    source: Option<EventSourceReference>,
 }
 
 pub(super) async fn events(
@@ -52,7 +61,15 @@ pub(super) async fn events(
         Err(error) => return access_failure(error),
     };
     if options.show_all {
-        return access_failure(AccessError::Forbidden);
+        if !state.god_mode {
+            return access_failure(AccessError::Forbidden);
+        }
+        if let Err(error) = state
+            .authority
+            .current_private_view(&scope, true, |_, _| ())
+        {
+            return access_failure(error);
+        }
     }
     let category = options.category.as_deref().unwrap_or("all");
     if ![
@@ -79,8 +96,9 @@ pub(super) async fn events(
             "Check the event filters and try again.",
         );
     }
+    let until = Instant::now() + REQUEST_TIMEOUT;
     for _ in 0..2 {
-        match read(&state, &scope, &options, category).await {
+        match read(&state, &scope, &options, category, until).await {
             Ok(PlayerDisclosure::Published(bytes)) => return json_response(StatusCode::OK, bytes),
             Ok(PlayerDisclosure::Changed | PlayerDisclosure::Busy)
             | Err(WorldError::Storage(StoreError::StaleCut)) => continue,
@@ -96,6 +114,7 @@ async fn read(
     scope: &Arc<AuthorizedScope>,
     options: &RequestOptions,
     category: &str,
+    until: Instant,
 ) -> Result<PlayerDisclosure, WorldError> {
     let game = &state.game;
     let budget = game.host.budget();
@@ -151,11 +170,14 @@ async fn read(
         )
         .await?;
     let language = game.language().cloned().ok_or(WorldError::ProviderKind)?;
-    let work = budget.clone();
-    let feed: EventFeed = game
-        .host
-        .compute(move || rows.prepare(&language, &work))
-        .await??;
+    let feed: EventFeed = if rows.is_empty() {
+        rows.prepare(&language, budget)?
+    } else {
+        let work = budget.clone();
+        game.host
+            .compute_before(until, move || rows.prepare(&language, &work))
+            .await??
+    };
     let references = state
         .references
         .scoped(&scope.scope)
@@ -163,12 +185,12 @@ async fn read(
     let temporal = feed
         .events
         .iter()
-        .filter_map(|(_, _, source)| source.as_ref().map(|(id, at)| (id, *at)))
+        .filter_map(|row| row.temporal.as_ref().map(|(id, at)| (id, *at)))
         .collect::<Vec<_>>();
     let expiry = feed
         .events
         .iter()
-        .filter_map(|(_, event, _)| event.expires_at)
+        .filter_map(|row| row.event.expires_at)
         .reduce(f64::min);
     let next_cursor = feed
         .older
@@ -195,17 +217,178 @@ async fn read(
                 let events = feed
                     .events
                     .iter()
-                    .map(|(_, event, _)| {
-                        event
-                            .project(policy, &references, &roles)
-                            .map_err(|_| StoreError::InvalidRecord)
+                    .map(|row| {
+                        Ok::<_, crate::player_events::PlayerEventError>(PublicFeedEvent {
+                            event: row.event.project(policy, &references, &roles)?,
+                            source: row.event.source_reference(
+                                &references,
+                                generation,
+                                &row.revision,
+                            )?,
+                        })
                     })
-                    .collect::<Result<Vec<_>, _>>()?;
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|_| StoreError::InvalidRecord)?;
                 wire::encode(
                     &PublicFeed {
                         events,
                         next_cursor,
                         newer_cursor,
+                    },
+                    b"",
+                    b"",
+                    budget,
+                )
+                .map_err(WorldError::Wire)
+            },
+        )
+        .await
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SourceRequest {
+    references: Vec<EventSourceReference>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PublicSources<'a> {
+    ok: bool,
+    world_id: &'a str,
+    generation: &'a str,
+    sources: Vec<EventSourceDetail<'a>>,
+}
+
+pub(super) async fn sources(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    let Ok(_slot) = state.capacity.try_acquire() else {
+        return busy();
+    };
+    let (parts, body) = request.into_parts();
+    let scope = match scope(&state.authority, &parts.headers, None).await {
+        Ok(scope) => Arc::new(scope),
+        Err(error) => return access_failure(error),
+    };
+    let (selected, _input): (SourceRequest, _) =
+        match json(&parts.headers, body, state.game.host.budget()).await {
+            Ok(input) => input,
+            Err(error) => return error,
+        };
+    if !(1..=2).contains(&selected.references.len()) {
+        return refusal(
+            StatusCode::BAD_REQUEST,
+            "event-history",
+            "Select one or two event sources.",
+        );
+    }
+    let until = Instant::now() + REQUEST_TIMEOUT;
+    for _ in 0..2 {
+        match read_sources(&state, &scope, &selected.references, until).await {
+            Ok(PlayerDisclosure::Published(bytes)) => return json_response(StatusCode::OK, bytes),
+            Ok(PlayerDisclosure::Changed | PlayerDisclosure::Busy)
+            | Err(WorldError::Storage(StoreError::StaleCut)) => continue,
+            Ok(PlayerDisclosure::Unchanged) => break,
+            Err(error) => return failed(error),
+        }
+    }
+    access_failure(AccessError::Changed)
+}
+
+async fn read_sources(
+    state: &PlayerRoutes,
+    scope: &Arc<AuthorizedScope>,
+    requested: &[EventSourceReference],
+    until: Instant,
+) -> Result<PlayerDisclosure, WorldError> {
+    let game = &state.game;
+    let budget = game.host.budget();
+    let _request = budget.reserve(4096).map_err(|_| StoreError::Capacity)?;
+    let selected = game
+        .world
+        .capture_transcript(state.authority.clone(), scope.clone())
+        .await?;
+    let (world, generation, revision) = selected.durable_head();
+    let references = state
+        .references
+        .scoped(&scope.scope)
+        .map_err(|_| StoreError::InvalidRecord)?;
+    for reference in requested {
+        if !reference
+            .valid(&references, generation)
+            .map_err(|_| StoreError::InvalidRecord)?
+        {
+            return Err(AccessError::Changed.into());
+        }
+    }
+    let rows = game
+        .store
+        .event_sources(
+            DurableHead {
+                world_id: world.to_owned(),
+                generation: generation.to_owned(),
+                revision,
+            },
+            scope.scope.actor_id.clone(),
+            requested
+                .iter()
+                .map(|reference| reference.source_id.clone())
+                .collect(),
+        )
+        .await?;
+    let language = game.language().cloned().ok_or(WorldError::ProviderKind)?;
+    let bodies = if rows.is_empty() {
+        rows.prepare(&language, budget)?
+    } else {
+        let work = budget.clone();
+        game.host
+            .compute_before(until, move || rows.prepare(&language, &work))
+            .await??
+    };
+    let temporal = bodies
+        .rows()
+        .filter_map(|row| row.temporal.as_ref().map(|(id, at)| (id, *at)))
+        .collect::<Vec<_>>();
+    let expiry = bodies
+        .rows()
+        .filter_map(|row| row.event.expires_at)
+        .reduce(f64::min);
+    let _projection = budget
+        .reserve(bodies.projection_bytes().ok_or(StoreError::Capacity)?)
+        .map_err(|_| StoreError::Capacity)?;
+    game.world
+        .disclose_transcript(
+            &state.authority,
+            scope,
+            &selected,
+            &temporal,
+            expiry,
+            |_, _, budget| {
+                let sources = requested
+                    .iter()
+                    .map(|reference| {
+                        let Some((row, qualification)) = bodies.source(&reference.source_id) else {
+                            return Ok(EventSourceDetail::unavailable(&reference.source_id));
+                        };
+                        let qualification = qualification
+                            .map(|(id, detail)| (id, detail.map(|detail| detail.event.text())));
+                        row.event
+                            .source_detail(
+                                &references,
+                                generation,
+                                reference,
+                                row.edge.order,
+                                &row.revision,
+                                qualification,
+                            )
+                            .map_err(|_| StoreError::InvalidRecord)
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                wire::encode(
+                    &PublicSources {
+                        ok: true,
+                        world_id: world,
+                        generation,
+                        sources,
                     },
                     b"",
                     b"",
