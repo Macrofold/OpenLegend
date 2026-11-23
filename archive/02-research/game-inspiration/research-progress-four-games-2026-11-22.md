@@ -10,14 +10,14 @@ Repository: `Macrofold/OpenLegend`. Research branch: `research/resonance-dawnwal
 
 | ID | Subject | State | Output / remaining scope |
 | --- | --- | --- | --- |
-| G193 | Final Fantasy Resonance | In progress | `dossiers/final-fantasy-resonance.md`; identity verified. Mechanics, lore, presentation, production, economics, five reviews, Steam testimony, creation, applications and final review are being researched. |
-| G194 | The Blood of Dawnwalker | Queued, authorized | `dossiers/the-blood-of-dawnwalker.md`; begin after G193 is reviewed and committed. |
+| G193 | Final Fantasy Resonance | Complete | [Full dossier](dossiers/final-fantasy-resonance.md), reviewed and committed as `feb561affd05f181c7ec2854f76856f9f6f0315d`. R01–R14 and affirmative R15; five critic bodies, twenty Steam accounts, 63 distinct source URLs. |
+| G194 | The Blood of Dawnwalker | In progress | `dossiers/the-blood-of-dawnwalker.md`; full mechanics, lore, presentation, production, commercial, reception and conditional creation pass. |
 | G195 | Resident Evil Requiem / Resident Evil 9 | Queued, authorized | `dossiers/resident-evil-requiem.md`; verify exact product and edition scope before the full pass. |
 | G196 | Mewgenics | Queued, authorized | `dossiers/mewgenics.md`; begin after G195. |
 
-Active subject: G193. Independent research lanes cover mechanics; lore/presentation; reception; and production/business/creation. Shared index and roster changes have one writer. No later subject is counted complete from preliminary identity checks.
+Active subject: G194. Independent research lanes cover mechanics; lore/presentation; reception; and production/business/creation. Shared index and roster changes have one writer. No later subject is counted complete from preliminary identity checks.
 
-Next boundary: finish G193's substantive coverage, examine its actual diff, verify evidence and internal navigation, commit it, and record that commit before proceeding to G194.
+Next boundary: finish G194's substantive coverage, examine its actual diff, verify evidence and internal navigation, commit it, and record that commit before proceeding to G195. G193's relative links resolve against the base tree plus this scoped addition; unavailable private commercial data and blocked direct mod pages remain explicitly qualified.
 
 ## Initial evidence and preservation boundary
 
