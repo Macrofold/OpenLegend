@@ -4,7 +4,8 @@
 use openlegend_simulation::{
     geometry::{
         BodySweepAnswer, BodySweepMode, GeometryAnswers, GeometryMap, GeometryQueries,
-        HorizontalDirection, RoutePlan, RouteQuery, StandingSelection, SurfaceLineAnswer,
+        HorizontalDirection, MovementRayHit, RoutePlan, RouteQuery, SightRay, StandingSelection,
+        SurfaceLineAnswer,
     },
     host::{ByteBudget, ByteReservation, CapacityError, ResidentReservation},
     state::{Bounds, Point, SurfacePoint},
@@ -207,6 +208,7 @@ impl SpatialProvider {
         if q.sight
             .iter()
             .chain(&q.sound)
+            .chain(&q.movement_rays)
             .any(|r| !finite(r.from) || !finite(r.to))
         {
             return Err(SpatialError::InvalidQuery);
@@ -222,7 +224,7 @@ impl SpatialProvider {
         }) {
             return Err(SpatialError::InvalidQuery);
         }
-        let (allocation, _scratch) = self.reserve_answers(q, budget)?;
+        let (mut allocation, _scratch) = self.reserve_answers(q, budget)?;
         let sight = {
             // Support, movement and routes can arrive without any sight rays.
             #[cfg(feature = "profile-campaign")]
@@ -242,6 +244,9 @@ impl SpatialProvider {
             .map(|r| self.can_walk(&r.from, &r.to, &r.body))
             .collect();
         let flight = q.flight.iter().map(|leg| self.can_fly(leg)).collect();
+        let movement_rays = collect_funded_answers(&q.movement_rays, |ray| {
+            self.movement_ray(ray, &mut allocation)
+        })?;
         let support = q
             .support
             .iter()
@@ -333,6 +338,7 @@ impl SpatialProvider {
             sight,
             walking,
             flight,
+            movement_rays,
             support,
             standing,
             surface_lines,
@@ -354,6 +360,50 @@ impl SpatialProvider {
         })
     }
 
+    /// Keep only the nearest tied collider IDs. The index's visit order does
+    /// not settle ties between physical geometry and living/target bodies.
+    fn movement_ray(
+        &self,
+        ray: &SightRay,
+        allocation: &mut ByteReservation,
+    ) -> Result<Option<MovementRayHit>, SpatialError> {
+        let mut fraction = f64::INFINITY;
+        let mut ids = Vec::new();
+        let failed = self.scene.visit_segment(ray.from, ray.to, None, &mut |shape, (at, _)| {
+            if shape.solid.is_none() || at > fraction {
+                return false;
+            }
+            if at < fraction {
+                fraction = at;
+                ids.clear();
+            }
+            let id = shape.id.as_str();
+            if !ids.contains(&id) {
+                // Borrowed tie keys fit the existing per-shape scratch. Only
+                // the saved result extends the independent answer allowance.
+                if ids.try_reserve(1).is_err() {
+                    return true;
+                }
+                ids.push(id);
+            }
+            false
+        });
+        if failed {
+            return Err(SpatialError::Capacity);
+        }
+        if ids.is_empty() {
+            return Ok(None);
+        }
+        let bytes = ids.iter().try_fold(allocation.bytes(), |bytes, id| {
+            bytes.checked_add(size_of::<String>() + id.len())
+        }).ok_or(SpatialError::Capacity)?;
+        allocation.resize(bytes)?;
+        let mut collider_ids = Vec::new();
+        collider_ids.try_reserve_exact(ids.len()).map_err(|_| SpatialError::Capacity)?;
+        collider_ids.extend(ids.into_iter().map(str::to_owned));
+        Ok(Some(MovementRayHit { fraction, collider_ids }))
+    }
+
     fn reserve_answers(
         &self,
         q: &GeometryQueries,
@@ -367,6 +417,7 @@ impl SpatialProvider {
             + q.sight.len()
             + q.walking.len()
             + q.flight.len()
+            + size_of::<Option<MovementRayHit>>() * q.movement_rays.len()
             + q.standing.len()
             + 8 * q.sound.len()
             + size_of::<BodySweepAnswer>() * q.body_sweeps.len()

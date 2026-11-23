@@ -4,6 +4,7 @@
 use super::flight::{FlightCursor, FlightStep};
 use super::input::{AdmittedWorldInput, PreparedSteering, SteeringPreparation, input_boundary};
 use super::navigation::{NavigationGate, NavigationGateStep};
+use super::projectiles::{PredictionStep, ProjectilePrediction, ProjectileSettle, ProjectileSettleStep};
 use super::reconcile::{ReconcileAnswer, ReconcileCursor, ReconcileStep};
 use super::sensing::sensory_bound;
 use super::{
@@ -327,8 +328,10 @@ enum Phase {
     SenseStart,
     Predict,
     Steering,
+    ProjectileBoundary,
     Move,
     FlightMove,
+    ProjectileSettle,
     Wander,
     Endpoint,
     StatusEnd,
@@ -358,6 +361,7 @@ enum EventDestination {
     Reconcile,
     Motion,
     Flight,
+    Projectile,
     Endpoint,
     Appraisal,
     Territorial,
@@ -411,6 +415,11 @@ pub(crate) struct AdvanceCursor {
     input_seconds: f64,
     inputs: Vec<AdmittedWorldInput>,
     steering_preparation: Option<SteeringPreparation>,
+    projectile_steering: Option<PreparedSteering>,
+    projectile_prediction: Option<ProjectilePrediction>,
+    projectile_settlement: Option<ProjectileSettle>,
+    projectile_event: Option<crate::events::CompletedOccurrence>,
+    projectile_before_move: bool,
     slice_cursor: PhysicalChangeCursor,
     slice_events: usize,
     event_count: usize,
@@ -492,6 +501,8 @@ impl AdvanceCursor {
                     .as_ref()
                     .and_then(SteeringPreparation::question)
             })
+            .or_else(|| self.projectile_prediction.as_ref().and_then(ProjectilePrediction::question))
+            .or_else(|| self.projectile_settlement.as_ref().and_then(ProjectileSettle::question))
             .or_else(|| self.forage.as_ref().and_then(ForageChoice::sight_request))
             .or_else(|| self.hunt_route.as_deref().map(HuntRouteChoice::queries))
             .or_else(|| {
@@ -601,6 +612,11 @@ impl AdvanceCursor {
             input_seconds: 0.0,
             inputs,
             steering_preparation: None,
+            projectile_steering: None,
+            projectile_prediction: None,
+            projectile_settlement: None,
+            projectile_event: None,
+            projectile_before_move: false,
             slice_cursor: core.journal.physical.change_cursor(),
             slice_events: 0,
             event_count: 0,

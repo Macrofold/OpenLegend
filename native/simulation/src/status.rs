@@ -645,17 +645,7 @@ pub fn read_attribute(
             let Some(profile) = &definition.practice else {
                 return Ok(None);
             };
-            Ok(Some(AttributeValue::Number(
-                if progress.starting == 1
-                    || progress.releases.len() as u64 >= profile.independent_releases
-                    || (progress.coaching.is_some()
-                        && progress.releases.len() as u64 >= profile.coached_releases)
-                {
-                    1.0
-                } else {
-                    0.0
-                },
-            )))
+            Ok(Some(AttributeValue::Number(progress.rank(profile) as f64)))
         }
         "native-health-v1" => {
             let (AttributeSchema::Number { min, max, .. }, Some(body)) =

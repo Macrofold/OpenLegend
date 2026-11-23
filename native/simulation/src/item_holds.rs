@@ -305,13 +305,27 @@ pub(crate) fn manufacture_hold_id(action_id: &str, index: usize) -> String {
 pub(crate) enum ActionHoldKey {
     HearthInput(usize),
     ManufactureTool(usize),
+    Projectile(usize),
 }
 
 impl ActionHoldKey {
+    /// Identifies the exact claims an existing action owns when its identity
+    /// is replaced. The same selection drives release in the physical journal.
+    pub(crate) fn owned_by(action: &crate::state::Action) -> Option<(usize, fn(usize) -> Self)> {
+        if let Some(work) = action.hearth_work.as_ref() {
+            return Some((work.stones.len(), Self::HearthInput));
+        }
+        if let Some(tools) = action.manufacture_tools.as_ref().filter(|tools| !tools.is_empty()) {
+            return Some((tools.len(), Self::ManufactureTool));
+        }
+        action.is_practice_shot().then_some((1, Self::Projectile))
+    }
+
     pub(crate) fn id(&self, action: &str) -> String {
         match self {
             Self::HearthInput(index) => hearth_hold_id(action, *index),
             Self::ManufactureTool(index) => manufacture_hold_id(action, *index),
+            Self::Projectile(_) => crate::projectile::hold_id(action),
         }
     }
 }
@@ -481,6 +495,10 @@ pub(crate) fn install(
                     && tool.quantity as f64 == value.amount
                     && value.id == manufacture_hold_id(&action.id, index)
             })
+        } else if let Some(aim) = action.ranged.as_ref().filter(|_| action.is_practice_shot()) {
+            action.ammo_item_id.as_deref() == Some(item_id.as_str())
+                && aim.ammunition == *definition && value.amount == 1.0
+                && value.id == aim.reservation_id && value.id == crate::projectile::hold_id(&action.id)
         } else {
             return Err(InstallError::UnsupportedFamily(
                 "active resource reservation",

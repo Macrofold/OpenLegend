@@ -21,7 +21,7 @@ fn cell(value: f64) -> i64 {
     (value / CELL_SIZE).floor() as i64
 }
 
-fn reach(installed: &InstalledWorld, entity: &Entity, seconds: f64) -> Result<f64, ExecutionError> {
+pub(super) fn reach(installed: &InstalledWorld, entity: &Entity, seconds: f64) -> Result<f64, ExecutionError> {
     if installed
         .capabilities
         .capability_blocked(Some(entity), "locomotion")?

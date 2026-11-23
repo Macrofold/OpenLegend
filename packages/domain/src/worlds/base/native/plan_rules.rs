@@ -64,38 +64,13 @@ impl PlanRules {
     /// One pass substitutes only authored marker locations; words inserted by
     /// a person are never interpreted as another marker.
     pub(crate) fn text(&self, template: &str, fields: &[(&str, TextRef<'_>)]) -> JsText {
-        let mut result = JsText::from("");
-        let mut rest = template;
-        while let Some(start) = rest.find('{') {
-            result.push_str(&rest[..start]);
-            rest = &rest[start..];
-            let Some(end) = rest.find('}') else {
-                break;
-            };
-            if let Some((_, value)) = fields.iter().find(|(key, _)| *key == &rest[1..end]) {
-                value.append_to(&mut result);
-            } else {
-                result.push_str(&rest[..=end]);
-            }
-            rest = &rest[end + 1..];
-        }
-        result.push_str(rest);
-        result
+        crate::text::substitute_fields(template, fields)
     }
     pub(crate) fn text_bound(
         &self,
         template: &str,
         fields: &[(&str, TextRef<'_>)],
     ) -> Option<usize> {
-        let occurrences = template.bytes().filter(|b| *b == b'{').count();
-        let fields = fields.iter().try_fold(0usize, |sum, (_, value)| {
-            sum.checked_add(value.storage_bytes())
-        })?;
-        // UTF16 promotion and its exact escaped JSON coexist while appending.
-        template
-            .len()
-            .checked_add(occurrences.checked_mul(fields)?)?
-            .checked_mul(20)?
-            .checked_add(std::mem::size_of::<JsText>())
+        crate::text::substituted_fields_bound(template, fields)
     }
 }

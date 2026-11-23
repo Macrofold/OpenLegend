@@ -93,6 +93,7 @@ impl AdvanceCursor {
             EventDestination::Endpoint => {
                 self.endpoint_answer = Some(EndpointAnswer::Occurrence(receipt))
             }
+            EventDestination::Projectile => self.projectile_event = Some(receipt),
             EventDestination::Appraisal
             | EventDestination::Territorial
             | EventDestination::Flight => {}
@@ -1188,6 +1189,8 @@ impl AdvanceCursor {
                     }
                     if start {
                         self.phase = Phase::SenseStart;
+                    } else if self.projectile_settlement.is_some() {
+                        self.phase = Phase::ProjectileSettle;
                     } else {
                         self.select_wanderers(core)?;
                         self.phase = Phase::Wander;
@@ -1256,6 +1259,12 @@ impl AdvanceCursor {
                 }
                 Phase::Steering => {
                     return self.steer_slice(core, answer.take(), budget);
+                }
+                Phase::ProjectileBoundary => {
+                    return self.projectile_boundary(core, answer.take(), budget);
+                }
+                Phase::ProjectileSettle => {
+                    return self.settle_projectiles(core, answer.take(), budget);
                 }
                 Phase::NativeCommand => {
                     if self.pending_flush(core, Phase::NativeCommand, budget)? {

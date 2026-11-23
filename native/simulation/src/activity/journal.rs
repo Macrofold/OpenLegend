@@ -105,6 +105,11 @@ impl MutableRecord {
         entry.incomplete = self.incomplete;
     }
 }
+enum ReleaseBefore {
+    Missing,
+    Unobserved,
+}
+
 enum ActivityUndo {
     MethodInsert {
         id: String,
@@ -124,6 +129,11 @@ enum ActivityUndo {
         actor: String,
         id: String,
         before: MutableRecord,
+    },
+    Release {
+        actor: String,
+        id: String,
+        before: ReleaseBefore,
     },
     Insert {
         actor: String,
@@ -500,6 +510,102 @@ impl ActivityJournal {
             before: MutableRecord::capture(entry),
         })
     }
+    /// Bind the release that actually completed while the actor's exact work
+    /// is active. Return its already-authorized occurrence ID for skill credit.
+    pub(crate) fn install_practice_release(
+        &mut self,
+        state: &mut ActivityState,
+        actor: &str,
+        action: &str,
+        event: &str,
+        facts: &PracticeReleaseFacts<'_>,
+        profile: &crate::status::PracticeProfile,
+    ) -> Result<Option<String>, ActivityError> {
+        let entry = state
+            .active(action)?
+            .ok_or(ActivityError::InvalidStructure)?;
+        if entry.actor_id != actor
+            || !matches!(&entry.command, NativeCommand::PracticeShot { .. })
+            || entry.release.is_some()
+        {
+            return Err(ActivityError::InvalidStructure);
+        }
+        self.reserve(
+            heap_sum([
+                ActivityRelease::practice_bytes(event, facts, profile)
+                    .ok_or(ActivityError::Capacity)?,
+                actor.len(),
+                entry.id.len() * 2,
+            ])
+            .ok_or(ActivityError::Capacity)?,
+        )?;
+        let release = ActivityRelease::practice(event, facts, profile);
+        if !release.valid_for(&entry.command) {
+            return Err(ActivityError::InvalidStructure);
+        }
+        let id = entry.id.clone();
+        let revoked = entry.revoked == Some(true);
+        self.push(ActivityUndo::Release {
+            actor: actor.to_owned(),
+            id: id.clone(),
+            before: ReleaseBefore::Missing,
+        })?;
+        state
+            .collections
+            .get_mut(actor)
+            .and_then(|owner| owner.records.get_mut(&id))
+            .ok_or(ActivityError::InvalidStructure)?
+            .occurrence
+            .release = Some(release);
+        self.settle_record(state, actor, &id)?;
+        Ok((!revoked).then_some(id))
+    }
+
+    /// Store only an actually observed terminal result. A retired or revoked
+    /// personal occurrence remains unavailable even when physical flight ends.
+    pub(crate) fn observe_practice_contact(
+        &mut self,
+        state: &mut ActivityState,
+        actor: &str,
+        action: &str,
+        hit: bool,
+    ) -> Result<(), ActivityError> {
+        let Some(owner) = state.collections.get(actor) else {
+            return Ok(());
+        };
+        let entry = match owner.action_record(action) {
+            Ok(Some(record)) if record.occurrence.revoked != Some(true) => &record.occurrence,
+            Ok(_) | Err(ActivityError::Unavailable) => return Ok(()),
+            Err(error) => return Err(error),
+        };
+        let release = entry
+            .release
+            .as_ref()
+            .ok_or(ActivityError::InvalidStructure)?;
+        if let Some(prior) = release.hit {
+            return if prior == hit {
+                Ok(())
+            } else {
+                Err(ActivityError::InvalidStructure)
+            };
+        }
+        self.reserve(actor.len() + entry.id.len() * 2)?;
+        let id = entry.id.clone();
+        self.push(ActivityUndo::Release {
+            actor: actor.to_owned(),
+            id: id.clone(),
+            before: ReleaseBefore::Unobserved,
+        })?;
+        state
+            .collections
+            .get_mut(actor)
+            .and_then(|owner| owner.records.get_mut(&id))
+            .and_then(|record| record.occurrence.release.as_mut())
+            .ok_or(ActivityError::InvalidStructure)?
+            .hit = Some(hit);
+        Ok(())
+    }
+
     fn current_before(&mut self, state: &ActivityState, key: &str) -> Result<(), ActivityError> {
         self.reserve(key.len() + state.current.get(key).map_or(0, String::len))?;
         let before = state
@@ -648,6 +754,25 @@ impl ActivityJournal {
                         Some(&before.action_id),
                     );
                     before.restore(&mut record.occurrence);
+                    self.settle_record(state, &actor, &id)?;
+                }
+                ActivityUndo::Release { actor, id, before } => {
+                    let entry = &mut state
+                        .collections
+                        .get_mut(&actor)
+                        .and_then(|owner| owner.records.get_mut(&id))
+                        .ok_or(ActivityError::InvalidStructure)?
+                        .occurrence;
+                    match before {
+                        ReleaseBefore::Missing => entry.release = None,
+                        ReleaseBefore::Unobserved => {
+                            entry
+                                .release
+                                .as_mut()
+                                .ok_or(ActivityError::InvalidStructure)?
+                                .hit = None;
+                        }
+                    }
                     self.settle_record(state, &actor, &id)?;
                 }
                 ActivityUndo::Insert {

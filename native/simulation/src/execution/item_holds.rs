@@ -4,6 +4,30 @@ use super::*;
 use crate::item_holds::{ActionHoldKey, ClaimState, HeldRecord, prepare_hold};
 
 impl CoreMutation<'_> {
+    pub(crate) fn reserve_projectile(&mut self, actor: &str) -> Result<(), ExecutionError> {
+        let physical = &self.state.physical;
+        let action = physical.entities.get(actor).and_then(|entity| entity.actor.as_ref())
+            .and_then(|body| body.action.as_ref()).ok_or(ExecutionError::MissingActor)?;
+        let aim = action.ranged.as_ref().ok_or(ExecutionError::Invariant)?;
+        let ammunition = action.ammo_item_id.as_deref().ok_or(ExecutionError::Invariant)?;
+        let lot = physical.entities.get(ammunition).and_then(|entity| entity.item.as_ref())
+            .ok_or(ExecutionError::Invariant)?;
+        if lot.definition_pin != aim.ammunition || lot.quantity <= physical.holds.quantity(ammunition) {
+            return Err(ExecutionError::Invariant);
+        }
+        use crate::work::WorkUnit;
+        self.journal.meters.charge(&[(WorkUnit::Claims, 1), (WorkUnit::Effects, 1)])?;
+        let (id, held) = prepare_hold(
+            actor, &action.id, ActionHoldKey::Projectile(0), (ammunition, 1),
+            &aim.ammunition, lot.revision, physical.holds.coverage.next_ordinal,
+            &self.journal.physical.budget,
+        )?;
+        if id != aim.reservation_id {
+            return Err(ExecutionError::Invariant);
+        }
+        self.physical().install_item_hold(id, held)
+    }
+
     /// Reserve the complete staged group before installing any claim. The
     /// action is already native and journalled, so refusal rolls that back too.
     pub(crate) fn reserve_hearth_holds(&mut self, actor_id: &str) -> Result<(), ExecutionError> {
@@ -138,25 +162,14 @@ impl PhysicalMutation<'_> {
         Ok(())
     }
 
+    /// Release the current action's selected claims through the same inverse
+    /// journal and durable row writer used by explicit consumption.
     pub(crate) fn release_action_holds(
         &mut self,
         actor: EntityHandle,
+        count: usize,
+        key: fn(usize) -> ActionHoldKey,
     ) -> Result<(), ExecutionError> {
-        let action = self
-            .state
-            .entities
-            .resolve(actor)
-            .and_then(|entity| entity.actor.as_ref())
-            .and_then(|actor| actor.action.as_ref())
-            .ok_or(ExecutionError::Invariant)?;
-        let (count, key): (usize, fn(usize) -> ActionHoldKey) =
-            if let Some(work) = action.hearth_work.as_ref() {
-                (work.stones.len(), ActionHoldKey::HearthInput)
-            } else if let Some(tools) = action.manufacture_tools.as_ref() {
-                (tools.len(), ActionHoldKey::ManufactureTool)
-            } else {
-                return Ok(());
-            };
         for index in 0..count {
             let action = self
                 .state

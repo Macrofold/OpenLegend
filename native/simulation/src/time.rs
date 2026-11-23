@@ -6,6 +6,7 @@ pub(crate) use participants::{NativeParticipants, ParticipantPreparation};
 mod travel;
 use travel::MotionTravelBounds;
 mod prediction;
+mod projectiles;
 pub(crate) use prediction::MechanicalForecast;
 mod flight;
 mod motion;

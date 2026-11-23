@@ -22,6 +22,8 @@ pub struct OccurrenceRules {
     pub fire_out: Option<FireOutRule>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub flight: Option<FlightRules>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ranged: Option<RangedOccurrenceRules>,
     pub speech_importance: f64,
     pub sound_importance: f64,
     pub received_urgency: f64,
@@ -59,6 +61,23 @@ pub struct FlightRules {
     pub takeoff_suffix: crate::text::JsText,
     pub landing_before_surface: crate::text::JsText,
     pub fall_suffix: crate::text::JsText,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RangedOccurrenceRules {
+    pub shot_released: String,
+    pub released: crate::text::JsText,
+    pub projectile_ended: String,
+    pub shot_ended: String,
+    pub contact_hit: crate::text::JsText,
+    pub contact_stopped: crate::text::JsText,
+    pub contact_source: crate::text::JsText,
+    pub terminated: crate::text::JsText,
+    pub observed_hit: crate::text::JsText,
+    pub observed_no_injury: crate::text::JsText,
+    pub observed_cover: crate::text::JsText,
+    pub observed_range_end: crate::text::JsText,
+    pub stopped: crate::text::JsText,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

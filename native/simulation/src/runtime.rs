@@ -128,6 +128,7 @@ pub use npc::{
     RuntimeNpcSubjectNote,
 };
 pub use player::{InspectedRecipeRecord, RuntimeWorldStorage};
+pub use player::RuntimePracticeOffer;
 pub use player::{OBJECT_HISTORY_SELECTION, RuntimeObjectHistoryEntry, RuntimeObjectHistoryRead};
 pub use player::{
     RuntimeOfferCursor, RuntimeOfferPage, RuntimeOfferProblem, RuntimeOfferSelection, RuntimeOfferSource,

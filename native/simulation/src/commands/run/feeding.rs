@@ -67,6 +67,12 @@ impl CommandCursor {
             NativeCommand::Feed { target_id, .. } | NativeCommand::Pickup { target_id, .. } =>
                 (target_id, installed.retained.item_handling_read.reach),
             NativeCommand::Gather { target_id, .. } | NativeCommand::TendFire { target_id, .. } => (target_id, installed.movement.interaction_radius()),
+            NativeCommand::PracticeShot { target_id, .. } => {
+                let aim = self.action.as_ref().and_then(|action| action.ranged.as_ref()).ok_or(ExecutionError::Invariant)?;
+                let tool = installed.retained.items.get(&aim.tool.id).and_then(|item| item.ranged_weapon.as_ref())
+                    .ok_or(ExecutionError::Invariant)?;
+                (target_id, crate::projectile::practice::approach_range(installed, tool.range)?)
+            }
             _ => return Err(ExecutionError::Invariant),
         };
         let physical = &core.state.physical;
@@ -78,7 +84,7 @@ impl CommandCursor {
             .entities
             .get(target_id)
             .ok_or(ExecutionError::MissingEntity)?;
-        if matches!(self.command, NativeCommand::Pickup { .. } | NativeCommand::TendFire { .. })
+        if matches!(self.command, NativeCommand::Pickup { .. } | NativeCommand::TendFire { .. } | NativeCommand::PracticeShot { .. })
             && installed.capabilities.capability_blocked(Some(actor), "locomotion")?
         {
             self.refuse(&installed.ordinary_actions.value().actions_restricted);

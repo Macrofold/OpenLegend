@@ -115,13 +115,89 @@ impl AdvanceCursor {
             .take()
             .ok_or_else(invalid)?
             .finish(core, answer, budget)?;
-        self.finish_slice(core, steering, budget)?;
+        if !core.state.physical.projectiles.flights.is_empty() {
+            let roster = self.roster.as_ref().ok_or_else(invalid)?;
+            let binding = self.binding(core)?;
+            self.projectile_prediction = Some(ProjectilePrediction::prepare(
+                core, roster, &steering, self.input_seconds, self.input_seconds, binding, budget,
+            )?);
+            self.projectile_steering = Some(steering);
+            self.phase = Phase::ProjectileBoundary;
+            return self.projectile_boundary(core, None, budget);
+        }
+        self.finish_slice(core, steering, None, budget)?;
         Ok(Progress::Continue)
     }
+    pub(super) fn projectile_boundary(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        answer: Option<AdvanceAnswer>,
+        budget: &ByteBudget,
+    ) -> Result<Progress, AdvanceError> {
+        let answer = match answer {
+            Some(AdvanceAnswer::Geometry(value)) => Some(value),
+            None => None,
+            _ => return Err(invalid().into()),
+        };
+        let binding = self.binding(core)?;
+        let prediction = self.projectile_prediction.as_mut().ok_or_else(invalid)?;
+        let steering = self.projectile_steering.as_ref().ok_or_else(invalid)?;
+        match prediction.step(core, steering, self.input_seconds, answer, binding, budget)? {
+            PredictionStep::Geometry => Ok(Progress::Geometry),
+            PredictionStep::Done(seconds) if seconds == 0.0 => {
+                let prediction = self.projectile_prediction.take().ok_or_else(invalid)?;
+                self.projectile_steering = None;
+                self.projectile_settlement = Some(prediction.into_settlement(0.0));
+                self.projectile_before_move = true;
+                self.phase = Phase::ProjectileSettle;
+                Ok(Progress::Continue)
+            }
+            PredictionStep::Done(seconds) => {
+                let steering = self.projectile_steering.take().ok_or_else(invalid)?;
+                self.finish_slice(core, steering, Some(seconds), budget)?;
+                Ok(Progress::Continue)
+            }
+        }
+    }
+
+    pub(super) fn settle_projectiles(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        answer: Option<AdvanceAnswer>,
+        budget: &ByteBudget,
+    ) -> Result<Progress, AdvanceError> {
+        let geometry = match answer {
+            Some(AdvanceAnswer::Geometry(value)) => Some(value),
+            None => None,
+            _ => return Err(invalid().into()),
+        };
+        let binding = self.binding(core)?;
+        let step = self.projectile_settlement.as_mut().ok_or_else(invalid)?.step(
+            core, binding, geometry, self.projectile_event.take(), budget,
+        )?;
+        match step {
+            ProjectileSettleStep::Geometry => return Ok(Progress::Geometry),
+            ProjectileSettleStep::Event(event) => {
+                self.stage_event(core, event, EventDestination::Projectile, budget)?;
+                return Ok(Progress::Event);
+            }
+            ProjectileSettleStep::Done => self.projectile_settlement = None,
+        }
+        if std::mem::take(&mut self.projectile_before_move) {
+            self.discard_mechanics()?;
+            self.phase = Phase::Predict;
+        } else {
+            self.select_wanderers(core)?;
+            self.phase = Phase::Wander;
+        }
+        Ok(Progress::Continue)
+    }
+
     fn finish_slice(
         &mut self,
         core: &mut CoreMutation<'_>,
         steering: PreparedSteering,
+        projectile_seconds: Option<f64>,
         budget: &ByteBudget,
     ) -> Result<(), AdvanceError> {
         let installed = core.state.installed.clone();
@@ -142,7 +218,7 @@ impl AdvanceCursor {
         // Only a stored absolute deadline owns an exact landing. A relative
         // duration keeps Source's subtraction residue; zeroing it early changes
         // shared-boundary work and later sampling chronology.
-        let landing = mechanics.ends_at.is_some() && seconds >= mechanics.seconds;
+        let mut landing = mechanics.ends_at.is_some() && seconds >= mechanics.seconds;
         let mut endpoint = if landing && mechanics.ends_at.is_some() {
             mechanics.ends_at
         } else if seconds >= review - now {
@@ -155,6 +231,14 @@ impl AdvanceCursor {
         }
         if let Some(at) = endpoint {
             seconds = at - now;
+        }
+        if let Some(limit) = projectile_seconds.filter(|limit| *limit < seconds) {
+            seconds = limit;
+            endpoint = None;
+            landing = false;
+        }
+        if let Some(prediction) = self.projectile_prediction.take() {
+            self.projectile_settlement = Some(prediction.into_settlement(seconds));
         }
         if !(seconds > 0.0) || !seconds.is_finite() {
             return Err(ExecutionError::Invariant.into());

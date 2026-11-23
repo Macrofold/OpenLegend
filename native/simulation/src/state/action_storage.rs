@@ -45,6 +45,10 @@ impl HeapBytes for Action {
         heap_sum([
             self.native_locomotion.heap_bytes()?,
             self.strike_motion.heap_bytes()?,
+            self.ranged.heap_bytes()?,
+            self.competence_pin.heap_bytes()?,
+            self.weapon_item_id.heap_bytes()?,
+            self.ammo_item_id.heap_bytes()?,
             self.lethal_permission.heap_bytes()?,
             self.attack_observers.heap_bytes()?,
             self.follow.heap_bytes()?,

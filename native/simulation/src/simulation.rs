@@ -138,6 +138,7 @@ pub(crate) struct PhysicalState {
     pub gifts: crate::handover::GiftState,
     pub participation: crate::participation::ParticipationState,
     pub coaching: crate::install::ClosedCoachingState,
+    pub projectiles: crate::projectile::ProjectileState,
     pub header: WorldHeader,
     pub identity: IdentityState,
     pub entities: EntityStore,

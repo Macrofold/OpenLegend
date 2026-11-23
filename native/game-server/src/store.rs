@@ -116,8 +116,9 @@ impl fmt::Display for StoreError {
             Self::InitializationRequired => "An empty database requires explicit initialization",
             Self::OpeningRequired => "This database is initialized and requires a starting world",
             Self::AwaitingCreation => "This database is registered to receive a new world",
-            Self::DamagedInstallation =>
-                "This database contains retained data but has no current world header",
+            Self::DamagedInstallation => {
+                "This database contains retained data but has no current world header"
+            }
             Self::StaleCut => "PostgreSQL does not match the selected world revision",
             Self::KnownPlacesPendingSave => "The selected place evidence is awaiting the ordinary save",
             Self::RuntimeCutBusy => "The accepted simulation read is occupied",

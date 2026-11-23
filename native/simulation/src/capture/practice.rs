@@ -1,6 +1,6 @@
 //! Capture only occurrence views actually referenced by this actor's visible
-//! practice progress. Missing resident records stay missing: the server's real
-//! indexed activity reader supplies them before formatting the final evidence.
+//! practice progress. The present record must bind the exact event and family.
+//! A missing resident description leaves the retained practice support intact.
 
 use super::*;
 use std::collections::BTreeSet;
@@ -50,25 +50,35 @@ pub(super) fn practice_records<'a>(
         .map_err(|_| ExecutionError::Capacity)?;
     let mut seen = BTreeSet::new();
     for definition in state.installed.attributes.values() {
-        if definition.value().practice.is_none() {
+        let Some(profile) = &definition.value().practice else {
             continue;
-        }
+        };
         let Some(progress) = progress.and_then(|progress| progress.get(&definition.value().id))
         else {
             continue;
         };
         for support in &progress.releases {
-            if !seen.insert(support.occurrence_id.as_str()) {
-                continue;
-            }
             match state
                 .activity
-                .occurrence_for(&actor.id, &support.occurrence_id)
+                .occurrence_by_id(&actor.id, &support.occurrence_id)
             {
-                Ok(Some(occurrence)) => records.push(PracticeRecord {
-                    key: &support.occurrence_id,
-                    view: &occurrence.view,
-                }),
+                Ok(Some(occurrence)) => {
+                    if occurrence.revoked == Some(true)
+                        || occurrence.release.as_ref().is_none_or(|release| {
+                            !release.supports(&support.event_id, &profile.family)
+                        })
+                    {
+                        return Err(ExecutionError::Activity(
+                            crate::activity::ActivityError::InvalidStructure,
+                        ));
+                    }
+                    if seen.insert(support.occurrence_id.as_str()) {
+                        records.push(PracticeRecord {
+                            key: &support.occurrence_id,
+                            view: &occurrence.view,
+                        });
+                    }
+                }
                 Ok(None) | Err(crate::activity::ActivityError::Unavailable) => {}
                 Err(error) => return Err(ExecutionError::Activity(error)),
             }

@@ -552,7 +552,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub ranged: Option<UnconvertedField>,
+    pub ranged: Option<crate::projectile::RangedAim>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -564,7 +564,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub competence_pin: Option<UnconvertedField>,
+    pub competence_pin: Option<DefinitionPin>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -738,13 +738,13 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub weapon_item_id: Option<UnconvertedField>,
+    pub weapon_item_id: Option<String>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub ammo_item_id: Option<UnconvertedField>,
+    pub ammo_item_id: Option<String>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -849,6 +849,7 @@ impl Action {
             || self.is_picking_up()
             || self.is_tending_fire()
             || self.is_treating_scar()
+            || self.is_practice_shot()
             || self.is_following()
             || self.is_placing_hearth()
     }
@@ -913,6 +914,35 @@ impl Action {
         self.kind == "tend-fire" && self.fire_operation.is_some() && self.target_id.is_some()
     }
 
+    pub(crate) fn is_practice_shot(&self) -> bool {
+        self.kind == "practice-shot"
+            && self.ranged.is_some()
+            && self.competence_pin.is_some()
+            && self.target_id.is_some()
+            && self.weapon_item_id.is_some()
+            && self.ammo_item_id.is_some()
+    }
+
+    pub(crate) fn practice_shot(
+        id: String,
+        aim: crate::projectile::RangedAim,
+        target: String,
+        weapon: String,
+        ammunition: String,
+        competence: DefinitionPin,
+        seconds: f64,
+    ) -> Self {
+        let mut action = Self::native_action(id, "practice-shot", "working");
+        action.ranged = Some(aim);
+        action.target_id = Some(target);
+        action.weapon_item_id = Some(weapon);
+        action.ammo_item_id = Some(ammunition);
+        action.competence_pin = Some(competence);
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
+        action
+    }
+
     pub(crate) fn is_treating_scar(&self) -> bool {
         self.kind == "treat-scar"
             && self.stage == "working"
@@ -952,9 +982,10 @@ impl Action {
             || self.cooperation.is_some()
             || self.combat_help_id.is_some()
             || self.evasion.is_some()
-            || self.ranged.is_some()
+            || (self.kind == "practice-shot" || self.ranged.is_some() || self.competence_pin.is_some()
+                || self.weapon_item_id.is_some() || self.ammo_item_id.is_some())
+                && !self.is_practice_shot()
             || self.attack_execution.is_some()
-            || self.competence_pin.is_some()
             || self.ranged_policy_pin.is_some()
             || self.coaching_episode_id.is_some()
             || self.assembly_phase.is_some()
@@ -985,8 +1016,6 @@ impl Action {
             || self.quantity.is_some_and(|n| n == 0 || !self.is_picking_up())
             || self.recipe_id.is_some() != self.is_manufacturing()
             || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting() || self.is_picking_up() || self.is_tending_fire()))
-            || self.weapon_item_id.is_some()
-            || self.ammo_item_id.is_some()
             || self.heat_id.is_some() != self.is_cooking()
             || self.fire_operation.is_some() != self.is_tending_fire()
             || self.fire_guard.is_some()

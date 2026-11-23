@@ -77,6 +77,11 @@ pub enum RuntimePlayerCommand<'a> {
     },
     PlaceHearth { definition: &'a DefinitionPin, site: &'a SurfacePoint },
     TreatScar { target: &'a str, scar: &'a str },
+    PracticeShot {
+        target: &'a str,
+        weapon: Option<&'a str>,
+        ammunition: Option<&'a str>,
+    },
     TendFire { target: &'a str, operation: crate::fire_care::FireOperation, item: Option<&'a str> },
     Pickup { target: &'a str, item: Option<&'a str>, quantity: Option<u64> },
     Drop { item: &'a str, quantity: u64 },
@@ -134,6 +139,9 @@ impl RuntimePlayerCommand<'_> {
             Self::Handover { target, gift, .. } => target.len() + gift.retained_text_bytes(),
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
             Self::TreatScar { target, scar } => target.len() + scar.len(),
+            Self::PracticeShot { target, weapon, ammunition } => {
+                target.len() + weapon.map_or(0, str::len) + ammunition.map_or(0, str::len)
+            }
             Self::TendFire { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
             Self::DirectedSpeech { text, target, .. } => text.storage_bytes() + target.len(),
@@ -208,6 +216,9 @@ impl RuntimePlayerCommand<'_> {
         }
         if let Self::TreatScar { target, scar } = self {
             return bind_scar_treatment(id, actor, target, scar);
+        }
+        if let Self::PracticeShot { target, weapon, ammunition } = self {
+            return bind_practice_shot(id, actor, target, weapon, ammunition);
         }
         if let Self::TendFire { target, operation, item } = self {
             return bind_fire(id, actor, target, operation, item);
@@ -325,6 +336,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Cook { .. }
             | Self::Status { .. }
             | Self::TreatScar { .. }
+            | Self::PracticeShot { .. }
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
             | Self::LearnRecord(_)
@@ -496,6 +508,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Cook { .. }
             | Self::Status { .. }
             | Self::TreatScar { .. }
+            | Self::PracticeShot { .. }
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
             | Self::LearnRecord(_)
@@ -1069,6 +1082,53 @@ fn bind_food_preparation(
     ))
 }
 
+
+fn bind_practice_shot(
+    id: &str,
+    actor: &str,
+    target: &str,
+    weapon: Option<&str>,
+    ammunition: Option<&str>,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Input<'a> {
+        actor_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        ammo_item_id: Option<&'a str>,
+        human_initiated: bool,
+        id: &'a str,
+        target_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        weapon_item_id: Option<&'a str>,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid()
+        || ![Some(target), weapon, ammunition].into_iter().flatten().all(crate::values::is_safe_record_id)
+    {
+        return Err(serde::de::Error::custom("Invalid practice shot binding."));
+    }
+    let input = Input {
+        actor_id: actor,
+        ammo_item_id: ammunition,
+        human_initiated: true,
+        id,
+        target_id: target,
+        kind: "practice-shot",
+        weapon_item_id: weapon,
+    };
+    let fields = 5 + usize::from(ammunition.is_some()) + usize::from(weapon.is_some());
+    let encoding = CommandEncoding::from_ordered(&input, fields)?;
+    let command = NativeCommand::PracticeShot {
+        envelope: headers.envelope(encoding),
+        target_id: target.into(),
+        weapon_item_id: weapon.map(str::to_owned),
+        ammo_item_id: ammunition.map(str::to_owned),
+    };
+    Ok((command, json_record(&input)?))
+}
 
 fn bind_scar_treatment(
     id: &str, actor: &str, target: &str, scar: &str,

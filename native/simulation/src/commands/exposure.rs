@@ -34,6 +34,7 @@ impl CommandExposure {
             | NativeCommand::Drop { envelope, .. }
             | NativeCommand::TendFire { envelope, .. }
             | NativeCommand::TreatScar { envelope, .. }
+            | NativeCommand::PracticeShot { envelope, .. }
             | NativeCommand::PlaceHearth { envelope, .. }
             | NativeCommand::Cook { envelope, .. }
             | NativeCommand::Craft { envelope, .. }

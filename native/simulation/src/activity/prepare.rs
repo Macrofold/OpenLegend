@@ -49,6 +49,9 @@ pub(super) fn start_record(
         NativeCommand::Gather {
             target_id, tool, ..
         } => [Some(target_id), tool.item_id.as_deref()],
+        NativeCommand::PracticeShot { target_id, weapon_item_id, .. } => {
+            [Some(target_id), weapon_item_id.as_deref()]
+        }
         NativeCommand::Fish { target_id, item_id, .. } => [Some(target_id), Some(item_id)],
         NativeCommand::Pickup { target_id, item_id, .. } => [Some(target_id), item_id.as_deref()],
         NativeCommand::Eat { item_id, .. } | NativeCommand::Equipment { item_id, .. } => [Some(item_id), None],
@@ -58,8 +61,14 @@ pub(super) fn start_record(
         NativeCommand::Cook { heat_id, inputs, .. } => Some((heat_id, inputs)),
         _ => None,
     };
-    let objects_count = 2 + cooking.map_or(0, |(_, inputs)| inputs.len() + 1);
+    let practice_ammunition = match command {
+        NativeCommand::PracticeShot { ammo_item_id, .. } => ammo_item_id.as_deref(),
+        _ => None,
+    };
+    let objects_count = 2 + usize::from(practice_ammunition.is_some())
+        + cooking.map_or(0, |(_, inputs)| inputs.len() + 1);
     let selected_objects = || fields.iter().flatten().copied()
+        .chain(practice_ammunition)
         .chain(cooking.into_iter().map(|(heat, _)| heat.as_str()))
         .chain(cooking.into_iter().flat_map(|(_, inputs)| inputs.values().map(String::as_str)));
     let object_bytes = selected_objects()
@@ -144,7 +153,7 @@ pub(super) fn start_record(
         revoked: None,
         incomplete: None,
         stock_resolution: None,
-        no_learning_control: None,
+        no_learning_control: matches!(command, NativeCommand::PracticeShot { .. }).then_some(true),
     };
     Ok(entry)
 }

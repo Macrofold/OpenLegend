@@ -88,6 +88,49 @@ fn contact_cue<'a>(
         .then_some((cue, source, action))
 }
 
+/// A flight is installed before its release event and remains until its
+/// actual contact has finished publishing. Only those stages admit these
+/// engine-produced events through the native-target path.
+fn current_projectile_event(core: &CoreMutation<'_>, event: &WorldEvent) -> bool {
+    let rules = core.state.installed.occurrence_rules.value();
+    let Some(words) = rules.ranged.as_ref() else {
+        return false;
+    };
+    if event.scope != Some(EventScope::External)
+        || (event.event_type != words.shot_released
+            && event.event_type != rules.projectile_contact_event)
+    {
+        return false;
+    }
+    let Some(data) = &event.data else {
+        return false;
+    };
+    let text = |key| match data.get(key) {
+        Some(EventScalar::Text(value)) => value.as_unicode(),
+        _ => None,
+    };
+    let Some(flight) =
+        text("projectileId").and_then(|id| core.state.physical.projectiles.flights.get(id))
+    else {
+        return false;
+    };
+    let flight = &flight.flight;
+    if event.event_type == words.shot_released {
+        let source = core.state.physical.entities.get(&flight.source_id);
+        event.at == flight.launched_at
+            && event.actor_id.as_deref() == Some(flight.source_id.as_str())
+            && event.target_id == flight.target_id
+            && text("actionId") == Some(flight.action_id.as_str())
+            && source.and_then(Entity::physical_life) == Some(flight.source_life)
+    } else {
+        event.at == flight.advanced_at
+            && event.origin == Some(flight.position)
+            && event.target_id.is_some()
+            && event.actor_id == event.target_id
+            && matches!(data.get("contactLife"), Some(EventScalar::Number(_)))
+    }
+}
+
 pub(crate) fn require_supported_event(
     core: &CoreMutation<'_>,
     event: &WorldEvent,
@@ -108,6 +151,7 @@ pub(crate) fn require_supported_event(
         && event.event_type != installed.ordinary_actions.value().action_started_event
         && contact != Some(ContactCue::Attempt)
         && !crate::reception::combat_observation::current_attack_cue(core, event)
+        && !current_projectile_event(core, event)
     {
         return Err(ExecutionError::UnsupportedFamily);
     }

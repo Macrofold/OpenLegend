@@ -67,6 +67,42 @@ impl TextRef<'_> {
     }
 }
 
+/// Replace only placeholders in the installed template. Substituted names can
+/// carry exact UTF-16 and are never interpreted as template input themselves.
+pub(crate) fn substitute_fields(template: &str, fields: &[(&str, TextRef<'_>)]) -> JsText {
+    let mut result = JsText::from("");
+    let mut rest = template;
+    while let Some(start) = rest.find('{') {
+        result.push_str(&rest[..start]);
+        rest = &rest[start..];
+        let Some(end) = rest.find('}') else {
+            break;
+        };
+        if let Some((_, value)) = fields.iter().find(|(key, _)| *key == &rest[1..end]) {
+            value.append_to(&mut result);
+        } else {
+            result.push_str(&rest[..=end]);
+        }
+        rest = &rest[end + 1..];
+    }
+    result.push_str(rest);
+    result
+}
+
+/// Workspace for the fully rendered text, including temporary exact text copies.
+pub(crate) fn substituted_fields_bound(template: &str, fields: &[(&str, TextRef<'_>)]) -> Option<usize> {
+    let occurrences = template.bytes().filter(|b| *b == b'{').count();
+    let fields = fields.iter().try_fold(0usize, |sum, (_, value)| {
+        sum.checked_add(value.storage_bytes())
+    })?;
+    // UTF16 promotion and its exact escaped JSON coexist while appending.
+    template
+        .len()
+        .checked_add(occurrences.checked_mul(fields)?)?
+        .checked_mul(20)?
+        .checked_add(std::mem::size_of::<JsText>())
+}
+
 pub enum CodeUnits<'a> {
     Unicode(std::str::EncodeUtf16<'a>),
     Utf16(std::iter::Copied<std::slice::Iter<'a, u16>>),

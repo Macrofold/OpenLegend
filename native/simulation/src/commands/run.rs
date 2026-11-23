@@ -27,6 +27,7 @@ mod casting;
 mod preparing_food;
 mod fire;
 mod scar_treatment;
+mod practice;
 mod respawn;
 mod follow;
 mod hearth;
@@ -100,6 +101,7 @@ enum Phase {
     Follow,
     FeedReach,
     ScarReach,
+    PracticeReach,
     RespawnSupport,
     RespawnStanding,
     RespawnConditions,
@@ -536,6 +538,10 @@ impl CommandCursor {
         }
         if matches!(self.command, NativeCommand::TreatScar { .. }) {
             self.prepare_scar_view(core)?;
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::PracticeShot { .. }) {
+            self.prepare_practice_view(core)?;
             return Ok(false);
         }
         if matches!(self.command, NativeCommand::Cook { .. }) {
@@ -1045,6 +1051,11 @@ impl CommandCursor {
                                         Phase::FeedApproach
                                     };
                             }
+                            Phase::PracticeReach => {
+                                let visible = answer.sight.pop().ok_or(ExecutionError::Invariant)?;
+                                self.queries = None;
+                                self.practice_reach(core, visible)?;
+                            }
                             Phase::ScarReach => {
                                 self.queries = None;
                                 if answer.sight.pop().ok_or(ExecutionError::Invariant)? {
@@ -1257,6 +1268,7 @@ impl CommandCursor {
                             NativeCommand::Respawn { .. } | NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
                                 | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
                                 | NativeCommand::Drop { .. } | NativeCommand::TransferItem { .. }
+                                | NativeCommand::PracticeShot { .. }
                         ) || matches!(self.command, NativeCommand::Handover { .. })
                             && mode != super::WorkTransitionMode::Continue)
                     {
@@ -1487,6 +1499,11 @@ impl CommandCursor {
                                 return Ok(Progress::Occurrence(event));
                             }
                         }
+                        NativeCommand::PracticeShot { .. } => {
+                            if self.prepare_practice_shot(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
                         NativeCommand::InspectInventory { selected: None, .. } => {
                             return Err(ExecutionError::Invariant);
                         }
@@ -1497,7 +1514,7 @@ impl CommandCursor {
                 }
                 Phase::StoragePage => return self.storage_occurrence(core, &actor_id),
                 Phase::RespawnSupport | Phase::RespawnStanding
-                | Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach | Phase::ScarReach => {
+                | Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach | Phase::ScarReach | Phase::PracticeReach => {
                     return Err(ExecutionError::Invariant);
                 }
                 Phase::Standing => {
@@ -1810,6 +1827,12 @@ impl CommandCursor {
                     // digits). Admission precedes allocation and the retained copy.
                     self.grow_action_storage("action-".len() + 16)?;
                     let action_id = core.physical().allocate("action")?.id;
+                    if self.action.as_ref().is_some_and(Action::is_practice_shot) {
+                        self.grow_action_storage(action_id.len() + ":projectile".len())?;
+                        let action = self.action.as_mut().ok_or(ExecutionError::Invariant)?;
+                        action.ranged.as_mut().ok_or(ExecutionError::Invariant)?.reservation_id =
+                            crate::projectile::hold_id(&action_id);
+                    }
                     self.action.as_mut().ok_or(ExecutionError::Invariant)?.id = action_id.clone();
                     self.size_action_storage()?;
                     if let Some(id) = &self.activity_id {
@@ -1928,6 +1951,7 @@ impl CommandCursor {
                     let action = self.action.take().ok_or(ExecutionError::Invariant)?;
                     let action_id = action.id.clone();
                     let place_hearth = action.is_placing_hearth();
+                    let practice = action.is_practice_shot();
                     if action.is_manufacturing() && !self.admit_craft_record(core, &actor_id, &action)? {
                         continue;
                     }
@@ -1949,6 +1973,7 @@ impl CommandCursor {
                         },
                     )?;
                     if place_hearth { core.reserve_hearth_holds(&actor_id)?; }
+                    if practice { core.reserve_projectile(&actor_id)?; }
                     let mut result = ordinary.accepted.outcome(true);
                     result.action_id = Some(action_id);
                     self.outcome = Some(result);
@@ -2036,6 +2061,9 @@ impl CommandCursor {
                         }
                         if matches!(self.command, NativeCommand::TreatScar { .. }) {
                             return self.scar_treatment_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::PracticeShot { .. }) {
+                            return self.practice_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::Craft { .. }) {
                             return self.craft_started(core, &actor_id);

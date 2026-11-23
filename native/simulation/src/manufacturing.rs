@@ -152,6 +152,7 @@ impl Candidate<'_> {
 
 pub(crate) struct InstalledMethod {
     pub pin: DefinitionPin,
+    pub family: Option<DefinitionPin>,
     pub name: JsText,
     pub description: JsText,
     pub work_seconds: f64,
@@ -406,7 +407,7 @@ impl Definition<'_> {
         if !self.dependencies_match(items, policy_pin) {
             return Err(InstallError::DefinitionPin);
         }
-        self.into_method(canonical).map(Some)
+        self.into_method(canonical, Some(family)).map(Some)
     }
 
     fn install_fixed(
@@ -473,10 +474,10 @@ impl Definition<'_> {
         {
             return Err(InstallError::DefinitionBody);
         }
-        self.into_method(canonical)
+        self.into_method(canonical, None)
     }
 
-    fn into_method(self, canonical: &str) -> Result<InstalledMethod, InstallError> {
+    fn into_method(self, canonical: &str, family: Option<DefinitionPin>) -> Result<InstalledMethod, InstallError> {
         let mut counts = IndexMap::<&str, u64>::new();
         for input in &self.inputs {
             let count = counts.entry(input.definition_id.as_str()).or_default();
@@ -493,6 +494,7 @@ impl Definition<'_> {
             .collect();
         Ok(InstalledMethod {
             pin: mechanical_pin(self.id, self.version, canonical, &self.digest)?,
+            family,
             name: self.name,
             description: self.description,
             work_seconds: self.work_seconds,
@@ -825,6 +827,7 @@ heap_record!(Input {
 heap_record!(Output { port, definition });
 heap_record!(InstalledMethod {
     pin,
+    family,
     name,
     description,
     inputs,

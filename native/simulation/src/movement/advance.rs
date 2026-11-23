@@ -27,6 +27,7 @@ mod casting;
 mod preparing_food;
 mod fire;
 mod scar_treatment;
+mod practice;
 mod follow;
 mod hearth;
 mod manufacture;
@@ -70,6 +71,7 @@ enum Phase {
     CookReach,
     HearthWork,
     ScarReach,
+    PracticeLine,
     Finish,
     Clear,
     Stopped,
@@ -79,6 +81,7 @@ pub(crate) struct MoveAdvanceCursor {
     actor_id: String,
     action_id: Option<String>,
     physical_life: u64,
+    practice_release: Option<practice::PendingPracticeRelease>,
     seconds: f64,
     phase: Phase,
     motion: Option<MotionOperation>,
@@ -161,6 +164,7 @@ impl MoveAdvanceCursor {
             actor_id: actor_id.into(),
             action_id: None,
             physical_life: 0,
+            practice_release: None,
             seconds,
             phase: Phase::Start,
             motion: None,
@@ -319,6 +323,9 @@ impl MoveAdvanceCursor {
                     }
                     self.event = None;
                     self.phase = self.after_event;
+                    if let Some(event) = self.complete_practice_release(core, &completed)? {
+                        return Ok(Progress::Occurrence(event));
+                    }
                 }
                 MoveAdvanceAnswer::Personal(acquired) => {
                     let pending = self
@@ -366,6 +373,9 @@ impl MoveAdvanceCursor {
                 if self.phase == Phase::HearthWork { return self.finish_hearth_geometry(core, answer); }
                 if self.phase == Phase::ScarReach {
                     return self.finish_scar_treatment(core, answer.sight.pop() == Some(true));
+                }
+                if self.phase == Phase::PracticeLine {
+                    return self.finish_practice_line(core, answer.sight.pop() == Some(true));
                 }
                 if self.phase == Phase::CastLine {
                     return self.finish_cast_line(core, answer);
@@ -652,6 +662,16 @@ impl MoveAdvanceCursor {
                         }
                         return self.check_hearth(core);
                     }
+                    if action.is_practice_shot() && action.stage == "working" {
+                        if action.remaining_seconds > self.seconds + installed.time_epsilon {
+                            core.physical().advance_timed_work(&self.actor_id,
+                                self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
+                                self.seconds, installed.time_epsilon)?;
+                            self.phase = Phase::Done;
+                            continue;
+                        }
+                        return self.check_practice(core);
+                    }
                     if action.is_treating_scar() {
                         if action.remaining_seconds > self.seconds + installed.time_epsilon {
                             core.physical().advance_timed_work(
@@ -853,6 +873,7 @@ impl MoveAdvanceCursor {
                     let (entity, action) =
                         bound(core, &self.actor_id, action_id, self.physical_life)?;
                     if action.is_placing_hearth() { return self.check_hearth(core); }
+                    if action.is_practice_shot() { return self.check_practice(core); }
                     if action.is_casting() {
                         self.start_target_work(core, action.replans)?;
                         self.phase = Phase::Done;
@@ -1042,6 +1063,7 @@ impl MoveAdvanceCursor {
                 | Phase::FeedSight
                 | Phase::HearthWork
                 | Phase::ScarReach
+                | Phase::PracticeLine
                 | Phase::CastLine
                 | Phase::CookReach => {
                     return Err(ExecutionError::Invariant);

@@ -230,10 +230,14 @@ pub struct RuntimeFoodMenu<'a> {
     pub eating: Option<(&'a crate::text::JsText, crate::consumption::EatingOffer<'a>)>,
 }
 
+mod practice;
+pub use practice::RuntimePracticeOffer;
+
 pub enum RuntimeResourceOffer<'a> {
     Gather(RuntimeGatherOffer<'a>),
     Fish(RuntimeFishOffer<'a>),
     Pickup(RuntimePickupOffer<'a>),
+    Practice(RuntimePracticeOffer<'a>),
 }
 
 pub struct RuntimePickupOffer<'a> {
@@ -790,6 +794,14 @@ impl NativeWorldSession {
                         Ok(None) => {}
                         Err(error) => result = Some(Err(error)),
                     }
+                    return true;
+                }
+                if let Some(target) = state.physical.entities.get(id).filter(|target| target.practice_target.is_some()) {
+                    if !matches(&body) {
+                        return false;
+                    }
+                    let encode = encode.take().expect("one selected source");
+                    result = Some(practice::offer(state, actor, &body.name, target, &self.budget, encode));
                     return true;
                 }
                 if observed.kind != "resource" || !matches(&body) {

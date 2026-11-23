@@ -298,6 +298,12 @@ pub(crate) enum NativeCommand {
         weapon_item_id: Option<String>,
         auto_equip: Option<bool>,
     },
+    PracticeShot {
+        envelope: CommandEnvelope,
+        target_id: String,
+        weapon_item_id: Option<String>,
+        ammo_item_id: Option<String>,
+    },
     LearnRecord {
         envelope: CommandEnvelope,
         record: RecipeRecordSelection,
@@ -330,7 +336,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String,tools:crate::manufacturing::ToolSelection);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,ammo_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String,tools:crate::manufacturing::ToolSelection);
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -660,6 +666,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "pickup" | "drop" | "eat" | "equip" | "unequip") && input.item_id.is_some())
             || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
             || input.quantity.is_some_and(|n| !matches!(input.kind.as_str(), "pickup" | "drop") || n == 0 || n > crate::identity::MAX_SAFE_INTEGER)
+            || (input.kind != "practice-shot" && input.ammo_item_id.is_some())
             || (input.kind != "craft" && (input.recipe_id.is_some() || input.tools.is_some()))
             || input
                 .tools
@@ -942,6 +949,24 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     request,
                 })
             }
+            "practice-shot"
+                if !discovery_extras
+                    && input.attempt_id.is_none()
+                    && input.distance.is_none()
+                    && input.after.is_none()
+                    && input.method_after.is_none()
+                    && input.definition_id.is_none()
+                    && input.auto_equip.is_none()
+                    && input.weapon_item_id.as_deref().is_none_or(is_safe_record_id)
+                    && input.ammo_item_id.as_deref().is_none_or(is_safe_record_id) =>
+            {
+                Ok(Self::PracticeShot {
+                    envelope,
+                    target_id: input.target_id.filter(|id| is_safe_record_id(id)).ok_or_else(|| D::Error::custom("A practice shot requires its selected target."))?,
+                    weapon_item_id: input.weapon_item_id,
+                    ammo_item_id: input.ammo_item_id,
+                })
+            }
             "inspect-activities"
                 if !discovery_extras
                     && input.attempt_id.is_none()
@@ -1002,6 +1027,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::PracticeShot { envelope, .. }
             | Self::LearnRecord { envelope, .. }
             | Self::InspectInventory { envelope, .. }
             | Self::InspectActivities { envelope, .. } => envelope,
@@ -1039,6 +1065,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::PracticeShot { envelope, .. }
             | Self::LearnRecord { envelope, .. }
             | Self::InspectInventory { envelope, .. }
             | Self::InspectActivities { envelope, .. } => envelope,
@@ -1073,6 +1100,7 @@ impl NativeCommand {
             Self::WithdrawAttempt { .. } => "withdraw-attempt",
             Self::Follow { .. } => "follow",
             Self::Strike { .. } => "strike",
+            Self::PracticeShot { .. } => "practice-shot",
             Self::LearnRecord { .. } => "learn-record",
             Self::InspectInventory { .. } => "inspect-inventory",
             Self::InspectActivities { .. } => "inspect-activities",

@@ -205,6 +205,15 @@ pub struct SightRay {
     pub to: Point,
 }
 
+/// The nearest contact with movement-blocking installed geometry. Several
+/// shapes can meet the same point; the simulation chooses the canonical ID.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MovementRayHit {
+    pub fraction: f64,
+    pub collider_ids: Vec<String>,
+}
+
 /// Return the interaction-anchor line to check once both bodies are within
 /// reach. This prepares a ray only. The caller still owns permission and the
 /// meaning of a clear or obstructed answer.
@@ -536,6 +545,8 @@ pub struct GeometryQueries {
     pub walking: Vec<WalkingSegment>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub flight: Vec<FlightSegment>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub movement_rays: Vec<SightRay>,
     pub support: Vec<SupportQuery>,
     pub standing: Vec<StandingQuery>,
     pub surface_lines: Vec<SurfaceLineQuery>,
@@ -603,6 +614,8 @@ pub struct GeometryAnswers {
     pub walking: Vec<bool>,
     #[serde(default)]
     pub flight: Vec<bool>,
+    #[serde(default)]
+    pub movement_rays: Vec<Option<MovementRayHit>>,
     pub support: Vec<Option<SurfacePoint>>,
     pub standing: Vec<bool>,
     pub surface_lines: Vec<Option<SurfaceLineAnswer>>,
@@ -753,6 +766,7 @@ mod query_custody {
         sight,
         walking,
         flight,
+        movement_rays,
         support,
         standing,
         surface_lines,
@@ -778,6 +792,7 @@ impl GeometryQueries {
         self.sight.is_empty()
             && self.walking.is_empty()
             && self.flight.is_empty()
+            && self.movement_rays.is_empty()
             && self.support.is_empty()
             && self.standing.is_empty()
             && self.surface_lines.is_empty()
@@ -799,6 +814,7 @@ impl GeometryQueries {
             sight: Vec::new(),
             walking: Vec::new(),
             flight: Vec::new(),
+            movement_rays: Vec::new(),
             support: Vec::new(),
             standing: Vec::new(),
             surface_lines: Vec::new(),
@@ -826,6 +842,7 @@ impl GeometryQueries {
         if self.sight.len() != answer.sight.len()
             || self.walking.len() != answer.walking.len()
             || self.flight.len() != answer.flight.len()
+            || self.movement_rays.len() != answer.movement_rays.len()
             || self.support.len() != answer.support.len()
             || self.standing.len() != answer.standing.len()
             || self.surface_lines.len() != answer.surface_lines.len()
@@ -849,7 +866,11 @@ impl GeometryQueries {
                 && point.z.is_finite()
                 && !point.surface_id.is_empty()
         };
-        if answer.placement_stances.iter().zip(&self.placement_stances).any(|(stances, query)| {
+        if answer.movement_rays.iter().flatten().any(|hit| {
+            !(0.0..=1.0).contains(&hit.fraction)
+                || hit.collider_ids.is_empty()
+                || hit.collider_ids.iter().any(String::is_empty)
+        }) || answer.placement_stances.iter().zip(&self.placement_stances).any(|(stances, query)| {
             stances.len() > if query.exact.is_some() { 1 } else { 8 }
                 || stances.iter().any(|stance| {
                     !point(&stance.stance)

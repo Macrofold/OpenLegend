@@ -15,7 +15,6 @@ pub(crate) fn finish_selected_installation(
     mut installation: CoreInstallation,
 ) -> Result<SelectedInstallation, InstallError> {
     for (field, table, empty_map) in [
-        ("projectiles", "sim_projectiles", true),
         ("familyTree", "sim_family_tree", false),
         ("declarationReceipts", "declaration_receipts", true),
     ] {

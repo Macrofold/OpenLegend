@@ -12,6 +12,7 @@ heap_record!(OccurrenceRules {
     contact_event,
     fire_out,
     flight,
+    ranged,
     speech_importance,
     sound_importance,
     received_urgency,
@@ -41,6 +42,21 @@ heap_record!(FlightRules {
     takeoff_suffix,
     landing_before_surface,
     fall_suffix
+});
+heap_record!(RangedOccurrenceRules {
+    shot_released,
+    released,
+    projectile_ended,
+    shot_ended,
+    contact_hit,
+    contact_stopped,
+    contact_source,
+    terminated,
+    observed_hit,
+    observed_no_injury,
+    observed_cover,
+    observed_range_end,
+    stopped
 });
 heap_record!(ResponseRules {
     offers,

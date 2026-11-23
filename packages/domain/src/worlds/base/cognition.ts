@@ -4,6 +4,7 @@ import { BASE_THREAT_RESPONSE_PROFILE } from './threat-response-profile.js';
 import type { WorldEvent } from '../../types.js';
 import { freeze } from 'immer';
 import { BASE_RESPONSE_RULES } from './response-rules.js';
+import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
 
 const fireOut = { eventType: 'fire-out', message: 'The campfire ran out of fuel.' };
 const flight = {
@@ -15,6 +16,21 @@ const flight = {
   takeoffSuffix: ' took flight.',
   landingBeforeSurface: ' landed on ',
   fallSuffix: ' came to rest on the surface below.',
+};
+const ranged = {
+  shotReleased: 'shot-released',
+  released: BASE_RANGED_TEXT.released,
+  projectileEnded: 'projectile-ended',
+  shotEnded: 'shot-ended',
+  contactHit: BASE_RANGED_TEXT.contactHit,
+  contactStopped: BASE_RANGED_TEXT.contactStopped,
+  contactSource: BASE_RANGED_TEXT.contactSource,
+  terminated: BASE_RANGED_TEXT.terminated,
+  observedHit: BASE_RANGED_TEXT.observedHit,
+  observedNoInjury: BASE_RANGED_TEXT.observedNoInjury,
+  observedCover: BASE_RANGED_TEXT.observedCover,
+  observedRangeEnd: BASE_RANGED_TEXT.observedRangeEnd,
+  stopped: BASE_RANGED_TEXT.stopped,
 };
 
 export const BASE_OCCURRENCE_RULES = freeze(
@@ -29,6 +45,7 @@ export const BASE_OCCURRENCE_RULES = freeze(
     contactEvent: 'contact',
     fireOut,
     flight,
+    ranged,
     speechImportance: 7,
     soundImportance: 3,
     receivedUrgency: 4,
@@ -66,7 +83,7 @@ export const BASE_OCCURRENCE_RULES = freeze(
       'struck',
       'guarded',
       'shot-released',
-      'shot-ended',
+      ranged.shotEnded,
       'body-effect',
       'moved',
       'action-stopped',

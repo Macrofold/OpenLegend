@@ -198,7 +198,7 @@ pub(crate) struct ActivityOccurrence {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub release: Option<UnconvertedField>,
+    pub release: Option<super::ActivityRelease>,
     pub id: String,
     pub actor_id: String,
     pub command_id: String,
@@ -287,7 +287,6 @@ impl ActivityOccurrence {
         display: &ActivityDisplayLimits,
     ) -> Result<(), ActivityError> {
         if self.attack_execution.is_some()
-            || self.release.is_some()
             || self.stock_resolution.is_some()
             || self.method_id.is_some()
         {
@@ -298,7 +297,11 @@ impl ActivityOccurrence {
         if matches!(self.command, NativeCommand::InspectActivities { .. }) {
             return Err(ActivityError::InvalidStructure);
         }
-        if self.actor_id != actor_id
+        if self
+            .release
+            .as_ref()
+            .is_some_and(|release| !release.valid_for(&self.command))
+            || self.actor_id != actor_id
             || !is_safe_record_id(&self.id)
             || !is_safe_record_id(&self.action_id)
             || self.command.envelope().id != self.id
@@ -770,6 +773,22 @@ impl ActivityState {
             .action_record(action_id)
             .map(|record| record.map(|record| &record.occurrence))
     }
+
+    /// Read an actor's exact retained occurrence, whose ID can differ from the
+    /// action invocation that produced it.
+    pub(crate) fn occurrence_by_id(
+        &self,
+        actor_id: &str,
+        occurrence_id: &str,
+    ) -> Result<Option<&ActivityOccurrence>, ActivityError> {
+        let Some(collection) = self.collections.get(actor_id) else {
+            return Ok(None);
+        };
+        collection
+            .get(occurrence_id)
+            .map(|record| record.map(|record| &record.occurrence))
+    }
+
     pub(crate) fn install(
         header: ActivityHeader,
         collections: IndexMap<String, ActivityCollection>,

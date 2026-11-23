@@ -3,7 +3,10 @@
 //! work meter, sparse physical journal and attribute-change notice owner.
 
 use super::*;
+use crate::activity::PracticeReleaseFacts;
 use crate::host::retained_size::heap_record;
+use crate::state::{PracticeProgress, ReleaseSupport};
+use crate::status::PracticeProfile;
 use crate::work::WorkUnit;
 
 heap_record!(crate::state::ReleaseSupport {
@@ -19,7 +22,83 @@ heap_record!(crate::state::CoachingSupport {
 });
 heap_record!(crate::state::PracticeProgress { releases, coaching });
 
+impl PracticeProgress {
+    /// Apply the installed rule to the remaining lawful support, including
+    /// the character's authored starting rank and any completed coaching.
+    pub fn rank(&self, profile: &PracticeProfile) -> u64 {
+        u64::from(
+            self.starting == 1
+                || self.releases.len() as u64 >= profile.independent_releases
+                || (self.coaching.is_some()
+                    && self.releases.len() as u64 >= profile.coached_releases),
+        )
+    }
+}
+
 impl CoreMutation<'_> {
+    /// Record this exact committed shot and its owned skill evidence in the
+    /// same candidate as the ammunition debit. Returns whether rank improved.
+    pub(crate) fn record_practice_release(
+        &mut self,
+        actor: &str,
+        action: &str,
+        emitted: &CompletedOccurrence,
+        facts: PracticeReleaseFacts<'_>,
+    ) -> Result<bool, ExecutionError> {
+        let profile = facts
+            .definition
+            .practice
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?;
+        let event = emitted.event_id();
+        let Some(occurrence) = self
+            .journal
+            .activity
+            .install_practice_release(
+                &mut self.state.activity,
+                actor,
+                action,
+                event,
+                &facts,
+                profile,
+            )
+            .map_err(ExecutionError::Activity)?
+        else {
+            return Ok(false);
+        };
+        self.physical()
+            .credit_practice(actor, &facts.definition.id, occurrence, event, profile)
+    }
+
+    /// The flight caller already proved the exact outcome was observed. Check
+    /// the original physical life again before adding its own private result.
+    pub(crate) fn record_observed_practice_contact(
+        &mut self,
+        actor: &str,
+        source_life: u64,
+        action: &str,
+        hit: bool,
+    ) -> Result<(), ExecutionError> {
+        let still_present = self
+            .state
+            .physical
+            .entities
+            .get(actor)
+            .is_some_and(|entity| {
+                entity.actively_participates()
+                    && entity.actor.as_ref().is_some_and(|body| {
+                        body.alive && body.physical_life.unwrap_or(0) == source_life
+                    })
+            });
+        if still_present {
+            self.journal
+                .activity
+                .observe_practice_contact(&mut self.state.activity, actor, action, hit)
+                .map_err(ExecutionError::Activity)?;
+        }
+        Ok(())
+    }
+
     pub(crate) fn revoke_practice_support(
         &mut self,
         actor_id: &str,
@@ -88,6 +167,128 @@ impl CoreMutation<'_> {
     }
 }
 impl PhysicalMutation<'_> {
+    fn practice_before(
+        journal: &mut PhysicalJournal,
+        handle: EntityHandle,
+        actor: &str,
+        key: &str,
+        progress: &PracticeProgress,
+        growth: usize,
+    ) -> Result<u64, ExecutionError> {
+        let revision = progress
+            .revision
+            .checked_add(1)
+            .filter(|revision| *revision <= MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Identity)?;
+        let bytes = heap_sum([
+            key.len().checked_mul(3).ok_or(ExecutionError::Capacity)?,
+            actor.len(),
+            progress.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            growth,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        journal.reserve(bytes)?;
+        let undo_key = UndoKey::Practice(handle.slot, handle.generation, key.to_owned());
+        if journal.first(&undo_key)? {
+            journal.retain(
+                undo_key,
+                Undo::Practice {
+                    entity: handle,
+                    key: key.to_owned(),
+                    before: progress.clone(),
+                },
+            )?;
+        }
+        Ok(revision)
+    }
+
+    fn practice_member_mut(
+        &mut self,
+        handle: EntityHandle,
+        index: usize,
+    ) -> Result<&mut PracticeProgress, ExecutionError> {
+        self.state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.practice.as_mut())
+            .and_then(|practice| practice.get_index_mut(index))
+            .map(|(_, progress)| progress)
+            .ok_or(ExecutionError::Invariant)
+    }
+
+    fn settle_practice_change(
+        &mut self,
+        handle: EntityHandle,
+        entity_id: String,
+    ) -> Result<(), ExecutionError> {
+        self.state
+            .entities
+            .settle_practice_memory(handle, &mut self.journal.reservation, false)?;
+        self.journal.change(PhysicalChange::Attribute {
+            entity_id,
+            outward_change: true,
+        })
+    }
+
+    fn credit_practice(
+        &mut self,
+        actor: &str,
+        attribute: &str,
+        occurrence_id: String,
+        event: &str,
+        profile: &PracticeProfile,
+    ) -> Result<bool, ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(actor)
+            .ok_or(ExecutionError::MissingActor)?;
+        let Some((index, key, progress)) = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.practice.as_ref())
+            .and_then(|practice| practice.get_full(attribute))
+        else {
+            return Ok(false);
+        };
+        let releases = &progress.releases;
+        if releases.len() as u64 >= profile.independent_releases
+            || releases
+                .iter()
+                .any(|support| support.occurrence_id == occurrence_id)
+        {
+            return Ok(false);
+        }
+        let prior_rank = progress.rank(profile);
+        let growth = heap_sum([
+            occurrence_id.capacity(),
+            event.len(),
+            if releases.len() == releases.capacity() {
+                size_of::<ReleaseSupport>()
+            } else {
+                0
+            },
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let revision = Self::practice_before(self.journal, handle, actor, key, progress, growth)?;
+        let progress = self.practice_member_mut(handle, index)?;
+        progress
+            .releases
+            .try_reserve_exact(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        progress.releases.push(ReleaseSupport {
+            occurrence_id,
+            event_id: event.to_owned(),
+        });
+        progress.revision = revision;
+        let improved = prior_rank == 0 && progress.rank(profile) == 1;
+        self.settle_practice_change(handle, actor.to_owned())?;
+        Ok(improved)
+    }
+
     fn revoke_practice_member(
         &mut self,
         handle: EntityHandle,
@@ -133,39 +334,9 @@ impl PhysicalMutation<'_> {
         if !releases && !coaching {
             return Ok(());
         }
-        let revision = progress
-            .revision
-            .checked_add(1)
-            .filter(|revision| *revision <= MAX_SAFE_INTEGER)
-            .ok_or(ExecutionError::Identity)?;
-        let bytes = heap_sum([
-            key.len().checked_mul(3).ok_or(ExecutionError::Capacity)?,
-            entity.id.len(),
-            progress.heap_bytes().ok_or(ExecutionError::Capacity)?,
-        ])
-        .ok_or(ExecutionError::Capacity)?;
-        self.journal.reserve(bytes)?;
-        let undo_key = UndoKey::Practice(handle.slot, handle.generation, key.clone());
-        if self.journal.first(&undo_key)? {
-            self.journal.retain(
-                undo_key,
-                Undo::Practice {
-                    entity: handle,
-                    key: key.clone(),
-                    before: progress.clone(),
-                },
-            )?;
-        }
+        let revision = Self::practice_before(self.journal, handle, &entity.id, key, progress, 0)?;
         let entity_id = entity.id.clone();
-        let progress = self
-            .state
-            .entities
-            .resolve_mut(handle)
-            .and_then(|entity| entity.actor.as_mut())
-            .and_then(|actor| actor.practice.as_mut())
-            .and_then(|practice| practice.get_index_mut(index))
-            .ok_or(ExecutionError::Invariant)?
-            .1;
+        let progress = self.practice_member_mut(handle, index)?;
         if releases {
             progress.releases.retain(|support| {
                 !selected.contains(&support.event_id) && !selected.contains(&support.occurrence_id)
@@ -175,9 +346,6 @@ impl PhysicalMutation<'_> {
             progress.coaching = None;
         }
         progress.revision = revision;
-        self.journal.change(PhysicalChange::Attribute {
-            entity_id,
-            outward_change: true,
-        })
+        self.settle_practice_change(handle, entity_id)
     }
 }

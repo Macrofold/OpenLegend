@@ -192,6 +192,7 @@ pub(crate) struct SightBatch {
     observer: ObserverLife,
     queries: GeometryQueries,
     checks: Vec<SightCheck>,
+    point: Option<SightDecision>,
     reservation: ByteReservation,
 }
 
@@ -199,6 +200,7 @@ pub(crate) struct SightResults {
     observer: ObserverLife,
     binding: GeometryBinding,
     checks: Vec<SightCheck>,
+    point_seen: Option<bool>,
     _reservation: ByteReservation,
 }
 
@@ -208,6 +210,28 @@ impl SightBatch {
         installed: &InstalledWorld,
         observer_id: &str,
         targets: &[&str],
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, SensorError> {
+        Self::prepare_with_point(
+            physical,
+            installed,
+            observer_id,
+            targets,
+            None,
+            binding,
+            budget,
+        )
+    }
+
+    /// The same current vision cut may contain bodies and one exact point.
+    /// The point adds a single occlusion test and never grants a body contact.
+    pub(crate) fn prepare_with_point(
+        physical: &PhysicalState,
+        installed: &InstalledWorld,
+        observer_id: &str,
+        targets: &[&str],
+        point: Option<Point>,
         binding: GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Self, SensorError> {
@@ -225,7 +249,11 @@ impl SightBatch {
         // Three exact body-height tests are the current vision-geometry-v1
         // detector. Batching all possible rays adds no exposure; complete native
         // CPU/provider costs include even rays an earlier clear ray could skip.
-        let ray_capacity = targets.len().checked_mul(3).ok_or(SensorError::Capacity)?;
+        let ray_capacity = targets
+            .len()
+            .checked_mul(3)
+            .and_then(|count| count.checked_add(usize::from(point.is_some())))
+            .ok_or(SensorError::Capacity)?;
         let id_bytes = targets
             .iter()
             .try_fold(0_usize, |total, id| total.checked_add(id.len()))
@@ -307,6 +335,39 @@ impl SightBatch {
                 decision,
             });
         }
+        let point = if let Some(position) = point {
+            if !enabled || vision.radius <= 0.0 {
+                Some(SightDecision::Known(false))
+            } else {
+                let from = from.ok_or(SensorError::PhysicalPosition)?;
+                if (from.x - position.x).powi(2)
+                    + (from.y - position.y).powi(2)
+                    + (from.z - position.z).powi(2)
+                    > vision.radius.powi(2)
+                    || !horizontal_cone(
+                        from,
+                        observer.spatial.heading,
+                        vision.field_of_view,
+                        position,
+                    )
+                {
+                    Some(SightDecision::Known(false))
+                } else {
+                    let first = queries.sight.len();
+                    let eye = Point {
+                        y: from.y + observer.body_profile().eye_height,
+                        ..from
+                    };
+                    queries.sight.push(SightRay {
+                        from: eye,
+                        to: position,
+                    });
+                    Some(SightDecision::Rays { first, count: 1 })
+                }
+            }
+        } else {
+            None
+        };
         let observer = ObserverLife {
             actor_id: observer.id.clone(),
             physical_life: observer.physical_life().unwrap_or(0),
@@ -326,6 +387,7 @@ impl SightBatch {
             observer,
             queries,
             checks,
+            point,
             reservation,
         })
     }
@@ -356,6 +418,12 @@ impl SightBatch {
                     SightDecision::Known(sight[first..first + count].iter().any(|clear| *clear));
             }
         }
+        let point_seen = self.point.map(|decision| match decision {
+            SightDecision::Known(value) => value,
+            SightDecision::Rays { first, count } => {
+                sight[first..first + count].iter().any(|clear| *clear)
+            }
+        });
         let binding = self.queries.binding;
         drop(self.queries);
         self.reservation
@@ -374,12 +442,17 @@ impl SightBatch {
             observer: self.observer,
             binding,
             checks: self.checks,
+            point_seen,
             _reservation: self.reservation,
         })
     }
 }
 
 impl SightResults {
+    pub(crate) fn point_seen(&self) -> Option<bool> {
+        self.point_seen
+    }
+
     pub(crate) fn observer(&self) -> &ObserverLife {
         &self.observer
     }

@@ -657,16 +657,19 @@ impl PhysicalJournal {
     ) -> Result<(), RecordEncodingError> {
         let state = &simulation.physical;
         let ledger = &simulation.records;
-        let (maximum, details) = self.undo.iter().try_fold(
-            (self.undo.len(), 0usize),
-            |(maximum, details), undo| match undo {
+        let (maximum, details, flight_changes) = self.undo.iter().try_fold(
+            (self.undo.len(), 0usize, 0usize),
+            |(maximum, details, flights), undo| match undo {
                 Undo::Inventory(before) if before.edited_item() => {
-                    Some((maximum.checked_add(1 + before.changed_contents().count())?, details))
+                    Some((maximum.checked_add(1 + before.changed_contents().count())?, details, flights))
                 }
                 Undo::Episode(episode) => {
-                    Some((maximum, details.checked_add(episode.attributes.len())?))
+                    Some((maximum, details.checked_add(episode.attributes.len())?, flights))
                 }
-                _ => Some((maximum, details)),
+                Undo::ProjectileLaunch { .. } | Undo::ProjectileProgress { .. } | Undo::ProjectileRetire { .. } => {
+                    Some((maximum, details, flights.checked_add(1)?))
+                }
+                _ => Some((maximum, details, flights)),
             },
         ).ok_or_else(error)?;
         let keys = maximum.checked_add(details).ok_or_else(error)?;
@@ -676,6 +679,7 @@ impl PhysicalJournal {
                 .and_then(|bytes| bytes.checked_mul(5))
                 .ok_or_else(error)?,
             map_storage::<&str, bool>(maximum).ok_or_else(error)?,
+            map_storage::<&str, bool>(flight_changes).ok_or_else(error)?,
             map_storage::<&str, Vec<&Undo>>(maximum).ok_or_else(error)?,
             self.undo
                 .len()
@@ -695,6 +699,7 @@ impl PhysicalJournal {
         let mut object_lineage = false;
         let mut claims = IndexMap::with_capacity(maximum);
         let mut added = 0u64;
+        let mut flights = IndexMap::with_capacity(flight_changes);
         participation::encode_exposures(self, state, ledger, output, budget)?;
         for change in &self.undo {
             match change {
@@ -709,6 +714,18 @@ impl PhysicalJournal {
                 // Pending consent is an inline setting in the canonical
                 // world row, written by the parent settings encoder.
                 Undo::ExitExposure { .. } | Undo::Gift(_) | Undo::MaterialWet { .. } | Undo::MaterialDetails { .. } => {}
+                Undo::ProjectileLaunch { id, .. } => {
+                    flights.entry(id.as_str()).or_insert(false);
+                }
+                Undo::ProjectileProgress { id, .. } => {
+                    flights.entry(id.as_str()).or_insert(true);
+                }
+                Undo::ProjectileRetire { id, before, .. } => {
+                    flights.entry(id.as_str()).or_insert(true);
+                    if before.passage_owner {
+                        observe(output, "sim_projectile_passages", &["world", "projectiles", id], false, 0, budget)?;
+                    }
+                }
                 Undo::CoachingPresence { .. } => coaching = true,
                 Undo::RemovedPhysicalRoot(before) => {
                     // The transfer revised direct contents before taking the
@@ -995,6 +1012,9 @@ impl PhysicalJournal {
                     }
                 }
             }
+        }
+        if !flights.is_empty() {
+            map(ledger, output, "sim_projectiles", &["world"], "projectiles", state.projectiles.present.then_some(&state.projectiles.flights), &flights, false, budget)?;
         }
         if !claims.is_empty() {
             let table = "sim_resource_reservations";

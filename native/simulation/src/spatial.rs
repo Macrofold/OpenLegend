@@ -6,8 +6,10 @@ use crate::state::{BodyProfile, Point};
 
 mod angle;
 mod logarithm;
+mod point_contact;
 pub use angle::atan2;
 pub(crate) use logarithm::log10;
+pub(crate) use point_contact::moving_point_contact;
 
 /// Current JavaScript Math.hypot(dx,dy,dz) evaluation order, including its
 /// scaled compensated sum. Squared sums or nested hypot alter real route cuts.

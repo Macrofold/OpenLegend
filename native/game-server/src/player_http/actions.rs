@@ -11,6 +11,7 @@ use openlegend_simulation::{
 use std::sync::LazyLock;
 mod preparation;
 mod pickup;
+mod practice;
 mod manufacture;
 mod status;
 mod fire;
@@ -168,6 +169,9 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                                 gathering(selected, offer, budget)
                             }
                             RuntimeResourceOffer::Pickup(offer) => pickup::render(selected, offer, controls, budget),
+                            RuntimeResourceOffer::Practice(offer) => {
+                                practice::render(selected, offer, controls, budget)
+                            }
                             RuntimeResourceOffer::Fish(offer) => {
                                 let available = if !controls {
                                     Some("Take control of your character to act here.")

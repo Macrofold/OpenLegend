@@ -33,6 +33,7 @@ pub(crate) struct PhysicalDefinitions<'a> {
         &'a IndexMap<String, super::VerifiedDefinition<crate::status::AttributeDefinition>>,
     pub status_policy: &'a crate::status::StatusEffectPolicy,
     pub body_policy: Option<&'a crate::body::BodyPolicy>,
+    pub ranged_installed: bool,
     pub maximum_candidates: usize,
     pub maximum_path_points: usize,
     pub epsilon: f64,
@@ -570,12 +571,16 @@ pub(crate) fn install_physical(
         children.take("resourceReservations")?.unwrap_or(false), true,
     )?;
     let holds = crate::item_holds::install(reservations, &entities, budget)?;
+    let projectiles = crate::projectile::ProjectileState::install(
+        import, &mut children, header.sim_time, installed.ranged_installed, budget,
+    )?;
     Ok(PhysicalInstallation {
         state: PhysicalState {
             gifts: crate::handover::GiftState::install(gifts, &entities, header.sim_time, budget)?,
             holds,
             participation,
             coaching,
+            projectiles,
             header,
             identity,
             entities,
@@ -1136,6 +1141,7 @@ pub(super) fn validate_physical_item_references(
                 || action.is_treating_scar() && !crate::body::scar_treatment::valid_saved(
                     entity, action, installed.body_policy.as_ref().map(super::VerifiedDefinition::value),
                 )
+                || action.is_practice_shot() && !crate::projectile::practice::valid_saved(state, installed, entity, action)
                 || action.is_tending_fire() && !crate::fire_care::valid_saved(
                     action, state, installed.fire_care.as_ref().map(|rule| rule.value()),
                 )

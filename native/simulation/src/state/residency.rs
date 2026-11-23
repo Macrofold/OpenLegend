@@ -47,6 +47,7 @@ pub(super) struct EntityMetadata {
     agency: usize,
     participation: usize,
     operational: usize,
+    practice: usize,
     storage: ResidentReservation,
     budget: ByteBudget,
 }
@@ -56,6 +57,7 @@ impl EntityMetadata {
         let agency = agency_bytes(entity)?;
         let participation = participation_bytes(entity)?;
         let operational = operational_bytes(entity)?;
+        let practice = practice_bytes(entity)?;
         Ok(Self {
             values: status::ValueStorage::new(entity, budget)?,
             _authored: budget
@@ -74,11 +76,13 @@ impl EntityMetadata {
             agency,
             participation,
             operational,
+            practice,
             storage: budget.reserve_backing(
                 semantic
                     .checked_add(agency)
                     .and_then(|n| n.checked_add(participation))
                     .and_then(|n| n.checked_add(operational))
+                    .and_then(|n| n.checked_add(practice))
                     .ok_or(ExecutionError::Capacity)?,
             )?,
             budget: budget.clone(),
@@ -117,6 +121,40 @@ impl HeapBytes for Placement {
                 heap_sum([parent_entity_id.capacity(), port_id.capacity(), slot.heap_bytes()?]),
         }
     }
+}
+
+fn settle_component(
+    budget: &ByteBudget,
+    storage: &mut ResidentReservation,
+    tracked: &mut usize,
+    after: usize,
+    from: &mut ByteReservation,
+    restoring: bool,
+) -> Result<(), ExecutionError> {
+    let total = storage
+        .bytes()
+        .checked_sub(*tracked)
+        .and_then(|n| n.checked_add(after))
+        .ok_or(ExecutionError::Capacity)?;
+    if total > storage.bytes() {
+        let growth = from.split_off(total - storage.bytes())?;
+        if restoring {
+            budget.restore_backing(storage, growth)?;
+        } else {
+            budget.fund_backing(storage, growth)?;
+        }
+    }
+    storage.resize(total)?;
+    *tracked = after;
+    Ok(())
+}
+
+fn practice_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
+    entity
+        .actor
+        .as_ref()
+        .map_or(Some(0), |actor| actor.practice.heap_bytes())
+        .ok_or(ExecutionError::Capacity)
 }
 
 fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
@@ -278,38 +316,54 @@ impl EntityStore {
         from: &mut ByteReservation,
         restoring: bool,
     ) -> Result<(), ExecutionError> {
+        let (after, metadata) = self.component_memory(handle, operational_bytes)?;
+        settle_component(
+            &metadata.budget,
+            &mut metadata.storage,
+            &mut metadata.operational,
+            after,
+            from,
+            restoring,
+        )
+    }
+
+    /// Practice grows only on released or revoked personal support. Generic
+    /// inventory, body and movement writes need not inspect its retained rows.
+    pub(crate) fn settle_practice_memory(
+        &mut self,
+        handle: EntityHandle,
+        from: &mut ByteReservation,
+        restoring: bool,
+    ) -> Result<(), ExecutionError> {
+        let (after, metadata) = self.component_memory(handle, practice_bytes)?;
+        settle_component(
+            &metadata.budget,
+            &mut metadata.storage,
+            &mut metadata.practice,
+            after,
+            from,
+            restoring,
+        )
+    }
+
+    fn component_memory(
+        &mut self,
+        handle: EntityHandle,
+        measure: impl FnOnce(&Entity) -> Result<usize, ExecutionError>,
+    ) -> Result<(usize, &mut EntityMetadata), ExecutionError> {
         let slot = self
             .slots
             .get_mut(handle.slot)
             .filter(|slot| slot.generation == handle.generation)
             .ok_or(ExecutionError::MissingEntity)?;
-        let after = operational_bytes(slot.entity.as_ref().ok_or(ExecutionError::MissingEntity)?)?;
+        let after = measure(slot.entity.as_ref().ok_or(ExecutionError::MissingEntity)?)?;
         let metadata = slot
             .metadata_storage
             .as_mut()
             .ok_or(ExecutionError::Invariant)?;
-        let total = metadata
-            .storage
-            .bytes()
-            .checked_sub(metadata.operational)
-            .and_then(|n| n.checked_add(after))
-            .ok_or(ExecutionError::Capacity)?;
-        if total > metadata.storage.bytes() {
-            let growth = from.split_off(total - metadata.storage.bytes())?;
-            if restoring {
-                metadata
-                    .budget
-                    .restore_backing(&mut metadata.storage, growth)?;
-            } else {
-                metadata
-                    .budget
-                    .fund_backing(&mut metadata.storage, growth)?;
-            }
-        }
-        metadata.storage.resize(total)?;
-        metadata.operational = after;
-        Ok(())
+        Ok((after, metadata))
     }
+
     pub(crate) fn settle_participation_memory(
         &mut self,
         handle: EntityHandle,

@@ -1,5 +1,5 @@
-//! Own progress and checked resident evidence. Cold activity rows remain a
-//! separate exact-cut repository read.
+//! Own progress and checked resident evidence. A retained support without
+//! its description uses the installed wording for that case.
 
 use super::{Arc, SceneError};
 use openlegend_simulation::{
@@ -123,37 +123,40 @@ pub(super) fn project_practice(
         let releases = progress.releases.len();
         let coached = progress.coaching.is_some();
         let starting = progress.starting == 1;
-        let value = starting
-            || releases as u64 >= profile.independent_releases
-            || (coached && releases as u64 >= profile.coached_releases);
+        let value = progress.rank(profile) == 1;
         let mut evidence = Vec::new();
         for support in &progress.releases {
             let activity = actor
                 .practice_records()
                 .find(|(id, _)| *id == support.occurrence_id)
-                .map(|(_, activity)| activity)
-                .ok_or(SceneError::Unsupported(
-                    "a cold activity record needed by practice",
-                ))?;
+                .map(|(_, activity)| activity);
             let retained = custody.bytes();
-            let workspace = limits
-                .display_bytes
-                .checked_mul(16)
-                .ok_or(SceneError::Capacity)?;
+            let workspace = if activity.is_some() {
+                limits
+                    .display_bytes
+                    .checked_mul(16)
+                    .ok_or(SceneError::Capacity)?
+            } else {
+                view.evidence_fallback.len()
+            };
             custody.resize(
                 retained
                     .checked_add(workspace)
                     .ok_or(SceneError::Capacity)?,
             )?;
-            let description = project_activity(
-                activity,
-                Some(&policy.evidence_header),
-                &limits,
-                limits.display_bytes,
-                limits.depth,
-            )
-            .map_err(|_| SceneError::Unsupported("the installed practice activity display"))?
-            .text;
+            let description = if let Some(activity) = activity {
+                project_activity(
+                    activity,
+                    Some(&policy.evidence_header),
+                    &limits,
+                    limits.display_bytes,
+                    limits.depth,
+                )
+                .map_err(|_| SceneError::Unsupported("the installed practice activity display"))?
+                .text
+            } else {
+                view.evidence_fallback.as_str().into()
+            };
             custody.resize(
                 retained
                     .checked_add(description.storage_bytes())

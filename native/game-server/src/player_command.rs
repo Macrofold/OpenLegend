@@ -92,6 +92,12 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     item_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    ammunition_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     container_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
@@ -323,6 +329,8 @@ impl SelectedKnownPlace {
 enum CommandKind {
     Move,
     Strike,
+    #[serde(rename = "practice-shot")]
+    PracticeShot,
     Follow,
     Respawn,
     Cancel,
@@ -864,7 +872,7 @@ impl PlayerCommands {
                                         return Ok(ApplicationStart::Existing(
                                             ResultOwner::Refused(
                                                 "stale-contact",
-                                                if matches!(raw.kind, CommandKind::StatusEffect | CommandKind::Follow | CommandKind::Strike) {
+                                                if matches!(raw.kind, CommandKind::StatusEffect | CommandKind::Follow | CommandKind::Strike | CommandKind::PracticeShot) {
                                                     "Choose a target you can see now."
                                                 } else {
                                                     "Choose a resource you can see now."
@@ -1088,6 +1096,7 @@ impl CommandRequest {
             || command.tools.as_ref().is_some_and(|tools| {
                 tools.len() != 1 || tools.iter().any(|(role, item)| !id(role) || !id(item))
             })
+            || (!matches!(command.kind, CommandKind::PracticeShot) && command.ammunition_id.is_some())
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
             || (!matches!(command.kind, CommandKind::TreatScar) && command.scar_id.is_some())
             || (!matches!(command.kind, CommandKind::PlaceHearth) && command.hearth_plan.is_some())
@@ -1193,6 +1202,17 @@ impl CommandRequest {
                                 id(&point.surface_id)
                                     && [point.x, point.y, point.z].iter().all(|n| n.is_finite())
                             })) =>
+            {
+                Ok(())
+            }
+            CommandKind::PracticeShot
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.item_id.as_deref().is_none_or(id)
+                    && command.ammunition_id.as_deref().is_none_or(id) =>
             {
                 Ok(())
             }
@@ -1530,6 +1550,11 @@ impl PreparedRequest {
                     .as_deref()
                     .ok_or(StoreError::InvalidRecord)?,
                 permission: strike_permission,
+            }),
+            CommandKind::PracticeShot => Ok(RuntimePlayerCommand::PracticeShot {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                weapon: input.item_id.as_deref(),
+                ammunition: input.ammunition_id.as_deref(),
             }),
             CommandKind::Move => Ok(RuntimePlayerCommand::Move(
                 destination.ok_or(StoreError::InvalidRecord)?,

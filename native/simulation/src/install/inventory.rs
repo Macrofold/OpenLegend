@@ -68,8 +68,8 @@ pub(super) struct ItemDefinitionFields {
     description: Option<crate::text::JsText>,
     #[serde(default)]
     properties: Vec<crate::text::JsText>,
-    ammunition: Option<serde::de::IgnoredAny>,
-    ranged_weapon: Option<serde::de::IgnoredAny>,
+    ammunition: Option<crate::projectile::Ammunition>,
+    ranged_weapon: Option<crate::projectile::RangedWeapon>,
     melee: Option<serde::de::IgnoredAny>,
     nutrition: Option<f64>,
     fishing_tool: Option<FishingTool>,
@@ -82,6 +82,7 @@ pub(super) struct ItemDefinitionFields {
     #[serde(default)]
     tracks_material_origins: bool,
     assembly_material: Option<MaterialRole>,
+    recipe_id: Option<String>,
     recipe_record: Option<ItemRecipeRecord>,
     contents_exposure: Option<ContentsExposure>,
 }
@@ -165,6 +166,8 @@ pub(crate) struct ItemDefinitionRead {
     pub properties: Vec<crate::text::JsText>,
     pub category: &'static str,
     pub(crate) nutrition: Option<f64>,
+    pub(crate) ranged_weapon: Option<crate::projectile::RangedWeapon>,
+    pub(crate) ammunition: Option<crate::projectile::Ammunition>,
     plain_material: bool,
     gathering_tool: Option<GatheringTool>,
     fishing_tool: Option<FishingTool>,
@@ -174,6 +177,7 @@ pub(crate) struct ItemDefinitionRead {
     equipment: Option<Equipment>,
     pub tracks_material_origins: bool,
     pub material: Option<ItemMaterialRule>,
+    pub(crate) recipe_id: Option<String>,
     pub(crate) recipe_record: Option<ItemRecipeRecord>,
     open_contents: bool,
     pub(crate) exposure: Option<crate::material_exposure::ExposedMaterial>,
@@ -210,6 +214,8 @@ impl ItemDefinitionRead {
                 .as_ref()
                 .is_some_and(|tool| !is_safe_record_id(&tool.resource_id) || tool.quantity == 0)
             || value.fishing_tool.as_ref().is_some_and(|tool| !is_safe_record_id(&tool.kind))
+            || value.ranged_weapon.as_ref().is_some_and(|weapon| !weapon.valid())
+            || value.ammunition.as_ref().is_some_and(|ammunition| !ammunition.valid())
         {
             return Err(InstallError::DefinitionBody);
         }
@@ -298,6 +304,8 @@ impl ItemDefinitionRead {
                 && value.ranged_weapon.is_none() && value.melee.is_none()
                 && value.gathering_tool.is_none() && value.ammunition.is_none()
                 && value.nutrition.is_none_or(|value| value == 0.0),
+            ranged_weapon: value.ranged_weapon,
+            ammunition: value.ammunition,
             gathering_tool: value.gathering_tool,
             fishing_tool: value.fishing_tool,
             portable: value.portable,
@@ -307,6 +315,7 @@ impl ItemDefinitionRead {
             tracks_material_origins: value.tracks_material_origins
                 || value.assembly_material.is_some(),
             material,
+            recipe_id: value.recipe_id,
             recipe_record: value.recipe_record,
             open_contents: value.contents_exposure.is_some(),
             exposure: material_exposure,
@@ -364,10 +373,13 @@ heap_record!(ItemDefinitionRead {
     gather_label,
     description,
     properties,
+    ranged_weapon,
+    ammunition,
     gathering_tool,
     fishing_tool,
     material,
     equipment,
+    recipe_id,
     recipe_record
 });
 heap_record!(GatheringTool { resource_id });

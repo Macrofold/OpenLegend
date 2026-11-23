@@ -228,6 +228,9 @@ impl HeapBytes for NativeCommand {
                 definition_id.heap_bytes()?,
                 weapon_item_id.heap_bytes()?,
             ]),
+            Self::PracticeShot { envelope, target_id, weapon_item_id, ammo_item_id } => heap_sum([
+                envelope.heap_bytes()?, target_id.heap_bytes()?, weapon_item_id.heap_bytes()?, ammo_item_id.heap_bytes()?,
+            ]),
             Self::InspectInventory { envelope, selected, world } => heap_sum([
                 envelope.heap_bytes()?,
                 selected.as_ref().map_or(Some(0), |item| {
@@ -247,13 +250,13 @@ impl HeapBytes for NativeCommand {
 impl ActivityOccurrence {
     pub(super) fn live_heap_bytes(&self) -> Option<usize> {
         if self.attack_execution.is_some()
-            || self.release.is_some()
             || self.stock_resolution.is_some()
         {
             return None;
         }
         heap_sum([
             self.cooperation.heap_bytes()?,
+            self.release.heap_bytes()?,
             self.id.heap_bytes()?,
             self.actor_id.heap_bytes()?,
             self.command_id.heap_bytes()?,

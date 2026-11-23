@@ -37,6 +37,7 @@ mod conditions;
 mod contact;
 use contact::ContactPhase;
 mod flight;
+mod projectile;
 mod foraging;
 mod heat;
 mod hearth;
@@ -49,8 +50,8 @@ pub(crate) use inventory::partitionable_stock;
 pub use inventory::{OwnedArrangement, OwnedMove, OwnedStockLot, OwnedStockSelection};
 pub(crate) use inventory::{OwnedMoveError, can_split_stock, drop_item_problem, inventory_work_bound, same_container_merge};
 pub(crate) use inventory::{OwnedDebits, can_debit_lot, can_debit_lot_after_hold};
-mod participation;
 pub(crate) use inventory::{EquipmentDecision, EquipmentRequest, equipment_fits};
+mod participation;
 mod practice;
 mod rates;
 mod restore;
@@ -1230,6 +1231,8 @@ enum UndoKey {
     Contacts(usize, u64),
     Placement(usize, u64),
     Flight(usize, u64),
+    ProjectileProgress(String),
+    ProjectileRetire(String),
     Heading(usize, u64),
     Heat(usize, u64),
     Territorial(usize, u64),
@@ -1325,6 +1328,19 @@ struct WindowClock {
 }
 enum Undo {
     Gift(crate::handover::GiftUndo),
+    ProjectileLaunch {
+        id: String,
+        present: bool,
+    },
+    ProjectileProgress {
+        id: String,
+        before: crate::projectile::FlightPosition,
+    },
+    ProjectileRetire {
+        position: usize,
+        id: String,
+        before: Box<crate::projectile::FundedProjectile>,
+    },
     InventoryAvailability(inventory::ContentsBefore),
     MaterialWet { item: EntityHandle, before: bool },
     MaterialDetails { root: EntityHandle, before: u64 },
@@ -1896,6 +1912,18 @@ impl PhysicalJournal {
         while self.undo.len() > frame.undo_start {
             let undo = self.undo.pop().ok_or(ExecutionError::Invariant)?;
             match undo {
+                Undo::ProjectileLaunch { id, present } => {
+                    state.projectiles.flights.shift_remove(&id).ok_or(ExecutionError::Invariant)?;
+                    state.projectiles.present = present;
+                }
+                Undo::ProjectileProgress { id, before } => {
+                    state.projectiles.flights.get_mut(&id).ok_or(ExecutionError::Invariant)?.flight.set_progress(before);
+                }
+                Undo::ProjectileRetire { position, id, before } => {
+                    if state.projectiles.flights.shift_insert(position, id, before).is_some() {
+                        return Err(ExecutionError::Invariant);
+                    }
+                }
                 Undo::InventoryAvailability(before) => before.restore(state)?,
                 Undo::MaterialWet { item, before } => inventory.exposure.set_wet(item, before),
                 Undo::MaterialDetails { root, before } => {
@@ -2236,6 +2264,7 @@ impl PhysicalJournal {
                         .and_then(|actor| actor.practice.as_mut())
                         .and_then(|practice| practice.get_mut(&key))
                         .ok_or(ExecutionError::Invariant)? = before;
+                    state.entities.settle_practice_memory(entity, &mut self.reservation, true)?;
                 }
                 Undo::Flight { entity, before, fall_velocity } => {
                     let current = state.entities.resolve_mut(entity).ok_or(ExecutionError::Invariant)?;
@@ -3481,11 +3510,11 @@ impl PhysicalMutation<'_> {
         };
         let binding_changed = actor.action.as_ref().map(|action| action.id.as_str())
             != action.as_ref().map(|action| action.id.as_str());
-        if binding_changed && actor.action.as_ref().is_some_and(|action| {
-            action.is_placing_hearth()
-                || action.manufacture_tools.as_ref().is_some_and(|tools| !tools.is_empty())
-        }) {
-            self.release_action_holds(handle)?;
+        if let Some((count, key)) = actor.action.as_ref()
+            .filter(|_| binding_changed)
+            .and_then(crate::item_holds::ActionHoldKey::owned_by)
+        {
+            self.release_action_holds(handle, count, key)?;
         }
         let actor = self.state.entities.resolve(handle).and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;

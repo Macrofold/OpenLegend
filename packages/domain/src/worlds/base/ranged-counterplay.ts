@@ -83,6 +83,7 @@ export const BASE_RANGED_TEXT = {
   contactHit: 'was contacted by a projectile.',
   contactStopped: 'stopped a projectile without injury.',
   contactSource: ' The projectile came from ',
+  terminated: 'A committed projectile terminated.',
   observedHit: 'hit ',
   observedNoInjury: 'did not injure ',
   observedCover: 'saw the projectile stop against solid cover.',

@@ -10,6 +10,8 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
 mod prepare;
+mod release;
+pub(crate) use release::{ActivityRelease, PracticeReleaseFacts};
 pub(crate) use prepare::{ActivityStartProblem, check_activity_start};
 mod event;
 pub(crate) use event::EventActivity;
@@ -22,7 +24,8 @@ mod install;
 mod learning;
 mod residency;
 pub(crate) use learning::LearningLanguage;
-pub use learning::{LearningHistoryRequest, LearningJudgment, RuntimeInspectedSkill};
+pub use learning::{LearningHistoryRequest, LearningJudgment};
+pub use learning::RuntimeInspectedSkill;
 pub(crate) use learning::inspected_activities;
 pub(crate) use learning::{
     CompletedActivityLearning, LearningFormatAnswer, LearningFormatRequest, LearningHistoryAnswer,

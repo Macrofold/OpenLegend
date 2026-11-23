@@ -30,6 +30,7 @@ pub(crate) struct MotionOperation {
     binding: GeometryBinding,
     budget: ByteBudget,
     complete: Option<bool>,
+    forecast: Option<MotionForecast>,
     _reservation: ByteReservation,
 }
 fn error(error: MovementError) -> ExecutionError {
@@ -71,6 +72,7 @@ impl MotionOperation {
             occupied,
             binding,
             budget,
+            None,
         )
     }
     /// A transient steering route uses the same physical prefix writer without
@@ -92,8 +94,32 @@ impl MotionOperation {
             true,
             binding,
             budget,
+            None,
         )
     }
+    /// Prepare the same checked path and occupied prefix for elapsed contact
+    /// prediction. The resulting track owns its reservation and has no effect.
+    pub(crate) fn forecast(
+        core: &CoreMutation<'_>,
+        entity: &Entity,
+        path: &[SurfacePoint],
+        action_id: Option<&str>,
+        distance_budget: f64,
+        occupied: bool,
+        seconds: f64,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        Self::with_path(
+            core, &entity.id, path, action_id, distance_budget, occupied, binding, budget,
+            Some(seconds),
+        )
+    }
+
+    pub(crate) fn into_forecast(self) -> Result<MotionForecast, ExecutionError> {
+        self.forecast.ok_or(ExecutionError::Invariant)
+    }
+
     fn with_path(
         core: &CoreMutation<'_>,
         actor_id: &str,
@@ -103,6 +129,7 @@ impl MotionOperation {
         occupied: bool,
         binding: GeometryBinding,
         budget: &ByteBudget,
+        forecast_seconds: Option<f64>,
     ) -> Result<Self, ExecutionError> {
         if !distance_budget.is_finite()
             || distance_budget < 0.0
@@ -160,17 +187,19 @@ impl MotionOperation {
             entity.ordinary_body_profile().id.len(),
         ])
         .ok_or(ExecutionError::Capacity)?;
-        let reservation = budget.reserve(bytes)?;
-        let cursor = MotionCursor::start(
-            handle,
-            entity,
-            path.to_vec(),
-            action_id,
-            distance_budget,
-            occupied,
-            core.state.installed.spatial.epsilon,
-        )
-        .map_err(error)?;
+        let mut reservation = budget.reserve(bytes)?;
+        let epsilon = core.state.installed.spatial.epsilon;
+        let cursor = if let Some(seconds) = forecast_seconds {
+            let cursor = MotionCursor::start_forecast(
+                handle, entity, path.to_vec(), distance_budget, seconds, occupied, epsilon, budget,
+            ).map_err(error)?;
+            reservation.resize(size_of::<Self>())?;
+            cursor
+        } else {
+            MotionCursor::start(
+                handle, entity, path.to_vec(), action_id, distance_budget, occupied, epsilon,
+            ).map_err(error)?
+        };
         Ok(Self {
             cursor: Some(cursor),
             sweep: None,
@@ -179,6 +208,7 @@ impl MotionOperation {
             binding,
             budget: budget.clone(),
             complete: None,
+            forecast: None,
             _reservation: reservation,
         })
     }
@@ -266,7 +296,14 @@ impl MotionOperation {
                 let cursor = self.cursor.as_mut().ok_or(ExecutionError::Invariant)?;
                 let Some((kind, from, to)) = cursor.question() else {
                     let cursor = self.cursor.take().ok_or(ExecutionError::Invariant)?;
-                    let complete = core.physical().finish_motion(cursor)?;
+                    let complete = if cursor.is_forecast() {
+                        let forecast = cursor.into_forecast().map_err(error)?;
+                        let complete = forecast.complete;
+                        self.forecast = Some(forecast);
+                        complete
+                    } else {
+                        core.physical().finish_motion(cursor)?
+                    };
                     self.complete = Some(complete);
                     continue;
                 };
