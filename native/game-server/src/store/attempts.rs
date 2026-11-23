@@ -14,8 +14,9 @@ use std::sync::Arc;
 enum AttemptClaim {
     Semantic(Arc<SemanticClaim>),
     Reflection(Arc<ReflectionScope>, ReflectionCue),
-    EscalatedChoice {
+    EscalatedDecision {
         fingerprint: String,
+        kind: &'static str,
         level_ceiling: u64,
         rejected: Option<String>,
     },
@@ -206,15 +207,19 @@ impl Store {
             .await
     }
 
-    /// Fund the one direct fallback only for the exact unresolved automatic
-    /// choice and after every earlier linked execution is known terminal.
-    pub(crate) async fn reserve_escalated_choice(
+    /// Fund the one direct higher answer for the exact unfinished root
+    /// after every preceding linked execution is known terminal.
+    pub(crate) async fn reserve_escalated_decision(
         &self,
         request: AttemptRequest,
         fingerprint: String,
+        kind: &'static str,
         level_ceiling: u64,
         rejected: Option<&str>,
     ) -> Result<AttemptAdmission, CommitError> {
+        if !matches!(kind, "thought" | "chat") || (kind == "chat" && rejected.is_some()) {
+            return Err(CommitError::RolledBack(StoreError::InvalidRecord));
+        }
         // This bounded copy is only needed when custody reaches SQL.
         let _custody = self
             .budget
@@ -222,8 +227,9 @@ impl Store {
             .map_err(|_| CommitError::RolledBack(StoreError::Capacity))?;
         self.reserve_for_model(
             request,
-            Some(AttemptClaim::EscalatedChoice {
+            Some(AttemptClaim::EscalatedDecision {
                 fingerprint,
+                kind,
                 level_ceiling,
                 rejected: rejected.map(str::to_owned),
             }),
@@ -251,7 +257,7 @@ impl Store {
             if tx.query_opt("SELECT id FROM attempts WHERE id=$1", &[&request.id]).await?.is_some() {
                 return Ok(AttemptAdmission::Existing);
             }
-            if let Some(AttemptClaim::EscalatedChoice { level_ceiling, .. }) = &claim
+            if let Some(AttemptClaim::EscalatedDecision { level_ceiling, .. }) = &claim
                 && request.amount > *level_ceiling
             {
                 return Ok(AttemptAdmission::Exhausted);
@@ -264,21 +270,21 @@ impl Store {
                     claim.scope.actor == request.actor && claim.take(tx, &request.id).await?,
                 Some(AttemptClaim::Reflection(scope, cue)) =>
                     scope.actor == request.actor && scope.attempt == request.id && scope.take_cue(tx, &cue).await?,
-                Some(AttemptClaim::EscalatedChoice { fingerprint, rejected, .. }) => {
+                Some(AttemptClaim::EscalatedDecision { fingerprint, kind, rejected, .. }) => {
                     let actor = json_record(&request.actor).map_err(|_| StoreError::InvalidRecord)?;
                     tx.query_one(
                         "SELECT EXISTS(SELECT 1 FROM jobs WHERE id=$1 AND fingerprint=$2 \
-                          AND selection->>'kind'='thought' AND selection->>'npcId'=$3 \
+                          AND selection->>'kind'=$4 AND selection->>'npcId'=$3 \
                           AND selection->>'status' IN ('queued','judging','generating')) \
                          AND NOT EXISTS(SELECT 1 FROM cognition_attempt_links l JOIN attempts a ON a.id=l.attempt_id \
                           WHERE l.root_job_id=$1 AND (l.level=4 OR l.stage='decision-escalation' \
                           OR COALESCE((a.receipt::json->>'completionUncertain')::bool,true))) \
-                         AND ($4::text IS NULL OR EXISTS(SELECT 1 FROM response_receipts r \
+                         AND ($5::text IS NULL OR EXISTS(SELECT 1 FROM response_receipts r \
                           WHERE r.world_id=(SELECT world_id FROM world_head WHERE id=1) AND r.slot=$1 \
-                          AND r.payload::json#>>'{components,action,code}'=$4 \
+                          AND r.payload::json#>>'{components,action,code}'=$5 \
                           AND r.payload::json#>>'{components,action,ok}'='false' \
                           AND r.payload::json#>>'{outcome,code}'='response-rejected'))",
-                        &[&request.job, &fingerprint, &actor, &rejected],
+                        &[&request.job, &fingerprint, &actor, &kind, &rejected],
                     ).await?.try_get(0)?
                 }
                 None => true,

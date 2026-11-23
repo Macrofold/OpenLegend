@@ -1,7 +1,7 @@
-//! One stronger answer to an unresolved, already offered automatic choice.
+//! One stronger answer to an unresolved native choice or addressed conversation.
 //! The original actor slot, preparation, evidence and native writer remain owners.
 
-use super::{Work, apply_choice, generation_failure, prepare};
+use super::{Work, apply_choice, effects, generation_failure, prepare};
 use crate::npc::apply::RefusedChoice;
 use crate::{
     boot::CurrentServer,
@@ -10,8 +10,9 @@ use crate::{
         decode_provider,
     },
     decision_render::{
-        BoundAttention,
+        BoundAttention, OfferedAction,
         provider::{self, Generation},
+        tree_bytes,
     },
     live_save::LiveSaves,
     npc::settings::{Prices, default_direct_prices},
@@ -328,6 +329,8 @@ struct Disclosure {
     dispatch_by: Instant,
     clock: DelayedDecisionClock,
     fingerprint: String,
+    kind: &'static str,
+    owner_stop: watch::Receiver<bool>,
     rejected: Option<RefusedChoice>,
     level_ceiling_micro_usd: u64,
 }
@@ -339,13 +342,17 @@ impl ProviderDisclosure for Disclosure {
         request: AttemptRequest,
     ) -> impl Future<Output = Result<AttemptAdmission, CommitError>> + Send + 'a {
         async move {
-            if self.clock.interrupted() || Instant::now() >= self.dispatch_by {
+            if *self.owner_stop.borrow()
+                || self.clock.interrupted()
+                || Instant::now() >= self.dispatch_by
+            {
                 return Ok(AttemptAdmission::Existing);
             }
             store
-                .reserve_escalated_choice(
+                .reserve_escalated_decision(
                     request,
                     self.fingerprint.clone(),
+                    self.kind,
                     self.level_ceiling_micro_usd,
                     self.rejected.as_ref().map(|choice| choice.code.as_ref()),
                 )
@@ -361,6 +368,9 @@ impl ProviderDisclosure for Disclosure {
     ) -> Result<(), CallFailure> {
         // The accepted clock and source share this native turn through the
         // real callback that hands the request to the transport.
+        if *self.owner_stop.borrow() {
+            return Err(CallFailure::Cancelled);
+        }
         if self.clock.interrupted() {
             return Err(CallFailure::Stale("game-paused"));
         }
@@ -461,8 +471,6 @@ pub(super) async fn run(
     let eligible = rejected
         .as_ref()
         .map_or_else(Instant::now, |value| value.eligible);
-    let dispatch_by = work.deadline.min(eligible + Duration::from_secs(2));
-    let deadline = work.deadline.min(eligible + Duration::from_secs(30));
     let budget = game.host.budget();
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -493,22 +501,12 @@ pub(super) async fn run(
             .collect(),
     };
     let aliases = input.choices.keys().copied().collect::<Vec<_>>();
-    let answer = closed(
-        json!({
-            "status":{"type":"string","enum":["answered","abstained"]},
-            "value":{"anyOf":[closed(json!({"choice":{"type":"string","enum":aliases}}),["choice"]),{"type":"null"}]},
-            "reason":{"type":["string","null"],"enum":["insufficient-evidence","conflicting-evidence","no-suitable-option","unsupported",null]},
-        }),
-        ["status", "value", "reason"],
-    );
-    let schema = closed(
-        json!({"answers":closed(json!({"q0":answer}),["q0"])}),
-        ["answers"],
-    );
-    let schema_bytes = json_record_len(&schema).map_err(|_| CallFailure::Invalid)?;
+    let schema = answer_schema(closed(
+        json!({"choice":{"type":"string","enum":aliases}}),
+        ["choice"],
+    ));
     let prompt_bytes = json_record_len(&input).map_err(|_| CallFailure::Invalid)?;
-    let input_bytes = INSTRUCTIONS.len() + prompt_bytes;
-    if input_bytes > INPUT_BYTES || schema_bytes > SCHEMA_BYTES {
+    if INSTRUCTIONS.len().saturating_add(prompt_bytes) > INPUT_BYTES {
         return Err(CallFailure::ContextLimit);
     }
     let prompt_custody = budget
@@ -519,16 +517,285 @@ pub(super) async fn run(
     let prompt = String::from_utf8(encoded).map_err(|_| CallFailure::Invalid)?;
     drop(input);
     drop(rated_context);
-    let id = attempt_id(&work);
+    let ids = prepared
+        .context
+        .offers
+        .iter()
+        .map(|offer| offer.id.clone())
+        .collect::<Vec<_>>();
+    let sent = prepare_call(
+        game,
+        route,
+        &work,
+        HigherInput {
+            prepared: &prepared,
+            schema: &schema,
+            instructions: INSTRUCTIONS,
+            prompt: &prompt,
+            kind: "thought",
+            eligible,
+            clock: clock.clone(),
+            rejected: rejected.map(|value| value.choice),
+        },
+    )?;
+    drop(schema);
+    drop(prompt);
+    drop(prompt_custody);
+    let (choice, deadline) = submit(
+        game,
+        dispatch,
+        route,
+        &work,
+        &clock,
+        sent,
+        move |text, budget| {
+            let _choices = choices_custody;
+            let _answer = budget
+                .reserve(SqlCell::json_decode_bound(text).ok_or(CallFailure::Invalid)?)
+                .map_err(super::response_capacity)?;
+            decode_choice(text, &ids)
+        },
+    )
+    .await?;
+    let work = Work { deadline, ..work };
+    super::ensure_running(&work)?;
+    if route.mode == Mode::Apply
+        && let Some(offer) = choice.map(|index| &prepared.context.offers[index])
+        && !offer.no_intervention
+    {
+        return apply_choice(
+            game,
+            saves,
+            &work,
+            prepared.ticket,
+            offer,
+            false,
+            Some(clock),
+        )
+        .await
+        .map(|_| ());
+    }
+    let (status, condition, message) = match (route.mode, choice) {
+        (Mode::Observe, choice) => {
+            let selected = choice.map_or("abstained", |index| {
+                prepared.context.offers[index].id.as_str()
+            });
+            (
+                SpeechReplyStatus::Failed,
+                format!("diagnostic-only:{selected}"),
+                "The delayed action choice was recorded for inspection.",
+            )
+        }
+        (Mode::Apply, Some(_)) => (
+            SpeechReplyStatus::Completed,
+            "continued".to_owned(),
+            "The character chose to continue their current work.",
+        ),
+        _ => (
+            SpeechReplyStatus::Failed,
+            "abstained".to_owned(),
+            "The delayed action choice ended without changing gameplay.",
+        ),
+    };
+    finish_unapplied(
+        game, saves, work, prepared, clock, status, condition, message,
+    )
+    .await
+}
+
+pub(super) async fn respond(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    dispatch: &Arc<DecisionDispatch>,
+    route: &ConfiguredEscalation,
+    work: Work,
+    mut prepared: prepare::Prepared,
+    clock: DelayedDecisionClock,
+) -> Result<(), CallFailure> {
+    let eligible = Instant::now();
+    let budget = game.host.budget();
+    // The existing response renderer binds only allowed operations and aliases.
+    // No paid action rating, relevance lookup or secondary inference follows
+    // the decision to use the higher route.
+    let offered_bytes = prepared
+        .context
+        .offers
+        .len()
+        .checked_mul(size_of::<OfferedAction>())
+        .ok_or(CallFailure::ContextLimit)?;
+    let offered_custody = budget
+        .reserve(offered_bytes)
+        .map_err(super::response_capacity)?;
+    let mut offered = prepared
+        .context
+        .offers
+        .iter()
+        .map(|offer| OfferedAction {
+            id: &offer.id,
+            description: &offer.caption,
+        })
+        .collect::<Vec<_>>();
+    let actions = game
+        .cognition
+        .fit_prompt_actions(&mut offered, prepared.route.remaining())
+        .map_err(generation_failure)?
+        .is_some();
+    prepared.context.fields["situationQueries"] = false.into();
+    let (prompt, bound) = prepared
+        .context
+        .render_response(game, &offered, actions, None)?;
+    drop(offered);
+    drop(offered_custody);
+    const WRAPPER: &str = " Put the existing structured character response in answers.q0.value with status answered and reason null. If you cannot give a supported answer, use status abstained, a null value, and one of the allowed reasons.";
+    let instructions_bytes = game.cognition.response_instructions.len() + WRAPPER.len();
+    let instructions_custody = budget
+        .reserve(instructions_bytes)
+        .map_err(super::response_capacity)?;
+    let instructions = format!("{}{WRAPPER}", game.cognition.response_instructions);
+    let schema_custody = budget
+        .reserve(tree_bytes(bound.value()).saturating_add(8192))
+        .map_err(super::response_capacity)?;
+    let schema = answer_schema(bound.value().clone());
+    let sent = prepare_call(
+        game,
+        route,
+        &work,
+        HigherInput {
+            prepared: &prepared,
+            schema: &schema,
+            instructions: &instructions,
+            prompt: prompt.as_str(),
+            kind: "chat",
+            eligible,
+            clock: clock.clone(),
+            rejected: None,
+        },
+    )?;
+    drop(schema);
+    drop(schema_custody);
+    drop(prompt);
+    drop(instructions);
+    drop(instructions_custody);
+    let (answer, deadline) = submit(
+        game,
+        dispatch,
+        route,
+        &work,
+        &clock,
+        sent,
+        move |text, budget| {
+            let _answer = budget
+                .reserve(SqlCell::json_decode_bound(text).ok_or(CallFailure::Invalid)?)
+                .map_err(super::response_capacity)?;
+            answer_value(text)?
+                .map(|value| {
+                    provider::generation_output(value.get(), &bound, budget)
+                        .map_err(generation_failure)
+                })
+                .transpose()
+        },
+    )
+    .await?;
+    let work = Work { deadline, ..work };
+    super::ensure_running(&work)?;
+    match (route.mode, answer) {
+        (Mode::Apply, Some(answer)) => {
+            let (value, custody) = answer.into_parts();
+            let payload = effects(value, custody, &prepared.frame)
+                .map_err(|error| error.at("response-validation"))?;
+            super::super::apply::apply(
+                saves,
+                game,
+                &work.job,
+                prepared.ticket,
+                payload,
+                work.permit,
+                work.cancellation,
+                work.deadline,
+                None,
+                Some(clock),
+            )
+            .await
+            .map(|_| ())
+            .map_err(|error| error.at("response-application"))
+        }
+        (Mode::Observe, Some(_)) => {
+            finish_unapplied(
+                game,
+                saves,
+                work,
+                prepared,
+                clock,
+                SpeechReplyStatus::Failed,
+                "diagnostic-only:response".into(),
+                "The higher reply was checked without applying it.",
+            )
+            .await
+        }
+        (_, None) => {
+            finish_unapplied(
+                game,
+                saves,
+                work,
+                prepared,
+                clock,
+                SpeechReplyStatus::Failed,
+                "abstained".into(),
+                "The character did not give a reply.",
+            )
+            .await
+        }
+        (Mode::Off, Some(_)) => Err(CallFailure::Invalid),
+    }
+}
+
+struct HigherInput<'a> {
+    prepared: &'a prepare::Prepared,
+    schema: &'a Value,
+    instructions: &'a str,
+    prompt: &'a str,
+    kind: &'static str,
+    eligible: Instant,
+    clock: DelayedDecisionClock,
+    rejected: Option<RefusedChoice>,
+}
+
+struct HigherCall {
+    call: PreparedCall,
+    disclosure: Disclosure,
+    deadline: Instant,
+}
+
+/// Fund the exact provider body once. The caller may release temporary
+/// renderings before the asynchronous transport takes custody of the body.
+fn prepare_call(
+    game: &CurrentServer,
+    route: &ConfiguredEscalation,
+    work: &Work,
+    input: HigherInput<'_>,
+) -> Result<HigherCall, CallFailure> {
+    super::ensure_running(work)?;
+    if input.clock.interrupted() {
+        return Err(CallFailure::Stale("game-paused"));
+    }
+    if input.instructions.len().saturating_add(input.prompt.len()) > INPUT_BYTES
+        || json_record_len(input.schema).map_err(|_| CallFailure::Invalid)? > SCHEMA_BYTES
+    {
+        return Err(CallFailure::ContextLimit);
+    }
+    let dispatch_by = work.deadline.min(input.eligible + Duration::from_secs(2));
+    let deadline = work.deadline.min(input.eligible + Duration::from_secs(30));
+    let budget = game.host.budget();
+    let id = attempt_id(work);
     let request = provider::generation_request(
         &route.destination,
         MODEL,
         None,
         Generation {
             schema_name: "decision_escalation",
-            schema: &schema,
-            instructions: INSTRUCTIONS,
-            prompt: prompt.as_str(),
+            schema: input.schema,
+            instructions: input.instructions,
+            prompt: input.prompt,
             effort: Some("low"),
             max_output_tokens: OUTPUT_TOKENS,
             stream: false,
@@ -557,41 +824,54 @@ pub(super) async fn run(
             ceiling: route.monthly_ceiling_micro_usd,
         },
         requested_model: MODEL.into(),
-        context_digest: sha256_hex(prompt.as_str().as_bytes()),
+        context_digest: sha256_hex(input.prompt.as_bytes()),
         macrofold_billing_mode: None,
         deadline,
-        // The fresh cut includes the accepted negative primary receipt.
-        // Dispatch waits for this prefix's ordinary durable acknowledgement.
-        evidence_cut: prepared.through,
+        evidence_cut: input.prepared.through,
         preview: None,
     };
-    let allowed = CallAuthority {
-        source: prepared.ticket.clone(),
-        speaker: None,
-        discovery: None,
-    };
     let disclosure = Disclosure {
-        allowed,
+        allowed: CallAuthority {
+            source: input.prepared.ticket.clone(),
+            speaker: work.permit.clone(),
+            discovery: None,
+        },
         dispatch_by,
-        clock: clock.clone(),
+        clock: input.clock.clone(),
+        kind: input.kind,
+        owner_stop: work.cancellation.clone(),
         fingerprint: work.job.job.fingerprint.clone(),
-        rejected: rejected.map(|value| value.choice),
+        rejected: input.rejected,
         level_ceiling_micro_usd: route.level_ceiling_micro_usd,
     };
+    Ok(HigherCall {
+        call,
+        disclosure,
+        deadline,
+    })
+}
+
+/// Both answer shapes reuse the same admission, transport and settlement.
+async fn submit<T: Send + 'static>(
+    game: &CurrentServer,
+    dispatch: &Arc<DecisionDispatch>,
+    route: &ConfiguredEscalation,
+    work: &Work,
+    clock: &DelayedDecisionClock,
+    sent: HigherCall,
+    decode: impl FnOnce(&str, &openlegend_simulation::host::ByteBudget) -> Result<T, CallFailure>
+    + Send
+    + 'static,
+) -> Result<(T, Instant), CallFailure> {
+    let HigherCall {
+        call,
+        disclosure,
+        deadline,
+    } = sent;
     let rate = Arc::clone(&route.rate);
-    let ids = prepared
-        .context
-        .offers
-        .iter()
-        .map(|offer| offer.id.clone())
-        .collect::<Vec<_>>();
-    let parser = budget.clone();
-    drop(schema);
-    drop(prompt);
-    drop(prompt_custody);
+    let parser = game.host.budget().clone();
     let (stop_higher, higher_stop) = watch::channel(false);
     let submission = dispatch.submit(call, disclosure, higher_stop, move |body, http| {
-        let _choices = choices_custody;
         let mut terminal = false;
         let mut charged = None;
         let mut observation = decode_provider(None, parser.clone(), |value| {
@@ -610,10 +890,7 @@ pub(super) async fn run(
                 return Err(CallFailure::Invalid);
             }
             let text = provider::direct_text(value, &parser).map_err(generation_failure)?;
-            let _answer = parser
-                .reserve(SqlCell::json_decode_bound(&text.text).ok_or(CallFailure::Invalid)?)
-                .map_err(super::response_capacity)?;
-            decode_answer(&text.text, &ids)
+            decode(&text.text, &parser)
         })(body, http);
         observation.completion_uncertain = !terminal;
         observation.charged_microusd = charged;
@@ -621,45 +898,36 @@ pub(super) async fn run(
     });
     tokio::pin!(submission);
     let mut cancellation = work.cancellation.clone();
-    let choice = match tokio::select! {
+    match tokio::select! {
         biased;
         _ = super::stopped(&mut cancellation) => Err(CallFailure::Cancelled),
         _ = clock.interruption() => Err(CallFailure::Stale("game-paused")),
         result = &mut submission => Ok(result),
     } {
-        Ok(result) => result?,
+        Ok(result) => result.map(|answer| (answer, deadline)),
         Err(reason) => {
             stop_higher.send_replace(true);
-            // The transport owns settlement. Keep its original hold and do
-            // not discard a real spending/storage failure during cancellation.
+            // Preserve the dispatched attempt's original accounting.
             if let Err(error) = submission.await
                 && matches!(error.cause().1, CallFailure::Commit(_))
             {
                 return Err(error);
             }
-            return Err(reason);
+            Err(reason)
         }
-    };
-    let work = Work { deadline, ..work };
-    super::ensure_running(&work)?;
-    if route.mode == Mode::Apply
-        && let Some(offer) = choice.map(|index| &prepared.context.offers[index])
-        && !offer.no_intervention
-    {
-        return apply_choice(
-            game,
-            saves,
-            &work,
-            prepared.ticket,
-            offer,
-            false,
-            Some(clock),
-        )
-        .await
-        .map(|_| ());
     }
-    // Even a diagnostic or a deliberate continuation belongs to this exact
-    // original evidence. The same currentness fence supplies no new authority.
+}
+
+async fn finish_unapplied(
+    game: &Arc<CurrentServer>,
+    saves: &LiveSaves,
+    work: Work,
+    prepared: prepare::Prepared,
+    clock: DelayedDecisionClock,
+    status: SpeechReplyStatus,
+    condition: String,
+    message: &'static str,
+) -> Result<(), CallFailure> {
     let turn = tokio::time::timeout_at(work.deadline, game.world.npc_disclosure_turn())
         .await
         .map_err(|_| CallFailure::Stale("decision-deadline"))?
@@ -670,32 +938,11 @@ pub(super) async fn run(
     }
     let final_scope = CallAuthority {
         source: prepared.ticket,
-        speaker: None,
+        speaker: work.permit.clone(),
         discovery: None,
     };
     final_scope.start(turn, &work.cancellation, &mut || ())?;
-    let (status, condition, message) = match (route.mode, choice) {
-        (Mode::Observe, choice) => {
-            let selected = choice.map_or("abstained", |index| {
-                prepared.context.offers[index].id.as_str()
-            });
-            (
-                SpeechReplyStatus::Failed,
-                format!("diagnostic-only:{selected}"),
-                "The delayed action choice was recorded for inspection.",
-            )
-        }
-        (Mode::Apply, Some(_)) => (
-            SpeechReplyStatus::Completed,
-            "continued".to_owned(),
-            "The character chose to continue their current work.",
-        ),
-        _ => (
-            SpeechReplyStatus::Failed,
-            "abstained".to_owned(),
-            "The delayed action choice ended without changing gameplay.",
-        ),
-    };
+    let budget = game.host.budget();
     let done = work
         .job
         .advance(
@@ -723,7 +970,39 @@ fn closed<const N: usize>(properties: Value, names: [&'static str; N]) -> Value 
     json!({"type":"object","additionalProperties":false,"required":names.as_slice(),"properties":properties})
 }
 
-fn decode_answer(text: &str, ids: &[String]) -> Result<Option<usize>, CallFailure> {
+fn answer_schema(value: Value) -> Value {
+    let answer = closed(
+        json!({
+            "status":{"type":"string","enum":["answered","abstained"]},
+            "value":{"anyOf":[value,{"type":"null"}]},
+            "reason":{"type":["string","null"],"enum":["insufficient-evidence","conflicting-evidence","no-suitable-option","unsupported",null]},
+        }),
+        ["status", "value", "reason"],
+    );
+    closed(
+        json!({"answers":closed(json!({"q0":answer}),["q0"])}),
+        ["answers"],
+    )
+}
+
+fn decode_choice(text: &str, ids: &[String]) -> Result<Option<usize>, CallFailure> {
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Choice {
+        choice: String,
+    }
+    answer_value(text)?
+        .map(|value| {
+            let chosen =
+                serde_json::from_str::<Choice>(value.get()).map_err(|_| CallFailure::Invalid)?;
+            ids.iter()
+                .position(|offered| *offered == chosen.choice)
+                .ok_or(CallFailure::Invalid)
+        })
+        .transpose()
+}
+
+fn answer_value(text: &str) -> Result<Option<Box<serde_json::value::RawValue>>, CallFailure> {
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct Envelope {
@@ -741,25 +1020,12 @@ fn decode_answer(text: &str, ids: &[String]) -> Result<Option<usize>, CallFailur
         value: Box<serde_json::value::RawValue>,
         reason: Value,
     }
-    #[derive(Deserialize)]
-    #[serde(deny_unknown_fields)]
-    struct Choice {
-        choice: String,
-    }
     let answer = serde_json::from_str::<Envelope>(text)
         .map_err(|_| CallFailure::Invalid)?
         .answers
         .q0;
     match (answer.status.as_str(), answer.value, answer.reason) {
-        ("answered", value, Value::Null) => {
-            let chosen = serde_json::from_str::<Choice>(value.get())
-                .map_err(|_| CallFailure::Invalid)?
-                .choice;
-            ids.iter()
-                .position(|offered| *offered == chosen)
-                .map(Some)
-                .ok_or(CallFailure::Invalid)
-        }
+        ("answered", value, Value::Null) if value.get() != "null" => Ok(Some(value)),
         ("abstained", value, Value::String(reason))
             if value.get() == "null"
                 && matches!(

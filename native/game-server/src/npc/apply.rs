@@ -59,6 +59,8 @@ pub(super) async fn apply(
     let original = job.clone();
     let provider = game.clone();
     let begin_stop = cancellation.clone();
+    let begin_clock = delayed_clock.clone();
+    let settle_clock = delayed_clock.clone();
     let begin_permit = permit.clone();
     let staged = saves.clone();
     let accepted = saves.clone();
@@ -79,7 +81,7 @@ pub(super) async fn apply(
                         "decision-deadline",
                     )));
                 }
-                if delayed_clock
+                if begin_clock
                     .as_ref()
                     .is_some_and(DelayedDecisionClock::interrupted)
                 {
@@ -152,6 +154,12 @@ pub(super) async fn apply(
                     if *cancellation.borrow() {
                         return Ok(fence.settle(key, false)?);
                     }
+                    if settle_clock
+                        .as_ref()
+                        .is_some_and(DelayedDecisionClock::interrupted)
+                    {
+                        return Ok(fence.settle(key, false)?);
+                    }
                     // A useful reply may expire while its physical effects
                     // are being prepared. Roll back before accepting them.
                     if Instant::now() >= deadline {
@@ -184,6 +192,12 @@ pub(super) async fn apply(
     match applied {
         Some(Applied::Accepted { .. } | Applied::Refused(_)) => Ok(None),
         Some(Applied::Reconsider { refusal, .. }) => Ok(Some(refusal)),
+        None if delayed_clock
+            .as_ref()
+            .is_some_and(DelayedDecisionClock::interrupted) =>
+        {
+            Err(CallFailure::Stale("game-paused"))
+        }
         Some(Applied::Stale("cancelled")) | None => Err(CallFailure::Cancelled),
         Some(Applied::Stale(reason)) => Err(CallFailure::Stale(reason)),
     }

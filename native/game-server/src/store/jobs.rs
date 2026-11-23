@@ -340,7 +340,7 @@ impl Store {
             status: job.status,
             completed_at: job.completed_at,
             player_speech_event_id: event,
-            npc_id: (job.kind == "thought")
+            npc_id: matches!(job.kind.as_str(), "thought" | "chat")
                 .then(|| json_record(&job.request.npc_id))
                 .transpose()
                 .map_err(invalid)?,

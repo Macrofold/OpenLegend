@@ -232,16 +232,18 @@ pub(super) async fn run(
         {
             // The original route judgment is already part of this decision.
             // A later handoff cannot acquire a new clock after a pause.
+            let offered_fallback = work.permit.is_none()
+                && work
+                    .automatic
+                    .as_ref()
+                    .is_some_and(|trigger| trigger.discovery.is_none());
+            let conversation_fallback = work.job.job.kind == "chat"
+                && work.permit.is_some()
+                && work.automatic.is_none();
             let configured_fallback = models
                 .escalation
                 .as_ref()
-                .filter(|_| {
-                    work.permit.is_none()
-                        && work
-                            .automatic
-                            .as_ref()
-                            .is_some_and(|trigger| trigger.discovery.is_none())
-                })
+                .filter(|_| offered_fallback || conversation_fallback)
                 .map(|route| (route, game.world.delayed_decision_clock()));
             let mut stop = work.cancellation.clone();
             let mut collected = tokio::select! {
@@ -386,6 +388,28 @@ pub(super) async fn run(
                 Some(route) => route,
             };
             let choose = route == "level1";
+            // The higher route is the first reply-generation attempt for the
+            // original conversation. A completed ordinary generation never
+            // returns here to buy another answer.
+            if !choose
+                && conversation_fallback
+                && prepared.addressed
+                && let Some((fallback, clock)) = configured_fallback.as_ref().filter(|(fallback, _)| {
+                    fallback.permits(escalation::Reason::SemanticEscalation)
+                })
+            {
+                return escalation::respond(
+                    game,
+                    saves,
+                    dispatch,
+                    fallback,
+                    work,
+                    prepared,
+                    clock.clone(),
+                )
+                .await
+                .map_err(|error| error.at("decision-escalation"));
+            }
             let include_actions = choose
                 || !prepared.speech_trigger
                 || observed.choice("possibleAction") != Some("no")
@@ -393,8 +417,8 @@ pub(super) async fn run(
             let mut selected = Vec::new();
             let mut escalation = 2;
             if include_actions {
-                let fallback =
-                    configured_fallback.filter(|_| choose && escalation::has_action(&prepared));
+                let fallback = configured_fallback
+                    .filter(|_| offered_fallback && choose && escalation::has_action(&prepared));
                 let configured = fallback.as_ref().map(|(route, _)| *route);
                 let accepted = action_attention(
                     game,
