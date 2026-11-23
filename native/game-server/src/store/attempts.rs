@@ -14,7 +14,10 @@ use std::sync::Arc;
 enum AttemptClaim {
     Semantic(Arc<SemanticClaim>),
     Reflection(Arc<ReflectionScope>, ReflectionCue),
-    EscalatedChoice(String),
+    EscalatedChoice {
+        fingerprint: String,
+        level_ceiling: u64,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -208,9 +211,16 @@ impl Store {
         &self,
         request: AttemptRequest,
         fingerprint: String,
+        level_ceiling: u64,
     ) -> Result<AttemptAdmission, CommitError> {
-        self.reserve_for_model(request, Some(AttemptClaim::EscalatedChoice(fingerprint)))
-            .await
+        self.reserve_for_model(
+            request,
+            Some(AttemptClaim::EscalatedChoice {
+                fingerprint,
+                level_ceiling,
+            }),
+        )
+        .await
     }
 
     async fn reserve_for_model(
@@ -233,6 +243,11 @@ impl Store {
             if tx.query_opt("SELECT id FROM attempts WHERE id=$1", &[&request.id]).await?.is_some() {
                 return Ok(AttemptAdmission::Existing);
             }
+            if let Some(AttemptClaim::EscalatedChoice { level_ceiling, .. }) = &claim
+                && request.amount > *level_ceiling
+            {
+                return Ok(AttemptAdmission::Exhausted);
+            }
             if exposure(tx, &request.actor).await?.checked_add(amount).is_none_or(|sum| sum > ceiling) {
                 return Ok(AttemptAdmission::Exhausted);
             }
@@ -241,7 +256,7 @@ impl Store {
                     claim.scope.actor == request.actor && claim.take(tx, &request.id).await?,
                 Some(AttemptClaim::Reflection(scope, cue)) =>
                     scope.actor == request.actor && scope.attempt == request.id && scope.take_cue(tx, &cue).await?,
-                Some(AttemptClaim::EscalatedChoice(fingerprint)) => {
+                Some(AttemptClaim::EscalatedChoice { fingerprint, .. }) => {
                     let actor = json_record(&request.actor).map_err(|_| StoreError::InvalidRecord)?;
                     tx.query_one(
                         "SELECT EXISTS(SELECT 1 FROM jobs WHERE id=$1 AND fingerprint=$2 \

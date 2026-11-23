@@ -2,7 +2,8 @@
 //! The authored world provides decision wording and allowed effects separately.
 
 use super::decide::{
-    ConfiguredDeployment, MacrofoldCatalog, Model, Models, escalation::ConfiguredEscalation,
+    ConfiguredDeployment, MacrofoldCatalog, Model, Models,
+    escalation::{ConfiguredEscalation, DecisionFunds},
 };
 use crate::narrator::{NarratorMacrofold, NarratorModel};
 use crate::provider_transport::{
@@ -419,12 +420,14 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
     let (fast_deployment, complex_deployment) = targets.as_ref().map_or((None, None), |targets| {
         targets.models(&mut judgment, fast.as_ref(), complex.as_ref())
     });
-    let provider = if judgment.macrofold.is_some() {
+    let provider = if judgment.macrofold.is_some() || judgment.deployment.is_some() {
         "macrofold"
     } else {
         "jev"
     };
     let origin = format!("{provider}/{}", judgment.requested);
+    let complex_model = setting("COGNITION_COMPLEX_MODEL", "gpt-5")?;
+    let default_model = setting("OPENAI_MODEL", "gpt-5.6-luna")?;
     let escalation = ConfiguredEscalation::configured(
         optional("DECISION_ESCALATION_JSON")?.as_deref(),
         &origin,
@@ -432,8 +435,14 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
         jev_only,
         optional("OPENAI_MODEL_PRICES_JSON")?.as_deref(),
         optional("OPENAI_DECISION_ENDPOINT")?.as_deref(),
-        micro_usd(number("LLM_CALL_RESERVE_USD", 0.08, 0.000001, 10.0)?.max(0.25))?,
-        ceiling_micro_usd.saturating_sub(interactive),
+        DecisionFunds {
+            minimum_micro_usd: micro_usd(
+                number("LLM_CALL_RESERVE_USD", 0.08, 0.000001, 10.0)?.max(0.25),
+            )?,
+            monthly_background_micro_usd: ceiling_micro_usd.saturating_sub(interactive),
+            complex_model: &complex_model,
+            default_model: &default_model,
+        },
     )?;
     Ok((
         limit,
@@ -738,23 +747,66 @@ pub(super) fn narrator_model(
     }))
 }
 
-fn direct_prices() -> Result<(f64, f64, f64), Error> {
-    let default = setting("OPENAI_MODEL", "gpt-5.6-luna")?;
+#[derive(Clone, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub(super) struct Prices {
+    pub(super) input_usd_per_million: f64,
+    pub(super) output_usd_per_million: f64,
+    #[serde(default)]
+    pub(super) cached_input_usd_per_million: Option<f64>,
+    #[serde(default)]
+    pub(super) cache_write_input_usd_per_million: Option<f64>,
+}
+
+impl Prices {
+    fn input_rates(&self) -> impl Iterator<Item = f64> + '_ {
+        [
+            Some(self.input_usd_per_million),
+            self.cached_input_usd_per_million,
+            self.cache_write_input_usd_per_million,
+        ]
+        .into_iter()
+        .flatten()
+    }
+
+    pub(super) fn maximum_input_rate(&self) -> f64 {
+        self.input_rates().fold(0.0, f64::max)
+    }
+
+    pub(super) fn valid(&self) -> bool {
+        self.input_rates()
+            .chain([self.output_usd_per_million])
+            .all(|rate| (0.0..=1000.0).contains(&rate))
+    }
+}
+
+pub(super) fn default_direct_prices(model: &str) -> Result<Prices, Error> {
     let names = [
         "LLM_INPUT_USD_PER_MILLION",
         "LLM_OUTPUT_USD_PER_MILLION",
         "LLM_CACHED_INPUT_USD_PER_MILLION",
         "LLM_CACHE_WRITE_USD_PER_MILLION",
     ];
-    if default != "gpt-5.6-luna" && names.iter().any(|name| std::env::var_os(name).is_none()) {
+    if model != "gpt-5.6-luna" && names.iter().any(|name| std::env::var_os(name).is_none()) {
         return Err("A custom OPENAI_MODEL requires explicit prices".into());
     }
+    Ok(Prices {
+        input_usd_per_million: number(names[0], 0.2, 0.0, 1000.0)?,
+        output_usd_per_million: number(names[1], 1.2, 0.0, 1000.0)?,
+        cached_input_usd_per_million: Some(number(names[2], 0.02, 0.0, 1000.0)?),
+        cache_write_input_usd_per_million: Some(number(names[3], 0.25, 0.0, 1000.0)?),
+    })
+}
+
+fn direct_prices() -> Result<(f64, f64, f64), Error> {
+    let model = setting("OPENAI_MODEL", "gpt-5.6-luna")?;
     let floor = number("LLM_CALL_RESERVE_USD", 0.08, 0.000001, 10.0)?;
-    let input = number(names[0], 0.2, 0.0, 1000.0)?
-        .max(number(names[2], 0.02, 0.0, 1000.0)?)
-        .max(number(names[3], 0.25, 0.0, 1000.0)?);
-    let output = number(names[1], 1.2, 0.0, 1000.0)?;
-    Ok((floor, input, output))
+    let prices = default_direct_prices(&model)?;
+    Ok((
+        floor,
+        prices.maximum_input_rate(),
+        prices.output_usd_per_million,
+    ))
 }
 
 fn direct_language(token: &str) -> Result<(Option<Model>, Option<Model>, u64), Error> {

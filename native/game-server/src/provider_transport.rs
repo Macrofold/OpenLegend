@@ -218,6 +218,11 @@ impl PreparedProviderRequest {
         self.route
     }
 
+    /// Read the already encoded request size for conservative provider reservation.
+    pub(crate) fn buffered_body_bytes(&self) -> Option<usize> {
+        Some(self.request.body()?.as_bytes()?.len())
+    }
+
     pub(crate) fn observer(&self) -> Option<ProviderDestination> {
         self.observation.clone()
     }

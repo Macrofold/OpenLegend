@@ -378,6 +378,15 @@ pub(super) async fn run(
             let mut selected = Vec::new();
             let mut escalation = 2;
             if include_actions {
+                let fallback = models.escalation.as_ref().filter(|_| {
+                    choose
+                        && work.automatic.is_some()
+                        && work.permit.is_none()
+                        && work.discovery().is_none()
+                        && escalation::has_action(&prepared)
+                });
+                let invalid_fallback =
+                    fallback.filter(|route| route.permits(escalation::Reason::InvalidOutput));
                 let accepted = action_attention(
                     game,
                     dispatch,
@@ -386,10 +395,11 @@ pub(super) async fn run(
                     decision,
                     models.ceiling_micro_usd,
                     choose,
+                    invalid_fallback.is_some(),
                 )
                 .await;
-                match accepted {
-                    Ok(Some((rated, rated_context))) => {
+                let reconsider = match accepted {
+                    Ok(Some(ActionAttention::Rated(rated, rated_context))) => {
                         let mut best = None;
                         let threshold = if choose {
                             game.cognition.choice_threshold
@@ -411,36 +421,35 @@ pub(super) async fn run(
                             let picked = (!offer.no_intervention).then_some(offer);
                             return finish_native(game, saves, work, prepared.ticket, picked).await;
                         }
-                        if choose
-                            && work.automatic.is_some()
-                            && work.permit.is_none()
-                            && work.discovery().is_none()
-                            && let Some(route) = &models.escalation
-                            && let Some(reason) = escalation::reason(&prepared, &rated)
-                            && route.permits(reason)
-                        {
-                            return escalation::run(
-                                game,
-                                saves,
-                                dispatch,
-                                route,
-                                work,
-                                prepared,
-                                rated_context,
-                            )
-                            .await
-                            .map_err(|error| error.at("decision-escalation"));
-                        }
+                        fallback.and_then(|route| {
+                            let reason = escalation::reason(&prepared, &rated)?;
+                            route
+                                .permits(reason)
+                                .then_some((route, rated_context, reason))
+                        })
                     }
-                    Ok(None) => {}
+                    Ok(Some(ActionAttention::InvalidOutput(context))) => {
+                        let route = invalid_fallback
+                            .ok_or_else(|| CallFailure::Invalid.at("action-attention"))?;
+                        Some((route, context, escalation::Reason::InvalidOutput))
+                    }
+                    Ok(None) => None,
                     // A settled optional judgment can have unusable ratings. Keep
                     // the permitted offers and let the generation dispatch recheck
                     // the same decision. A level-one rating is the decision itself.
                     Err(error) if !choose && matches!(error.cause().1, CallFailure::Invalid) => {
                         ensure_running(&work)?;
                         selected.extend(&prepared.context.offers);
+                        None
                     }
                     Err(error) => return Err(error.at("action-attention")),
+                };
+                if let Some((route, context, reason)) = reconsider {
+                    return escalation::run(
+                        game, saves, dispatch, route, work, prepared, context, reason,
+                    )
+                    .await
+                    .map_err(|error| error.at("decision-escalation"));
                 }
                 if choose {
                     if !available {
@@ -934,6 +943,14 @@ async fn recall_attention(
         .await
 }
 
+enum ActionAttention {
+    Rated(
+        provider::JudgmentAnswer,
+        Arc<crate::decision_render::BoundAttention>,
+    ),
+    InvalidOutput(Arc<crate::decision_render::BoundAttention>),
+}
+
 async fn action_attention(
     game: &Arc<CurrentServer>,
     dispatch: &Arc<DecisionDispatch>,
@@ -942,13 +959,8 @@ async fn action_attention(
     decision: &Model,
     ceiling: u64,
     choose: bool,
-) -> Result<
-    Option<(
-        provider::JudgmentAnswer,
-        Arc<crate::decision_render::BoundAttention>,
-    )>,
-    CallFailure,
-> {
+    retain_invalid: bool,
+) -> Result<Option<ActionAttention>, CallFailure> {
     let budget = game.host.budget();
     let id = format!("{}:attempt:0:action-attention", work.job.job.id);
     let offers = prepared
@@ -1008,9 +1020,15 @@ async fn action_attention(
             },
             work.cancellation.clone(),
             decode_provider_bound(decision.billing(), true, budget.clone(), move |output| {
-                provider::decode_judgment(output, &attention.questions, &parser)
-                    .map(|rated| Some((rated, attention)))
-                    .map_err(|_| CallFailure::Invalid)
+                match provider::decode_judgment(output, &attention.questions, &parser) {
+                    Ok(rated) => Ok(Some(ActionAttention::Rated(rated, attention))),
+                    // Only a received judgment envelope can report a bad offered answer.
+                    // The spending owner still checks that the earlier execution ended.
+                    Err(RenderError::InvalidResponse) if retain_invalid => {
+                        Ok(Some(ActionAttention::InvalidOutput(attention)))
+                    }
+                    Err(_) => Err(CallFailure::Invalid),
+                }
             }),
         )
         .await
