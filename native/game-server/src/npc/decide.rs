@@ -6,11 +6,15 @@ use crate::{
     authority::{Authority, AuthorizedScope},
     boot::CurrentServer,
     decision_dispatch::{
-        CallAuthority, CallFailure, DecisionDispatch, PreparedCall, decode_provider,
+        CallAuthority, CallFailure, DecisionDispatch, PreparedCall, decode_provider_bound,
     },
     decision_render::{BoundSchema, OfferedAction, RenderError, provider},
     live_save::LiveSaves,
-    provider_transport::{ProviderDestination, macrofold::BillingMode},
+    provider_transport::{
+        PreparedProviderRequest, ProviderDestination,
+        deployment::{Deployment, OutputPolicy, Preparation},
+        macrofold::{BillingBinding, BillingMode},
+    },
     store::{AdmittedJob, AttemptRequest, InferenceClass},
 };
 use openlegend_simulation::{
@@ -31,25 +35,132 @@ pub(super) struct Models {
     pub(super) judgment: Model,
     pub(super) fast: Option<Model>,
     pub(super) complex: Option<Model>,
+    pub(super) fast_deployment: Option<Model>,
+    pub(super) complex_deployment: Option<Model>,
     pub(super) ceiling_micro_usd: u64,
     pub(super) embedding: Option<Arc<super::semantic_index::EmbeddingModel>>,
 }
 
+impl Models {
+    fn response_model(&self, level: i32) -> Option<&Model> {
+        if level == 2 {
+            self.fast_deployment.as_ref().or(self.fast.as_ref())
+        } else {
+            self.complex_deployment.as_ref().or(self.complex.as_ref())
+        }
+    }
+}
+
+#[derive(Clone)]
 pub(super) struct Model {
     pub(super) destination: ProviderDestination,
     pub(super) requested: String,
     pub(super) macrofold: Option<MacrofoldCatalog>,
+    pub(super) deployment: Option<ConfiguredDeployment>,
     pub(super) amount_micro_usd: u64,
     pub(super) output_tokens: usize,
     pub(super) effort: Option<&'static str>,
 }
 
+#[derive(Clone)]
+pub(super) struct ConfiguredDeployment {
+    pub(super) owner: Arc<Deployment>,
+    pub(super) output: Option<OutputPolicy>,
+}
+
+#[derive(Clone)]
 pub(super) struct MacrofoldCatalog {
     pub(super) billing: BillingMode,
     pub(super) connection: Option<String>,
 }
 
 impl Model {
+    pub(super) fn use_deployment(
+        &mut self,
+        deployment: ConfiguredDeployment,
+        output_limit: Option<usize>,
+    ) {
+        self.requested = format!(
+            "deployment:{}",
+            deployment.owner.selection.model_binding.deployment_id
+        );
+        self.output_tokens = self
+            .output_tokens
+            .min(output_limit.unwrap_or(self.output_tokens));
+        self.macrofold = None;
+        self.effort = None;
+        self.deployment = Some(deployment);
+    }
+
+    pub(super) fn billing(&self) -> Option<BillingBinding> {
+        if let Some(deployment) = &self.deployment {
+            Some(BillingBinding {
+                mode: BillingMode::Byok,
+                deployment: Some(deployment.owner.selection.pin()),
+            })
+        } else {
+            self.macrofold.as_ref().map(|catalog| BillingBinding {
+                mode: catalog.billing,
+                deployment: None,
+            })
+        }
+    }
+
+    /// Prepare deployed judgments through the bounded same-origin description
+    /// read. The normal dispatch still reserves spending and checks source at POST.
+    pub(super) async fn judgment_request(
+        &self,
+        dispatch: &DecisionDispatch,
+        budget: &ByteBudget,
+        stopped: &watch::Receiver<bool>,
+        deadline: Instant,
+        id: &str,
+        judgment: provider::Judgment<'_>,
+    ) -> Result<PreparedProviderRequest, CallFailure> {
+        if let Some(target) = &self.deployment {
+            let operation = self.preparation(dispatch, budget, stopped, deadline);
+            let output = target
+                .owner
+                .judgment(&operation, self.output_tokens)
+                .await?;
+            return Ok(provider::deployment_judgment_request(
+                &self.destination,
+                &target.owner,
+                deadline,
+                judgment,
+                output,
+                id,
+                budget,
+            )?);
+        }
+        let allowance = self.amount_micro_usd.to_string();
+        Ok(provider::judgment_request(
+            &self.destination,
+            &self.requested,
+            self.route(&allowance, deadline),
+            judgment,
+            self.output_tokens,
+            id,
+            budget,
+        )?)
+    }
+
+    fn preparation<'a>(
+        &'a self,
+        dispatch: &'a DecisionDispatch,
+        budget: &'a ByteBudget,
+        stopped: &'a watch::Receiver<bool>,
+        deadline: Instant,
+    ) -> Preparation<'a> {
+        Preparation {
+            destination: &self.destination,
+            network: dispatch.network(),
+            budget,
+            stopped,
+            deadline,
+        }
+    }
+
     pub(super) fn route<'a>(
         &'a self,
         allowance: &'a str,
@@ -180,22 +291,23 @@ pub(super) async fn run(
             let budget = game.host.budget();
             let source = prepared.ticket.clone();
             let decision = &models.judgment;
-            let allowance = decision.amount_micro_usd.to_string();
             let operation = ":attempt:0:route";
             let id = format!("{}{operation}", work.job.job.id);
             let input = provider::Judgment {
                 state: provider::JudgmentState::Prompt(prepared.route.as_str()),
                 questions,
             };
-            let request = provider::judgment_request(
-                &decision.destination,
-                &decision.requested,
-                decision.route(&allowance, work.deadline),
-                input,
-                decision.output_tokens,
-                &id,
-                budget,
-            )?;
+            let request = decision
+                .judgment_request(
+                    dispatch,
+                    budget,
+                    &work.cancellation,
+                    work.deadline,
+                    &id,
+                    input,
+                )
+                .await
+                .map_err(|error| error.at("route"))?;
             let policy = game.cognition.clone();
             let parse_budget = budget.clone();
             let addressed = prepared.addressed;
@@ -220,8 +332,9 @@ pub(super) async fn run(
                         discovery: work.discovery(),
                     },
                     work.cancellation.clone(),
-                    decode_provider(
-                        decision.macrofold.as_ref().map(|value| value.billing),
+                    decode_provider_bound(
+                        decision.billing(),
+                        true,
                         parse_budget.clone(),
                         move |parsed| {
                             let questions = policy
@@ -329,12 +442,9 @@ pub(super) async fn run(
                 "level4" => 4,
                 _ => return Err(CallFailure::Invalid.at("route")),
             };
-            let model = if level == 2 {
-                models.fast.as_ref()
-            } else {
-                models.complex.as_ref()
-            }
-            .ok_or(CallFailure::Invalid.at("route"))?;
+            let model = models
+                .response_model(level)
+                .ok_or(CallFailure::Invalid.at("route"))?;
             // The route already rendered required context with query support
             // and without these optional additions. Reuse its exact byte count.
             let mut offered = selected
@@ -573,7 +683,25 @@ async fn generate(
     } else {
         std::borrow::Cow::Borrowed(game.cognition.response_instructions.as_str())
     };
-    let preview = if model.macrofold.is_some() && view.reply_player.is_some() {
+    let capabilities = if let Some(target) = &model.deployment {
+        let operation = model.preparation(dispatch, budget, &work.cancellation, work.deadline);
+        Some(
+            target
+                .owner
+                .generation(
+                    &operation,
+                    target.output.expect("configured response output policy"),
+                    schema.value(),
+                    model.output_tokens,
+                )
+                .await
+                .map_err(|error| error.at(stage))?,
+        )
+    } else {
+        None
+    };
+    let stream_available = capabilities.map_or(model.macrofold.is_some(), |mode| mode.streaming);
+    let preview = if stream_available && view.reply_player.is_some() {
         work.permit
             .as_ref()
             .zip(view.reply_player)
@@ -597,18 +725,32 @@ async fn generate(
         instructions: &instructions,
         prompt: view.prompt.as_str(),
         effort: model.effort,
-        max_output_tokens: model.output_tokens,
+        max_output_tokens: capabilities.map_or(model.output_tokens, |mode| mode.output_tokens),
         stream: preview.is_some(),
     };
-    let request = provider::generation_request(
-        &model.destination,
-        &model.requested,
-        model.route(&allowance, work.deadline),
-        generation,
-        &id,
-        budget,
-    )?;
-    let macrofold = model.macrofold.as_ref().map(|value| value.billing);
+    let request = if let Some((target, capabilities)) = model.deployment.as_ref().zip(capabilities)
+    {
+        provider::deployment_generation_request(
+            &model.destination,
+            &target.owner,
+            &allowance,
+            work.deadline,
+            capabilities.mode,
+            generation,
+            &id,
+            budget,
+        )?
+    } else {
+        provider::generation_request(
+            &model.destination,
+            &model.requested,
+            model.route(&allowance, work.deadline),
+            generation,
+            &id,
+            budget,
+        )?
+    };
+    let macrofold = model.billing();
     let parse_budget = budget.clone();
     let mut call = side(
         work,
@@ -632,7 +774,7 @@ async fn generate(
                 discovery: work.discovery(),
             },
             work.cancellation.clone(),
-            decode_provider(macrofold, parse_budget.clone(), move |value| {
+            decode_provider_bound(macrofold, false, parse_budget.clone(), move |value| {
                 if macrofold.is_some() {
                     match provider::macrofold_text(value).map_err(|_| CallFailure::Invalid)? {
                         provider::TextResult::Refused => Err(CallFailure::Invalid),
@@ -725,21 +867,21 @@ async fn recall_attention(
 ) -> Result<provider::JudgmentAnswer, CallFailure> {
     let budget = game.host.budget();
     let decision = &models.judgment;
-    let allowance = decision.amount_micro_usd.to_string();
     let id = format!("{}:attempt:0:attention:0", work.job.job.id);
     let attended = review.request.clone();
-    let request = provider::judgment_request(
-        &decision.destination,
-        &decision.requested,
-        decision.route(&allowance, work.deadline),
-        provider::Judgment {
-            state: provider::JudgmentState::Structured(&attended.state),
-            questions: &attended.questions,
-        },
-        decision.output_tokens,
-        &id,
-        budget,
-    )?;
+    let request = decision
+        .judgment_request(
+            dispatch,
+            budget,
+            &work.cancellation,
+            work.deadline,
+            &id,
+            provider::Judgment {
+                state: provider::JudgmentState::Structured(&attended.state),
+                questions: &attended.questions,
+            },
+        )
+        .await?;
     let evidence_digest = openlegend_simulation::encoding::hex_bytes(&request.digest);
     let parser = budget.clone();
     dispatch
@@ -762,14 +904,10 @@ async fn recall_attention(
                 discovery: work.discovery(),
             },
             work.cancellation.clone(),
-            decode_provider(
-                decision.macrofold.as_ref().map(|value| value.billing),
-                budget.clone(),
-                move |output| {
-                    provider::decode_optional_attention(output, &attended.questions, &parser)
-                        .map_err(|_| CallFailure::Invalid)
-                },
-            ),
+            decode_provider_bound(decision.billing(), true, budget.clone(), move |output| {
+                provider::decode_optional_attention(output, &attended.questions, &parser)
+                    .map_err(|_| CallFailure::Invalid)
+            }),
         )
         .await
 }
@@ -784,7 +922,6 @@ async fn action_attention(
     choose: bool,
 ) -> Result<Option<provider::JudgmentAnswer>, CallFailure> {
     let budget = game.host.budget();
-    let allowance = decision.amount_micro_usd.to_string();
     let id = format!("{}:attempt:0:action-attention", work.job.job.id);
     let offers = prepared
         .context
@@ -811,15 +948,16 @@ async fn action_attention(
         state: provider::JudgmentState::Structured(&attention.state),
         questions: &attention.questions,
     };
-    let request = provider::judgment_request(
-        &decision.destination,
-        &decision.requested,
-        decision.route(&allowance, work.deadline),
-        judgment,
-        decision.output_tokens,
-        &id,
-        budget,
-    )?;
+    let request = decision
+        .judgment_request(
+            dispatch,
+            budget,
+            &work.cancellation,
+            work.deadline,
+            &id,
+            judgment,
+        )
+        .await?;
     let parser = budget.clone();
     dispatch
         .submit(
@@ -841,15 +979,11 @@ async fn action_attention(
                 discovery: work.discovery(),
             },
             work.cancellation.clone(),
-            decode_provider(
-                decision.macrofold.as_ref().map(|value| value.billing),
-                budget.clone(),
-                move |output| {
-                    provider::decode_judgment(output, &attention.questions, &parser)
-                        .map(Some)
-                        .map_err(|_| CallFailure::Invalid)
-                },
-            ),
+            decode_provider_bound(decision.billing(), true, budget.clone(), move |output| {
+                provider::decode_judgment(output, &attention.questions, &parser)
+                    .map(Some)
+                    .map_err(|_| CallFailure::Invalid)
+            }),
         )
         .await
 }
@@ -893,10 +1027,7 @@ fn side(
         },
         requested_model: model.requested.clone(),
         context_digest: sha256_hex(context.as_bytes()),
-        macrofold_billing_mode: model
-            .macrofold
-            .as_ref()
-            .map(|route| billing_name(route.billing)),
+        macrofold_billing_mode: model.billing().map(|binding| billing_name(binding.mode)),
         deadline: work.deadline,
         evidence_cut,
         preview: None,

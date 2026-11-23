@@ -4,7 +4,10 @@
 use super::{BoundSchema, RenderError};
 use crate::{
     network::NetworkError,
-    provider_transport::{PreparedProviderRequest, ProviderDestination},
+    provider_transport::{
+        PreparedProviderRequest, ProviderDestination,
+        deployment::{Deployment, OutputMode},
+    },
 };
 use openlegend_simulation::{
     host::{ByteBudget, ByteReservation},
@@ -13,7 +16,8 @@ use openlegend_simulation::{
 };
 use serde::Serialize;
 use serde_json::Value;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::Arc};
+use tokio::time::Instant;
 
 #[derive(Serialize)]
 #[serde(untagged)]
@@ -75,7 +79,11 @@ struct MacrofoldLimits<'a> {
 impl<'a> MacrofoldRoute<'a> {
     fn body<T>(&self, input: T, output_tokens: usize, stream: bool) -> MacrofoldBody<'a, T> {
         MacrofoldBody {
-            stream: stream.then_some(true),
+            stream: if matches!(self.binding, MacrofoldBinding::Deployment { .. }) {
+                Some(stream)
+            } else {
+                stream.then_some(true)
+            },
             workspace_id: self.workspace_id,
             model_binding: self.binding,
             input,
@@ -86,6 +94,47 @@ impl<'a> MacrofoldRoute<'a> {
             },
         }
     }
+}
+
+fn deployment_route<'a>(
+    owner: &Deployment,
+    allowance: &'a str,
+    deadline: Instant,
+) -> MacrofoldRoute<'a> {
+    let target = owner.selection;
+    let remaining = deadline.saturating_duration_since(Instant::now());
+    MacrofoldRoute {
+        workspace_id: Some(target.workspace_id),
+        binding: MacrofoldBinding::Deployment {
+            deployment_id: target.model_binding.deployment_id,
+            deployment_revision_id: target.model_binding.deployment_revision_id,
+        },
+        max_cost_micro_usd: allowance,
+        timeout_seconds: (remaining.as_secs() + u64::from(remaining.subsec_nanos() != 0)).min(240),
+    }
+}
+
+pub(crate) fn deployment_judgment_request(
+    destination: &ProviderDestination,
+    owner: &Arc<Deployment>,
+    deadline: Instant,
+    input: Judgment<'_>,
+    output_tokens: usize,
+    request_id: &str,
+    budget: &ByteBudget,
+) -> Result<PreparedProviderRequest, NetworkError> {
+    // The deployed native inference fee is zero. The caller still reserves
+    // its full configured positive judgment allowance before any POST.
+    judgment_request(
+        destination,
+        "",
+        Some(deployment_route(owner, "0", deadline)),
+        input,
+        output_tokens,
+        request_id,
+        budget,
+    )
+    .map(|request| request.for_deployment(owner))
 }
 
 pub(crate) fn judgment_request(
@@ -159,6 +208,48 @@ pub(crate) fn generation_request(
     request_id: &str,
     budget: &ByteBudget,
 ) -> Result<PreparedProviderRequest, NetworkError> {
+    render_generation(
+        destination,
+        model,
+        macrofold,
+        None,
+        generation,
+        request_id,
+        budget,
+    )
+}
+
+pub(crate) fn deployment_generation_request(
+    destination: &ProviderDestination,
+    owner: &Arc<Deployment>,
+    allowance: &str,
+    deadline: Instant,
+    mode: OutputMode,
+    generation: Generation<'_>,
+    request_id: &str,
+    budget: &ByteBudget,
+) -> Result<PreparedProviderRequest, NetworkError> {
+    render_generation(
+        destination,
+        "",
+        Some(deployment_route(owner, allowance, deadline)),
+        Some(mode),
+        generation,
+        request_id,
+        budget,
+    )
+    .map(|request| request.for_deployment(owner))
+}
+
+fn render_generation(
+    destination: &ProviderDestination,
+    model: &str,
+    macrofold: Option<MacrofoldRoute<'_>>,
+    mode: Option<OutputMode>,
+    generation: Generation<'_>,
+    request_id: &str,
+    budget: &ByteBudget,
+) -> Result<PreparedProviderRequest, NetworkError> {
     let schema = JsonSchema {
         name: generation.schema_name,
         strict: true,
@@ -175,7 +266,8 @@ pub(crate) fn generation_request(
         struct ResponseFormat<'a> {
             #[serde(rename = "type")]
             kind: &'static str,
-            json_schema: JsonSchema<'a>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            json_schema: Option<JsonSchema<'a>>,
         }
         #[derive(Serialize)]
         struct Provider {
@@ -185,19 +277,65 @@ pub(crate) fn generation_request(
         struct Input<'a> {
             messages: [Message<'a>; 2],
             max_tokens: usize,
-            response_format: ResponseFormat<'a>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            response_format: Option<ResponseFormat<'a>>,
             #[serde(skip_serializing_if = "Option::is_none")]
             provider: Option<Provider>,
             #[serde(skip_serializing_if = "Option::is_none")]
             reasoning: Option<Reasoning<'a>>,
         }
-        // This shape is the installed structured-output route. A deployment
-        // that selects another output mode must supply its own prepared shape.
+        let guided = matches!(
+            mode,
+            Some(OutputMode::JsonObject | OutputMode::PromptedJson)
+        );
+        const GUIDANCE: &str =
+            "\n\nReturn only JSON matching this schema. Do not use Markdown fences or tools.\n";
+        let instructions = if guided {
+            use openlegend_simulation::encoding::{json_record_len, write_json_record};
+            let length = json_record_len(generation.schema).map_err(|_| NetworkError::Transfer)?;
+            let total = generation
+                .instructions
+                .len()
+                .saturating_add(GUIDANCE.len())
+                .saturating_add(length);
+            if total > 500_000 {
+                return Err(NetworkError::Capacity);
+            }
+            let custody = budget.reserve(total).map_err(|_| NetworkError::Capacity)?;
+            let mut message = Vec::new();
+            message
+                .try_reserve_exact(total)
+                .map_err(|_| NetworkError::Capacity)?;
+            message.extend_from_slice(generation.instructions.as_bytes());
+            message.extend_from_slice(GUIDANCE.as_bytes());
+            write_json_record(generation.schema, &mut message)
+                .map_err(|_| NetworkError::Transfer)?;
+            Some((
+                String::from_utf8(message).map_err(|_| NetworkError::Transfer)?,
+                custody,
+            ))
+        } else {
+            None
+        };
+        let response_format = match mode {
+            Some(OutputMode::PromptedJson) => None,
+            Some(OutputMode::JsonObject) => Some(ResponseFormat {
+                kind: "json_object",
+                json_schema: None,
+            }),
+            None | Some(OutputMode::JsonSchema) => Some(ResponseFormat {
+                kind: "json_schema",
+                json_schema: Some(schema),
+            }),
+        };
+        let catalog = matches!(route.binding, MacrofoldBinding::Catalog { .. });
         let input = Input {
             messages: [
                 Message {
                     role: "system",
-                    content: generation.instructions,
+                    content: instructions
+                        .as_ref()
+                        .map_or(generation.instructions, |(message, _)| message.as_str()),
                 },
                 Message {
                     role: "user",
@@ -205,16 +343,11 @@ pub(crate) fn generation_request(
                 },
             ],
             max_tokens: generation.max_output_tokens,
-            response_format: ResponseFormat {
-                kind: "json_schema",
-                json_schema: schema,
-            },
-            provider: matches!(route.binding, MacrofoldBinding::Catalog { .. }).then_some(
-                Provider {
-                    require_parameters: true,
-                },
-            ),
-            reasoning,
+            response_format,
+            provider: catalog.then_some(Provider {
+                require_parameters: true,
+            }),
+            reasoning: catalog.then_some(reasoning).flatten(),
         };
         destination.inference(
             &route.body(input, generation.max_output_tokens, generation.stream),

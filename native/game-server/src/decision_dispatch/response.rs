@@ -3,6 +3,7 @@
 use super::{CallFailure, ModelUsage, ProviderObservation};
 use crate::provider_transport::{
     FundedReply, HttpEvidence,
+    deployment::{DeploymentAttribution, DeploymentRevision},
     macrofold::{self, BillingBinding, BillingMode},
 };
 use openlegend_simulation::{
@@ -21,6 +22,26 @@ pub(crate) fn decode_provider<T, F>(
 where
     F: FnOnce(&Value) -> Result<T, CallFailure>,
 {
+    decode_provider_bound(
+        billing.map(|mode| BillingBinding {
+            mode,
+            deployment: None,
+        }),
+        false,
+        budget,
+        use_output,
+    )
+}
+
+pub(crate) fn decode_provider_bound<T, F>(
+    billing: Option<BillingBinding>,
+    native: bool,
+    budget: ByteBudget,
+    use_output: F,
+) -> impl FnOnce(FundedReply, &HttpEvidence) -> ProviderObservation<T>
+where
+    F: FnOnce(&Value) -> Result<T, CallFailure>,
+{
     move |body, http| {
         let mut observation = ProviderObservation {
             value: Err(CallFailure::Invalid),
@@ -29,12 +50,10 @@ where
             usage: None,
             charged_microusd: None,
             completion_uncertain: true,
+            proof: Default::default(),
+            unsupported_deployment: false,
         };
-        if let Some(billing) = billing {
-            let binding = BillingBinding {
-                mode: billing,
-                deployment: None,
-            };
+        if let Some(binding) = billing {
             let result = if let Some(observed) = &body.observed {
                 observation.provider_request_id = Some(observed.run.id.clone());
                 macrofold::observed_terminal(
@@ -61,11 +80,32 @@ where
                 });
                 observation.charged_microusd = result.estimated_micro_usd;
                 observation.completion_uncertain = result.completion_uncertain;
+                observation.unsupported_deployment = result.reason
+                    == Some("unsupported_model_capability")
+                    && !result.completion_uncertain;
+                if binding.deployment.is_some() {
+                    observation.proof.macrofold_deployment =
+                        result
+                            .deployment
+                            .map(
+                                |(deployment_id, deployment_revision_id)| DeploymentRevision {
+                                    deployment_id,
+                                    deployment_revision_id,
+                                },
+                            );
+                    observation.proof.macrofold_cost_attribution = result
+                        .deployment
+                        .filter(|_| result.fixed_fee_attribution)
+                        .map(|(deployment_id, _)| DeploymentAttribution::new(deployment_id));
+                }
                 if let Some(parsed) = result
                     .output
                     .and_then(|output| FundedJson::read(output.get(), &budget).ok())
                 {
-                    observation.value = use_output(&parsed.value);
+                    capture_native_facts(&mut observation, &parsed.value, native);
+                    if observation.proof.native_truncated != Some(true) {
+                        observation.value = use_output(&parsed.value);
+                    }
                 }
             }
         } else if let Ok(text) = std::str::from_utf8(&body.bytes)
@@ -84,9 +124,21 @@ where
                     output_tokens,
                 });
             observation.completion_uncertain = false;
-            observation.value = use_output(&parsed.value);
+            capture_native_facts(&mut observation, &parsed.value, native);
+            if observation.proof.native_truncated != Some(true) {
+                observation.value = use_output(&parsed.value);
+            }
         }
         observation
+    }
+}
+
+fn capture_native_facts<T>(observation: &mut ProviderObservation<T>, output: &Value, native: bool) {
+    if native {
+        observation.proof.native_latency_ms = output["latency_ms"]
+            .as_f64()
+            .filter(|latency| latency.is_finite() && *latency >= 0.);
+        observation.proof.native_truncated = output["truncated"].as_bool();
     }
 }
 
@@ -113,6 +165,8 @@ pub(crate) fn decode_embeddings(
         usage: None,
         charged_microusd: None,
         completion_uncertain: true,
+        proof: Default::default(),
+        unsupported_deployment: false,
     };
     let Some(parsed) = std::str::from_utf8(&body.bytes)
         .ok()

@@ -6,7 +6,7 @@ use super::{
     recall::semantic::SemanticClaim,
     reflection::{ReflectionCue, ReflectionScope},
 };
-use crate::authority::now_ms;
+use crate::{authority::now_ms, provider_transport::deployment::ModelExecutionProof};
 use openlegend_simulation::{encoding::json_record, identity::MAX_SAFE_INTEGER};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -73,6 +73,8 @@ struct PriorReceipt {
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ModelReceipt {
+    #[serde(flatten)]
+    pub proof: ModelExecutionProof,
     pub request_id: String,
     pub provider: InferenceClass,
     pub requested_model: String,

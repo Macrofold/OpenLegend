@@ -3,7 +3,7 @@
 
 use super::super::{Director, USEFUL_LIFETIME};
 use crate::{
-    decision_dispatch::{CallFailure, PreparedCall, ProviderDisclosure, decode_provider},
+    decision_dispatch::{CallFailure, PreparedCall, ProviderDisclosure, decode_provider_bound},
     decision_render::provider::{self, Judgment, JudgmentState},
     live_save::ProtectedGameplaySave,
     store::{AttemptRequest, InferenceClass, StoreError},
@@ -246,23 +246,23 @@ pub(super) async fn run(
         let job = format!("activity-learning:{}", uuid::Uuid::new_v4());
         let state = JsText::from_units(state);
         let request_id = format!("{job}:activity-learning");
-        let allowance = model.amount_micro_usd.to_string();
-        let request = provider::judgment_request(
-            &model.destination,
-            &model.requested,
-            model.route(&allowance, deadline),
-            Judgment {
-                state: JudgmentState::ExactPrompt(&state),
-                questions: &listed.values,
-            },
-            model.output_tokens,
-            &request_id,
-            budget,
-        )?;
+        let request = model
+            .judgment_request(
+                &director.dispatch,
+                budget,
+                &stopped,
+                deadline,
+                &request_id,
+                Judgment {
+                    state: JudgmentState::ExactPrompt(&state),
+                    questions: &listed.values,
+                },
+            )
+            .await?;
         let context_digest = hex_bytes(&request.digest);
         drop(state);
         let parser = budget.clone();
-        let billing = model.macrofold.as_ref().map(|catalog| catalog.billing);
+        let billing = model.billing();
         let result = director
             .dispatch
             .submit(
@@ -282,7 +282,7 @@ pub(super) async fn run(
                     },
                     requested_model: model.requested.clone(),
                     context_digest,
-                    macrofold_billing_mode: billing.map(|mode| match mode {
+                    macrofold_billing_mode: billing.map(|binding| match binding.mode {
                         crate::provider_transport::macrofold::BillingMode::Managed => "managed",
                         crate::provider_transport::macrofold::BillingMode::Byok => "byok",
                     }),
@@ -292,7 +292,7 @@ pub(super) async fn run(
                 },
                 publication.clone(),
                 stopped,
-                decode_provider(billing, budget.clone(), move |result| {
+                decode_provider_bound(billing, true, budget.clone(), move |result| {
                     provider::decode_optional_attention(result, &listed.values, &parser)
                         .map_err(|_| CallFailure::Invalid)
                 }),

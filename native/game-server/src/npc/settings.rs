@@ -1,17 +1,213 @@
 //! Trusted operator settings select provider credentials and spending routes.
 //! The authored world provides decision wording and allowed effects separately.
 
-use super::decide::{MacrofoldCatalog, Model, Models};
+use super::decide::{ConfiguredDeployment, MacrofoldCatalog, Model, Models};
 use crate::narrator::{NarratorMacrofold, NarratorModel};
-use crate::provider_transport::{ProviderDestination, ProviderRoute, macrofold::BillingMode};
-use std::time::Duration;
+use crate::provider_transport::{
+    ProviderDestination, ProviderRoute,
+    deployment::{Deployment, DeploymentSelection, ModelBinding, OutputPolicy, canonical_uuid},
+    macrofold::BillingMode,
+};
+use openlegend_simulation::values::deserialize_present_safe_integer;
+use serde::Deserialize;
+use std::{sync::Arc, time::Duration};
+use uuid::Uuid;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ModelTargets {
+    #[serde(deserialize_with = "deserialize_present_safe_integer")]
+    schema_version: Option<u64>,
+    #[serde(deserialize_with = "canonical_uuid")]
+    workspace_id: Uuid,
+    purposes: Purposes,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Purposes {
+    #[serde(default, deserialize_with = "supplied")]
+    judgment: Option<JudgmentTarget>,
+    #[serde(default, deserialize_with = "supplied")]
+    npc_response_fast: Option<GenerationTarget>,
+    #[serde(default, deserialize_with = "supplied")]
+    npc_response_complex: Option<GenerationTarget>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JudgmentTarget {
+    model_binding: ModelBinding,
+    #[serde(default, deserialize_with = "output_limit")]
+    max_output_tokens: Option<usize>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GenerationTarget {
+    model_binding: ModelBinding,
+    #[serde(default, deserialize_with = "output_limit")]
+    max_output_tokens: Option<usize>,
+    #[serde(default)]
+    structured_output: OutputPolicy,
+}
+
+fn supplied<'de, D: serde::Deserializer<'de>, T: Deserialize<'de>>(
+    de: D,
+) -> Result<Option<T>, D::Error> {
+    T::deserialize(de).map(Some)
+}
+
+fn output_limit<'de, D: serde::Deserializer<'de>>(de: D) -> Result<Option<usize>, D::Error> {
+    let value = deserialize_present_safe_integer(de)?
+        .and_then(|value| usize::try_from(value).ok())
+        .filter(|value| *value > 0)
+        .ok_or_else(|| serde::de::Error::custom("max_output_tokens must be a positive safe integer"))?;
+    Ok(Some(value))
+}
+
+impl ModelTargets {
+    fn from_env() -> Result<Option<Self>, Error> {
+        // Explicitly supplied empty JSON is an invalid configuration too.
+        let raw = match std::env::var("OPENLEGEND_MODEL_TARGETS_JSON") {
+            Ok(raw) => raw,
+            Err(std::env::VarError::NotPresent) => return Ok(None),
+            Err(error) => return Err(error.into()),
+        };
+        let settings: Self = serde_json::from_str(&raw).map_err(|error| {
+            // A malformed operator value cannot appear in a startup log.
+            format!(
+                "Invalid OPENLEGEND_MODEL_TARGETS_JSON at line {}, column {}",
+                error.line(),
+                error.column()
+            )
+        })?;
+        let purposes = &settings.purposes;
+        if settings.schema_version != Some(1)
+            || (purposes.judgment.is_none()
+                && purposes.npc_response_fast.is_none()
+                && purposes.npc_response_complex.is_none())
+        {
+            return Err("OPENLEGEND_MODEL_TARGETS_JSON requires schema_version 1 and at least one supported purpose".into());
+        }
+        Ok(Some(settings))
+    }
+
+    fn models(
+        &self,
+        judgment: &mut Model,
+        fast: Option<&Model>,
+        complex: Option<&Model>,
+    ) -> (Option<Model>, Option<Model>) {
+        let mut deployments = Vec::<Arc<Deployment>>::new();
+        let mut bind = |model_binding, output| {
+            let owner = match deployments
+                .iter()
+                .find(|entry| entry.selection.model_binding == model_binding)
+            {
+                Some(entry) => entry.clone(),
+                None => {
+                    let entry = Deployment::new(DeploymentSelection {
+                        workspace_id: self.workspace_id,
+                        model_binding,
+                    });
+                    deployments.push(entry.clone());
+                    entry
+                }
+            };
+            ConfiguredDeployment { owner, output }
+        };
+        if let Some(target) = &self.purposes.judgment {
+            judgment.use_deployment(bind(target.model_binding, None), target.max_output_tokens);
+        }
+        let mut response = |model: Option<&Model>, target: Option<&GenerationTarget>| {
+            let (mut model, target) = model.cloned().zip(target)?;
+            let binding = bind(target.model_binding, Some(target.structured_output));
+            model.use_deployment(binding, target.max_output_tokens);
+            Some(model)
+        };
+        (
+            response(fast, self.purposes.npc_response_fast.as_ref()),
+            response(complex, self.purposes.npc_response_complex.as_ref()),
+        )
+    }
+
+    fn operating_settings(
+        &self,
+        values: &mut std::collections::BTreeMap<String, serde_json::Value>,
+    ) {
+        use serde_json::json;
+        fn caption(
+            binding: ModelBinding,
+            output: Option<usize>,
+            policy: Option<OutputPolicy>,
+        ) -> String {
+            let revision = binding.deployment_revision_id.map_or_else(
+                || "current serving revision".to_owned(),
+                |revision| format!("revision {revision}"),
+            );
+            let allowance = output.map_or_else(
+                || "current output allowance".to_owned(),
+                |output| format!("at most {output} output tokens"),
+            );
+            let mode = policy.map_or("native decisions", OutputPolicy::caption);
+            format!(
+                "Deployment {}; {revision}; {allowance}; {mode}",
+                binding.deployment_id
+            )
+        }
+        for (name, projection) in [
+            (
+                "macrofoldJudgmentDeployment",
+                self.purposes
+                    .judgment
+                    .as_ref()
+                    .map(|target| caption(target.model_binding, target.max_output_tokens, None)),
+            ),
+            (
+                "macrofoldFastDeployment",
+                self.purposes.npc_response_fast.as_ref().map(|target| {
+                    caption(
+                        target.model_binding,
+                        target.max_output_tokens,
+                        Some(target.structured_output),
+                    )
+                }),
+            ),
+            (
+                "macrofoldComplexDeployment",
+                self.purposes.npc_response_complex.as_ref().map(|target| {
+                    caption(
+                        target.model_binding,
+                        target.max_output_tokens,
+                        Some(target.structured_output),
+                    )
+                }),
+            ),
+        ] {
+            values.insert(
+                name.to_owned(),
+                json!(
+                    projection
+                        .as_deref()
+                        .unwrap_or("Use existing provider settings")
+                ),
+            );
+        }
+        values.insert(
+            "macrofoldDeploymentWorkspace".to_owned(),
+            json!(self.workspace_id),
+        );
+    }
+}
 
 pub(super) struct ConfiguredModels {
     pub(super) routes: Models,
     interactive: u64,
     jev_only: bool,
+    targets: Option<ModelTargets>,
 }
 
 pub(super) fn embedding_model(
@@ -51,7 +247,12 @@ pub(super) fn embedding_model(
 }
 
 fn ai_timeout() -> Result<Duration, Error> {
-    Ok(Duration::from_secs_f64(number("AI_TIMEOUT_SECONDS", 35.0, 5.0, 120.0)?))
+    Ok(Duration::from_secs_f64(number(
+        "AI_TIMEOUT_SECONDS",
+        35.0,
+        5.0,
+        120.0,
+    )?))
 }
 
 fn embedding_price(model: &str) -> Result<(Option<f64>, std::sync::Arc<[String]>), Error> {
@@ -74,8 +275,12 @@ fn embedding_price(model: &str) -> Result<(Option<f64>, std::sync::Arc<[String]>
         .unwrap_or_default();
     let mut entries = catalogue.into_iter().filter(|entry| entry.model == model);
     if let Some(entry) = entries.next() {
-        if entries.next().is_some() || !(0.0..=1000.0).contains(&entry.prices.input_usd_per_million) {
-            return Err("OPENAI_MODEL_PRICES_JSON must give one valid input rate for the embedding model".into());
+        if entries.next().is_some() || !(0.0..=1000.0).contains(&entry.prices.input_usd_per_million)
+        {
+            return Err(
+                "OPENAI_MODEL_PRICES_JSON must give one valid input rate for the embedding model"
+                    .into(),
+            );
         }
         return Ok((
             Some(entry.prices.input_usd_per_million),
@@ -108,6 +313,10 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
         return Err("OPEN_LEGEND_NPC_AI_CONCURRENCY is outside the host capacity range".into());
     }
     let macrofold = optional("MACROFOLD_API_KEY")?;
+    let targets = ModelTargets::from_env()?;
+    if macrofold.is_none() && targets.is_some() {
+        return Err("OPENLEGEND_MODEL_TARGETS_JSON requires the configured Macrofold adapter (MACROFOLD_API_KEY)".into());
+    }
     let jev = optional("TYPESAFE_API_KEY")?.or(optional("JEV_API_KEY")?);
     let language = optional("OPENAI_API_KEY")?;
     if macrofold.is_none() && jev.is_none() {
@@ -116,18 +325,13 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
     let ceiling_micro_usd = micro_usd(budget_usd)?;
     let jev_only = setting("AI_JEV_ONLY", "false")? == "true";
     let judgment_amount = judgment_allowance(macrofold.is_some())?;
-    let (judgment, fast, complex, generation) = if let Some(token) = macrofold {
+    let (mut judgment, fast, complex, generation) = if let Some(token) = macrofold {
         let base = setting("MACROFOLD_BASE_URL", "http://localhost:3210")?;
         let billing = match setting("MACROFOLD_BILLING_MODE", "byok")?.as_str() {
             "byok" => BillingMode::Byok,
             "managed" => BillingMode::Managed,
             _ => return Err("MACROFOLD_BILLING_MODE must be byok or managed".into()),
         };
-        if optional("OPENLEGEND_MODEL_TARGETS_JSON")?.is_some() {
-            return Err(
-                "This server build requires supported Macrofold deployment bindings".into(),
-            );
-        }
         let general_connection = optional("MACROFOLD_PROVIDER_CONNECTION_ID")?;
         let wrap = |requested,
                     amount_micro_usd,
@@ -145,6 +349,7 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
                 amount_micro_usd,
                 output_tokens,
                 effort,
+                deployment: None,
                 macrofold: Some(MacrofoldCatalog {
                     billing,
                     connection,
@@ -197,6 +402,7 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
             )?,
             requested: model,
             macrofold: None,
+            deployment: None,
             amount_micro_usd: judgment_amount,
             output_tokens: 16_384,
             effort: None,
@@ -208,6 +414,9 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
         (judgment, fast, complex, generation)
     };
     let interactive = interactive_allowance(judgment_amount, generation)?;
+    let (fast_deployment, complex_deployment) = targets.as_ref().map_or((None, None), |targets| {
+        targets.models(&mut judgment, fast.as_ref(), complex.as_ref())
+    });
     Ok((
         limit,
         Some(ConfiguredModels {
@@ -215,11 +424,14 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
                 judgment,
                 fast,
                 complex,
+                fast_deployment,
+                complex_deployment,
                 ceiling_micro_usd,
                 embedding: None,
             },
             interactive,
             jev_only,
+            targets,
         }),
     ))
 }
@@ -322,6 +534,7 @@ fn nano_model(
                 amount_micro_usd: fast.amount_micro_usd,
                 output_tokens,
                 effort: Some("low"),
+                deployment: None,
                 macrofold: Some(MacrofoldCatalog {
                     billing: route.billing,
                     connection: route.connection.clone(),
@@ -349,6 +562,7 @@ fn nano_model(
                 output_tokens,
                 effort: Some("low"),
                 macrofold: None,
+                deployment: None,
             },
             interactive_allowance(judgment_allowance(false)?, reserve(120_000.0)?)?,
         )
@@ -388,6 +602,9 @@ pub(crate) fn creation_model_settings(
         ),
     ]);
     if let Some(models) = &models {
+        if let Some(targets) = &models.targets {
+            targets.operating_settings(&mut values);
+        }
         let model_names = [
             (
                 "jevModel",
@@ -407,7 +624,7 @@ pub(crate) fn creation_model_settings(
         ];
         for (direct, managed, model) in model_names {
             if let Some(model) = model {
-                let name = if model.macrofold.is_some() {
+                let name = if model.billing().is_some() {
                     managed
                 } else {
                     direct
@@ -441,8 +658,14 @@ pub(crate) fn creation_model_settings(
     }
     if let Some(embedding) = embedding {
         values.insert("embeddingModel".to_owned(), json!(embedding.model));
-        values.insert("embeddingDimensions".to_owned(), json!(embedding.dimensions));
-        values.insert("embeddingCallReserveUsd".to_owned(), json!(embedding.amount as f64 / 1_000_000.0));
+        values.insert(
+            "embeddingDimensions".to_owned(),
+            json!(embedding.dimensions),
+        );
+        values.insert(
+            "embeddingCallReserveUsd".to_owned(),
+            json!(embedding.amount as f64 / 1_000_000.0),
+        );
     }
     Ok(values)
 }
@@ -525,6 +748,7 @@ fn direct_language(token: &str) -> Result<(Option<Model>, Option<Model>, u64), E
             destination: ProviderDestination::new(ProviderRoute::OpenAi, None, token)?,
             requested,
             macrofold: None,
+            deployment: None,
             amount_micro_usd: reserve(500_000.0)?,
             output_tokens,
             effort: Some("low"),

@@ -13,6 +13,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+pub(crate) mod deployment;
 mod events;
 mod follow;
 pub(crate) mod macrofold;
@@ -189,6 +190,7 @@ impl ProviderDestination {
             digest,
             _body: storage,
             observation: (self.route == ProviderRoute::Macrofold).then(|| self.clone()),
+            deployment: None,
         })
     }
 }
@@ -199,9 +201,19 @@ pub(crate) struct PreparedProviderRequest {
     pub(crate) digest: [u8; 32],
     _body: ByteReservation,
     observation: Option<ProviderDestination>,
+    deployment: Option<std::sync::Arc<deployment::Deployment>>,
 }
 
 impl PreparedProviderRequest {
+    pub(crate) fn for_deployment(mut self, owner: &std::sync::Arc<deployment::Deployment>) -> Self {
+        self.deployment = Some(owner.clone());
+        self
+    }
+
+    pub(crate) fn deployment(&self) -> Option<std::sync::Arc<deployment::Deployment>> {
+        self.deployment.clone()
+    }
+
     pub(crate) fn route(&self) -> ProviderRoute {
         self.route
     }

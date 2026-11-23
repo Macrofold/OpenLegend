@@ -9,6 +9,7 @@ use crate::{
     provider_transport::{
         ActiveRun, FundedReply, HttpEvidence, InferenceEvent, InferenceEvents,
         PreparedProviderRequest, ProviderDestination, ProviderExchange, ProviderReply,
+        deployment::ModelExecutionProof,
     },
     store::{
         AttemptAdmission, AttemptRequest, CommitError, ModelReceipt, ModelUsage, ReservedAttempt,
@@ -31,7 +32,7 @@ use tokio::{sync::watch, time::Instant};
 mod previews;
 pub(crate) use previews::{PreviewTerminal, ReplyPreview, ReplyPreviews, ReplyReceipt};
 mod response;
-pub(crate) use response::{decode_embeddings, decode_provider};
+pub(crate) use response::{decode_embeddings, decode_provider, decode_provider_bound};
 
 pub(crate) struct PreparedCall {
     pub request: PreparedProviderRequest,
@@ -57,6 +58,8 @@ pub(crate) struct ProviderObservation<T> {
     pub usage: Option<ModelUsage>,
     pub charged_microusd: Option<u64>,
     pub completion_uncertain: bool,
+    pub proof: ModelExecutionProof,
+    pub unsupported_deployment: bool,
 }
 
 #[derive(Debug)]
@@ -71,6 +74,7 @@ pub(crate) enum CallFailure {
     ContextLimit,
     Transport(NetworkError),
     Refused(u16),
+    Deployment(&'static str),
     Invalid,
     Commit(CommitError),
     At {
@@ -94,6 +98,10 @@ impl fmt::Display for CallFailure {
             Self::ContextLimit => f.write_str("The complete decision context exceeds its limit"),
             Self::Transport(error) => error.fmt(f),
             Self::Refused(status) => write!(f, "The provider refused the request ({status})"),
+            Self::Deployment(code) => write!(
+                f,
+                "The selected deployment could not prepare the request ({code})"
+            ),
             Self::Invalid => f.write_str("The provider returned an invalid response"),
             Self::Commit(error) => error.fmt(f),
             Self::At { stage, failed } => write!(f, "{stage}: {failed}"),
@@ -118,6 +126,7 @@ impl CallFailure {
                 | Self::Stale(_)
                 | Self::Authority(_)
                 | Self::Refused(_)
+                | Self::Deployment(_)
                 | Self::DecodeBusy => Outcome::Refused,
                 _ => Outcome::Failed,
             },
@@ -308,6 +317,8 @@ impl DecisionDispatch {
             result = waiting => result.map_err(CallFailure::World)?,
         }
         let route = request.route();
+        let deployment = request.deployment();
+        let requested = deployment.as_ref().map(|target| target.selection);
         let observer = request.observer();
         let operation = self.network.admit(deadline, 32768)?;
         let provider = allowance.provider;
@@ -361,6 +372,10 @@ impl DecisionDispatch {
                 macrofold_billing_mode,
                 usage: None,
                 estimated_cost_usd: None,
+                proof: ModelExecutionProof {
+                    macrofold_requested_deployment: requested,
+                    ..ModelExecutionProof::default()
+                },
             };
         let result = if intent.is_ok() {
             let permit = &permit;
@@ -590,6 +605,21 @@ impl DecisionDispatch {
             .and_then(|out| out.provider_request_id.take())
             .or_else(|| accepted_run.as_ref().map(|run| run.id.clone()))
             .or_else(|| evidence.as_mut().and_then(|http| http.trace_id.take()));
+        let mut proof = observation
+            .as_mut()
+            .map(|value| std::mem::take(&mut value.proof))
+            .unwrap_or_default();
+        proof.macrofold_requested_deployment = requested;
+        if let Some(deployment) = deployment {
+            deployment.observe(
+                proof.macrofold_deployment,
+                evidence.as_ref().is_some_and(|http| {
+                    http.error_code.as_deref() == Some("unsupported_model_capability")
+                }) || observation
+                    .as_ref()
+                    .is_some_and(|value| value.unsupported_deployment),
+            );
+        }
         let receipt = ModelReceipt {
             request_id: attempt.id().to_owned(),
             provider,
@@ -616,6 +646,7 @@ impl DecisionDispatch {
             macrofold_billing_mode,
             usage: observation.as_mut().and_then(|out| out.usage.take()),
             estimated_cost_usd: charged.map(|value| value as f64 / 1_000_000.0),
+            proof,
         };
         let settled = self.game.store.settle_model(attempt, receipt).await;
         if matches!(

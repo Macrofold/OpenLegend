@@ -397,6 +397,7 @@ pub(super) async fn run(
     let dispatched = AtomicBool::new(false);
     let started = Instant::now();
     let mut receipt = ModelReceipt {
+        proof: Default::default(),
         request_id: scope.attempt.clone(),
         provider: InferenceClass::OpenAi,
         requested_model: model.model.clone(),

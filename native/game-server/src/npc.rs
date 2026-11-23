@@ -869,6 +869,11 @@ impl Director {
                 "The original provider request already has a record.",
                 "existing",
             ),
+            CallFailure::Deployment(reason) => (
+                SpeechReplyStatus::Failed,
+                "The reply service is unavailable for this request.",
+                *reason,
+            ),
             CallFailure::Refused(_) => (
                 SpeechReplyStatus::Failed,
                 "The reply service declined the request.",
@@ -914,7 +919,9 @@ impl Director {
         let message = if job.job.kind == "action" {
             match status {
                 SpeechReplyStatus::Cancelled => "The action was cancelled.",
-                SpeechReplyStatus::Stale => "The action or its selected target changed before it could be shown.",
+                SpeechReplyStatus::Stale => {
+                    "The action or its selected target changed before it could be shown."
+                }
                 _ => "The action description could not be used. Your action was not shown.",
             }
         } else {

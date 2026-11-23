@@ -341,6 +341,7 @@ impl ProviderDestination {
             digest,
             _body: storage,
             observation: Some(self.clone()),
+            deployment: None,
         })
     }
 }
