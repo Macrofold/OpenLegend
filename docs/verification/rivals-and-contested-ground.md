@@ -462,3 +462,13 @@ Two signed players held Aim and walked on authored terrain in the same world. Ru
 An earlier joined build sometimes chose the current center during an active walk. A motion track can end with an identical point and a rounding-sized time remainder. The observation owner now uses the preceding moving piece in that case. An actual stationary interval still gives no lead. Motion tracks retain numeric positions and times, and recording is limited to the exact bodies needed by an active aim.
 
 Tree `d69b6bdd15f5`, executable SHA-256 `c47ed3343fee`, passed `integrated-observed-v9` (`9a5a8eec09f3`) and `integrated-stopped-v8` (`15e35ab3860f`). The earlier partial observation and stopped-walk fixture failures are retained with the successful cases. Both games used the authored slow test clock and closed their PostgreSQL databases. The ground result alone leaves flight and falling unqualified.
+
+### Evasion through the signed Rust browser
+
+A signed player chose a supported short dodge. The server refused unsupported ground, a support seam, an overlong destination and an occupied path before committing the action or its repeat deadline. An admitted dodge used the installed movement profile and kept the existing attack-recovery deadline. Its intermediate position and exact action survived shutdown. The reopened game completed the same path at the selected point and saved one completion. Repeating the original command under the same control returned its receipt. A new control could recover that receipt and could only issue a new action with fresh authorization. Ordinary walking remained available during the dodge's repeat cooldown.
+
+The first admitted path failed when the start-event writer only handled Walk. A subsequent cold run reached its destination and was still counted as blocked because the ordinary walk completion required a consumed route. The shared position and support check now serves both actions. Evasion retains its exact chosen waypoint until its installed duration ends. Cancellation retains the position already earned and the two recovery deadlines.
+
+In a separate signed game, a stag hit interrupted an admitted dodge after the player had moved partway. Health fell from 100 to 82, the action stopped at the position already reached, and no completion event was saved. The injury, position, original receipt and both deadlines survived reopening without a second hit.
+
+The final focused source manifest is `3d17ba611a42` and the executable SHA-256 is `744dbb737f3d`. The three results on that executable are completion `0680b56496c9`, signed Stop `26964e9013e0` and injury `340b13e7cfd7`. The checks used disposable PostgreSQL databases and the running Rust server.

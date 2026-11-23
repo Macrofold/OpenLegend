@@ -87,7 +87,7 @@ impl SliceActions {
                 )?;
                 working.insert(*handle, action.id.clone());
             }
-            if !restricted && advances_ground(action) {
+            if (!restricted || action.is_evading()) && advances_ground(action) {
                 approaching.push(*handle);
             }
         }

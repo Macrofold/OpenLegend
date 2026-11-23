@@ -103,6 +103,38 @@ impl PhysicalMutation<'_> {
         Ok(())
     }
 
+    pub(crate) fn retain_evasion_recovery(
+        &mut self,
+        id: &str,
+        deadline: f64,
+    ) -> Result<(), ExecutionError> {
+        if !deadline.is_finite() || deadline <= self.state.header.sim_time {
+            return Err(ExecutionError::Invariant);
+        }
+        let entity = self.state.entities.handle(id).ok_or(ExecutionError::MissingEntity)?;
+        let before = self
+            .state
+            .entities
+            .resolve(entity)
+            .and_then(|entity| entity.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?
+            .evasion_ready_at;
+        if before.is_some_and(|prior| deadline <= prior) {
+            return Ok(());
+        }
+        self.journal.reserve(2 * size_of::<Undo>())?;
+        let key = UndoKey::EvasionReady(entity.slot, entity.generation);
+        if self.journal.first(&key)? {
+            self.journal.retain(key, Undo::EvasionReady { entity, before })?;
+        }
+        self.state
+            .entities
+            .resolve_mut(entity)
+            .and_then(|entity| entity.actor.as_mut())
+            .ok_or(ExecutionError::MissingActor)?
+            .evasion_ready_at = Some(deadline);
+        Ok(())
+    }
     pub(crate) fn start_contact_recovery(
         &mut self,
         id: &str,

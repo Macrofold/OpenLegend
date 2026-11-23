@@ -227,6 +227,10 @@ pub(crate) enum NativeCommand {
         envelope: CommandEnvelope,
         destination: RecordedSurfacePoint,
     },
+    Evade {
+        envelope: CommandEnvelope,
+        destination: RecordedSurfacePoint,
+    },
     Feed {
         envelope: CommandEnvelope,
         target_id: String,
@@ -813,6 +817,12 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     D::Error::custom("Movement requires its selected destination.")
                 })?,
             }),
+            "evade" if !extras_for_move => Ok(Self::Evade {
+                envelope,
+                destination: input.destination.ok_or_else(|| {
+                    D::Error::custom("Evasion requires its selected destination.")
+                })?,
+            }),
             "feed"
                 if !extras_for_say
                     && input.text.is_none()
@@ -1057,6 +1067,7 @@ impl NativeCommand {
             Self::Outing { envelope, .. }
             | Self::Handover { envelope, .. }
             | Self::Move { envelope, .. }
+            | Self::Evade { envelope, .. }
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
@@ -1097,6 +1108,7 @@ impl NativeCommand {
             Self::Outing { envelope, .. }
             | Self::Handover { envelope, .. }
             | Self::Move { envelope, .. }
+            | Self::Evade { envelope, .. }
             | Self::Feed { envelope, .. }
             | Self::Gather { envelope, .. }
             | Self::Fish { envelope, .. }
@@ -1130,6 +1142,7 @@ impl NativeCommand {
         match self {
             Self::Outing { .. } => crate::worlds::base_outings::travel_command_type(),
             Self::Move { .. } => "move",
+            Self::Evade { .. } => "evade",
             Self::Handover { .. } => "handover",
             Self::Feed { .. } => "feed",
             Self::Gather { .. } => "gather",

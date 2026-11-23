@@ -59,6 +59,8 @@ enum Phase {
     Follow,
     ContactMotionStart,
     ContactMotion,
+    EvadeMotion,
+    EvadeArrival,
     ZeroMotion,
     Check,
     Route,
@@ -139,15 +141,18 @@ fn supported(entity: &Entity) -> Option<(Point, &str)> {
         _ => None,
     }
 }
-fn in_reach(entity: &Entity, action: &Action, tolerance: f64) -> bool {
+fn at_destination(entity: &Entity, action: &Action, tolerance: f64) -> bool {
     let Some(destination) = &action.destination else {
         return false;
     };
-    action.path.is_empty()
-        && supported(entity).is_some_and(|(point, surface)| {
-            surface == destination.surface_id
-                && crate::spatial::distance(point, destination.point()) <= tolerance
-        })
+    supported(entity).is_some_and(|(point, surface)| {
+        surface == destination.surface_id
+            && crate::spatial::distance(point, destination.point()) <= tolerance
+    })
+}
+
+fn in_reach(entity: &Entity, action: &Action, tolerance: f64) -> bool {
+    action.path.is_empty() && at_destination(entity, action, tolerance)
 }
 impl MoveAdvanceCursor {
     pub(crate) fn action_id(&self) -> Option<&str> {
@@ -235,7 +240,8 @@ impl MoveAdvanceCursor {
         )?;
         // Source's zero-time path repair uses ordinary static geometry only;
         // occupied-body avoidance belongs to the later actual native motion.
-        let occupied = (phase == Phase::ContactMotion && action.strike_motion.is_some())
+        let occupied = phase == Phase::EvadeMotion
+            || (phase == Phase::ContactMotion && action.strike_motion.is_some())
             || (phase == Phase::PositiveMotion
                 && (action.native_locomotion.is_some()
                     || entity
@@ -559,6 +565,19 @@ impl MoveAdvanceCursor {
                 }
                 self.motion = None;
                 let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
+                if self.phase == Phase::EvadeMotion {
+                    let rule = installed.occurrence_rules.value().evasion.as_ref().ok_or(ExecutionError::Invariant)?;
+                    if !complete {
+                        self.fail(&rule.obstructed)?;
+                    } else if core.physical().advance_timed_work(
+                        &self.actor_id, action_id, self.seconds, installed.time_epsilon,
+                    )? {
+                        self.phase = Phase::EvadeArrival;
+                    } else {
+                        self.phase = Phase::Done;
+                    }
+                    continue;
+                }
                 if !complete {
                     core.physical()
                         .clear_movement_path(&self.actor_id, action_id)?;
@@ -657,6 +676,23 @@ impl MoveAdvanceCursor {
                     self.action_id = Some(action.id.clone());
                     self.physical_life =
                         entity.physical_life().ok_or(ExecutionError::MissingActor)?;
+                    if let Some(evasion) = &action.evasion {
+                        let rule = installed.occurrence_rules.value().evasion.as_ref().ok_or(ExecutionError::Invariant)?;
+                        let now = core.state.physical.header.sim_time;
+                        if evasion.source_life != self.physical_life
+                            || !entity.actively_participates()
+                            || installed.capabilities.capability_blocked(Some(entity), "locomotion")?
+                            || installed.capabilities.capability_blocked(Some(entity), "actions")?
+                        {
+                            self.fail(&rule.interrupted)?;
+                        } else if self.seconds > 0.0 {
+                            let elapsed = self.seconds.min((evasion.ends_at - (now - self.seconds)).max(0.0));
+                            self.start_motion(core, evasion.speed * elapsed, Phase::EvadeMotion)?;
+                        } else {
+                            self.phase = Phase::Done;
+                        }
+                        continue;
+                    }
                     if action.follow.is_some() {
                         if self.seconds > 0.0 {
                             if action.stage == "approaching" && action.navigation.is_none() && !action.path.is_empty() {
@@ -925,6 +961,23 @@ impl MoveAdvanceCursor {
                     self.queries = Some((queries, guard));
                     return Ok(Progress::Geometry);
                 }
+                Phase::EvadeArrival => {
+                    let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
+                    let (entity, action) = bound(core, &self.actor_id, action_id, self.physical_life)?;
+                    let rule = installed.occurrence_rules.value().evasion.as_ref().ok_or(ExecutionError::Invariant)?;
+                    // Evasion keeps its sole committed waypoint through the deadline.
+                    if !at_destination(entity, action, crate::movement::evasion::COORDINATE_EPSILON) {
+                        self.fail(&rule.obstructed)?;
+                        continue;
+                    }
+                    self.reserve(
+                        rule.finished.storage_bytes() + 3 * size_of::<NarrationPart>()
+                            + self.actor_id.len() * 3 + rule.ended_event.len() + 128,
+                    )?;
+                    return Ok(Progress::Occurrence(self.emit(
+                        core, rule.finished.clone(), &rule.ended_event, Phase::Finish,
+                    )?));
+                }
                 Phase::Arrival => {
                     let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
                     let (entity, action) =
@@ -1021,6 +1074,15 @@ impl MoveAdvanceCursor {
                             plan_id: None,
                             action_id: None,
                         }
+                    } else if let Some(rule) = core.state.physical.entities.get(&self.actor_id)
+                        .and_then(|entity| entity.actor.as_ref()).and_then(|actor| actor.action.as_ref())
+                        .filter(|action| action.is_evading())
+                        .and_then(|_| installed.occurrence_rules.value().evasion.as_ref())
+                    {
+                        self.reserve(rule.completed.storage_bytes())?;
+                        let mut completed = rules.movement_completed.outcome(true);
+                        completed.message = rule.completed.clone();
+                        completed
                     } else if let Some(result) = self.production_result.take() {
                         result
                     } else if let Some(result) = self.cast_result.take() {
@@ -1117,6 +1179,7 @@ impl MoveAdvanceCursor {
                 | Phase::ZeroMotion
                 | Phase::PositiveMotion
                 | Phase::ContactMotion
+                | Phase::EvadeMotion
                 | Phase::FeedReach
                 | Phase::FeedSight
                 | Phase::HearthWork
@@ -1144,13 +1207,29 @@ impl MoveAdvanceCursor {
         });
         parts.push(NarrationPart::Literal(" ".into()));
         parts.push(NarrationPart::Literal(text));
+        let activity = (self.phase == Phase::EvadeArrival).then(|| {
+            self.action_id.as_deref().ok_or(ExecutionError::Invariant)
+        }).transpose()?;
+        if let Some(action) = activity {
+            self.reserve(crate::host::retained_size::map_storage::<String, crate::reception::EventScalar>(2)
+                .ok_or(ExecutionError::Capacity)? + action.len() * 2 + "actionIdsemanticTrigger".len())?;
+        }
+        let data = if self.phase == Phase::EvadeArrival {
+            let action = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
+            Some(indexmap::IndexMap::from([
+                ("actionId".into(), crate::reception::EventScalar::Text(action.into())),
+                ("semanticTrigger".into(), crate::reception::EventScalar::Boolean(true)),
+            ]))
+        } else {
+            None
+        };
         let event = core.stage_event(EventEmissionIntent {
             event_type: event_type.into(),
             text: EmissionText::Narration(Narration { parts }),
             audience: AudienceSelection::Physical,
             source_id: Some(self.actor_id.clone()),
             target_id: None,
-            data: None,
+            data,
             scope: EventScope::External,
             origin: None,
             exposure: None,

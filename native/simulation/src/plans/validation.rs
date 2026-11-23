@@ -143,6 +143,7 @@ pub(crate) fn valid_command(
         | NativeCommand::Eat { .. }
         | NativeCommand::Ranged { .. }
         | NativeCommand::Guard { .. }
+        | NativeCommand::Evade { .. }
         | NativeCommand::PracticeShot { .. }
         | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }

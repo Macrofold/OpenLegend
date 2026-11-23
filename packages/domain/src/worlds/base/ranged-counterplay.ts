@@ -92,6 +92,9 @@ export const BASE_RANGED_TEXT = {
 };
 
 export const BASE_EVASION_KEYWORDS = ['evade', 'dodge'];
+const evasionRecovery = '{label} is ready in {seconds} game seconds. Walking remains available.';
+const evasionDistance = 'Choose a distinct supported destination within {maximum} m.';
+export const BASE_EVASION_ENDED_EVENT = 'evasion-ended';
 export const BASE_EVASION_TEXT = {
   description:
     'Choose a short supported evasive movement. Current distance, duration and repeat limits are disclosed with the action.',
@@ -100,15 +103,36 @@ export const BASE_EVASION_TEXT = {
     'Other supported short destinations are not listed; ordinary movement remains available.',
   unavailable: 'This body cannot make that evasive movement.',
   recovery: (label: string, seconds: number) =>
-    `${label} is ready in ${seconds} game seconds. Walking remains available.`,
-  distance: (maximum: number) => `Choose a distinct supported destination within ${maximum} m.`,
+    evasionRecovery.replace('{seconds}', String(seconds)).replace('{label}', () => label),
+  distance: (maximum: number) => evasionDistance.replace('{maximum}', String(maximum)),
   blockedPath: 'That short path is blocked or unsupported.',
   interrupted: 'The chosen movement was interrupted.',
   obstructed: 'The chosen movement stopped at a physical obstruction.',
+  started: 'started the chosen evasive movement.',
   finished: 'finished the chosen evasive movement.',
   completed: 'The chosen movement ended.',
   injuryInterrupted: 'Injury interrupted the chosen movement.',
 };
+
+export function baseEvasionOccurrenceRules() {
+  return {
+    unavailable: BASE_EVASION_TEXT.unavailable,
+    recovery: evasionRecovery,
+    distance: evasionDistance,
+    blockedPath: BASE_EVASION_TEXT.blockedPath,
+    interrupted: BASE_EVASION_TEXT.interrupted,
+    obstructed: BASE_EVASION_TEXT.obstructed,
+    started: BASE_EVASION_TEXT.started,
+    finished: BASE_EVASION_TEXT.finished,
+    completed: BASE_EVASION_TEXT.completed,
+    injuryInterrupted: BASE_EVASION_TEXT.injuryInterrupted,
+    endedEvent: BASE_EVASION_ENDED_EVENT,
+    distanceFact: 'Distance (m)',
+    durationFact: 'Duration (game seconds)',
+    repeatFact: 'Repeat interval (game seconds)',
+    pathFact: 'Path',
+  };
+}
 
 export const BASE_RANGED_CHOICE_LABEL = '{label} at {target} with {tool}';
 

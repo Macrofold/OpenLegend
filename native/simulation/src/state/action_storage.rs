@@ -46,6 +46,7 @@ impl HeapBytes for Action {
             self.native_locomotion.heap_bytes()?,
             self.strike_motion.heap_bytes()?,
             self.ranged.heap_bytes()?,
+            self.evasion.heap_bytes()?,
             self.ranged_policy_pin.heap_bytes()?,
             self.guard.heap_bytes()?,
             self.competence_pin.heap_bytes()?,

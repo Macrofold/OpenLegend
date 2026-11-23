@@ -30,6 +30,7 @@ mod scar_treatment;
 mod practice;
 mod ranged;
 mod guard;
+mod evasion;
 mod respawn;
 mod follow;
 mod hearth;
@@ -106,6 +107,7 @@ enum Phase {
     ScarReach,
     PracticeReach,
     GuardSight,
+    EvadePath,
     RangedSight,
     RangedPointReview,
     RangedRelease,
@@ -216,6 +218,7 @@ pub(crate) struct CommandCursor {
     ranged_release: Option<Box<crate::movement::MoveAdvanceCursor>>,
     ranged_point_review: Option<Box<(crate::projectile::point_review::PointReview, ByteReservation)>>,
     follow: Option<crate::movement::follow::FollowCursor>,
+    evasion_path: Option<Box<crate::movement::MotionOperation>>,
     hearth: Option<hearth::PreparedHearth>,
     travel: Option<Box<travel::Consent>>,
     typed_plan_mode: Option<crate::plans::PlanMode>,
@@ -406,6 +409,7 @@ impl CommandCursor {
             ranged_release: None,
             ranged_point_review: None,
             follow: None,
+            evasion_path: None,
             hearth: None,
             travel: None,
             typed_plan_mode: None,
@@ -466,6 +470,7 @@ impl CommandCursor {
             .or_else(|| self.gift_sound.as_ref().map(|sound| sound.queries()))
             .or_else(|| self.contact_route.as_ref().map(|route| route.queries()))
             .or_else(|| self.follow.as_ref().and_then(|cursor| cursor.queries()))
+            .or_else(|| self.evasion_path.as_ref().and_then(|cursor| cursor.queries()))
             .or(self.queries.as_ref())
     }
     pub(crate) fn actor_id(&self) -> &str {
@@ -558,6 +563,10 @@ impl CommandCursor {
             self.prepare_scar_view(core)?;
             return Ok(false);
         }
+        if matches!(self.command, NativeCommand::Evade { .. }) {
+            self.prepare_evasion_view(core)?;
+            return Ok(false);
+        }
         if matches!(self.command, NativeCommand::Guard { .. }) {
             self.prepare_guard_view(core)?;
             return Ok(false);
@@ -636,7 +645,7 @@ impl CommandCursor {
             || self
                 .action
                 .as_ref()
-                .is_some_and(|action| action.stage == "approaching")
+                .is_some_and(|action| action.stage == "approaching" && !action.is_evading())
         {
             self.reserve(
                 crate::activity::approach_view_bytes(
@@ -952,6 +961,12 @@ impl CommandCursor {
                         }
                     }
                     CommandAnswer::Geometry(mut answer) => {
+                        if matches!(self.phase, Phase::EvadePath) {
+                            if self.check_evasion_path(core, Some(answer))? {
+                                return Ok(Progress::Geometry);
+                            }
+                            return self.drive(core, None);
+                        }
                         if matches!(self.phase, Phase::Follow) {
                             if self.follow_step(core, Some(answer))? {
                                 return Ok(Progress::Geometry);
@@ -1244,7 +1259,7 @@ impl CommandCursor {
             }
             let actor_id = self.command.envelope().actor_id.clone();
             match self.phase {
-                Phase::Follow => return Ok(Progress::Geometry),
+                Phase::Follow | Phase::EvadePath => return Ok(Progress::Geometry),
                 Phase::Start => {
                     let prior = core
                         .state
@@ -1389,6 +1404,11 @@ impl CommandCursor {
                             self._reservation.merge(storage)?;
                             self.phase = if outcome.ok { Phase::Tail } else { Phase::Done };
                             self.outcome = Some(outcome);
+                        }
+                        NativeCommand::Evade { .. } => {
+                            if self.prepare_evasion(core)? && self.check_evasion_path(core, None)? {
+                                return Ok(Progress::Geometry);
+                            }
                         }
                         NativeCommand::Move { destination, .. } => {
                             if ![destination.x, destination.y, destination.z]
@@ -2017,6 +2037,7 @@ impl CommandCursor {
                     let place_hearth = action.is_placing_hearth();
                     let projectile = action.is_projectile_action();
                     let guard_heading = action.guard.as_ref().map(|guard| guard.facing);
+                    let evasion_repeat = action.evasion.as_ref().map(|evasion| evasion.repeat_at);
                     if action.is_manufacturing() && !self.admit_craft_record(core, &actor_id, &action)? {
                         continue;
                     }
@@ -2042,6 +2063,9 @@ impl CommandCursor {
                     }
                     if place_hearth { core.reserve_hearth_holds(&actor_id)?; }
                     if projectile { core.reserve_projectile(&actor_id)?; }
+                    if let Some(repeat) = evasion_repeat {
+                        core.physical().retain_evasion_recovery(&actor_id, repeat)?;
+                    }
                     if let Some(heading) = guard_heading {
                         core.physical().set_heading(&actor_id, heading)?;
                     }
@@ -2056,7 +2080,7 @@ impl CommandCursor {
                             .get(&actor_id)
                             .and_then(|entity| entity.actor.as_ref())
                             .and_then(|actor| actor.action.as_ref())
-                            .is_some_and(|action| action.stage == "approaching")
+                            .is_some_and(|action| action.stage == "approaching" && !action.is_evading())
                         {
                             core.journal
                                 .activity
@@ -2152,19 +2176,21 @@ impl CommandCursor {
                             }
                             return self.natural_contact_started(core, &actor_id);
                         }
-                        let NativeCommand::Move { destination, .. } = &self.command else {
-                            return Err(ExecutionError::Invariant);
+                        let message = match &self.command {
+                            NativeCommand::Move { destination, .. } => {
+                                let point = destination.point();
+                                self.reserve(ordinary.departure_heap_bound(point).ok_or(ExecutionError::Capacity)?)?;
+                                ordinary.departure(point).map_err(|_| ExecutionError::Invariant)?.into()
+                            }
+                            NativeCommand::Evade { .. } => {
+                                let copy = installed.occurrence_rules.value().evasion.as_ref()
+                                    .ok_or(ExecutionError::Invariant)?;
+                                self.reserve(copy.started.storage_bytes() + 3 * std::mem::size_of::<NarrationPart>()
+                                    + actor_id.len() * 3 + ordinary.action_started_event.len() + 192)?;
+                                copy.started.clone()
+                            }
+                            _ => return Err(ExecutionError::Invariant),
                         };
-                        let point = destination.point();
-                        let bytes = ordinary
-                            .departure_heap_bound(point)
-                            .ok_or(ExecutionError::Capacity)?;
-                        self._reservation.resize(
-                            self._reservation
-                                .bytes()
-                                .checked_add(bytes)
-                                .ok_or(ExecutionError::Capacity)?,
-                        )?;
                         let text = Narration {
                             parts: vec![
                                 NarrationPart::Participant {
@@ -2173,18 +2199,13 @@ impl CommandCursor {
                                     article: None,
                                 },
                                 NarrationPart::Literal(" ".into()),
-                                NarrationPart::Literal(
-                                    ordinary
-                                        .departure(point)
-                                        .map_err(|_| ExecutionError::Invariant)?
-                                        .into(),
-                                ),
+                                NarrationPart::Literal(message),
                             ],
                         };
                         let mut data = IndexMap::new();
                         data.insert(
                             "actionType".to_owned(),
-                            crate::reception::EventScalar::Text(("move".to_owned()).into()),
+                            crate::reception::EventScalar::Text(self.command.kind().into()),
                         );
                         let event = core.stage_event(EventEmissionIntent {
                             event_type: ordinary.action_started_event.clone(),
@@ -2866,7 +2887,7 @@ fn actor_problem(
     {
         return Ok(Some(ordinary.speech_restricted.outcome(false)));
     }
-    if matches!(command, NativeCommand::Move { .. })
+    if matches!(command, NativeCommand::Move { .. } | NativeCommand::Evade { .. })
         && core
             .state
             .installed

@@ -799,6 +799,9 @@ fn validate_entity(
         }
     }
     if let Some(actor) = &entity.actor {
+        if actor.evasion_ready_at.is_some_and(|at| !at.is_finite() || at < 0.0) {
+            return Err(InstallError::CurrentFormat);
+        }
         if let Some(conditions) = &actor.conditions {
             for (id, episode) in conditions {
                 let definition = installed
@@ -1143,6 +1146,7 @@ pub(super) fn validate_physical_item_references(
                 )
                 || action.is_practice_shot() && !crate::projectile::practice::valid_saved(state, installed, entity, action)
                 || action.is_ranged_attack() && !crate::projectile::loadout::valid_saved(state, installed, entity, action)
+                || action.is_evading() && !crate::movement::evasion::valid_saved(state, installed, entity, action)
                 || action.is_guard() && !crate::contact::guard::valid_saved(state, installed, entity, action)
                 || action.is_tending_fire() && !crate::fire_care::valid_saved(
                     action, state, installed.fire_care.as_ref().map(|rule| rule.value()),

@@ -14,6 +14,7 @@ heap_record!(OccurrenceRules {
     flight,
     ranged,
     guard_interrupted,
+    evasion,
     speech_importance,
     sound_importance,
     received_urgency,
@@ -43,6 +44,23 @@ heap_record!(FlightRules {
     takeoff_suffix,
     landing_before_surface,
     fall_suffix
+});
+heap_record!(EvasionOccurrenceRules {
+    unavailable,
+    recovery,
+    distance,
+    blocked_path,
+    interrupted,
+    obstructed,
+    started,
+    finished,
+    completed,
+    injury_interrupted,
+    ended_event,
+    distance_fact,
+    duration_fact,
+    repeat_fact,
+    path_fact
 });
 heap_record!(RangedOccurrenceRules {
     shot_released,

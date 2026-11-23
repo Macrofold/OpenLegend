@@ -223,13 +223,16 @@ impl PhysicalMutation<'_> {
             .and_then(|actor| actor.action.as_ref())
             .filter(|action| {
                 action.id == action_id
-                    && action.stage == "working"
-                    && (action.has_ground_motion() || action.is_natural_contact() || action.is_manufacturing())
+                    && (action.is_evading()
+                        || action.stage == "working"
+                            && (action.has_ground_motion() || action.is_natural_contact() || action.is_manufacturing()))
             })
             .ok_or(ExecutionError::Invariant)?;
         let before = action.remaining_seconds;
         let ready = action.ranged.as_ref().filter(|aim| aim.manual).map(|aim| aim.ready);
-        let after = if let Some(motion) = &action.strike_motion {
+        let after = if let Some(evasion) = &action.evasion {
+            (evasion.ends_at - self.state.header.sim_time).max(0.0)
+        } else if let Some(motion) = &action.strike_motion {
             // A stored release time owns this boundary even when another
             // event lands within the ordinary duration epsilon before it.
             (motion.release_at - self.state.header.sim_time).max(0.0)

@@ -278,7 +278,8 @@ impl ProjectilePrediction {
                             .capabilities
                             .capability_blocked(Some(entity), "locomotion")?
                         {
-                            let occupied = action.strike_motion.is_some()
+                            let occupied = action.is_evading()
+                                || action.strike_motion.is_some()
                                 || action.native_locomotion.is_some()
                                 || entity.animal.is_some();
                             self.current = Some(MotionOperation::forecast(

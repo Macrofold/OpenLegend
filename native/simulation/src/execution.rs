@@ -1239,6 +1239,7 @@ enum UndoKey {
     TerritorialPlace(usize, u64),
     Health(usize, u64),
     CombatReady(usize, u64),
+    EvasionReady(usize, u64),
     ContactPhase(usize, u64),
     StrikeMotion(usize, u64),
     AttackObservers(usize, u64),
@@ -1489,6 +1490,10 @@ enum Undo {
         ready: Option<bool>,
     },
     CombatReady {
+        entity: EntityHandle,
+        before: Option<f64>,
+    },
+    EvasionReady {
         entity: EntityHandle,
         before: Option<f64>,
     },
@@ -2327,6 +2332,14 @@ impl PhysicalJournal {
                         .and_then(|entity| entity.actor.as_mut())
                         .ok_or(ExecutionError::Invariant)?
                         .combat_ready_at = before;
+                }
+                Undo::EvasionReady { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .evasion_ready_at = before;
                 }
                 Undo::ContactPhase {
                     entity,
@@ -3830,7 +3843,9 @@ impl PhysicalMutation<'_> {
             if action.id != *action_id || action.path != cursor.path {
                 return Err(ExecutionError::Invariant);
             }
-            if cursor.consumed_points > 0 {
+            // The evasion's sole point is its immutable commitment, even if
+            // ordinary geometry reaches it within tolerance before the deadline.
+            if cursor.consumed_points > 0 && !action.is_evading() {
                 let tail = cursor
                     .path
                     .get(cursor.consumed_points..)

@@ -197,7 +197,9 @@ impl BodyReconcileCursor {
         let installed = core.state.installed.clone();
         let rules = installed.occurrence_rules.value();
         let interruption = |action: &crate::state::Action| {
-            if action.is_projectile_action() {
+            if action.is_evading() {
+                rules.evasion.as_ref().and_then(|evasion| evasion.injury_interrupted.as_ref())
+            } else if action.is_projectile_action() {
                 rules.ranged.as_ref().and_then(|ranged| ranged.injury_interrupted.as_ref())
             } else if action.guard.as_ref().is_some_and(|guard| {
                 guard.phase != crate::contact::guard::GuardPhase::Recovery

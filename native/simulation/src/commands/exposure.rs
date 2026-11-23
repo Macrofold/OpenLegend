@@ -41,6 +41,7 @@ impl CommandExposure {
             | NativeCommand::Cook { envelope, .. }
             | NativeCommand::Craft { envelope, .. }
             | NativeCommand::Move { envelope, .. }
+            | NativeCommand::Evade { envelope, .. }
             | NativeCommand::Follow { envelope, .. }
             | NativeCommand::Strike { envelope, .. }
             | NativeCommand::Cancel { envelope, .. } => {

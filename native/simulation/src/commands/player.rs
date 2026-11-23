@@ -33,6 +33,7 @@ impl RuntimeGuardFacing<'_> {
 #[derive(Clone, Copy)]
 pub enum RuntimePlayerCommand<'a> {
     Move(&'a SurfacePoint),
+    Evade(&'a SurfacePoint),
     Strike {
         target: &'a str,
         definition: &'a str,
@@ -151,7 +152,7 @@ impl BoundPlayerCommand {
 impl RuntimePlayerCommand<'_> {
     pub(crate) fn selected_text_bytes(self) -> usize {
         match self {
-            Self::Move(point) => point.surface_id.len(),
+            Self::Move(point) | Self::Evade(point) => point.surface_id.len(),
             Self::Strike {
                 target, definition, weapon, ..
             } => target.len() + definition.len() + weapon.map_or(0, str::len),
@@ -389,6 +390,7 @@ impl RuntimePlayerCommand<'_> {
         }
         let (kind, destination, expected_action_id, target_id, item_id, gathering_mode) = match self {
             Self::Move(point) => ("move", Some(point), None, None, None, None),
+            Self::Evade(point) => ("evade", Some(point), None, None, None, None),
             Self::Respawn => ("respawn", None, None, None, None, None),
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
             Self::DismissStrikeReview => ("dismiss-strike-review", None, None, None, None, None),
@@ -530,6 +532,10 @@ impl RuntimePlayerCommand<'_> {
         let envelope = headers.envelope(encoding);
         let command = match self {
             Self::Move(point) => NativeCommand::Move {
+                envelope,
+                destination: point.clone().into(),
+            },
+            Self::Evade(point) => NativeCommand::Evade {
                 envelope,
                 destination: point.clone().into(),
             },

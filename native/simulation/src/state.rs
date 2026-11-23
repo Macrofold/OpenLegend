@@ -546,7 +546,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub evasion: Option<UnconvertedField>,
+    pub(crate) evasion: Option<crate::movement::evasion::Evasion>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -858,6 +858,7 @@ impl Action {
 
     pub(crate) fn has_ground_motion(&self) -> bool {
         self.kind == "move"
+            || self.is_evading()
             || (self.kind == "feed" && self.feeding.is_some())
             || self.is_gathering()
             || self.is_casting()
@@ -888,6 +889,25 @@ impl Action {
     /// before the windup starts. Automatic moving windups have their own motion.
     pub(crate) fn has_contact_approach(&self) -> bool {
         self.awaiting_moving_contact() && self.replans.is_some()
+    }
+
+    pub(crate) fn is_evading(&self) -> bool {
+        self.kind == "evade" && self.stage == "approaching" && self.evasion.is_some()
+    }
+
+    pub(crate) fn evading(
+        id: String,
+        destination: RecordedSurfacePoint,
+        evasion: crate::movement::evasion::Evasion,
+        seconds: f64,
+    ) -> Self {
+        let mut action = Self::native_action(id, "evade", "approaching");
+        action.path = vec![destination.physical().clone()];
+        action.destination = Some(destination);
+        action.evasion = Some(evasion);
+        action.total_seconds = seconds;
+        action.remaining_seconds = seconds;
+        action
     }
 
     pub(crate) fn is_following(&self) -> bool {
@@ -1043,7 +1063,7 @@ impl Action {
             || (self.attack_observers.is_some() && !self.is_natural_contact())
             || self.cooperation.is_some()
             || self.combat_help_id.is_some()
-            || self.evasion.is_some()
+            || ((self.evasion.is_some() || self.kind == "evade") && !self.is_evading())
             || (matches!(self.kind.as_str(), "practice-shot" | "aim" | "shoot-once" | "hunt")
                 || self.ranged.is_some() || self.competence_pin.is_some() || self.ranged_policy_pin.is_some()
                 || self.ammo_item_id.is_some())

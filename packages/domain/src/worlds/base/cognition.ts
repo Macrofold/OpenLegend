@@ -4,7 +4,12 @@ import { BASE_THREAT_RESPONSE_PROFILE } from './threat-response-profile.js';
 import type { WorldEvent } from '../../types.js';
 import { freeze } from 'immer';
 import { BASE_RESPONSE_RULES } from './response-rules.js';
-import { BASE_RANGED_CHOICE_LABEL, BASE_RANGED_TEXT } from './ranged-counterplay.js';
+import {
+  BASE_EVASION_ENDED_EVENT,
+  BASE_RANGED_CHOICE_LABEL,
+  BASE_RANGED_TEXT,
+  baseEvasionOccurrenceRules,
+} from './ranged-counterplay.js';
 import { BASE_HUNTING } from './hunting.js';
 import { BASE_GUARD_TEXT } from './shield-defense.js';
 
@@ -61,12 +66,14 @@ export const BASE_OCCURRENCE_RULES = freeze(
     flight,
     ranged,
     guardInterrupted: BASE_GUARD_TEXT.injuryInterrupted,
+    evasion: baseEvasionOccurrenceRules(),
     speechImportance: 7,
     soundImportance: 3,
     receivedUrgency: 4,
     unintelligibleSpeechImportance: 3,
     semanticEvents: [
       'crafted',
+      BASE_EVASION_ENDED_EVENT,
       'declaration-admitted',
       'shot-released',
       'projectile-contact',

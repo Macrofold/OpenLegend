@@ -349,6 +349,7 @@ impl SelectedKnownPlace {
 #[serde(rename_all = "lowercase")]
 enum CommandKind {
     Move,
+    Evade,
     Strike,
     #[serde(rename = "practice-shot")]
     PracticeShot,
@@ -1335,6 +1336,16 @@ impl CommandRequest {
                     && command.distance.is_none_or(|n| n.is_finite() && n > 0.0)
                     && command.follow_until.is_none_or(|n| n.is_finite() && n >= 0.0)
                     && command.complete_follow != Some(false) => Ok(()),
+            CommandKind::Evade
+                if command.expected_action_id.is_none()
+                    && command.target_id.is_none()
+                    && command.item_id.is_none()
+                    && command.known_place.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.position.as_ref().is_some_and(|point| {
+                        id(&point.surface_id)
+                            && [point.x, point.y, point.z].iter().all(|n| n.is_finite())
+                    }) => Ok(()),
             CommandKind::Move
                 if command.expected_action_id.is_none()
                     && command.target_id.is_none()
@@ -1771,6 +1782,9 @@ impl PreparedRequest {
                 weapon: input.item_id.as_deref(),
                 ammunition: input.ammunition_id.as_deref(),
             }),
+            CommandKind::Evade => Ok(RuntimePlayerCommand::Evade(
+                destination.ok_or(StoreError::InvalidRecord)?,
+            )),
             CommandKind::Move => Ok(RuntimePlayerCommand::Move(
                 destination.ok_or(StoreError::InvalidRecord)?,
             )),

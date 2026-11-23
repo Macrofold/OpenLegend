@@ -186,7 +186,8 @@ impl ActivityDisplayCursor {
     ) -> Result<Self, ExecutionError> {
         if matches!(
             command,
-            NativeCommand::Outing { .. }
+            NativeCommand::Evade { .. }
+                | NativeCommand::Outing { .. }
                 | NativeCommand::Handover { .. }
                 | NativeCommand::Feed { .. }
                 | NativeCommand::Gather { .. }
@@ -518,7 +519,8 @@ impl ActivityDisplayCursor {
                 distance: *distance,
             },
             NativeCommand::Strike { .. } => Command::Strike { purpose },
-            NativeCommand::Outing { .. }
+            NativeCommand::Evade { .. }
+            | NativeCommand::Outing { .. }
             | NativeCommand::Feed { .. }
             | NativeCommand::Gather { .. }
             | NativeCommand::Fish { .. }

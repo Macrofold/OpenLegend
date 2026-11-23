@@ -4651,7 +4651,9 @@ function executeCommandNative(
                         ? preparationCopy.started
                         : action.type === 'follow'
                           ? FOLLOW_OUTCOMES.started
-                          : `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+                          : action.evasion
+                            ? BASE_EVASION_TEXT.started
+                            : `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
                     ),
         actor,
         action.targetId,

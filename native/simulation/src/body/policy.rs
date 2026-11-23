@@ -64,6 +64,21 @@ pub(crate) struct EvasionPolicy {
     pub description: String,
 }
 
+impl EvasionPolicy {
+    pub(crate) fn valid(&self) -> bool {
+        !self.body_plans.is_empty()
+            && self.body_plans.iter().enumerate().all(|(index, plan)| {
+                matches!(plan.as_str(), "biped" | "quadruped" | "avian")
+                    && !self.body_plans[..index].contains(plan)
+            })
+            && [self.maximum_distance, self.seconds, self.repeat_seconds]
+                .into_iter()
+                .all(|value| value.is_finite() && value > 0.0)
+            && !self.label.trim().is_empty()
+            && !self.description.trim().is_empty()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct CombatPolicy {

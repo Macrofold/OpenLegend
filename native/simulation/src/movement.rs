@@ -11,6 +11,7 @@ mod advance;
 mod residency;
 pub(crate) use advance::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
 mod execution;
+pub(crate) mod evasion;
 pub(crate) mod follow;
 pub(crate) use execution::{MotionOperation, MotionStep};
 mod clearance;

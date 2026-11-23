@@ -407,6 +407,10 @@ impl MechanicalForecast {
                 }
                 continue;
             }
+            if let Some(evasion) = &action.evasion {
+                bound.at(evasion.ends_at);
+                continue;
+            }
             if let Some(plan) = &actor.agency.plan {
                 crate::plans::require_supported_activity(plan)?;
             }

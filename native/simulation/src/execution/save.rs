@@ -853,6 +853,7 @@ impl PhysicalJournal {
                         | Undo::Heading { entity, .. }
                         | Undo::Health { entity, .. }
                         | Undo::CombatReady { entity, .. }
+                        | Undo::EvasionReady { entity, .. }
                         | Undo::ContactPhase { entity, .. }
                         | Undo::StrikeMotion { entity, .. }
                         | Undo::AttackObservers { entity, .. }
@@ -919,7 +920,7 @@ impl PhysicalJournal {
                         Undo::Heading { before, .. } => {
                             rows.geometry_heading.get_or_insert(*before);
                         }
-                        Undo::Health { .. } | Undo::CombatReady { .. } => rows.actor = true,
+                        Undo::Health { .. } | Undo::CombatReady { .. } | Undo::EvasionReady { .. } => rows.actor = true,
                         Undo::Heat { .. } => rows.heat = true,
                         Undo::Territorial { .. } | Undo::TerritorialPlace { .. } => rows.territorial = true,
                         Undo::Action { .. } => {

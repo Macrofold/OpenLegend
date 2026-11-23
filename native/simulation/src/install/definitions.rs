@@ -258,6 +258,9 @@ pub(crate) fn install_physical_meanings(
     ) {
         (None, None, None) => None,
         (Some(value), Some(pin), Some(input)) if input.pin == pin => {
+            if value.evasion.as_ref().is_some_and(|profile| !profile.valid()) {
+                return Err(InstallError::DefinitionBody);
+            }
             Some(input.verify(value, &mut construction, budget)?)
         }
         _ => return Err(InstallError::DefinitionPin),

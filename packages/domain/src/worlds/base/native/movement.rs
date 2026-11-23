@@ -107,8 +107,8 @@ impl InstalledMovementPolicy {
             .actor
             .as_ref()
             .and_then(|actor| actor.action.as_ref());
-        if action.is_some_and(|action| action.evasion.is_some()) {
-            return Err(ExecutionError::UnsupportedFamily);
+        if let Some(evasion) = action.and_then(|action| action.evasion.as_ref()) {
+            return Ok(evasion.speed);
         }
         let Some(binding) = action.and_then(|action| {
             action
