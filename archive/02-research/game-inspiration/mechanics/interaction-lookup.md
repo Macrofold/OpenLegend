@@ -4,6 +4,21 @@
 
 Use the concrete example to find a study, then read its limitations and counterexamples. Prefer comparing two different solutions to the same design problem over copying the most spectacular isolated feature.
 
+## Party combinations, consequential commitments and changing roles
+
+The [November 22 four-game record](../research-progress-four-games-2026-11-22.md) owns this addition's completion and evidence limits. These are distinct released-game rules and constructed worked examples, not reports of firsthand play or approved Open Legend features.
+
+| Question | Named reference or interaction | Read |
+| --- | --- | --- |
+| Can a visible turn order become a resource the player changes? | Resonance's stagger, action sequence and distinct Resonance/Limit Burst/Espers systems. | [Combat and growth](../dossiers/final-fantasy-resonance.md#combat-and-character-growth), [worked interactions](../dossiers/final-fantasy-resonance.md#worked-interactions). |
+| Can a learned capability outlive its original equipment choice? | Vision mastery, AP investment and the limited active configuration. | [Resonance growth](../dossiers/final-fantasy-resonance.md#growth-has-several-different-owners). |
+| Does a deadline charge for meaningful commitments or for looking around? | Dawnwalker's time segments, learning, family activities and version-specific respec costs. | [Time and progression](../dossiers/the-blood-of-dawnwalker.md#time-capabilities-and-progression), [worked situations](../dossiers/the-blood-of-dawnwalker.md#worked-situations-across-systems). |
+| Can political progress change an ordinary route? | Brencis's Edicts, patrols, prices and access to Svartrau. | [Institutions and access](../dossiers/the-blood-of-dawnwalker.md#equipment-resources-travel-and-institutions). |
+| Can a quick solution consume a future opportunity? | Requiem's blood collection, body disposal, supplies and specimen-based production. | [Resource methods and worked cases](../dossiers/resident-evil-requiem.md#worked-situations-across-the-systems). |
+| What remains enjoyable when surprise is gone? | Requiem's altered routes, challenge unlocks, separate temporary-build mode and contrasting replay accounts. | [Progress and returning](../dossiers/resident-evil-requiem.md#progress-time-loss-and-returning), [reception](../dossiers/resident-evil-requiem.md#reception-enjoyment-and-reasons-to-return-or-stop). |
+| Can material rules change an apparently familiar action? | Mewgenics' rain/conduction/robot turn, melting an ice route, and Toss/Underdog positioning. | [Eight worked interactions](../dossiers/mewgenics.md#worked-interactions-across-systems). |
+| Can a successful adventurer become useful in another role? | Mewgenics' retirement, inherited possibilities, household relationships and finite house-boss defense. | [Household consequences](../dossiers/mewgenics.md#the-household-inheritance-and-resource-pressure), [contrasting player accounts](../dossiers/mewgenics.md#reception-enjoyment-and-reasons-to-return). |
+
 ## Persistent careers, communities and shared-world scale
 
 | Question | Named reference or interaction | Read |
@@ -194,3 +209,4 @@ The same word can conceal different promises: a story can be authored, generated
 For broader comparisons, see [what makes these worlds fun](../essays/what-actually-makes-these-worlds-fun.md), [virality and discovery](../essays/virality-and-discovery.md), and [production pitfalls](../essays/production-and-platform-pitfalls.md). For dates, review context, and source limitations, follow the individual studies rather than treating this lookup as an independent evidence source.
 
 [Back to granular studies](README.md) · [Library home](../README.md)
+

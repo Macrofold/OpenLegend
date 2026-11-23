@@ -6,6 +6,17 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Resonance, Dawnwalker, Requiem and Mewgenics — November 2026 research
+
+These four independent full-game studies cover R01–R14 and affirmative R15. The [scoped completion record](../research-progress-four-games-2026-11-22.md) preserves their separate research commits, review samples and source limits. The [interaction lookup](../mechanics/interaction-lookup.md#party-combinations-consequential-commitments-and-changing-roles) connects concrete examples to design questions.
+
+| Dossier | Useful starting question |
+| --- | --- |
+| [Final Fantasy Resonance — G193](final-fantasy-resonance.md) | How do readable turn order, shared preparation, learned capabilities and changing party roles support experimentation? What changes when a mobile story becomes a premium game? |
+| [The Blood of Dawnwalker — G194](the-blood-of-dawnwalker.md) | How do time commitments, human/vampire capabilities, social access and a reacting occupation make preparation consequential? Which costs changed after launch? |
+| [Resident Evil Requiem / Resident Evil 9 — G195](resident-evil-requiem.md) | How do vulnerability, resources, information and contrasting protagonists change the use of familiar spaces? Which first-run pleasures survive repeated play? |
+| [Mewgenics — G196](mewgenics.md) | What does an expedition leave for the next generation, and when does persistent household management become either a satisfying purpose or unwanted work? |
+
 ## Pax Dei — November 2026 addition
 
 [Pax Dei — G192](pax-dei.md) studies persistent construction, shared encounters, ordinary play, reception, production, economics and marketing. Its [application map](pax-dei/05-openlegend-lessons.md#10-continue-through-existing-owners) routes the findings to existing design and work owners; the [scoped record](../research-progress-pax-dei-2026-11-14.md) preserves completion and evidence limits.
@@ -87,3 +98,4 @@ Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-
 **Does a convenience preserve the interesting decision?** Read the reviews and version histories beside the mechanics: saving, encounter controls, growth boosts, equipment information and timed-input support alter different costs. A launch complaint is not proof that every later version behaves the same way.
 
 For broader entry points, use the [interaction lookup](../mechanics/interaction-lookup.md), [comparative map](../essays/comparative-map.md) and [evidence interpretation](../essays/how-to-interpret-the-evidence.md). For completion status, commits and remaining whole-library gates, return to the [progress ledger](../research-progress.md). The separate [D&D packet status](../games/dungeons-and-dragons.md#evidence-and-completion-status) covers the additive tabletop expansion.
+
