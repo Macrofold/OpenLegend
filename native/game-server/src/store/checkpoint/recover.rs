@@ -724,6 +724,9 @@ impl Store {
             let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
             return self.answer_checkpoint_source_versions(tx, candidate, &request, &decoder).await;
         }
+        if let Some(request) = provider.restore_archives().map_err(runtime)? {
+            return self.answer_checkpoint_archives(tx, candidate, &request).await;
+        }
         #[derive(Deserialize)]
         struct Request<'a> {
             kind: &'a str,
@@ -734,7 +737,6 @@ impl Store {
             phase: Option<&'a str>,
         }
         enum Selection {
-            Archives,
             Support,
             Members,
             Accounts,
@@ -744,7 +746,6 @@ impl Store {
                 let request: Request =
                     serde_json::from_str(text).map_err(|_| StoreError::InvalidRecord)?;
                 Ok::<_, StoreError>(match (request.kind, request.value.phase) {
-                    ("restore-archives", _) => Selection::Archives,
                     ("support-membership", _) => Selection::Support,
                     ("restore-retention", Some("membership")) => Selection::Members,
                     ("restore-retention", Some("metadata" | "records")) => Selection::Accounts,
@@ -753,10 +754,6 @@ impl Store {
             })
             .map_err(runtime)??;
         match selected {
-            Selection::Archives => {
-                self.answer_checkpoint_archives(tx, candidate, provider)
-                    .await
-            }
             Selection::Support => {
                 self.answer_checkpoint_support(tx, candidate, provider)
                     .await

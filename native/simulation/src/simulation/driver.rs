@@ -158,6 +158,10 @@ enum QuestionBody {
         request: Arc<crate::experience::HistoryEditQuestion>,
         projection: Option<Box<super::restore::RestoreReadProjection>>,
     },
+    RestoreArchives(
+        Arc<crate::restore::RestoreArchivesQuestion>,
+        Box<super::restore::RestoreReadProjection>,
+    ),
     ActivityLearningFormat(Arc<crate::activity::LearningFormatRequest>),
 }
 
@@ -370,6 +374,23 @@ impl ProviderQuestion {
             kind: self.kind,
             binding: self.binding,
             value,
+        })
+    }
+
+    pub(crate) fn restore_archives(
+        &self,
+    ) -> Option<(&crate::restore::RestoreArchivesRequest, &crate::records::ChangedRows)> {
+        match &self.body {
+            QuestionBody::RestoreArchives(request, projection) => Some((request.value(), &projection.changes)),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn restore_archives_envelope(&self) -> Option<impl Serialize + '_> {
+        self.restore_archives().map(|(request, restore_projection)| restore::RestoreQuestion {
+            kind: self.kind,
+            binding: self.binding,
+            value: restore::RestoreReadRequest { request, restore_projection },
         })
     }
 
@@ -630,6 +651,7 @@ enum AnswerBody {
     LocalFormat(Box<LocalFormat>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     KnownPlaces(Box<KnownPlacesAnswer>),
+    RestoreArchives(Box<crate::restore::RestoreArchivesAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     SourceVersions(Box<SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
@@ -827,6 +849,22 @@ impl ProviderResponse {
             kind: ProviderKind::KnownPlaces,
             binding,
             body: AnswerBody::KnownPlaces(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn restore_archives(
+        binding: GeometryBinding,
+        answer: Box<crate::restore::RestoreArchivesAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.provider_binding(binding.geometry_revision) {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::RestoreArchives,
+            binding,
+            body: AnswerBody::RestoreArchives(answer),
             _reservation: reservation,
         })
     }
@@ -2146,6 +2184,9 @@ impl OperationDriver {
                     }
                     AnswerBody::SourceVersions(value) => {
                         (Some(Answer::SourceVersions(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::RestoreArchives(value) => {
+                        (Some(Answer::RestoreArchives(*value)), Some(_reservation), None)
                     }
                     AnswerBody::PersonalHistory(value) => {
                         (Some(Answer::History(*value)), Some(_reservation), None)

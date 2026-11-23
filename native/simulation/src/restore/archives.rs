@@ -1,46 +1,17 @@
 //! Exact final-reference reads use the staged SQL dependency/retention indexes.
 //! No cold personal body is imported or parsed by this owner.
 use super::*;
-use crate::experience::HistoryPreparationError;
+use crate::experience::{HistoryBinding, HistoryPreparationError};
 use crate::host::CandidateKey;
 use std::sync::Arc;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Binding {
-    world_id: String,
-    generation: String,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    accepted_cut: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    identity_through: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    candidate_id: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    candidate_generation: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    request_serial: u64,
-}
-impl Binding {
-    fn provider_binding(&self, revision: u64) -> crate::geometry::GeometryBinding {
-        crate::geometry::GeometryBinding::new(
-            CandidateKey {
-                id: self.candidate_id,
-                base_cut: self.accepted_cut,
-                generation: self.candidate_generation,
-            },
-            revision,
-            self.request_serial,
-        )
-    }
-}
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct RestoreArchivesRequest {
-    binding: Binding,
-    offset: usize,
-    archives: Vec<RestoreArchive>,
-    maximum_transfer_bytes: usize,
+pub struct RestoreArchivesRequest {
+    pub binding: HistoryBinding,
+    pub offset: usize,
+    pub archives: Vec<RestoreArchive>,
+    pub maximum_transfer_bytes: usize,
 }
 pub(crate) struct RestoreArchivesQuestion {
     request: RestoreArchivesRequest,
@@ -54,27 +25,68 @@ impl RestoreArchivesQuestion {
         self.request.binding.provider_binding(revision)
     }
 }
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Selected {
+pub struct RestoreArchiveMatch {
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    index: u64,
-    category: ArchiveCategory,
+    pub index: u64,
+    pub category: ArchiveCategory,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct RestoreArchivesAnswer {
-    binding: Binding,
-    selected: Vec<Selected>,
+    binding: HistoryBinding,
+    selected: Vec<RestoreArchiveMatch>,
     #[serde(skip)]
     _storage: Option<ByteReservation>,
     #[serde(skip)]
     wire_bytes: usize,
 }
+#[derive(Serialize)]
+struct Reply<'a> {
+    binding: &'a HistoryBinding,
+    selected: &'a [RestoreArchiveMatch],
+}
+
+impl RestoreArchivesRequest {
+    /// The bounded SQL reader reserves room for the reply header before
+    /// consuming the result group. The direct reply uses the same wire bound.
+    pub fn reply_header_bytes(&self) -> Option<usize> {
+        self.reply_bytes(&[]).ok()
+    }
+
+    fn reply_bytes(&self, selected: &[RestoreArchiveMatch]) -> Result<usize, HistoryPreparationError> {
+        crate::encoding::json_record_len(&Reply { binding: &self.binding, selected })
+            .map_err(|_| HistoryPreparationError::MalformedResponse)
+    }
+}
+
 impl RestoreArchivesAnswer {
+    pub(crate) fn from_rows(
+        request: &RestoreArchivesRequest,
+        selected: Vec<RestoreArchiveMatch>,
+        mut storage: ByteReservation,
+    ) -> Result<Self, HistoryPreparationError> {
+        let wire_bytes = request.reply_bytes(&selected)?;
+        if wire_bytes > request.maximum_transfer_bytes {
+            return Err(HistoryPreparationError::Capacity);
+        }
+        let bytes = selected.capacity().checked_mul(size_of::<RestoreArchiveMatch>())
+            .and_then(|bytes| bytes.checked_add(request.binding.world_id.len()))
+            .and_then(|bytes| bytes.checked_add(request.binding.generation.len()))
+            .ok_or(HistoryPreparationError::Capacity)?;
+        storage.resize(bytes).map_err(|_| HistoryPreparationError::Capacity)?;
+        Ok(Self {
+            binding: request.binding.clone(),
+            selected,
+            _storage: Some(storage),
+            wire_bytes,
+        })
+    }
+
     pub(crate) fn decode(text: &str, budget: &ByteBudget) -> Result<Self, HistoryPreparationError> {
         let storage =
-            crate::install::reserve_typed_parse::<Self>(text, size_of::<Selected>(), None, budget)
+            crate::install::reserve_typed_parse::<Self>(text, size_of::<RestoreArchiveMatch>(), None, budget)
                 .map_err(|error| match error {
                     crate::install::InstallError::Capacity => HistoryPreparationError::Capacity,
                     _ => HistoryPreparationError::MalformedResponse,
@@ -266,7 +278,7 @@ impl RestoreArchivesCursor {
                 return Err(HistoryPreparationError::Capacity);
             }
             let request = RestoreArchivesRequest {
-                binding: Binding {
+                binding: HistoryBinding {
                     world_id: core.state.physical.header.id.clone(),
                     generation: core.state.generation.clone(),
                     accepted_cut: core.state.accepted_cut,

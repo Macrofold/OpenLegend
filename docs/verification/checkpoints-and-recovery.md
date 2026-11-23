@@ -148,6 +148,14 @@ The November 21, 2026 browser, held-generation and stopped-server cases used sou
 
 Final shutdown reports after releasing the listener, retained requests and shared PostgreSQL Store. Checkpoint handoff reports separately because the same Store remains open for the replacement world. The [activity-learning and maintenance replay](attention-and-memory-core.md) confirmed zero transient, resident and pending-save reservations at final shutdown, including a recovered checkpoint and continued play.
 
+#### Direct Rust checkpoint archive selection
+
+The checkpoint reader now uses typed archive requests, selected positions and the prospective SQL rows already prepared by Rust. It queries the original archive keys inside the recovery transaction and discards the temporary SQL view before returning the independently funded answer.
+
+The ordinary clock completed a real hourly review that archived four original NPC memories. A signed Load restored all four original bodies and classifications, with the summary still available to its authorized reader. In a second run the current Forget removed one archive before Load. The three remaining archives survived and the forgotten one stayed absent. Both cases replayed the exact original Load receipt and shut down with all tracked reservations released.
+
+The local correctness build also passed [remembered movement and Trade](character-and-map-additions.md#remembered-movement-during-an-ordinary-save). Source tree `dbf5d386c39e83085870d088faddac238f4c8305` and executable SHA-256 `ca1fe99961913474b3fe888291f8c70a6e3adc7868809b03214208d00906c9fd` identify the build. The archive `nsc04-archive-and-remembered-move-20261122` has manifest `d65bb1d160719ae2d67a0b16051c5b529f22c69b0cac29f69c46a69f1dc96f92`. Locked Rust and addon checks, TypeScript and the network check passed. Local fixture cleanup completed with no provider charges.
+
 [Retained artwork recovery](game-asset-storage.md#stand-alone-world-artwork-selection) now covers a mismatched installed release and restoring exact saved pins after catalog permission was withdrawn. Other World operations sections and the managed due-capture comparison remain open under [NSC04-R5](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
 
 ### Exact memory versions in Rust — November 22, 2026

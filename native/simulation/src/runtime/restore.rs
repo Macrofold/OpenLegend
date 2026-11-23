@@ -4,11 +4,41 @@ use super::*;
 pub use crate::{
     experience::RestorePrivacyInput,
     restore::{
-        ArchiveCategory as RestoreArchiveCategory, RestoreArchive, RestoreArchiveSelection,
+        ArchiveCategory as RestoreArchiveCategory, RestoreArchive, RestoreArchiveMatch, RestoreArchiveSelection,
         RestoreBinding, RestoreGrant, RestoreMetadataInput,
     },
     simulation::restore::{RestoreInput, RestoreRetentionPreparation},
 };
+
+/// Retains exactly the inactive candidate's funded archive request and
+/// prospective SQL rows. This read grants no authority over a live world.
+pub struct RuntimeRestoreArchives(Arc<ProviderQuestion>);
+
+impl RuntimeRestoreArchives {
+    pub fn parts(&self) -> (&crate::restore::RestoreArchivesRequest, &crate::records::ChangedRows) {
+        self.0.restore_archives().expect("checked restore archives request")
+    }
+}
+
+impl RuntimeProvider {
+    pub fn restore_archives(&self) -> Result<Option<RuntimeRestoreArchives>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question.restore_archives().is_some().then_some(RuntimeRestoreArchives(question)))
+    }
+}
+
+impl RuntimeProviderInput {
+    /// Transfer the selected archive identities to the original restore owner.
+    pub fn restore_archives(
+        request: &RuntimeRestoreArchives,
+        selected: Vec<crate::restore::RestoreArchiveMatch>,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        let header = custody.split_off(size_of::<crate::restore::RestoreArchivesAnswer>())?;
+        let answer = crate::restore::RestoreArchivesAnswer::from_rows(request.parts().0, selected, custody).map_err(failure)?;
+        Ok(Self { body: RuntimeAnswerBody::RestoreArchives(Box::new(answer)), custody: header })
+    }
+}
 
 /// Exact application metadata of a prepared, still closed installation.
 pub struct RuntimeRestorePlacement<'a> {

@@ -15,11 +15,18 @@ pub(super) enum RestoreReply {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RestoreReadRequest<'a, T: ?Sized> {
+pub(super) struct RestoreReadRequest<'a, T: ?Sized> {
     #[serde(flatten)]
-    request: &'a T,
-    restore_projection: &'a crate::records::ChangedRows,
+    pub(super) request: &'a T,
+    pub(super) restore_projection: &'a crate::records::ChangedRows,
 }
+#[derive(Serialize)]
+pub(super) struct RestoreQuestion<'a, T: ?Sized> {
+    pub(super) kind: ProviderKind,
+    pub(super) binding: GeometryBinding,
+    pub(super) value: RestoreReadRequest<'a, T>,
+}
+
 pub(super) fn poll_restore(
     cursor: &mut RestoreReconcileCursor,
     core: &mut CoreMutation<'_>,
@@ -111,16 +118,20 @@ pub(super) fn poll_restore(
                 answer, binding, request, Some(Box::new(projection)), budget, RestoreReply::History,
             )
         }
-        RestoreStep::Archives(request) => projected_question(
-            core,
-            answer,
-            ProviderKind::RestoreArchives,
-            request.provider_binding(core.state.installed.geometry.spatial.revision),
-            request.value(),
-            settings,
-            budget,
-            RestoreReply::Archives,
-        ),
+        RestoreStep::Archives(request) => {
+            if answer.is_some() {
+                return Err(DriveError::StaleResponse);
+            }
+            let binding = request.provider_binding(core.state.installed.geometry.spatial.revision);
+            let projection = capture_projection(core, binding, settings, budget)?;
+            let question = ProviderQuestion::prepare_bound(
+                ProviderKind::RestoreArchives,
+                binding,
+                QuestionBody::RestoreArchives(request, Box::new(projection)),
+                budget,
+            )?;
+            Ok(Poll::Question(question, RestoreReply::Archives))
+        },
     }
 }
 fn projected_question<T: Serialize + ?Sized>(

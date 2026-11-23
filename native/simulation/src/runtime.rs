@@ -100,8 +100,8 @@ pub use read_cut::{
 };
 mod restore;
 pub use restore::{
-    RestoreArchive, RestoreArchiveCategory, RestoreArchiveSelection, RestoreBinding, RestoreGrant, RestoreInput,
-    RestoreMetadataInput, RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreMembership,
+    RestoreArchive, RestoreArchiveCategory, RestoreArchiveMatch, RestoreArchiveSelection, RestoreBinding, RestoreGrant, RestoreInput,
+    RestoreMetadataInput, RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreArchives, RuntimeRestoreMembership,
     RuntimeRestorePlacement,
 };
 mod retained_values;
@@ -341,6 +341,7 @@ enum RuntimeAnswerBody {
     LocalFormat(crate::geometry::GeometryBinding, Box<LocalFormat>),
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     KnownPlaces(Box<crate::simulation::KnownPlacesAnswer>),
+    RestoreArchives(Box<crate::restore::RestoreArchivesAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     SourceVersions(Box<crate::simulation::SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
@@ -660,6 +661,12 @@ fn provider_response(
                         return Err(failure("version plan requires its original typed request"));
                     }
                     ProviderResponse::source_versions(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::RestoreArchives(answer) => {
+                    if question.restore_archives().is_none() {
+                        return Err(failure("archive selection requires its original restore request"));
+                    }
+                    ProviderResponse::restore_archives(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::PersonalHistory(answer) => {
                     if question.personal_history().is_none() {
@@ -1116,6 +1123,9 @@ impl RuntimeProvider {
         }
         if let Some(places) = question.known_places_envelope() {
             return RuntimeJson::encode(&places, budget);
+        }
+        if let Some(archives) = question.restore_archives_envelope() {
+            return RuntimeJson::encode(&archives, budget);
         }
         if let Some(history) = question.personal_history_envelope() {
             return RuntimeJson::encode(&history, budget);

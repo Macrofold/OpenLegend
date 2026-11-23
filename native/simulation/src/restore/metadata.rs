@@ -740,6 +740,7 @@ pub(crate) fn finish_restore_metadata(
     })
 }
 
+pub use archives::{RestoreArchiveMatch, RestoreArchivesRequest};
 pub(crate) use archives::{
     RestoreArchivesAnswer, RestoreArchivesCursor, RestoreArchivesQuestion, RestoreArchivesStep,
 };

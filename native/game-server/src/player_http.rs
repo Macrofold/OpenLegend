@@ -56,7 +56,7 @@ mod typed_actions;
 mod view;
 
 const REQUEST_LIMIT: usize = 4096;
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
+pub(crate) const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
 #[derive(Clone)]
 struct PlayerRoutes {

@@ -1,7 +1,7 @@
 //! Retained archive bodies stay with the checkpoint. Only bounded dependency
 //! selections and their exact charges enter the inactive native candidate.
 
-use super::provider::{self, Binding};
+use super::provider;
 use super::{CheckpointHistory, RecoveryAuthority};
 use crate::store::read::admitted_query_bounded;
 use crate::store::{DurableHead, MAX_SAFE_INTEGER, Store, StoreError, StoreResult};
@@ -9,48 +9,14 @@ use openlegend_simulation::encoding::{json_record, json_record_len, sha256_hex};
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::records::SqlCell;
 use openlegend_simulation::runtime::{
-    RestoreInput, RestoreMetadataInput, RuntimeProvider, RuntimeProviderInput,
+    RestoreArchiveMatch, RestoreInput, RestoreMetadataInput, RuntimeProviderInput, RuntimeRestoreArchives,
 };
 pub(super) use openlegend_simulation::runtime::{
     RestoreArchive as Archive, RestoreArchiveCategory as Category,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
 use std::borrow::Cow;
 use tokio_postgres::Transaction;
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Question {
-    binding: Binding,
-    offset: u64,
-    archives: Vec<Archive>,
-    maximum_transfer_bytes: usize,
-    restore_projection: Box<RawValue>,
-}
-
-pub(crate) struct PreparedCheckpointArchives {
-    input: Question,
-    _custody: ByteReservation,
-}
-
-impl PreparedCheckpointArchives {
-    pub(crate) fn projection(&self) -> &RawValue {
-        &self.input.restore_projection
-    }
-}
-
-#[derive(Serialize)]
-struct Selected {
-    index: u64,
-    category: Category,
-}
-
-#[derive(Serialize)]
-struct Answer<'a> {
-    binding: &'a Binding,
-    selected: Vec<Selected>,
-}
 
 impl Store {
     /// Determine archive retention from the fully staged canonical account
@@ -60,44 +26,34 @@ impl Store {
         &self,
         tx: &Transaction<'_>,
         prospective: &DurableHead,
-        request: &RuntimeProvider,
+        request: &RuntimeRestoreArchives,
     ) -> StoreResult<RuntimeProviderInput> {
-        let prepared = self.prepare_checkpoint_archives(request)?;
-        self.with_checkpoint_projection(
+        let (_, projection) = request.parts();
+        self.with_checkpoint_rows(
             tx,
             prospective,
-            prepared.projection(),
-            self.read_checkpoint_archives(tx, prospective, &prepared),
+            projection,
+            None,
+            None,
+            self.read_checkpoint_archives(tx, prospective, request),
         )
         .await
     }
 
-    pub(crate) fn prepare_checkpoint_archives(
-        &self,
-        request: &RuntimeProvider,
-    ) -> StoreResult<PreparedCheckpointArchives> {
-        let (input, custody) = provider::prepare(self, request, "restore-archives")?;
-        Ok(PreparedCheckpointArchives {
-            input,
-            _custody: custody,
-        })
-    }
-
-    /// Read only the exact archive references requested by the inactive native
-    /// owner, from its prospective SQL cut. Never decode their private prose.
-    pub(crate) async fn read_checkpoint_archives(
+    /// Read the exact admitted archive references without decoding their prose.
+    async fn read_checkpoint_archives(
         &self,
         tx: &Transaction<'_>,
         prospective: &DurableHead,
-        prepared: &PreparedCheckpointArchives,
+        request: &RuntimeRestoreArchives,
     ) -> StoreResult<RuntimeProviderInput> {
-        let input = &prepared.input;
+        let (input, _) = request.parts();
         provider::verify_header(self, tx, prospective, 0, &input.binding, None).await?;
         if input.archives.len() > self.schema.checkpoint.archive_rows
             || input
                 .offset
-                .checked_add(input.archives.len() as u64)
-                .is_none_or(|end| end > MAX_SAFE_INTEGER)
+                .checked_add(input.archives.len())
+                .is_none_or(|end| end as u64 > MAX_SAFE_INTEGER)
         {
             return Err(StoreError::InvalidRecord);
         }
@@ -138,15 +94,19 @@ impl Store {
                 revision: &row.revision,
             })
             .collect();
-        let mut answer = Answer {
-            binding: &input.binding,
-            selected: Vec::new(),
-        };
-        let frame = json_record_len(&answer).map_err(|_| StoreError::InvalidRecord)?;
+        let frame = input.reply_header_bytes().ok_or(StoreError::InvalidRecord)?;
         let mut wire = input
             .maximum_transfer_bytes
             .checked_sub(frame)
             .ok_or(StoreError::Capacity)?;
+        let bytes = wanted.len().checked_mul(std::mem::size_of::<RestoreArchiveMatch>())
+            .and_then(|n| n.checked_add(512))
+            .and_then(|n| n.checked_add(input.binding.world_id.len()))
+            .and_then(|n| n.checked_add(input.binding.generation.len()))
+            .ok_or(StoreError::Capacity)?;
+        let custody = self.budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+        let mut selected = Vec::new();
+        selected.try_reserve_exact(wanted.len()).map_err(|_| StoreError::Capacity)?;
         if !wanted.is_empty() {
             let encoded = json_record(&wanted).map_err(|_| StoreError::InvalidRecord)?;
             let (_transfer, rows) = admitted_query_bounded(
@@ -160,7 +120,7 @@ impl Store {
             for row in rows {
                 let index = usize::try_from(row.try_get::<_, i32>(0)?)
                     .map_err(|_| StoreError::InvalidRecord)?;
-                if input
+                if selected.len() == wanted.len() || input
                     .archives
                     .get(index)
                     .is_none_or(|archive| archive.kind == "perspective")
@@ -174,14 +134,13 @@ impl Store {
                     "speech" => Category::Speech,
                     _ => return Err(StoreError::InvalidRecord),
                 };
-                answer.selected.push(Selected {
-                    index: input.offset + index as u64,
+                selected.push(RestoreArchiveMatch {
+                    index: (input.offset + index) as u64,
                     category,
                 });
             }
         }
-        let (json, custody) = self.encode_restore_output(&answer, input.maximum_transfer_bytes)?;
-        Ok(RuntimeProviderInput::new(json, custody))
+        RuntimeProviderInput::restore_archives(request, selected, custody).map_err(|_| StoreError::Capacity)
     }
 
     /// Prepare restoration using current target authority. The caller supplies

@@ -7,6 +7,7 @@ use crate::{
     command_epoch::{RETRY_MS, RequestIdentity},
     live_save::{AcceptedSaveInput, LiveSaves},
     npc::Director,
+    player_http::REQUEST_TIMEOUT,
     player_references::ReferenceIssuer,
     store::{AdmittedReceipt, GameplayReceipt, KnownPlaceViewPage, PlaceViewRequest, StoreError},
     wire,
@@ -228,8 +229,8 @@ pub(crate) struct SelectedKnownPlace {
 
 impl SelectedKnownPlace {
     /// Use the exact SQL snapshot selected under the tab’s initial scope.
-    /// An editor or inspection without ordinary intake can await one needed
-    /// save, then select the same supplied reference in a fresh permitted cut.
+    /// A caller outside ordinary intake can await one needed save, then
+    /// select the same supplied reference in a fresh permitted cut.
     pub(crate) async fn read(
         game: &CurrentServer,
         authority: &Arc<Authority>,
@@ -639,11 +640,35 @@ impl PlayerCommands {
                 };
                 let reference = facts.request.command.known_place.as_ref();
                 let remembered = reference.is_some();
+                let requested_trade = facts.request.command.target_id.as_deref().zip(
+                    facts
+                        .gift
+                        .as_ref()
+                        .and_then(|gift| gift.requested_items.as_deref())
+                        .filter(|items| !items.is_empty()),
+                );
+                let reads_retained = remembered || requested_trade.is_some();
+                if reads_retained {
+                    // These reads may wait for PostgreSQL and an ordinary save.
+                    // Keep their exact evidence without blocking protected edits
+                    // or recovery on ordinary intake.
+                    drop(intake.take());
+                }
                 let selected_place = match reference {
                     Some(reference) => {
-                        match SelectedKnownPlace::read(&self.game, permits, &scope, reference, None).await
+                        let until = tokio::time::Instant::now() + REQUEST_TIMEOUT;
+                        match SelectedKnownPlace::read(
+                            &self.game,
+                            permits,
+                            &scope,
+                            reference,
+                            Some(until),
+                        )
+                        .await
                         {
-                            Err(WorldError::Storage(StoreError::StaleCut | StoreError::KnownPlacesPendingSave)) => None,
+                            Err(WorldError::Storage(
+                                StoreError::StaleCut | StoreError::KnownPlacesPendingSave,
+                            )) => None,
                             value => value?,
                         }
                     }
@@ -653,16 +678,11 @@ impl PlayerCommands {
                     gift.requested_items.as_ref().is_some_and(|items| !items.is_empty())
                         || gift.handover_operation != openlegend_simulation::handover::GiftOperation::Offer
                 });
-                let trade_evidence = if let (Some(contact), Some(items)) = (
-                    facts.request.command.target_id.as_deref(),
-                    facts.gift.as_ref().and_then(|gift| gift.requested_items.as_ref())
-                        .filter(|items| !items.is_empty()),
-                ) {
-                    // The retained-item read can wait on PostgreSQL. Its fixed
-                    // cut owns the original proof without holding up protected
-                    // edits or recovery on the ordinary save-admission gate.
-                    drop(intake.take());
-                    let evidence = self.read_trade_evidence(&scope, contact, items).await?;
+                let trade_evidence = match requested_trade {
+                    Some((contact, items)) => self.read_trade_evidence(&scope, contact, items).await?,
+                    None => None,
+                };
+                if reads_retained {
                     intake = Some(self.saves.enter_ordinary().await);
                     permits.current(&scope, Capability::Play, true, |_, _| ())?;
                     if self.identity.lock().await.epoch.token != facts.request.command_epoch {
@@ -673,10 +693,7 @@ impl PlayerCommands {
                     }
                     self.maintenance.allow_ordinary(permits, &scope)?;
                     self.saves.check_admission(tokio::time::Instant::now())?;
-                    evidence
-                } else {
-                    None
-                };
+                }
                 let _intake = intake;
                 let prepare = facts.clone();
                 let begin_facts = facts.clone();
