@@ -16,7 +16,7 @@ pub(crate) use health::HealthChangeCursor;
 mod rates;
 pub(crate) use rates::BodyRateCursor;
 mod remains;
-pub(crate) use remains::{RemainsCursor, RemainsStep, next_remains_deadline};
+pub(crate) use remains::{RemainsAnswer, RemainsCursor, RemainsStep, next_remains_deadline};
 
 fn narration_bound(template: &str, entity: &crate::state::Entity) -> Option<usize> {
     let tokens = template.bytes().filter(|byte| *byte == b'{').count();

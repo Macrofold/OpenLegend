@@ -214,6 +214,67 @@ impl CoreMutation<'_> {
         Ok(id)
     }
 
+    /// Release top-level corpse stock after the due-remains cursor proves
+    /// the pile footprint fits. Whole lots keep their declared owners,
+    /// identity and nested contents. Refusal leaves the body and all stock.
+    pub(crate) fn release_remains_stock(
+        &mut self,
+        body: &str,
+        site: &SurfacePoint,
+    ) -> Result<bool, ExecutionError> {
+        let state = &self.state;
+        let entities = &state.physical.entities;
+        let children = state.inventory.direct_items(body);
+        if children.is_empty() {
+            return Ok(true);
+        }
+        let mut visit = || {
+            self.journal.meters.charge(&[(WorkUnit::Candidates, 1)])?;
+            Ok(())
+        };
+        for &handle in children {
+            let item = entities.resolve(handle).ok_or(ExecutionError::Invariant)?;
+            let lot = item.item.as_ref().ok_or(ExecutionError::Invariant)?;
+            if lot.assembly_claim.is_some() {
+                return Ok(false);
+            }
+            if state.physical.holds.is_empty() {
+                visit()?;
+            } else if inventory_work_bound(state, None, item, &mut visit)? {
+                return Ok(false);
+            }
+        }
+        let bytes = children
+            .len()
+            .checked_mul(size_of::<EntityHandle>())
+            .ok_or(ExecutionError::Capacity)?;
+        let _workspace = self.journal.budget.reserve(bytes)?;
+        let children = children.to_vec();
+        let from = entities.handle(body).ok_or(ExecutionError::Invariant)?;
+        let pile = self.prepare_drop_pile(site)?;
+        let to = self
+            .state
+            .physical
+            .entities
+            .handle(&pile)
+            .ok_or(ExecutionError::Invariant)?;
+        for child in children {
+            let item = &self
+                .state
+                .physical
+                .entities
+                .resolve(child)
+                .ok_or(ExecutionError::Invariant)?
+                .id;
+            let _move = self.journal.budget.reserve(item.len())?;
+            let item = item.clone();
+            self.relocate_contained_lot(body, &pile, &item, false)?;
+        }
+        self.publish_packing(from, PackingChange::Add(0), false)?;
+        self.publish_packing(to, PackingChange::Add(0), false)?;
+        Ok(true)
+    }
+
     pub(crate) fn drop_checked_lot(
         &mut self,
         actor: &str,

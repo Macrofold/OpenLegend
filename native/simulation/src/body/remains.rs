@@ -3,8 +3,10 @@
 use super::{BodyAnswer, BodyReconcileCursor};
 use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
 use crate::execution::{CoreMutation, ExecutionError, StagedOccurrence};
-use crate::host::{ByteBudget, ByteReservation};
+use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, StandingQuery};
+use crate::host::{ByteBudget, ByteReservation, CandidateKey, retained_size::HeapBytes};
 use crate::simulation::PhysicalState;
+use crate::state::SurfacePoint;
 use std::mem::size_of;
 
 pub(crate) fn next_remains_deadline<I: AsRef<str>>(
@@ -35,11 +37,17 @@ pub(crate) fn next_remains_deadline<I: AsRef<str>>(
 pub(crate) enum RemainsStep<'a> {
     Occurrence(StagedOccurrence),
     Personal(&'a crate::activity::PendingActivityResult),
+    Geometry(&'a GeometryQueries),
     Complete { removed: bool },
+}
+pub(crate) enum RemainsAnswer {
+    Body(BodyAnswer),
+    Geometry(GeometryAnswers),
 }
 enum Progress {
     Occurrence(StagedOccurrence),
     Personal,
+    Geometry,
     Complete,
 }
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -54,29 +62,37 @@ enum Phase {
     Done,
 }
 pub(crate) struct RemainsCursor {
+    candidate: CandidateKey,
     ids: Vec<String>,
     index: usize,
     phase: Phase,
     body: Option<BodyReconcileCursor>,
     event: Option<String>,
+    release: Option<Box<(GeometryQueries, ByteReservation)>>,
     removed: bool,
     membership_pending: bool,
     budget: ByteBudget,
     reservation: ByteReservation,
 }
 impl RemainsCursor {
-    pub(crate) fn new(ids: &[String], budget: &ByteBudget) -> Result<Self, ExecutionError> {
+    pub(crate) fn new(
+        ids: &[String],
+        candidate: CandidateKey,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
         let reservation = budget.reserve(
             size_of::<Self>()
                 + ids.len() * size_of::<String>()
                 + ids.iter().map(String::len).sum::<usize>() * 2,
         )?;
         Ok(Self {
+            candidate,
             ids: ids.to_vec(),
             index: 0,
             phase: Phase::Check,
             body: None,
             event: None,
+            release: None,
             removed: false,
             membership_pending: false,
             budget: budget.clone(),
@@ -92,10 +108,13 @@ impl RemainsCursor {
         )?;
         Ok(())
     }
+    pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.release.as_deref().map(|(query, _)| query)
+    }
     pub(crate) fn step<'a>(
         &'a mut self,
         core: &mut CoreMutation<'_>,
-        answer: Option<BodyAnswer>,
+        answer: Option<RemainsAnswer>,
     ) -> Result<RemainsStep<'a>, ExecutionError> {
         Ok(match self.drive(core, answer)? {
             Progress::Occurrence(event) => RemainsStep::Occurrence(event),
@@ -105,6 +124,9 @@ impl RemainsCursor {
                     .ok_or(ExecutionError::Invariant)?
                     .personal()?,
             ),
+            Progress::Geometry => {
+                RemainsStep::Geometry(self.geometry_request().ok_or(ExecutionError::Invariant)?)
+            }
             Progress::Complete => RemainsStep::Complete {
                 removed: self.removed,
             },
@@ -113,9 +135,36 @@ impl RemainsCursor {
     fn drive(
         &mut self,
         core: &mut CoreMutation<'_>,
-        answer: Option<BodyAnswer>,
+        answer: Option<RemainsAnswer>,
     ) -> Result<Progress, ExecutionError> {
-        let mut answer = answer;
+        let mut answer = if self.release.is_some() {
+            match answer {
+                Some(RemainsAnswer::Geometry(value)) => {
+                    let (request, _custody) =
+                        *self.release.take().ok_or(ExecutionError::Invariant)?;
+                    request
+                        .validate_answers(&value)
+                        .map_err(|_| ExecutionError::Invariant)?;
+                    let id = self.ids.get(self.index).ok_or(ExecutionError::Invariant)?;
+                    self.phase = if value.standing.as_slice() == [true]
+                        && core.release_remains_stock(id, &request.standing[0].point)?
+                    {
+                        Phase::RemoveEvent
+                    } else {
+                        Phase::Next
+                    };
+                    None
+                }
+                None => return Ok(Progress::Geometry),
+                Some(_) => return Err(ExecutionError::Invariant),
+            }
+        } else {
+            match answer {
+                Some(RemainsAnswer::Body(value)) => Some(value),
+                None => None,
+                Some(_) => return Err(ExecutionError::Invariant),
+            }
+        };
         if self.body.is_none() {
             match answer.take() {
                 Some(BodyAnswer::Occurrence(event)) => {
@@ -207,20 +256,41 @@ impl RemainsCursor {
                     return Ok(Progress::Occurrence(event));
                 }
                 Phase::Remove => {
-                    self.phase = if remains
+                    if !remains
                         .remove_at
                         .is_some_and(|at| core.state.physical.header.sim_time >= at)
                     {
-                        Phase::RemoveEvent
+                        self.phase = Phase::Next;
+                    } else if !core.state.inventory.has_children(id) {
+                        self.phase = Phase::RemoveEvent;
+                    } else if let Some((point, support)) = entity.world_support() {
+                        // Use the same installed pile footprint as a player's Drop.
+                        // Until placement is known safe, the body retains its stock.
+                        let body = &installed.retained.item_handling_read.object_body;
+                        let custody = self.budget.reserve(
+                            size_of::<(GeometryQueries, ByteReservation)>()
+                                + size_of::<StandingQuery>()
+                                + support.len()
+                                + body.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                        )?;
+                        let mut query = GeometryQueries::new(GeometryBinding::new(
+                            self.candidate,
+                            installed.geometry.spatial.revision,
+                            core.journal.next_provider_serial()?,
+                        ));
+                        query.standing = vec![StandingQuery {
+                            point: SurfacePoint {
+                                x: point.x,
+                                y: point.y,
+                                z: point.z,
+                                surface_id: support.to_owned(),
+                            },
+                            body: body.clone(),
+                        }];
+                        self.release = Some(Box::new((query, custody)));
+                        return Ok(Progress::Geometry);
                     } else {
-                        Phase::Next
-                    };
-                    // Removal with possessions needs the item release owner
-                    // before this corpse can cease being accessible.
-                    if matches!(self.phase, Phase::RemoveEvent)
-                        && core.state.inventory.has_children(id)
-                    {
-                        return Err(ExecutionError::UnsupportedFamily);
+                        self.phase = Phase::Next;
                     }
                 }
                 Phase::RemoveEvent => {

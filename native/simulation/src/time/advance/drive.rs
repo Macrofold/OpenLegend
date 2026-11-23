@@ -304,7 +304,7 @@ impl AdvanceCursor {
             .map(|handle| self.actor(core, *handle).map(str::to_owned))
             .collect::<Result<Vec<_>, _>>()?;
         self.reconcile = Some(ReconcileCursor::Remains(crate::body::RemainsCursor::new(
-            &ids, budget,
+            &ids, self.candidate, budget,
         )?));
         Ok(())
     }

@@ -151,6 +151,14 @@ The stand-alone browser used **Open** and displayed the exact lot. Signed reques
 
 The refusal and successful caller are retained under `nsc04-remains-custody-20261122`. The successful Rust source tree was `f94ac175749fac814f08935ef541345aad403203` and executable SHA-256 was `262fdbe50d831c48ac2ac546cfd772218818ef83f3d9e8669fde887b097a3171`. The locked app and addon checks and stand-alone build passed. The warm and cold listeners released all reservations and the disposable databases closed. This case verifies an NPC body and its custody.
 
+#### Belongings when remains disappear
+
+The stand-alone clock now checks the installed ground-pile footprint when remains with belongings reach the removal deadline. It uses the existing ground-pile and inventory operations to move whole lots while keeping their identities and declared ownership. An obstructed location leaves the body and its belongings in place while ordinary game time continues. [The authored remains rule](../worlds/base/survival.md#death-and-remains) sets the deadlines and this placement condition.
+
+The TypeScript control and stand-alone Rust each opened a current-format save 120 game seconds before the installed removal deadline. Ordinary time crossed the deadline, the body was removed and PostgreSQL saved the original cord and bag under the existing pile. The two cord lots stayed separate. Three stones stayed in the original bag and the bag kept its ownership declaration. After a cold restart the browser opened that pile and showed its exact three top-level lots. A second Rust case blocked the pile footprint. Time advanced past the same deadline before and after restart, the body stayed rotting and its lot and bag stayed on it. The browser opened the nearby pile and saw only its original lot.
+
+The cases are retained under `nsc04-remains-decay-20261122`. The Rust source tree was `d2ffa214af36784815cc274d8b747977f0c7ab35` and executable SHA-256 was `7c00bcb8d3c715bb7d677af961cf1de62feddf5b3f70ddbb3f0c1189131afa64`. The locked app and addon checks, affected formatting and stand-alone build passed. The warm and cold Rust listeners released all reservations and each disposable database closed. No timing comparison ran.
+
 ### The authored Watchpost recipe record — November 22, 2026
 
 The local Main opening loaded all 163 authored entities. In a signed-in browser, a player four metres from the real Broken Watchpost cache chose **Walk to and open**. The previous Rust build reached the cache and refused its recipe record with HTTP 503. The Source control and repaired Rust server opened all five items and returned the same recipe details, including the ingredients, output, 180 seconds of work, and authored limitations. The Rust page showed the authored item description. Source also added quantity and location text.

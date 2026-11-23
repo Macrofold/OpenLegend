@@ -1,7 +1,7 @@
 //! Real zero-time and maintenance owners share the outer advance's occurrence
 //! and personal-result duties. This adapter supplies no effects of its own.
 use crate::activity::PendingActivityResult;
-use crate::body::{BodyAnswer, RemainsCursor, RemainsStep};
+use crate::body::{BodyAnswer, RemainsAnswer, RemainsCursor, RemainsStep};
 use crate::conditions::{ConditionReconcileCursor, ConditionReconcileStep};
 use crate::events::CompletedOccurrence;
 use crate::execution::{
@@ -40,6 +40,7 @@ impl ReconcileCursor {
     pub(super) fn geometry_request(&self) -> Option<&GeometryQueries> {
         match self {
             Self::Action(cursor) => cursor.queries().ok(),
+            Self::Remains(cursor) => cursor.geometry_request(),
             _ => None,
         }
     }
@@ -114,13 +115,19 @@ impl ReconcileCursor {
             Self::Remains(cursor) => {
                 let input = match answer {
                     None => None,
-                    Some(ReconcileAnswer::Occurrence(value)) => Some(BodyAnswer::Occurrence(value)),
-                    Some(ReconcileAnswer::Personal(value)) => Some(BodyAnswer::Personal(value)),
+                    Some(ReconcileAnswer::Occurrence(value)) => {
+                        Some(RemainsAnswer::Body(BodyAnswer::Occurrence(value)))
+                    }
+                    Some(ReconcileAnswer::Personal(value)) => {
+                        Some(RemainsAnswer::Body(BodyAnswer::Personal(value)))
+                    }
+                    Some(ReconcileAnswer::Geometry(value)) => Some(RemainsAnswer::Geometry(value)),
                     _ => return Err(invalid()),
                 };
                 match cursor.step(core, input)? {
                     RemainsStep::Occurrence(value) => ReconcileStep::Occurrence(value),
                     RemainsStep::Personal(value) => ReconcileStep::Personal(value),
+                    RemainsStep::Geometry(value) => ReconcileStep::Geometry(value),
                     RemainsStep::Complete { .. } => ReconcileStep::Complete,
                 }
             }
