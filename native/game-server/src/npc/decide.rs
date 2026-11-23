@@ -477,12 +477,10 @@ pub(super) async fn run(
                     drop(held);
                     ensure_running(&work)?;
                     let origin = work.automatic.as_ref().map(|trigger| trigger.read.clone());
-                    let ticket = Arc::new(
-                        game.world
-                            .bind_npc(original, current, binding, origin)
-                            .await
-                            .map_err(prepare::binding_failure)?,
-                    );
+                    let ticket = game.world
+                        .bind_npc(original, current, binding, origin)
+                        .await
+                        .map_err(prepare::binding_failure)?;
                     let parsed = generate(
                         game,
                         dispatch,

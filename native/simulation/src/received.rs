@@ -39,10 +39,11 @@ mod recent_residency;
 mod restore_membership;
 pub(crate) use restore_membership::{RestoreRecentSelection, restore_recent_membership};
 mod support_retention;
+pub use support_retention::SupportMembershipRequest;
 pub(crate) use knowledge_retention::{CompletedKnowledgeRetention, KnowledgeRetentionCursor};
 pub(crate) use recent::{CompletedRecentRetention, RecentRetentionCursor};
 pub(crate) use support_retention::{
-    CompletedSupportRetention, SupportMembershipAnswer, SupportMembershipRequest,
+    CompletedSupportRetention, SupportMembershipAnswer, SupportMembershipQuestion,
     SupportPreparation, SupportRetentionCursor, SupportRetentionStep,
 };
 mod retained_size;

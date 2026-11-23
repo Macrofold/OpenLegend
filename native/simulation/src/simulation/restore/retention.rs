@@ -7,7 +7,7 @@ use crate::experience::retention::{
 };
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::received::{
-    RecentRetentionCursor, SupportMembershipAnswer, SupportMembershipRequest, SupportPreparation,
+    RecentRetentionCursor, SupportMembershipAnswer, SupportMembershipQuestion, SupportPreparation,
     SupportRetentionCursor, SupportRetentionStep,
 };
 use indexmap::{IndexMap, IndexSet};
@@ -51,7 +51,7 @@ pub(super) enum RetentionAnswer {
 pub(super) enum RetentionStep<'a> {
     Continue,
     Accounts(Arc<RestoreRetentionQuestion>),
-    Support(&'a SupportMembershipRequest),
+    Support(Arc<SupportMembershipQuestion>),
     Collation(&'a crate::language::CollationRequest),
     Complete { source_changed: bool },
 }

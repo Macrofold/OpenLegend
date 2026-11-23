@@ -101,7 +101,7 @@ pub use read_cut::{
 mod restore;
 pub use restore::{
     RestoreArchive, RestoreArchiveCategory, RestoreArchiveMatch, RestoreArchiveSelection, RestoreBinding, RestoreGrant, RestoreInput,
-    RestoreMetadataInput, RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreArchives, RuntimeRestoreMembership,
+    RestoreMetadataInput, RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreArchives, RuntimeRestoreMembership, RuntimeRestoreSupport,
     RuntimeRestorePlacement,
 };
 mod retained_values;
@@ -342,6 +342,7 @@ enum RuntimeAnswerBody {
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     KnownPlaces(Box<crate::simulation::KnownPlacesAnswer>),
     RestoreArchives(Box<crate::restore::RestoreArchivesAnswer>),
+    SupportMembership(Box<crate::received::SupportMembershipAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     SourceVersions(Box<crate::simulation::SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
@@ -661,6 +662,12 @@ fn provider_response(
                         return Err(failure("version plan requires its original typed request"));
                     }
                     ProviderResponse::source_versions(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::SupportMembership(answer) => {
+                    if question.support_membership().is_none() {
+                        return Err(failure("support membership requires its original question"));
+                    }
+                    ProviderResponse::support_membership(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::RestoreArchives(answer) => {
                     if question.restore_archives().is_none() {
@@ -1123,6 +1130,9 @@ impl RuntimeProvider {
         }
         if let Some(places) = question.known_places_envelope() {
             return RuntimeJson::encode(&places, budget);
+        }
+        if let Some(support) = question.support_membership_envelope() {
+            return RuntimeJson::encode(&support, budget);
         }
         if let Some(archives) = question.restore_archives_envelope() {
             return RuntimeJson::encode(&archives, budget);

@@ -323,13 +323,13 @@ impl Collected {
                 if let Some(reason) = reason.stale_reason() {
                     return Err(CallFailure::Stale(reason).at("recall-binding"));
                 }
-                self.original = Some(original);
+                self.original = Some(*original);
                 return Ok(None);
             }
         };
         Ok(Some(RecallReview {
             request: Arc::new(request),
-            ticket: Arc::new(ticket),
+            ticket,
             through,
         }))
     }

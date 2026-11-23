@@ -40,6 +40,45 @@ impl RuntimeProviderInput {
     }
 }
 
+/// Owns the funded aliases and prospective row changes for one inactive
+/// restore. The SQL reader may retain this cut across its own await.
+pub struct RuntimeRestoreSupport(Arc<ProviderQuestion>);
+
+impl RuntimeRestoreSupport {
+    pub fn parts(&self) -> (&crate::received::SupportMembershipRequest, &crate::records::ChangedRows) {
+        let (request, projection) = self.0.support_membership().expect("checked support question");
+        (request, projection.expect("restore support has a staged projection"))
+    }
+}
+
+impl RuntimeProvider {
+    pub fn restore_support(&self) -> Result<Option<RuntimeRestoreSupport>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question.support_membership().is_some_and(|(_, projection)| projection.is_some())
+            .then_some(RuntimeRestoreSupport(question)))
+    }
+}
+
+impl RuntimeProviderInput {
+    /// Return the selected aliases under the existing question's binding.
+    pub fn support_membership(
+        request: &RuntimeRestoreSupport,
+        retained: Vec<usize>,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        use crate::received::SupportMembershipAnswer;
+        let bytes = retained.capacity().checked_mul(size_of::<usize>())
+            .and_then(|n| n.checked_add(size_of::<SupportMembershipAnswer>()))
+            .ok_or(CapacityError)?;
+        custody.resize(bytes)?;
+        let answer = SupportMembershipAnswer { binding: request.parts().0.binding, retained };
+        Ok(Self {
+            body: RuntimeAnswerBody::SupportMembership(Box::new(answer)),
+            custody,
+        })
+    }
+}
+
 /// Exact application metadata of a prepared, still closed installation.
 pub struct RuntimeRestorePlacement<'a> {
     pub world_id: &'a str,

@@ -18,7 +18,8 @@ pub(super) enum RestoreReply {
 pub(super) struct RestoreReadRequest<'a, T: ?Sized> {
     #[serde(flatten)]
     pub(super) request: &'a T,
-    pub(super) restore_projection: &'a crate::records::ChangedRows,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(super) restore_projection: Option<&'a crate::records::ChangedRows>,
 }
 #[derive(Serialize)]
 pub(super) struct RestoreQuestion<'a, T: ?Sized> {
@@ -93,16 +94,20 @@ pub(super) fn poll_restore(
             budget,
             RestoreReply::Retention,
         ),
-        RestoreStep::Support(request) => projected_question(
-            core,
-            answer,
-            ProviderKind::SupportMembership,
-            request.binding,
-            request,
-            settings,
-            budget,
-            RestoreReply::Support,
-        ),
+        RestoreStep::Support(request) => {
+            if answer.is_some() {
+                return Err(DriveError::StaleResponse);
+            }
+            let binding = request.request.binding;
+            let projection = capture_projection(core, binding, settings, budget)?;
+            let pending = ProviderQuestion::prepare_bound(
+                ProviderKind::SupportMembership,
+                binding,
+                QuestionBody::SupportMembership(request, Some(Box::new(projection))),
+                budget,
+            )?;
+            Ok(Poll::Question(pending, RestoreReply::Support))
+        },
         RestoreStep::RetentionCollation(request) => collation_question(answer, request, budget, RestoreReply::RetentionCollation),
         RestoreStep::Complete(done) => Ok(Poll::Complete(done)),
         RestoreStep::Collation(request) => collation_question(answer, request, budget, RestoreReply::Collation),
@@ -151,7 +156,7 @@ fn projected_question<T: Serialize + ?Sized>(
         binding,
         &RestoreReadRequest {
             request,
-            restore_projection: &projection.changes,
+            restore_projection: Some(&projection.changes),
         },
         budget,
         route,

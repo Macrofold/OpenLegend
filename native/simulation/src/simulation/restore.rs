@@ -138,7 +138,7 @@ pub(crate) enum RestoreStep<'a> {
     Collation(&'a crate::language::CollationRequest),
     Archives(Arc<RestoreArchivesQuestion>),
     Retention(Arc<crate::experience::retention::RestoreRetentionQuestion>),
-    Support(&'a crate::received::SupportMembershipRequest),
+    Support(Arc<crate::received::SupportMembershipQuestion>),
     RetentionCollation(&'a crate::language::CollationRequest),
     SourceVersions(Arc<ProviderQuestion>),
     Complete(CompletedRestore),

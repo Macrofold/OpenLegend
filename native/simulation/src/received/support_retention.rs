@@ -18,13 +18,17 @@ pub(crate) struct SupportPreparation {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct SupportMembershipRequest {
+pub struct SupportMembershipRequest {
     pub binding: GeometryBinding,
     pub world_id: String,
     pub generation: String,
     pub accepted_cut: u64,
     pub actor_id: String,
     pub aliases: Vec<String>,
+}
+pub(crate) struct SupportMembershipQuestion {
+    pub(crate) request: SupportMembershipRequest,
+    _storage: ByteReservation,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -42,7 +46,7 @@ struct Selection {
     aliases: IndexSet<String>,
     retained: Vec<bool>,
     through: usize,
-    request: Option<(SupportMembershipRequest, ByteReservation)>,
+    request: Option<Arc<SupportMembershipQuestion>>,
     _storage: ByteReservation,
 }
 pub(crate) struct SupportRetentionCursor {
@@ -58,9 +62,9 @@ pub(crate) struct CompletedSupportRetention {
     pub(crate) outcome: Outcome,
     _storage: ByteReservation,
 }
-pub(crate) enum SupportRetentionStep<'a> {
+pub(crate) enum SupportRetentionStep {
     Continue,
-    Membership(&'a SupportMembershipRequest),
+    Membership(Arc<SupportMembershipQuestion>),
     Complete(CompletedSupportRetention),
 }
 fn place(capsule: &TemporalSupportCapsule) -> bool {
@@ -244,7 +248,7 @@ impl SupportRetentionCursor {
         let actor_id = &self.actors[self.next];
         let storage = budget.reserve(
             heap_sum([
-                size_of::<SupportMembershipRequest>(),
+                size_of::<SupportMembershipQuestion>() + 2 * size_of::<usize>(),
                 strings,
                 (end - from)
                     .checked_mul(size_of::<String>())
@@ -273,7 +277,10 @@ impl SupportRetentionCursor {
             aliases,
         };
         selection.through = end;
-        selection.request = Some((request, storage));
+        selection.request = Some(Arc::new(SupportMembershipQuestion {
+            request,
+            _storage: storage,
+        }));
         Ok(())
     }
     pub(crate) fn step(
@@ -281,13 +288,14 @@ impl SupportRetentionCursor {
         core: &mut CoreMutation<'_>,
         answer: Option<SupportMembershipAnswer>,
         budget: &ByteBudget,
-    ) -> Result<SupportRetentionStep<'_>, ExecutionError> {
+    ) -> Result<SupportRetentionStep, ExecutionError> {
         if let Some(answer) = answer {
             let selection = self.current.as_mut().ok_or(ExecutionError::Invariant)?;
-            let (request, _) = selection
+            let request = &selection
                 .request
                 .as_ref()
-                .ok_or(ExecutionError::Invariant)?;
+                .ok_or(ExecutionError::Invariant)?
+                .request;
             if answer.binding != request.binding
                 || answer
                     .retained
@@ -345,16 +353,11 @@ impl SupportRetentionCursor {
             .is_some_and(|selection| selection.through < selection.aliases.len());
         if needs_question {
             self.prepare_question(core, budget)?;
-            return Ok(SupportRetentionStep::Membership(
-                &self
-                    .current
-                    .as_ref()
-                    .ok_or(ExecutionError::Invariant)?
-                    .request
-                    .as_ref()
-                    .ok_or(ExecutionError::Invariant)?
-                    .0,
-            ));
+            let request = self.current
+                .as_ref()
+                .and_then(|selection| selection.request.as_ref())
+                .ok_or(ExecutionError::Invariant)?;
+            return Ok(SupportRetentionStep::Membership(Arc::clone(request)));
         }
         let selection = self.current.as_ref().ok_or(ExecutionError::Invariant)?;
         // Complete the whole captured set before inferring absence. Recheck live

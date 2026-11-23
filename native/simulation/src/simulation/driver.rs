@@ -158,6 +158,10 @@ enum QuestionBody {
         request: Arc<crate::experience::HistoryEditQuestion>,
         projection: Option<Box<super::restore::RestoreReadProjection>>,
     },
+    SupportMembership(
+        Arc<crate::received::SupportMembershipQuestion>,
+        Option<Box<super::restore::RestoreReadProjection>>,
+    ),
     RestoreArchives(
         Arc<crate::restore::RestoreArchivesQuestion>,
         Box<super::restore::RestoreReadProjection>,
@@ -377,6 +381,25 @@ impl ProviderQuestion {
         })
     }
 
+    pub(crate) fn support_membership(
+        &self,
+    ) -> Option<(&crate::received::SupportMembershipRequest, Option<&crate::records::ChangedRows>)> {
+        match &self.body {
+            QuestionBody::SupportMembership(question, projection) => {
+                Some((&question.request, projection.as_ref().map(|projection| &projection.changes)))
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn support_membership_envelope(&self) -> Option<impl Serialize + '_> {
+        self.support_membership().map(|(request, restore_projection)| restore::RestoreQuestion {
+            kind: self.kind,
+            binding: self.binding,
+            value: restore::RestoreReadRequest { request, restore_projection },
+        })
+    }
+
     pub(crate) fn restore_archives(
         &self,
     ) -> Option<(&crate::restore::RestoreArchivesRequest, &crate::records::ChangedRows)> {
@@ -390,7 +413,7 @@ impl ProviderQuestion {
         self.restore_archives().map(|(request, restore_projection)| restore::RestoreQuestion {
             kind: self.kind,
             binding: self.binding,
-            value: restore::RestoreReadRequest { request, restore_projection },
+            value: restore::RestoreReadRequest { request, restore_projection: Some(restore_projection) },
         })
     }
 
@@ -652,6 +675,7 @@ enum AnswerBody {
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     KnownPlaces(Box<KnownPlacesAnswer>),
     RestoreArchives(Box<crate::restore::RestoreArchivesAnswer>),
+    SupportMembership(Box<crate::received::SupportMembershipAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
     SourceVersions(Box<SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
@@ -849,6 +873,22 @@ impl ProviderResponse {
             kind: ProviderKind::KnownPlaces,
             binding,
             body: AnswerBody::KnownPlaces(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn support_membership(
+        binding: GeometryBinding,
+        answer: Box<crate::received::SupportMembershipAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::SupportMembership,
+            binding,
+            body: AnswerBody::SupportMembership(answer),
             _reservation: reservation,
         })
     }
@@ -1812,14 +1852,15 @@ impl OperationCursor {
                 };
                 match cursor.step(core, supplied, budget)? {
                     crate::received::SupportRetentionStep::Continue => Ok(Poll::Continue),
-                    crate::received::SupportRetentionStep::Membership(request) => question(
-                        answer,
-                        ProviderKind::SupportMembership,
-                        request.binding,
-                        request,
-                        budget,
-                        OperationReply::SupportRetention,
-                    ),
+                    crate::received::SupportRetentionStep::Membership(request) => {
+                        let pending = ProviderQuestion::prepare_bound(
+                            ProviderKind::SupportMembership,
+                            request.request.binding,
+                            QuestionBody::SupportMembership(request, None),
+                            budget,
+                        )?;
+                        Ok(Poll::Question(pending, OperationReply::SupportRetention))
+                    },
                     crate::received::SupportRetentionStep::Complete(done) => Ok(Poll::Complete(
                         DriverCompletion::Operation(CompletedOperation::SupportRetention(done)),
                     )),
@@ -2184,6 +2225,9 @@ impl OperationDriver {
                     }
                     AnswerBody::SourceVersions(value) => {
                         (Some(Answer::SourceVersions(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::SupportMembership(value) => {
+                        (Some(Answer::SupportMembership(*value)), Some(_reservation), None)
                     }
                     AnswerBody::RestoreArchives(value) => {
                         (Some(Answer::RestoreArchives(*value)), Some(_reservation), None)

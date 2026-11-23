@@ -25,9 +25,9 @@ pub(crate) struct NpcHistoryRows {
 }
 
 pub(crate) enum NpcBinding {
-    Issued(RuntimeNpcResponseTicket),
+    Issued(Arc<RuntimeNpcResponseTicket>),
     Refused {
-        original: RuntimeNpcRead,
+        original: Box<RuntimeNpcRead>,
         reason: RuntimeError,
     },
 }
@@ -379,7 +379,7 @@ impl HostedWorld {
         current: RuntimeNpcRead,
         request: RuntimeNpcBindingRequest,
         trigger: Option<Arc<RuntimeNpcTrigger>>,
-    ) -> Result<RuntimeNpcResponseTicket, WorldError> {
+    ) -> Result<Arc<RuntimeNpcResponseTicket>, WorldError> {
         match self
             .bind_npc_preserving_read(original, current, request, trigger)
             .await?
@@ -407,9 +407,12 @@ impl HostedWorld {
                 request,
                 trigger.as_deref(),
             ) {
-                Ok(ticket) => Ok(NpcBinding::Issued(ticket)),
+                // The ticket and read already fund their carriers. Send
+                // pointers so the async receiver never copies either full
+                // owned read through the worker's result and poll frames.
+                Ok(ticket) => Ok(NpcBinding::Issued(Arc::new(ticket))),
                 Err(reason) => Ok(NpcBinding::Refused {
-                    original: original.expect("a refused binding preserves its initial read"),
+                    original: Box::new(original.expect("a refused binding preserves its initial read")),
                     reason,
                 }),
             }

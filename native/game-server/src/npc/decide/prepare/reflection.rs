@@ -271,7 +271,7 @@ pub(in crate::npc) async fn prepare(
     .fund_reflection(subject_bindings, &mut custody)
     .map_err(packet_failure)?;
     drop(history);
-    let npc: RuntimeNpcResponseTicket = game
+    let npc = game
         .world
         .bind_npc(origin, current, request, None)
         .await
@@ -279,6 +279,7 @@ pub(in crate::npc) async fn prepare(
     let (ticket, files) = game
         .world
         .capture(move |world| {
+            let npc = Arc::into_inner(npc).expect("the reflection owns its prepared NPC ticket");
             let ticket = world.bind_reflection_direct(
                 &body,
                 &body,

@@ -727,6 +727,9 @@ impl Store {
         if let Some(request) = provider.restore_archives().map_err(runtime)? {
             return self.answer_checkpoint_archives(tx, candidate, &request).await;
         }
+        if let Some(request) = provider.restore_support().map_err(runtime)? {
+            return self.answer_checkpoint_support(tx, candidate, &request).await;
+        }
         #[derive(Deserialize)]
         struct Request<'a> {
             kind: &'a str,
@@ -737,7 +740,6 @@ impl Store {
             phase: Option<&'a str>,
         }
         enum Selection {
-            Support,
             Members,
             Accounts,
         }
@@ -746,7 +748,6 @@ impl Store {
                 let request: Request =
                     serde_json::from_str(text).map_err(|_| StoreError::InvalidRecord)?;
                 Ok::<_, StoreError>(match (request.kind, request.value.phase) {
-                    ("support-membership", _) => Selection::Support,
                     ("restore-retention", Some("membership")) => Selection::Members,
                     ("restore-retention", Some("metadata" | "records")) => Selection::Accounts,
                     _ => return Err(StoreError::InvalidRecord),
@@ -754,10 +755,6 @@ impl Store {
             })
             .map_err(runtime)??;
         match selected {
-            Selection::Support => {
-                self.answer_checkpoint_support(tx, candidate, provider)
-                    .await
-            }
             Selection::Members => {
                 let request = provider
                     .prepare_restore_membership(&self.budget)

@@ -232,7 +232,7 @@ pub(super) async fn finish(
         speech_trigger,
         route,
         context,
-        ticket: Arc::new(ticket),
+        ticket,
         frame: collected.frame,
         _projection: projection,
     })

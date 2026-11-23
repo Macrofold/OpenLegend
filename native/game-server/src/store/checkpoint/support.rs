@@ -2,37 +2,17 @@
 //! Its SQL projection supplies the exact current rows, without opening recent
 //! pages, prose or another actor's account scope.
 
-use super::provider;
 use crate::store::read::admitted_query;
 use crate::store::{DurableHead, Store, StoreError, StoreResult};
 use openlegend_simulation::encoding::json_record_len;
-use openlegend_simulation::geometry::GeometryBinding;
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::runtime::{
-    RuntimeProvider, RuntimeProviderInput, RuntimeRestoreMembership,
+    RuntimeProviderInput, RuntimeRestoreMembership, RuntimeRestoreSupport,
 };
-use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
+use serde::Deserialize;
 use std::collections::BTreeSet;
+use std::mem::size_of;
 use tokio_postgres::Transaction;
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Question {
-    binding: GeometryBinding,
-    world_id: String,
-    generation: String,
-    accepted_cut: u64,
-    actor_id: String,
-    aliases: Vec<String>,
-    restore_projection: Box<RawValue>,
-}
-
-#[derive(Serialize)]
-struct Answer {
-    binding: GeometryBinding,
-    retained: Vec<usize>,
-}
 
 pub(crate) struct RetainedAccountMembership {
     pub aliases: Vec<usize>,
@@ -60,10 +40,9 @@ impl Store {
         &self,
         tx: &Transaction<'_>,
         prospective: &DurableHead,
-        provider: &RuntimeProvider,
+        pending: &RuntimeRestoreSupport,
     ) -> StoreResult<RuntimeProviderInput> {
-        let (request, _custody): (Question, _) =
-            provider::prepare(self, provider, "support-membership")?;
+        let (request, projection) = pending.parts();
         if request.world_id != prospective.world_id
             || request.generation != prospective.generation
             || request.accepted_cut != 0
@@ -88,7 +67,7 @@ impl Store {
             .budget
             .reserve(workspace)
             .map_err(|_| StoreError::Capacity)?;
-        self.with_checkpoint_projection(tx, prospective, &request.restore_projection, async {
+        self.with_checkpoint_rows(tx, prospective, projection, None, None, async {
             let (_transfer, rows) = admitted_query(
                 tx,
                 &self.schema.checkpoint.support_membership,
@@ -100,18 +79,16 @@ impl Store {
                 .iter()
                 .map(|row| row.try_get::<_, &str>(0).map_err(StoreError::from))
                 .collect::<StoreResult<BTreeSet<_>>>()?;
-            let retained = request
-                .aliases
-                .iter()
-                .enumerate()
-                .filter_map(|(index, alias)| matches.contains(alias.as_str()).then_some(index))
-                .collect();
-            let answer = Answer {
-                binding: request.binding,
-                retained,
-            };
-            let (json, custody) = self.encode_restore_output(&answer, usize::MAX)?;
-            Ok(RuntimeProviderInput::new(json, custody))
+            let bytes = rows.len().checked_mul(size_of::<usize>())
+                .and_then(|bytes| bytes.checked_add(128))
+                .ok_or(StoreError::Capacity)?;
+            let custody = self.budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+            let mut retained = Vec::new();
+            retained.try_reserve_exact(rows.len()).map_err(|_| StoreError::Capacity)?;
+            retained.extend(request.aliases.iter().enumerate()
+                .filter_map(|(index, alias)| matches.contains(alias.as_str()).then_some(index)));
+            RuntimeProviderInput::support_membership(pending, retained, custody)
+                .map_err(|_| StoreError::Capacity)
         })
         .await
     }
