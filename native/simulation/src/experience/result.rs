@@ -155,7 +155,8 @@ pub(crate) fn prepare_activity_result(
     let has_memory = actor.has_memory();
     let law = core.state.installed.account_law();
     let context = ActivityRecordingContext::from_occurrence(entry);
-    let routine = has_memory && law.routine_result(core.state, actor_id, context)?;
+    let routine = has_memory
+        && law.routine_result(core.state, actor_id, context)?;
     if !routine && (prior.is_some() || !has_memory) {
         return Ok(ActivityResultAcquisition::Complete(completed(
             actor_id,

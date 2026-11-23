@@ -835,13 +835,11 @@ fn validate_entity(
                 || notice.occurred_at < 0.0
                 || notice.occurred_at > now
         }) || actor.encounters.as_ref().is_some_and(|encounters| {
-            installed
-                .body_policy
-                .and_then(|body| body.combat.as_ref())
-                .and_then(|combat| combat.encounters.as_ref())
-                .is_none()
+            installed.body_policy.and_then(|body| body.combat.as_ref())
+                .and_then(|combat| combat.encounters.as_ref()).is_none()
                 || !encounters.valid(actor.physical_life.unwrap_or(0), now)
-        }) || actor.coaching_episode_id.is_some()
+        })
+            || actor.coaching_episode_id.is_some()
         {
             return Err(InstallError::CurrentFormat);
         }

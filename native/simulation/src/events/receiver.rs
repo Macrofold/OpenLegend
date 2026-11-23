@@ -152,12 +152,12 @@ pub(super) fn prepare_receiver_awareness(
         };
         if let Some(kind) = kind {
             let source = if event.event_type == rules.projectile_contact_event {
-                field_id(event, "contactSourceId")
-                    .filter(|id| selection.references().iter().any(|(seen, _)| seen == id))
+                field_id(event, "contactSourceId").filter(|id| {
+                    selection.references().iter().any(|(seen, _)| seen == id)
+                })
             } else {
                 selection.source_id()
-            }
-            .filter(|id| cue || sight.and_then(|answer| answer.seen(id)) == Some(true));
+            }.filter(|id| cue || sight.and_then(|answer| answer.seen(id)) == Some(true));
             receive(core, target, event, kind, source, struck, budget)?;
         }
     }

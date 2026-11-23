@@ -23,6 +23,7 @@ pub mod construction_gather;
 mod construction_seed;
 pub use construction_seed::InitialConstructionGrant;
 mod contact;
+pub mod combat_encounters;
 pub mod encoding;
 pub mod events;
 pub mod execution;

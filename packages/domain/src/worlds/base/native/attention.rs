@@ -7,7 +7,8 @@ use crate::attention::{
     RecordingSource,
 };
 use crate::experience::{
-    AccountAfterRelease, CognitionPolicy, PersonalSourceHeader, PersonalSourceKind, RetentionReason,
+    AccountAfterRelease, CognitionPolicy, PersonalSourceHeader,
+    PersonalSourceKind, RetentionReason,
 };
 use crate::install::DefinitionIdentity;
 use crate::received::ReceivedError;
@@ -350,24 +351,19 @@ impl<'a> AccountLaw<'a> {
         if !self.ordinary(activity) {
             return Ok(false);
         }
-        let source = state
-            .physical
+        let source = state.physical
             .entities
             .get(actor_id)
             .ok_or(ReceivedError("Routine movement has no physical actor."))?;
-        if crate::combat_encounters::has_personal_context(state, source)
-            || state
-                .experience
-                .has_commitment_completion(
-                    actor_id,
-                    self.rules
-                        .routine_commitment_events
-                        .iter()
-                        .map(String::as_str),
-                )
-                .map_err(|_| {
-                    ReceivedError("Routine movement commitment coverage is unavailable.")
-                })?
+        if crate::combat_encounters::has_personal_context(state, source) || state.experience
+            .has_commitment_completion(
+                actor_id,
+                self.rules
+                    .routine_commitment_events
+                    .iter()
+                    .map(String::as_str),
+            )
+            .map_err(|_| ReceivedError("Routine movement commitment coverage is unavailable."))?
         {
             return Ok(false);
         }

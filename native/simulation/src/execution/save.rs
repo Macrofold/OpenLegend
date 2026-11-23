@@ -1280,15 +1280,8 @@ impl PhysicalJournal {
                 )?;
             }
             let actor_parent = ["world", "entities", id, "actor"];
-            let current_encounters = entity
-                .actor
-                .as_ref()
-                .and_then(|actor| actor.encounters.as_deref());
-            if rows.actor
-                || rows
-                    .encounters_before
-                    .is_some_and(|before| before.is_some() != current_encounters.is_some())
-            {
+            let current_encounters = entity.actor.as_ref().and_then(|actor| actor.encounters.as_deref());
+            if rows.actor || rows.encounters_before.is_some_and(|before| before.is_some() != current_encounters.is_some()) {
                 one(
                     ledger,
                     output,
@@ -1301,14 +1294,7 @@ impl PhysicalJournal {
                 )?;
             }
             if let Some(before) = rows.encounters_before {
-                encounters::encode(
-                    id,
-                    before.as_deref(),
-                    current_encounters,
-                    ledger,
-                    output,
-                    budget,
-                )?;
+                encounters::encode(id, before.as_deref(), current_encounters, ledger, output, budget)?;
             }
             if rows.action
                 || rows.agency

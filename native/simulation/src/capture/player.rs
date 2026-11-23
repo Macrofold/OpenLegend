@@ -3,6 +3,7 @@
 //! Entity/WorldState mirror after capture.
 
 use super::*;
+use serde::Deserialize;
 use crate::experience::PersonalSourceKind;
 use crate::host::retained_size::tree_node_bound;
 use std::collections::{BTreeMap, BTreeSet};
@@ -25,21 +26,14 @@ impl<T: AsRef<str>> EncounterPreference<T> {
     pub(crate) fn valid(&self) -> bool {
         use crate::values::is_safe_record_id;
         is_safe_record_id(self.target_id.as_ref())
-            && self
-                .episode
-                .as_ref()
-                .is_none_or(|episode| is_safe_record_id(episode.as_ref()))
+            && self.episode.as_ref().is_none_or(|episode| is_safe_record_id(episode.as_ref()))
     }
 }
 impl EncounterPreference<String> {
     pub(crate) fn borrowed(&self) -> EncounterPreference<&str> {
         EncounterPreference {
-            actor_life: self.actor_life,
-            target_id: &self.target_id,
-            target_life: self.target_life,
-            episode: self.episode.as_deref(),
-            revision: self.revision,
-            hostile_revision: self.hostile_revision,
+            actor_life: self.actor_life, target_id: &self.target_id, target_life: self.target_life,
+            episode: self.episode.as_deref(), revision: self.revision, hostile_revision: self.hostile_revision,
         }
     }
 }

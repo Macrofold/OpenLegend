@@ -11,6 +11,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 mod encoding;
 pub(crate) mod guard_input;
+mod encounter_input;
 use encoding::CommandEncoding;
 mod outings_input;
 pub(crate) mod ranged_input;

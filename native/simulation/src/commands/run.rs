@@ -45,6 +45,8 @@ mod eating;
 mod drop;
 mod pickup;
 mod inspect_activities;
+mod descriptive_act;
+mod encounter_control;
 mod inspect_item;
 mod inspect_storage;
 mod learn_record;
@@ -2762,23 +2764,10 @@ impl CommandCursor {
                             crate::state::AttackModeNoticeKind::OwnOffensiveActionAdmitted,
                         )?;
                         if let Some(invocation) = result.action_id.as_deref()
-                            && matches!(
-                                &self.command,
-                                NativeCommand::Strike { .. }
-                                    | NativeCommand::Ranged {
-                                        intent:
-                                            crate::commands::ranged_input::RangedIntent::Start { .. },
-                                        ..
-                                    }
-                            )
+                            && matches!(&self.command, NativeCommand::Strike { .. }
+                                | NativeCommand::Ranged { intent: crate::commands::ranged_input::RangedIntent::Start { .. }, .. })
                         {
-                            crate::combat_encounters::select_owned(
-                                core,
-                                &actor_id,
-                                &self.command.envelope().id,
-                                invocation,
-                                &self.budget,
-                            )?;
+                            crate::combat_encounters::select_owned(core, &actor_id, &self.command.envelope().id, invocation, &self.budget)?;
                         }
                     }
                     // Public commands stage their exact retry receipt with the
@@ -2969,10 +2958,7 @@ fn actor_problem(
     }
     if core.state.physical.header.paused
         && !ends_consent
-        && !matches!(
-            command,
-            NativeCommand::Cancel { .. } | NativeCommand::EncounterPreference { .. }
-        )
+        && !matches!(command, NativeCommand::Cancel { .. } | NativeCommand::EncounterPreference { .. })
     {
         return Ok(Some(ordinary.paused.outcome(false)));
     }

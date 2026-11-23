@@ -132,14 +132,8 @@ impl ObserverReceptionCursor {
         let progress = self.drive(core, answer, budget)?;
         Ok(match progress {
             Progress::Geometry => ObserverReceptionStep::Geometry(
-                self.flights
-                    .as_ref()
-                    .and_then(crate::combat_encounters::CheckedFlights::request)
-                    .or_else(|| {
-                        self.visual
-                            .as_ref()
-                            .and_then(PersonalVisualCursor::geometry_request)
-                    })
+                self.flights.as_ref().and_then(crate::combat_encounters::CheckedFlights::request)
+                    .or_else(|| self.visual.as_ref().and_then(PersonalVisualCursor::geometry_request))
                     .ok_or_else(invalid)?,
             ),
             Progress::Language => ObserverReceptionStep::Language(
@@ -339,21 +333,14 @@ impl ObserverReceptionCursor {
                     }
                     self.require_supported_encounter_context(core)?;
                     let observer = &self.received.as_ref().ok_or_else(invalid)?.observer;
-                    crate::combat_encounters::settle_seen_actions(
-                        core,
-                        &observer.actor_id,
-                        budget,
-                    )?;
-                    self.flights =
-                        crate::combat_encounters::CheckedFlights::prepare(core, observer, budget)?;
+                    crate::combat_encounters::settle_seen_actions(core, &observer.actor_id, budget)?;
+                    self.flights = crate::combat_encounters::CheckedFlights::prepare(core, observer, budget)?;
                     self.phase = PublicationPhase::CombatFlights;
                 }
                 PublicationPhase::CombatFlights => {
                     if let Some(flights) = self.flights.as_mut() {
                         let answers = match answer.take() {
-                            Some(ObserverReceptionAnswer::Visual(
-                                PersonalVisualAnswer::Geometry(answers),
-                            )) => Some(answers),
+                            Some(ObserverReceptionAnswer::Visual(PersonalVisualAnswer::Geometry(answers))) => Some(answers),
                             None => None,
                             _ => return Err(invalid().into()),
                         };
@@ -377,11 +364,7 @@ impl ObserverReceptionCursor {
                         let cue = match acquired {
                             AttackAcquisition::NewCue(cue) => cue,
                             AttackAcquisition::Known(known) => {
-                                crate::combat_encounters::restore_seen_action(
-                                    core,
-                                    &observer.actor_id,
-                                    known,
-                                )?;
+                                crate::combat_encounters::restore_seen_action(core, &observer.actor_id, known)?;
                                 continue;
                             }
                         };

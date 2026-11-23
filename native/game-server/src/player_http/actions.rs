@@ -658,31 +658,13 @@ pub(crate) struct ContactMenu<'a> {
 
 impl ContactMenu<'_> {
     fn preferred(&self) -> Option<&ContactAction<'_>> {
-        self.actions
-            .iter()
-            .filter(|action| {
-                action.priority.is_some()
-                    && (self.encounter.is_some()
-                        || matches!(
-                            &action.intent,
-                            ContactIntent::Compose {
-                                preference: None,
-                                ..
-                            }
-                        ))
-            })
-            .enumerate()
-            .max_by_key(|(index, action)| {
-                (action.priority, action.enabled, std::cmp::Reverse(*index))
-            })
+        self.actions.iter().filter(|action| action.priority.is_some()
+            && (self.encounter.is_some() || matches!(&action.intent, ContactIntent::Compose { preference: None, .. }))).enumerate()
+            .max_by_key(|(index, action)| (action.priority, action.enabled, std::cmp::Reverse(*index)))
             .map(|(_, action)| action)
     }
 
-    fn reference(
-        &self,
-        action: &ContactAction<'_>,
-        references: &PlayerReferences<'_>,
-    ) -> Result<String, RuntimeError> {
+    fn reference(&self, action: &ContactAction<'_>, references: &PlayerReferences<'_>) -> Result<String, RuntimeError> {
         struct BindingFacts<'a>(&'a [(JsText, JsText)]);
         impl Serialize for BindingFacts<'_> {
             fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -692,45 +674,20 @@ impl ContactMenu<'_> {
                 serializer.collect_seq(facts)
             }
         }
-        references
-            .primary_action(&(
-                self.encounter
-                    .as_ref()
-                    .map(|seen| (&seen.binding, seen.family)),
-                action.id.as_str(),
-                self.selected,
-                &action.label,
-                &action.description,
-                action.enabled,
-                action.reason,
-                &action.intent,
-                BindingFacts(&action.facts),
-            ))
-            .map_err(RuntimeError::application_refused)
+        references.primary_action(&(
+            self.encounter.as_ref().map(|seen| (&seen.binding, seen.family)),
+            action.id.as_str(), self.selected, &action.label, &action.description,
+            action.enabled, action.reason, &action.intent, BindingFacts(&action.facts),
+        )).map_err(RuntimeError::application_refused)
     }
 
-    pub(crate) fn encode(
-        &self,
-        references: &PlayerReferences<'_>,
-        budget: &ByteBudget,
-    ) -> Result<Bytes, RuntimeError> {
+    pub(crate) fn encode(&self, references: &PlayerReferences<'_>, budget: &ByteBudget) -> Result<Bytes, RuntimeError> {
         let action = self.preferred();
-        let reference = action
-            .map(|action| self.reference(action, references))
-            .transpose()?;
-        resource_menu_selection(
-            self.revision,
-            &self.actions,
-            &self.categories,
-            action
-                .zip(reference.as_deref())
-                .map(|(action, reference)| PrimaryActionSelection {
-                    target_id: self.selected,
-                    action_id: action.id.as_str(),
-                    reference,
-                }),
-            budget,
-        )
+        let reference = action.map(|action| self.reference(action, references)).transpose()?;
+        resource_menu_selection(self.revision, &self.actions, &self.categories,
+            action.zip(reference.as_deref()).map(|(action, reference)| PrimaryActionSelection {
+                target_id: self.selected, action_id: action.id.as_str(), reference,
+            }), budget)
     }
 
     pub(crate) fn primary_command(
@@ -738,15 +695,9 @@ impl ContactMenu<'_> {
         reference: &PrimaryActionSelection<String>,
         scoped: &PlayerReferences<'_>,
     ) -> Result<Option<&ContactCommand<'_>>, RuntimeError> {
-        let Some(choice) = self
-            .preferred()
-            .filter(|row| row.enabled && row.id == reference.action_id)
-        else {
-            return Ok(None);
-        };
-        if self.reference(choice, scoped)? != reference.reference {
-            return Ok(None);
-        }
+        let Some(choice) = self.preferred().filter(|row| row.enabled && row.id == reference.action_id)
+        else { return Ok(None); };
+        if self.reference(choice, scoped)? != reference.reference { return Ok(None); }
         Ok(match &choice.intent {
             ContactIntent::Command { command } => Some(command),
             ContactIntent::Compose { preference, .. } => preference.as_ref(),
@@ -759,26 +710,12 @@ impl ContactMenu<'_> {
     }
 
     pub(crate) fn control_allowed(&self, operation: EncounterOperation) -> bool {
-        self.actions.iter().any(|action| {
-            action.enabled
-                && match &action.intent {
-                    ContactIntent::Compose {
-                        preference:
-                            Some(ContactCommand::Preference {
-                                encounter_preference,
-                                ..
-                            }),
-                        ..
-                    }
-                    | ContactIntent::Command {
-                        command:
-                            ContactCommand::Preference {
-                                encounter_preference,
-                                ..
-                            },
-                    } => encounter_preference.operation == operation,
-                    _ => false,
-                }
+        self.actions.iter().any(|action| action.enabled && match &action.intent {
+            ContactIntent::Compose { preference: Some(ContactCommand::Preference { encounter_preference, .. }), .. }
+            | ContactIntent::Command { command: ContactCommand::Preference { encounter_preference, .. } } => {
+                encounter_preference.operation == operation
+            }
+            _ => false,
         })
     }
 }
@@ -789,16 +726,10 @@ fn current_control<'a>(
     selected: &'a str,
     operation: EncounterOperation,
 ) -> Result<ContactCommand<'a>, RuntimeError> {
-    let reference = references
-        .encounter_control(operation, binding)
-        .map_err(RuntimeError::application_refused)?;
+    let reference = references.encounter_control(operation, binding).map_err(RuntimeError::application_refused)?;
     Ok(ContactCommand::Preference {
-        kind: "encounter-preference",
-        target_id: selected,
-        encounter_preference: EncounterRequest {
-            operation,
-            reference,
-        },
+        kind: "encounter-preference", target_id: selected,
+        encounter_preference: EncounterRequest { operation, reference },
     })
 }
 
@@ -820,33 +751,20 @@ pub(crate) fn contact_choices<'a>(
 
     let words = &*CONVERSATION;
     let encounter = strike_menu.as_ref().and_then(|menu| menu.encounter());
-    let family = encounter
-        .as_ref()
-        .map_or(EncounterFamily::Ordinary, |seen| seen.family);
+    let family = encounter.as_ref().map_or(EncounterFamily::Ordinary, |seen| seen.family);
     use openlegend_simulation::worlds::base_context_actions::{Choice, rank};
     let mut workspace =
         budget.reserve(2048 + 8 * conversant.map_or(0, JsText::storage_bytes) + selected.len())?;
     let mut actions = Vec::new();
     let mut categories = Vec::new();
     if let Some(name) = conversant {
-        let custom = encounter
-            .as_ref()
-            .filter(|read| read.family != EncounterFamily::Ordinary);
+        let custom = encounter.as_ref().filter(|read| read.family != EncounterFamily::Ordinary);
         if let Some(custom) = custom {
             let bytes = 4 * (custom.speak.label.len() + custom.speak.description.len());
             workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
         }
-        let preference = encounter
-            .as_ref()
-            .filter(|_| controlling)
-            .map(|seen| {
-                current_control(
-                    references,
-                    &seen.binding,
-                    selected,
-                    EncounterOperation::Speak,
-                )
-            })
+        let preference = encounter.as_ref().filter(|_| controlling)
+            .map(|seen| current_control(references, &seen.binding, selected, EncounterOperation::Speak))
             .transpose()?;
         actions.push(ContactAction {
             id: format!("talk-{selected}"),
@@ -897,14 +815,10 @@ pub(crate) fn contact_choices<'a>(
                     keywords: &[],
                     target_id: selected,
                     enabled: unavailable.is_none(),
-                    reason: unavailable,
-                    facts: Vec::new(),
+                    reason: unavailable, facts: Vec::new(),
                     priority: rank(family, Choice::Release),
                     intent: ContactIntent::Command {
-                        command: ContactCommand::Release {
-                            kind: "release-shot",
-                            aim_id: held.action_id,
-                        },
+                        command: ContactCommand::Release { kind: "release-shot", aim_id: held.action_id },
                     },
                 });
             }
@@ -914,9 +828,7 @@ pub(crate) fn contact_choices<'a>(
                 } else {
                     reason
                 };
-                let bytes = 3 * size_of::<ContactAction<'_>>()
-                    + selected.len()
-                    + 128
+                let bytes = 3 * size_of::<ContactAction<'_>>() + selected.len() + 128
                     + 4 * (seen.stop_words.label.len() + seen.stop_words.description.len());
                 workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
                 actions.push(ContactAction {
@@ -924,20 +836,9 @@ pub(crate) fn contact_choices<'a>(
                     label: Cow::Owned(JsText::from(seen.stop_words.label)),
                     category: "Combat",
                     description: Cow::Owned(JsText::from(seen.stop_words.description)),
-                    keywords: &[],
-                    target_id: selected,
-                    enabled: stop_reason.is_none(),
-                    reason: stop_reason,
-                    facts: Vec::new(),
-                    priority: None,
-                    intent: ContactIntent::Command {
-                        command: current_control(
-                            references,
-                            &seen.binding,
-                            selected,
-                            EncounterOperation::Stop,
-                        )?,
-                    },
+                    keywords: &[], target_id: selected, enabled: stop_reason.is_none(),
+                    reason: stop_reason, facts: Vec::new(), priority: None,
+                    intent: ContactIntent::Command { command: current_control(references, &seen.binding, selected, EncounterOperation::Stop)? },
                 });
             }
         }
@@ -1008,22 +909,15 @@ pub(crate) fn contact_choices<'a>(
                 enabled: attack_reason.is_none(),
                 reason: attack_reason,
                 facts,
-                priority: rank(
-                    family,
-                    Choice::Strike {
-                        exact: encounter
-                            .as_ref()
-                            .and_then(|seen| seen.own)
-                            .is_some_and(|own| {
-                                own.kind == OffensiveKind::Strike
-                                    && own.definition_id.as_deref() == Some(definition.id())
-                                    && own.weapon_item_id.as_deref() == definition.weapon()
-                            }),
-                        equipped: definition.weapon().is_some()
-                            && definition.equipment_revision().is_none(),
-                        carried: definition.equipment_revision().is_some(),
-                    },
-                ),
+                priority: rank(family, Choice::Strike {
+                    exact: encounter.as_ref().and_then(|seen| seen.own).is_some_and(|own| {
+                        own.kind == OffensiveKind::Strike
+                            && own.definition_id.as_deref() == Some(definition.id())
+                            && own.weapon_item_id.as_deref() == definition.weapon()
+                    }),
+                    equipped: definition.weapon().is_some() && definition.equipment_revision().is_none(),
+                    carried: definition.equipment_revision().is_some(),
+                }),
                 intent: ContactIntent::Command {
                     command: ContactCommand::Strike {
                         kind: "strike",
@@ -1061,26 +955,19 @@ pub(crate) fn contact_choices<'a>(
                 enabled: reason.is_none(),
                 reason,
                 facts: Vec::new(),
-                priority: rank(
-                    family,
-                    Choice::Ranged {
-                        kind,
-                        exact: encounter
-                            .as_ref()
-                            .and_then(|seen| seen.own)
-                            .is_some_and(|own| {
-                                let expected = match choice.mode {
-                                    RuntimeRangedMode::Aim => OffensiveKind::Aim,
-                                    RuntimeRangedMode::ShootOnce => OffensiveKind::ShootOnce,
-                                    RuntimeRangedMode::Hunt => OffensiveKind::Hunt,
-                                };
-                                own.kind == expected
-                                    && own.weapon_item_id.as_deref() == Some(choice.weapon)
-                                    && own.ammo_item_id.as_deref() == Some(choice.ammunition)
-                            }),
-                        carried: choice.auto_equip,
-                    },
-                ),
+                priority: rank(family, Choice::Ranged {
+                    kind,
+                    exact: encounter.as_ref().and_then(|seen| seen.own).is_some_and(|own| {
+                        let expected = match choice.mode {
+                            RuntimeRangedMode::Aim => OffensiveKind::Aim,
+                            RuntimeRangedMode::ShootOnce => OffensiveKind::ShootOnce,
+                            RuntimeRangedMode::Hunt => OffensiveKind::Hunt,
+                        };
+                        own.kind == expected && own.weapon_item_id.as_deref() == Some(choice.weapon)
+                            && own.ammo_item_id.as_deref() == Some(choice.ammunition)
+                    }),
+                    carried: choice.auto_equip,
+                }),
                 intent: ContactIntent::Command {
                     command: ContactCommand::Ranged {
                         mode: choice.mode,
@@ -1094,11 +981,8 @@ pub(crate) fn contact_choices<'a>(
         }
         let guard_reason = reason.or(menu.guard_reason());
         for (item, name, verb) in menu.guard_shields() {
-            let bytes = 2 * size_of::<ContactAction<'_>>()
-                + 4 * (item.len() + selected.len() + verb.len())
-                + 4 * name.storage_bytes()
-                + 4 * menu.name.storage_bytes()
-                + 128;
+            let bytes = 2 * size_of::<ContactAction<'_>>() + 4 * (item.len() + selected.len() + verb.len())
+                + 4 * name.storage_bytes() + 4 * menu.name.storage_bytes() + 128;
             workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
             actions.push(ContactAction {
                 id: format!("guard-{selected}-{item}"),
@@ -1112,11 +996,7 @@ pub(crate) fn contact_choices<'a>(
                 facts: Vec::new(),
                 priority: None,
                 intent: ContactIntent::Command {
-                    command: ContactCommand::Guard {
-                        kind: "guard",
-                        target_id: selected,
-                        item_id: item,
-                    },
+                    command: ContactCommand::Guard { kind: "guard", target_id: selected, item_id: item },
                 },
             });
         }
@@ -1125,41 +1005,16 @@ pub(crate) fn contact_choices<'a>(
         }
     }
     if family == EncounterFamily::Attack && actions.iter().all(|action| action.priority.is_none()) {
-        let (label, description) =
-            openlegend_simulation::worlds::base_context_actions::unavailable();
-        workspace.resize(
-            workspace
-                .bytes()
-                .checked_add(
-                    4 * (label.len() + description.len())
-                        + selected.len()
-                        + 3 * size_of::<ContactAction<'_>>(),
-                )
-                .ok_or(CapacityError)?,
-        )?;
+        let (label, description) = openlegend_simulation::worlds::base_context_actions::unavailable();
+        workspace.resize(workspace.bytes().checked_add(4 * (label.len() + description.len()) + selected.len() + 3 * size_of::<ContactAction<'_>>())
+            .ok_or(CapacityError)?)?;
         actions.push(ContactAction {
-            id: format!("unavailable-attack-{selected}"),
-            label: Cow::Owned(JsText::from(label)),
-            category: "Combat",
-            description: Cow::Owned(JsText::from(description)),
-            keywords: &[],
-            target_id: selected,
-            enabled: false,
-            reason: Some(description),
-            facts: Vec::new(),
-            priority: Some(0),
-            intent: ContactIntent::Unavailable,
+            id: format!("unavailable-attack-{selected}"), label: Cow::Owned(JsText::from(label)),
+            category: "Combat", description: Cow::Owned(JsText::from(description)),
+            keywords: &[], target_id: selected, enabled: false, reason: Some(description), facts: Vec::new(),
+            priority: Some(0), intent: ContactIntent::Unavailable,
         });
-        if !categories.contains(&"Combat") {
-            categories.push("Combat");
-        }
+        if !categories.contains(&"Combat") { categories.push("Combat"); }
     }
-    Ok(ContactMenu {
-        revision,
-        selected,
-        actions,
-        categories,
-        encounter,
-        _storage: workspace,
-    })
+    Ok(ContactMenu { revision, selected, actions, categories, encounter, _storage: workspace })
 }

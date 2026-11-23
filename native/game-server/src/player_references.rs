@@ -421,11 +421,7 @@ impl PlayerReferences<'_> {
         operation: openlegend_simulation::combat_encounters::EncounterOperation,
         binding: &openlegend_simulation::capture::EncounterPreference<&str>,
     ) -> Result<String, serde_json::Error> {
-        sign(
-            &self.issuer.body,
-            "",
-            &("encounter-control", &self.scope, operation, binding),
-        )
+        sign(&self.issuer.body, "", &("encounter-control", &self.scope, operation, binding))
     }
 
     pub fn context_action(

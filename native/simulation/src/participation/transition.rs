@@ -366,8 +366,7 @@ impl ParticipationCursor {
             physical.set_local_pose(&self.request.actor_id, None, ready_at)?;
         }
         if phase == Some("inactive") {
-            core.physical()
-                .clear_personal_encounters(&self.request.actor_id)?;
+            core.physical().clear_personal_encounters(&self.request.actor_id)?;
         }
         let before = core.state.physical.entities.get(&self.request.actor_id)
             .and_then(|entity| entity.actor.as_ref()).ok_or(ExecutionError::MissingActor)?
@@ -761,13 +760,8 @@ impl ParticipationCursor {
                     // Eligibility and any required return-standing check have
                     // succeeded. Refusals and no-op returns never reach this.
                     self.materialize_edit(core)?;
-                    if matches!(
-                        self.request.operation,
-                        ParticipationOperation::BeginExit { .. }
-                            | ParticipationOperation::SettleDeparture { .. }
-                    ) {
-                        core.physical()
-                            .clear_personal_encounters(&self.request.actor_id)?;
+                    if matches!(self.request.operation, ParticipationOperation::BeginExit { .. } | ParticipationOperation::SettleDeparture { .. }) {
+                        core.physical().clear_personal_encounters(&self.request.actor_id)?;
                     }
                     if let ParticipationOperation::SettleDeparture { assignment, .. } =
                         &self.request.operation

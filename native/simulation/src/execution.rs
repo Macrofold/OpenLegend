@@ -34,6 +34,8 @@ mod attributes;
 mod attack_notice;
 mod attack_timing;
 mod combat_observation;
+mod personal_encounters;
+mod body;
 mod conditions;
 mod contact;
 use contact::ContactPhase;
@@ -2411,17 +2413,9 @@ impl PhysicalJournal {
                     )?;
                 }
                 Undo::PersonalEncounters { entity, before } => {
-                    state
-                        .entities
-                        .resolve_mut(entity)
-                        .and_then(|entity| entity.actor.as_mut())
-                        .ok_or(ExecutionError::Invariant)?
-                        .encounters = before;
-                    state.entities.settle_operational_memory(
-                        entity,
-                        &mut self.reservation,
-                        true,
-                    )?;
+                    state.entities.resolve_mut(entity).and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?.encounters = before;
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
                 }
                 Undo::ContactPhase {
                     entity,

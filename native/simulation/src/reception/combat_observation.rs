@@ -1,9 +1,7 @@
 //! A private combat cue consumes the observer's completed visual reception.
 //! The action keeps only the receipt that prevents repeating the same evidence.
 use super::{EventScalar, ObserverLife};
-use crate::combat_encounters::{
-    ObservedAttackKind, SeenAttack, current_pair, observed_preparation,
-};
+use crate::combat_encounters::{ObservedAttackKind, SeenAttack, current_pair, observed_preparation};
 use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope, WorldEvent};
 use crate::execution::{CoreMutation, ExecutionError, StagedOccurrence};
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
@@ -27,9 +25,7 @@ pub struct AttackObservationReceipt {
 
 impl HeapBytes for AttackObservationReceipt {
     fn heap_bytes(&self) -> Option<usize> {
-        self.episode
-            .heap_bytes()?
-            .checked_add(self.occurrence_id.capacity())
+        self.episode.heap_bytes()?.checked_add(self.occurrence_id.capacity())
     }
 }
 
@@ -57,18 +53,11 @@ impl PreparedAttackCue {
         budget: &ByteBudget,
     ) -> Result<(StagedOccurrence, ByteReservation), ExecutionError> {
         let staged = core.stage_event(self.event)?;
-        self.receipt_storage.resize(
-            self.receipt_storage
-                .bytes()
-                .checked_add(staged.id.len())
-                .ok_or(ExecutionError::Capacity)?,
-        )?;
-        self.receipts
-            .get_mut(&self.observer)
-            .ok_or(ExecutionError::Invariant)?
+        self.receipt_storage.resize(self.receipt_storage.bytes().checked_add(staged.id.len())
+            .ok_or(ExecutionError::Capacity)?)?;
+        self.receipts.get_mut(&self.observer).ok_or(ExecutionError::Invariant)?
             .occurrence_id = staged.id.clone();
-        let receipts =
-            FundedAttackObservers::from_storage(self.receipts, self.receipt_storage, budget)?;
+        let receipts = FundedAttackObservers::from_storage(self.receipts, self.receipt_storage, budget)?;
         core.physical()
             .replace_attack_observers(self.source, &self.action, receipts)?;
         Ok((staged, self.storage))
@@ -186,39 +175,21 @@ pub(crate) fn next_attack_cue(
             })
         {
             if directed {
-                let own = state
-                    .entities
-                    .get(&observer.actor_id)
-                    .ok_or(ExecutionError::MissingActor)?;
+                let own = state.entities.get(&observer.actor_id).ok_or(ExecutionError::MissingActor)?;
                 let pair = current_pair(core.state, own, source);
                 if own.has_memory()
-                    && core
-                        .state
-                        .experience
-                        .actor(&observer.actor_id)
+                    && core.state.experience.actor(&observer.actor_id)
                         .is_some_and(|owner| !owner.privacy.revoked(&prior.occurrence_id))
                     && pair.is_none_or(|pair| {
-                        !pair.active.values().any(|old| {
-                            old.kind == ObservedAttackKind::Action && old.id == action.id
-                        })
-                    })
-                {
-                    let bytes = heap_sum([
-                        source_id.len(),
-                        action.id.len(),
-                        episode.map_or(0, String::len),
-                        prior.occurrence_id.len(),
-                    ])
-                    .ok_or(ExecutionError::Capacity)?;
+                    !pair.active.values().any(|old| old.kind == ObservedAttackKind::Action && old.id == action.id)
+                }) {
+                    let bytes = heap_sum([source_id.len(), action.id.len(), episode.map_or(0, String::len), prior.occurrence_id.len()])
+                        .ok_or(ExecutionError::Capacity)?;
                     let custody = budget.reserve(bytes)?;
                     return Ok(Some(AttackAcquisition::Known(SeenAttack {
-                        source: source_id.clone(),
-                        life: source.physical_life().ok_or(ExecutionError::Invariant)?,
-                        action: action.id.clone(),
-                        episode: episode.cloned(),
-                        occurrence: prior.occurrence_id.clone(),
-                        had_pair: pair.is_some(),
-                        _custody: custody,
+                        source: source_id.clone(), life: source.physical_life().ok_or(ExecutionError::Invariant)?,
+                        action: action.id.clone(), episode: episode.cloned(), occurrence: prior.occurrence_id.clone(),
+                        had_pair: pair.is_some(), _custody: custody,
                     })));
                 }
             }
@@ -255,11 +226,7 @@ pub(crate) fn next_attack_cue(
             },
         );
         let source_life = source.physical_life().ok_or(ExecutionError::Invariant)?;
-        let wording = if action.is_natural_contact() {
-            &policy.preparing_strike
-        } else {
-            &policy.aiming
-        };
+        let wording = if action.is_natural_contact() { &policy.preparing_strike } else { &policy.aiming };
         let event_storage = budget.reserve(
             1024 + 3 * (source_id.len() + target_id.len())
                 + 2 * action.id.len()
@@ -269,7 +236,11 @@ pub(crate) fn next_attack_cue(
         let action_id = action.id.clone();
         let event = EventEmissionIntent {
             event_type: ATTACK_CUE_EVENT.to_owned(),
-            text: EmissionText::Narration(preparation_narration(source_id, target_id, wording)),
+            text: EmissionText::Narration(preparation_narration(
+                source_id,
+                target_id,
+                wording,
+            )),
             audience: AudienceSelection::Explicit(vec![observer.actor_id.clone()]),
             origin: None,
             source_id: Some(source_id.clone()),

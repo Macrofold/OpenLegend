@@ -259,15 +259,8 @@ impl Director {
                 let budget = game.host.budget();
                 Ok(
                     authority.current(&scope, Capability::Play, false, |fields, controls| {
-                        with_contact_choices(
-                            session,
-                            fields,
-                            &refs,
-                            &selected,
-                            &game,
-                            controls,
-                            |choices, references| choices.encode(references, budget),
-                        )
+                        with_contact_choices(session, fields, &refs, &selected, &game, controls,
+                            |choices, references| choices.encode(references, budget))
                     }),
                 )
             })
@@ -989,6 +982,7 @@ async fn wait_admission(
     }
 }
 
+
 // Both the HTTP menu and preferred-command guard use the same current
 // conversation and combat choices. Only the caller's independently funded
 // result can leave the accepted promotion lane.
@@ -999,10 +993,8 @@ pub(crate) fn with_contact_choices<T>(
     selected: &str,
     game: &CurrentServer,
     controls: bool,
-    consume: impl FnOnce(
-        crate::player_http::actions::ContactMenu<'_>,
-        &crate::player_references::PlayerReferences<'_>,
-    ) -> Result<T, openlegend_simulation::runtime::RuntimeError>,
+    consume: impl FnOnce(crate::player_http::actions::ContactMenu<'_>, &crate::player_references::PlayerReferences<'_>)
+        -> Result<T, openlegend_simulation::runtime::RuntimeError>,
 ) -> Result<Option<T>, openlegend_simulation::runtime::RuntimeError> {
     use openlegend_simulation::runtime::RuntimeError;
     let budget = game.host.budget();
@@ -1012,36 +1004,19 @@ pub(crate) fn with_contact_choices<T>(
     } else {
         None
     };
-    let references = refs
-        .scoped(scope)
-        .map_err(RuntimeError::application_refused)?;
+    let references = refs.scoped(scope).map_err(RuntimeError::application_refused)?;
     let mut consume = Some(consume);
     let mut alias_error = None;
     let choices = session.with_player_strike_menu(
-        &scope.account_id,
-        &scope.actor_id,
-        |body| match references.contact(
-            body.source_id,
-            body.physical_life.unwrap_or(0),
-            body.lease_id,
-        ) {
+        &scope.account_id, &scope.actor_id,
+        |body| match references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id) {
             Ok(alias) => alias == selected,
-            Err(problem) => {
-                alias_error = Some(problem);
-                false
-            }
+            Err(problem) => { alias_error = Some(problem); false }
         },
         |menu| {
             let choices = crate::player_http::actions::contact_choices(
-                menu.sequence(),
-                selected,
-                talk.as_ref().map(|target| &target.name),
-                Some(menu),
-                |ray| game.spatial.clear_interaction_line(ray),
-                controls,
-                clock.manually_paused,
-                &references,
-                budget,
+                menu.sequence(), selected, talk.as_ref().map(|target| &target.name), Some(menu),
+                |ray| game.spatial.clear_interaction_line(ray), controls, clock.manually_paused, &references, budget,
             )?;
             consume.take().expect("one chosen context")(choices, &references)
         },
@@ -1049,22 +1024,11 @@ pub(crate) fn with_contact_choices<T>(
     if let Some(error) = alias_error {
         return Err(RuntimeError::application_refused(error));
     }
-    if choices.is_some() {
-        return Ok(choices);
-    }
-    let Some(talk) = talk else {
-        return Ok(None);
-    };
+    if choices.is_some() { return Ok(choices); }
+    let Some(talk) = talk else { return Ok(None); };
     let choices = crate::player_http::actions::contact_choices(
-        session.accepted_progress()?.sequence,
-        selected,
-        Some(&talk.name),
-        None,
-        |ray| game.spatial.clear_interaction_line(ray),
-        controls,
-        clock.manually_paused,
-        &references,
-        budget,
+        session.accepted_progress()?.sequence, selected, Some(&talk.name), None,
+        |ray| game.spatial.clear_interaction_line(ray), controls, clock.manually_paused, &references, budget,
     )?;
     consume.take().expect("one chosen context")(choices, &references).map(Some)
 }
