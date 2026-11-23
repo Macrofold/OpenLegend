@@ -1,7 +1,9 @@
 //! Trusted operator settings select provider credentials and spending routes.
 //! The authored world provides decision wording and allowed effects separately.
 
-use super::decide::{ConfiguredDeployment, MacrofoldCatalog, Model, Models};
+use super::decide::{
+    ConfiguredDeployment, MacrofoldCatalog, Model, Models, escalation::ConfiguredEscalation,
+};
 use crate::narrator::{NarratorMacrofold, NarratorModel};
 use crate::provider_transport::{
     ProviderDestination, ProviderRoute,
@@ -407,8 +409,8 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
             output_tokens: 16_384,
             effort: None,
         };
-        let (fast, complex, generation) = match language.filter(|_| !jev_only) {
-            Some(token) => direct_language(&token)?,
+        let (fast, complex, generation) = match language.as_deref().filter(|_| !jev_only) {
+            Some(token) => direct_language(token)?,
             None => (None, None, 0),
         };
         (judgment, fast, complex, generation)
@@ -417,6 +419,22 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
     let (fast_deployment, complex_deployment) = targets.as_ref().map_or((None, None), |targets| {
         targets.models(&mut judgment, fast.as_ref(), complex.as_ref())
     });
+    let provider = if judgment.macrofold.is_some() {
+        "macrofold"
+    } else {
+        "jev"
+    };
+    let origin = format!("{provider}/{}", judgment.requested);
+    let escalation = ConfiguredEscalation::configured(
+        optional("DECISION_ESCALATION_JSON")?.as_deref(),
+        &origin,
+        language.as_deref(),
+        jev_only,
+        optional("OPENAI_MODEL_PRICES_JSON")?.as_deref(),
+        optional("OPENAI_DECISION_ENDPOINT")?.as_deref(),
+        micro_usd(number("LLM_CALL_RESERVE_USD", 0.08, 0.000001, 10.0)?.max(0.25))?,
+        ceiling_micro_usd.saturating_sub(interactive),
+    )?;
     Ok((
         limit,
         Some(ConfiguredModels {
@@ -428,6 +446,7 @@ pub(super) fn from_env(budget_usd: f64) -> Result<(usize, Option<ConfiguredModel
                 complex_deployment,
                 ceiling_micro_usd,
                 embedding: None,
+                escalation,
             },
             interactive,
             jev_only,

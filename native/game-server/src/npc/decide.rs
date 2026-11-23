@@ -28,6 +28,7 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::{sync::watch, time::Instant};
 
+pub(super) mod escalation;
 pub(super) mod prepare;
 mod query;
 
@@ -39,6 +40,7 @@ pub(super) struct Models {
     pub(super) complex_deployment: Option<Model>,
     pub(super) ceiling_micro_usd: u64,
     pub(super) embedding: Option<Arc<super::semantic_index::EmbeddingModel>>,
+    pub(super) escalation: Option<escalation::ConfiguredEscalation>,
 }
 
 impl Models {
@@ -387,7 +389,7 @@ pub(super) async fn run(
                 )
                 .await;
                 match accepted {
-                    Ok(Some(rated)) => {
+                    Ok(Some((rated, rated_context))) => {
                         let mut best = None;
                         let threshold = if choose {
                             game.cognition.choice_threshold
@@ -408,6 +410,26 @@ pub(super) async fn run(
                         if choose && let Some((offer, _)) = best {
                             let picked = (!offer.no_intervention).then_some(offer);
                             return finish_native(game, saves, work, prepared.ticket, picked).await;
+                        }
+                        if choose
+                            && work.automatic.is_some()
+                            && work.permit.is_none()
+                            && work.discovery().is_none()
+                            && let Some(route) = &models.escalation
+                            && let Some(reason) = escalation::reason(&prepared, &rated)
+                            && route.permits(reason)
+                        {
+                            return escalation::run(
+                                game,
+                                saves,
+                                dispatch,
+                                route,
+                                work,
+                                prepared,
+                                rated_context,
+                            )
+                            .await
+                            .map_err(|error| error.at("decision-escalation"));
                         }
                     }
                     Ok(None) => {}
@@ -920,7 +942,13 @@ async fn action_attention(
     decision: &Model,
     ceiling: u64,
     choose: bool,
-) -> Result<Option<provider::JudgmentAnswer>, CallFailure> {
+) -> Result<
+    Option<(
+        provider::JudgmentAnswer,
+        Arc<crate::decision_render::BoundAttention>,
+    )>,
+    CallFailure,
+> {
     let budget = game.host.budget();
     let id = format!("{}:attempt:0:action-attention", work.job.job.id);
     let offers = prepared
@@ -981,7 +1009,7 @@ async fn action_attention(
             work.cancellation.clone(),
             decode_provider_bound(decision.billing(), true, budget.clone(), move |output| {
                 provider::decode_judgment(output, &attention.questions, &parser)
-                    .map(Some)
+                    .map(|rated| Some((rated, attention)))
                     .map_err(|_| CallFailure::Invalid)
             }),
         )

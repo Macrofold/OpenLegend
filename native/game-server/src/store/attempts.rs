@@ -14,6 +14,7 @@ use std::sync::Arc;
 enum AttemptClaim {
     Semantic(Arc<SemanticClaim>),
     Reflection(Arc<ReflectionScope>, ReflectionCue),
+    EscalatedChoice(String),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -201,6 +202,17 @@ impl Store {
             .await
     }
 
+    /// Fund the one direct fallback only for the exact unresolved automatic
+    /// choice and after every earlier linked execution is known terminal.
+    pub(crate) async fn reserve_escalated_choice(
+        &self,
+        request: AttemptRequest,
+        fingerprint: String,
+    ) -> Result<AttemptAdmission, CommitError> {
+        self.reserve_for_model(request, Some(AttemptClaim::EscalatedChoice(fingerprint)))
+            .await
+    }
+
     async fn reserve_for_model(
         &self,
         request: AttemptRequest,
@@ -229,6 +241,18 @@ impl Store {
                     claim.scope.actor == request.actor && claim.take(tx, &request.id).await?,
                 Some(AttemptClaim::Reflection(scope, cue)) =>
                     scope.actor == request.actor && scope.attempt == request.id && scope.take_cue(tx, &cue).await?,
+                Some(AttemptClaim::EscalatedChoice(fingerprint)) => {
+                    let actor = json_record(&request.actor).map_err(|_| StoreError::InvalidRecord)?;
+                    tx.query_one(
+                        "SELECT EXISTS(SELECT 1 FROM jobs WHERE id=$1 AND fingerprint=$2 \
+                          AND selection->>'kind'='thought' AND selection->>'npcId'=$3 \
+                          AND selection->>'status' IN ('queued','judging','generating')) \
+                         AND NOT EXISTS(SELECT 1 FROM cognition_attempt_links l JOIN attempts a ON a.id=l.attempt_id \
+                          WHERE l.root_job_id=$1 AND (l.level=4 OR l.stage='decision-escalation' \
+                          OR COALESCE((a.receipt::json->>'completionUncertain')::bool,true)))",
+                        &[&request.job, &fingerprint, &actor],
+                    ).await?.try_get(0)?
+                }
                 None => true,
             };
             if !claimed {
