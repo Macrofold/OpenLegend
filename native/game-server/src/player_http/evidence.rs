@@ -3,6 +3,7 @@
 
 use super::*;
 use crate::{
+    player_references::PRIVATE_CURSOR_BYTES,
     store::recall::browse::{EVIDENCE_PAGE, MemoryPosition},
     world::PlayerDisclosure,
 };
@@ -21,6 +22,13 @@ pub(super) struct Arguments {
     actor_id: String,
     cursor: Option<String>,
     limit: Option<usize>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct Cursor<Fence> {
+    fence: Fence,
+    position: MemoryPosition,
 }
 
 #[derive(Serialize)]
@@ -110,7 +118,7 @@ impl Arguments {
             && self
                 .cursor
                 .as_ref()
-                .is_none_or(|cursor| !cursor.is_empty() && cursor.encode_utf16().count() <= 2048)
+                .is_none_or(|cursor| !cursor.is_empty() && cursor.len() <= PRIVATE_CURSOR_BYTES)
     }
 }
 
@@ -140,7 +148,7 @@ pub(super) async fn read(
     let store = state.game.store.clone();
     let capture_custody = custody.clone();
     let capture_stop = stop.clone();
-    let (selected, cut, (sequence, life, pending)) = world
+    let (selected, cut, (sequence, life, revision, pending)) = world
         .capture_recollections_with(
             state.authority.clone(),
             scope.clone(),
@@ -152,21 +160,25 @@ pub(super) async fn read(
                 }
                 session
                     .with_memory_page_read(&actor, |read| {
-                        Ok((read.sequence, read.life, store.prepare_evidence_page(read)?))
+                        Ok((
+                            read.sequence,
+                            read.life,
+                            read.memory_revision,
+                            store.prepare_evidence_page(read)?,
+                        ))
                     })?
                     .ok_or_else(|| WorldError::Access(AccessError::Forbidden))?
             },
         )
         .await?;
     let scope_key = scope.scope.key().map_err(|_| StoreError::InvalidRecord)?;
-    // Bind continuation to the complete accepted cut. Every page rechecks its
-    // current owner and grant before visiting PostgreSQL and disclosing.
+    // Keep continuation across unrelated world updates. The selected
+    // actor's accepted memory revision replaces a whole-world cut number.
     let fence = json_record(&(
         &scope_key,
         &cut.generation,
         &cut.actor,
-        pending.accepted_cut,
-        cut.revision,
+        revision,
         cut.privacy_revision,
         life,
     ))
@@ -175,7 +187,7 @@ pub(super) async fn read(
     let before = request
         .cursor
         .as_deref()
-        .map(|cursor| parse_cursor(cursor, &fence))
+        .map(|cursor| parse_cursor(&state.references, cursor, &fence))
         .transpose()?;
     let mut rows = state
         .game
@@ -196,7 +208,7 @@ pub(super) async fn read(
         .disclose_history(&state.authority, &selected, |session, budget| {
             let _custody = custody;
             let timeline = stop.borrow();
-            if *timeline || !session.memory_page_subject_current(&cut.actor, life)? {
+            if *timeline || !session.memory_page_subject_current(&cut.actor, life, revision)? {
                 return Err(WorldError::ProjectionChanged);
             }
             selected.sources().with_personal_sources(|sources| {
@@ -217,10 +229,13 @@ pub(super) async fn read(
                     return Err(StoreError::StaleCut.into());
                 }
                 let next_cursor = next
-                    .as_ref()
-                    .map(|position| json_record(position).map(|json| format!("{fence}.{json}")))
-                    .transpose()
-                    .map_err(|_| StoreError::InvalidRecord)?;
+                    .map(|position| {
+                        state.references.seal_evidence_cursor(&Cursor {
+                            fence: fence.as_str(),
+                            position,
+                        }).ok_or(StoreError::Capacity)
+                    })
+                    .transpose()?;
                 let result = ToolResult {
                     status: "ok",
                     data: Page {
@@ -264,16 +279,17 @@ fn record<'a>(
     })
 }
 
-fn parse_cursor(cursor: &str, fence: &str) -> Result<MemoryPosition, WorldError> {
-    let (expected, body) = cursor
-        .split_once('.')
+fn parse_cursor(
+    references: &ReferenceIssuer,
+    cursor: &str,
+    fence: &str,
+) -> Result<MemoryPosition, WorldError> {
+    let cursor: Cursor<String> = references
+        .open_evidence_cursor(cursor)
         .ok_or(WorldError::ProjectionChanged)?;
-    if expected != fence {
-        return Err(WorldError::ProjectionChanged);
-    }
-    let position: MemoryPosition =
-        serde_json::from_str(body).map_err(|_| WorldError::ProjectionChanged)?;
-    if !position.at.is_finite()
+    let position = cursor.position;
+    if cursor.fence != fence
+        || !position.at.is_finite()
         || !is_safe_record_id(&position.id)
         || position.kind != PersonalSourceKind::Memory
     {

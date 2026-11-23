@@ -31,6 +31,8 @@ const PEOPLE_CURSOR: &[u8] = b"openlegend-private-people-cursor";
 const TRADE_CURSOR: &[u8] = b"openlegend-private-trade-cursor";
 const OFFER_RECIPIENT_CURSOR: &[u8] = b"openlegend-private-offer-recipient-cursor";
 const OBJECT_HISTORY_CURSOR: &[u8] = b"openlegend-private-object-history-cursor";
+const EVIDENCE_CURSOR: &[u8] = b"openlegend-private-evidence-cursor";
+pub(crate) const PRIVATE_CURSOR_BYTES: usize = 2048;
 
 const INVENTORY_GROUP: &[u8] = b"openlegend-private-inventory-group";
 
@@ -170,6 +172,15 @@ impl ReferenceIssuer {
         self.open_private(OBJECT_HISTORY_CURSOR, token)
     }
 
+    pub(crate) fn seal_evidence_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(EVIDENCE_CURSOR, value)
+            .filter(|token| token.len() <= PRIVATE_CURSOR_BYTES)
+    }
+
+    pub(crate) fn open_evidence_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(EVIDENCE_CURSOR, token)
+    }
+
     pub(crate) fn seal_inventory_group(&self, group: &InventoryGroupClaim<&str>) -> Option<String> {
         self.seal_private(INVENTORY_GROUP, group)
     }
@@ -196,7 +207,7 @@ impl ReferenceIssuer {
     }
 
     fn open_private<T: DeserializeOwned>(&self, purpose: &[u8], token: &str) -> Option<T> {
-        if token.len() > 2048 || token.len() % 2 != 0 {
+        if token.len() > PRIVATE_CURSOR_BYTES || token.len() % 2 != 0 {
             return None;
         }
         let hex = |byte| char::from(byte).to_digit(16).map(|digit| digit as u8);

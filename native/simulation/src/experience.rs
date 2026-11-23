@@ -1114,7 +1114,10 @@ impl PersonalSourceRecord {
     }
 }
 
-fn collection_owner(kind: PersonalSourceKind, actor_id: &str) -> Result<String, ExperienceError> {
+pub(crate) fn collection_owner(
+    kind: PersonalSourceKind,
+    actor_id: &str,
+) -> Result<String, ExperienceError> {
     let path = match kind {
         PersonalSourceKind::Memory => vec!["world", "memories", actor_id],
         PersonalSourceKind::Awareness => vec!["world", "experience", "awareness", actor_id],

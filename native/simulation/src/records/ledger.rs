@@ -11,7 +11,7 @@ use std::{mem::size_of, sync::Arc};
 
 pub(crate) struct RecordLedger {
     rows: IndexMap<String, IndexMap<String, RecordPlacement>>,
-    owners: IndexMap<String, IndexMap<String, OwnerCoverage>>,
+    owners: IndexMap<String, IndexMap<String, CoveredOwner>>,
     world_settings_template: String,
     host_settings_template: String,
     accepted_cut: u64,
@@ -25,10 +25,19 @@ struct RowEdit {
     id: String,
     after: Option<RecordPlacement>,
 }
+const MEMORY_TABLE: &str = "mind_memories";
+
+struct CoveredOwner {
+    coverage: OwnerCoverage,
+    // This is local to accepted native state. A SQL acknowledgement or
+    // same-cut hydration does not change the visible collection.
+    memory_revision: u64,
+}
+
 struct OwnerEdit {
     table: String,
     id: String,
-    after: OwnerCoverage,
+    after: CoveredOwner,
 }
 struct PreparedMetadata {
     world_template: Option<String>,
@@ -85,7 +94,7 @@ impl RecordLedger {
             size_of::<Self>(),
             map_storage::<String, IndexMap<String, RecordPlacement>>(records.tables.len())
                 .ok_or_else(error)?,
-            map_storage::<String, IndexMap<String, OwnerCoverage>>(records.coverage.len())
+            map_storage::<String, IndexMap<String, CoveredOwner>>(records.coverage.len())
                 .ok_or_else(error)?,
         ])
         .ok_or_else(error)?;
@@ -111,7 +120,7 @@ impl RecordLedger {
                 bound,
                 coverage.table.len().checked_mul(2).ok_or_else(error)?,
                 coverage.owner.len().checked_mul(2).ok_or_else(error)?,
-                map_storage::<String, OwnerCoverage>(1).ok_or_else(error)?,
+                map_storage::<String, CoveredOwner>(1).ok_or_else(error)?,
             ])
             .ok_or_else(error)?;
         }
@@ -140,13 +149,19 @@ impl RecordLedger {
             }
             rows.insert(table.clone(), table_rows);
         }
-        let mut owners: IndexMap<String, IndexMap<String, OwnerCoverage>> =
+        let mut owners: IndexMap<String, IndexMap<String, CoveredOwner>> =
             IndexMap::with_capacity(records.coverage.len());
         for coverage in &records.coverage {
             if owners
                 .entry(coverage.table.clone())
                 .or_default()
-                .insert(coverage.owner.clone(), coverage.clone())
+                .insert(
+                    coverage.owner.clone(),
+                    CoveredOwner {
+                        coverage: coverage.clone(),
+                        memory_revision: 0,
+                    },
+                )
                 .is_some()
             {
                 return Err(error());
@@ -176,7 +191,7 @@ impl RecordLedger {
                     .values()
                     .flat_map(|owners| owners.iter())
                     .try_fold(bytes, |bytes, (id, owner)| {
-                        bytes.checked_add(owner_bytes(id, owner)?)
+                        bytes.checked_add(owner_bytes(id, &owner.coverage)?)
                     })
             })
             .ok_or_else(error)?;
@@ -190,7 +205,7 @@ impl RecordLedger {
         let mut bytes = heap_sum([
             map_storage::<String, IndexMap<String, RecordPlacement>>(self.rows.capacity())
                 .ok_or_else(error)?,
-            map_storage::<String, IndexMap<String, OwnerCoverage>>(self.owners.capacity())
+            map_storage::<String, IndexMap<String, CoveredOwner>>(self.owners.capacity())
                 .ok_or_else(error)?,
         ])
         .ok_or_else(error)?;
@@ -206,7 +221,7 @@ impl RecordLedger {
             bytes = heap_sum([
                 bytes,
                 table.capacity(),
-                map_storage::<String, OwnerCoverage>(owners.capacity()).ok_or_else(error)?,
+                map_storage::<String, CoveredOwner>(owners.capacity()).ok_or_else(error)?,
             ])
             .ok_or_else(error)?;
         }
@@ -238,8 +253,26 @@ impl RecordLedger {
             .flat_map(|rows| rows.values())
             .filter(move |row| row.parent == parent)
     }
+    fn owner(&self, table: &str, owner: &str) -> Option<&CoveredOwner> {
+        self.owners.get(table)?.get(owner)
+    }
     pub(crate) fn coverage(&self, table: &str, owner: &str) -> Option<&OwnerCoverage> {
-        self.owners.get(table).and_then(|owners| owners.get(owner))
+        self.owner(table, owner).map(|owner| &owner.coverage)
+    }
+    pub(crate) fn memory_revision(&self, owner: &str) -> u64 {
+        self.owner(MEMORY_TABLE, owner)
+            .map_or(0, |owner| owner.memory_revision)
+    }
+    fn retained_coverage(&self, coverage: OwnerCoverage) -> CoveredOwner {
+        let memory_revision = if coverage.table == MEMORY_TABLE {
+            self.memory_revision(&coverage.owner)
+        } else {
+            0
+        };
+        CoveredOwner {
+            coverage,
+            memory_revision,
+        }
     }
     pub(crate) fn presence(&self, table: &str, id: &str, owner: &str) -> Option<bool> {
         if self.placement(table, id).is_some() {
@@ -271,7 +304,7 @@ impl RecordLedger {
             .checked_add(1)
             .filter(|cut| *cut <= crate::identity::MAX_SAFE_INTEGER)
             .ok_or_else(error)?;
-        let metadata = self.prepare_metadata(changes, observed)?;
+        let metadata = self.prepare_metadata(changes, observed, Some(after_cut))?;
         Ok(PreparedRecordLedger {
             key,
             after_cut,
@@ -285,6 +318,7 @@ impl RecordLedger {
         &mut self,
         changes: &ChangedRows,
         observed: &[OwnerCoverage],
+        memory_revision: Option<u64>,
     ) -> Result<PreparedMetadata, RecordEncodingError> {
         let count = changes
             .rows
@@ -296,7 +330,7 @@ impl RecordLedger {
             owner_maximum
                 .checked_mul(size_of::<OwnerEdit>())
                 .ok_or_else(error)?,
-            map_storage::<(String, String), OwnerCoverage>(owner_maximum).ok_or_else(error)?,
+            map_storage::<(String, String), CoveredOwner>(owner_maximum).ok_or_else(error)?,
             map_storage::<&str, usize>(owner_maximum).ok_or_else(error)?,
         ])
         .ok_or_else(error)?;
@@ -336,7 +370,7 @@ impl RecordLedger {
             if owner.next_ordinal > crate::identity::MAX_SAFE_INTEGER {
                 return Err(error());
             }
-            let after = owner.clone();
+            let after = self.retained_coverage(owner.clone());
             if owner_updates
                 .insert((owner.table.clone(), owner.owner.clone()), after)
                 .is_some()
@@ -361,16 +395,33 @@ impl RecordLedger {
                 let key = (table.clone(), row.parent.clone());
                 if !owner_updates.contains_key(&key) {
                     let coverage = self.coverage(table, &row.parent).ok_or_else(error)?.clone();
-                    owner_updates.insert(key.clone(), coverage);
+                    owner_updates.insert(key.clone(), self.retained_coverage(coverage));
                 }
                 let owner = owner_updates.get_mut(&key).ok_or_else(error)?;
-                owner.parent_present = true;
-                owner.next_ordinal = owner.next_ordinal.max(
+                if table == MEMORY_TABLE
+                    && let Some(revision) = memory_revision
+                {
+                    owner.memory_revision = revision;
+                }
+                let coverage = &mut owner.coverage;
+                coverage.parent_present = true;
+                coverage.next_ordinal = coverage.next_ordinal.max(
                     row.position
                         .checked_add(1)
                         .filter(|value| *value <= crate::identity::MAX_SAFE_INTEGER)
                         .ok_or_else(error)?,
                 );
+            }
+        }
+        if let Some(revision) = memory_revision {
+            for id in changes.deletes.get(MEMORY_TABLE).into_iter().flatten() {
+                // The canonical source writer observes its collection on
+                // removal, including a cold placement hydrated before edit.
+                let parent = &self.placement(MEMORY_TABLE, id).ok_or_else(error)?.parent;
+                owner_updates
+                    .get_mut(&(MEMORY_TABLE.to_owned(), parent.clone()))
+                    .ok_or_else(error)?
+                    .memory_revision = revision;
             }
         }
         let mut rows = Vec::with_capacity(count);
@@ -387,7 +438,7 @@ impl RecordLedger {
                     .ok_or_else(error)?,
             )
             .ok_or_else(error)?,
-            map_storage::<String, IndexMap<String, OwnerCoverage>>(
+            map_storage::<String, IndexMap<String, CoveredOwner>>(
                 self.owners
                     .len()
                     .checked_add(owner_updates.len())
@@ -495,7 +546,7 @@ impl RecordLedger {
                 .map_or(0, IndexMap::len)
                 .checked_add(count)
                 .ok_or_else(error)?;
-            let growth = map_storage::<String, OwnerCoverage>(
+            let growth = map_storage::<String, CoveredOwner>(
                 needed
                     .checked_mul(2)
                     .and_then(|n| n.checked_add(8))
@@ -524,7 +575,7 @@ impl RecordLedger {
                     .ok_or_else(error)?;
             }
             after_payload = after_payload
-                .checked_add(owner_bytes(&id, &after).ok_or_else(error)?)
+                .checked_add(owner_bytes(&id, &after.coverage).ok_or_else(error)?)
                 .ok_or_else(error)?;
             owners.push(OwnerEdit { table, id, after });
         }
@@ -674,7 +725,7 @@ impl RecordLedger {
         let metadata = if writes.is_empty() && observed.is_empty() {
             None
         } else {
-            Some(self.prepare_metadata(changes, observed)?)
+            Some(self.prepare_metadata(changes, observed, None)?)
         };
         Ok(PreparedTemporalPageLedger(
             self.prepare_same_cut(through_cut, metadata)?,

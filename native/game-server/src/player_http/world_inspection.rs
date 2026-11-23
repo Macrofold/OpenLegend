@@ -114,7 +114,8 @@ async fn read_evidence(
         Ok(Ok(crate::world::PlayerDisclosure::Busy)) | Err(_) => busy(),
         Ok(Ok(
             crate::world::PlayerDisclosure::Changed | crate::world::PlayerDisclosure::Unchanged,
-        )) => access_failure(AccessError::Changed),
+        ))
+        | Ok(Err(WorldError::ProjectionChanged)) => access_failure(AccessError::Changed),
         Ok(Err(error)) => failed(error),
     }
 }

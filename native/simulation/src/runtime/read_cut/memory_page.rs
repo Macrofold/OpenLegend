@@ -8,7 +8,7 @@ pub struct RuntimeMemoryPageRead<'a> {
     pub world_id: &'a str,
     pub generation: &'a str,
     pub actor: &'a str,
-    pub accepted_cut: u64,
+    pub memory_revision: u64,
     pub durable_revision: u64,
     pub in_flight_through: Option<u64>,
     pub life: u64,
@@ -35,7 +35,7 @@ impl NativeWorldSession {
             world_id: &state.physical.header.id,
             generation: &state.generation,
             actor,
-            accepted_cut: cut.through_cut,
+            memory_revision: self.memory_revision(state, actor)?,
             durable_revision: cut.durable_revision,
             in_flight_through: cut.in_flight_through,
             life,
@@ -51,9 +51,25 @@ impl NativeWorldSession {
         &self,
         actor: &str,
         life: u64,
+        revision: u64,
     ) -> Result<bool, RuntimeError> {
         let state = &self.session.publication_read().map_err(failure)?.state;
-        Ok(actor_life(state, actor) == Some(life))
+        Ok(actor_life(state, actor) == Some(life)
+            && self.memory_revision(state, actor)? == revision)
+    }
+
+    fn memory_revision(
+        &self,
+        state: &crate::simulation::SimulationState,
+        actor: &str,
+    ) -> Result<u64, RuntimeError> {
+        let _key = self.budget.reserve(512 + 8 * actor.len())?;
+        let owner = crate::experience::collection_owner(
+            crate::experience::PersonalSourceKind::Memory,
+            actor,
+        )
+        .map_err(failure)?;
+        Ok(state.records.memory_revision(&owner))
     }
 }
 

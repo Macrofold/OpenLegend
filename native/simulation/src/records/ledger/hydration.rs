@@ -116,7 +116,7 @@ impl RecordLedger {
         let metadata = if count == 0 && observed.is_empty() {
             None
         } else {
-            Some(self.prepare_metadata(&changes, observed)?)
+            Some(self.prepare_metadata(&changes, observed, None)?)
         };
         Ok(PreparedHydrationLedger(
             self.prepare_same_cut(through_cut, metadata)?,
