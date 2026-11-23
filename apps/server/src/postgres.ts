@@ -21,6 +21,9 @@ import {
   type MetadataBaseline,
 } from './live-read-overlay.js';
 
+// The stand-alone writer and stopped backup use this same PostgreSQL key.
+const WORLD_WRITER_KEY = '187114, 1';
+
 interface TransactionScope {
   active: boolean;
   client: pg.Client;
@@ -190,7 +193,9 @@ export class PostgresDatabase implements SqlDatabase {
       );
       return;
     }
-    const lock = await this.client.query('SELECT pg_try_advisory_lock(187114, 1) AS acquired');
+    const lock = await this.client.query(
+      `SELECT pg_try_advisory_lock(${WORLD_WRITER_KEY}) AS acquired`,
+    );
     if (!lock.rows[0].acquired) throw new Error('Another Open Legend writer owns this database.');
     await this.client.query(
       'CREATE SCHEMA IF NOT EXISTS open_legend; SET search_path TO open_legend; CREATE SCHEMA IF NOT EXISTS mind',
@@ -202,6 +207,32 @@ export class PostgresDatabase implements SqlDatabase {
   assertWriteAdmission(): void {
     if (!this.writeOwnershipReady || this.failed || this.closing || this.readOnly)
       throw new Error('The database writer is unavailable for new gameplay.');
+  }
+  /** Hold the stopped source stable across an operator catalog read and a
+   * child Rust backup. Their read-only snapshots share this writer fence.
+   * Return only after releasing the dedicated session's share. Uploads and
+   * later retries of a published capture must run outside this callback.
+   */
+  withStoppedWorld<T>(capture: () => Promise<T>): Promise<T> {
+    if (!this.readOnly || this.transactionActive)
+      throw new Error('A stopped world capture needs its own read-only database owner.');
+    return this.serial(async () => {
+      await this.ready;
+      const lock = await this.client.query(
+        `SELECT pg_try_advisory_lock_shared(${WORLD_WRITER_KEY}) AS acquired`,
+      );
+      if (!lock.rows[0].acquired)
+        throw new Error('Stop the Open Legend writer before capturing recovery data.');
+      try {
+        return await capture();
+      } finally {
+        const release = await this.client.query(
+          `SELECT pg_advisory_unlock_shared(${WORLD_WRITER_KEY}) AS released`,
+        );
+        if (!release.rows[0].released)
+          throw new Error('The stopped world capture lost its writer fence.');
+      }
+    });
   }
   private serial<T>(operation: () => Promise<T>): Promise<T> {
     return this.writeLane.run(operation);

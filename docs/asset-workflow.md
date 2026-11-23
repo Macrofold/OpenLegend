@@ -163,11 +163,16 @@ Removing tracked files makes the current checkout smaller. Old reachable Git obj
 Use the configured recovery writer to preserve coherent publication metadata and every admitted physical asset location, including named viewer/mirror copies. `recovery-initialize --output /external/authority-work` establishes the independent current-permission marker for a new installation; normal operation reuses its configured marker and work directory. Access/rights changes must update that independent record, so an older backup cannot resurrect withdrawn content.
 
 ```sh
-pnpm assets recovery-create --operation selected-asset-checkpoint --output /private/tmp/asset-checkpoint
+pnpm assets recovery-create --operation selected-asset-checkpoint \
+  --output /private/tmp/asset-checkpoint \
+  --server-directory /path/to/server-binary-directory \
+  --server-release /path/to/exact-server-release
 pnpm assets recovery-verify --manifest /private/tmp/asset-checkpoint/locator.json --output /private/tmp/asset-verified-restore
 ```
 
-Keep the returned checkpoint locator in durable operator storage. `recovery-create` captures the current owning database and its configured operational data directory; an explicitly selected `--source-root` can supply that directory. Use a new checkpoint identity and external work directory. `recovery-verify` uses the recovery reader, retains the checkpoint manifest and metadata locally, and streams every protected asset through a full hash check before reporting success. It does not retain those media streams in the verification directory, restore the application's database or publish recovered content.
+Stop the game server before taking a new capture. For a database with a world, `recovery-create` runs the selected Rust executable's `backup-world` command and captures the asset catalog under the same stopped-writer guard. The guard releases before uploads. The operating data directory comes from configuration or `--source-root`. Omit the Rust arguments for a catalog-only database. Use a new checkpoint identity and external work directory. Retry the same identity and directory after an interruption to reuse the verified local capture.
+
+Keep the returned checkpoint locator in durable operator storage. `recovery-verify` uses the recovery reader, retains the checkpoint manifest and metadata locally, and streams every protected asset through a full hash check before reporting success. It does not retain those media streams in the verification directory, restore the application's database or publish recovered content.
 
 The verified migration checkpoint has a small [checked-in exact locator](../assets/recovery/asset-migration-complete-20261017.json), so recovering its preserved collection does not depend on a temporary directory surviving. Supply that file to `recovery-verify --manifest`. It contains no credentials or saved-world data; the protected backup still requires the configured recovery permissions. Keep future checkpoint locators in durable operator storage too, rather than relying on terminal output or cache files.
 

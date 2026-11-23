@@ -40,7 +40,6 @@ import type {
 import { hashAssetFile } from '../../apps/server/src/asset-storage.js';
 import { tableRows } from '../../apps/server/src/record-pages.js';
 import { CHECKPOINT_LIMITS } from '../../apps/server/src/checkpoint-format.js';
-import { writeOperationalBackup } from '../../apps/server/src/operational-backup.js';
 import { syncDirectory } from '../../apps/server/src/save-files.js';
 
 /** Independent recovery storage protects an old content checkpoint from restoring
@@ -625,7 +624,8 @@ async function capturedTransferLocations(
   }
   return result;
 }
-/** Own the SQL snapshot briefly; transfer bytes outside it. Every copied file is
+/** Capture the catalog and optional Rust world backup under one stopped-source
+ * fence. Release the fence before network transfers. Every copied file is
  * checked against current rights on both sides of elapsed cloud work. */
 export async function createAssetRecoveryCheckpoint(
   repo: AssetRepository,
@@ -633,7 +633,8 @@ export async function createAssetRecoveryCheckpoint(
   options: {
     checkpointId: string;
     authorityDomain: string;
-    sourceDirectory: string;
+    withStoppedSource: (capture: () => Promise<void>) => Promise<void>;
+    backupWorld: (destination: string) => Promise<void>;
     directory: string;
     sourceStorages?: AssetRecoveryTransport[];
   },
@@ -703,10 +704,12 @@ export async function createAssetRecoveryCheckpoint(
   } else {
     // The exact owner record permits discarding only this attempt's unpublished,
     // incomplete metadata capture. Protected cloud bytes are never removed here.
-    await rm(metadataRoot, { recursive: true, force: true });
-    await mkdir(metadataRoot, { mode: 0o700 });
-    await (repo.db.readTransaction?.bind(repo.db) ?? repo.db.transaction.bind(repo.db))(
-      async () => {
+    await options.withStoppedSource(async () => {
+      await rm(metadataRoot, { recursive: true, force: true });
+      await mkdir(metadataRoot, { mode: 0o700 });
+      const worldExists = await (
+        repo.db.readTransaction?.bind(repo.db) ?? repo.db.transaction.bind(repo.db)
+      )(async () => {
         const snapshot = await repo.restrictionSnapshot();
         if (snapshot.generation !== current.generation)
           throw new Error('Current recovery authority does not cover the SQL snapshot.');
@@ -735,16 +738,19 @@ export async function createAssetRecoveryCheckpoint(
         } finally {
           await catalog.close();
         }
-        if (await repo.db.prepare('SELECT world_id FROM world_head LIMIT 1').get()) {
-          await writeOperationalBackup(
-            repo.db,
-            options.sourceDirectory,
-            join(metadataRoot, 'world'),
-          );
-          operationalBackup = true;
-        }
-      },
-    );
+        const schema = await repo.db
+          .prepare("SELECT to_regclass('open_legend.world_head') AS head")
+          .get();
+        return Boolean(
+          schema?.['head'] &&
+            (await repo.db.prepare('SELECT world_id FROM world_head LIMIT 1').get()),
+        );
+      });
+      if (worldExists) {
+        await options.backupWorld(join(metadataRoot, 'world'));
+        operationalBackup = true;
+      }
+    });
     const files: { path: string; sha256: string; bytes: number }[] = [];
     for await (const path of diskFiles(metadataRoot)) {
       if (files.length >= 20000)

@@ -11,18 +11,38 @@ import {
 import { PostgresDatabase } from '../../apps/server/src/postgres.js';
 import { readCurrentAssetAuthority, type AssetRecoveryTransport } from './recovery.js';
 
-const runLocalRestore = promisify(execFile);
+const run = promisify(execFile);
+
+interface RustWorldTarget {
+  serverDirectory: string;
+  release: string;
+  databaseUrl: string;
+  dataDirectory: string;
+}
+
+function operatorEnvironment(target: RustWorldTarget) {
+  return {
+    ...process.env,
+    PATH: target.serverDirectory,
+    OPEN_LEGEND_DATABASE_URL: target.databaseUrl,
+    OPEN_LEGEND_DATA_DIR: target.dataDirectory,
+  };
+}
+
+/** Await the stopped Rust backup, which owns and verifies its output files. */
+export async function backupRustWorld(target: RustWorldTarget, destination: string) {
+  await run('openlegend-game-server', ['backup-world', target.release, destination], {
+    env: operatorEnvironment(target),
+    maxBuffer: 64 * 1024,
+  });
+}
 
 /** The only network operations use the existing authenticated recovery reader.
  * Neither read holds a database writer or creates a Node gameplay service. */
 export async function restoreRustWorld(
   storage: AssetRecoveryTransport,
-  options: {
-    serverDirectory: string;
-    release: string;
+  options: RustWorldTarget & {
     backup: string;
-    databaseUrl: string;
-    dataDirectory: string;
     domain: string;
   },
 ): Promise<RestoredWorldArtwork> {
@@ -31,18 +51,10 @@ export async function restoreRustWorld(
     const principal = { accountId: await storage.principal() };
     const verification = { domain: options.domain, directory };
     await readCurrentAssetAuthority(storage, verification);
-    const { stdout } = await runLocalRestore(
+    const { stdout } = await run(
       'openlegend-game-server',
       ['restore-world', options.release, options.backup, '--artwork-operator', principal.accountId],
-      {
-        env: {
-          ...process.env,
-          PATH: options.serverDirectory,
-          OPEN_LEGEND_DATABASE_URL: options.databaseUrl,
-          OPEN_LEGEND_DATA_DIR: options.dataDirectory,
-        },
-        maxBuffer: 64 * 1024,
-      },
+      { env: operatorEnvironment(options), maxBuffer: 64 * 1024 },
     );
     const report = JSON.parse(stdout) as RestoredWorldArtwork;
     const release = report.artwork?.release;

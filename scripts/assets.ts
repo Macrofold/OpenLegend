@@ -155,6 +155,7 @@ async function repository<T>(
     repo: AssetRepository,
     storage: S3AssetStorage,
     principal: { accountId: string },
+    database: PostgresDatabase,
   ) => Promise<T>,
   readOnly = false,
 ): Promise<T> {
@@ -170,7 +171,7 @@ async function repository<T>(
     database = new PostgresDatabase(url, readOnly);
     const repo = new AssetRepository(database);
     if (!readOnly) await repo.initialize();
-    return await operation(repo, storage, principal);
+    return await operation(repo, storage, principal, database);
   } finally {
     try {
       await database?.close();
@@ -246,6 +247,7 @@ async function run(): Promise<void> {
   authority-export --output /outside/repository/current-authority.json
   recovery-initialize --output /outside/repository/authority-work
   recovery-create --operation CHECKPOINT --output /outside/repository/checkpoint-work [--source-config FROZEN_ENV_CONFIG]
+    [--server-directory /path/to/server-binary-directory --server-release /path/to/release]
   recovery-verify --manifest LOCATOR.json --output /outside/repository/verified-restore
   recovery-restore-catalog --source-root /outside/repository/verified-restore
   recovery-restore-world --source-root /outside/repository/verified-restore/metadata/world --server-directory /path/to/server-binary-directory --server-release /path/to/release
@@ -818,7 +820,7 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
         );
         return;
       }
-      await repository(async (repo) => {
+      await repository(async (repo, _readerStorage, _principal, database) => {
         if (command === 'recovery-initialize') {
           const result = await workflows.initializeRecoveryAuthority(repo, storage, {
             domain: authorityDomain,
@@ -833,15 +835,28 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
           );
         } else if (command === 'recovery-create') {
           const { readConfig } = await import('../apps/server/src/config.js');
+          const { backupRustWorld } = await import('./assets/restore-rust-world.js');
+          const config = readConfig();
           const directory = await outsideRepository(required('output'));
           for (const source of await sourceConfigurations())
             additionalStorages.push(new S3AssetStorage(source, 'recovery-writer'));
           const locator = await workflows.createAssetRecoveryCheckpoint(repo, storage, {
             checkpointId: required('operation'),
             authorityDomain,
-            sourceDirectory: values['source-root']
-              ? await realpath(values['source-root'])
-              : readConfig().dataDirectory,
+            withStoppedSource: (capture) => database.withStoppedWorld(capture),
+            backupWorld: async (destination) => {
+              await backupRustWorld(
+                {
+                  serverDirectory: await realpath(required('server-directory')),
+                  release: await realpath(required('server-release')),
+                  databaseUrl: config.databaseUrl,
+                  dataDirectory: values['source-root']
+                    ? await realpath(values['source-root'])
+                    : config.dataDirectory,
+                },
+                destination,
+              );
+            },
             directory,
             sourceStorages: additionalStorages,
           });
@@ -884,7 +899,7 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
             }),
           );
         } else throw new Error('Unknown recovery command.');
-      });
+      }, command === 'recovery-create');
     } finally {
       storage.close();
       for (const source of additionalStorages) source.close();

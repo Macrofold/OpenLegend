@@ -58,7 +58,7 @@ export const localProcessOwners: Readonly<Record<string, string>> = {
   'scripts/assets/migration.ts': 'Local Git object inspection; no fetch/clone/pull.',
   'scripts/assets/inventory.ts': 'Local Git index inspection; no remote operation.',
   'scripts/assets/restore-rust-world.ts':
-    'One local stopped Rust restore command; cloud permission reads remain in the existing recovery adapter.',
+    'Fixed local stopped Rust backup and restore commands; cloud permission reads remain in the existing recovery adapter.',
   'scripts/decision-benchmark/escalation-load.ts':
     'Offline fixture load and local Git revision; external fetch is replaced by a throwing fixture.',
 };
@@ -111,6 +111,11 @@ export const localBinaryCommands: Readonly<
   >
 > = {
   'scripts/assets/restore-rust-world.ts': [
+    {
+      program: 'openlegend-game-server',
+      kind: 'execFile',
+      args: ['backup-world', null, null],
+    },
     {
       program: 'openlegend-game-server',
       kind: 'execFile',
