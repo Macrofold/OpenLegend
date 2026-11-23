@@ -318,7 +318,8 @@ impl WorldInputs {
     ) -> Result<T, E> {
         let mut state = self.state.lock().map_err(|_| AccessError::Availability)?;
         let account = state.clock;
-        let current = state.actors.get_mut(&audience.scope.actor_id).ok_or(AccessError::Changed)?;
+        let actor = &audience.scope.actor_id;
+        let current = state.actors.get(actor).ok_or(AccessError::Changed)?;
         if !same_controller(&audience.scope, &current.audience.scope)
             || current.scope.input_epoch != turn.scope.input_epoch
             || current.scope.attack_input_token != turn.scope.attack_input_token
@@ -327,6 +328,14 @@ impl WorldInputs {
             return Err(AccessError::Changed.into());
         }
         let version = current.attack.version.checked_add(1).ok_or(AccessError::Availability)?;
+        let movement_scope = if reviewed {
+            let next = state.revision.checked_add(1)
+                .filter(|revision| *revision <= MAX_SAFE_INTEGER)
+                .ok_or(AccessError::Availability)?;
+            Some((next, Uuid::new_v4()))
+        } else {
+            None
+        };
         let now = Instant::now();
         let starts = frontier(account, turn.frontier, now);
         let phase = match (turn.operation, action, pending, reviewed) {
@@ -344,6 +353,20 @@ impl WorldInputs {
             action: action.map(str::to_owned), phase,
         };
         let output = accept()?;
+        if let Some((revision, _)) = movement_scope {
+            state.revision = revision;
+        }
+        let current = &mut state.actors[actor];
+        if let Some((revision, token)) = movement_scope {
+            // Opening a review withdraws held movement in the same gate.
+            // The next view advertises its replacement token. Delayed
+            // direction packets from before the modal can never restart it.
+            current.scope.revision = revision;
+            current.scope.movement_input_token = token;
+            current.steering = None;
+            current.sequence = 0;
+            current.held_for_advance = None;
+        }
         current.attack.version = version;
         current.attack.gesture = Some(gesture);
         Ok(output)

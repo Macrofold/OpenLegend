@@ -12,6 +12,8 @@ The same build turned Combat mode on in the live Chromium browser after a signed
 
 Two separately signed players streamed the same low shot. The attacker received an own-action notice on admission. The defender received one personal notice at actual contact, after the shot had already left the sling. The defender’s notice identified only the contact occurrence, without naming its source. A permitted read after the last stream closed returned the same notice. Result `be0bf849` records both streams, one 14-point injury and complete local cleanup.
 
+Opening a release review ended the currently held movement in the same accepted request. A steering update with the previous token was refused before its original expiry, and the same attack token still canceled the exact preparation. A distinct expired attack Cancel was refused and left the movement token current. Both cases passed cold receipt recovery and cleanup on executable `907c8e9739fa`, with results `0f409bf8` and `cff832b3`.
+
 The results and source identities are archived outside Git in `nsc04-timed-combat-20261123`. The manifest SHA-256 begins `cb88400bf455`.
 
 ## October 25, 2026 UTC — remove the aggregate injury meter
