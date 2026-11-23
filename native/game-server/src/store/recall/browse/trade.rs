@@ -5,7 +5,7 @@ use super::MemoryBrowseCut;
 use crate::store::{Store, StoreError, StoreResult, durable_head, ordinal, read::admitted_query};
 use openlegend_simulation::{
     experience::{PersonalSourceKind, PersonalSourceRef},
-    handover::{GiftLot, ReceivedTradeTerm},
+    handover::{GiftLot, NpcTradeLot, ReceivedTradeTerm, TradeEvidence, trade_suggestion_limit},
     host::{ByteBudget, ByteReservation},
     text::JsText,
     values::is_safe_record_id,
@@ -251,6 +251,71 @@ impl Store {
             })
         })
         .await
+    }
+
+    /// The native catalogue supplies only genuinely offerable peers. One
+    /// independent snapshot reads their newest exact disclosed lots with the
+    /// existing indexed chooser, retaining only the finite NPC suggestion slice.
+    pub(crate) async fn npc_trade_disclosures(
+        self: &Arc<Self>,
+        cut: Arc<MemoryBrowseCut>,
+        people: Vec<String>,
+    ) -> StoreResult<Vec<NpcTradeLot>> {
+        let maximum = trade_suggestion_limit();
+        let owner = Arc::clone(self);
+        self.read_isolated(move |tx| {
+            Box::pin(async move {
+                require_cut(tx, &cut).await?;
+                let sql = &owner.schema.recall.trade_disclosures;
+                let limit = i64::try_from(sql.scan_rows).map_err(|_| StoreError::Capacity)?;
+                let selected = i64::try_from(maximum).map_err(|_| StoreError::Capacity)?;
+                // This stays on the same generated first-page SQL and its
+                // exact latest-source/version filters as the ordinary chooser.
+                let _query_backing = owner.budget.reserve(sql.first.len() + 128)
+                    .map_err(|_| StoreError::Capacity)?;
+                let query = format!("SELECT r.* FROM ({}) r WHERE r.latest ORDER BY r.position DESC, r.ordinal DESC LIMIT $11", sql.first);
+                let mut terms = Vec::new();
+                for person in people {
+                    if !is_safe_record_id(&person) || person == cut.actor {
+                        return Err(StoreError::InvalidRecord);
+                    }
+                    let _input = owner.budget.reserve(8192).map_err(|_| StoreError::Capacity)?;
+                    let incoming = json!({"family":"item-offer","offererId":person,"recipientId":cut.actor});
+                    let outgoing = json!({"family":"item-offer","offererId":cut.actor,"recipientId":person});
+                    let keys = json!([cut.actor, person]);
+                    let params: [&(dyn ToSql + Sync); 11] = [
+                        &incoming, &outgoing, &keys, &cut.world, &cut.actor, &cut.generation,
+                        &limit, &cut.world, &cut.actor, &cut.generation, &selected,
+                    ];
+                    let (_transfer, rows) = admitted_query(tx, &query, &params, &owner.budget).await?;
+                    if rows.len() > maximum {
+                        return Err(StoreError::InvalidRecord);
+                    }
+                    for row in &rows {
+                        let mut proof_storage = reserve_rows::<ReceivedTradeTerm>(&owner.budget, 1)?;
+                        let selected = decode_term(row, 0, &mut proof_storage)?;
+                        let evidence = Arc::new(TradeEvidence::admit(
+                            &cut.world, &cut.actor, &person, &cut.generation, cut.privacy_revision,
+                            vec![selected], proof_storage,
+                        ).map_err(|_| StoreError::Capacity)?);
+                        let name: &str = row.try_get("name")?;
+                        let description: &str = row.try_get("description")?;
+                        if !row.try_get::<_, f64>("disclosed_at")?.is_finite() {
+                            return Err(StoreError::InvalidRecord);
+                        }
+                        let bytes = (name.len() + description.len()).checked_mul(2)
+                            .and_then(|bytes| bytes.checked_add(size_of::<NpcTradeLot>()))
+                            .ok_or(StoreError::Capacity)?;
+                        let custody = owner.budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+                        terms.try_reserve_exact(1).map_err(|_| StoreError::Capacity)?;
+                        terms.push(NpcTradeLot {
+                            evidence, name: name.into(), description: description.into(), custody,
+                        });
+                    }
+                }
+                Ok(terms)
+            })
+        }).await
     }
 
     /// Look up the submitted lots exactly. A rendered page is not a proof of

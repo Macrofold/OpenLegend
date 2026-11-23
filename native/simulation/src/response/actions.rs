@@ -509,6 +509,9 @@ pub(super) fn prepare(
                     .is_none_or(|source| source.source_current(core.state, actor))
                     && handover.offered_lot().is_none_or(|lot| {
                         crate::handover::trade_lot_current(core.state, actor, lot, true)
+                    })
+                    && handover.trade_evidence().is_none_or(|evidence| {
+                        evidence.current(core.state, actor, handover.target())
                     });
                 if !current {
                     return result(

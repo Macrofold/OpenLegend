@@ -66,7 +66,9 @@ export const BASE_HANDOVER = {
         key === 'give' ? give : receive,
       ),
     exchangeDescription: (give: string, receive: string) =>
-      `Give ${give} to receive ${receive}. Availability is checked when agreeing.`,
+      copy.exchangeDescription.replace(/\{(give|receive)\}/g, (_slot, key) =>
+        key === 'give' ? give : receive,
+      ),
     giftDescription: (give: string, person: string, minutes: number) =>
       copy.giftDescription.replace(/\{(give|person|minutes)\}/g, (_slot, key) =>
         key === 'give' ? give : key === 'person' ? person : String(minutes),

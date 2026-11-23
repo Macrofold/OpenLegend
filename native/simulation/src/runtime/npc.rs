@@ -1,6 +1,8 @@
 //! Detached NPC first-person facts retain their actual native evidence owner.
 //! Reading these facts grants neither an executable response nor a current
 //! source lease; the context producer must bind those independently.
+mod trade;
+
 use super::*;
 use crate::appraisals::AppraisalScope;
 use crate::capture::{
@@ -411,6 +413,14 @@ impl NativeWorldSession {
             .map_err(failure)?
         {
             return Ok(Err("native-response-gift-terms"));
+        }
+        if disclosure && ticket.bindings.actions.values()
+            .filter_map(|choice| choice.handover.as_ref())
+            .any(|choice| choice.trade_evidence().is_some_and(|evidence| {
+                !evidence.current(state, actor_id, choice.target())
+            }))
+        {
+            return Ok(Err("native-response-trade-disclosure"));
         }
         if ticket.checks_query_evidence {
             let cut = &ticket.original.read.perception.evidence;

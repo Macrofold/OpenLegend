@@ -1240,6 +1240,17 @@ impl ResponseCursor {
                     let (body, storage) = canonical.into_parts();
                     self.merge(storage)?;
                     let command = self.command.take().ok_or(ExecutionError::Invariant)?;
+                    // Only an actually selected native offer can supply an
+                    // independent older disclosure proof to ordinary Handover.
+                    let trade_evidence = self.response.operation(self.index)
+                        .filter(|op| op.kind == ResponseKind::Act
+                            && op.data.get("kind").and_then(SqlCell::as_str) == Some("known"))
+                        .and_then(|op| op.text("actionId"))
+                        .and_then(JsText::as_unicode)
+                        .and_then(|id| self.bindings.input.actions.get(id))
+                        .and_then(|choice| choice.handover.as_ref())
+                        .and_then(crate::handover::NpcHandover::trade_evidence)
+                        .cloned();
                     let cursor = CommandCursor::new(
                         command,
                         body,
@@ -1247,7 +1258,7 @@ impl ResponseCursor {
                             preview: false,
                             native_controller: false,
                             native_movement: None,
-                            trade_evidence: None,
+                            trade_evidence,
                             durable_receipt: false,
                         },
                         Self::binding(core, self.candidate)?,

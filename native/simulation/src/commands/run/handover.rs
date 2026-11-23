@@ -32,6 +32,11 @@ impl NativeCommand {
                     )
                 })
                 .ok_or(ExecutionError::Capacity)?,
+            NpcHandover::Exchange { evidence, .. } => evidence
+                .only_lot()
+                .ok_or(ExecutionError::Invariant)?
+                .item_id
+                .len(),
             _ => 0,
         };
         let _scratch = budget.reserve(
@@ -62,6 +67,15 @@ impl NativeCommand {
                 handover_operation: GiftOperation::Offer,
                 offered_items: Some(vec![lot.selection()]),
                 requested_items: Some(Vec::new()),
+                offer_id: None,
+                expected_offer_revision: None,
+            },
+            NpcHandover::Exchange { evidence, lot } => crate::handover::GiftIntent {
+                handover_operation: GiftOperation::Offer,
+                offered_items: Some(vec![lot.selection()]),
+                requested_items: Some(vec![
+                    evidence.only_lot().ok_or(ExecutionError::Invariant)?.selection(),
+                ]),
                 offer_id: None,
                 expected_offer_revision: None,
             },

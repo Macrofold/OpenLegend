@@ -13,6 +13,8 @@ use crate::{
 };
 use std::sync::Arc;
 
+mod exchange;
+
 impl NpcCandidateCursor {
     pub(super) fn offer_gift_replies(
         &mut self,

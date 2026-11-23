@@ -5,6 +5,7 @@
   "residentProposals": 12,
   "typedProposalLots": 12,
   "typedProposals": 24,
+  "exchangeDescription": "Give {give} to receive {receive}. Availability is checked when agreeing.",
   "counterDescription": "Counteroffer: give {give} to receive {receive}. This replaces the earlier terms; they must accept the new revision.",
   "giftDescription": "Offer {give} to {person}. Nothing moves unless they accept within {minutes} game minutes; I keep it meanwhile and can withdraw it.",
   "title": "Trade",

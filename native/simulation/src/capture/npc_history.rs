@@ -64,6 +64,8 @@ pub(crate) struct NpcHistoricalScope {
     pub actor_id: String,
     pub read_serial: u64,
     pub accepted_cut: u64,
+    #[serde(skip)]
+    pub(crate) durable_revision: u64,
     pub identity_through: u64,
     pub sequence: u64,
     pub at: f64,
@@ -235,6 +237,7 @@ impl NpcHistoricalScope {
             actor_id: actor.to_owned(),
             read_serial: serial,
             accepted_cut: state.accepted_cut,
+            durable_revision: state.durable_revision,
             identity_through,
             sequence: state.physical.header.sequence,
             at: state.physical.header.sim_time,

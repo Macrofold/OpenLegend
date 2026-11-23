@@ -173,13 +173,69 @@ impl HostedWorld {
         inspection: Option<openlegend_simulation::activity::ActivityInspectionNavigation>,
     ) -> Result<RuntimeNpcRead, WorldError> {
         let input = NpcReadInput::new(&self.host, actor, consumer)?;
-        self.prepare_actor_read(
+        let read = self.prepare_actor_read(
             game,
             move |session| input.current(session),
             move |session, read| session.begin_npc_suggestions(read, inspection),
             NativeWorldSession::step_npc_context_with_notes,
         )
-        .await
+        .await?;
+        self.attach_trade_prospects(read).await
+    }
+
+    async fn attach_trade_prospects(
+        self: &Arc<Self>,
+        read: RuntimeNpcRead,
+    ) -> Result<RuntimeNpcRead, WorldError> {
+        use crate::store::{StoreError, recall::browse::MemoryBrowseCut};
+        if !read.has_npc_trade_prospects() {
+            return Ok(read);
+        }
+        let budget = self.host.budget().clone();
+        let (read, prospects) = self.capture(move |session| {
+            let selected = session.with_npc_trade_prospects(&read, |source, peers| {
+                let mut input = budget.reserve(0)?;
+                let mut people = Vec::<String>::new();
+                for id in peers {
+                    if people.iter().any(|known| known == id) {
+                        continue;
+                    }
+                    let bytes = input.bytes().checked_add(id.len() + 2 * std::mem::size_of::<String>())
+                        .ok_or(openlegend_simulation::host::CapacityError)?;
+                    input.resize(bytes)?;
+                    people.push(id.to_owned());
+                }
+                let custody = budget.reserve(512 + source.world.len() + source.actor.len() + source.generation.len())?;
+                let cut = Arc::new(MemoryBrowseCut {
+                    world: source.world.to_owned(),
+                    generation: source.generation.to_owned(),
+                    actor: source.actor.to_owned(),
+                    revision: source.durable_revision,
+                    privacy_revision: source.privacy_revision,
+                    at: source.at,
+                    identity_through: source.identity_through,
+                    _custody: custody,
+                });
+                Ok::<_, openlegend_simulation::host::CapacityError>((cut, people, input))
+            })?.transpose()?;
+            Ok((read, selected))
+        }).await?;
+        let Some((cut, people, custody)) = prospects else {
+            return Ok(read);
+        };
+        let result = self.store.npc_trade_disclosures(cut, people).await;
+        drop(custody);
+        let terms = match result {
+            Ok(terms) if terms.is_empty() => return Ok(read),
+            Ok(terms) => terms,
+            Err(StoreError::StaleCut) => return Ok(read),
+            Err(error) => return Err(error.into()),
+        };
+        self.capture(move |session| {
+            let mut read = read;
+            session.join_npc_trade_prospects(&mut read, &terms)?;
+            Ok(read)
+        }).await
     }
 
     /// Hold the actor's exact accepted presentation and remaining work without

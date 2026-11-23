@@ -19,6 +19,12 @@ pub fn trade_lot_limit() -> usize {
     crate::stock_transfer::limits().moved_lots
 }
 
+/// Compact remembered-item suggestions use the same bundled-world limit as
+/// Source. The exact Handover command can bind any eligible received lot.
+pub fn trade_suggestion_limit() -> usize {
+    crate::worlds::base_handover::GIFT_COPY.candidate_lots
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GiftLot {
@@ -666,6 +672,15 @@ pub struct TradeEvidence {
     _custody: crate::host::ByteReservation,
 }
 
+/// A separately funded display for one previously disclosed lot. Preparing a
+/// choice consumes its exact evidence, without retaining these display strings.
+pub struct NpcTradeLot {
+    pub evidence: Arc<TradeEvidence>,
+    pub name: crate::text::JsText,
+    pub description: crate::text::JsText,
+    pub custody: crate::host::ByteReservation,
+}
+
 impl TradeEvidence {
     /// Move the admitted command terms and their reservation from the exact
     /// read. Reserve only the added scope and shared command owner here.
@@ -703,6 +718,17 @@ impl TradeEvidence {
             terms,
             _custody: custody,
         })
+    }
+
+    pub(crate) fn counterpart(&self) -> &str {
+        &self.counterpart
+    }
+
+    pub(crate) fn only_lot(&self) -> Option<&GiftLot> {
+        match self.terms.as_slice() {
+            [selected] => Some(&selected.lot),
+            _ => None,
+        }
     }
 
     pub(crate) fn current(
@@ -1140,6 +1166,10 @@ pub(crate) enum NpcHandover {
         terms: Arc<CounterTerms>,
         lot: GiftLot,
     },
+    Exchange {
+        evidence: Arc<TradeEvidence>,
+        lot: GiftLot,
+    },
 }
 
 impl NpcHandover {
@@ -1148,21 +1178,30 @@ impl NpcHandover {
             Self::Reply { source, .. } => &source.offerer,
             Self::Offer { recipient, .. } => recipient,
             Self::Counter { terms, .. } => &terms.source.offerer,
+            Self::Exchange { evidence, .. } => evidence.counterpart(),
         }
     }
 
     pub(crate) fn source(&self) -> Option<&GiftSource> {
         match self {
             Self::Reply { source, .. } => Some(source),
-            Self::Offer { .. } => None,
+            Self::Offer { .. } | Self::Exchange { .. } => None,
             Self::Counter { terms, .. } => Some(&terms.source),
+        }
+    }
+
+    pub(crate) fn trade_evidence(&self) -> Option<&Arc<TradeEvidence>> {
+        if let Self::Exchange { evidence, .. } = self {
+            Some(evidence)
+        } else {
+            None
         }
     }
 
     pub(crate) fn offered_lot(&self) -> Option<&GiftLot> {
         match self {
             Self::Reply { .. } => None,
-            Self::Offer { lot, .. } | Self::Counter { lot, .. } => Some(lot),
+            Self::Offer { lot, .. } | Self::Counter { lot, .. } | Self::Exchange { lot, .. } => Some(lot),
         }
     }
 }
@@ -1175,7 +1214,7 @@ impl HeapBytes for NpcHandover {
                 recipient.heap_bytes()?.checked_add(lot.heap_bytes()?)
             }
             // The shared prior terms carry their own reservation.
-            Self::Counter { lot, .. } => lot.heap_bytes(),
+            Self::Counter { lot, .. } | Self::Exchange { lot, .. } => lot.heap_bytes(),
         }
     }
 }
