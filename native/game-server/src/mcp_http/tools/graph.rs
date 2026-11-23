@@ -290,6 +290,7 @@ fn inspect_definition(
             Inspected {
                 definition,
                 relationships: page,
+                browse_relationships: supported(kind),
             },
             budget,
             recipient,
@@ -498,10 +499,13 @@ struct LiveSubject<'a> {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct Inspected<'a> {
     #[serde(flatten)]
     definition: Definition<'a>,
     relationships: Page<'a>,
+    // A readable source need not have an indexed neighborhood or a trace.
+    browse_relationships: bool,
 }
 
 #[derive(Serialize)]

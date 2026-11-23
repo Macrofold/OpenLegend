@@ -300,6 +300,14 @@ Across 24 Start and Ready changes, 61 concurrent state responses carried the tok
 
 The locked builds used base `7d9415987c88`. The final source patch is `3d79827c8faa` and executable `609ac6c51e0b`. The local archive `nsc04-operator-maintenance-20261122` retains `epoch-view-final`, `hold-exit-token-final` and `npc-hold-token-final`. The ordinary Operations and missed-start restart ran again on executable `45637ef92c19`. The unchanged timer, grant, bounded history and background consumers passed on `0acd1b77dded2`. All recorded fixture databases were absent after teardown. The server ran without Node. The controlled provider exchanges recorded zero charges. Network and scoped formatting checks passed. No unit suite or timing comparison ran.
 
+## Original command recovery after a stale Rust stream
+
+On November 23, 2026, Chromium equipped a carried knife through Inventory. Rust saved the attachment and one receipt while the original HTTP response was held. A signed control transfer changed the authority between the subsequent state read and stream admission. The real stream request returned HTTP 409 without a projection. The browser reconnected, kept the original receipt reference under the same owner and timeline, and showed the already equipped knife. Inventory's **Check result** recovered the exact saved answer without sending a second Equip.
+
+The earlier browser erased the recovery reference in the same scenario, even though PostgreSQL still held one receipt. Signing a different account into the same browser while the 409 was held cleared the first account's reference and refused its receipt. A separate Play revocation returned 403 and closed the private view. The changed-stream path clears the old view immediately. Only the original recovery reference waits for the fresh signed view's owner and timeline check.
+
+The fixed browser tree and index were `b397a3bb7886` and `bbb12de09a41`. Both browsers used Rust executable `0e50d59d18f9`. The local archive `nsc04-browser-stream-receipts-20261123` (`ee1ee7994b99`) preserves results `616efa7979dc`, `79ab7d04a2bd`, `62ef0ddd076e` and `f1ce462f9640`, plus the earlier fixture failures. All browsers, listeners and disposable databases were closed. This is local correctness evidence.
+
 ## Stand-alone Rust public spectator map — November 22, 2026
 
 A separately signed-in spectator opened World operations in Chromium. It drew six bodies and the authored terrain without names, identifiers, inventories, speech or a private note saved during the run. The initial response matched the Source projection of the same opening, including each body’s category, position and order. The normal five-second refresh showed the player move from x=24.0 to x=23.3. Spectating alone left the clock paused and opened no gameplay stream. The spectator’s direct character state, controls, stream and walk requests were refused. An inspect-only account could see permitted status without the map.

@@ -29,6 +29,7 @@ let worldGeneration = '';
 let viewScope = '';
 let privateDraftNamespace = '';
 let privateDraftTimeline = '';
+let pendingStreamRecoveryOwner: string | undefined;
 let accessGeneration = 0;
 let currentContacts = new Set<string>();
 export class AccessError extends Error {}
@@ -80,6 +81,7 @@ export function clearAccess(options?: {
   preservePendingCommands?: boolean;
   preserveCheckpointResultsFor?: string;
 }): void {
+  pendingStreamRecoveryOwner = undefined;
   accessGeneration++;
   worldGeneration = '';
   viewScope = '';
@@ -110,7 +112,35 @@ export function clearAccess(options?: {
     /* Browser storage is optional. */
   }
 }
+
+/** A command receipt can outlive its stream, but belongs to the same private owner and timeline. */
+export function commandRecoveryOwner(view: GameView): string | undefined {
+  if (!view.access?.commandRecoveryScope) return undefined;
+  return JSON.stringify([
+    view.access.commandRecoveryScope,
+    view.worldId,
+    view.access.actorId,
+    view.player.id,
+    view.saveTimeline,
+  ]);
+}
+
+/** Invalidate the old view immediately. Keep only receipt recovery descriptions until fresh access. */
+export function invalidateStreamAccess(view: GameView): void {
+  const owner = commandRecoveryOwner(view);
+  clearAccess({
+    preservePendingCommands: !!owner,
+    preserveCheckpointResultsFor: view.checkpoint?.recoveryScope,
+  });
+  pendingStreamRecoveryOwner = owner;
+}
+
 export function acceptAccess(view: GameView): void {
+  if (pendingStreamRecoveryOwner) {
+    if (pendingStreamRecoveryOwner !== commandRecoveryOwner(view))
+      clearAccess({ preserveCheckpointResultsFor: view.checkpoint?.recoveryScope });
+    pendingStreamRecoveryOwner = undefined;
+  }
   currentContacts = new Set(
     view.entities.flatMap((entity) => [
       entity.id,

@@ -99,6 +99,7 @@ pub(crate) async fn capture_host(
             can_operate: access.can_operate,
             can_inspect_mind: (god_mode && access.can_inspect).then_some(true),
             can_inspect_intelligence: (god_mode && access.can_inspect).then_some(true),
+            can_inspect_world: (god_mode && access.can_inspect).then_some(true),
             can_show_all_events: (god_mode && access.can_inspect).then_some(true),
             can_edit_person_memory: (god_mode && access.can_create).then_some(true),
             mode: if access.local {

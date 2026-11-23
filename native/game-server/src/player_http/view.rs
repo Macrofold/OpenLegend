@@ -372,12 +372,15 @@ async fn events(
     let revisions = views.routes.saves.subscribe();
     let (first, _) = match views.first(&tab, false).await {
         Ok(result) => result,
+        Err(error) if stale_view_scope(&error) => {
+            return stream_access_failure(AccessError::Changed);
+        }
         Err(error) => return unavailable(error),
     };
     if let Some(key) = &query.scope
         && first.scope.scope.key().ok().as_ref() != Some(key)
     {
-        return access_failure(AccessError::Changed);
+        return stream_access_failure(AccessError::Changed);
     }
     let prepare: PrepareView = {
         let views = views.clone();
@@ -393,7 +396,7 @@ async fn events(
             controlling
         }) {
             Ok(controlling) => controlling,
-            Err(error) => return access_failure(error),
+            Err(error) => return stream_access_failure(error),
         };
     let presence = if controlling {
         let background = match views
@@ -412,7 +415,7 @@ async fn events(
             .connect(first.scope.clone(), background)
         {
             Ok(presence) => presence,
-            Err(error) => return access_failure(error),
+            Err(error) => return stream_access_failure(error),
         }
     } else {
         None
@@ -439,6 +442,17 @@ async fn events(
         Body::new(body),
     )
         .into_response()
+}
+
+fn stream_access_failure(error: AccessError) -> Response {
+    // A stale stream identity can arise between the usable state response and
+    // this admission. A fresh read must prove current access before reconnect.
+    if matches!(error, AccessError::Changed) {
+        let mut response = access_failure(error);
+        *response.status_mut() = StatusCode::CONFLICT;
+        return response;
+    }
+    access_failure(error)
 }
 
 fn world_access(error: AccessError) -> ViewError {

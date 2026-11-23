@@ -22,6 +22,7 @@ type Inspection = {
   node?: RelationshipNode;
   ref?: RelationshipRef;
   data: unknown;
+  browseRelationships?: boolean;
   relationships: RelationshipPage & { subject?: { kind: 'entity' | 'item'; id: string } };
 };
 const key = (ref: RelationshipRef) => JSON.stringify([ref.kind, ref.id, ref.version]);
@@ -41,7 +42,7 @@ export function WorldInspection({
   sessionId?: string;
   connected: boolean;
   conditionPolicyRevision: number;
-  onRemovalPrepared(sessionId: string, plan: WorldAgentPlanView): void;
+  onRemovalPrepared?(sessionId: string, plan: WorldAgentPlanView): void;
 }) {
   const [query, setQuery] = useState(''),
     [nodes, setNodes] = useState<RelationshipNode[]>([]);
@@ -200,13 +201,14 @@ export function WorldInspection({
   }
   const [direction, setDirection] = useState<'out' | 'in' | 'both'>('out');
   const page = inspection?.relationships;
+  const canBrowseRelationships = !!(onRemovalPrepared || inspection?.browseRelationships);
   return (
     <section
       className="ol-inventions ol-creator-page"
       aria-label="World-owner relationship inspection"
     >
       <header className="ol-creator-context">
-        <Tag tone="highlight">God mode · Read-only inspection</Tag>
+        <Tag tone="highlight">Read-only inspection</Tag>
         <h3>World relationships</h3>
         <p>
           This reads world records, not your character’s knowledge. Relationships are source-backed,
@@ -401,7 +403,8 @@ export function WorldInspection({
           <p className="ol-caption">
             {root.kind} · {root.id} · version {root.version.slice(0, 12)}
           </p>
-          {root.kind === 'status-effect' &&
+          {onRemovalPrepared &&
+            root.kind === 'status-effect' &&
             inspection.node?.layer === 'definition' &&
             inspection.node.canInspect &&
             !inspection.node.availability && (
@@ -436,26 +439,27 @@ export function WorldInspection({
             >
               Refresh this source
             </Button>
-            {(['out', 'in', 'both'] as const).map((value) => (
-              <Button
-                size="sm"
-                key={value}
-                disabled={busy}
-                variant="quiet"
-                aria-pressed={direction === value}
-                onPress={() => {
-                  setDirection(value);
-                  relationships(value);
-                }}
-              >
-                {value === 'out'
-                  ? 'Uses / produces'
-                  : value === 'in'
-                    ? 'Used by'
-                    : 'Both directions'}
-              </Button>
-            ))}
-            {!page.subject && root.kind !== 'memory-record' && (
+            {canBrowseRelationships &&
+              (['out', 'in', 'both'] as const).map((value) => (
+                <Button
+                  size="sm"
+                  key={value}
+                  disabled={busy}
+                  variant="quiet"
+                  aria-pressed={direction === value}
+                  onPress={() => {
+                    setDirection(value);
+                    relationships(value);
+                  }}
+                >
+                  {value === 'out'
+                    ? 'Uses / produces'
+                    : value === 'in'
+                      ? 'Used by'
+                      : 'Both directions'}
+                </Button>
+              ))}
+            {canBrowseRelationships && !page.subject && root.kind !== 'memory-record' && (
               <Button
                 size="sm"
                 disabled={busy}
@@ -521,7 +525,7 @@ export function WorldInspection({
               );
             })}
           </ul>
-          {page.nextCursor && (
+          {canBrowseRelationships && page.nextCursor && (
             <Button
               size="sm"
               disabled={busy}

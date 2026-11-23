@@ -1079,6 +1079,8 @@ export interface GameView {
     canInspectMind?: boolean;
     /** May open private cognition diagnostics for currently permitted records. */
     canInspectIntelligence?: boolean;
+    /** May open the read-only world inspection panel. */
+    canInspectWorld?: boolean;
     /** May show additional event types in their own permitted history. */
     canShowAllEvents?: boolean;
     /** May edit the importance of a permitted personal memory. */

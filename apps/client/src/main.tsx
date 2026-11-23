@@ -82,6 +82,8 @@ import {
   WorldCreationHostError,
   clearAccess,
   acceptAccess,
+  commandRecoveryOwner,
+  invalidateStreamAccess,
   eventsUrl,
   applyGamePatch,
   getState,
@@ -137,6 +139,7 @@ import {
   type PersonDraft,
 } from './ui/god-tools';
 import { WorldAgent } from './ui/world-agent';
+import { WorldInspection } from './ui/world-inspection';
 import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
 import { CampActivity, type ActivityEntry } from './ui/camp-activity';
@@ -619,18 +622,13 @@ function App({
           previous.access?.privateDraftScope !== next.access?.privateDraftScope ||
           previous.saveTimeline !== next.saveTimeline
         ) {
-          const samePrivateOwner =
-            !!previous.access?.commandRecoveryScope &&
-            previous.access.commandRecoveryScope === next.access?.commandRecoveryScope &&
-            previous.worldId === next.worldId &&
-            previous.access.actorId === next.access?.actorId &&
-            previous.player.id === next.player.id &&
-            previous.saveTimeline === next.saveTimeline;
+          const previousOwner = commandRecoveryOwner(previous);
           // A successful load replaces the timeline, but its original outcome
           // remains readable under the same native checkpoint authority. This
           // exception never preserves an executable old-timeline command.
           clearAccess({
-            preservePendingCommands: samePrivateOwner,
+            preservePendingCommands:
+              !!previousOwner && previousOwner === commandRecoveryOwner(next),
             preserveCheckpointResultsFor:
               previous.checkpoint?.recoveryScope === next.checkpoint?.recoveryScope
                 ? next.checkpoint?.recoveryScope
@@ -674,6 +672,11 @@ function App({
       clearTimeout(timer);
       timer = setTimeout(() => void bootstrap(), delay);
     };
+    const refreshStreamAccess = (current: GameView) => {
+      pauseTab();
+      invalidateStreamAccess(current);
+      resetApplication();
+    };
     function connectEvents() {
       const current = streamView;
       if (!active || !current || isPaused()) return;
@@ -699,9 +702,7 @@ function App({
           } else if (frame.event === 'access-changed') {
             source = undefined;
             connection.close();
-            pauseTab();
-            clearAccess();
-            resetApplication();
+            refreshStreamAccess(streamView ?? current);
           } else if (frame.event === 'reset') {
             try {
               const reset = JSON.parse(frame.data) as GameView;
@@ -734,6 +735,10 @@ function App({
           if (result.reason === 'connection_failed' && result.failure.kind === 'http_status') {
             const status = result.failure.status;
             if (status === 204) return;
+            if (status === 409) {
+              refreshStreamAccess(current);
+              return;
+            }
             if (status === 401 || status === 403) {
               pauseTab();
               clearAccess();
@@ -904,14 +909,24 @@ function App({
   }));
   const canUseWorldAgent = view?.access?.canUseWorldAgent ?? false;
   const canInspectIntelligence = !!(view?.godMode || view?.access?.canInspectIntelligence);
+  const canInspectWorld = !!(view?.godMode || view?.access?.canInspectWorld);
   useEffect(() => {
     if (!canUseWorldAgent)
       setOpen((panels) =>
         panels.includes('world-editor') ? panels.filter((id) => id !== 'world-editor') : panels,
       );
   }, [canUseWorldAgent]);
+  useEffect(() => {
+    if (!canInspectWorld)
+      setOpen((panels) =>
+        panels.includes('world-inspection')
+          ? panels.filter((id) => id !== 'world-inspection')
+          : panels,
+      );
+  }, [canInspectWorld]);
   const panelVisible = (id: PanelId) =>
     (id !== 'world-editor' || canUseWorldAgent) &&
+    (id !== 'world-inspection' || canInspectWorld) &&
     open.includes(id) &&
     (!narrow || (open.at(-1) === id && !inspectorSheetVisible && !bagSheetShowing));
   const inventoryFeedbackVisible = useRef(false);
@@ -1035,6 +1050,7 @@ function App({
   }
   function show(id: PanelId) {
     if (id === 'world-editor' && !canUseWorldAgent) return;
+    if (id === 'world-inspection' && !canInspectWorld) return;
     if (id === 'inventory') id = 'character';
     if (!panelVisible(id) && document.activeElement)
       panelOpeners.current.set(id, document.activeElement);
@@ -2575,6 +2591,17 @@ function App({
       case 'agent':
       case 'world-editor':
       case 'world-inspection':
+        if (id === 'world-inspection' && !view.godMode) {
+          return canInspectWorld ? (
+            <WorldInspection
+              key={JSON.stringify([view.worldId, view.access?.scope, view.historyEpoch])}
+              actorId={view.player.id}
+              worldId={view.worldId}
+              connected={connected}
+              conditionPolicyRevision={conditionPolicyRevision}
+            />
+          ) : null;
+        }
         return (
           <WorldAgent
             mode={id === 'agent' ? 'invent' : id === 'world-editor' ? 'author' : 'inspect'}
@@ -2762,6 +2789,7 @@ function App({
             </Section>
             {(canUseWorldAgent ||
               view.godMode ||
+              canInspectWorld ||
               canInspectIntelligence ||
               view.access?.canOperate) && (
               <Section title="World tools">
@@ -2773,11 +2801,9 @@ function App({
                     </p>
                   </>
                 )}
-                {view.godMode && (
-                  <>
-                    <Button onPress={() => openGameTask('time')}>Time</Button>
-                    <Button onPress={() => openGameTask('world-inspection')}>Inspect world</Button>
-                  </>
+                {view.godMode && <Button onPress={() => openGameTask('time')}>Time</Button>}
+                {canInspectWorld && (
+                  <Button onPress={() => openGameTask('world-inspection')}>Inspect world</Button>
                 )}
                 {canInspectIntelligence && (
                   <Button onPress={() => openGameTask('intelligence')}>

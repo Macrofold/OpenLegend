@@ -464,7 +464,7 @@ fn read_selection(
                     .any(|section| matches!(section, Section::Relationships))
             }) {
                 return match recipient {
-                    Recipient::Signed(_) if graph::supported(&input.kind) => {
+                    Recipient::Signed(_) => {
                         Ok(Selection::Relationships(graph::Request::Inspect(input)))
                     }
                     _ => Err(Failure::Unavailable),
