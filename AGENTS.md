@@ -145,6 +145,8 @@ For code, design or documentation work, follow [Documentation](.agents/rules/doc
 
 ## Work discipline
 
+**Local disk exhaustion.** If the local computer runs out of disk space during any task, pause immediately and notify Mike. Wait for his direction before clearing space, retrying or resuming work.
+
 Use [Rebase](.agents/skills/openlegend-rebase/SKILL.md) at initial implementation startup and before every rebase/merge, including standalone conflict-free operations. It owns base precedence, refresh, safe history/worktree coordination and the mandatory all-work conflict stop; [rebase verification](.agents/rules/verification.md#rebase-verification) owns selected checks. Resuming/compaction does not restart startup. Report exact refs and all [branch/checkout operations](#reporting-work). Unqualified `main` means local `main`, not `origin/main`. Confirm an apparent merge request if speech-to-text may have mistaken “report back” for “merge back.”
 
 Preserve unrelated edits, pinned dependencies and the single lockfile. Write new automated tests only when Mike asks. [Verification](.agents/rules/verification.md) owns focused existing/downstream checks, disposable scenarios, static checks, PostgreSQL, meaningful missing coverage and impact-based stress selection. Required local checks and merge gates remain.
