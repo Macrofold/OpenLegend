@@ -4,7 +4,9 @@
 use super::*;
 use crate::{
     player_events::{EventSourceDetail, EventSourceReference, PublicEvent},
-    store::{DurableHead, EventBoundary, EventFeed, EventSourceQuery},
+    store::{
+        DurableHead, EventBoundary, EventFeed, EventSourceQuery, recall::browse::MemorySearch,
+    },
     world::PlayerDisclosure,
 };
 use openlegend_simulation::encoding::{hex_bytes, json_record, sha256_hex};
@@ -21,6 +23,7 @@ pub(super) struct RequestOptions {
     at: Option<f64>,
     cursor: Option<String>,
     limit: Option<u64>,
+    q: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -38,6 +41,8 @@ struct PublicFeed {
     next_cursor: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     newer_cursor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    scan_limited: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -96,9 +101,13 @@ pub(super) async fn events(
             "Check the event filters and try again.",
         );
     }
+    let search = match super::recall::terms(&state, options.q.as_deref(), 200) {
+        Ok(search) => search.map(Arc::new),
+        Err(response) => return response,
+    };
     let until = Instant::now() + REQUEST_TIMEOUT;
     for _ in 0..2 {
-        match read(&state, &scope, &options, category, until).await {
+        match read(&state, &scope, &options, category, search.clone(), until).await {
             Ok(PlayerDisclosure::Published(bytes)) => return json_response(StatusCode::OK, bytes),
             Ok(PlayerDisclosure::Changed | PlayerDisclosure::Busy)
             | Err(WorldError::Storage(StoreError::StaleCut)) => continue,
@@ -114,6 +123,7 @@ async fn read(
     scope: &Arc<AuthorizedScope>,
     options: &RequestOptions,
     category: &str,
+    search: Option<Arc<MemorySearch>>,
     until: Instant,
 ) -> Result<PlayerDisclosure, WorldError> {
     let game = &state.game;
@@ -141,6 +151,7 @@ async fn read(
             category,
             options.kind.as_ref(),
             options.show_all,
+            search.as_ref().map(|search| &search.words),
         ))
         .map_err(|_| StoreError::InvalidRecord)?
         .as_bytes(),
@@ -167,10 +178,11 @@ async fn read(
                 boundary,
                 limit: options.limit.unwrap_or(50) as i64,
             },
+            search,
         )
         .await?;
     let language = game.language().cloned().ok_or(WorldError::ProviderKind)?;
-    let feed: EventFeed = if rows.is_empty() {
+    let feed: EventFeed = if !rows.needs_preparation() {
         rows.prepare(&language, budget)?
     } else {
         let work = budget.clone();
@@ -183,13 +195,11 @@ async fn read(
         .scoped(&scope.scope)
         .map_err(|_| StoreError::InvalidRecord)?;
     let temporal = feed
-        .events
-        .iter()
+        .proofs()
         .filter_map(|row| row.temporal.as_ref().map(|(id, at)| (id, *at)))
         .collect::<Vec<_>>();
     let expiry = feed
-        .events
-        .iter()
+        .proofs()
         .filter_map(|row| row.event.expires_at)
         .reduce(f64::min);
     let next_cursor = feed
@@ -234,6 +244,7 @@ async fn read(
                         events,
                         next_cursor,
                         newer_cursor,
+                        scan_limited: feed.scanned_window.then_some(true),
                     },
                     b"",
                     b"",

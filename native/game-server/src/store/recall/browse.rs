@@ -239,7 +239,7 @@ impl Store {
 }
 
 impl MemorySearch {
-    fn matches(
+    pub(crate) fn matches(
         &self,
         text: &JsText,
         budget: &openlegend_simulation::host::ByteBudget,

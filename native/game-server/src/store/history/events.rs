@@ -4,7 +4,7 @@
 
 use super::super::{
     DurableHead, Store, StoreError, StoreResult, durable_head, ordinal, read::admitted_query,
-    sql_ordinal,
+    recall::browse::MemorySearch, sql_ordinal,
 };
 use super::transcript::{VerifiedEventBody, retained_event};
 use crate::{language::LanguageProvider, player_events::RetainedPlayerEvent};
@@ -16,6 +16,10 @@ use openlegend_simulation::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio_postgres::{Row, Transaction, types::ToSql};
+
+mod search;
+
+type PageFilter<'a> = [&'a (dyn ToSql + Sync); 5];
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub(crate) struct EventEdge {
@@ -48,15 +52,24 @@ pub(crate) struct EventSourceQuery {
     pub limit: i64,
 }
 
-pub(crate) struct EventFeedRows {
-    actor: String,
-    rows: Vec<Row>,
+struct EventWindow {
     watermark: Option<EventEdge>,
-    newer: bool,
     before: Option<EventEdge>,
+    newer: bool,
     show_newer: bool,
     limit: usize,
-    _transfer: ByteReservation,
+}
+
+pub(crate) struct EventFeedRows(FeedInput);
+
+enum FeedInput {
+    Raw {
+        actor: String,
+        rows: Vec<Row>,
+        window: EventWindow,
+        _transfer: ByteReservation,
+    },
+    Matched(EventFeed),
 }
 
 pub(crate) struct RetainedEventRow {
@@ -70,10 +83,18 @@ pub(crate) struct EventFeed {
     pub events: Vec<RetainedEventRow>,
     pub older: Option<EventBoundary>,
     pub newer: Option<EventBoundary>,
+    pub scanned_window: bool,
+    extra_match: Option<RetainedEventRow>,
     _custody: ByteReservation,
 }
 
 impl EventFeed {
+    /// A body that establishes continuation must meet the same disclosure
+    /// check as displayed matches.
+    pub(crate) fn proofs(&self) -> impl Iterator<Item = &RetainedEventRow> {
+        self.events.iter().chain(self.extra_match.iter())
+    }
+
     pub(crate) fn projection_bytes(&self) -> Option<usize> {
         self._custody.bytes().checked_add(4096)?.checked_mul(2)
     }
@@ -134,17 +155,26 @@ impl Store {
         head: DurableHead,
         actor: String,
         options: EventSourceQuery,
+        search: Option<Arc<MemorySearch>>,
     ) -> StoreResult<EventFeedRows> {
         let store = self.clone();
-        self.read_operational(move |tx| {
-            Box::pin(async move {
-                if durable_head(tx).await?.as_ref() != Some(&head) {
-                    return Err(StoreError::StaleCut);
-                }
-                store.read_event_feed(tx, &head, actor, options).await
+        if let Some(search) = search {
+            self.read_isolated(move |tx| {
+                Box::pin(async move {
+                    store
+                        .read_event_feed(tx, &head, actor, options, Some(&search))
+                        .await
+                })
             })
-        })
-        .await
+            .await
+        } else {
+            self.read_operational(move |tx| {
+                Box::pin(
+                    async move { store.read_event_feed(tx, &head, actor, options, None).await },
+                )
+            })
+            .await
+        }
     }
 
     /// Select the exact permitted IDs and at most one correction per ID under
@@ -196,7 +226,11 @@ impl Store {
         head: &DurableHead,
         actor: String,
         options: EventSourceQuery,
+        search: Option<&MemorySearch>,
     ) -> StoreResult<EventFeedRows> {
+        if durable_head(tx).await?.as_ref() != Some(head) {
+            return Err(StoreError::StaleCut);
+        }
         let query_budget = self
             .schema
             .transcript_account
@@ -207,7 +241,7 @@ impl Store {
             .budget
             .reserve(query_budget)
             .map_err(|_| StoreError::Capacity)?;
-        let params: [&(dyn ToSql + Sync); 5] = [
+        let params: PageFilter<'_> = [
             &head.world_id,
             &actor,
             &options.kind,
@@ -230,16 +264,18 @@ impl Store {
             .transpose()?
         };
         let Some(watermark) = watermark else {
-            return Ok(EventFeedRows {
+            return Ok(EventFeedRows(FeedInput::Raw {
                 actor,
                 rows: Vec::new(),
-                watermark: None,
-                newer: false,
-                before: None,
-                show_newer: false,
-                limit: 0,
+                window: EventWindow {
+                    watermark: None,
+                    before: None,
+                    newer: false,
+                    show_newer: false,
+                    limit: 0,
+                },
                 _transfer: self.budget.reserve(0).map_err(|_| StoreError::Capacity)?,
-            });
+            }));
         };
         let mut newer = options
             .boundary
@@ -267,23 +303,58 @@ impl Store {
             .as_ref()
             .map(|boundary| &boundary.before)
             .or(initial_anchor.as_ref());
-        let show_newer = options.boundary.is_some() || options.at.is_some();
-        let before = cutoff.cloned();
+        let include_first = options.boundary.is_none() && !newer;
+        let window = EventWindow {
+            watermark: Some(watermark),
+            newer,
+            before: cutoff.cloned(),
+            show_newer: options.boundary.is_some() || options.at.is_some(),
+            limit: usize::try_from(options.limit).map_err(|_| StoreError::InvalidRecord)?,
+        };
+        if let Some(search) = search {
+            let feed = self
+                .search_event_feed(tx, &params, &actor, window, include_first, search)
+                .await?;
+            return Ok(EventFeedRows(FeedInput::Matched(feed)));
+        }
+        let offered = options.limit.checked_add(1).ok_or(StoreError::Capacity)?;
+        let (transfer, rows) = self
+            .event_chunk(
+                tx,
+                &params,
+                &window,
+                window.before.as_ref(),
+                include_first,
+                offered,
+            )
+            .await?;
+        Ok(EventFeedRows(FeedInput::Raw {
+            actor,
+            rows,
+            window,
+            _transfer: transfer,
+        }))
+    }
+
+    async fn event_chunk(
+        &self,
+        tx: &Transaction<'_>,
+        params: &PageFilter<'_>,
+        window: &EventWindow,
+        cutoff: Option<&EventEdge>,
+        include_first: bool,
+        offered: i64,
+    ) -> StoreResult<(ByteReservation, Vec<Row>)> {
+        let watermark = window.watermark.as_ref().ok_or(StoreError::InvalidRecord)?;
         let cutoff_order = cutoff.map(|p| sql_ordinal(p.order)).transpose()?;
         let cutoff_id = cutoff.map(|p| p.id.as_str());
         let after_mark = sql_ordinal(watermark.order)?;
-        let offered = options.limit.checked_add(1).ok_or(StoreError::Capacity)?;
-        let order = if newer { "ASC" } else { "DESC" };
-        let comparison = if options
-            .boundary
-            .as_ref()
-            .is_some_and(|boundary| boundary.newer)
-        {
-            ">"
-        } else if options.boundary.is_some() {
-            "<"
+        let (order, comparison) = if window.newer {
+            ("ASC", ">")
+        } else if include_first {
+            ("DESC", "<=")
         } else {
-            "<="
+            ("DESC", "<")
         };
         let select = format!(
             "WITH selected AS MATERIALIZED (
@@ -307,23 +378,13 @@ impl Store {
             &cutoff_id,
             &offered,
         ];
-        let (transfer, rows) = admitted_query(tx, &select, &all, &self.budget).await?;
-        Ok(EventFeedRows {
-            actor,
-            rows,
-            watermark: Some(watermark),
-            newer,
-            before,
-            show_newer,
-            limit: usize::try_from(options.limit).map_err(|_| StoreError::InvalidRecord)?,
-            _transfer: transfer,
-        })
+        admitted_query(tx, &select, &all, &self.budget).await
     }
 }
 
 impl EventFeedRows {
-    pub(crate) fn is_empty(&self) -> bool {
-        self.rows.is_empty()
+    pub(crate) fn needs_preparation(&self) -> bool {
+        matches!(&self.0, FeedInput::Raw { rows, .. } if !rows.is_empty())
     }
 
     pub(crate) fn prepare(
@@ -331,18 +392,17 @@ impl EventFeedRows {
         language: &LanguageProvider,
         budget: &ByteBudget,
     ) -> StoreResult<EventFeed> {
-        let Self {
-            actor,
-            mut rows,
-            watermark,
-            newer,
-            before,
-            show_newer,
-            limit,
-            _transfer,
-        } = self;
-        let more = rows.len() > limit;
-        rows.truncate(limit);
+        let (actor, mut rows, window, _transfer) = match self.0 {
+            FeedInput::Matched(feed) => return Ok(feed),
+            FeedInput::Raw {
+                actor,
+                rows,
+                window,
+                _transfer,
+            } => (actor, rows, window, _transfer),
+        };
+        let more = rows.len() > window.limit;
+        rows.truncate(window.limit);
         let mut owned = event_rows_capacity(rows.len(), budget)?;
         let mut events = Vec::with_capacity(rows.len());
         for row in rows {
@@ -350,36 +410,64 @@ impl EventFeedRows {
                 &row, &actor, language, budget, &mut owned,
             )?);
         }
-        if !newer {
+        let continuing = if more {
+            events.last().map(|row| row.edge.clone())
+        } else {
+            None
+        };
+        Ok(window.finish(events, continuing, false, None, owned))
+    }
+}
+
+impl EventWindow {
+    fn finish(
+        self,
+        mut events: Vec<RetainedEventRow>,
+        continuing: Option<EventEdge>,
+        scanned_window: bool,
+        extra_match: Option<RetainedEventRow>,
+        custody: ByteReservation,
+    ) -> EventFeed {
+        if !self.newer {
             events.reverse();
         }
         let low = events.first().map(|event| &event.edge);
-        let high = events.last().map(|event| &event.edge).or(before.as_ref());
+        let high = events
+            .last()
+            .map(|event| &event.edge)
+            .or(self.before.as_ref());
         let page = |edge: &EventEdge, newer| {
-            watermark.as_ref().map(|watermark| EventBoundary {
+            self.watermark.as_ref().map(|watermark| EventBoundary {
                 watermark: watermark.clone(),
                 before: edge.clone(),
                 newer,
             })
         };
-        let older = if (newer && before.is_some()) || (!newer && more) {
-            low.and_then(|edge| page(edge, false))
+        let older = if self.newer {
+            low.filter(|_| self.before.is_some())
+                .and_then(|edge| page(edge, false))
         } else {
-            None
+            continuing.as_ref().and_then(|edge| page(edge, false))
         };
-        let newest = if (newer && more)
-            || (!newer && show_newer && high.zip(watermark.as_ref()).is_some_and(|(a, b)| a < b))
+        let newer = if self.newer {
+            continuing.as_ref().and_then(|edge| page(edge, true))
+        } else if self.show_newer
+            && high
+                .zip(self.watermark.as_ref())
+                .is_some_and(|(a, b)| a < b)
         {
             high.and_then(|edge| page(edge, true))
         } else {
             None
         };
-        Ok(EventFeed {
+        EventFeed {
             events,
             older,
-            newer: newest,
-            _custody: owned,
-        })
+            newer,
+            scanned_window,
+            extra_match,
+            _custody: custody,
+        }
     }
 }
 
