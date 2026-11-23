@@ -189,9 +189,10 @@ impl Views {
                     attempt.view.read(),
                     attempt.view.event_ids(),
                     attempt.view.control_preview_cut(),
-                    |allowed, budget| {
+                    attempt.view.attack_review(),
+                    |allowed, review_allowed, budget| {
                         if encode_http {
-                            let bytes = wire::encode(&attempt.view.wire(allowed), b"", b"", budget)
+                            let bytes = wire::encode(&attempt.view.wire(allowed, review_allowed), b"", b"", budget)
                                 .map_err(WorldError::Wire)?;
                             openlegend_simulation::profile_count!(FRAME_HTTP, 1);
                             Ok(Some(bytes))

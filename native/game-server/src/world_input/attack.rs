@@ -61,6 +61,12 @@ pub(crate) struct ReleaseRenewal {
     action_id: String,
 }
 
+impl ReleaseRenewal {
+    pub(super) fn action_id(&self) -> &str {
+        &self.action_id
+    }
+}
+
 #[derive(Default)]
 pub(super) struct AttackState {
     version: u64,
@@ -72,6 +78,15 @@ struct Gesture {
     begin: String,
     action: Option<String>,
     phase: Phase,
+}
+
+impl Gesture {
+    fn matches_renewal(&self, update: &ReleaseRenewal, token: Uuid) -> bool {
+        update.attack_input_token == token
+            && update.gesture_sequence == self.sequence
+            && update.begin_command_id == self.begin
+            && self.action.as_ref() == Some(&update.action_id)
+    }
 }
 
 enum Phase {
@@ -86,6 +101,8 @@ struct Coverage {
     ends: f64,
     expires: Instant,
     renewal: u64,
+    checked_advance: Option<u64>,
+    review_request: Arc<ReleaseReviewRequest>,
 }
 
 pub(crate) struct AttackTurn {
@@ -113,6 +130,7 @@ pub(super) struct ReleaseProof {
     sequence: u64,
     token: Uuid,
     starts: f64,
+    pub(super) review_request: Arc<ReleaseReviewRequest>,
 }
 
 impl AttackState {
@@ -144,41 +162,77 @@ impl AttackState {
         }
     }
 
+    pub(super) fn matches_renewal(
+        &self,
+        update: &ReleaseRenewal,
+        token: Uuid,
+        sequence: u64,
+        now: Instant,
+    ) -> bool {
+        self.pending().is_some_and(|(gesture, window)| {
+            gesture.matches_renewal(update, token)
+                && window.expires > now
+                && (window.renewal + 1..=MAX_SAFE_INTEGER).contains(&sequence)
+        })
+    }
+
     pub(super) fn renew(
         &mut self,
         update: &ReleaseRenewal,
         token: Uuid,
         sequence: u64,
         now: Instant,
+        live_pending_release: Option<&str>,
     ) -> bool {
-        let Some(gesture) = self.gesture.as_mut() else { return false; };
-        let Phase::Pending(window) = &mut gesture.phase else { return false; };
-        if update.attack_input_token != token || update.gesture_sequence != gesture.sequence
-            || update.begin_command_id != gesture.begin || gesture.action.as_ref() != Some(&update.action_id)
-            || window.expires <= now || !(window.renewal + 1..=MAX_SAFE_INTEGER).contains(&sequence)
-        {
+        if live_pending_release != Some(update.action_id()) || !self.matches_renewal(update, token, sequence, now) {
             return false;
         }
+        let Some(Phase::Pending(window)) = self.gesture.as_mut().map(|gesture| &mut gesture.phase) else {
+            return false;
+        };
         window.renewal = sequence;
         window.expires = now + EXPIRES;
         true
     }
 
-    pub(super) fn offered(&self, now: Instant) -> bool {
-        self.pending().is_some_and(|(_, window)| window.expires > now && window.ends > window.starts)
+    pub(super) fn matches_review_request(&self, request: &Arc<ReleaseReviewRequest>) -> bool {
+        self.pending().is_some_and(|(_, window)| Arc::ptr_eq(&window.review_request, request))
+    }
+
+    pub(super) fn end_pending_review(&mut self) {
+        if let Some(gesture) = &mut self.gesture {
+            gesture.phase = Phase::Ended;
+        }
+    }
+
+    pub(super) fn live(&self, now: Instant) -> bool {
+        self.pending().is_some_and(|(_, window)| window.expires > now)
+    }
+
+    /// Only the advance that checked this exact pending native action can
+    /// renew it without waiting to read the accepted world again.
+    pub(super) fn checked_for_advance(&self, serial: u64) -> bool {
+        self.pending().is_some_and(|(_, window)| window.checked_advance == Some(serial))
     }
 
     pub(super) fn snapshot(
-        &self, now: Instant, token: Uuid, current: impl FnOnce(&str) -> bool,
+        &mut self, now: Instant, token: Uuid, serial: u64, current: impl FnOnce(&str) -> bool,
     ) -> Option<(RuntimeReleaseInput, ReleaseProof)> {
-        let (gesture, window) = self.pending()?;
+        let gesture = self.gesture.as_mut()?;
+        let Phase::Pending(window) = &mut gesture.phase else { return None; };
         let action = gesture.action.as_ref()?;
-        if window.expires <= now || window.ends <= window.starts || !current(action) {
+        // Even a currently empty window proves the intention is still live.
+        // Only positive credited coverage can authorize a native release.
+        if window.expires <= now || !current(action) {
             return None;
         }
+        window.checked_advance = Some(serial);
         Some((
             RuntimeReleaseInput { action_id: action.clone(), starts_at: window.starts, ends_at: window.ends },
-            ReleaseProof { sequence: gesture.sequence, token, starts: window.starts },
+            ReleaseProof {
+                sequence: gesture.sequence, token, starts: window.starts,
+                review_request: window.review_request.clone(),
+            },
         ))
     }
 
@@ -313,6 +367,7 @@ impl WorldInputs {
         turn: &AttackTurn,
         action: Option<&str>,
         pending: bool,
+        request: Option<Arc<ReleaseReviewRequest>>,
         reviewed: bool,
         accept: impl FnOnce() -> Result<T, E>,
     ) -> Result<T, E> {
@@ -343,6 +398,8 @@ impl WorldInputs {
             (AttackOperation::Begin, Some(_), _, _) => Phase::Open,
             (AttackOperation::Release(_), Some(_), true, _) => Phase::Pending(Coverage {
                 starts, ends: starts, expires: now + EXPIRES, renewal: 0,
+                checked_advance: None,
+                review_request: request.ok_or(AccessError::Availability)?,
             }),
             (AttackOperation::Cancel, _, _, _) => Phase::Cancelled,
             _ => Phase::Ended,
@@ -361,11 +418,7 @@ impl WorldInputs {
             // Opening a review withdraws held movement in the same gate.
             // The next view advertises its replacement token. Delayed
             // direction packets from before the modal can never restart it.
-            current.scope.revision = revision;
-            current.scope.movement_input_token = token;
-            current.steering = None;
-            current.sequence = 0;
-            current.held_for_advance = None;
+            current.stop_for_review(revision, token);
         }
         current.attack.version = version;
         current.attack.gesture = Some(gesture);

@@ -587,7 +587,7 @@ impl AdvanceCursor {
                     Some(AdvanceAnswer::Geometry(value)) => Some(EndpointAnswer::Geometry(value)),
                     _ => return Err(invalid().into()),
                 };
-                match cursor.step(core, input, &self.inputs)? {
+                match cursor.step(core, input, &self.inputs, &mut self.release_reviews)? {
                     EndpointStep::Participation(actor) => {
                         self.participation = Some(crate::participation::ParticipationCursor::due(
                             core,
@@ -1534,6 +1534,7 @@ impl AdvanceCursor {
                         navigation: std::mem::take(&mut self.navigation),
                         entity_routes_pending: self.entity_routes_pending,
                         continuation: self.continuation.take(),
+                        release_reviews: std::mem::take(&mut self.release_reviews),
                         events: std::mem::take(&mut self.events),
                         _reservation: self.reservation.take().ok_or_else(invalid)?,
                     }));

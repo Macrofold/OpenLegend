@@ -251,6 +251,7 @@ impl PreparedGame {
             authority.clone(),
             custody.clone(),
             usize::try_from(6 * players)?,
+            usize::try_from(4 * players)?,
         )?);
         let grace = setting("OPEN_LEGEND_EXIT_GRACE_SECONDS", "15")?.parse::<f64>()?;
         if !(1.0..=60.0).contains(&grace) {

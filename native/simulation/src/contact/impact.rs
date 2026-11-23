@@ -47,6 +47,7 @@ pub(crate) enum ContactStep {
 struct RequestedStrike {
     input: TimedReleaseInput,
     may_wait: bool,
+    refresh_review: bool,
     permit: Option<Box<super::StrikePermission>>,
     review: Option<Box<(super::StrikePermission, ByteReservation)>>,
     pending: bool,
@@ -932,12 +933,18 @@ impl ImpactCursor {
         cursor.requested = Some(Box::new(RequestedStrike {
             input,
             may_wait,
+            refresh_review: false,
             permit: permit.map(|permit| Box::new(permit.clone())),
             review: None,
             pending: false,
             committed: None,
         }));
         Ok(cursor)
+    }
+
+    pub(crate) fn refresh_release_review(&mut self) -> Result<(), ExecutionError> {
+        self.requested.as_mut().ok_or(ExecutionError::Invariant)?.refresh_review = true;
+        Ok(())
     }
 
     pub(crate) fn requested_result(&mut self) -> (
@@ -966,10 +973,20 @@ impl ImpactCursor {
         let injury = super::ContactInjury::read(installed, source, target)?;
         let release = timing.assess(request.input)?;
         let digest = || review::timed_strike_digest(definition, injury, request.input, &self.budget);
-        match review::check_damage(
-            installed, source, target, injury.maximum(definition.damage * release.injury_factor),
-            request.permit.as_deref(), digest,
-        )? {
+        let maximum = injury.maximum(definition.damage * release.injury_factor);
+        let checked = review::check_damage(
+            installed, source, target, maximum, request.permit.as_deref(), digest,
+        )?;
+        // A readiness-time change may require new explicit approval. It can
+        // never turn an old permission into a freshly allowed automatic hit.
+        let checked = if request.refresh_review && matches!(checked, Review::Changed)
+            && matches!(review::check_damage(installed, source, target, maximum, None, digest)?, Review::Required)
+        {
+            Review::Required
+        } else {
+            checked
+        };
+        match checked {
             Review::Allowed => {}
             Review::Required => {
                 let (digest, _scratch) = digest()?;

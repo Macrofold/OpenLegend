@@ -336,7 +336,15 @@ function App({
   const [lethalReview, setLethalReview] = useState<{
     review: NonNullable<ApiResult['lethalReview']>;
     action: ActionOption;
+    invitation?: true;
+    timedAttack?: true;
   } | null>(null);
+  const activeAttackInvitation = view?.player.attackReview?.review.id;
+  useEffect(() => {
+    setLethalReview((current) =>
+      current?.invitation && current.review.id !== activeAttackInvitation ? null : current,
+    );
+  }, [activeAttackInvitation]);
   const [lethalBusyReviewId, setLethalBusyReviewId] = useState<string | null>(null);
   const lethalBusy = lethalBusyReviewId !== null && lethalBusyReviewId === lethalReview?.review.id;
   useEffect(
@@ -1358,12 +1366,13 @@ function App({
     const confirmingReviewId = lethalReview.review.id;
     setLethalBusyReviewId(confirmingReviewId);
     try {
-      const result = lethalReview.action.command.execution
-        ? await attack.confirmReview(lethalReview.action, lethalReview.review.id)
-        : await command({
-            ...lethalReview.action,
-            command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
-          });
+      const result =
+        lethalReview.timedAttack || lethalReview.action.command.execution
+          ? await attack.confirmReview(lethalReview.action, lethalReview.review.id)
+          : await command({
+              ...lethalReview.action,
+              command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
+            });
       if (!('lethalReview' in result) || !result.lethalReview)
         setLethalReview((current) =>
           current?.review.id === lethalReview.review.id ? null : current,
@@ -1588,9 +1597,10 @@ function App({
     preferences: actionInput,
     blocked:
       !!picker || targeting || choosingActionSubject || placingConstruction || !!lethalReview,
-    ownReview: !!lethalReview?.action.command.execution,
+    ownReview: !!(lethalReview?.timedAttack || lethalReview?.action.command.execution),
     command,
-    onReview: (action, review) => setLethalReview({ action, review }),
+    onReview: (action, review, invitation) =>
+      setLethalReview({ action, review, invitation, timedAttack: true }),
     notify,
   });
   const primaryAction = usePrimaryAction(
@@ -3617,7 +3627,11 @@ function App({
           review={lethalReview.review}
           busy={lethalBusy}
           cancel={() => {
-            if (lethalReview.action.command.execution) attack.cancelReview(lethalReview.review.id);
+            if (lethalReview.timedAttack || lethalReview.action.command.execution)
+              attack.cancelReview(
+                lethalReview.review.id,
+                lethalReview.action.command.aimId ?? lethalReview.action.command.expectedActionId,
+              );
             else
               void command({
                 id: `cancel-review:${lethalReview.review.id}`,

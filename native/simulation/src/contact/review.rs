@@ -45,8 +45,12 @@ impl StrikePermission {
         self.heap_bytes()
     }
 
-    pub(crate) fn target_id(&self) -> &str {
+    pub fn target_id(&self) -> &str {
         &self.target_id
+    }
+
+    pub fn target_life(&self) -> u64 {
+        self.target_life
     }
 
     pub(crate) fn valid_for_source(&self, actor: &Entity) -> bool {
@@ -237,6 +241,64 @@ pub struct StrikeReviewOffer {
     _custody: ByteReservation,
 }
 
+/// Result of a covered timed release that requires current approval. The
+/// clock has disarmed the old intention. Only its owner may offer a new review.
+pub struct TimedReleaseReview {
+    action: String,
+    offer: StrikeReviewOffer,
+    _custody: ByteReservation,
+}
+
+impl TimedReleaseReview {
+    pub fn actor_id(&self) -> &str {
+        &self.offer.permission.actor_id
+    }
+
+    pub fn action_id(&self) -> &str {
+        &self.action
+    }
+
+    pub fn offer(&self) -> &StrikeReviewOffer {
+        &self.offer
+    }
+
+    pub(crate) fn prepare(
+        state: &crate::simulation::SimulationState,
+        action_id: &str,
+        permission: StrikePermission,
+        custody: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        use crate::host::retained_size::HeapBytes;
+        let actor = &permission.actor_id;
+        let action = state.physical.entities.get(actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?;
+        let rule = state.installed.body_policy.as_ref()
+            .and_then(|policy| policy.value().lethal_attack_review.as_ref())
+            .ok_or(ExecutionError::Invariant)?;
+        let (view, storage, description) = if action.ranged.is_some() {
+            let (view, storage) =
+                ranged_activity_view(state, actor, action, Some(permission.target_id()), budget)?;
+            (view, storage, rule.ranged_description.as_str())
+        } else {
+            let active = state.activity.active(action_id)
+                .map_err(ExecutionError::Activity)?
+                .ok_or(ExecutionError::Invariant)?;
+            let storage = budget.reserve(active.view.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+            (active.view.clone(), storage, rule.description.as_str())
+        };
+        let name_storage = budget.reserve(action_id.len())?;
+        Ok(Self {
+            action: action_id.into(),
+            offer: StrikeReviewOffer::new(permission, custody, view, storage, rule, description)?,
+            _custody: name_storage,
+        })
+    }
+}
+
 impl StrikeReviewOffer {
     pub(crate) fn new(
         permission: StrikePermission,
@@ -268,6 +330,63 @@ impl StrikeReviewOffer {
             _custody: custody,
         })
     }
+}
+
+/// Prepare the range control's private activity label from the current permitted
+/// target chosen by launch review, and fund the copy independently of the action.
+pub(crate) fn ranged_activity_view(
+    state: &crate::simulation::SimulationState,
+    actor: &str,
+    action: &crate::state::Action,
+    reviewed_target: Option<&str>,
+    budget: &ByteBudget,
+) -> Result<(crate::activity::ActivityView, ByteReservation), ExecutionError> {
+    use crate::activity::ActivityView;
+    use crate::host::retained_size::HeapBytes;
+    let aim = action.ranged.as_ref().ok_or(ExecutionError::Invariant)?;
+    let policy = state
+        .installed
+        .manifest
+        .ranged_policy
+        .as_ref()
+        .ok_or(ExecutionError::Invariant)?;
+    let tool = state
+        .installed
+        .retained
+        .items
+        .get(&aim.tool.id)
+        .ok_or(ExecutionError::Invariant)?;
+    let names = crate::worlds::InstalledPersonalNameReader::prepare(
+        &state.physical,
+        &state.reception,
+        &state.installed,
+        &state.experience,
+        actor,
+    )?;
+    let target = reviewed_target
+        .or_else(|| aim.aim_target.as_ref().map(|subject| subject.id.as_str()))
+        .map(|id| names.capture_observer_name(id, budget))
+        .transpose()?;
+    let view_bytes = heap_sum([
+        policy.action_label.len() * 2,
+        tool.named.name.storage_bytes(),
+        target
+            .as_ref()
+            .map_or(0, |label| label.name().name.storage_bytes()),
+    ])
+    .ok_or(ExecutionError::Capacity)?;
+    let mut storage = budget.reserve(view_bytes)?;
+    let view = ActivityView {
+        name: policy.action_label.as_str().into(),
+        actor: None,
+        tool: Some(tool.named.name.clone()),
+        target: target.as_ref().map(|label| label.name().name.clone()),
+        facts: Vec::new(),
+        children: None,
+        result: None,
+    };
+    storage.resize(view.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+    Ok((view, storage))
 }
 
 pub(crate) enum ChosenContact {

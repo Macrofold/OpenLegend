@@ -37,6 +37,15 @@ pub struct ReleaseInput {
     pub starts_at: f64,
     pub ends_at: f64,
 }
+impl ReleaseInput {
+    pub(super) fn covers(&self, at: f64) -> bool {
+        self.has_elapsed() && self.starts_at <= at && at <= self.ends_at
+    }
+
+    fn has_elapsed(&self) -> bool {
+        self.ends_at > self.starts_at
+    }
+}
 heap_record!(AdmittedWorldInput { actor_id, release });
 heap_record!(ReleaseInput { action_id });
 impl AdmittedWorldInput {
@@ -83,7 +92,10 @@ pub(super) fn input_boundary(
             .steering
             .iter()
             .map(|s| (s.starts_at, s.ends_at))
-            .chain(input.release.iter().map(|r| (r.starts_at, r.ends_at)))
+            .chain(
+                input.release.iter().filter(|release| release.has_elapsed())
+                    .map(|release| (release.starts_at, release.ends_at)),
+            )
         {
             if start > now {
                 bound = bound.min(start - now);

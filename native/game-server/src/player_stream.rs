@@ -256,17 +256,20 @@ impl Body for PlayerStream {
                     // share of the same publication window.
                     self.after = attempt.started_at + VIEW_CADENCE;
                     let mut inventory = false;
+                    let mut review = false;
                     let result = turn.disclose(
                         &self.authority,
                         &attempt.scope,
                         attempt.view.read(),
                         attempt.view.event_ids(),
                         attempt.view.control_preview_cut(),
-                        |allowed, budget| {
+                        attempt.view.attack_review(),
+                        |allowed, review_allowed, budget| {
                             inventory = allowed;
+                            review = review_allowed;
                             match attempt
                                 .view
-                                .select(self.previous.as_ref(), allowed, budget)
+                                .select(self.previous.as_ref(), allowed, review_allowed, budget)
                                 .map_err(|error| match error {
                                     ViewError::Capacity => {
                                         WorldError::Wire(wire::WireError::Capacity)
@@ -279,7 +282,7 @@ impl Body for PlayerStream {
                                 }
                                 ViewSelection::Reset => {
                                     let bytes = wire::encode(
-                                        &attempt.view.wire(allowed),
+                                        &attempt.view.wire(allowed, review_allowed),
                                         RESET,
                                         SUFFIX,
                                         budget,
@@ -310,7 +313,7 @@ impl Body for PlayerStream {
                             self.covered_revision = Some(revision);
                             self.fresh_attempt = false;
                             self.scope = attempt.scope;
-                            self.previous = Some(attempt.view.into_previous(inventory));
+                            self.previous = Some(attempt.view.into_previous(inventory, review));
                             return Poll::Ready(Some(Ok(Frame::data(bytes))));
                         }
                         Err(WorldError::Access(

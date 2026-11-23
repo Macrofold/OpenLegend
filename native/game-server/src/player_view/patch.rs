@@ -15,6 +15,7 @@ use fields::{ClockChanges, PlayerChanges};
 pub(crate) struct PreviousView {
     data: ViewOwned,
     can_use_inventory: bool,
+    attack_review: Option<uuid::Uuid>,
 }
 
 pub(crate) enum ViewSelection<'a> {
@@ -30,6 +31,7 @@ impl PreparedPlayerView {
         &'a self,
         previous: Option<&'a PreviousView>,
         can_use_inventory: bool,
+        show_attack_review: bool,
         budget: &ByteBudget,
     ) -> Result<ViewSelection<'a>, ViewError> {
         let Some(previous) = previous else {
@@ -39,7 +41,9 @@ impl PreparedPlayerView {
         let after = &self.owned;
         // These sections have no patch lane in the existing browser protocol.
         // A changed observer or privacy epoch always needs a fresh full view.
-        if !Arc::ptr_eq(&before.policy, &after.policy)
+        let review = show_attack_review.then(|| self.attack_review().map(|review| review.id())).flatten();
+        if previous.attack_review != review
+            || !Arc::ptr_eq(&before.policy, &after.policy)
             || before.world_id != after.world_id
             || before.timeline != after.timeline
             || before.host.access != after.host.access
@@ -82,11 +86,9 @@ impl PreparedPlayerView {
 
     /// Retain only the accepted decoded view after handoff. The potentially
     /// larger actor/event snapshot and its worker evidence are released here.
-    pub(crate) fn into_previous(self, can_use_inventory: bool) -> PreviousView {
-        PreviousView {
-            data: self.owned,
-            can_use_inventory,
-        }
+    pub(crate) fn into_previous(self, can_use_inventory: bool, show_attack_review: bool) -> PreviousView {
+        let attack_review = show_attack_review.then(|| self.attack_review().map(|review| review.id())).flatten();
+        PreviousView { data: self.owned, can_use_inventory, attack_review }
     }
 }
 

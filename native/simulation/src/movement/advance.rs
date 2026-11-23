@@ -89,6 +89,7 @@ pub(crate) struct MoveAdvanceCursor {
     physical_life: u64,
     practice_release: Option<practice::PendingPracticeRelease>,
     requested_ranged_release: Option<Box<ranged::ReleaseRequest>>,
+    refresh_release_review: bool,
     ranged_point_review: Option<Box<ranged::PointWork>>,
     seconds: f64,
     phase: Phase,
@@ -96,6 +97,7 @@ pub(crate) struct MoveAdvanceCursor {
     record_motion: bool,
     observed_track: Option<super::MotionForecast>,
     contact: Option<Box<ImpactCursor>>,
+    timed_contact_review: Option<Box<(crate::contact::StrikePermission, ByteReservation)>>,
     follow: Option<Box<super::follow::FollowCursor>>,
     meal_sight: Option<crate::reception::SightBatch>,
     queries: Option<(GeometryQueries, ByteReservation)>,
@@ -179,6 +181,7 @@ impl MoveAdvanceCursor {
             physical_life: 0,
             practice_release: None,
             requested_ranged_release: None,
+            refresh_release_review: false,
             ranged_point_review: None,
             seconds,
             phase: Phase::Start,
@@ -186,6 +189,7 @@ impl MoveAdvanceCursor {
             record_motion: false,
             observed_track: None,
             contact: None,
+            timed_contact_review: None,
             follow: None,
             meal_sight: None,
             queries: None,
@@ -220,16 +224,37 @@ impl MoveAdvanceCursor {
                 pending.selection(), pending.input, false, budget,
             )?;
             cursor.phase = Phase::PendingRangedRelease;
+            cursor.refresh_release_review = true;
             return Ok(Some(cursor));
         }
         let mut cursor = Self::new(source, 0.0, binding, budget)?;
         cursor.reserve(action.id.len().checked_add(size_of::<ImpactCursor>())
             .ok_or(ExecutionError::Capacity)?)?;
         cursor.action_id = Some(action.id.clone());
-        cursor.contact = Some(Box::new(ImpactCursor::request_release(
+        let mut impact = ImpactCursor::request_release(
             source, action, pending.input, false, pending.lethal_permission.as_ref(), binding, budget,
-        )?));
+        )?;
+        impact.refresh_release_review()?;
+        cursor.contact = Some(Box::new(impact));
         Ok(Some(cursor))
+    }
+
+    /// The native release owner prepares the review from the reached cut.
+    /// Moving it out leaves its independently funded target and wording intact.
+    pub(crate) fn take_timed_release_review(
+        &mut self,
+        core: &CoreMutation<'_>,
+    ) -> Result<Option<crate::contact::review::TimedReleaseReview>, ExecutionError> {
+        let review = self.take_ranged_release_review().or_else(|| self.timed_contact_review.take());
+        let Some(review) = review else { return Ok(None); };
+        let (permission, storage) = *review;
+        crate::contact::review::TimedReleaseReview::prepare(
+            &*core.state,
+            self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
+            permission,
+            storage,
+            &self.budget,
+        ).map(Some)
     }
     pub(crate) fn moving_contact(
         actor_id: &str,
@@ -356,10 +381,15 @@ impl MoveAdvanceCursor {
                 MoveAdvanceAnswer::Occurrence(answer) => ContactAnswer::Occurrence(answer),
                 MoveAdvanceAnswer::Personal(answer) => ContactAnswer::Personal(answer),
             });
-            match work.step(core, answer)? {
+            let finished = match work.step(core, answer)? {
                 ContactStep::Geometry => return Ok(Progress::Geometry),
                 ContactStep::Occurrence(event) => return Ok(Progress::Occurrence(event)),
                 ContactStep::Personal => return Ok(Progress::Personal),
+                finished => finished,
+            };
+            self.timed_contact_review = work.requested_result().2;
+            self.contact = None;
+            match finished {
                 ContactStep::AdvanceComplete => self.phase = Phase::Done,
                 ContactStep::ActionComplete => self.phase = Phase::Finish,
                 ContactStep::SightLost => {
@@ -371,8 +401,8 @@ impl MoveAdvanceCursor {
                     self.fail(&rules.natural_contact.unavailable)?;
                 }
                 ContactStep::Invalidated => self.fail(&rules.natural_contact.unavailable)?,
+                _ => unreachable!("a terminal contact step was already selected"),
             }
-            self.contact = None;
             return self.drive(core, None);
         }
         let mut geometry = None;

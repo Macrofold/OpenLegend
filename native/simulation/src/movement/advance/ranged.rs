@@ -192,6 +192,12 @@ impl MoveAdvanceCursor {
         Ok((self.failure.take(), requested.review, requested.pending))
     }
 
+    pub(super) fn take_ranged_release_review(
+        &mut self,
+    ) -> Option<Box<(crate::contact::StrikePermission, ByteReservation)>> {
+        self.requested_ranged_release.as_mut()?.review.take()
+    }
+
     fn ranged_fail(
         &mut self,
         reason: &str,
@@ -668,7 +674,7 @@ impl MoveAdvanceCursor {
             let final_subject =
                 indicated.filter(|seen| original.is_none_or(|old| old.id != seen.id));
             let permission = requested.map_or(action.lethal_permission.as_deref(), |_| reviewed);
-            match check_launch_review(
+            let check = |permission| check_launch_review(
                 &installed,
                 actor,
                 action,
@@ -679,7 +685,14 @@ impl MoveAdvanceCursor {
                 sample,
                 permission,
                 &self.budget,
-            )? {
+            );
+            let mut approval = check(permission)?;
+            if self.refresh_release_review && matches!(approval, LaunchApproval::Changed)
+                && let next @ LaunchApproval::Required(..) = check(None)?
+            {
+                approval = next;
+            }
+            match approval {
                 LaunchApproval::Allowed(review) => (review.digest, review._workspace),
                 LaunchApproval::Required(permission, custody) if requested.is_some() => {
                     self.requested_ranged_release
@@ -709,14 +722,25 @@ impl MoveAdvanceCursor {
                 } else {
                     action.lethal_permission.as_deref()
                 };
-                match review::check_damage(
+                let checked = review::check_damage(
                     &installed,
                     actor,
                     target,
                     maximum,
                     permission,
                     current_digest,
-                )? {
+                )?;
+                let checked = if self.refresh_release_review && matches!(checked, Review::Changed)
+                    && matches!(
+                        review::check_damage(&installed, actor, target, maximum, None, current_digest)?,
+                        Review::Required
+                    )
+                {
+                    Review::Required
+                } else {
+                    checked
+                };
+                match checked {
                     Review::Allowed => {}
                     Review::Required if self.requested_ranged_release.is_some() => {
                         let (digest, _workspace) = current_digest()?;

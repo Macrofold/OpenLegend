@@ -1165,6 +1165,12 @@ export interface GameView {
   player: Named & {
     inputScope?: WorldInputScope;
     attackModeNotice?: AttackModeNotice;
+    /** A freshly permitted review for a release awaiting an explicit decision. */
+    attackReview?: {
+      actionId: string;
+      command: CommandInput;
+      review: NonNullable<ApiResult['lethalReview']>;
+    };
     attackSource?: {
       label: string;
       enabled: boolean;

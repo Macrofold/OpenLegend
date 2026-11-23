@@ -246,52 +246,13 @@ impl CommandCursor {
                     .filter(|current| current.id == *action)
             })
             .ok_or(ExecutionError::Invariant)?;
-        let aim = action.ranged.as_ref().ok_or(ExecutionError::Invariant)?;
-        let policy = state
-            .installed
-            .manifest
-            .ranged_policy
-            .as_ref()
-            .ok_or(ExecutionError::Invariant)?;
-        let tool = state
-            .installed
-            .retained
-            .items
-            .get(&aim.tool.id)
-            .ok_or(ExecutionError::Invariant)?;
-        let names = crate::worlds::InstalledPersonalNameReader::prepare(
-            &state.physical,
-            &state.reception,
-            &state.installed,
-            &state.experience,
+        let (view, storage) = crate::contact::review::ranged_activity_view(
+            state,
             self.actor_id(),
+            action,
+            self.strike_confirmation.as_ref().map(|review| review.0.target_id()),
+            &self.budget,
         )?;
-        let target = self
-            .strike_confirmation
-            .as_ref()
-            .map(|review| review.0.target_id())
-            .or_else(|| aim.aim_target.as_ref().map(|subject| subject.id.as_str()))
-            .map(|id| names.capture_observer_name(id, &self.budget))
-            .transpose()?;
-        let view_bytes = heap_sum([
-            policy.action_label.len() * 2,
-            tool.named.name.storage_bytes(),
-            target
-                .as_ref()
-                .map_or(0, |label| label.name().name.storage_bytes()),
-        ])
-        .ok_or(ExecutionError::Capacity)?;
-        let mut storage = self.budget.reserve(view_bytes)?;
-        let view = ActivityView {
-            name: policy.action_label.as_str().into(),
-            actor: None,
-            tool: Some(tool.named.name.clone()),
-            target: target.as_ref().map(|label| label.name().name.clone()),
-            facts: Vec::new(),
-            children: None,
-            result: None,
-        };
-        storage.resize(view.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
         self.view = Some(view);
         self.view_reservation = Some(storage);
         Ok(())

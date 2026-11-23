@@ -108,7 +108,6 @@ pub(crate) fn router(
         identity,
         clock.maintenance().clone(),
         inputs.clone(),
-        capacity,
     ));
     let state = PlayerRoutes {
         authority,
@@ -557,7 +556,16 @@ async fn update_input(State(state): State<PlayerRoutes>, request: Request) -> Re
                 .capture(move |world| {
                     let scope = &accepted_scope.scope;
                     let facts = world.player_input_direct(&scope.account_id, &scope.actor_id)?;
-                    Ok(inputs.update(accepted_scope, facts, world.clock()?, input))
+                    let clock = world.clock()?;
+                    // A completed or refused release no longer has an accepted
+                    // native intention. Tell the browser to stop renewing it.
+                    if matches!(&input, InputUpdate::Renew { pending_release: Some(_), .. }) {
+                        return Ok(world.with_player_attack(&scope.account_id, &scope.actor_id, |attack| {
+                            let pending = attack.and_then(|(action, pending)| pending.then_some(action));
+                            inputs.update(accepted_scope.clone(), facts, clock, input, pending)
+                        })?);
+                    }
+                    Ok(inputs.update(accepted_scope, facts, clock, input, None))
                 })
                 .await
         }

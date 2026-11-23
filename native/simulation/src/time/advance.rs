@@ -155,6 +155,7 @@ pub(crate) struct CompletedAdvance {
     pub navigation: Vec<(EntityHandle, PendingRefugeNavigation)>,
     pub entity_routes_pending: bool,
     pub continuation: Option<AdvanceContinuation>,
+    release_reviews: super::endpoint::TimedReleaseReviews,
     events: Vec<EventBatch>,
     _reservation: ByteReservation,
 }
@@ -309,6 +310,9 @@ impl CompletedAdvance {
     pub(crate) fn events(&self) -> impl Iterator<Item = &WorldEvent> + Clone {
         self.events.iter().flat_map(EventBatch::events)
     }
+    pub(crate) fn timed_release_reviews(&self) -> &[crate::contact::review::TimedReleaseReview] {
+        self.release_reviews.entries()
+    }
 }
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
@@ -434,6 +438,7 @@ pub(crate) struct AdvanceCursor {
     flight: Option<FlightCursor>,
     endpoint: Option<EndpointCursor>,
     endpoint_answer: Option<EndpointAnswer>,
+    release_reviews: super::endpoint::TimedReleaseReviews,
     motion_answer: Option<MoveAdvanceAnswer>,
     reconcile: Option<ReconcileCursor>,
     reconcile_answer: Option<ReconcileAnswer>,
@@ -634,6 +639,7 @@ impl AdvanceCursor {
             flight: None,
             endpoint: None,
             endpoint_answer: None,
+            release_reviews: Default::default(),
             motion_answer: None,
             reconcile: None,
             reconcile_answer: None,

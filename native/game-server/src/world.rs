@@ -91,6 +91,17 @@ impl WorldError {
             _ => false,
         }
     }
+
+    /// Report a refusal while staging an application's part of an unaccepted
+    /// native operation. The clock can retry when a resource owner said busy.
+    pub(crate) fn candidate_refusal(self) -> RuntimeError {
+        match self {
+            Self::Simulation(error) => error,
+            Self::Host(HostError::Capacity) => openlegend_simulation::host::CapacityError.into(),
+            error if error.is_admission_refusal() => RuntimeError::application_busy(error),
+            error => RuntimeError::application_refused(error),
+        }
+    }
 }
 
 impl std::fmt::Display for WorldError {
@@ -413,7 +424,8 @@ impl PlayerDisclosureTurn {
         read: &RuntimePlayerRead,
         selected_events: &[String],
         control_preview_cut: Option<u64>,
-        publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
+        attack_review: Option<&crate::player_command::LateReviewInvite>,
+        publish: impl FnOnce(bool, bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
         self.world.disclose_player_in_turn(
             authority,
@@ -421,6 +433,7 @@ impl PlayerDisclosureTurn {
             read,
             selected_events,
             control_preview_cut,
+            attack_review,
             publish,
         )
     }
@@ -849,7 +862,8 @@ impl HostedWorld {
         read: &RuntimePlayerRead,
         selected_events: &[String],
         control_preview_cut: Option<u64>,
-        publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
+        attack_review: Option<&crate::player_command::LateReviewInvite>,
+        publish: impl FnOnce(bool, bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
         self.request_advance_publication();
         let guard = self.enter_turn(self.turn.lock()).await?;
@@ -864,6 +878,7 @@ impl HostedWorld {
             read,
             selected_events,
             control_preview_cut,
+            attack_review,
             publish,
         )
     }
@@ -875,7 +890,8 @@ impl HostedWorld {
         read: &RuntimePlayerRead,
         selected_events: &[String],
         control_preview_cut: Option<u64>,
-        publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
+        attack_review: Option<&crate::player_command::LateReviewInvite>,
+        publish: impl FnOnce(bool, bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
         #[cfg(feature = "profile-campaign")]
         let mut observation = openlegend_simulation::profile_scope!(DISCLOSE);
@@ -918,12 +934,20 @@ impl HostedWorld {
             ) {
                 return Ok(PlayerDisclosure::Changed);
             }
+            // The review is an independent private disclosure inside this
+            // same accepted world turn. Its failure hides only the invitation.
+            let review_allowed = if controlling && !clock.paused {
+                attack_review.map(|review| review.current(&session, scope, self.host.budget()))
+                    .transpose()?.unwrap_or(false)
+            } else {
+                false
+            };
             let Some(permit) =
                 session.player_publication(read, selected_events, clock.paused, controlling)?
             else {
                 return Ok(PlayerDisclosure::Changed);
             };
-            let result = publish(permit.can_use_inventory(), self.host.budget())?;
+            let result = publish(permit.can_use_inventory(), review_allowed, self.host.budget())?;
             drop(permit);
             Ok(match result {
                 Some(bytes) => {

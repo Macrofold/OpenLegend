@@ -2,7 +2,10 @@
 //! and how a character moves. Only the real clock credits a lease with time.
 
 use crate::authority::{AccessError, Authority, AuthorizedScope, Capability, RequestScope};
+use crate::player_command::{AttackReviews, ReleaseReviewRequest, StagedLateReview, prepare_late_review};
+use crate::world::WorldError;
 use indexmap::IndexMap;
+use openlegend_simulation::runtime::{RuntimeError, TimedReleaseReview};
 use openlegend_simulation::{
     host::{ByteBudget, ByteReservation, map_storage},
     identity::MAX_SAFE_INTEGER,
@@ -118,6 +121,7 @@ pub(crate) struct WorldInputs {
     authority: Arc<Authority>,
     budget: ByteBudget,
     maximum: usize,
+    reviews: Arc<AttackReviews>,
 }
 
 pub(crate) struct InputSnapshot {
@@ -125,6 +129,11 @@ pub(crate) struct InputSnapshot {
     permits: Vec<Arc<AuthorizedScope>>,
     windows: Vec<InputProof>,
     holder: Option<(Arc<WorldInputs>, u64)>,
+    _custody: ByteReservation,
+}
+
+pub(crate) struct TimedReviewUpdates {
+    entries: Vec<(StagedLateReview, Arc<AuthorizedScope>)>,
     _custody: ByteReservation,
 }
 
@@ -138,12 +147,14 @@ impl WorldInputs {
         authority: Arc<Authority>,
         budget: ByteBudget,
         maximum: usize,
+        review_capacity: usize,
     ) -> Result<Self, AccessError> {
         let custody = budget.reserve(0).map_err(|_| AccessError::Busy)?;
         Ok(Self {
             authority,
             budget,
             maximum,
+            reviews: Arc::new(AttackReviews::new(review_capacity)),
             state: Mutex::new(State {
                 actors: IndexMap::new(),
                 revision: 0,
@@ -153,6 +164,53 @@ impl WorldInputs {
                 clock: None,
             }),
         })
+    }
+
+    pub(crate) fn reviews(&self) -> &Arc<AttackReviews> {
+        &self.reviews
+    }
+
+    pub(crate) fn stage_timed_reviews(
+        &self,
+        snapshot: &InputSnapshot,
+        offers: &[TimedReleaseReview],
+        budget: &ByteBudget,
+    ) -> Result<TimedReviewUpdates, RuntimeError> {
+        let bytes = offers.len().checked_mul(std::mem::size_of::<(StagedLateReview, Arc<AuthorizedScope>)>())
+            .ok_or(openlegend_simulation::host::CapacityError)?;
+        let custody = budget.reserve(bytes)?;
+        let mut prepared = Vec::with_capacity(offers.len());
+        for offer in offers {
+            let (scope, request) = snapshot.permits.iter().zip(&snapshot.windows)
+                .filter_map(|(scope, proof)| Some((scope, &proof.release.as_ref()?.review_request)))
+                .find(|(scope, request)| scope.scope.actor_id == offer.actor_id()
+                    && request.action() == Some(offer.action_id()))
+                .ok_or_else(|| RuntimeError::application_refused("Native release review has no input proof."))?;
+            let staged = prepare_late_review(scope, request.clone(), offer, budget)?;
+            prepared.push((staged, scope.clone()));
+        }
+        self.reviews
+            .reserve_slots(offers.iter().map(TimedReleaseReview::actor_id))
+            .map_err(WorldError::candidate_refusal)?;
+        Ok(TimedReviewUpdates { entries: prepared, _custody: custody })
+    }
+
+    pub(crate) fn publish_timed_reviews(&self, reviews: &TimedReviewUpdates) {
+        if reviews.entries.is_empty() { return; }
+        let mut state = self.state.lock().expect("accepted input owner is intact");
+        for (review, scope) in &reviews.entries {
+            let actor = &scope.scope.actor_id;
+            let current = state.actors.get(actor).is_some_and(|input| {
+                same_controller(&input.audience.scope, &scope.scope)
+                    && input.attack.matches_review_request(&review.request)
+            });
+            if !current { continue; }
+            let Ok(revision) = revision(&mut state) else { continue; };
+            let input = &mut state.actors[actor];
+            input.stop_for_review(revision, Uuid::new_v4());
+            input.attack.end_pending_review();
+            self.reviews.publish_late(review.pending.clone());
+        }
     }
 
     pub(crate) fn for_view(
@@ -170,27 +228,27 @@ impl WorldInputs {
         facts: RuntimePlayerInputState,
         clock: RuntimeClock,
         update: InputUpdate,
+        live_pending_release: Option<&str>,
     ) -> Result<InputOutcome, AccessError> {
         let now = Instant::now();
         self.use_input(audience, facts, clock.paused, |input, account| {
             let frontier = (!clock.paused && facts.alive && facts.can_steer)
                 .then(|| frontier(account, clock.at, now));
-            input.apply(&update, now, frontier)
+            input.apply(&update, now, frontier, live_pending_release)
         })
     }
 
-    /// A private elapsed turn has already checked this live direction against
-    /// the accepted actor. Renew or stop it without queuing behind that turn.
-    /// Starting a direction or dealing with genuine expiry needs a fresh read.
+    /// During a private elapsed turn, renew only input lanes already checked
+    /// against the accepted actor. A stale claim in one lane cannot block a
+    /// current claim in the other. Settlement ends the serial before publication.
     pub(crate) fn update_during_advance(
         &self,
         audience: &AuthorizedScope,
         update: &InputUpdate,
     ) -> Result<Option<InputOutcome>, AccessError> {
         match update {
-            InputUpdate::Renew {
-                movement: Some(_), pending_release: None, ..
-            } => {}
+            InputUpdate::Renew { movement, pending_release, .. }
+                if movement.is_some() || pending_release.is_some() => {}
             InputUpdate::Steer { direction, .. } if direction.x == 0.0 && direction.z == 0.0 => {}
             _ => return Ok(None),
         }
@@ -198,23 +256,46 @@ impl WorldInputs {
         let Some(advance) = state.active_advance else {
             return Ok(None);
         };
-        let Some(input) = state.actors.get_mut(&audience.scope.actor_id) else {
-            return Ok(None);
-        };
-        if input.held_for_advance != Some(advance)
-            || !same_controller(&input.audience.scope, &audience.scope)
-        {
+        let actor = &audience.scope.actor_id;
+        if !state.actors.get(actor).is_some_and(|input| {
+            same_controller(&input.audience.scope, &audience.scope)
+        }) {
             return Ok(None);
         }
         self.authority
             .current(audience, Capability::Play, true, |_, _| {
                 let now = Instant::now();
-                input
-                    .steering
-                    .as_ref()
-                    .filter(|window| window.expires > now)?;
-                Some(input.apply(update, now, None))
-            })
+                expire_inputs(&mut state, actor, now)?;
+                let input = &mut state.actors[actor];
+                let release = match update {
+                    InputUpdate::Renew { movement, pending_release, renewal_sequence, .. } => {
+                        let movement_current = movement.as_ref().is_some_and(|request| {
+                            input.matches_movement_renewal(request, *renewal_sequence)
+                        });
+                        if movement_current && input.held_for_advance != Some(advance) {
+                            return Ok(None);
+                        }
+                        let release = pending_release.as_ref().filter(|request| {
+                            input.attack.matches_renewal(
+                                request, input.scope.attack_input_token, *renewal_sequence, now,
+                            )
+                        });
+                        if (!movement_current && release.is_none())
+                            || (release.is_some() && !input.attack.checked_for_advance(advance))
+                        {
+                            return Ok(None);
+                        }
+                        release.map(ReleaseRenewal::action_id)
+                    }
+                    InputUpdate::Steer { .. } => {
+                        if input.steering.is_none() || input.held_for_advance != Some(advance) {
+                            return Ok(None);
+                        }
+                        None
+                    }
+                };
+                Ok(Some(input.apply(update, now, None, release)))
+            })?
     }
 
     fn use_input<T>(
@@ -288,25 +369,14 @@ impl WorldInputs {
                     );
                 }
                 let account = state.clock;
-                if state.actors[&scope.actor_id]
-                    .steering
-                    .as_ref()
-                    .is_some_and(|window| window.expires <= now)
-                {
-                    let revision = revision(&mut state)?;
-                    let input = &mut state.actors[&scope.actor_id];
-                    input.scope.revision = revision;
-                    input.scope.movement_input_token = Uuid::new_v4();
-                    input.steering = None;
-                    input.sequence = 0;
-                }
-                expire_attack(&mut state, &scope.actor_id, now)?;
+                expire_inputs(&mut state, &scope.actor_id, now)?;
                 Ok(use_input(&mut state.actors[&scope.actor_id], account))
             })?
     }
 
     pub(crate) fn exclude(&self) -> Result<(), AccessError> {
         let mut state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        self.reviews.clear().map_err(|_| AccessError::Availability)?;
         state.clock = None;
         state.actors.clear();
         Ok(())
@@ -314,6 +384,7 @@ impl WorldInputs {
 
     pub(crate) fn clear_actor(&self, actor: &str) -> Result<(), AccessError> {
         let mut state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        self.reviews.clear_actor(actor).map_err(|_| AccessError::Availability)?;
         state.actors.swap_remove(actor);
         Ok(())
     }
@@ -390,7 +461,7 @@ impl WorldInputs {
                     .steering
                     .as_ref()
                     .is_some_and(|window| window.expires > now && window.ends > window.starts)
-                    || input.attack.offered(now)
+                    || input.attack.live(now)
             })
             .count();
         // Bound the independently owned native input carrier and scope refs.
@@ -412,7 +483,7 @@ impl WorldInputs {
         let mut checked_input = false;
         for input in state.actors.values_mut() {
             let steering = input.steering.as_ref().filter(|window| window.expires > now);
-            let release = input.attack.offered(now);
+            let release = input.attack.live(now);
             if steering.is_none() && !release {
                 continue;
             }
@@ -441,7 +512,7 @@ impl WorldInputs {
             let steering = steering.filter(|window| window.ends > window.starts);
             let release = if release {
                 world.with_player_attack(&scope.account_id, &scope.actor_id, |current| {
-                    input.attack.snapshot(now, input.scope.attack_input_token, |action| {
+                    input.attack.snapshot(now, input.scope.attack_input_token, serial, |action| {
                         current == Some((action, true))
                     })
                 }).map_err(|_| AccessError::Changed)?
@@ -503,11 +574,28 @@ impl Drop for InputSnapshot {
 }
 
 impl Input {
+    fn stop_for_review(&mut self, revision: u64, movement_token: Uuid) {
+        self.scope.revision = revision;
+        self.scope.movement_input_token = movement_token;
+        self.steering = None;
+        self.sequence = 0;
+        self.held_for_advance = None;
+    }
+
+    fn matches_movement_renewal(&self, movement: &MovementRenewal, sequence: u64) -> bool {
+        self.steering.as_ref().is_some_and(|window| {
+            movement.movement_input_token == self.scope.movement_input_token
+                && movement.movement_sequence == self.sequence
+                && (window.renewal + 1..=MAX_SAFE_INTEGER).contains(&sequence)
+        })
+    }
+
     fn apply(
         &mut self,
         update: &InputUpdate,
         now: Instant,
         start_frontier: Option<f64>,
+        live_pending_release: Option<&str>,
     ) -> InputOutcome {
         let mut result = InputOutcome {
             ok: false,
@@ -564,21 +652,18 @@ impl Input {
                 movement,
                 pending_release,
             } if *input_epoch == self.scope.input_epoch => {
-                let renewed = movement.as_ref().zip(self.steering.as_mut()).is_some_and(
-                    |(movement, window)| {
-                        if movement.movement_input_token != self.scope.movement_input_token
-                            || movement.movement_sequence != self.sequence
-                            || !(window.renewal + 1..=MAX_SAFE_INTEGER).contains(renewal_sequence)
-                        {
-                            return false;
-                        }
-                        window.renewal = *renewal_sequence;
-                        window.expires = now + EXPIRES;
-                        true
-                    },
-                );
+                let renewed = movement.as_ref().is_some_and(|request| {
+                    self.matches_movement_renewal(request, *renewal_sequence)
+                });
+                if let Some(window) = self.steering.as_mut().filter(|_| renewed) {
+                    window.renewal = *renewal_sequence;
+                    window.expires = now + EXPIRES;
+                }
                 let renewed_release = pending_release.as_ref().is_some_and(|pending| {
-                    self.attack.renew(pending, self.scope.attack_input_token, *renewal_sequence, now)
+                    self.attack.renew(
+                        pending, self.scope.attack_input_token, *renewal_sequence, now,
+                        live_pending_release,
+                    )
                 });
                 if renewed || renewed_release {
                     result.ok = true;
@@ -597,6 +682,20 @@ impl Input {
 fn valid_direction(direction: &Direction) -> bool {
     let magnitude = direction.x.hypot(direction.z);
     magnitude == 0.0 || (magnitude - 1.0).abs() <= 16.0 * f64::EPSILON
+}
+
+fn expire_inputs(state: &mut State, actor: &str, now: Instant) -> Result<(), AccessError> {
+    if state.actors[actor].steering.as_ref().is_some_and(|window| window.expires <= now) {
+        let revision = revision(state)?;
+        let input = &mut state.actors[actor];
+        input.scope.revision = revision;
+        input.scope.movement_input_token = Uuid::new_v4();
+        input.steering = None;
+        input.sequence = 0;
+        input.held_for_advance = None;
+    }
+    expire_attack(state, actor, now)?;
+    Ok(())
 }
 
 fn expire_attack(state: &mut State, actor: &str, now: Instant) -> Result<bool, AccessError> {

@@ -40,7 +40,10 @@ use tokio::sync::Mutex;
 use uuid::Uuid;
 mod attack_result;
 mod contact;
+mod late_review;
 mod typed;
+pub(crate) use contact::Reviews as AttackReviews;
+pub(crate) use late_review::{LateReviewInvite, ReleaseReviewRequest, StagedLateReview, prepare_late_review};
 pub(crate) use typed::{ActionAttempt, AttemptRecovery};
 
 #[derive(Deserialize)]
@@ -466,6 +469,7 @@ enum ResultOwner {
         value: Arc<AcceptedSaveInput>,
         review: Option<contact::Update>,
         result: attack_result::AcceptedAttack,
+        request: Option<Arc<ReleaseReviewRequest>>,
     },
     Durable(AdmittedReceipt),
     Refused(&'static str, &'static str),
@@ -490,7 +494,6 @@ impl PlayerCommands {
         identity: Arc<Mutex<RequestIdentity>>,
         maintenance: Arc<crate::operator_maintenance::OperatorMaintenance>,
         inputs: Arc<WorldInputs>,
-        capacity: usize,
     ) -> Self {
         Self {
             game,
@@ -499,9 +502,13 @@ impl PlayerCommands {
             references,
             identity,
             maintenance,
-            reviews: Arc::new(contact::Reviews::new(capacity)),
+            reviews: inputs.reviews().clone(),
             inputs,
         }
+    }
+
+    pub(crate) fn pending_attack_review(&self, scope: &RequestScope) -> Result<Option<LateReviewInvite>, WorldError> {
+        self.reviews.late_invite(scope, &self.references)
     }
 
     /// Bind the command token to the notice published with it. A view which
@@ -1134,7 +1141,7 @@ impl PlayerCommands {
                                         .ok_or_else(|| RuntimeError::application_refused("Attack review has no scope."))?;
                                     let pending = reviews.prepare(
                                         &scope.scope, &prepare.request.command, timing, offer, budget,
-                                    ).map_err(RuntimeError::application_refused)?;
+                                    ).map_err(WorldError::candidate_refusal)?;
                                     let (value, custody) = pending.result(
                                         offer, product.outcome(), timing.map(|turn| &turn.scope), budget,
                                     )?;
@@ -1159,12 +1166,12 @@ impl PlayerCommands {
                                     .map_err(RuntimeError::application_refused)?,
                             };
                             let accepted = stage.stage(&product, Some(receipt))?;
-                            Ok(if timing.is_some() {
-                                ResultOwner::WithAttack {
-                                    value: accepted,
-                                    result: attack_result::AcceptedAttack::prepare(product.outcome(), budget)?,
-                                    review,
-                                }
+                            Ok(if let Some(turn) = timing {
+                                let result = attack_result::AcceptedAttack::prepare(product.outcome(), budget)?;
+                                let request = result.pending().then(|| {
+                                    ReleaseReviewRequest::prepare(prepare.clone(), turn, budget)
+                                }).transpose()?;
+                                ResultOwner::WithAttack { value: accepted, result, review, request }
                             } else if let Some(update) = review {
                                 ResultOwner::WithReview(accepted, update)
                             } else {
@@ -1195,11 +1202,11 @@ impl PlayerCommands {
                                 )?
                             };
                             if let Some(turn) = finish_attack.as_ref().and_then(|turn| turn.get()) {
-                                let ResultOwner::WithAttack { result, review, .. } = staged else {
+                                let ResultOwner::WithAttack { result, review, request, .. } = staged else {
                                     return Err(StoreError::InvalidRecord.into());
                                 };
                                 finish_inputs.accept_attack(
-                                    &finish_scope, turn, result.action(), result.pending(),
+                                    &finish_scope, turn, result.action(), result.pending(), request.clone(),
                                     matches!(review, Some(contact::Update::Offer(_))), settle,
                                 )
                             } else {

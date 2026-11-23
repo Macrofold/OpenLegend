@@ -14,7 +14,7 @@ use crate::{
         construction_gather::MaterialGatherProjection,
     },
     world::{ApplicationStart, IO_YIELD, ProtectedCommit, WorldError},
-    world_input::{InputSnapshot, WorldInputs},
+    world_input::{InputSnapshot, TimedReviewUpdates, WorldInputs},
 };
 use openlegend_simulation::{
     construction_gather::{ConstructionEffect, MaterialGrants},
@@ -41,6 +41,7 @@ struct Advance {
     navigation_pending: bool,
     deferred_routes: bool,
     save: Option<Arc<AcceptedSaveInput>>,
+    timed_reviews: Option<TimedReviewUpdates>,
 }
 
 struct ProtectedAdvance {
@@ -78,6 +79,24 @@ fn begin_current_offer(
         }
         _ => session.begin_authoritative_advance(seconds, 4096, Vec::new(), materials),
     }
+}
+
+fn stage_release_reviews(
+    product: &openlegend_simulation::runtime::RuntimePreparedProducts<'_>,
+    inputs: Option<&WorldInputs>,
+    snapshot: Option<&Mutex<Option<InputSnapshot>>>,
+    budget: &openlegend_simulation::host::ByteBudget,
+) -> Result<Option<TimedReviewUpdates>, RuntimeError> {
+    let offers = product.timed_release_reviews();
+    if offers.is_empty() {
+        return Ok(None);
+    }
+    let missing = || RuntimeError::application_refused("Native release review has no live input.");
+    let input = inputs.ok_or_else(missing)?;
+    let snapshot = snapshot.ok_or_else(missing)?.lock()
+        .map_err(RuntimeError::application_refused)?;
+    let snapshot = snapshot.as_ref().ok_or_else(missing)?;
+    input.stage_timed_reviews(snapshot, offers, budget).map(Some)
 }
 
 struct CheckpointInterval<'a> {
@@ -532,6 +551,9 @@ impl GameClock {
                     .map(|_| Arc::new(Mutex::new(None::<InputSnapshot>)));
                 let capture = settlement.clone();
                 let recheck = inputs.clone();
+                let review_inputs = inputs.clone();
+                let review_snapshots = settlement.clone();
+                let publish_inputs = inputs.clone();
                 let advance = self.game.world.execute_and_publish(
                     #[cfg(feature = "profile-campaign")]
                     openlegend_simulation::profile::sites::TURN_CLOCK,
@@ -561,7 +583,7 @@ impl GameClock {
                         let game = game.clone();
                         async move { game.answer_operation(question).await }
                     },
-                    move |output, _| {
+                    move |output, budget| {
                         let RuntimeDirectOutput::Prepared(product) = output else {
                             unreachable!("advance cannot preview")
                         };
@@ -582,6 +604,9 @@ impl GameClock {
                             navigation_pending,
                             deferred_routes,
                             save,
+                            timed_reviews: stage_release_reviews(
+                                &product, review_inputs.as_deref(), review_snapshots.as_deref(), budget,
+                            )?,
                         })
                     },
                     move |fence, key, staged| {
@@ -602,6 +627,9 @@ impl GameClock {
                         }
                     },
                     move |staged| {
+                        if let Some((inputs, reviews)) = publish_inputs.as_ref().zip(staged.timed_reviews.as_ref()) {
+                            inputs.publish_timed_reviews(reviews);
+                        }
                         accept.accept(staged.save.as_ref().expect("accepted clock has save input"))
                     },
                 );
@@ -654,7 +682,10 @@ impl GameClock {
         let settlement = inputs.as_ref().map(|_| Arc::new(Mutex::new(None::<InputSnapshot>)));
         let capture = settlement.clone();
         let recheck = inputs.clone();
-        let result = self.game.world.execute_protected(
+        let review_inputs = inputs.clone();
+        let review_snapshots = settlement.clone();
+        let publish_inputs = inputs.clone();
+        let result = self.game.world.execute_protected_then(
             move |session| begin_current_offer(session, clock, seconds, inputs, capture, Some(materials)),
             move |question| {
                 let game = game.clone();
@@ -678,6 +709,9 @@ impl GameClock {
                         navigation_pending: result.code == "navigation-pending",
                         deferred_routes: product.has_deferred_navigation(),
                         save: None,
+                        timed_reviews: stage_release_reviews(
+                            &product, review_inputs.as_deref(), review_snapshots.as_deref(), budget,
+                        )?,
                     },
                     save: ProtectedGameplaySave::prepare(&product, &staging_store, budget)?,
                     acquisitions: product.material_acquisitions().to_vec(),
@@ -704,6 +738,12 @@ impl GameClock {
                     candidate.save.record_commit(&projection.gameplay);
                     Ok(acknowledgement)
                 })
+            },
+            move |candidate| {
+                if let Some((inputs, reviews)) = publish_inputs.as_ref().zip(candidate.advance.timed_reviews.as_ref()) {
+                    inputs.publish_timed_reviews(reviews);
+                }
+                Ok(())
             },
         ).await;
         match result {

@@ -269,6 +269,7 @@ struct ViewOwned {
     policy: Arc<PlayerViewPolicy>,
     host: ViewHostFacts,
     input_scope: Option<InputScope>,
+    attack_review: Option<crate::player_command::LateReviewInvite>,
     own: PreparedSelf,
     contacts: PreparedContacts,
     events: PreparedPlayerEvents,
@@ -337,7 +338,7 @@ pub(crate) async fn prepare_view(
     if !host.matches(&scope)? {
         return Err(ViewError::Changed);
     }
-    let (read, (own, input_facts, revision, save_failed)) = game
+    let (read, (own, input_facts, revision, save_failed, can_review_attack)) = game
         .world
         .capture_player(
             scope.account_id.clone(),
@@ -357,11 +358,14 @@ pub(crate) async fn prepare_view(
                         alive: facts.alive,
                         can_steer: facts.can_steer,
                     };
+                    let can_review_attack = facts.action.and_then(|action| action.execution)
+                        .is_some_and(|execution| execution.ready && !execution.release_requested
+                            && execution.assessment.is_none());
                     let projected = (|| {
                         let scoped = references.scoped(&scope)?;
                         prepare_self(facts, &policy.scene, &scoped, false, false, budget)
                     })();
-                    Ok((projected, input_facts, revision, save_failed))
+                    Ok((projected, input_facts, revision, save_failed, can_review_attack))
                 }
             },
         )
@@ -386,6 +390,11 @@ pub(crate) async fn prepare_view(
                 })?,
         );
     }
+    let attack_review = if can_review_attack && host.controlling() && !read.clock().paused {
+        commands.pending_attack_review(&scope).map_err(ViewError::World)?
+    } else {
+        None
+    };
     let input_scope = if host.controlling() {
         Some(
             inputs
@@ -467,6 +476,7 @@ pub(crate) async fn prepare_view(
                     policy,
                     host,
                     input_scope,
+                    attack_review,
                     own,
                     contacts,
                     events,
@@ -614,6 +624,10 @@ fn controls(
 }
 
 impl PreparedPlayerView {
+    pub(crate) fn attack_review(&self) -> Option<&crate::player_command::LateReviewInvite> {
+        self.owned.attack_review.as_ref()
+    }
+
     pub(crate) fn control_preview_cut(&self) -> Option<u64> {
         self.owned.host.paused_stop.as_ref().map(|stop| stop.cut)
     }
@@ -678,10 +692,11 @@ impl PreparedPlayerView {
     pub fn revision(&self) -> u64 {
         self.owned.host.revision
     }
-    pub fn wire(&self, can_use_inventory: bool) -> impl Serialize + '_ {
+    pub fn wire(&self, can_use_inventory: bool, show_attack_review: bool) -> impl Serialize + '_ {
         FullView {
             data: &self.owned,
             can_use_inventory,
+            show_attack_review,
         }
     }
 }
@@ -700,6 +715,8 @@ struct PlayerWire<'a> {
     construction_revision: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     input_scope: Option<&'a InputScope>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    attack_review: Option<&'a crate::player_command::LateReviewInvite>,
     can_use_inventory: bool,
     work: Option<()>,
     controls: &'a [ActionOption],
@@ -774,6 +791,7 @@ impl ViewOwned {
             inventory_read_revision: &self.host.inventory,
             construction_revision: self.policy.world.construction_revision.as_deref(),
             input_scope: self.input_scope.as_ref(),
+            attack_review: None,
             can_use_inventory,
             work: None,
             controls: &self.controls,
@@ -806,6 +824,7 @@ impl ViewOwned {
 struct FullView<'a> {
     data: &'a ViewOwned,
     can_use_inventory: bool,
+    show_attack_review: bool,
 }
 impl Serialize for FullView<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -865,7 +884,11 @@ impl Serialize for FullView<'_> {
         )?;
         wire.serialize_entry("inventionPolicy", &world.invention_policy)?;
         wire.serialize_entry("godMode", &false)?;
-        wire.serialize_entry("player", &data.player(self.can_use_inventory))?;
+        let mut player = data.player(self.can_use_inventory);
+        if self.show_attack_review {
+            player.attack_review = data.attack_review.as_ref();
+        }
+        wire.serialize_entry("player", &player)?;
         wire.serialize_entry("entities", &data.contacts.entities)?;
         wire.serialize_entry(
             "communicationReferences",

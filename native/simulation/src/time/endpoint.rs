@@ -7,6 +7,7 @@ use super::{NativeParticipants, SliceActions};
 use crate::activity::PendingActivityResult;
 use crate::body::{BodyAnswer, BodyRateCursor, BodyStep};
 use crate::conditions::{ConditionReconcileCursor, ConditionReconcileStep};
+use crate::contact::review::TimedReleaseReview;
 use crate::events::CompletedOccurrence;
 use crate::execution::{CoreMutation, ExecutionError, StagedOccurrence};
 use crate::experience::AcquiredActivityResult;
@@ -70,6 +71,37 @@ pub(crate) struct EndpointCursor {
     budget: ByteBudget,
     _reservation: ByteReservation,
 }
+
+#[derive(Default)]
+pub(super) struct TimedReleaseReviews {
+    entries: Vec<TimedReleaseReview>,
+    custody: Option<ByteReservation>,
+}
+
+impl TimedReleaseReviews {
+    pub(super) fn entries(&self) -> &[TimedReleaseReview] {
+        &self.entries
+    }
+
+    fn push(&mut self, review: TimedReleaseReview, budget: &ByteBudget) -> Result<(), ExecutionError> {
+        if self.entries.len() == self.entries.capacity() {
+            let next = self.entries.capacity().checked_mul(2)
+                .ok_or(ExecutionError::Capacity)?.max(1);
+            let bytes = next.checked_mul(size_of::<TimedReleaseReview>())
+                .ok_or(ExecutionError::Capacity)?;
+            if let Some(custody) = &mut self.custody {
+                custody.resize(bytes)?;
+            } else {
+                self.custody = Some(budget.reserve(bytes)?);
+            }
+            self.entries.try_reserve_exact(next - self.entries.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        self.entries.push(review);
+        Ok(())
+    }
+}
+
 fn occurrence(
     answer: Option<EndpointAnswer>,
 ) -> Result<Option<CompletedOccurrence>, ExecutionError> {
@@ -213,8 +245,9 @@ impl EndpointCursor {
         core: &mut CoreMutation<'_>,
         answer: Option<EndpointAnswer>,
         inputs: &[AdmittedWorldInput],
+        reviews: &mut TimedReleaseReviews,
     ) -> Result<EndpointStep<'a>, ExecutionError> {
-        Ok(match self.progress(core, answer, inputs)? {
+        Ok(match self.progress(core, answer, inputs, reviews)? {
             Progress::Participation => EndpointStep::Participation(
                 self.exits
                     .as_ref()
@@ -244,6 +277,7 @@ impl EndpointCursor {
         core: &mut CoreMutation<'_>,
         mut answer: Option<EndpointAnswer>,
         inputs: &[AdmittedWorldInput],
+        reviews: &mut TimedReleaseReviews,
     ) -> Result<Progress, ExecutionError> {
         loop {
             match self.phase {
@@ -367,16 +401,20 @@ impl EndpointCursor {
                         self.binding.serial = core.journal.next_provider_serial()?;
                         if timed {
                             let at = core.state.physical.header.sim_time;
-                            let window = inputs.iter().find_map(|input| {
-                                (input.actor_id == entity.id).then_some(input.release.as_ref()).flatten()
-                                    .filter(|release| release.action_id == action.id && release.ends_at > release.starts_at)
-                            });
-                            if window.is_none_or(|release| release.ends_at < at) {
-                                self.disarm_pending_release(core, handle)?;
-                            } else if window.is_some_and(|release| release.starts_at <= at) {
-                                self.work = MoveAdvanceCursor::pending_timed_release(
-                                    &entity.id, action, self.binding, &self.budget,
-                                )?;
+                            let window = inputs.iter().filter(|input| input.actor_id == entity.id)
+                                .find_map(|input| input.release.as_ref()
+                                    .filter(|release| release.action_id == action.id));
+                            match window {
+                                None => self.disarm_pending_release(core, handle)?,
+                                Some(release) if release.covers(at) => {
+                                    self.work = MoveAdvanceCursor::pending_timed_release(
+                                        &entity.id, action, self.binding, &self.budget,
+                                    )?;
+                                }
+                                // A live lease may be waiting for additional elapsed credit.
+                                // It cannot fire yet and its uncommitted choice still belongs
+                                // to the exact action. Absence above is the revocation signal.
+                                Some(_) => {}
                             }
                             if self.work.is_none() {
                                 self.phase = Phase::Next;
@@ -407,8 +445,11 @@ impl EndpointCursor {
                         MoveAdvanceStep::Personal(_) => return Ok(Progress::Personal),
                         MoveAdvanceStep::Geometry(_) => return Ok(Progress::Geometry),
                         MoveAdvanceStep::Complete => {
-                            self.work = None;
+                            let mut work = self.work.take().ok_or(ExecutionError::Invariant)?;
                             if timed {
+                                if let Some(review) = work.take_timed_release_review(core)? {
+                                    reviews.push(review, &self.budget)?;
+                                }
                                 self.disarm_pending_release(core, self.actors[self.next])?;
                             }
                             self.phase = if std::mem::take(&mut self.check_pending_release) {

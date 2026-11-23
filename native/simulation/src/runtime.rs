@@ -20,6 +20,7 @@ mod account_retention;
 mod control;
 pub use crate::commands::{PlayerTravelDestination, PlayerTravelIntent, RuntimeGuardFacing};
 pub use crate::contact::{StrikePermission, StrikeReviewOffer};
+pub use crate::contact::review::TimedReleaseReview;
 pub use crate::experience::{RetentionPreparation, render_account_summary};
 pub use crate::outings::view::{OutingViews, PlayerOuting};
 pub use crate::plans::PlanMode;
@@ -2022,6 +2023,15 @@ impl RuntimePreparedProducts<'_> {
         match self.operation {
             CompletedOperation::Command(command) => command.command.strike_review(),
             _ => None,
+        }
+    }
+
+    /// Current approval requested during an authorized advance. The host must
+    /// settle the exact input and recheck disclosure before publishing it.
+    pub fn timed_release_reviews(&self) -> &[TimedReleaseReview] {
+        match self.operation {
+            CompletedOperation::Advance(advance) => advance.timed_release_reviews(),
+            _ => &[],
         }
     }
 
