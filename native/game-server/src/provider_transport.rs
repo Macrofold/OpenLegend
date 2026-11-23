@@ -465,6 +465,14 @@ impl HttpEvidence {
         }
     }
 
+    /// Macrofold validates this exact inline input bound before admitting a
+    /// Run. A generic HTTP or schema failure does not qualify.
+    pub(crate) fn macrofold_input_limit(&self, route: ProviderRoute) -> bool {
+        route == ProviderRoute::Macrofold
+            && self.status == 413
+            && self.error_code.as_deref() == Some("input_too_large")
+    }
+
     /// Only documented pre-admission refusals establish there was no model
     /// invocation. In particular, an ordinary 409 or 5xx is not safe to replay.
     pub(crate) fn admission_rejected(&self, route: ProviderRoute) -> bool {

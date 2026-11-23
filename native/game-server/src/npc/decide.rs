@@ -395,9 +395,7 @@ pub(super) async fn run(
             if include_actions {
                 let fallback =
                     configured_fallback.filter(|_| choose && escalation::has_action(&prepared));
-                let invalid_fallback = fallback
-                    .as_ref()
-                    .filter(|(route, _)| route.permits(escalation::Reason::InvalidOutput));
+                let configured = fallback.as_ref().map(|(route, _)| *route);
                 let accepted = action_attention(
                     game,
                     dispatch,
@@ -406,7 +404,7 @@ pub(super) async fn run(
                     decision,
                     models.ceiling_micro_usd,
                     choose,
-                    invalid_fallback.is_some(),
+                    configured,
                 )
                 .await;
                 let reconsider = match accepted {
@@ -478,11 +476,10 @@ pub(super) async fn run(
                                 .then_some((*route, clock, rated_context, reason))
                         })
                     }
-                    Ok(Some(ActionAttention::InvalidOutput(context))) => {
-                        let (route, clock) = invalid_fallback
-                            .ok_or_else(|| CallFailure::Invalid.at("action-attention"))?;
-                        Some((*route, clock, context, escalation::Reason::InvalidOutput))
-                    }
+                    Ok(Some(ActionAttention::Recovery(reason, context))) => fallback
+                        .as_ref()
+                        .filter(|(route, _)| route.permits(reason))
+                        .map(|(route, clock)| (*route, clock, context, reason)),
                     Ok(None) => None,
                     // A settled optional judgment can have unusable ratings. Keep
                     // the permitted offers and let the generation dispatch recheck
@@ -1025,7 +1022,10 @@ enum ActionAttention {
         provider::JudgmentAnswer,
         Arc<crate::decision_render::BoundAttention>,
     ),
-    InvalidOutput(Arc<crate::decision_render::BoundAttention>),
+    Recovery(
+        escalation::Reason,
+        Arc<crate::decision_render::BoundAttention>,
+    ),
 }
 
 async fn action_attention(
@@ -1036,7 +1036,7 @@ async fn action_attention(
     decision: &Model,
     ceiling: u64,
     choose: bool,
-    retain_invalid: bool,
+    fallback: Option<&escalation::ConfiguredEscalation>,
 ) -> Result<Option<ActionAttention>, CallFailure> {
     let budget = game.host.budget();
     let id = format!("{}:attempt:0:action-attention", work.job.job.id);
@@ -1076,7 +1076,12 @@ async fn action_attention(
         )
         .await?;
     let parser = budget.clone();
-    dispatch
+    let retain_invalid =
+        fallback.is_some_and(|route| route.permits(escalation::Reason::InvalidOutput));
+    let unavailable_context = fallback
+        .filter(|route| route.permits(escalation::Reason::RouteUnavailable))
+        .map(|_| Arc::clone(&attention));
+    let assessed = dispatch
         .submit(
             side(
                 work,
@@ -1101,14 +1106,25 @@ async fn action_attention(
                     Ok(rated) => Ok(Some(ActionAttention::Rated(rated, attention))),
                     // Only a received judgment envelope can report a bad offered answer.
                     // The spending owner still checks that the earlier execution ended.
-                    Err(RenderError::InvalidResponse) if retain_invalid => {
-                        Ok(Some(ActionAttention::InvalidOutput(attention)))
-                    }
+                    Err(RenderError::InvalidResponse) if retain_invalid => Ok(Some(
+                        ActionAttention::Recovery(escalation::Reason::InvalidOutput, attention),
+                    )),
                     Err(_) => Err(CallFailure::Invalid),
                 }
             }),
         )
-        .await
+        .await;
+    match (assessed, unavailable_context) {
+        (Err(error), Some(context))
+            if matches!(error.cause().1, CallFailure::ProviderInputLimit) =>
+        {
+            Ok(Some(ActionAttention::Recovery(
+                escalation::Reason::RouteUnavailable,
+                context,
+            )))
+        }
+        (outcome, _) => outcome,
+    }
 }
 
 fn ensure_running(work: &Work) -> Result<(), CallFailure> {

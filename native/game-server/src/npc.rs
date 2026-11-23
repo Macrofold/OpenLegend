@@ -904,6 +904,11 @@ impl Director {
                 "The necessary information was too large for this AI request.",
                 "context-exceeded",
             ),
+            CallFailure::ProviderInputLimit => (
+                SpeechReplyStatus::Failed,
+                "The necessary information was too large for this AI request.",
+                "input_too_large",
+            ),
             CallFailure::DecodeBusy => (
                 SpeechReplyStatus::Failed,
                 "The reply could not be processed in time.",

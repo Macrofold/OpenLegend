@@ -72,6 +72,7 @@ pub(crate) enum CallFailure {
     World(WorldError),
     DecodeBusy,
     ContextLimit,
+    ProviderInputLimit,
     Transport(NetworkError),
     Refused(u16),
     Deployment(&'static str),
@@ -97,6 +98,9 @@ impl fmt::Display for CallFailure {
             Self::World(error) => error.fmt(f),
             Self::DecodeBusy => f.write_str("Compute capacity remained busy for the funded reply"),
             Self::ContextLimit => f.write_str("The complete decision context exceeds its limit"),
+            Self::ProviderInputLimit => {
+                f.write_str("The provider refused its inline input before invocation")
+            }
             Self::Transport(error) => error.fmt(f),
             Self::Refused(status) => write!(f, "The provider refused the request ({status})"),
             Self::Deployment(code) => write!(
@@ -128,6 +132,7 @@ impl CallFailure {
                 | Self::Stale(_)
                 | Self::Authority(_)
                 | Self::Refused(_)
+                | Self::ProviderInputLimit
                 | Self::Deployment(_)
                 | Self::DecodeBusy => Outcome::Refused,
                 _ => Outcome::Failed,
@@ -530,9 +535,15 @@ impl DecisionDispatch {
             };
             match response {
                 Ok(ProviderReply::Refused(http)) => {
-                    let status = http.status;
+                    let failure = if http.macrofold_input_limit(route) {
+                        CallFailure::ProviderInputLimit
+                    } else {
+                        CallFailure::Refused(http.status)
+                    };
                     evidence = Some(http);
-                    Err(CallFailure::Refused(status))
+                    // Return the typed failure only after the same original
+                    // spending settlement as any refusal.
+                    Err(failure)
                 }
                 Ok(ProviderReply::Json {
                     evidence: http,
