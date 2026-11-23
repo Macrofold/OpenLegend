@@ -62,8 +62,9 @@ export const BASE_HANDOVER = {
       ),
     withdrawDescription: (terms: string) => `Withdraw my offer of ${terms}; nothing moves.`,
     counterDescription: (give: string, receive: string) =>
-      copy.counterDescription.replace(/\{(give|receive)\}/g, (_slot, key) =>
-        key === 'give' ? give : receive,
+      (receive ? copy.counterDescription : copy.counterGiftDescription).replace(
+        /\{(give|receive)\}/g,
+        (_slot, key) => (key === 'give' ? give : receive),
       ),
     exchangeDescription: (give: string, receive: string) =>
       copy.exchangeDescription.replace(/\{(give|receive)\}/g, (_slot, key) =>

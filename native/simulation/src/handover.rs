@@ -1177,7 +1177,7 @@ impl NpcHandover {
         match self {
             Self::Reply { source, .. } => &source.offerer,
             Self::Offer { recipient, .. } => recipient,
-            Self::Counter { terms, .. } => &terms.source.offerer,
+            Self::Counter { terms, .. } => &terms.counterpart,
             Self::Exchange { evidence, .. } => evidence.counterpart(),
         }
     }
@@ -1219,41 +1219,54 @@ impl HeapBytes for NpcHandover {
     }
 }
 
-/// One immutable, funded set of requested items from a received offer. All
-/// choices for this prior revision can share it. The ordinary writer still
-/// revalidates the prior revision, stock and reach.
+/// An NPC can replace an incoming offer or add one own lot to already
+/// disclosed terms. Both choices use the same ordinary Counter writer.
+pub(crate) struct NpcOfferRevision<'a> {
+    pub(crate) gift: &'a GiftDisclosure,
+    pub(crate) reference: &'a crate::experience::PersonalSourceRef,
+    pub(crate) counterpart: &'a str,
+    pub(crate) offered: (&'a [GiftLot], &'a [GiftDescription]),
+    pub(crate) requested: (&'a [GiftLot], &'a [GiftDescription]),
+}
+
 pub(crate) struct CounterTerms {
     pub(crate) source: GiftSource,
+    pub(crate) counterpart: String,
+    pub(crate) offered: Vec<GiftSelection>,
     pub(crate) requested: Vec<GiftSelection>,
     _custody: crate::host::ByteReservation,
 }
 
 impl CounterTerms {
+    /// Fund one exact prior revision once for all current additions.
     pub(crate) fn prepare(
-        gift: &GiftDisclosure,
-        reference: &crate::experience::PersonalSourceRef,
+        revision: &NpcOfferRevision<'_>,
         budget: &ByteBudget,
     ) -> Result<Arc<Self>, ExecutionError> {
-        let bytes = gift
-            .offer
+        let bytes = revision
             .offered
-            .len()
-            .checked_mul(size_of::<GiftSelection>())
-            .and_then(|bytes| bytes.checked_add(size_of::<Self>() + 2 * size_of::<usize>()))
-            .and_then(|bytes| {
-                gift.offer
-                    .offered
-                    .iter()
-                    .try_fold(bytes, |bytes, lot| bytes.checked_add(lot.item_id.len()))
-            })
+            .0
+            .iter()
+            .chain(revision.requested.0)
+            .try_fold(
+                size_of::<Self>() + 2 * size_of::<usize>() + revision.counterpart.len(),
+                |bytes, lot| bytes.checked_add(size_of::<GiftSelection>() + lot.item_id.len()),
+            )
             .ok_or(ExecutionError::Capacity)?;
         let mut custody = budget.reserve(bytes)?;
-        let (source, source_custody) = GiftSource::prepare(gift, reference, budget)?;
+        let (source, source_custody) =
+            GiftSource::prepare(revision.gift, revision.reference, budget)?;
         custody.merge(source_custody)?;
-        let requested = gift.offer.offered.iter().map(GiftLot::selection).collect();
         Ok(Arc::new(Self {
             source,
-            requested,
+            counterpart: revision.counterpart.to_owned(),
+            offered: revision.offered.0.iter().map(GiftLot::selection).collect(),
+            requested: revision
+                .requested
+                .0
+                .iter()
+                .map(GiftLot::selection)
+                .collect(),
             _custody: custody,
         }))
     }
@@ -1472,6 +1485,47 @@ impl ReceivedGifts {
             .values()
             .map(|record| &record.disclosure)
             .filter(move |gift| gift.offer.party(other))
+    }
+
+    /// Offer revisions use only the NPC's own exact still-open terms. A
+    /// received offer permits replacement and preserving its prior own terms.
+    /// An already-sent offer permits only adding to its own existing terms.
+    pub(crate) fn npc_revisions<'a>(
+        &'a self,
+        actor: &'a str,
+    ) -> impl Iterator<Item = NpcOfferRevision<'a>> {
+        self.pending.values().flat_map(move |record| {
+            let gift = &record.disclosure;
+            let row = &gift.offer;
+            let received = row.recipient_id == actor;
+            let reference = &record.original.header().reference;
+            let own = (&row.offered[..], &gift.descriptions.offered[..]);
+            let other = (&row.requested[..], &gift.descriptions.requested[..]);
+            let (counterpart, offered, requested) = if received {
+                (row.offerer_id.as_str(), other, own)
+            } else {
+                (row.recipient_id.as_str(), own, other)
+            };
+            let replace =
+                (received && requested.0.len() < trade_lot_limit()).then(|| NpcOfferRevision {
+                    gift,
+                    reference,
+                    counterpart,
+                    offered: (&[], &[]),
+                    requested,
+                });
+            let extend = (row.party(actor)
+                && !offered.0.is_empty()
+                && offered.0.len() + requested.0.len() < trade_lot_limit())
+            .then(|| NpcOfferRevision {
+                gift,
+                reference,
+                counterpart,
+                offered,
+                requested,
+            });
+            [replace, extend].into_iter().flatten()
+        })
     }
 
     /// The ordinary NPC menu grants replies only to the actual recipient.

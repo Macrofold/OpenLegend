@@ -170,6 +170,7 @@ struct ProposalLot {
 struct CounterOption {
     target: usize,
     terms: Arc<CounterTerms>,
+    give: JsText,
     receive: JsText,
 }
 
@@ -244,8 +245,8 @@ impl NpcCandidateCursor {
                 rays.push(ray);
                 any_open |= fresh_allowed
                     || received
-                        .npc_incoming(&self.actor)
-                        .any(|(gift, _)| gift.offer.offerer_id == target.id);
+                        .npc_revisions(&self.actor)
+                        .any(|revision| revision.counterpart == target.id);
             }
         }
         if !any_open {
@@ -315,8 +316,8 @@ impl NpcCandidateCursor {
         prepared.recipients.retain(|subject| {
             let id = &self.targets[subject.target].id;
             let can_counter = received
-                .npc_incoming(&self.actor)
-                .any(|(gift, _)| &gift.offer.offerer_id == id);
+                .npc_revisions(&self.actor)
+                .any(|revision| revision.counterpart == id);
             has_counter |= can_counter;
             subject.fresh_allowed || can_counter
         });
@@ -376,7 +377,16 @@ impl NpcCandidateCursor {
             .social_offer_read
             .as_ref()
             .ok_or(ExecutionError::Invariant)?;
-        if counter.is_none() && !(recipient.fresh_allowed && stock.fresh_allowed) {
+        if let Some(counter) = counter {
+            if counter
+                .terms
+                .offered
+                .iter()
+                .any(|old| old.item_id == lot.item_id)
+            {
+                return Ok(());
+            }
+        } else if !(recipient.fresh_allowed && stock.fresh_allowed) {
             return Ok(());
         }
         let definition = state
@@ -401,7 +411,11 @@ impl NpcCandidateCursor {
                     lot: lot.clone(),
                 },
                 self.id(&[
-                    "counter:",
+                    if counter.terms.offered.is_empty() {
+                        "counter:"
+                    } else {
+                        "extend-offer:"
+                    },
                     &source.id,
                     ":",
                     &revision,
@@ -413,7 +427,10 @@ impl NpcCandidateCursor {
                 describe_proposal(
                     &quantity,
                     &definition.named.name,
-                    ProposalCopy::Counter(&counter.receive),
+                    ProposalCopy::Counter {
+                        prior: &counter.give,
+                        receive: &counter.receive,
+                    },
                     &self.budget,
                 )?,
             )
@@ -479,16 +496,13 @@ impl GiftProposals {
     ) -> Result<(), ExecutionError> {
         let recipients = &self.recipients;
         let eligible = || {
-            received
-                .npc_incoming(actor)
-                .filter_map(|(gift, reference)| {
-                    let target = recipients
-                        .iter()
-                        .find(|subject| targets[subject.target].id == gift.offer.offerer_id)?
-                        .target;
-                    (gift.offer.offered.len() < crate::handover::trade_lot_limit())
-                        .then_some((gift, reference, target))
-                })
+            received.npc_revisions(actor).filter_map(|revision| {
+                let target = recipients
+                    .iter()
+                    .find(|subject| targets[subject.target].id == revision.counterpart)?
+                    .target;
+                Some((revision, target))
+            })
         };
         let count = eligible().count();
         let storage = budget.reserve(
@@ -498,36 +512,35 @@ impl GiftProposals {
         )?;
         self._storage.merge(storage)?;
         self.counters = Vec::with_capacity(count);
-        for (gift, reference, target) in eligible() {
-            let terms = CounterTerms::prepare(gift, reference, budget)?;
-            let names = gift
-                .descriptions
+        for (revision, target) in eligible() {
+            let terms = CounterTerms::prepare(&revision, budget)?;
+            let names = revision
                 .offered
+                .1
                 .iter()
+                .chain(revision.requested.1)
                 .map(|description| &description.name);
+            let count = revision.offered.0.len() + revision.requested.0.len();
             let mut storage = budget.reserve(
                 casting::text_bound(names)?
-                    .checked_add(
-                        gift.offer
-                            .offered
-                            .len()
-                            .checked_mul(64)
-                            .ok_or(ExecutionError::Capacity)?,
-                    )
+                    .checked_add(count.checked_mul(64).ok_or(ExecutionError::Capacity)?)
                     .and_then(|bytes| bytes.checked_mul(4))
                     .ok_or(ExecutionError::Capacity)?,
             )?;
+            let mut give = JsText::default();
             let mut receive = JsText::default();
-            append_gift_lots(
-                &mut receive,
-                &gift.offer.offered,
-                &gift.descriptions.offered,
+            append_gift_lots(&mut give, revision.offered.0, revision.offered.1)?;
+            append_gift_lots(&mut receive, revision.requested.0, revision.requested.1)?;
+            storage.resize(
+                give.storage_bytes()
+                    .checked_add(receive.storage_bytes())
+                    .ok_or(ExecutionError::Capacity)?,
             )?;
-            storage.resize(receive.storage_bytes())?;
             self._storage.merge(storage)?;
             self.counters.push(CounterOption {
                 target,
                 terms,
+                give,
                 receive,
             });
         }
@@ -642,7 +655,10 @@ enum ProposalCopy<'a> {
         named: &'a crate::state::Named,
         minutes: f64,
     },
-    Counter(&'a JsText),
+    Counter {
+        prior: &'a JsText,
+        receive: &'a JsText,
+    },
 }
 
 fn describe_proposal(
@@ -652,12 +668,19 @@ fn describe_proposal(
     budget: &ByteBudget,
 ) -> Result<(JsText, ByteReservation), ExecutionError> {
     let copy = &*GIFT_COPY;
-    let (template, extra) = match words {
-        ProposalCopy::Gift { named, .. } => (copy.gift_description, &named.name),
-        ProposalCopy::Counter(receive) => (copy.counter_description, receive),
+    let (template, extra, existing_give) = match words {
+        ProposalCopy::Gift { named, .. } => (copy.gift_description, &named.name, None),
+        ProposalCopy::Counter { prior, receive } => {
+            let template = if receive.is_empty() {
+                copy.counter_gift_description
+            } else {
+                copy.counter_description
+            };
+            (template, receive, Some(prior))
+        }
     };
     let mut custody = budget.reserve(
-        casting::text_bound([item, extra])?
+        casting::text_bound([item, extra].into_iter().chain(existing_give))?
             .checked_mul(2)
             .and_then(|bytes| {
                 bytes.checked_add(
@@ -674,8 +697,12 @@ fn describe_proposal(
             ("minutes", ProposalCopy::Gift { minutes, .. }) => {
                 text.push_str(ryu_js::Buffer::new().format(*minutes))
             }
-            ("receive", ProposalCopy::Counter(receive)) => text.push_text(receive),
+            ("receive", ProposalCopy::Counter { receive, .. }) => text.push_text(receive),
             ("give", _) => {
+                if let Some(prior) = existing_give.filter(|prior| !prior.is_empty()) {
+                    text.push_text(prior);
+                    text.push_str(", ");
+                }
                 text.push_str(quantity);
                 text.push_str(" ");
                 text.push_text(item);
@@ -684,7 +711,7 @@ fn describe_proposal(
         }
         Ok(())
     })?;
-    if matches!(words, ProposalCopy::Counter(_)) {
+    if matches!(words, ProposalCopy::Counter { .. }) {
         result.push_str(" ");
         result.push_str(copy.decision);
     }

@@ -24,8 +24,9 @@ impl NativeCommand {
         let target = choice.target();
         let prior_bytes = match choice {
             NpcHandover::Counter { terms, .. } => terms
-                .requested
+                .offered
                 .iter()
+                .chain(&terms.requested)
                 .try_fold(terms.source.id.len(), |bytes, lot| {
                     bytes.checked_add(
                         size_of::<crate::handover::GiftSelection>() + lot.item_id.len(),
@@ -79,13 +80,18 @@ impl NativeCommand {
                 offer_id: None,
                 expected_offer_revision: None,
             },
-            NpcHandover::Counter { terms, lot } => crate::handover::GiftIntent {
-                handover_operation: GiftOperation::Counter,
-                offered_items: Some(vec![lot.selection()]),
-                requested_items: Some(terms.requested.clone()),
-                offer_id: Some(terms.source.id.clone()),
-                expected_offer_revision: Some(terms.source.revision),
-            },
+            NpcHandover::Counter { terms, lot } => {
+                let mut offered = Vec::with_capacity(terms.offered.len() + 1);
+                offered.extend(terms.offered.iter().cloned());
+                offered.push(lot.selection());
+                crate::handover::GiftIntent {
+                    handover_operation: GiftOperation::Counter,
+                    offered_items: Some(offered),
+                    requested_items: Some(terms.requested.clone()),
+                    offer_id: Some(terms.source.id.clone()),
+                    expected_offer_revision: Some(terms.source.revision),
+                }
+            }
         };
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
