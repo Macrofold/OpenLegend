@@ -561,6 +561,7 @@ impl Terminal {
                         ("actionId", string(&flight.action_id)),
                         ("sourceLife", number(flight.source_life as f64)),
                         ("sourceId", string(&flight.source_id)),
+                        ("sourceController", string(flight.source_controller.as_str())),
                         ("result", string(result)),
                         ("damage", number(self.loss)),
                         ("rawInjury", number(self.raw_injury)),
@@ -582,6 +583,9 @@ impl Terminal {
                     }
                     if let Some(id) = self.body.as_deref().or(self.solid.as_deref()) {
                         fields.insert("interceptionId".into(), string(id));
+                    }
+                    if let Some(life) = self.body_life {
+                        fields.insert("contactLife".into(), number(life as f64));
                     }
                     EventEmissionIntent {
                         event_type: words.projectile_ended.clone(),

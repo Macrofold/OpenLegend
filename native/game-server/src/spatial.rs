@@ -90,7 +90,31 @@ pub struct SpatialProvider {
     _resident: ResidentReservation,
 }
 
+pub(crate) enum AimGeometry<'a> {
+    Surface(&'a str),
+    Shape(&'a str),
+}
+
 impl SpatialProvider {
+    /// Bind a browser point to this exact installed map. The simulation checks
+    /// release range and sight separately, from the actor's current position.
+    pub(crate) fn admits_aim_point(
+        &self,
+        revision: u64,
+        point: Point,
+        basis: Option<AimGeometry<'_>>,
+    ) -> bool {
+        if revision != self.revision || !finite(point) {
+            return false;
+        }
+        match basis {
+            Some(AimGeometry::Surface(id)) => self.matches_named_support(point, id),
+            Some(AimGeometry::Shape(id)) => self.scene.shape_contains_point(point, id),
+            // The caller binds the current permitted body in the same read.
+            None => true,
+        }
+    }
+
     pub(crate) fn clear_interaction_line(
         &self,
         ray: &openlegend_simulation::geometry::SightRay,

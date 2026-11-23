@@ -106,6 +106,7 @@ enum Phase {
     PracticeReach,
     GuardSight,
     RangedSight,
+    RangedPointReview,
     RangedRelease,
     RespawnSupport,
     RespawnStanding,
@@ -210,6 +211,7 @@ pub(crate) struct CommandCursor {
     queries: Option<GeometryQueries>,
     contact_route: Option<crate::contact::StrikeRoute>,
     ranged_release: Option<Box<crate::movement::MoveAdvanceCursor>>,
+    ranged_point_review: Option<Box<(crate::projectile::point_review::PointReview, ByteReservation)>>,
     follow: Option<crate::movement::follow::FollowCursor>,
     hearth: Option<hearth::PreparedHearth>,
     travel: Option<Box<travel::Consent>>,
@@ -398,6 +400,7 @@ impl CommandCursor {
             queries: None,
             contact_route: None,
             ranged_release: None,
+            ranged_point_review: None,
             follow: None,
             hearth: None,
             travel: None,
@@ -455,6 +458,7 @@ impl CommandCursor {
         self.sight
             .as_ref()
             .map(|sight| sight.queries())
+            .or_else(|| self.ranged_point_review.as_ref().map(|owner| owner.0.queries()))
             .or_else(|| self.gift_sound.as_ref().map(|sound| sound.queries()))
             .or_else(|| self.contact_route.as_ref().map(|route| route.queries()))
             .or_else(|| self.follow.as_ref().and_then(|cursor| cursor.queries()))
@@ -977,8 +981,14 @@ impl CommandCursor {
                             self.finish_guard_sight(core, answer)?;
                             return self.drive(core, None);
                         }
+                        if matches!(self.phase, Phase::RangedPointReview) {
+                            return self.finish_ranged_point_review(core, answer);
+                        }
                         if matches!(self.phase, Phase::RangedSight) {
                             self.finish_ranged_sight(core, answer)?;
+                            if matches!(self.phase, Phase::RangedPointReview) {
+                                return Ok(Progress::Geometry);
+                            }
                             return self.drive(core, None);
                         }
                         if matches!(self.phase, Phase::LearnRecordSight | Phase::LearnRecordReach) {
@@ -1552,7 +1562,7 @@ impl CommandCursor {
                 }
                 Phase::StoragePage => return self.storage_occurrence(core, &actor_id),
                 Phase::RespawnSupport | Phase::RespawnStanding
-                | Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach | Phase::ScarReach | Phase::PracticeReach | Phase::GuardSight | Phase::RangedSight | Phase::RangedRelease => {
+                | Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach | Phase::ScarReach | Phase::PracticeReach | Phase::GuardSight | Phase::RangedSight | Phase::RangedPointReview | Phase::RangedRelease => {
                     return Err(ExecutionError::Invariant);
                 }
                 Phase::Standing => {
@@ -1800,13 +1810,17 @@ impl CommandCursor {
                             .as_ref()
                             .and_then(|policy| policy.value().lethal_attack_review.as_ref())
                             .ok_or(ExecutionError::Invariant)?;
+                        let description = if matches!(self.command, NativeCommand::Ranged { .. }) {
+                            &rule.ranged_description
+                        } else {
+                            &rule.description
+                        };
                         let offered = crate::contact::StrikeReviewOffer::new(
-                            permission, custody, view, storage, rule,
+                            permission, custody, view, storage, rule, description,
                         )?;
                         self.strike_review = Some(Box::new(offered));
-                        self.reserve(rule.description.len() + "lethal-review-required".len())?;
-                        self.outcome =
-                            Some(outcome(false, "lethal-review-required", &rule.description));
+                        self.reserve(description.len() + "lethal-review-required".len())?;
+                        self.outcome = Some(outcome(false, "lethal-review-required", description));
                         self.phase = Phase::Done;
                         continue;
                     }

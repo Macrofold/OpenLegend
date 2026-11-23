@@ -28,6 +28,12 @@ pub(super) struct Pending {
     target: Option<String>,
     definition: Option<String>,
     aim: Option<String>,
+    point: Option<Point>,
+    basis: Option<AimBasis>,
+    body_reference: Option<String>,
+    tool: Option<String>,
+    ammunition: Option<String>,
+    auto_equip: Option<bool>,
     expires_at: i64,
     pub(super) permission: StrikePermission,
     _custody: ByteReservation,
@@ -67,6 +73,12 @@ impl Reviews {
                             && entry.target == command.target_id
                             && entry.definition == command.definition_id
                             && entry.aim == command.aim_id
+                            && entry.point == command.aim_point
+                            && entry.basis == command.aim_basis
+                            && entry.body_reference == command.body_reference
+                            && entry.tool == command.item_id
+                            && entry.ammunition == command.ammunition_id
+                            && entry.auto_equip == command.auto_equip
                     }
             })
             .cloned())
@@ -93,19 +105,27 @@ impl Reviews {
             }
             pending.try_reserve(1).map_err(|_| HostError::Capacity)?;
         }
+        let basis = command.aim_basis.as_ref();
+        let selected_text = [
+            command.target_id.as_ref(),
+            command.definition_id.as_ref(),
+            command.aim_id.as_ref(),
+            command.body_reference.as_ref(),
+            command.item_id.as_ref(),
+            command.ammunition_id.as_ref(),
+            basis.and_then(|basis| basis.body_reference.as_ref()),
+            basis.and_then(|basis| basis.surface_id.as_ref()),
+            basis.and_then(|basis| basis.shape_id.as_ref()),
+        ];
         let bytes = offer
             .permission
             .retained_bytes()
-            .and_then(|n| {
-                n.checked_add(
-                    size_of::<Pending>()
-                        + 64
-                        + 2 * scope.actor_id.len()
-                        + command.target_id.as_ref().map_or(0, String::len)
-                        + command.definition_id.as_ref().map_or(0, String::len)
-                        + command.aim_id.as_ref().map_or(0, String::len)
-                        + 256,
-                )
+            .and_then(|n| n.checked_add(size_of::<Pending>() + 64 + 2 * scope.actor_id.len() + 256))
+            .and_then(|base| {
+                selected_text
+                    .into_iter()
+                    .flatten()
+                    .try_fold(base, |total, part| total.checked_add(part.len()))
             })
             .ok_or(HostError::Capacity)?;
         let custody = budget.reserve(bytes).map_err(HostError::from)?;
@@ -117,6 +137,12 @@ impl Reviews {
             target: command.target_id.clone(),
             definition: command.definition_id.clone(),
             aim: command.aim_id.clone(),
+            point: command.aim_point,
+            basis: command.aim_basis.clone(),
+            body_reference: command.body_reference.clone(),
+            tool: command.item_id.clone(),
+            ammunition: command.ammunition_id.clone(),
+            auto_equip: command.auto_equip,
             expires_at: now.saturating_add(REVIEW_MS),
             permission: offer.permission.clone(),
             _custody: custody,

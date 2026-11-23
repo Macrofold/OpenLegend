@@ -2,11 +2,12 @@
 //! The clock later confirms the same live shot before moving any stock.
 use super::*;
 use crate::commands::RangedIntent;
+use crate::commands::ranged_input::{LaunchApproval, check_launch_review};
 use crate::contact::review::{ChosenContact, Review};
 use crate::host::retained_size::heap_sum;
+use crate::projectile::point_review::{PointReview, PointReviewStep};
 use crate::projectile::{AimedLife, RangedAim, RangedTarget, RuntimeRangedMode, hold_id, loadout};
 use crate::reception::SightBatch;
-use crate::state::Entity;
 
 impl CommandCursor {
     pub(super) fn prepare_ranged_start(
@@ -261,10 +262,12 @@ impl CommandCursor {
             &state.experience,
             self.actor_id(),
         )?;
-        let target = aim
-            .aim_target
+        let target = self
+            .strike_confirmation
             .as_ref()
-            .map(|subject| names.capture_observer_name(&subject.id, &self.budget))
+            .map(|review| review.0.target_id())
+            .or_else(|| aim.aim_target.as_ref().map(|subject| subject.id.as_str()))
+            .map(|id| names.capture_observer_name(id, &self.budget))
             .transpose()?;
         let view_bytes = heap_sum([
             policy.action_label.len() * 2,
@@ -294,7 +297,7 @@ impl CommandCursor {
 impl CommandCursor {
     pub(super) fn finish_ranged_sight(
         &mut self,
-        core: &CoreMutation<'_>,
+        core: &mut CoreMutation<'_>,
         answer: GeometryAnswers,
     ) -> Result<(), ExecutionError> {
         let NativeCommand::Ranged {
@@ -319,9 +322,23 @@ impl CommandCursor {
                 subject.as_ref().map(|subject| subject.id.as_str())
             }
         };
-        if selected.is_some_and(|id| observed.seen(id) != Some(true))
-            || matches!(target, RangedTarget::Point { .. }) && observed.point_seen() != Some(true)
-        {
+        let permitted = match target {
+            RangedTarget::Subject { id, .. } => observed.seen(id) == Some(true),
+            RangedTarget::Point { point, subject } => {
+                observed.point_seen() == Some(true)
+                    || match subject
+                        .as_ref()
+                        .filter(|body| observed.seen(&body.id) == Some(true))
+                        .and_then(|body| state.physical.entities.get(&body.id))
+                    {
+                        Some(body) => {
+                            crate::projectile::inside_current_body(body, *point, &self.budget)?
+                        }
+                        None => false,
+                    }
+            }
+        };
+        if !permitted {
             self.refuse(&ordinary.not_applicable);
             return Ok(());
         }
@@ -363,6 +380,7 @@ impl CommandCursor {
         } else {
             Phase::Prepared
         };
+        let aim_point = aim.aim_point;
         if let Some((subject, target)) = looked_at.zip(aim.aim_target.as_ref()) {
             if *mode != RuntimeRangedMode::Aim {
                 let chosen = match &self.chosen_contact {
@@ -421,7 +439,118 @@ impl CommandCursor {
                 action.lethal_permission = chosen.map(|permit| Box::new(permit.clone()));
             }
         }
+        if *mode == RuntimeRangedMode::ShootOnce {
+            if let Some(point) = aim_point {
+                let mut binding = self.binding;
+                binding.serial = core.journal.next_provider_serial()?;
+                if let Some(review) = PointReview::prepare(
+                    core,
+                    self.actor_id(),
+                    point,
+                    weapon.range,
+                    binding,
+                    &self.budget,
+                )? {
+                    let custody = self
+                        .budget
+                        .reserve(size_of::<(PointReview, ByteReservation)>())?;
+                    self.ranged_point_review = Some(Box::new((review, custody)));
+                    self.phase = Phase::RangedPointReview;
+                    return Ok(());
+                }
+                self.check_initial_point(core, None)?;
+                return Ok(());
+            }
+        }
         self.phase = next;
+        Ok(())
+    }
+
+    pub(super) fn finish_ranged_point_review(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        answer: GeometryAnswers,
+    ) -> Result<Progress, ExecutionError> {
+        let (review, custody) = *self
+            .ranged_point_review
+            .take()
+            .ok_or(ExecutionError::Invariant)?;
+        match review.finish(core, answer, &self.budget)? {
+            PointReviewStep::Geometry(next) => {
+                self.ranged_point_review = Some(Box::new((next, custody)));
+                Ok(Progress::Geometry)
+            }
+            PointReviewStep::Complete(indicated) => {
+                self.check_initial_point(core, indicated.as_ref().map(|(body, _)| body))?;
+                self.drive(core, None)
+            }
+        }
+    }
+
+    fn check_initial_point(
+        &mut self,
+        core: &CoreMutation<'_>,
+        indicated: Option<&AimedLife>,
+    ) -> Result<(), ExecutionError> {
+        let state = &core.state;
+        let source = state
+            .physical
+            .entities
+            .get(self.actor_id())
+            .ok_or(ExecutionError::MissingActor)?;
+        let installed = state.installed.clone();
+        let action = self.action.as_ref().ok_or(ExecutionError::Invariant)?;
+        let aim = action.ranged.as_ref().ok_or(ExecutionError::Invariant)?;
+        let selection = aim.selected().ok_or(ExecutionError::Invariant)?;
+        let subject = match indicated {
+            Some(indicated) => {
+                let Some(body) = crate::projectile::selected_body(
+                    state,
+                    source,
+                    (&indicated.id, indicated.life),
+                ) else {
+                    self.refuse(&installed.ordinary_actions.value().not_applicable);
+                    return Ok(());
+                };
+                Some(body)
+            }
+            None => None,
+        };
+        let (weapon, ammunition) = loadout::installed_loadout(&installed, aim)?;
+        let Some(ChosenContact::Player(permission)) = self.chosen_contact.as_ref() else {
+            return Err(ExecutionError::UnsupportedFamily);
+        };
+        match check_launch_review(
+            &installed,
+            source,
+            action,
+            selection,
+            [None, subject],
+            (weapon.damage + ammunition.damage_bonus).max(0.0),
+            permission.as_deref(),
+            &self.budget,
+        )? {
+            LaunchApproval::Allowed(_) => {
+                let action = self.action.as_mut().ok_or(ExecutionError::Invariant)?;
+                action.requires_lethal_review = Some(true);
+                action.lethal_permission = permission
+                    .as_ref()
+                    .map(|permit| Box::new((**permit).clone()));
+                self.phase = Phase::Prepared;
+            }
+            LaunchApproval::Required(permit, custody) => {
+                self.strike_confirmation = Some(Box::new((permit, custody)));
+                self.phase = Phase::Choice;
+            }
+            LaunchApproval::Changed => {
+                let rules = installed
+                    .body_policy
+                    .as_ref()
+                    .and_then(|body| body.value().lethal_attack_review.as_ref())
+                    .ok_or(ExecutionError::InvalidCheckpoint)?;
+                self.discovery_result(false, "lethal-review-stale", &rules.ranged_description)?;
+            }
+        }
         Ok(())
     }
 }
@@ -459,30 +588,12 @@ impl CommandCursor {
             self.refuse(&ordinary.not_applicable);
             return self.drive(core, None);
         };
-        // A subject already chosen by this exact aim can be reissued by the
-        // signed control. An override needs its own fresh trajectory choice.
-        if target.as_ref().is_some_and(|target| {
-            match (
-                target,
-                action
-                    .ranged
-                    .as_ref()
-                    .and_then(|aim| aim.aim_target.as_ref()),
-            ) {
-                (RangedTarget::Subject { id, life }, Some(current)) => {
-                    current.id != *id || current.life != *life
-                }
-                _ => true,
-            }
-        }) {
-            self.refuse(&ordinary.not_applicable);
-            return self.drive(core, None);
-        }
         let release = crate::movement::MoveAdvanceCursor::release_request(
             &actor.id,
             action,
             self.binding,
             permission.as_deref(),
+            target.as_ref(),
             &self.budget,
         )?;
         self.ranged_release = Some(Box::new(release));

@@ -3,7 +3,7 @@
 //! bytes or an activity's recorded command.
 use super::{CommandEncoding, CommandHeaders, NativeCommand};
 use crate::host::retained_size::{HeapBytes, heap_sum};
-use crate::projectile::{RangedTarget, RuntimeRangedMode};
+use crate::projectile::{RangedTarget, RuntimeRangedMode, RuntimeRangedTarget};
 use crate::values::{deserialize_present_option, is_safe_record_id};
 use serde::{Deserialize, Serialize};
 
@@ -238,4 +238,123 @@ pub(crate) fn review_digest(
         crate::encoding::sha256_hex(canonical.as_bytes()),
         reservation,
     ))
+}
+
+/// The one approval covers the exact former and final visible subjects, as
+/// well as the chosen point and equipment. Hidden bodies cannot change the
+/// offer. Their later collision remains physical after release.
+pub(crate) struct LaunchReview {
+    pub digest: String,
+    pub _workspace: crate::host::ByteReservation,
+}
+
+pub(crate) enum LaunchApproval {
+    Allowed(LaunchReview),
+    Required(
+        crate::contact::StrikePermission,
+        crate::host::ByteReservation,
+    ),
+    Changed,
+}
+
+pub(crate) fn check_launch_review(
+    installed: &crate::simulation::InstalledWorld,
+    source: &crate::state::Entity,
+    action: &crate::state::Action,
+    selection: RuntimeRangedTarget<'_>,
+    subjects: [Option<&crate::state::Entity>; 2],
+    ammunition_injury: f64,
+    permission: Option<&crate::contact::StrikePermission>,
+    budget: &crate::host::ByteBudget,
+) -> Result<LaunchApproval, crate::execution::ExecutionError> {
+    use crate::contact::{ContactInjury, review};
+    use crate::execution::ExecutionError;
+    let mut facts = [None; 2];
+    for (slot, subject) in facts.iter_mut().zip(subjects) {
+        if let Some(subject) = subject {
+            let injury = ContactInjury::read(installed, source, subject)?;
+            *slot = Some((
+                subject.id.as_str(),
+                subject
+                    .physical_life()
+                    .ok_or(ExecutionError::MissingActor)?,
+                injury.outgoing,
+                injury.susceptibility,
+                injury.incoming,
+                injury.maximum(ammunition_injury),
+            ));
+        }
+    }
+    let aim = action.ranged.as_ref().ok_or(ExecutionError::Invariant)?;
+    let (point, direct) = match selection {
+        RuntimeRangedTarget::Point { point, subject } => (Some(point), subject),
+        RuntimeRangedTarget::Subject { id, life } => (None, Some((id, life))),
+    };
+    let bindings = (
+        aim.manual.then_some(action.id.as_str()),
+        &aim.tool,
+        &aim.ammunition,
+        action.weapon_item_id.as_deref(),
+        action.ammo_item_id.as_deref(),
+        point,
+        direct,
+        facts,
+    );
+    let digest = || {
+        let size =
+            crate::encoding::json_record_len(&bindings).map_err(|_| ExecutionError::Invariant)?;
+        let guard = budget.reserve(size.checked_add(128).ok_or(ExecutionError::Capacity)?)?;
+        let encoded =
+            crate::encoding::json_record(&bindings).map_err(|_| ExecutionError::Invariant)?;
+        Ok::<_, ExecutionError>((crate::encoding::sha256_hex(encoded.as_bytes()), guard))
+    };
+    if let Some(permission) = permission {
+        let checked = subjects.into_iter().zip(facts).find(|(subject, fact)| {
+            subject.zip(*fact).is_some_and(|(subject, (_, life, ..))| {
+                permission.valid_for_action(source, &subject.id, life)
+            })
+        });
+        let Some((Some(subject), Some((_, _, _, _, _, maximum)))) = checked else {
+            return Ok(LaunchApproval::Changed);
+        };
+        let (digest, _workspace) = digest()?;
+        // Save the same approved digest with the flight. The callback copies
+        // only the small digest while the scoped allocation is still live.
+        let approval = review::check_damage(
+            installed,
+            source,
+            subject,
+            maximum,
+            Some(permission),
+            || {
+                let custody = budget.reserve(digest.len())?;
+                Ok((digest.clone(), custody))
+            },
+        )?;
+        return Ok(match approval {
+            review::Review::Allowed => LaunchApproval::Allowed(LaunchReview { digest, _workspace }),
+            _ => LaunchApproval::Changed,
+        });
+    }
+    for (subject, fact) in subjects.into_iter().zip(facts) {
+        if let (Some(subject), Some((_, _, _, _, _, maximum))) = (subject, fact) {
+            if matches!(
+                review::check_damage(installed, source, subject, maximum, None, digest)?,
+                review::Review::Required
+            ) {
+                let (digest, _workspace) = digest()?;
+                let (permission, mut custody) =
+                    review::prepare_digest(source, subject, &digest, budget)?;
+                custody.resize(
+                    custody
+                        .bytes()
+                        .checked_add(std::mem::size_of::<crate::host::ByteReservation>())
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
+                return Ok(LaunchApproval::Required(permission, custody));
+            }
+        }
+    }
+    let (digest, _workspace) = digest()?;
+    Ok(LaunchApproval::Allowed(LaunchReview { digest, _workspace }))
 }

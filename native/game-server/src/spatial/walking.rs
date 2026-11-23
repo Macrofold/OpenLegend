@@ -45,16 +45,25 @@ fn above_support(
 }
 
 impl SpatialProvider {
+    fn is_on_support(&self, point: Point, surface: &StandardSupport) -> bool {
+        surface.contains(point)
+            && (surface.y_at(point.x, point.z) - point.y).abs() <= SUPPORT
+            && (!surface.terrain || self.terrain_walkable(point))
+    }
+
+    pub(super) fn matches_named_support(&self, point: Point, id: &str) -> bool {
+        self.scene
+            .named(id)
+            .is_some_and(|surface| self.is_on_support(point, surface))
+    }
+
     pub(super) fn support(&self, point: Point, surface: Option<&str>) -> Option<SurfacePoint> {
         if !finite(point) {
             return None;
         }
         let on = |s: &StandardSupport| {
-            let y = s.y_at(point.x, point.z);
-            (s.contains(point)
-                && (y - point.y).abs() <= SUPPORT
-                && (!s.terrain || self.terrain_walkable(point)))
-            .then(|| s.point(point.x, point.z))
+            self.is_on_support(point, s)
+                .then(|| s.point(point.x, point.z))
         };
         if let Some(surface) = surface {
             return on(self.scene.named(surface)?);

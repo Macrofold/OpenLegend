@@ -18,7 +18,7 @@ mod direct_player;
 pub(crate) use definitions::write_installed_definitions;
 pub use direct_player::{
     PlayerActionFacts, PlayerCommunicationSubject, PlayerIdentityFacts, PlayerMapMarker,
-    PlayerObservedBody, PlayerPerception, PlayerSelfAttribution, PlayerSelfFacts,
+    PlayerObservedBody, PlayerPerception, PlayerRangedSource, PlayerSelfAttribution, PlayerSelfFacts,
 };
 mod inventory;
 pub(crate) mod maintenance;
@@ -885,7 +885,7 @@ pub(crate) fn with_actor_self<T>(
     } else {
         OwnReferenceAttribution::Sequence(state.physical.header.sequence)
     };
-    let inventory = inventory::capture(state, actor_id, private, budget)?;
+    let inventory = inventory::capture(state, entity, private, budget)?;
     let (practice_records, _practice_guard) = if private {
         (Vec::new(), budget.reserve(0)?)
     } else {
@@ -1042,6 +1042,7 @@ pub(crate) fn with_actor_self<T>(
                 held_stock: &inventory.held,
                 craft_stock: &inventory.craft_stock,
                 equipped: &inventory.equipped,
+                ranged_source: inventory.ranged_source,
                 knowledge_revision: state
                     .reception
                     .knowledge_revisions

@@ -9,6 +9,7 @@ use crate::{
     npc::Director,
     player_http::REQUEST_TIMEOUT,
     player_references::ReferenceIssuer,
+    spatial::AimGeometry,
     store::{AdmittedReceipt, GameplayReceipt, KnownPlaceViewPage, PlaceViewRequest, StoreError},
     wire,
     world::{ApplicationStart, PlayerHistoryRead, WorldError},
@@ -22,7 +23,7 @@ use openlegend_simulation::{
     reception::EncounterExposure,
     runtime::{InteractionMode, NativeWorldSession, RuntimeDirectOutput, RuntimeError, RuntimePlayerCommand,
         StockGroupRefusal, StockGroupRequest, stock_group_limit_message},
-    state::SurfacePoint,
+    state::{Point, SurfacePoint},
     text::JsText,
     values::deserialize_present_option,
     worlds::base_observed::SpeechVolume,
@@ -102,6 +103,18 @@ struct CommandInput {
     ammunition_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     aim_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    aim_point: Option<Point>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    aim_basis: Option<AimBasis>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     body_reference: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
@@ -753,6 +766,12 @@ impl PlayerCommands {
                 let begin_authority = permits.clone();
                 let begin_references = self.references.clone();
                 let begin_budget = self.game.host.budget().clone();
+                let begin_spatial = facts
+                    .request
+                    .command
+                    .aim_point
+                    .is_some()
+                    .then(|| self.game.spatial.clone());
                 let accept = self.saves.clone();
                 let stage = self.saves.clone();
                 let game = self.game.clone();
@@ -815,6 +834,18 @@ impl PlayerCommands {
                                 &begin_scope.scope.account_id,
                                 &begin_scope.scope.actor_id,
                             )?;
+                            if let Some((point, basis)) = raw.aim_point.zip(raw.aim_basis.as_ref()) {
+                                let spatial = begin_spatial.as_ref().expect("point request owns geometry");
+                                let admitted = world.with_geometry(|map| {
+                                    spatial.admits_aim_point(map.spatial.revision, point, basis.geometry())
+                                })?;
+                                if !admitted {
+                                    return Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                        "aim-point",
+                                        "That displayed shape changed. Choose a new point.",
+                                    )));
+                                }
+                            }
                             let position = if remembered {
                                 let stale = || {
                                     ApplicationStart::Existing(ResultOwner::Refused(
@@ -897,10 +928,17 @@ impl PlayerCommands {
                                         )?
                                     } else {
                                         begin_references.resolve_contact_body(
-                                            world, &begin_scope.scope, contact, raw.body_reference.as_deref(), &begin_budget,
+                                            world,
+                                            &begin_scope.scope,
+                                            contact,
+                                            raw.aim_basis.as_ref().and_then(|basis| basis.body_reference.as_deref())
+                                                .or(raw.body_reference.as_deref()),
+                                            &begin_budget,
                                         )?
                                     };
-                                    let Some(target) = selected.filter(|contact| !raw.kind.binds_target_life() || contact.life.is_some()) else {
+                                    let Some(target) = selected.filter(|contact| {
+                                        raw.aim_point.is_some() || !raw.kind.binds_target_life() || contact.life.is_some()
+                                    }) else {
                                         return Ok(ApplicationStart::Existing(
                                             ResultOwner::Refused(
                                                 "stale-contact",
@@ -974,15 +1012,20 @@ impl PlayerCommands {
                             } else {
                                 None
                             };
-                            let ranged_subject = target.as_ref().and_then(|contact| {
-                                contact.life.map(|life| RuntimeRangedTarget::Subject { id: contact.id.as_str(), life })
-                            });
+                            let indicated_life = target
+                                .as_ref()
+                                .and_then(|contact| Some((contact.id.as_str(), contact.life?)));
+                            let ranged_target = match (raw.aim_point, indicated_life) {
+                                (Some(point), subject) => Some(RuntimeRangedTarget::Point { point, subject }),
+                                (None, Some((id, life))) => Some(RuntimeRangedTarget::Subject { id, life }),
+                                (None, None) => None,
+                            };
                             let command = begin_facts.command(
                                 position,
                                 target.as_ref().map(|value| value.id.as_str())
                                     .or(nested)
                                     .or(own_status.then_some(begin_scope.scope.actor_id.as_str())),
-                                ranged_subject,
+                                ranged_target,
                                 speech_target.as_ref().map(|value| (value.id.as_str(), value.role)),
                                 travel_destination.as_ref().map(|value| value.id.as_str()),
                                 selected_review.as_ref().and_then(|slot| slot.get()).map(|review| &review.permission),
@@ -1083,6 +1126,46 @@ impl PlayerCommands {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct AimBasis {
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    body_reference: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    surface_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    shape_id: Option<String>,
+}
+
+impl AimBasis {
+    fn geometry(&self) -> Option<AimGeometry<'_>> {
+        if let Some(id) = self.surface_id.as_deref() {
+            Some(AimGeometry::Surface(id))
+        } else {
+            self.shape_id.as_deref().map(AimGeometry::Shape)
+        }
+    }
+}
+
+fn valid_body_reference(reference: &str) -> bool {
+    reference.len() == 64
+        && reference
+            .bytes()
+            .all(|value| value.is_ascii_digit() || (b'a'..=b'f').contains(&value))
+}
+
 impl CommandInput {
     fn permits_manual_pause(&self) -> bool {
         matches!(self.kind, CommandKind::Cancel)
@@ -1101,9 +1184,26 @@ impl CommandRequest {
                 })
         }
         let command = &self.command;
+        let point_binding_valid = match (command.aim_point, command.aim_basis.as_ref()) {
+            (None, None) => true,
+            (Some(_), Some(basis)) if matches!(command.kind, CommandKind::Aim | CommandKind::ShootOnce | CommandKind::ReleaseShot)
+                && command.body_reference.is_none() =>
+            {
+                match (&basis.body_reference, &basis.surface_id, &basis.shape_id) {
+                    (Some(body), None, None) => valid_body_reference(body)
+                        && command.target_id.as_deref().is_some_and(id),
+                    (None, Some(static_id), None) | (None, None, Some(static_id)) => {
+                        id(static_id) && command.target_id.is_none()
+                    }
+                    _ => false,
+                }
+            }
+            _ => false,
+        };
         let arrangement = command.kind.arrangement().is_some();
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
+            || !point_binding_valid
             || Uuid::parse_str(&self.command_epoch).is_err()
             || (!arrangement && !matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing | CommandKind::LearnRecord)
                 && command.expected_revision.is_some())
@@ -1138,8 +1238,9 @@ impl CommandRequest {
                 && command.ammunition_id.is_some())
             || (!matches!(command.kind, CommandKind::ReleaseShot) && command.aim_id.is_some())
             || command.body_reference.as_ref().is_some_and(|reference| {
-                !command.kind.binds_target_life() || command.target_id.is_none() || reference.len() != 64
-                    || !reference.bytes().all(|value| value.is_ascii_digit() || (b'a'..=b'f').contains(&value))
+                !command.kind.binds_target_life()
+                    || command.target_id.is_none()
+                    || !valid_body_reference(reference)
             })
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
             || (!matches!(command.kind, CommandKind::TreatScar) && command.scar_id.is_some())
@@ -1255,7 +1356,7 @@ impl CommandRequest {
                     && command.known_place.is_none()
                     && command.expected_action_id.is_none()
                     && command.gathering_mode.is_none()
-                    && command.target_id.as_deref().is_some_and(id)
+                    && (command.aim_point.is_some() || command.target_id.as_deref().is_some_and(id))
                     && command.item_id.as_deref().is_none_or(id)
                     && command.ammunition_id.as_deref().is_none_or(id) =>
             {
@@ -1552,7 +1653,7 @@ impl PreparedRequest {
         &'a self,
         destination: Option<&'a SurfacePoint>,
         target: Option<&'a str>,
-        ranged_subject: Option<RuntimeRangedTarget<'a>>,
+        ranged_target: Option<RuntimeRangedTarget<'a>>,
         speech_target: Option<(&'a str, SpeechTargetRole)>,
         travel_destination: Option<&'a str>,
         strike_permission: Option<&'a openlegend_simulation::runtime::StrikePermission>,
@@ -1633,7 +1734,7 @@ impl PreparedRequest {
             CommandKind::Aim | CommandKind::ShootOnce | CommandKind::Hunt => {
                 Ok(RuntimePlayerCommand::RangedStart {
                     mode: input.kind.ranged_start().ok_or(StoreError::InvalidRecord)?,
-                    target: ranged_subject.ok_or(StoreError::InvalidRecord)?,
+                    target: ranged_target.ok_or(StoreError::InvalidRecord)?,
                     weapon: input.item_id.as_deref(),
                     ammunition: input.ammunition_id.as_deref(),
                     auto_equip: input.auto_equip.unwrap_or(false),
@@ -1641,7 +1742,7 @@ impl PreparedRequest {
                 })
             }
             CommandKind::Guard => {
-                let facing = match (ranged_subject, input.facing_heading) {
+                let facing = match (ranged_target, input.facing_heading) {
                     (Some(RuntimeRangedTarget::Subject { id, life }), None) =>
                         RuntimeGuardFacing::Subject { id, life },
                     (None, Some(heading)) => RuntimeGuardFacing::Direction(heading),
@@ -1655,7 +1756,7 @@ impl PreparedRequest {
             }
             CommandKind::ReleaseShot => Ok(RuntimePlayerCommand::RangedRelease {
                 action: input.aim_id.as_deref().ok_or(StoreError::InvalidRecord)?,
-                target: ranged_subject,
+                target: ranged_target,
                 permission: strike_permission,
             }),
             CommandKind::PracticeShot => Ok(RuntimePlayerCommand::PracticeShot {

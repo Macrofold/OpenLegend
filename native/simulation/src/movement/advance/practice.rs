@@ -313,6 +313,7 @@ impl MoveAdvanceCursor {
             actor,
             action,
             None,
+            Some((&aim_target.id, aim_target.life)),
             policy,
             digest.into(),
             ray,

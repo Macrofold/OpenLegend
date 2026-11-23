@@ -129,18 +129,32 @@ pub(crate) fn valid_saved(
     let Some((tool, ammo)) = owned(tool).zip(owned(ammo)) else {
         return false;
     };
-    let Some(target) = aim.aim_target.as_ref() else {
-        return false;
+    let target = aim.aim_target.as_ref();
+    let valid_body = |target: &crate::projectile::AimedLife| {
+        target.id != actor.id
+            && target.life <= crate::identity::MAX_SAFE_INTEGER
+            && crate::values::is_safe_record_id(&target.id)
     };
-    action.ranged_policy_pin.as_ref() == Some(pin)
+    let chosen = match (target, aim.aim_point) {
+        (Some(body), None) => {
+            valid_body(body)
+                && action.target_id.as_deref() == Some(body.id.as_str())
+                && action.target_life == Some(body.life)
+                && aim.aim_point_subject.is_none()
+        }
+        (None, Some(point)) => {
+            policy.point_fire
+                && action.kind != "hunt"
+                && action.stage == "working"
+                && action.target_id.is_none()
+                && action.target_life.is_none()
+                && [point.x, point.y, point.z].into_iter().all(f64::is_finite)
+                && aim.aim_point_subject.as_ref().is_none_or(valid_body)
+        }
+        _ => false,
+    };
+    chosen && action.ranged_policy_pin.as_ref() == Some(pin)
         && action.competence_pin.is_none()
-        && action.target_id.as_deref() == Some(target.id.as_str())
-        && action.target_life == Some(target.life)
-        && target.id != actor.id
-        && target.life <= crate::identity::MAX_SAFE_INTEGER
-        && crate::values::is_safe_record_id(&target.id)
-        && aim.aim_point.is_none()
-        && aim.aim_point_subject.is_none()
         && aim.observed_motion.is_none()
         && aim.manual == (action.kind == "aim")
         && aim.ready == (aim.manual && action.remaining_seconds == 0.0)
@@ -160,7 +174,10 @@ pub(crate) fn valid_saved(
         && installed_loadout(installed, aim).is_ok()
         && action.lethal_permission.as_ref().is_none_or(|permission| {
             action.requires_lethal_review == Some(true)
-                && permission.valid_for_action(actor, &target.id, target.life)
+                && target.map_or_else(
+                    || permission.valid_for_source(actor),
+                    |target| permission.valid_for_action(actor, &target.id, target.life),
+                )
         })
         && state.holds.matches_item(
             &actor.id,

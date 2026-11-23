@@ -104,6 +104,8 @@ struct RangedCopy {
     cancel_label: Arc<str>,
     not_ready: Arc<str>,
     ready: Arc<str>,
+    ammunition_unavailable: Arc<str>,
+    supported: bool,
 }
 
 #[derive(Deserialize)]
@@ -238,13 +240,34 @@ struct Evasion {
 }
 
 #[derive(PartialEq, Serialize)]
-struct AttackSource {
+#[serde(tag = "kind", rename_all = "lowercase", rename_all_fields = "camelCase")]
+enum AttackSource {
+    Melee {
+        label: Arc<str>,
+        enabled: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        reason: Option<Arc<str>>,
+        command: StrikeCommand,
+    },
+    Ranged {
+        label: JsText,
+        enabled: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        reason: Option<Arc<str>>,
+        point_fire: bool,
+        target_rule: &'static str,
+        command: RangedPointerCommand,
+    },
+}
+
+#[derive(PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RangedPointerCommand {
+    #[serde(rename = "type")]
     kind: &'static str,
-    label: Arc<str>,
-    enabled: bool,
+    item_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    reason: Option<Arc<str>>,
-    command: StrikeCommand,
+    ammunition_id: Option<String>,
 }
 
 #[derive(PartialEq, Serialize)]
@@ -616,36 +639,68 @@ pub fn prepare_self(
             controls,
         })
     }).transpose()?;
-    let attack_source = facts.body.filter(|_| facts.alive).and_then(|body| {
-        let policy = &policy.melee;
-        let definition = policy.definitions.iter().find(|definition| {
-            definition
-                .required_body_plan
-                .as_ref()
-                .is_none_or(|plan| *plan == body.plan)
-                && (contains(&policy.unrestricted_body_plans, &body.plan)
-                    || facts
-                        .natural_strike_ids
-                        .is_some_and(|ids| contains(ids, &definition.id)))
-        })?;
-        let reason = if !policy.supported {
-            Some(policy.unavailable.clone())
-        } else if facts.combat_ready_at.is_some_and(|at| at > facts.at) {
-            Some(policy.recovering.clone())
+    let recovering = facts.combat_ready_at.is_some_and(|at| at > facts.at);
+    let attack_source = if let Some((source, copy)) =
+        facts.ranged_source.zip(policy.action.ranged.as_ref())
+    {
+        let reason = if !copy.supported
+            || !facts.alive
+            || facts.incapacitated
+            || facts.actions_blocked
+            || facts.support_surface_id.is_none()
+        {
+            Some(policy.melee.unavailable.clone())
+        } else if recovering {
+            Some(policy.melee.recovering.clone())
         } else {
-            None
+            source
+                .ammunition
+                .is_none()
+                .then(|| copy.ammunition_unavailable.clone())
         };
-        Some(AttackSource {
-            kind: "melee",
-            label: definition.label.clone(),
+        Some(AttackSource::Ranged {
+            label: source.label.clone(),
             enabled: reason.is_none(),
             reason,
-            command: StrikeCommand {
-                kind: "strike",
-                definition_id: definition.id.clone(),
+            point_fire: source.point_fire,
+            target_rule: source.target_rule,
+            command: RangedPointerCommand {
+                kind: "shoot-once",
+                item_id: source.weapon.to_owned(),
+                ammunition_id: source.ammunition.map(str::to_owned),
             },
         })
-    });
+    } else {
+        facts.body.filter(|_| facts.alive).and_then(|body| {
+            let policy = &policy.melee;
+            let definition = policy.definitions.iter().find(|definition| {
+                definition
+                    .required_body_plan
+                    .as_ref()
+                    .is_none_or(|plan| *plan == body.plan)
+                    && (contains(&policy.unrestricted_body_plans, &body.plan)
+                        || facts
+                            .natural_strike_ids
+                            .is_some_and(|ids| contains(ids, &definition.id)))
+            })?;
+            let reason = if !policy.supported {
+                Some(policy.unavailable.clone())
+            } else if recovering {
+                Some(policy.recovering.clone())
+            } else {
+                None
+            };
+            Some(AttackSource::Melee {
+                label: definition.label.clone(),
+                enabled: reason.is_none(),
+                reason,
+                command: StrikeCommand {
+                    kind: "strike",
+                    definition_id: definition.id.clone(),
+                },
+            })
+        })
+    };
     let trade_reader_revision = references.personal_source(&(
         "trade-reader-owner",
         &policy.trade.body_definitions,

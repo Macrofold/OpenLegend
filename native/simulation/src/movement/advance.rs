@@ -74,6 +74,7 @@ enum Phase {
     ScarReach,
     PracticeLine,
     RangedLine,
+    RangedPointReview,
     Finish,
     Clear,
     Stopped,
@@ -85,6 +86,7 @@ pub(crate) struct MoveAdvanceCursor {
     physical_life: u64,
     practice_release: Option<practice::PendingPracticeRelease>,
     requested_ranged_release: Option<Box<ranged::ReleaseRequest>>,
+    ranged_point_review: Option<Box<ranged::PointWork>>,
     seconds: f64,
     phase: Phase,
     motion: Option<MotionOperation>,
@@ -169,6 +171,7 @@ impl MoveAdvanceCursor {
             physical_life: 0,
             practice_release: None,
             requested_ranged_release: None,
+            ranged_point_review: None,
             seconds,
             phase: Phase::Start,
             motion: None,
@@ -269,6 +272,8 @@ impl MoveAdvanceCursor {
             motion.queries().ok_or(ExecutionError::Invariant)
         } else if let Some(sight) = &self.meal_sight {
             Ok(sight.queries())
+        } else if let Some(review) = &self.ranged_point_review {
+            Ok(review.queries())
         } else {
             Ok(&self.queries.as_ref().ok_or(ExecutionError::Invariant)?.0)
         }
@@ -361,6 +366,9 @@ impl MoveAdvanceCursor {
                 }
                 if self.phase == Phase::RangedLine {
                     return self.finish_ranged_line(core, answer);
+                }
+                if self.phase == Phase::RangedPointReview {
+                    return self.finish_point_review(core, answer);
                 }
                 let (query, _guard) = self
                     .queries
@@ -1094,7 +1102,7 @@ impl MoveAdvanceCursor {
                 | Phase::FeedSight
                 | Phase::HearthWork
                 | Phase::ScarReach
-                | Phase::PracticeLine | Phase::RangedLine
+                | Phase::PracticeLine | Phase::RangedLine | Phase::RangedPointReview
                 | Phase::CastLine
                 | Phase::CookReach => {
                     return Err(ExecutionError::Invariant);

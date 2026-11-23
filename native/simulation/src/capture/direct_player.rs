@@ -58,6 +58,16 @@ pub struct PlayerActionFacts<'a> {
 
 /// Self-only facts loaned inside the accepted-read lane. Detached application
 /// products must reserve the bytes they retain. No NPC mind fields are exposed.
+/// The equipped item and first compatible available lot in this capture.
+#[derive(Clone, Copy)]
+pub struct PlayerRangedSource<'a> {
+    pub weapon: &'a str,
+    pub ammunition: Option<&'a str>,
+    pub label: &'a JsText,
+    pub point_fire: bool,
+    pub target_rule: &'static str,
+}
+
 pub struct PlayerSelfFacts<'a> {
     pub world_id: &'a str,
     pub actor_id: &'a str,
@@ -94,6 +104,7 @@ pub struct PlayerSelfFacts<'a> {
     pub held_stock: &'a [(&'a str, f64)],
     pub craft_stock: &'a indexmap::IndexMap<&'a str, u64>,
     pub equipped: &'a [crate::install::OwnedItem<'a>],
+    pub ranged_source: Option<PlayerRangedSource<'a>>,
     pub knowledge_revision: u64,
     pub agency: &'a ActorAgency,
     pub practice: Option<&'a indexmap::IndexMap<String, crate::state::PracticeProgress>>,
@@ -211,6 +222,12 @@ impl<'a> PlayerSelfFacts<'a> {
             .heap_bytes()?
             .checked_add(self.identity.appearance.map_or(0, JsText::storage_bytes))?;
         let mut bytes = 4096_usize.checked_add(names)?;
+        if let Some(source) = self.ranged_source {
+            bytes = bytes
+                .checked_add(source.label.storage_bytes())?
+                .checked_add(source.weapon.len())?
+                .checked_add(source.ammunition.map_or(0, str::len))?;
+        }
         for attribute in self.attributes {
             bytes = bytes
                 .checked_add(attribute.heap_bytes()?)?
@@ -366,6 +383,7 @@ impl OwnActorProduct<'_> {
             held_stock: player.held_stock,
             craft_stock: player.craft_stock,
             equipped: player.equipped,
+            ranged_source: player.ranged_source,
             knowledge_revision: player.knowledge_revision,
             agency: player.agency,
             practice: player.practice,

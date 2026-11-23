@@ -315,6 +315,25 @@ impl Scene {
         self.support_by_id.get(id).map(|i| &self.supports[*i])
     }
 
+    pub(super) fn shape_contains_point(&self, point: Point, id: &str) -> bool {
+        let bounds = Bounds {
+            min: point,
+            max: point,
+        };
+        self.shape_index.as_ref().is_some_and(|index| {
+            index.visit(&|b| super::overlaps(b, &bounds, EPS), &mut |candidate| {
+                let shape = &self.shapes[candidate];
+                // A clicked exterior face belongs to the shape.
+                shape.id == id
+                    && shape.sight
+                    && shape
+                        .planes
+                        .iter()
+                        .all(|plane| dot(plane.normal, point) <= plane.bound + EPS)
+            })
+        })
+    }
+
     pub(super) fn supports_in(&self, bounds: &Bounds) -> Vec<&StandardSupport> {
         let mut indices = Vec::new();
         if let Some(index) = &self.supports_index {

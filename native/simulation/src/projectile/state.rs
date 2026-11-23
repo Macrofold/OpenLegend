@@ -41,6 +41,16 @@ pub(crate) enum SourceController {
     Native,
 }
 
+impl SourceController {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Player => "player",
+            Self::Npc => "npc",
+            Self::Native => "native",
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ProjectileFlight {
@@ -108,6 +118,7 @@ impl ProjectileFlight {
         source: &crate::state::Entity,
         action: &crate::state::Action,
         reviewed: Option<&crate::contact::StrikePermission>,
+        target: Option<(&str, u64)>,
         policy: ContactPolicy,
         digest: JsText,
         line: crate::geometry::SightRay,
@@ -118,7 +129,6 @@ impl ProjectileFlight {
     ) -> Result<Self, ExecutionError> {
         let aim = action.ranged.as_ref().ok_or(ExecutionError::Invariant)?;
         let practice = action.is_practice_shot();
-        let target = aim.aim_target.as_ref();
         let source_controller = match source.actor.as_ref().map(|actor| actor.controller.as_str()) {
             Some("player") => SourceController::Player,
             Some("npc") => SourceController::Npc,
@@ -154,8 +164,8 @@ impl ProjectileFlight {
             source_controller,
             contact_policy: policy,
             source_exited,
-            target_id: target.map(|target| target.id.clone()),
-            target_life: target.filter(|_| !practice).map(|target| target.life),
+            target_id: target.map(|(id, _)| id.to_owned()),
+            target_life: target.filter(|_| !practice).map(|(_, life)| life),
             practice,
             requires_lethal_review: action.requires_lethal_review.unwrap_or(false)
                 || source_controller == SourceController::Player,
@@ -230,7 +240,11 @@ impl ProjectileFlight {
             && (self.practice
                 || !self.requires_lethal_review
                 || self.source_controller != SourceController::Player
-                || self.target_id.is_none())
+                || !self.lethal_permission.as_ref().is_some_and(|permission| {
+                    self.attack_digest.as_unicode().is_some_and(|digest| {
+                        permission.valid_for_flight(&self.source_id, self.source_life, digest)
+                    })
+                }))
         {
             return Err(InstallError::CurrentFormat);
         }

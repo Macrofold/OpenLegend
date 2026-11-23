@@ -45,6 +45,26 @@ impl StrikePermission {
         self.heap_bytes()
     }
 
+    pub(crate) fn target_id(&self) -> &str {
+        &self.target_id
+    }
+
+    pub(crate) fn valid_for_source(&self, actor: &Entity) -> bool {
+        actor
+            .physical_life()
+            .is_some_and(|life| self.valid_for_flight(&actor.id, life, &self.attack_digest))
+    }
+
+    pub(crate) fn valid_for_flight(&self, source: &str, life: u64, digest: &str) -> bool {
+        self.actor_id == source
+            && self.source_life == life
+            && is_safe_record_id(&self.target_id)
+            && self.target_life <= crate::identity::MAX_SAFE_INTEGER
+            && self.attack_digest == digest
+            && digest.len() == 64
+            && digest.bytes().all(|byte| byte.is_ascii_hexdigit())
+    }
+
     pub(crate) fn valid_for_action(&self, actor: &Entity, target: &str, life: u64) -> bool {
         self.actor_id == actor.id
             && actor.physical_life() == Some(self.source_life)
@@ -200,13 +220,14 @@ impl StrikeReviewOffer {
         view: crate::activity::ActivityView,
         view_custody: ByteReservation,
         policy: &crate::body::LethalReviewPolicy,
+        description: &str,
     ) -> Result<Self, ExecutionError> {
         custody.resize(
             heap_sum([
                 custody.bytes(),
                 size_of::<Self>() - size_of::<StrikePermission>(),
                 policy.title.len(),
-                policy.description.len(),
+                description.len(),
                 policy.confirm_label.len(),
                 policy.cancel_label.len(),
             ])
@@ -216,7 +237,7 @@ impl StrikeReviewOffer {
         Ok(Self {
             permission,
             title: policy.title.clone(),
-            description: policy.description.clone(),
+            description: description.to_owned(),
             confirm_label: policy.confirm_label.clone(),
             cancel_label: policy.cancel_label.clone(),
             view,

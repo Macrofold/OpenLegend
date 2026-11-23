@@ -59,6 +59,18 @@ pub(crate) struct RangedAim {
     pub observed_motion: Option<ObservedMotion>,
 }
 
+impl RangedAim {
+    pub(crate) fn selected(&self) -> Option<RuntimeRangedTarget<'_>> {
+        if let Some(target) = &self.aim_target {
+            return Some(RuntimeRangedTarget::Subject { id: &target.id, life: target.life });
+        }
+        Some(RuntimeRangedTarget::Point {
+            point: self.aim_point?,
+            subject: self.aim_point_subject.as_ref().map(|body| (body.id.as_str(), body.life)),
+        })
+    }
+}
+
 heap_record!(AimedLife { id });
 heap_record!(RangedAim {
     tool,
@@ -127,6 +139,16 @@ pub(crate) enum RangedTarget {
 }
 
 impl RangedTarget {
+    pub(crate) fn selected(&self) -> RuntimeRangedTarget<'_> {
+        match self {
+            Self::Subject { id, life } => RuntimeRangedTarget::Subject { id, life: *life },
+            Self::Point { point, subject } => RuntimeRangedTarget::Point {
+                point: *point,
+                subject: subject.as_ref().map(|body| (body.id.as_str(), body.life)),
+            },
+        }
+    }
+
     pub(crate) fn bound(value: RuntimeRangedTarget<'_>) -> Self {
         match value {
             RuntimeRangedTarget::Subject { id, life } => Self::Subject {

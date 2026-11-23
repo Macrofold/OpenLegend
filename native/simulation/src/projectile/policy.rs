@@ -116,6 +116,13 @@ impl RangedPolicy {
         )
     }
 
+    pub(crate) fn target_rule(&self) -> &'static str {
+        match self.target_rule {
+            TargetRule::LivingActor => "living-actor",
+            TargetRule::LivingAnimal => "living-animal",
+        }
+    }
+
     pub(crate) fn permits(&self, target: &Entity) -> bool {
         target.actively_participates()
             && target.actor.as_ref().is_some_and(|actor| actor.alive)
