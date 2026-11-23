@@ -76,7 +76,10 @@ pub(crate) fn practice_choice<'a>(
             actor,
             ammunition_id,
             &weapon.ammunition_kind,
-            existing,
+            existing.map_or(
+                super::loadout::StockAdmission::Free,
+                super::loadout::StockAdmission::CurrentHold,
+            ),
         )?,
         None => None,
     };

@@ -456,6 +456,9 @@ impl NpcCandidateCursor {
             Enumerate::EquippedStrike(target, weapon) => {
                 self.offer_equipped_strike(core, target, weapon, preparation_id)?;
             }
+            Enumerate::Ranged(target, tool, stock) => {
+                self.offer_ranged(core, target, tool, stock, preparation_id)?;
+            }
             Enumerate::Guard(target, shield) => {
                 self.offer_guard(core, target, shield, preparation_id)?;
             }

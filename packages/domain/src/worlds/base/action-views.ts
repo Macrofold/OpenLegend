@@ -321,15 +321,12 @@ function activityView(
     }
   }
   const rangedCommand = heldAim ?? command;
+  const ranged =
+    heldAim || ['hunt', 'aim', 'shoot-once'].includes(command.type) ? rangedPolicy(world) : null;
   const rangedWithoutApproach =
     (command.type === 'aim' || command.type === 'shoot-once') &&
     (!!command.aimPoint || (command.type === 'aim' && command.manualExecution));
-  if (
-    (heldAim || ['hunt', 'aim', 'shoot-once'].includes(command.type)) &&
-    'ammoItemId' in rangedCommand &&
-    definition?.rangedWeapon &&
-    rangedPolicy(world)
-  ) {
+  if (ranged && 'ammoItemId' in rangedCommand && definition?.rangedWeapon) {
     const compatible = (item: ItemInstance) =>
       world.itemDefinitions[item.definitionId]?.ammunition?.kind ===
       definition.rangedWeapon!.ammunitionKind;
@@ -345,9 +342,18 @@ function activityView(
               compatible(item),
           );
     const ammo = ammunition && world.itemDefinitions[ammunition.definitionId];
+    const shot = definition.rangedWeapon;
+    const words = activityDisplay.ranged;
+    const requirement = rangedWithoutApproach ? words.withoutApproach : words.afterApproach;
     view.facts.push({
       name: 'shot',
-      value: `${definition.rangedWeapon.damage + (ammo?.ammunition?.damageBonus ?? 0)} injury before protection; range ${definition.rangedWeapon.range} m; base aim steadiness ${Math.round(definition.rangedWeapon.accuracy * 100)}%; straight flight ${definition.rangedWeapon.flightSpeed} m per game second. Movement and solid cover determine contact.`,
+      value: rangedFact(words.shot, {
+        damage: Math.max(0, shot.damage + (ammo?.ammunition?.damageBonus ?? 0)),
+        range: shot.range,
+        steadiness: Math.round(shot.accuracy * 100),
+        speed: shot.flightSpeed,
+        contact: ranged.accuracyExplanation,
+      }),
       critical: false,
     });
     view.facts.push({
@@ -356,19 +362,29 @@ function activityView(
         ? heldAim.ranged?.ready
           ? 'Releases the selected prepared aim now; no further approach or preparation'
           : `Requests release when the selected aim is ready; ${heldAim.remainingSeconds} game seconds of preparation remain. You control movement.`
-        : `${shotPreparationSeconds(world, toolPracticeDefinition(world, definition)?.practice)} game seconds${rangedWithoutApproach ? ' without automatic approach' : ' after any approach'}; ${command.type === 'aim' ? 'then choose Shoot or Cancel aim' : 'then releases one projectile automatically'}`,
+        : command.type === 'aim'
+          ? `${shotPreparationSeconds(world, toolPracticeDefinition(world, definition)?.practice)} game seconds${requirement}; then choose Shoot or Cancel aim`
+          : rangedFact(words.automaticPreparation, {
+              seconds: shotPreparationSeconds(
+                world,
+                toolPracticeDefinition(world, definition)?.practice,
+              ),
+              approach: requirement,
+            }),
       critical: true,
     });
     if (!heldAim && !rangedWithoutApproach)
       view.facts.push({
         name: 'approach',
-        value: `Move to within ${rangedApproachRange(world, definition.rangedWeapon.range).toFixed(2)} m; the route length is not known`,
+        value: rangedFact(words.approach, {
+          distance: rangedApproachRange(world, shot.range).toFixed(2),
+        }),
         critical: true,
       });
     view.facts.push({
       name: 'ammunition',
       value: ammunition
-        ? `Uses one ${ammo!.name}; ${ammunition.quantity} in this carried stack`
+        ? rangedFact(words.stock, { ammunition: ammo!.name, quantity: ammunition.quantity })
         : 'No compatible carried projectile is currently known; a projectile is required',
       critical: true,
     });
@@ -747,6 +763,12 @@ export function nativeCatalogueView(
     return view;
   };
 }
+function rangedFact(template: string, fields: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (token, key: string) =>
+    Object.hasOwn(fields, key) ? String(fields[key]) : token,
+  );
+}
+
 /** Share physical naming and exact ammunition reads without adding catalogue-only facts. */
 export function nativeActivityViews(
   world: WorldState,

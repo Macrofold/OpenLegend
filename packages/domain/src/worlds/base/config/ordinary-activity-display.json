@@ -39,6 +39,14 @@
       "uncertainty": "An attempt, not a promised hit or kill; range and line of effect are checked at impact"
     }
   },
+  "ranged": {
+    "shot": "{damage} injury before protection; range {range} m; base aim steadiness {steadiness}%; straight flight {speed} m per game second. {contact}",
+    "automaticPreparation": "{seconds} game seconds{approach}; then releases one projectile automatically",
+    "afterApproach": " after any approach",
+    "withoutApproach": " without automatic approach",
+    "approach": "Move to within {distance} m; the route length is not known",
+    "stock": "Uses one {ammunition}; {quantity} in this carried stack"
+  },
   "observed": {
     "distanceName": "distance",
     "distanceSuffix": " m",

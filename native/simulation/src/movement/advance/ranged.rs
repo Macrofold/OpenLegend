@@ -308,7 +308,7 @@ impl MoveAdvanceCursor {
                 actor,
                 Some(ammo_id),
                 &weapon.ammunition_kind,
-                Some(action),
+                loadout::StockAdmission::CurrentHold(action),
             )?
             .is_some()
             || !state.physical.holds.matches_item(

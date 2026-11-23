@@ -77,7 +77,7 @@ impl NpcCandidateCursor {
         self.stage = Enumerate::EquippedStrike(index + 1, 0);
         let Some(target) = self.targets.get(index) else {
             self.melee_choices = None;
-            self.stage = Enumerate::Guard(0, 0);
+            self.stage = Enumerate::Ranged(0, 0, 0);
             return Ok(());
         };
         if !target.visible || !target.alive {
@@ -98,7 +98,7 @@ impl NpcCandidateCursor {
         if self.melee_choices.is_none() {
             let choices = MeleeChoices::prepare(core, source, &self.budget)?;
             if choices.weapons.is_empty() {
-                self.stage = Enumerate::Guard(0, 0);
+                self.stage = Enumerate::Ranged(0, 0, 0);
                 return Ok(());
             }
             self.melee_choices = Some(choices);

@@ -10,6 +10,11 @@ use crate::projectile::{AimedLife, RangedAim, RangedTarget, RuntimeRangedMode, h
 use crate::reception::SightBatch;
 
 impl CommandCursor {
+    pub(super) fn is_npc_ranged_choice(&self) -> bool {
+        matches!(&self.command, NativeCommand::Ranged { envelope, intent }
+            if envelope.human_initiated.is_none() && intent.npc_subject().is_some())
+    }
+
     pub(super) fn prepare_ranged_start(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -36,15 +41,13 @@ impl CommandCursor {
             .entities
             .get(&envelope.actor_id)
             .ok_or(ExecutionError::MissingActor)?;
-        let Some(ChosenContact::Player(permission)) = self.chosen_contact.as_ref() else {
-            return Err(ExecutionError::UnsupportedFamily);
+        let body = source.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+        let permission = match (&self.chosen_contact, body.controller.as_str()) {
+            (Some(ChosenContact::Player(permission)), "player")
+                if envelope.human_initiated == Some(true) => permission.as_deref(),
+            (Some(ChosenContact::Npc), "npc") if self.is_npc_ranged_choice() => None,
+            _ => return Err(ExecutionError::UnsupportedFamily),
         };
-        let body = source
-            .actor
-            .as_ref()
-            .filter(|body| body.controller == "player")
-            .filter(|_| envelope.human_initiated == Some(true))
-            .ok_or(ExecutionError::UnsupportedFamily)?;
         let Some(policy) = installed.manifest.ranged_policy.as_ref() else {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
@@ -54,10 +57,6 @@ impl CommandCursor {
             .ranged_policy_pin
             .as_ref()
             .ok_or(ExecutionError::Invariant)?;
-        let combat = installed
-            .body_policy
-            .as_ref()
-            .and_then(|body| body.value().combat.as_ref());
         if !installed
             .retained
             .item_handling_read
@@ -72,25 +71,11 @@ impl CommandCursor {
         let mut point = None;
         let seen_body = match target {
             RangedTarget::Subject { id, life } => {
-                let subject = state.physical.entities.get(id).filter(|subject| {
-                    source.id != subject.id
-                        && subject.physical_life() == Some(*life)
-                        && policy.permits(subject)
-                        && combat.is_some_and(|combat| {
-                            subject.actor.as_ref().is_some_and(|target| {
-                                combat.permits_target(&body.controller, &target.controller, true)
-                                    && (*mode != RuntimeRangedMode::Hunt
-                                        || installed
-                                            .occurrence_rules
-                                            .value()
-                                            .ranged
-                                            .as_ref()
-                                            .is_some_and(|rules| {
-                                                rules.menu.permits_hunt(target.species.as_deref())
-                                            }))
-                            })
-                        })
-                });
+                let subject = crate::projectile::selected_body(state, source, (id, *life))
+                    .filter(|subject| {
+                        *mode != RuntimeRangedMode::Hunt
+                            || crate::projectile::may_hunt(installed, subject)
+                    });
                 let Some(subject) = subject else {
                     self.discovery_result(false, "invalid-target", &policy.invalid_target_text)?;
                     return Ok(false);
@@ -126,6 +111,13 @@ impl CommandCursor {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
         };
+        if !tool.equipped {
+            let entity = state.physical.entities.get(tool.id).ok_or(ExecutionError::Invariant)?;
+            if !crate::execution::equipment_can_equip(state, source, entity, true, &self.budget)? {
+                self.refuse(&ordinary.not_applicable);
+                return Ok(false);
+            }
+        }
         let weapon = tool_type
             .ranged_weapon
             .as_ref()
@@ -135,7 +127,7 @@ impl CommandCursor {
             source,
             ammunition.as_deref(),
             &weapon.ammunition_kind,
-            None,
+            loadout::StockAdmission::Replace(&self.budget),
         )?
         else {
             self.refuse(&ordinary.not_applicable);
@@ -339,6 +331,11 @@ impl CommandCursor {
             }
         };
         if !permitted {
+            if matches!(target, RangedTarget::Subject { .. }) {
+                return self.discovery_refuse(
+                    &installed.occurrence_rules.value().response.offers.availability.unperceived,
+                );
+            }
             self.refuse(&ordinary.not_applicable);
             return Ok(());
         }
@@ -382,11 +379,10 @@ impl CommandCursor {
         };
         let aim_point = aim.aim_point;
         if let Some((subject, target)) = looked_at.zip(aim.aim_target.as_ref()) {
-            if *mode != RuntimeRangedMode::Aim {
-                let chosen = match &self.chosen_contact {
-                    Some(ChosenContact::Player(value)) => value.as_deref(),
-                    _ => return Err(ExecutionError::UnsupportedFamily),
-                };
+            if *mode != RuntimeRangedMode::Aim
+                && let Some(ChosenContact::Player(value)) = &self.chosen_contact
+            {
+                let chosen = value.as_deref();
                 let injury = crate::contact::ContactInjury::read(installed, source, subject)?;
                 let maximum = injury.maximum((weapon.damage + ammunition.damage_bonus).max(0.0));
                 let digest = || {
@@ -671,42 +667,28 @@ impl CommandCursor {
 }
 
 impl CommandCursor {
-    pub(super) fn prepare_ranged_equipment(
-        &mut self,
-        core: &mut CoreMutation<'_>,
-    ) -> Result<bool, ExecutionError> {
+    pub(super) fn equip_ranged(&self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         let NativeCommand::Ranged {
-            intent: RangedIntent::Start {
-                auto_equip: true, ..
-            },
+            intent: RangedIntent::Start { auto_equip: true, weapon: Some(item), .. },
             ..
         } = &self.command
         else {
-            return Ok(true);
+            return Ok(());
         };
-        let action = self.action.as_ref().ok_or(ExecutionError::Invariant)?;
-        let item = action
-            .weapon_item_id
-            .as_deref()
-            .ok_or(ExecutionError::Invariant)?;
-        let installed = core.state.installed.clone();
-        let ordinary = installed.ordinary_actions.value();
         let actor = self.actor_id();
-        let necessary = core.state.physical.entities.get(item)
-            .is_some_and(|lot| !matches!(&lot.placement, Some(crate::state::Placement::Attached { parent_entity_id, .. }) if parent_entity_id == actor));
-        if !necessary {
-            return Ok(true);
-        }
-        let decision =
-            core.change_equipment(actor, item, crate::execution::EquipmentRequest::Equip)?;
-        if !matches!(
-            decision,
+        let attached = core.state.physical.entities.get(item).is_some_and(|lot| {
+            matches!(&lot.placement, Some(crate::state::Placement::Attached { parent_entity_id, .. })
+                if parent_entity_id == actor)
+        });
+        if !attached && !matches!(
+            core.equip_for_action(actor, item)?,
             crate::execution::EquipmentDecision::Applied { .. }
         ) {
-            self.refuse(&ordinary.not_applicable);
-            return Ok(false);
+            // Readiness already checked this exact item and its conflicts.
+            // An unexpected failed write must roll back the entire replacement.
+            return Err(ExecutionError::Invariant);
         }
-        Ok(true)
+        Ok(())
     }
 }
 

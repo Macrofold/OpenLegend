@@ -23,6 +23,20 @@ pub(crate) enum RangedIntent {
 }
 
 impl RangedIntent {
+    /// A resident may choose only an already bound, finite subject shot.
+    pub(crate) fn npc_subject(&self) -> Option<&str> {
+        match self {
+            Self::Start {
+                mode: RuntimeRangedMode::ShootOnce | RuntimeRangedMode::Hunt,
+                target: RangedTarget::Subject { id, .. },
+                weapon: Some(_),
+                ammunition: Some(_),
+                auto_equip: true,
+            } => Some(id),
+            _ => None,
+        }
+    }
+
     pub(crate) fn kind(&self) -> &'static str {
         match self {
             Self::Start { mode, .. } => mode.kind(),

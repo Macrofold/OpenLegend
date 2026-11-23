@@ -46,7 +46,7 @@ export type NativeNpcOfferMeaning =
     }
   | { readonly kind: 'probe'; readonly probe: number }
   | {
-      readonly kind: 'fish' | 'cook' | 'fire-care' | 'handover' | 'equipped-strike';
+      readonly kind: 'fish' | 'cook' | 'fire-care' | 'handover' | 'equipped-strike' | 'ranged';
       readonly body: number;
     }
   | {
@@ -369,6 +369,7 @@ export function formatNativeNpcCandidateDescriptions(
           subjectIds: [body(meaning.body).sourceId],
           transition: offer.transition,
         };
+      case 'ranged':
       case 'equipped-strike':
       case 'fish':
       case 'cook':

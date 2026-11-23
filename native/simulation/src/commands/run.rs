@@ -604,7 +604,8 @@ impl CommandCursor {
     /// Only an accepted plan can activate a chosen contact. Caller-provided
     /// command fields cannot turn discovery into execution.
     pub(crate) fn for_planned_contact(mut self) -> Self {
-        self.chosen_contact = matches!(self.command, NativeCommand::Strike { .. })
+        self.chosen_contact = (matches!(self.command, NativeCommand::Strike { .. })
+            || self.is_npc_ranged_choice())
             .then_some(crate::contact::review::ChosenContact::Npc);
         self
     }
@@ -633,6 +634,9 @@ impl CommandCursor {
     }
 
     pub(super) fn for_preparation(mut self, mode: super::WorkTransitionMode) -> Self {
+        if self.is_npc_ranged_choice() {
+            self.chosen_contact = Some(crate::contact::review::ChosenContact::Npc);
+        }
         self.preparation_mode = Some(mode);
         self
     }
@@ -1872,12 +1876,6 @@ impl CommandCursor {
                     self.phase = Phase::Done;
                 }
                 Phase::RecordPrepared => {
-                    if matches!(self.command, NativeCommand::Ranged { .. })
-                        && !self.source_scope_started
-                        && !self.prepare_ranged_equipment(core)?
-                    {
-                        continue;
-                    }
                     if !self.source_scope_started {
                         self.exposure = super::exposure::CommandExposure::prepare(
                             core,
@@ -2062,7 +2060,10 @@ impl CommandCursor {
                         continue;
                     }
                     if place_hearth { core.reserve_hearth_holds(&actor_id)?; }
-                    if projectile { core.reserve_projectile(&actor_id)?; }
+                    if projectile {
+                        self.equip_ranged(core)?;
+                        core.reserve_projectile(&actor_id)?;
+                    }
                     if let Some(repeat) = evasion_repeat {
                         core.physical().retain_evasion_recovery(&actor_id, repeat)?;
                     }

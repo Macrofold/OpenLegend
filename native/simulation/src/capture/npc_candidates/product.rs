@@ -87,6 +87,9 @@ pub enum NpcOfferMeaning {
         body: usize,
         weapon: usize,
     },
+    Ranged {
+        body: usize,
+    },
     Guard {
         body: usize,
         tool: std::sync::Arc<NpcGuardTool>,

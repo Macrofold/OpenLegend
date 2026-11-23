@@ -77,6 +77,19 @@ pub(crate) fn inside_current_body(
     .is_some())
 }
 
+/// Hunt is a world-authored purpose for this exact kind of quarry. The
+/// ordinary shot remains available for other eligible bodies.
+pub(crate) fn may_hunt(
+    installed: &crate::simulation::InstalledWorld,
+    body: &crate::state::Entity,
+) -> bool {
+    let occurrences = installed.occurrence_rules.value();
+    occurrences.response.offers.hunting.methods.ranged_weapon
+        && occurrences.ranged.as_ref().is_some_and(|rules| {
+            rules.menu.permits_hunt(body.actor.as_ref().and_then(|actor| actor.species.as_deref()))
+        })
+}
+
 pub(crate) fn selected_body<'a>(
     state: &'a crate::simulation::SimulationState,
     source: &crate::state::Entity,

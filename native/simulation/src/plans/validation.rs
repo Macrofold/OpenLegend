@@ -86,6 +86,11 @@ pub(crate) fn valid_command(
                     _ => false,
                 }
         }
+        NativeCommand::Ranged { intent, envelope } => {
+            world.manifest.ranged_policy.is_some()
+                && envelope.human_initiated.is_none()
+                && intent.npc_subject().is_some_and(|target| target != envelope.actor_id)
+        }
         NativeCommand::Guard {
             envelope,
             facing: crate::commands::guard_input::GuardFacing::Subject { id, life },
@@ -141,7 +146,6 @@ pub(crate) fn valid_command(
         | NativeCommand::TransferItem { .. }
         | NativeCommand::Equipment { .. }
         | NativeCommand::Eat { .. }
-        | NativeCommand::Ranged { .. }
         | NativeCommand::Guard { .. }
         | NativeCommand::Evade { .. }
         | NativeCommand::PracticeShot { .. }

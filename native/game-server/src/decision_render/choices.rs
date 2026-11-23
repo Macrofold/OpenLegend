@@ -74,6 +74,7 @@ impl DecisionPolicy {
             | Meaning::Approach { body, .. }
             | Meaning::Strike { body, .. }
             | Meaning::EquippedStrike { body, .. }
+            | Meaning::Ranged { body }
             | Meaning::Guard { body, .. }
             | Meaning::Fish { body }
             | Meaning::Cook { body }
@@ -145,6 +146,7 @@ impl DecisionPolicy {
             Meaning::Guard { .. } | Meaning::EquippedStrike { .. } => String::new(),
             // Their core actions supplied an installed activity description.
             Meaning::Fish { .. } | Meaning::Cook { .. } | Meaning::FireCare { .. }
+            | Meaning::Ranged { .. }
             | Meaning::Handover { .. } => String::new(),
         };
         if let Some(temporary) = &offer.temporary {
@@ -172,6 +174,7 @@ impl DecisionPolicy {
                 | Meaning::Status { .. }
                 | Meaning::Strike { .. }
                 | Meaning::EquippedStrike { .. }
+                | Meaning::Ranged { .. }
                 | Meaning::Fish { .. }
                 | Meaning::Cook { .. }
                 | Meaning::FireCare { .. }

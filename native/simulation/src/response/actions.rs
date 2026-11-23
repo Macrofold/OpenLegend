@@ -71,6 +71,8 @@ pub(super) fn command(
                 | "tend-fire"
                 | "guard"
                 | "strike"
+                | "shoot-once"
+                | "hunt"
                 | "cancel"
                 | "withdraw-attempt"
                 | "inspect-activities"
@@ -111,12 +113,17 @@ fn target_current(
             expected,
         )
 }
-fn raw_targets<'a>(raw: &'a SqlCell, actor: &'a str) -> impl Iterator<Item = &'a str> {
-    [raw.get("targetId"), raw.get("heatId")]
+fn raw_subjects(raw: &SqlCell) -> impl Iterator<Item = &str> {
+    let ranged = raw.get("rangedTarget").filter(|target| {
+        target.get("kind").and_then(SqlCell::as_str) == Some("subject")
+    });
+    [raw.get("targetId"), raw.get("heatId"), ranged.and_then(|target| target.get("id"))]
         .into_iter()
         .flatten()
         .filter_map(SqlCell::as_str)
-        .filter(move |id| !id.is_empty() && *id != actor)
+}
+fn raw_targets<'a>(raw: &'a SqlCell, actor: &'a str) -> impl Iterator<Item = &'a str> {
+    raw_subjects(raw).filter(move |id| !id.is_empty() && *id != actor)
 }
 fn targets_current(
     core: &CoreMutation<'_>,
@@ -691,13 +698,7 @@ pub(super) fn prepare(
             }
             if target.is_some_and(|target| {
                 binding.commands.iter().any(|raw| {
-                    raw.get("targetId")
-                        .and_then(SqlCell::as_str)
-                        .is_some_and(|id| id != target)
-                        || raw
-                            .get("heatId")
-                            .and_then(SqlCell::as_str)
-                            .is_some_and(|id| id != target)
+                    raw_subjects(raw).any(|id| id != target)
                 })
             }) {
                 return result(

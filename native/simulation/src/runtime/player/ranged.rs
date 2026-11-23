@@ -106,12 +106,7 @@ pub(super) fn choices<'a>(
     if tools.is_empty() || stock.is_empty() {
         return Ok((Vec::new(), custody));
     }
-    let hunt = text.menu.permits_hunt(
-        target
-            .actor
-            .as_ref()
-            .and_then(|actor| actor.species.as_deref()),
-    );
+    let hunt = crate::projectile::may_hunt(installed, target);
     let modes = [
         (
             RuntimeRangedMode::Aim,

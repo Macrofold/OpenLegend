@@ -1,12 +1,15 @@
 //! Select an accessible tool and one compatible projectile from the holder's
 //! current stock. An existing aim may reuse its own exact held unit.
 use crate::execution::ExecutionError;
+use crate::host::ByteBudget;
 use crate::install::{ItemDefinitionRead, OwnedItem, owned_by, project_owned};
 use crate::simulation::SimulationState;
 use crate::state::{Action, Entity};
 
 pub(crate) type Choice<'a> = (OwnedItem<'a>, &'a ItemDefinitionRead);
 
+/// Exact carried selection defers equipment port and hold checks to the
+/// ordinary equipment owner, which knows which work will be replaced.
 pub(crate) fn weapon<'a>(
     state: &'a SimulationState,
     holder: &'a Entity,
@@ -20,7 +23,7 @@ pub(crate) fn weapon<'a>(
         let definition = retained.items.get(lot.definition_id)?;
         (definition.ranged_weapon.is_some()
             && accepts(definition)
-            && (lot.equipped || equip && lot.quantity == 1 && lot.available_quantity == 1))
+            && (lot.equipped || equip && lot.quantity == 1))
             .then_some((lot, definition))
     };
     if let Some(item) = selected {
@@ -44,38 +47,59 @@ pub(crate) fn weapon<'a>(
     Ok(None)
 }
 
+pub(crate) enum StockAdmission<'a> {
+    Free,
+    CurrentHold(&'a Action),
+    Replace(&'a ByteBudget),
+}
+
+impl StockAdmission<'_> {
+    pub(crate) fn available(
+        &self,
+        state: &SimulationState,
+        holder: &Entity,
+        lot: OwnedItem<'_>,
+        definition: &ItemDefinitionRead,
+    ) -> Result<bool, ExecutionError> {
+        if lot.available_quantity > 0 {
+            return Ok(true);
+        }
+        let holds = &state.physical.holds;
+        Ok(match *self {
+            Self::Free => false,
+            Self::Replace(budget) => {
+                holds.quantity_after_replacement(lot.id, holder, budget)? < lot.quantity
+            }
+            Self::CurrentHold(action) => action.ranged.as_ref().is_some_and(|aim| {
+                holds.matches_item(
+                    &holder.id, &action.id, &aim.reservation_id, lot.id, 1, &definition.pin,
+                )
+            }),
+        })
+    }
+}
+
 pub(crate) fn ammunition<'a>(
     state: &'a SimulationState,
     holder: &'a Entity,
     selected: Option<&str>,
     kind: &str,
-    held: Option<&Action>,
+    admission: StockAdmission<'_>,
 ) -> Result<Option<Choice<'a>>, ExecutionError> {
     let physical = &state.physical;
     let retained = &state.installed.retained;
-    let candidate = |lot: OwnedItem<'a>| {
-        let definition = retained.items.get(lot.definition_id)?;
-        (definition
-            .ammunition
-            .as_ref()
-            .is_some_and(|ammo| ammo.kind == kind)
-            && (lot.available_quantity > 0
-                || held
-                    .and_then(|action| action.ranged.as_ref().map(|aim| (action, aim)))
-                    .is_some_and(|(action, aim)| {
-                        physical.holds.matches_item(
-                            &holder.id,
-                            &action.id,
-                            &aim.reservation_id,
-                            lot.id,
-                            1,
-                            &definition.pin,
-                        )
-                    })))
-        .then_some((lot, definition))
+    let candidate = |lot: OwnedItem<'a>| -> Result<_, ExecutionError> {
+        let definition = retained.items.get(lot.definition_id).ok_or(ExecutionError::Invariant)?;
+        if !definition.ammunition.as_ref().is_some_and(|ammo| ammo.kind == kind) {
+            return Ok(None);
+        }
+        Ok(admission.available(state, holder, lot, definition)?.then_some((lot, definition)))
     };
     if let Some(item) = selected {
-        return Ok(owned_by(physical, retained, &holder.id, item)?.and_then(candidate));
+        return match owned_by(physical, retained, &holder.id, item)? {
+            Some(lot) => candidate(lot),
+            None => Ok(None),
+        };
     }
     let mut selected = None;
     state.inventory.visit_owned_until(
@@ -90,7 +114,7 @@ pub(crate) fn ammunition<'a>(
                 accessible,
                 physical.holds.quantity(&body.id),
             )?;
-            selected = candidate(lot);
+            selected = candidate(lot)?;
             Ok(selected.is_some())
         },
     )?;

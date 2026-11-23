@@ -25,6 +25,8 @@ struct DisplayWords<'a> {
     #[serde(borrow)]
     strike: StrikeWords<'a>,
     #[serde(borrow)]
+    ranged: RangedWords<'a>,
+    #[serde(borrow)]
     observed: ObservedWords<'a>,
 }
 
@@ -51,6 +53,16 @@ struct StrikeWords<'a> {
     weapon_past: &'a str,
     #[serde(borrow)]
     catalogue: StrikeCatalogue<'a>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RangedWords<'a> {
+    shot: &'a str,
+    automatic_preparation: &'a str,
+    after_approach: &'a str,
+    approach: &'a str,
+    stock: &'a str,
 }
 
 /// Extra context for a human choosing a strike, never added to NPC offers or
@@ -467,10 +479,7 @@ pub(crate) fn equipped_strike_offer(
     let target = crate::narration::name_phrase(target, crate::narration::NameArticle::Indefinite, false);
     let label = if let Some(hunting) = hunting {
         let tool = crate::narration::name_phrase(weapon, crate::narration::NameArticle::Indefinite, false);
-        JsText::concat(&[
-            &hunting.label.as_str().into(), &" ".into(), &target, &" with ".into(), &tool,
-            &" ".into(), &hunting.purpose.as_str().into(), &". ".into(), &hunting.scope.as_str().into(),
-        ])
+        hunting_label(hunting, &target, &tool)
     } else {
         weapon_strike_name(weapon, Some(&target))?
     };
@@ -485,6 +494,100 @@ pub(crate) fn equipped_strike_offer(
     offer.push_str(" ");
     offer.push_str(&contact_attack_description(strike)?);
     Some(offer)
+}
+
+fn hunting_label(
+    hunting: &super::base_decision_offers::HuntingOfferRules,
+    target: &JsText,
+    tool: &JsText,
+) -> JsText {
+    JsText::concat(&[
+        &hunting.label.as_str().into(), &" ".into(), target, &" with ".into(), tool,
+        &" ".into(), &hunting.purpose.as_str().into(), &". ".into(), &hunting.scope.as_str().into(),
+    ])
+}
+
+pub(crate) struct RangedOfferFacts<'a> {
+    pub damage: f64,
+    pub range: f64,
+    pub approach: f64,
+    pub flight_speed: f64,
+    pub windup: f64,
+    pub steadiness: f64,
+    pub stock: u64,
+    pub accuracy_explanation: &'a str,
+}
+
+/// Format the installed facts of this one automatically released shot. Its
+/// known ammunition lot belongs to the choosing character.
+pub(crate) fn ranged_offer(
+    equipment: &JsText,
+    target: &crate::state::Named,
+    weapon: &crate::install::ItemDefinitionRead,
+    ammunition: &crate::install::ItemDefinitionRead,
+    menu: &super::base_cognition::RangedMenuWords,
+    hunting: Option<&super::base_decision_offers::HuntingOfferRules>,
+    facts: RangedOfferFacts<'_>,
+) -> Option<JsText> {
+    use crate::narration::{NameArticle, name_phrase};
+    use crate::text::{TextRef, substitute_fields};
+    let ranged = &words()?.ranged;
+    let target = name_phrase(target, NameArticle::Definite, false);
+    let tool = name_phrase(&weapon.named, NameArticle::Definite, false);
+    let mut display = equipment.clone();
+    if !display.is_empty() {
+        display.push_str(" ");
+    }
+    if let Some(hunting) = hunting {
+        display.push_text(&hunting_label(hunting, &target, &tool));
+    } else {
+        display.push_text(&substitute_fields(
+            &menu.title,
+            &[
+                ("label", TextRef::Unicode(&menu.shoot_label)),
+                ("target", TextRef::Text(&target)),
+                ("tool", TextRef::Text(&tool)),
+            ],
+        ));
+        display.push_str(".");
+    }
+    if let Some(description) = &weapon.description {
+        display.push_str(" ");
+        display.push_text(description);
+    }
+    display.push_str(" ");
+    display.push_text(&substitute_fields(
+        ranged.stock,
+        &[
+            ("ammunition", TextRef::Text(&ammunition.named.name)),
+            ("quantity", TextRef::Unicode(&facts.stock.to_string())),
+        ],
+    ));
+    display.push_str(". ");
+    display.push_text(&substitute_fields(
+        ranged.automatic_preparation,
+        &[
+            ("seconds", TextRef::Unicode(&number(facts.windup)?)),
+            ("approach", TextRef::Unicode(ranged.after_approach)),
+        ],
+    ));
+    display.push_str(". ");
+    display.push_text(&substitute_fields(
+        ranged.approach,
+        &[("distance", TextRef::Unicode(&format!("{:.2}", facts.approach)))],
+    ));
+    display.push_str(". ");
+    display.push_text(&substitute_fields(
+        ranged.shot,
+        &[
+            ("damage", TextRef::Unicode(&number(facts.damage)?)),
+            ("range", TextRef::Unicode(&number(facts.range)?)),
+            ("steadiness", TextRef::Unicode(&number((facts.steadiness * 100.0).round())?)),
+            ("speed", TextRef::Unicode(&number(facts.flight_speed)?)),
+            ("contact", TextRef::Unicode(facts.accuracy_explanation)),
+        ],
+    ));
+    Some(display)
 }
 
 fn contact_attack_description(strike: StrikeRead) -> Option<String> {
