@@ -252,7 +252,7 @@ impl AdvanceCursor {
         self.material = crate::material_exposure::MaterialSlice::capture(
             core, weather.incident, end_incident, budget,
         )?;
-        self.working = Some(SliceActions::capture(core, participants, budget)?);
+        self.working = Some(SliceActions::capture(core, participants, &steering, budget)?);
         // Eligibility is reconciled after any command/status work and before
         // the saved countdown receives time. No new decision receives a draw.
         for handle in participants.animals() {

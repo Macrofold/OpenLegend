@@ -10,7 +10,7 @@ use crate::geometry::{
 use crate::host::{ByteBudget, ByteReservation};
 use crate::native_danger::DangerAssessment;
 use crate::reception::{VisionParameters, horizontal_cone, vision_parameters};
-use crate::spatial::{distance, interpolate};
+use crate::spatial::{cone_roots, distance, interpolate};
 use crate::state::{Point, SurfacePoint};
 use crate::work::WorkUnit;
 use std::mem::size_of;
@@ -299,27 +299,5 @@ impl AirGeometry {
             .charge(&[(WorkUnit::Tests, request.sight.len() as u64)])?;
         self.request = Some((request, storage));
         Ok(None)
-    }
-}
-
-fn cone_roots(
-    origin: Point,
-    from: Point,
-    to: Point,
-    heading: f64,
-    angle: f64,
-    roots: &mut Vec<f64>,
-) {
-    if angle >= std::f64::consts::TAU {
-        return;
-    }
-    for bearing in [heading - angle / 2.0, heading + angle / 2.0] {
-        let (x, z) = bearing.sin_cos();
-        let before = (from.x - origin.x) * z - (from.z - origin.z) * x;
-        let after = (to.x - origin.x) * z - (to.z - origin.z) * x;
-        let cross = before / (before - after);
-        if cross > 0.0 && cross < 1.0 {
-            roots.push(cross);
-        }
     }
 }

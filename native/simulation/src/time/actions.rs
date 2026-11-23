@@ -2,22 +2,31 @@
 //! after motion cannot give newly started work any of that elapsed interval.
 //! See docs/simulation-time.md#native-interval-contract.
 use super::NativeParticipants;
+use super::input::PreparedSteering;
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::host::retained_size::{heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
-use crate::state::EntityHandle;
+use crate::state::{Action, EntityHandle};
+
+pub(super) fn advances_ground(action: &Action) -> bool {
+    action.has_ground_motion() && action.stage == "approaching"
+        || action.strike_motion.is_some()
+        || action.has_contact_approach()
+}
 use indexmap::IndexMap;
 use std::mem::size_of;
 
 pub(crate) struct SliceActions {
     pub working: IndexMap<EntityHandle, String>,
     pub approaching: Vec<EntityHandle>,
+    pub(super) aims: Option<Box<super::movement::AimTracks>>,
     _reservation: ByteReservation,
 }
 impl SliceActions {
     pub(crate) fn capture(
         core: &CoreMutation<'_>,
         participants: &NativeParticipants,
+        steering: &PreparedSteering,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let count = participants.actors().len();
@@ -33,6 +42,7 @@ impl SliceActions {
         )?;
         let mut working = IndexMap::with_capacity(count);
         let mut approaching = Vec::with_capacity(count);
+        let mut aims = None;
         for handle in participants.actors() {
             let Some(entity) = core.state.physical.entities.resolve(*handle) else {
                 continue;
@@ -47,9 +57,13 @@ impl SliceActions {
             let Some(action) = &actor.action else {
                 continue;
             };
-            if !action.supported_native_action() || action.has_unconverted_fields()
-            {
+            if !action.supported_native_action() || action.has_unconverted_fields() {
                 return Err(ExecutionError::UnsupportedFamily);
+            }
+            if action.ranged.is_some() && action.stage == "working" {
+                super::movement::AimTracks::start(
+                    core, *handle, entity, action, steering, budget, &mut aims,
+                )?;
             }
             let restricted = core
                 .state
@@ -59,7 +73,11 @@ impl SliceActions {
             if action.follow.is_none()
                 && !action.holds_ready_aim()
                 && (action.stage == "working" || action.awaiting_moving_contact())
-                && (!restricted || action.kind == "status-effect" || action.is_natural_contact() || action.is_manufacturing() || action.is_guard())
+                && (!restricted
+                    || action.kind == "status-effect"
+                    || action.is_natural_contact()
+                    || action.is_manufacturing()
+                    || action.is_guard())
             {
                 reservation.resize(
                     reservation
@@ -69,17 +87,14 @@ impl SliceActions {
                 )?;
                 working.insert(*handle, action.id.clone());
             }
-            if !restricted
-                && ((action.has_ground_motion() && action.stage == "approaching")
-                    || action.strike_motion.is_some()
-                    || action.has_contact_approach())
-            {
+            if !restricted && advances_ground(action) {
                 approaching.push(*handle);
             }
         }
         Ok(Self {
             working,
             approaching,
+            aims,
             _reservation: reservation,
         })
     }

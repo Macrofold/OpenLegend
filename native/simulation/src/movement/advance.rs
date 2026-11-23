@@ -90,6 +90,8 @@ pub(crate) struct MoveAdvanceCursor {
     seconds: f64,
     phase: Phase,
     motion: Option<MotionOperation>,
+    record_motion: bool,
+    observed_track: Option<super::MotionForecast>,
     contact: Option<Box<ImpactCursor>>,
     follow: Option<Box<super::follow::FollowCursor>>,
     meal_sight: Option<crate::reception::SightBatch>,
@@ -175,6 +177,8 @@ impl MoveAdvanceCursor {
             seconds,
             phase: Phase::Start,
             motion: None,
+            record_motion: false,
+            observed_track: None,
             contact: None,
             follow: None,
             meal_sight: None,
@@ -239,17 +243,29 @@ impl MoveAdvanceCursor {
                         .as_ref()
                         .is_some_and(|actor| actor.controller == "native")
                         && entity.animal.is_some()));
-        self.motion = Some(MotionOperation::start(
+        let mut motion = MotionOperation::start(
             core,
             &self.actor_id,
             distance,
             occupied,
             self.binding,
             &self.budget,
-        )?);
+        )?;
+        if self.record_motion && self.seconds > 0.0 && distance > 0.0 {
+            motion.record_execution(self.seconds, distance)?;
+        }
+        self.motion = Some(motion);
         self.phase = phase;
         Ok(())
     }
+    pub(crate) fn record_movement(&mut self) {
+        self.record_motion = true;
+    }
+
+    pub(crate) fn take_executed_track(&mut self) -> Option<super::MotionForecast> {
+        self.observed_track.take()
+    }
+
     pub(crate) fn step<'a>(
         &'a mut self,
         core: &mut CoreMutation<'_>,
@@ -538,6 +554,9 @@ impl MoveAdvanceCursor {
                     MotionStep::Complete(complete) => complete,
                 };
                 self.binding = motion.binding();
+                if let Some(track) = motion.take_executed_track() {
+                    self.observed_track = Some(track);
+                }
                 self.motion = None;
                 let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
                 if !complete {

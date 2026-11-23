@@ -155,7 +155,9 @@ pub(crate) fn valid_saved(
     };
     chosen && action.ranged_policy_pin.as_ref() == Some(pin)
         && action.competence_pin.is_none()
-        && aim.observed_motion.is_none()
+        && aim.observed_motion.is_none_or(|motion| {
+            aim.aim_target.is_some() && motion.valid() && motion.at <= state.header.sim_time
+        })
         && aim.manual == (action.kind == "aim")
         && aim.ready == (aim.manual && action.remaining_seconds == 0.0)
         && (!aim.ready || action.stage == "working")

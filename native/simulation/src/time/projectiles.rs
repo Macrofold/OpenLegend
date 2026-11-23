@@ -348,7 +348,7 @@ impl ProjectilePrediction {
                 let at = first_motion
                     .filter(|(at, _)| *at > 0.0)
                     .map_or(candidate.point, |(_, pose)| {
-                        interpolate(candidate.point, pose.point(), until / first_turn)
+                        interpolate(candidate.point, *pose, until / first_turn)
                     });
                 core.journal.meters.charge(&[(WorkUnit::Tests, 1)])?;
                 if let Some(contact) =

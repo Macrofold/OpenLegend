@@ -1250,6 +1250,7 @@ enum UndoKey {
     ActionNavigation(usize, u64),
     ActionRemaining(usize, u64),
     ActionSample(usize, u64),
+    ActionAimMotion(usize, u64),
     SensoryProgress(usize, u64),
     AnimalEpisode(usize, u64),
     Foraging(usize, u64),
@@ -1510,6 +1511,11 @@ enum Undo {
         entity: EntityHandle,
         action_id: String,
         before: Option<f64>,
+    },
+    ActionAimMotion {
+        entity: EntityHandle,
+        action_id: String,
+        before: Option<crate::projectile::ObservedMotion>,
     },
     ActionReplans {
         entity: EntityHandle,
@@ -2350,6 +2356,15 @@ impl PhysicalJournal {
                         before,
                         &self.budget,
                     )?);
+                }
+                Undo::ActionAimMotion { entity, action_id, before } => {
+                    state.entities.resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.action.as_mut())
+                        .filter(|action| action.id == action_id)
+                        .and_then(|action| action.ranged.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .observed_motion = before;
                 }
                 Undo::ActionSample {
                     entity,

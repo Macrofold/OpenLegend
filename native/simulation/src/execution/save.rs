@@ -867,6 +867,7 @@ impl PhysicalJournal {
                         | Undo::ActionNavigation { entity, .. }
                         | Undo::ActionRemaining { entity, .. }
                         | Undo::ActionSample { entity, .. }
+                        | Undo::ActionAimMotion { entity, .. }
                         | Undo::SensoryProgress { entity, .. }
                         | Undo::AnimalEpisode { entity, .. }
                         | Undo::Foraging { entity, .. }
@@ -934,7 +935,8 @@ impl PhysicalJournal {
                         | Undo::ContactPhase { .. }
                         | Undo::StrikeMotion { .. }
                         | Undo::AttackObservers { .. }
-                        | Undo::ActionSample { .. } => rows.action = true,
+                        | Undo::ActionSample { .. }
+                        | Undo::ActionAimMotion { .. } => rows.action = true,
                         Undo::AnimalEpisode { before, .. } => {
                             rows.episode = true;
                             if rows.episode_before.is_none() {

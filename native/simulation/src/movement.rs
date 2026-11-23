@@ -444,9 +444,10 @@ pub(crate) struct MotionCursor {
 #[derive(Debug, serde::Serialize)]
 pub(crate) struct MotionTrack {
     pub at: Vec<f64>,
-    pub pose: Vec<SurfacePoint>,
+    pub pose: Vec<Point>,
 }
 struct MotionPreview {
+    forecast: bool,
     seconds: f64,
     distance_budget: f64,
     track: MotionTrack,
@@ -539,14 +540,8 @@ impl MotionCursor {
             .len()
             .checked_add(2)
             .ok_or(MovementError::InvalidPath)?;
-        let max_id = path
-            .iter()
-            .map(|p| p.surface_id.len())
-            .chain(std::iter::once(point.surface_id.len()))
-            .max()
-            .unwrap_or(0);
         let bytes = count
-            .checked_mul(std::mem::size_of::<SurfacePoint>() + std::mem::size_of::<f64>() + max_id)
+            .checked_mul(std::mem::size_of::<Point>() + std::mem::size_of::<f64>())
             .and_then(|n| n.checked_add(path.capacity() * std::mem::size_of::<SurfacePoint>()))
             .and_then(|n| {
                 n.checked_add(path.iter().map(|p| p.surface_id.capacity()).sum::<usize>())
@@ -577,8 +572,9 @@ impl MotionCursor {
         let mut at = Vec::with_capacity(count);
         let mut pose = Vec::with_capacity(count);
         at.push(0.0);
-        pose.push(point);
+        pose.push(point.point());
         cursor.preview = Some(MotionPreview {
+            forecast: true,
             seconds,
             distance_budget,
             track: MotionTrack { at, pose },
@@ -586,12 +582,45 @@ impl MotionCursor {
         });
         Ok(cursor)
     }
-    pub(crate) fn is_forecast(&self) -> bool {
-        self.preview.is_some()
+    /// Track the genuinely committed ground path for a currently aimed
+    /// subject. The existing path writer still owns every position change.
+    pub(crate) fn record_execution(
+        &mut self,
+        seconds: f64,
+        distance_budget: f64,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<(), MovementError> {
+        if !seconds.is_finite() || seconds <= 0.0 || !distance_budget.is_finite()
+            || distance_budget < 0.0 || self.preview.is_some() || self.steps != 0
+        {
+            return Err(MovementError::InvalidPath);
+        }
+        let count = self.path.len().checked_add(2).ok_or(MovementError::Capacity)?;
+        let bytes = count
+            .checked_mul(std::mem::size_of::<Point>() + std::mem::size_of::<f64>())
+            .and_then(|bytes| bytes.checked_add(std::mem::size_of::<MotionPreview>()))
+            .ok_or(MovementError::Capacity)?;
+        let reservation = budget.reserve(bytes).map_err(|_| MovementError::Capacity)?;
+        let mut at = Vec::with_capacity(count);
+        let mut pose = Vec::with_capacity(count);
+        at.push(0.0);
+        pose.push(self.position.point());
+        self.preview = Some(MotionPreview {
+            forecast: false, seconds, distance_budget,
+            track: MotionTrack { at, pose }, reservation,
+        });
+        Ok(())
     }
-    pub(crate) fn into_forecast(mut self) -> Result<MotionForecast, MovementError> {
+
+    pub(crate) fn is_forecast(&self) -> bool {
+        self.preview.as_ref().is_some_and(|track| track.forecast)
+    }
+
+    pub(crate) fn take_motion_track(&mut self) -> Result<Option<MotionForecast>, MovementError> {
+        let Some(mut preview) = self.preview.take() else {
+            return Ok(None);
+        };
         let complete = self.result().ok_or(MovementError::InvalidAnswer)?;
-        let mut preview = self.preview.take().ok_or(MovementError::InvalidAnswer)?;
         if preview
             .track
             .at
@@ -600,20 +629,14 @@ impl MotionCursor {
             || preview.track.at.len() == 1
         {
             preview.track.at.push(preview.seconds);
-            preview.track.pose.push(
-                preview
-                    .track
-                    .pose
-                    .last()
-                    .ok_or(MovementError::InvalidAnswer)?
-                    .clone(),
-            );
+            let last = *preview.track.pose.last().ok_or(MovementError::InvalidAnswer)?;
+            preview.track.pose.push(last);
         }
-        Ok(MotionForecast {
+        Ok(Some(MotionForecast {
             track: preview.track,
             complete,
             reservation: preview.reservation,
-        })
+        }))
     }
     pub(crate) fn body(&self) -> &BodyProfile {
         &self.body
@@ -839,15 +862,15 @@ impl MotionCursor {
             if preview.distance_budget > 0.0 {
                 let at = (self.travelled / preview.distance_budget * preview.seconds)
                     .min(preview.seconds);
-                if at > *preview.track.at.last().expect("initial forecast sample") {
+                if at > *preview.track.at.last().expect("initial motion sample") {
                     preview.track.at.push(at);
-                    preview.track.pose.push(self.position.clone());
+                    preview.track.pose.push(self.position.point());
                 } else {
                     *preview
                         .track
                         .pose
                         .last_mut()
-                        .expect("initial forecast pose") = self.position.clone();
+                        .expect("initial motion pose") = self.position.point();
                 }
             }
         }

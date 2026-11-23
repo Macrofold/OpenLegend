@@ -687,9 +687,17 @@ impl MoveAdvanceCursor {
                 core,
             );
         };
-        let line =
-            aim_line(origin(actor)?, point, weapon.range).ok_or(ExecutionError::Invariant)?;
         let now = state.physical.header.sim_time;
+        let from = origin(actor)?;
+        let observed = directed.and_then(|(id, life)| {
+            aim.aim_target.as_ref().filter(|target| target.id == id && target.life == life)
+                .and(aim.observed_motion.as_ref())
+        });
+        let aimed = crate::projectile::leading::intercept_point(
+            from, point, observed, now, weapon.flight_speed, weapon.range, installed.spatial.epsilon,
+        );
+        let line = aim_line(from, aimed, weapon.range).or_else(|| aim_line(from, point, weapon.range))
+            .ok_or(ExecutionError::Invariant)?;
         let recovery = now + weapon.recovery_seconds;
         let shot_storage = self.budget.reserve(
             4096 + 8

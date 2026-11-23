@@ -120,6 +120,19 @@ impl MotionOperation {
         self.forecast.ok_or(ExecutionError::Invariant)
     }
 
+    pub(crate) fn record_execution(
+        &mut self,
+        seconds: f64,
+        distance_budget: f64,
+    ) -> Result<(), ExecutionError> {
+        self.cursor.as_mut().ok_or(ExecutionError::Invariant)?
+            .record_execution(seconds, distance_budget, &self.budget).map_err(error)
+    }
+
+    pub(crate) fn take_executed_track(&mut self) -> Option<MotionForecast> {
+        self.forecast.take()
+    }
+
     fn with_path(
         core: &CoreMutation<'_>,
         actor_id: &str,
@@ -295,12 +308,11 @@ impl MotionOperation {
             if self.progress.is_none() {
                 let cursor = self.cursor.as_mut().ok_or(ExecutionError::Invariant)?;
                 let Some((kind, from, to)) = cursor.question() else {
-                    let cursor = self.cursor.take().ok_or(ExecutionError::Invariant)?;
-                    let complete = if cursor.is_forecast() {
-                        let forecast = cursor.into_forecast().map_err(error)?;
-                        let complete = forecast.complete;
-                        self.forecast = Some(forecast);
-                        complete
+                    let mut cursor = self.cursor.take().ok_or(ExecutionError::Invariant)?;
+                    let read_only = cursor.is_forecast();
+                    self.forecast = cursor.take_motion_track().map_err(error)?;
+                    let complete = if read_only {
+                        self.forecast.as_ref().ok_or(ExecutionError::Invariant)?.complete
                     } else {
                         core.physical().finish_motion(cursor)?
                     };

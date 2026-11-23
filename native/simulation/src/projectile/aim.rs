@@ -14,13 +14,23 @@ pub(crate) struct AimedLife {
     pub life: u64,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ObservedMotion {
     pub from_at: f64,
     pub at: f64,
     pub from: Point,
     pub to: Point,
+}
+
+impl ObservedMotion {
+    pub(crate) fn valid(self) -> bool {
+        self.from_at.is_finite() && self.from_at >= 0.0
+            && self.at.is_finite() && self.at > self.from_at
+            && [self.from, self.to].into_iter().all(|point| {
+                point.x.is_finite() && point.y.is_finite() && point.z.is_finite()
+            })
+    }
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]

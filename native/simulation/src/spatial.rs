@@ -41,6 +41,45 @@ pub fn interpolate(from: Point, to: Point, fraction: f64) -> Point {
     }
 }
 
+/// Return two or fewer real roots using the stable signed-root formula used
+/// by Source's continuous range and intercept owners.
+pub(crate) fn quadratic_roots(a: f64, b: f64, c: f64) -> [Option<f64>; 2] {
+    if a.abs() <= 1e-12 * (b.abs() + c.abs()) {
+        return [(b != 0.0).then(|| -c / b), None];
+    }
+    let discriminant = b * b - 4.0 * a * c;
+    if discriminant < 0.0 {
+        return [None, None];
+    }
+    let sign = if b < 0.0 { -1.0 } else { 1.0 };
+    let q = -0.5 * (b + sign * discriminant.sqrt());
+    [Some(q / a), (q != 0.0).then(|| c / q)]
+}
+
+/// The two cone edges are straight lines in relative horizontal coordinates.
+/// Keep the original aerial sight sweep's endpoint crossings.
+pub(crate) fn cone_roots(
+    origin: Point,
+    from: Point,
+    to: Point,
+    heading: f64,
+    angle: f64,
+    roots: &mut Vec<f64>,
+) {
+    if angle >= std::f64::consts::TAU {
+        return;
+    }
+    for bearing in [heading - angle / 2.0, heading + angle / 2.0] {
+        let (x, z) = bearing.sin_cos();
+        let before = (from.x - origin.x) * z - (from.z - origin.z) * x;
+        let after = (to.x - origin.x) * z - (to.z - origin.z) * x;
+        let cross = before / (before - after);
+        if cross > 0.0 && cross < 1.0 {
+            roots.push(cross);
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Extent {
     pub radius: f64,

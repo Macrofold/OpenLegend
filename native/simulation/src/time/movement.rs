@@ -12,6 +12,9 @@ use crate::movement::{
 use crate::state::Point;
 use std::mem::size_of;
 
+mod aim;
+pub(super) use aim::AimTracks;
+
 enum Progress {
     Geometry,
     Occurrence(StagedOccurrence),
@@ -34,6 +37,9 @@ pub(crate) struct MotionSliceCursor {
 }
 impl MotionSliceCursor {
     pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        if let Some(request) = self.actions.aims.as_ref().and_then(|aims| aims.question()) {
+            return Some(request);
+        }
         self.steering_current
             .as_ref()
             .and_then(MotionOperation::queries)
@@ -113,6 +119,16 @@ impl MotionSliceCursor {
         mechanics: &MechanicalForecast,
         mut answer: Option<MoveAdvanceAnswer>,
     ) -> Result<Progress, ExecutionError> {
+        if self
+            .actions
+            .aims
+            .as_ref()
+            .is_some_and(|aims| !aims.before_finished())
+        {
+            if self.aim_sight(core, answer.take())? {
+                return Ok(Progress::Geometry);
+            }
+        }
         // All steering prefixes commit in admitted input order before action
         // movement. Later movers therefore see each earlier occupied placement.
         while let Some((handle, route)) = self.steering.routes.get_index(self.steering_next) {
@@ -124,14 +140,25 @@ impl MotionSliceCursor {
                 if let Some(entity) = entity {
                     if can_steer(core.state, entity)? {
                         self.binding.serial = core.journal.next_provider_serial()?;
-                        self.steering_current = Some(MotionOperation::start_steering(
+                        let distance = route.distance * (self.seconds / self.input_seconds);
+                        let mut motion = MotionOperation::start_steering(
                             core,
                             &entity.id,
                             &route.path,
-                            route.distance * (self.seconds / self.input_seconds),
+                            distance,
                             self.binding,
                             &self.budget,
-                        )?);
+                        )?;
+                        if distance > 0.0
+                            && self
+                                .actions
+                                .aims
+                                .as_ref()
+                                .is_some_and(|aims| aims.recording(*handle))
+                        {
+                            motion.record_execution(self.seconds, distance)?;
+                        }
+                        self.steering_current = Some(motion);
                     }
                 }
                 if self.steering_current.is_none() {
@@ -152,6 +179,15 @@ impl MotionSliceCursor {
             {
                 MotionStep::Geometry(_) => return Ok(Progress::Geometry),
                 MotionStep::Complete(_) => {
+                    if let Some(track) = self
+                        .steering_current
+                        .as_mut()
+                        .and_then(MotionOperation::take_executed_track)
+                    {
+                        if let Some(aims) = self.actions.aims.as_mut() {
+                            aims.record(*handle, track);
+                        }
+                    }
                     self.steering_current = None;
                     self.steering_next += 1;
                 }
@@ -159,6 +195,17 @@ impl MotionSliceCursor {
         }
         loop {
             let Some(handle) = self.actions.approaching.get(self.next).copied() else {
+                if self
+                    .actions
+                    .aims
+                    .as_ref()
+                    .is_some_and(|aims| !aims.finished())
+                {
+                    if self.aim_sight(core, answer.take())? {
+                        return Ok(Progress::Geometry);
+                    }
+                    self.actions.aims = None;
+                }
                 if answer.is_some() {
                     return Err(ExecutionError::UnfinishedOccurrence);
                 }
@@ -175,11 +222,10 @@ impl MotionSliceCursor {
                         .is_some_and(|actor| {
                             actor.alive
                                 && !actor.incapacitated
-                                && actor.action.as_ref().is_some_and(|action| {
-                                    (action.has_ground_motion() && action.stage == "approaching")
-                                        || (action.strike_motion.is_some()
-                                            || action.has_contact_approach())
-                                })
+                                && actor
+                                    .action
+                                    .as_ref()
+                                    .is_some_and(super::actions::advances_ground)
                         });
                 if !eligible {
                     self.next += 1;
@@ -208,7 +254,16 @@ impl MotionSliceCursor {
                 } else {
                     MoveAdvanceCursor::new
                 };
-                self.current = Some(start(&entity.id, self.seconds, self.binding, &self.budget)?);
+                let mut mover = start(&entity.id, self.seconds, self.binding, &self.budget)?;
+                if self
+                    .actions
+                    .aims
+                    .as_ref()
+                    .is_some_and(|aims| aims.recording(handle))
+                {
+                    mover.record_movement();
+                }
+                self.current = Some(mover);
             }
             match self
                 .current
@@ -254,8 +309,34 @@ impl MotionSliceCursor {
                     )?;
                 }
             }
+            if let Some(track) = self
+                .current
+                .as_mut()
+                .and_then(MoveAdvanceCursor::take_executed_track)
+            {
+                if let Some(aims) = self.actions.aims.as_mut() {
+                    aims.record(handle, track);
+                }
+            }
             self.current = None;
             self.next += 1;
         }
+    }
+
+    fn aim_sight(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        answer: Option<MoveAdvanceAnswer>,
+    ) -> Result<bool, ExecutionError> {
+        let answer = match answer {
+            None => None,
+            Some(MoveAdvanceAnswer::Geometry(answer)) => Some(answer),
+            _ => return Err(ExecutionError::UnfinishedOccurrence),
+        };
+        self.actions
+            .aims
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?
+            .run(core, answer, self.seconds, self.binding, &self.budget)
     }
 }

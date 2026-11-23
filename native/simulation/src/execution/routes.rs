@@ -48,6 +48,44 @@ impl PhysicalMutation<'_> {
             .motion_sample_remaining_metres = Some(remaining);
         Ok(())
     }
+    /// Retain the selected action's actual observed movement without replacing
+    /// the action or changing the target's physical authority.
+    pub(crate) fn set_observed_aim_motion(
+        &mut self,
+        handle: EntityHandle,
+        action_id: &str,
+        motion: Option<crate::projectile::ObservedMotion>,
+    ) -> Result<(), ExecutionError> {
+        if motion.is_some_and(|motion| !motion.valid() || motion.at != self.state.header.sim_time) {
+            return Err(ExecutionError::Invariant);
+        }
+        let before = self.state.entities.resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id && action.stage == "working")
+            .and_then(|action| action.ranged.as_ref())
+            .ok_or(ExecutionError::Invariant)?
+            .observed_motion;
+        if before == motion {
+            return Ok(());
+        }
+        self.journal.reserve(2 * size_of::<Undo>() + action_id.len())?;
+        let key = UndoKey::ActionAimMotion(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            self.journal.retain(key, Undo::ActionAimMotion {
+                entity: handle, action_id: action_id.into(), before,
+            })?;
+        }
+        self.state.entities.resolve_mut(handle)
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.action.as_mut())
+            .filter(|action| action.id == action_id)
+            .and_then(|action| action.ranged.as_mut())
+            .ok_or(ExecutionError::Invariant)?
+            .observed_motion = motion;
+        Ok(())
+    }
+
     pub(crate) fn clear_action_navigation(
         &mut self,
         id: &str,
