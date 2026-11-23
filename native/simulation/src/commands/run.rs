@@ -2836,8 +2836,16 @@ fn actor_problem(
     if matches!(command, NativeCommand::Feed { .. }) && !native {
         return Ok(Some(ordinary.unsupported_controller.outcome(false)));
     }
-    if entity.spatial.local_pose.is_some() {
-        return Err(ExecutionError::UnsupportedFamily);
+    if entity.spatial.local_pose.is_some()
+        && matches!(command, NativeCommand::Feed { .. } | NativeCommand::Gather { .. }
+            | NativeCommand::Fish { .. } | NativeCommand::TendFire { .. }
+            | NativeCommand::TreatScar { .. } | NativeCommand::PlaceHearth { .. } | NativeCommand::Cook { .. }
+            | NativeCommand::Craft { .. } | NativeCommand::Equipment { .. } | NativeCommand::Strike { .. }
+            | NativeCommand::Guard { .. } | NativeCommand::Ranged { .. } | NativeCommand::PracticeShot { .. })
+    {
+        let rules = core.state.installed.manifest.ranged_policy.as_ref()
+            .and_then(|policy| policy.local_avoidance.as_ref()).ok_or(ExecutionError::Invariant)?;
+        return Ok(Some(outcome(false, "posture-held", &rules.posture_held_text)));
     }
     if command.envelope().cooperation.is_some() || command.envelope().combat_help_id.is_some() {
         return Err(ExecutionError::UnsupportedFamily);

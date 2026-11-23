@@ -76,12 +76,13 @@ impl AdvanceCursor {
         let now = core.state.physical.header.sim_time;
         let mechanics = self.mechanics.as_ref().ok_or_else(invalid)?;
         let review = next_animal_review(&core.state.physical, &core.state.installed, participants)?;
+        let pose_return = super::super::super::projectiles::local_pose::next_return_at(&core.state.physical);
         let input = private_motion_seconds(
             &core.state.physical,
             &installed,
             participants,
             mechanics,
-            (self.end_at - now).min(mechanics.seconds).min(review - now),
+            (self.end_at - now).min(mechanics.seconds).min(review - now).min(pose_return - now),
         )?;
         self.input_seconds = input_boundary(core, &self.inputs, mechanics, input)?;
         let binding = self.binding(core)?;
@@ -187,8 +188,7 @@ impl AdvanceCursor {
             self.discard_mechanics()?;
             self.phase = Phase::Predict;
         } else {
-            self.select_wanderers(core)?;
-            self.phase = Phase::Wander;
+            self.phase = Phase::SenseEnd;
         }
         Ok(Progress::Continue)
     }
@@ -487,6 +487,8 @@ impl AdvanceCursor {
             });
         let mechanics = self.mechanics.as_ref().ok_or_else(invalid)?;
         let deferred = !mechanics.requires_immediate_integration
+            && self.projectile_settlement.is_none()
+            && !core.state.physical.bodies.has_local_poses()
             && mechanics.seconds > epsilon
             && !work_ends
             && self.event_count() == self.slice_events

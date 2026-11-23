@@ -572,10 +572,7 @@ pub(crate) fn effective_body_profile<'a>(
     entity: &'a Entity,
     budget: &ByteBudget,
 ) -> Result<EffectiveBodyProfile<'a>, ProjectionError> {
-    if entity.spatial.local_pose.is_some() {
-        return Err(ProjectionError::UnsupportedFamily);
-    }
-    let reservation = if entity.spatial.soft_footprint.is_some() {
+    let reservation = if entity.spatial.soft_footprint.is_some() || entity.spatial.local_pose.is_some() {
         let ordinary = entity.ordinary_body_profile();
         Some(
             budget

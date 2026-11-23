@@ -16,6 +16,8 @@ use crate::state::{Entity, EntityHandle, Point};
 use crate::work::WorkUnit;
 use std::mem::size_of;
 
+mod crossing;
+pub(super) mod local_pose;
 mod passage;
 mod settle;
 pub(super) use passage::PassageTracks;
@@ -120,7 +122,7 @@ impl ProjectilePrediction {
             let point = entity
                 .world_position()
                 .ok_or(ExecutionError::InvalidPosition)?;
-            let extent: Extent = entity.body_profile().as_ref().into();
+            let extent = entity.actual_extent();
             // A fall is physical even if the body cannot choose locomotion.
             let travel = if entity.spatial.fall_velocity.is_some() {
                 flight::motion_reach(installed, entity, horizon)?
@@ -132,7 +134,12 @@ impl ProjectilePrediction {
                 travel.max(route.distance * horizon / input_seconds)
             });
             core.journal.meters.charge(&[(WorkUnit::Candidates, 1)])?;
-            let envelope = extent.height + extent.radius + travel + installed.time_epsilon;
+            let height = if entity.spatial.local_pose.is_some() {
+                entity.ordinary_body_profile().height
+            } else {
+                extent.height
+            };
+            let envelope = height + extent.radius + travel + installed.spatial.epsilon;
             let passage = PassageObserver::prepare(installed, entity, budget)?.filter(|observer| {
                 intersects_a_flight(
                     flights.values()
@@ -452,6 +459,21 @@ impl ProjectilePrediction {
                     moving_point_contact(flight.position, to, candidate.point, at, candidate.extent)
                 {
                     bound = bound.min(until * contact.enter);
+                }
+                if until > 0.0 && flight.encounters.as_ref().is_some_and(|crossings| {
+                    crossings.values().any(|crossing| crossing.body_id == entity.id
+                        && entity.physical_life() == Some(crossing.body_life))
+                }) {
+                    core.journal.meters.charge(&[(WorkUnit::Tests, 1)])?;
+                    let ordinary = entity.ordinary_body_profile().into();
+                    if let Some(interval) = moving_point_contact(flight.position, to, candidate.point, at, ordinary) {
+                        if interval.exit < 1.0 {
+                            // At the mathematical root the closed capsule still
+                            // intersects. Cross by at most the existing time
+                            // tolerance, leaving any earlier real contact in force.
+                            bound = bound.min((until * interval.exit + core.state.installed.time_epsilon).min(until));
+                        }
+                    }
                 }
                 // The actual flight owner can decline a blocked or unsafe
                 // leg. Bound either possibility, then test the actual body.

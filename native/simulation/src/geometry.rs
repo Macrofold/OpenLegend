@@ -723,6 +723,7 @@ mod query_custody {
     use crate::host::retained_size::{HeapBytes, heap_record, heap_sum};
 
     heap_record!(SightRay {});
+    heap_record!(MovementRayHit { collider_ids });
     heap_record!(WalkingSegment { from, to, body });
     heap_record!(RelativeSupport {});
     heap_record!(SupportQuery {

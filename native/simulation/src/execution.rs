@@ -38,6 +38,7 @@ mod contact;
 use contact::ContactPhase;
 mod flight;
 mod projectile;
+pub(crate) use projectile::CrossingChange;
 mod foraging;
 mod heat;
 mod hearth;
@@ -1225,6 +1226,7 @@ enum UndoKey {
     PlanGeneration(usize, u64),
     BodyRevision(usize, u64),
     BodyLifecycle(usize, u64),
+    LocalPose(usize, u64),
     Remains(usize, u64),
     PendingDeath(usize, u64),
     Scar(usize, u64, String),
@@ -1345,6 +1347,11 @@ enum Undo {
         ordinal: u64,
         present: bool,
     },
+    ProjectileCrossings {
+        id: String,
+        before: Option<crate::projectile::ProjectileCrossings>,
+        storage: Option<crate::host::ResidentReservation>,
+    },
     ProjectileRetire {
         position: usize,
         id: String,
@@ -1454,6 +1461,11 @@ enum Undo {
         conditions: Option<crate::state::BodyConditions>,
         fall_velocity: Option<f64>,
         local_avoidance_ready_at: Option<f64>,
+    },
+    LocalPose {
+        entity: EntityHandle,
+        before: Option<crate::state::LocalPose>,
+        ready_at: Option<f64>,
     },
     Remains {
         entity: EntityHandle,
@@ -1943,6 +1955,11 @@ impl PhysicalJournal {
                     flight.passages.rollback_add(&receiver, life, ordinal)?;
                     flight.flight.set_passages(present);
                 }
+                Undo::ProjectileCrossings { id, before, storage } => {
+                    let row = state.projectiles.flights.get_mut(&id).ok_or(ExecutionError::Invariant)?;
+                    row.flight.encounters = before;
+                    row.crossing_storage = storage;
+                }
                 Undo::ProjectileRetire { position, id, before } => {
                     if state.projectiles.flights.shift_insert(position, id, before).is_some() {
                         return Err(ExecutionError::Invariant);
@@ -2132,6 +2149,14 @@ impl PhysicalJournal {
                     entity.spatial.fall_velocity = fall_velocity;
                     entity.spatial.local_avoidance_ready_at = local_avoidance_ready_at;
                     let id = entity.id.clone();
+                    state.bodies.refresh(&state.entities, &id)?;
+                }
+                Undo::LocalPose { entity, before, ready_at } => {
+                    let body = state.entities.resolve_mut(entity).ok_or(ExecutionError::Invariant)?;
+                    body.spatial.local_pose = before;
+                    body.spatial.local_avoidance_ready_at = ready_at;
+                    let id = body.id.clone();
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
                     state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::Remains { entity, before } => {
@@ -2747,7 +2772,7 @@ impl PhysicalMutation<'_> {
             .entities
             .resolve(handle)
             .ok_or(ExecutionError::MissingEntity)?;
-        if entity.spatial.local_pose.is_some() || entity.spatial.flight.is_some() {
+        if entity.spatial.flight.is_some() {
             return Err(ExecutionError::UnsupportedFamily);
         }
         let position = entity

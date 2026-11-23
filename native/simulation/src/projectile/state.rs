@@ -5,7 +5,7 @@ use crate::experience::EmptyChildOwner;
 use crate::host::retained_size::{HeapBytes, heap_record, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation, ResidentReservation};
 use crate::install::{InstallError, RowImport, WorldChildren, reserve_typed_parse, rows};
-use crate::state::{Point, UnconvertedField};
+use crate::state::{EntityStore, Point};
 use crate::text::JsText;
 use crate::values::{
     DefinitionPin, deserialize_present_option, deserialize_present_safe_integer,
@@ -15,6 +15,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::mem::size_of;
+use super::ProjectileCrossings;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct FlightPosition {
@@ -99,7 +100,7 @@ pub(crate) struct ProjectileFlight {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    execution: Option<UnconvertedField>,
+    pub(crate) execution: Option<Box<crate::attack_execution::AttackExecutionEvidence>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -108,10 +109,10 @@ pub(crate) struct ProjectileFlight {
     near_pass_observed_lives: Option<EmptyChildOwner>,
     #[serde(
         default,
-        deserialize_with = "deserialize_present_option",
+        deserialize_with = "super::crossing::deserialize_present",
         skip_serializing_if = "Option::is_none"
     )]
-    encounters: Option<UnconvertedField>,
+    pub(crate) encounters: Option<ProjectileCrossings>,
 }
 
 impl ProjectileFlight {
@@ -257,12 +258,26 @@ impl ProjectileFlight {
         {
             return Err(InstallError::CurrentFormat);
         }
-        if self.execution.is_some() || self.encounters.is_some() {
-            return Err(InstallError::UnsupportedFamily(
-                "specialized projectile contact",
-            ));
+        if self.execution.as_ref().is_some_and(|execution| {
+            !execution.valid() || execution.tool() != &self.tool
+                || execution.committed_at() != self.launched_at
+        }) {
+            return Err(InstallError::CurrentFormat);
+        }
+        if self.encounters.as_ref().is_some_and(|rows| {
+            rows.iter().any(|(key, row)| !row.valid(key, self.launched_at, at))
+        }) {
+            return Err(InstallError::CurrentFormat);
         }
         Ok(())
+    }
+
+    pub(crate) fn contact_factor(&self) -> f64 {
+        self.execution.as_ref().map_or(1.0, |score| score.contact_factor())
+    }
+
+    pub(crate) fn injury_factor(&self) -> f64 {
+        self.execution.as_ref().map_or(1.0, |score| score.injury_factor())
     }
 
     pub(crate) fn progress(&self) -> FlightPosition {
@@ -305,13 +320,15 @@ heap_record!(ProjectileFlight {
     lethal_permission,
     attack_digest,
     tool,
-    ammunition
+    ammunition,
+    execution
 });
 
 pub(crate) struct FundedProjectile {
     pub flight: ProjectileFlight,
     pub passages: NearPassages,
     pub(crate) resident: ResidentReservation,
+    pub(crate) crossing_storage: Option<ResidentReservation>,
 }
 
 impl Serialize for FundedProjectile {
@@ -328,6 +345,28 @@ pub(crate) struct ProjectileState {
 }
 
 impl ProjectileState {
+    pub(crate) fn validate_crossing_occurrences(
+        &self,
+        history: &crate::events::OccurrenceHistory,
+    ) -> Result<(), InstallError> {
+        for row in self.flights.values() {
+            let flight = &row.flight;
+            for entry in flight.encounters.iter().flat_map(|entries| entries.values()) {
+                if let Ok(record) = history.original(&entry.pose_occurrence_id) {
+                    let event = record.event();
+                    if event.event_type != "body-ducked"
+                        || event.at != entry.entered_at
+                        || event.actor_id.as_deref() != Some(entry.body_id.as_str())
+                        || !event.data.as_ref().and_then(|fields| fields.get("projectileId"))
+                            .is_some_and(|value| matches!(value, crate::reception::EventScalar::Text(id) if id.as_unicode() == Some(flight.id.as_str())))
+                    {
+                        return Err(InstallError::CurrentFormat);
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
     /// Prepare and install one committed flight. The release owner supplies
     /// its already admitted construction allocation and rolls the insertion
     /// back with the debit if later occurrence settlement fails.
@@ -341,7 +380,7 @@ impl ProjectileState {
         flight
             .validate(now)
             .map_err(|_| ExecutionError::Invariant)?;
-        if self.flights.contains_key(&flight.id) || flight.near_pass_observed_lives.is_some() {
+        if self.flights.contains_key(&flight.id) || flight.near_pass_observed_lives.is_some() || flight.encounters.is_some() {
             return Err(ExecutionError::Invariant);
         }
         let bytes = flight
@@ -387,6 +426,7 @@ impl ProjectileState {
                 flight,
                 passages: NearPassages::default(),
                 resident,
+                crossing_storage: None,
             }),
         );
         self.present = true;
@@ -398,6 +438,7 @@ impl ProjectileState {
         children: &mut WorldChildren,
         at: f64,
         ranged_installed: bool,
+        entities: &EntityStore,
         budget: &ByteBudget,
     ) -> Result<Self, InstallError> {
         const ROOT: &str = "[\"world\"]";
@@ -447,6 +488,13 @@ impl ProjectileState {
             let flight: ProjectileFlight =
                 serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
             flight.validate(at)?;
+            let crossing_storage = flight.encounters.as_ref().map(|rows| {
+                if rows.values().any(|row| !row.validates_pose(entities)) {
+                    return Err(InstallError::CurrentFormat);
+                }
+                budget.reserve_record(rows.heap_bytes().ok_or(InstallError::Capacity)?)
+                    .map_err(|_| InstallError::Capacity)
+            }).transpose()?;
             if flight.id != row.slot || !row.extra.is_empty() || flights.contains_key(&row.slot) {
                 return Err(InstallError::CurrentFormat);
             }
@@ -486,6 +534,7 @@ impl ProjectileState {
                     flight,
                     passages,
                     resident,
+                    crossing_storage,
                 }),
             );
         }

@@ -109,7 +109,7 @@ pub(crate) fn action_route_request_current(
         .as_ref()
         .map(|_| budget.reserve(entity.ordinary_body_profile().id.len()))
         .transpose()?;
-    let body = entity.body_profile();
+    let body = entity.travel_body_profile();
     Ok(request.geometry_revision == revision
         && *surface == request.from.surface_id
         && crate::spatial::distance(*position, request.from.point()) < 1e-7
@@ -305,7 +305,7 @@ impl NavigationGate {
         let route = RouteQuery::Surface {
             from: proposal.origin.clone(),
             to: destination.clone(),
-            body: entity.body_profile().into_owned(),
+            body: entity.travel_body_profile().into_owned(),
         };
         let mut question = GeometryQueries::new(GeometryBinding::new(
             self.candidate,

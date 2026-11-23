@@ -1,6 +1,9 @@
 //! The interval prediction admits a clock boundary. Resolve its actual
 //! contact after motion, with current physical participation and sight.
 use super::*;
+use super::local_pose::{Avoidance, AvoidanceStep};
+use super::crossing::{ClearedCrossing, CloseStep};
+use crate::execution::CrossingChange;
 use super::passage::{PassageHit, PassageHits};
 use crate::body::{
     BodyAnswer, BodyStep, HealthChangeCursor, ProjectileContact, ScarEffect, scar_factor,
@@ -10,6 +13,7 @@ use crate::events::{
 };
 use crate::execution::StagedOccurrence;
 use crate::geometry::MovementRayHit;
+use crate::host::retained_size::HeapBytes;
 use crate::narration::{Narration, NarrationPart, PersonRole};
 use crate::reception::{EventScalar, SightBatch};
 use crate::text::JsText;
@@ -25,6 +29,8 @@ pub(in super::super) struct ProjectileSettle {
     horizon: f64,
     seconds: f64,
     solids: Vec<Option<MovementRayHit>>,
+    preexisting: usize,
+    launched_solids: Option<GeometryQueries>,
     order: Option<Vec<(String, usize)>>,
     next: usize,
     started: bool,
@@ -33,12 +39,15 @@ pub(in super::super) struct ProjectileSettle {
     passages: Option<PassageHits>,
     next_passage: usize,
     expected_passage: Option<String>,
+    exit: Option<ClearedCrossing>,
     terminal: Option<Terminal>,
     _reservation: ByteReservation,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
+    Avoidance,
+    DuckSettled,
     Sight,
     KnownSource,
     Injury,
@@ -59,6 +68,7 @@ struct Terminal {
     saw_point: bool,
     known_source: bool,
     phase: Phase,
+    avoidance: Option<Avoidance>,
     sight: Option<SightBatch>,
     injury: Option<HealthChangeCursor>,
     before: Option<f64>,
@@ -77,10 +87,13 @@ impl ProjectileSettle {
         tracks: Option<PassageTracks>,
         reservation: ByteReservation,
     ) -> Self {
+        let preexisting = solids.len();
         Self {
             horizon,
             seconds,
             solids,
+            preexisting,
+            launched_solids: None,
             order: None,
             next: 0,
             started: false,
@@ -89,14 +102,22 @@ impl ProjectileSettle {
             passages: None,
             next_passage: 0,
             expected_passage: None,
+            exit: None,
             terminal: None,
             _reservation: reservation,
         }
     }
 
+    pub(in crate::time) fn current(budget: &ByteBudget) -> Result<Self, ExecutionError> {
+        Ok(Self::new(0.0, 0.0, Vec::new(), None, budget.reserve(size_of::<Self>())?))
+    }
+
     pub(in super::super) fn question(&self) -> Option<&GeometryQueries> {
-        self.scan.as_ref().and_then(PassageScan::request).or_else(|| {
-            self.terminal.as_ref()?.sight.as_ref().map(SightBatch::queries)
+        self.launched_solids.as_ref().or_else(|| self.scan.as_ref().and_then(PassageScan::request))
+            .or_else(|| self.exit.as_ref().and_then(ClearedCrossing::question)).or_else(|| {
+            let terminal = self.terminal.as_ref()?;
+            terminal.avoidance.as_ref().and_then(Avoidance::question)
+                .or_else(|| terminal.sight.as_ref().map(SightBatch::queries))
         })
     }
 
@@ -118,11 +139,40 @@ impl ProjectileSettle {
     pub(in super::super) fn step(
         &mut self,
         core: &mut CoreMutation<'_>,
-        binding: GeometryBinding,
+        mut binding: GeometryBinding,
         mut geometry: Option<GeometryAnswers>,
         mut event: Option<CompletedOccurrence>,
         budget: &ByteBudget,
     ) -> Result<ProjectileSettleStep, ExecutionError> {
+        // Work at the endpoint may commit a new shot. It receives an actual
+        // solid check at launch and no part of the preceding elapsed interval.
+        if self.order.is_none() {
+            let flights = &core.state.physical.projectiles.flights;
+            if let Some(query) = self.launched_solids.take() {
+                let answer = geometry.take().ok_or(ExecutionError::UnfinishedOccurrence)?;
+                query.validate_answers(&answer).map_err(|_| ExecutionError::InvalidCheckpoint)?;
+                let bytes = answer.movement_rays.heap_bytes().ok_or(ExecutionError::Capacity)?;
+                self._reservation.resize(self._reservation.bytes().checked_add(bytes)
+                    .ok_or(ExecutionError::Capacity)?)?;
+                self.solids.try_reserve_exact(answer.movement_rays.len()).map_err(|_| ExecutionError::Capacity)?;
+                self.solids.extend(answer.movement_rays);
+            } else if flights.len() > self.solids.len() {
+                let count = flights.len() - self.solids.len();
+                self._reservation.resize(self._reservation.bytes().checked_add(
+                    count.checked_mul(size_of::<crate::geometry::SightRay>())
+                        .ok_or(ExecutionError::Capacity)?,
+                ).ok_or(ExecutionError::Capacity)?)?;
+                binding.serial = core.journal.next_provider_serial()?;
+                let mut query = GeometryQueries::new(binding);
+                query.movement_rays.try_reserve_exact(count).map_err(|_| ExecutionError::Capacity)?;
+                for row in flights.values().skip(self.solids.len()) {
+                    let position = row.flight.position;
+                    query.movement_rays.push(crate::geometry::SightRay { from: position, to: position });
+                }
+                self.launched_solids = Some(query);
+                return Ok(ProjectileSettleStep::Geometry);
+            }
+        }
         if let Some(tracks) = self.tracks.take() {
             self.scan = Some(tracks.prepare_actual(core, self.seconds, binding, budget)?);
         }
@@ -167,6 +217,21 @@ impl ProjectileSettle {
         loop {
             let Some((id, ordinal)) = self.order.as_ref().and_then(|order| order.get(self.next))
             else {
+                if self.exit.is_none() {
+                    self.exit = ClearedCrossing::next(core, budget)?;
+                }
+                if let Some(exit) = &mut self.exit {
+                    match exit.step(core, binding, geometry.take(), budget)? {
+                        CloseStep::Geometry => return Ok(ProjectileSettleStep::Geometry),
+                        CloseStep::Event(staged) => {
+                            self.exit = None;
+                            self._reservation.resize(self._reservation.bytes().checked_add(staged.id.len())
+                                .ok_or(ExecutionError::Capacity)?)?;
+                            self.expected_passage = Some(staged.id.clone());
+                            return Ok(ProjectileSettleStep::Event(staged));
+                        }
+                    }
+                }
                 if geometry.is_some() || event.is_some() {
                     return Err(ExecutionError::UnfinishedOccurrence);
                 }
@@ -174,7 +239,12 @@ impl ProjectileSettle {
             };
             if !self.started {
                 let solid = self.solids.get(*ordinal).and_then(Option::as_ref);
-                self.terminal = self.advance_flight(core, id, solid, budget)?;
+                let (elapsed, horizon) = if *ordinal < self.preexisting {
+                    (self.seconds, self.horizon)
+                } else {
+                    (0.0, 0.0)
+                };
+                self.terminal = self.advance_flight(core, id, solid, elapsed, horizon, budget)?;
                 self.started = true;
                 self.next_passage = 0;
             }
@@ -198,6 +268,13 @@ impl ProjectileSettle {
                 {
                     return Ok(next);
                 }
+                if terminal.phase == Phase::DuckSettled {
+                    let prior = self.terminal.take().ok_or(ExecutionError::Invariant)?;
+                    // The projectile has already travelled to this boundary. Reuse
+                    // its reached solid candidate and test the actual new bodies.
+                    self.terminal = Terminal::prepare_at(core, id, prior.solid.as_deref(), budget)?;
+                    continue;
+                }
                 self.terminal = None;
             }
             if geometry.is_some() || event.is_some() {
@@ -213,6 +290,8 @@ impl ProjectileSettle {
         core: &mut CoreMutation<'_>,
         id: &str,
         solid: Option<&MovementRayHit>,
+        elapsed: f64,
+        horizon: f64,
         budget: &ByteBudget,
     ) -> Result<Option<Terminal>, ExecutionError> {
         let state = &core.state.physical;
@@ -225,14 +304,46 @@ impl ProjectileSettle {
         let at = state.header.sim_time;
         let time_epsilon = core.state.installed.time_epsilon;
         let space_epsilon = core.state.installed.spatial.epsilon;
-        let (point, travel) = flight.travel(self.seconds);
+        let (point, travel) = flight.travel(elapsed);
         let solid = solid.and_then(|hit| {
-            let hit_at = hit.fraction * self.horizon.min(flight.remaining_range / flight.speed);
-            (hit_at <= self.seconds + time_epsilon)
+            let hit_at = hit.fraction * horizon.min(flight.remaining_range / flight.speed);
+            (hit_at <= elapsed + time_epsilon)
                 .then(|| hit.collider_ids.iter().min())
                 .flatten()
         });
+        let _solid_storage = budget.reserve(solid.map_or(0, String::len))?;
+        let solid = solid.cloned();
         let after = flight.remaining_range - travel;
+        let source_exited = flight.source_exited || !state.entities.get(&flight.source_id)
+            .and_then(|source| Some((source, source.world_position()?)))
+            .is_some_and(|(source, origin)| {
+                source.physical_life() == Some(flight.source_life)
+                    && moving_point_contact(point, point, origin, origin, source.actual_extent()).is_some()
+            });
+        core.physical().set_projectile_progress(
+            id,
+            crate::projectile::FlightPosition {
+                position: point,
+                advanced_at: at,
+                remaining_range: after,
+                source_exited,
+            },
+        )?;
+        Terminal::prepare_at(core, id, solid.as_deref(), budget)
+    }
+}
+
+impl Terminal {
+    fn prepare_at(
+        core: &mut CoreMutation<'_>,
+        id: &str,
+        solid: Option<&str>,
+        budget: &ByteBudget,
+    ) -> Result<Option<Self>, ExecutionError> {
+        let state = &core.state.physical;
+        let flight = &state.projectiles.flights.get(id).ok_or(ExecutionError::Invariant)?.flight;
+        let point = flight.position;
+        let space_epsilon = core.state.installed.spatial.epsilon;
         let mut body = None;
         let mut tested = 0;
         state
@@ -247,7 +358,7 @@ impl ProjectileSettle {
                 let Some(origin) = candidate.world_position() else {
                     return false;
                 };
-                let extent: Extent = candidate.ordinary_body_profile().into();
+                let extent = candidate.actual_extent();
                 if launch_overlap(flight, candidate, origin, extent) {
                     return false;
                 }
@@ -261,7 +372,7 @@ impl ProjectileSettle {
                 };
                 tested += 1;
                 if moving_point_contact(point, point, low, low, expanded).is_some()
-                    && solid.is_none_or(|other| candidate.id.as_str() < other.as_str())
+                    && solid.is_none_or(|other| candidate.id.as_str() < other)
                     && body.is_none_or(|prior: &Entity| candidate.id < prior.id)
                 {
                     body = Some(candidate);
@@ -270,39 +381,25 @@ impl ProjectileSettle {
                 false
             });
         core.journal.meters.charge(&[(WorkUnit::Tests, tested)])?;
-        let origin_overlap = state
-            .entities
-            .get(&flight.source_id)
-            .and_then(|source| {
-                Some((
-                    source,
-                    source.world_position()?,
-                    Extent::from(source.ordinary_body_profile()),
-                ))
-            })
-            .is_some_and(|(source, origin, extent)| {
-                source.physical_life() == Some(flight.source_life)
-                    && moving_point_contact(point, point, origin, origin, extent).is_some()
-            });
-        let source_exited = flight.source_exited || !origin_overlap;
-        let terminal = if body.is_some() || solid.is_some() || after <= space_epsilon {
+        let terminal = if body.is_some() || solid.is_some() || flight.remaining_range <= space_epsilon {
             let _storage = budget.reserve(
                 size_of::<Terminal>()
                     + 2 * id.len()
                     + body.map_or(0, |entry| entry.id.len())
                     + solid.map_or(0, |entry| entry.len()),
             )?;
-            Some(Terminal {
+            Some(Self {
                 shot: id.into(),
                 body: body.map(|entry| entry.id.clone()),
-                solid: solid.filter(|_| body.is_none()).cloned(),
+                solid: solid.map(str::to_owned),
                 body_life: body.and_then(Entity::physical_life),
                 hit: false,
                 seen: false,
                 saw_selected: false,
                 saw_point: false,
                 known_source: false,
-                phase: Phase::Sight,
+                phase: Phase::Avoidance,
+                avoidance: None,
                 sight: None,
                 injury: None,
                 before: None,
@@ -315,25 +412,9 @@ impl ProjectileSettle {
         } else {
             None
         };
-        if self.seconds == 0.0 && terminal.is_none() {
-            // This path was selected only for an exact zero-time hit. Non-hit
-            // flights remain pending at that same cut.
-            return Ok(None);
-        }
-        core.physical().set_projectile_progress(
-            id,
-            crate::projectile::FlightPosition {
-                position: point,
-                advanced_at: at,
-                remaining_range: after,
-                source_exited,
-            },
-        )?;
         Ok(terminal)
     }
-}
 
-impl Terminal {
     fn step(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -349,6 +430,50 @@ impl Terminal {
             {
                 return Err(ExecutionError::UnfinishedOccurrence);
             }
+            if self.phase == Phase::DuckSettled {
+                let body = self.body.as_deref().ok_or(ExecutionError::Invariant)?;
+                let _entry = budget.reserve(body.len() + expected.len())?;
+                let entered_at = core.state.physical.header.sim_time;
+                core.physical().projectile_crossing(&self.shot, CrossingChange::Open(
+                    crate::projectile::ProjectileCrossing {
+                        body_id: body.into(),
+                        body_life: self.body_life.ok_or(ExecutionError::Invariant)?,
+                        pose_occurrence_id: expected,
+                        entered_at,
+                    },
+                ))?;
+            }
+        }
+        if self.phase == Phase::DuckSettled {
+            return Ok(None);
+        }
+        if self.phase == Phase::Avoidance {
+            if let Some(body) = &self.body {
+                if let Some(avoidance) = &mut self.avoidance {
+                    let answer = geometry.take().ok_or(ExecutionError::UnfinishedOccurrence)?;
+                    match avoidance.step(core, body, &self.shot, binding, answer, budget)? {
+                        AvoidanceStep::Geometry => return Ok(Some(ProjectileSettleStep::Geometry)),
+                        AvoidanceStep::Contact => {}
+                        AvoidanceStep::Duck(staged) => {
+                            self.avoidance = None;
+                            self.phase = Phase::DuckSettled;
+                            self._storage.resize(self._storage.bytes().checked_add(staged.id.len())
+                                .ok_or(ExecutionError::Capacity)?)?;
+                            self.expected = Some(staged.id.clone());
+                            return Ok(Some(ProjectileSettleStep::Event(staged)));
+                        }
+                    }
+                } else {
+                    let point = core.state.physical.projectiles.flights.get(&self.shot)
+                        .ok_or(ExecutionError::Invariant)?.flight.position;
+                    self.avoidance = Avoidance::prepare(core, body, point, binding, budget)?;
+                    if self.avoidance.is_some() {
+                        return Ok(Some(ProjectileSettleStep::Geometry));
+                    }
+                }
+            }
+            self.avoidance = None;
+            self.phase = Phase::Sight;
         }
         loop {
             let physical = &core.state.physical;
@@ -504,7 +629,7 @@ impl Terminal {
                         .body_policy
                         .as_ref()
                         .map(|body| body.value());
-                    let injury = flight.injury
+                    let injury = flight.injury * flight.injury_factor()
                         * resistance
                         * scar_factor(policy, entry, ScarEffect::IncomingInjury);
                     let storage = budget.reserve(entry.id.len() + self.shot.len())?;
@@ -813,7 +938,7 @@ fn stage_passage(
     }).map(Some)
 }
 
-fn subject(id: &str, clause: &JsText) -> Narration {
+pub(super) fn subject(id: &str, clause: &JsText) -> Narration {
     Narration {
         parts: vec![
             NarrationPart::Participant {

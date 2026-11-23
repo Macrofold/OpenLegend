@@ -3,12 +3,8 @@ use crate::execution::PhysicalChange;
 
 impl AdvanceCursor {
     fn after_motion(&mut self, core: &CoreMutation<'_>) -> Result<(), AdvanceError> {
-        if self.projectile_settlement.is_some() {
-            self.phase = Phase::ProjectileSettle;
-        } else {
-            self.select_wanderers(core)?;
-            self.phase = Phase::Wander;
-        }
+        self.select_wanderers(core)?;
+        self.phase = Phase::Wander;
         Ok(())
     }
 
@@ -686,7 +682,7 @@ impl AdvanceCursor {
                     let next = if self.phase == Phase::RemainsStart {
                         Phase::AppraisalsStart
                     } else {
-                        Phase::SenseEnd
+                        Phase::PoseReturnEnd
                     };
                     self.begin_reconcile_remains(core, budget)?;
                     self.phase = next;
@@ -1223,7 +1219,7 @@ impl AdvanceCursor {
                         }
                     }
                     if start {
-                        self.phase = Phase::SenseStart;
+                        self.phase = Phase::PoseReturnStart;
                     } else if self.working.as_ref().is_some_and(|work| work.aims.is_some()) {
                         self.phase = Phase::AimMotion;
                     } else {
@@ -1244,6 +1240,42 @@ impl AdvanceCursor {
                     }
                     work.aims = None;
                     self.after_motion(core)?;
+                }
+                Phase::PoseReturnStart | Phase::PoseReturnEnd => {
+                    let start = self.phase == Phase::PoseReturnStart;
+                    if self.pose_return.is_none() && core.state.physical.bodies.has_local_poses() {
+                        if answer.is_some() {
+                            return Err(invalid().into());
+                        }
+                        let binding = self.binding(core)?;
+                        self.pose_return = super::super::projectiles::local_pose::ReturnProbe::prepare(core, binding, budget)?;
+                        if self.pose_return.as_ref().is_some_and(|probe| probe.question().is_some()) {
+                            return Ok(Progress::Geometry);
+                        }
+                    }
+                    if let Some(probe) = self.pose_return.take() {
+                        let input = match answer.take() {
+                            Some(AdvanceAnswer::Geometry(answer)) => Some(answer),
+                            None => None,
+                            _ => return Err(invalid().into()),
+                        };
+                        if let Some(event) = probe.finish(core, input, budget)? {
+                            core.sync_sensory_changes()?;
+                            self.stage_event(core, event, EventDestination::Flight, budget)?;
+                            return Ok(Progress::Event);
+                        }
+                        continue;
+                    }
+                    self.phase = if start {
+                        Phase::SenseStart
+                    } else if core.state.physical.projectiles.flights.is_empty() {
+                        Phase::SenseEnd
+                    } else {
+                        if self.projectile_settlement.is_none() {
+                            self.projectile_settlement = Some(ProjectileSettle::current(budget)?);
+                        }
+                        Phase::ProjectileSettle
+                    };
                 }
                 Phase::SenseStart | Phase::SenseEnd => {
                     let destination = self.phase;

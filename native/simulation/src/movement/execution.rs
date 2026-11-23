@@ -33,7 +33,7 @@ pub(crate) struct MotionOperation {
     forecast: Option<MotionForecast>,
     _reservation: ByteReservation,
 }
-fn error(error: MovementError) -> ExecutionError {
+pub(crate) fn error(error: MovementError) -> ExecutionError {
     match error {
         MovementError::Work(error) => ExecutionError::Work(error),
         MovementError::Capacity => ExecutionError::Capacity,
@@ -162,9 +162,6 @@ impl MotionOperation {
             action_id,
         )?
         .map_or(distance_budget, |limit| distance_budget.min(limit));
-        if entity.spatial.local_pose.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
         let handle = core
             .state
             .physical

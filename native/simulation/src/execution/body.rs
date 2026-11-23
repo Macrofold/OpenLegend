@@ -6,6 +6,48 @@ use crate::host::retained_size::{map_storage, tree_node_bound};
 use crate::state::{Entity, Remains};
 
 impl PhysicalMutation<'_> {
+    /// Change the native shape and its response deadline through one inverse.
+    /// The caller has already checked actual life, contact, sight and clearance.
+    pub(crate) fn set_local_pose(
+        &mut self,
+        id: &str,
+        next: Option<crate::state::LocalPose>,
+        ready_at: Option<f64>,
+    ) -> Result<(), ExecutionError> {
+        let handle = self.state.entities.handle(id).ok_or(ExecutionError::MissingEntity)?;
+        let entity = self.state.entities.resolve(handle).ok_or(ExecutionError::Invariant)?;
+        let before = &entity.spatial.local_pose;
+        let prior_ready_at = entity.spatial.local_avoidance_ready_at;
+        if before == &next && prior_ready_at == ready_at {
+            return Ok(());
+        }
+        let changes_shape = before.as_ref().map(|pose| pose.contracted_height)
+            != next.as_ref().map(|pose| pose.contracted_height);
+        self.journal.reserve(heap_sum([
+            2 * size_of::<Undo>(),
+            id.len(),
+            before.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            next.heap_bytes().ok_or(ExecutionError::Capacity)?,
+        ]).ok_or(ExecutionError::Capacity)?)?;
+        let key = UndoKey::LocalPose(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            self.journal.retain(key, Undo::LocalPose {
+                entity: handle,
+                before: before.clone(),
+                ready_at: prior_ready_at,
+            })?;
+        }
+        let body = self.state.entities.resolve_mut(handle).ok_or(ExecutionError::Invariant)?;
+        body.spatial.local_pose = next;
+        body.spatial.local_avoidance_ready_at = ready_at;
+        self.state.entities.settle_operational_memory(handle, &mut self.journal.reservation, false)?;
+        if changes_shape {
+            self.state.bodies.refresh(&self.state.entities, id)?;
+            self.advance_body_revision(id)?;
+        }
+        Ok(())
+    }
+
     pub(crate) fn advance_body_revision(&mut self, id: &str) -> Result<(), ExecutionError> {
         let handle = self
             .state
@@ -62,9 +104,16 @@ impl PhysicalMutation<'_> {
             .resolve(handle)
             .ok_or(ExecutionError::MissingEntity)?;
         let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
-        if entity.spatial.flight.is_some() || entity.spatial.local_pose.is_some() {
+        if entity.spatial.flight.is_some() {
             return Err(ExecutionError::UnsupportedFamily);
         }
+        if !incapacitate && entity.spatial.local_pose.is_some() {
+            let life = entity.physical_life().ok_or(ExecutionError::MissingActor)?;
+            self.close_body_crossings(id, life)?;
+            self.set_local_pose(id, None, None)?;
+        }
+        let entity = self.state.entities.resolve(handle).ok_or(ExecutionError::Invariant)?;
+        let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
         self.journal.reserve(2 * size_of::<Undo>() + id.len())?;
         let key = UndoKey::BodyLifecycle(handle.slot, handle.generation);
         if self.journal.first(&key)? {

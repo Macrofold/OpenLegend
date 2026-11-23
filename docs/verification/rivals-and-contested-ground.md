@@ -496,3 +496,11 @@ The first positive restart refused because the save contained an active projecti
 A signed player aimed at a visible bird. After the bird had flown along an authored route, its actual motion appeared in the saved Aim action. The release direction matched the intercept calculated from that observed flight. Shooting at the bird’s current center would have given a different direction. The signed retry spent no second stone, and PostgreSQL reopened with the same terminal event and receipt. An earlier setup put another body at the bird’s starting point and did not complete Aim. The passing setup gave that body its own clear space.
 
 The same executable passed the moving-ground and stopped-ground callers. It led the observed walker and used the current center after the walker stopped. Tree `baf736f3b11e`, executable `4424d68d9094` and results `321ff566bc53`, `706560aa51bd` and `a7c29ac29b5d` identify the three runs. The authored aiming rule uses observed ground and flight movement. Falling bodies still take part in physical contact and use the current center for aim.
+
+### Automatic duck and return to standing in Rust
+
+Two separately signed players used an ordinary sling shot and the live player stream. The high shot reached the defender's standing shape, and the defender saw it in time to duck. One saved random draw and one stone covered the attempt. A pause and PostgreSQL reopening preserved the shortened body, the live shot, its original command receipt and the still-open crossing. The defender received a Miss only after the shot left the standing shape. Health stayed at 100.
+
+The shooter kept the last standing observation during the pause and saw the shorter 0.7875 m body at the next scheduled sight sample. The defender returned to its ordinary 1.75 m height at its saved deadline. The shooter received that standing measurement at a later sight sample. The low shot hit the defender for 14 health and spent one stone. The defender stayed upright with unchanged randomness and no duck recovery deadline.
+
+Tree `0c0e5d8c25c2`, source manifest `595e3d71cf65` and executable `5bd51325e343` identify the focused local build. Results `ac42b5a45d28` and `40a3b02ee349` record the high and low checks. Both listeners released their tracked reservations and the disposable databases were removed.

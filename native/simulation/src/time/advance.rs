@@ -325,6 +325,7 @@ enum Phase {
     WanderEndClocks,
     AnimalChoices,
     FlightStart,
+    PoseReturnStart,
     SenseStart,
     Predict,
     Steering,
@@ -339,6 +340,7 @@ enum Phase {
     Arrival,
     AppraisalsEnd,
     RemainsEnd,
+    PoseReturnEnd,
     SenseEnd,
     Travel,
     Continue,
@@ -420,6 +422,7 @@ pub(crate) struct AdvanceCursor {
     projectile_prediction: Option<ProjectilePrediction>,
     projectile_settlement: Option<ProjectileSettle>,
     projectile_event: Option<crate::events::CompletedOccurrence>,
+    pose_return: Option<super::projectiles::local_pose::ReturnProbe>,
     projectile_before_move: bool,
     slice_cursor: PhysicalChangeCursor,
     slice_events: usize,
@@ -504,6 +507,7 @@ impl AdvanceCursor {
             })
             .or_else(|| self.projectile_prediction.as_ref().and_then(ProjectilePrediction::question))
             .or_else(|| self.projectile_settlement.as_ref().and_then(ProjectileSettle::question))
+            .or_else(|| self.pose_return.as_ref().and_then(super::projectiles::local_pose::ReturnProbe::question))
             .or_else(|| self.forage.as_ref().and_then(ForageChoice::sight_request))
             .or_else(|| self.hunt_route.as_deref().map(HuntRouteChoice::queries))
             .or_else(|| {
@@ -618,6 +622,7 @@ impl AdvanceCursor {
             projectile_prediction: None,
             projectile_settlement: None,
             projectile_event: None,
+            pose_return: None,
             projectile_before_move: false,
             slice_cursor: core.journal.physical.change_cursor(),
             slice_events: 0,

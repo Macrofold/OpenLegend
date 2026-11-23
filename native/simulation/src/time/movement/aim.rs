@@ -56,7 +56,6 @@ pub(in crate::time) struct AimTracks {
 fn observable_position(body: &Entity) -> Option<Point> {
     if !body.actively_participates()
         || body.spatial.fall_velocity.is_some()
-        || body.spatial.local_pose.is_some()
         || !body.actor.as_ref().is_some_and(|actor| actor.alive)
     {
         return None;

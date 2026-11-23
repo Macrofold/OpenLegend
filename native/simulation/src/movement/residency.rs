@@ -11,6 +11,7 @@ struct Counts {
     points: usize,
     cells: usize,
     extents: usize,
+    local_poses: usize,
     strings: usize,
 }
 impl Counts {
@@ -35,6 +36,9 @@ impl Counts {
             (self.extents.checked_add(1).ok_or(CapacityError)?)
                 .checked_mul(tree_node_bound::<u64, usize>().ok_or(CapacityError)?)
                 .ok_or(CapacityError)?,
+            self.local_poses.checked_add(1)
+                .and_then(|count| count.checked_mul(tree_node_bound::<String, bool>()?))
+                .ok_or(CapacityError)?,
             self.strings,
         ])
         .ok_or(CapacityError)
@@ -47,6 +51,7 @@ impl BodyIndex {
             points: self.points.len(),
             cells: self.cells.len(),
             extents: self.extents.len(),
+            local_poses: self.local_poses.len(),
             strings: self.strings,
         }
     }
@@ -75,6 +80,7 @@ impl BodyIndex {
             points: 0,
             cells: 0,
             extents: 0,
+            local_poses: 0,
             strings: 0,
         };
         let mut value = Self {
@@ -82,6 +88,7 @@ impl BodyIndex {
             points: BTreeMap::new(),
             cells: BTreeMap::new(),
             extents: BTreeMap::new(),
+            local_poses: BTreeMap::new(),
             strings: 0,
             storage: budget.reserve_backing(counts.bytes()?)?,
             budget: budget.clone(),
@@ -133,8 +140,20 @@ impl BodyIndex {
         entities: &EntityStore,
         id: &str,
     ) -> Result<(), CapacityError> {
-        let root = entities.get(id).is_some_and(Entity::physical_root);
+        let entity = entities.get(id);
+        let root = entity.is_some_and(Entity::physical_root);
         let mut after = self.counts();
+        let posed = entity.is_some_and(|entity| {
+            entity.actively_participates() && entity.spatial.local_pose.is_some()
+        });
+        let was_posed = !self.local_poses.is_empty() && self.local_poses.contains_key(id);
+        if posed && !was_posed {
+            after.local_poses = after.local_poses.checked_add(1).ok_or(CapacityError)?;
+            after.strings = after.strings.checked_add(id.len()).ok_or(CapacityError)?;
+        } else if !posed && was_posed {
+            after.local_poses -= 1;
+            after.strings -= self.local_poses.get_key_value(id).ok_or(CapacityError)?.0.capacity();
+        }
         if root && !self.roots.contains(id) {
             after.roots = after.roots.checked_add(1).ok_or(CapacityError)?;
             after.strings = after.strings.checked_add(id.len()).ok_or(CapacityError)?;
@@ -143,13 +162,13 @@ impl BodyIndex {
             after.strings -= key.capacity();
         }
         let root_peak = after.bytes()?;
-        let next = entities.get(id).and_then(|entity| {
+        let next = entity.and_then(|entity| {
             // Objects can be sight targets without becoming walking occupants.
             // Each physical query retains its own actor/object eligibility.
             if !entity.actively_participates() {
                 return None;
             }
-            let body = entity.body_profile();
+            let body = entity.travel_body_profile();
             Some((
                 entities.handle(id)?,
                 entity.world_position()?,
@@ -165,6 +184,12 @@ impl BodyIndex {
                     && old.order == order
             },
         );
+        let shape_changed = posed != was_posed;
+        let former = if self.local_poses.is_empty() || (unchanged && !shape_changed) {
+            None
+        } else {
+            self.points.get(id).map(|point| (point.position, point.extent))
+        };
         if !unchanged {
             let old = self.points.get_key_value(id);
             if let Some((key, point)) = old {
@@ -207,12 +232,20 @@ impl BodyIndex {
             }
         }
         self.fund(root_peak.max(after.bytes()?))?;
+        if let Some((old, extent)) = former {
+            self.wake_local_poses(old, extent, shape_changed.then_some(id));
+        }
         if root {
             if !self.roots.contains(id) {
                 self.roots.insert(id.to_owned());
             }
         } else {
             self.roots.remove(id);
+        }
+        if posed && !was_posed {
+            self.local_poses.insert(id.to_owned(), true);
+        } else if !posed && was_posed {
+            self.local_poses.remove(id);
         }
         if !unchanged {
             if let Some(old) = self.points.remove(id) {
@@ -246,6 +279,12 @@ impl BodyIndex {
                     },
                 );
             }
+        }
+        if (!unchanged || shape_changed)
+            && !self.local_poses.is_empty()
+            && let Some((_, position, extent, _)) = next
+        {
+            self.wake_local_poses(position, extent, shape_changed.then_some(id));
         }
         self.strings = after.strings;
         Ok(())

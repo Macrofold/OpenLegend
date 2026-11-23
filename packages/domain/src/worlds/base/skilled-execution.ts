@@ -34,11 +34,12 @@ export const BASE_LOCAL_AVOIDANCE = {
   contractedText: 'ducked beneath an incoming projectile.',
   restoredText: 'returned to an upright posture.',
   clearedText: 'was missed by the passing projectile.',
+  postureHeldText: 'Wait until this body can stand before beginning that work.',
 };
 
 export const BASE_SKILLED_TEXT = {
   sourceUnavailable: 'This attack is unavailable in the current world or body.',
-  postureHeld: 'Wait until this body can stand before beginning that work.',
+  postureHeld: BASE_LOCAL_AVOIDANCE.postureHeldText,
   recoveredRelease: 'A recovered action uses ordinary execution.',
   invalidRelease: 'Choose a valid release.',
   strikeChanged: 'That prepared strike is no longer available.',

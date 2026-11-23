@@ -38,6 +38,7 @@ heap_record!(Participation {
     return_anchor
 });
 heap_record!(super::Remains { phase, source_id, yields });
+heap_record!(super::LocalPose { profile });
 
 pub(super) struct EntityMetadata {
     _authored: ResidentReservation,
@@ -189,6 +190,7 @@ fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
                 entity.retirement.heap_bytes()?,
                 entity.remains.heap_bytes()?,
                 entity.spatial.flight.heap_bytes()?,
+                entity.spatial.local_pose.heap_bytes()?,
             ])
         })
         .ok_or(ExecutionError::Capacity)

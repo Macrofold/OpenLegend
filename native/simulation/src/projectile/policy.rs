@@ -1,7 +1,7 @@
 //! Installed finite-shot rules shared by weapon discovery and release.
 //! Numeric tuning and wording are supplied by the world's current manifest.
 use crate::host::retained_size::heap_record;
-use crate::state::Entity;
+use crate::state::{BodyProfile, Entity};
 use crate::values::{DefinitionPin, deserialize_present_option, deserialize_safe_integer};
 use serde::Deserialize;
 
@@ -36,6 +36,19 @@ pub(crate) struct LocalAvoidance {
     pub contracted_text: String,
     pub restored_text: String,
     pub cleared_text: String,
+    pub posture_held_text: String,
+}
+
+impl LocalAvoidance {
+    /// The installed response contracts the ordinary tall capsule once. A body
+    /// the definition does not own cannot acquire an effective pose.
+    pub(crate) fn contracted_height(&self, body: &BodyProfile, epsilon: f64) -> Option<f64> {
+        if !self.body_profiles.contains(&body.id) {
+            return None;
+        }
+        let height = (body.radius * 2.0 + epsilon).max(body.height * self.height_factor);
+        (height < body.height).then_some(height)
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -103,6 +116,7 @@ impl RangedPolicy {
                         &avoidance.contracted_text,
                         &avoidance.restored_text,
                         &avoidance.cleared_text,
+                        &avoidance.posture_held_text,
                     ]
                     .into_iter()
                     .all(|value| !value.is_empty() && value.encode_utf16().count() <= 400)
@@ -128,6 +142,20 @@ impl RangedPolicy {
             && target.actor.as_ref().is_some_and(|actor| actor.alive)
             && (self.target_rule == TargetRule::LivingActor || target.animal.is_some())
     }
+
+    pub(crate) fn target_condition_factor(&self, target: &Entity) -> f64 {
+        if self.condition_adjustment == ConditionAdjustment::DangerOrReturn
+            && target.threat.as_ref().map_or_else(
+                || target.animal.as_ref().is_some_and(|animal| animal.episode.is_some()),
+                |threat| threat.progress.mode == crate::native_controller::territorial::Mode::Return
+                    && target.actor.as_ref().is_some_and(|actor| actor.action.is_some()),
+            )
+        {
+            self.condition_accuracy_factor
+        } else {
+            1.0
+        }
+    }
 }
 
 heap_record!(RangedPolicy {
@@ -146,5 +174,6 @@ heap_record!(LocalAvoidance {
     body_profiles,
     contracted_text,
     restored_text,
-    cleared_text
+    cleared_text,
+    posture_held_text
 });

@@ -302,6 +302,9 @@ fn assemble_selected_core(
             status_policy: &meanings.status_policy,
             body_policy: meanings.body_policy.as_ref().map(VerifiedDefinition::value),
             ranged_installed: meanings.manifest.ranged_policy.is_some() && occurrence_rules.value().ranged.is_some(),
+            local_avoidance: meanings.manifest.ranged_policy_pin.as_ref().zip(
+                meanings.manifest.ranged_policy.as_ref().and_then(|policy| policy.local_avoidance.as_ref())
+            ),
             fire_out: occurrence_rules.value().fire_out.as_ref(),
             maximum_candidates,
             maximum_path_points,
@@ -471,6 +474,7 @@ fn assemble_selected_core(
         },
         &InstalledEvidenceMeaning,
     )?;
+    physical.projectiles.validate_crossing_occurrences(&personal_install.occurrences)?;
     let temporal = personal_install
         .temporal
         .ok_or(CoreInstallError::MissingTemporal)?;

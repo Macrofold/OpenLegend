@@ -410,7 +410,13 @@ impl MoveAdvanceCursor {
             }
         };
         if !visible {
-            return self.ranged_fail(&rules.not_applicable.message, core);
+            let message = match selection {
+                RuntimeRangedTarget::Subject { .. } => {
+                    &installed.occurrence_rules.value().response.offers.availability.unperceived.message
+                }
+                RuntimeRangedTarget::Point { .. } => &rules.not_applicable.message,
+            };
+            return self.ranged_fail(message, core);
         }
         if action.stage == "approaching" {
             // Approaches belong to a selected subject. A point never chooses

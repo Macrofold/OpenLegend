@@ -51,7 +51,7 @@ pub(super) fn construct(entity: &Entity, id: String, kind: &str) -> Result<Entit
     let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
     let body = actor.body.as_ref().ok_or(ExecutionError::MissingBody)?;
     let remains = entity.remains.as_ref().ok_or(ExecutionError::Invariant)?;
-    if entity.spatial.flight.is_some() || entity.spatial.local_pose.is_some() {
+    if entity.spatial.flight.is_some() {
         return Err(ExecutionError::UnsupportedFamily);
     }
     Ok(Entity {

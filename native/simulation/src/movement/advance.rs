@@ -668,8 +668,7 @@ impl MoveAdvanceCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
-                    if !action.supported_native_action() || entity.spatial.local_pose.is_some()
-                    {
+                    if !action.supported_native_action() {
                         return Err(ExecutionError::UnsupportedFamily);
                     }
                     self.reserve(action.id.len())?;
@@ -821,7 +820,7 @@ impl MoveAdvanceCursor {
                             self.fail(failure)?;
                             continue;
                         }
-                        let profile = crate::status::effective_body_profile(entity, &self.budget)?;
+                        let profile = entity.travel_body_profile();
                         let request = &navigation.request;
                         if request.geometry_revision == installed.geometry.spatial.revision
                             && request.body.radius == profile.radius
@@ -945,7 +944,7 @@ impl MoveAdvanceCursor {
                         z: position.z,
                         surface_id: surface.into(),
                     };
-                    let body = entity.body_profile().into_owned();
+                    let body = entity.travel_body_profile().into_owned();
                     let to = to.physical().clone();
                     self.binding.serial = core.journal.next_provider_serial()?;
                     let mut queries = GeometryQueries::new(self.binding);

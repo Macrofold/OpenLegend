@@ -34,6 +34,7 @@ pub(crate) struct PhysicalDefinitions<'a> {
     pub status_policy: &'a crate::status::StatusEffectPolicy,
     pub body_policy: Option<&'a crate::body::BodyPolicy>,
     pub ranged_installed: bool,
+    pub local_avoidance: Option<(&'a crate::values::DefinitionPin, &'a crate::projectile::LocalAvoidance)>,
     pub maximum_candidates: usize,
     pub maximum_path_points: usize,
     pub epsilon: f64,
@@ -572,7 +573,7 @@ pub(crate) fn install_physical(
     )?;
     let holds = crate::item_holds::install(reservations, &entities, budget)?;
     let projectiles = crate::projectile::ProjectileState::install(
-        import, &mut children, header.sim_time, installed.ranged_installed, budget,
+        import, &mut children, header.sim_time, installed.ranged_installed, &entities, budget,
     )?;
     Ok(PhysicalInstallation {
         state: PhysicalState {
@@ -651,7 +652,7 @@ impl crate::values::NativeValueValidation for WindowValidation<'_> {
     }
 }
 fn validate_entity(
-    entity: &Entity,
+    entity: &mut Entity,
     installed: &PhysicalDefinitions<'_>,
     now: f64,
     _purpose: super::InstallPurpose,
@@ -674,10 +675,6 @@ fn validate_entity(
             "mechanism fields",
         ),
         (
-            entity.spatial.local_pose.is_some(),
-            "non-ground physical placement",
-        ),
-        (
             entity.status_effects.as_ref().is_some_and(|statuses| {
                 statuses
                     .values()
@@ -689,6 +686,7 @@ fn validate_entity(
     if let Some((_, family)) = pending_family.into_iter().find(|(present, _)| *present) {
         return Err(InstallError::UnsupportedFamily(family));
     }
+    validate_local_pose(entity, installed, now)?;
     if let Some(target) = &entity.practice_target {
         let installed_practice =
             installed
@@ -987,6 +985,45 @@ fn validate_entity(
     {
         return Err(InstallError::CurrentFormat);
     }
+    Ok(())
+}
+
+fn validate_local_pose(
+    entity: &mut Entity,
+    installed: &PhysicalDefinitions<'_>,
+    now: f64,
+) -> Result<(), InstallError> {
+    let Some(pose) = &entity.spatial.local_pose else {
+        return Ok(());
+    };
+    let (pin, rules) = installed.local_avoidance.ok_or(InstallError::DefinitionPin)?;
+    let height = rules
+        .contracted_height(&entity.spatial.body, installed.epsilon)
+        .ok_or(InstallError::CurrentFormat)?;
+    let cooldown = pose.started_at + rules.cooldown_seconds;
+    if &pose.profile != pin
+        || !entity.actively_participates()
+        || !entity.actor.as_ref().is_some_and(|actor| actor.alive)
+        || entity.physical_life() != Some(pose.physical_life)
+        || entity.world_support().is_none()
+        || entity.spatial.flight.is_some()
+        || entity.spatial.fall_velocity.is_some()
+        || entity.spatial.soft_footprint.is_some()
+        || !pose.started_at.is_finite()
+        || pose.started_at < 0.0
+        || pose.started_at > now
+        || !pose.restore_at.is_finite()
+        || pose.restore_at != pose.started_at + rules.hold_seconds
+        || !cooldown.is_finite()
+        || entity.spatial.local_avoidance_ready_at != Some(cooldown)
+        || match pose.phase {
+            crate::state::LocalPosePhase::Holding => pose.restore_at < now,
+            crate::state::LocalPosePhase::RestoreBlocked => pose.restore_at > now,
+        }
+    {
+        return Err(InstallError::CurrentFormat);
+    }
+    entity.spatial.local_pose.as_mut().expect("admitted local pose").contracted_height = height;
     Ok(())
 }
 

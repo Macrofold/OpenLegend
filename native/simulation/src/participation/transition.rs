@@ -352,13 +352,21 @@ impl ParticipationCursor {
         anchor: Option<&SurfacePoint>,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
-        let before = core
+        let entity = core
             .state
             .physical
             .entities
             .get(&self.request.actor_id)
-            .and_then(|entity| entity.actor.as_ref())
-            .ok_or(ExecutionError::MissingActor)?
+            .ok_or(ExecutionError::MissingEntity)?;
+        if phase == Some("inactive") && entity.spatial.local_pose.is_some() {
+            let life = entity.physical_life().ok_or(ExecutionError::MissingActor)?;
+            let ready_at = entity.spatial.local_avoidance_ready_at;
+            let mut physical = core.physical();
+            physical.close_body_crossings(&self.request.actor_id, life)?;
+            physical.set_local_pose(&self.request.actor_id, None, ready_at)?;
+        }
+        let before = core.state.physical.entities.get(&self.request.actor_id)
+            .and_then(|entity| entity.actor.as_ref()).ok_or(ExecutionError::MissingActor)?
             .participation
             .as_ref();
         let bytes = heap_sum([
@@ -681,8 +689,7 @@ impl ParticipationCursor {
                         _ => {}
                     }
                     let entity = entity.ok_or(ExecutionError::MissingEntity)?;
-                    if entity.spatial.local_pose.is_some()
-                        || entity.spatial.flight.is_some()
+                    if entity.spatial.flight.is_some()
                         || actor.is_some_and(|actor| actor.encounters.is_some())
                     {
                         return Err(ExecutionError::UnsupportedFamily.into());

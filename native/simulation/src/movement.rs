@@ -14,6 +14,7 @@ mod execution;
 pub(crate) mod evasion;
 pub(crate) mod follow;
 pub(crate) use execution::{MotionOperation, MotionStep};
+pub(crate) use execution::error as execution_error;
 mod clearance;
 pub(crate) use clearance::{CompletedPathClearance, PathClearanceCursor, PathClearanceStep};
 
@@ -47,6 +48,7 @@ pub(crate) struct BodyIndex {
     points: BTreeMap<String, BodyPoint>,
     cells: BTreeMap<(i64, i64, i64), BTreeSet<String>>,
     extents: BTreeMap<u64, usize>,
+    local_poses: BTreeMap<String, bool>,
     strings: usize,
     storage: crate::host::ResidentReservation,
     budget: crate::host::ByteBudget,
@@ -108,18 +110,27 @@ impl BodyIndex {
         &'a self,
         origin: Point,
         radius: f64,
+        visit: impl FnMut(&'a str, &'a BodyPoint),
+    ) {
+        Self::visit_cells(&self.cells, &self.points, origin, radius, visit);
+    }
+    fn visit_cells<'a>(
+        cells: &'a BTreeMap<(i64, i64, i64), BTreeSet<String>>,
+        points: &'a BTreeMap<String, BodyPoint>,
+        origin: Point,
+        radius: f64,
         mut visit: impl FnMut(&'a str, &'a BodyPoint),
     ) {
         let bounds = CellBounds::around(origin, radius);
         let mut include = |ids: &BTreeSet<String>| {
             for id in ids {
-                if let Some((key, point)) = self.points.get_key_value(id) {
+                if let Some((key, point)) = points.get_key_value(id) {
                     visit(key.as_str(), point);
                 }
             }
         };
-        if bounds.volume() > self.cells.len() as f64 {
-            for (key, ids) in &self.cells {
+        if bounds.volume() > cells.len() as f64 {
+            for (key, ids) in cells {
                 if bounds.contains(*key) {
                     include(ids);
                 }
@@ -129,13 +140,36 @@ impl BodyIndex {
             for x in low.0..=high.0 {
                 for y in low.1..=high.1 {
                     for z in low.2..=high.2 {
-                        if let Some(ids) = self.cells.get(&(x, y, z)) {
+                        if let Some(ids) = cells.get(&(x, y, z)) {
                             include(ids);
                         }
                     }
                 }
             }
         }
+    }
+    pub(crate) fn local_pose_ids(&self) -> impl Iterator<Item = (&str, bool)> {
+        self.local_poses.iter().map(|(id, dirty)| (id.as_str(), *dirty))
+    }
+    pub(crate) fn has_local_poses(&self) -> bool {
+        !self.local_poses.is_empty()
+    }
+    pub(crate) fn clean_local_pose(&mut self, id: &str) {
+        if let Some(dirty) = self.local_poses.get_mut(id) {
+            *dirty = false;
+        }
+    }
+    /// A displaced blocker can enable expansion from its old neighborhood as
+    /// well as change clearance in its new one. Keep the standing envelope
+    /// for indexing so a contracted body never shrinks this wakeup bound.
+    fn wake_local_poses(&mut self, center: Point, extent: f64, excluded: Option<&str>) {
+        let radius = extent + self.maximum_extent();
+        let poses = &mut self.local_poses;
+        Self::visit_cells(&self.cells, &self.points, center, radius, |id, _| {
+            if Some(id) != excluded && let Some(dirty) = poses.get_mut(id) {
+                *dirty = true;
+            }
+        });
     }
     /// Exact selected envelope size and bytes needed to copy its IDs, without
     /// allocating a candidate vector or visiting unrelated bodies.
@@ -247,15 +281,11 @@ impl BodyIndex {
     }
 }
 
-/// Exact source bodySpace AABB. A local contracted pose requires its installed
-/// ranged policy and is refused until that owner joins the selected closure.
+/// The occupied box uses the current shape, including an admitted local pose.
 pub(crate) fn body_space(
     entity: &Entity,
     policy: &StatusEffectPolicy,
 ) -> Result<Bounds, MovementError> {
-    if entity.spatial.local_pose.is_some() {
-        return Err(MovementError::UnsupportedFamily);
-    }
     let point = entity
         .world_position()
         .ok_or(MovementError::MissingEntity)?;
@@ -318,6 +348,9 @@ pub(crate) struct OccupiedSweep {
     _reservation: crate::host::ByteReservation,
 }
 impl OccupiedSweep {
+    pub(crate) fn into_shape(self) -> (BodyProfile, Vec<Bounds>, ByteReservation) {
+        (self.body, self.bounds, self._reservation)
+    }
     pub(crate) fn prepare(
         index: &BodyIndex,
         entities: &EntityStore,
@@ -328,10 +361,31 @@ impl OccupiedSweep {
         budget: &crate::host::ByteBudget,
         meters: &mut crate::work::WorkMeters,
     ) -> Result<Self, MovementError> {
-        let mut reservation = budget
-            .reserve(std::mem::size_of::<Self>() + actor.ordinary_body_profile().id.len())
+        let _profile = actor.spatial.soft_footprint.is_some()
+            .then(|| budget.reserve(actor.ordinary_body_profile().id.len()))
+            .transpose()
             .map_err(|_| MovementError::Capacity)?;
-        let body = actor.body_profile().into_owned();
+        let body = actor.travel_body_profile();
+        Self::prepare_profile(index, entities, policy, actor, &body, from, furthest, budget, meters)
+    }
+
+    /// Body candidates use their actual shapes. The proposed moving or
+    /// stationary envelope belongs to the caller's admitted transition.
+    pub(crate) fn prepare_profile(
+        index: &BodyIndex,
+        entities: &EntityStore,
+        policy: &StatusEffectPolicy,
+        actor: &Entity,
+        profile: &BodyProfile,
+        from: Point,
+        furthest: Point,
+        budget: &crate::host::ByteBudget,
+        meters: &mut crate::work::WorkMeters,
+    ) -> Result<Self, MovementError> {
+        let mut reservation = budget
+            .reserve(std::mem::size_of::<Self>() + profile.id.len())
+            .map_err(|_| MovementError::Capacity)?;
+        let body = profile.clone();
         let radius =
             distance(from, furthest) + body.radius.max(body.height) + index.maximum_extent();
         let (count, _) = index.candidate_capacity(from, radius);
@@ -339,7 +393,7 @@ impl OccupiedSweep {
         index.visit_candidates(from, radius, |_, point| {
             if let Some(entity) = entities
                 .resolve(point.handle)
-                .filter(|entity| entity.spatial.soft_footprint.is_some())
+                .filter(|entity| entity.spatial.soft_footprint.is_some() || entity.spatial.local_pose.is_some())
             {
                 scratch = scratch.max(entity.ordinary_body_profile().id.len());
             }
@@ -495,7 +549,7 @@ impl MotionCursor {
             steps: 0,
             consumed_points: 0,
             travelled: 0.0,
-            body: entity.body_profile().into_owned(),
+            body: entity.travel_body_profile().into_owned(),
             remaining: entity
                 .threat
                 .as_ref()

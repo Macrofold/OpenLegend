@@ -73,6 +73,8 @@ pub(super) struct ItemDefinitionFields {
     properties: Vec<crate::text::JsText>,
     ammunition: Option<crate::projectile::Ammunition>,
     ranged_weapon: Option<crate::projectile::RangedWeapon>,
+    #[serde(default, deserialize_with = "crate::values::deserialize_present_option")]
+    execution: Option<Box<crate::attack_execution::AttackExecutionProfile>>,
     contact_defense: Option<crate::contact::guard::DefenseProfile>,
     melee: Option<MeleeProfile>,
     nutrition: Option<f64>,
@@ -179,6 +181,7 @@ pub(crate) struct ItemDefinitionRead {
     pub category: &'static str,
     pub(crate) nutrition: Option<f64>,
     pub(crate) ranged_weapon: Option<crate::projectile::RangedWeapon>,
+    pub(crate) execution: Option<Box<crate::attack_execution::AttackExecutionProfile>>,
     pub(crate) contact_defense: Option<crate::contact::guard::DefenseProfile>,
     melee: Option<MeleeProfile>,
     pub(crate) ammunition: Option<crate::projectile::Ammunition>,
@@ -230,6 +233,9 @@ impl ItemDefinitionRead {
             || value.fishing_tool.as_ref().is_some_and(|tool| !is_safe_record_id(&tool.kind))
             || value.ranged_weapon.as_ref().is_some_and(|weapon| !weapon.valid())
             || value.melee.as_ref().is_some_and(|profile| !profile.valid())
+            || value.execution.as_ref().is_some_and(|profile| {
+                !profile.valid() || (value.ranged_weapon.is_none() && value.melee.is_none())
+            })
             || value.contact_defense.as_ref().is_some_and(|profile| {
                 !profile.valid() || !value.equipment.as_ref().is_some_and(|gear| gear.uses.contains(&EquipmentUse::Guard))
             })
@@ -323,6 +329,7 @@ impl ItemDefinitionRead {
                 && value.gathering_tool.is_none() && value.ammunition.is_none()
                 && value.nutrition.is_none_or(|value| value == 0.0),
             ranged_weapon: value.ranged_weapon,
+            execution: value.execution,
             contact_defense: value.contact_defense,
             melee: value.melee,
             ammunition: value.ammunition,
@@ -398,6 +405,7 @@ heap_record!(ItemDefinitionRead {
     description,
     properties,
     ranged_weapon,
+    execution,
     contact_defense,
     ammunition,
     gathering_tool,

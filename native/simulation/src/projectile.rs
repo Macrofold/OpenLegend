@@ -3,6 +3,7 @@
 
 mod aim;
 mod definition;
+mod crossing;
 pub(crate) mod loadout;
 pub(crate) mod point_review;
 pub(crate) mod passages;
@@ -14,7 +15,8 @@ mod state;
 pub(crate) use aim::{AimedLife, ObservedMotion, RangedAim, RangedTarget};
 pub use aim::{RuntimeRangedMode, RuntimeRangedTarget};
 pub(crate) use definition::{Ammunition, RangedWeapon};
-pub(crate) use policy::RangedPolicy;
+pub(crate) use crossing::{ProjectileCrossing, ProjectileCrossings};
+pub(crate) use policy::{LocalAvoidance, RangedPolicy};
 pub(crate) use state::{
     ContactPolicy, FlightPosition, FundedProjectile, ProjectileFlight, ProjectileState,
     SourceController,
@@ -28,7 +30,7 @@ pub(crate) fn hold_id(action_id: &str) -> String {
 /// The route and the release select the same physical point on the subject.
 pub(crate) fn target_point(target: &crate::state::Entity) -> Option<crate::state::Point> {
     let mut point = target.world_position()?;
-    point.y += target.ordinary_body_profile().height / 2.0;
+    point.y += target.actual_height() / 2.0;
     Some(point)
 }
 

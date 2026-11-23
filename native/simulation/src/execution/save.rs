@@ -133,6 +133,7 @@ struct EntityRows<'a> {
     retirement: bool,
     geometry_heading: Option<f64>,
     geometry_lifecycle: Option<(Option<f64>, Option<f64>)>,
+    local_pose_before: Option<(&'a Option<crate::state::LocalPose>, Option<f64>)>,
     flight_before: Option<(&'a Option<crate::flight::FlightProgress>, Option<f64>)>,
     actor: bool,
     action: bool,
@@ -717,7 +718,8 @@ impl PhysicalJournal {
                 Undo::Episode(episode) => {
                     Some((maximum, details.checked_add(episode.attributes.len())?, flights))
                 }
-                Undo::ProjectileLaunch { .. } | Undo::ProjectileProgress { .. } | Undo::ProjectilePassage { .. } | Undo::ProjectileRetire { .. } => {
+                Undo::ProjectileLaunch { .. } | Undo::ProjectileProgress { .. } | Undo::ProjectilePassage { .. }
+                | Undo::ProjectileCrossings { .. } | Undo::ProjectileRetire { .. } => {
                     Some((maximum, details, flights.checked_add(1)?))
                 }
                 _ => Some((maximum, details, flights)),
@@ -770,7 +772,7 @@ impl PhysicalJournal {
                 Undo::ProjectileLaunch { id, .. } => {
                     flights.entry(id.as_str()).or_insert(false);
                 }
-                Undo::ProjectileProgress { id, .. } => {
+                Undo::ProjectileProgress { id, .. } | Undo::ProjectileCrossings { id, .. } => {
                     flights.entry(id.as_str()).or_insert(true);
                 }
                 Undo::ProjectilePassage { id, receiver, life, ordinal, present } => {
@@ -909,6 +911,7 @@ impl PhysicalJournal {
                         | Undo::PlanGeneration { entity, .. }
                         | Undo::BodyRevision { entity, .. }
                         | Undo::BodyLifecycle { entity, .. }
+                        | Undo::LocalPose { entity, .. }
                         | Undo::Remains { entity, .. }
                         | Undo::PendingDeath { entity, .. }
                         | Undo::Scar { entity, .. }
@@ -968,6 +971,9 @@ impl PhysicalJournal {
                             rows.actor = true;
                             rows.geometry_lifecycle
                                 .get_or_insert((*fall_velocity, *local_avoidance_ready_at));
+                        }
+                        Undo::LocalPose { before, ready_at, .. } => {
+                            rows.local_pose_before.get_or_insert((before, *ready_at));
                         }
                         Undo::Flight { before, fall_velocity, .. } => {
                             rows.flight_before.get_or_insert((before, *fall_velocity));
@@ -1221,6 +1227,10 @@ impl PhysicalJournal {
                 || rows.geometry_lifecycle.is_some_and(|(fall, avoidance)| {
                     fall != entity.spatial.fall_velocity
                         || avoidance != entity.spatial.local_avoidance_ready_at
+                })
+                || rows.local_pose_before.is_some_and(|(before, ready_at)| {
+                    before != &entity.spatial.local_pose
+                        || ready_at != entity.spatial.local_avoidance_ready_at
                 })
                 || rows.flight_before.is_some_and(|(before, fall)| {
                     before != &entity.spatial.flight || fall != entity.spatial.fall_velocity

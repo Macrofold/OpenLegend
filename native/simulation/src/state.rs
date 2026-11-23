@@ -225,16 +225,33 @@ pub struct SoftFootprint {
     pub height: f64,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum LocalPoseKind {
+    Duck,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum LocalPosePhase {
+    Holding,
+    RestoreBlocked,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LocalPose {
-    pub kind: String,
+    pub kind: LocalPoseKind,
     pub profile: DefinitionPin,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub physical_life: u64,
     pub started_at: f64,
     pub restore_at: f64,
-    pub phase: String,
+    pub phase: LocalPosePhase,
+    /// Exact installed response meaning is resolved at commitment and install.
+    /// This derived dimension is never a separate writable or saved body shape.
+    #[serde(skip)]
+    pub(crate) contracted_height: f64,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -1847,7 +1864,8 @@ impl Entity {
             _ => &self.spatial.body,
         }
     }
-    pub fn body_profile(&self) -> Cow<'_, BodyProfile> {
+    /// Clearance for travel remains the ordinary envelope throughout a duck.
+    pub(crate) fn travel_body_profile(&self) -> Cow<'_, BodyProfile> {
         let ordinary = self.ordinary_body_profile();
         match &self.spatial.soft_footprint {
             Some(form) => Cow::Owned(BodyProfile {
@@ -1860,6 +1878,38 @@ impl Entity {
             }),
             None => Cow::Borrowed(ordinary),
         }
+    }
+    pub(crate) fn actual_height(&self) -> f64 {
+        self.spatial.local_pose.as_ref().map_or_else(
+            || self.spatial.soft_footprint.as_ref()
+                .map_or_else(|| self.ordinary_body_profile().height, |shape| shape.height),
+            |pose| pose.contracted_height,
+        )
+    }
+    pub(crate) fn actual_extent(&self) -> crate::spatial::Extent {
+        crate::spatial::Extent {
+            height: self.actual_height(),
+            radius: self.spatial.soft_footprint.as_ref().map_or_else(
+                || self.ordinary_body_profile().radius,
+                |shape| shape.width.max(shape.length) / 2.0,
+            ),
+        }
+    }
+    /// Actual occupancy and sensory anchors share the same live response.
+    pub fn body_profile(&self) -> Cow<'_, BodyProfile> {
+        let ordinary = self.travel_body_profile();
+        let Some(pose) = &self.spatial.local_pose else {
+            return ordinary;
+        };
+        let height = pose.contracted_height;
+        let ratio = height / ordinary.height;
+        Cow::Owned(BodyProfile {
+            height,
+            eye_height: ordinary.eye_height * ratio,
+            ear_height: ordinary.ear_height * ratio,
+            interaction_height: ordinary.interaction_height * ratio,
+            ..ordinary.into_owned()
+        })
     }
     pub fn actively_participates(&self) -> bool {
         self.retirement.is_none()

@@ -571,7 +571,7 @@ pub(super) fn install_entities(
         )?;
         entity(import, &mut value, &row.id)?;
         value_storage.push(value_decode(&value, budget)?);
-        let entity: Entity = decode(&value)?;
+        let mut entity: Entity = decode(&value)?;
         let expected_id = crate::records::SqlCell::from(id.clone());
         let expected_kind = crate::records::SqlCell::from(entity.kind.clone());
         let name_matches = row
@@ -595,7 +595,7 @@ pub(super) fn install_entities(
         {
             return Err(InstallError::CurrentFormat);
         }
-        validate_entity(&entity, installed, now, purpose)?;
+        validate_entity(&mut entity, installed, now, purpose)?;
         let order = orders.shift_remove(&id).ok_or(InstallError::Identity)?;
         entries.push((order, entity));
     }
