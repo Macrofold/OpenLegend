@@ -34,6 +34,7 @@ pub(crate) mod actions;
 mod activity_history;
 pub(crate) mod assets;
 mod checkpoint;
+mod diagnostics;
 mod dialogue;
 mod event_history;
 mod expression;
@@ -139,7 +140,7 @@ pub(crate) fn router(
         god_mode,
         stop.clone(),
     )
-    .merge(preview::router(state.clone(), streams, stop));
+    .merge(preview::router(state.clone(), streams, stop.clone()));
     let operations = Router::new()
         .route("/api/construction/hearths", axum::routing::get(hearth::catalogue))
         .route("/api/construction/hearth-preview", post(hearth::preview))
@@ -233,6 +234,7 @@ pub(crate) fn router(
         );
     let operations = if god_mode {
         operations
+            .merge(diagnostics::router(stop))
             .route("/api/god/memories", post(recall::recollections))
             .route("/api/god/mind", post(notes::get))
             .route("/api/god/editor/person", post(person_editor::read))

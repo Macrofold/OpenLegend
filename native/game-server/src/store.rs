@@ -11,6 +11,7 @@ pub(crate) use attempts::{
 };
 pub(crate) mod checkpoint;
 pub(crate) mod creation;
+pub(crate) mod diagnostics;
 pub(crate) mod construction_gather;
 pub use checkpoint::RecoveredCheckpoint;
 pub(crate) use checkpoint::{

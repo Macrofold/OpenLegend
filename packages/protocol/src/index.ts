@@ -1077,6 +1077,8 @@ export interface GameView {
     canUseWorldAgent?: boolean;
     /** May open the read-only creator mind inspector for a permitted NPC. */
     canInspectMind?: boolean;
+    /** May open private cognition diagnostics for currently permitted records. */
+    canInspectIntelligence?: boolean;
     /** May show additional event types in their own permitted history. */
     canShowAllEvents?: boolean;
     /** May edit the importance of a permitted personal memory. */

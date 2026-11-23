@@ -903,6 +903,7 @@ function App({
     label: inspectedEntities.get(id)?.name ?? 'Out of sight',
   }));
   const canUseWorldAgent = view?.access?.canUseWorldAgent ?? false;
+  const canInspectIntelligence = !!(view?.godMode || view?.access?.canInspectIntelligence);
   useEffect(() => {
     if (!canUseWorldAgent)
       setOpen((panels) =>
@@ -2655,7 +2656,7 @@ function App({
           </>
         );
       case 'intelligence':
-        return view.godMode ? (
+        return canInspectIntelligence ? (
           <Diagnostics
             key={view.worldId}
             worldId={view.worldId}
@@ -2665,7 +2666,7 @@ function App({
             readScope={view.access?.scope}
           />
         ) : (
-          <p>God inspection is disabled.</p>
+          <p>Intelligence diagnostics are unavailable.</p>
         );
       case 'mind':
         return mindId &&
@@ -2759,7 +2760,10 @@ function App({
                 Describe an idea, find learned recipes, or revisit a request.
               </p>
             </Section>
-            {(canUseWorldAgent || view.godMode || view.access?.canOperate) && (
+            {(canUseWorldAgent ||
+              view.godMode ||
+              canInspectIntelligence ||
+              view.access?.canOperate) && (
               <Section title="World tools">
                 {canUseWorldAgent && (
                   <>
@@ -2773,10 +2777,12 @@ function App({
                   <>
                     <Button onPress={() => openGameTask('time')}>Time</Button>
                     <Button onPress={() => openGameTask('world-inspection')}>Inspect world</Button>
-                    <Button onPress={() => openGameTask('intelligence')}>
-                      Intelligence diagnostics
-                    </Button>
                   </>
+                )}
+                {canInspectIntelligence && (
+                  <Button onPress={() => openGameTask('intelligence')}>
+                    Intelligence diagnostics
+                  </Button>
                 )}
                 {view.access?.canOperate && (
                   <a href="/?view=operations" target="_blank" rel="noopener">

@@ -23,7 +23,7 @@ import type {
   GameView,
   EntityView,
 } from '@open-legend/protocol';
-import { AccessError, post, postContactRead } from '../api';
+import { AccessError, post, postContactRead, postPrivateRead } from '../api';
 import { EventTime } from './event-time';
 import { SubjectPicker, subjectPath } from './subject-picker';
 import { modalOwnsInput } from './keyboard';
@@ -1930,11 +1930,55 @@ function CopyValue({ label, value }: { label: string; value: unknown }) {
 
 function BillingDetails({ value }: { value: unknown }) {
   const data = object(value);
+  const saved = object(data?.['saved']);
   const runs = Array.isArray(data?.['runs']) ? data['runs'] : [];
   const money = (value: unknown) =>
     typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value))
       ? `$${(Number(value) / 1e6).toFixed(6)}`
       : 'Not reported';
+  if (saved) {
+    const receipt = object(saved['receipt']);
+    const usage = object(receipt?.['usage']);
+    const status = valueText(saved['status']);
+    return (
+      <section className="ol-diagnostic-card">
+        <strong>Saved billing</strong>
+        <dl className="ol-diagnostic-metrics">
+          <Labeled label="Status">
+            {status === 'uncertain'
+              ? 'Uncertain completion or cost'
+              : status === 'reserved'
+                ? 'Reserved'
+                : status === 'settled'
+                  ? 'Settled'
+                  : 'Not recorded'}
+          </Labeled>
+          {status !== 'settled' && (
+            <Labeled label="Original reservation">{money(saved['reservedMicroUsd'])}</Labeled>
+          )}
+          <Labeled label={status === 'settled' ? 'Ledger amount' : 'Amount held against budget'}>
+            {money(
+              status === 'reserved' ? saved['reservedMicroUsd'] : saved['ledgerCommittedMicroUsd'],
+            )}
+          </Labeled>
+          <Labeled label="Provider estimate">
+            {typeof receipt?.['estimatedCostUsd'] === 'number'
+              ? usd(receipt['estimatedCostUsd'])
+              : 'Not reported'}
+          </Labeled>
+          <Labeled label="Tokens">
+            {usage
+              ? `${usage['inputTokens'] ?? '?'} in / ${usage['outputTokens'] ?? '?'} out`
+              : 'Not reported'}
+          </Labeled>
+          {receipt?.['macrofoldBillingMode'] != null && (
+            <Labeled label="Billing mode">{String(receipt['macrofoldBillingMode'])}</Labeled>
+          )}
+        </dl>
+        <p className="ol-caption">From the server’s saved spending record.</p>
+      </section>
+    );
+  }
   return (
     <section className="ol-diagnostic-card">
       <strong>Provider billing</strong>
@@ -2424,6 +2468,7 @@ function Stage({
   remote,
   setRemote,
   showJson,
+  onAccessLost,
   supporting = [],
 }: {
   call: IntelligenceCall;
@@ -2433,6 +2478,7 @@ function Stage({
   remote: unknown;
   setRemote(value: unknown): void;
   showJson(raw: RawView): void;
+  onAccessLost(): void;
 }) {
   const [loadingBilling, setLoadingBilling] = useState(false);
   const [billingError, setBillingError] = useState('');
@@ -2449,7 +2495,9 @@ function Stage({
     (supportingFailure
       ? `${supportingFailure.kind} failed; inspect supporting details.`
       : undefined);
+  const savedBilling = path(call.output, 'savedBilling') === true;
   const hasProviderDetails =
+    savedBilling ||
     !!path(call.output, 'receipt', 'providerRequestId') ||
     call.exchanges.some(
       (exchange) =>
@@ -2525,21 +2573,29 @@ function Stage({
                 setLoadingBilling(true);
                 setBillingError('');
                 try {
-                  const result = await post<{ ok: boolean; details?: unknown; message?: string }>(
-                    '/api/god/intelligence-details',
-                    { id: call.id },
-                  );
+                  const result = await postPrivateRead<{
+                    ok: boolean;
+                    details?: unknown;
+                    message?: string;
+                  }>('/api/god/intelligence-details', { id: call.id });
                   if (!result.ok)
                     throw new Error(result.message ?? 'Provider details unavailable.');
                   setRemote(result.details);
                 } catch (error) {
+                  if (error instanceof AccessError) onAccessLost();
                   setBillingError(error instanceof Error ? error.message : String(error));
                 } finally {
                   setLoadingBilling(false);
                 }
               }}
             >
-              {remote === undefined ? 'Fetch billing details' : 'Refresh billing details'}
+              {savedBilling
+                ? remote === undefined
+                  ? 'Show saved billing'
+                  : 'Refresh saved billing'
+                : remote === undefined
+                  ? 'Fetch billing details'
+                  : 'Refresh billing details'}
             </Button>
           </div>
         )}
@@ -2575,10 +2631,12 @@ function TraceDetail({
   row,
   showJson,
   visible,
+  clearRaw,
 }: {
   row: Row;
   showJson(raw: RawView): void;
   visible: boolean;
+  clearRaw(): void;
 }) {
   const [detail, setDetail] = useState<{
       root: IntelligenceCall;
@@ -2590,11 +2648,17 @@ function TraceDetail({
     [error, setError] = useState(''),
     [remote, setRemote] = useState<Record<string, unknown>>({});
   const generation = useRef(0);
+  function clearPrivate() {
+    generation.current++;
+    setDetail(null);
+    setRemote({});
+    clearRaw();
+  }
   async function load() {
     const id = ++generation.current;
     setError('');
     try {
-      const result = await post<{
+      const result = await postPrivateRead<{
         ok: boolean;
         message?: string;
         details: NonNullable<typeof detail>;
@@ -2604,7 +2668,8 @@ function TraceDetail({
       setDetail(result.details);
     } catch (loadError) {
       if (id !== generation.current) return;
-      setDetail(null);
+      if (loadError instanceof AccessError) clearPrivate();
+      else setDetail(null);
       setError(String(loadError));
     }
   }
@@ -2751,6 +2816,10 @@ function TraceDetail({
               remote={remote[call.id]}
               setRemote={(value) => setRemote((current) => ({ ...current, [call.id]: value }))}
               showJson={showJson}
+              onAccessLost={() => {
+                clearPrivate();
+                setError('Inspection permission changed. Refresh to continue.');
+              }}
             />
           ))}
         </>
@@ -2872,7 +2941,7 @@ export function Diagnostics({
     readAbort.current = controller;
     if (!peek) setLoading(true);
     try {
-      const result = await post<{
+      const result = await postPrivateRead<{
         ok: boolean;
         message?: string;
         worldId?: string;
@@ -2994,6 +3063,7 @@ export function Diagnostics({
           row={selection}
           showJson={showRaw}
           visible={visible}
+          clearRaw={() => setRaw((value) => (value?.key === rawKey ? null : value))}
         />
         {currentRaw && visible && <RawJsonPanel raw={currentRaw} onClose={() => setRaw(null)} />}
       </div>

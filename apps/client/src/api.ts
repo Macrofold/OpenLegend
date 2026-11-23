@@ -513,6 +513,25 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
     throw new Error(`The request was not accepted (${response.status}).`);
   return result;
 }
+/** A private read treats refused access and a changed read scope differently
+ * from an interrupted refresh, so its owner can discard an already shown result. */
+export async function postPrivateRead<T extends { ok: boolean; message?: string }>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  const generation = accessGeneration;
+  const { response, result } = await sendPost<T>(path, body, signal);
+  if (generation !== accessGeneration)
+    throw new AccessError('Your access or world changed. Refresh before continuing.');
+  if (response.status === 401) throw new SignInRequiredError('Sign in to continue.');
+  if (response.status === 403)
+    throw new AccessError(result.message ?? 'This account has no access to this information.');
+  if (!response.ok && !result.message)
+    throw new Error(`The request was not accepted (${response.status}).`);
+  return result;
+}
+
 /** Read-only POSTs share contact-loss fencing with scoped GETs. Write receipts
  * deliberately use post(): losing a contact cannot erase a committed result. */
 export async function postContactRead<T extends { ok: boolean; message?: string }>(

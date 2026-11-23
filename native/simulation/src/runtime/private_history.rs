@@ -7,11 +7,11 @@ use std::sync::atomic::AtomicBool;
 
 mod activity_inspection;
 mod promises;
-pub use promises::{
-    RuntimePromisePosition, RuntimePromisePresentation, RuntimePromiseSelection, RuntimePromiseView,
-    RuntimeResidentPromise,
-};
 pub use activity_inspection::RuntimeActivityInspection;
+pub use promises::{
+    RuntimePromisePosition, RuntimePromisePresentation, RuntimePromiseSelection,
+    RuntimePromiseView, RuntimeResidentPromise,
+};
 mod recent;
 pub use recent::{
     RuntimeRecentBrowse, RuntimeRecentPosition, RuntimeRecentReceipt, RuntimeRecentSourceRead,
@@ -222,6 +222,59 @@ impl NativeWorldSession {
                 .is_some_and(|body| owner == actor || body.controller != "player"))
     }
 
+    /// Borrow identity and display facts for the explicit Intelligence history
+    /// panel. This walks mind owners and the selected person, without capturing
+    /// any history, observations or private mind contents. A detached consumer
+    /// owns its admitted copy and must check the current rights before delivery.
+    pub fn with_intelligence_people(
+        &self,
+        account: &str,
+        owner: &str,
+        mut admit: impl FnMut(&str, &crate::text::JsText, u64) -> Result<(), RuntimeError>,
+    ) -> Result<bool, RuntimeError> {
+        let accepted = self.session.accepted().map_err(failure)?;
+        let state = &accepted.state;
+        if accepted.require_player_read(account, owner).is_err() {
+            return Ok(false);
+        }
+        for id in std::iter::once(owner).chain(
+            state
+                .minds
+                .minds
+                .iter()
+                .flat_map(|minds| minds.keys().map(String::as_str).filter(|id| *id != owner)),
+        ) {
+            if let Some(person) = state.physical.entities.get(id)
+                && let Some(actor) = person.actor.as_ref()
+                && (id == owner || actor.controller != "player")
+            {
+                admit(id, &person.name, actor.physical_life.unwrap_or(0))?;
+            }
+        }
+        Ok(true)
+    }
+
+    /// Check a selected historic diagnostic subject against the live person.
+    /// The application retains and rechecks its session and Inspect grant.
+    pub fn intelligence_person_current(
+        &self,
+        account: &str,
+        owner: &str,
+        actor: &str,
+        life: u64,
+    ) -> Result<bool, RuntimeError> {
+        if !self.private_history_permitted(account, owner, actor)? {
+            return Ok(false);
+        }
+        let state = &self.session.accepted().map_err(failure)?.state;
+        Ok(state
+            .physical
+            .entities
+            .get(actor)
+            .and_then(|person| person.actor.as_ref())
+            .is_some_and(|body| body.physical_life.unwrap_or(0) == life))
+    }
+
     /// The Journal may render only the installed selection against its saved
     /// source cut. The actual transfer stays inside the returned disclosure
     /// lease, whose currentness is independent of unrelated clock advances.
@@ -285,7 +338,9 @@ impl NativeWorldSession {
                     )
                     .map_err(failure)?
                     .and_then(|item| state.installed.retained.items.get(item.definition_id))
-                    .is_some_and(|item| item.pin.id == definition.id && item.pin.version == definition.version)
+                    .is_some_and(|item| {
+                        item.pin.id == definition.id && item.pin.version == definition.version
+                    })
                 }
             };
             if !alive {
