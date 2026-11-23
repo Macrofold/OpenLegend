@@ -229,6 +229,52 @@ pub(in crate::npc::decide) async fn collect(
 }
 
 impl Collected {
+    /// Retain the original disclosed rows and attention selection. No recall
+    /// search or provider attention is performed during this continuation.
+    pub(super) fn from_refused_choice(
+        original: RuntimeNpcRead,
+        selection: &openlegend_simulation::runtime::RuntimeNpcBindingRequest,
+        frame: ReceivedFrame,
+        budget: &ByteBudget,
+    ) -> Result<Self, CallFailure> {
+        let selected = selection.selected_personal();
+        let sources = (!selected.is_empty())
+            .then(|| original.personal_sources(budget).map_err(packet_failure))
+            .transpose()?;
+        if selected.iter().any(|row| {
+            sources.as_ref().is_none_or(|sources| {
+                row.inventory != sources.ordinal || row.ordinal >= sources.personal.len()
+            })
+        }) {
+            return Err(CallFailure::Stale("native-choice-original-evidence"));
+        }
+        let attention = selection.selected_attention();
+        let attention_bytes = attention
+            .len()
+            .checked_mul(size_of::<usize>())
+            .ok_or_else(|| capacity(CapacityError))?;
+        let body_bytes = selected
+            .len()
+            .checked_mul(size_of::<usize>())
+            .ok_or_else(|| capacity(CapacityError))?;
+        let attention = OriginAttention {
+            _storage: budget.reserve(attention_bytes).map_err(capacity)?,
+            ordinals: attention.iter().map(|row| row.ordinal).collect(),
+        };
+        let storage = budget.reserve(body_bytes).map_err(capacity)?;
+        let required = selected.iter().map(|row| row.ordinal).collect();
+        Ok(Self {
+            through: original.accepted_cut(),
+            original: Some(original),
+            attention,
+            sources,
+            required,
+            optional: Vec::new(),
+            frame,
+            _selection: storage,
+        })
+    }
+
     /// Bind only the optional candidates that the size-limited judge actually
     /// receives. Native still owns their permission and acquired versions.
     pub(in crate::npc::decide) async fn review(
@@ -258,6 +304,7 @@ impl Collected {
             source_data,
             &self.required,
             ProjectionPurpose::Recall,
+            None,
             None,
         )?;
         fresh.release_current_self();

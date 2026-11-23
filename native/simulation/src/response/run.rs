@@ -60,6 +60,7 @@ pub(crate) struct CompletedResponse {
     pub components: IndexMap<String, Outcome>,
     pub events: Vec<WorldEvent>,
     pub replayed: bool,
+    pub(crate) reconsiderable_refusal: bool,
     protected: bool,
     reservation: ByteReservation,
 }
@@ -146,6 +147,8 @@ pub(crate) struct ResponseCursor {
     events: Vec<WorldEvent>,
     evidence: Option<Vec<String>>,
     resolve_attempt: bool,
+    reconsider_choice: bool,
+    reconsiderable_refusal: bool,
     budget: ByteBudget,
     reservation: Option<ByteReservation>,
     working: Option<ByteReservation>,
@@ -158,6 +161,7 @@ impl ResponseCursor {
         bindings: Arc<ResponseBindings>,
         candidate: CandidateKey,
         protected: bool,
+        reconsider_choice: bool,
         budget: &ByteBudget,
     ) -> Result<Self, CommandOperationError> {
         if !is_safe_record_id(id)
@@ -259,6 +263,8 @@ impl ResponseCursor {
             events: Vec::new(),
             evidence: None,
             resolve_attempt: false,
+            reconsider_choice,
+            reconsiderable_refusal: false,
             budget: budget.clone(),
             reservation: Some(reservation),
             working: None,
@@ -431,6 +437,7 @@ impl ResponseCursor {
             components: std::mem::take(&mut self.components),
             events: std::mem::take(&mut self.events),
             replayed,
+            reconsiderable_refusal: self.reconsiderable_refusal,
             protected: self.protected,
             reservation: self.reservation.take().ok_or(ExecutionError::Invariant)?,
         }))
@@ -802,6 +809,7 @@ impl ResponseCursor {
                 + events.len() * size_of::<WorldEvent>(),
         )?;
         let result = completed.outcome().clone();
+        self.record_choice_refusal(core, &result);
         self.merge(storage)?;
         for event in &mut events {
             let original =
@@ -900,6 +908,26 @@ impl ResponseCursor {
             })
             .ok_or(ExecutionError::Capacity)
     }
+    // Only a concrete refusal from the action executor or its choice
+    // preparation can qualify. Stale evidence, protected access and
+    // unavailable actors stop before those paths.
+    fn record_choice_refusal(&mut self, core: &CoreMutation<'_>, outcome: &Outcome) {
+        if !self.reconsider_choice || outcome.ok {
+            return;
+        }
+        let rules = core.state.installed.ordinary_actions.value();
+        self.reconsiderable_refusal =
+            matches!(outcome.code.as_str(), "out-of-reach" | "missing-material")
+                || [
+                    &rules.out_of_reach,
+                    &rules.no_route,
+                    &rules.unreachable,
+                    &rules.blocked,
+                ]
+                .into_iter()
+                .any(|refusal| refusal.code == outcome.code);
+    }
+
     fn finish(&mut self, core: &mut CoreMutation<'_>) -> Result<Progress, CommandOperationError> {
         let accepted = self.components.values().filter(|o| o.ok).count();
         let rejected = self.components.len() - accepted;
@@ -975,6 +1003,21 @@ impl ResponseCursor {
                     .unwrap_or(&self.bindings.input.evidence_ids),
                 &self.budget,
             )?;
+        }
+        if self.reconsiderable_refusal {
+            if accepted != 0 || self.components.len() != 1 {
+                return Err(ExecutionError::Invariant.into());
+            }
+            // Record the actual refusal, with the exact before-image of any
+            // tentative command mutations. The higher reply gets a distinct
+            // response identity and can never inherit a primary effect.
+            let checkpoint = self
+                .checkpoint
+                .take()
+                .ok_or(ExecutionError::InvalidCheckpoint)?;
+            core.journal.rollback_to(core.state, checkpoint)?;
+            self.events.clear();
+            self.checkpoint = Some(core.journal.checkpoint(core.state)?);
         }
         self.merge(result.storage)?;
         let receipt_bound = self
@@ -1359,6 +1402,7 @@ impl ResponseCursor {
                                 let (outcome, storage) = prepared.into_parts();
                                 self.merge(storage)?;
                                 if !outcome.ok {
+                                    self.record_choice_refusal(core, &outcome);
                                     self.store(
                                         core,
                                         ComponentResult {
@@ -1412,6 +1456,7 @@ impl ResponseCursor {
                                     )?);
                                 }
                                 PlanEditStep::Complete(outcome) => {
+                                    self.record_choice_refusal(core, outcome);
                                     let storage = self.budget.reserve(
                                         outcome.heap_bytes().ok_or(ExecutionError::Capacity)?,
                                     )?;

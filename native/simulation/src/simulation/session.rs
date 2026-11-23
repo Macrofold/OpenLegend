@@ -704,6 +704,7 @@ impl Session {
         response: crate::response::ActorResponse,
         bindings: Arc<crate::response::ResponseBindings>,
         protected: bool,
+        reconsider_choice: bool,
     ) -> Result<CandidateKey, SessionError> {
         if protected && !self.save_barrier_complete() {
             return Err(FenceError::Busy.into());
@@ -721,6 +722,7 @@ impl Session {
                 bindings,
                 key,
                 protected,
+                reconsider_choice,
                 &self.budget,
             )
             .map_err(DriveError::from)?;

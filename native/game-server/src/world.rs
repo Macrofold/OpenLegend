@@ -296,6 +296,7 @@ impl WorldHost {
         let (durable, _) = watch::channel(receipt.accepted_cut);
         session.activate(receipt)?;
         let fence = session.fence();
+        let (delayed_decision_clock, _) = watch::channel(session.clock()?.paused);
         let world = Arc::new(HostedWorld {
             host: Arc::clone(self),
             store,
@@ -307,6 +308,7 @@ impl WorldHost {
             operations: TaskTracker::new(),
             closing: AtomicBool::new(false),
             durable,
+            delayed_decision_clock,
             pending_source_edits: Mutex::new(BTreeSet::new()),
             protected_hold: Mutex::new(None),
         });
@@ -334,6 +336,7 @@ pub struct HostedWorld {
     pub(crate) operations: TaskTracker,
     closing: AtomicBool,
     durable: watch::Sender<u64>,
+    delayed_decision_clock: watch::Sender<bool>,
     pending_source_edits: Mutex<BTreeSet<Arc<str>>>,
     // An unresolved SQL outcome retains the actual candidate output and prefix.
     // Normal stop cannot pretend it rejected the mutation. Recovery cold-opens
@@ -434,6 +437,23 @@ pub(crate) enum NpcDisclosure {
     Refused(&'static str),
 }
 
+/// An optional higher decision ends at the first accepted pause. Each
+/// receiver keeps its original clock version, even if the world resumes.
+#[derive(Clone)]
+pub(crate) struct DelayedDecisionClock(watch::Receiver<bool>);
+
+impl DelayedDecisionClock {
+    pub(crate) fn interrupted(&self) -> bool {
+        *self.0.borrow() || self.0.has_changed().unwrap_or(true)
+    }
+
+    pub(crate) async fn interruption(&self) {
+        if !self.interrupted() {
+            let _ = self.0.clone().changed().await;
+        }
+    }
+}
+
 pub(crate) struct NpcDisclosureTurn<'a> {
     world: &'a HostedWorld,
     _turn: TurnGuard<tokio::sync::MutexGuard<'a, ()>>,
@@ -508,6 +528,22 @@ impl HostedWorld {
             return Err(WorldError::SourceEditPending);
         }
         Ok(fence.settle(key, true)?)
+    }
+
+    /// The game clock calls this after accepting its protected write and before
+    /// releasing the native turn shared by provider disclosure and effects.
+    pub(crate) fn publish_decision_clock(&self, paused: bool) {
+        self.delayed_decision_clock.send_if_modified(|previous| {
+            if *previous == paused {
+                return false;
+            }
+            *previous = paused;
+            true
+        });
+    }
+
+    pub(crate) fn delayed_decision_clock(&self) -> DelayedDecisionClock {
+        DelayedDecisionClock(self.delayed_decision_clock.subscribe())
     }
 
     /// Start the prepared transfer only while its native source and consumer

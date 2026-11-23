@@ -42,6 +42,16 @@ pub struct RuntimeNpcBindingRequest {
 }
 
 impl RuntimeNpcBindingRequest {
+    /// The exact inputs retained by the preceding decision. Refreshing
+    /// its action choices must not acquire a different memory selection.
+    pub fn selected_personal(&self) -> &[NpcPersonalEvidence] {
+        &self.request.selection.evidence
+    }
+
+    pub fn selected_attention(&self) -> &[NpcAliasOrdinal] {
+        &self.request.selection.attention
+    }
+
     /// Only a supplied physical reference can anchor an original-scene
     /// query. Match the life and lease before looking at the old coordinates.
     pub fn received_anchor(
@@ -329,6 +339,7 @@ pub struct RuntimeNpcResponseTicket {
 pub struct RuntimeNpcOperations {
     value: crate::records::SqlCell,
     custody: ByteReservation,
+    reconsider_choice: bool,
 }
 
 impl RuntimeNpcOperations {
@@ -338,6 +349,7 @@ impl RuntimeNpcOperations {
     pub fn known_action(
         alias: &str,
         mode: &str,
+        reconsider_choice: bool,
         budget: &ByteBudget,
     ) -> Result<Self, RuntimeError> {
         use crate::host::retained_size::map_storage;
@@ -413,7 +425,9 @@ impl RuntimeNpcOperations {
                 action,
             ],
         );
-        Self::new(record(RESPONSE, [SqlCell::Array(vec![op])]), custody)
+        let mut result = Self::new(record(RESPONSE, [SqlCell::Array(vec![op])]), custody)?;
+        result.reconsider_choice = reconsider_choice;
+        Ok(result)
     }
 
     /// Move an already funded response into the mutation attempt. Keep the
@@ -427,7 +441,11 @@ impl RuntimeNpcOperations {
             return Err(CapacityError.into());
         }
         custody.resize(bytes)?;
-        Ok(Self { value, custody })
+        Ok(Self {
+            value,
+            custody,
+            reconsider_choice: false,
+        })
     }
 }
 
@@ -469,6 +487,59 @@ impl RuntimeNpcResponseTicket {
             },
         ))
     }
+    pub(super) fn remaining_choices(
+        &self,
+        alias: &str,
+        budget: &ByteBudget,
+    ) -> Result<(Vec<String>, ByteReservation), RuntimeError> {
+        if self.phase.load(Ordering::Acquire) != SETTLED
+            || self.bindings.purpose != NpcBindingPurpose::Decision
+            || self.original.query_expanded
+        {
+            return Err(stale("native-choice-recovery-settlement"));
+        }
+        let (selection, _) = self
+            .query_selection
+            .as_ref()
+            .ok_or_else(|| failure("NPC choice selection is unavailable"))?;
+        let identity = |row: &NpcActionOrdinal| {
+            match row.source {
+                NpcCatalogueSource::Original => self.original.candidates(),
+                NpcCatalogueSource::Current => self.current.candidates(),
+            }
+            .and_then(|set| set.offers().get(row.ordinal))
+            .map(|offer| offer.id.as_str())
+            .ok_or_else(|| failure("refused choice has no native offer"))
+        };
+        let rejected = selection
+            .actions
+            .iter()
+            .find(|row| row.alias == alias)
+            .ok_or_else(|| failure("refused choice did not belong to its original offer set"))
+            .and_then(identity)?;
+        let upper = selection.actions.len().saturating_sub(1);
+        let bytes = selection.actions.iter().try_fold(
+            upper
+                .checked_mul(size_of::<String>())
+                .ok_or(CapacityError)?,
+            |bytes, row| {
+                let id = identity(row)?;
+                bytes
+                    .checked_add(if id == rejected { 0 } else { id.len() })
+                    .ok_or_else(|| RuntimeError::from(CapacityError))
+            },
+        )?;
+        let custody = budget.reserve(bytes)?;
+        let mut remaining = Vec::with_capacity(upper);
+        for row in &selection.actions {
+            let id = identity(row)?;
+            if id != rejected {
+                remaining.push(id.to_owned());
+            }
+        }
+        Ok((remaining, custody))
+    }
+
     pub fn actor_id(&self) -> &str {
         &self.current.read.perception.actor_id
     }
@@ -683,7 +754,10 @@ impl NativeWorldSession {
         response: &str,
         protected: bool,
     ) -> Result<CandidateKey, RuntimeError> {
-        self.begin_npc_response_with(owner, protected, |limits, budget| {
+        let ticket = owner
+            .as_ref()
+            .ok_or_else(|| failure("NPC response ticket was released"))?;
+        self.begin_npc_response_with(ticket, protected, false, |limits, budget| {
             crate::response::ActorResponse::decode(response, limits, budget)
                 .map_err(response_failure)
         })
@@ -694,23 +768,29 @@ impl NativeWorldSession {
     /// admission, including receipt hashing, as the bytes-based entry point.
     pub fn begin_npc_response_owned(
         &mut self,
-        owner: &mut Option<RuntimeNpcResponseTicket>,
+        ticket: &RuntimeNpcResponseTicket,
         response: RuntimeNpcOperations,
         protected: bool,
     ) -> Result<CandidateKey, RuntimeError> {
-        self.begin_npc_response_with(owner, protected, move |limits, budget| {
-            if !budget.owns(&response.custody) {
-                return Err(failure("NPC response belongs to another native budget"));
-            }
-            crate::response::ActorResponse::admit(response.value, limits, response.custody)
-                .map_err(response_failure)
-        })
+        self.begin_npc_response_with(
+            ticket,
+            protected,
+            response.reconsider_choice,
+            move |limits, budget| {
+                if !budget.owns(&response.custody) {
+                    return Err(failure("NPC response belongs to another native budget"));
+                }
+                crate::response::ActorResponse::admit(response.value, limits, response.custody)
+                    .map_err(response_failure)
+            },
+        )
     }
 
     fn begin_npc_response_with(
         &mut self,
-        owner: &mut Option<RuntimeNpcResponseTicket>,
+        ticket: &RuntimeNpcResponseTicket,
         protected: bool,
+        reconsider_choice: bool,
         prepare: impl FnOnce(
             &crate::response::ResponseLimits,
             &ByteBudget,
@@ -724,9 +804,6 @@ impl NativeWorldSession {
         if protected && !self.session.save_barrier_complete() {
             return Err(failure("protected response awaits the actual save barrier"));
         }
-        let ticket = owner
-            .as_ref()
-            .ok_or_else(|| failure("NPC response ticket was released"))?;
         ticket.require_prepared()?;
         if !self.npc_host_current(&ticket.original) || !self.npc_host_current(&ticket.current) {
             return Err(stale("native-response-maintenance-boundary"));
@@ -787,7 +864,13 @@ impl NativeWorldSession {
         let bindings = self.npc_response_bindings(ticket)?;
         let key = self
             .session
-            .begin_response(&ticket.decision_id, response, bindings, protected)
+            .begin_response(
+                &ticket.decision_id,
+                response,
+                bindings,
+                protected,
+                reconsider_choice,
+            )
             .map_err(failure)?;
         ticket.phase.store(APPLYING, Ordering::Release);
         self.active_response = Some(ActiveNpcResponse {

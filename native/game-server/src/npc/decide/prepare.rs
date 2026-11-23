@@ -140,7 +140,66 @@ impl Projection {
 pub(super) async fn finish(
     game: &Arc<CurrentServer>,
     work: &Work,
+    collected: Collected,
+) -> Result<Prepared, CallFailure> {
+    finish_prepared(game, work, collected, None).await
+}
+
+struct Reconsideration<'a> {
+    remaining: &'a [String],
+    decision_id: &'a str,
+}
+
+pub(super) async fn reconsider_choice(
+    game: &Arc<CurrentServer>,
+    work: &Work,
+    previous: Prepared,
+    alias: (String, ByteReservation),
+    refusal: &str,
+    decision_id: &str,
+) -> Result<Prepared, CallFailure> {
+    let Prepared { ticket, frame, .. } = previous;
+    let ticket = Arc::try_unwrap(ticket).map_err(|_| CallFailure::Invalid)?;
+    let refusal_copy = game
+        .host
+        .budget()
+        .reserve(refusal.len())
+        .map_err(capacity)?;
+    let refusal = refusal.to_owned();
+    let recovered = game
+        .world
+        .capture(move |session| {
+            let (alias, _alias_custody) = alias;
+            let _refusal_custody = refusal_copy;
+            session.reopen_refused_npc_choice(ticket, &alias, &refusal)
+        })
+        .await
+        .map_err(binding_failure)?;
+    let openlegend_simulation::runtime::NpcChoiceRecovery {
+        original,
+        request,
+        remaining,
+        _custody,
+    } = *recovered;
+    let collected = Collected::from_refused_choice(original, &request, frame, game.host.budget())?;
+    drop(request);
+    finish_prepared(
+        game,
+        work,
+        collected,
+        Some(Reconsideration {
+            remaining: &remaining,
+            decision_id,
+        }),
+    )
+    .await
+}
+
+async fn finish_prepared(
+    game: &Arc<CurrentServer>,
+    work: &Work,
     mut collected: Collected,
+    reconsideration: Option<Reconsideration<'_>>,
 ) -> Result<Prepared, CallFailure> {
     ensure_running(work)?;
     let budget = game.host.budget();
@@ -188,7 +247,7 @@ pub(super) async fn finish(
                 .ok_or_else(|| capacity(CapacityError))?,
         ).map_err(capacity)?;
     }
-    let (binding, mut context, addressed, speech_trigger) = project(
+    let (mut binding, mut context, addressed, speech_trigger) = project(
         game,
         work,
         &current,
@@ -197,7 +256,22 @@ pub(super) async fn finish(
         &collected.required,
         ProjectionPurpose::Decision,
         Some((collected.original.as_ref().ok_or(CallFailure::Invalid)?, &mut projection)),
+        reconsideration.as_ref().map(|input| input.remaining),
     )?;
+    if let Some(input) = reconsideration {
+        if !context.offers.iter().any(|option| !option.no_intervention) {
+            return Err(CallFailure::Stale("native-choice-no-safe-alternative"));
+        }
+        projection
+            .resize(
+                projection
+                    .bytes()
+                    .checked_add(input.decision_id.len())
+                    .ok_or_else(|| capacity(CapacityError))?,
+            )
+            .map_err(capacity)?;
+        binding.decision_id = input.decision_id.into();
+    }
     if let Some(page) = inspection {
         finish_activity_fields(&mut context, page);
     }
@@ -301,6 +375,7 @@ fn project(
     rows: &[usize],
     purpose: ProjectionPurpose,
     original_read: Option<(&RuntimeNpcRead, &mut ByteReservation)>,
+    remaining_offers: Option<&[String]>,
 ) -> Result<(RuntimeNpcBindingInput, Projection, bool, bool), CallFailure> {
     let consumer = consumer(work);
     let decision = matches!(purpose, ProjectionPurpose::Decision);
@@ -525,6 +600,11 @@ fn project(
     };
     let (mut fields, speaks, expressions, preview_player) = if decision {
         for (ordinal, offer) in read.decision_offers().map_err(packet_failure)?.enumerate() {
+            if remaining_offers
+                .is_some_and(|remaining| !remaining.iter().any(|id| id == offer.native_id))
+            {
+                continue;
+            }
             let id = format!("a{ordinal}");
             let caption = prompt_text(offer.description.ok_or(CallFailure::Invalid)?);
             actions.push(NpcActionOrdinal {

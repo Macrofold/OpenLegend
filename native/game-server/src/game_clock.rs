@@ -182,6 +182,7 @@ impl GameClock {
         let inputs = self.inputs.clone();
         let saves = self.saves.clone();
         let maintenance = self.maintenance.clone();
+        let world = self.game.world.clone();
         self.game
             .world
             .execute_protected_then(
@@ -242,6 +243,7 @@ impl GameClock {
                             saves.resume_semantic_index();
                         }
                     }
+                    world.publish_decision_clock(paused);
                     maintenance.publish(snapshot);
                     saves.signal_view();
                     Ok(())
@@ -376,9 +378,10 @@ impl GameClock {
     ) -> Result<(), WorldError> {
         let provider = self.game.clone();
         let store = self.game.store.clone();
+        let world = self.game.world.clone();
         self.game
             .world
-            .execute_protected(
+            .execute_protected_then(
                 move |session| {
                     session.begin_control_direct(next.paused, next.speed, next.manually_paused)
                 },
@@ -397,6 +400,10 @@ impl GameClock {
                     Box::pin(
                         async move { store.commit_prefix(prefix.rows(), &[], projection).await },
                     )
+                },
+                move |_| {
+                    world.publish_decision_clock(next.paused);
+                    Ok(())
                 },
             )
             .await?;

@@ -118,13 +118,14 @@ pub use crate::time::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput
 pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
-    AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal, RuntimeNpcAppraisalRecord,
-    RuntimeNpcIdentity, RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcBoundaryFact, RuntimeNpcConsumer,
-    RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcFeeling, RuntimeNpcFeelingTarget,
-    RuntimeNpcFeelings, RuntimeNpcHistoryWindow, RuntimeNpcObservedBody, RuntimeNpcOffer, RuntimeNpcOperations,
-    RuntimeNpcPersonalSource, RuntimeNpcPersonalSources, RuntimeNpcPreparationStep,
-    RuntimeNpcPresentedBody, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
-    RuntimeNpcHistoricalPose, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
+    AppraisalSelection, AppraisalSourceAlias, NpcChoiceRecovery, PersonalOrdinal,
+    RuntimeNpcAppraisalRecord, RuntimeNpcBindingInput, RuntimeNpcBindingRequest,
+    RuntimeNpcBoundaryFact, RuntimeNpcConsumer, RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin,
+    RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings, RuntimeNpcHistoricalPose,
+    RuntimeNpcHistoryWindow, RuntimeNpcIdentity, RuntimeNpcObservedBody, RuntimeNpcOffer,
+    RuntimeNpcOperations, RuntimeNpcPersonalSource, RuntimeNpcPersonalSources,
+    RuntimeNpcPreparationStep, RuntimeNpcPresentedBody, RuntimeNpcPublication, RuntimeNpcRead,
+    RuntimeNpcResponseTicket, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
     RuntimeNpcSubjectNote,
 };
 pub use player::{InspectedRecipeRecord, RuntimeWorldStorage};
@@ -1976,6 +1977,17 @@ pub struct RuntimePreparedProducts<'a> {
 impl RuntimePreparedProducts<'_> {
     pub fn outcome(&self) -> &crate::commands::Outcome {
         self.operation.outcome()
+    }
+
+    /// A sole offered action was refused by its native execution owner.
+    /// The candidate retains only its refusal receipt.
+    pub fn native_choice_refusal(&self) -> Option<&crate::commands::Outcome> {
+        match self.operation {
+            CompletedOperation::Response(done) if done.reconsiderable_refusal => {
+                done.components.get("action")
+            }
+            _ => None,
+        }
     }
 
     pub fn strike_review(&self) -> Option<&StrikeReviewOffer> {

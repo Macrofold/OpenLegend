@@ -52,9 +52,17 @@ pub struct RuntimeNpcPublication {
 }
 
 pub struct RuntimeNpcOffer<'a> {
+    pub native_id: &'a str,
     pub description: Option<&'a crate::text::JsText>,
     pub no_intervention: bool,
     pub transition: &'static str,
+}
+
+pub struct NpcChoiceRecovery {
+    pub original: RuntimeNpcRead,
+    pub request: RuntimeNpcBindingRequest,
+    pub remaining: Vec<String>,
+    pub _custody: ByteReservation,
 }
 
 pub struct RuntimeNpcRead {
@@ -221,6 +229,43 @@ impl NativeWorldSession {
             .take_npc_response_for_query(&mut Some(ticket))?
             .into_query()?;
         Ok((first, current, request, policy))
+    }
+
+    /// A settled sole native refusal carries its original read and selected
+    /// source ordinals into one re-preparation. Do not disclose the old action
+    /// set: its physical feasibility is the very thing that changed.
+    pub fn reopen_refused_npc_choice(
+        &self,
+        ticket: RuntimeNpcResponseTicket,
+        alias: &str,
+        code: &str,
+    ) -> Result<Box<NpcChoiceRecovery>, RuntimeError> {
+        self.npc_response_application(&ticket)?.map_err(stale)?;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let concrete = state
+            .responses
+            .get(&ticket.decision_id)
+            .is_some_and(|receipt| {
+                !receipt.outcome.ok
+                    && receipt.outcome.code == "response-rejected"
+                    && receipt.components.len() == 1
+                    && receipt
+                        .components
+                        .get("action")
+                        .is_some_and(|action| !action.ok && action.code == code)
+            });
+        if !concrete {
+            return Err(stale("native-choice-recovery-receipt"));
+        }
+        let (remaining, mut custody) = ticket.remaining_choices(alias, &self.budget)?;
+        custody.merge(self.budget.reserve(size_of::<NpcChoiceRecovery>())?)?;
+        let (original, _previous, request) = ticket.into_query()?;
+        Ok(Box::new(NpcChoiceRecovery {
+            original,
+            request,
+            remaining,
+            _custody: custody,
+        }))
     }
 
     fn take_npc_response_for_query(
@@ -981,6 +1026,7 @@ impl RuntimeNpcRead {
             .offers()
             .iter()
             .map(|offer| RuntimeNpcOffer {
+                native_id: &offer.id,
                 description: offer.description.as_ref(),
                 no_intervention: !offer.command.has_command(),
                 transition: match offer.transition {

@@ -8,10 +8,11 @@ use crate::{
     live_save::{AcceptedSaveInput, LiveSaves},
     player_events::SpeechReplyStatus,
     store::{AdmittedJob, TerminalOutcome},
-    world::{ApplicationStart, WorldError},
+    world::{ApplicationStart, DelayedDecisionClock, WorldError},
 };
-use openlegend_simulation::runtime::{
-    RuntimeDirectOutput, RuntimeError, RuntimeNpcOperations, RuntimeNpcResponseTicket,
+use openlegend_simulation::{
+    host::ByteReservation,
+    runtime::{RuntimeDirectOutput, RuntimeError, RuntimeNpcOperations, RuntimeNpcResponseTicket},
 };
 use std::sync::Arc;
 use tokio::{sync::watch, time::Instant};
@@ -23,6 +24,15 @@ enum Applied {
         preview: Option<(Arc<ReplyPreview>, Option<Arc<ReplyReceipt>>)>,
     },
     Refused(Arc<AcceptedSaveInput>),
+    Reconsider {
+        save: Arc<AcceptedSaveInput>,
+        refusal: RefusedChoice,
+    },
+}
+
+pub(super) struct RefusedChoice {
+    pub(super) code: Box<str>,
+    _custody: ByteReservation,
 }
 
 pub(super) async fn apply(
@@ -35,7 +45,8 @@ pub(super) async fn apply(
     cancellation: watch::Receiver<bool>,
     deadline: Instant,
     preview: Option<Arc<ReplyPreview>>,
-) -> Result<(), CallFailure> {
+    delayed_clock: Option<DelayedDecisionClock>,
+) -> Result<Option<RefusedChoice>, CallFailure> {
     if *cancellation.borrow() {
         return Err(CallFailure::Cancelled);
     }
@@ -53,7 +64,6 @@ pub(super) async fn apply(
     let accepted = saves.clone();
     let settle_world = game.world.clone();
     let settle_job = job.clone();
-    let mut ticket = Some(Arc::try_unwrap(ticket).map_err(|_| CallFailure::Invalid)?);
     game.world.request_advance_publication();
     let applied = game
         .world
@@ -69,16 +79,21 @@ pub(super) async fn apply(
                         "decision-deadline",
                     )));
                 }
+                if delayed_clock
+                    .as_ref()
+                    .is_some_and(DelayedDecisionClock::interrupted)
+                {
+                    return Ok(ApplicationStart::Existing(Applied::Stale("game-paused")));
+                }
                 if let Some((authority, scope)) = &begin_permit {
                     authority.current(scope, Capability::Play, true, |_, _| ())?;
                 }
-                let witness = ticket.as_ref().expect("response ticket is present");
-                match session.npc_response_application(witness)? {
+                match session.npc_response_application(&ticket)? {
                     Ok(lease) => drop(lease),
                     Err(reason) => return Ok(ApplicationStart::Existing(Applied::Stale(reason))),
                 }
                 Ok(ApplicationStart::Candidate(
-                    session.begin_npc_response_owned(&mut ticket, draft, false)?,
+                    session.begin_npc_response_owned(&ticket, draft, false)?,
                 ))
             },
             move |question| {
@@ -89,6 +104,18 @@ pub(super) async fn apply(
                 let RuntimeDirectOutput::Prepared(product) = output else {
                     unreachable!("responses do not preview")
                 };
+                if let Some(rejected) = product.native_choice_refusal() {
+                    // This result preserves the negative native receipt and
+                    // leaves the automatic root open for its one paid child.
+                    let custody = budget.reserve(rejected.code.len())?;
+                    return Ok(Applied::Reconsider {
+                        save: staged.stage(&product, None)?,
+                        refusal: RefusedChoice {
+                            code: rejected.code.as_str().into(),
+                            _custody: custody,
+                        },
+                    });
+                }
                 let result = product.outcome();
                 let (status, message) = if result.ok {
                     (SpeechReplyStatus::Completed, "Reply completed.".into())
@@ -144,7 +171,7 @@ pub(super) async fn apply(
                         selected.settle(receipt.clone());
                     }
                 }
-                Applied::Refused(save) => accepted.accept(save),
+                Applied::Refused(save) | Applied::Reconsider { save, .. } => accepted.accept(save),
                 Applied::Stale(_) => {}
             },
         )
@@ -155,7 +182,8 @@ pub(super) async fn apply(
             other => CallFailure::World(other),
         })?;
     match applied {
-        Some(Applied::Accepted { .. } | Applied::Refused(_)) => Ok(()),
+        Some(Applied::Accepted { .. } | Applied::Refused(_)) => Ok(None),
+        Some(Applied::Reconsider { refusal, .. }) => Ok(Some(refusal)),
         Some(Applied::Stale("cancelled")) | None => Err(CallFailure::Cancelled),
         Some(Applied::Stale(reason)) => Err(CallFailure::Stale(reason)),
     }

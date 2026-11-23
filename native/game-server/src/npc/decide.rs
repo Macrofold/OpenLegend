@@ -16,6 +16,7 @@ use crate::{
         macrofold::{BillingBinding, BillingMode},
     },
     store::{AdmittedJob, AttemptRequest, InferenceClass},
+    world::DelayedDecisionClock,
 };
 use openlegend_simulation::{
     encoding::sha256_hex,
@@ -229,6 +230,19 @@ pub(super) async fn run(
     openlegend_simulation::profile_body!(
         NPC,
         {
+            // The original route judgment is already part of this decision.
+            // A later handoff cannot acquire a new clock after a pause.
+            let configured_fallback = models
+                .escalation
+                .as_ref()
+                .filter(|_| {
+                    work.permit.is_none()
+                        && work
+                            .automatic
+                            .as_ref()
+                            .is_some_and(|trigger| trigger.discovery.is_none())
+                })
+                .map(|route| (route, game.world.delayed_decision_clock()));
             let mut stop = work.cancellation.clone();
             let mut collected = tokio::select! {
                 biased;
@@ -379,15 +393,11 @@ pub(super) async fn run(
             let mut selected = Vec::new();
             let mut escalation = 2;
             if include_actions {
-                let fallback = models.escalation.as_ref().filter(|_| {
-                    choose
-                        && work.automatic.is_some()
-                        && work.permit.is_none()
-                        && work.discovery().is_none()
-                        && escalation::has_action(&prepared)
-                });
-                let invalid_fallback =
-                    fallback.filter(|route| route.permits(escalation::Reason::InvalidOutput));
+                let fallback =
+                    configured_fallback.filter(|_| choose && escalation::has_action(&prepared));
+                let invalid_fallback = fallback
+                    .as_ref()
+                    .filter(|(route, _)| route.permits(escalation::Reason::InvalidOutput));
                 let accepted = action_attention(
                     game,
                     dispatch,
@@ -420,19 +430,58 @@ pub(super) async fn run(
                         }
                         if choose && let Some((offer, _)) = best {
                             let picked = (!offer.no_intervention).then_some(offer);
+                            if let Some(((route, clock), picked)) = fallback
+                                .as_ref()
+                                .filter(|(route, _)| {
+                                    route.permits(escalation::Reason::NativeRejection)
+                                })
+                                .zip(picked)
+                            {
+                                let Some(refused) = apply_choice(
+                                    game,
+                                    saves,
+                                    &work,
+                                    prepared.ticket.clone(),
+                                    picked,
+                                    true,
+                                    None,
+                                )
+                                .await?
+                                else {
+                                    return Ok(());
+                                };
+                                let eligible = Instant::now();
+                                let selected =
+                                    budget.reserve(picked.id.len()).map_err(response_capacity)?;
+                                let alias = (picked.id.clone(), selected);
+                                return escalation::reconsider_rejected(
+                                    game,
+                                    saves,
+                                    dispatch,
+                                    route,
+                                    work,
+                                    prepared,
+                                    alias,
+                                    refused,
+                                    eligible,
+                                    clock.clone(),
+                                )
+                                .await
+                                .map_err(|error| error.at("decision-escalation"));
+                            }
                             return finish_native(game, saves, work, prepared.ticket, picked).await;
                         }
-                        fallback.and_then(|route| {
+                        fallback.as_ref().and_then(|(route, clock)| {
                             let reason = escalation::reason(&prepared, &rated)?;
                             route
                                 .permits(reason)
-                                .then_some((route, rated_context, reason))
+                                .then_some((*route, clock, rated_context, reason))
                         })
                     }
                     Ok(Some(ActionAttention::InvalidOutput(context))) => {
-                        let route = invalid_fallback
+                        let (route, clock) = invalid_fallback
                             .ok_or_else(|| CallFailure::Invalid.at("action-attention"))?;
-                        Some((route, context, escalation::Reason::InvalidOutput))
+                        Some((*route, clock, context, escalation::Reason::InvalidOutput))
                     }
                     Ok(None) => None,
                     // A settled optional judgment can have unusable ratings. Keep
@@ -445,9 +494,18 @@ pub(super) async fn run(
                     }
                     Err(error) => return Err(error.at("action-attention")),
                 };
-                if let Some((route, context, reason)) = reconsider {
+                if let Some((route, clock, context, reason)) = reconsider {
                     return escalation::run(
-                        game, saves, dispatch, route, work, prepared, context, reason,
+                        game,
+                        saves,
+                        dispatch,
+                        route,
+                        work,
+                        prepared,
+                        context,
+                        reason,
+                        None,
+                        clock.clone(),
                     )
                     .await
                     .map_err(|error| error.at("decision-escalation"));
@@ -662,8 +720,10 @@ pub(super) async fn run(
                 work.cancellation,
                 work.deadline,
                 dispatch.previews().get(&work.job.job.id),
+                None,
             )
             .await
+            .map(|_| ())
             .map_err(|error| error.at("response-application"))
         },
         CallFailure::profile_outcome
@@ -868,23 +928,39 @@ async fn finish_native(
         saves.signal_view();
         return Ok(());
     };
+    apply_choice(game, saves, &work, ticket, choice, false, None)
+        .await
+        .map(|_| ())
+}
+
+async fn apply_choice(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    work: &Work,
+    ticket: Arc<openlegend_simulation::runtime::RuntimeNpcResponseTicket>,
+    choice: &prepare::NativeOffer,
+    reconsider: bool,
+    delayed_clock: Option<DelayedDecisionClock>,
+) -> Result<Option<super::apply::RefusedChoice>, CallFailure> {
     let mode = if choice.transition == "continue" {
         "enqueue"
     } else {
         choice.transition
     };
-    let payload = RuntimeNpcOperations::known_action(&choice.id, mode, game.host.budget())
-        .map_err(|error| CallFailure::World(error.into()).at("response-preparation"))?;
+    let payload =
+        RuntimeNpcOperations::known_action(&choice.id, mode, reconsider, game.host.budget())
+            .map_err(|error| CallFailure::World(error.into()).at("response-preparation"))?;
     super::apply::apply(
         saves,
         game,
         &work.job,
         ticket,
         payload,
-        work.permit,
-        work.cancellation,
+        work.permit.clone(),
+        work.cancellation.clone(),
         work.deadline,
         None,
+        delayed_clock,
     )
     .await
     .map_err(|error| error.at("response-application"))

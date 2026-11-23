@@ -849,6 +849,11 @@ impl Director {
                 "The reply was cancelled.",
                 "cancelled",
             ),
+            CallFailure::Stale("game-paused") => (
+                SpeechReplyStatus::Cancelled,
+                "The reply was cancelled when the game paused.",
+                "game-paused",
+            ),
             CallFailure::Stale(reason) => (
                 SpeechReplyStatus::Stale,
                 "The conversation changed before the reply could be used.",

@@ -1,7 +1,8 @@
 //! One stronger answer to an unresolved, already offered automatic choice.
 //! The original actor slot, preparation, evidence and native writer remain owners.
 
-use super::{Work, finish_native, generation_failure, prepare};
+use super::{Work, apply_choice, generation_failure, prepare};
+use crate::npc::apply::RefusedChoice;
 use crate::{
     boot::CurrentServer,
     decision_dispatch::{
@@ -19,7 +20,7 @@ use crate::{
     store::{
         AttemptAdmission, AttemptRequest, CommitError, InferenceClass, Store, TerminalOutcome,
     },
-    world::NpcDisclosureTurn,
+    world::{DelayedDecisionClock, NpcDisclosureTurn},
 };
 use openlegend_simulation::{
     encoding::{json_record_len, sha256_hex, write_json_record},
@@ -325,7 +326,9 @@ pub(super) fn reason(
 struct Disclosure {
     allowed: CallAuthority,
     dispatch_by: Instant,
+    clock: DelayedDecisionClock,
     fingerprint: String,
+    rejected: Option<RefusedChoice>,
     level_ceiling_micro_usd: u64,
 }
 
@@ -336,7 +339,7 @@ impl ProviderDisclosure for Disclosure {
         request: AttemptRequest,
     ) -> impl Future<Output = Result<AttemptAdmission, CommitError>> + Send + 'a {
         async move {
-            if Instant::now() >= self.dispatch_by {
+            if self.clock.interrupted() || Instant::now() >= self.dispatch_by {
                 return Ok(AttemptAdmission::Existing);
             }
             store
@@ -344,6 +347,7 @@ impl ProviderDisclosure for Disclosure {
                     request,
                     self.fingerprint.clone(),
                     self.level_ceiling_micro_usd,
+                    self.rejected.as_ref().map(|choice| choice.code.as_ref()),
                 )
                 .await
         }
@@ -355,11 +359,88 @@ impl ProviderDisclosure for Disclosure {
         stop: &watch::Receiver<bool>,
         start: &mut dyn FnMut(),
     ) -> Result<(), CallFailure> {
+        // The accepted clock and source share this native turn through the
+        // real callback that hands the request to the transport.
+        if self.clock.interrupted() {
+            return Err(CallFailure::Stale("game-paused"));
+        }
         if Instant::now() >= self.dispatch_by {
             return Err(CallFailure::Stale("higher-dispatch-deadline"));
         }
         self.allowed.start(turn, stop, start)
     }
+}
+
+pub(super) struct Rejected {
+    choice: RefusedChoice,
+    eligible: Instant,
+}
+
+pub(super) async fn reconsider_rejected(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    dispatch: &Arc<DecisionDispatch>,
+    route: &ConfiguredEscalation,
+    work: Work,
+    prepared: prepare::Prepared,
+    alias: (String, openlegend_simulation::host::ByteReservation),
+    choice: RefusedChoice,
+    eligible: Instant,
+    clock: DelayedDecisionClock,
+) -> Result<(), CallFailure> {
+    if clock.interrupted() {
+        return Err(CallFailure::Stale("game-paused"));
+    }
+    let decision_id = attempt_id(&work);
+    let before = work.deadline.min(eligible + Duration::from_secs(2));
+    let rejected = Rejected { choice, eligible };
+    let prepared = tokio::time::timeout_at(
+        before,
+        prepare::reconsider_choice(
+            game,
+            &work,
+            prepared,
+            alias,
+            &rejected.choice.code,
+            &decision_id,
+        ),
+    )
+    .await
+    .map_err(|_| CallFailure::Stale("higher-dispatch-deadline"))??;
+    // Finish the existing ordinary save before a contingent purchase. The
+    // action application has already released its turn and intake guard.
+    let mut cancelled = work.cancellation.clone();
+    tokio::select! {
+        biased;
+        _ = super::stopped(&mut cancelled) => return Err(CallFailure::Cancelled),
+        _ = clock.interruption() => return Err(CallFailure::Stale("game-paused")),
+        saved = game.world.when_durable(prepared.through, before) => {
+            saved.map_err(CallFailure::World)?;
+        }
+    }
+    // Reuse the installed bounded context renderer without asking for any
+    // further rating, relevance, embedding or interpretation.
+    let context = game
+        .cognition
+        .action_attention(&prepared.context.fields, &[], true, game.host.budget())
+        .map_err(generation_failure)?;
+    run(
+        game,
+        saves,
+        dispatch,
+        route,
+        work,
+        prepared,
+        Arc::new(context),
+        Reason::NativeRejection,
+        Some(rejected),
+        clock,
+    )
+    .await
+}
+
+fn attempt_id(work: &Work) -> String {
+    format!("{}:attempt:0:{STAGE}", work.job.job.id)
 }
 
 pub(super) async fn run(
@@ -371,13 +452,24 @@ pub(super) async fn run(
     prepared: prepare::Prepared,
     rated_context: Arc<BoundAttention>,
     reason: Reason,
+    rejected: Option<Rejected>,
+    clock: DelayedDecisionClock,
 ) -> Result<(), CallFailure> {
-    let dispatch_by = work.deadline.min(Instant::now() + Duration::from_secs(2));
+    if clock.interrupted() {
+        return Err(CallFailure::Stale("game-paused"));
+    }
+    let eligible = rejected
+        .as_ref()
+        .map_or_else(Instant::now, |value| value.eligible);
+    let dispatch_by = work.deadline.min(eligible + Duration::from_secs(2));
+    let deadline = work.deadline.min(eligible + Duration::from_secs(30));
     let budget = game.host.budget();
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
     struct ChoiceContext<'a> {
         reason: Reason,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        rejected: Option<&'a str>,
         decision_context: &'a Value,
         attention_policy: &'a Value,
         choices: indexmap::IndexMap<&'a str, &'a str>,
@@ -392,6 +484,7 @@ pub(super) async fn run(
         .map_err(super::response_capacity)?;
     let input = ChoiceContext {
         reason,
+        rejected: rejected.as_ref().map(|value| value.choice.code.as_ref()),
         decision_context: &rated_context.state["decisionContext"],
         attention_policy: &rated_context.state["attentionPolicy"],
         choices: native_offers
@@ -426,7 +519,7 @@ pub(super) async fn run(
     let prompt = String::from_utf8(encoded).map_err(|_| CallFailure::Invalid)?;
     drop(input);
     drop(rated_context);
-    let id = format!("{}:attempt:0:{STAGE}", work.job.job.id);
+    let id = attempt_id(&work);
     let request = provider::generation_request(
         &route.destination,
         MODEL,
@@ -466,7 +559,9 @@ pub(super) async fn run(
         requested_model: MODEL.into(),
         context_digest: sha256_hex(prompt.as_str().as_bytes()),
         macrofold_billing_mode: None,
-        deadline: work.deadline,
+        deadline,
+        // The fresh cut includes the accepted negative primary receipt.
+        // Dispatch waits for this prefix's ordinary durable acknowledgement.
         evidence_cut: prepared.through,
         preview: None,
     };
@@ -478,7 +573,9 @@ pub(super) async fn run(
     let disclosure = Disclosure {
         allowed,
         dispatch_by,
+        clock: clock.clone(),
         fingerprint: work.job.job.fingerprint.clone(),
+        rejected: rejected.map(|value| value.choice),
         level_ceiling_micro_usd: route.level_ceiling_micro_usd,
     };
     let rate = Arc::clone(&route.rate);
@@ -492,51 +589,74 @@ pub(super) async fn run(
     drop(schema);
     drop(prompt);
     drop(prompt_custody);
-    let choice = dispatch
-        .submit(
-            call,
-            disclosure,
-            work.cancellation.clone(),
-            move |body, http| {
-                let _choices = choices_custody;
-                let mut terminal = false;
-                let mut charged = None;
-                let mut observation = decode_provider(None, parser.clone(), |value| {
-                    terminal = matches!(
-                        value["status"].as_str(),
-                        Some("completed" | "failed" | "incomplete" | "cancelled")
-                    );
-                    if terminal
-                        && value["model"].as_str().is_some_and(|model| {
-                            model == MODEL
-                                || rate.reported_aliases.iter().any(|alias| alias == model)
-                        })
-                    {
-                        charged = rate.prices.amount(&value["usage"]);
-                    }
-                    if value["status"] != "completed" {
-                        return Err(CallFailure::Invalid);
-                    }
-                    let text = provider::direct_text(value, &parser).map_err(generation_failure)?;
-                    let _answer = parser
-                        .reserve(
-                            SqlCell::json_decode_bound(&text.text).ok_or(CallFailure::Invalid)?,
-                        )
-                        .map_err(super::response_capacity)?;
-                    decode_answer(&text.text, &ids)
-                })(body, http);
-                observation.completion_uncertain = !terminal;
-                observation.charged_microusd = charged;
-                observation
-            },
-        )
-        .await?;
+    let (stop_higher, higher_stop) = watch::channel(false);
+    let submission = dispatch.submit(call, disclosure, higher_stop, move |body, http| {
+        let _choices = choices_custody;
+        let mut terminal = false;
+        let mut charged = None;
+        let mut observation = decode_provider(None, parser.clone(), |value| {
+            terminal = matches!(
+                value["status"].as_str(),
+                Some("completed" | "failed" | "incomplete" | "cancelled")
+            );
+            if terminal
+                && value["model"].as_str().is_some_and(|model| {
+                    model == MODEL || rate.reported_aliases.iter().any(|alias| alias == model)
+                })
+            {
+                charged = rate.prices.amount(&value["usage"]);
+            }
+            if value["status"] != "completed" {
+                return Err(CallFailure::Invalid);
+            }
+            let text = provider::direct_text(value, &parser).map_err(generation_failure)?;
+            let _answer = parser
+                .reserve(SqlCell::json_decode_bound(&text.text).ok_or(CallFailure::Invalid)?)
+                .map_err(super::response_capacity)?;
+            decode_answer(&text.text, &ids)
+        })(body, http);
+        observation.completion_uncertain = !terminal;
+        observation.charged_microusd = charged;
+        observation
+    });
+    tokio::pin!(submission);
+    let mut cancellation = work.cancellation.clone();
+    let choice = match tokio::select! {
+        biased;
+        _ = super::stopped(&mut cancellation) => Err(CallFailure::Cancelled),
+        _ = clock.interruption() => Err(CallFailure::Stale("game-paused")),
+        result = &mut submission => Ok(result),
+    } {
+        Ok(result) => result?,
+        Err(reason) => {
+            stop_higher.send_replace(true);
+            // The transport owns settlement. Keep its original hold and do
+            // not discard a real spending/storage failure during cancellation.
+            if let Err(error) = submission.await
+                && matches!(error.cause().1, CallFailure::Commit(_))
+            {
+                return Err(error);
+            }
+            return Err(reason);
+        }
+    };
+    let work = Work { deadline, ..work };
     super::ensure_running(&work)?;
     if route.mode == Mode::Apply
         && let Some(offer) = choice.map(|index| &prepared.context.offers[index])
         && !offer.no_intervention
     {
-        return finish_native(game, saves, work, prepared.ticket, Some(offer)).await;
+        return apply_choice(
+            game,
+            saves,
+            &work,
+            prepared.ticket,
+            offer,
+            false,
+            Some(clock),
+        )
+        .await
+        .map(|_| ());
     }
     // Even a diagnostic or a deliberate continuation belongs to this exact
     // original evidence. The same currentness fence supplies no new authority.
@@ -545,6 +665,9 @@ pub(super) async fn run(
         .map_err(|_| CallFailure::Stale("decision-deadline"))?
         .map_err(CallFailure::World)?;
     super::ensure_running(&work)?;
+    if clock.interrupted() {
+        return Err(CallFailure::Stale("game-paused"));
+    }
     let final_scope = CallAuthority {
         source: prepared.ticket,
         speaker: None,
