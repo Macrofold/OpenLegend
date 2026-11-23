@@ -90,7 +90,7 @@ The release source tree was `add03d209c70`, executable `bc6115bb85f7`, and the o
 
 The Main cognition export stayed byte-identical after its five preparation constants moved to their existing shared owners. Both exported policies have SHA-256 `e01e0de373a85c2f5cea5d418f7d89a4f16ce9efe8e0ac649c4423dd6884c595`. Build type and network checks passed.
 
-The release exporter uses the shared creation tables and occupied-target query. The reviewed opening builder owns navigation readiness and its existing route reuse. The actual schema-only export matched `177475c5ace3`, and the current Main review matched `6185f000b263` byte for byte. Full and build type checks, formatting and the network boundary check passed.
+The release exporter uses the shared creation tables, occupied-target query and checkpoint archive selector. The reviewed opening builder owns navigation readiness and its existing route reuse. The actual schema-only export matched `177475c5ace3`, and the current Main review matched `6185f000b263` byte for byte. The archive selector still chooses the same current-format records in the same order. Full and build type checks, formatting and the network boundary check passed.
 
 ## October 14 main world and solo testing ground
 

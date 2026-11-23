@@ -72,7 +72,7 @@ import {
 import {
   restoreArchiveSelectionRows,
   restoreArchiveSelectionSql,
-} from '../apps/server/src/native-restore-archives.js';
+} from '../apps/server/src/restore-archive-selection.js';
 import {
   correctionAddressedPagesSql,
   correctionAliasPagesSql,

@@ -1,11 +1,16 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
 import type { SqlDatabase } from './sql-database.js';
 
-type Admission = Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
+interface SourceReservation {
+  release(): void;
+}
+interface Admission {
+  reserveConsumerBytes(bytes: number): SourceReservation;
+  reserveConsumerJson(bytes: Buffer): SourceReservation;
+}
 interface Section {
   budget: Admission;
-  guards: NativeWorldConsumer[];
+  guards: SourceReservation[];
   closed: boolean;
 }
 const preparation = new AsyncLocalStorage<Section>();
@@ -13,7 +18,7 @@ interface Frame {
   section: Section;
   closed: boolean;
   budget: Admission;
-  guards: NativeWorldConsumer[];
+  guards: SourceReservation[];
   parent?: Frame;
 }
 const frames = new AsyncLocalStorage<Frame>();
@@ -58,7 +63,7 @@ export async function withNativeSourcePreparation<T>(
   budget: Admission,
   read: () => Promise<T>,
 ): Promise<T> {
-  const owner = { budget, guards: [] as NativeWorldConsumer[], closed: false };
+  const owner = { budget, guards: [] as SourceReservation[], closed: false };
   try {
     return await preparation.run(owner, read);
   } finally {
@@ -75,7 +80,7 @@ export async function withNativeSqlPreparation<T>(
 ): Promise<T> {
   if (!db.withReadTransferAdmission)
     throw new Error('Native preparation requires admitted PostgreSQL transfers.');
-  const roots: NativeWorldConsumer[] = [];
+  const roots: SourceReservation[] = [];
   let active = true;
   try {
     return await withNativeSourcePreparation(budget, () =>
@@ -101,7 +106,7 @@ export async function withNativeSqlPreparation<T>(
   }
 }
 
-function release(frame: { guards: NativeWorldConsumer[]; closed: boolean }): void {
+function release(frame: { guards: SourceReservation[]; closed: boolean }): void {
   frame.closed = true;
   for (const guard of frame.guards) guard.release();
   frame.guards.length = 0;
@@ -115,7 +120,7 @@ export async function prepareNativeSource<T>(read: () => Promise<T>): Promise<T>
     section,
     closed: false,
     budget,
-    guards: [] as NativeWorldConsumer[],
+    guards: [] as SourceReservation[],
     parent: currentFrame(section),
   };
   try {
@@ -133,7 +138,7 @@ export function prepareNativeSourceSync<T>(read: () => T): T {
     section,
     closed: false,
     budget,
-    guards: [] as NativeWorldConsumer[],
+    guards: [] as SourceReservation[],
     parent: currentFrame(section),
   };
   try {
@@ -159,7 +164,7 @@ export function decodeSourceJson<T>(text: string, decode: () => T, copies = 1): 
 }
 
 function decodeOwnedJson<T>(
-  frame: { budget: Admission; guards: NativeWorldConsumer[] },
+  frame: { budget: Admission; guards: SourceReservation[] },
   text: string,
   decode: () => T,
   copies = 1,
