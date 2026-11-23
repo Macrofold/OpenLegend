@@ -11,13 +11,13 @@ Repository: `Macrofold/OpenLegend`. Research branch: `research/resonance-dawnwal
 | ID | Subject | State | Output / remaining scope |
 | --- | --- | --- | --- |
 | G193 | Final Fantasy Resonance | Complete | [Full dossier](dossiers/final-fantasy-resonance.md), reviewed and committed as `feb561affd05f181c7ec2854f76856f9f6f0315d`. R01–R14 and affirmative R15; five critic bodies, twenty Steam accounts, 63 distinct source URLs. |
-| G194 | The Blood of Dawnwalker | In progress | `dossiers/the-blood-of-dawnwalker.md`; full mechanics, lore, presentation, production, commercial, reception and conditional creation pass. |
-| G195 | Resident Evil Requiem / Resident Evil 9 | Queued, authorized | `dossiers/resident-evil-requiem.md`; verify exact product and edition scope before the full pass. |
+| G194 | The Blood of Dawnwalker | Complete | [Full dossier](dossiers/the-blood-of-dawnwalker.md), reviewed and committed as `0e8e300368375fcc9e26fd9c7bc9b5ab72f3002f`. R01–R14 and affirmative PC R15; seven critic bodies, ten Steam accounts, 99 distinct source URLs. Includes November 17 NG+ changes. |
+| G195 | Resident Evil Requiem / Resident Evil 9 | In progress | `dossiers/resident-evil-requiem.md`; exact-product verification and full research pass. |
 | G196 | Mewgenics | Queued, authorized | `dossiers/mewgenics.md`; begin after G195. |
 
-Active subject: G194. Independent research lanes cover mechanics; lore/presentation; reception; and production/business/creation. Shared index and roster changes have one writer. No later subject is counted complete from preliminary identity checks.
+Active subject: G195. Independent research lanes cover mechanics; lore/presentation; reception; and production/business/creation. Shared index and roster changes have one writer. No later subject is counted complete from preliminary identity checks.
 
-Next boundary: finish G194's substantive coverage, examine its actual diff, verify evidence and internal navigation, commit it, and record that commit before proceeding to G195. G193's relative links resolve against the base tree plus this scoped addition; unavailable private commercial data and blocked direct mod pages remain explicitly qualified.
+Next boundary: finish G195's substantive coverage, examine its actual diff, verify evidence and internal navigation, commit it, and record that commit before proceeding to G196. Both completed dossiers' relative links resolve against the base tree plus this scoped addition. Dawnwalker's launch claims are distinguished from updates 1.1/1.2, and time/hunger/lore/application integration was reviewed. Unavailable private commercial data, indexed-only Steam records and blocked direct mod pages remain explicitly qualified.
 
 ## Initial evidence and preservation boundary
 
@@ -36,3 +36,4 @@ Each dossier must contain substantive major-system coverage and several explaine
 Every dossier retains adjacent citations, source dates/types/access limits, an R01–R15 coverage map, worked-example labels, research-to-existing-owner routes and specific limits on transfer. No unsupported public financial result, copied sequel mechanic, invented playtest, fabricated video observation or assumed reception consensus counts as evidence.
 
 Final batch review will check all four outputs, their scoped completion records, roster/index links and source anchors. Automated game tests are not relevant to this prose-only change.
+
