@@ -410,14 +410,30 @@ impl CoreMutation<'_> {
             return Ok(Err(reason));
         }
         let attached = matches!(placement, Placement::Attached { .. });
-        let _source = self.journal.budget.reserve(source.len())?;
+        let world_custodian = world_source
+            .or(world_destination)
+            .filter(|storage| storage.root.actor.is_some())
+            .map(|storage| storage.root.id.as_str());
+        let _source = self
+            .journal
+            .budget
+            .reserve(source.len() + world_custodian.map_or(0, str::len))?;
         let source = source.to_owned();
+        let world_custodian = world_custodian.map(str::to_owned);
         let Some(moved) = self.relocate_stock(DirectRelocation {
             source: &source,
             destination: request.target_id,
             actor,
-            source_owner: world_source.is_none().then_some(actor),
-            destination_owner: world_destination.is_none().then_some(actor),
+            source_owner: if world_source.is_some() {
+                world_custodian.as_deref()
+            } else {
+                Some(actor)
+            },
+            destination_owner: if world_destination.is_some() {
+                world_custodian.as_deref()
+            } else {
+                Some(actor)
+            },
             item: request.item_id,
             quantity,
             cause,

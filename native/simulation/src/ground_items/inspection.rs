@@ -49,12 +49,27 @@ impl<'a> WorldStorage<'a> {
                 return None;
             }
             if let Some(Placement::World { revision, .. }) = root.placement.as_ref() {
+                // Only actual remains open another actor's inventory here. The
+                // observed contact and physical reach still bind that access.
+                if root.actor.as_ref().is_some_and(|body| {
+                    body.alive
+                        || !root
+                            .remains
+                            .as_ref()
+                            .is_some_and(|remains| remains.phase != "removed")
+                }) {
+                    return None;
+                }
                 let permitted = if root.container.is_some() {
                     crate::install::inventory_bag_access(root, &actor.id)
                 } else {
-                    super::is_item_pile(&state.installed.observation_rules.value().pile_kind, root)
+                    root.actor.is_some()
+                        || super::is_item_pile(
+                            &state.installed.observation_rules.value().pile_kind,
+                            root,
+                        )
                 };
-                if root.actor.is_some() || !permitted {
+                if !permitted {
                     return None;
                 }
                 root.world_support()?;
@@ -186,6 +201,7 @@ impl<'a> WorldStorage<'a> {
             self.actor.physical_life(),
             self.actor_placement_revision,
             actor_place,
+            self.root.physical_life(),
             root_place,
             self.placement_revision,
             self.geometry_revision,

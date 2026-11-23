@@ -141,6 +141,16 @@ The original TypeScript button could become disabled during an ordinary refresh.
 
 The final TypeScript `source-9` and Rust `rust-4` cases, diagnostic and earlier failures are under `nsc04-world-nested-container-20261122`. The final Rust executable SHA-256 is `237a71c42a1138e5c1a7297aafa58cdc0c7ee6df78d7862c01fc34c545608f89`. Its scoped source is retained over `326762a9b063de43207376953b8ee869740e9a74`. The shared browser bundle SHA-256 is `f7aafe4f5f3914b333d61d688619daf3a1653cda074ff9cdbdf43ad3a42e857f`. The locked Rust build, TypeScript, affected formatting and network checks passed. Both Rust listeners released their reservations and the disposable databases closed. No timing comparison ran.
 
+The `adjacent-inventory` case on that same executable also opened a carried bag without closing the outer store page. After a cold reopen it moved a loose fiber lot out of the store and back. Walking out of reach refused the page and a new move using the current command epoch. The saved original move receipt still resolved.
+
+#### Opening and moving belongings on remains
+
+An ordinary signed strike and final-blow confirmation left one saved dead NPC and a visible body with a two-unit cord lot. The previous stand-alone server showed the body and refused to open its belongings. The same actor-root check now permits current, physically placed remains. It checks current sight and reach, and every enclosing bag still checks its own access. Living belongings and guessed raw identities disclosed nothing.
+
+The stand-alone browser used **Open** and displayed the exact lot. Signed requests took one cord, inspected the updated page and returned it to the original lot. PostgreSQL recorded one split and one merge. Both recorded the dead NPC as the custodian at the time of the event. A fresh command using the old lot evidence refused. Exact repeat requests returned their saved results. The cold server recovered the strike and both transfer receipts and retained the original two-unit lot. This follows the same ordinary custody rule as the [TypeScript corpse pickup](rivals-and-contested-ground.md#observed-companion-loss-and-recovered-bow--october-14-2026).
+
+The refusal and successful caller are retained under `nsc04-remains-custody-20261122`. The successful Rust source tree was `f94ac175749fac814f08935ef541345aad403203` and executable SHA-256 was `262fdbe50d831c48ac2ac546cfd772218818ef83f3d9e8669fde887b097a3171`. The locked app and addon checks and stand-alone build passed. The warm and cold listeners released all reservations and the disposable databases closed. This case verifies an NPC body and its custody.
+
 ### The authored Watchpost recipe record — November 22, 2026
 
 The local Main opening loaded all 163 authored entities. In a signed-in browser, a player four metres from the real Broken Watchpost cache chose **Walk to and open**. The previous Rust build reached the cache and refused its recipe record with HTTP 503. The Source control and repaired Rust server opened all five items and returned the same recipe details, including the ingredients, output, 180 seconds of work, and authored limitations. The Rust page showed the authored item description. Source also added quantity and location text.
