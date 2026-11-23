@@ -100,7 +100,7 @@ pub use read_cut::{
 };
 mod restore;
 pub use restore::{
-    RestoreArchive, RestoreArchiveCategory, RestoreBinding, RestoreGrant, RestoreInput,
+    RestoreArchive, RestoreArchiveCategory, RestoreArchiveSelection, RestoreBinding, RestoreGrant, RestoreInput,
     RestoreMetadataInput, RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreMembership,
     RuntimeRestorePlacement,
 };
@@ -342,6 +342,7 @@ enum RuntimeAnswerBody {
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     KnownPlaces(Box<crate::simulation::KnownPlacesAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
+    SourceVersions(Box<crate::simulation::SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
     AppraisalOutcomes(Box<crate::response::AppraisalCreatesAnswer>),
@@ -512,6 +513,25 @@ impl RuntimeProviderInput {
 
     /// Transfer only the scoped, funded prior rows. The appraisal owner
     /// validates their exact identities and current format before using them.
+    /// Adopt the exact version plan built from the accepted SQL cut.
+    pub fn source_versions(
+        binding: crate::geometry::GeometryBinding,
+        plan: crate::received::SourceVersionPlan,
+        maximum: usize,
+        mut storage: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        let header = storage.split_off(0)?;
+        let answer = crate::simulation::SourceVersionsAnswer::adopt(binding, plan, maximum, storage)
+            .map_err(|error| match error {
+                crate::simulation::DriveError::Capacity => CapacityError.into(),
+                error => failure(error),
+            })?;
+        Ok(Self {
+            body: RuntimeAnswerBody::SourceVersions(Box::new(answer)),
+            custody: header,
+        })
+    }
+
     pub fn appraisal_outcomes(
         binding: crate::geometry::GeometryBinding,
         rows: Vec<crate::records::InstalledRow>,
@@ -634,6 +654,12 @@ fn provider_response(
                         return Err(failure("place capsules require their original request"));
                     }
                     ProviderResponse::known_places(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::SourceVersions(answer) => {
+                    if question.source_versions().is_none() {
+                        return Err(failure("version plan requires its original typed request"));
+                    }
+                    ProviderResponse::source_versions(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::PersonalHistory(answer) => {
                     if question.personal_history().is_none() {
@@ -1093,6 +1119,9 @@ impl RuntimeProvider {
         }
         if let Some(history) = question.personal_history_envelope() {
             return RuntimeJson::encode(&history, budget);
+        }
+        if let Some(versions) = question.source_versions_envelope() {
+            return RuntimeJson::encode(&versions, budget);
         }
         if let Some(sources) = question.npc_sources_envelope() {
             return RuntimeJson::encode(&sources, budget);

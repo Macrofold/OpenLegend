@@ -4,8 +4,8 @@ use super::*;
 pub use crate::{
     experience::RestorePrivacyInput,
     restore::{
-        ArchiveCategory as RestoreArchiveCategory, RestoreArchive, RestoreBinding, RestoreGrant,
-        RestoreMetadataInput,
+        ArchiveCategory as RestoreArchiveCategory, RestoreArchive, RestoreArchiveSelection,
+        RestoreBinding, RestoreGrant, RestoreMetadataInput,
     },
     simulation::restore::{RestoreInput, RestoreRetentionPreparation},
 };

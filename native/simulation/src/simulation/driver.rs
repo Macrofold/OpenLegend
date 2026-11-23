@@ -152,6 +152,7 @@ enum QuestionBody {
     ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
     AppraisalOutcomes(Box<crate::response::AppraisalCreatesRequest>),
     NpcSources(Arc<crate::capture::NpcSourcesRequest>),
+    SourceVersions(Arc<source_versions::SourceVersionsRequest>),
     KnownPlaces(Box<KnownPlacesRequest>),
     PersonalHistory {
         request: Arc<crate::experience::HistoryEditQuestion>,
@@ -422,6 +423,21 @@ impl ProviderQuestion {
         })
     }
 
+    pub(crate) fn source_versions(&self) -> Option<&Arc<source_versions::SourceVersionsRequest>> {
+        match &self.body {
+            QuestionBody::SourceVersions(request) => Some(request),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn source_versions_envelope(&self) -> Option<QuestionEnvelope<'_, source_versions::SourceVersionsRequest>> {
+        self.source_versions().map(|request| QuestionEnvelope {
+            kind: self.kind,
+            binding: self.binding,
+            value: request.as_ref(),
+        })
+    }
+
     pub(crate) fn npc_sources(&self) -> Option<&crate::capture::NpcSourcesRequest> {
         match &self.body {
             QuestionBody::NpcSources(request) => Some(request),
@@ -615,6 +631,7 @@ enum AnswerBody {
     NpcSources(Box<crate::capture::NpcSourcesAnswer>),
     KnownPlaces(Box<KnownPlacesAnswer>),
     PersonalHistory(Box<crate::experience::HistoryEditAnswer>),
+    SourceVersions(Box<SourceVersionsAnswer>),
     Maintenance(Box<crate::cognition::format::MaintenanceFormatAnswer>),
     ActivityHistory(Box<crate::activity::LearningHistoryAnswer>),
     AppraisalOutcomes(Box<crate::response::AppraisalCreatesAnswer>),
@@ -827,6 +844,22 @@ impl ProviderResponse {
             binding,
             body: AnswerBody::PersonalHistory(answer),
             _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn source_versions(
+        binding: GeometryBinding,
+        answer: Box<SourceVersionsAnswer>,
+        custody: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if answer.binding != binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::SourceVersions,
+            binding,
+            body: AnswerBody::SourceVersions(answer),
+            _reservation: custody,
         })
     }
 
@@ -2110,6 +2143,9 @@ impl OperationDriver {
                     }
                     AnswerBody::KnownPlaces(value) => {
                         (Some(Answer::KnownPlaces(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::SourceVersions(value) => {
+                        (Some(Answer::SourceVersions(*value)), Some(_reservation), None)
                     }
                     AnswerBody::PersonalHistory(value) => {
                         (Some(Answer::History(*value)), Some(_reservation), None)

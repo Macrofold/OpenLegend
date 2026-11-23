@@ -150,6 +150,16 @@ Final shutdown reports after releasing the listener, retained requests and share
 
 [Retained artwork recovery](game-asset-storage.md#stand-alone-world-artwork-selection) now covers a mismatched installed release and restoring exact saved pins after catalog permission was withdrawn. Other World operations sections and the managed due-capture comparison remain open under [NSC04-R5](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
 
+### Exact memory versions in Rust — November 22, 2026
+
+The signed receipt editor corrected the exact acquired speech, refused a foreign correction and a stale reference, and kept another actor's private rows intact. A walk completed while the read was held. The server used the same saved correction and forgetting records without sending a JSON packet between its Rust components.
+
+Scheduled review archived four original accounts. A live Load kept their exact revisions, preserved young and protected accounts, and returned the original receipt on replay. The stopped semantic recovery case refused a SQL write with the database unchanged, retried successfully, preserved the original held attempt and matched the allowed vector. The withdrawn source stayed absent, and movement saved after reopening.
+
+These cases used base `2c8cfb447`, patch `e98862f93b4f` and executable `6f84ec13018f`. Results in `nsc04-typed-source-versions-20261122/caller-evidence.tar.gz` (`7c4ed07f9588`) are `receipt-verified` (`47027d0c9451`), `archive-baseline` (`691eff5da3b6`) and `stopped-verified` (`2ae60e6f5bff`). The locked Rust build, TypeScript build type check and network boundary check passed. Controlled local provider cost was $0.
+
+A separate paused fixture captured 2,080 aged optional accounts. Stopped recovery refused that checkpoint with `RolledBack(InvalidRecord)` on both the prior encoded executable (`6d64333ed645`) and the typed executable. The pressure case remains open, including the later retention round that would use the inactive version-plan request.
+
 ### Managed due-capture attempts — November 22, 2026
 
 The standard 16 GiB worker ran the 180-second opening with one player, ten human NPCs, ten deer, five hares and 1,246 scenery records on `b99919940`. The first run (`fb06738c…`) stopped when the comparison expected a private checksum in the operator’s catalog. The retry (`55c2e922…`, run `f9a31028…`) verified the TypeScript file through its actual reader. The file held 12,263 rows and 30.35 MB, with 815 ms between the observed staging and publication notices. TypeScript recovered the last walk’s receipt after restart. Rust saved 34 walks and both replies and published its file. The comparison then asked for the operator catalog after closing the last controlling stream. Rust had begun the [departure transition](multiplayer-entry-maintenance.md#stand-alone-rust-departure-after-connection-loss--november-22-2026) and returned `403 stale-scope`. Four cases never started. The 27 collected artifacts matched their hashes, the job cleaned up, and the retained worker stopped. The retry settled an estimated $0.290434 of compute and used $0 for providers.

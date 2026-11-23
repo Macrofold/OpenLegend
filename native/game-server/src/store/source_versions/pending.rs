@@ -3,6 +3,8 @@
 
 use super::*;
 use openlegend_simulation::received::SourceVersionArchiveChange;
+use openlegend_simulation::records::ChangedRows;
+use serde_json::value::RawValue;
 
 #[derive(Default)]
 pub(super) struct Owner {
@@ -95,8 +97,7 @@ impl Owner {
                         return Err(StoreError::InvalidRecord);
                     }
                     let revision = text(columns.revision)?.to_owned();
-                    let mut metadata: Metadata =
-                        parse(&json_record(metadata).map_err(|_| StoreError::InvalidRecord)?)?;
+                    let mut metadata = Metadata::from_cell(metadata)?;
                     if kind == Kind::Memory {
                         // Impressions have no archive-accounting metadata but
                         // their exact personal dependencies remain selectable.

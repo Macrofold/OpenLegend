@@ -6,7 +6,7 @@ use std::borrow::Cow;
 /// The accepted predecessor of the actual source-version question. Borrowing
 /// this inside the native turn leaves no temporary world or save copy.
 pub struct RuntimeSourceVersionRead<'a> {
-    pub request: &'a str,
+    pub request: &'a crate::simulation::SourceVersionsRequest,
     pub binding: crate::geometry::GeometryBinding,
     pub world_id: &'a str,
     pub generation: &'a str,
@@ -35,7 +35,14 @@ impl RuntimeSourceVersionRead<'_> {
 
 impl RuntimeProvider {
     pub fn asks_source_versions(&self) -> Result<bool, RuntimeError> {
-        Ok(self.question()?.kind() == crate::simulation::ProviderKind::SourceVersions)
+        Ok(self.question()?.source_versions().is_some())
+    }
+
+    /// Keep the exact already-funded inactive reader while its savepoint is
+    /// open. A live reader instead borrows its accepted pending-save cut.
+    pub fn checkpoint_source_versions(&self) -> Result<Option<Arc<crate::simulation::SourceVersionsRequest>>, RuntimeError> {
+        let question = self.question()?;
+        Ok(question.source_versions().filter(|request| request.restore().is_some()).cloned())
     }
 
     pub fn asks_npc_sources(&self) -> Result<bool, RuntimeError> {
@@ -213,19 +220,6 @@ impl RuntimeNpcSourceRead<'_> {
     }
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SourceHeader<'a> {
-    binding: crate::geometry::GeometryBinding,
-    #[serde(borrow)]
-    world_id: Cow<'a, str>,
-    #[serde(borrow)]
-    generation: Cow<'a, str>,
-    base_cut: u64,
-    #[serde(default)]
-    restore_projection: Option<&'a serde_json::value::RawValue>,
-}
-
 impl NativeWorldSession {
     /// Lend the exact pending predecessor of an ordinary finalizer to the
     /// storage owner. Restore has its own checkpoint predecessor.
@@ -236,22 +230,10 @@ impl NativeWorldSession {
     ) -> Result<Option<T>, RuntimeError> {
         self.require_active()?;
         let question = ticket.question()?;
-        if question.kind() != crate::simulation::ProviderKind::SourceVersions {
+        let Some(request) = question.source_versions() else {
             return Ok(None);
-        }
-        #[derive(Deserialize)]
-        struct Envelope<'a> {
-            #[serde(borrow)]
-            value: SourceHeader<'a>,
-        }
-        let text = question
-            .json()
-            .ok_or_else(|| failure("missing source request"))?;
-        let _storage = self.budget.reserve(text.len()).map_err(failure)?;
-        let Envelope { value: header } = serde_json::from_str(text).map_err(failure)?;
-        if question.binding() != header.binding
-            || header.base_cut != header.binding.base_cut
-            || header.restore_projection.is_some()
+        };
+        if question.binding() != request.binding || request.restore().is_some()
         {
             return Err(failure(
                 "source request is not an ordinary accepted predecessor",
@@ -259,13 +241,13 @@ impl NativeWorldSession {
         }
         let (metadata, save) = self
             .session
-            .source_versions_read(header.binding, &header.world_id, &header.generation)
+            .source_versions_read(request.binding, &request.world_id, &request.generation)
             .map_err(failure)?;
         Ok(Some(prepare(RuntimeSourceVersionRead {
-            request: text,
-            binding: header.binding,
-            world_id: &header.world_id,
-            generation: &header.generation,
+            request,
+            binding: request.binding,
+            world_id: &request.world_id,
+            generation: &request.generation,
             durable_revision: metadata.durable_revision,
             in_flight_through: metadata.in_flight_through,
             save,

@@ -8,7 +8,7 @@ use crate::store::{
     CurrentOpening, DurableHead, Store, StoreError, StoreResult, durable_head, sql_ordinal,
 };
 use openlegend_simulation::records::{ChangedRows, SqlCell};
-use openlegend_simulation::runtime::RuntimeRecallDecoder;
+use openlegend_simulation::runtime::{RestoreArchiveSelection, RuntimeRecallDecoder};
 use serde_json::value::RawValue;
 use std::collections::{BTreeMap, BTreeSet};
 use tokio_postgres::Transaction;
@@ -24,71 +24,29 @@ impl Store {
         projection: &RawValue,
         consume: impl std::future::Future<Output = StoreResult<R>>,
     ) -> StoreResult<R> {
-        self.checkpoint_view(tx, prospective, projection, None, None, consume)
-            .await
-    }
-
-    /// Perspective and version readers require exact derived ownership when
-    /// their private canonical predecessor differs from the staged baseline.
-    pub(crate) async fn with_checkpoint_recall_view<R>(
-        &self,
-        tx: &Transaction<'_>,
-        prospective: &DurableHead,
-        projection: &RawValue,
-        decoder: &RuntimeRecallDecoder<'_>,
-        archives: Option<&RawValue>,
-        consume: impl std::future::Future<Output = StoreResult<R>>,
-    ) -> StoreResult<R> {
-        self.checkpoint_view(tx, prospective, projection, Some(decoder), archives, consume)
-            .await
-    }
-
-    pub(crate) async fn with_checkpoint_recall_rows<R>(
-        &self,
-        tx: &Transaction<'_>,
-        prospective: &DurableHead,
-        changes: &ChangedRows,
-        decoder: &RuntimeRecallDecoder<'_>,
-        consume: impl std::future::Future<Output = StoreResult<R>>,
-    ) -> StoreResult<R> {
-        if durable_head(tx).await?.as_ref() != Some(prospective) {
-            return Err(StoreError::StaleCut);
-        }
-        self.checkpoint_view_rows(tx, prospective, changes, Some(decoder), None, consume)
-            .await
-    }
-
-    async fn checkpoint_view<R>(
-        &self,
-        tx: &Transaction<'_>,
-        prospective: &DurableHead,
-        projection: &RawValue,
-        decoder: Option<&RuntimeRecallDecoder<'_>>,
-        archives: Option<&RawValue>,
-        consume: impl std::future::Future<Output = StoreResult<R>>,
-    ) -> StoreResult<R> {
-        if durable_head(tx).await?.as_ref() != Some(prospective) {
-            return Err(StoreError::StaleCut);
-        }
         let _workspace = self
             .budget
             .reserve(SqlCell::json_decode_bound(projection.get()).ok_or(StoreError::InvalidRecord)?)
             .map_err(|_| StoreError::Capacity)?;
         let changes: ChangedRows =
             serde_json::from_str(projection.get()).map_err(|_| StoreError::InvalidRecord)?;
-        self.checkpoint_view_rows(tx, prospective, &changes, decoder, archives, consume)
-            .await
+        self.with_checkpoint_rows(tx, prospective, &changes, None, None, consume).await
     }
 
-    async fn checkpoint_view_rows<R>(
+    /// Run read-only recovery preparation through the actual typed private
+    /// record cut and selected archives before rolling its SQL savepoint back.
+    pub(crate) async fn with_checkpoint_rows<R>(
         &self,
         tx: &Transaction<'_>,
         prospective: &DurableHead,
         changes: &ChangedRows,
         decoder: Option<&RuntimeRecallDecoder<'_>>,
-        archives: Option<&RawValue>,
+        archives: Option<RestoreArchiveSelection<'_>>,
         consume: impl std::future::Future<Output = StoreResult<R>>,
     ) -> StoreResult<R> {
+        if durable_head(tx).await?.as_ref() != Some(prospective) {
+            return Err(StoreError::StaleCut);
+        }
         self.validate_rows(changes)?;
         let refresh_dependencies = decoder.is_some()
             && changes
@@ -119,7 +77,7 @@ impl Store {
         let answer = async {
             self.write_records(tx, world, revision, changes).await?;
             if let Some(archives) = archives {
-                self.apply_checkpoint_archive_baseline(tx, prospective, archives.get())
+                self.apply_checkpoint_archive_selection(tx, prospective, archives.rows().count(), archives.rows())
                     .await?;
             }
             if let Some(decoder) = decoder.filter(|_| refresh_dependencies) {

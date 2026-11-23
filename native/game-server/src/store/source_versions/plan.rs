@@ -6,7 +6,9 @@ use super::pending::{Charge, Overlay, fund};
 use super::*;
 use crate::store::read::admitted_query;
 use crate::store::schema::{SourceVersionAccountQueries, SourceVersionStatements};
+use openlegend_simulation::encoding::json_record;
 use openlegend_simulation::host::ByteBudget;
+use openlegend_simulation::received::{SourceVersionChange, SourceVersionPlan};
 
 pub(super) struct Input<'a, 'tx> {
     pub world: &'a str,
@@ -16,36 +18,6 @@ pub(super) struct Input<'a, 'tx> {
     pub sql: &'a SourceVersionStatements,
     pub pending: &'a Overlay<'a>,
     pub custody: &'a mut ByteReservation,
-}
-
-#[derive(Serialize)]
-pub(super) struct Reply {
-    pub binding: GeometryBinding,
-    pub plan: Plan,
-}
-
-#[derive(Serialize)]
-pub(super) struct Plan {
-    changes: Vec<Change>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Change {
-    actor_id: String,
-    kind: Kind,
-    id: String,
-    revision: String,
-    expected_prior: Option<Charge>,
-    desired: Option<Desired>,
-}
-
-#[derive(Serialize)]
-struct Desired {
-    #[serde(flatten)]
-    charge: Charge,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    payload: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -102,7 +74,7 @@ impl Input<'_, '_> {
     pub(super) async fn prepare(
         &mut self,
         mut changed: BTreeMap<(Kind, String), Mutation>,
-    ) -> StoreResult<Plan> {
+    ) -> StoreResult<SourceVersionPlan> {
         self.fill_predecessors(&mut changed).await?;
         let mut affected = BTreeSet::new();
         let mut changed_owners = BTreeSet::new();
@@ -155,9 +127,7 @@ impl Input<'_, '_> {
             affected.insert(Version { source, revision });
         }
         if affected.is_empty() {
-            return Ok(Plan {
-                changes: Vec::new(),
-            });
+            return Ok(SourceVersionPlan::new(Vec::new()));
         }
 
         let mut future = BTreeMap::new();
@@ -302,34 +272,22 @@ impl Input<'_, '_> {
             let desired = match (old, next) {
                 (_, None) => None,
                 (Some(prior), Some(category)) if prior.category == category => continue,
-                (Some(prior), Some(category)) => Some(Desired {
-                    charge: Charge {
-                        category,
-                        bytes: prior.bytes,
-                    },
-                    payload: None,
-                }),
+                (Some(prior), Some(category)) => Some((category, prior.bytes, None)),
                 (None, Some(category)) => {
                     let payload = bodies.remove(&key).ok_or(StoreError::StaleCut)?;
-                    Some(Desired {
-                        charge: Charge {
-                            category,
-                            bytes: payload.len() as u64,
-                        },
-                        payload: Some(payload),
-                    })
+                    Some((category, payload.len() as u64, Some(payload)))
                 }
             };
-            result.push(Change {
-                actor_id: key.source.actor_id,
-                kind: key.source.kind,
-                id: key.source.id,
-                revision: key.revision,
-                expected_prior: old,
+            result.push(SourceVersionChange::new(
+                key.source.actor_id,
+                kind_name(key.source.kind).to_owned(),
+                key.source.id,
+                key.revision,
+                old.map(|prior| (prior.category, prior.bytes)),
                 desired,
-            });
+            ).map_err(|_| StoreError::InvalidRecord)?);
         }
-        Ok(Plan { changes: result })
+        Ok(SourceVersionPlan::new(result))
     }
 
     fn queries(&self, kind: Kind) -> &'_ SourceVersionAccountQueries {

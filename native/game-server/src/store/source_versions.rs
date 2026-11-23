@@ -3,18 +3,17 @@
 //! rows, dependency classes and original bytes from the fixed SQL cut.
 
 use super::{Store, StoreError, StoreResult, durable_head, ordinal};
-use openlegend_simulation::encoding::{json_record, json_record_len, sha256_hex};
+use openlegend_simulation::encoding::{json_record_len, sha256_hex};
 use openlegend_simulation::experience::{PersonalSourceKind as Kind, PersonalSourceRef};
 use openlegend_simulation::geometry::GeometryBinding;
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::received::AccountClass;
-use openlegend_simulation::records::{ChangedRows, SqlCell};
+use openlegend_simulation::records::SqlCell;
 use openlegend_simulation::runtime::{
-    RuntimeProvider, RuntimeProviderInput, RuntimeRecallDecoder, RuntimeSourceVersionRead,
+    RuntimeProviderInput, RuntimeRecallDecoder, RuntimeSourceVersionRead,
 };
+use openlegend_simulation::simulation::SourceVersionsRequest;
 use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
-use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 use tokio_postgres::Transaction;
@@ -79,69 +78,6 @@ struct Mutation {
     prior: Option<Account>,
     create: bool,
     expired: bool,
-}
-
-#[derive(Deserialize)]
-struct Envelope<'a> {
-    #[serde(borrow)]
-    value: Request<'a>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Request<'a> {
-    binding: GeometryBinding,
-    #[serde(borrow)]
-    world_id: Cow<'a, str>,
-    #[serde(borrow)]
-    generation: Cow<'a, str>,
-    base_cut: u64,
-    cuts: Vec<PrivacyCut>,
-    #[serde(borrow)]
-    records: Records<'a>,
-    #[serde(borrow)]
-    personal_predecessors: Vec<Predecessor<'a>>,
-    maximum_transfer_bytes: usize,
-    restore_projection: Option<Box<RawValue>>,
-    archive_baseline: Option<Box<RawValue>>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct PrivacyCut {
-    actor_id: String,
-    forgotten: BTreeSet<String>,
-}
-
-#[derive(Deserialize)]
-struct Records<'a> {
-    #[serde(borrow)]
-    writes: BTreeMap<&'a str, Vec<Incoming<'a>>>,
-    deletes: BTreeMap<String, Vec<String>>,
-    #[serde(default)]
-    expired: BTreeMap<String, Vec<String>>,
-}
-
-#[derive(Deserialize)]
-struct Incoming<'a> {
-    id: String,
-    #[serde(borrow)]
-    payload: Cow<'a, str>,
-    #[serde(borrow)]
-    extra: Vec<&'a RawValue>,
-    create: bool,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Predecessor<'a> {
-    table: String,
-    id: String,
-    actor_id: String,
-    payload: String,
-    #[serde(borrow)]
-    extra: Vec<&'a RawValue>,
-    encoded_bytes: usize,
 }
 
 struct Columns {
@@ -233,23 +169,13 @@ impl Store {
         &self,
         read: RuntimeSourceVersionRead<'_>,
     ) -> StoreResult<PreparedSourceVersions> {
-        let allowance = SqlCell::json_decode_bound(read.request)
-            .and_then(|bytes| bytes.checked_mul(2))
-            .ok_or(StoreError::Capacity)?;
-        let mut custody = self
-            .budget
-            .reserve(allowance)
-            .map_err(|_| StoreError::Capacity)?;
-        let Envelope { value: request } =
-            serde_json::from_str(read.request).map_err(|_| StoreError::InvalidRecord)?;
-        if request.maximum_transfer_bytes == 0
-            || request.restore_projection.is_some()
-            || request.archive_baseline.is_some()
-        {
+        let request = read.request;
+        if request.maximum_transfer_bytes == 0 {
             return Err(StoreError::InvalidRecord);
         }
         let maximum = request.maximum_transfer_bytes;
-        let (forgotten, changed) = self.source_version_inputs(request)?;
+        let mut custody = self.budget.reserve(0).map_err(|_| StoreError::Capacity)?;
+        let (forgotten, changed) = self.source_version_inputs(request, &mut custody)?;
         let (prefix, suffix) = read.pending_rows();
         if prefix.is_some() != read.in_flight_through.is_some() {
             return Err(StoreError::StaleCut);
@@ -286,60 +212,57 @@ impl Store {
 
     fn source_version_inputs(
         &self,
-        mut request: Request<'_>,
+        request: &SourceVersionsRequest,
+        custody: &mut ByteReservation,
     ) -> StoreResult<(
         BTreeMap<String, BTreeSet<String>>,
         BTreeMap<(Kind, String), Mutation>,
     )> {
         let mut forgotten = BTreeMap::new();
-        for cut in request.cuts {
-            if forgotten.insert(cut.actor_id, cut.forgotten).is_some() {
+        for (actor, ids) in request.forgotten() {
+            let bytes = ids.iter().try_fold(actor.len(), |n, id| n.checked_add(id.len()))
+                .ok_or(StoreError::Capacity)?;
+            pending::fund(custody, bytes, ids.len().checked_add(1).ok_or(StoreError::Capacity)?)?;
+            if forgotten.insert(actor.to_owned(), ids.iter().cloned().collect()).is_some() {
                 return Err(StoreError::InvalidRecord);
             }
         }
+        let records = &request.records;
         let mut changed = BTreeMap::<(Kind, String), Mutation>::new();
         for kind in KINDS {
             let table = kind.table();
             let columns = self.source_columns(kind)?;
-            for id in request.records.deletes.remove(table).into_iter().flatten() {
-                changed.entry((kind, id)).or_default();
+            for id in records.deletes.get(table).into_iter().flatten() {
+                pending::fund(custody, id.len(), 1)?;
+                changed.entry((kind, id.clone())).or_default();
             }
-            for id in request.records.expired.remove(table).into_iter().flatten() {
-                changed.entry((kind, id)).or_default().expired = true;
+            for id in records.expired.get(table).into_iter().flatten() {
+                pending::fund(custody, id.len(), 1)?;
+                changed.entry((kind, id.clone())).or_default().expired = true;
             }
-            for row in request.records.writes.remove(table).into_iter().flatten() {
-                let next = columns.account(kind, &row.id, &row.payload, &row.extra, None)?;
-                let change = changed.entry((kind, row.id)).or_default();
+            for row in records.writes.get(table).into_iter().flatten() {
+                let next = columns.account(kind, &row.id, &row.payload, &row.extra, custody)?;
+                let change = changed.entry((kind, row.id.clone())).or_default();
                 if change.next.replace(next).is_some() {
                     return Err(StoreError::InvalidRecord);
                 }
                 change.create = row.create;
             }
         }
-        if !request.records.writes.is_empty()
-            || !request.records.deletes.is_empty()
-            || !request.records.expired.is_empty()
-        {
-            return Err(StoreError::InvalidRecord);
-        }
-        for row in request.personal_predecessors {
-            let kind = KINDS
-                .into_iter()
-                .find(|kind| kind.table() == row.table)
-                .ok_or(StoreError::InvalidRecord)?;
+        for row in request.predecessors() {
+            let kind = row.header().reference.kind;
+            pending::fund(custody, row.row_id().len(), 0)?;
             // Other already-touched canonical owners are not in this closure.
-            let Some(change) = changed.get_mut(&(kind, row.id.clone())) else {
+            let Some(change) = changed.get_mut(&(kind, row.row_id().to_owned())) else {
                 continue;
             };
-            if row.payload.len() != row.encoded_bytes {
-                return Err(StoreError::InvalidRecord);
-            }
             let columns = self.source_columns(kind)?;
-            let mut prior = columns.account(kind, &row.id, &row.payload, &row.extra, None)?;
-            if prior.key.source.actor_id != row.actor_id {
+            let mut prior = columns.account(kind, row.row_id(), row.payload(), row.columns(), custody)?;
+            if prior.key.source.actor_id != row.header().actor_id {
                 return Err(StoreError::InvalidRecord);
             }
-            prior.payload = Some(row.payload);
+            pending::fund(custody, row.payload().len(), 0)?;
+            prior.payload = Some(row.payload().to_owned());
             if change.prior.replace(prior).is_some() {
                 return Err(StoreError::InvalidRecord);
             }
@@ -358,72 +281,39 @@ impl Store {
         &self,
         tx: &Transaction<'_>,
         head: &super::DurableHead,
-        provider: &RuntimeProvider,
+        request: &SourceVersionsRequest,
         decoder: &RuntimeRecallDecoder<'_>,
     ) -> StoreResult<RuntimeProviderInput> {
-        if !provider
-            .asks_source_versions()
-            .map_err(|_| StoreError::StaleCut)?
+        if request.binding.base_cut != 0
+            || request.world_id != head.world_id
+            || request.generation != head.generation
+            || request.maximum_transfer_bytes == 0
         {
-            return Err(StoreError::InvalidRecord);
+            return Err(StoreError::StaleCut);
         }
-        let (read, projection, baseline) = provider
-            .with_request(|text| {
-                let size = SqlCell::json_decode_bound(text)
-                    .and_then(|bytes| bytes.checked_mul(2))
-                    .ok_or(StoreError::Capacity)?;
-                let custody = self
-                    .budget
-                    .reserve(size)
-                    .map_err(|_| StoreError::Capacity)?;
-                let Envelope { value: mut request } =
-                    serde_json::from_str(text).map_err(|_| StoreError::InvalidRecord)?;
-                if request.base_cut != 0
-                    || request.binding.base_cut != 0
-                    || request.world_id != head.world_id
-                    || request.generation != head.generation
-                    || request.maximum_transfer_bytes == 0
-                {
-                    return Err(StoreError::StaleCut);
-                }
-                let projection = request
-                    .restore_projection
-                    .take()
-                    .ok_or(StoreError::InvalidRecord)?;
-                let baseline = request
-                    .archive_baseline
-                    .take()
-                    .ok_or(StoreError::InvalidRecord)?;
-                let binding = request.binding;
-                let maximum = request.maximum_transfer_bytes;
-                let (forgotten, changed) = self.source_version_inputs(request)?;
-                Ok((
-                    PreparedSourceVersions {
-                        binding,
-                        world: head.world_id.clone(),
-                        generation: head.generation.clone(),
-                        revision: head.revision,
-                        in_flight_through: None,
-                        maximum,
-                        forgotten,
-                        changed,
-                        pending: [pending::Owner::default(), pending::Owner::default()],
-                        custody,
-                    },
-                    projection,
-                    baseline,
-                ))
-            })
-            .map_err(|_| StoreError::StaleCut)??;
-        self.with_checkpoint_recall_view(
+        let (projection, baseline) = request.restore().ok_or(StoreError::InvalidRecord)?;
+        let mut custody = self.budget.reserve(0).map_err(|_| StoreError::Capacity)?;
+        let (forgotten, changed) = self.source_version_inputs(request, &mut custody)?;
+        let read = PreparedSourceVersions {
+            binding: request.binding,
+            world: head.world_id.clone(),
+            generation: head.generation.clone(),
+            revision: head.revision,
+            in_flight_through: None,
+            maximum: request.maximum_transfer_bytes,
+            forgotten,
+            changed,
+            pending: [pending::Owner::default(), pending::Owner::default()],
+            custody,
+        };
+        self.with_checkpoint_rows(
             tx,
             head,
-            &projection,
-            decoder,
-            Some(&baseline),
+            projection,
+            Some(decoder),
+            Some(baseline),
             self.finish_source_versions(tx, read, false),
-        )
-        .await
+        ).await
     }
 
     pub(crate) async fn read_source_versions(
@@ -469,22 +359,10 @@ impl Store {
             pending: &pending,
             custody: &mut read.custody,
         };
-        let reply = plan::Reply {
-            binding: read.binding,
-            plan: inputs.prepare(read.changed).await?,
-        };
-        let len = json_record_len(&reply).map_err(|_| StoreError::InvalidRecord)?;
-        if len > read.maximum {
-            return Err(StoreError::Capacity);
-        }
-        let mut custody = budget
-            .reserve(len.checked_mul(2).ok_or(StoreError::Capacity)?)
-            .map_err(|_| StoreError::Capacity)?;
-        let json = json_record(&reply).map_err(|_| StoreError::InvalidRecord)?;
-        custody
-            .resize(json.capacity())
-            .map_err(|_| StoreError::Capacity)?;
-        Ok(RuntimeProviderInput::new(json, custody))
+        let plan = inputs.prepare(read.changed).await?;
+        drop((read.pending, read.forgotten, read.world, read.generation));
+        RuntimeProviderInput::source_versions(read.binding, plan, read.maximum, read.custody)
+            .map_err(|error| if error.is_capacity() { StoreError::Capacity } else { StoreError::InvalidRecord })
     }
 }
 
@@ -494,31 +372,48 @@ impl Columns {
         kind: Kind,
         id: &str,
         payload: &str,
-        values: &[&RawValue],
-        previous: Option<String>,
+        values: &[SqlCell],
+        custody: &mut ByteReservation,
     ) -> StoreResult<Account> {
-        let get = |at| {
-            values
-                .get(at)
-                .map(|value: &&RawValue| value.get())
-                .ok_or(StoreError::InvalidRecord)
-        };
+        let get = |at: usize| values.get(at).ok_or(StoreError::InvalidRecord);
+        let text = |at| get(at)?.as_str().ok_or(StoreError::InvalidRecord);
+        let metadata = get(self.metadata)?;
+        let metadata_bytes = json_record_len(metadata).map_err(|_| StoreError::InvalidRecord)?;
+        pending::fund(custody, metadata_bytes.checked_add(id.len()).ok_or(StoreError::Capacity)?, 1)?;
         let source = account_record(kind, id)?;
-        if parse::<String>(get(self.actor)?)? != source.actor_id
-            || parse::<String>(get(self.source)?)? != source.id
-        {
+        if text(self.actor)? != source.actor_id || text(self.source)? != source.id {
             return Err(StoreError::InvalidRecord);
         }
-        let revision = parse::<String>(get(self.revision)?)?;
+        let revision = text(self.revision)?.to_owned();
         if revision != sha256_hex(payload.as_bytes()) {
             return Err(StoreError::InvalidRecord);
         }
         Ok(Account {
             key: Version { source, revision },
-            metadata: parse(get(self.metadata)?)?,
-            category: category(&parse::<String>(get(self.category)?)?)?,
+            metadata: Metadata::from_cell(metadata)?,
+            category: category(text(self.category)?)?,
             bytes: payload.len(),
-            payload: previous,
+            payload: None,
         })
+    }
+}
+
+impl Metadata {
+    fn from_cell(value: &SqlCell) -> StoreResult<Self> {
+        let array = |key| value.get(key).and_then(SqlCell::as_array).ok_or(StoreError::InvalidRecord);
+        let text = |slot: &SqlCell, key| slot.get(key).and_then(SqlCell::as_str)
+            .map(str::to_owned).ok_or(StoreError::InvalidRecord);
+        let versions = array("versions")?.iter().map(|row| {
+            if row.as_object().is_none_or(|fields| fields.len() != 3) {
+                return Err(StoreError::InvalidRecord);
+            }
+            let kind = row.get("kind").and_then(SqlCell::as_str).and_then(source_kind)
+                .ok_or(StoreError::InvalidRecord)?;
+            Ok(PersonalSourceRef { kind, id: text(row, "id")?, revision: text(row, "revision")? })
+        }).collect::<StoreResult<_>>()?;
+        let learning = array("learning")?.iter().map(|row| Ok(Learning {
+            kind: text(row, "kind")?, id: text(row, "id")?,
+        })).collect::<StoreResult<_>>()?;
+        Ok(Self { versions, learning })
     }
 }

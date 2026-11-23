@@ -42,10 +42,8 @@ mod save;
 pub(crate) use residency::{PackedTemporalSave, PreparedTemporalResidency, SavedTemporalResidency};
 mod versions;
 pub(crate) use actor::ensure_temporal_actor;
-pub use versions::SourceVersionArchiveChange;
-pub(crate) use versions::{
-    SourceVersionPlan, apply_source_version_plan, reset_source_version_plan,
-};
+pub use versions::{SourceVersionArchiveChange, SourceVersionChange, SourceVersionPlan};
+pub(crate) use versions::{apply_source_version_plan, reset_source_version_plan};
 mod support;
 pub(crate) use accounts::{
     AccountAdditionBudget, KnowledgeAccountChange, bootstrap_personal_accounts,

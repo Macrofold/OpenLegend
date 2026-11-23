@@ -4,11 +4,12 @@ use super::*;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::received::SourceVersionPlan;
 use crate::records::{ChangedRows, RowEncoder};
+use crate::experience::{PersonalPredecessors, PersonalSourceRecord};
 
 const TABLES: [&str; 3] = ["mind_awareness", "mind_memories", "mind_summaries"];
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(in crate::simulation) struct SourceVersionsAnswer {
+pub(crate) struct SourceVersionsAnswer {
     pub(super) binding: GeometryBinding,
     plan: SourceVersionPlan,
     #[serde(skip)]
@@ -19,6 +20,29 @@ pub(in crate::simulation) struct SourceVersionsAnswer {
     applied: bool,
 }
 impl SourceVersionsAnswer {
+    pub(crate) fn adopt(
+        binding: GeometryBinding,
+        plan: SourceVersionPlan,
+        maximum: usize,
+        mut storage: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        #[derive(Serialize)]
+        struct Reply<'a> {
+            binding: GeometryBinding,
+            plan: &'a SourceVersionPlan,
+        }
+        // Count the same finite reply envelope for its existing transfer limit.
+        // The stand-alone path never creates the corresponding JSON string.
+        let wire_bytes = crate::encoding::json_record_len(&Reply { binding, plan: &plan })
+            .map_err(|_| DriveError::Encoding)?;
+        if wire_bytes > maximum {
+            return Err(DriveError::Capacity);
+        }
+        storage.resize(plan.heap_bytes().and_then(|n| n.checked_add(size_of::<Self>()))
+            .ok_or(DriveError::Capacity)?).map_err(|_| DriveError::Capacity)?;
+        Ok(Self { binding, plan, storage: Some(storage), wire_bytes, applied: false })
+    }
+
     pub(super) fn decode(text: &str, budget: &ByteBudget) -> Result<Self, DriveError> {
         let storage = crate::install::reserve_typed_parse::<Self>(
             text,
@@ -45,29 +69,63 @@ impl SourceVersionsAnswer {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct PrivacyCut<'a> {
-    actor_id: &'a str,
-    forgotten: &'a [String],
+struct PrivacyCut {
+    actor_id: String,
+    forgotten: Vec<String>,
 }
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Request<'a, P: Serialize, A: Serialize> {
-    binding: GeometryBinding,
-    world_id: &'a str,
-    generation: &'a str,
-    base_cut: u64,
-    cuts: Vec<PrivacyCut<'a>>,
-    records: &'a ChangedRows,
-    personal_predecessors: P,
-    maximum_transfer_bytes: usize,
-    #[serde(flatten)]
-    restore: Option<RestoreContext<'a, A>>,
+
+/// Immutable inputs to the exact version lookup. Canonical row payloads remain
+/// in their funded record owners. Recovery shares its already packed SQL view.
+pub struct SourceVersionsRequest {
+    pub binding: GeometryBinding,
+    pub world_id: String,
+    pub generation: String,
+    cuts: Vec<PrivacyCut>,
+    pub records: ChangedRows,
+    predecessors: PersonalPredecessors,
+    pub maximum_transfer_bytes: usize,
+    restore: Option<RestoreContext>,
+    _storage: ByteReservation,
+    _rows: ByteReservation,
 }
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct RestoreContext<'a, A: Serialize> {
-    restore_projection: &'a ChangedRows,
-    archive_baseline: A,
+
+struct RestoreContext {
+    projection: Arc<crate::simulation::restore::RestoreReadProjection>,
+    baseline: Arc<crate::restore::RestoreArchiveBaseline>,
+}
+
+impl SourceVersionsRequest {
+    pub fn forgotten(&self) -> impl ExactSizeIterator<Item = (&str, &[String])> {
+        self.cuts.iter().map(|cut| (cut.actor_id.as_str(), cut.forgotten.as_slice()))
+    }
+
+    pub fn predecessors(&self) -> &[Arc<PersonalSourceRecord>] {
+        self.predecessors.records()
+    }
+
+    pub fn restore(&self) -> Option<(&ChangedRows, crate::restore::RestoreArchiveSelection<'_>)> {
+        self.restore.as_ref().map(|restore| (&restore.projection.changes, restore.baseline.archives()))
+    }
+}
+
+impl Serialize for SourceVersionsRequest {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut row = serializer.serialize_struct("SourceVersionsRequest", if self.restore.is_some() { 10 } else { 8 })?;
+        row.serialize_field("binding", &self.binding)?;
+        row.serialize_field("worldId", &self.world_id)?;
+        row.serialize_field("generation", &self.generation)?;
+        row.serialize_field("baseCut", &self.binding.base_cut)?;
+        row.serialize_field("cuts", &self.cuts)?;
+        row.serialize_field("records", &self.records)?;
+        row.serialize_field("personalPredecessors", &self.predecessors.value())?;
+        row.serialize_field("maximumTransferBytes", &self.maximum_transfer_bytes)?;
+        if let Some((projection, archive_baseline)) = self.restore() {
+            row.serialize_field("restoreProjection", projection)?;
+            row.serialize_field("archiveBaseline", &archive_baseline)?;
+        }
+        row.end()
+    }
 }
 fn needs_no_source_versions(records: &ChangedRows, schema: &crate::records::RecordSchema) -> bool {
     records.deletes.is_empty()
@@ -108,7 +166,7 @@ impl Finalizer {
         since: Option<crate::experience::ExperienceCheckpoint>,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, DriveError> {
-        Self::prepare_with::<()>(core, key, since, None, 1, budget)
+        Self::prepare_with(core, key, since, None, 1, budget)
     }
     /// Restoration plans only edits after its genuine post-privacy baseline.
     /// SQL replays that immutable before-view, including its first selected
@@ -117,8 +175,8 @@ impl Finalizer {
         core: &CoreMutation<'_>,
         key: crate::host::CandidateKey,
         since: crate::experience::ExperienceCheckpoint,
-        projection: &ChangedRows,
-        baseline: &crate::restore::RestoreArchiveBaseline,
+        projection: &Arc<crate::simulation::restore::RestoreReadProjection>,
+        baseline: &Arc<crate::restore::RestoreArchiveBaseline>,
         serial: u64,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, DriveError> {
@@ -127,18 +185,18 @@ impl Finalizer {
             key,
             Some(since),
             Some(RestoreContext {
-                restore_projection: projection,
-                archive_baseline: baseline.archives(),
+                projection: Arc::clone(projection),
+                baseline: Arc::clone(baseline),
             }),
             serial,
             budget,
         )
     }
-    fn prepare_with<A: Serialize>(
+    fn prepare_with(
         core: &CoreMutation<'_>,
         key: crate::host::CandidateKey,
         since: Option<crate::experience::ExperienceCheckpoint>,
-        restore: Option<RestoreContext<'_, A>>,
+        restore: Option<RestoreContext>,
         serial: u64,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, DriveError> {
@@ -153,7 +211,7 @@ impl Finalizer {
             budget,
         )
         .map_err(|_| DriveError::Encoding)?;
-        let (mut records, _owners, _rows_storage) = output
+        let (mut records, _owners, rows_storage) = output
             .finish()
             .map_err(|_| DriveError::Encoding)?
             .into_parts();
@@ -240,37 +298,46 @@ impl Finalizer {
                 actors.insert(actor.clone());
             }
         }
+        let scope = &core.state.physical.header.id;
+        let generation = &core.state.generation;
+        let request_bytes = actors.iter().try_fold(
+            size_of::<SourceVersionsRequest>() + 2 * size_of::<usize>() + scope.len() + generation.len(),
+            |bytes, actor| {
+                let ids = core.state.experience.actor(actor)?.privacy.forgotten_ids();
+                let names = ids.iter().try_fold(actor.len(), |n, id| n.checked_add(id.len()))?;
+                bytes.checked_add(size_of::<PrivacyCut>())?
+                    .checked_add(names)?
+                    .checked_add(ids.len().checked_mul(size_of::<String>())?)
+            },
+        ).ok_or(DriveError::Capacity)?;
+        let request_storage = budget.reserve(request_bytes).map_err(|_| DriveError::Capacity)?;
         let mut cuts = Vec::new();
-        cuts.try_reserve_exact(actors.len())
-            .map_err(|_| DriveError::Capacity)?;
+        cuts.try_reserve_exact(actors.len()).map_err(|_| DriveError::Capacity)?;
         for actor in &actors {
-            let history = core
-                .state
-                .experience
-                .actor(actor)
-                .ok_or(ExecutionError::Invariant)?;
-            cuts.push(PrivacyCut {
-                actor_id: actor,
-                forgotten: history.privacy.forgotten_ids(),
-            });
+            let history = core.state.experience.actor(actor).ok_or(ExecutionError::Invariant)?;
+            let ids = history.privacy.forgotten_ids();
+            let mut forgotten = Vec::new();
+            forgotten.try_reserve_exact(ids.len()).map_err(|_| DriveError::Capacity)?;
+            forgotten.extend(ids.iter().cloned());
+            cuts.push(PrivacyCut { actor_id: actor.clone(), forgotten });
         }
-        let binding =
-            GeometryBinding::new(key, core.state.installed.geometry.spatial.revision, serial);
+        let binding = GeometryBinding::new(key, core.state.installed.geometry.spatial.revision, serial);
         let maximum_transfer_bytes = budget.limit();
-        let question = ProviderQuestion::prepare(
+        let question = ProviderQuestion::prepare_bound(
             ProviderKind::SourceVersions,
             binding,
-            &Request {
+            QuestionBody::SourceVersions(Arc::new(SourceVersionsRequest {
                 binding,
-                world_id: &core.state.physical.header.id,
-                generation: &core.state.generation,
-                base_cut: key.base_cut,
+                world_id: scope.clone(),
+                generation: generation.clone(),
                 cuts,
-                records: &records,
-                personal_predecessors: predecessors.value(),
+                records,
+                predecessors,
                 maximum_transfer_bytes,
                 restore,
-            },
+                _storage: request_storage,
+                _rows: rows_storage,
+            })),
             budget,
         )?;
         storage

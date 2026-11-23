@@ -114,10 +114,10 @@ pub(crate) struct RestoreReconcileCursor {
     privacy: RestorePrivacyCursor,
     metadata: Option<RestoreMetadataPreparation>,
     archives: Option<RestoreArchivesCursor>,
-    baseline: Option<RestoreArchiveBaseline>,
+    baseline: Option<Arc<RestoreArchiveBaseline>>,
     entry: Option<(
         crate::experience::ExperienceCheckpoint,
-        RestoreReadProjection,
+        Arc<RestoreReadProjection>,
     )>,
     finalizer: Option<Finalizer>,
     source_versions: Option<SourceVersionsAnswer>,
@@ -306,7 +306,12 @@ impl RestoreReconcileCursor {
                         self.durable_identity_through,
                         budget,
                     )?;
-                    self.entry = Some((core.journal.experience.checkpoint(), projection));
+                    let mut projection = projection;
+                    projection
+                        ._storage
+                        .resize(projection._storage.bytes() + 2 * std::mem::size_of::<usize>())
+                        .map_err(|_| DriveError::Capacity)?;
+                    self.entry = Some((core.journal.experience.checkpoint(), Arc::new(projection)));
                 }
                 // Source resets only the prior prepared archive/account deltas;
                 // all actual personal retirements remain in the same journal.
@@ -321,7 +326,7 @@ impl RestoreReconcileCursor {
                     core,
                     self.key,
                     *checkpoint,
-                    &projection.changes,
+                    projection,
                     self.baseline.as_ref().ok_or(ExecutionError::Invariant)?,
                     serial,
                     budget,

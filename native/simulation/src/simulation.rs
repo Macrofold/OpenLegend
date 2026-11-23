@@ -29,6 +29,8 @@ pub(crate) use save::{encode_candidate_changes, encode_root_changes};
 mod publication;
 pub(crate) use publication::{PreparedPublication, PublicationError};
 mod driver;
+pub use driver::source_versions::SourceVersionsRequest;
+pub(crate) use driver::source_versions::SourceVersionsAnswer;
 pub(crate) use driver::KnownPlacesAnswer;
 pub use driver::LocalFormat;
 mod host_control;

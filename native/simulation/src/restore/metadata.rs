@@ -6,7 +6,7 @@ use crate::simulation::SimulationState;
 use crate::values::{deserialize_safe_integer, is_safe_record_id};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::mem::size_of;
+use std::{mem::size_of, sync::Arc};
 #[path = "archives.rs"]
 mod archives;
 
@@ -418,7 +418,9 @@ pub(crate) fn apply_restore_archive_baseline(
     core: &mut CoreMutation<'_>,
     prepared: RestoreMetadataPreparation,
     budget: &ByteBudget,
-) -> Result<RestoreArchiveBaseline, ExecutionError> {
+) -> Result<Arc<RestoreArchiveBaseline>, ExecutionError> {
+    let mut prepared = prepared;
+    prepared.storage.merge(budget.reserve(size_of::<RestoreArchiveBaseline>() + 2 * size_of::<usize>())?)?;
     let input = &prepared.input;
     let kept_archives = prepared
         .selection
@@ -453,49 +455,57 @@ pub(crate) fn apply_restore_archive_baseline(
         budget,
     )?;
     core.state.physical.header.paused = true;
-    Ok(RestoreArchiveBaseline { prepared })
+    Ok(Arc::new(RestoreArchiveBaseline { prepared }))
+}
+
+/// Exact archive rows admitted at the first private restore view. The retained
+/// class can differ from the class stored in the checkpoint.
+#[derive(Clone, Copy)]
+pub struct RestoreArchiveSelection<'a> {
+    rows: &'a [RestoreArchive],
+    retained: &'a [Option<ArchiveCategory>],
+}
+
+impl<'a> RestoreArchiveSelection<'a> {
+    pub fn rows(self) -> impl Iterator<Item = (&'a RestoreArchive, ArchiveCategory)> {
+        self.rows.iter().zip(self.retained).filter_map(|(row, class)| {
+            class.map(|class| (row, class))
+        })
+    }
+}
+
+impl Serialize for RestoreArchiveSelection<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeSeq;
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Row<'a> {
+            actor_id: &'a str,
+            kind: &'a str,
+            id: &'a str,
+            revision: &'a str,
+            bytes: u64,
+            category: ArchiveCategory,
+        }
+        let mut rows = serializer.serialize_seq(Some(self.rows().count()))?;
+        for (row, category) in self.rows() {
+            rows.serialize_element(&Row {
+                actor_id: &row.actor_id,
+                kind: &row.kind,
+                id: &row.id,
+                revision: &row.revision,
+                bytes: row.bytes,
+                category,
+            })?;
+        }
+        rows.end()
+    }
 }
 
 impl RestoreArchiveBaseline {
-    pub(crate) fn archives(&self) -> impl Serialize + '_ {
-        struct Rows<'a>(&'a RestoreMetadataPreparation);
-        impl Serialize for Rows<'_> {
-            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-                use serde::ser::SerializeSeq;
-                let selected = self
-                    .0
-                    .selection
-                    .as_ref()
-                    .expect("validated archive baseline");
-                let mut rows = serializer.serialize_seq(Some(
-                    selected.kept.iter().filter(|value| value.is_some()).count(),
-                ))?;
-                #[derive(Serialize)]
-                #[serde(rename_all = "camelCase")]
-                struct Row<'a> {
-                    actor_id: &'a str,
-                    kind: &'a str,
-                    id: &'a str,
-                    revision: &'a str,
-                    bytes: u64,
-                    category: ArchiveCategory,
-                }
-                for (row, category) in self.0.input.archives.iter().zip(&selected.kept) {
-                    if let Some(category) = category {
-                        rows.serialize_element(&Row {
-                            actor_id: &row.actor_id,
-                            kind: &row.kind,
-                            id: &row.id,
-                            revision: &row.revision,
-                            bytes: row.bytes,
-                            category: *category,
-                        })?;
-                    }
-                }
-                rows.end()
-            }
-        }
-        Rows(&self.prepared)
+    pub(crate) fn archives(&self) -> RestoreArchiveSelection<'_> {
+        let selected = self.prepared.selection.as_ref().expect("validated archive baseline");
+        RestoreArchiveSelection { rows: &self.prepared.input.archives, retained: &selected.kept }
     }
 
     /// Prepare exact final metadata before applying the provider's journal
@@ -632,44 +642,69 @@ impl RestoreArchiveBaseline {
         Ok(PreparedRestoreArchives { rows, storage })
     }
 }
+impl RestoreArchiveBaseline {
+    fn into_selected_archives(self, budget: &ByteBudget) -> Result<(Vec<RestoreArchive>, ByteReservation), ExecutionError> {
+        let RestoreMetadataPreparation {
+            input,
+            mut storage,
+            selection,
+        } = self.prepared;
+        let kept = selection.ok_or(ExecutionError::InvalidCheckpoint)?;
+        let count = kept.kept.iter().filter(|value| value.is_some()).count();
+        storage.merge(
+            budget.reserve(
+                count
+                    .checked_mul(size_of::<RestoreArchive>())
+                    .ok_or(ExecutionError::Capacity)?,
+            )?,
+        )?;
+        let mut before = Vec::new();
+        before
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        let RestoreMetadataInput {
+            archives,
+            actor_owners,
+            world_grants,
+            privacy_revisions,
+            namespace,
+            ..
+        } = input;
+        for (row, category) in archives.into_iter().zip(kept.kept) {
+            if let Some(category) = category {
+                before.push(RestoreArchive { category, ..row });
+            }
+        }
+        drop((actor_owners, world_grants, privacy_revisions, namespace));
+        Ok((before, storage))
+    }
+}
+
 pub(crate) fn finish_restore_metadata(
     core: &mut CoreMutation<'_>,
-    baseline: RestoreArchiveBaseline,
+    baseline: Arc<RestoreArchiveBaseline>,
     final_archives: PreparedRestoreArchives,
     budget: &ByteBudget,
 ) -> Result<RestoreMetadataResult, ExecutionError> {
-    let RestoreMetadataPreparation {
-        input,
-        mut storage,
-        selection,
-    } = baseline.prepared;
-    let kept = selection.ok_or(ExecutionError::InvalidCheckpoint)?;
-    let count = kept.kept.iter().filter(|value| value.is_some()).count();
-    storage.merge(
-        budget.reserve(
-            count
-                .checked_mul(size_of::<RestoreArchive>())
-                .ok_or(ExecutionError::Capacity)?,
-        )?,
-    )?;
-    let mut before = Vec::new();
-    before
-        .try_reserve_exact(count)
-        .map_err(|_| ExecutionError::Capacity)?;
-    let RestoreMetadataInput {
-        archives,
-        actor_owners,
-        world_grants,
-        privacy_revisions,
-        namespace,
-        ..
-    } = input;
-    for (row, category) in archives.into_iter().zip(kept.kept) {
-        if let Some(category) = category {
-            before.push(RestoreArchive { category, ..row });
+    let (before, mut storage) = match Arc::try_unwrap(baseline) {
+        Ok(baseline) => baseline.into_selected_archives(budget)?,
+        Err(held) => {
+            // A held read retains the original SQL view under its own guard.
+            // Final output needs only the selected archive metadata, not the
+            // candidate projection or the other operational metadata.
+            let selection = held.archives();
+            let (count, bytes) = selection.rows().try_fold((0usize, 0usize), |(count, bytes), (row, _)| {
+                Some((count.checked_add(1)?, bytes.checked_add(row.heap_bytes()?)?))
+            }).ok_or(ExecutionError::Capacity)?;
+            let size = count.checked_mul(size_of::<RestoreArchive>())
+                .and_then(|n| n.checked_add(bytes)).ok_or(ExecutionError::Capacity)?;
+            let storage = budget.reserve(size)?;
+            let mut before = Vec::new();
+            before.try_reserve_exact(count).map_err(|_| ExecutionError::Capacity)?;
+            before.extend(selection.rows().map(|(row, category)| RestoreArchive { category, ..row.clone() }));
+            (before, storage)
         }
-    }
-    drop((actor_owners, world_grants, privacy_revisions, namespace));
+    };
     let PreparedRestoreArchives {
         rows,
         storage: final_storage,

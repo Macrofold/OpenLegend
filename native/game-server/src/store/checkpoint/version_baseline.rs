@@ -28,15 +28,31 @@ impl Store {
             .map_err(|_| StoreError::Capacity)?;
         let admitted: Vec<Archive> =
             serde_json::from_str(selection).map_err(|_| StoreError::InvalidRecord)?;
+        self.apply_checkpoint_archive_selection(tx, head, admitted.len(), admitted.iter().map(|row| (row, row.category)))
+            .await
+    }
+
+    pub(crate) async fn apply_checkpoint_archive_selection<'a>(
+        &self,
+        tx: &Transaction<'_>,
+        head: &DurableHead,
+        count: usize,
+        selection: impl Iterator<Item = (&'a Archive, Category)>,
+    ) -> StoreResult<()> {
+        // The caller already owns the exact archive bodies. Admit only the
+        // borrowed ordered lookup and its node backing before indexing them.
+        let bytes = count.checked_mul(2 * (size_of::<[&str; 4]>() + 6 * size_of::<usize>()))
+            .ok_or(StoreError::Capacity)?;
+        let _lookup = self.budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
         let mut retained = BTreeMap::new();
-        for row in &admitted {
+        for (row, category) in selection {
             let key = [
                 row.actor_id.as_str(),
                 row.kind.as_str(),
                 row.id.as_str(),
                 row.revision.as_str(),
             ];
-            if retained.insert(key, row).is_some() {
+            if retained.insert(key, (row.bytes, category)).is_some() {
                 return Err(StoreError::InvalidRecord);
             }
         }
@@ -63,15 +79,15 @@ impl Store {
                 let revision: &str = row.try_get(3)?;
                 let current = (checked_class(row.try_get(4)?)?, ordinal(row.try_get(5)?)?);
                 let next = retained.remove(&[actor_id, kind, id, revision]);
-                let desired = if let Some(next) = next {
+                let desired = if let Some((bytes, category)) = next {
                     let observed = ordinal(row.try_get(6)?)?;
-                    if observed != next.bytes {
+                    if observed != bytes {
                         return Err(StoreError::InvalidRecord);
                     }
                     Some(if kind == "perspective" {
                         current
                     } else {
-                        (class(next.category), observed)
+                        (class(category), observed)
                     })
                 } else {
                     None

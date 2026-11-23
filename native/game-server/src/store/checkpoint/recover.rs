@@ -710,14 +710,19 @@ impl Store {
             let projection = prepared.projection().ok_or(StoreError::InvalidRecord)?;
             let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
             return self
-                .with_checkpoint_recall_rows(
+                .with_checkpoint_rows(
                     tx,
                     candidate,
                     projection,
-                    &decoder,
+                    Some(&decoder),
+                    None,
                     self.read_checkpoint_history(tx, candidate, &prepared),
                 )
                 .await;
+        }
+        if let Some(request) = provider.checkpoint_source_versions().map_err(runtime)? {
+            let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
+            return self.answer_checkpoint_source_versions(tx, candidate, &request, &decoder).await;
         }
         #[derive(Deserialize)]
         struct Request<'a> {
@@ -733,7 +738,6 @@ impl Store {
             Support,
             Members,
             Accounts,
-            Versions,
         }
         let selected = provider
             .with_request(|text| {
@@ -744,7 +748,6 @@ impl Store {
                     ("support-membership", _) => Selection::Support,
                     ("restore-retention", Some("membership")) => Selection::Members,
                     ("restore-retention", Some("metadata" | "records")) => Selection::Accounts,
-                    ("source-versions", _) => Selection::Versions,
                     _ => return Err(StoreError::InvalidRecord),
                 })
             })
@@ -777,11 +780,6 @@ impl Store {
             }
             Selection::Accounts => {
                 self.answer_checkpoint_account_retention(tx, candidate, provider)
-                    .await
-            }
-            Selection::Versions => {
-                let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
-                self.answer_checkpoint_source_versions(tx, candidate, provider, &decoder)
                     .await
             }
         }

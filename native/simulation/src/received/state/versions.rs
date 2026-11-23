@@ -49,7 +49,7 @@ struct Desired {
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Change {
+pub struct SourceVersionChange {
     actor_id: String,
     kind: String,
     id: String,
@@ -61,8 +61,8 @@ struct Change {
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct SourceVersionPlan {
-    changes: Vec<Change>,
+pub struct SourceVersionPlan {
+    changes: Vec<SourceVersionChange>,
 }
 
 /// Borrow an exact archived-source transition. The plan retains any immutable
@@ -89,7 +89,7 @@ heap_record!(Desired {
     bytes,
     payload
 });
-heap_record!(Change {
+heap_record!(SourceVersionChange {
     actor_id,
     kind,
     id,
@@ -98,7 +98,41 @@ heap_record!(Change {
     desired
 });
 heap_record!(SourceVersionPlan { changes });
+impl SourceVersionChange {
+    pub fn new(
+        actor_id: String,
+        kind: String,
+        id: String,
+        revision: String,
+        expected_prior: Option<(AccountClass, u64)>,
+        desired: Option<(AccountClass, u64, Option<String>)>,
+    ) -> Result<Self, ReceivedError> {
+        let category = |class| match class {
+            AccountClass::Optional => Category::Optional,
+            AccountClass::Required => Category::Required,
+            AccountClass::Speech => Category::Speech,
+        };
+        if expected_prior.is_some_and(|(_, bytes)| bytes > crate::identity::MAX_SAFE_INTEGER)
+            || desired.as_ref().is_some_and(|(_, bytes, _)| *bytes > crate::identity::MAX_SAFE_INTEGER)
+        {
+            return Err(invalid());
+        }
+        Ok(Self {
+            actor_id,
+            kind,
+            id,
+            revision,
+            expected_prior: expected_prior.map(|(class, bytes)| Charge { category: category(class), bytes }),
+            desired: desired.map(|(class, bytes, payload)| Desired { category: category(class), bytes, payload }),
+        })
+    }
+}
+
 impl SourceVersionPlan {
+    pub fn new(changes: Vec<SourceVersionChange>) -> Self {
+        Self { changes }
+    }
+
     pub(crate) fn archive_changes(
         &self,
     ) -> impl ExactSizeIterator<Item = SourceVersionArchiveChange<'_>> {
@@ -132,7 +166,7 @@ impl SourceVersionPlan {
         self.changes.is_empty()
     }
     pub(crate) fn array_element_bytes() -> usize {
-        size_of::<Change>()
+        size_of::<SourceVersionChange>()
     }
     pub(crate) fn validate_actors(
         &self,
