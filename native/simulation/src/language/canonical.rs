@@ -7,6 +7,7 @@ use crate::host::retained_size::HeapBytes;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::records::SqlCell;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::sync::Arc;
 
 #[derive(Serialize)]
@@ -75,19 +76,42 @@ impl CanonicalJsonRequest {
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let len = crate::encoding::json_record_len(input).map_err(|_| ExecutionError::Invariant)?;
-        let mut reservation =
+        let reservation =
             budget.reserve(len.checked_mul(2).ok_or(ExecutionError::Capacity)?)?;
         let json = crate::encoding::json_record(input).map_err(|_| ExecutionError::Invariant)?;
+        Self::admit_encoding(binding, Cow::Owned(json), budget, reservation)
+    }
+
+    /// Borrow the command owner's exact retained encoding long enough to
+    /// prepare the formatter's funded cells. The answer has its own validation.
+    pub(crate) fn borrow_encoding(
+        binding: GeometryBinding,
+        source: &str,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        Self::admit_encoding(binding, Cow::Borrowed(source), budget, budget.reserve(0)?)
+    }
+
+    fn admit_encoding(
+        binding: GeometryBinding,
+        json: Cow<'_, str>,
+        budget: &ByteBudget,
+        mut reservation: ByteReservation,
+    ) -> Result<Self, ExecutionError> {
         let shape =
             crate::experience::encoded_body_bound(&json).map_err(|_| ExecutionError::Capacity)?;
+        let encoded_allocation = match &json {
+            Cow::Owned(value) => value.capacity(),
+            Cow::Borrowed(_) => 0,
+        };
         // One prepared input cell, the returned canonical bytes and temporary
         // comparison decoding coexist. This is scratch admission, not a claim
         // that encoded size equals retained allocation or process memory.
         reservation.resize(
             shape
                 .checked_mul(2)
-                .and_then(|n| n.checked_add(json.capacity()))
-                .and_then(|n| n.checked_add(len.checked_mul(4)?))
+                .and_then(|n| n.checked_add(encoded_allocation))
+                .and_then(|n| n.checked_add(json.len().checked_mul(4)?))
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let value = serde_json::from_str(&json).map_err(|_| ExecutionError::Invariant)?;

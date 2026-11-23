@@ -173,7 +173,7 @@ impl PersonalTask {
 }
 pub(crate) struct CommandCursor {
     command: NativeCommand,
-    canonical: String,
+    canonical: Option<String>,
     view: Option<ActivityView>,
     view_reservation: Option<ByteReservation>,
     display: Option<super::ActivityDisplayCursor>,
@@ -269,7 +269,7 @@ impl CommandCursor {
             }
             CommandStart::Player(bound) => {
                 let (command, canonical) = bound.into_parts();
-                Self::admit(command, canonical, options, binding, budget)
+                Self::admit(command, Some(canonical), options, binding, budget)
             }
         }
     }
@@ -277,6 +277,36 @@ impl CommandCursor {
     pub(crate) fn needs_known_places(&self) -> bool {
         !self.options.preview && matches!(self.command, NativeCommand::Say { .. })
     }
+
+    fn canonical(&self) -> &str {
+        self.canonical
+            .as_deref()
+            .unwrap_or_else(|| self.command.source_encoding())
+    }
+
+    /// The controller's sealed operation already owns the exact Source bytes
+    /// used for the input-work charge. It has no idempotency receipt.
+    pub(super) fn from_native_movement(
+        input: super::native_movement::BoundNativeMovement,
+        native_movement: Option<NativeMovementInput>,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        Self::admit(
+            input.into_command(),
+            None,
+            CommandOptions {
+                preview: false,
+                native_controller: true,
+                native_movement,
+                trade_evidence: None,
+                durable_receipt: false,
+            },
+            binding,
+            budget,
+        )
+    }
+
     /// Admit the command with the exact bytes used for its receipt digest.
     /// A separately supplied canonical form must describe the same command.
     pub(crate) fn new(
@@ -309,18 +339,18 @@ impl CommandCursor {
                 return Err(ExecutionError::Invariant);
             }
         }
-        Self::admit(command, canonical, options, binding, budget)
+        Self::admit(command, Some(canonical), options, binding, budget)
     }
 
     fn admit(
         command: NativeCommand,
-        canonical: String,
+        canonical: Option<String>,
         options: CommandOptions,
         binding: GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let bytes = std::mem::size_of::<Self>()
-            + canonical.capacity()
+            + canonical.as_ref().map_or(0, String::capacity)
             + command.heap_bytes().ok_or(ExecutionError::Capacity)?
             + options
                 .native_movement
@@ -1164,7 +1194,7 @@ impl CommandCursor {
                         .meters
                         .begin(core.state.installed.work_policy.policy().group)?;
                     self.meter = Some(meter);
-                    let input_bytes = u64::try_from(self.canonical.encode_utf16().count())
+                    let input_bytes = u64::try_from(self.canonical().encode_utf16().count())
                         .ok()
                         .and_then(|n| n.checked_mul(3))
                         .ok_or(ExecutionError::Capacity)?;
@@ -1173,7 +1203,7 @@ impl CommandCursor {
                         .charge(&[(WorkUnit::InputBytes, input_bytes)])?;
                     if !self.options.native_controller && self.preparation_mode.is_none() {
                         if let Some(record) = core.state.commands.get(&self.command.envelope().id) {
-                            if record.receipt.digest == self.canonical {
+                            if record.receipt.digest.as_str() == self.canonical() {
                                 self.reserve(
                                     record
                                         .receipt
@@ -2525,7 +2555,7 @@ impl CommandCursor {
                         core.journal.commands.append(
                             &mut core.state.commands,
                             &self.command.envelope().id,
-                            &self.canonical,
+                            self.canonical(),
                             result,
                         )?;
                     }

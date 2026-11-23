@@ -636,9 +636,9 @@ impl ResponseCursor {
         core: &mut CoreMutation<'_>,
         command: NativeCommand,
     ) -> Result<(), ExecutionError> {
-        self.canonical = Some(CanonicalJsonRequest::prepare(
+        self.canonical = Some(CanonicalJsonRequest::borrow_encoding(
             Self::binding(core, self.candidate)?,
-            &command,
+            command.source_encoding(),
             &self.budget,
         )?);
         self.canonical_purpose = CanonicalPurpose::Command;

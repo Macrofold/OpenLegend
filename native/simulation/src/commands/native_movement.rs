@@ -2,7 +2,7 @@
 //! conditions and finalization as an ordinary movement intention. It carries
 //! its prepared route, never a writable actor or a second movement owner.
 use super::*;
-use crate::encoding::{json_record, json_record_len};
+use crate::encoding::json_record_len;
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::geometry::GeometryBinding;
 use crate::host::retained_size::{HeapBytes, heap_sum};
@@ -47,6 +47,48 @@ struct StopInput<'a> {
     kind: &'static str,
 }
 
+/// Controller-generated fields and their Source encoding are prepared
+/// together here. A caller cannot pair this action with other bytes.
+pub(super) struct BoundNativeMovement(NativeCommand);
+
+impl BoundNativeMovement {
+    pub(super) fn into_command(self) -> NativeCommand {
+        self.0
+    }
+}
+
+fn controller_headers(id: String, actor_id: &str) -> Result<CommandHeaders, ExecutionError> {
+    let headers = CommandHeaders {
+        id,
+        actor_id: actor_id.into(),
+        cooperation: None,
+        combat_help_id: None,
+        human_initiated: None,
+        purpose: None,
+        chosen_purpose: None,
+    };
+    if !headers.valid() {
+        return Err(ExecutionError::Invariant);
+    }
+    Ok(headers)
+}
+
+fn begin(
+    core: &mut CoreMutation<'_>,
+    command: BoundNativeMovement,
+    movement: Option<NativeMovementInput>,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<CommandOperation, CommandOperationError> {
+    let binding = GeometryBinding::new(
+        candidate,
+        core.state.installed.geometry.spatial.revision,
+        core.journal.next_provider_serial()?,
+    );
+    let cursor = CommandCursor::from_native_movement(command, movement, binding, budget)?;
+    CommandOperation::from_cursor(core, cursor, candidate, budget)
+}
+
 pub(crate) fn begin_native_feed(
     core: &mut CoreMutation<'_>,
     actor_id: &str,
@@ -70,34 +112,27 @@ pub(crate) fn begin_native_feed(
         .reserve((actor_id.len() + target_id.len() + item_id.map_or(0, str::len) + 64) * 12
             + size_of::<NativeCommand>())?;
     let id = format!("native-forage-{}", core.state.physical.identity.next_id());
-    let encoded = json_record(&FeedInput {
-        id: &id,
-        actor_id,
-        target_id,
-        item_id,
-        kind: "feed",
-    })
-    .map_err(|_| ExecutionError::Invariant)?;
-    let command = serde_json::from_str(&encoded).map_err(|_| ExecutionError::Invariant)?;
-    let geometry = GeometryBinding::new(
-        candidate,
-        core.state.installed.geometry.spatial.revision,
-        core.journal.next_provider_serial()?,
-    );
-    let cursor = CommandCursor::new(
-        command,
-        encoded,
-        CommandOptions {
-            preview: false,
-            native_controller: true,
-            native_movement: None,
-            trade_evidence: None,
-            durable_receipt: false,
+    let headers = controller_headers(id, actor_id)?;
+    if !is_safe_record_id(target_id) || !item_id.is_none_or(is_safe_record_id) {
+        return Err(ExecutionError::Invariant.into());
+    }
+    let encoding = CommandEncoding::from_ordered(
+        &FeedInput {
+            id: &headers.id,
+            actor_id: &headers.actor_id,
+            target_id,
+            item_id,
+            kind: "feed",
         },
-        geometry,
-        budget,
-    )?;
-    CommandOperation::from_cursor(core, cursor, candidate, budget)
+        4 + usize::from(item_id.is_some()),
+    )
+    .map_err(|_| ExecutionError::Invariant)?;
+    let command = BoundNativeMovement(NativeCommand::Feed {
+        envelope: headers.envelope(encoding),
+        target_id: target_id.into(),
+        item_id: item_id.map(str::to_owned),
+    });
+    begin(core, command, None, candidate, budget)
 }
 
 pub(crate) fn begin_native_stop(
@@ -108,47 +143,21 @@ pub(crate) fn begin_native_stop(
 ) -> Result<CommandOperation, CommandOperationError> {
     let _scratch = budget.reserve((actor_id.len() + 64) * 12 + size_of::<NativeCommand>())?;
     let id = format!("native-stop-{}", core.state.physical.identity.next_id());
+    let headers = controller_headers(id, actor_id)?;
     let input = StopInput {
-        id: &id,
-        actor_id,
+        id: &headers.id,
+        actor_id: &headers.actor_id,
         kind: "cancel",
     };
     let bytes = json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
     let _encoded = budget.reserve(bytes.checked_mul(8).ok_or(ExecutionError::Capacity)?)?;
-    let encoded = json_record(&input).map_err(|_| ExecutionError::Invariant)?;
-    let command = NativeCommand::Cancel {
+    let encoding = CommandEncoding::from_ordered(&input, 3).map_err(|_| ExecutionError::Invariant)?;
+    let command = BoundNativeMovement(NativeCommand::Cancel {
         expected_action_id: None,
         dismiss_review: false,
-        envelope: CommandEnvelope {
-            encoding: CommandEncoding::decode(&encoded).map_err(|_| ExecutionError::Invariant)?,
-            id,
-            actor_id: actor_id.into(),
-            cooperation: None,
-            combat_help_id: None,
-            human_initiated: None,
-            purpose: None,
-            chosen_purpose: None,
-        },
-    };
-    let geometry = GeometryBinding::new(
-        candidate,
-        core.state.installed.geometry.spatial.revision,
-        core.journal.next_provider_serial()?,
-    );
-    let cursor = CommandCursor::new(
-        command,
-        encoded,
-        CommandOptions {
-            preview: false,
-            native_controller: true,
-            native_movement: None,
-            trade_evidence: None,
-            durable_receipt: false,
-        },
-        geometry,
-        budget,
-    )?;
-    CommandOperation::from_cursor(core, cursor, candidate, budget)
+        envelope: headers.envelope(encoding),
+    });
+    begin(core, command, None, candidate, budget)
 }
 pub(crate) fn begin_native_movement(
     core: &mut CoreMutation<'_>,
@@ -209,33 +218,43 @@ pub(crate) fn begin_territorial_move(
         "native-territorial-{}",
         core.state.physical.identity.next_id()
     );
-    let encoded = json_record(&MovementInput {
-        id: &id,
-        actor_id,
-        kind: "move",
-        destination,
-    })
-    .map_err(|_| ExecutionError::Invariant)?;
-    let command = serde_json::from_str(&encoded).map_err(|_| ExecutionError::Invariant)?;
-    let geometry = GeometryBinding::new(
-        candidate,
-        core.state.installed.geometry.spatial.revision,
-        core.journal.next_provider_serial()?,
-    );
-    let cursor = CommandCursor::new(
-        command,
-        encoded,
-        CommandOptions {
-            preview: false,
-            native_controller: true,
-            native_movement: None,
-            trade_evidence: None,
-            durable_receipt: false,
+    // This branch used to acquire its position from Source JSON, where
+    // either signed zero is represented as zero. Keep that physical input.
+    let destination = SurfacePoint {
+        x: destination.x + 0.0,
+        y: destination.y + 0.0,
+        z: destination.z + 0.0,
+        surface_id: destination.surface_id.clone(),
+    };
+    let headers = controller_headers(id, actor_id)?;
+    let command = movement_command(headers, destination)?;
+    begin(core, command, None, candidate, budget)
+}
+
+fn movement_command(
+    headers: CommandHeaders,
+    destination: SurfacePoint,
+) -> Result<BoundNativeMovement, ExecutionError> {
+    if ![destination.x, destination.y, destination.z]
+        .into_iter()
+        .all(f64::is_finite)
+    {
+        return Err(ExecutionError::Invariant);
+    }
+    let encoding = CommandEncoding::from_ordered(
+        &MovementInput {
+            id: &headers.id,
+            actor_id: &headers.actor_id,
+            kind: "move",
+            destination: &destination,
         },
-        geometry,
-        budget,
-    )?;
-    CommandOperation::from_cursor(core, cursor, candidate, budget)
+        4,
+    )
+    .map_err(|_| ExecutionError::Invariant)?;
+    Ok(BoundNativeMovement(NativeCommand::Move {
+        envelope: headers.envelope(encoding),
+        destination: destination.into(),
+    }))
 }
 
 fn begin_native_ground(
@@ -299,32 +318,20 @@ fn begin_native_ground(
         "native-move"
     };
     let id = format!("{name}-{}", core.state.physical.identity.next_id());
-    let movement = MovementInput {
-        id: &id,
-        actor_id,
+    let headers = controller_headers(id, actor_id)?;
+    let encoded_bytes = json_record_len(&MovementInput {
+        id: &headers.id,
+        actor_id: &headers.actor_id,
         kind: "move",
         destination,
-    };
-    let encoded_bytes = json_record_len(&movement).map_err(|_| ExecutionError::Invariant)?;
+    })
+    .map_err(|_| ExecutionError::Invariant)?;
     let _encoding = budget.reserve(
         encoded_bytes
             .checked_mul(8)
             .ok_or(ExecutionError::Capacity)?,
     )?;
-    let encoded = json_record(&movement).map_err(|_| ExecutionError::Invariant)?;
-    let command = NativeCommand::Move {
-        envelope: CommandEnvelope {
-            encoding: CommandEncoding::decode(&encoded).map_err(|_| ExecutionError::Invariant)?,
-            id,
-            actor_id: actor_id.into(),
-            cooperation: None,
-            combat_help_id: None,
-            human_initiated: None,
-            purpose: None,
-            chosen_purpose: None,
-        },
-        destination: destination.clone().into(),
-    };
+    let command = movement_command(headers, destination.clone())?;
     let binding = NativeLocomotion {
         profile: pin.clone(),
         locomotion: locomotion.into(),
@@ -332,25 +339,11 @@ fn begin_native_ground(
         episode_id: episode_binding.map(|(id, _)| id.clone()),
         generation: episode_binding.map(|(_, generation)| generation),
     };
-    let geometry = GeometryBinding::new(
-        candidate,
-        core.state.installed.geometry.spatial.revision,
-        core.journal.next_provider_serial()?,
-    );
-    // Native controller commands have no idempotency receipt. Their original
-    // JSON bytes supply the same input-byte charge as Source's internal command.
-    let cursor = CommandCursor::new(
+    begin(
+        core,
         command,
-        encoded,
-        CommandOptions {
-            preview: false,
-            native_controller: true,
-            native_movement: Some(NativeMovementInput { binding, route, prepared }),
-            trade_evidence: None,
-            durable_receipt: false,
-        },
-        geometry,
+        Some(NativeMovementInput { binding, route, prepared }),
+        candidate,
         budget,
-    )?;
-    CommandOperation::from_cursor(core, cursor, candidate, budget)
+    )
 }
