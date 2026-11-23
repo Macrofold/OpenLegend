@@ -274,6 +274,8 @@ The new listener retires the stopped process's tab control before serving reques
 
 The checked source uses `326762a9b063` with patch `33eea95edee3`. The standalone executable is `0aa5a520fb93`. The local `nsc04-stopped-tab-control-20261122` archive preserves the failed old-browser trace, the two Rust runs and the two TypeScript runs. The locked build, affected formatting, production TypeScript check and network checks passed. The repaired Rust listeners reported zero transient, resident and pending-save reservations at shutdown. The checks used disposable local databases and sent no paid requests.
 
+The release build also kept the original browser tab open across restart. It acquired current control through the ordinary browser flow, recovered the same Sleep receipt and woke the same body. Early fixture attempts checked the action before the view had finished returning. The successful run waited for the accepted browser view. Its executable is `60ab7228de8f` on `665edca3bc24`, with a fresh production browser build. The local archive's `retained-tab-release-evidence.tar.gz` (`ec279a8ba180`) includes the earlier failures and the final result.
+
 ### Loading a historical departure
 
 On November 22, 2026, a signed-in player closed the controlling stream, saved during the fade, then took control again. Loading the saved point through the actual HTTP caller left the previous Rust body assigned to the canceled attempt with no current operational record. TypeScript assigned a new attempt. The Rust server now reconciles the two records while paused before opening its listener.
