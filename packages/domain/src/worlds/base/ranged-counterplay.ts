@@ -110,12 +110,24 @@ export const BASE_EVASION_TEXT = {
   injuryInterrupted: 'Injury interrupted the chosen movement.',
 };
 
+export const BASE_RANGED_CHOICE_LABEL = '{label} at {target} with {tool}';
+
 export function rangedChoiceLabel(
   type: 'aim' | 'shoot-once' | 'release-shot',
   target: string,
   tool: string,
 ): string {
-  return `${type === 'aim' ? BASE_RANGED_TEXT.aimName : type === 'release-shot' ? BASE_RANGED_TEXT.shootingName : BASE_RANGED_TEXT.shotName} at ${target} with ${tool}`;
+  const label =
+    type === 'aim'
+      ? BASE_RANGED_TEXT.aimName
+      : type === 'release-shot'
+        ? BASE_RANGED_TEXT.shootingName
+        : BASE_RANGED_TEXT.shotName;
+  const fields = { label, target, tool };
+  return BASE_RANGED_CHOICE_LABEL.replace(
+    /\{(label|target|tool)\}/g,
+    (_, key: keyof typeof fields) => fields[key],
+  );
 }
 
 /** Small local choices are examples, not an assertion that other destinations are impossible. */

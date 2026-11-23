@@ -12,6 +12,8 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 mod encoding;
 use encoding::CommandEncoding;
 mod outings_input;
+pub(crate) mod ranged_input;
+pub(crate) use ranged_input::RangedIntent;
 pub(crate) use outings_input::OutingParameters;
 pub use outings_input::{PlayerTravelDestination, PlayerTravelIntent};
 
@@ -297,6 +299,10 @@ pub(crate) enum NativeCommand {
         definition_id: String,
         weapon_item_id: Option<String>,
         auto_equip: Option<bool>,
+    },
+    Ranged {
+        envelope: CommandEnvelope,
+        intent: ranged_input::RangedIntent,
     },
     PracticeShot {
         envelope: CommandEnvelope,
@@ -631,6 +637,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         }
         if tag.kind == "follow" {
             return follow_input(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if matches!(tag.kind.as_str(), "aim" | "shoot-once" | "hunt" | "release-shot") {
+            return ranged_input::decode(raw.get()).map_err(serde::de::Error::custom);
         }
         if tag.kind == "handover" {
             return gift_input(raw.get()).map_err(serde::de::Error::custom);
@@ -1027,6 +1036,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::Ranged { envelope, .. }
             | Self::PracticeShot { envelope, .. }
             | Self::LearnRecord { envelope, .. }
             | Self::InspectInventory { envelope, .. }
@@ -1065,6 +1075,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::Ranged { envelope, .. }
             | Self::PracticeShot { envelope, .. }
             | Self::LearnRecord { envelope, .. }
             | Self::InspectInventory { envelope, .. }
@@ -1100,6 +1111,7 @@ impl NativeCommand {
             Self::WithdrawAttempt { .. } => "withdraw-attempt",
             Self::Follow { .. } => "follow",
             Self::Strike { .. } => "strike",
+            Self::Ranged { intent, .. } => intent.kind(),
             Self::PracticeShot { .. } => "practice-shot",
             Self::LearnRecord { .. } => "learn-record",
             Self::InspectInventory { .. } => "inspect-inventory",

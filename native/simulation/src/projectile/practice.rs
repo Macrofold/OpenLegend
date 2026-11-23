@@ -3,8 +3,7 @@
 //! preparation. Geometry and the final release still bind the current cut.
 
 use crate::execution::ExecutionError;
-use crate::geometry::SightRay;
-use crate::install::{ItemDefinitionRead, OwnedItem, VerifiedDefinition, owned_by, project_owned};
+use crate::install::{ItemDefinitionRead, OwnedItem, VerifiedDefinition, owned_by};
 use crate::simulation::SimulationState;
 use crate::state::{Action, Entity};
 use crate::status::{AttributeDefinition, PracticeProfile};
@@ -47,43 +46,13 @@ pub(crate) fn practice_choice<'a>(
     let physical = &state.physical;
     let installed = &state.installed;
     let retained = &installed.retained;
-    let available = |lot: OwnedItem<'a>| -> Option<(OwnedItem<'a>, &'a ItemDefinitionRead)> {
-        Some((lot, retained.items.get(lot.definition_id)?))
-    };
-    let matches_weapon = |(lot, tool): &(OwnedItem<'a>, &'a ItemDefinitionRead)| {
-        lot.equipped
-            && tool.ranged_weapon.is_some()
-            && tool
-                .recipe_id
-                .as_ref()
-                .and_then(|recipe| retained.manufacture.get(recipe))
-                .and_then(|method| method.family.as_ref())
-                == Some(&practice.family)
-    };
-    let weapon = if let Some(id) = weapon_id {
-        owned_by(physical, retained, &actor.id, id)?
-            .and_then(available)
-            .filter(matches_weapon)
-    } else {
-        let mut selected = None;
-        for body in state
-            .inventory
-            .children(&physical.entities, &actor.id, true)
-        {
-            let lot = project_owned(
-                retained,
-                &actor.id,
-                body,
-                false,
-                physical.holds.quantity(&body.id),
-            )?;
-            if let Some(weapon) = available(lot).filter(matches_weapon) {
-                selected = Some(weapon);
-                break;
-            }
-        }
-        selected
-    };
+    let weapon = super::loadout::weapon(state, actor, weapon_id, false, |tool| {
+        tool.recipe_id
+            .as_ref()
+            .and_then(|recipe| retained.manufacture.get(recipe))
+            .and_then(|method| method.family.as_ref())
+            == Some(&practice.family)
+    })?;
     let accuracy = weapon
         .and_then(|(_, tool)| tool.ranged_weapon.as_ref())
         .map(|weapon| {
@@ -101,52 +70,16 @@ pub(crate) fn practice_choice<'a>(
         })
         .transpose()?
         .flatten();
-    let mut ammunition = None;
-    if let Some((_, weapon)) =
-        weapon.and_then(|(lot, tool)| Some((lot, tool.ranged_weapon.as_ref()?)))
-    {
-        let compatible = |(lot, source): &(OwnedItem<'a>, &'a ItemDefinitionRead)| {
-            source
-                .ammunition
-                .as_ref()
-                .is_some_and(|ammo| ammo.kind == weapon.ammunition_kind)
-                && (lot.available_quantity > 0
-                    || existing
-                        .and_then(|action| action.ranged.as_ref().map(|aim| (action, aim)))
-                        .is_some_and(|(action, aim)| {
-                            physical.holds.matches_item(
-                                &actor.id,
-                                &action.id,
-                                &aim.reservation_id,
-                                lot.id,
-                                1,
-                                &source.pin,
-                            )
-                        }))
-        };
-        if let Some(id) = ammunition_id {
-            ammunition = owned_by(physical, retained, &actor.id, id)?
-                .and_then(available)
-                .filter(compatible);
-        } else {
-            state.inventory.visit_owned_until(
-                &physical.entities,
-                &actor.id,
-                &actor.id,
-                &mut |body, accessible| {
-                    let lot = project_owned(
-                        retained,
-                        &actor.id,
-                        body,
-                        accessible,
-                        physical.holds.quantity(&body.id),
-                    )?;
-                    ammunition = available(lot).filter(compatible);
-                    Ok(ammunition.is_some())
-                },
-            )?;
-        }
-    }
+    let ammunition = match weapon.and_then(|(_, tool)| tool.ranged_weapon.as_ref()) {
+        Some(weapon) => super::loadout::ammunition(
+            state,
+            actor,
+            ammunition_id,
+            &weapon.ammunition_kind,
+            existing,
+        )?,
+        None => None,
+    };
     let another = || {
         physical
             .entities
@@ -203,14 +136,6 @@ pub(crate) fn practice_choice<'a>(
     }))
 }
 
-pub(crate) fn firing_line(actor: &Entity, target: &Entity) -> Option<SightRay> {
-    let mut from = actor.world_position()?;
-    let mut to = target.world_position()?;
-    from.y += actor.ordinary_body_profile().interaction_height;
-    to.y += target.ordinary_body_profile().height / 2.0;
-    Some(SightRay { from, to })
-}
-
 pub(crate) fn installed_profile<'a>(
     state: &'a SimulationState,
     target: &Entity,
@@ -222,20 +147,11 @@ pub(crate) fn approach_range(
     installed: &crate::simulation::InstalledWorld,
     range: f64,
 ) -> Result<f64, ExecutionError> {
-    let Some(policy) = installed.manifest.ranged_policy.as_ref() else {
-        return Ok(range);
-    };
-    let buffer = policy
-        .get("approachBuffer")
-        .and_then(serde_json::Value::as_f64)
-        .filter(|value| value.is_finite() && *value >= 0.0)
-        .ok_or(ExecutionError::Invariant)?;
-    let minimum = policy
-        .get("minimumApproachRange")
-        .and_then(serde_json::Value::as_f64)
-        .filter(|value| value.is_finite() && *value > 0.0)
-        .ok_or(ExecutionError::Invariant)?;
-    Ok(range.min(minimum.max(range - buffer)))
+    Ok(installed
+        .manifest
+        .ranged_policy
+        .as_ref()
+        .map_or(range, |policy| policy.approach_range(range)))
 }
 
 /// Practice checks all actual living bodies in the firing segment plus the
@@ -246,7 +162,7 @@ pub(crate) fn body_in_firing_line(
     target: &Entity,
     profile: &PracticeProfile,
 ) -> Result<bool, ExecutionError> {
-    let ray = firing_line(actor, target).ok_or(ExecutionError::InvalidPosition)?;
+    let ray = super::firing_line(actor, target).ok_or(ExecutionError::InvalidPosition)?;
     let physical = &state.physical;
     let margin = profile.lane_margin;
     let midpoint = crate::spatial::interpolate(ray.from, ray.to, 0.5);

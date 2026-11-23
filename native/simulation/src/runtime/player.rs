@@ -63,6 +63,7 @@ pub struct RuntimeStrikeMenu<'a> {
     body: &'a crate::reception::ObservedBody,
     health: Option<&'a crate::reception::AttributeView>,
     pub name: &'a crate::text::JsText,
+    pub ranged: &'a [RuntimeRangedChoice<'a>],
 }
 
 impl<'a> RuntimeStrikeMenu<'a> {
@@ -232,6 +233,8 @@ pub struct RuntimeFoodMenu<'a> {
 
 mod practice;
 pub use practice::RuntimePracticeOffer;
+mod ranged;
+pub use ranged::RuntimeRangedChoice;
 
 pub enum RuntimeResourceOffer<'a> {
     Gather(RuntimeGatherOffer<'a>),
@@ -515,7 +518,9 @@ impl NativeWorldSession {
             .ok_or(CapacityError)?;
         let _workspace = self.budget.reserve(bytes)?;
         let strike = match command {
-            RuntimePlayerCommand::Strike { permission, .. } => {
+            RuntimePlayerCommand::Strike { permission, .. }
+            | RuntimePlayerCommand::RangedStart { permission, .. }
+            | RuntimePlayerCommand::RangedRelease { permission, .. } => {
                 Some(crate::contact::review::PlayerStrike { permission })
             }
             _ => None,
@@ -903,7 +908,8 @@ impl NativeWorldSession {
         let mut use_menu = Some(use_menu);
         simulation
             .visit_accepted_player_contacts(account, actor, &self.budget, |observed| {
-                let name = &observed.name.name;
+                let observed_name = observed.name;
+                let name = &observed_name.name;
                 let Some(target) = state.physical.entities.get(observed.source_id) else {
                     return false;
                 };
@@ -928,6 +934,15 @@ impl NativeWorldSession {
                 if !matches(observed) {
                     return false;
                 }
+                let (ranged, _custody) = match ranged::choices(
+                    state, source, target, observed_name, &self.budget,
+                ) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        result = Some(Err(failure(error)));
+                        return true;
+                    }
+                };
                 let choice = RuntimeStrikeMenu {
                     state,
                     source,
@@ -935,8 +950,9 @@ impl NativeWorldSession {
                     body,
                     health,
                     name,
+                    ranged: &ranged,
                 };
-                if choice.definitions().next().is_some() {
+                if choice.definitions().next().is_some() || !choice.ranged.is_empty() {
                     result = Some(use_menu.take().expect("one selected contact")(choice));
                 }
                 true

@@ -81,6 +81,8 @@ struct MeleeDefinition {
 struct ActionPolicy {
     preparing_route: Arc<str>,
     working: Arc<str>,
+    #[serde(default)]
+    ranged: Option<RangedCopy>,
     status_types: Vec<String>,
     working_status_types: Vec<String>,
     no_progress_types: Vec<String>,
@@ -92,6 +94,16 @@ struct ActionPolicy {
     status_type: String,
     replenishment_type: String,
     target_labels: Vec<TargetActionLabel>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RangedCopy {
+    ready_label: Arc<str>,
+    release_label: Arc<str>,
+    cancel_label: Arc<str>,
+    not_ready: Arc<str>,
+    ready: Arc<str>,
 }
 
 #[derive(Deserialize)]
@@ -253,6 +265,27 @@ pub struct OwnAction {
     duration_seconds: f64,
     elapsed_seconds: f64,
     advancing: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    detail: Option<Arc<str>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    controls: Option<[AimControl; 2]>,
+}
+
+#[derive(PartialEq, Serialize)]
+struct AimControl {
+    id: String,
+    label: Arc<str>,
+    enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<Arc<str>>,
+    command: AimCommand,
+}
+
+#[derive(PartialEq, Serialize)]
+#[serde(tag = "type", rename_all = "kebab-case", rename_all_fields = "camelCase")]
+enum AimCommand {
+    ReleaseShot { aim_id: Arc<str> },
+    Cancel { expected_action_id: Arc<str> },
 }
 
 #[derive(PartialEq, Serialize)]
@@ -316,6 +349,9 @@ impl PreparedSelf {
     pub(crate) fn pause_action(&mut self) {
         if let Some(action) = self.player.action.as_mut() {
             action.advancing = false;
+            if let Some([release, _]) = action.controls.as_mut() {
+                release.enabled = false;
+            }
         }
     }
 
@@ -502,8 +538,11 @@ pub fn prepare_self(
     let display = facts.action.map(|action| {
         let rules = &policy.action;
         let labels = &rules.labels;
+        let ranged = action.ranged_ready.zip(rules.ranged.as_ref());
         let label = if action.preparing_navigation {
             &rules.preparing_route
+        } else if let Some((true, copy)) = ranged {
+            &copy.ready_label
         } else if action.kind == rules.status_type {
             action
                 .definition_id
@@ -520,7 +559,34 @@ pub fn prepare_self(
             labels.get(action.kind).unwrap_or(&rules.working)
         };
         let working = action.stage == "working";
-        OwnAction {
+        let (detail, controls) = if let Some((ready, copy)) = ranged {
+            // These own only the current action reference; target, loadout and
+            // release authority stay with native execution.
+            let bytes = action.id.len().checked_mul(3)
+                .and_then(|n| n.checked_add("release:".len() + "cancel:".len() + 128))
+                .ok_or(SceneError::Capacity)?;
+            custody.resize(custody.bytes().checked_add(bytes).ok_or(SceneError::Capacity)?)?;
+            let aim_id: Arc<str> = Arc::from(action.id);
+            let release = AimControl {
+                id: format!("release:{}", action.id),
+                label: copy.release_label.clone(),
+                enabled: ready && !paused,
+                reason: (!ready).then(|| copy.not_ready.clone()),
+                command: AimCommand::ReleaseShot { aim_id: aim_id.clone() },
+            };
+            let cancel = AimControl {
+                id: format!("cancel:{}", action.id),
+                label: copy.cancel_label.clone(),
+                enabled: true,
+                reason: None,
+                command: AimCommand::Cancel { expected_action_id: aim_id },
+            };
+            let detail = if ready { &copy.ready } else { &copy.not_ready };
+            (Some(detail.clone()), Some([release, cancel]))
+        } else {
+            (None, None)
+        };
+        Ok::<_, SceneError>(OwnAction {
             id: action.id.to_owned(),
             label: (&**label).into(),
             show_status: action.preparing_navigation
@@ -541,9 +607,11 @@ pub fn prepare_self(
             } else {
                 0.0
             },
-            advancing: !paused && working,
-        }
-    });
+            advancing: !paused && working && action.ranged_ready != Some(true),
+            detail,
+            controls,
+        })
+    }).transpose()?;
     let attack_source = facts.body.filter(|_| facts.alive).and_then(|body| {
         let policy = &policy.melee;
         let definition = policy.definitions.iter().find(|definition| {

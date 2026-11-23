@@ -6,7 +6,7 @@ use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::native_response::{FoodSourceKind, FoodStock, ResourceFeeding};
 use crate::simulation::SimulationState;
-use crate::state::{Entity, ItemLot, Placement, Remains, Resource};
+use crate::state::{Entity, ItemLot, Placement, Point, Remains, Resource};
 use crate::worlds::base_foraging::{InstalledFood, InstalledForagingProfile, ResourceDiet};
 
 #[derive(Clone, Copy)]
@@ -240,6 +240,19 @@ pub(crate) fn approach(
     reach: f64,
     budget: &ByteBudget,
 ) -> Result<(RouteQuery, ByteReservation), ExecutionError> {
+    let mut goal = target.world_position().ok_or(ExecutionError::InvalidPosition)?;
+    goal.y += crate::status::effective_body_profile(target, budget)?.interaction_height;
+    approach_to(actor, target, reach, goal, budget)
+}
+
+/// Build one funded route request to an interaction point on the subject.
+pub(crate) fn approach_to(
+    actor: &Entity,
+    target: &Entity,
+    reach: f64,
+    goal: Point,
+    budget: &ByteBudget,
+) -> Result<(RouteQuery, ByteReservation), ExecutionError> {
     let profile = crate::status::effective_body_profile(actor, budget)?;
     let support_bytes = |entity: &Entity| match entity.placement.as_ref() {
         Some(crate::state::Placement::World {
@@ -259,8 +272,6 @@ pub(crate) fn approach(
     let target_position = target
         .world_position()
         .ok_or(ExecutionError::InvalidPosition)?;
-    let mut goal = target_position;
-    goal.y += crate::status::effective_body_profile(target, budget)?.interaction_height;
     Ok((
         RouteQuery::Approach {
             from: actor

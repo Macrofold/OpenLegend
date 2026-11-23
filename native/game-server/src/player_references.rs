@@ -56,6 +56,7 @@ pub(crate) struct RecentEditReference<Text, Receipt> {
 
 pub(crate) struct ResolvedContact {
     pub(crate) id: String,
+    pub(crate) life: Option<u64>,
     _custody: ByteReservation,
 }
 
@@ -219,8 +220,8 @@ impl ReferenceIssuer {
         self.resolve_contact_body(session, scope, selected, None, budget)
     }
 
-    /// The person overlay receives both the contact's current observation
-    /// lease and the physical-life reference issued in that same view.
+    /// A body-bound choice can also require the physical-life reference
+    /// issued inside this same scoped view. Non-actors carry no physical life.
     pub(crate) fn resolve_contact_body(
         &self,
         session: &NativeWorldSession,
@@ -309,6 +310,7 @@ impl ReferenceIssuer {
                             .reserve(body.source_id.len())
                             .map(|custody| ResolvedContact {
                                 id: body.source_id.to_owned(),
+                                life: body.actor.then(|| body.physical_life.unwrap_or(0)),
                                 _custody: custody,
                             })
                             .map_err(RuntimeError::from),

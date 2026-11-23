@@ -318,8 +318,9 @@ impl ActionHoldKey {
         if let Some(tools) = action.manufacture_tools.as_ref().filter(|tools| !tools.is_empty()) {
             return Some((tools.len(), Self::ManufactureTool));
         }
-        action.is_practice_shot().then_some((1, Self::Projectile))
+        action.is_projectile_action().then_some((1, Self::Projectile))
     }
+
 
     pub(crate) fn id(&self, action: &str) -> String {
         match self {
@@ -495,7 +496,7 @@ pub(crate) fn install(
                     && tool.quantity as f64 == value.amount
                     && value.id == manufacture_hold_id(&action.id, index)
             })
-        } else if let Some(aim) = action.ranged.as_ref().filter(|_| action.is_practice_shot()) {
+        } else if let Some(aim) = action.ranged.as_ref().filter(|_| action.is_projectile_action()) {
             action.ammo_item_id.as_deref() == Some(item_id.as_str())
                 && aim.ammunition == *definition && value.amount == 1.0
                 && value.id == aim.reservation_id && value.id == crate::projectile::hold_id(&action.id)

@@ -61,6 +61,7 @@ impl SliceActions {
                 .capabilities
                 .capability_blocked(Some(entity), "locomotion")?;
             if action.follow.is_none()
+                && !action.holds_ready_aim()
                 && (action.stage == "working" || action.awaiting_moving_contact())
                 && (!restricted || action.kind == "status-effect" || action.is_natural_contact() || action.is_manufacturing())
             {

@@ -26,7 +26,9 @@ use openlegend_simulation::{
     text::JsText,
     values::deserialize_present_option,
     worlds::base_observed::SpeechVolume,
-    runtime::{FireOperation, PlayerTravelDestination, PlayerTravelIntent, TravelOperation, PlanMode},
+    runtime::{FireOperation, PlayerTravelDestination, PlayerTravelIntent, TravelOperation, PlanMode,
+        RuntimeRangedMode, RuntimeRangedTarget,
+    },
 };
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
@@ -98,6 +100,12 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     ammunition_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    aim_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    body_reference: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    auto_equip: Option<bool>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     container_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
@@ -324,13 +332,19 @@ impl SelectedKnownPlace {
     }
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum CommandKind {
     Move,
     Strike,
     #[serde(rename = "practice-shot")]
     PracticeShot,
+    Aim,
+    #[serde(rename = "shoot-once")]
+    ShootOnce,
+    Hunt,
+    #[serde(rename = "release-shot")]
+    ReleaseShot,
     Follow,
     Respawn,
     Cancel,
@@ -367,6 +381,23 @@ enum CommandKind {
 }
 
 impl CommandKind {
+    fn ranged_start(self) -> Option<RuntimeRangedMode> {
+        match self {
+            Self::Aim => Some(RuntimeRangedMode::Aim),
+            Self::ShootOnce => Some(RuntimeRangedMode::ShootOnce),
+            Self::Hunt => Some(RuntimeRangedMode::Hunt),
+            _ => None,
+        }
+    }
+
+    fn may_offer_lethal_review(self) -> bool {
+        matches!(self, Self::Strike | Self::ShootOnce | Self::Hunt | Self::ReleaseShot)
+    }
+
+    fn ranged_subject(self) -> bool {
+        self.ranged_start().is_some() || matches!(self, Self::ReleaseShot)
+    }
+
     fn arrangement(self) -> Option<OwnedArrangement> {
         match self {
             Self::TransferItem => Some(OwnedArrangement::Move),
@@ -728,12 +759,12 @@ impl PlayerCommands {
                 let finish_authority = permits.clone();
                 let place_world = self.game.world.clone();
                 let finish_world = place_world.clone();
-                let strike = matches!(facts.request.command.kind, CommandKind::Strike);
+                let can_offer_review = facts.request.command.kind.may_offer_lethal_review();
                 let supplied_review = facts.request.command.lethal_review_id.is_some();
                 let begin_reviews = supplied_review.then(|| self.reviews.clone());
-                let stage_reviews = (strike || supplied_review).then(|| self.reviews.clone());
+                let stage_reviews = (can_offer_review || supplied_review).then(|| self.reviews.clone());
                 let publish_reviews = stage_reviews.clone();
-                let stage_scope = strike.then(|| scope.clone());
+                let stage_scope = can_offer_review.then(|| scope.clone());
                 // A selected approval is carried forward only by this exact
                 // admitted candidate. Ordinary commands allocate no carrier.
                 let selected_review = supplied_review
@@ -864,15 +895,15 @@ impl PlayerCommands {
                                             world, &begin_scope.scope, contact, raw.item_id.as_deref(), &begin_budget,
                                         )?
                                     } else {
-                                        begin_references.resolve_contact(
-                                            world, &begin_scope.scope, contact, &begin_budget,
+                                        begin_references.resolve_contact_body(
+                                            world, &begin_scope.scope, contact, raw.body_reference.as_deref(), &begin_budget,
                                         )?
                                     };
-                                    let Some(target) = selected else {
+                                    let Some(target) = selected.filter(|contact| !raw.kind.ranged_subject() || contact.life.is_some()) else {
                                         return Ok(ApplicationStart::Existing(
                                             ResultOwner::Refused(
                                                 "stale-contact",
-                                                if matches!(raw.kind, CommandKind::StatusEffect | CommandKind::Follow | CommandKind::Strike | CommandKind::PracticeShot) {
+                                                if raw.kind.ranged_subject() || matches!(raw.kind, CommandKind::StatusEffect | CommandKind::Follow | CommandKind::Strike | CommandKind::PracticeShot) {
                                                     "Choose a target you can see now."
                                                 } else {
                                                     "Choose a resource you can see now."
@@ -942,11 +973,15 @@ impl PlayerCommands {
                             } else {
                                 None
                             };
+                            let ranged_subject = target.as_ref().and_then(|contact| {
+                                contact.life.map(|life| RuntimeRangedTarget::Subject { id: contact.id.as_str(), life })
+                            });
                             let command = begin_facts.command(
                                 position,
                                 target.as_ref().map(|value| value.id.as_str())
                                     .or(nested)
                                     .or(own_status.then_some(begin_scope.scope.actor_id.as_str())),
+                                ranged_subject,
                                 speech_target.as_ref().map(|value| (value.id.as_str(), value.role)),
                                 travel_destination.as_ref().map(|value| value.id.as_str()),
                                 selected_review.as_ref().and_then(|slot| slot.get()).map(|review| &review.permission),
@@ -1096,7 +1131,14 @@ impl CommandRequest {
             || command.tools.as_ref().is_some_and(|tools| {
                 tools.len() != 1 || tools.iter().any(|(role, item)| !id(role) || !id(item))
             })
-            || (!matches!(command.kind, CommandKind::PracticeShot) && command.ammunition_id.is_some())
+            || (command.kind.ranged_start().is_none() && command.auto_equip.is_some())
+            || (command.kind.ranged_start().is_none() && !matches!(command.kind, CommandKind::PracticeShot)
+                && command.ammunition_id.is_some())
+            || (!matches!(command.kind, CommandKind::ReleaseShot) && command.aim_id.is_some())
+            || command.body_reference.as_ref().is_some_and(|reference| {
+                !command.kind.ranged_subject() || command.target_id.is_none() || reference.len() != 64
+                    || !reference.bytes().all(|value| value.is_ascii_digit() || (b'a'..=b'f').contains(&value))
+            })
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
             || (!matches!(command.kind, CommandKind::TreatScar) && command.scar_id.is_some())
             || (!matches!(command.kind, CommandKind::PlaceHearth) && command.hearth_plan.is_some())
@@ -1110,7 +1152,8 @@ impl CommandRequest {
             ) && command.definition_id.is_some())
             || (!matches!(command.kind, CommandKind::StatusEffect)
                 && (command.effect_operation.is_some() || command.facing_heading.is_some()))
-            || (!matches!(command.kind, CommandKind::Strike | CommandKind::Cancel)
+            || (!command.kind.may_offer_lethal_review()
+                && !matches!(command.kind, CommandKind::Cancel)
                 && command.lethal_review_id.is_some())
             || (!matches!(command.kind, CommandKind::Cook)
                 && (command.preparation_id.is_some()
@@ -1202,6 +1245,28 @@ impl CommandRequest {
                                 id(&point.surface_id)
                                     && [point.x, point.y, point.z].iter().all(|n| n.is_finite())
                             })) =>
+            {
+                Ok(())
+            }
+            CommandKind::Aim | CommandKind::ShootOnce | CommandKind::Hunt
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.item_id.as_deref().is_none_or(id)
+                    && command.ammunition_id.as_deref().is_none_or(id) =>
+            {
+                Ok(())
+            }
+            CommandKind::ReleaseShot
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.item_id.is_none()
+                    && command.target_id.as_deref().is_none_or(id)
+                    && command.aim_id.as_deref().is_some_and(id) =>
             {
                 Ok(())
             }
@@ -1474,6 +1539,7 @@ impl PreparedRequest {
         &'a self,
         destination: Option<&'a SurfacePoint>,
         target: Option<&'a str>,
+        ranged_subject: Option<RuntimeRangedTarget<'a>>,
         speech_target: Option<(&'a str, SpeechTargetRole)>,
         travel_destination: Option<&'a str>,
         strike_permission: Option<&'a openlegend_simulation::runtime::StrikePermission>,
@@ -1549,6 +1615,21 @@ impl PreparedRequest {
                     .definition_id
                     .as_deref()
                     .ok_or(StoreError::InvalidRecord)?,
+                permission: strike_permission,
+            }),
+            CommandKind::Aim | CommandKind::ShootOnce | CommandKind::Hunt => {
+                Ok(RuntimePlayerCommand::RangedStart {
+                    mode: input.kind.ranged_start().ok_or(StoreError::InvalidRecord)?,
+                    target: ranged_subject.ok_or(StoreError::InvalidRecord)?,
+                    weapon: input.item_id.as_deref(),
+                    ammunition: input.ammunition_id.as_deref(),
+                    auto_equip: input.auto_equip.unwrap_or(false),
+                    permission: strike_permission,
+                })
+            }
+            CommandKind::ReleaseShot => Ok(RuntimePlayerCommand::RangedRelease {
+                action: input.aim_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                target: ranged_subject,
                 permission: strike_permission,
             }),
             CommandKind::PracticeShot => Ok(RuntimePlayerCommand::PracticeShot {

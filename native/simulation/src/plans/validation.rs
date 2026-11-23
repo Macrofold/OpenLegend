@@ -124,6 +124,7 @@ pub(crate) fn valid_command(
         | NativeCommand::TransferItem { .. }
         | NativeCommand::Equipment { .. }
         | NativeCommand::Eat { .. }
+        | NativeCommand::Ranged { .. }
         | NativeCommand::PracticeShot { .. }
         | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }

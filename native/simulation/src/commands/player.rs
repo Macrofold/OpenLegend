@@ -77,6 +77,19 @@ pub enum RuntimePlayerCommand<'a> {
     },
     PlaceHearth { definition: &'a DefinitionPin, site: &'a SurfacePoint },
     TreatScar { target: &'a str, scar: &'a str },
+    RangedStart {
+        mode: crate::projectile::RuntimeRangedMode,
+        target: crate::projectile::RuntimeRangedTarget<'a>,
+        weapon: Option<&'a str>,
+        ammunition: Option<&'a str>,
+        auto_equip: bool,
+        permission: Option<&'a crate::contact::StrikePermission>,
+    },
+    RangedRelease {
+        action: &'a str,
+        target: Option<crate::projectile::RuntimeRangedTarget<'a>>,
+        permission: Option<&'a crate::contact::StrikePermission>,
+    },
     PracticeShot {
         target: &'a str,
         weapon: Option<&'a str>,
@@ -139,6 +152,10 @@ impl RuntimePlayerCommand<'_> {
             Self::Handover { target, gift, .. } => target.len() + gift.retained_text_bytes(),
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
             Self::TreatScar { target, scar } => target.len() + scar.len(),
+            Self::RangedStart { target, weapon, ammunition, .. } =>
+                target.selected_text_bytes() + weapon.map_or(0, str::len) + ammunition.map_or(0, str::len),
+            Self::RangedRelease { action, target, .. } =>
+                action.len() + target.map_or(0, crate::projectile::RuntimeRangedTarget::selected_text_bytes),
             Self::PracticeShot { target, weapon, ammunition } => {
                 target.len() + weapon.map_or(0, str::len) + ammunition.map_or(0, str::len)
             }
@@ -216,6 +233,27 @@ impl RuntimePlayerCommand<'_> {
         }
         if let Self::TreatScar { target, scar } = self {
             return bind_scar_treatment(id, actor, target, scar);
+        }
+        match self {
+            Self::RangedStart { mode, target, weapon, ammunition, auto_equip, .. } => {
+                return super::ranged_input::bind(
+                    player_headers(id, actor),
+                    super::ranged_input::RangedIntent::Start {
+                        mode, target: crate::projectile::RangedTarget::bound(target),
+                        weapon: weapon.map(str::to_owned), ammunition: ammunition.map(str::to_owned),
+                        auto_equip,
+                    },
+                );
+            }
+            Self::RangedRelease { action, target, .. } => {
+                return super::ranged_input::bind(
+                    player_headers(id, actor),
+                    super::ranged_input::RangedIntent::Release {
+                        action: action.into(), target: target.map(crate::projectile::RangedTarget::bound),
+                    },
+                );
+            }
+            _ => {}
         }
         if let Self::PracticeShot { target, weapon, ammunition } = self {
             return bind_practice_shot(id, actor, target, weapon, ammunition);
@@ -336,6 +374,8 @@ impl RuntimePlayerCommand<'_> {
             Self::Cook { .. }
             | Self::Status { .. }
             | Self::TreatScar { .. }
+            | Self::RangedStart { .. }
+            | Self::RangedRelease { .. }
             | Self::PracticeShot { .. }
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
@@ -508,6 +548,8 @@ impl RuntimePlayerCommand<'_> {
             Self::Cook { .. }
             | Self::Status { .. }
             | Self::TreatScar { .. }
+            | Self::RangedStart { .. }
+            | Self::RangedRelease { .. }
             | Self::PracticeShot { .. }
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }

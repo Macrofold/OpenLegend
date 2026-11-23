@@ -45,7 +45,7 @@ impl StrikePermission {
         self.heap_bytes()
     }
 
-    pub(super) fn valid_for_action(&self, actor: &Entity, target: &str, life: u64) -> bool {
+    pub(crate) fn valid_for_action(&self, actor: &Entity, target: &str, life: u64) -> bool {
         self.actor_id == actor.id
             && actor.physical_life() == Some(self.source_life)
             && self.target_id == target
@@ -87,24 +87,32 @@ pub(crate) fn prepare(
     injury: ContactInjury,
     budget: &ByteBudget,
 ) -> Result<(StrikePermission, ByteReservation), ExecutionError> {
-    let (attack_digest, temporary) = digest(definition, injury, budget)?;
+    let (attack_digest, _temporary) = digest(definition, injury, budget)?;
+    prepare_digest(source, target, &attack_digest, budget)
+}
+
+pub(crate) fn prepare_digest(
+    source: &Entity,
+    target: &Entity,
+    attack_digest: &str,
+    budget: &ByteBudget,
+) -> Result<(StrikePermission, ByteReservation), ExecutionError> {
     let storage = budget.reserve(
         heap_sum([
             size_of::<StrikePermission>(),
             source.id.len(),
             target.id.len(),
-            attack_digest.capacity(),
+            attack_digest.len(),
         ])
         .ok_or(ExecutionError::Capacity)?,
     )?;
-    drop(temporary);
     Ok((
         StrikePermission {
             actor_id: source.id.clone(),
             source_life: source.physical_life().ok_or(ExecutionError::MissingActor)?,
             target_id: target.id.clone(),
             target_life: target.physical_life().ok_or(ExecutionError::MissingActor)?,
-            attack_digest,
+            attack_digest: attack_digest.into(),
         },
         storage,
     ))
@@ -119,17 +127,31 @@ pub(crate) fn check(
     permission: Option<&StrikePermission>,
     budget: &ByteBudget,
 ) -> Result<Review, ExecutionError> {
+    check_damage(
+        installed,
+        source,
+        target,
+        injury.maximum(definition.damage),
+        permission,
+        || digest(definition, injury, budget),
+    )
+}
+
+pub(crate) fn check_damage(
+    installed: &InstalledWorld,
+    source: &Entity,
+    target: &Entity,
+    maximum: f64,
+    permission: Option<&StrikePermission>,
+    current_digest: impl FnOnce() -> Result<(String, ByteReservation), ExecutionError>,
+) -> Result<Review, ExecutionError> {
     let target_actor = target.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
     if let Some(permission) = permission {
-        let current = permission.valid_for_action(
-            source,
-            &target.id,
-            target_actor.physical_life.unwrap_or(0),
-        );
-        if !current {
+        if !permission.valid_for_action(source, &target.id, target_actor.physical_life.unwrap_or(0))
+        {
             return Ok(Review::Changed);
         }
-        let (current, _custody) = digest(definition, injury, budget)?;
+        let (current, _custody) = current_digest()?;
         return Ok(if current == permission.attack_digest {
             Review::Allowed
         } else {
@@ -141,7 +163,7 @@ pub(crate) fn check(
         policy.lethal_attack_review.is_some()
             && policy.zero_health.outcome(&target_actor.controller) == Some(ZeroHealthOutcome::Die)
     });
-    if !needs_review || injury.maximum(definition.damage) == 0.0 {
+    if !needs_review || maximum == 0.0 {
         return Ok(Review::Allowed);
     }
     // A conditional dialog would disclose private target health. The current
@@ -152,13 +174,11 @@ pub(crate) fn check(
     }) {
         return Err(ExecutionError::UnsupportedFamily);
     }
-    Ok(
-        if injury.maximum(definition.damage) >= target_actor.health {
-            Review::Required
-        } else {
-            Review::Allowed
-        },
-    )
+    Ok(if maximum >= target_actor.health {
+        Review::Required
+    } else {
+        Review::Allowed
+    })
 }
 
 /// A qualified, scoped player-facing offer. It remains owned by the completed

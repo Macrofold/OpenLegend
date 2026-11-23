@@ -24,8 +24,10 @@ pub(super) struct Pending {
     id: Uuid,
     actor: String,
     scope: String,
-    target: String,
-    definition: String,
+    kind: CommandKind,
+    target: Option<String>,
+    definition: Option<String>,
+    aim: Option<String>,
     expires_at: i64,
     pub(super) permission: StrikePermission,
     _custody: ByteReservation,
@@ -61,8 +63,10 @@ impl Reviews {
                     && if matches!(command.kind, CommandKind::Cancel) {
                         command.expected_action_id.is_none()
                     } else {
-                        command.target_id.as_deref() == Some(&entry.target)
-                            && command.definition_id.as_deref() == Some(&entry.definition)
+                        entry.kind == command.kind
+                            && entry.target == command.target_id
+                            && entry.definition == command.definition_id
+                            && entry.aim == command.aim_id
                     }
             })
             .cloned())
@@ -77,14 +81,9 @@ impl Reviews {
         offer: &StrikeReviewOffer,
         budget: &ByteBudget,
     ) -> Result<Arc<Pending>, WorldError> {
-        let target = command
-            .target_id
-            .as_ref()
-            .ok_or(StoreError::InvalidRecord)?;
-        let definition = command
-            .definition_id
-            .as_ref()
-            .ok_or(StoreError::InvalidRecord)?;
+        if !command.kind.may_offer_lethal_review() {
+            return Err(StoreError::InvalidRecord.into());
+        }
         let mut pending = self.pending.lock().map_err(|_| HostError::Poisoned)?;
         let now = now_ms();
         pending.retain(|_, entry| entry.expires_at > now);
@@ -102,8 +101,9 @@ impl Reviews {
                     size_of::<Pending>()
                         + 64
                         + 2 * scope.actor_id.len()
-                        + target.len()
-                        + definition.len()
+                        + command.target_id.as_ref().map_or(0, String::len)
+                        + command.definition_id.as_ref().map_or(0, String::len)
+                        + command.aim_id.as_ref().map_or(0, String::len)
                         + 256,
                 )
             })
@@ -113,8 +113,10 @@ impl Reviews {
             id: Uuid::new_v4(),
             actor: scope.actor_id.clone(),
             scope: scope.key().map_err(|_| StoreError::InvalidRecord)?,
-            target: target.clone(),
-            definition: definition.clone(),
+            kind: command.kind,
+            target: command.target_id.clone(),
+            definition: command.definition_id.clone(),
+            aim: command.aim_id.clone(),
             expires_at: now.saturating_add(REVIEW_MS),
             permission: offer.permission.clone(),
             _custody: custody,

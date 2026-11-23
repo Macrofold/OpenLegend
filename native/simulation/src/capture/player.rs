@@ -88,10 +88,8 @@ impl<'a> PlayerReadScope<'a> {
             || own
                 .action
                 .as_ref()
-                .is_some_and(|action| {
-                    action.guard.is_some()
-                        || (action.ranged.is_some() && !action.is_practice_shot())
-                })
+                .is_some_and(|action| action.guard.is_some()
+                        || (action.ranged.is_some() && !action.is_projectile_action()))
         {
             return Err(ExecutionError::UnsupportedFamily);
         }

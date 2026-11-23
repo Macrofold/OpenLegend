@@ -190,6 +190,7 @@ impl PhysicalMutation<'_> {
             })
             .ok_or(ExecutionError::Invariant)?;
         let before = action.remaining_seconds;
+        let ready = action.ranged.as_ref().filter(|aim| aim.manual).map(|aim| aim.ready);
         let after = if let Some(motion) = &action.strike_motion {
             // A stored release time owns this boundary even when another
             // event lands within the ordinary duration epsilon before it.
@@ -198,7 +199,7 @@ impl PhysicalMutation<'_> {
             let remaining = before - seconds;
             if remaining <= epsilon { 0.0 } else { remaining }
         };
-        if after == before {
+        if after == before && (after > 0.0 || ready != Some(false)) {
             return Ok(after == 0.0);
         }
         self.journal
@@ -211,17 +212,21 @@ impl PhysicalMutation<'_> {
                     entity: handle,
                     action_id: action_id.into(),
                     before,
+                    ready,
                 },
             )?;
         }
-        self.state
+        let action = self.state
             .entities
             .resolve_mut(handle)
             .and_then(|entity| entity.actor.as_mut())
             .and_then(|actor| actor.action.as_mut())
             .filter(|action| action.id == action_id)
-            .ok_or(ExecutionError::Invariant)?
-            .remaining_seconds = after;
+            .ok_or(ExecutionError::Invariant)?;
+        action.remaining_seconds = after;
+        if let Some(aim) = action.ranged.as_mut().filter(|aim| aim.manual) {
+            aim.ready = after == 0.0;
+        }
         Ok(after == 0.0)
     }
 

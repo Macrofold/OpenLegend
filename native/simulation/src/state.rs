@@ -570,7 +570,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub ranged_policy_pin: Option<UnconvertedField>,
+    pub ranged_policy_pin: Option<DefinitionPin>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -849,7 +849,7 @@ impl Action {
             || self.is_picking_up()
             || self.is_tending_fire()
             || self.is_treating_scar()
-            || self.is_practice_shot()
+            || self.is_projectile_action()
             || self.is_following()
             || self.is_placing_hearth()
     }
@@ -923,6 +923,39 @@ impl Action {
             && self.ammo_item_id.is_some()
     }
 
+    pub(crate) fn is_ranged_attack(&self) -> bool {
+        matches!(self.kind.as_str(), "aim" | "shoot-once" | "hunt")
+            && self.ranged.is_some()
+            && self.ranged_policy_pin.is_some()
+            && self.weapon_item_id.is_some()
+            && self.ammo_item_id.is_some()
+    }
+
+    pub(crate) fn holds_ready_aim(&self) -> bool {
+        self.is_ranged_attack()
+            && self.ranged.as_ref().is_some_and(|aim| aim.manual && aim.ready)
+    }
+
+    pub(crate) fn is_projectile_action(&self) -> bool {
+        self.is_practice_shot() || self.is_ranged_attack()
+    }
+
+    pub(crate) fn ranged_attack(
+        id: String, mode: crate::projectile::RuntimeRangedMode, aim: crate::projectile::RangedAim,
+        weapon: String, ammunition: String, policy: DefinitionPin, seconds: f64,
+    ) -> Self {
+        let mut action = Self::native_action(id, mode.kind(), "working");
+        action.target_id = aim.aim_target.as_ref().map(|body| body.id.clone());
+        action.target_life = aim.aim_target.as_ref().map(|body| body.life);
+        action.ranged = Some(aim);
+        action.ranged_policy_pin = Some(policy);
+        action.weapon_item_id = Some(weapon);
+        action.ammo_item_id = Some(ammunition);
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
+        action
+    }
+
     pub(crate) fn practice_shot(
         id: String,
         aim: crate::projectile::RangedAim,
@@ -982,11 +1015,11 @@ impl Action {
             || self.cooperation.is_some()
             || self.combat_help_id.is_some()
             || self.evasion.is_some()
-            || (self.kind == "practice-shot" || self.ranged.is_some() || self.competence_pin.is_some()
+            || (matches!(self.kind.as_str(), "practice-shot" | "aim" | "shoot-once" | "hunt")
+                || self.ranged.is_some() || self.competence_pin.is_some() || self.ranged_policy_pin.is_some()
                 || self.weapon_item_id.is_some() || self.ammo_item_id.is_some())
-                && !self.is_practice_shot()
+                && !self.is_projectile_action()
             || self.attack_execution.is_some()
-            || self.ranged_policy_pin.is_some()
             || self.coaching_episode_id.is_some()
             || self.assembly_phase.is_some()
             || self.assembly_exit_pending.is_some()
@@ -999,7 +1032,7 @@ impl Action {
             || (self.material_permission.is_some() && !self.is_gathering())
             || self.material_origin_ids.is_some()
             || self.material_contribution_ids.is_some()
-            || (!self.is_natural_contact()
+            || (!self.is_natural_contact() && !self.is_ranged_attack()
                 && (self.requires_lethal_review.is_some() || self.lethal_permission.is_some()))
             || (self.kind == "treat-scar" || self.scar_id.is_some()) && !self.is_treating_scar()
             || self.recipe_pin.is_some() != self.is_manufacturing()

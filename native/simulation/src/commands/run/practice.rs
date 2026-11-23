@@ -49,7 +49,7 @@ impl CommandCursor {
             .as_ref()
             .ok_or(ExecutionError::Invariant)?
             .range;
-        let Some(ray) = practice::firing_line(actor, target) else {
+        let Some(ray) = crate::projectile::firing_line(actor, target) else {
             self.refuse(&ordinary.out_of_reach);
             return Ok(false);
         };

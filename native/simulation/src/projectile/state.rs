@@ -71,7 +71,7 @@ pub(crate) struct ProjectileFlight {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    lethal_permission: Option<UnconvertedField>,
+    lethal_permission: Option<Box<crate::contact::StrikePermission>>,
     pub attack_digest: JsText,
     pub tool: DefinitionPin,
     pub ammunition: DefinitionPin,
@@ -104,12 +104,10 @@ pub(crate) struct ProjectileFlight {
 }
 
 impl ProjectileFlight {
-    pub(crate) fn from_practice(
-        id: String,
-        action_id: String,
+    pub(crate) fn from_action(
         source: &crate::state::Entity,
-        target_id: String,
-        aim: &super::RangedAim,
+        action: &crate::state::Action,
+        reviewed: Option<&crate::contact::StrikePermission>,
         policy: ContactPolicy,
         digest: JsText,
         line: crate::geometry::SightRay,
@@ -118,6 +116,9 @@ impl ProjectileFlight {
         injury: f64,
         handling: f64,
     ) -> Result<Self, ExecutionError> {
+        let aim = action.ranged.as_ref().ok_or(ExecutionError::Invariant)?;
+        let practice = action.is_practice_shot();
+        let target = aim.aim_target.as_ref();
         let source_controller = match source.actor.as_ref().map(|actor| actor.controller.as_str()) {
             Some("player") => SourceController::Player,
             Some("npc") => SourceController::Npc,
@@ -146,18 +147,21 @@ impl ProjectileFlight {
         )
         .is_none();
         Ok(Self {
-            id,
-            action_id,
+            id: String::new(),
+            action_id: action.id.clone(),
             source_id: source.id.clone(),
             source_life: aim.source_life,
             source_controller,
             contact_policy: policy,
             source_exited,
-            target_id: Some(target_id),
-            target_life: None,
-            practice: true,
-            requires_lethal_review: source_controller == SourceController::Player,
-            lethal_permission: None,
+            target_id: target.map(|target| target.id.clone()),
+            target_life: target.filter(|_| !practice).map(|target| target.life),
+            practice,
+            requires_lethal_review: action.requires_lethal_review.unwrap_or(false)
+                || source_controller == SourceController::Player,
+            lethal_permission: reviewed
+                .map(|permission| Box::new(permission.clone()))
+                .or_else(|| action.lethal_permission.clone()),
             attack_digest: digest,
             tool: aim.tool.clone(),
             ammunition: aim.ammunition.clone(),
@@ -222,8 +226,15 @@ impl ProjectileFlight {
         {
             return Err(InstallError::CurrentFormat);
         }
-        if self.lethal_permission.is_some() || self.execution.is_some() || self.encounters.is_some()
+        if self.lethal_permission.is_some()
+            && (self.practice
+                || !self.requires_lethal_review
+                || self.source_controller != SourceController::Player
+                || self.target_id.is_none())
         {
+            return Err(InstallError::CurrentFormat);
+        }
+        if self.execution.is_some() || self.encounters.is_some() {
             return Err(InstallError::UnsupportedFamily(
                 "specialized projectile contact",
             ));
@@ -268,6 +279,7 @@ heap_record!(ProjectileFlight {
     source_id,
     contact_policy,
     target_id,
+    lethal_permission,
     attack_digest,
     tool,
     ammunition

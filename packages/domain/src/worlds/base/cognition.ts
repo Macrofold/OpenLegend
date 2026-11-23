@@ -4,7 +4,8 @@ import { BASE_THREAT_RESPONSE_PROFILE } from './threat-response-profile.js';
 import type { WorldEvent } from '../../types.js';
 import { freeze } from 'immer';
 import { BASE_RESPONSE_RULES } from './response-rules.js';
-import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
+import { BASE_RANGED_CHOICE_LABEL, BASE_RANGED_TEXT } from './ranged-counterplay.js';
+import { BASE_HUNTING } from './hunting.js';
 
 const fireOut = { eventType: 'fire-out', message: 'The campfire ran out of fuel.' };
 const flight = {
@@ -22,6 +23,17 @@ const ranged = {
   released: BASE_RANGED_TEXT.released,
   projectileEnded: 'projectile-ended',
   shotEnded: 'shot-ended',
+  aimReady: 'aim-ready',
+  prepared: BASE_RANGED_TEXT.prepared,
+  menu: {
+    title: BASE_RANGED_CHOICE_LABEL,
+    aimLabel: BASE_RANGED_TEXT.aimName,
+    aimDescription: BASE_RANGED_TEXT.aimDescription,
+    shootLabel: BASE_RANGED_TEXT.shotName,
+    shootDescription: BASE_RANGED_TEXT.shotDescription,
+    huntLabel: BASE_HUNTING.label,
+    huntSpecies: BASE_HUNTING.knownPrey,
+  },
   contactHit: BASE_RANGED_TEXT.contactHit,
   contactStopped: BASE_RANGED_TEXT.contactStopped,
   contactSource: BASE_RANGED_TEXT.contactSource,

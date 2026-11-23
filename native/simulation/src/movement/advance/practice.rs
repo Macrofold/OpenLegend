@@ -3,7 +3,6 @@
 use super::*;
 use crate::body::{ProjectileContact, ScarEffect, scar_factor};
 use crate::host::retained_size::HeapBytes;
-use crate::item_holds::ClaimState;
 use crate::projectile::{ContactPolicy, ProjectileFlight, practice};
 use crate::reception::EventScalar;
 use indexmap::IndexMap;
@@ -131,7 +130,7 @@ impl MoveAdvanceCursor {
             self.fail(reason)?;
             return self.drive(core, None);
         }
-        let ray = practice::firing_line(actor, target).ok_or(ExecutionError::Invariant)?;
+        let ray = crate::projectile::firing_line(actor, target).ok_or(ExecutionError::Invariant)?;
         let range = offer
             .weapon
             .and_then(|(_, tool)| tool.ranged_weapon.as_ref())
@@ -206,7 +205,7 @@ impl MoveAdvanceCursor {
             .as_ref()
             .ok_or(ExecutionError::Invariant)?;
         let body_policy = installed.body_policy.as_ref();
-        let ray = practice::firing_line(actor, target).ok_or(ExecutionError::Invariant)?;
+        let ray = crate::projectile::firing_line(actor, target).ok_or(ExecutionError::Invariant)?;
         let outgoing = scar_factor(
             body_policy.map(crate::install::VerifiedDefinition::value),
             actor,
@@ -310,12 +309,10 @@ impl MoveAdvanceCursor {
         let injury = (weapon.damage + ammunition.damage_bonus) * outgoing;
         // Keep the prepared launch inputs immutable while the original action
         // and its claim settle. All writes share the same candidate inverse.
-        let mut flight = ProjectileFlight::from_practice(
-            String::new(),
-            action_id.into(),
+        let flight = ProjectileFlight::from_action(
             actor,
-            target_id.clone(),
-            aim,
+            action,
+            None,
             policy,
             digest.into(),
             ray,
@@ -324,25 +321,8 @@ impl MoveAdvanceCursor {
             injury,
             accuracy,
         )?;
-        core.physical().end_item_hold(&hold, ClaimState::Consumed)?;
-        let debit = core
-            .plan_owned_debits(&self.actor_id, &IndexMap::from([(ammo_id, 1)]))?
-            .ok_or(ExecutionError::Invariant)?;
-        core.record_owned_debit_sources(&self.actor_id, action_id, &debit)?;
-        core.use_owned_lots(&self.actor_id, action_id, debit)?;
-        core.physical()
-            .retain_combat_recovery(&self.actor_id, recovery)?;
-        if !core.physical().advance_timed_work(
-            &self.actor_id,
-            action_id,
-            self.seconds,
-            installed.time_epsilon,
-        )? {
-            return Err(ExecutionError::Invariant);
-        }
-        let projectile = core.physical().allocate("projectile")?.id;
-        flight.id = projectile.clone();
-        core.physical().launch_projectile(flight, flight_storage)?;
+        let projectile =
+            self.commit_projectile(core, &hold, ammo_id, recovery, flight, flight_storage)?;
         let event = crate::native_controller::feeding::stage(
             core,
             &self.actor_id,

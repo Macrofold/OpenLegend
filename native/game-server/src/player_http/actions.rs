@@ -442,7 +442,9 @@ pub(crate) fn contact_choices(
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     use openlegend_simulation::activity::{ActivityDetail, ActivityScalar};
+    use openlegend_simulation::runtime::RuntimeRangedMode;
     use openlegend_simulation::worlds::activity_display as display;
+    use std::{borrow::Cow, mem::size_of};
 
     #[derive(Serialize)]
     #[serde(tag = "kind", rename_all = "lowercase")]
@@ -453,29 +455,40 @@ pub(crate) fn contact_choices(
             npc_id: &'a str,
         },
         Command {
-            command: Strike<'a>,
+            command: Command<'a>,
         },
     }
     #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Strike<'a> {
-        #[serde(rename = "type")]
-        kind: &'static str,
-        target_id: &'a str,
-        definition_id: &'a str,
+    #[serde(untagged, rename_all_fields = "camelCase")]
+    enum Command<'a> {
+        Strike {
+            #[serde(rename = "type")]
+            kind: &'static str,
+            target_id: &'a str,
+            definition_id: &'a str,
+        },
+        Ranged {
+            #[serde(rename = "type")]
+            mode: RuntimeRangedMode,
+            target_id: &'a str,
+            item_id: &'a str,
+            ammunition_id: &'a str,
+            #[serde(skip_serializing_if = "std::ops::Not::not")]
+            auto_equip: bool,
+        },
     }
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
     struct Action<'a> {
         id: String,
-        label: JsText,
+        label: Cow<'a, JsText>,
         category: &'a str,
-        description: JsText,
+        description: Cow<'a, JsText>,
         keywords: &'a [String],
         target_id: &'a str,
         enabled: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
-        reason: Option<&'static str>,
+        reason: Option<&'a str>,
         #[serde(skip_serializing_if = "Vec::is_empty")]
         facts: Vec<(JsText, JsText)>,
         intent: Intent<'a>,
@@ -488,13 +501,13 @@ pub(crate) fn contact_choices(
     if let Some(name) = conversant {
         actions.push(Action {
             id: format!("talk-{selected}"),
-            label: JsText::concat(&[&words.label_prefix, name]),
+            label: Cow::Owned(JsText::concat(&[&words.label_prefix, name])),
             category: &words.category,
-            description: JsText::concat(&[
+            description: Cow::Owned(JsText::concat(&[
                 &words.description_prefix,
                 name,
                 &words.description_suffix,
-            ]),
+            ])),
             keywords: &words.keywords,
             target_id: selected,
             enabled: true,
@@ -508,6 +521,7 @@ pub(crate) fn contact_choices(
         categories.push(words.category.as_str());
     }
     if let Some(menu) = &strike_menu {
+        let before = actions.len();
         let reason = if !controlling {
             Some("Take control of your character to act here.")
         } else if menu.paused() {
@@ -559,16 +573,16 @@ pub(crate) fn contact_choices(
                 .collect();
             actions.push(Action {
                 id: format!("{}-{selected}", definition.id),
-                label,
+                label: Cow::Owned(label),
                 category: "Combat",
-                description: view.name,
+                description: Cow::Owned(view.name),
                 keywords: &[],
                 target_id: selected,
                 enabled: reason.is_none(),
                 reason,
                 facts,
                 intent: Intent::Command {
-                    command: Strike {
+                    command: Command::Strike {
                         kind: "strike",
                         target_id: selected,
                         definition_id: &definition.id,
@@ -576,7 +590,43 @@ pub(crate) fn contact_choices(
                 },
             });
         }
-        if !actions.is_empty() {
+        // Projection stays inside the accepted contact read. Borrow the
+        // installed descriptions as far as the one outgoing menu encode.
+        for choice in menu.ranged {
+            let kind = match choice.mode {
+                RuntimeRangedMode::Aim => "aim",
+                RuntimeRangedMode::ShootOnce => "shoot-once",
+                RuntimeRangedMode::Hunt => "hunt",
+            };
+            let bytes = (2 * size_of::<Action<'_>>() + 1)
+                .checked_add(kind.len())
+                .and_then(|size| size.checked_add(selected.len()))
+                .and_then(|size| size.checked_add(choice.weapon.len() + 1))
+                .ok_or(CapacityError)?;
+            workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
+            let reason = reason.or(choice.reason);
+            actions.push(Action {
+                id: format!("{kind}-{selected}-{}", choice.weapon),
+                label: Cow::Borrowed(&choice.label),
+                category: "Combat",
+                description: Cow::Borrowed(&choice.description),
+                keywords: &[],
+                target_id: selected,
+                enabled: reason.is_none(),
+                reason,
+                facts: Vec::new(),
+                intent: Intent::Command {
+                    command: Command::Ranged {
+                        mode: choice.mode,
+                        target_id: selected,
+                        item_id: choice.weapon,
+                        ammunition_id: choice.ammunition,
+                        auto_equip: choice.auto_equip,
+                    },
+                },
+            });
+        }
+        if actions.len() != before {
             categories.push("Combat");
         }
     }

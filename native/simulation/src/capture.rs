@@ -952,6 +952,9 @@ pub(crate) fn with_actor_self<T>(
             total_seconds: action.total_seconds,
             remaining_seconds: action.remaining_seconds,
             preparing_navigation: action.navigation.is_some(),
+            ranged_ready: action.ranged.as_ref()
+                .filter(|aim| action.is_ranged_attack() && aim.manual)
+                .map(|aim| aim.ready),
         }),
         speech: actor
             .capabilities

@@ -35,6 +35,7 @@ impl CommandExposure {
             | NativeCommand::TendFire { envelope, .. }
             | NativeCommand::TreatScar { envelope, .. }
             | NativeCommand::PracticeShot { envelope, .. }
+            | NativeCommand::Ranged { envelope, .. }
             | NativeCommand::PlaceHearth { envelope, .. }
             | NativeCommand::Cook { envelope, .. }
             | NativeCommand::Craft { envelope, .. }
@@ -55,7 +56,7 @@ impl CommandExposure {
                     .value()
                     .outward_activity
                     .actions;
-                let exposes_action = matches!(command, NativeCommand::Strike { .. })
+                let exposes_action = matches!(command, NativeCommand::Strike { .. } | NativeCommand::Ranged { .. })
                     || matches!(command, NativeCommand::Feed { .. } | NativeCommand::Gather { .. } | NativeCommand::Fish { .. } | NativeCommand::Cook { .. } | NativeCommand::Craft { .. } | NativeCommand::TendFire { .. } | NativeCommand::TreatScar { .. } | NativeCommand::PlaceHearth { .. } | NativeCommand::Follow { .. })
                         && outward.iter().any(|kind| kind == command.kind());
                 if !exposes_action

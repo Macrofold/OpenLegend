@@ -28,6 +28,7 @@ mod preparing_food;
 mod fire;
 mod scar_treatment;
 mod practice;
+mod ranged;
 mod follow;
 mod hearth;
 mod manufacture;
@@ -72,6 +73,7 @@ enum Phase {
     HearthWork,
     ScarReach,
     PracticeLine,
+    RangedLine,
     Finish,
     Clear,
     Stopped,
@@ -82,6 +84,7 @@ pub(crate) struct MoveAdvanceCursor {
     action_id: Option<String>,
     physical_life: u64,
     practice_release: Option<practice::PendingPracticeRelease>,
+    requested_ranged_release: Option<Box<ranged::ReleaseRequest>>,
     seconds: f64,
     phase: Phase,
     motion: Option<MotionOperation>,
@@ -165,6 +168,7 @@ impl MoveAdvanceCursor {
             action_id: None,
             physical_life: 0,
             practice_release: None,
+            requested_ranged_release: None,
             seconds,
             phase: Phase::Start,
             motion: None,
@@ -354,6 +358,9 @@ impl MoveAdvanceCursor {
             if let Some(mut answer) = geometry.take() {
                 if self.phase == Phase::FeedSight {
                     return self.feed_sight_answer(core, answer);
+                }
+                if self.phase == Phase::RangedLine {
+                    return self.finish_ranged_line(core, answer);
                 }
                 let (query, _guard) = self
                     .queries
@@ -662,6 +669,20 @@ impl MoveAdvanceCursor {
                         }
                         return self.check_hearth(core);
                     }
+                    if action.is_ranged_attack() && action.stage == "working" {
+                        if action.holds_ready_aim() {
+                            self.phase = Phase::Done;
+                            continue;
+                        }
+                        if action.remaining_seconds > self.seconds + installed.time_epsilon {
+                            core.physical().advance_timed_work(&self.actor_id,
+                                self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
+                                self.seconds, installed.time_epsilon)?;
+                            self.phase = Phase::Done;
+                            continue;
+                        }
+                        return self.check_ranged(core);
+                    }
                     if action.is_practice_shot() && action.stage == "working" {
                         if action.remaining_seconds > self.seconds + installed.time_epsilon {
                             core.physical().advance_timed_work(&self.actor_id,
@@ -757,7 +778,7 @@ impl MoveAdvanceCursor {
                         self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
                         self.physical_life,
                     )?;
-                    if action.feeding.is_none() && !action.is_gathering() && !action.is_picking_up() && !action.is_cooking() && !action.is_tending_fire() && action.destination.is_none() {
+                    if action.feeding.is_none() && !action.is_gathering() && !action.is_picking_up() && !action.is_cooking() && !action.is_tending_fire() && !action.is_projectile_action() && action.destination.is_none() {
                         self.fail(&rules.movement_missing_destination)?;
                         continue;
                     }
@@ -776,6 +797,9 @@ impl MoveAdvanceCursor {
                     }
                     if action.is_cooking() {
                         return self.check_cook(core);
+                    }
+                    if action.is_projectile_action() {
+                        return self.advance_shot_approach(core);
                     }
                     let tolerance = if action.is_casting() {
                         let Some(source) = action.target_id.as_deref().and_then(|id| crate::casts::source(core.state, id)) else {
@@ -874,6 +898,7 @@ impl MoveAdvanceCursor {
                         bound(core, &self.actor_id, action_id, self.physical_life)?;
                     if action.is_placing_hearth() { return self.check_hearth(core); }
                     if action.is_practice_shot() { return self.check_practice(core); }
+                    if action.is_ranged_attack() { return self.check_ranged(core); }
                     if action.is_casting() {
                         self.start_target_work(core, action.replans)?;
                         self.phase = Phase::Done;
@@ -1063,7 +1088,7 @@ impl MoveAdvanceCursor {
                 | Phase::FeedSight
                 | Phase::HearthWork
                 | Phase::ScarReach
-                | Phase::PracticeLine
+                | Phase::PracticeLine | Phase::RangedLine
                 | Phase::CastLine
                 | Phase::CookReach => {
                     return Err(ExecutionError::Invariant);

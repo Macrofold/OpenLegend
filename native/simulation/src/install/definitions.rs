@@ -43,22 +43,20 @@ struct Manifest {
     acoustics: AcousticPolicy,
     acoustics_pin: DefinitionPin,
     #[serde(deserialize_with = "deserialize_nullable")]
-    ranged_policy: Option<Value>,
+    ranged_policy: Option<crate::projectile::RangedPolicy>,
     #[serde(deserialize_with = "deserialize_nullable")]
     ranged_policy_pin: Option<DefinitionPin>,
     activity_hosts: Vec<DefinitionPin>,
     recipe_families: Vec<DefinitionPin>,
 }
 
-/// These are authored definitions only. The optional ranged family is retained
-/// intact for static presentation/save; an unsupported live action still fails
-/// installation/admission at the physical owner. No Value contains actors,
-/// histories, mutable clocks or a generic runtime field dictionary.
+/// Authored meanings stay immutable in the installed world. The row retains
+/// canonical storage while current consumers use validated rules.
 pub(crate) struct AuthoredManifest {
     pub row: crate::records::InstalledRow,
     pub revision: u64,
     pub appraisals: Option<Arc<Value>>,
-    pub ranged_policy: Option<Arc<Value>>,
+    pub ranged_policy: Option<crate::projectile::RangedPolicy>,
     pub ranged_policy_pin: Option<DefinitionPin>,
     pub activity_hosts: Vec<DefinitionPin>,
     pub recipe_families: Vec<DefinitionPin>,
@@ -160,7 +158,11 @@ pub(crate) fn install_physical_meanings(
         || manifest.definitions.len() != manifest.pins.len()
         || manifest.senses.len() != input.senses.len()
         || manifest.senses.len() != manifest.sense_pins.len()
-        || manifest.ranged_policy.is_some() != manifest.ranged_policy_pin.is_some()
+        || match (&manifest.ranged_policy, &manifest.ranged_policy_pin) {
+            (None, None) => false,
+            (Some(policy), Some(pin)) => !policy.valid(pin),
+            _ => true,
+        }
         || manifest.body_policy.is_some() != manifest.body_policy_pin.is_some()
     {
         return Err(InstallError::DefinitionBody);
@@ -369,17 +371,17 @@ pub(crate) fn install_physical_meanings(
             .recipe_families
             .heap_bytes()
             .ok_or(InstallError::Capacity)?,
-        [
-            manifest.appraisals.as_ref(),
-            manifest.ranged_policy.as_ref(),
-        ]
-        .into_iter()
-        .try_fold(0usize, |bytes, value| {
-            bytes.checked_add(value.map_or(Some(0), |value| {
+        manifest
+            .appraisals
+            .as_ref()
+            .map_or(Some(0), |value| {
                 fresh_json_bytes(value)?.checked_add(size_of::<Value>() + 2 * size_of::<usize>())
-            })?)
-        })
-        .ok_or(InstallError::Capacity)?,
+            })
+            .ok_or(InstallError::Capacity)?,
+        manifest
+            .ranged_policy
+            .heap_bytes()
+            .ok_or(InstallError::Capacity)?,
     ])
     .ok_or(InstallError::Capacity)?;
     let manifest_storage = construction
@@ -397,7 +399,7 @@ pub(crate) fn install_physical_meanings(
             row: manifest_row,
             revision: manifest.revision,
             appraisals: manifest.appraisals.map(Arc::new),
-            ranged_policy: manifest.ranged_policy.map(Arc::new),
+            ranged_policy: manifest.ranged_policy,
             ranged_policy_pin: manifest.ranged_policy_pin,
             activity_hosts: manifest.activity_hosts,
             recipe_families: manifest.recipe_families,

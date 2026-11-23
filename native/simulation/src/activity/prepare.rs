@@ -49,6 +49,9 @@ pub(super) fn start_record(
         NativeCommand::Gather {
             target_id, tool, ..
         } => [Some(target_id), tool.item_id.as_deref()],
+        NativeCommand::Ranged {
+            intent: crate::commands::RangedIntent::Start { target, weapon, .. }, ..
+        } => [target.subject_id(), weapon.as_deref()],
         NativeCommand::PracticeShot { target_id, weapon_item_id, .. } => {
             [Some(target_id), weapon_item_id.as_deref()]
         }
@@ -62,6 +65,9 @@ pub(super) fn start_record(
         _ => None,
     };
     let practice_ammunition = match command {
+        NativeCommand::Ranged {
+            intent: crate::commands::RangedIntent::Start { ammunition, .. }, ..
+        } => ammunition.as_deref(),
         NativeCommand::PracticeShot { ammo_item_id, .. } => ammo_item_id.as_deref(),
         _ => None,
     };

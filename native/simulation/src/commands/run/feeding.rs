@@ -67,6 +67,16 @@ impl CommandCursor {
             NativeCommand::Feed { target_id, .. } | NativeCommand::Pickup { target_id, .. } =>
                 (target_id, installed.retained.item_handling_read.reach),
             NativeCommand::Gather { target_id, .. } | NativeCommand::TendFire { target_id, .. } => (target_id, installed.movement.interaction_radius()),
+            NativeCommand::Ranged {
+                intent: crate::commands::RangedIntent::Start {
+                    target: crate::projectile::RangedTarget::Subject { id, .. }, ..
+                }, ..
+            } => {
+                let aim = self.action.as_ref().and_then(|action| action.ranged.as_ref()).ok_or(ExecutionError::Invariant)?;
+                let (tool, _) = crate::projectile::loadout::installed_loadout(installed, aim)?;
+                let policy = installed.manifest.ranged_policy.as_ref().ok_or(ExecutionError::Invariant)?;
+                (id, policy.approach_range(tool.range))
+            }
             NativeCommand::PracticeShot { target_id, .. } => {
                 let aim = self.action.as_ref().and_then(|action| action.ranged.as_ref()).ok_or(ExecutionError::Invariant)?;
                 let tool = installed.retained.items.get(&aim.tool.id).and_then(|item| item.ranged_weapon.as_ref())
@@ -84,18 +94,19 @@ impl CommandCursor {
             .entities
             .get(target_id)
             .ok_or(ExecutionError::MissingEntity)?;
-        if matches!(self.command, NativeCommand::Pickup { .. } | NativeCommand::TendFire { .. } | NativeCommand::PracticeShot { .. })
+        if matches!(self.command, NativeCommand::Pickup { .. } | NativeCommand::TendFire { .. } | NativeCommand::PracticeShot { .. } | NativeCommand::Ranged { .. })
             && installed.capabilities.capability_blocked(Some(actor), "locomotion")?
         {
             self.refuse(&installed.ordinary_actions.value().actions_restricted);
             return Ok(());
         }
-        let (route, storage) = feeding::approach(
-            actor,
-            target,
-            reach,
-            &self.budget,
-        )?;
+        let (route, storage) = if matches!(
+            self.command, NativeCommand::PracticeShot { .. } | NativeCommand::Ranged { .. }
+        ) {
+            crate::projectile::approach_to_shot(actor, target, reach, &self.budget)?
+        } else {
+            feeding::approach(actor, target, reach, &self.budget)?
+        };
         self._reservation.merge(storage)?;
         self.question(core, Phase::Route)?.routes.push(route);
         Ok(())

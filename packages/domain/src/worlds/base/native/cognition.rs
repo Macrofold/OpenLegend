@@ -69,6 +69,9 @@ pub struct RangedOccurrenceRules {
     pub released: crate::text::JsText,
     pub projectile_ended: String,
     pub shot_ended: String,
+    pub aim_ready: String,
+    pub prepared: crate::text::JsText,
+    pub menu: RangedMenuWords,
     pub contact_hit: crate::text::JsText,
     pub contact_stopped: crate::text::JsText,
     pub contact_source: crate::text::JsText,
@@ -79,6 +82,24 @@ pub struct RangedOccurrenceRules {
     pub observed_range_end: crate::text::JsText,
     pub stopped: crate::text::JsText,
 }
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RangedMenuWords {
+    pub title: String,
+    pub aim_label: String,
+    pub aim_description: crate::text::JsText,
+    pub shoot_label: String,
+    pub shoot_description: crate::text::JsText,
+    pub hunt_label: String,
+    pub hunt_species: Vec<String>,
+}
+
+impl RangedMenuWords {
+    pub fn permits_hunt(&self, species: Option<&str>) -> bool {
+        species.is_some_and(|species| self.hunt_species.iter().any(|known| known == species))
+    }
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ResponseRules {

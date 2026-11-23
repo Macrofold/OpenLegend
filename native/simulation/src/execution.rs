@@ -1485,6 +1485,7 @@ enum Undo {
         entity: EntityHandle,
         action_id: String,
         before: f64,
+        ready: Option<bool>,
     },
     CombatReady {
         entity: EntityHandle,
@@ -2299,15 +2300,19 @@ impl PhysicalJournal {
                     entity,
                     action_id,
                     before,
+                    ready,
                 } => {
-                    state
+                    let action = state
                         .entities
                         .resolve_mut(entity)
                         .and_then(|entity| entity.actor.as_mut())
                         .and_then(|actor| actor.action.as_mut())
                         .filter(|action| action.id == action_id)
-                        .ok_or(ExecutionError::Invariant)?
-                        .remaining_seconds = before;
+                        .ok_or(ExecutionError::Invariant)?;
+                    action.remaining_seconds = before;
+                    if let Some(ready) = ready {
+                        action.ranged.as_mut().ok_or(ExecutionError::Invariant)?.ready = ready;
+                    }
                 }
                 Undo::CombatReady { entity, before } => {
                     state

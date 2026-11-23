@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   BASE_GUARD_TEXT,
+  BASE_RANGED_TEXT,
   BASE_SKILLED_TEXT,
   canonicalJson,
   manufactureInputQuantities,
@@ -89,6 +90,15 @@ export function rustGameServerScenePolicy(world: WorldState) {
       action: {
         preparingRoute: rules.preparingRoute,
         working: rules.working,
+        ranged: world.moduleManifest.rangedPolicy
+          ? {
+              readyLabel: BASE_RANGED_TEXT.readyLabel,
+              releaseLabel: BASE_RANGED_TEXT.shootingName,
+              cancelLabel: BASE_RANGED_TEXT.cancelName,
+              notReady: BASE_RANGED_TEXT.notReady,
+              ready: BASE_RANGED_TEXT.ready,
+            }
+          : undefined,
         statusTypes: rules.actionStatusTypes,
         workingStatusTypes: rules.workingStatusTypes,
         noProgressTypes: rules.noProgressTypes,

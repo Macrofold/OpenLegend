@@ -50,6 +50,8 @@ pub struct PlayerActionFacts<'a> {
     pub total_seconds: f64,
     pub remaining_seconds: f64,
     pub preparing_navigation: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ranged_ready: Option<bool>,
 }
 
 /// Self-only facts loaned inside the accepted-read lane. Detached application

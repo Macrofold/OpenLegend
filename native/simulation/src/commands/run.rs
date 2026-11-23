@@ -28,6 +28,7 @@ mod preparing_food;
 mod fire;
 mod scar_treatment;
 mod practice;
+mod ranged;
 mod respawn;
 mod follow;
 mod hearth;
@@ -102,6 +103,8 @@ enum Phase {
     FeedReach,
     ScarReach,
     PracticeReach,
+    RangedSight,
+    RangedRelease,
     RespawnSupport,
     RespawnStanding,
     RespawnConditions,
@@ -204,6 +207,7 @@ pub(crate) struct CommandCursor {
     phase: Phase,
     queries: Option<GeometryQueries>,
     contact_route: Option<crate::contact::StrikeRoute>,
+    ranged_release: Option<Box<crate::movement::MoveAdvanceCursor>>,
     follow: Option<crate::movement::follow::FollowCursor>,
     hearth: Option<hearth::PreparedHearth>,
     travel: Option<Box<travel::Consent>>,
@@ -391,6 +395,7 @@ impl CommandCursor {
             phase: Phase::Start,
             queries: None,
             contact_route: None,
+            ranged_release: None,
             follow: None,
             hearth: None,
             travel: None,
@@ -441,6 +446,9 @@ impl CommandCursor {
         if matches!(self.phase, Phase::TypedPlan) { return self.typed_plan.as_ref()?.geometry(); }
         if matches!(self.phase, Phase::TravelChoice | Phase::TravelAccept | Phase::TravelEndReception) {
             return self.travel.as_ref()?.queries();
+        }
+        if let Some(release) = &self.ranged_release {
+            return release.queries().ok();
         }
         self.sight
             .as_ref()
@@ -538,6 +546,10 @@ impl CommandCursor {
         }
         if matches!(self.command, NativeCommand::TreatScar { .. }) {
             self.prepare_scar_view(core)?;
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::Ranged { .. }) {
+            self.prepare_ranged_view(core)?;
             return Ok(false);
         }
         if matches!(self.command, NativeCommand::PracticeShot { .. }) {
@@ -850,6 +862,7 @@ impl CommandCursor {
         answer: Option<CommandAnswer>,
     ) -> Result<Progress, ExecutionError> {
         if matches!(self.phase, Phase::TypedPlan) { return self.typed_walk_step(core, answer); }
+        if matches!(self.phase, Phase::RangedRelease) { return self.drive_ranged_release(core, answer); }
         let installed = core.state.installed.clone();
         let ordinary = installed.ordinary_actions.value();
         let mut answer = answer;
@@ -952,6 +965,10 @@ impl CommandCursor {
                             Phase::DiscoverySight | Phase::DiscoveryReach | Phase::DiscoveryRoute
                         ) {
                             self.finish_discovery_geometry(core, answer)?;
+                            return self.drive(core, None);
+                        }
+                        if matches!(self.phase, Phase::RangedSight) {
+                            self.finish_ranged_sight(core, answer)?;
                             return self.drive(core, None);
                         }
                         if matches!(self.phase, Phase::LearnRecordSight | Phase::LearnRecordReach) {
@@ -1297,7 +1314,7 @@ impl CommandCursor {
                     if self.typed_plan_mode.is_some() {
                         return self.prepare_typed_walk(core);
                     }
-                    if self.chosen_contact.is_some() {
+                    if self.chosen_contact.is_some() && matches!(self.command, NativeCommand::Strike { .. }) {
                         if self.start_discovery(core)? {
                             return Ok(Progress::Geometry);
                         }
@@ -1499,6 +1516,12 @@ impl CommandCursor {
                                 return Ok(Progress::Occurrence(event));
                             }
                         }
+                        NativeCommand::Ranged { intent: super::RangedIntent::Start { .. }, .. } => {
+                            if self.prepare_ranged_start(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
+                        NativeCommand::Ranged { .. } => return self.begin_ranged_release(core),
                         NativeCommand::PracticeShot { .. } => {
                             if self.prepare_practice_shot(core)? {
                                 return Ok(Progress::Geometry);
@@ -1514,7 +1537,7 @@ impl CommandCursor {
                 }
                 Phase::StoragePage => return self.storage_occurrence(core, &actor_id),
                 Phase::RespawnSupport | Phase::RespawnStanding
-                | Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach | Phase::ScarReach | Phase::PracticeReach => {
+                | Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach | Phase::ScarReach | Phase::PracticeReach | Phase::RangedSight | Phase::RangedRelease => {
                     return Err(ExecutionError::Invariant);
                 }
                 Phase::Standing => {
@@ -1794,6 +1817,12 @@ impl CommandCursor {
                     self.phase = Phase::Done;
                 }
                 Phase::RecordPrepared => {
+                    if matches!(self.command, NativeCommand::Ranged { .. })
+                        && !self.source_scope_started
+                        && !self.prepare_ranged_equipment(core)?
+                    {
+                        continue;
+                    }
                     if !self.source_scope_started {
                         self.exposure = super::exposure::CommandExposure::prepare(
                             core,
@@ -1827,7 +1856,7 @@ impl CommandCursor {
                     // digits). Admission precedes allocation and the retained copy.
                     self.grow_action_storage("action-".len() + 16)?;
                     let action_id = core.physical().allocate("action")?.id;
-                    if self.action.as_ref().is_some_and(Action::is_practice_shot) {
+                    if self.action.as_ref().is_some_and(Action::is_projectile_action) {
                         self.grow_action_storage(action_id.len() + ":projectile".len())?;
                         let action = self.action.as_mut().ok_or(ExecutionError::Invariant)?;
                         action.ranged.as_mut().ok_or(ExecutionError::Invariant)?.reservation_id =
@@ -1951,7 +1980,7 @@ impl CommandCursor {
                     let action = self.action.take().ok_or(ExecutionError::Invariant)?;
                     let action_id = action.id.clone();
                     let place_hearth = action.is_placing_hearth();
-                    let practice = action.is_practice_shot();
+                    let projectile = action.is_projectile_action();
                     if action.is_manufacturing() && !self.admit_craft_record(core, &actor_id, &action)? {
                         continue;
                     }
@@ -1973,7 +2002,7 @@ impl CommandCursor {
                         },
                     )?;
                     if place_hearth { core.reserve_hearth_holds(&actor_id)?; }
-                    if practice { core.reserve_projectile(&actor_id)?; }
+                    if projectile { core.reserve_projectile(&actor_id)?; }
                     let mut result = ordinary.accepted.outcome(true);
                     result.action_id = Some(action_id);
                     self.outcome = Some(result);
@@ -2064,6 +2093,9 @@ impl CommandCursor {
                         }
                         if matches!(self.command, NativeCommand::PracticeShot { .. }) {
                             return self.practice_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::Ranged { .. }) {
+                            return self.ranged_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::Craft { .. }) {
                             return self.craft_started(core, &actor_id);

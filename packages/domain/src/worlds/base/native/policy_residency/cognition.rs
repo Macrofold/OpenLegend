@@ -48,6 +48,9 @@ heap_record!(RangedOccurrenceRules {
     released,
     projectile_ended,
     shot_ended,
+    aim_ready,
+    prepared,
+    menu,
     contact_hit,
     contact_stopped,
     contact_source,
@@ -57,6 +60,15 @@ heap_record!(RangedOccurrenceRules {
     observed_cover,
     observed_range_end,
     stopped
+});
+heap_record!(super::RangedMenuWords {
+    title,
+    aim_label,
+    aim_description,
+    shoot_label,
+    shoot_description,
+    hunt_label,
+    hunt_species
 });
 heap_record!(ResponseRules {
     offers,
