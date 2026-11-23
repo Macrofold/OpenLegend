@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                   | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The separately delivered runner is in use; local integration and verified build reuse remain open. | 2026-11-18   |
+| In progress | The separately delivered runner is in use; local integration and verified build reuse remain open. | 2026-11-23   |
 
 ## Owners and minimal architecture
 
@@ -125,9 +125,15 @@ Before release, upload case outputs under the registered worker/run prefix, seal
 
 `collect` verifies downloaded checksums outside Git and records destination/manifest acknowledgement; an approved durable archive can acknowledge collection instead. Required artifacts are excluded from automatic expiry until acknowledged; optional output and staged source can expire after seven days. Use [tag-filtered lifecycle eligibility](https://aws.amazon.com/blogs/storage/simplify-your-data-lifecycle-by-using-object-tags-with-amazon-s3-lifecycle/), not unconditional bucket expiry. Adding eligibility to an already old object can make it expire immediately; preserve the destination first. No Object Lock, old-save migration or indefinite retention of every trace is needed. Missing required collection retains its cost commitment and a visible recovery item; stop compute, preserve the sole copy, and resolve retention before its reserved storage term ends. Delete EBS only once required payloads are verified elsewhere. Keep financial receipts/uncertain operations; retire other closed metadata with collected evidence. Never commit signed artifact URLs or private payloads; public documentation/source links are unaffected.
 
-Apply the [verification record and scratch rules](../../.agents/rules/verification.md#run-and-report-the-selected-checks) to local collection. Identical frozen bundles can share one checksum-verified copy. Every retained manifest must still resolve its inputs and required evidence after scratch removal, and retiring one record must leave shared bytes available to the others.
+Apply the [verification record rules](../../.agents/rules/verification.md#run-and-report-the-selected-checks) after local collection. Keep original result and receipt manifests intact. A run retained for replay must still resolve every dependency. Identical retained inputs can share a verified copy outside scratch until their last consumer retires.
 
 The [native campaign audit](../maintainers/verification-workers.md#native-campaign-setup-evidence--november-15-2026) attributes recorded preparation time; complete cold/warm reuse qualification remains open in VW02–VW03. Historical durations do not promise a saving. [AWS stop/start](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Stop_Start.html) retains EBS but can change host/public address; a restarted machine is not necessarily the identical physical benchmark host. Record measured hardware and environment on every claim and use fresh matched comparisons when that matters.
+
+### Local scratch cleanup
+
+VW03 proposes `pnpm verify:scratch RUN_ID` for local and managed checks. The creating tool records its private `scratch/` directory under the run root and writes results and retained inputs separately. The command defaults to a preview showing the path, estimated disk space and any reason to keep it. `--apply` uses the same eligibility check under the run owner’s exclusive claim after readers and writers finish. Require a closed run with its result recorded. Managed runs also require verified collection. Delete only that run’s registered scratch directory, without following links or accepting paths outside the designated root. Skip active, interrupted, deliberately retained and unrecognized runs. Recovery can close an interrupted run through its existing owner.
+
+After acknowledgement, the collector can invoke the same local operation without a second download. An interrupted cleanup can retry and an already removed directory succeeds. Avoid scanning the archive or sizing every file on the normal close path. Qualify automatic cleanup as an isolated experiment against manual closeout on equivalent disposable runs before enabling it. Check the same results and receipts survive, shared controls still replay, active runs are untouched and a failed deletion retries. Compare disk retained and closeout time outside the gameplay timing window.
 
 ## Implementation and review boundaries
 

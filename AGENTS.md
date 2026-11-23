@@ -173,6 +173,10 @@ Continue across stages; progress reports, a first implementation or an intermedi
 
 A required measurement may report failure; a required pass remains unmet. Optional diagnostics/improvements do not enlarge delivery scope. Unavailable external evidence stays unaccepted; finish independent authorized work first.
 
+**Clean up every task.** Keep deliverables, useful decisions and required evidence in their established homes. Put temporary outputs in a workspace owned by the task, separate from files to keep. Before handoff or closure, remove spent scratch once its users have finished and required outputs are verified in their intended location. Delete disposable copies directly. Compression makes sense only for material worth keeping. A task that created nothing temporary needs no cleanup record.
+
+When bulky files must survive a handoff, note their location, next use and release condition in the existing task record. An active investigation can keep what it needs for its duration. Review that material when the use changes or ends. Respect ownership, explicit preservation requests and existing recovery and [asset rules](docs/asset-workflow.md#where-files-belong), including editable originals and requested iterations. Leave shared, active or uncertain files to their owner and flag unresolved cleanup.
+
 Once agreed deliverables, affected-diff review and selected required checks pass, finish. Reopen only for a concrete finding, invalidated evidence or explicit requirement; unchanged broader qualification does not expand reconciliation. Use [Reporting work](#reporting-work).
 
 <!-- BEGIN AWS Agent Toolkit rules -->
