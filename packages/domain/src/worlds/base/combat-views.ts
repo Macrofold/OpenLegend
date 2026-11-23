@@ -5,7 +5,11 @@ import { seesEntity } from '../../perception.js';
 import { supportedPosition, worldPosition } from '../../spatial-state.js';
 import { sameSurfacePoint } from '../../spatial.js';
 import { distance3D, interpolate, type SurfacePoint } from '@open-legend/spatial';
-import { BASE_EVASION_DIRECTIONS } from './ranged-counterplay.js';
+import {
+  BASE_EVASION_DIRECTIONS,
+  baseEvasionChoiceDetails,
+  baseEvasionChoiceLabel,
+} from './ranged-counterplay.js';
 import type { Entity, WorldState } from '../../types.js';
 import { attackPreparation, attackPreparationLabel } from '../../combat-encounters.js';
 import { renderNarration, subjectNarration, person } from '../../narration.js';
@@ -15,7 +19,7 @@ export function evasionDescription(world: WorldState, actor: Entity, destination
   const profile = bodyPolicy(world)?.evasion;
   if (!profile) return undefined;
   const distance = distance3D(worldPosition(actor), destination);
-  return `Move ${distance.toFixed(2)} m along the selected supported path in ${profile.seconds} game seconds; wait ${profile.repeatSeconds} game seconds between evasions. ${profile.description}`;
+  return baseEvasionChoiceDetails(distance, profile);
 }
 
 /** Local disclosed examples. The ordinary point command remains available. */
@@ -36,7 +40,7 @@ export function evasionChoices(world: WorldState, actor: Entity) {
     const destination = { ...interpolate(from, point, fraction), surfaceId: point.surfaceId };
     return [
       {
-        label: `${profile.label} ${direction.label}`,
+        label: baseEvasionChoiceLabel(profile.label, direction.label),
         description: evasionDescription(world, actor, destination),
         destination,
       },

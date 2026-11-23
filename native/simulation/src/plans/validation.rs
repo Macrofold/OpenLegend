@@ -48,7 +48,7 @@ pub(crate) fn valid_command(
         return false;
     }
     match command {
-        NativeCommand::Move { destination, .. } => {
+        NativeCommand::Move { destination, .. } | NativeCommand::Evade { destination, .. } => {
             [destination.x, destination.y, destination.z]
                 .iter()
                 .all(|n| n.is_finite())
@@ -159,7 +159,6 @@ pub(crate) fn valid_command(
         | NativeCommand::Equipment { .. }
         | NativeCommand::Eat { .. }
         | NativeCommand::Guard { .. }
-        | NativeCommand::Evade { .. }
         | NativeCommand::PracticeShot { .. }
         | NativeCommand::ReleaseStrike { .. }
         | NativeCommand::Cancel { .. }

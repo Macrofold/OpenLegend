@@ -475,6 +475,14 @@ A second signed player started clear of an already admitted dodge, then walked i
 
 The final focused source manifest is `3d17ba611a42` and the executable SHA-256 is `744dbb737f3d`. Results on that executable are completion `0680b56496c9`, signed Stop `26964e9013e0`, injury `340b13e7cfd7` and late obstruction `870e7f7f47be`. The checks used disposable PostgreSQL databases and the running Rust server.
 
+### NPCs evade through the ordinary Rust movement owner
+
+A real held Aim gave a resident three authored direction choices through the signed conversation. The controlled provider selected north and the resident moved exactly once to the supported point `(22, 0, 12)`. The ordinary save retained the movement and repeat deadline. Restart returned the original conversation receipt, and repeating its request did not buy or apply another answer. The automatic thought path separately made the same supported choice during advancing play, without a player conversation. It preserved the occurrence, position and repeat deadline after restart.
+
+With the attacker outside the resident’s own sight and no personal danger cue, the same live request offered no Evasion. Cancellation after three choices were offered produced no movement or saved Evasion. Both cases preserved the original request outcome after restart. The first build offered the right choices but refused the selected action in the response family check. The repair uses the same point validation and movement executor as ordinary player Evasion. A separate negative fixture initially tried to install two vision detectors and was rejected before startup.
+
+The passing tree was `60a9b7653615` and executable `52ecf806718e`. Results `8bc0363cd8e5`, `2fe129a75622`, `0b20f5d678e1` and `ecf04edf78b3` show the four signed cases. All listeners exited, disposable databases closed and the controlled provider incurred zero spend. The `nsc04-npc-evade-20261123` archive preserves the passing and refused runs and their reconstructed source.
+
 ### NPC ranged choices through a signed conversation
 
 The NPC receives choices for the exact visible target, carried weapon and compatible ammunition stack. Choosing one option uses the same equipment, hold, movement and release owners as ordinary ranged actions. A hidden target and incompatible ammunition do not create choices. If the NPC loses sight of the selected target before applying the answer, the original choice is refused without changing equipment or consuming ammunition.

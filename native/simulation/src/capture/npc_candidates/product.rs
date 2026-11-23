@@ -83,6 +83,9 @@ pub enum NpcOfferMeaning {
     Probe {
         probe: usize,
     },
+    Evade {
+        choice: std::sync::Arc<NpcEvasionChoice>,
+    },
     EquippedStrike {
         body: usize,
         weapon: usize,

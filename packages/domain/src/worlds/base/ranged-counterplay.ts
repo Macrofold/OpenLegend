@@ -95,6 +95,31 @@ export const BASE_EVASION_KEYWORDS = ['evade', 'dodge'];
 const evasionRecovery = '{label} is ready in {seconds} game seconds. Walking remains available.';
 const evasionDistance = 'Choose a distinct supported destination within {maximum} m.';
 export const BASE_EVASION_ENDED_EVENT = 'evasion-ended';
+const evasionChoiceLabel = '{label} {direction}';
+const evasionChoiceDetails =
+  'Move {distance} m along the selected supported path in {seconds} game seconds; wait {repeatSeconds} game seconds between evasions. {description}';
+
+function evasionWords(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (marker, key: string) =>
+    Object.hasOwn(values, key) ? String(values[key]) : marker,
+  );
+}
+
+export function baseEvasionChoiceLabel(label: string, direction: string): string {
+  return evasionWords(evasionChoiceLabel, { label, direction });
+}
+
+export function baseEvasionChoiceDetails(
+  distance: number,
+  profile: { seconds: number; repeatSeconds: number; description: string },
+): string {
+  return evasionWords(evasionChoiceDetails, {
+    distance: distance.toFixed(2),
+    seconds: profile.seconds,
+    repeatSeconds: profile.repeatSeconds,
+    description: profile.description,
+  });
+}
 export const BASE_EVASION_TEXT = {
   description:
     'Choose a short supported evasive movement. Current distance, duration and repeat limits are disclosed with the action.',
@@ -131,6 +156,10 @@ export function baseEvasionOccurrenceRules() {
     durationFact: 'Duration (game seconds)',
     repeatFact: 'Repeat interval (game seconds)',
     pathFact: 'Path',
+    directions: BASE_EVASION_DIRECTIONS,
+    choiceLabel: evasionChoiceLabel,
+    choiceDetails: evasionChoiceDetails,
+    destinationScope: BASE_EVASION_TEXT.destinationScope,
   };
 }
 

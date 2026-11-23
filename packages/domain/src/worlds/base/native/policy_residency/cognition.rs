@@ -60,8 +60,13 @@ heap_record!(EvasionOccurrenceRules {
     distance_fact,
     duration_fact,
     repeat_fact,
-    path_fact
+    path_fact,
+    directions,
+    choice_label,
+    choice_details,
+    destination_scope
 });
+heap_record!(EvasionDirection { label });
 heap_record!(RangedOccurrenceRules {
     shot_released,
     released,

@@ -142,7 +142,9 @@ impl DecisionPolicy {
                 text(&words["strikes"][*definition][usize::from(*hunting)])?,
                 &[("name", &name(target.name, NameArticle::Definite)?)],
             ),
-            Meaning::Guard { .. } | Meaning::EquippedStrike { .. } => String::new(),
+            Meaning::Guard { .. } | Meaning::EquippedStrike { .. } | Meaning::Evade { .. } => {
+                String::new()
+            }
             // Their core actions supplied an installed activity description.
             Meaning::Fish { .. } | Meaning::Cook { .. } | Meaning::FireCare { .. }
             | Meaning::Ranged { .. }
@@ -198,6 +200,11 @@ impl DecisionPolicy {
         }
         if let Meaning::Guard { tool, .. } = &offer.meaning {
             let mut description = self.guard(tool, body.map(|_| &target.name.name))?;
+            description.push_str(&result);
+            return Ok(description);
+        }
+        if let Meaning::Evade { choice } = &offer.meaning {
+            let mut description = choice.description.clone();
             description.push_str(&result);
             return Ok(description);
         }

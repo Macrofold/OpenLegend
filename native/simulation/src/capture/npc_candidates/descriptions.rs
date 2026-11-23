@@ -142,6 +142,7 @@ pub struct NpcDescriptionsRequest {
     offers: Vec<NpcDescriptionOffer>,
     activity_labels: Vec<crate::capture::NpcActivityLabel>,
     installed: Arc<crate::simulation::InstalledWorld>,
+    prepared_text_bytes: usize,
     storage: ByteReservation,
 }
 
@@ -235,6 +236,7 @@ impl NpcDescriptionsRequest {
         self.storage
             .bytes()
             .saturating_add(self.context._storage.bytes())
+            .saturating_add(self.prepared_text_bytes)
             .saturating_add(
                 self.context
                     .myself
@@ -261,12 +263,20 @@ impl NpcDescriptionsRequest {
                 .ok()
                 .is_some_and(|index| targets[index].visible);
         }
+        let mut prepared_text_bytes = 0usize;
         let bytes = offers.iter().try_fold(
             size_of::<Self>() + 2 * size_of::<usize>(),
             |bytes, offer| {
                 let meaning = match &offer.meaning {
                     NpcOfferMeaning::Continuation { action_type, .. } => {
                         action_type.heap_bytes()?
+                    }
+                    NpcOfferMeaning::Evade { choice } => {
+                        // The shared choice already owns this backing. A
+                        // formatter needs its own budget for the copied text.
+                        prepared_text_bytes = prepared_text_bytes
+                            .checked_add(choice.description.storage_bytes())?;
+                        0
                     }
                     _ => 0,
                 };
@@ -313,6 +323,7 @@ impl NpcDescriptionsRequest {
                 .collect(),
             activity_labels: activity.labels.clone(),
             installed: Arc::clone(&core.state.installed),
+            prepared_text_bytes,
             storage,
         }))
     }

@@ -85,6 +85,17 @@ pub struct EvasionOccurrenceRules {
     pub duration_fact: String,
     pub repeat_fact: String,
     pub path_fact: String,
+    pub directions: Vec<EvasionDirection>,
+    pub choice_label: String,
+    pub choice_details: String,
+    pub destination_scope: String,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EvasionDirection {
+    pub label: String,
+    pub x: f64,
+    pub z: f64,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

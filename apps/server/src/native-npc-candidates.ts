@@ -45,6 +45,7 @@ export type NativeNpcOfferMeaning =
       readonly reach: number;
     }
   | { readonly kind: 'probe'; readonly probe: number }
+  | { readonly kind: 'evade'; readonly choice: { label: string; description: string } }
   | {
       readonly kind: 'fish' | 'cook' | 'fire-care' | 'handover' | 'equipped-strike' | 'ranged';
       readonly body: number;
@@ -326,6 +327,20 @@ export function formatNativeNpcCandidateDescriptions(
         base = decisionOfferDescription({ kind: 'probe', direction: probe.direction });
         break;
       }
+      case 'evade':
+        if (offer.description !== undefined)
+          return {
+            ordinal,
+            id: offer.id,
+            description: offer.description,
+            firstActionDescription: meaning.choice.label,
+            transition: offer.transition,
+          };
+        base = {
+          description: meaning.choice.description,
+          firstActionDescription: meaning.choice.label,
+        };
+        break;
       case 'guard': {
         const tool = meaning.tool;
         const observed = meaning.body === null ? undefined : body(meaning.body);

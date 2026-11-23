@@ -43,6 +43,8 @@ use fire::FuelChoices;
 mod gifts;
 use gifts::GiftProposals;
 mod defense;
+mod evasion;
+pub use evasion::NpcEvasionChoice;
 use defense::GuardChoices;
 pub use defense::NpcGuardTool;
 mod melee;
@@ -71,6 +73,7 @@ enum Enumerate {
     GiftProposal(usize, usize, usize),
     Follow(usize, usize),
     Status(usize, usize),
+    Evade(usize),
     Probe(usize),
     Approach(usize),
     Fish(usize, usize),
@@ -385,6 +388,10 @@ impl NpcCandidateCursor {
                     envelope,
                     destination: input.destination.ok_or(ExecutionError::Invariant)?.clone().into(),
                 },
+                "evade" => NativeCommand::Evade {
+                    envelope,
+                    destination: input.destination.ok_or(ExecutionError::Invariant)?.clone().into(),
+                },
                 "fish" => NativeCommand::Fish {
                     envelope,
                     target_id: target()?,
@@ -685,7 +692,10 @@ impl NpcCandidateCursor {
                             proposals.completed += 1;
                         }
                         self.append(offer)?;
-                    } else if matches!(offer.meaning, NpcOfferMeaning::Strike { .. })
+                    } else if matches!(
+                        offer.meaning,
+                        NpcOfferMeaning::Strike { .. } | NpcOfferMeaning::Evade { .. }
+                    )
                         && matches!(
                             outcome.code.as_str(),
                             "combat-recovery" | "evasion-recovery"

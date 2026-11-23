@@ -186,14 +186,7 @@ impl NpcCandidateCursor {
             }
             Enumerate::Status(target_index, definition_index) => {
                 if target_index > self.targets.len() {
-                    self.stage = if crate::reception::vision_parameters(&installed, actor_entity)
-                        .radius
-                        == 0.0
-                    {
-                        Enumerate::Probe(0)
-                    } else {
-                        Enumerate::Approach(0)
-                    };
+                    self.stage = Enumerate::Evade(0);
                     return Ok(true);
                 }
                 if definition_index == installed.status_policy.definitions.len() {
@@ -266,6 +259,21 @@ impl NpcCandidateCursor {
                     guard,
                     WorkTransitionMode::Replace,
                 )?;
+            }
+            Enumerate::Evade(index) => {
+                if !self.offer_evasion(core, index, preparation_id)? {
+                    let entity = core
+                        .state
+                        .physical
+                        .entities
+                        .get(&self.actor)
+                        .ok_or(ExecutionError::MissingActor)?;
+                    self.stage = if crate::reception::vision_parameters(&installed, entity).radius == 0.0 {
+                        Enumerate::Probe(0)
+                    } else {
+                        Enumerate::Approach(0)
+                    };
+                }
             }
             Enumerate::Probe(index) => {
                 if index == rules.probes.len() {

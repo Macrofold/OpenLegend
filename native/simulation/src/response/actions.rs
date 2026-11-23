@@ -63,6 +63,7 @@ pub(super) fn command(
         raw.get("type").and_then(SqlCell::as_str),
         Some(
             "move"
+                | "evade"
                 | "follow"
                 | "say"
                 | "status-effect"
