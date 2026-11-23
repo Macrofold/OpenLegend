@@ -156,13 +156,12 @@ impl NativeWorldSession {
                 .and_then(|bytes| bytes.checked_add(4096))
                 .ok_or(CapacityError)?;
         let _workspace = self.budget.reserve(capacity)?;
-        let (command, signature) =
+        let command =
             NativeCommand::bind_player_expression(request, actor, predicate, target)
                 .map_err(failure)?;
         self.session
             .begin_command_with_plan(
-                command,
-                signature,
+                crate::commands::CommandStart::Player(command),
                 CommandOptions {
                     preview: false,
                     native_controller: false,

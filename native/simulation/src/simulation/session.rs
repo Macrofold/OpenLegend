@@ -635,12 +635,17 @@ impl Session {
         options: crate::commands::CommandOptions,
         material_gather: crate::construction_gather::ConstructionGather,
     ) -> Result<CandidateKey, SessionError> {
-        self.begin_command_with_plan(command, canonical, options, material_gather, None, None)
+        self.begin_command_with_plan(
+            crate::commands::CommandStart::Separate(command, canonical),
+            options,
+            material_gather,
+            None,
+            None,
+        )
     }
     pub(crate) fn begin_command_with_plan(
         &mut self,
-        command: crate::commands::NativeCommand,
-        canonical: String,
+        input: crate::commands::CommandStart,
         options: crate::commands::CommandOptions,
         material_gather: crate::construction_gather::ConstructionGather,
         typed_plan: Option<crate::plans::PlanMode>,
@@ -649,7 +654,7 @@ impl Session {
         let preview = options.preview;
         if preview
             && !matches!(
-                &command,
+                input.command(),
                 crate::commands::NativeCommand::Cancel { .. }
                     | crate::commands::NativeCommand::Move { .. }
                     | crate::commands::NativeCommand::PlaceHearth { .. }
@@ -666,9 +671,8 @@ impl Session {
                 self.simulation.state.installed.geometry.spatial.revision,
                 journal.next_provider_serial()?,
             );
-            let cursor = crate::commands::CommandCursor::new(
-                command,
-                canonical,
+            let cursor = crate::commands::CommandCursor::from_start(
+                input,
                 options,
                 binding,
                 &self.budget,

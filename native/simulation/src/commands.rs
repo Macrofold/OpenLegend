@@ -384,6 +384,33 @@ pub struct InspectedStorage {
     pub(crate) expected_revision: Option<u64>,
 }
 
+impl InspectedStorage {
+    fn validated(
+        root: String,
+        after: Option<String>,
+        expected_scope: Option<crate::text::JsText>,
+        expected_revision: Option<u64>,
+    ) -> Result<Self, serde_json::Error> {
+        let continuation = match (after.as_deref(), expected_scope.as_ref()) {
+            (None, None) => false,
+            (Some(after), Some(scope)) if is_safe_record_id(after) && scope.units_len() == 64 => true,
+            _ => return Err(serde::de::Error::custom("Invalid inspection continuation.")),
+        };
+        if !is_safe_record_id(&root)
+            || expected_revision.is_some() != continuation
+            || expected_revision.is_some_and(|revision| revision > crate::identity::MAX_SAFE_INTEGER)
+        {
+            return Err(serde::de::Error::custom("Invalid inventory inspection."));
+        }
+        Ok(Self {
+            root,
+            after,
+            expected_scope,
+            expected_revision,
+        })
+    }
+}
+
 fn inventory_inspection_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -404,28 +431,27 @@ fn inventory_inspection_input(raw: &str) -> Result<NativeCommand, serde_json::Er
         expected_scope: Option<crate::text::JsText>,
     }
     let input: Input = serde_json::from_str(raw)?;
-    let continuation = match (input.after, input.expected_scope) {
-        (None, None) => None,
-        (Some(after), Some(scope))
-            if is_safe_record_id(&after) && scope.units_len() == 64 =>
-        {
-            Some((after, scope))
-        }
-        _ => return Err(serde::de::Error::custom("Invalid inspection continuation.")),
-    };
-    let (selected, world) = match (input.item_id, input.container_id, input.expected_revision, continuation) {
-        (None, None, None, None) => (None, None),
-        (Some(item_id), Some(container_id), Some(expected_revision), None)
+    let (selected, world) = match (
+        input.item_id,
+        input.container_id,
+        input.expected_revision,
+        input.after,
+        input.expected_scope,
+    ) {
+        (None, None, None, None, None) => (None, None),
+        (Some(item_id), Some(container_id), Some(expected_revision), None, None)
             if is_safe_record_id(&item_id) && is_safe_record_id(&container_id) =>
         {
-            (Some(InspectedItem { item_id, container_id, expected_revision }), None)
+            (
+                Some(InspectedItem { item_id, container_id, expected_revision }),
+                None,
+            )
         }
-        (None, Some(root), revision, continuation)
-            if is_safe_record_id(&root) && revision.is_some() == continuation.is_some() =>
-        {
-            let (after, expected_scope) = continuation
-                .map_or((None, None), |(after, scope)| (Some(after), Some(scope)));
-            (None, Some(InspectedStorage { root, after, expected_scope, expected_revision: revision }))
+        (None, Some(root), revision, after, scope) => {
+            (
+                None,
+                Some(InspectedStorage::validated(root, after, scope, revision)?),
+            )
         }
         _ => return Err(serde::de::Error::custom("Invalid inventory inspection.")),
     };

@@ -89,6 +89,22 @@ pub enum RuntimePlayerCommand<'a> {
     Unequip { item: &'a str, expected_revision: u64, placement_revision: u64 },
 }
 
+/// The owner binds executable facts and the exact receipt bytes together.
+pub(crate) struct BoundPlayerCommand {
+    command: NativeCommand,
+    canonical: String,
+}
+
+impl BoundPlayerCommand {
+    pub(super) fn command(&self) -> &NativeCommand {
+        &self.command
+    }
+
+    pub(super) fn into_parts(self) -> (NativeCommand, String) {
+        (self.command, self.canonical)
+    }
+}
+
 impl RuntimePlayerCommand<'_> {
     pub(crate) fn selected_text_bytes(self) -> usize {
         match self {
@@ -135,6 +151,15 @@ impl RuntimePlayerCommand<'_> {
     }
 
     pub(crate) fn bind(
+        self,
+        id: &str,
+        actor: &str,
+    ) -> Result<BoundPlayerCommand, serde_json::Error> {
+        let (command, canonical) = self.bind_parts(id, actor)?;
+        Ok(BoundPlayerCommand { command, canonical })
+    }
+
+    fn bind_parts(
         self,
         id: &str,
         actor: &str,
@@ -330,8 +355,13 @@ impl RuntimePlayerCommand<'_> {
             _ => (None, None, None),
         };
         let headers = player_headers(id, actor);
+        let unsafe_id = |id: &str| !crate::values::is_safe_record_id(id);
         if !headers.valid()
-            || recipe_id.is_some_and(|id| !crate::values::is_safe_record_id(id))
+            || recipe_id.is_some_and(unsafe_id)
+            || item_id.is_some_and(unsafe_id)
+            || (matches!(self, Self::Gather { .. } | Self::Fish { .. } | Self::Pickup { .. })
+                && target_id.is_some_and(unsafe_id))
+            || (matches!(self, Self::Pickup { .. }) && quantity.is_some() && item_id.is_none())
             || tools.is_some_and(|tools| !crate::manufacturing::valid_tool_selection(tools))
             || destination
                 .is_some_and(|point| ![point.x, point.y, point.z].iter().all(|n| n.is_finite()))
@@ -839,12 +869,41 @@ fn bind_storage_inspection(
         #[serde(skip_serializing_if = "Option::is_none")]
         expected_revision: Option<u64>,
     }
+    let world = super::InspectedStorage::validated(
+        root.to_owned(),
+        after.map(str::to_owned),
+        expected_scope.cloned(),
+        expected_revision,
+    )?;
+    let headers = player_headers(id, actor);
+    if !headers.valid() {
+        return Err(serde::de::Error::custom("Invalid selected native command binding."));
+    }
     let value = Inspection {
-        id, actor_id: actor, kind: "inspect-inventory", human_initiated: true,
-        container_id: root, after, expected_scope, expected_revision,
+        id,
+        actor_id: actor,
+        kind: "inspect-inventory",
+        human_initiated: true,
+        container_id: root,
+        after,
+        expected_scope,
+        expected_revision,
     };
-    let signature = json_record(&value)?;
-    Ok((super::inventory_inspection_input(&signature)?, signature))
+    let encoding = CommandEncoding::from_ordered(
+        &value,
+        5 + usize::from(after.is_some())
+            + usize::from(expected_scope.is_some())
+            + usize::from(expected_revision.is_some()),
+    )?;
+    let canonical = encoding.json.get().to_owned();
+    Ok((
+        NativeCommand::InspectInventory {
+            envelope: headers.envelope(encoding),
+            selected: None,
+            world: Some(world),
+        },
+        canonical,
+    ))
 }
 
 fn player_headers(id: &str, actor: &str) -> CommandHeaders {
@@ -1112,7 +1171,7 @@ impl NativeCommand {
     /// eligibility and the exact selected target have been checked.
     pub(crate) fn bind_player_expression(
         id: &str, actor: &str, predicate: &JsText, target: Option<&str>,
-    ) -> Result<(Self, String), serde_json::Error> {
+    ) -> Result<BoundPlayerCommand, serde_json::Error> {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Expression<'a> {
@@ -1133,10 +1192,13 @@ impl NativeCommand {
         }
         let input = Expression { actor_id: actor, id, predicate, target_id: target, kind: "descriptive-act" };
         let encoding = CommandEncoding::from_ordered(&input, 4 + usize::from(target.is_some()))?;
-        Ok((Self::DescriptiveAct {
-            envelope: headers.envelope(encoding),
-            predicate: predicate.clone(),
-            target: target.map(str::to_owned),
-        }, json_record(&input)?))
+        Ok(BoundPlayerCommand {
+            command: Self::DescriptiveAct {
+                envelope: headers.envelope(encoding),
+                predicate: predicate.clone(),
+                target: target.map(str::to_owned),
+            },
+            canonical: json_record(&input)?,
+        })
     }
 }

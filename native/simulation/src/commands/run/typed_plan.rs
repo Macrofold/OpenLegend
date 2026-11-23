@@ -68,7 +68,8 @@ impl CommandCursor {
         // would make the ordinary runner mistake this unstarted walk for a replay.
         let (command, _) = super::super::player::RuntimePlayerCommand::Move(destination.physical())
             .bind(&format!("{id}:walk"), actor)
-            .map_err(|_| ExecutionError::Invariant)?;
+            .map_err(|_| ExecutionError::Invariant)?
+            .into_parts();
         let transition = match mode {
             PlanMode::Enqueue => WorkTransitionMode::Enqueue,
             PlanMode::Replace => WorkTransitionMode::Replace,

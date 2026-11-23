@@ -553,11 +553,10 @@ impl NativeWorldSession {
             RuntimePlayerCommand::Handover { evidence, .. } => evidence.cloned(),
             _ => None,
         };
-        let (command, signature) = command.bind(id, actor).map_err(failure)?;
+        let input = command.bind(id, actor).map_err(failure)?;
         self.session
             .begin_command_with_plan(
-                command,
-                signature,
+                crate::commands::CommandStart::Player(input),
                 crate::commands::CommandOptions {
                     preview,
                     native_controller: false,

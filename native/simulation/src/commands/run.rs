@@ -239,7 +239,41 @@ fn outcome(ok: bool, code: &str, message: &str) -> Outcome {
         action_id: None,
     }
 }
+
+/// Start with either separately supplied bytes to check or the sealed pair
+/// prepared by the stand-alone player binding owner.
+pub(crate) enum CommandStart {
+    Separate(NativeCommand, String),
+    Player(super::player::BoundPlayerCommand),
+}
+
+impl CommandStart {
+    pub(crate) fn command(&self) -> &NativeCommand {
+        match self {
+            Self::Separate(command, _) => command,
+            Self::Player(bound) => bound.command(),
+        }
+    }
+}
+
 impl CommandCursor {
+    pub(crate) fn from_start(
+        input: CommandStart,
+        options: CommandOptions,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        match input {
+            CommandStart::Separate(command, canonical) => {
+                Self::new(command, canonical, options, binding, budget)
+            }
+            CommandStart::Player(bound) => {
+                let (command, canonical) = bound.into_parts();
+                Self::admit(command, canonical, options, binding, budget)
+            }
+        }
+    }
+
     pub(crate) fn needs_known_places(&self) -> bool {
         !self.options.preview && matches!(self.command, NativeCommand::Say { .. })
     }
@@ -275,6 +309,16 @@ impl CommandCursor {
                 return Err(ExecutionError::Invariant);
             }
         }
+        Self::admit(command, canonical, options, binding, budget)
+    }
+
+    fn admit(
+        command: NativeCommand,
+        canonical: String,
+        options: CommandOptions,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
         let bytes = std::mem::size_of::<Self>()
             + canonical.capacity()
             + command.heap_bytes().ok_or(ExecutionError::Capacity)?
