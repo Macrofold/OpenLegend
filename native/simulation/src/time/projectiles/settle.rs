@@ -56,6 +56,8 @@ struct Terminal {
     injury: Option<HealthChangeCursor>,
     before: Option<f64>,
     loss: f64,
+    raw_injury: f64,
+    prevented_injury: f64,
     expected: Option<String>,
     _storage: ByteReservation,
 }
@@ -244,6 +246,8 @@ impl ProjectileSettle {
                 injury: None,
                 before: None,
                 loss: 0.0,
+                raw_injury: 0.0,
+                prevented_injury: 0.0,
                 expected: None,
                 _storage,
             })
@@ -444,8 +448,12 @@ impl Terminal {
                         * scar_factor(policy, entry, ScarEffect::IncomingInjury);
                     let storage = budget.reserve(entry.id.len() + self.shot.len())?;
                     let id = entry.id.clone();
+                    let direction = Point { x: -flight.direction.x, y: -flight.direction.y, z: -flight.direction.z };
+                    let defense = crate::contact::guard::apply_contact(core, &id, direction, injury)?;
+                    self.raw_injury = injury;
+                    self.prevented_injury = defense.prevented;
                     self.injury = Some(HealthChangeCursor::new(
-                        core, &id, -injury, &self.shot, None, None, budget,
+                        core, &id, -defense.injury, &self.shot, None, None, budget,
                     )?);
                     drop(storage);
                     self.before = Some(before);
@@ -555,6 +563,8 @@ impl Terminal {
                         ("sourceId", string(&flight.source_id)),
                         ("result", string(result)),
                         ("damage", number(self.loss)),
+                        ("rawInjury", number(self.raw_injury)),
+                        ("preventedInjury", number(self.prevented_injury)),
                         ("incomingX", number(-direction.x)),
                         ("incomingY", number(-direction.y)),
                         ("incomingZ", number(-direction.z)),

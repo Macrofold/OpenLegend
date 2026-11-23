@@ -189,8 +189,9 @@ impl ActivityDisplayCursor {
                 | NativeCommand::Cook { .. }
                 | NativeCommand::Equipment { .. }
                 | NativeCommand::Eat { .. }
+                | NativeCommand::Guard { .. }
                 | NativeCommand::Ranged { .. }
-            | NativeCommand::PracticeShot { .. }
+                | NativeCommand::PracticeShot { .. }
                 | NativeCommand::Cancel { .. }
                 | NativeCommand::WithdrawAttempt { .. }
                 | NativeCommand::LearnRecord { .. }
@@ -491,6 +492,7 @@ impl ActivityDisplayCursor {
             | NativeCommand::Craft { .. }
             | NativeCommand::Eat { .. }
             | NativeCommand::Ranged { .. }
+            | NativeCommand::Guard { .. }
             | NativeCommand::PracticeShot { .. }
             | NativeCommand::Equipment { .. }
             | NativeCommand::Cancel { .. }

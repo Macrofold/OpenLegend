@@ -70,6 +70,7 @@ pub(super) struct ItemDefinitionFields {
     properties: Vec<crate::text::JsText>,
     ammunition: Option<crate::projectile::Ammunition>,
     ranged_weapon: Option<crate::projectile::RangedWeapon>,
+    contact_defense: Option<crate::contact::guard::DefenseProfile>,
     melee: Option<serde::de::IgnoredAny>,
     nutrition: Option<f64>,
     fishing_tool: Option<FishingTool>,
@@ -167,6 +168,7 @@ pub(crate) struct ItemDefinitionRead {
     pub category: &'static str,
     pub(crate) nutrition: Option<f64>,
     pub(crate) ranged_weapon: Option<crate::projectile::RangedWeapon>,
+    pub(crate) contact_defense: Option<crate::contact::guard::DefenseProfile>,
     pub(crate) ammunition: Option<crate::projectile::Ammunition>,
     plain_material: bool,
     gathering_tool: Option<GatheringTool>,
@@ -215,6 +217,9 @@ impl ItemDefinitionRead {
                 .is_some_and(|tool| !is_safe_record_id(&tool.resource_id) || tool.quantity == 0)
             || value.fishing_tool.as_ref().is_some_and(|tool| !is_safe_record_id(&tool.kind))
             || value.ranged_weapon.as_ref().is_some_and(|weapon| !weapon.valid())
+            || value.contact_defense.as_ref().is_some_and(|profile| {
+                !profile.valid() || !value.equipment.as_ref().is_some_and(|gear| gear.uses.contains(&EquipmentUse::Guard))
+            })
             || value.ammunition.as_ref().is_some_and(|ammunition| !ammunition.valid())
         {
             return Err(InstallError::DefinitionBody);
@@ -305,6 +310,7 @@ impl ItemDefinitionRead {
                 && value.gathering_tool.is_none() && value.ammunition.is_none()
                 && value.nutrition.is_none_or(|value| value == 0.0),
             ranged_weapon: value.ranged_weapon,
+            contact_defense: value.contact_defense,
             ammunition: value.ammunition,
             gathering_tool: value.gathering_tool,
             fishing_tool: value.fishing_tool,
@@ -345,6 +351,10 @@ impl ItemDefinitionRead {
         self.fishing_tool.as_ref().map(|tool| tool.kind.as_str())
     }
 
+    pub(crate) fn can_guard(&self) -> bool {
+        self.equipment.as_ref().is_some_and(|gear| gear.uses.contains(&EquipmentUse::Guard))
+    }
+
     pub(crate) fn equipment_ports(&self) -> Option<&[String]> {
         self.equipment.as_ref().map(|gear| gear.ports.as_slice())
     }
@@ -374,6 +384,7 @@ heap_record!(ItemDefinitionRead {
     description,
     properties,
     ranged_weapon,
+    contact_defense,
     ammunition,
     gathering_tool,
     fishing_tool,

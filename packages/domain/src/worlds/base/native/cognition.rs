@@ -24,6 +24,8 @@ pub struct OccurrenceRules {
     pub flight: Option<FlightRules>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ranged: Option<RangedOccurrenceRules>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub guard_interrupted: Option<crate::text::JsText>,
     pub speech_importance: f64,
     pub sound_importance: f64,
     pub received_urgency: f64,
@@ -71,6 +73,8 @@ pub struct RangedOccurrenceRules {
     pub shot_ended: String,
     pub aim_ready: String,
     pub prepared: crate::text::JsText,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub injury_interrupted: Option<crate::text::JsText>,
     pub menu: RangedMenuWords,
     pub contact_hit: crate::text::JsText,
     pub contact_stopped: crate::text::JsText,

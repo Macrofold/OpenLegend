@@ -881,7 +881,7 @@ fn validate_entity(
                         || a.total_seconds != 0.0
                         || a.destination.is_some()))
                 || (a.target_life.is_some() && !a.is_natural_contact() && !a.is_following() && !a.is_ranged_attack())
-                || (!a.has_ground_motion() && !a.is_natural_contact() && !a.is_manufacturing() && a.kind != "status-effect")
+                || !a.supported_native_action()
         }) {
             return Err(InstallError::CurrentFormat);
         }
@@ -1143,6 +1143,7 @@ pub(super) fn validate_physical_item_references(
                 )
                 || action.is_practice_shot() && !crate::projectile::practice::valid_saved(state, installed, entity, action)
                 || action.is_ranged_attack() && !crate::projectile::loadout::valid_saved(state, installed, entity, action)
+                || action.is_guard() && !crate::contact::guard::valid_saved(state, installed, entity, action)
                 || action.is_tending_fire() && !crate::fire_care::valid_saved(
                     action, state, installed.fire_care.as_ref().map(|rule| rule.value()),
                 )

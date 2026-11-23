@@ -6,6 +6,7 @@ import { freeze } from 'immer';
 import { BASE_RESPONSE_RULES } from './response-rules.js';
 import { BASE_RANGED_CHOICE_LABEL, BASE_RANGED_TEXT } from './ranged-counterplay.js';
 import { BASE_HUNTING } from './hunting.js';
+import { BASE_GUARD_TEXT } from './shield-defense.js';
 
 const fireOut = { eventType: 'fire-out', message: 'The campfire ran out of fuel.' };
 const flight = {
@@ -25,6 +26,7 @@ const ranged = {
   shotEnded: 'shot-ended',
   aimReady: 'aim-ready',
   prepared: BASE_RANGED_TEXT.prepared,
+  injuryInterrupted: BASE_RANGED_TEXT.injuryInterrupted,
   menu: {
     title: BASE_RANGED_CHOICE_LABEL,
     aimLabel: BASE_RANGED_TEXT.aimName,
@@ -58,6 +60,7 @@ export const BASE_OCCURRENCE_RULES = freeze(
     fireOut,
     flight,
     ranged,
+    guardInterrupted: BASE_GUARD_TEXT.injuryInterrupted,
     speechImportance: 7,
     soundImportance: 3,
     receivedUrgency: 4,

@@ -702,7 +702,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub guard: Option<UnconvertedField>,
+    pub(crate) guard: Option<Box<crate::contact::guard::Guard>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -840,6 +840,16 @@ pub struct Action {
 }
 
 impl Action {
+    /// The finite native actions with a working clock and occurrence owner.
+    /// Stationary phases never become ground movement just to pass this check.
+    pub(crate) fn supported_native_action(&self) -> bool {
+        self.has_ground_motion()
+            || self.is_natural_contact()
+            || self.is_manufacturing()
+            || self.is_guard()
+            || self.kind == "status-effect"
+    }
+
     pub(crate) fn has_ground_motion(&self) -> bool {
         self.kind == "move"
             || (self.kind == "feed" && self.feeding.is_some())
@@ -956,6 +966,19 @@ impl Action {
         action
     }
 
+    pub(crate) fn guarding(id: String, item: String, guard: crate::contact::guard::Guard, seconds: f64) -> Self {
+        let mut action = Self::native_action(id, "guard", "working");
+        action.item_id = Some(item);
+        action.guard = Some(Box::new(guard));
+        action.total_seconds = seconds;
+        action.remaining_seconds = seconds;
+        action
+    }
+
+    pub(crate) fn is_guard(&self) -> bool {
+        self.kind == "guard" && self.stage == "working" && self.guard.is_some() && self.item_id.is_some()
+    }
+
     pub(crate) fn practice_shot(
         id: String,
         aim: crate::projectile::RangedAim,
@@ -1043,12 +1066,12 @@ impl Action {
                 .is_some_and(|tools| tools.len() > 1)
             || self.food_preparation.is_some() != (self.kind == "cook")
             || self.fishing.is_some() != (self.kind == "fish")
-            || self.guard.is_some()
+            || ((self.kind == "guard" || self.guard.is_some()) && !self.is_guard())
             || self.follow.is_some() != (self.kind == "follow")
             || self.transferred.is_some()
             || self.quantity.is_some_and(|n| n == 0 || !self.is_picking_up())
             || self.recipe_id.is_some() != self.is_manufacturing()
-            || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting() || self.is_picking_up() || self.is_tending_fire()))
+            || (self.item_id.is_some() && !(self.is_gathering() || self.is_casting() || self.is_picking_up() || self.is_tending_fire() || self.is_guard()))
             || self.heat_id.is_some() != self.is_cooking()
             || self.fire_operation.is_some() != self.is_tending_fire()
             || self.fire_guard.is_some()

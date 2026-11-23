@@ -49,6 +49,7 @@ pub(super) fn start_record(
         NativeCommand::Gather {
             target_id, tool, ..
         } => [Some(target_id), tool.item_id.as_deref()],
+        NativeCommand::Guard { facing, item_id, .. } => [facing.subject_id(), Some(item_id)],
         NativeCommand::Ranged {
             intent: crate::commands::RangedIntent::Start { target, weapon, .. }, ..
         } => [target.subject_id(), weapon.as_deref()],

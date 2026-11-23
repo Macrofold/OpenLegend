@@ -125,6 +125,7 @@ pub(crate) fn valid_command(
         | NativeCommand::Equipment { .. }
         | NativeCommand::Eat { .. }
         | NativeCommand::Ranged { .. }
+        | NativeCommand::Guard { .. }
         | NativeCommand::PracticeShot { .. }
         | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }

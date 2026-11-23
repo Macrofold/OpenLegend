@@ -56,6 +56,7 @@ pub(crate) struct ImpactCursor {
     body: Option<HealthChangeCursor>,
     health_before: f64,
     raw_injury: f64,
+    prevented_injury: f64,
     hit_reason: Option<&'static str>,
     status_ids: Vec<String>,
     status_index: usize,
@@ -110,6 +111,7 @@ impl ImpactCursor {
             body: None,
             health_before: 0.0,
             raw_injury: 0.0,
+            prevented_injury: 0.0,
             hit_reason: None,
             status_ids: Vec::new(),
             status_index: 0,
@@ -971,6 +973,13 @@ impl ImpactCursor {
         }
         let raw_injury = injury.maximum(definition.damage);
         let health_before = actor.health;
+        let source_position = source.world_position().ok_or(ExecutionError::InvalidPosition)?;
+        let target_position = target.world_position().ok_or(ExecutionError::InvalidPosition)?;
+        let direction = crate::state::Point {
+            x: source_position.x - target_position.x,
+            y: source_position.y - target_position.y,
+            z: source_position.z - target_position.z,
+        };
         // Match the selected Source guaranteed-contact path. Ineligible sight
         // or reach never spends a draw. See AC09.6 for the shared RNG follow-up.
         if accuracy != 1.0 && self.automatic(core)? && core.physical().draw() >= accuracy {
@@ -980,10 +989,12 @@ impl ImpactCursor {
         self.hit_reason = Some("hit");
         self.health_before = health_before;
         self.raw_injury = raw_injury;
+        let defense = super::guard::apply_contact(core, &self.target, direction, raw_injury)?;
+        self.prevented_injury = defense.prevented;
         self.body = Some(HealthChangeCursor::new(
             core,
             &self.target,
-            -raw_injury,
+            -defense.injury,
             &self.action,
             None,
             None,
@@ -1179,7 +1190,7 @@ impl ImpactCursor {
                 );
             }
             data.insert("contactInjury".into(), EventScalar::Boolean(true));
-            data.insert("preventedInjury".into(), EventScalar::Number(0.0));
+            data.insert("preventedInjury".into(), EventScalar::Number(self.prevented_injury));
             data.insert("rawInjury".into(), EventScalar::Number(self.raw_injury));
             data.insert(
                 "healthBefore".into(),

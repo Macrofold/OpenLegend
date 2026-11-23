@@ -18,7 +18,7 @@ use std::sync::{Arc, Weak};
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod account_retention;
 mod control;
-pub use crate::commands::{PlayerTravelDestination, PlayerTravelIntent};
+pub use crate::commands::{PlayerTravelDestination, PlayerTravelIntent, RuntimeGuardFacing};
 pub use crate::contact::{StrikePermission, StrikeReviewOffer};
 pub use crate::experience::{RetentionPreparation, render_account_summary};
 pub use crate::outings::view::{OutingViews, PlayerOuting};

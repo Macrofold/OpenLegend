@@ -47,6 +47,7 @@ impl HeapBytes for Action {
             self.strike_motion.heap_bytes()?,
             self.ranged.heap_bytes()?,
             self.ranged_policy_pin.heap_bytes()?,
+            self.guard.heap_bytes()?,
             self.competence_pin.heap_bytes()?,
             self.weapon_item_id.heap_bytes()?,
             self.ammo_item_id.heap_bytes()?,

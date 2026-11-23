@@ -62,6 +62,7 @@ pub struct RuntimeStrikeMenu<'a> {
     target: &'a crate::state::Entity,
     body: &'a crate::reception::ObservedBody,
     health: Option<&'a crate::reception::AttributeView>,
+    may_attack: bool,
     pub name: &'a crate::text::JsText,
     pub ranged: &'a [RuntimeRangedChoice<'a>],
 }
@@ -128,7 +129,30 @@ impl<'a> RuntimeStrikeMenu<'a> {
             .retained
             .native_strike_read
             .keys()
+            .filter(|_| self.may_attack)
             .filter_map(|id| crate::contact::profile(installed, self.source, id))
+    }
+
+    /// Borrow only equipped shields from this accepted contact cut.
+    pub fn guard_shields(&self) -> impl Iterator<Item = (&'a str, &'a crate::text::JsText, &'a str)> + '_ {
+        self.state.inventory.children(&self.state.physical.entities, &self.source.id, true)
+            .filter_map(|shield| {
+                let lot = shield.item.as_ref()?;
+                let definition = self.state.installed.retained.items.get(&lot.definition_pin.id)?;
+                let profile = definition.contact_defense.as_ref()?;
+                definition.can_guard().then_some((shield.id.as_str(), &definition.named.name, profile.label.as_str()))
+            })
+    }
+
+    pub fn guard_reason(&self) -> Option<&'a str> {
+        let source = self.source.actor.as_ref()?;
+        let current = self.state.physical.header.sim_time;
+        let same_direction = self.source.world_position().is_some_and(|origin| {
+            (origin.x - self.body.position.x).hypot(origin.z - self.body.position.z) <= 1e-8
+        });
+        (same_direction || source.action.as_ref().is_some_and(crate::state::Action::is_guard) ||
+            source.combat_ready_at.is_some_and(|at| at > current))
+            .then_some(self.state.installed.ordinary_actions.value().not_applicable.message.as_str())
     }
 }
 
@@ -913,10 +937,9 @@ impl NativeWorldSession {
                 let Some(target) = state.physical.entities.get(observed.source_id) else {
                     return false;
                 };
-                if !observed.actor
-                    || !observed.physical_life.is_some_and(|life| {
-                        crate::contact::may_target(&state.installed, source, target, life)
-                    })
+                if !observed.actor || target.id == source.id || !target.actively_participates()
+                    || !target.actor.as_ref().is_some_and(|actor| actor.alive)
+                    || !observed.physical_life.is_some_and(|life| target.physical_life() == Some(life))
                 {
                     return false;
                 }
@@ -931,17 +954,23 @@ impl NativeWorldSession {
                         .find(|value| value.body_health == Some(true)),
                     _ => None,
                 });
+                let life = observed.physical_life;
                 if !matches(observed) {
                     return false;
                 }
-                let (ranged, _custody) = match ranged::choices(
-                    state, source, target, observed_name, &self.budget,
-                ) {
-                    Ok(value) => value,
-                    Err(error) => {
-                        result = Some(Err(failure(error)));
-                        return true;
+                let may_attack = life.is_some_and(|life| {
+                    crate::contact::may_target(&state.installed, source, target, life)
+                });
+                let ranged = if may_attack {
+                    match ranged::choices(state, source, target, observed_name, &self.budget) {
+                        Ok(value) => Some(value),
+                        Err(error) => {
+                            result = Some(Err(failure(error)));
+                            return true;
+                        }
                     }
+                } else {
+                    None
                 };
                 let choice = RuntimeStrikeMenu {
                     state,
@@ -949,10 +978,13 @@ impl NativeWorldSession {
                     target,
                     body,
                     health,
+                    may_attack,
                     name,
-                    ranged: &ranged,
+                    ranged: ranged.as_ref().map_or(&[], |(choices, _)| choices.as_slice()),
                 };
-                if choice.definitions().next().is_some() || !choice.ranged.is_empty() {
+                if choice.definitions().next().is_some() || !choice.ranged.is_empty()
+                    || choice.guard_shields().next().is_some()
+                {
                     result = Some(use_menu.take().expect("one selected contact")(choice));
                 }
                 true

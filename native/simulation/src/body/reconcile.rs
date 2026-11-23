@@ -38,8 +38,8 @@ pub(super) enum Progress {
 enum Phase {
     Start,
     Finish,
-    ScarFinish,
-    ScarClear,
+    InjuryFinish,
+    InjuryClear,
     Unavailable,
     CancelDeathPlan,
     DiscardDeathPlan,
@@ -195,6 +195,18 @@ impl BodyReconcileCursor {
             return Ok(Progress::Personal);
         }
         let installed = core.state.installed.clone();
+        let rules = installed.occurrence_rules.value();
+        let interruption = |action: &crate::state::Action| {
+            if action.is_projectile_action() {
+                rules.ranged.as_ref().and_then(|ranged| ranged.injury_interrupted.as_ref())
+            } else if action.guard.as_ref().is_some_and(|guard| {
+                guard.phase != crate::contact::guard::GuardPhase::Recovery
+            }) {
+                rules.guard_interrupted.as_ref()
+            } else {
+                None
+            }
+        };
         loop {
             if let Some(plan) = self.death_plan.as_mut() {
                 match plan.step(core, plan_answer.take())? {
@@ -247,8 +259,11 @@ impl BodyReconcileCursor {
                     self.unavailable = actor.health == 0.0 && actor.alive && !actor.incapacitated;
                     self.phase = if self.unavailable {
                         Phase::Finish
-                    } else if self.injury && actor.action.as_ref().is_some_and(|action| action.is_treating_scar()) {
-                        Phase::ScarFinish
+                    } else if self.injury && actor.action.as_ref().is_some_and(|action| {
+                        action.is_treating_scar()
+                            || interruption(action).is_some()
+                    }) {
+                        Phase::InjuryFinish
                     } else {
                         Phase::Native
                     };
@@ -281,23 +296,29 @@ impl BodyReconcileCursor {
                         }
                     }
                 }
-                Phase::ScarFinish => {
+                Phase::InjuryFinish => {
                     let action = actor.action.as_ref().ok_or(ExecutionError::Invariant)?;
-                    self.reserve(action.id.len())?;
+                    let message = if let Some(text) = interruption(action) {
+                        self.reserve(action.id.len() + text.storage_bytes())?;
+                        text.clone()
+                    } else {
+                        let policy = installed.body_policy.as_ref()
+                            .and_then(|body| body.value().reincarnation.as_ref())
+                            .ok_or(ExecutionError::Invariant)?;
+                        self.reserve(action.id.len() + policy.treatment_interrupted_text.len())?;
+                        policy.treatment_interrupted_text.as_str().into()
+                    };
                     let id = action.id.clone();
-                    let policy = installed.body_policy.as_ref()
-                        .and_then(|body| body.value().reincarnation.as_ref())
-                        .ok_or(ExecutionError::Invariant)?;
                     let mut result = installed.ordinary_actions.value().cannot_interrupt.outcome(false);
                     result.code = "interrupted".into();
-                    result.message = policy.treatment_interrupted_text.as_str().into();
-                    self.phase = Phase::ScarClear;
+                    result.message = message;
+                    self.phase = Phase::InjuryClear;
                     if let ActionFinish::Personal(pending) = core.begin_finish_action(&self.actor, &id, result)? {
                         self.pending = Some(pending);
                         return Ok(Progress::Personal);
                     }
                 }
-                Phase::ScarClear => {
+                Phase::InjuryClear => {
                     core.physical().replace_action(&self.actor, None, ActionWrite {
                         generation: PlanGenerationWrite::Advance,
                         behavior: Some(false),

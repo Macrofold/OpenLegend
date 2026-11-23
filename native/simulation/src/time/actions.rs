@@ -47,11 +47,7 @@ impl SliceActions {
             let Some(action) = &actor.action else {
                 continue;
             };
-            if (!action.has_ground_motion()
-                && !action.is_natural_contact()
-                && !action.is_manufacturing()
-                && action.kind != "status-effect")
-                || action.has_unconverted_fields()
+            if !action.supported_native_action() || action.has_unconverted_fields()
             {
                 return Err(ExecutionError::UnsupportedFamily);
             }
@@ -63,7 +59,7 @@ impl SliceActions {
             if action.follow.is_none()
                 && !action.holds_ready_aim()
                 && (action.stage == "working" || action.awaiting_moving_contact())
-                && (!restricted || action.kind == "status-effect" || action.is_natural_contact() || action.is_manufacturing())
+                && (!restricted || action.kind == "status-effect" || action.is_natural_contact() || action.is_manufacturing() || action.is_guard())
             {
                 reservation.resize(
                     reservation

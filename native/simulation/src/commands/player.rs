@@ -16,6 +16,21 @@ use indexmap::IndexMap;
 use serde::Serialize;
 
 #[derive(Clone, Copy)]
+pub enum RuntimeGuardFacing<'a> {
+    Subject { id: &'a str, life: u64 },
+    Direction(f64),
+}
+
+impl RuntimeGuardFacing<'_> {
+    fn text_bytes(self) -> usize {
+        match self {
+            Self::Subject { id, .. } => id.len(),
+            Self::Direction(_) => 0,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
 pub enum RuntimePlayerCommand<'a> {
     Move(&'a SurfacePoint),
     Strike {
@@ -77,6 +92,11 @@ pub enum RuntimePlayerCommand<'a> {
     },
     PlaceHearth { definition: &'a DefinitionPin, site: &'a SurfacePoint },
     TreatScar { target: &'a str, scar: &'a str },
+    Guard {
+        item: &'a str,
+        facing: RuntimeGuardFacing<'a>,
+        auto_equip: bool,
+    },
     RangedStart {
         mode: crate::projectile::RuntimeRangedMode,
         target: crate::projectile::RuntimeRangedTarget<'a>,
@@ -152,6 +172,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Handover { target, gift, .. } => target.len() + gift.retained_text_bytes(),
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
             Self::TreatScar { target, scar } => target.len() + scar.len(),
+            Self::Guard { item, facing, .. } => item.len() + facing.text_bytes(),
             Self::RangedStart { target, weapon, ammunition, .. } =>
                 target.selected_text_bytes() + weapon.map_or(0, str::len) + ammunition.map_or(0, str::len),
             Self::RangedRelease { action, target, .. } =>
@@ -235,6 +256,9 @@ impl RuntimePlayerCommand<'_> {
             return bind_scar_treatment(id, actor, target, scar);
         }
         match self {
+            Self::Guard { item, facing, auto_equip } => {
+                return super::guard_input::bind(player_headers(id, actor), item, facing, auto_equip);
+            }
             Self::RangedStart { mode, target, weapon, ammunition, auto_equip, .. } => {
                 return super::ranged_input::bind(
                     player_headers(id, actor),
@@ -374,6 +398,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Cook { .. }
             | Self::Status { .. }
             | Self::TreatScar { .. }
+            | Self::Guard { .. }
             | Self::RangedStart { .. }
             | Self::RangedRelease { .. }
             | Self::PracticeShot { .. }
@@ -548,6 +573,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Cook { .. }
             | Self::Status { .. }
             | Self::TreatScar { .. }
+            | Self::Guard { .. }
             | Self::RangedStart { .. }
             | Self::RangedRelease { .. }
             | Self::PracticeShot { .. }

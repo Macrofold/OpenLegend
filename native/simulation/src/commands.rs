@@ -10,6 +10,7 @@ use crate::values::{
 use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 mod encoding;
+pub(crate) mod guard_input;
 use encoding::CommandEncoding;
 mod outings_input;
 pub(crate) mod ranged_input;
@@ -41,7 +42,7 @@ pub(crate) use native_movement::{
     begin_territorial_move,
 };
 pub(crate) mod player;
-pub use player::{OwnedArrangement, OwnedMove, OwnedStockSelection};
+pub use player::{OwnedArrangement, OwnedMove, OwnedStockSelection, RuntimeGuardFacing};
 mod state;
 pub(crate) use state::*;
 mod display;
@@ -303,6 +304,12 @@ pub(crate) enum NativeCommand {
     Ranged {
         envelope: CommandEnvelope,
         intent: ranged_input::RangedIntent,
+    },
+    Guard {
+        envelope: CommandEnvelope,
+        item_id: String,
+        facing: guard_input::GuardFacing,
+        auto_equip: bool,
     },
     PracticeShot {
         envelope: CommandEnvelope,
@@ -640,6 +647,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         }
         if matches!(tag.kind.as_str(), "aim" | "shoot-once" | "hunt" | "release-shot") {
             return ranged_input::decode(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if tag.kind == "guard" {
+            return guard_input::decode(raw.get()).map_err(serde::de::Error::custom);
         }
         if tag.kind == "handover" {
             return gift_input(raw.get()).map_err(serde::de::Error::custom);
@@ -1036,6 +1046,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::Guard { envelope, .. }
             | Self::Ranged { envelope, .. }
             | Self::PracticeShot { envelope, .. }
             | Self::LearnRecord { envelope, .. }
@@ -1075,6 +1086,7 @@ impl NativeCommand {
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
+            | Self::Guard { envelope, .. }
             | Self::Ranged { envelope, .. }
             | Self::PracticeShot { envelope, .. }
             | Self::LearnRecord { envelope, .. }
@@ -1112,6 +1124,7 @@ impl NativeCommand {
             Self::Follow { .. } => "follow",
             Self::Strike { .. } => "strike",
             Self::Ranged { intent, .. } => intent.kind(),
+            Self::Guard { .. } => "guard",
             Self::PracticeShot { .. } => "practice-shot",
             Self::LearnRecord { .. } => "learn-record",
             Self::InspectInventory { .. } => "inspect-inventory",

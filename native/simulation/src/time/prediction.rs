@@ -363,10 +363,14 @@ impl MechanicalForecast {
             if action.kind == "status-effect" {
                 continue;
             }
-            if (!action.has_ground_motion() && !action.is_natural_contact() && !action.is_manufacturing())
-                || action.has_unconverted_fields()
+            if !action.supported_native_action() || action.has_unconverted_fields()
             {
                 return Err(ExecutionError::UnsupportedFamily);
+            }
+            if action.is_guard() {
+                let guard = action.guard.as_ref().ok_or(ExecutionError::Invariant)?;
+                bound.at(guard.deadline());
+                continue;
             }
             if action.is_natural_contact() && !action.has_contact_approach() {
                 if let Some(motion) = &action.strike_motion {

@@ -27,7 +27,7 @@ use openlegend_simulation::{
     values::deserialize_present_option,
     worlds::base_observed::SpeechVolume,
     runtime::{FireOperation, PlayerTravelDestination, PlayerTravelIntent, TravelOperation, PlanMode,
-        RuntimeRangedMode, RuntimeRangedTarget,
+        RuntimeGuardFacing, RuntimeRangedMode, RuntimeRangedTarget,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -345,6 +345,7 @@ enum CommandKind {
     Hunt,
     #[serde(rename = "release-shot")]
     ReleaseShot,
+    Guard,
     Follow,
     Respawn,
     Cancel,
@@ -394,8 +395,8 @@ impl CommandKind {
         matches!(self, Self::Strike | Self::ShootOnce | Self::Hunt | Self::ReleaseShot)
     }
 
-    fn ranged_subject(self) -> bool {
-        self.ranged_start().is_some() || matches!(self, Self::ReleaseShot)
+    fn binds_target_life(self) -> bool {
+        self.ranged_start().is_some() || matches!(self, Self::ReleaseShot | Self::Guard)
     }
 
     fn arrangement(self) -> Option<OwnedArrangement> {
@@ -899,11 +900,11 @@ impl PlayerCommands {
                                             world, &begin_scope.scope, contact, raw.body_reference.as_deref(), &begin_budget,
                                         )?
                                     };
-                                    let Some(target) = selected.filter(|contact| !raw.kind.ranged_subject() || contact.life.is_some()) else {
+                                    let Some(target) = selected.filter(|contact| !raw.kind.binds_target_life() || contact.life.is_some()) else {
                                         return Ok(ApplicationStart::Existing(
                                             ResultOwner::Refused(
                                                 "stale-contact",
-                                                if raw.kind.ranged_subject() || matches!(raw.kind, CommandKind::StatusEffect | CommandKind::Follow | CommandKind::Strike | CommandKind::PracticeShot) {
+                                                if raw.kind.binds_target_life() || matches!(raw.kind, CommandKind::StatusEffect | CommandKind::Follow | CommandKind::Strike | CommandKind::PracticeShot) {
                                                     "Choose a target you can see now."
                                                 } else {
                                                     "Choose a resource you can see now."
@@ -1131,12 +1132,13 @@ impl CommandRequest {
             || command.tools.as_ref().is_some_and(|tools| {
                 tools.len() != 1 || tools.iter().any(|(role, item)| !id(role) || !id(item))
             })
-            || (command.kind.ranged_start().is_none() && command.auto_equip.is_some())
+            || (command.kind.ranged_start().is_none() && !matches!(command.kind, CommandKind::Guard)
+                && command.auto_equip.is_some())
             || (command.kind.ranged_start().is_none() && !matches!(command.kind, CommandKind::PracticeShot)
                 && command.ammunition_id.is_some())
             || (!matches!(command.kind, CommandKind::ReleaseShot) && command.aim_id.is_some())
             || command.body_reference.as_ref().is_some_and(|reference| {
-                !command.kind.ranged_subject() || command.target_id.is_none() || reference.len() != 64
+                !command.kind.binds_target_life() || command.target_id.is_none() || reference.len() != 64
                     || !reference.bytes().all(|value| value.is_ascii_digit() || (b'a'..=b'f').contains(&value))
             })
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
@@ -1150,8 +1152,8 @@ impl CommandRequest {
                 command.kind,
                 CommandKind::StatusEffect | CommandKind::Strike
             ) && command.definition_id.is_some())
-            || (!matches!(command.kind, CommandKind::StatusEffect)
-                && (command.effect_operation.is_some() || command.facing_heading.is_some()))
+            || (!matches!(command.kind, CommandKind::StatusEffect) && command.effect_operation.is_some())
+            || (!matches!(command.kind, CommandKind::StatusEffect | CommandKind::Guard) && command.facing_heading.is_some())
             || (!command.kind.may_offer_lethal_review()
                 && !matches!(command.kind, CommandKind::Cancel)
                 && command.lethal_review_id.is_some())
@@ -1259,6 +1261,17 @@ impl CommandRequest {
             {
                 Ok(())
             }
+            CommandKind::Guard
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.item_id.as_deref().is_some_and(id)
+                    && match (command.target_id.as_deref(), command.facing_heading) {
+                        (Some(target), None) => id(target),
+                        (None, Some(heading)) => heading.is_finite(),
+                        _ => false,
+                    } => Ok(()),
             CommandKind::ReleaseShot
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -1625,6 +1638,19 @@ impl PreparedRequest {
                     ammunition: input.ammunition_id.as_deref(),
                     auto_equip: input.auto_equip.unwrap_or(false),
                     permission: strike_permission,
+                })
+            }
+            CommandKind::Guard => {
+                let facing = match (ranged_subject, input.facing_heading) {
+                    (Some(RuntimeRangedTarget::Subject { id, life }), None) =>
+                        RuntimeGuardFacing::Subject { id, life },
+                    (None, Some(heading)) => RuntimeGuardFacing::Direction(heading),
+                    _ => return Err(StoreError::InvalidRecord.into()),
+                };
+                Ok(RuntimePlayerCommand::Guard {
+                    item: input.item_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                    facing,
+                    auto_equip: input.auto_equip.unwrap_or(false),
                 })
             }
             CommandKind::ReleaseShot => Ok(RuntimePlayerCommand::RangedRelease {

@@ -77,7 +77,7 @@ impl InstalledMovementPolicy {
     pub(crate) fn direct_probe_max_distance(&self) -> f64 {
         self.value.direct_probe_max_distance
     }
-    /// Ordinary work occupies the movement slot. Bound weapon execution and
+    /// Ordinary work occupies the movement slot. Stationary aim and
     /// committed strike recovery retain the player's independent retreat.
     pub(crate) fn steering_action_allowed(&self, entity: &Entity) -> bool {
         entity
@@ -86,6 +86,7 @@ impl InstalledMovementPolicy {
             .and_then(|actor| actor.action.as_ref())
             .is_none_or(|action| {
                 action.attack_execution.is_some()
+                    || (action.is_ranged_attack() && action.stage == "working")
                     || (action.kind == "strike"
                         && action.strike_phase == Some(crate::contact::StrikePhase::Recovery))
             })

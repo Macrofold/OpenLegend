@@ -360,6 +360,12 @@ impl MoveAdvanceCursor {
             .as_ref()
             .ok_or(ExecutionError::Invariant)?;
         if aim.manual && self.requested_ranged_release.is_none() {
+            if aim.ready {
+                // The ordinary action boundary rechecks only this aimed
+                // subject. Readiness was announced when its timer finished.
+                self.phase = Phase::Done;
+                return Ok(Progress::Complete);
+            }
             let _event = self
                 .budget
                 .reserve(768 + 3 * actor.id.len() + id.len() + words.prepared.storage_bytes())?;

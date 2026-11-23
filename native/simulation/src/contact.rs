@@ -4,6 +4,7 @@ use crate::simulation::InstalledWorld;
 use crate::state::{Action, Entity};
 use crate::worlds::base_decision_offers::NativeStrikeRead;
 use serde::{Deserialize, Serialize};
+pub(crate) mod guard;
 mod impact;
 mod injury;
 mod motion;

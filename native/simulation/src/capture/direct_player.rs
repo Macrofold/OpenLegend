@@ -52,6 +52,8 @@ pub struct PlayerActionFacts<'a> {
     pub preparing_navigation: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ranged_ready: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub guard_label: Option<&'a str>,
 }
 
 /// Self-only facts loaned inside the accepted-read lane. Detached application

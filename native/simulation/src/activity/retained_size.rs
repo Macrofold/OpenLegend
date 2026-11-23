@@ -228,6 +228,8 @@ impl HeapBytes for NativeCommand {
                 definition_id.heap_bytes()?,
                 weapon_item_id.heap_bytes()?,
             ]),
+            Self::Guard { envelope, item_id, facing, .. } =>
+                heap_sum([envelope.heap_bytes()?, item_id.heap_bytes()?, facing.heap_bytes()?]),
             Self::Ranged { envelope, intent } =>
                 envelope.heap_bytes()?.checked_add(intent.heap_bytes()?),
             Self::PracticeShot { envelope, target_id, weapon_item_id, ammo_item_id } => heap_sum([

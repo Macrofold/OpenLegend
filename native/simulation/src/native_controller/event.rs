@@ -1,5 +1,5 @@
-//! Only the actual target can consume a directed contact as an animal alarm.
-//! The occurrence cursor supplies the target's acquired sight or bodily contact.
+//! Only the actual target can consume directed attack or contact evidence as
+//! an animal alarm. The occurrence cursor supplies its own acquired evidence.
 use super::{begin_alarm, selected_profile};
 use crate::contact::StrikePhase;
 use crate::events::{AcquiredOccurrence, EventScope, WorldEvent};
@@ -12,14 +12,25 @@ use crate::native_response::{
     region_danger_key,
 };
 use crate::reception::{EventScalar, ExperienceModality};
-use crate::state::{Action, Entity};
+use crate::state::{Action, Entity, Point};
 use crate::work::WorkUnit;
 
 fn receiver<'a>(core: &'a CoreMutation<'_>, event: &WorldEvent) -> Option<&'a Entity> {
-    let animal = event
-        .target_id
-        .as_deref()
-        .and_then(|id| core.state.physical.entities.get(id))?;
+    if !core
+        .state
+        .installed
+        .occurrence_rules
+        .value()
+        .native_target_events
+        .contains(&event.event_type)
+    {
+        return None;
+    }
+    let animal = core
+        .state
+        .physical
+        .entities
+        .get(event.target_id.as_deref()?)?;
     let state = animal.animal.as_ref()?;
     (animal
         .actor
@@ -88,46 +99,70 @@ fn contact_cue<'a>(
         .then_some((cue, source, action))
 }
 
-/// A flight is installed before its release event and remains until its
-/// actual contact has finished publishing. Only those stages admit these
-/// engine-produced events through the native-target path.
-fn current_projectile_event(core: &CoreMutation<'_>, event: &WorldEvent) -> bool {
+enum ProjectileCue<'a> {
+    Release {
+        source: &'a Entity,
+        source_life: u64,
+        target_life: Option<u64>,
+    },
+    Contact {
+        flight: &'a str,
+        point: Point,
+        contact_life: f64,
+    },
+}
+
+/// Prove the event came from the current flight. Source coordinates are read
+/// later and only for a receiver that actually observed the release.
+fn current_projectile_event<'a>(
+    core: &'a CoreMutation<'_>,
+    event: &WorldEvent,
+) -> Option<ProjectileCue<'a>> {
     let rules = core.state.installed.occurrence_rules.value();
-    let Some(words) = rules.ranged.as_ref() else {
-        return false;
-    };
+    let words = rules.ranged.as_ref()?;
     if event.scope != Some(EventScope::External)
         || (event.event_type != words.shot_released
             && event.event_type != rules.projectile_contact_event)
     {
-        return false;
+        return None;
     }
-    let Some(data) = &event.data else {
-        return false;
-    };
+    let data = event.data.as_ref()?;
     let text = |key| match data.get(key) {
         Some(EventScalar::Text(value)) => value.as_unicode(),
         _ => None,
     };
-    let Some(flight) =
-        text("projectileId").and_then(|id| core.state.physical.projectiles.flights.get(id))
-    else {
-        return false;
-    };
-    let flight = &flight.flight;
+    let flight = &core
+        .state
+        .physical
+        .projectiles
+        .flights
+        .get(text("projectileId")?)?
+        .flight;
     if event.event_type == words.shot_released {
-        let source = core.state.physical.entities.get(&flight.source_id);
-        event.at == flight.launched_at
+        let source = core.state.physical.entities.get(&flight.source_id)?;
+        (event.at == flight.launched_at
             && event.actor_id.as_deref() == Some(flight.source_id.as_str())
             && event.target_id == flight.target_id
             && text("actionId") == Some(flight.action_id.as_str())
-            && source.and_then(Entity::physical_life) == Some(flight.source_life)
+            && source.physical_life() == Some(flight.source_life))
+        .then_some(ProjectileCue::Release {
+            source,
+            source_life: flight.source_life,
+            target_life: flight.target_life,
+        })
     } else {
-        event.at == flight.advanced_at
+        let EventScalar::Number(contact_life) = data.get("contactLife")? else {
+            return None;
+        };
+        (event.at == flight.advanced_at
             && event.origin == Some(flight.position)
             && event.target_id.is_some()
-            && event.actor_id == event.target_id
-            && matches!(data.get("contactLife"), Some(EventScalar::Number(_)))
+            && event.actor_id == event.target_id)
+            .then_some(ProjectileCue::Contact {
+                flight: &flight.id,
+                point: flight.position,
+                contact_life: *contact_life,
+            })
     }
 }
 
@@ -151,17 +186,12 @@ pub(crate) fn require_supported_event(
         && event.event_type != installed.ordinary_actions.value().action_started_event
         && contact != Some(ContactCue::Attempt)
         && !crate::reception::combat_observation::current_attack_cue(core, event)
-        && !current_projectile_event(core, event)
+        && current_projectile_event(core, event).is_none()
     {
         return Err(ExecutionError::UnsupportedFamily);
     }
     if let Some(action) = source_action {
-        if action.has_unconverted_fields()
-            || (!action.has_ground_motion()
-                && !action.is_natural_contact()
-                && !action.is_manufacturing()
-                && action.kind != "status-effect")
-        {
+        if action.has_unconverted_fields() || !action.supported_native_action() {
             return Err(ExecutionError::UnsupportedFamily);
         }
     }
@@ -173,15 +203,7 @@ pub(crate) fn event_reception_needed(
     event: &WorldEvent,
     observer: &str,
 ) -> Result<bool, ExecutionError> {
-    Ok(event.target_id.as_deref() == Some(observer)
-        && core
-            .state
-            .installed
-            .occurrence_rules
-            .value()
-            .native_target_events
-            .contains(&event.event_type)
-        && receiver(core, event).is_some())
+    Ok(event.target_id.as_deref() == Some(observer) && receiver(core, event).is_some())
 }
 
 pub(crate) fn acquire_event(
@@ -197,61 +219,31 @@ pub(crate) fn acquire_event(
     {
         return Err(ExecutionError::UnfinishedOccurrence);
     }
-    let Some(target) = event.target_id.as_deref() else {
+    let Some(animal) = receiver(core, event) else {
         return Ok(());
     };
-    if !event_reception_needed(core, event, target)? {
-        return Ok(());
-    }
+    // Borrow the immutable occurrence's target through candidate mutation.
+    let target = event
+        .target_id
+        .as_deref()
+        .ok_or(ExecutionError::Invariant)?;
     let Some(received) = awareness
         .iter()
         .find(|received| received.actor_id == target)
     else {
         return Ok(());
     };
-    let Some((cue, source, action)) = contact_cue(core, event) else {
+    let Some(evidence) = directed_evidence(core, animal, event, received)? else {
         return Ok(());
     };
-    let animal = receiver(core, event).ok_or(ExecutionError::Invariant)?;
-    if animal.physical_life() != action.target_life {
-        return Ok(());
-    }
-    let seen = received.source_id.as_deref() == Some(source.id.as_str());
-    let felt = cue == ContactCue::Attempt && received.modality == ExperienceModality::Felt;
-    if !(felt || seen && received.modality == ExperienceModality::Observed) {
-        return Ok(());
-    }
-    if cue == ContactCue::Preparation {
-        let installed = &core.state.installed;
-        let visible = installed
-            .body_policy
-            .as_ref()
-            .and_then(|body| body.value().combat.as_ref())
-            .and_then(|combat| combat.encounters.as_ref())
-            .is_some_and(|encounter| encounter.visible_preparation);
-        let state = animal.animal.as_ref().ok_or(ExecutionError::Invariant)?;
-        if !visible
-            || !selected_profile(installed, state)?
-                .dangers
-                .attack_preparation
-        {
-            return Ok(());
-        }
-    }
-    if animal.spatial.flight.is_some() {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
     let at = event.at;
-    let life = source.physical_life().ok_or(ExecutionError::Invariant)?;
-    let cause = if cue == ContactCue::Preparation {
-        &action.id
-    } else {
-        &event.id
-    };
-    // Keep temporary key encoding funded independently of the saved maps. A
-    // missing source disclosure never consults the hidden attacker's position.
-    let _keys = budget.reserve(256 + 8 * (source.id.len() + cause.len()))?;
-    let prep_key = if cue == ContactCue::Preparation {
+    let cause = evidence.preparation.map_or(&event.id, |action| &action.id);
+    let source_bytes = evidence.source.map_or(0, |(source, _)| source.id.len());
+    let region_bytes = evidence.region.as_ref().map_or(0, |region| region.id.len());
+    // Fund temporary structured keys independently of the saved danger maps.
+    let _keys = budget.reserve(256 + 8 * (source_bytes + cause.len() + region_bytes))?;
+    let prep_key = if evidence.preparation.is_some() {
+        let (source, life) = evidence.source.ok_or(ExecutionError::Invariant)?;
         let key = crate::encoding::json_record(&(&source.id, life))
             .map_err(|_| ExecutionError::Invariant)?;
         if animal
@@ -268,33 +260,27 @@ pub(crate) fn acquire_event(
     } else {
         None
     };
-    let body = if seen && cue == ContactCue::Attempt {
-        let extent = source.body_profile();
-        Some((
-            body_danger_key(&source.id, life).map_err(|_| ExecutionError::Invariant)?,
-            source
-                .world_position()
-                .ok_or(ExecutionError::InvalidPosition)?,
-            DangerExtent {
-                radius: extent.radius,
-                height: extent.height,
-            },
-        ))
-    } else {
-        None
-    };
-    let region = if felt {
-        // Natural contact originates on this body. Without an observed attacker
-        // there is no license to look up where the blow came from.
-        Some(
-            animal
-                .world_position()
-                .ok_or(ExecutionError::InvalidPosition)?,
-        )
-    } else {
-        None
-    };
-    let cause_kind = if cue == ContactCue::Preparation {
+    let body = evidence
+        .source
+        .filter(|_| evidence.preparation.is_none())
+        .map(|(source, life)| {
+            let extent = source.body_profile();
+            Ok::<_, ExecutionError>((
+                body_danger_key(&source.id, life).map_err(|_| ExecutionError::Invariant)?,
+                source,
+                life,
+                source
+                    .world_position()
+                    .ok_or(ExecutionError::InvalidPosition)?,
+                DangerExtent {
+                    radius: extent.radius,
+                    height: extent.height,
+                },
+            ))
+        })
+        .transpose()?;
+    let region = evidence.region;
+    let cause_kind = if evidence.preparation.is_some() {
         CauseKind::Action
     } else {
         CauseKind::Event
@@ -312,11 +298,19 @@ pub(crate) fn acquire_event(
         + prep_key.as_ref().map_or(0, |key| key.len() + cause.len())
         + body
             .as_ref()
-            .map_or(0, |(key, _, _)| key.len() + source.id.len())
-        + region.map_or(0, |_| 8 * event.id.len() + 32);
-    let _write = budget.reserve(cause.len() + body.as_ref().map_or(0, |_| source.id.len()))?;
+            .map_or(0, |(key, source, _, _, _)| key.len() + source.id.len())
+        + region.as_ref().map_or(0, |region| 8 * region.id.len() + 32);
+    let _write = budget.reserve(cause.len() + source_bytes + region_bytes)?;
+    let region = region.map(|region| {
+        let source = RegionSource {
+            kind: region.kind,
+            id: region.id.to_owned(),
+        };
+        (source, region.point, region.incoming)
+    });
     let cause = cause.clone();
-    let source_id = body.as_ref().map(|_| source.id.clone());
+    let body = body
+        .map(|(key, source, life, point, extent)| (key, source.id.clone(), life, point, extent));
     core.journal.meters.charge(&[(WorkUnit::Effects, 1)])?;
     let mut mutation = core.physical();
     mutation.reserve_response_growth(allocation)?;
@@ -338,11 +332,11 @@ pub(crate) fn acquire_event(
         .dangers
         .try_reserve(usize::from(body.is_some()) + usize::from(region.is_some()))
         .map_err(|_| ExecutionError::Capacity)?;
-    if let Some((key, point, extent)) = body {
+    if let Some((key, source_id, life, point, extent)) = body {
         episode.dangers.insert(
             key,
             NativeDanger::Body {
-                source_id: source_id.ok_or(ExecutionError::Invariant)?,
+                source_id,
                 physical_life: life,
                 point,
                 extent,
@@ -353,23 +347,159 @@ pub(crate) fn acquire_event(
             },
         );
     }
-    if let Some(point) = region {
-        let source = RegionSource {
-            kind: RegionKind::Event,
-            id: event.id.clone(),
-        };
+    if let Some((source, point, incoming)) = region {
         episode.dangers.insert(
             region_danger_key(&source).map_err(|_| ExecutionError::Invariant)?,
             NativeDanger::Region {
                 source,
                 point,
                 observed_at: at,
-                incoming: None,
+                incoming,
                 inside_avoidance: None,
             },
         );
     }
     mutation.behavior_changed(target, false)
+}
+
+struct DirectedEvidence<'a> {
+    preparation: Option<&'a Action>,
+    source: Option<(&'a Entity, u64)>,
+    region: Option<ContactRegion<'a>>,
+}
+
+struct ContactRegion<'a> {
+    kind: RegionKind,
+    id: &'a str,
+    point: Point,
+    incoming: Option<Point>,
+}
+
+/// Select the prey's own acquired evidence. An actual impact uses its local
+/// position and any received direction even when the source was never seen.
+fn directed_evidence<'a>(
+    core: &'a CoreMutation<'_>,
+    animal: &Entity,
+    event: &'a WorldEvent,
+    received: &Awareness,
+) -> Result<Option<DirectedEvidence<'a>>, ExecutionError> {
+    let observed = received.modality == ExperienceModality::Observed;
+    let felt = received.modality == ExperienceModality::Felt;
+    if let Some(projectile) = current_projectile_event(core, event) {
+        return Ok(match projectile {
+            ProjectileCue::Release {
+                source,
+                source_life,
+                target_life,
+            } if observed
+                && Some(animal.id.as_str()) == received.target_id.as_deref()
+                && received.source_id.as_deref() == Some(source.id.as_str())
+                && animal.id != source.id
+                && animal.physical_life() == target_life =>
+            {
+                Some(DirectedEvidence {
+                    preparation: None,
+                    source: Some((source, source_life)),
+                    region: None,
+                })
+            }
+            ProjectileCue::Contact {
+                flight,
+                point,
+                contact_life,
+            } if felt
+                && animal
+                    .physical_life()
+                    .is_some_and(|life| life as f64 == contact_life) =>
+            {
+                Some(DirectedEvidence {
+                    preparation: None,
+                    source: None,
+                    region: Some(ContactRegion {
+                        kind: RegionKind::Projectile,
+                        id: flight,
+                        point,
+                        incoming: incoming_bearing(received),
+                    }),
+                })
+            }
+            _ => None,
+        });
+    }
+
+    let Some((cue, source, action)) = contact_cue(core, event) else {
+        return Ok(None);
+    };
+    if animal.physical_life() != action.target_life {
+        return Ok(None);
+    }
+    let seen = received.source_id.as_deref() == Some(source.id.as_str());
+    let felt = cue == ContactCue::Attempt && felt;
+    if !(felt || seen && observed) {
+        return Ok(None);
+    }
+    let preparation = if cue == ContactCue::Preparation {
+        let installed = &core.state.installed;
+        let visible = installed
+            .body_policy
+            .as_ref()
+            .and_then(|body| body.value().combat.as_ref())
+            .and_then(|combat| combat.encounters.as_ref())
+            .is_some_and(|encounter| encounter.visible_preparation);
+        let state = animal.animal.as_ref().ok_or(ExecutionError::Invariant)?;
+        if !visible
+            || !selected_profile(installed, state)?
+                .dangers
+                .attack_preparation
+        {
+            return Ok(None);
+        }
+        Some(action)
+    } else {
+        None
+    };
+    // Preserve the existing natural-contact admission for this separate family.
+    if animal.spatial.flight.is_some() {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    let source = if seen {
+        Some((
+            source,
+            source.physical_life().ok_or(ExecutionError::Invariant)?,
+        ))
+    } else {
+        None
+    };
+    let region = if felt {
+        Some(ContactRegion {
+            kind: RegionKind::Event,
+            id: &event.id,
+            point: animal
+                .world_position()
+                .ok_or(ExecutionError::InvalidPosition)?,
+            incoming: None,
+        })
+    } else {
+        None
+    };
+    Ok(Some(DirectedEvidence {
+        preparation,
+        source,
+        region,
+    }))
+}
+
+fn incoming_bearing(received: &Awareness) -> Option<Point> {
+    let data = received.event_data.as_ref()?;
+    let number = |key| match data.get(key) {
+        Some(EventScalar::Number(value)) if value.is_finite() => Some(*value),
+        _ => None,
+    };
+    Some(Point {
+        x: number("incomingX")?,
+        y: number("incomingY")?,
+        z: number("incomingZ")?,
+    })
 }
 
 fn map_growth<V>(

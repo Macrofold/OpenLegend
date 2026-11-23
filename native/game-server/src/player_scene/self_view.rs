@@ -586,10 +586,14 @@ pub fn prepare_self(
         } else {
             (None, None)
         };
+        if let Some(label) = action.guard_label {
+            let bytes = label.len().checked_mul(2).ok_or(SceneError::Capacity)?;
+            custody.resize(custody.bytes().checked_add(bytes).ok_or(SceneError::Capacity)?)?;
+        }
         Ok::<_, SceneError>(OwnAction {
             id: action.id.to_owned(),
-            label: (&**label).into(),
-            show_status: action.preparing_navigation
+            label: action.guard_label.unwrap_or(label.as_ref()).into(),
+            show_status: action.guard_label.is_some() || action.preparing_navigation
                 || contains(&rules.status_types, action.kind)
                 || (working && contains(&rules.working_status_types, action.kind)),
             progress: if action.stage == "approaching"

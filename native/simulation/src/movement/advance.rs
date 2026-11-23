@@ -622,8 +622,7 @@ impl MoveAdvanceCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
-                    if (!action.has_ground_motion() && !action.is_natural_contact() && !action.is_manufacturing())
-                        || entity.spatial.local_pose.is_some()
+                    if !action.supported_native_action() || entity.spatial.local_pose.is_some()
                     {
                         return Err(ExecutionError::UnsupportedFamily);
                     }
@@ -669,10 +668,17 @@ impl MoveAdvanceCursor {
                         }
                         return self.check_hearth(core);
                     }
+                    if action.is_guard() {
+                        match crate::contact::guard::advance(core, &self.actor_id)? {
+                            Some(true) => self.phase = Phase::Finish,
+                            Some(false) => self.phase = Phase::Done,
+                            None => self.fail(&rules.not_applicable.message)?,
+                        }
+                        continue;
+                    }
                     if action.is_ranged_attack() && action.stage == "working" {
                         if action.holds_ready_aim() {
-                            self.phase = Phase::Done;
-                            continue;
+                            return self.check_ranged(core);
                         }
                         if action.remaining_seconds > self.seconds + installed.time_epsilon {
                             core.physical().advance_timed_work(&self.actor_id,

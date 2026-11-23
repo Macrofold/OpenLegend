@@ -45,7 +45,7 @@ pub(super) fn reach(installed: &InstalledWorld, entity: &Entity, seconds: f64) -
         Some(action) if action.is_natural_contact() => {
             action.strike_motion.is_some() || action.has_contact_approach()
         }
-        Some(action) if action.kind == "status-effect" || action.is_manufacturing() => false,
+        Some(action) if action.kind == "status-effect" || action.is_manufacturing() || action.is_guard() => false,
         Some(_) => return Err(ExecutionError::UnsupportedFamily),
     };
     Ok(if moving {

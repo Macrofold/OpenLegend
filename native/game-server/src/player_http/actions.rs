@@ -467,6 +467,12 @@ pub(crate) fn contact_choices(
             target_id: &'a str,
             definition_id: &'a str,
         },
+        Guard {
+            #[serde(rename = "type")]
+            kind: &'static str,
+            target_id: &'a str,
+            item_id: &'a str,
+        },
         Ranged {
             #[serde(rename = "type")]
             mode: RuntimeRangedMode,
@@ -623,6 +629,26 @@ pub(crate) fn contact_choices(
                         ammunition_id: choice.ammunition,
                         auto_equip: choice.auto_equip,
                     },
+                },
+            });
+        }
+        let guard_reason = reason.or(menu.guard_reason());
+        for (item, name, verb) in menu.guard_shields() {
+            let bytes = 2 * size_of::<Action<'_>>() + 4 * (item.len() + selected.len() + verb.len())
+                + 4 * name.storage_bytes() + 4 * menu.name.storage_bytes() + 128;
+            workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
+            actions.push(Action {
+                id: format!("guard-{selected}-{item}"),
+                label: Cow::Owned(JsText::concat(&[&verb.into(), &" ".into(), name])),
+                category: "Combat",
+                description: Cow::Borrowed(menu.name),
+                keywords: &[],
+                target_id: selected,
+                enabled: guard_reason.is_none(),
+                reason: guard_reason,
+                facts: Vec::new(),
+                intent: Intent::Command {
+                    command: Command::Guard { kind: "guard", target_id: selected, item_id: item },
                 },
             });
         }
