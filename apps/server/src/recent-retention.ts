@@ -5,7 +5,7 @@ import {
   selectedTemporalPolicy,
   updateWorld,
 } from '@open-legend/domain';
-import type { SavedWorld } from './store.js';
+import type { SavedWorld } from './saved-world.js';
 import type { PreparedMemoryRetention } from './temporal-storage.js';
 
 /** Recent eligibility belongs to the native actor's exact charge directory.

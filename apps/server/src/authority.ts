@@ -21,7 +21,7 @@ import {
   sameDefinitionPin,
   materializeNativeValuesInPlace,
 } from '@open-legend/domain';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 // Dependency order for operational recovery; these records never enter gameplay checkpoints.
 // Invites and maintenance windows are operational access/control records owned by

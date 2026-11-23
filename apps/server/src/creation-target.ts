@@ -27,7 +27,9 @@ import { BACKUP_TABLES } from './operational-backup-format.js';
 import { ASSET_TABLES } from './asset-repository.js';
 import { WORLD_RECORD_TABLES } from './world-record-schema.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
-import type { SavedWorld, SqlDatabase, SqlGameRepository } from './store.js';
+import type { SqlGameRepository } from './store.js';
+import type { SavedWorld } from './saved-world.js';
+import type { SqlDatabase } from './sql-database.js';
 
 export class CreationTargetError extends Error {
   constructor(

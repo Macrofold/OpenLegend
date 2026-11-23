@@ -22,7 +22,7 @@ import {
 } from '@open-legend/domain';
 import type { AccountBinding } from './authority.js';
 import type { CreationStartupPreparation } from './creation-target.js';
-import type { SavedWorld } from './store.js';
+import type { SavedWorld } from './saved-world.js';
 import type { AssetRevisionReference } from '@open-legend/assets';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { prepareOpeningReadiness } from './world-opening-authoring.js';

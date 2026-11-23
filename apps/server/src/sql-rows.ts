@@ -1,4 +1,4 @@
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { countMetric, gaugeMetric, withGroupedWriteAttribution } from './performance.js';
 import { toUSVString } from 'node:util';
 

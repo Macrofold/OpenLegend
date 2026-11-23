@@ -16,7 +16,7 @@ import {
   captureTemporalReadContext,
 } from '@open-legend/domain';
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 /** Native append intent belongs to the existing immutable save cut. Physical
  * packing never runs while physical time advances. */

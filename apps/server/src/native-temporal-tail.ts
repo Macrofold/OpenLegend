@@ -7,7 +7,7 @@ import {
   type NativeActorReadCut,
 } from './native-read-cut.js';
 import { ViewChangedError } from './player-view-async.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 
 export interface NativeTemporalTailRequest {
   readonly actorId: string;
@@ -23,7 +23,7 @@ export interface NativeTemporalTailRequest {
  * Explicit retirement and unsaved empty edits stay with the page owner. */
 export async function resolveNativeReceiptTail(
   world: NativeWorld,
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   actorId: string,
   acceptedCut: number,
   pending: () => LiveReadCuts,

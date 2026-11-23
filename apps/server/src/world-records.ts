@@ -81,7 +81,8 @@ import {
   type ReceivedChargeDirectory,
   referencedReceivedValues,
 } from '@open-legend/domain';
-import type { SavedWorld, SqlDatabase } from './store.js';
+import type { SavedWorld } from './saved-world.js';
+import type { SqlDatabase } from './sql-database.js';
 import {
   RECORD_NODES,
   WORLD_RECORD_SCHEMA,

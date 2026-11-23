@@ -1,7 +1,7 @@
 import { parseSourceJson } from './native-source-preparation.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import { nativeCurrentRow } from './native-current-sources.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import {
   correctionCandidates,
@@ -55,7 +55,7 @@ function integer(value: unknown): number {
  * prepareHistoryEdit; neither an actor's lifetime nor its shared pool is loaded.
  * The native owner keeps the accepted live projection and candidate fence. */
 export async function readNativeHistoryEdit(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   request: NativeHistoryEditReadRequest,
   cut: LiveReadCuts,
 ) {

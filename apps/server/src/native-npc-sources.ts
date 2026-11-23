@@ -10,7 +10,7 @@ import type { NativeGeometryQueries } from '@open-legend/native-simulation';
 import type { Named } from '@open-legend/language';
 import type { NativeActorReadCut } from './native-read-cut.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import { nativeCurrentRow } from './native-current-sources.js';
 import type { NativePersonalSource } from './native-recall.js';
 import type { RetrievedMemory } from './memory-repository.js';
@@ -222,7 +222,7 @@ function integer(value: unknown): number {
  * native origin applies its earlier time/prefix/frontier and current privacy
  * fences; unrelated accepted movement does not invalidate historical context. */
 export async function readNativeNpcSources(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   request: NativeNpcSourcesRequest,
   cut: LiveReadCuts,
 ) {
@@ -242,7 +242,7 @@ export async function readNativeNpcSources(
 /** Private place browsing reuses the exact selected-personal-row reader,
  * without manufacturing a geometry/provider binding or requesting receipts. */
 export async function readNativePersonalSourceRows(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   request: Omit<NativeNpcSourcesRequest, 'binding'> & { readonly acceptedCut: number },
   cut: LiveReadCuts,
 ) {
@@ -252,7 +252,7 @@ export async function readNativePersonalSourceRows(
 }
 
 async function readNativeSourceRows(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   request: Omit<NativeNpcSourcesRequest, 'binding'> & { readonly acceptedCut: number },
   cut: LiveReadCuts,
 ) {

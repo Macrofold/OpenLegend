@@ -17,7 +17,8 @@ import {
 } from '@open-legend/domain';
 import { appendMemory } from '../../../packages/domain/src/events.js';
 import type { AiReceipt } from '@open-legend/ai';
-import { SqlGameRepository, type JobRecord, type SavedWorld } from './store.js';
+import { SqlGameRepository, type JobRecord } from './store.js';
+import type { SavedWorld } from './saved-world.js';
 import { DecisionLedger, levelLimits } from './cognition-budget.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 

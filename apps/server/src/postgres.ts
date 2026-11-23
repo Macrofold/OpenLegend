@@ -8,7 +8,7 @@ import {
 } from './performance.js';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import { nativeSourceColumnParsers } from './native-source-preparation.js';
 import { createNativeConsumerScope } from './native-consumer.js';
 import {
@@ -87,7 +87,7 @@ function runTransactionCallbacks(callbacks: readonly (() => void)[]): unknown[] 
 }
 
 /** Independent bounded read and write lanes; a large recall cannot occupy the writer. */
-export class PostgresDatabase implements SqlDatabase {
+export class PostgresDatabase implements LiveSqlDatabase {
   get checkpointSource() {
     return { url: this.connectionString };
   }

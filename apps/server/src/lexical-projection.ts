@@ -1,4 +1,4 @@
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { markLexicalIncomplete } from './lexical-coverage.js';
 import { derivedChargeSql } from './memory-derivatives.js';
 import { searchWords } from './text-search.js';

@@ -3,7 +3,7 @@ import { beginTiming, endTiming, countMetric } from './performance.js';
 import { sqlRowBatches } from './sql-rows.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import type { RecordChanges, RowChange } from './world-records.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { temporalBlockExpiredSql } from './temporal-page-storage.js';
 
 import { retainedEvidenceRowSql, retainedReceivedUseSql } from './retained-evidence-selection.js';

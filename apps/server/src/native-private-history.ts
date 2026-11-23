@@ -4,7 +4,7 @@ import { replacedHistoryAwareness } from './history-preparation.js';
 import { nativeAppendHistoryProjection } from './native-history.js';
 import type { NativePublication } from './native-operation.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import { nativeRecordChanges } from './native-records.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import { retainNativeSources } from './native-consumer.js';
@@ -18,7 +18,7 @@ export async function nativePrivateHistory(
   publication: NativePublication,
   beforePrivacy: ExperiencePrivacy,
   privacy: ExperiencePrivacy,
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   beforeCut: LiveReadCuts,
 ): Promise<HistoryProjection> {
   const projection = nativeAppendHistoryProjection(publication.history);
@@ -41,7 +41,7 @@ export async function nativePrivateHistory(
 export function nativeRestoredHistory(
   publication: NativeRestorePublication,
   beforePrivacy: ExperiencePrivacy,
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   beforeCut: LiveReadCuts,
 ): Promise<HistoryProjection> {
   const privacy = publication.restoreMetadata.privacy;
@@ -68,7 +68,7 @@ async function privacyHistory(
   actors: Iterable<string>,
   beforePrivacy: ExperiencePrivacy,
   privacy: ExperiencePrivacy,
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   beforeCut: LiveReadCuts,
   restore: boolean,
 ): Promise<HistoryProjection> {

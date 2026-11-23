@@ -1,5 +1,5 @@
 import { parameterBatchLimit, SqlWriteBatch } from './sql-rows.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { gaugeMetric, timed, beginTiming, elapsedTiming, profilingEnabled } from './performance.js';
 
 type Table = 'mind_source_versions' | 'history_events' | 'history_perspectives';

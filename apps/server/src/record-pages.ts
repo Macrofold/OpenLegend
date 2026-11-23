@@ -1,7 +1,7 @@
 import { retainedEvidenceRowSql } from './retained-evidence-selection.js';
 import { liveEvidenceRowSql } from './world-record-schema.js';
 import { setImmediate } from 'node:timers/promises';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
 
 const identifier = (name: string) => {

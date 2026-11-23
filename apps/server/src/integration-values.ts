@@ -1,4 +1,4 @@
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import {
   parseSourceJson,
   prepareNativeSourceSync,

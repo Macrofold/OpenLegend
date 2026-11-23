@@ -12,7 +12,8 @@ import {
   type WorldGrant,
 } from './authority.js';
 import type { WorldState } from '@open-legend/domain';
-import type { SqlDatabase, SqlGameRepository } from './store.js';
+import type { SqlGameRepository } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { WorldService } from './world-service.js';
 
 /** Operational invite bounds; docs/limits/multiplayer.md#mp15. */

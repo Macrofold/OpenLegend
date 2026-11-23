@@ -16,7 +16,7 @@ import {
   type AssetRevisionReference,
 } from '@open-legend/assets';
 import { createHash } from 'node:crypto';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
 
 /** Operational records never enter gameplay rewind. Register this complete catalog in

@@ -15,7 +15,8 @@ import {
   fundNativeSourceWorkspace,
   withNativeSqlPreparation,
 } from './native-source-preparation.js';
-import type { GameRepository, SqlDatabase } from './store.js';
+import type { GameRepository } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { PlayerPracticeLoader } from './player-self-view.js';
 import { playerHasWork } from './player-self-view.js';
 import {

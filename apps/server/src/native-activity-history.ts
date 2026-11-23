@@ -1,6 +1,6 @@
 import { ACTIVITY_LEARNING_PREPARATION } from '@open-legend/domain';
 import type { NativeGeometryQueries } from '@open-legend/native-simulation';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import { WorldRecords } from './world-records.js';
 import { nativeCurrentRow } from './native-current-sources.js';
@@ -20,7 +20,7 @@ export interface NativeActivityHistoryRequest {
  * under the actual accepted SQL/pending cut. No decoded occurrence is relabelled
  * with an invented slot, position, or source column. */
 export async function readNativeActivityHistory(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   request: NativeActivityHistoryRequest,
   cut: LiveReadCuts,
 ) {

@@ -1,7 +1,7 @@
 import type { ApiResult, CommandInput } from '@open-legend/protocol';
 import { commandRecoveryFields, type RequestScope } from './authority.js';
 import { digest } from './content-digest.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { z } from 'zod';
 import { decodeSourceJson } from './native-source-preparation.js';
 

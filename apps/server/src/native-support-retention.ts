@@ -1,7 +1,7 @@
 import { jsonByteLength } from '@open-legend/domain';
 import type { NativeGeometryQueries } from '@open-legend/native-simulation';
 import type { LiveReadCuts } from './live-read-overlay.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import { mergeRecordChanges, type RecordChanges } from './world-records.js';
 import { selectActorRecordChanges } from './actor-record-selection.js';
 import { RetentionMetadata, accountTables } from './retention-metadata.js';
@@ -20,7 +20,7 @@ export interface NativeSupportMembershipRequest {
  * with its cold remainder. Recent pages and opaque account bodies are never
  * hydrated to prove an aliases-only sparse-support dependency. */
 export async function readNativeSupportMembership(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   cut: LiveReadCuts,
   request: NativeSupportMembershipRequest,
 ) {

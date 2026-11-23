@@ -18,7 +18,7 @@ import {
 import type { StorySource } from './history.js';
 import { receivedValueSql } from './temporal-page-storage.js';
 import type { RecordChanges } from './world-records.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { sqlRowBatches } from './sql-rows.js';
 
 export const personalAccountRevision = (payload: string) =>

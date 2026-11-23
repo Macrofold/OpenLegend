@@ -22,7 +22,7 @@ import {
   withNativeConsumerScope,
 } from './native-consumer.js';
 import { withNativeSqlPreparation } from './native-source-preparation.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { MemoryRepository } from './memory-repository.js';
 import {
   readNativeKnownPlaceEvidence,

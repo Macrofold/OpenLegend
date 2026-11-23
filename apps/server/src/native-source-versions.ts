@@ -6,7 +6,7 @@ import type { LiveReadCuts } from './live-read-overlay.js';
 import { personalAccountRevision } from './personal-accounts.js';
 import type { RetentionRow } from './retention-metadata.js';
 import { prepareSourceVersionPlan, type SourceVersionPlan } from './source-version-retention.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import type { RecordChanges } from './world-records.js';
 import type { NativeRestoreArchive } from './native-restore.js';
@@ -42,7 +42,7 @@ export interface NativeSourceVersionsRequest extends NativeSourceVersionContext 
 /** The native candidate asks once, before its temporal header and save rows are
  * sealed. The ordinary application stage consumes this exact plan afterward. */
 export async function readNativeSourceVersions(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   beforeCut: LiveReadCuts,
   request: NativeSourceVersionsRequest,
 ): Promise<{
@@ -74,7 +74,7 @@ const key = (table: string, id: string) => JSON.stringify([table, id]);
  * changes: durable SQL alone cannot prove a pending learned-source revision.
  * The host retains the candidate/cut fence across this asynchronous preparation. */
 export async function prepareNativeSourceVersionPlan(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   input: NativeSourceVersionContext,
   changes: RecordChanges,
   predecessors: readonly NativePersonalPredecessor[],

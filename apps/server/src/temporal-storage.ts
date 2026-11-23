@@ -35,7 +35,8 @@ import {
   type ReceivedObservation,
   type ReceivedEntrySelection,
 } from '@open-legend/domain';
-import type { SavedWorld, SqlDatabase } from './store.js';
+import type { SavedWorld } from './saved-world.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { MemoryScope } from './memory-repository.js';
 import type { SourceVersionPlan } from './source-version-retention.js';
 

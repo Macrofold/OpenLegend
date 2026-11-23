@@ -20,7 +20,8 @@ import {
 } from './save-files.js';
 import { tableRows } from './record-pages.js';
 import { WorldRecords } from './world-records.js';
-import type { SavedWorld, SqlDatabase } from './store.js';
+import type { SavedWorld } from './saved-world.js';
+import type { SqlDatabase } from './sql-database.js';
 
 const manifestSchema = z
   .object({

@@ -1,7 +1,7 @@
 import type { NativeGeometryQueries } from '@open-legend/native-simulation';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { MemoryRepository } from './memory-repository.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 
 export interface NativeKnownPlaceEvidenceRequest {
   readonly binding: NativeGeometryQueries['binding'];
@@ -19,7 +19,7 @@ export interface NativeKnownPlaceEvidenceRequest {
  * through the existing repository at the operation's original accepted cut;
  * live place bodies and a later SQL prefix cannot fill missing history. */
 export async function readNativeKnownPlaceEvidence(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   memories: Pick<MemoryRepository, 'readNativeKnownPlaceCapsules'>,
   request: NativeKnownPlaceEvidenceRequest,
   cut: LiveReadCuts,

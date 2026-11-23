@@ -22,7 +22,7 @@ import { selectActorRecordChanges } from './actor-record-selection.js';
 import { mergeRecordChanges, type RecordChanges, type RowChange } from './world-records.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import { nativeCurrentRow } from './native-current-sources.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import { sqlRowBatches } from './sql-rows.js';
 import type { NativeProviderAnswer } from './native-provider-answer.js';
 import {
@@ -96,7 +96,7 @@ function pendingAt(cut: LiveReadCuts, actorId: string): RecordChanges {
  * and at most one actor's existing 64-account/4 MiB body slice. It performs no
  * canonical mutation and never constructs a Source world. */
 export async function prepareNativeAccountRetention(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   cut: LiveReadCuts,
   request: NativeAccountRetentionRequest,
   read: NativeWorldAccountRetention,
@@ -156,7 +156,7 @@ export async function prepareNativeAccountRetention(
 }
 
 async function accountMetadata(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   request: NativeAccountRetentionRequest,
   pending: RecordChanges,
   capacity: RetentionCapacity,
@@ -236,7 +236,7 @@ interface BodyRequest {
   at: number;
 }
 async function accountBodies(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   request: BodyRequest,
   selected: readonly Candidate[],
   pending: RecordChanges,
@@ -359,7 +359,7 @@ export interface NativeRestoreRetentionRequest {
 /** The restore driver supplies a genuine private SQL rollback view before this
  * same selector runs. The guarded reply survives its actual native answer. */
 export async function readNativeRestoreRetention(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   cut: LiveReadCuts,
   request: NativeRestoreRetentionRequest,
   capacity: RetentionCapacity,

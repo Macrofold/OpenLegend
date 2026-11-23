@@ -1,4 +1,4 @@
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { markLexicalIncomplete } from './lexical-coverage.js';
 
 /** A logical charge includes the replaceable value, its exact key and a conservative

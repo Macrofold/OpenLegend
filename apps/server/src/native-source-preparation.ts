@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 type Admission = Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
 interface Section {

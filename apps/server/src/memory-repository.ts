@@ -160,7 +160,8 @@ import {
   type OfferLot,
 } from '@open-legend/domain';
 import { z } from 'zod';
-import type { SqlDatabase, SavedWorld } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
+import type { SavedWorld } from './saved-world.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import { RECORD_ACTOR_PATHS, RECORD_PARENTS } from './world-record-schema.js';
 
@@ -1643,7 +1644,7 @@ export class MemoryRepository {
   }
   private readonly lexical: LexicalProjection;
   constructor(
-    private readonly db: SqlDatabase,
+    private readonly db: LiveSqlDatabase,
     private readonly prepareRetentionMetadata?: (
       state: SavedWorld,
       pending: RecordChanges | undefined,
@@ -1905,7 +1906,7 @@ export class MemoryRepository {
     }
   }
 
-  static async assertSearchSchema(db: Pick<SqlDatabase, 'prepare'>): Promise<void> {
+  static async assertSearchSchema(db: Pick<LiveSqlDatabase, 'prepare'>): Promise<void> {
     const existing = await db
       .prepare("SELECT to_regclass('open_legend.recall_sources') AS relation")
       .get();
@@ -1945,7 +1946,7 @@ export class MemoryRepository {
         );
     }
   }
-  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+  static async initializeSchema(db: Pick<LiveSqlDatabase, 'exec'>): Promise<void> {
     await db.exec(`
       CREATE TABLE IF NOT EXISTS recall_sources (
         world_id TEXT NOT NULL REFERENCES world_head(world_id), actor_id TEXT NOT NULL,

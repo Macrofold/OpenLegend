@@ -13,7 +13,8 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { populateScenario, parseScenario } from './performance/scenario.js';
-import { SqlGameRepository, type SavedWorld } from '../apps/server/src/store.js';
+import { SqlGameRepository } from '../apps/server/src/store.js';
+import type { SavedWorld } from '../apps/server/src/saved-world.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { retainHotEvents } from '../apps/server/src/hot-events.js';
 import { isDeepStrictEqual } from 'node:util';

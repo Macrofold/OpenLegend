@@ -1,4 +1,4 @@
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 /** A deliberately omitted optional artifact is different from a drained queue.
  * Keep one conservative coverage marker per actor, never a lifetime list of keys.

@@ -32,7 +32,8 @@ import {
   type TemporalActorHistory,
   type WorldState,
 } from '@open-legend/domain';
-import type { SavedWorld, SqlDatabase } from './store.js';
+import type { SavedWorld } from './saved-world.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import { historyKey, historyPositions } from './history-residency.js';
 import { MemoryRetentionError, type PreparedMemoryRetention } from './temporal-storage.js';
 import {
@@ -91,7 +92,7 @@ const sourceEntries = (world: WorldState, actorId: string): ExperienceEntry[] =>
 /** Lasting records use the same exact source tables and mutation owner. Retired
  * records are physically reclaimed by the encompassing world transaction. */
 export async function prepareAccountRetention(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   state: SavedWorld,
   complete = false,
   pendingDeletes?: ReadonlyMap<string, readonly string[]>,
@@ -645,7 +646,7 @@ export async function prepareSupportRetentionPlan(
 /** Existing account retirement prepares its exact effects outside mutation. The
  * finite plan holds selected records, not another writable knowledge model. */
 export async function prepareAccountRetentionPlan(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   state: SavedWorld,
   metadata: RetentionMetadataView,
   actorIds: readonly string[],

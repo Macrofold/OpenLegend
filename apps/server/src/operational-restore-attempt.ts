@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { z } from 'zod';
 import { recoveryFile } from './game-saves.js';
 import { SaveFiles, syncDirectory } from './save-files.js';
-import type { SqlDatabase, SqlGameRepository } from './store.js';
+import type { SqlGameRepository } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { WorldRecords } from './world-records.js';
 
 const ownerFile = '.directory-owner.json';

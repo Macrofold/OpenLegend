@@ -10,7 +10,7 @@ import type {
   WorldAgentProgress,
   WorldCreationOperationView,
 } from '@open-legend/protocol';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { AuthoringPacket, AuthoringProfile } from './world-authoring-context.js';
 import {
   creationReceiptRequestSchema,

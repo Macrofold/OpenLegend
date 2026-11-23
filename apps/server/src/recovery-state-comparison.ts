@@ -4,7 +4,7 @@ import {
   validateOrderedRecord,
   type OrderedRecord,
 } from '../../../packages/domain/src/ordered-record.js';
-import type { SavedWorld } from './store.js';
+import type { SavedWorld } from './saved-world.js';
 
 const invalidProjection = Symbol('invalid recovery comparison');
 const orderedEntries = Symbol('ordered entries');

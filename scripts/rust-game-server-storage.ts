@@ -32,10 +32,10 @@ import { bodyProfile, spatialMap } from '../packages/domain/src/spatial-state.js
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import {
   DATABASE_SCHEMA,
+  JOB_UPSERT_SQL,
   PERMITTED_UNMARKED_TABLES,
   initializeGameSchema,
 } from '../apps/server/src/game-storage-schema.js';
-import { JOB_UPSERT_SQL } from '../apps/server/src/job-storage.js';
 import { WorldRecords } from '../apps/server/src/world-records.js';
 import { RECORD_NODES } from '../apps/server/src/world-record-schema.js';
 import { receivedCurrentOwnerTables } from '../apps/server/src/received-record-references.js';

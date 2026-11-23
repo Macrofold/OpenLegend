@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { MaintenanceWindowView } from '@open-legend/protocol';
 import type { RequestScope } from './authority.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { OverloadError } from './work-lane.js';
 import type { WorldService } from './world-service.js';
 

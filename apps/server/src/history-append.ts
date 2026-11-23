@@ -6,7 +6,7 @@ import { HistoryBatch } from './history-batch.js';
 import { encodeStoryAccount, encodeTemporalStoryAccount } from './personal-accounts.js';
 import type { ReceivedEventAccount } from './received-event-accounts.js';
 import { isPostgresText } from './sql-rows.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 export interface AppendHistoryInput {
   event: WorldEvent;

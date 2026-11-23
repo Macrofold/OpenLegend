@@ -13,7 +13,8 @@ import { MemoryRepository } from '../apps/server/src/memory-repository.js';
 import { privacyLedgerKey, worldPrivacy } from '../apps/server/src/privacy-ledger.js';
 import { ReceivedValueOwnership } from '../apps/server/src/received-value-ownership.js';
 import { SqlWriteBatch } from '../apps/server/src/sql-rows.js';
-import type { SavedWorld, SqlDatabase } from '../apps/server/src/store.js';
+import type { SavedWorld } from '../apps/server/src/saved-world.js';
+import type { SqlDatabase } from '../apps/server/src/sql-database.js';
 import {
   writeCanonicalWorldRows,
   writeHistoryProjection,

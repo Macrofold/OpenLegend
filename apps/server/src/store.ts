@@ -1,3 +1,5 @@
+import type { LiveSqlDatabase } from './live-sql-database.js';
+import type { SavedWorld } from './saved-world.js';
 import {
   fundNativeSourceWorkspace,
   nativeSourcePreparationActive,
@@ -5,7 +7,7 @@ import {
   withoutNativeSqlPreparation,
 } from './native-source-preparation.js';
 import { retainNativeSources, withNativeConsumerScope } from './native-consumer.js';
-import { JOB_UPSERT_SQL, jobPayloadPrefix, jobSelection } from './job-storage.js';
+import { jobPayloadPrefix, jobSelection } from './job-storage.js';
 import { diagnosticStorage, diagnosticSelectionPattern } from './diagnostic-storage.js';
 import {
   SOURCE_RETENTION_CLOSURE_ROUNDS,
@@ -58,7 +60,7 @@ import {
 import { InviteRepository } from './invites.js';
 import { MaintenanceRepository } from './maintenance.js';
 import { AssetRepository } from './asset-repository.js';
-import { assertAssetBinding, type AssetRevisionReference } from '@open-legend/assets';
+import { assertAssetBinding } from '@open-legend/assets';
 import {
   compactHistory,
   recordSavedTemporalPages,
@@ -107,6 +109,7 @@ import {
 } from './attempt-budget.js';
 import {
   DATABASE_SCHEMA,
+  JOB_UPSERT_SQL,
   assertGameSchema,
   initializeGameSchema,
   markGameSchema,
@@ -229,57 +232,6 @@ export interface AttemptBudget {
   id: string;
   limitUsd: number;
 }
-export interface SqlDatabase {
-  /** Transport grouping for explicitly independent writes; transaction semantics are unchanged. */
-  readonly writeGroups: boolean;
-  /** Synchronous health of the session owning the exclusive world-writer lock. */
-  assertWriteAdmission(): void;
-  /** Undefined adapters cannot prove whether shared committed reads are safe. */
-  readonly transactionActive?: boolean;
-  checkpointSource?: import('./checkpoint-worker-client.js').CheckpointSource;
-  transaction<T>(operation: () => Promise<T>): Promise<T>;
-  setLiveReadCuts?(provider: LiveReadCutsProvider): void;
-  maintenanceTransaction?<T>(operation: () => Promise<T>): Promise<T>;
-  readTransaction?<T>(operation: () => Promise<T>): Promise<T>;
-  /** Native bootstrap owns each selected SQL transfer before the driver
-   * allocates rows. The caller retains that custody through consumption. */
-  withReadTransferAdmission?<T>(
-    admit: (bytes: number, rows: number) => void,
-    operation: () => Promise<T>,
-  ): Promise<T>;
-  withoutReadTransferAdmission?<T>(operation: () => T): T;
-  /** A tentative SQL read projection inside an actual write transaction. All
-   * rows and callback effects are rolled back before returning its result. */
-  rollbackView?<T>(operation: () => Promise<T>): Promise<T>;
-  readForActor?<T>(worldId: string, actorId: string, operation: () => Promise<T>): Promise<T>;
-  readAtCut?<T>(cut: LiveReadCuts, operation: () => Promise<T>): Promise<T>;
-  /** Selected canonical metadata plus explicit pending merge, in the same
-   * validated snapshot. Ordinary body/source readers keep the live overlay. */
-  readMetadataBaseline?<T>(
-    actorIds: readonly string[],
-    operation: (baseline: MetadataBaseline) => Promise<T>,
-  ): Promise<T>;
-  afterCommit?(callback: () => void): void;
-  afterRollback?(callback: () => void): void;
-  exec(sql: string): Promise<void>;
-  prepare(sql: string): {
-    get(...params: any[]): Promise<Record<string, unknown> | undefined>;
-    all(...params: any[]): Promise<Record<string, unknown>[]>;
-    run(...params: any[]): Promise<unknown>;
-  };
-  close(): Promise<void>;
-}
-
-export interface SavedWorld {
-  world: WorldState;
-  /** Exact installed presentation content. Absent means bootstrap-only depiction. */
-  presentationRelease?: AssetRevisionReference;
-  presentationReleaseRevision?: number;
-  speed: number;
-  manuallyPaused: boolean;
-  actorMilestones?: Record<string, Record<string, boolean>>;
-}
-
 /** Operational read providers retain actual native products, never a mutable
  * TypeScript world. They are installed only with the matching SQL authority. */
 export interface NativeWorldProviders {
@@ -921,7 +873,7 @@ export class SqlGameRepository implements GameRepository {
   readonly authority: AuthorityRepository;
   readonly invites: InviteRepository;
   readonly maintenance: MaintenanceRepository;
-  readonly db: SqlDatabase;
+  readonly db: LiveSqlDatabase;
   readonly records: WorldRecords;
   readonly memories: MemoryRepository;
   private readonly integrationValues: IntegrationValues;
@@ -1045,7 +997,7 @@ export class SqlGameRepository implements GameRepository {
   readonly assets: AssetRepository;
   constructor(
     dataDirectory: string,
-    database: SqlDatabase,
+    database: LiveSqlDatabase,
     private readonly initialization: { preserveSaveStages?: boolean } = {},
   ) {
     this.db = database;
@@ -2524,7 +2476,7 @@ export class SqlGameRepository implements GameRepository {
     // A transaction must read its own snapshot, never newer committed cache data.
     return this.db.transactionActive === false && !!this.db.afterCommit && !!this.db.afterRollback;
   }
-  private invalidateRead(cache: { clear(): void }, db: SqlDatabase): void {
+  private invalidateRead(cache: { clear(): void }, db: LiveSqlDatabase): void {
     const invalidate = () => cache.clear();
     invalidate();
     // Fence reads prepared during an enclosing transaction as well as before it.

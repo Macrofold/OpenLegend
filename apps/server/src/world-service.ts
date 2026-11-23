@@ -416,7 +416,8 @@ import type {
   PlayerPreferencePatch,
 } from '@open-legend/protocol';
 import type { AppConfig } from './config.js';
-import { digest, type SavedWorld, type GameRepository, type PreparedCommit } from './store.js';
+import { digest, type GameRepository, type PreparedCommit } from './store.js';
+import type { SavedWorld } from './saved-world.js';
 import {
   assertAssetRevisionReference,
   sameAssetRevision,

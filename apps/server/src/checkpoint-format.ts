@@ -1,4 +1,4 @@
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 // Encoding limits are work bounds, not history retention. Larger individual owners
 // must split growing collections in the canonical codec before raising these limits.

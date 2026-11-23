@@ -1,4 +1,4 @@
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 /** Personal context and its query cache share one collision-free actor/world scope. */
 export function personalVectorScope(

@@ -3,7 +3,7 @@ import { HISTORY_TABLES, HistoryRepository } from './history.js';
 import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
 import { RECORD_NODES, type JsonRecord } from './world-record-schema.js';
 import { assembleWorldRecords, WorldRecords } from './world-records.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { SavePayload } from './game-saves.js';
 import { SaveFiles, type SaveFileMetadata } from './save-files.js';
 import { CHECKPOINT_ENCODING } from './checkpoint-format.js';

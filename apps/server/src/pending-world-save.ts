@@ -9,7 +9,7 @@ import { jsonText } from '@open-legend/domain';
 import { RECORD_NODES } from './world-record-schema.js';
 import { Buffer } from 'node:buffer';
 import type { GameplayReceipt } from './command-receipts.js';
-import type { SavedWorld } from './store.js';
+import type { SavedWorld } from './saved-world.js';
 import { mergeRowChange, type RecordChanges, type RowChange } from './world-records.js';
 import { mergeHistoryPreparation, type PreparedHistory } from './history-preparation.js';
 

@@ -1,7 +1,7 @@
 import { jsonByteLength } from '@open-legend/domain';
 import type { NativeGeometryQueries } from '@open-legend/native-simulation';
 import type { LiveReadCuts } from './live-read-overlay.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import { nativeCurrentRow } from './native-current-sources.js';
 
 export interface NativeAppraisalOutcomesRequest {
@@ -17,7 +17,7 @@ export interface NativeAppraisalOutcomesRequest {
  * An empty result certifies absence at this actual SQL/pending overlay, without
  * turning an active-only installed appraisal tail into complete history. */
 export async function readNativeAppraisalOutcomes(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   request: NativeAppraisalOutcomesRequest,
   cut: LiveReadCuts,
 ) {

@@ -16,7 +16,8 @@ import {
   type MemoryRecord,
   EXPERIENCE_LIMITS,
 } from '@open-legend/domain';
-import { SqlGameRepository, type SavedWorld } from '../apps/server/src/store.js';
+import { SqlGameRepository } from '../apps/server/src/store.js';
+import type { SavedWorld } from '../apps/server/src/saved-world.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { candidateSet } from '../apps/server/src/recall.js';
 import { MemoryReadCache, type MemoryScope } from '../apps/server/src/memory-repository.js';

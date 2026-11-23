@@ -5,7 +5,8 @@ import { restoredSourceVersions } from './source-version-retention.js';
 import { HISTORY_TABLES, validateHistoryEvidence } from './history.js';
 import { digest } from './content-digest.js';
 import { AUTOSAVE_LIMITS, AUTOSAVE_DEFAULTS, SAVE_FORMAT } from './checkpoint-format.js';
-import type { SavedWorld, SqlDatabase } from './store.js';
+import type { SavedWorld } from './saved-world.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { AutosaveSettings, CheckpointFailure, GameSaveSummary } from '@open-legend/protocol';
 import { SaveFiles, compareSaves, type SavePosition, type SaveFileMetadata } from './save-files.js';
 import {

@@ -1,9 +1,9 @@
-import type { SqlDatabase } from '../../apps/server/src/store.js';
+import type { LiveSqlDatabase } from '../../apps/server/src/live-sql-database.js';
 import { temporalBlockExpiredSql } from '../../apps/server/src/temporal-page-storage.js';
 
 /** Explicit workload-boundary diagnostic; never called by gameplay or save admission.
  * SQL aggregates count cold data without loading it into the simulation. */
-export async function evidenceStorageStats(db: SqlDatabase, worldId: string) {
+export async function evidenceStorageStats(db: LiveSqlDatabase, worldId: string) {
   if (!db.readMetadataBaseline)
     throw new Error('Physical storage diagnostics require a durable metadata snapshot.');
   return db.readMetadataBaseline([], async (baseline) => {

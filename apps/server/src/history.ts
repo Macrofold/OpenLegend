@@ -62,7 +62,7 @@ import type {
   TranscriptItem,
   WorldEventSourceReference,
 } from '@open-legend/protocol';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import {
   copyNativeProduct,
   releaseNativeProduct,
@@ -289,7 +289,7 @@ function fundNativeBanner(item: TranscriptItem, worldId: string, actorId: string
 /** Scoped durable history repository. Only the application binds owner and perspective. */
 export class HistoryRepository {
   constructor(
-    private db: SqlDatabase,
+    private db: LiveSqlDatabase,
     private principals: ReadonlyArray<{ ownerId: string; actorId: string }> = [],
   ) {
     this.bindLocalPrincipal = principals.length === 0;
@@ -597,7 +597,7 @@ export class HistoryRepository {
       .prepare('SELECT id FROM history_events WHERE world_id=? AND response_id=? LIMIT 1')
       .get(worldId, responseId));
   }
-  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+  static async initializeSchema(db: Pick<LiveSqlDatabase, 'exec'>): Promise<void> {
     await db.exec(`
       CREATE TABLE IF NOT EXISTS history_totals (
         world_id TEXT PRIMARY KEY, event_count BIGINT NOT NULL CHECK(event_count>=0));

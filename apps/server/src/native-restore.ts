@@ -18,8 +18,8 @@ import type {
   NativeCurrentWorldInstallation,
   NativeWorldAdoption,
   NativeWorldProviders,
-  SqlDatabase,
 } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import type { NativePublication } from './native-operation.js';
 import type { RetentionCapacity } from './native-account-retention.js';

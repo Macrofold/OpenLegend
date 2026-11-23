@@ -1,6 +1,6 @@
 import { parseSourceJson } from './native-source-preparation.js';
 import type { PersonalSourceRef } from '@open-legend/domain';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { NativeHistoryEditReadRequest } from './native-temporal-pages.js';
 import type { NativeRestoreArchive } from './native-restore.js';

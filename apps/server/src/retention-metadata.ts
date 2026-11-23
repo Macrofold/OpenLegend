@@ -27,7 +27,7 @@ import {
 } from './temporal-storage.js';
 import { RECORD_NODES, RECORD_PARENTS, liveEvidenceRowSql } from './world-record-schema.js';
 import type { RecordChanges, RowChange } from './world-records.js';
-import type { SqlDatabase } from './store.js';
+import type { LiveSqlDatabase } from './live-sql-database.js';
 import type { AccountRetentionMetadata } from './retention-record-metadata.js';
 import { countMetric } from './performance.js';
 import { receiptLookupBucket } from './temporal-page-storage.js';
@@ -382,7 +382,7 @@ export function accountRetentionCandidatesSql(
 /** Both actual retention callers select the same bounded indexed metadata.
  * Opaque account prose is fetched only after the single per-actor selection. */
 export async function readAccountRetentionCandidates(
-  db: SqlDatabase,
+  db: LiveSqlDatabase,
   worldId: string,
   table: (typeof accountTables)[number],
   requests: readonly AccountRetentionQuery[],
@@ -493,7 +493,7 @@ export class RetentionMetadata {
       throw new Error('Complete personal retention metadata is unavailable for this world.');
   }
   async capture(
-    db: SqlDatabase,
+    db: LiveSqlDatabase,
     worldId: string,
     actorIds: readonly string[],
     selection: RetentionSelection,
@@ -506,7 +506,7 @@ export class RetentionMetadata {
       : this.captureBaseline(db, worldId, actorIds, selection);
   }
   private async captureBaseline(
-    db: SqlDatabase,
+    db: LiveSqlDatabase,
     worldId: string,
     actorIds: readonly string[],
     selection: RetentionSelection,
@@ -961,7 +961,7 @@ export class RetentionMetadataView {
    * evaluated here; SQL sees only the untouched cold remainder. Boolean proofs
    * therefore never need subtraction after a replacement or parent removal. */
   async survivingMembership(
-    db: SqlDatabase,
+    db: LiveSqlDatabase,
     worldId: string,
     actorId: string,
     aliases: readonly string[],
@@ -979,7 +979,7 @@ export class RetentionMetadataView {
    * The head is returned even for zero matches; helper-owned transactions and
    * candidate-by-all-pages subplans are unnecessary. */
   async survivingMembershipBatch(
-    db: SqlDatabase,
+    db: LiveSqlDatabase,
     worldId: string,
     requests: readonly {
       actorId: string;

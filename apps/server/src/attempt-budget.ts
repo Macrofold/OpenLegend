@@ -1,5 +1,5 @@
 import { microUsdToUsd, usdToMicroUsd, type AiReceipt } from '@open-legend/ai';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 export interface AttemptBudgetSnapshot {
   spentUsd: number;

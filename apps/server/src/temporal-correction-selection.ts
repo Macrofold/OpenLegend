@@ -4,7 +4,7 @@
 import { parsePersonalFactAlias, parseTemporalReceiptId } from '@open-legend/domain';
 import { receiptLookupBucket } from './temporal-page-storage.js';
 import { digest } from './content-digest.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 export const correctionPageBytes = 4 * 1024 * 1024;
 export const correctionPageRows = 8192;

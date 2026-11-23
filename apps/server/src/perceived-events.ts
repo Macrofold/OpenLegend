@@ -20,7 +20,7 @@ import type {
   GameView,
 } from '@open-legend/protocol';
 import { digest } from './content-digest.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { storyAccountSql, storySourceRow } from './personal-accounts.js';
 import { SEARCH_SCAN_ROWS, matchesSearch, scanMatches, searchTerms } from './text-search.js';
 import { HistoryCursorError } from './history-cursor-error.js';
