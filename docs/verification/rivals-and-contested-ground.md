@@ -471,7 +471,9 @@ The first admitted path failed when the start-event writer only handled Walk. A 
 
 In a separate signed game, a stag hit interrupted an admitted dodge after the player had moved partway. Health fell from 100 to 82, the action stopped at the position already reached, and no completion event was saved. The injury, position, original receipt and both deadlines survived reopening without a second hit.
 
-The final focused source manifest is `3d17ba611a42` and the executable SHA-256 is `744dbb737f3d`. The three results on that executable are completion `0680b56496c9`, signed Stop `26964e9013e0` and injury `340b13e7cfd7`. The checks used disposable PostgreSQL databases and the running Rust server.
+A second signed player started clear of an already admitted dodge, then walked into its path. The dodge ended at x = 20.230002 m, within 0.003 mm of the independently computed obstruction, and recorded the installed blocked outcome before its normal end. The original session reopened in Chrome at that position, recovered the receipt and could walk again. Both recovery deadlines survived. A fresh login remained unable to read the original session’s receipt.
+
+The final focused source manifest is `3d17ba611a42` and the executable SHA-256 is `744dbb737f3d`. Results on that executable are completion `0680b56496c9`, signed Stop `26964e9013e0`, injury `340b13e7cfd7` and late obstruction `870e7f7f47be`. The checks used disposable PostgreSQL databases and the running Rust server.
 
 ### NPC ranged choices through a signed conversation
 
