@@ -166,7 +166,9 @@ Scheduled review archived four original accounts. A live Load kept their exact r
 
 These cases used base `2c8cfb447`, patch `e98862f93b4f` and executable `6f84ec13018f`. Results in `nsc04-typed-source-versions-20261122/caller-evidence.tar.gz` (`7c4ed07f9588`) are `receipt-verified` (`47027d0c9451`), `archive-baseline` (`691eff5da3b6`) and `stopped-verified` (`2ae60e6f5bff`). The locked Rust build, TypeScript build type check and network boundary check passed. Controlled local provider cost was $0.
 
-A separate paused fixture captured 2,080 aged optional accounts. Stopped recovery refused that checkpoint with `RolledBack(InvalidRecord)` on both the prior encoded executable (`6d64333ed645`) and the typed executable. The pressure case remains open, including the later retention round that would use the inactive version-plan request.
+With 36 overdue and 2,044 still-current optional accounts, both servers loaded the checkpoint, removed exactly the 36 and preserved a second actor's protected account after cold reopening. Rust replay returned the same receipt. The diagnostic executable (`461fa00b90e3`) confirmed the signed load used the typed memory-version plan before commit.
+
+A separate fixture made all 2,080 optional accounts overdue at once. Both servers refused when complete retirement exceeded the existing four rounds of up to 64 selected accounts. Rust kept the previous generation, revision and memory bodies, and replay returned the same refusal. The prior encoded and typed stopped attempts both returned `RolledBack(InvalidRecord)`. All six disposable databases were removed. Results and diagnostic source are in `pressure-caller-evidence.tar.gz` (`625c01a7a6a8`) in the same evidence directory.
 
 ### Managed due-capture attempts — November 22, 2026
 
