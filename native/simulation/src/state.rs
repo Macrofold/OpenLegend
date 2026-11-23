@@ -654,7 +654,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub scar_id: Option<UnconvertedField>,
+    pub scar_id: Option<String>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -848,6 +848,7 @@ impl Action {
             || self.is_cooking()
             || self.is_picking_up()
             || self.is_tending_fire()
+            || self.is_treating_scar()
             || self.is_following()
             || self.is_placing_hearth()
     }
@@ -912,6 +913,22 @@ impl Action {
         self.kind == "tend-fire" && self.fire_operation.is_some() && self.target_id.is_some()
     }
 
+    pub(crate) fn is_treating_scar(&self) -> bool {
+        self.kind == "treat-scar"
+            && self.stage == "working"
+            && self.target_id.is_some()
+            && self.scar_id.is_some()
+    }
+
+    pub(crate) fn treat_scar(id: String, rest: String, scar: String, seconds: f64) -> Self {
+        let mut action = Self::native_action(id, "treat-scar", "working");
+        action.target_id = Some(rest);
+        action.scar_id = Some(scar);
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
+        action
+    }
+
     pub(crate) fn is_picking_up(&self) -> bool {
         self.kind == "pickup"
             && self.target_id.is_some()
@@ -953,7 +970,7 @@ impl Action {
             || self.material_contribution_ids.is_some()
             || (!self.is_natural_contact()
                 && (self.requires_lethal_review.is_some() || self.lethal_permission.is_some()))
-            || self.scar_id.is_some()
+            || (self.kind == "treat-scar" || self.scar_id.is_some()) && !self.is_treating_scar()
             || self.recipe_pin.is_some() != self.is_manufacturing()
             || self.manufacture_tools.is_some() != self.is_manufacturing()
             || self

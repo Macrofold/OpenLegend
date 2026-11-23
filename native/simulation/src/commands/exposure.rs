@@ -25,7 +25,7 @@ impl CommandExposure {
         budget: &ByteBudget,
     ) -> Result<Option<Self>, ExecutionError> {
         let id = match command {
-            NativeCommand::Outing { .. } => return Ok(None),
+            NativeCommand::Outing { .. } | NativeCommand::Respawn { .. } => return Ok(None),
             NativeCommand::StatusEffect { target_id, .. } => target_id,
             NativeCommand::Feed { envelope, .. }
             | NativeCommand::Gather { envelope, .. }
@@ -33,6 +33,7 @@ impl CommandExposure {
             | NativeCommand::Pickup { envelope, .. }
             | NativeCommand::Drop { envelope, .. }
             | NativeCommand::TendFire { envelope, .. }
+            | NativeCommand::TreatScar { envelope, .. }
             | NativeCommand::PlaceHearth { envelope, .. }
             | NativeCommand::Cook { envelope, .. }
             | NativeCommand::Craft { envelope, .. }
@@ -54,7 +55,7 @@ impl CommandExposure {
                     .outward_activity
                     .actions;
                 let exposes_action = matches!(command, NativeCommand::Strike { .. })
-                    || matches!(command, NativeCommand::Feed { .. } | NativeCommand::Gather { .. } | NativeCommand::Fish { .. } | NativeCommand::Cook { .. } | NativeCommand::Craft { .. } | NativeCommand::TendFire { .. } | NativeCommand::PlaceHearth { .. } | NativeCommand::Follow { .. })
+                    || matches!(command, NativeCommand::Feed { .. } | NativeCommand::Gather { .. } | NativeCommand::Fish { .. } | NativeCommand::Cook { .. } | NativeCommand::Craft { .. } | NativeCommand::TendFire { .. } | NativeCommand::TreatScar { .. } | NativeCommand::PlaceHearth { .. } | NativeCommand::Follow { .. })
                         && outward.iter().any(|kind| kind == command.kind());
                 if !exposes_action
                     && !entity

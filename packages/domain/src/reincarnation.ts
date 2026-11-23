@@ -58,11 +58,15 @@ export interface ReincarnationPolicy {
   arrivalText: string;
   arrivalNarration: string;
   continueLabel: string;
+  continueUnavailableText: string;
+  noUsableRestText: string;
   deathText: string;
   retainedLabel: string;
   lostLabel: string;
   treatmentLabel: string;
   treatmentText: string;
+  treatmentStartClause: string;
+  treatmentInterruptedText: string;
 }
 export interface PendingDeath {
   at: number;
@@ -270,7 +274,11 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
     actor = entity.actor!,
     death = actor.pendingDeath;
   if (!policy || !death || actor.alive || actor.controller !== policy.qualifyingController)
-    return outcome(false, 'respawn-unavailable', 'There is no lost life to continue.');
+    return outcome(
+      false,
+      'respawn-unavailable',
+      policy?.continueUnavailableText ?? 'There is no lost life to continue.',
+    );
   if (actor.participation?.phase !== undefined && actor.participation.phase !== 'active')
     return outcome(false, 'inactive', 'Return to the world before continuing.');
   const roots = worldRootEntities(world, true);
@@ -303,12 +311,7 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
       }
     }
   }
-  if (!choices.length)
-    return outcome(
-      false,
-      'respawn-unavailable',
-      'No usable rest spot is available. Your belongings and lost body remain saved.',
-    );
+  if (!choices.length) return outcome(false, 'respawn-unavailable', policy.noUsableRestText);
   if (!Number.isSafeInteger((actor.physicalLife ?? 0) + 1))
     throw new Error('Physical life exhausted.');
   const choice =
@@ -430,11 +433,15 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
       'arrivalText',
       'arrivalNarration',
       'continueLabel',
+      'continueUnavailableText',
+      'noUsableRestText',
       'deathText',
       'retainedLabel',
       'lostLabel',
       'treatmentLabel',
       'treatmentText',
+      'treatmentStartClause',
+      'treatmentInterruptedText',
     ]) ||
     !hasRecordFields(policy.placement, [
       'samples',
@@ -488,10 +495,19 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
       policy.arrivalText,
       policy.arrivalNarration,
       policy.continueLabel,
+      policy.continueUnavailableText,
+      policy.noUsableRestText,
       policy.deathText,
       policy.retainedLabel,
       policy.lostLabel,
-      ...(treatment ? [policy.treatmentLabel, policy.treatmentText] : []),
+      ...(treatment
+        ? [
+            policy.treatmentLabel,
+            policy.treatmentText,
+            policy.treatmentStartClause,
+            policy.treatmentInterruptedText,
+          ]
+        : []),
     ].every((text) => typeof text === 'string' && text.trim().length > 0 && text.length <= 1024) ||
     !validNameTemplate(policy.arrivalNarration, ['subject'])
   )

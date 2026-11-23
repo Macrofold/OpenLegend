@@ -979,6 +979,18 @@ impl PersonalVisualCursor {
         }
         let installed = Arc::clone(&core.state.installed);
         let policy = &installed.attention.value().retention;
+        // Attended contact can be the first lasting record for this observer.
+        // Establish its accounts only when there is current support to retain.
+        crate::received::bootstrap_personal_accounts(
+            &mut core.state.physical,
+            &core.state.reception,
+            &core.state.experience,
+            &core.state.learned_capabilities,
+            &mut core.state.temporal,
+            &installed,
+            observer,
+            budget,
+        )?;
         let held = core.state.temporal.retain_current_support(
             &mut CurrentRecordingContext {
                 current: &mut core.journal.current,

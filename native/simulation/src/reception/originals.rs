@@ -231,6 +231,30 @@ impl OriginalJournal {
             .map_err(|_| capacity())
     }
 
+    /// The closing life already saved its terminal history. Move its remaining
+    /// phase-only originals to undo even if the new life begins in the same
+    /// world sequence. Independently held history keeps its own references.
+    pub(super) fn begin_replacement_phase(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        sequence: u64,
+    ) -> Result<(), ReceivedError> {
+        self.slot(observer.len())?;
+        let storage = OriginalMetadata::empty(&self.budget)?;
+        let owner = state.perception_evidence.as_mut()
+            .and_then(|owners| owners.get_mut(observer)).ok_or_else(invalid)?;
+        self.undo.push(OriginalUndo::PhaseReset {
+            observer: observer.to_owned(),
+            sequence: owner.received_at_sequence,
+            received: std::mem::take(&mut owner.received),
+            receipts: std::mem::take(&mut owner.receipts),
+            storage: owner.original_storage.replace(storage),
+        });
+        owner.received_at_sequence = sequence;
+        Ok(())
+    }
+
     pub(crate) fn ensure_owner(
         &mut self,
         state: &mut ReceptionState,

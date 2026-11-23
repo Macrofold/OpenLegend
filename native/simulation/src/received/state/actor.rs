@@ -36,7 +36,7 @@ pub(crate) fn ensure_temporal_actor(
             .and_then(|owners| owners.get(actor_id))
             .is_some_and(|owner| owner.life == old_life)
         {
-            crate::reception::retire_perception_life(core, actor_id, old_life, budget)?;
+            crate::reception::replace_current_perception_life(core, actor_id, old_life, life, budget)?;
         }
     }
     install_temporal_actor_life(

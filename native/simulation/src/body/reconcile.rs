@@ -14,6 +14,7 @@ use crate::execution::{
 use crate::experience::AcquiredActivityResult;
 use crate::host::retained_size::{heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
+use crate::plans::{PlanControlCursor, PlanControlKind, PlanControlStep};
 use crate::reception::EventScalar;
 use crate::state::Remains;
 use indexmap::IndexMap;
@@ -37,7 +38,11 @@ pub(super) enum Progress {
 enum Phase {
     Start,
     Finish,
+    ScarFinish,
+    ScarClear,
     Unavailable,
+    CancelDeathPlan,
+    DiscardDeathPlan,
     Separate,
     Retire,
     Interrupt,
@@ -52,7 +57,9 @@ pub(crate) struct BodyReconcileCursor {
     life: Option<u64>,
     phase: Phase,
     unavailable: bool,
+    injury: bool,
     pending: Option<PendingActionFinish>,
+    death_plan: Option<Box<PlanControlCursor>>,
     ending: Option<PendingStatusEnd>,
     interrupt: Option<Vec<String>>,
     next_status: usize,
@@ -77,7 +84,9 @@ impl BodyReconcileCursor {
             life: None,
             phase: Phase::Start,
             unavailable: false,
+            injury: false,
             pending: None,
+            death_plan: None,
             ending: None,
             interrupt: None,
             next_status: 0,
@@ -87,6 +96,11 @@ impl BodyReconcileCursor {
             reservation,
         })
     }
+    pub(super) fn after_injury(mut self, injury: bool) -> Self {
+        self.injury = injury;
+        self
+    }
+
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
         self.reservation.resize(
             self.reservation
@@ -119,20 +133,15 @@ impl BodyReconcileCursor {
         Ok(match self.progress(core, answer)? {
             Progress::Occurrence(event) => BodyStep::Occurrence(event),
             Progress::Complete => BodyStep::Complete,
-            Progress::Personal => BodyStep::Personal(if let Some(pending) = &self.pending {
-                pending.personal()
-            } else {
-                self.ending
-                    .as_ref()
-                    .ok_or(ExecutionError::Invariant)?
-                    .personal()
-            }),
+            Progress::Personal => BodyStep::Personal(self.personal()?),
         })
     }
     pub(super) fn personal(
         &self,
     ) -> Result<&crate::activity::PendingActivityResult, ExecutionError> {
-        Ok(if let Some(pending) = &self.pending {
+        Ok(if let Some(plan) = &self.death_plan {
+            plan.personal()?
+        } else if let Some(pending) = &self.pending {
             pending.personal()
         } else {
             self.ending
@@ -147,6 +156,7 @@ impl BodyReconcileCursor {
         answer: Option<BodyAnswer>,
     ) -> Result<Progress, ExecutionError> {
         let mut completed = None;
+        let mut plan_answer = None;
         match answer {
             Some(BodyAnswer::Occurrence(event)) => {
                 if self.conditions.is_some() {
@@ -159,7 +169,9 @@ impl BodyReconcileCursor {
                 }
             }
             Some(BodyAnswer::Personal(acquired)) => {
-                if let Some(pending) = self.pending.take() {
+                if self.death_plan.is_some() {
+                    plan_answer = Some(acquired);
+                } else if let Some(pending) = self.pending.take() {
                     core.complete_finish_action(pending, &acquired)?;
                 } else if let Some(ending) = self.ending.take() {
                     let end = ending.resume(core, &acquired)?;
@@ -184,6 +196,12 @@ impl BodyReconcileCursor {
         }
         let installed = core.state.installed.clone();
         loop {
+            if let Some(plan) = self.death_plan.as_mut() {
+                match plan.step(core, plan_answer.take())? {
+                    PlanControlStep::Personal(_) => return Ok(Progress::Personal),
+                    PlanControlStep::Complete => self.death_plan = None,
+                }
+            }
             if self.phase == Phase::Done {
                 return Ok(Progress::Complete);
             }
@@ -229,6 +247,8 @@ impl BodyReconcileCursor {
                     self.unavailable = actor.health == 0.0 && actor.alive && !actor.incapacitated;
                     self.phase = if self.unavailable {
                         Phase::Finish
+                    } else if self.injury && actor.action.as_ref().is_some_and(|action| action.is_treating_scar()) {
+                        Phase::ScarFinish
                     } else {
                         Phase::Native
                     };
@@ -260,6 +280,29 @@ impl BodyReconcileCursor {
                             return Ok(Progress::Personal);
                         }
                     }
+                }
+                Phase::ScarFinish => {
+                    let action = actor.action.as_ref().ok_or(ExecutionError::Invariant)?;
+                    self.reserve(action.id.len())?;
+                    let id = action.id.clone();
+                    let policy = installed.body_policy.as_ref()
+                        .and_then(|body| body.value().reincarnation.as_ref())
+                        .ok_or(ExecutionError::Invariant)?;
+                    let mut result = installed.ordinary_actions.value().cannot_interrupt.outcome(false);
+                    result.code = "interrupted".into();
+                    result.message = policy.treatment_interrupted_text.as_str().into();
+                    self.phase = Phase::ScarClear;
+                    if let ActionFinish::Personal(pending) = core.begin_finish_action(&self.actor, &id, result)? {
+                        self.pending = Some(pending);
+                        return Ok(Progress::Personal);
+                    }
+                }
+                Phase::ScarClear => {
+                    core.physical().replace_action(&self.actor, None, ActionWrite {
+                        generation: PlanGenerationWrite::Advance,
+                        behavior: Some(false),
+                    })?;
+                    self.phase = Phase::Native;
                 }
                 Phase::Unavailable => {
                     let policy = installed
@@ -334,9 +377,29 @@ impl BodyReconcileCursor {
                             *core.physical().snapshot_episode(&self.actor)? = None;
                         }
                         core.physical().set_remains(&self.actor, Some(remains))?;
-                        self.phase = Phase::Separate;
+                        self.phase = if policy.reincarnation.as_ref().is_some_and(|death| {
+                            core.state.physical.entities.get(&self.actor)
+                                .and_then(|entity| entity.actor.as_ref())
+                                .is_some_and(|actor| actor.controller == death.qualifying_controller)
+                        }) {
+                            Phase::CancelDeathPlan
+                        } else {
+                            Phase::Separate
+                        };
                     } else {
                         self.phase = Phase::Interrupt;
+                    }
+                }
+                Phase::CancelDeathPlan | Phase::DiscardDeathPlan => {
+                    let cancelling = self.phase == Phase::CancelDeathPlan;
+                    self.phase = if cancelling { Phase::DiscardDeathPlan } else { Phase::Separate };
+                    let kind = if cancelling {
+                        actor.agency.plan.is_some().then_some(PlanControlKind::Cancel { summarize: true })
+                    } else {
+                        actor.agency.suspended_plan().is_some().then_some(PlanControlKind::DiscardSuspended)
+                    };
+                    if let Some(kind) = kind {
+                        self.death_plan = Some(Box::new(PlanControlCursor::new(&self.actor, kind, &self.budget)?));
                     }
                 }
                 Phase::Separate => {
@@ -351,14 +414,6 @@ impl BodyReconcileCursor {
                     }) else {
                         continue;
                     };
-                    // Closing an equipped life needs the inventory transfer
-                    // and loss report in the same candidate as the new corpse.
-                    if core.state.inventory.has_children(&self.actor)
-                        || actor.agency.plan.is_some()
-                        || actor.agency.suspended_plan().is_some()
-                    {
-                        return Err(ExecutionError::UnsupportedFamily);
-                    }
                     let growth = super::corpse::allocation_bound(entity)
                         .ok_or(ExecutionError::Capacity)?
                         + policy.corpse_kind.len()
@@ -382,6 +437,12 @@ impl BodyReconcileCursor {
                         .ok_or(ExecutionError::InvalidPosition)?;
                     let corpse = super::corpse::construct(entity, id.clone(), &policy.corpse_kind)?;
                     core.physical().insert_corpse(corpse)?;
+                    // The world chooses the retained types before drawing its scar.
+                    let (retained, left, summary) = core.partition_replacement_custody(
+                        &self.actor, &id, policy.retained_type_fraction,
+                    )?;
+                    let retained_types = retained.len();
+                    let lost_types = left.len();
                     let scar = if policy.scars.is_empty() {
                         None
                     } else {
@@ -399,9 +460,10 @@ impl BodyReconcileCursor {
                             at: now,
                             position,
                             corpse_id: id.clone(),
-                            retained: Vec::new(),
-                            left: Vec::new(),
+                            retained,
+                            left,
                         },
+                        summary,
                     )?;
                     core.physical().set_remains(&self.actor, None)?;
                     core.physical().membership_changed(&self.actor)?;
@@ -416,8 +478,8 @@ impl BodyReconcileCursor {
                     if let Some(scar) = scar {
                         data.insert("scarId".into(), EventScalar::Text((scar.id.clone()).into()));
                     }
-                    data.insert("retainedTypes".into(), EventScalar::Number(0.0));
-                    data.insert("lostTypes".into(), EventScalar::Number(0.0));
+                    data.insert("retainedTypes".into(), EventScalar::Number(retained_types as f64));
+                    data.insert("lostTypes".into(), EventScalar::Number(lost_types as f64));
                     let event = core.stage_event(EventEmissionIntent {
                         event_type: installed
                             .observation_rules

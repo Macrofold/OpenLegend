@@ -30,6 +30,7 @@ pub enum RuntimePlayerCommand<'a> {
         complete: Option<bool>,
     },
     Travel(PlayerTravelIntent<'a>),
+    Respawn,
     Cancel(Option<&'a str>),
     DismissStrikeReview,
     Gather {
@@ -75,6 +76,7 @@ pub enum RuntimePlayerCommand<'a> {
         inputs: &'a IndexMap<String, String>,
     },
     PlaceHearth { definition: &'a DefinitionPin, site: &'a SurfacePoint },
+    TreatScar { target: &'a str, scar: &'a str },
     TendFire { target: &'a str, operation: crate::fire_care::FireOperation, item: Option<&'a str> },
     Pickup { target: &'a str, item: Option<&'a str>, quantity: Option<u64> },
     Drop { item: &'a str, quantity: u64 },
@@ -115,7 +117,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Follow { target, .. } => target.len(),
             Self::Travel(intent) => intent.text_bytes(),
             Self::Cancel(action) => action.map_or(0, str::len),
-            Self::DismissStrikeReview => 0,
+            Self::DismissStrikeReview | Self::Respawn => 0,
             Self::Gather { target, tool, .. } => target.len() + tool.map_or(0, str::len),
             Self::Fish { target, tool } => target.len() + tool.len(),
             Self::Pickup { target, item, .. } => target.len() + item.map_or(0, str::len),
@@ -131,6 +133,7 @@ impl RuntimePlayerCommand<'_> {
             }
             Self::Handover { target, gift, .. } => target.len() + gift.retained_text_bytes(),
             Self::PlaceHearth { definition, site } => definition.id.len() + definition.digest.len() + site.surface_id.len(),
+            Self::TreatScar { target, scar } => target.len() + scar.len(),
             Self::TendFire { target, item, .. } => target.len() + item.map_or(0, str::len),
             Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
             Self::DirectedSpeech { text, target, .. } => text.storage_bytes() + target.len(),
@@ -202,6 +205,9 @@ impl RuntimePlayerCommand<'_> {
         }
         if let Self::PlaceHearth { definition, site } = self {
             return bind_hearth(id, actor, definition, site);
+        }
+        if let Self::TreatScar { target, scar } = self {
+            return bind_scar_treatment(id, actor, target, scar);
         }
         if let Self::TendFire { target, operation, item } = self {
             return bind_fire(id, actor, target, operation, item);
@@ -307,6 +313,7 @@ impl RuntimePlayerCommand<'_> {
         }
         let (kind, destination, expected_action_id, target_id, item_id, gathering_mode) = match self {
             Self::Move(point) => ("move", Some(point), None, None, None, None),
+            Self::Respawn => ("respawn", None, None, None, None, None),
             Self::Cancel(action) => ("cancel", None, action, None, None, None),
             Self::DismissStrikeReview => ("dismiss-strike-review", None, None, None, None, None),
             Self::Gather { target, tool, mode } => ("gather", None, None, Some(target), tool, mode),
@@ -317,6 +324,7 @@ impl RuntimePlayerCommand<'_> {
             Self::Say { target, .. } => ("say", None, None, target.map(|(id, _)| id), None, None),
             Self::Cook { .. }
             | Self::Status { .. }
+            | Self::TreatScar { .. }
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
             | Self::LearnRecord(_)
@@ -445,6 +453,7 @@ impl RuntimePlayerCommand<'_> {
                 envelope,
                 destination: point.clone().into(),
             },
+            Self::Respawn => NativeCommand::Respawn { envelope },
             Self::Cancel(action) => NativeCommand::Cancel {
                 envelope,
                 expected_action_id: action.map(str::to_owned),
@@ -486,6 +495,7 @@ impl RuntimePlayerCommand<'_> {
             },
             Self::Cook { .. }
             | Self::Status { .. }
+            | Self::TreatScar { .. }
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
             | Self::LearnRecord(_)
@@ -1059,6 +1069,43 @@ fn bind_food_preparation(
     ))
 }
 
+
+fn bind_scar_treatment(
+    id: &str, actor: &str, target: &str, scar: &str,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Input<'a> {
+        actor_id: &'a str,
+        human_initiated: bool,
+        id: &'a str,
+        scar_id: &'a str,
+        target_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let headers = player_headers(id, actor);
+    if !headers.valid() || !crate::values::is_safe_record_id(target)
+        || !crate::values::is_safe_record_id(scar)
+    {
+        return Err(serde::de::Error::custom("Invalid scar treatment binding."));
+    }
+    let input = Input {
+        actor_id: actor,
+        human_initiated: true,
+        id,
+        scar_id: scar,
+        target_id: target,
+        kind: "treat-scar",
+    };
+    let encoding = CommandEncoding::from_ordered(&input, 6)?;
+    let command = NativeCommand::TreatScar {
+        envelope: headers.envelope(encoding),
+        target_id: target.into(),
+        scar_id: scar.into(),
+    };
+    Ok((command, json_record(&input)?))
+}
 
 fn bind_fire(
     id: &str, actor: &str, target: &str,

@@ -79,6 +79,8 @@ struct CommandInput {
     )]
     target_id: Option<String>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    scar_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     distance: Option<f64>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     follow_until: Option<f64>,
@@ -322,11 +324,14 @@ enum CommandKind {
     Move,
     Strike,
     Follow,
+    Respawn,
     Cancel,
     Gather,
     Fish,
     #[serde(rename = "tend-fire")]
     TendFire,
+    #[serde(rename = "treat-scar")]
+    TreatScar,
     #[serde(rename = "place-hearth")]
     PlaceHearth,
     Outing,
@@ -1084,6 +1089,7 @@ impl CommandRequest {
                 tools.len() != 1 || tools.iter().any(|(role, item)| !id(role) || !id(item))
             })
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
+            || (!matches!(command.kind, CommandKind::TreatScar) && command.scar_id.is_some())
             || (!matches!(command.kind, CommandKind::PlaceHearth) && command.hearth_plan.is_some())
             || (!matches!(command.kind, CommandKind::Follow)
                 && (command.distance.is_some() || command.follow_until.is_some() || command.complete_follow.is_some()))
@@ -1201,6 +1207,13 @@ impl CommandRequest {
             {
                 Ok(())
             }
+            CommandKind::Respawn
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.target_id.is_none()
+                    && command.item_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.expected_action_id.is_none() => Ok(()),
             CommandKind::Cancel
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -1278,6 +1291,15 @@ impl CommandRequest {
                     && command.expected_action_id.is_none() && command.gathering_mode.is_none()
                     && command.target_id.is_none() && command.item_id.is_none()
                     && command.hearth_plan.as_ref().is_some_and(|plan| plan.valid()) => Ok(()),
+            CommandKind::TreatScar
+                if command.position.is_none()
+                    && command.known_place.is_none()
+                    && command.expected_action_id.is_none()
+                    && command.gathering_mode.is_none()
+                    && command.item_id.is_none()
+                    && command.target_id.as_deref().is_some_and(id)
+                    && command.scar_id.as_deref().is_some_and(openlegend_simulation::values::is_safe_record_id)
+                => Ok(()),
             CommandKind::TendFire
                 if command.position.is_none() && command.known_place.is_none()
                     && command.expected_action_id.is_none() && command.gathering_mode.is_none()
@@ -1515,6 +1537,7 @@ impl PreparedRequest {
             CommandKind::Cancel if input.lethal_review_id.is_some() => {
                 Ok(RuntimePlayerCommand::DismissStrikeReview)
             }
+            CommandKind::Respawn => Ok(RuntimePlayerCommand::Respawn),
             CommandKind::Cancel => Ok(RuntimePlayerCommand::Cancel(
                 input.expected_action_id.as_deref(),
             )),
@@ -1555,6 +1578,10 @@ impl PreparedRequest {
                 let plan = input.hearth_plan.as_ref().ok_or(StoreError::InvalidRecord)?;
                 Ok(RuntimePlayerCommand::PlaceHearth { definition: &plan.definition, site: &plan.site })
             }
+            CommandKind::TreatScar => Ok(RuntimePlayerCommand::TreatScar {
+                target: target.ok_or(StoreError::InvalidRecord)?,
+                scar: input.scar_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+            }),
             CommandKind::TendFire => Ok(RuntimePlayerCommand::TendFire {
                 target: target.ok_or(StoreError::InvalidRecord)?,
                 operation: input.fire_operation.ok_or(StoreError::InvalidRecord)?,

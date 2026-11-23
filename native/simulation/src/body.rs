@@ -9,6 +9,7 @@ mod corpse;
 mod reconcile;
 mod recovery;
 mod scars;
+pub(crate) mod scar_treatment;
 pub(crate) use reconcile::{BodyAnswer, BodyReconcileCursor, BodyStep, reconcile_native_control};
 pub(crate) use recovery::recovery_anchor;
 mod health;
@@ -18,7 +19,7 @@ pub(crate) use rates::BodyRateCursor;
 mod remains;
 pub(crate) use remains::{RemainsAnswer, RemainsCursor, RemainsStep, next_remains_deadline};
 
-fn narration_bound(template: &str, entity: &crate::state::Entity) -> Option<usize> {
+pub(crate) fn narration_bound(template: &str, entity: &crate::state::Entity) -> Option<usize> {
     let tokens = template.bytes().filter(|byte| *byte == b'{').count();
     crate::host::retained_size::heap_sum([
         (tokens.checked_mul(2)?.checked_add(1)?)
@@ -34,7 +35,7 @@ fn narration_bound(template: &str, entity: &crate::state::Entity) -> Option<usiz
         512,
     ])
 }
-fn narration(template: &str, entity: &crate::state::Entity) -> crate::narration::Narration {
+pub(crate) fn narration(template: &str, entity: &crate::state::Entity) -> crate::narration::Narration {
     let name = crate::state::Named {
         name: entity.name.clone(),
         name_form: entity.name_form.clone(),

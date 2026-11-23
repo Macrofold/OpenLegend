@@ -192,6 +192,8 @@ impl PhysicalMutation<'_> {
                     entity: handle,
                     alive: actor.alive,
                     incapacitated: actor.incapacitated,
+                    physical_life: actor.physical_life,
+                    conditions: actor.body.as_ref().map(|body| body.conditions.clone()),
                     fall_velocity: entity.spatial.fall_velocity,
                     local_avoidance_ready_at: entity.spatial.local_avoidance_ready_at,
                 },

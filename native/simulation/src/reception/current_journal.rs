@@ -11,6 +11,7 @@ use std::mem::{align_of, size_of};
 use std::sync::Arc;
 
 mod attention_work;
+mod life;
 mod frames;
 use super::current_residency::{CurrentOwnerPart, CurrentOwnerStorage, VisibilityPart};
 use attention_work::{AttentionCut, AttentionSources, AttentionWork};
@@ -30,7 +31,18 @@ pub(crate) struct CurrentCheckpoint {
     reservation: usize,
     storage: Option<usize>,
 }
+struct BeforeLife {
+    number: u64,
+    observer: Option<ObserverLife>,
+    support: Option<DetectionSupportState>,
+}
+
 enum CurrentUndo {
+    Life {
+        observer: String,
+        prior: Box<BeforeLife>,
+    },
+
     AttentionPreparation {
         enabled: bool,
         prior: IndexMap<String, AttentionWork>,
@@ -274,17 +286,23 @@ impl CurrentJournal {
         ])
     }
     pub(super) fn reserve_growth(&mut self, bytes: usize) -> Result<(), ReceivedError> {
+        self.reserve_undo_growth(bytes, 1)
+    }
+
+    fn reserve_undo_growth(&mut self, bytes: usize, entries: usize) -> Result<(), ReceivedError> {
+        let required = self.undo.len().checked_add(entries).ok_or_else(capacity)?;
         let old_storage = self
             .undo
             .capacity()
             .checked_mul(size_of::<CurrentUndo>())
             .ok_or_else(capacity)?;
-        let next_capacity = if self.undo.len() == self.undo.capacity() {
+        let next_capacity = if required > self.undo.capacity() {
             self.undo
                 .capacity()
                 .checked_mul(2)
                 .ok_or_else(capacity)?
                 .max(4)
+                .max(required)
         } else {
             self.undo.capacity()
         };
@@ -917,6 +935,14 @@ impl CurrentJournal {
                 CurrentUndo::Attention { observer, prior } => {
                     owner_mut(state, &observer)?.attention = prior;
                     self.settle_owner(state, &observer, CurrentOwnerPart::Attention, true)?;
+                }
+                CurrentUndo::Life { observer, prior } => {
+                    let owner = owner_mut(state, &observer)?;
+                    owner.life = prior.number;
+                    owner.observer = prior.observer;
+                    owner.support = prior.support;
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Observer, true)?;
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Support, true)?;
                 }
                 CurrentUndo::NextContact { observer, prior } => {
                     owner_mut(state, &observer)?.next_contact = prior

@@ -161,6 +161,8 @@ impl HeapBytes for Progress {
 }
 
 impl Policy {
+    pub(crate) fn attack_range(&self) -> f64 { self.attack_range }
+
     pub(crate) fn authored_bytes(&self) -> Option<usize> {
         heap_sum([
             self.id.heap_bytes()?,

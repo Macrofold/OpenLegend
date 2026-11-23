@@ -164,6 +164,7 @@ impl HeapBytes for NativeCommand {
                 definition_id.heap_bytes()?,
                 resting_place_id.heap_bytes()?,
             ]),
+            Self::Respawn { envelope } => envelope.heap_bytes(),
             Self::Cancel {
                 envelope,
                 expected_action_id,
@@ -206,6 +207,8 @@ impl HeapBytes for NativeCommand {
             ]),
             Self::Craft { envelope, recipe_id, tools } =>
                 heap_sum([envelope.heap_bytes()?, recipe_id.heap_bytes()?, tools.heap_bytes()?]),
+            Self::TreatScar { envelope, target_id, scar_id } =>
+                heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?, scar_id.heap_bytes()?]),
             Self::TendFire { envelope, target_id, item_id, .. } => heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?, item_id.heap_bytes()?]),
             Self::Cook { envelope, heat_id, definition, inputs } =>
                 heap_sum([envelope.heap_bytes()?, heat_id.heap_bytes()?, definition.heap_bytes()?, inputs.heap_bytes()?]),

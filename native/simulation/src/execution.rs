@@ -1425,6 +1425,8 @@ enum Undo {
         entity: EntityHandle,
         alive: bool,
         incapacitated: bool,
+        physical_life: Option<u64>,
+        conditions: Option<crate::state::BodyConditions>,
         fall_velocity: Option<f64>,
         local_avoidance_ready_at: Option<f64>,
     },
@@ -2059,6 +2061,8 @@ impl PhysicalJournal {
                     entity,
                     alive,
                     incapacitated,
+                    physical_life,
+                    conditions,
                     fall_velocity,
                     local_avoidance_ready_at,
                 } => {
@@ -2069,6 +2073,10 @@ impl PhysicalJournal {
                     let actor = entity.actor.as_mut().ok_or(ExecutionError::Invariant)?;
                     actor.alive = alive;
                     actor.incapacitated = incapacitated;
+                    actor.physical_life = physical_life;
+                    if let Some(conditions) = conditions {
+                        actor.body.as_mut().ok_or(ExecutionError::MissingBody)?.conditions = conditions;
+                    }
                     entity.spatial.fall_velocity = fall_velocity;
                     entity.spatial.local_avoidance_ready_at = local_avoidance_ready_at;
                     let id = entity.id.clone();
@@ -2085,20 +2093,21 @@ impl PhysicalJournal {
                     state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::PendingDeath {
-                    entity,
+                    entity: handle,
                     before,
                     combat_ready_at,
                     evasion_ready_at,
                 } => {
                     let entity = state
                         .entities
-                        .resolve_mut(entity)
+                        .resolve_mut(handle)
                         .ok_or(ExecutionError::Invariant)?;
                     let actor = entity.actor.as_mut().ok_or(ExecutionError::Invariant)?;
                     actor.pending_death = before;
                     actor.combat_ready_at = combat_ready_at;
                     actor.evasion_ready_at = evasion_ready_at;
                     let id = entity.id.clone();
+                    state.entities.settle_operational_memory(handle, &mut self.reservation, true)?;
                     state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::Scar {

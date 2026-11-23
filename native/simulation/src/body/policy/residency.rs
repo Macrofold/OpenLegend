@@ -179,11 +179,15 @@ heap_record!(ReincarnationPolicy {
     arrival_text,
     arrival_narration,
     continue_label,
+    continue_unavailable_text,
+    no_usable_rest_text,
     death_text,
     retained_label,
     lost_label,
     treatment_label,
-    treatment_text
+    treatment_text,
+    treatment_start_clause,
+    treatment_interrupted_text
 });
 heap_record!(ReplacementPlacement {
     samples,

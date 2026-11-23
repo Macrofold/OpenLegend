@@ -206,7 +206,7 @@ struct Death {
 
 #[derive(PartialEq, Serialize)]
 struct Possession {
-    name: String,
+    name: JsText,
     quantity: u64,
 }
 
@@ -471,8 +471,8 @@ pub fn prepare_self(
         .death()
         .zip(policy.reincarnation.as_ref())
         .map(|(death, policy)| {
-            let possession = |(name, quantity): (&str, u64)| Possession {
-                name: name.to_owned(),
+            let possession = |(name, quantity): (&JsText, u64)| Possession {
+                name: name.clone(),
                 quantity,
             };
             Death {

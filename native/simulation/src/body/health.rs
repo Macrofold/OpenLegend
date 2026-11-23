@@ -59,8 +59,8 @@ impl HealthChangeCursor {
             .find(|d| d.value().implementation == "native-health-v1")
             .map(|d| d.value());
         let reconcile = BodyReconcileCursor::new(actor, cause, budget)?;
-        core.physical()
-            .set_health(actor, before + delta, definition)?;
+        let changed = core.physical().set_health(actor, before + delta, definition)?;
+        let reconcile = reconcile.after_injury(changed && delta < 0.0);
         Ok(Self {
             actor: actor.into(),
             cause: cause.into(),

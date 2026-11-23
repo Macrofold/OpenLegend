@@ -14,6 +14,7 @@ mod packing;
 mod transfer;
 mod group;
 mod handover;
+mod replacement;
 use pickup::compatible_lots;
 pub(crate) use handover::can_receive_trade_container;
 pub use transfer::{OwnedArrangement, OwnedMove, OwnedStockLot, OwnedStockSelection};

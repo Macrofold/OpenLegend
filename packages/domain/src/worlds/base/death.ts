@@ -40,12 +40,16 @@ export const BASE_REINCARNATION_POLICY: ReincarnationPolicy = {
   arrivalText: 'You stumble out of the woods...',
   arrivalNarration: '{subject.name:definite} stumbled out of the woods...',
   continueLabel: 'Continue near a campfire',
+  continueUnavailableText: 'There is no lost life to continue.',
+  noUsableRestText: 'No usable rest spot is available. Your belongings and lost body remain saved.',
   deathText:
     'You died. Half of your carried item types remain with you; the rest are on your old body. Your next life carries a scar.',
   retainedLabel: 'Retained',
   lostLabel: 'Left on your old body',
   treatmentLabel: 'Treat',
   treatmentText: 'You finished treating one death scar.',
+  treatmentStartClause: 'began treatment.',
+  treatmentInterruptedText: 'Injury interrupted scar treatment.',
 };
 export const BASE_DEATH_COMMAND_DESCRIPTIONS = {
   respawn:

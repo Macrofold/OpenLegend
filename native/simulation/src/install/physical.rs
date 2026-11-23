@@ -1077,7 +1077,7 @@ fn validate_body_references(
                         .all(|v| v.is_finite())
                     || death.retained.iter().chain(&death.left).any(|item| {
                         item.name.is_empty()
-                            || item.name.encode_utf16().count() > 256
+                            || item.name.units_len() > 256
                             || item.quantity == 0
                     })
                     || entities
@@ -1133,6 +1133,9 @@ pub(super) fn validate_physical_item_references(
         if entity.actor.as_ref().and_then(|actor| actor.action.as_ref()).is_some_and(|action| {
             action.is_placing_hearth() && !crate::hearth::valid_saved(state, installed, entity, action)
                 || action.is_cooking() && !crate::food_preparation::valid_saved(action, state, retained)
+                || action.is_treating_scar() && !crate::body::scar_treatment::valid_saved(
+                    entity, action, installed.body_policy.as_ref().map(super::VerifiedDefinition::value),
+                )
                 || action.is_tending_fire() && !crate::fire_care::valid_saved(
                     action, state, installed.fire_care.as_ref().map(|rule| rule.value()),
                 )

@@ -74,6 +74,8 @@ impl PhysicalMutation<'_> {
                     entity: handle,
                     alive: actor.alive,
                     incapacitated: actor.incapacitated,
+                    physical_life: actor.physical_life,
+                    conditions: actor.body.as_ref().map(|body| body.conditions.clone()),
                     fall_velocity: entity.spatial.fall_velocity,
                     local_avoidance_ready_at: entity.spatial.local_avoidance_ready_at,
                 },
@@ -103,6 +105,67 @@ impl PhysicalMutation<'_> {
         self.state.bodies.refresh(&self.state.entities, id)?;
         Ok(())
     }
+    /// Install only the new physical life. The command owner proves the
+    /// replacement location and handles existing experience before publishing.
+    pub(crate) fn replace_dead_life(&mut self, id: &str) -> Result<(), ExecutionError> {
+        let handle = self.state.entities.handle(id).ok_or(ExecutionError::MissingEntity)?;
+        let entity = self.state.entities.resolve(handle).ok_or(ExecutionError::MissingEntity)?;
+        let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+        let body = actor.body.as_ref().ok_or(ExecutionError::MissingBody)?;
+        let life = actor.physical_life.unwrap_or(0).checked_add(1)
+            .filter(|next| *next <= MAX_SAFE_INTEGER).ok_or(ExecutionError::Invariant)?;
+        if actor.alive || actor.pending_death.is_none() || actor.action.is_some()
+            || entity.spatial.flight.is_some() || entity.spatial.local_pose.is_some()
+        {
+            return Err(ExecutionError::Invariant);
+        }
+        let health = body.max_health;
+        self.journal.reserve(heap_sum([
+            4 * size_of::<Undo>(),
+            2 * id.len(),
+            actor.pending_death.heap_bytes().ok_or(ExecutionError::Capacity)?,
+        ]).ok_or(ExecutionError::Capacity)?)?;
+        let lifecycle = UndoKey::BodyLifecycle(handle.slot, handle.generation);
+        if self.journal.first(&lifecycle)? {
+            self.journal.retain(lifecycle, Undo::BodyLifecycle {
+                entity: handle,
+                alive: actor.alive,
+                incapacitated: actor.incapacitated,
+                physical_life: actor.physical_life,
+                conditions: Some(body.conditions.clone()),
+                fall_velocity: entity.spatial.fall_velocity,
+                local_avoidance_ready_at: entity.spatial.local_avoidance_ready_at,
+            })?;
+        }
+        let pending = UndoKey::PendingDeath(handle.slot, handle.generation);
+        let first_pending = self.journal.first(&pending)?;
+        let entity = self.state.entities.resolve_mut(handle).ok_or(ExecutionError::Invariant)?;
+        let actor = entity.actor.as_mut().ok_or(ExecutionError::Invariant)?;
+        let before = actor.pending_death.take();
+        let combat = actor.combat_ready_at.take();
+        let evasion = actor.evasion_ready_at.take();
+        if first_pending {
+            self.journal.retain(pending, Undo::PendingDeath {
+                entity: handle,
+                before,
+                combat_ready_at: combat,
+                evasion_ready_at: evasion,
+            })?;
+        }
+        actor.alive = true;
+        actor.incapacitated = false;
+        actor.physical_life = Some(life);
+        actor.body.as_mut().ok_or(ExecutionError::MissingBody)?.conditions =
+            crate::state::BodyConditions { wetness: 0.0, burning: 0.0 };
+        entity.spatial.fall_velocity = None;
+        entity.spatial.local_avoidance_ready_at = None;
+        self.state.entities.settle_operational_memory(handle, &mut self.journal.reservation, false)?;
+        self.set_health(id, health, None)?;
+        self.advance_body_revision(id)?;
+        self.state.bodies.refresh(&self.state.entities, id)?;
+        Ok(())
+    }
+
     pub(crate) fn set_remains(
         &mut self,
         id: &str,
@@ -148,6 +211,7 @@ impl PhysicalMutation<'_> {
         &mut self,
         id: &str,
         pending: crate::body::PendingDeath,
+        mut summary: ByteReservation,
     ) -> Result<(), ExecutionError> {
         let handle = self
             .state
@@ -164,6 +228,8 @@ impl PhysicalMutation<'_> {
             return Err(ExecutionError::Invariant);
         }
         self.journal.reserve(2 * size_of::<Undo>() + id.len())?;
+        summary.resize(pending.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        self.journal.reservation.merge(summary)?;
         let key = UndoKey::PendingDeath(handle.slot, handle.generation);
         if self.journal.first(&key)? {
             self.journal.retain(
@@ -185,6 +251,7 @@ impl PhysicalMutation<'_> {
         actor.pending_death = Some(pending);
         actor.combat_ready_at = None;
         actor.evasion_ready_at = None;
+        self.state.entities.settle_operational_memory(handle, &mut self.journal.reservation, false)?;
         self.state.bodies.refresh(&self.state.entities, id)?;
         Ok(())
     }
@@ -272,6 +339,39 @@ impl PhysicalMutation<'_> {
             .insert(scar.into(), next);
         Ok(())
     }
+    pub(crate) fn treat_scar(&mut self, id: &str, scar: &str) -> Result<(), ExecutionError> {
+        let entity = self.state.entities.handle(id).ok_or(ExecutionError::MissingEntity)?;
+        let (index, _, count) = self.state.entities.resolve(entity)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.scars.as_ref())
+            .and_then(|scars| scars.get_full(scar))
+            .ok_or(ExecutionError::Invariant)?;
+        let count = *count;
+        if count < 1.0 {
+            return Err(ExecutionError::Invariant);
+        }
+        self.journal.reserve(2 * size_of::<Undo>() + 2 * scar.len())?;
+        let key = UndoKey::Scar(entity.slot, entity.generation, scar.into());
+        if self.journal.first(&key)? {
+            self.journal.retain(key, Undo::Scar {
+                entity,
+                key: scar.into(),
+                before: Some((index, count)),
+                root_present: true,
+            })?;
+        }
+        let scars = self.state.entities.resolve_mut(entity)
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.scars.as_mut())
+            .ok_or(ExecutionError::Invariant)?;
+        if count == 1.0 {
+            scars.shift_remove(scar);
+        } else {
+            *scars.get_mut(scar).ok_or(ExecutionError::Invariant)? = count - 1.0;
+        }
+        self.advance_body_revision(id)
+    }
+
     pub(crate) fn insert_corpse(&mut self, corpse: Entity) -> Result<(), ExecutionError> {
         self.insert_entity(corpse, true).map(|_| ())
     }

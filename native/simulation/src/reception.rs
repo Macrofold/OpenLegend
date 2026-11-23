@@ -107,7 +107,7 @@ pub(crate) use privacy::{revoke_attention_evidence, revoke_current_evidence};
 pub(crate) use restore::clear_restore_recordings;
 pub(crate) use retirement::{
     EndedCurrentEvidence, RetiredPerceptionLife, end_current_evidence, end_current_subject,
-    retire_perception_life,
+    replace_current_perception_life, retire_perception_life,
 };
 mod warning;
 pub(crate) use warning::acquire_ordinary_warning;

@@ -234,6 +234,7 @@ pub(crate) enum NativeCommand {
         operation: crate::fire_care::FireOperation,
         item_id: Option<String>,
     },
+    TreatScar { envelope: CommandEnvelope, target_id: String, scar_id: String },
     Pickup {
         envelope: CommandEnvelope,
         target_id: String,
@@ -274,6 +275,7 @@ pub(crate) enum NativeCommand {
         resting_place_id: Option<String>,
         resting_bay: Option<u64>,
     },
+    Respawn { envelope: CommandEnvelope },
     Cancel {
         envelope: CommandEnvelope,
         expected_action_id: Option<String>,
@@ -531,6 +533,30 @@ fn fire_care_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     })
 }
 
+fn scar_treatment_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Input {
+        #[serde(rename = "type")]
+        _kind: String,
+        #[serde(flatten)]
+        headers: CommandHeaders,
+        target_id: String,
+        scar_id: String,
+    }
+    let input: Input = serde_json::from_str(raw)?;
+    if !input.headers.valid() || !is_safe_record_id(&input.target_id)
+        || !is_safe_record_id(&input.scar_id)
+    {
+        return Err(serde::de::Error::custom("Invalid scar treatment binding."));
+    }
+    Ok(NativeCommand::TreatScar {
+        envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
+        target_id: input.target_id,
+        scar_id: input.scar_id,
+    })
+}
+
 fn hearth_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -605,6 +631,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         }
         if tag.kind == "tend-fire" {
             return fire_care_input(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if tag.kind == "treat-scar" {
+            return scar_treatment_input(raw.get()).map_err(serde::de::Error::custom);
         }
         if tag.kind == "learn-record" {
             return record_learning_input(raw.get()).map_err(serde::de::Error::custom);
@@ -836,6 +865,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
                 resting_place_id: input.resting_place_id,
                 resting_bay: input.resting_bay,
             }),
+            "respawn" if !extras_for_cancel && input.expected_action_id.is_none() => Ok(Self::Respawn { envelope }),
             "cancel" if !extras_for_cancel => Ok(Self::Cancel {
                 envelope,
                 expected_action_id: input.expected_action_id,
@@ -957,6 +987,7 @@ impl NativeCommand {
             | Self::Pickup { envelope, .. }
             | Self::Drop { envelope, .. }
             | Self::TendFire { envelope, .. }
+            | Self::TreatScar { envelope, .. }
             | Self::PlaceHearth { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
@@ -966,6 +997,7 @@ impl NativeCommand {
             | Self::Say { envelope, .. }
             | Self::DescriptiveAct { envelope, .. }
             | Self::StatusEffect { envelope, .. }
+            | Self::Respawn { envelope }
             | Self::Cancel { envelope, .. }
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
@@ -992,6 +1024,7 @@ impl NativeCommand {
             | Self::Pickup { envelope, .. }
             | Self::Drop { envelope, .. }
             | Self::TendFire { envelope, .. }
+            | Self::TreatScar { envelope, .. }
             | Self::PlaceHearth { envelope, .. }
             | Self::Cook { envelope, .. }
             | Self::Craft { envelope, .. }
@@ -1001,6 +1034,7 @@ impl NativeCommand {
             | Self::Say { envelope, .. }
             | Self::DescriptiveAct { envelope, .. }
             | Self::StatusEffect { envelope, .. }
+            | Self::Respawn { envelope }
             | Self::Cancel { envelope, .. }
             | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
@@ -1021,6 +1055,7 @@ impl NativeCommand {
             Self::Pickup { .. } => "pickup",
             Self::Drop { .. } => "drop",
             Self::TendFire { .. } => "tend-fire",
+            Self::TreatScar { .. } => "treat-scar",
             Self::PlaceHearth { .. } => "place-hearth",
             Self::Cook { .. } => "cook",
             Self::Craft { .. } => "craft",
@@ -1033,6 +1068,7 @@ impl NativeCommand {
             Self::Say { .. } => "say",
             Self::DescriptiveAct { .. } => "descriptive-act",
             Self::StatusEffect { .. } => "status-effect",
+            Self::Respawn { .. } => "respawn",
             Self::Cancel { .. } => "cancel",
             Self::WithdrawAttempt { .. } => "withdraw-attempt",
             Self::Follow { .. } => "follow",

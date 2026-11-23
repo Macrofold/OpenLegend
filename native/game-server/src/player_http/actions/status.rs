@@ -2,7 +2,7 @@
 
 use super::*;
 use openlegend_simulation::{commands::StatusOperation, runtime::RuntimeStatusMenu};
-use std::mem::size_of;
+use std::{borrow::Cow, mem::size_of};
 
 pub(super) fn render(
     menu: RuntimeStatusMenu<'_>,
@@ -10,13 +10,19 @@ pub(super) fn render(
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Command<'a> {
-        #[serde(rename = "type")]
-        kind: &'static str,
-        definition_id: &'a str,
-        target_id: &'a str,
-        effect_operation: StatusOperation,
+    #[serde(tag = "type", rename_all_fields = "camelCase")]
+    enum Command<'a> {
+        #[serde(rename = "status-effect")]
+        Status {
+            definition_id: &'a str,
+            target_id: &'a str,
+            effect_operation: StatusOperation,
+        },
+        #[serde(rename = "treat-scar")]
+        TreatScar {
+            target_id: &'a str,
+            scar_id: &'a str,
+        },
     }
     #[derive(Serialize)]
     struct Intent<'a> {
@@ -27,7 +33,7 @@ pub(super) fn render(
     #[serde(rename_all = "camelCase")]
     struct Choice<'a> {
         id: String,
-        label: &'a str,
+        label: Cow<'a, str>,
         category: &'static str,
         target_id: &'a str,
         description: &'a str,
@@ -36,10 +42,11 @@ pub(super) fn render(
         icon: Option<&'a str>,
         enabled: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
-        reason: Option<&'static str>,
+        reason: Option<Cow<'a, JsText>>,
         intent: Intent<'a>,
     }
-    const CATEGORY: &str = "States";
+    const STATES: &str = "States";
+    const BODY: &str = "Body";
     let bytes = menu
         .choices
         .iter()
@@ -50,43 +57,102 @@ pub(super) fn render(
                 .checked_add(":deactivate:".len())
         })
         .ok_or(CapacityError)?;
-    let _custody = budget.reserve(bytes)?;
-    let choices: Vec<_> = menu
-        .choices
-        .iter()
-        .map(|choice| {
-            let starting = choice.operation == StatusOperation::Activate;
-            let action = if starting { "activate" } else { "deactivate" };
-            let reason = if !controlling {
-                Some("Take control of your character to act here.")
-            } else if menu.paused {
-                Some("Resume the world to act.")
-            } else if !menu.available || starting && !menu.allows_actions {
-                Some("Your character cannot do that now.")
-            } else {
-                None
-            };
-            Choice {
-                id: format!("{}:{}:{action}", choice.definition_id, menu.actor),
-                label: choice.label,
-                category: CATEGORY,
-                target_id: menu.actor,
-                description: choice.label,
-                keywords: [choice.label],
-                icon: choice.icon,
-                enabled: reason.is_none(),
-                reason,
-                intent: Intent {
-                    kind: "command",
-                    command: Command {
-                        kind: "status-effect",
-                        definition_id: choice.definition_id,
-                        target_id: menu.actor,
-                        effect_operation: choice.operation,
-                    },
+    let treatment_bytes = menu
+        .treatment
+        .as_ref()
+        .map_or(Some(0), |treatment| {
+            treatment.scars.iter().try_fold(
+                256_usize.checked_add(treatment.material.storage_bytes())?,
+                |sum, scar| {
+                    sum.checked_add(size_of::<Choice<'_>>())?
+                        .checked_add(treatment.label.len())?
+                        .checked_add(scar.name.len())?
+                        .checked_add(scar.id.len())?
+                        .checked_add(128)
                 },
-            }
+            )
         })
-        .collect();
-    resource_menu(menu.sequence, &choices, CATEGORY, budget)
+        .ok_or(CapacityError)?;
+    let _custody = budget.reserve(bytes.checked_add(treatment_bytes).ok_or(CapacityError)?)?;
+    let common_refusal = if !controlling {
+        Some(JsText::from("Take control of your character to act here."))
+    } else if menu.paused {
+        Some(JsText::from("Resume the world to act."))
+    } else if !menu.available {
+        Some(JsText::from("Your character cannot do that now."))
+    } else {
+        None
+    };
+    let blocked_actions =
+        (!menu.allows_actions).then(|| JsText::from("Your character cannot do that now."));
+    let mut choices = Vec::with_capacity(
+        menu.choices.len()
+            + menu
+                .treatment
+                .as_ref()
+                .map_or(0, |treatment| treatment.scars.len()),
+    );
+    choices.extend(menu.choices.iter().map(|choice| {
+        let starting = choice.operation == StatusOperation::Activate;
+        let action = if starting { "activate" } else { "deactivate" };
+        let reason = common_refusal
+            .as_ref()
+            .or_else(|| starting.then_some(blocked_actions.as_ref()).flatten());
+        Choice {
+            id: format!("{}:{}:{action}", choice.definition_id, menu.actor),
+            label: Cow::Borrowed(choice.label),
+            category: STATES,
+            target_id: menu.actor,
+            description: choice.label,
+            keywords: [choice.label],
+            icon: choice.icon,
+            enabled: reason.is_none(),
+            reason: reason.map(Cow::Borrowed),
+            intent: Intent {
+                kind: "command",
+                command: Command::Status {
+                    definition_id: choice.definition_id,
+                    target_id: menu.actor,
+                    effect_operation: choice.operation,
+                },
+            },
+        }
+    }));
+    let missing_stock = menu
+        .treatment
+        .as_ref()
+        .filter(|treatment| !treatment.material_available)
+        .map(|treatment| {
+            let mut reason = JsText::from(format!("Treatment needs {} ", treatment.quantity));
+            reason.push_text(treatment.material);
+            reason.push_str(" in your carried inventory.");
+            reason
+        });
+    if let Some(treatment) = &menu.treatment {
+        let reason = common_refusal
+            .as_ref()
+            .or(blocked_actions.as_ref())
+            .or(missing_stock.as_ref());
+        choices.extend(treatment.scars.iter().map(|scar| Choice {
+            id: format!("treat-{}", scar.id),
+            label: Cow::Owned(format!("{} {}", treatment.label, scar.name)),
+            category: BODY,
+            target_id: treatment.target,
+            description: scar.name,
+            keywords: ["scar"],
+            icon: None,
+            enabled: reason.is_none(),
+            reason: reason.map(Cow::Borrowed),
+            intent: Intent {
+                kind: "command",
+                command: Command::TreatScar {
+                    target_id: treatment.target,
+                    scar_id: scar.id,
+                },
+            },
+        }));
+        resource_menu_categories(menu.sequence, &choices, &[STATES, BODY], budget)
+    } else {
+        resource_menu(menu.sequence, &choices, STATES, budget)
+    }
 }

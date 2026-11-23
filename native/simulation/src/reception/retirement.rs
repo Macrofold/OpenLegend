@@ -497,3 +497,42 @@ pub(crate) fn retire_perception_life(
         _reservation: ended._reservation,
     })
 }
+
+/// Install the new current receiver only from the terminal proof for this cut.
+/// The temporal owner switches its receipt epoch immediately afterwards.
+fn begin_replacement_perception(
+    core: &mut CoreMutation<'_>,
+    proof: RetiredPerceptionLife,
+    life: u64,
+) -> Result<(), ExecutionError> {
+    let observer = proof.observer_id();
+    let header = &core.state.physical.header;
+    if proof.at() != header.sim_time || life == proof.physical_life()
+        || core.state.physical.entities.get(observer).and_then(|entity| entity.physical_life()) != Some(life)
+    {
+        return Err(invalid());
+    }
+    core.journal.current.begin_replacement_life(
+        &mut core.state.reception, observer, proof.physical_life(), life,
+    )?;
+    core.journal.originals.begin_replacement_phase(
+        &mut core.state.reception, observer, header.sequence,
+    )?;
+    Ok(())
+}
+
+/// Give a new body its current receiver even in a world without personal
+/// memory. The earlier retired reception and temporal records remain valid.
+pub(crate) fn replace_current_perception_life(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    previous: u64,
+    next: u64,
+    budget: &ByteBudget,
+) -> Result<(), ExecutionError> {
+    if owner(core, observer).is_none() {
+        return Ok(());
+    }
+    let retired = retire_perception_life(core, observer, previous, budget)?;
+    begin_replacement_perception(core, retired, next)
+}

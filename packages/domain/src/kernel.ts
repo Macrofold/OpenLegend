@@ -1577,7 +1577,11 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     if (world.paused) return reject('paused', 'Resume the world before continuing.');
     return source.actor.pendingDeath
       ? null
-      : reject('respawn-unavailable', 'There is no lost life to continue.');
+      : reject(
+          'respawn-unavailable',
+          reincarnationPolicy(world)?.continueUnavailableText ??
+            'There is no lost life to continue.',
+        );
   }
   if (!activelyParticipates(source))
     return reject(ordinaryRules.inactive.code, ordinaryRules.inactive.message);

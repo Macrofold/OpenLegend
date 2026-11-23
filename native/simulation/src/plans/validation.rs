@@ -130,7 +130,9 @@ pub(crate) fn valid_command(
         | NativeCommand::InspectActivities { .. }
         | NativeCommand::LearnRecord { .. }
         | NativeCommand::DescriptiveAct { .. }
-        | NativeCommand::PlaceHearth { .. } => false,
+        | NativeCommand::PlaceHearth { .. }
+        | NativeCommand::TreatScar { .. }
+        | NativeCommand::Respawn { .. } => false,
     }
 }
 fn valid_evidence(value: Option<&ResultEvidence>, actor: &str) -> bool {

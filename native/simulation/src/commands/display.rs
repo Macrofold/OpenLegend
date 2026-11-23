@@ -182,6 +182,8 @@ impl ActivityDisplayCursor {
                 | NativeCommand::Fish { .. }
                 | NativeCommand::Pickup { .. }
                 | NativeCommand::TendFire { .. }
+                | NativeCommand::Respawn { .. }
+                | NativeCommand::TreatScar { .. }
                 | NativeCommand::PlaceHearth { .. }
                 | NativeCommand::Craft { .. }
                 | NativeCommand::Cook { .. }
@@ -479,7 +481,9 @@ impl ActivityDisplayCursor {
             | NativeCommand::Pickup { .. }
             | NativeCommand::Drop { .. }
             | NativeCommand::TransferItem { .. }
+            | NativeCommand::Respawn { .. }
             | NativeCommand::TendFire { .. }
+            | NativeCommand::TreatScar { .. }
             | NativeCommand::PlaceHearth { .. }
             | NativeCommand::Cook { .. }
             | NativeCommand::Craft { .. }

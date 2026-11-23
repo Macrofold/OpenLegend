@@ -344,11 +344,13 @@ export function commitBodyEffects(
     actor.action = null;
   }
   if (actor.health < before && actor.action?.type === 'treat-scar') {
+    const policy = bodyPolicy(world)?.reincarnation;
+    if (!policy) throw new Error('Scar treatment lacks its installed body policy.');
     finishPlanAction(
       world,
       entity.id,
       actor.action.id,
-      outcome(false, 'interrupted', 'Injury interrupted scar treatment.'),
+      outcome(false, 'interrupted', policy.treatmentInterruptedText),
     );
     actor.action = null;
   }

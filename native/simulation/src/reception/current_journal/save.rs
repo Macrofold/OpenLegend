@@ -145,7 +145,8 @@ fn contact_bound(contact: &CurrentContact) -> Result<usize, RecordEncodingError>
 
 fn header_subject(change: &CurrentUndo) -> Option<&str> {
     match change {
-        CurrentUndo::VisualConfirmation { observer, .. }
+        CurrentUndo::Life { observer, .. }
+        | CurrentUndo::VisualConfirmation { observer, .. }
         | CurrentUndo::MotionMember { observer, .. }
         | CurrentUndo::MotionExpiry { observer, .. }
         | CurrentUndo::GapMember { observer, .. }
@@ -185,10 +186,10 @@ impl CurrentJournal {
         }
         Ok(())
     }
-    pub(in super::super) fn restore_headers(
-        &self,
+    pub(in super::super) fn restore_headers<'a>(
+        &'a self,
         before: CurrentCheckpoint,
-        selected: &mut super::super::save::Headers<'_>,
+        selected: &mut super::super::save::Headers<'a>,
     ) -> Result<(), RecordEncodingError> {
         use super::super::save::ChildMarker;
         for change in self
@@ -204,6 +205,7 @@ impl CurrentJournal {
             let entry = selected.get_mut(observer).ok_or_else(error)?;
             match change {
                 CurrentUndo::VisualConfirmation { prior, .. } => entry.reserve(prior)?,
+                CurrentUndo::Life { prior, .. } => entry.reserve(&prior.observer)?,
                 CurrentUndo::GapMember { prior, .. } => entry.reserve(prior)?,
                 CurrentUndo::Gaps { prior, .. } => entry.reserve(prior)?,
                 _ => {}
@@ -227,6 +229,11 @@ impl CurrentJournal {
                 }
                 CurrentUndo::Attention { prior, .. } => {
                     header.attention = prior.as_ref().map(|_| ChildMarker)
+                }
+                CurrentUndo::Life { prior, .. } => {
+                    header.life = prior.number;
+                    header.observer = prior.observer.clone();
+                    header.support = prior.support.as_ref();
                 }
                 CurrentUndo::NextContact { prior, .. } => header.next_contact = *prior,
                 CurrentUndo::Geometry { prior, .. } => {

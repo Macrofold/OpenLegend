@@ -1,7 +1,9 @@
 //! The current replacement-body definition and pending outcome. No fallback
 //! revival law or scar tuning is embedded in these engine records.
 
+use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::state::Point;
+use crate::text::JsText;
 use crate::values::{deserialize_nullable, deserialize_safe_integer};
 use serde::{Deserialize, Serialize};
 
@@ -34,11 +36,15 @@ pub(crate) struct ReincarnationPolicy {
     pub arrival_text: String,
     pub arrival_narration: String,
     pub continue_label: String,
+    pub continue_unavailable_text: String,
+    pub no_usable_rest_text: String,
     pub death_text: String,
     pub retained_label: String,
     pub lost_label: String,
     pub treatment_label: String,
     pub treatment_text: String,
+    pub treatment_start_clause: String,
+    pub treatment_interrupted_text: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -74,7 +80,23 @@ pub(crate) struct PendingDeath {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct DeathPossessions {
-    pub name: String,
+    pub name: JsText,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub quantity: u64,
+}
+
+impl HeapBytes for PendingDeath {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([
+            self.corpse_id.heap_bytes()?,
+            self.retained.heap_bytes()?,
+            self.left.heap_bytes()?,
+        ])
+    }
+}
+
+impl HeapBytes for DeathPossessions {
+    fn heap_bytes(&self) -> Option<usize> {
+        self.name.heap_bytes()
+    }
 }

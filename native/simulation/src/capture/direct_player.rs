@@ -135,15 +135,15 @@ pub struct PlayerDeathFacts<'a> {
 }
 
 impl<'a> PlayerDeathFacts<'a> {
-    pub fn retained(&self) -> impl ExactSizeIterator<Item = (&'a str, u64)> {
+    pub fn retained(&self) -> impl ExactSizeIterator<Item = (&'a JsText, u64)> {
         self.retained
             .iter()
-            .map(|entry| (entry.name.as_str(), entry.quantity))
+            .map(|entry| (&entry.name, entry.quantity))
     }
-    pub fn left(&self) -> impl ExactSizeIterator<Item = (&'a str, u64)> {
+    pub fn left(&self) -> impl ExactSizeIterator<Item = (&'a JsText, u64)> {
         self.left
             .iter()
-            .map(|entry| (entry.name.as_str(), entry.quantity))
+            .map(|entry| (&entry.name, entry.quantity))
     }
 }
 
@@ -240,7 +240,7 @@ impl<'a> PlayerSelfFacts<'a> {
         if let Some(death) = self.death() {
             bytes = bytes.checked_add(death.corpse_id.len())?;
             for (name, _) in death.retained().chain(death.left()) {
-                bytes = bytes.checked_add(name.len())?.checked_add(64)?;
+                bytes = bytes.checked_add(name.storage_bytes())?.checked_add(64)?;
             }
         }
         bytes

@@ -116,9 +116,12 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                         && recipe.is_none()
                         && (own_status || catalogue && for_menu.is_none())
                     {
+                        let references = tokens.scoped(scope).map_err(RuntimeError::application_refused)?;
                         return session.with_player_status_menu(
                             &scope.account_id,
                             &scope.actor_id,
+                            |body| references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id)
+                                .map_err(RuntimeError::application_refused),
                             |menu| status::render(menu, controls, budget),
                         ).map(Some);
                     }

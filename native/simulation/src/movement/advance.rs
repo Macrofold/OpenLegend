@@ -26,6 +26,7 @@ use std::mem::size_of;
 mod casting;
 mod preparing_food;
 mod fire;
+mod scar_treatment;
 mod follow;
 mod hearth;
 mod manufacture;
@@ -68,6 +69,7 @@ enum Phase {
     CastLine,
     CookReach,
     HearthWork,
+    ScarReach,
     Finish,
     Clear,
     Stopped,
@@ -362,6 +364,9 @@ impl MoveAdvanceCursor {
                     return self.cook_reach_answer(core, answer.sight.pop() == Some(true));
                 }
                 if self.phase == Phase::HearthWork { return self.finish_hearth_geometry(core, answer); }
+                if self.phase == Phase::ScarReach {
+                    return self.finish_scar_treatment(core, answer.sight.pop() == Some(true));
+                }
                 if self.phase == Phase::CastLine {
                     return self.finish_cast_line(core, answer);
                 }
@@ -646,6 +651,19 @@ impl MoveAdvanceCursor {
                             continue;
                         }
                         return self.check_hearth(core);
+                    }
+                    if action.is_treating_scar() {
+                        if action.remaining_seconds > self.seconds + installed.time_epsilon {
+                            core.physical().advance_timed_work(
+                                &self.actor_id,
+                                self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
+                                self.seconds,
+                                installed.time_epsilon,
+                            )?;
+                            self.phase = Phase::Done;
+                            continue;
+                        }
+                        return self.check_scar_treatment(core);
                     }
                     if (action.is_picking_up() || action.is_tending_fire()) && action.stage == "working" {
                         if action.remaining_seconds > self.seconds + installed.time_epsilon {
@@ -1023,6 +1041,7 @@ impl MoveAdvanceCursor {
                 | Phase::FeedReach
                 | Phase::FeedSight
                 | Phase::HearthWork
+                | Phase::ScarReach
                 | Phase::CastLine
                 | Phase::CookReach => {
                     return Err(ExecutionError::Invariant);

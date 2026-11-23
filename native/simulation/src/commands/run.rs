@@ -26,6 +26,8 @@ mod discovery;
 mod casting;
 mod preparing_food;
 mod fire;
+mod scar_treatment;
+mod respawn;
 mod follow;
 mod hearth;
 mod travel;
@@ -97,6 +99,11 @@ enum Phase {
     Route,
     Follow,
     FeedReach,
+    ScarReach,
+    RespawnSupport,
+    RespawnStanding,
+    RespawnConditions,
+    RespawnArrival,
     GatherSight,
     CastSight,
     CastLine,
@@ -179,6 +186,7 @@ pub(crate) struct CommandCursor {
     display: Option<super::ActivityDisplayCursor>,
     prepared_emission: Option<EventEmissionIntent>,
     storage_inspection: Option<inspect_storage::PreparedStorage>,
+    respawn: Option<Box<respawn::Search>>,
     before_action_id: Option<String>,
     chosen_work_done: bool,
     source_scope_started: bool,
@@ -365,6 +373,7 @@ impl CommandCursor {
             display: None,
             prepared_emission: None,
             storage_inspection: None,
+            respawn: None,
             before_action_id: None,
             chosen_work_done: false,
             source_scope_started: false,
@@ -523,6 +532,10 @@ impl CommandCursor {
         }
         if matches!(self.command, NativeCommand::TendFire { .. }) {
             self.prepare_fire_view(core)?;
+            return Ok(false);
+        }
+        if matches!(self.command, NativeCommand::TreatScar { .. }) {
+            self.prepare_scar_view(core)?;
             return Ok(false);
         }
         if matches!(self.command, NativeCommand::Cook { .. }) {
@@ -1032,6 +1045,16 @@ impl CommandCursor {
                                         Phase::FeedApproach
                                     };
                             }
+                            Phase::ScarReach => {
+                                self.queries = None;
+                                if answer.sight.pop().ok_or(ExecutionError::Invariant)? {
+                                    self.phase = Phase::Prepared;
+                                } else {
+                                    self.refuse(&ordinary.out_of_reach);
+                                }
+                            }
+                            Phase::RespawnSupport => return self.respawn_supported(core, answer.support),
+                            Phase::RespawnStanding => return self.respawn_standing(core, answer.standing),
                             Phase::TravelReach => return self.travel_reach(core, answer.sight.pop().ok_or(ExecutionError::Invariant)?),
                             Phase::TravelDestination => return self.travel_destination(core, answer.routes.pop()),
                             Phase::HearthGeometry => return self.hearth_geometry(core, answer),
@@ -1117,7 +1140,11 @@ impl CommandCursor {
                     }
                     crate::conditions::ConditionReconcileStep::Complete => {
                         self.conditions = None;
-                        self.phase = Phase::Done;
+                        self.phase = if matches!(self.phase, Phase::RespawnConditions) {
+                            Phase::RespawnArrival
+                        } else {
+                            Phase::Done
+                        };
                         continue;
                     }
                 }
@@ -1227,7 +1254,7 @@ impl CommandCursor {
                     if let Some(mode) = self.preparation_mode
                         && (matches!(
                             self.command,
-                            NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
+                            NativeCommand::Respawn { .. } | NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
                                 | NativeCommand::Equipment { .. } | NativeCommand::Eat { .. }
                                 | NativeCommand::Drop { .. } | NativeCommand::TransferItem { .. }
                         ) || matches!(self.command, NativeCommand::Handover { .. })
@@ -1251,6 +1278,9 @@ impl CommandCursor {
                         self.outcome = Some(problem);
                         self.phase = Phase::Done;
                         continue;
+                    }
+                    if matches!(self.command, NativeCommand::Respawn { .. }) {
+                        return self.start_respawn(core);
                     }
                     if self.typed_plan_mode.is_some() {
                         return self.prepare_typed_walk(core);
@@ -1399,6 +1429,12 @@ impl CommandCursor {
                         NativeCommand::PlaceHearth { .. } => {
                             if self.prepare_hearth(core)? { return Ok(Progress::Geometry); }
                         }
+                        NativeCommand::Respawn { .. } => return Err(ExecutionError::Invariant),
+                        NativeCommand::TreatScar { .. } => {
+                            if self.prepare_scar_treatment(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
                         NativeCommand::TendFire { .. } => {
                             if self.prepare_fire(core)? { return Ok(Progress::Geometry); }
                         }
@@ -1460,7 +1496,8 @@ impl CommandCursor {
                     }
                 }
                 Phase::StoragePage => return self.storage_occurrence(core, &actor_id),
-                Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach => {
+                Phase::RespawnSupport | Phase::RespawnStanding
+                | Phase::StorageSight | Phase::StorageReach | Phase::LearnRecordSight | Phase::LearnRecordReach | Phase::ScarReach => {
                     return Err(ExecutionError::Invariant);
                 }
                 Phase::Standing => {
@@ -1996,6 +2033,9 @@ impl CommandCursor {
                         }
                         if matches!(self.command, NativeCommand::TendFire { .. }) {
                             return self.fire_started(core, &actor_id);
+                        }
+                        if matches!(self.command, NativeCommand::TreatScar { .. }) {
+                            return self.scar_treatment_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::Craft { .. }) {
                             return self.craft_started(core, &actor_id);
@@ -2573,7 +2613,8 @@ impl CommandCursor {
                 Phase::GiftPrivate => {
                     if let Some(event) = self.gift_private_event(core)? { return Ok(Progress::Occurrence(event)); }
                 }
-                Phase::Conditions => return Err(ExecutionError::UnfinishedOccurrence),
+                Phase::RespawnArrival => return self.respawn_arrival(core),
+                Phase::Conditions | Phase::RespawnConditions => return Err(ExecutionError::UnfinishedOccurrence),
                 Phase::Done => {
                     let result = self.outcome.take().ok_or(ExecutionError::Invariant)?;
                     if self.preparation_mode.is_some() {
@@ -2672,6 +2713,20 @@ fn actor_problem(
         .flatten()
     {
         crate::plans::require_supported_activity(plan)?;
+    }
+    if matches!(command, NativeCommand::Respawn { .. }) {
+        if native {
+            return Ok(Some(ordinary.unsupported_controller.outcome(false)));
+        }
+        if core.state.physical.header.paused {
+            return Ok(Some(ordinary.paused.outcome(false)));
+        }
+        // A pending death removes the body from participation for every
+        // physical action. Continue instead checks whether the player returned.
+        if entity.retirement.is_some() || actor.participation.as_ref().is_some_and(|p| p.phase != "active") {
+            return Ok(Some(ordinary.inactive.outcome(false)));
+        }
+        return Ok(None);
     }
     if !entity.actively_participates() {
         return Ok(Some(ordinary.inactive.outcome(false)));
