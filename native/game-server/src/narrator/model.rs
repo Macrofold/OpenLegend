@@ -77,11 +77,28 @@ struct Experience {
     exposure: Option<ReadExposure>,
 }
 
+#[derive(Deserialize)]
+struct AccountDetails {
+    modality: Option<SqlCell>,
+    importance: Option<SqlCell>,
+    urgency: Option<SqlCell>,
+    content: Option<SqlCell>,
+    #[serde(default, deserialize_with = "read_exposure")]
+    exposure: Option<ReadExposure>,
+}
+
 #[derive(Serialize, Deserialize)]
 struct ReadExposure {
     kind: String,
     label: JsText,
     description: JsText,
+}
+
+// A present exposure must be the selected observation, including its exact text.
+fn read_exposure<'de, D: serde::Deserializer<'de>>(
+    decoder: D,
+) -> Result<Option<ReadExposure>, D::Error> {
+    ReadExposure::deserialize(decoder).map(Some)
 }
 
 #[derive(Serialize)]
@@ -202,22 +219,16 @@ impl NarratorModel {
         {
             let handle = format!("s{}", sources.len() + 1);
             source_ids.push(source.id);
+            let account = source.account.get();
             let _account = custody(
                 budget,
-                SqlCell::json_decode_bound(source.account.get()).ok_or(CallFailure::Invalid)?,
+                SqlCell::json_decode_bound(account).ok_or(CallFailure::Invalid)?,
             )?;
-            let fields: SqlCell =
-                serde_json::from_str(source.account.get()).map_err(|_| CallFailure::Invalid)?;
-            let SqlCell::Object(mut fields) = fields else {
+            if !account.trim_start().starts_with('{') {
                 return Err(CallFailure::Invalid);
-            };
-            let exposure = fields
-                .shift_remove("exposure")
-                .map(|raw| {
-                    let text = json_record(&raw).map_err(|_| CallFailure::Invalid)?;
-                    serde_json::from_str(&text).map_err(|_| CallFailure::Invalid)
-                })
-                .transpose()?;
+            }
+            let details: AccountDetails =
+                serde_json::from_str(account).map_err(|_| CallFailure::Invalid)?;
             sources.push(Source {
                 handle,
                 mandatory: claim.mandatory_source(source.id),
@@ -226,11 +237,11 @@ impl NarratorModel {
                     order: source.order,
                     event_type: source.event_type.to_owned(),
                     text: native_text(source.text),
-                    modality: fields.shift_remove("modality"),
-                    importance: fields.shift_remove("importance"),
-                    urgency: fields.shift_remove("urgency"),
-                    content: fields.shift_remove("content"),
-                    exposure,
+                    modality: details.modality,
+                    importance: details.importance,
+                    urgency: details.urgency,
+                    content: details.content,
+                    exposure: details.exposure,
                 },
             });
         }
