@@ -150,8 +150,8 @@ fn fingerprint(
     )?;
     let rules = state.installed.observation_rules.value();
     let activity = rules.outward_body_activity(entity)?;
-    let animation =
-        rules.observed_action_animation(entity, &state.installed.retained.native_strike_read)?;
+    let (animation, _animation_storage) =
+        rules.observed_action_animation(entity, state, budget)?.unzip();
     let effects = project_status_effects(
         entity,
         &state.installed.status_policy,

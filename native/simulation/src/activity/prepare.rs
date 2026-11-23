@@ -43,8 +43,11 @@ pub(super) fn start_record(
             resting_place_id,
             ..
         } => [Some(target_id.as_str()), resting_place_id.as_deref()],
-        NativeCommand::Follow { target_id, .. } | NativeCommand::Strike { target_id, .. } => {
+        NativeCommand::Follow { target_id, .. } => {
             [Some(target_id.as_str()), None]
+        }
+        NativeCommand::Strike { target_id, weapon_item_id, .. } => {
+            [Some(target_id), weapon_item_id.as_deref()]
         }
         NativeCommand::Gather {
             target_id, tool, ..

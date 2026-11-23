@@ -9,12 +9,15 @@ use crate::{
     identity::MAX_SAFE_INTEGER,
     material_exposure::{MaterialPresence, StockExposure},
     records::OwnerCoverage,
-    state::{Entity, EntityHandle, EntityStore, Individuality, Named, Placement},
+    state::{Entity, EntityHandle, EntityStore, Individuality, LivingBody, Named, Placement},
     values::{DefinitionPin, deserialize_safe_integer, is_safe_record_id},
 };
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::{mem::size_of, sync::LazyLock};
+
+mod melee;
+pub(crate) use melee::{MeleeProfile, equipped_melee};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -71,7 +74,7 @@ pub(super) struct ItemDefinitionFields {
     ammunition: Option<crate::projectile::Ammunition>,
     ranged_weapon: Option<crate::projectile::RangedWeapon>,
     contact_defense: Option<crate::contact::guard::DefenseProfile>,
-    melee: Option<serde::de::IgnoredAny>,
+    melee: Option<MeleeProfile>,
     nutrition: Option<f64>,
     fishing_tool: Option<FishingTool>,
     gathering_tool: Option<GatheringTool>,
@@ -135,6 +138,14 @@ struct Equipment {
     uses: Vec<EquipmentUse>,
 }
 
+impl Equipment {
+    fn fits(&self, body: &LivingBody) -> bool {
+        self.ports
+            .iter()
+            .all(|port| body.equipment_ports.iter().any(|owned| owned.id == *port))
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum EquipmentUse {
@@ -169,6 +180,7 @@ pub(crate) struct ItemDefinitionRead {
     pub(crate) nutrition: Option<f64>,
     pub(crate) ranged_weapon: Option<crate::projectile::RangedWeapon>,
     pub(crate) contact_defense: Option<crate::contact::guard::DefenseProfile>,
+    melee: Option<MeleeProfile>,
     pub(crate) ammunition: Option<crate::projectile::Ammunition>,
     plain_material: bool,
     gathering_tool: Option<GatheringTool>,
@@ -217,6 +229,7 @@ impl ItemDefinitionRead {
                 .is_some_and(|tool| !is_safe_record_id(&tool.resource_id) || tool.quantity == 0)
             || value.fishing_tool.as_ref().is_some_and(|tool| !is_safe_record_id(&tool.kind))
             || value.ranged_weapon.as_ref().is_some_and(|weapon| !weapon.valid())
+            || value.melee.as_ref().is_some_and(|profile| !profile.valid())
             || value.contact_defense.as_ref().is_some_and(|profile| {
                 !profile.valid() || !value.equipment.as_ref().is_some_and(|gear| gear.uses.contains(&EquipmentUse::Guard))
             })
@@ -311,6 +324,7 @@ impl ItemDefinitionRead {
                 && value.nutrition.is_none_or(|value| value == 0.0),
             ranged_weapon: value.ranged_weapon,
             contact_defense: value.contact_defense,
+            melee: value.melee,
             ammunition: value.ammunition,
             gathering_tool: value.gathering_tool,
             fishing_tool: value.fishing_tool,
@@ -1067,10 +1081,7 @@ pub(super) fn install_inventory(
                     .ok_or(InstallError::CurrentFormat)?;
                 if equipment.ports.first() != Some(port_id)
                     || lot.individuality != Individuality::Individual
-                    || equipment
-                        .ports
-                        .iter()
-                        .any(|port| !body.equipment_ports.iter().any(|p| p.id == *port))
+                    || !equipment.fits(body)
                 {
                     return Err(InstallError::CurrentFormat);
                 }

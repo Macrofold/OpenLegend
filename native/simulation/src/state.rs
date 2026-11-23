@@ -741,6 +741,12 @@ pub struct Action {
     pub weapon_item_id: Option<String>,
     #[serde(
         default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub(crate) contact_weapon_digest: Option<String>,
+    #[serde(
+        default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
@@ -1040,8 +1046,12 @@ impl Action {
             || self.evasion.is_some()
             || (matches!(self.kind.as_str(), "practice-shot" | "aim" | "shoot-once" | "hunt")
                 || self.ranged.is_some() || self.competence_pin.is_some() || self.ranged_policy_pin.is_some()
-                || self.weapon_item_id.is_some() || self.ammo_item_id.is_some())
+                || self.ammo_item_id.is_some())
                 && !self.is_projectile_action()
+            || (self.weapon_item_id.is_some() && !self.is_projectile_action()
+                && !self.is_natural_contact())
+            || (self.contact_weapon_digest.is_some()
+                != (self.weapon_item_id.is_some() && self.is_natural_contact()))
             || self.attack_execution.is_some()
             || self.coaching_episode_id.is_some()
             || self.assembly_phase.is_some()
@@ -1118,6 +1128,7 @@ impl Action {
             recipe_id: None,
             item_id: None,
             weapon_item_id: None,
+            contact_weapon_digest: None,
             ammo_item_id: None,
             heat_id: None,
             fire_operation: None,
@@ -1147,20 +1158,24 @@ impl Action {
         action.definition_id = Some(definition_id);
         action
     }
-    pub(crate) fn natural_contact(
+    pub(crate) fn contact(
         id: String,
         target_id: String,
         target_life: u64,
-        definition: &crate::worlds::base_decision_offers::NativeStrikeRead,
+        definition: crate::contact::ContactRead<'_>,
     ) -> Self {
         let mut action = Self::native_action(id, "strike", "working");
         action.target_id = Some(target_id);
         action.target_life = Some(target_life);
-        action.definition_id = Some(definition.id.clone());
+        action.definition_id = Some(definition.id.into());
         action.definition_version = Some(definition.version);
         action.remaining_seconds = definition.work_seconds;
         action.total_seconds = definition.work_seconds;
         action.strike_phase = Some(crate::contact::StrikePhase::Windup);
+        if let crate::contact::ContactKind::Equipped { item_id, definition } = definition.kind {
+            action.weapon_item_id = Some(item_id.into());
+            action.contact_weapon_digest = Some(definition.pin.digest.clone());
+        }
         action
     }
     pub(crate) fn resource_feed(

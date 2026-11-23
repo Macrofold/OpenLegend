@@ -563,6 +563,7 @@ fn assemble_selected_core(
                 action.is_natural_contact()
                     && !crate::contact::valid_action(
                         &installed,
+                        &physical.entities,
                         entity,
                         action,
                         action

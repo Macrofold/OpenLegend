@@ -66,50 +66,64 @@ impl CommandCursor {
             NativeCommand::Strike {
                 definition_id,
                 weapon_item_id,
+                auto_equip,
                 ..
             } => {
-                if weapon_item_id.is_some() {
+                if auto_equip == &Some(true) {
                     return Err(ExecutionError::UnsupportedFamily);
                 }
-                let body = actor.body.as_ref().map(|body| body.plan.as_str());
-                let selected = installed.retained.native_strike_read.get(definition_id);
-                let manual = rules
-                    .manual_work_body_plans
-                    .iter()
-                    .any(|plan| Some(plan.as_str()) == body);
-                if !manual
-                    && !(actor
-                        .natural_strike_ids
-                        .as_ref()
-                        .is_some_and(|ids| ids.contains(definition_id))
-                        && selected.and_then(|strike| strike.required_body_plan.as_deref()) == body)
-                {
-                    self.discovery_refuse(&rules.availability.manual_work)?;
-                    return Ok(false);
-                }
-                let Some(strike) = selected else {
-                    self.discovery_refuse(&rules.availability.unknown_strike)?;
-                    return Ok(false);
-                };
-                if body.is_none()
-                    || strike
-                        .required_body_plan
-                        .as_deref()
-                        .is_some_and(|required| Some(required) != body)
-                    || !(rules
-                        .natural_strike_body_plans
+                if let Some(item) = weapon_item_id {
+                    if crate::contact::ContactRead::select(
+                        &installed,
+                        &core.state.physical.entities,
+                        entity,
+                        definition_id,
+                        Some(item),
+                    ).is_none() {
+                        self.discovery_refuse(&rules.availability.unsupported_strike)?;
+                        return Ok(false);
+                    }
+                } else {
+                    let body = actor.body.as_ref().map(|body| body.plan.as_str());
+                    let selected = installed.retained.native_strike_read.get(definition_id);
+                    let manual = rules
+                        .manual_work_body_plans
                         .iter()
-                        .any(|plan| Some(plan.as_str()) == body)
-                        || actor
+                        .any(|plan| Some(plan.as_str()) == body);
+                    if !manual
+                        && !(actor
                             .natural_strike_ids
                             .as_ref()
-                            .is_some_and(|ids| ids.contains(definition_id)))
-                {
-                    self.discovery_refuse(&rules.availability.unsupported_strike)?;
-                    return Ok(false);
-                }
-                if strike.preparation_motion.is_some() {
-                    return Err(ExecutionError::UnsupportedFamily);
+                            .is_some_and(|ids| ids.contains(definition_id))
+                            && selected.and_then(|strike| strike.required_body_plan.as_deref()) == body)
+                    {
+                        self.discovery_refuse(&rules.availability.manual_work)?;
+                        return Ok(false);
+                    }
+                    let Some(strike) = selected else {
+                        self.discovery_refuse(&rules.availability.unknown_strike)?;
+                        return Ok(false);
+                    };
+                    if body.is_none()
+                        || strike
+                            .required_body_plan
+                            .as_deref()
+                            .is_some_and(|required| Some(required) != body)
+                        || !(rules
+                            .natural_strike_body_plans
+                            .iter()
+                            .any(|plan| Some(plan.as_str()) == body)
+                            || actor
+                                .natural_strike_ids
+                                .as_ref()
+                                .is_some_and(|ids| ids.contains(definition_id)))
+                    {
+                        self.discovery_refuse(&rules.availability.unsupported_strike)?;
+                        return Ok(false);
+                    }
+                    if strike.preparation_motion.is_some() {
+                        return Err(ExecutionError::UnsupportedFamily);
+                    }
                 }
                 if actor
                     .combat_ready_at
@@ -248,21 +262,27 @@ impl CommandCursor {
                     .entities
                     .get(&self.command.envelope().actor_id)
                     .ok_or(ExecutionError::MissingActor)?;
-                let (target_id, reach) = match &self.command {
+                let (target_id, strike) = match &self.command {
                     NativeCommand::Strike {
                         target_id,
                         definition_id,
+                        weapon_item_id,
                         ..
                     } => {
-                        let d = installed
-                            .retained
-                            .native_strike_read
-                            .get(definition_id)
-                            .ok_or(ExecutionError::Invariant)?;
-                        (target_id, d.approach_range.unwrap_or(d.range))
+                        let Some(strike) = crate::contact::ContactRead::select(
+                            &installed,
+                            &core.state.physical.entities,
+                            actor,
+                            definition_id,
+                            weapon_item_id.as_deref(),
+                        ) else {
+                            return self.discovery_refuse(&rules.availability.unsupported_strike);
+                        };
+                        (target_id, strike)
                     }
                     _ => return Err(ExecutionError::Invariant),
                 };
+                let reach = strike.approach_range.unwrap_or(strike.range);
                 let target = core
                     .state
                     .physical
@@ -281,17 +301,10 @@ impl CommandCursor {
                 let mut goal = position;
                 goal.y += target_profile.interaction_height;
                 let reached = clear && crate::spatial::distance(from, goal) <= reach;
-                if let NativeCommand::Strike { definition_id, .. } = &self.command {
-                    let d = installed
-                        .retained
-                        .native_strike_read
-                        .get(definition_id)
-                        .ok_or(ExecutionError::Invariant)?;
-                    if !d.auto_move_to_range
-                        && !(clear && crate::spatial::distance(from, goal) <= d.range)
-                    {
-                        return self.discovery_refuse(&rules.availability.strike_range);
-                    }
+                if !strike.auto_move_to_range
+                    && !(clear && crate::spatial::distance(from, goal) <= strike.range)
+                {
+                    return self.discovery_refuse(&rules.availability.strike_range);
                 }
                 if reached {
                     return self.discovery_ready(core, None);

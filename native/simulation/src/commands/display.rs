@@ -416,6 +416,25 @@ impl ActivityDisplayCursor {
             NativeCommand::Say { text, .. } => text.storage_bytes(),
             _ => 0,
         };
+        let strike = match &self.command {
+            NativeCommand::Strike { definition_id, weapon_item_id, .. } => {
+                crate::contact::ContactRead::select(
+                    &state.installed,
+                    &state.physical.entities,
+                    actor,
+                    definition_id,
+                    weapon_item_id.as_deref(),
+                )
+            }
+            _ => None,
+        };
+        let weapon = strike.and_then(|strike| match strike.kind {
+            crate::contact::ContactKind::Equipped { definition, .. } => Some(&definition.named),
+            _ => None,
+        });
+        let weapon_bytes = weapon.map_or(Some(0), |weapon| {
+            weapon.name.storage_bytes().checked_mul(3)?.checked_add(128)
+        }).ok_or(ExecutionError::Capacity)?;
         let bound = heap_sum([
             size_of::<ActivityDisplayRequest>() + 2 * size_of::<usize>(),
             state.installed.content.profile.id.len(),
@@ -430,6 +449,7 @@ impl ActivityDisplayCursor {
                 .map_or(0, |purpose| purpose.description.storage_bytes()),
             effect_bytes,
             speech,
+            weapon_bytes,
         ])
         .ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(bound)?;
@@ -445,7 +465,9 @@ impl ActivityDisplayCursor {
             None
         };
         let purpose = Purpose {
-            purpose: envelope.purpose.clone(),
+            purpose: envelope.purpose.clone().or_else(|| {
+                weapon.and_then(|weapon| authored::weapon_strike_name(weapon, None))
+            }),
             chosen_purpose: envelope
                 .chosen_purpose
                 .as_ref()
@@ -516,15 +538,6 @@ impl ActivityDisplayCursor {
                 .as_ref()
                 .map(|actions| actions.deactivate.as_str().into()),
         });
-        let strike = match &self.command {
-            NativeCommand::Strike { definition_id, .. } => state
-                .installed
-                .retained
-                .native_strike_read
-                .get(definition_id)
-                .map(authored::StrikeRead::from),
-            _ => None,
-        };
         let input = Input {
             command,
             actor: authored::ObservedActor {
@@ -535,7 +548,7 @@ impl ActivityDisplayCursor {
             },
             target,
             effect,
-            strike,
+            strike: strike.map(authored::StrikeRead::from),
         };
         let profile = Profile {
             id: state.installed.content.profile.id.clone(),

@@ -409,7 +409,7 @@ impl CommandKind {
     }
 
     fn binds_target_life(self) -> bool {
-        self.ranged_start().is_some() || matches!(self, Self::ReleaseShot | Self::Guard)
+        self.ranged_start().is_some() || matches!(self, Self::ReleaseShot | Self::Guard | Self::Strike)
     }
 
     fn arrangement(self) -> Option<OwnedArrangement> {
@@ -1398,7 +1398,7 @@ impl CommandRequest {
             CommandKind::Strike
                 if command.position.is_none()
                     && command.known_place.is_none()
-                    && command.item_id.is_none()
+                    && command.item_id.as_deref().is_none_or(id)
                     && command.expected_action_id.is_none()
                     && command.gathering_mode.is_none()
                     && command.target_id.as_deref().is_some_and(id)
@@ -1729,6 +1729,7 @@ impl PreparedRequest {
                     .definition_id
                     .as_deref()
                     .ok_or(StoreError::InvalidRecord)?,
+                weapon: input.item_id.as_deref(),
                 permission: strike_permission,
             }),
             CommandKind::Aim | CommandKind::ShootOnce | CommandKind::Hunt => {

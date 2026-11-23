@@ -1,17 +1,19 @@
 //! Finite natural contact uses installed strike definitions and the common body
 //! and occurrence owners. Selecting an intention does not grant an impact.
 use crate::simulation::InstalledWorld;
-use crate::state::{Action, Entity};
+use crate::state::{Action, Entity, EntityStore};
 use crate::worlds::base_decision_offers::NativeStrikeRead;
 use serde::{Deserialize, Serialize};
 pub(crate) mod guard;
 mod impact;
 mod injury;
 mod motion;
+mod read;
 pub(crate) mod review;
 pub(crate) use impact::{ContactAnswer, ContactStep, ImpactCursor};
 pub(crate) use injury::ContactInjury;
 pub(crate) use motion::{StrikeMotion, StrikeRoute, StrikeRouteStep, reach};
+pub(crate) use read::{ContactKind, ContactRead};
 pub use review::{StrikePermission, StrikeReviewOffer};
 
 pub(crate) fn stage_preparation(
@@ -241,16 +243,14 @@ pub(crate) fn contact_permitted(
 
 pub(crate) fn valid_action(
     installed: &InstalledWorld,
+    entities: &EntityStore,
     source: &Entity,
     action: &Action,
     target: Option<&Entity>,
     now: f64,
 ) -> bool {
     use StrikePhase::*;
-    let Some(definition) = action
-        .definition_id
-        .as_deref()
-        .and_then(|id| profile(installed, source, id))
+    let Some(definition) = ContactRead::action(installed, entities, source, action)
     else {
         return false;
     };

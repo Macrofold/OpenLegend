@@ -12,7 +12,8 @@ use crate::native_response::{LocomotionMode, NativeLocomotion, NativeResponsePro
 use crate::simulation::InstalledWorld;
 use crate::spatial::{Extent, body_surface_distance};
 use crate::state::{Action, BodyProfile, Entity, Placement, Point, SurfacePoint};
-use crate::worlds::base_decision_offers::{NativeStrikeRead, StrikePreparationRead};
+use super::ContactRead;
+use crate::worlds::base_decision_offers::StrikePreparationRead;
 use serde::{Deserialize, Serialize};
 use std::mem::size_of;
 
@@ -117,15 +118,12 @@ impl StrikeMotion {
 
     pub(crate) fn prepare(
         installed: &InstalledWorld,
-        definition: &NativeStrikeRead,
+        definition: ContactRead<'_>,
         target: &Entity,
         now: f64,
         budget: &ByteBudget,
     ) -> Result<(Box<Self>, ByteReservation), ExecutionError> {
-        let profile = definition
-            .preparation_motion
-            .as_ref()
-            .ok_or(ExecutionError::Invariant)?;
+        let profile = definition.preparation_motion.ok_or(ExecutionError::Invariant)?;
         let installed = selected_locomotion(installed, profile).ok_or(ExecutionError::Invariant)?;
         let Some(Placement::World {
             position,
@@ -171,11 +169,11 @@ impl StrikeMotion {
     pub(super) fn valid(
         &self,
         installed: &InstalledWorld,
-        definition: &NativeStrikeRead,
+        definition: ContactRead<'_>,
         now: f64,
         remaining: f64,
     ) -> bool {
-        let Some(profile) = definition.preparation_motion.as_ref() else {
+        let Some(profile) = definition.preparation_motion else {
             return false;
         };
         let binding = &self.locomotion;
@@ -207,7 +205,7 @@ impl StrikeMotion {
 /// body surface for moving contact, or by the usual anchors for a fixed strike.
 pub(crate) fn reach(
     installed: &InstalledWorld,
-    definition: &NativeStrikeRead,
+    definition: ContactRead<'_>,
     actor: &Entity,
     target: &Entity,
     range: f64,

@@ -903,6 +903,12 @@ pub(crate) fn with_actor_self<T>(
             state, entity, &names, budget,
         )?)
     };
+    let (action_animation, _animation_storage) = if private {
+        (None, None)
+    } else {
+        state.installed.observation_rules.value()
+            .observed_action_animation(entity, state, budget)?.unzip()
+    };
     let product = OwnActorProduct {
         world_id: &state.physical.header.id,
         actor_id,
@@ -1063,14 +1069,7 @@ pub(crate) fn with_actor_self<T>(
                 evasion_ready_at: actor.evasion_ready_at,
                 combat_ready_at: actor.combat_ready_at,
                 natural_strike_ids: actor.natural_strike_ids.as_deref(),
-                action_animation: state
-                    .installed
-                    .observation_rules
-                    .value()
-                    .observed_action_animation(
-                        entity,
-                        &state.installed.retained.native_strike_read,
-                    )?,
+                action_animation,
                 senses: &player_metadata
                     .as_ref()
                     .ok_or(ExecutionError::Invariant)?

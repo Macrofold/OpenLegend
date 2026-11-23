@@ -46,6 +46,9 @@ struct StrikeWords<'a> {
     approach_name: &'a str,
     approach_prefix: &'a str,
     approach_suffix: &'a str,
+    weapon_name: &'a str,
+    weapon_target: &'a str,
+    weapon_past: &'a str,
     #[serde(borrow)]
     catalogue: StrikeCatalogue<'a>,
 }
@@ -239,8 +242,8 @@ pub(crate) fn shared_name(
     )
 }
 
-impl From<&crate::worlds::base_decision_offers::NativeStrikeRead> for StrikeRead {
-    fn from(strike: &crate::worlds::base_decision_offers::NativeStrikeRead) -> Self {
+impl From<crate::contact::ContactRead<'_>> for StrikeRead {
+    fn from(strike: crate::contact::ContactRead<'_>) -> Self {
         Self {
             damage: strike.damage,
             range: strike.range,
@@ -250,6 +253,25 @@ impl From<&crate::worlds::base_decision_offers::NativeStrikeRead> for StrikeRead
             accuracy: strike.accuracy,
         }
     }
+}
+
+pub(crate) fn weapon_strike_name(weapon: &crate::state::Named, target: Option<&JsText>) -> Option<JsText> {
+    let words = &words()?.strike;
+    let name = crate::narration::name_phrase(weapon, crate::narration::NameArticle::Indefinite, false);
+    if let Some(target) = target {
+        let (before, after) = words.weapon_target.split_once("{target}")?;
+        let (between, end) = after.split_once("{weapon}")?;
+        Some(JsText::concat(&[&before.into(), target, &between.into(), &name, &end.into()]))
+    } else {
+        let (before, after) = words.weapon_name.split_once("{weapon}")?;
+        Some(JsText::concat(&[&before.into(), &name, &after.into()]))
+    }
+}
+
+pub(crate) fn weapon_strike_past(weapon: &crate::state::Named) -> Option<JsText> {
+    let (before, after) = words()?.strike.weapon_past.split_once("{weapon}")?;
+    let name = crate::narration::name_phrase(weapon, crate::narration::NameArticle::Definite, false);
+    Some(JsText::concat(&[&before.into(), &name, &after.into()]))
 }
 
 pub fn format(

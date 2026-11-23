@@ -134,16 +134,20 @@ impl ObservationRules {
 
 impl ObservationRules {
     /// Physical animation uses the present body's public heading. It exposes
-    /// the active phase and progress without a target identity or position.
+    /// the active phase, progress and currently held weapon name without an
+    /// item identity, a target or its position. The caller owns the returned
+    /// reservation with the animation until it encodes or retains it.
     pub(crate) fn observed_action_animation(
         &self,
         entity: &Entity,
-        strikes: &indexmap::IndexMap<String, crate::worlds::base_decision_offers::NativeStrikeRead>,
+        state: &crate::simulation::SimulationState,
+        budget: &crate::host::ByteBudget,
     ) -> Result<
-        Option<crate::worlds::base_observed::ObservedActionAnimation>,
+        Option<(crate::worlds::base_observed::ObservedActionAnimation, crate::host::ByteReservation)>,
         crate::status::ProjectionError,
     > {
-        use crate::contact::StrikePhase;
+        use crate::contact::{ContactKind, ContactRead, StrikePhase};
+        use crate::status::ProjectionError;
         use crate::worlds::base_observed::{
             AnimationKind, AnimationPhase, HorizontalDirection, ObservedActionAnimation,
         };
@@ -155,33 +159,46 @@ impl ObservationRules {
         else {
             return Ok(None);
         };
-        let definition = action
-            .definition_id
-            .as_ref()
-            .and_then(|id| strikes.get(id))
-            .filter(|definition| Some(definition.version) == action.definition_version)
-            .ok_or(crate::status::ProjectionError::UnsupportedFamily)?;
-        let kind = match definition.animation.as_str() {
-            "punch" => AnimationKind::Punch,
-            "melee" => AnimationKind::Melee,
-            _ => return Err(crate::status::ProjectionError::UnsupportedFamily),
+        let (kind, tool) = if action.weapon_item_id.is_some() {
+            let Some(ContactKind::Equipped { definition, .. }) = ContactRead::action(
+                &state.installed, &state.physical.entities, entity, action,
+            ).map(|read| read.kind) else {
+                // While interruption settles, an unavailable weapon cannot
+                // be disclosed from a stale action alone.
+                return Ok(None);
+            };
+            (AnimationKind::Melee, Some(&definition.named.name))
+        } else {
+            let definition = action.definition_id.as_ref()
+                .and_then(|id| state.installed.retained.native_strike_read.get(id))
+                .filter(|definition| Some(definition.version) == action.definition_version)
+                .ok_or(ProjectionError::UnsupportedFamily)?;
+            let kind = match definition.animation.as_str() {
+                "punch" => AnimationKind::Punch,
+                "melee" => AnimationKind::Melee,
+                _ => return Err(ProjectionError::UnsupportedFamily),
+            };
+            (kind, None)
         };
         let phase = match action.strike_phase {
             Some(StrikePhase::Windup) => AnimationPhase::Windup,
             Some(StrikePhase::Recovery) => AnimationPhase::Recovery,
-            None => return Err(crate::status::ProjectionError::UnsupportedFamily),
+            None => return Err(ProjectionError::UnsupportedFamily),
         };
-        Ok(Some(ObservedActionAnimation {
+        let bytes = action.id.len().checked_add(tool.map_or(0, crate::text::JsText::storage_bytes))
+            .ok_or(ProjectionError::Capacity)?;
+        let storage = budget.reserve(bytes).map_err(|_| ProjectionError::Capacity)?;
+        Ok(Some((ObservedActionAnimation {
             id: action.id.clone(),
             kind,
             phase,
-            tool: None,
+            tool: tool.cloned(),
             progress: (1.0 - action.remaining_seconds / action.total_seconds).clamp(0.0, 1.0),
             direction: HorizontalDirection {
                 x: entity.spatial.heading.sin(),
                 z: entity.spatial.heading.cos(),
             },
-        }))
+        }, storage)))
     }
 }
 

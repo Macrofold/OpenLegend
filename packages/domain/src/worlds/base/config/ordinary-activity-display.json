@@ -30,6 +30,9 @@
     "approachName": "approach",
     "approachPrefix": "Move to within ",
     "approachSuffix": " m; route length is not known",
+    "weaponName": "Strike with {weapon}",
+    "weaponTarget": "Attack {target} with {weapon}",
+    "weaponPast": "struck with {weapon}",
     "catalogue": {
       "approachPrefix": "Approach and ",
       "uncertaintyName": "Uncertainty",

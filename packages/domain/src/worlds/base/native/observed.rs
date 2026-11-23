@@ -259,7 +259,7 @@ pub struct ObservedActionAnimation {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub tool: Option<String>,
+    pub tool: Option<crate::text::JsText>,
     pub progress: f64,
     pub direction: HorizontalDirection,
 }

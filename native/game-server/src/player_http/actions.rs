@@ -466,6 +466,8 @@ pub(crate) fn contact_choices(
             kind: &'static str,
             target_id: &'a str,
             definition_id: &'a str,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            item_id: Option<&'a str>,
         },
         Guard {
             #[serde(rename = "type")]
@@ -538,10 +540,11 @@ pub(crate) fn contact_choices(
         for definition in menu.definitions() {
             let bytes = 4096_usize
                 .checked_add(
-                    4 * (definition.label.storage_bytes()
+                    4 * (definition.label_source_bytes()
                         + menu.name.storage_bytes()
                         + selected.len()
-                        + definition.id.len()),
+                        + definition.id().len()
+                        + definition.weapon().map_or(0, str::len)),
                 )
                 .ok_or(CapacityError)?;
             workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
@@ -551,19 +554,20 @@ pub(crate) fn contact_choices(
             let view = menu.view(definition).ok_or_else(|| {
                 RuntimeError::application_refused("Strike presentation unavailable.")
             })?;
-            let label = if definition.auto_move_to_range
+            let label = definition.label(menu.name).ok_or_else(|| {
+                RuntimeError::application_refused("Strike presentation unavailable.")
+            })?;
+            let label = if definition.auto_move_to_range()
                 && !menu
                     .reach_line(definition, budget)?
                     .is_some_and(|ray| line_clear(&ray))
             {
                 JsText::concat(&[
                     &copy.approach_prefix.into(),
-                    &definition.label.first_case(false),
-                    &" ".into(),
-                    menu.name,
+                    &label.first_case(false),
                 ])
             } else {
-                JsText::concat(&[&definition.label, &" ".into(), menu.name])
+                label
             };
             let facts = std::iter::once(("Target".into(), menu.name.clone()))
                 .chain(view.facts.into_iter().filter_map(|fact| match fact.value {
@@ -578,7 +582,11 @@ pub(crate) fn contact_choices(
                 )))
                 .collect();
             actions.push(Action {
-                id: format!("{}-{selected}", definition.id),
+                id: if let Some(item) = definition.weapon() {
+                    format!("{}-{selected}-{item}", definition.id())
+                } else {
+                    format!("{}-{selected}", definition.id())
+                },
                 label: Cow::Owned(label),
                 category: "Combat",
                 description: Cow::Owned(view.name),
@@ -591,7 +599,8 @@ pub(crate) fn contact_choices(
                     command: Command::Strike {
                         kind: "strike",
                         target_id: selected,
-                        definition_id: &definition.id,
+                        definition_id: definition.id(),
+                        item_id: definition.weapon(),
                     },
                 },
             });

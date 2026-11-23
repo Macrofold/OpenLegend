@@ -50,6 +50,7 @@ impl HeapBytes for Action {
             self.guard.heap_bytes()?,
             self.competence_pin.heap_bytes()?,
             self.weapon_item_id.heap_bytes()?,
+            self.contact_weapon_digest.heap_bytes()?,
             self.ammo_item_id.heap_bytes()?,
             self.lethal_permission.heap_bytes()?,
             self.attack_observers.heap_bytes()?,

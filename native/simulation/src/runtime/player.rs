@@ -67,6 +67,45 @@ pub struct RuntimeStrikeMenu<'a> {
     pub ranged: &'a [RuntimeRangedChoice<'a>],
 }
 
+#[derive(Clone, Copy)]
+pub struct RuntimeStrikeChoice<'a>(crate::contact::ContactRead<'a>);
+
+impl<'a> RuntimeStrikeChoice<'a> {
+    pub fn id(self) -> &'a str {
+        self.0.id
+    }
+
+    pub fn weapon(self) -> Option<&'a str> {
+        match self.0.kind {
+            crate::contact::ContactKind::Natural(_) => None,
+            crate::contact::ContactKind::Equipped { item_id, .. } => Some(item_id),
+        }
+    }
+
+    pub fn auto_move_to_range(self) -> bool {
+        self.0.auto_move_to_range
+    }
+
+    pub fn label_source_bytes(self) -> usize {
+        match self.0.kind {
+            crate::contact::ContactKind::Natural(strike) => strike.label.storage_bytes(),
+            crate::contact::ContactKind::Equipped { definition, .. } => definition.named.name.storage_bytes(),
+        }
+    }
+
+    pub fn label(self, target: &crate::text::JsText) -> Option<crate::text::JsText> {
+        use crate::text::JsText;
+        match self.0.kind {
+            crate::contact::ContactKind::Natural(strike) => {
+                Some(JsText::concat(&[&strike.label, &" ".into(), target]))
+            }
+            crate::contact::ContactKind::Equipped { definition, .. } => {
+                crate::worlds::activity_display::weapon_strike_name(&definition.named, Some(target))
+            }
+        }
+    }
+}
+
 impl<'a> RuntimeStrikeMenu<'a> {
     pub fn paused(&self) -> bool {
         self.state.physical.header.paused
@@ -85,13 +124,19 @@ impl<'a> RuntimeStrikeMenu<'a> {
     /// public attribute from this read may appear in the returned view.
     pub fn view(
         &self,
-        definition: &crate::worlds::base_decision_offers::NativeStrikeRead,
+        choice: RuntimeStrikeChoice<'a>,
     ) -> Option<crate::activity::ActivityView> {
         use crate::worlds::activity_display as display;
+        let purpose = match choice.0.kind {
+            crate::contact::ContactKind::Natural(_) => None,
+            crate::contact::ContactKind::Equipped { definition, .. } => {
+                display::weapon_strike_name(&definition.named, None)
+            }
+        };
         display::format(
             self.profile(),
-            display::OrdinaryAction::Strike(Some(display::StrikeRead::from(definition))),
-            None,
+            display::OrdinaryAction::Strike(Some(display::StrikeRead::from(choice.0))),
+            purpose,
             None,
             Some(display::ObservedActor {
                 position: self.source.world_position()?,
@@ -109,13 +154,13 @@ impl<'a> RuntimeStrikeMenu<'a> {
     /// selected strike can already reach its target without walking.
     pub fn reach_line(
         &self,
-        definition: &crate::worlds::base_decision_offers::NativeStrikeRead,
+        choice: RuntimeStrikeChoice<'a>,
         budget: &ByteBudget,
     ) -> Result<Option<crate::geometry::SightRay>, RuntimeError> {
         crate::geometry::interaction_reach(
             self.source,
             self.target,
-            definition.approach_range.unwrap_or(definition.range),
+            choice.0.approach_range.unwrap_or(choice.0.range),
             budget,
         )
         .map_err(failure)
@@ -123,14 +168,21 @@ impl<'a> RuntimeStrikeMenu<'a> {
 
     pub fn definitions(
         &self,
-    ) -> impl Iterator<Item = &'a crate::worlds::base_decision_offers::NativeStrikeRead> + '_ {
+    ) -> impl Iterator<Item = RuntimeStrikeChoice<'a>> + '_ {
         let installed = &self.state.installed;
+        let entities = &self.state.physical.entities;
+        let held = self.may_attack.then(|| self.state.inventory.children(entities, &self.source.id, true))
+            .into_iter().flatten()
+            .filter_map(|item| crate::contact::ContactRead::equipped(installed, entities, self.source, &item.id));
         installed
             .retained
             .native_strike_read
             .keys()
             .filter(|_| self.may_attack)
             .filter_map(|id| crate::contact::profile(installed, self.source, id))
+            .map(crate::contact::ContactRead::from)
+            .chain(held)
+            .map(RuntimeStrikeChoice)
     }
 
     /// Borrow only equipped shields from this accepted contact cut.

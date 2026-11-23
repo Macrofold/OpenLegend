@@ -36,6 +36,7 @@ pub enum RuntimePlayerCommand<'a> {
     Strike {
         target: &'a str,
         definition: &'a str,
+        weapon: Option<&'a str>,
         permission: Option<&'a crate::contact::StrikePermission>,
     },
     Follow {
@@ -150,8 +151,8 @@ impl RuntimePlayerCommand<'_> {
         match self {
             Self::Move(point) => point.surface_id.len(),
             Self::Strike {
-                target, definition, ..
-            } => target.len() + definition.len(),
+                target, definition, weapon, ..
+            } => target.len() + definition.len() + weapon.map_or(0, str::len),
             Self::Follow { target, .. } => target.len(),
             Self::Travel(intent) => intent.text_bytes(),
             Self::Cancel(action) => action.map_or(0, str::len),
@@ -223,10 +224,10 @@ impl RuntimePlayerCommand<'_> {
             return bind_directed_speech(id, actor, target, role, text, volume);
         }
         if let Self::Strike {
-            target, definition, ..
+            target, definition, weapon, ..
         } = self
         {
-            return bind_strike(id, actor, target, definition);
+            return bind_strike(id, actor, target, definition, weapon);
         }
         if let Self::Follow {
             target,
@@ -808,6 +809,7 @@ fn bind_strike(
     actor: &str,
     target: &str,
     definition: &str,
+    weapon: Option<&str>,
 ) -> Result<(NativeCommand, String), serde_json::Error> {
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -819,12 +821,15 @@ fn bind_strike(
         target_id: &'a str,
         #[serde(rename = "type")]
         kind: &'static str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        weapon_item_id: Option<&'a str>,
     }
     let headers = player_headers(id, actor);
     if !headers.valid()
         || ![target, definition]
             .into_iter()
             .all(crate::values::is_safe_record_id)
+        || weapon.is_some_and(|id| !crate::values::is_safe_record_id(id))
     {
         return Err(serde::ser::Error::custom("Invalid strike binding."));
     }
@@ -835,13 +840,14 @@ fn bind_strike(
         id,
         target_id: target,
         kind: "strike",
+        weapon_item_id: weapon,
     };
     Ok((
         NativeCommand::Strike {
-            envelope: headers.envelope(CommandEncoding::from_ordered(&binding, 6)?),
+            envelope: headers.envelope(CommandEncoding::from_ordered(&binding, 6 + usize::from(weapon.is_some()))?),
             target_id: target.into(),
             definition_id: definition.into(),
-            weapon_item_id: None,
+            weapon_item_id: weapon.map(str::to_owned),
             auto_equip: None,
         },
         json_record(&binding)?,

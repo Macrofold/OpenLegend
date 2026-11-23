@@ -1,5 +1,5 @@
 use super::*;
-use crate::contact::{StrikeMotion, StrikeRoute, StrikeRouteStep, may_target, profile, reach};
+use crate::contact::{ContactKind, ContactRead, StrikeMotion, StrikeRoute, StrikeRouteStep, may_target, profile, reach};
 
 impl CommandCursor {
     pub(super) fn prepare_contact_route(
@@ -131,8 +131,9 @@ impl CommandCursor {
             .entities
             .get(&envelope.actor_id)
             .ok_or(ExecutionError::MissingActor)?;
-        let definition =
-            profile(installed, source, definition_id).ok_or(ExecutionError::UnsupportedFamily)?;
+        let definition = ContactRead::from(
+            profile(installed, source, definition_id).ok_or(ExecutionError::UnsupportedFamily)?,
+        );
         let Some(target) = physical.entities.get(target_id) else {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
@@ -152,7 +153,7 @@ impl CommandCursor {
             self.refuse(&ordinary.not_applicable);
             return Ok(false);
         }
-        let motion = definition.preparation_motion.as_ref();
+        let motion = definition.preparation_motion;
         let range = motion.map_or(definition.range, |motion| motion.start_range);
         if motion.is_some() && target.supported_position().is_none() {
             self.refuse(&ordinary.out_of_reach);
@@ -165,8 +166,7 @@ impl CommandCursor {
         let mut storage = self.budget.reserve(
             envelope.id.len() + definition_id.len() + target_id.len() + "strikeworking".len(),
         )?;
-        let mut action =
-            Action::natural_contact(envelope.id.clone(), target_id.clone(), life, definition);
+        let mut action = Action::contact(envelope.id.clone(), target_id.clone(), life, definition);
         if motion.is_some() {
             let (motion, custody) = StrikeMotion::prepare(
                 installed,
@@ -197,7 +197,7 @@ impl CommandCursor {
             envelope,
             definition_id,
             target_id,
-            weapon_item_id: None,
+            weapon_item_id,
             ..
         } = &self.command
         else {
@@ -223,8 +223,13 @@ impl CommandCursor {
             _ => return Err(ExecutionError::UnsupportedFamily),
         };
         let installed = &core.state.installed;
-        let definition =
-            profile(installed, source, definition_id).ok_or(ExecutionError::UnsupportedFamily)?;
+        let definition = ContactRead::select(
+            installed,
+            &core.state.physical.entities,
+            source,
+            definition_id,
+            weapon_item_id.as_deref(),
+        ).ok_or(ExecutionError::InvalidCheckpoint)?;
         let target = core
             .state
             .physical
@@ -278,15 +283,21 @@ impl CommandCursor {
                     .checked_add(std::mem::size_of_val(permit))
             })
             .ok_or(ExecutionError::Capacity)?;
+        let weapon_bytes = match definition.kind {
+            ContactKind::Natural(_) => 0,
+            ContactKind::Equipped { item_id, definition } => item_id.len().checked_add(
+                definition.pin.digest.len()
+            ).ok_or(ExecutionError::Capacity)?,
+        };
         let mut storage = self.budget.reserve(
             envelope.id.len()
                 + target_id.len()
                 + definition.id.len()
                 + "strikeapproachingentity".len()
-                + permission_bytes,
+                + permission_bytes
+                + weapon_bytes,
         )?;
-        let mut action =
-            Action::natural_contact(envelope.id.clone(), target_id.clone(), life, definition);
+        let mut action = Action::contact(envelope.id.clone(), target_id.clone(), life, definition);
         action.requires_lethal_review = player.then_some(true);
         action.lethal_permission = permission.map(|permit| Box::new(permit.clone()));
         if let Some(route) = route {

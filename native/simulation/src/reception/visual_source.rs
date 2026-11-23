@@ -162,12 +162,11 @@ pub(super) fn prepare_visual_source(
         )?
         .into_parts();
         reservation.merge(guard)?;
-        (
-            Some(effects),
-            Some(
-                rules.observed_action_animation(subject, &state.installed.retained.native_strike_read)?,
-            ),
-        )
+        let (animation, storage) = rules.observed_action_animation(subject, state, budget)?.unzip();
+        if let Some(storage) = storage {
+            reservation.merge(storage)?;
+        }
+        (Some(effects), Some(animation))
     } else {
         (None, None)
     };

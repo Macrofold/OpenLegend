@@ -1,6 +1,6 @@
 //! A human's confirmation binds the same current body and strike facts that
 //! the impact consumes. The host owns the expiring, single-use browser offer.
-use super::ContactInjury;
+use super::{ContactInjury, ContactKind, ContactRead};
 use crate::body::ZeroHealthOutcome;
 use crate::execution::ExecutionError;
 use crate::host::retained_size::{heap_record, heap_sum};
@@ -80,14 +80,24 @@ impl StrikePermission {
 }
 
 fn digest(
-    definition: &NativeStrikeRead,
+    definition: ContactRead<'_>,
     injury: ContactInjury,
     budget: &ByteBudget,
 ) -> Result<(String, ByteReservation), ExecutionError> {
     // Use the existing exact text codec. This work only runs when issuing or
     // checking a confirmation. Nonlethal ordinary strikes use the scalars.
+    #[derive(Serialize)]
+    #[serde(untagged)]
+    enum Selected<'a> {
+        Natural(&'a NativeStrikeRead),
+        Equipped(&'a str, &'a crate::values::DefinitionPin),
+    }
+    let attack = match definition.kind {
+        ContactKind::Natural(strike) => Selected::Natural(strike),
+        ContactKind::Equipped { item_id, definition } => Selected::Equipped(item_id, &definition.pin),
+    };
     let selected = (
-        &definition,
+        attack,
         injury.outgoing,
         injury.susceptibility,
         injury.incoming,
@@ -103,7 +113,7 @@ fn digest(
 pub(crate) fn prepare(
     source: &Entity,
     target: &Entity,
-    definition: &NativeStrikeRead,
+    definition: ContactRead<'_>,
     injury: ContactInjury,
     budget: &ByteBudget,
 ) -> Result<(StrikePermission, ByteReservation), ExecutionError> {
@@ -142,7 +152,7 @@ pub(crate) fn check(
     installed: &InstalledWorld,
     source: &Entity,
     target: &Entity,
-    definition: &NativeStrikeRead,
+    definition: ContactRead<'_>,
     injury: ContactInjury,
     permission: Option<&StrikePermission>,
     budget: &ByteBudget,

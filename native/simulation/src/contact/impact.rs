@@ -2,8 +2,8 @@
 //! impact and drives the existing body and occurrence continuations.
 use super::motion::support_parts;
 use super::{
-    StrikeMotion, StrikeOutcome, StrikePhase, StrikeRoute, StrikeRouteStep, may_target, profile,
-    reach,
+    ContactKind, ContactRead, StrikeMotion, StrikeOutcome, StrikePhase, StrikeRoute, StrikeRouteStep,
+    may_target, reach,
 };
 use crate::activity::PendingActivityResult;
 use crate::body::{BodyAnswer, BodyStep, HealthChangeCursor};
@@ -177,10 +177,7 @@ impl ImpactCursor {
     ) -> Result<ContactStep, ExecutionError> {
         let (source, action) = self.source(&core.state.physical.entities)?;
         let installed = &core.state.installed;
-        let definition = action
-            .definition_id
-            .as_deref()
-            .and_then(|id| profile(installed, source, id))
+        let definition = ContactRead::action(installed, &core.state.physical.entities, source, action)
             .ok_or(ExecutionError::Invariant)?;
         let start_range = definition.preparation_motion.as_ref().map_or_else(
             || definition.approach_range.unwrap_or(definition.range),
@@ -228,10 +225,7 @@ impl ImpactCursor {
                 .entities
                 .get(&self.target)
                 .ok_or(ExecutionError::MissingEntity)?;
-            let definition = action
-                .definition_id
-                .as_deref()
-                .and_then(|id| profile(&core.state.installed, source, id))
+            let definition = ContactRead::action(&core.state.installed, &core.state.physical.entities, source, action)
                 .ok_or(ExecutionError::Invariant)?;
             if let Some(ray) = crate::geometry::interaction_reach_from(
                 source,
@@ -267,10 +261,7 @@ impl ImpactCursor {
             .entities
             .get(&self.target)
             .ok_or(ExecutionError::MissingEntity)?;
-        let definition = action
-            .definition_id
-            .as_deref()
-            .and_then(|id| profile(installed, source, id))
+        let definition = ContactRead::action(installed, &core.state.physical.entities, source, action)
             .ok_or(ExecutionError::Invariant)?;
         let Some((from, surface)) = support_parts(source) else {
             return Ok(ContactStep::Invalidated);
@@ -428,11 +419,8 @@ impl ImpactCursor {
             .transpose()?
             .flatten();
         if !same_route {
-            let definition = action
-                .definition_id
-                .as_deref()
-                .and_then(|id| profile(installed, source, id))
-                .and_then(|definition| definition.preparation_motion.as_ref())
+            let definition = ContactRead::action(installed, &core.state.physical.entities, source, action)
+                .and_then(|definition| definition.preparation_motion)
                 .ok_or(ExecutionError::Invariant)?;
             self.binding.serial = core.journal.next_provider_serial()?;
             self.route = Some(StrikeRoute::prepare(
@@ -518,10 +506,7 @@ impl ImpactCursor {
         let starting = awaiting && navigation.is_none();
         let motion = if starting {
             let installed = &core.state.installed;
-            let definition = action
-                .definition_id
-                .as_deref()
-                .and_then(|id| profile(installed, source, id))
+            let definition = ContactRead::action(installed, &core.state.physical.entities, source, action)
                 .ok_or(ExecutionError::Invariant)?;
             let target = core
                 .state
@@ -643,13 +628,7 @@ impl ImpactCursor {
                     let valid = action
                         .target_life
                         .is_some_and(|life| may_target(installed, source, target, life))
-                        && action
-                            .definition_id
-                            .as_deref()
-                            .and_then(|id| profile(installed, source, id))
-                            .is_some_and(|definition| {
-                                Some(definition.version) == action.definition_version
-                            })
+                        && ContactRead::action(installed, &core.state.physical.entities, source, action).is_some()
                         && !installed
                             .capabilities
                             .capability_blocked(Some(source), "actions")?
@@ -715,14 +694,7 @@ impl ImpactCursor {
                         return Ok(ContactStep::AdvanceComplete);
                     }
                     let (source, action) = self.source(&core.state.physical.entities)?;
-                    let definition = profile(
-                        &core.state.installed,
-                        source,
-                        action
-                            .definition_id
-                            .as_deref()
-                            .ok_or(ExecutionError::Invariant)?,
-                    )
+                    let definition = ContactRead::action(&core.state.installed, &core.state.physical.entities, source, action)
                     .ok_or(ExecutionError::Invariant)?;
                     let target = core
                         .state
@@ -936,14 +908,7 @@ impl ImpactCursor {
     fn begin_impact(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         let (source, action) = self.source(&core.state.physical.entities)?;
         let installed = &core.state.installed;
-        let definition = profile(
-            installed,
-            source,
-            action
-                .definition_id
-                .as_deref()
-                .ok_or(ExecutionError::Invariant)?,
-        )
+        let definition = ContactRead::action(installed, &core.state.physical.entities, source, action)
         .ok_or(ExecutionError::Invariant)?;
         let target = core
             .state
@@ -980,9 +945,12 @@ impl ImpactCursor {
             y: source_position.y - target_position.y,
             z: source_position.z - target_position.z,
         };
-        // Match the selected Source guaranteed-contact path. Ineligible sight
-        // or reach never spends a draw. See AC09.6 for the shared RNG follow-up.
-        if accuracy != 1.0 && self.automatic(core)? && core.physical().draw() >= accuracy {
+        // Ineligible contact never draws. An equipped attempt draws exactly
+        // once, including at guaranteed accuracy. Keep the existing natural
+        // strike policy until its separate AC09.6 reconciliation.
+        let draws = matches!(definition.kind, ContactKind::Equipped { .. })
+            || (accuracy != 1.0 && self.automatic(core)?);
+        if draws && core.physical().draw() >= accuracy {
             self.hit_reason = Some("accuracy");
             return Ok(());
         }
@@ -1018,10 +986,7 @@ impl ImpactCursor {
         else {
             return Ok(false);
         };
-        let seconds = action
-            .definition_id
-            .as_deref()
-            .and_then(|id| profile(&core.state.installed, target, id))
+        let seconds = ContactRead::action(&core.state.installed, &core.state.physical.entities, target, action)
             .ok_or(ExecutionError::Invariant)?
             .recovery_seconds
             .unwrap_or(0.0);
@@ -1124,14 +1089,7 @@ impl ImpactCursor {
     ) -> Result<StagedOccurrence, ExecutionError> {
         let (source, action) = self.source(&core.state.physical.entities)?;
         let installed = std::sync::Arc::clone(&core.state.installed);
-        let definition = profile(
-            &installed,
-            source,
-            action
-                .definition_id
-                .as_deref()
-                .ok_or(ExecutionError::Invariant)?,
-        )
+        let definition = ContactRead::action(&installed, &core.state.physical.entities, source, action)
         .ok_or(ExecutionError::Invariant)?;
         let recovery = definition.recovery_seconds.unwrap_or(0.0);
         let reason = self.hit_reason.ok_or(ExecutionError::Invariant)?;
@@ -1144,18 +1102,22 @@ impl ImpactCursor {
         } else {
             ""
         };
+        let verb_bytes = match definition.kind {
+            ContactKind::Natural(strike) => strike.past_tense.storage_bytes(),
+            ContactKind::Equipped { definition, .. } => 512 + 3 * definition.named.name.storage_bytes(),
+        };
         self.reserve(
             2048 + 3 * (self.source.len() + self.target.len())
                 + self.action.len()
                 + definition.id.len()
-                + definition.past_tense.storage_bytes()
+                + verb_bytes
                 + rules.missed.len()
                 + suffix.len(),
         )?;
         let mut data = IndexMap::from([
             (
                 "definitionId".into(),
-                EventScalar::Text(definition.id.clone().into()),
+                EventScalar::Text(definition.id.into()),
             ),
             (
                 "actionId".into(),
@@ -1201,6 +1163,17 @@ impl ImpactCursor {
                 EventScalar::Number(self.health_after(core)?),
             );
         }
+        let verb = if hit {
+            match definition.kind {
+                ContactKind::Natural(strike) => strike.past_tense.clone(),
+                ContactKind::Equipped { definition, .. } => {
+                    crate::worlds::activity_display::weapon_strike_past(&definition.named)
+                        .ok_or(ExecutionError::Invariant)?
+                }
+            }
+        } else {
+            rules.missed.clone().into()
+        };
         core.physical().start_contact_recovery(
             &self.source,
             &self.action,
@@ -1212,11 +1185,6 @@ impl ImpactCursor {
             recovery,
         )?;
         let mut prefix = crate::text::JsText::from(" ");
-        let verb = if hit {
-            definition.past_tense.clone()
-        } else {
-            rules.missed.clone().into()
-        };
         crate::text::TextRef::from(&verb).append_to(&mut prefix);
         crate::text::TextRef::from(" ").append_to(&mut prefix);
         core.stage_event(EventEmissionIntent {

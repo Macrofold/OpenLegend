@@ -345,7 +345,7 @@ impl HuntRead<'_> {
         if actor.combat_ready_at.is_none_or(|until| until <= now)
             && crate::contact::reach(
                 &self.state.installed,
-                strike,
+                strike.into(),
                 self.animal,
                 quarry,
                 start_range,
