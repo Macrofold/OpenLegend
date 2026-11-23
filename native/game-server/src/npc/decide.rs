@@ -251,6 +251,7 @@ pub(super) async fn run(
                     Ok(answered) => Some(answered),
                     Err(error) => match error.cause().1 {
                         CallFailure::Cancelled
+                        | CallFailure::CompletionUnconfirmed
                         | CallFailure::Authority(_)
                         | CallFailure::Commit(_)
                         | CallFailure::World(_) => return Err(error),

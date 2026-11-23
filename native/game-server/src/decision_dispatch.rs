@@ -75,6 +75,7 @@ pub(crate) enum CallFailure {
     Transport(NetworkError),
     Refused(u16),
     Deployment(&'static str),
+    CompletionUnconfirmed,
     Invalid,
     Commit(CommitError),
     At {
@@ -102,6 +103,7 @@ impl fmt::Display for CallFailure {
                 f,
                 "The selected deployment could not prepare the request ({code})"
             ),
+            Self::CompletionUnconfirmed => f.write_str("The provider did not confirm completion"),
             Self::Invalid => f.write_str("The provider returned an invalid response"),
             Self::Commit(error) => error.fmt(f),
             Self::At { stage, failed } => write!(f, "{stage}: {failed}"),
@@ -667,7 +669,16 @@ impl DecisionDispatch {
             return Err(CallFailure::Cancelled.at("response-decode"));
         }
         result?;
-        observation.ok_or(CallFailure::Invalid)?.value
+        let value = observation.ok_or(CallFailure::Invalid)?.value;
+        // A language reply can report uncertain execution without an answer.
+        // Embedding observations also use this flag when only pricing is unknown.
+        if route != crate::provider_transport::ProviderRoute::Embedding
+            && uncertain
+            && matches!(&value, Err(CallFailure::Invalid))
+        {
+            return Err(CallFailure::CompletionUnconfirmed);
+        }
+        value
     }
 
     async fn cancel_known_run(

@@ -884,6 +884,11 @@ impl Director {
                 "The reply service did not finish the request.",
                 "transport",
             ),
+            CallFailure::CompletionUnconfirmed => (
+                SpeechReplyStatus::Failed,
+                "The reply service couldn't confirm that the request finished.",
+                "completion-unconfirmed",
+            ),
             CallFailure::Invalid => (
                 SpeechReplyStatus::Failed,
                 "The reply could not be used.",

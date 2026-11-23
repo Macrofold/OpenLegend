@@ -95,6 +95,12 @@ The same configured default-model rates now own the direct request's reservation
 
 The initial held test did not reach direct HTTPS and did not capture the terminal condition. The equivalent held replay passed with the same final executable. Both results are preserved, and this does not establish a performance or reliability rate. Exact tree `70a09ec67661d7ab2fc29f444feefcf5e154a847`, executable SHA-256 `611ecaac74c4fce8f4530b4eb62a40f4713c60024f256a23f143c1b3f9bf2379`, private archive `~/.codex/verification/OpenLegend/native-runtime-foundations/nsc04-decision-invalid-rating-20261122`, manifest SHA-256 `d23af0f3046cc47cf63a0362bcac72460a16ee44eb8d1690107cb47e1bbbe92b`. The case list and per-case cleanup records are in the manifest.
 
+### Unconfirmed completion during optional action assessment
+
+November 23, 2026. The earlier stand-alone build treated an unconfirmed assessment as a completed malformed answer. It sent one additional generation request and applied a two-berry gift. The repaired build records `action-attention/completion-unconfirmed`, keeps the original attempt's spending reservation and sends no generation request. The gifts and response effects stayed absent. A separate completed malformed assessment still allowed one ordinary generation, and the gift and original receipt survived exact retry and cold reopening.
+
+The matched control is `239d3f512` with executable `03f916121a1c`. The candidate tree is `1284392a9a46ea8b3601637167a94ea24fff107f` with executable `5a45ad6e78b6`. Both candidate outcomes and the matched control use the real controlled HTTPS caller. Their attempt status and amounts survive cold reopening. Controlled HTTPS cost $0, and there were zero remaining temporary databases. One preliminary control used an earlier incompatible installed artifact and stopped before gameplay. It is preserved separately from the three completed cases.
+
 ## Remembered aliases in Node-hosted Rust replies — November 22, 2026
 
 An ordinary player conversation reproduced a reply refusal before generation. The bridge classified a remembered person as a visible body because the person existed in its wider perception roster. Rust correctly refused that body because the reply had not selected it. The bridge now uses the current visible selection for physical references. Remembered aliases still resolve through their permitted evidence or recognized identity.
