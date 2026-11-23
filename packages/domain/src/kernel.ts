@@ -1,4 +1,5 @@
 import itemMoveCopy from './worlds/base/item-move-copy.json' with { type: 'json' };
+import equipmentCopy from './worlds/base/equipment-copy.json' with { type: 'json' };
 import recordCopy from './recipe-record-copy.json' with { type: 'json' };
 import activityLearningCopy from './activity-learning-copy.json' with { type: 'json' };
 import inspectionCopy from './inventory-inspection-copy.json' with { type: 'json' };
@@ -2385,7 +2386,7 @@ function prepareNativeOperation(
         ((!equippedItem(world, actor.id, 'melee', command.weaponItemId) && !command.autoEquip) ||
           !accessiblePossession(world, actor.id, command.weaponItemId))
       )
-        return reject('weapon-unavailable', 'Equip that exact accessible weapon first.');
+        return reject('weapon-unavailable', equipmentCopy.attackUnavailable);
       if (command.weaponItemId && command.autoEquip) {
         const problem = equipmentProblem(
           world,

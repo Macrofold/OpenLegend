@@ -468,6 +468,10 @@ pub(crate) fn contact_choices(
             definition_id: &'a str,
             #[serde(skip_serializing_if = "Option::is_none")]
             item_id: Option<&'a str>,
+            #[serde(skip_serializing_if = "std::ops::Not::not")]
+            auto_equip: bool,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            expected_revision: Option<u64>,
         },
         Guard {
             #[serde(rename = "type")]
@@ -537,7 +541,8 @@ pub(crate) fn contact_choices(
         } else {
             None
         };
-        for definition in menu.definitions() {
+        for definition in menu.definitions(budget) {
+            let definition = definition?;
             let bytes = 4096_usize
                 .checked_add(
                     4 * (definition.label_source_bytes()
@@ -569,7 +574,14 @@ pub(crate) fn contact_choices(
             } else {
                 label
             };
+            let equipment = if let Some((text, custody)) = menu.equipment_preview(definition, budget)? {
+                workspace.merge(custody)?;
+                Some(("Equipment".into(), text))
+            } else {
+                None
+            };
             let facts = std::iter::once(("Target".into(), menu.name.clone()))
+                .chain(equipment)
                 .chain(view.facts.into_iter().filter_map(|fact| match fact.value {
                     ActivityDetail::Scalar(ActivityScalar::String(value)) => {
                         Some((fact.name.first_case(true), value))
@@ -601,6 +613,8 @@ pub(crate) fn contact_choices(
                         target_id: selected,
                         definition_id: definition.id(),
                         item_id: definition.weapon(),
+                        auto_equip: definition.equipment_revision().is_some(),
+                        expected_revision: definition.equipment_revision(),
                     },
                 },
             });

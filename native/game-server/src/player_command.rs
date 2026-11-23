@@ -1201,11 +1201,13 @@ impl CommandRequest {
             _ => false,
         };
         let arrangement = command.kind.arrangement().is_some();
+        let equip_strike =
+            matches!(command.kind, CommandKind::Strike) && command.auto_equip == Some(true);
         if !id(&self.command_id)
             || self.command_id.starts_with("gameplay:")
             || !point_binding_valid
             || Uuid::parse_str(&self.command_epoch).is_err()
-            || (!arrangement && !matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing | CommandKind::LearnRecord)
+            || (!arrangement && !equip_strike && !matches!(command.kind, CommandKind::Unequip | CommandKind::InspectItem | CommandKind::Outing | CommandKind::LearnRecord)
                 && command.expected_revision.is_some())
             || (!matches!(command.kind, CommandKind::Outing)
                 && (command.outing_operation.is_some() || command.outing_mode.is_some()
@@ -1232,7 +1234,7 @@ impl CommandRequest {
             || command.tools.as_ref().is_some_and(|tools| {
                 tools.len() != 1 || tools.iter().any(|(role, item)| !id(role) || !id(item))
             })
-            || (command.kind.ranged_start().is_none() && !matches!(command.kind, CommandKind::Guard)
+            || (command.kind.ranged_start().is_none() && !matches!(command.kind, CommandKind::Guard | CommandKind::Strike)
                 && command.auto_equip.is_some())
             || (command.kind.ranged_start().is_none() && !matches!(command.kind, CommandKind::PracticeShot)
                 && command.ammunition_id.is_some())
@@ -1399,6 +1401,8 @@ impl CommandRequest {
                 if command.position.is_none()
                     && command.known_place.is_none()
                     && command.item_id.as_deref().is_none_or(id)
+                    && (!equip_strike || command.item_id.is_some())
+                    && command.expected_revision.is_none_or(|revision| revision <= openlegend_simulation::identity::MAX_SAFE_INTEGER)
                     && command.expected_action_id.is_none()
                     && command.gathering_mode.is_none()
                     && command.target_id.as_deref().is_some_and(id)
@@ -1730,6 +1734,8 @@ impl PreparedRequest {
                     .as_deref()
                     .ok_or(StoreError::InvalidRecord)?,
                 weapon: input.item_id.as_deref(),
+                auto_equip: input.auto_equip == Some(true),
+                equipment_revision: input.expected_revision,
                 permission: strike_permission,
             }),
             CommandKind::Aim | CommandKind::ShootOnce | CommandKind::Hunt => {

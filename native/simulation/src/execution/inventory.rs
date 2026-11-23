@@ -23,7 +23,7 @@ pub(crate) use drop::inventory_work_bound;
 pub(crate) use drop::drop_item_problem;
 pub(crate) use pickup::partitionable_stock;
 pub(crate) use debit::{OwnedDebits, can_debit_lot, can_debit_lot_after_hold};
-pub(crate) use equipment::{EquipmentDecision, EquipmentRequest, equipment_fits};
+pub(crate) use equipment::{EquipmentDecision, EquipmentRequest, equipment_can_equip, equipment_conflicts, equipment_fits};
 
 struct LotDebit<'a> {
     cause: &'a str,

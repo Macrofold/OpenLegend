@@ -68,7 +68,7 @@ pub struct RuntimeStrikeMenu<'a> {
 }
 
 #[derive(Clone, Copy)]
-pub struct RuntimeStrikeChoice<'a>(crate::contact::ContactRead<'a>);
+pub struct RuntimeStrikeChoice<'a>(crate::contact::ContactRead<'a>, Option<u64>);
 
 impl<'a> RuntimeStrikeChoice<'a> {
     pub fn id(self) -> &'a str {
@@ -84,6 +84,12 @@ impl<'a> RuntimeStrikeChoice<'a> {
 
     pub fn auto_move_to_range(self) -> bool {
         self.0.auto_move_to_range
+    }
+
+    /// When present, the attack puts on a carried weapon against the offered
+    /// inventory cut. Reject a changed cut before putting any item away.
+    pub fn equipment_revision(self) -> Option<u64> {
+        self.1
     }
 
     pub fn label_source_bytes(self) -> usize {
@@ -166,14 +172,23 @@ impl<'a> RuntimeStrikeMenu<'a> {
         .map_err(failure)
     }
 
-    pub fn definitions(
-        &self,
-    ) -> impl Iterator<Item = RuntimeStrikeChoice<'a>> + '_ {
+    pub fn definitions<'b>(
+        &'b self,
+        budget: &'b ByteBudget,
+    ) -> impl Iterator<Item = Result<RuntimeStrikeChoice<'a>, RuntimeError>> + 'b {
         let installed = &self.state.installed;
         let entities = &self.state.physical.entities;
         let held = self.may_attack.then(|| self.state.inventory.children(entities, &self.source.id, true))
             .into_iter().flatten()
             .filter_map(|item| crate::contact::ContactRead::equipped(installed, entities, self.source, &item.id));
+        let carried = self.may_attack.then(|| self.state.inventory.children(entities, &self.source.id, false))
+            .into_iter().flatten()
+            .filter(|item| matches!(item.placement, Some(crate::state::Placement::Contained { .. })))
+            .filter_map(move |item| match crate::contact::ContactRead::carried(self.state, self.source, item, budget) {
+                Ok(Some(read)) => Some(Ok(RuntimeStrikeChoice(read, Some(self.source.inventory_revision.unwrap_or_default())))),
+                Ok(None) => None,
+                Err(error) => Some(Err(failure(error))),
+            });
         installed
             .retained
             .native_strike_read
@@ -182,7 +197,23 @@ impl<'a> RuntimeStrikeMenu<'a> {
             .filter_map(|id| crate::contact::profile(installed, self.source, id))
             .map(crate::contact::ContactRead::from)
             .chain(held)
-            .map(RuntimeStrikeChoice)
+            .map(|read| Ok(RuntimeStrikeChoice(read, None)))
+            .chain(carried)
+    }
+
+    pub fn equipment_preview(
+        &self,
+        choice: RuntimeStrikeChoice<'a>,
+        budget: &ByteBudget,
+    ) -> Result<Option<(crate::text::JsText, crate::host::ByteReservation)>, RuntimeError> {
+        if choice.equipment_revision().is_none() {
+            return Ok(None);
+        }
+        let item = choice.weapon()
+            .and_then(|id| self.state.physical.entities.get(id))
+            .ok_or_else(|| failure(crate::execution::ExecutionError::Invariant))?;
+        crate::commands::equipment_preview(self.state, self.source, item, budget)
+            .map(Some).map_err(failure)
     }
 
     /// Borrow only equipped shields from this accepted contact cut.
@@ -594,10 +625,12 @@ impl NativeWorldSession {
             .ok_or(CapacityError)?;
         let _workspace = self.budget.reserve(bytes)?;
         let strike = match command {
-            RuntimePlayerCommand::Strike { permission, .. }
-            | RuntimePlayerCommand::RangedStart { permission, .. }
+            RuntimePlayerCommand::Strike { permission, equipment_revision, .. } => {
+                Some(crate::contact::review::PlayerStrike { permission, equipment_revision })
+            }
+            RuntimePlayerCommand::RangedStart { permission, .. }
             | RuntimePlayerCommand::RangedRelease { permission, .. } => {
-                Some(crate::contact::review::PlayerStrike { permission })
+                Some(crate::contact::review::PlayerStrike { permission, equipment_revision: None })
             }
             _ => None,
         };
@@ -1034,8 +1067,7 @@ impl NativeWorldSession {
                     name,
                     ranged: ranged.as_ref().map_or(&[], |(choices, _)| choices.as_slice()),
                 };
-                if choice.definitions().next().is_some() || !choice.ranged.is_empty()
-                    || choice.guard_shields().next().is_some()
+                if may_attack || choice.guard_shields().next().is_some()
                 {
                     result = Some(use_menu.take().expect("one selected contact")(choice));
                 }

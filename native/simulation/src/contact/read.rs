@@ -1,7 +1,10 @@
 //! A synchronous contact definition read shared by preparation and impact.
 
-use crate::install::{ItemDefinitionRead, equipped_melee};
-use crate::simulation::InstalledWorld;
+use crate::commands::NativeCommand;
+use crate::execution::{ExecutionError, equipment_can_equip};
+use crate::host::ByteBudget;
+use crate::install::{ItemDefinitionRead, MeleeProfile, equipped_melee};
+use crate::simulation::{InstalledWorld, SimulationState};
 use crate::state::{Action, Entity, EntityStore};
 use crate::worlds::base_decision_offers::{NativeStrikeRead, StrikePreparationRead};
 
@@ -48,6 +51,74 @@ impl<'a> From<&'a NativeStrikeRead> for ContactRead<'a> {
 }
 
 impl<'a> ContactRead<'a> {
+    /// Resolve the exact intended weapon through the common equipment
+    /// prerequisites when this request explicitly prepares to equip it.
+    pub(crate) fn command(
+        state: &'a SimulationState,
+        source: &Entity,
+        command: &'a NativeCommand,
+        budget: &ByteBudget,
+    ) -> Result<Option<Self>, ExecutionError> {
+        let NativeCommand::Strike {
+            definition_id,
+            weapon_item_id,
+            auto_equip,
+            ..
+        } = command
+        else {
+            return Err(ExecutionError::Invariant);
+        };
+        let read = Self::select(
+            &state.installed,
+            &state.physical.entities,
+            source,
+            definition_id,
+            weapon_item_id.as_deref(),
+        );
+        if *auto_equip != Some(true) || weapon_item_id.is_none() {
+            return Ok(read);
+        }
+        let Some(item) = weapon_item_id
+            .as_ref()
+            .and_then(|id| state.physical.entities.get(id))
+        else {
+            return Ok(None);
+        };
+        if let Some(read) = read {
+            return Ok(equipment_can_equip(state, source, item, true, budget)?.then_some(read));
+        }
+        let read = Self::carried(state, source, item, budget)?;
+        Ok(read.filter(|read| read.id == definition_id))
+    }
+
+    pub(crate) fn carried(
+        state: &'a SimulationState,
+        source: &Entity,
+        item: &'a Entity,
+        budget: &ByteBudget,
+    ) -> Result<Option<Self>, ExecutionError> {
+        let Some(lot) = item.item.as_ref() else {
+            return Ok(None);
+        };
+        let Some(definition) = state
+            .installed
+            .retained
+            .items
+            .get(&lot.definition_pin.id)
+            .filter(|definition| definition.pin == lot.definition_pin)
+        else {
+            return Ok(None);
+        };
+        let Some(profile) = definition.melee_profile() else {
+            return Ok(None);
+        };
+        let Some(read) = Self::weapon(&state.installed, source, &item.id, definition, profile)
+        else {
+            return Ok(None);
+        };
+        Ok(equipment_can_equip(state, source, item, true, budget)?.then_some(read))
+    }
+
     /// Read one exact equipped lot or one installed natural strike. This
     /// borrows the selected state. Eligibility and targets are checked by
     /// the caller through the ordinary contact owner.
@@ -72,6 +143,17 @@ impl<'a> ContactRead<'a> {
         source: &Entity,
         item_id: &'a str,
     ) -> Option<Self> {
+        let (definition, profile) = equipped_melee(entities, &installed.retained, source, item_id)?;
+        Self::weapon(installed, source, item_id, definition, profile)
+    }
+
+    fn weapon(
+        installed: &InstalledWorld,
+        source: &Entity,
+        item_id: &'a str,
+        definition: &'a ItemDefinitionRead,
+        profile: &MeleeProfile,
+    ) -> Option<Self> {
         let actor = source.actor.as_ref()?;
         let body = actor.body.as_ref()?;
         if !matches!(actor.controller.as_str(), "player" | "npc")
@@ -79,7 +161,6 @@ impl<'a> ContactRead<'a> {
         {
             return None;
         }
-        let (definition, profile) = equipped_melee(entities, &installed.retained, source, item_id)?;
         let id = definition.pin.id.as_str();
         let allowed_body = installed
             .occurrence_rules

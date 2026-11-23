@@ -66,21 +66,19 @@ impl CommandCursor {
             NativeCommand::Strike {
                 definition_id,
                 weapon_item_id,
-                auto_equip,
                 ..
             } => {
-                if auto_equip == &Some(true) {
-                    return Err(ExecutionError::UnsupportedFamily);
-                }
-                if let Some(item) = weapon_item_id {
-                    if crate::contact::ContactRead::select(
-                        &installed,
-                        &core.state.physical.entities,
-                        entity,
-                        definition_id,
-                        Some(item),
-                    ).is_none() {
-                        self.discovery_refuse(&rules.availability.unsupported_strike)?;
+                if weapon_item_id.is_some() {
+                    if self.selected_equipment_revision.is_some_and(|revision| {
+                        revision != entity.inventory_revision.unwrap_or_default()
+                    }) {
+                        self.refuse_strike_weapon(true)?;
+                        return Ok(false);
+                    }
+                    if crate::contact::ContactRead::command(
+                        &core.state, entity, &self.command, &self.budget,
+                    )?.is_none() {
+                        self.refuse_strike_weapon(false)?;
                         return Ok(false);
                     }
                 } else {
@@ -265,18 +263,17 @@ impl CommandCursor {
                 let (target_id, strike) = match &self.command {
                     NativeCommand::Strike {
                         target_id,
-                        definition_id,
                         weapon_item_id,
                         ..
                     } => {
-                        let Some(strike) = crate::contact::ContactRead::select(
-                            &installed,
-                            &core.state.physical.entities,
-                            actor,
-                            definition_id,
-                            weapon_item_id.as_deref(),
-                        ) else {
-                            return self.discovery_refuse(&rules.availability.unsupported_strike);
+                        let Some(strike) = crate::contact::ContactRead::command(
+                            &core.state, actor, &self.command, &self.budget,
+                        )? else {
+                            return if weapon_item_id.is_some() {
+                                self.refuse_strike_weapon(false)
+                            } else {
+                                self.discovery_refuse(&rules.availability.unsupported_strike)
+                            };
                         };
                         (target_id, strike)
                     }

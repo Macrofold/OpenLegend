@@ -50,7 +50,7 @@ pub(crate) use inventory::partitionable_stock;
 pub use inventory::{OwnedArrangement, OwnedMove, OwnedStockLot, OwnedStockSelection};
 pub(crate) use inventory::{OwnedMoveError, can_split_stock, drop_item_problem, inventory_work_bound, same_container_merge};
 pub(crate) use inventory::{OwnedDebits, can_debit_lot, can_debit_lot_after_hold};
-pub(crate) use inventory::{EquipmentDecision, EquipmentRequest, equipment_fits};
+pub(crate) use inventory::{EquipmentDecision, EquipmentRequest, equipment_can_equip, equipment_conflicts, equipment_fits};
 mod participation;
 mod practice;
 mod rates;

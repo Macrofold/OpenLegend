@@ -195,9 +195,7 @@ impl CommandCursor {
     ) -> Result<(), ExecutionError> {
         let NativeCommand::Strike {
             envelope,
-            definition_id,
             target_id,
-            weapon_item_id,
             ..
         } = &self.command
         else {
@@ -223,13 +221,9 @@ impl CommandCursor {
             _ => return Err(ExecutionError::UnsupportedFamily),
         };
         let installed = &core.state.installed;
-        let definition = ContactRead::select(
-            installed,
-            &core.state.physical.entities,
-            source,
-            definition_id,
-            weapon_item_id.as_deref(),
-        ).ok_or(ExecutionError::InvalidCheckpoint)?;
+        let definition = ContactRead::command(
+            &core.state, source, &self.command, &self.budget,
+        )?.ok_or(ExecutionError::InvalidCheckpoint)?;
         let target = core
             .state
             .physical

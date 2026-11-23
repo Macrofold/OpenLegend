@@ -3,6 +3,8 @@
 use super::*;
 use crate::state::Individuality;
 
+use crate::simulation::SimulationState;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum EquipmentRequest {
     Equip,
@@ -22,7 +24,9 @@ pub(crate) enum EquipmentDecision {
     },
 }
 
+#[derive(Clone, Copy)]
 struct Attachment<'a> {
+    id: &'a str,
     child: EntityHandle,
     lot: &'a ItemLot,
     revision: u64,
@@ -77,6 +81,7 @@ fn owned_attachment<'a>(
         return None;
     }
     Some(Attachment {
+        id: &item.id,
         child: state.physical.entities.handle(&item.id)?,
         lot,
         revision,
@@ -86,7 +91,93 @@ fn owned_attachment<'a>(
     })
 }
 
+fn conflicting_attachments<'a>(
+    state: &'a SimulationState,
+    actor: &'a str,
+    selected: Attachment<'a>,
+) -> impl Iterator<Item = Attachment<'a>> {
+    state
+        .inventory
+        .children(&state.physical.entities, actor, true)
+        .filter_map(move |item| {
+            let other = owned_attachment(state, actor, item)?;
+            (other.child != selected.child
+                && crate::install::equipment_ports_conflict(other.ports, selected.ports))
+            .then_some(other)
+        })
+}
+
+/// Read exact currently equipped items that would be stowed for this item.
+/// No hold is released and no alternate attachment is selected here.
+pub(crate) fn equipment_conflicts<'a>(
+    state: &'a SimulationState,
+    actor: &'a str,
+    item: &'a Entity,
+) -> impl Iterator<Item = &'a Entity> {
+    owned_attachment(state, actor, item)
+        .into_iter()
+        .flat_map(move |selected| conflicting_attachments(state, actor, selected))
+        .filter_map(|conflict| state.physical.entities.resolve(conflict.child))
+}
+
+fn unreserved(
+    state: &SimulationState,
+    actor: &Entity,
+    selected: Attachment<'_>,
+    equipping: bool,
+    replacing: bool,
+    budget: &ByteBudget,
+) -> Result<bool, ExecutionError> {
+    let holds = &state.physical.holds;
+    let items = std::iter::once(selected)
+        .chain(conflicting_attachments(state, &actor.id, selected).filter(|_| equipping));
+    for item in items {
+        let held = if replacing {
+            holds.quantity_after_replacement(item.id, actor, budget)?
+        } else {
+            holds.quantity(item.id)
+        };
+        if held != 0 {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+/// Prepare exact singleton equipment at an unchanged cut. A replacement
+/// can use a lot only after its previous action's own holds would release.
+pub(crate) fn equipment_can_equip(
+    state: &SimulationState,
+    actor: &Entity,
+    item: &Entity,
+    replacing: bool,
+    budget: &ByteBudget,
+) -> Result<bool, ExecutionError> {
+    let Some(selected) = owned_attachment(state, &actor.id, item) else {
+        return Ok(false);
+    };
+    if !selected.fits(actor) {
+        return Ok(false);
+    }
+    if !selected.attached && !replacing
+        && actor.actor.as_ref().is_some_and(|actor| actor.action.is_some())
+    {
+        return Ok(false);
+    }
+    unreserved(state, actor, selected, !selected.attached, replacing, budget)
+}
+
 impl CoreMutation<'_> {
+    /// Install admitted equipment after an action swap released the previous
+    /// holds and before the new action acquires any or publishes its result.
+    pub(crate) fn equip_for_action(
+        &mut self,
+        actor_id: &str,
+        item_id: &str,
+    ) -> Result<EquipmentDecision, ExecutionError> {
+        self.write_equipment(actor_id, item_id, EquipmentRequest::Equip, true)
+    }
+
     /// Admit one direct item and the exact currently attached conflicts. These
     /// handles never leave the command's physical cut. General lot splitting
     /// and nested custody moves require their item-transfer owners.
@@ -95,6 +186,16 @@ impl CoreMutation<'_> {
         actor_id: &str,
         item_id: &str,
         request: EquipmentRequest,
+    ) -> Result<EquipmentDecision, ExecutionError> {
+        self.write_equipment(actor_id, item_id, request, false)
+    }
+
+    fn write_equipment(
+        &mut self,
+        actor_id: &str,
+        item_id: &str,
+        request: EquipmentRequest,
+        installing_action: bool,
     ) -> Result<EquipmentDecision, ExecutionError> {
         let state = &self.state;
         let entities = &state.physical.entities;
@@ -106,7 +207,7 @@ impl CoreMutation<'_> {
             .actor
             .as_ref()
             .ok_or(ExecutionError::Invariant)?;
-        if actor.action.is_some() {
+        if !installing_action && actor.action.is_some() {
             return Ok(EquipmentDecision::Busy);
         }
         let selected = entities
@@ -133,19 +234,11 @@ impl CoreMutation<'_> {
         if !selected.fits(parent_entity) {
             return Ok(EquipmentDecision::Unavailable);
         }
-        // The inventory installer admits no active resource holds. When a
-        // family starts owning holds, it must update this shared admission too.
-        let conflicts = state
-            .inventory
-            .children(entities, actor_id, true)
-            .filter_map(|item| {
-                let other = owned_attachment(state, actor_id, item)?;
-                (equipping
-                    && other.child != selected.child
-                    && crate::install::equipment_ports_conflict(other.ports, selected.ports))
-                .then_some(other)
-            });
         let budget = self.journal.physical.budget.clone();
+        if !unreserved(state, parent_entity, selected, equipping, false, &budget)? {
+            return Ok(EquipmentDecision::Unavailable);
+        }
+        let conflicts = conflicting_attachments(state, actor_id, selected).filter(|_| equipping);
         let count = 1 + state.inventory.attachment_count(actor_id);
         let mut workspace = budget.reserve(
             count

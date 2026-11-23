@@ -80,7 +80,7 @@ export function equipmentChangeDescription(
 ): string {
   if (isEquipped(world, actorId, itemId)) return '';
   const conflicts = equipmentConflicts(world, actorId, itemId);
-  return `Auto-equip${conflicts.length ? `; put away ${conflicts.map((i) => world.itemDefinitions[i.definitionId]!.name).join(', ')}` : ''}. `;
+  return `${equipmentCopy.autoEquip}${conflicts.length ? `${equipmentCopy.putAway}${conflicts.map((i) => world.itemDefinitions[i.definitionId]!.name).join(', ')}` : ''}. `;
 }
 export function equipmentEquipOutcome(
   world: WorldState,

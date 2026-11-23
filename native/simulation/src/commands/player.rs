@@ -37,6 +37,8 @@ pub enum RuntimePlayerCommand<'a> {
         target: &'a str,
         definition: &'a str,
         weapon: Option<&'a str>,
+        auto_equip: bool,
+        equipment_revision: Option<u64>,
         permission: Option<&'a crate::contact::StrikePermission>,
     },
     Follow {
@@ -224,10 +226,10 @@ impl RuntimePlayerCommand<'_> {
             return bind_directed_speech(id, actor, target, role, text, volume);
         }
         if let Self::Strike {
-            target, definition, weapon, ..
+            target, definition, weapon, auto_equip, ..
         } = self
         {
-            return bind_strike(id, actor, target, definition, weapon);
+            return bind_strike(id, actor, target, definition, weapon, auto_equip);
         }
         if let Self::Follow {
             target,
@@ -810,11 +812,14 @@ fn bind_strike(
     target: &str,
     definition: &str,
     weapon: Option<&str>,
+    auto_equip: bool,
 ) -> Result<(NativeCommand, String), serde_json::Error> {
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
     struct Binding<'a> {
         actor_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        auto_equip: Option<bool>,
         definition_id: &'a str,
         human_initiated: bool,
         id: &'a str,
@@ -830,6 +835,7 @@ fn bind_strike(
             .into_iter()
             .all(crate::values::is_safe_record_id)
         || weapon.is_some_and(|id| !crate::values::is_safe_record_id(id))
+        || (auto_equip && weapon.is_none())
     {
         return Err(serde::ser::Error::custom("Invalid strike binding."));
     }
@@ -841,14 +847,18 @@ fn bind_strike(
         target_id: target,
         kind: "strike",
         weapon_item_id: weapon,
+        auto_equip: auto_equip.then_some(true),
     };
     Ok((
         NativeCommand::Strike {
-            envelope: headers.envelope(CommandEncoding::from_ordered(&binding, 6 + usize::from(weapon.is_some()))?),
+            envelope: headers.envelope(CommandEncoding::from_ordered(
+                &binding,
+                6 + usize::from(weapon.is_some()) + usize::from(auto_equip),
+            )?),
             target_id: target.into(),
             definition_id: definition.into(),
             weapon_item_id: weapon.map(str::to_owned),
-            auto_equip: None,
+            auto_equip: auto_equip.then_some(true),
         },
         json_record(&binding)?,
     ))

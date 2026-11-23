@@ -660,7 +660,10 @@ pub(crate) fn reconcile_native_control(
     {
         return Ok(());
     }
-    if entity.threat.is_some() {
+    // Death already ended the old action and retired its perception. A
+    // dead native territorial body keeps its dormant policy, with no
+    // territorial review deadline. Live controller transfer is separate.
+    if entity.threat.is_some() && (actor.alive || actor.controller != "native") {
         return Err(ExecutionError::UnsupportedFamily);
     }
     let owned_flight = entity

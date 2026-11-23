@@ -679,7 +679,7 @@ impl Session {
             )?
             .with_typed_plan(typed_plan);
             let cursor = match strike {
-                Some(strike) => cursor.for_player_contact(strike.permission)?,
+                Some(strike) => cursor.for_player_contact(strike)?,
                 None => cursor,
             };
             let mut core = CoreMutation {

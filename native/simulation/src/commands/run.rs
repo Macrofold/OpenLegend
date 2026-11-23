@@ -37,6 +37,7 @@ mod travel;
 mod typed_plan;
 mod manufacture;
 mod equipment;
+pub(crate) use equipment::equipment_preview;
 mod transfer_item;
 mod eating;
 mod drop;
@@ -155,6 +156,7 @@ enum Phase {
     Interrupt,
     Replace,
     Install,
+    ContactAfterEquip,
     AfterDeparture,
     CancelEnd,
     CancelClear,
@@ -205,6 +207,7 @@ pub(crate) struct CommandCursor {
     discovery_approaching: bool,
     discovery_starts_work: bool,
     chosen_contact: Option<crate::contact::review::ChosenContact>,
+    selected_equipment_revision: Option<u64>,
     strike_confirmation: Option<Box<(crate::contact::StrikePermission, ByteReservation)>>,
     strike_review: Option<Box<crate::contact::StrikeReviewOffer>>,
     phase: Phase,
@@ -394,6 +397,7 @@ impl CommandCursor {
             discovery_approaching: false,
             discovery_starts_work: false,
             chosen_contact: None,
+            selected_equipment_revision: None,
             strike_confirmation: None,
             strike_review: None,
             phase: Phase::Start,
@@ -600,8 +604,10 @@ impl CommandCursor {
     /// from the submitted command text or an NPC operation.
     pub(crate) fn for_player_contact(
         mut self,
-        permission: Option<&crate::contact::StrikePermission>,
+        strike: crate::contact::review::PlayerStrike<'_>,
     ) -> Result<Self, ExecutionError> {
+        let permission = strike.permission;
+        self.selected_equipment_revision = strike.equipment_revision;
         self.reserve(
             permission
                 .map_or(Some(0), |value| {
@@ -2144,6 +2150,9 @@ impl CommandCursor {
                             return self.craft_started(core, &actor_id);
                         }
                         if matches!(self.command, NativeCommand::Strike { .. }) {
+                            if let Some(event) = self.equip_strike(core, &actor_id)? {
+                                return Ok(Progress::Occurrence(event));
+                            }
                             return self.natural_contact_started(core, &actor_id);
                         }
                         let NativeCommand::Move { destination, .. } = &self.command else {
@@ -2196,6 +2205,9 @@ impl CommandCursor {
                         return Ok(Progress::Occurrence(event));
                     }
                     self.phase = Phase::AfterDeparture;
+                }
+                Phase::ContactAfterEquip => {
+                    return self.natural_contact_started(core, &actor_id);
                 }
                 Phase::AfterDeparture => {
                     if !self.options.native_controller {

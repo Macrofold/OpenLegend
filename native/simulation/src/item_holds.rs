@@ -213,6 +213,37 @@ impl ItemHolds {
         self.quantities.get(item).copied().unwrap_or_default()
     }
 
+    /// Read the remaining hold on this exact lot after releasing only the
+    /// claims owned by the current action being replaced.
+    pub(crate) fn quantity_after_replacement(
+        &self,
+        item: &str,
+        actor: &crate::state::Entity,
+        budget: &ByteBudget,
+    ) -> Result<u64, ExecutionError> {
+        let total = self.quantity(item);
+        let Some(action) = actor.actor.as_ref().and_then(|actor| actor.action.as_ref()) else {
+            return Ok(total);
+        };
+        if total == 0 {
+            return Ok(0);
+        }
+        let Some((count, key)) = ActionHoldKey::owned_by(action) else {
+            return Ok(total);
+        };
+        let _id = budget.reserve(action.id.len().checked_add(32).ok_or(ExecutionError::Capacity)?)?;
+        (0..count).try_fold(total, |remaining, index| {
+            let Some(row) = self.rows.get(&key(index).id(&action.id)) else {
+                return Ok(remaining);
+            };
+            let (held, _, quantity) = row.stock();
+            if held != item || row.value.actor_id != actor.id || row.value.invocation_id != action.id {
+                return Ok(remaining);
+            }
+            remaining.checked_sub(quantity).ok_or(ExecutionError::Invariant)
+        })
+    }
+
     pub(crate) fn work_allocation(&self) -> crate::values::WorkVector {
         crate::values::WorkVector {
             live: self.rows.len() as u64,

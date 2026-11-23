@@ -108,6 +108,8 @@ struct Input {
     effect: Option<authored::EffectWords>,
     #[serde(skip_serializing_if = "Option::is_none")]
     strike: Option<authored::StrikeRead>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    equipment: Option<JsText>,
 }
 impl ActivityDisplayRequest {
     /// Render only the selected facts under a separate output allowance. The
@@ -140,7 +142,7 @@ impl ActivityDisplayRequest {
             ),
             Command::Strike { purpose } => (purpose, Action::Strike(self.input.strike)),
         };
-        let view = authored::format(
+        let mut view = authored::format(
             (&self.profile.id, self.profile.version),
             action,
             purpose.purpose.clone(),
@@ -149,6 +151,15 @@ impl ActivityDisplayRequest {
             self.input.target.clone(),
         )
         .ok_or(ExecutionError::UnsupportedFamily)?;
+        if let Some(equipment) = &self.input.equipment {
+            use crate::activity::{ActivityDetail, ActivityFact, ActivityScalar};
+            view.facts.push(ActivityFact {
+                name: "Equipment".into(),
+                value: ActivityDetail::Scalar(ActivityScalar::String(equipment.clone())),
+                critical: true,
+                sentence: None,
+            });
+        }
         Ok((view, workspace))
     }
 }
@@ -417,14 +428,10 @@ impl ActivityDisplayCursor {
             _ => 0,
         };
         let strike = match &self.command {
-            NativeCommand::Strike { definition_id, weapon_item_id, .. } => {
-                crate::contact::ContactRead::select(
-                    &state.installed,
-                    &state.physical.entities,
-                    actor,
-                    definition_id,
-                    weapon_item_id.as_deref(),
-                )
+            NativeCommand::Strike { .. } => {
+                crate::contact::ContactRead::command(
+                    state, actor, &self.command, budget,
+                )?
             }
             _ => None,
         };
@@ -452,7 +459,19 @@ impl ActivityDisplayCursor {
             weapon_bytes,
         ])
         .ok_or(ExecutionError::Capacity)?;
-        let reservation = budget.reserve(bound)?;
+        let mut reservation = budget.reserve(bound)?;
+        let equipment = if let NativeCommand::Strike {
+            weapon_item_id: Some(item), auto_equip: Some(true), ..
+        } = &self.command
+            && let Some(item) = state.physical.entities.get(item)
+                .filter(|item| matches!(&item.placement, Some(crate::state::Placement::Contained { .. })))
+        {
+            let (text, storage) = crate::commands::equipment_preview(state, actor, item, budget)?;
+            reservation.merge(storage)?;
+            Some(text)
+        } else {
+            None
+        };
         let target = if let (Some(target), Some(name)) = (target, name) {
             Some(authored::ObservedTarget {
                 name,
@@ -549,6 +568,7 @@ impl ActivityDisplayCursor {
             target,
             effect,
             strike: strike.map(authored::StrikeRead::from),
+            equipment,
         };
         let profile = Profile {
             id: state.installed.content.profile.id.clone(),

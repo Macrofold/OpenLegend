@@ -24,7 +24,7 @@ mod inventory;
 pub use crate::consumption::EatingOffer;
 pub(crate) use inventory::Inventory;
 pub(crate) use inventory::ItemDefinitionRead;
-pub(crate) use inventory::equipped_melee;
+pub(crate) use inventory::{MeleeProfile, equipped_melee};
 pub(crate) use inventory::RemovedInventoryChild;
 pub(crate) use inventory::inventory_display_limit;
 pub(crate) use inventory::item_count_pin;

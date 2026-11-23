@@ -264,4 +264,5 @@ pub(crate) enum ChosenContact {
 /// Issued only by the typed browser command entry.
 pub(crate) struct PlayerStrike<'a> {
     pub permission: Option<&'a StrikePermission>,
+    pub equipment_revision: Option<u64>,
 }
