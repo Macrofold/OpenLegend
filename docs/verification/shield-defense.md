@@ -109,6 +109,14 @@ The joined source tree `c7410f99d8f8`, executable SHA-256 `b58f566643c6`, repeat
 
 A player punched toward a resident and then used Stop before any impact. The resident had already acquired the directed preparation. Its next real conversation offered one Guard using its current facing and exact carried shield. The offer carried no selected attacker. Choosing it kept that facing, equipped the shield once and saved its source and deadline. Restart recovered the same reply and equipment without another provider request.
 
-The first build suppressed the valid offer because the original body’s missing explicit generation is represented as life zero. The current capture uses that same identity rule as execution. A hidden second player could prepare and stop an attack without giving the resident a Guard option. The cue also expired at the installed deadline. Withdrawing it while a reply was held refused application, and cancelling a separate reply left equipment unchanged. The queued-plan admission rechecks that same cue, with its own caller check pending.
+The first build suppressed the valid offer because the original body’s missing explicit generation is represented as life zero. The current capture uses that same identity rule as execution. A hidden second player could prepare and stop an attack without giving the resident a Guard option. The cue also expired at the installed deadline. Withdrawing it while a reply was held refused application, and cancelling a separate reply left equipment unchanged.
 
 The focused source manifest is `ce942086e31f` and executable SHA-256 is `c2741f4e73a9`. Results `e2f5be406619`, `882d803f718b`, `fde1505eac60`, `109a784980f2` and `42209e71e89c` cover the five signed cases. All used the normal PostgreSQL writer and controlled local HTTPS replies.
+
+### Guard queued behind an approach
+
+The controlled model chose an offered approach followed by Guard. An ordinary save showed the approach running and the exact Guard still queued. The resident reached the offered destination, then raised the shield once using its new heading. The original reply receipt and Guard survived reopening.
+
+In the matched withdrawal case, a signed Forget removed the exact cue after the queued step was saved. The approach still finished. Guard stopped with the installed stale-action result before changing the shield or sling, even though the original cue deadline had not passed. Cold retry returned the same reply and sent no further provider request.
+
+Manifest `8d51554c9736`, executable `907c8e9739fa` and results `5d9d124a37c4` and `f3b7bdfe35c9` identify the independent disposable databases and clean shutdowns. Earlier fixture attempts had not reached the required cue or had chosen directional probes, which the installed rules offer only when the character cannot see.
