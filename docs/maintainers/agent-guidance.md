@@ -24,7 +24,13 @@ The [implementation workflow review and its 16 decisions](../verification/agent-
 
 [CG07 local-tool verification](completed/2026/agent-guidance.md#cg07--local-pinned-tool-integration) is complete; its evidence does not close CG05 or fresh-session adoption routing.
 
+### Comment contract follow-through
+
+- [ ] **Proposed targeted Rust backfill; source edits not yet authorized.** The [comment audit](../research/agent-workflows/archive/2026/2026-11-24-code-comments.md#rust-sample) identifies hidden SQL/paid preparation, save completion/cancellation, read-cut encoding, navigation outcomes, spatial units and caller obligations. When authorized, add concise contracts at those owners and the related command/preparation entrypoints, preserving good rationale and checking relevant callers against current behavior. Completion means the selected contracts and links are accurate with no unintended runtime changes; it does not require a repository-wide commenting pass.
+
 ## CG05 — Read-only routing cases
+
+For the [code-commenting guide](../../.agents/rules/code-comments.md), observe an existing Rust helper review, source-comment design for a new helper, a code-comment task started in a native crate, and an unrelated prose task that merely mentions comments/Rust. The first three should read the guide; the prose task should not. [Audit and routing evidence](../research/agent-workflows/archive/2026/2026-11-24-code-comments.md#guidance-verification) owns this scoped observation; broader CG05 remains open.
 
 The [verification-location route](../../.agents/rules/verification.md#choose-the-execution-location) requires read-only observations for: choosing a short local correctness check at root; planning a short native benchmark or remote performance run from `apps/server`; designing a new worker/bootstrap file; and correcting prose that merely mentions AWS testing. Verification tasks must read the short location policy; speed tests must select AWS even when short, while Mike's explicit local request selects the exception. For player-visible timing on a named, previously approved device, verify that the approval covers this client measurement and that the report identifies both hosts. Remote use must also read the worker/AWS procedure, while the new-tool case reads the design pair and performance guidance. Prose-only and cheap local correctness cases must not preload cloud implementation. Include an existing-instance request: it still follows the worker procedure and actual ownership rules; an unavailable pool cannot justify a local timing fallback. Written routes and structural checks do not establish installed-agent compliance. These observations remain open; no native dispatch probes were run for this route.
 

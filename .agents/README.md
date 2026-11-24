@@ -16,6 +16,7 @@ Use these canonical owners rather than restating their workflows:
 - [Implementation](rules/implementation.md): adaptive planning, execution and continuity for authorized product/code/tooling changes.
 - [Engineering context](rules/engineering-context.md): conditional contract routes for affected behavior.
 - [Performance](skills/openlegend-performance/SKILL.md): short cost/design core, then only matching technical chapters.
+- [Code comments](rules/code-comments.md): concise caller contracts, local rationale, references and maintenance for code work.
 - [Prioritization](skills/openlegend-prioritize/SKILL.md): choosing future work by the experience it enables or protects; loaded for selection/reprioritization, not ordinary execution.
 - [Rebase](skills/openlegend-rebase/SKILL.md): base selection, refresh/reconciliation, worktree/history protections and conflict stops.
 - [Merge branch](skills/merge-branch/SKILL.md): explicitly requested newest-source squash integration, source provenance, conflict reporting and destination publication.

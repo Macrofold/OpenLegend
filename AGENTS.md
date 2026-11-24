@@ -85,9 +85,7 @@ Before adding or retaining a runtime check, identify what its consumer needs, a 
 
 ### Document shared helpers
 
-When defining or changing a shared helper whose signature hides substantial work, describe that work in its doc comment (for example, a database query, a history scan or encoding a buffer for another process). Tell callers when they can reuse the result and who releases any retained resources. When calling it, check whether an earlier stage already prepared what you need.
-
-Comment other non-obvious requirements, tradeoffs and extension seams beside the code. Explain the reason locally and link the canonical heading. Keep reasoning and links current as behavior changes.
+Before implementing, refactoring or reviewing code, or designing or editing its comments, read [Code comments](.agents/rules/code-comments.md). This includes new files and internal helpers. It owns concise caller contracts, hidden costs, result reuse, resource release, local rationale and comment maintenance. Reuse current loaded guidance; a prose-only task that merely mentions code does not trigger this read.
 
 ## Task scope and authorization
 

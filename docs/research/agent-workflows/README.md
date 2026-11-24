@@ -4,5 +4,6 @@ Current operating guidance lives in [the instruction system](../../../.agents/RE
 
 - [Workflow audit](archive/2026/2026-10-21-workflow-audit.md): observed contradictions, measured file sizes, prior dispatch observations and primary-source rationale.
 - [Original source review](archive/2026/2026-09-24-guidance-sources.md): source applicability and original design choices.
+- [Code-comment research and Rust audit](archive/2026/2026-11-24-code-comments.md): sampled rationale/contracts, evidence on AI readers and selective adoption.
 
 Browse [2026 investigations](archive/2026/) by question. Subsequent ordinary tasks can inform the synthesis without a new productivity-measurement programme.
