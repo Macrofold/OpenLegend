@@ -1,9 +1,11 @@
+import type { GameView } from '@open-legend/protocol';
 import { test, expect, type Page, type TestInfo } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { stockedCamp } from '../fixtures/world.js';
 import { testRepository, closeTestDatabases, readConfig } from '../fixtures/database.js';
 import { enterGame, blockExternalBrowserRequests } from '../fixtures/browser.js';
+import { browserTabHeaders, rustBrowserGame } from '../fixtures/rust-browser.js';
 import { editWorld } from '../fixtures/service.js';
 import {
   admitDeclaration,
@@ -509,6 +511,7 @@ test('WASD steers native movement with bounded renewals and stops on key release
   const inputs: Array<{
     kind: string;
     movementInputToken?: string;
+    movement?: { movementInputToken: string };
     direction?: { x: number; z: number };
   }> = [];
   const acknowledgements: Array<{
@@ -544,12 +547,33 @@ test('WASD steers native movement with bounded renewals and stops on key release
       ),
     );
   });
-  const game = await start(page, executionWorld(), true);
+  await blockExternalBrowserRequests(page);
+  const game = await rustBrowserGame();
   try {
+    await page.goto(game.base);
+    await enterGame(page);
+    const headers = await browserTabHeaders(page);
+    const state = async () => {
+      const response = await page.request.get(game.base + '/api/state', { headers });
+      try {
+        expect(response.ok(), 'current signed game view').toBe(true);
+        const view = (await response.json()) as GameView;
+        expect(view.access?.controlling).toBe(true);
+        return view;
+      } finally {
+        await response.dispose();
+      }
+    };
+    if ((await state()).clock.paused) {
+      await page.getByRole('button', { name: 'Game menu (Escape)', exact: true }).click();
+      await page.getByRole('button', { name: 'Resume world', exact: true }).click();
+      await page.getByRole('button', { name: 'Back to the world', exact: true }).click();
+      await expect.poll(async () => (await state()).clock.paused).toBe(false);
+    }
     await page.locator('#world').focus();
     await page.waitForTimeout(200);
     const idle = inputs.length;
-    const initial = worldPosition(entityGet(game.service.world.entities, PLAYER_ID)!);
+    const initial = (await state()).player.position;
     const heldAt = performance.now();
     await page.keyboard.down('w');
     await page.keyboard.down('d');
@@ -566,8 +590,8 @@ test('WASD steers native movement with bounded renewals and stops on key release
       )
       .toBeGreaterThan(0);
     await expect
-      .poll(() => {
-        const p = worldPosition(entityGet(game.service.world.entities, PLAYER_ID)!);
+      .poll(async () => {
+        const p = (await state()).player.position;
         return Math.hypot(p.x - initial.x, p.z - initial.z);
       })
       .toBeGreaterThan(0.1);
@@ -578,11 +602,16 @@ test('WASD steers native movement with bounded renewals and stops on key release
     // Expiry may already have stopped this lane before keyup. Both outcomes
     // must stop actual motion; neither may revive the old held keys.
     await page.waitForTimeout(500);
-    const stoppedAt = { ...worldPosition(entityGet(game.service.world.entities, PLAYER_ID)!) };
+    const stopped = await state();
+    const stoppedAt = stopped.player.position;
     await page.waitForTimeout(250);
-    const afterStop = worldPosition(entityGet(game.service.world.entities, PLAYER_ID)!);
+    const afterRelease = await state();
+    const afterStop = afterRelease.player.position;
+    expect(afterRelease.clock.seconds).toBeGreaterThan(stopped.clock.seconds);
     expect(Math.hypot(afterStop.x - stoppedAt.x, afterStop.z - stoppedAt.z)).toBeLessThan(0.001);
     const moving = inputs.slice(idle);
+    const renewals = moving.filter((input) => input.kind === 'renew' && input.movement);
+    expect(renewals.length).toBeGreaterThan(0);
     for (const input of moving.filter((input) => input.kind === 'steer' && input.direction)) {
       const size = Math.hypot(input.direction!.x, input.direction!.z);
       expect(size === 0 || Math.abs(size - 1) < 1e-9).toBe(true);
@@ -590,6 +619,31 @@ test('WASD steers native movement with bounded renewals and stops on key release
     expect(moving.length).toBeLessThanOrEqual(Math.ceil(heldMs / 100) * 2 + 8);
     const firstToken = inputs.find((input) => input.movementInputToken)?.movementInputToken;
     await Promise.all(acknowledgementReads);
+    await page.getByRole('button', { name: 'Game menu (Escape)', exact: true }).click();
+    await page.getByRole('button', { name: 'Controls', exact: true }).click();
+    const forward = page.getByLabel('Forward', { exact: true });
+    await forward.focus();
+    await expect(forward).toBeFocused();
+    await page.waitForTimeout(150);
+    const beforeEditorKey = inputs.length;
+    await page.keyboard.press('w');
+    await page.waitForTimeout(250);
+    expect(inputs).toHaveLength(beforeEditorKey);
+    await page.getByRole('button', { name: 'Hide Settings & help panel', exact: true }).click();
+    await page.locator('#world').focus();
+    await page.keyboard.press('Shift+S');
+    const speech = page.getByRole('textbox', { name: 'Words to say out loud', exact: true });
+    await expect(speech).toBeFocused();
+    const beforeTextKey = inputs.length;
+    await page.keyboard.press('w');
+    await expect(speech).toHaveValue('w');
+    await page.waitForTimeout(250);
+    expect(inputs).toHaveLength(beforeTextKey);
+    await page.getByRole('button', { name: 'Close text bar', exact: true }).click();
+    const afterEditor = (await state()).player.position;
+    expect(Math.hypot(afterEditor.x - afterStop.x, afterEditor.z - afterStop.z)).toBeLessThan(
+      0.001,
+    );
     await recordJson(info, 'movement-input', {
       heldMs,
       inputs,
@@ -598,15 +652,13 @@ test('WASD steers native movement with bounded renewals and stops on key release
       scopeRotated: acknowledgements.some(
         (result) => result.inputScope && result.inputScope.movementInputToken !== firstToken,
       ),
+      movement: Math.hypot(afterStop.x - initial.x, afterStop.z - initial.z),
+      afterRelease: Math.hypot(afterStop.x - stoppedAt.x, afterStop.z - stoppedAt.z),
+      movingClockContinued: afterRelease.clock.seconds > stopped.clock.seconds,
+      renewals: renewals.length,
+      editorAddedInputs: inputs.length - beforeEditorKey,
+      typedInSpeech: true,
     });
-    await page.getByRole('button', { name: 'Settings and help', exact: true }).click();
-    await page.getByRole('tab', { name: 'Controls & help', exact: true }).click();
-    await page.getByLabel('Forward', { exact: true }).focus();
-    await page.waitForTimeout(150);
-    const stopped = inputs.length;
-    await page.keyboard.press('w');
-    await page.waitForTimeout(250);
-    expect(inputs).toHaveLength(stopped);
   } finally {
     await page.keyboard.up('w').catch(() => {});
     await page.keyboard.up('d').catch(() => {});

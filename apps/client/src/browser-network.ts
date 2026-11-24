@@ -5,7 +5,7 @@ import {
   subscribeEvents,
 } from '@open-legend/network';
 import type { EventFrame, Subscription, ConsumptionContext } from '@open-legend/network';
-import { browserRequestPolicy } from './network-policies';
+import { browserRequestPolicy, STEERING_STOP } from './network-policies';
 
 // Stable document owners count abandoned underlying work as well as visible waits.
 const reads = createNetworkOwner({ role: 'browser-api-reads', capacity: 16 });
@@ -87,8 +87,10 @@ export function browserRequest(
 ): Promise<BrowserReply> {
   const method = init.method === 'POST' ? 'POST' : 'GET';
   const policy = browserRequestPolicy(method, path, body);
+  // Withdrawing steering must reach control while the presence owner is
+  // still waiting for the earlier input response.
   const owner =
-    policy.semantic === 'presence'
+    policy.semantic === 'presence' && policy.discriminator !== STEERING_STOP
       ? presence
       : policy.semantic === 'read' || policy.semantic === 'preparation'
         ? reads

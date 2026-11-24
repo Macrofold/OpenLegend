@@ -26,6 +26,12 @@ The joined release passed the same real pointer and confirmation path in headed 
 
 The earlier checks are in `nsc04-timed-combat-20261123` (manifest `cb88400bf455`). The renewal failure, clean browser and mixed-control checks, and exact replay inputs are in its `late-renewal` subdirectory (manifest `c99a6040ba6a`). The same executable also passed signed withdrawal of the original subject and expiry with a fresh explicit release after restart. Those results are `e0194c13ff81` and `baeb2ad66c80` in `late-renewal/signed-followup` (manifest `339a7008ad08`).
 
+## Keyboard steering on the stand-alone Rust server
+
+A signed Chromium player moved diagonally with bounded renewals. Releasing one key while holding another kept the last accepted movement available for a stop. The zero-direction request used the existing control capacity, so it reached Rust while the earlier nonzero reply was still held. Rust accepted sequence 6 after sequence 5. The zero was the only new input in that interval. Delivering the earlier reply left the player stationary as game time advanced. Choosing Forward in Controls and typing an unsent message also passed. The original browser and a state-only repair both failed to send the stop while the reply was held.
+
+Local evidence is in `nsc04-rust-wasd-20261124` (manifest `18990daf6252`). Executable `51535373c681` served browser build `a03afb1ed116`. The held reply result is `7013da4d24d5` and the ordinary browser result is `cb52caff698`. Formatting, TypeScript, network checks and the production browser build passed. The dedicated databases and browser processes closed.
+
 ## October 25, 2026 UTC — remove the aggregate injury meter
 
 The overall injury field, its event delta and movement coefficient are removed from body state, response profiles, history and story selection. Damage/healing still use the shared health owner; defense, susceptibility, interruptions, death, scars and independent status effects remain. Body-part wounds are not implemented. The [current body contract](../architecture.md#actor-means-any-living-being) and [care proposal](../projects/recovery-and-care-feature-spec.md) distinguish these retained foundations from future injuries.

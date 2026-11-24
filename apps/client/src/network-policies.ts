@@ -211,6 +211,15 @@ routes(
 routes('POST', ['/api/presence'], 'presence', 5_000, 'latest');
 // Fixed transient input never retries a stale direction or creates a durable action receipt.
 routes('POST', ['/api/input'], 'presence', 1_000, 'latest');
+export const STEERING_STOP = 'stop-steering';
+entries.push({
+  method: 'POST',
+  pathname: '/api/input',
+  discriminator: STEERING_STOP,
+  semantic: 'presence',
+  timeoutMs: 1_000,
+  recovery: 'latest',
+});
 entries.push(
   {
     method: 'POST',
@@ -249,6 +258,19 @@ export const browserRequestPolicies: readonly Readonly<BrowserRequestPolicy>[] =
   entries.map((entry) => Object.freeze(entry)),
 );
 
+function stopsSteering(input: object): boolean {
+  if (!('kind' in input) || input.kind !== 'steer' || !('direction' in input)) return false;
+  const direction = input.direction;
+  return (
+    direction !== null &&
+    typeof direction === 'object' &&
+    'x' in direction &&
+    direction.x === 0 &&
+    'z' in direction &&
+    direction.z === 0
+  );
+}
+
 export function browserRequestPolicy(
   method: BrowserRequestPolicy['method'],
   path: string,
@@ -268,7 +290,9 @@ export function browserRequestPolicy(
         ? Object.keys(object).length
           ? 'write'
           : 'read'
-        : undefined;
+        : pathname === '/api/input' && stopsSteering(object)
+          ? STEERING_STOP
+          : undefined;
   const policy = browserRequestPolicies.find(
     (entry) =>
       entry.method === method &&

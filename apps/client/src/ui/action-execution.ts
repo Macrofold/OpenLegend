@@ -746,7 +746,8 @@ export function useActionExecution({
       if (!key || !keys.current.delete(key)) return;
       if (!keys.current.size) functions.current.stopMovement();
       else {
-        movement.current = undefined;
+        // A pending request can defer the new direction. Keep the last intent
+        // available so releasing the final key can still stop it.
         movementYaw.current = current.current.scene.current?.cameraState().yaw ?? 0;
         steer();
       }
