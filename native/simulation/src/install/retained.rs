@@ -148,6 +148,8 @@ impl RetainedDefinitions {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ItemHandlingReadPolicy {
+    default_portable: bool,
+    generated_packing_load: Option<u64>,
     enabled: bool,
     actor_body_profiles: Vec<String>,
     pub reach: f64,
@@ -630,11 +632,17 @@ pub(crate) fn install_retained(
         "config_assembly_families",
         input.assembly_families,
     )?;
+    let assembly_canonical = assembly
+        .as_ref()
+        .map(|(rows, input)| canonical_entries(rows, input, budget))
+        .transpose()?;
     let (construction_seed_families, _construction_families_preparation, finite_rain) =
-        if let Some((rows, input)) = &assembly {
-            let (_canonical_storage, canonical) = canonical_entries(rows, input, budget)?;
-            let (families, preparation) = crate::construction_seed::prepare_families(&canonical, budget)?;
-            let cue = finite_rain.map(|cue| cue.verify(&canonical, budget)).transpose()?;
+        if let Some((_, canonical)) = &assembly_canonical {
+            let (families, preparation) =
+                crate::construction_seed::prepare_families(canonical, budget)?;
+            let cue = finite_rain
+                .map(|cue| cue.verify(canonical, budget))
+                .transpose()?;
             (families, preparation, cue)
         } else {
             if finite_rain.is_some() {
@@ -646,7 +654,6 @@ pub(crate) fn install_retained(
                 None,
             )
         };
-    let assembly_families = assembly.map(|(rows, _)| rows);
     let contents_exposure_input = r.verified_map(
         "contentsExposureProfiles",
         "config_contents_exposure_profiles",
@@ -657,7 +664,7 @@ pub(crate) fn install_retained(
     let (mut items, _item_preparation) = prepare_items(
         &item_definitions,
         &item_input,
-        assembly_families.as_ref(),
+        assembly.as_ref().map(|(rows, _)| rows),
         exposure.as_ref().map(|(_, canonical)| canonical),
         attributes,
         maximum_extent,
@@ -763,15 +770,35 @@ pub(crate) fn install_retained(
             serde_json::from_str(body).map_err(|_| InstallError::DefinitionBody)?;
         let canonical = recipe_canonical.get(id).ok_or(InstallError::DefinitionBody)?.get();
         if let Some(method) = decoded.install(
-            id, canonical, profile, family_pins, &handling_pin,
-            &items, &item_definitions,
+            id,
+            canonical,
+            profile,
+            family_pins,
+            &handling_pin,
+            &items,
+            &item_definitions,
+            assembly_canonical.as_ref().map(|(_, rows)| rows),
+            budget,
+            (
+                item_handling_read.default_portable,
+                item_handling_read.generated_packing_load,
+            ),
         )? {
-            prepared.resize(id.len().checked_add(method.heap_bytes().ok_or(InstallError::Capacity)?)
-                .ok_or(InstallError::Capacity)?).map_err(|_| InstallError::Capacity)?;
-            method_storage.merge(prepared).map_err(|_| InstallError::Capacity)?;
+            prepared
+                .resize(
+                    id.len()
+                        .checked_add(method.heap_bytes().ok_or(InstallError::Capacity)?)
+                        .ok_or(InstallError::Capacity)?,
+                )
+                .map_err(|_| InstallError::Capacity)?;
+            method_storage
+                .merge(prepared)
+                .map_err(|_| InstallError::Capacity)?;
             manufacture.insert(id.to_owned(), method);
         }
     }
+    std::mem::drop(assembly_canonical);
+    let assembly_families = assembly.map(|(rows, _)| rows);
     // Resolve the exact display pin once for each installed physical record.
     // An unavailable method leaves its ordinary physical item intact.
     for index in 0..items.len() {

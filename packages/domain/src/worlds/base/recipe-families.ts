@@ -1,3 +1,4 @@
+import outputRules from './config/recipe-output-rules.json' with { type: 'json' };
 import { BASE_ATTACK_EXECUTION } from './skilled-execution.js';
 import { entityValues } from '../../entity-collection.js';
 import type {
@@ -131,7 +132,7 @@ function inheritedProperties(world: WorldState, candidate: RecipeCandidate): Mat
       ),
     ),
   ]
-    .filter((property) => property !== 'food' && property !== 'fuel')
+    .filter((property) => !outputRules.excludedInheritedProperties.includes(property))
     .sort();
 }
 function baseOutput(

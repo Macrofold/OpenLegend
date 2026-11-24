@@ -1,3 +1,4 @@
+import outputRules from './config/recipe-output-rules.json' with { type: 'json' };
 import type { EquipmentProfile, EquipmentPort } from '../../equipment.js';
 
 // Body plans alone never grant these authored hand and cloak attachments.
@@ -11,7 +12,10 @@ export const BASE_SPEAR_EQUIPMENT: EquipmentProfile = {
   ports: ['main-hand', 'off-hand'],
   uses: ['melee'],
 };
-export const BASE_GATHER_EQUIPMENT: EquipmentProfile = { ports: ['main-hand'], uses: ['gather'] };
+export const BASE_GATHER_EQUIPMENT: EquipmentProfile = {
+  ports: outputRules.gatheringToolPorts,
+  uses: ['gather'],
+};
 export const BASE_RANGED_WEAPON_EQUIPMENT: EquipmentProfile = {
   ports: ['main-hand', 'off-hand'],
   uses: ['ranged'],

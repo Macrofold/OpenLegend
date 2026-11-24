@@ -139,6 +139,10 @@ struct NamedOutput {
 }
 
 impl Candidate<'_> {
+    pub(crate) fn output_name(&self) -> &JsText {
+        &self.output.name
+    }
+
     /// Compare authored choices while letting the selected world read its
     /// own parameter shape. Object formatting does not grant recipe authority.
     pub(crate) fn same_choices(&self, other: &Self) -> bool {
@@ -276,7 +280,7 @@ impl Definition<'_> {
             || origin.kind != "family"
             || !origin.family_pin.is_some_and(|family| family_pins.contains(&family))
             || provenance.source != "authored-world"
-            || !self.dependencies_match(items, policy_pin)
+            || !self.dependencies_match(items, policy_pin, None)
             || self.outputs.iter().any(|output| {
                 !items.get(&output.definition.id).is_some_and(|item| item.pin == output.definition)
             })
@@ -290,19 +294,32 @@ impl Definition<'_> {
         &self,
         items: &IndexMap<String, ItemDefinitionRead>,
         policy_pin: &DefinitionPin,
+        material_family: Option<&DefinitionPin>,
     ) -> bool {
         let mut policy = false;
+        let mut family_matched = material_family.is_none();
         for reference in &self.dependency_references {
             match reference.kind.as_str() {
                 "item-definition"
-                    if items.get(&reference.pin.id).is_some_and(|item| item.pin == reference.pin) => {}
+                    if items
+                        .get(&reference.pin.id)
+                        .is_some_and(|item| item.pin == reference.pin) => {}
                 "item-handling-policy" if !policy && reference.pin == *policy_pin => policy = true,
+                "assembly-family" if !family_matched && Some(&reference.pin) == material_family => {
+                    family_matched = true;
+                }
                 _ => return false,
             }
         }
-        policy && self.inputs.iter().all(|input| items.get(&input.definition_id).is_some_and(|item|
-            self.dependency_references.iter().any(|dep| dep.kind == "item-definition" && dep.pin == item.pin)
-        ))
+        policy
+            && family_matched
+            && self.inputs.iter().all(|input| {
+                items.get(&input.definition_id).is_some_and(|item| {
+                    self.dependency_references
+                        .iter()
+                        .any(|dep| dep.kind == "item-definition" && dep.pin == item.pin)
+                })
+            })
     }
 
     pub(crate) fn install(
@@ -314,6 +331,9 @@ impl Definition<'_> {
         policy_pin: &DefinitionPin,
         items: &IndexMap<String, ItemDefinitionRead>,
         item_rows: &RetainedMap,
+        assembly: Option<&IndexMap<String, &RawValue>>,
+        budget: &ByteBudget,
+        item_defaults: (bool, Option<u64>),
     ) -> Result<Option<InstalledMethod>, InstallError> {
         let origin: Origin<'_> =
             serde_json::from_str(self.source.get()).map_err(|_| InstallError::DefinitionBody)?;
@@ -335,6 +355,9 @@ impl Definition<'_> {
                     origin.implementation_pin,
                     items,
                     policy_pin,
+                    item_rows,
+                    assembly,
+                    budget,
                 )
                 .map(Some);
         }
@@ -397,14 +420,21 @@ impl Definition<'_> {
             || !rules.validates(
                 self.work_seconds,
                 &candidate,
-                |id| items.get(id),
+                |id| {
+                    items.get(id).filter(|item| {
+                        self.dependency_references.iter().any(|reference| {
+                            reference.kind == "item-definition" && reference.pin == item.pin
+                        })
+                    })
+                },
                 meaning,
                 output_body,
+                item_defaults,
             )?
         {
             return Err(InstallError::DefinitionBody);
         }
-        if !self.dependencies_match(items, policy_pin) {
+        if !self.dependencies_match(items, policy_pin, None) {
             return Err(InstallError::DefinitionPin);
         }
         self.into_method(canonical, Some(family)).map(Some)
@@ -418,29 +448,96 @@ impl Definition<'_> {
         implementation: Option<DefinitionPin>,
         items: &IndexMap<String, ItemDefinitionRead>,
         handling: &DefinitionPin,
+        item_rows: &RetainedMap,
+        assembly: Option<&IndexMap<String, &RawValue>>,
+        budget: &ByteBudget,
     ) -> Result<InstalledMethod, InstallError> {
         let provenance: Provenance<'_> = serde_json::from_str(self.provenance.get())
             .map_err(|_| InstallError::DefinitionBody)?;
         let expected = fixed_implementation_pin()?;
-        let [out] = self.outputs.as_slice() else {
+        let [output] = self.outputs.as_slice() else {
             return Err(InstallError::DefinitionBody);
         };
-        let [authored_out] = exact.outputs.as_slice() else {
-            return Err(InstallError::DefinitionBody);
-        };
-        let [tool] = self.retained_tools.as_slice() else {
-            return Err(InstallError::DefinitionBody);
-        };
-        let [authored_tool] = exact.retained_tools.as_slice() else {
+        let [authored_output] = exact.outputs.as_slice() else {
             return Err(InstallError::DefinitionBody);
         };
         let item_pin = |pin: &DefinitionPin| {
             items.get(&pin.id).is_some_and(|item| &item.pin == pin)
-                && self
-                    .dependency_references
-                    .iter()
-                    .any(|dep| dep.kind == "item-definition" && &dep.pin == pin)
+                && self.dependency_references.iter().any(|dependency| {
+                    dependency.kind == "item-definition" && &dependency.pin == pin
+                })
         };
+        // A carried material can use a structural material definition even
+        // when this build offers no corresponding construction commands.
+        let (material_family, _custody) = if items
+            .get(&output.definition.id)
+            .is_some_and(|item| item.material.is_some())
+        {
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Item {
+                assembly_material: Material,
+            }
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Material {
+                family_id: String,
+            }
+            #[derive(Deserialize)]
+            struct Family<'a> {
+                id: &'a str,
+                #[serde(deserialize_with = "deserialize_safe_integer")]
+                version: u64,
+            }
+            let body = item_rows
+                .get(&output.definition.id)
+                .ok_or(InstallError::DefinitionBody)?;
+            let funding = budget
+                .reserve(body.len().checked_add(128).ok_or(InstallError::Capacity)?)
+                .map_err(|_| InstallError::Capacity)?;
+            let item: Item =
+                serde_json::from_str(body).map_err(|_| InstallError::DefinitionBody)?;
+            let id = item.assembly_material.family_id;
+            let family = assembly
+                .and_then(|rows| rows.get(&id))
+                .ok_or(InstallError::DefinitionPin)?;
+            let rule: Family<'_> =
+                serde_json::from_str(family.get()).map_err(|_| InstallError::DefinitionBody)?;
+            if rule.id != id || rule.version == 0 {
+                return Err(InstallError::DefinitionPin);
+            }
+            let pin = DefinitionPin {
+                id,
+                version: rule.version,
+                digest: crate::encoding::content_label(family.get()),
+            };
+            (Some(pin), Some(funding))
+        } else {
+            (None, None)
+        };
+        // Ordinary manufacture currently holds at most one retained tool.
+        // Keep the selected role absent for material-only work.
+        let tools_match = match (
+            self.retained_tools.as_slice(),
+            exact.retained_tools.as_slice(),
+        ) {
+            ([], []) => true,
+            ([actual], [authored]) => {
+                actual.role == authored.role
+                    && actual.quantity == authored.quantity
+                    && actual
+                        .allowed_definitions
+                        .iter()
+                        .map(|pin| pin.id.as_str())
+                        .eq(authored.allowed_definition_ids.iter().map(String::as_str))
+                    && actual.allowed_definitions.iter().all(item_pin)
+            }
+            _ => false,
+        };
+        let tool_dependencies = self
+            .retained_tools
+            .first()
+            .map_or(0, |tool| tool.allowed_definitions.len());
         if self.id != key
             || !is_safe_record_id(key)
             || self.version != 1
@@ -453,24 +550,17 @@ impl Definition<'_> {
             || self.inputs != exact.inputs
             || self.work_seconds != exact.work_seconds
             || !self.facts.is_empty()
-            || out.port != authored_out.port
-            || out.quantity != authored_out.quantity
-            || out.definition.id != authored_out.definition_id
-            || !item_pin(&out.definition)
-            || tool.role != authored_tool.role
-            || tool.quantity != authored_tool.quantity
-            || !tool
-                .allowed_definitions
-                .iter()
-                .map(|pin| pin.id.as_str())
-                .eq(authored_tool
-                    .allowed_definition_ids
-                    .iter()
-                    .map(String::as_str))
-            || !tool.allowed_definitions.iter().all(item_pin)
-            || !self.dependencies_match(items, handling)
+            || output.port != authored_output.port
+            || output.quantity != authored_output.quantity
+            || output.definition.id != authored_output.definition_id
+            || !item_pin(&output.definition)
+            || !tools_match
+            || !self.dependencies_match(items, handling, material_family.as_ref())
             || self.dependency_references.len()
-                != self.inputs.len() + tool.allowed_definitions.len() + self.outputs.len() + 1
+                != self.inputs.len()
+                    + tool_dependencies
+                    + 2
+                    + usize::from(material_family.is_some())
         {
             return Err(InstallError::DefinitionBody);
         }

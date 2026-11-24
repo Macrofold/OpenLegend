@@ -2,6 +2,7 @@
 //! compiler. A generic recipe or item description grants no native effect.
 use crate::install::{InstallError, ItemDefinitionRead};
 use crate::manufacturing::{Candidate, FixedTransform, Input};
+use crate::text::JsText;
 use serde::Deserialize;
 use std::sync::LazyLock;
 
@@ -43,9 +44,95 @@ static SLING: LazyLock<AuthoredSling> = LazyLock::new(|| {
     }
 });
 
+const GATHERING_FAMILY: &str = "base:gathering-tool";
+const RETAINED_FIXED_TRANSFORMS: [&str; 4] = [
+    "base:clean-fibers",
+    "base:knap-cutting-stone",
+    "base:trim-club",
+    "base:twist-cord",
+];
+
+struct AuthoredMethods {
+    fixed: Vec<FixedTransform>,
+    gathering: Vec<(Candidate<'static>, GatheringParameters)>,
+}
+
+static AUTHORED: LazyLock<AuthoredMethods> = LazyLock::new(|| {
+    #[derive(Deserialize)]
+    struct Catalogue<'a> {
+        #[serde(borrow)]
+        methods: Vec<Row<'a>>,
+    }
+    #[derive(Deserialize)]
+    struct Row<'a> {
+        definition: Option<FixedTransform>,
+        #[serde(borrow)]
+        candidate: Option<Candidate<'a>>,
+    }
+    let source: Catalogue<'static> =
+        serde_json::from_str(include_str!("../config/first-playable.generated.json"))
+            .expect("Base manufacture catalogue is a build input");
+    let mut fixed = Vec::new();
+    let mut gathering = Vec::new();
+    for row in source.methods {
+        if let Some(recipe) = row.definition
+            && RETAINED_FIXED_TRANSFORMS.contains(&recipe.id.as_str())
+        {
+            fixed.push(recipe);
+        }
+        if let Some(candidate) = row.candidate
+            && candidate.family.id == GATHERING_FAMILY
+        {
+            let parameters = serde_json::from_str(candidate.parameters.get())
+                .expect("Base uses a valid finite gathering tool");
+            gathering.push((candidate, parameters));
+        }
+    }
+    assert_eq!(
+        fixed.len(),
+        RETAINED_FIXED_TRANSFORMS.len(),
+        "missing retained Base transform"
+    );
+    AuthoredMethods { fixed, gathering }
+});
+
+#[derive(Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct GatheringParameters {
+    work_seconds: f64,
+    resource_id: String,
+    quantity: u64,
+}
+
+#[derive(Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+struct StoryFields {
+    story_importance: StoryWeight,
+}
+
+#[derive(Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+struct StoryWeight {
+    story_importance: f64,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct OutputRules {
+    excluded_inherited_properties: Vec<String>,
+    gathering_tool_ports: Vec<String>,
+    constructed_story_fields: StoryFields,
+}
+
+static OUTPUTS: LazyLock<OutputRules> = LazyLock::new(|| {
+    serde_json::from_str(include_str!("../config/recipe-output-rules.json"))
+        .expect("Base manufacture output rules are a build input")
+});
+
 pub(crate) enum Rules {
     RiverLine,
     FieldSling,
+    GatheringTool,
 }
 
 pub(crate) fn selected(profile: (&str, u64), family: &str) -> Option<Rules> {
@@ -54,6 +141,9 @@ pub(crate) fn selected(profile: (&str, u64), family: &str) -> Option<Rules> {
     }
     if family == LINE.family_id {
         return Some(Rules::RiverLine);
+    }
+    if family == GATHERING_FAMILY {
+        return Some(Rules::GatheringTool);
     }
     (family == SLING.candidate.family.id).then_some(Rules::FieldSling)
 }
@@ -79,6 +169,14 @@ impl Rules {
                     .map_err(|_| InstallError::DefinitionBody)?;
                 Ok(true)
             }
+            Self::GatheringTool => {
+                let parameters: GatheringParameters =
+                    serde_json::from_str(candidate.parameters.get())
+                        .map_err(|_| InstallError::DefinitionBody)?;
+                Ok(AUTHORED.gathering.iter().any(|(authored, expected)| {
+                    candidate.same_choices(authored) && &parameters == expected
+                }))
+            }
             Self::FieldSling => {
                 if !candidate.same_choices(&SLING.candidate) {
                     return Ok(false);
@@ -99,9 +197,13 @@ impl Rules {
         definition: impl Fn(&str) -> Option<&'a ItemDefinitionRead>,
         output: &ItemDefinitionRead,
         body: &str,
+        item_defaults: (bool, Option<u64>),
     ) -> Result<bool, InstallError> {
         match self {
             Self::RiverLine => Ok(LINE.validates(work, &candidate.inputs, definition, output)),
+            Self::GatheringTool => {
+                gathering_product(work, candidate, definition, output, body, item_defaults)
+            }
             Self::FieldSling => {
                 #[derive(Deserialize)]
                 #[serde(rename_all = "camelCase")]
@@ -169,36 +271,116 @@ impl LineRules {
     }
 }
 
-/// Only the checked Base cutting-stone transform is currently executable.
+/// The retained Base transforms use their ordinary authored recipe
+/// records. Construction transforms keep their separate support boundary.
 pub(crate) fn supports_fixed(
     profile: (&str, u64),
     candidate: &FixedTransform,
 ) -> Result<bool, InstallError> {
-    const KNAPPING: &str = "base:knap-cutting-stone";
-    if profile != ("grounded-wilderness", 1) || candidate.id != KNAPPING {
+    if profile != ("grounded-wilderness", 1)
+        || !RETAINED_FIXED_TRANSFORMS.contains(&candidate.id.as_str())
+    {
         return Ok(false);
     }
-    static RECIPE: LazyLock<FixedTransform> = LazyLock::new(|| {
-        #[derive(Deserialize)]
-        struct Catalogue {
-            methods: Vec<Method>,
-        }
-        #[derive(Deserialize)]
-        struct Method {
-            definition: Option<FixedTransform>,
-        }
-        let authored: Catalogue =
-            serde_json::from_str(include_str!("../config/first-playable.generated.json"))
-                .expect("Base manufacture catalogue is a build input");
-        authored
-            .methods
-            .into_iter()
-            .filter_map(|method| method.definition)
-            .find(|recipe| recipe.id == KNAPPING)
-            .expect("Base catalogue contains its cutting-stone recipe")
-    });
-    if &*RECIPE != candidate {
+    let authored = AUTHORED
+        .fixed
+        .iter()
+        .find(|recipe| recipe.id == candidate.id)
+        .expect("Base catalogue contains its retained transforms");
+    if authored != candidate {
         return Err(InstallError::DefinitionBody);
     }
     Ok(true)
+}
+
+/// Validate only the compiled result of the exact authored tools. Besides
+/// the shared item fields, this closed output shape prevents an unrelated
+/// weapon, food, container or material capability entering through this family.
+fn gathering_product<'a>(
+    work: f64,
+    candidate: &Candidate<'_>,
+    definition: impl Fn(&str) -> Option<&'a ItemDefinitionRead>,
+    output: &ItemDefinitionRead,
+    body: &str,
+    (portable, packing_load): (bool, Option<u64>),
+) -> Result<bool, InstallError> {
+    use serde::de::IgnoredAny;
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Equipment<'a> {
+        #[serde(borrow)]
+        uses: [&'a str; 1],
+        #[serde(rename = "ports")]
+        _ports: IgnoredAny,
+    }
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Product<'a> {
+        #[serde(borrow)]
+        equipment: Equipment<'a>,
+        mechanism_fields: StoryFields,
+        #[serde(rename = "id")]
+        _id: IgnoredAny,
+        #[serde(rename = "version")]
+        _version: IgnoredAny,
+        #[serde(rename = "name")]
+        _name: IgnoredAny,
+        #[serde(rename = "description")]
+        _description: IgnoredAny,
+        #[serde(rename = "properties")]
+        _properties: IgnoredAny,
+        #[serde(rename = "portable")]
+        _portable: IgnoredAny,
+        #[serde(rename = "packingLoad")]
+        _packing_load: Option<IgnoredAny>,
+        #[serde(rename = "gatheringTool")]
+        _gathering_tool: IgnoredAny,
+        #[serde(rename = "recipeId")]
+        _recipe_id: IgnoredAny,
+        #[serde(rename = "recipeRecord")]
+        _recipe_record: Option<IgnoredAny>,
+    }
+    let product: Product<'_> =
+        serde_json::from_str(body).map_err(|_| InstallError::DefinitionBody)?;
+    let Some((_, rules)) = AUTHORED
+        .gathering
+        .iter()
+        .find(|(expected, _)| candidate.same_choices(expected))
+    else {
+        return Ok(false);
+    };
+    let inherited = |property: &JsText| {
+        !OUTPUTS
+            .excluded_inherited_properties
+            .iter()
+            .any(|excluded| property == excluded.as_str())
+    };
+    let properties = &output.properties;
+    let exact_properties = properties.windows(2).all(|pair| pair[0] < pair[1])
+        && properties.iter().all(|property| {
+            inherited(property)
+                && candidate.inputs.iter().any(|input| {
+                    definition(&input.definition_id)
+                        .is_some_and(|material| material.properties.contains(property))
+                })
+        })
+        && candidate.inputs.iter().all(|input| {
+            definition(&input.definition_id).is_some_and(|material| {
+                material
+                    .properties
+                    .iter()
+                    .filter(|property| inherited(property))
+                    .all(|property| properties.binary_search(property).is_ok())
+            })
+        });
+    Ok(work == rules.work_seconds
+        && definition(&rules.resource_id).is_some_and(|resource| resource.recipe_id.is_none())
+        && output.gathering_tool_yield() == Some((rules.resource_id.as_str(), rules.quantity))
+        && &output.named.name == candidate.output_name()
+        && output.portable == portable
+        && output.packing_load() == packing_load
+        && output.equipment_ports() == Some(OUTPUTS.gathering_tool_ports.as_slice())
+        && product.equipment.uses == ["gather"]
+        && product.mechanism_fields == OUTPUTS.constructed_story_fields
+        && exact_properties)
 }

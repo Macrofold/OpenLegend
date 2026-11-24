@@ -1,0 +1,5 @@
+{
+  "excludedInheritedProperties": ["food", "fuel"],
+  "gatheringToolPorts": ["main-hand"],
+  "constructedStoryFields": { "story_importance": { "story_importance": 8 } }
+}

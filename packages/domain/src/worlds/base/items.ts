@@ -1,3 +1,4 @@
+import outputRules from './config/recipe-output-rules.json' with { type: 'json' };
 import { BASE_ATTACK_EXECUTION } from './skilled-execution.js';
 import { BASE_CANOPY, CANOPY_ITEMS } from './canopies.js';
 import type { ItemDefinition } from '../../types.js';
@@ -33,7 +34,7 @@ const CONTACT_CHARACTERISTICS: ItemDefinition['characteristics'] = [
 
 /** Unfamiliar constructed objects can earn an introduction; ordinary materials
  * remain quiet. The story selector still owns all admission. */
-export const CONSTRUCTED_ITEM_STORY_FIELDS = { story_importance: { story_importance: 8 } };
+export const CONSTRUCTED_ITEM_STORY_FIELDS = outputRules.constructedStoryFields;
 
 const existingItems: Readonly<Record<string, ItemDefinition>> = {
   ...CANOPY_ITEMS,
