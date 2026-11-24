@@ -58,8 +58,8 @@ impl RuntimeNpcRead {
 }
 
 impl RuntimeNpcResponseTicket {
-    /// Fund only the compact disclosure proof. The stand-alone formatter has
-    /// already checked that this stage projects only the supported families.
+    /// Fund the compact disclosure proof only for inputs it can prove after
+    /// restart. The live reply checks learned methods through their own owner.
     pub fn stage_witness(
         &self,
         budget: &ByteBudget,
@@ -81,6 +81,8 @@ impl RuntimeNpcResponseTicket {
             || self.bindings.purpose != NpcBindingPurpose::Decision
             || self.checks_query_evidence
             || self.original.activity_inspection.is_some()
+            || self.original.has_learned_activity_offer()
+            || self.current.has_learned_activity_offer()
             || !matches(&self.original.historical_scope)
             || !self.current.stage_notes_match(current.knowledge_revision)
             || self
