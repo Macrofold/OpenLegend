@@ -16,7 +16,8 @@ pub use inventory::{
     StockGroupRefusal, StockGroupRequest, stock_group_limit_message,
 };
 mod catalogue;
-pub use catalogue::RuntimeActionCatalogue;
+pub use catalogue::{RuntimeActionCatalogue, RuntimeCatalogueOffer};
+use catalogue::{current_actor_target, follow_availability};
 mod status_menu;
 mod hearth;
 mod teaching;
@@ -67,6 +68,7 @@ pub struct RuntimeContactMenu<'a> {
     health: Option<&'a crate::reception::AttributeView>,
     may_act: bool,
     may_attack: bool,
+    pub follow: Option<RuntimeFollowOffer<'a>>,
     teaching: Option<GeometryBinding>,
     pub name: &'a crate::text::JsText,
     pub ranged: &'a [RuntimeRangedChoice<'a>],
@@ -115,6 +117,12 @@ impl<'a> RuntimeStrikeChoice<'a> {
             }
         }
     }
+}
+
+pub struct RuntimeFollowOffer<'a> {
+    pub name: &'a crate::text::JsText,
+    pub paused: bool,
+    pub reason: Option<&'a str>,
 }
 
 impl<'a> RuntimeContactMenu<'a> {
@@ -1113,16 +1121,16 @@ impl NativeWorldSession {
 
     /// Admit a menu for one currently observed person. Borrow installed
     /// offers and the permitted name through synchronous publication. Primary
-    /// action rechecks can skip lessons, which never change that choice.
+    /// action rechecks skip manual-only Follow and teaching rows.
     pub fn with_player_contact_menu<T>(
         &self,
         account: &str,
         actor: &str,
-        include_teaching: bool,
+        detail_choices: bool,
         matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
         use_menu: impl FnOnce(RuntimeContactMenu<'_>) -> Result<T, RuntimeError>,
     ) -> Result<Option<T>, RuntimeError> {
-        self.with_contact_menu_for(account, actor, include_teaching, None, matches, use_menu)
+        self.with_contact_menu_for(account, actor, detail_choices, None, matches, use_menu)
     }
 
     /// The exact held-tool shortcut has no lessons or automatic equipment
@@ -1142,7 +1150,7 @@ impl NativeWorldSession {
         &self,
         account: &str,
         actor: &str,
-        include_teaching: bool,
+        detail_choices: bool,
         equipment: Option<&str>,
         mut matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
         use_menu: impl FnOnce(RuntimeContactMenu<'_>) -> Result<T, RuntimeError>,
@@ -1168,15 +1176,9 @@ impl NativeWorldSession {
             .visit_accepted_player_contacts(account, actor, &self.budget, |observed| {
                 let observed_name = observed.name;
                 let name = &observed_name.name;
-                let Some(target) = state.physical.entities.get(observed.source_id) else {
+                let Some(target) = current_actor_target(state, source, &observed) else {
                     return false;
                 };
-                if !observed.actor || target.id == source.id || !target.actively_participates()
-                    || !target.actor.as_ref().is_some_and(|actor| actor.alive)
-                    || !observed.physical_life.is_some_and(|life| target.physical_life() == Some(life))
-                {
-                    return false;
-                }
                 use crate::reception::SensoryFacet;
                 let Some(SensoryFacet::Body { body }) = observed.body_facet().map(|f| &f.value)
                 else {
@@ -1206,6 +1208,17 @@ impl NativeWorldSession {
                 } else {
                     None
                 };
+                let follow = if detail_choices {
+                    match follow_availability(state, source, may_act) {
+                        Ok(offer) => offer.map(|offer| offer.with_name(name)),
+                        Err(error) => {
+                            result = Some(Err(error));
+                            return true;
+                        }
+                    }
+                } else {
+                    None
+                };
                 let choice = RuntimeContactMenu {
                     state,
                     source,
@@ -1214,7 +1227,8 @@ impl NativeWorldSession {
                     health,
                     may_act,
                     may_attack,
-                    teaching: (include_teaching && teaching::has_offers(state, source, target))
+                    follow,
+                    teaching: (detail_choices && teaching::has_offers(state, source, target))
                         .then(|| GeometryBinding::new(
                             CandidateKey {
                                 id: 0,
@@ -1227,7 +1241,11 @@ impl NativeWorldSession {
                     name,
                     ranged: ranged.as_ref().map_or(&[], |(choices, _)| choices.as_slice()),
                 };
-                if may_attack || choice.teaching.is_some() || choice.encounter().is_some() || may_act && choice.guard_shields().next().is_some()
+                if may_attack
+                    || choice.teaching.is_some()
+                    || choice.follow.is_some()
+                    || choice.encounter().is_some()
+                    || (may_act && choice.guard_shields().next().is_some())
                 {
                     result = Some(use_menu.take().expect("one selected contact")(choice));
                 }

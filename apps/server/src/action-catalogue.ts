@@ -34,6 +34,7 @@ import {
   rangedChoiceLabel,
   BASE_RANGED_TEXT,
   BASE_OUTING,
+  BASE_FOLLOW_MENU,
   outingInvitationProblem,
   BASE_COMBAT_HELP,
   activityRequestHost,
@@ -537,10 +538,10 @@ function nativeActionCatalogue(
   if (selected?.actor?.alive && selected.id !== scope.actorId)
     add(
       `follow:${selected.id}`,
-      `Follow ${selected.name}`,
-      'Movement',
+      `${BASE_FOLLOW_MENU.labelPrefix}${selected.name}`,
+      BASE_FOLLOW_MENU.category,
       { type: 'follow', targetId: selected.id },
-      ['follow', 'accompany'],
+      BASE_FOLLOW_MENU.keywords,
       selected.id,
     );
   const includeUnavailableCategory = (
@@ -728,10 +729,10 @@ function nativeActionCatalogue(
     if (context.catalogue && target.actor?.alive)
       add(
         `follow:${target.id}`,
-        `Follow ${target.name}`,
-        'Movement',
+        `${BASE_FOLLOW_MENU.labelPrefix}${target.name}`,
+        BASE_FOLLOW_MENU.category,
         { type: 'follow', targetId: target.id },
-        ['follow', 'accompany'],
+        BASE_FOLLOW_MENU.keywords,
         target.id,
       );
     if (context.catalogue && worldSupport(target))

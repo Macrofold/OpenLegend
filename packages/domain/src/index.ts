@@ -596,5 +596,6 @@ export { hasTemporalRecentIndividual } from './temporal-evidence.js';
 export { retainCapturedTemporalSupport } from './temporal-evidence.js';
 export {
   decisionOfferDescription,
+  BASE_FOLLOW_MENU,
   type DecisionOfferDescription,
 } from './worlds/base/decision-offers.js';

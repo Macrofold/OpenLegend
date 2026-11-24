@@ -193,22 +193,35 @@ pub(super) fn render(
         (!gathering.is_empty()).then_some(GATHER.name),
         (!craft.is_empty()).then_some(manufacture::CATEGORY),
     ];
-    let mut categories = [""; 6];
-    let mut length = 0;
+    let mut _category_storage = budget.reserve(0)?;
+    let mut categories = Vec::new();
     for category in groups
         .into_iter()
         .flatten()
         .chain(resources.into_iter().flat_map(|rows| rows.groups()))
     {
-        if !categories[..length].contains(&category) {
-            categories[length] = category;
-            length += 1;
+        if categories.contains(&category) {
+            continue;
         }
+        if categories.len() == categories.capacity() {
+            let next = categories
+                .capacity()
+                .checked_mul(2)
+                .ok_or(CapacityError)?
+                .max(4);
+            let storage =
+                budget.reserve(next.checked_mul(size_of::<&str>()).ok_or(CapacityError)?)?;
+            categories
+                .try_reserve_exact(next - categories.len())
+                .map_err(|_| CapacityError)?;
+            _category_storage = storage;
+        }
+        categories.push(category);
     }
     resource_menu_selection(
         menu.sequence,
         &Actions(&choices, gathering, craft, resources),
-        &categories[..length],
+        &categories,
         None,
         budget,
     )

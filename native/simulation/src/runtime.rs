@@ -141,7 +141,7 @@ pub use npc::{
     RuntimeNpcResponseTicket, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
     RuntimeNpcStageWitness, RuntimeNpcSubjectNote,
 };
-pub use player::{InspectedRecipeRecord, RuntimeWorldStorage};
+pub use player::{InspectedRecipeRecord, RuntimeCatalogueOffer, RuntimeFollowOffer, RuntimeWorldStorage};
 pub use player::{RuntimeActionCatalogue, RuntimePracticeOffer, RuntimeRangedChoice};
 pub use crate::projectile::{RuntimeRangedMode, RuntimeRangedTarget};
 pub use player::{OBJECT_HISTORY_SELECTION, RuntimeObjectHistoryEntry, RuntimeObjectHistoryRead};

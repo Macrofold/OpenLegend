@@ -3,6 +3,11 @@
 
 use super::*;
 
+pub enum RuntimeCatalogueOffer<'a> {
+    Follow(RuntimeFollowOffer<'a>),
+    Resource(RuntimeResourceOffer<'a>),
+}
+
 pub struct RuntimeActionCatalogue<'a> {
     simulation: &'a crate::simulation::Simulation,
     budget: &'a ByteBudget,
@@ -55,18 +60,24 @@ impl NativeWorldSession {
 }
 
 impl RuntimeActionCatalogue<'_> {
-    /// Traverse one accepted perception capture for on-demand resource offers.
+    /// Traverse one accepted perception capture for on-demand contact and resource offers.
     /// Gather and cast tools are prepared only for a relevant perceived site,
     /// once per family. Borrowed offers and optional geometry stay inside this
     /// lease; callers fund any retained rows before advancing.
-    pub fn visit_resources(
+    pub fn visit_contact_choices(
         &self,
         mut add: impl FnMut(
             &crate::capture::PlayerObservedBody<'_>,
-            RuntimeResourceOffer<'_>,
+            RuntimeCatalogueOffer<'_>,
         ) -> Result<(), RuntimeError>,
     ) -> Result<(), RuntimeError> {
         let state = &self.simulation.state;
+        let source = state
+            .physical
+            .entities
+            .get(self.actor.id)
+            .ok_or_else(|| failure("Missing catalogue actor"))?;
+        let follow = follow_availability(state, source, self.actor.can_act)?;
         let mut tool_yields = None;
         let mut fish_tools = None;
         let mut workspace = self.budget.reserve(0)?;
@@ -79,11 +90,21 @@ impl RuntimeActionCatalogue<'_> {
                     return false;
                 };
                 let result = (|| {
+                    if let Some(follow) = follow
+                        && current_actor_target(state, source, &body).is_some()
+                    {
+                        add(
+                            &body,
+                            RuntimeCatalogueOffer::Follow(follow.with_name(&body.name.name)),
+                        )?;
+                    }
                     if pickup::observed_source(state, observed) {
                         if let Some(read) =
                             pickup::PickupRead::current(state, self.actor.id, &body, self.budget)?
                         {
-                            read.render(self.budget, |offer| add(&body, offer))?;
+                            read.render(self.budget, |offer| {
+                                add(&body, RuntimeCatalogueOffer::Resource(offer))
+                            })?;
                         }
                         return Ok(());
                     }
@@ -100,7 +121,7 @@ impl RuntimeActionCatalogue<'_> {
                             target,
                             None,
                             self.budget,
-                            |offer| add(&body, offer),
+                            |offer| add(&body, RuntimeCatalogueOffer::Resource(offer)),
                         );
                     }
                     if observed.kind != "resource" {
@@ -122,7 +143,7 @@ impl RuntimeActionCatalogue<'_> {
                             self.budget,
                             tools,
                             false,
-                            |offer| add(&body, offer),
+                            |offer| add(&body, RuntimeCatalogueOffer::Resource(offer)),
                         );
                     }
                     let Some((gathering, quantity)) = menu_gathering(state, &body) else {
@@ -160,8 +181,10 @@ impl RuntimeActionCatalogue<'_> {
                         });
                     add(
                         &body,
-                        RuntimeResourceOffer::Gather(gather_menu_offer(
-                            state, &body, gathering, quantity, self.actor, amount,
+                        RuntimeCatalogueOffer::Resource(RuntimeResourceOffer::Gather(
+                            gather_menu_offer(
+                                state, &body, gathering, quantity, self.actor, amount,
+                            ),
                         )),
                     )
                 })();
@@ -188,6 +211,73 @@ impl RuntimeActionCatalogue<'_> {
             visit,
         )
     }
+}
+
+/// Only a current received body can bind the living participant. The same
+/// selection serves contextual and global discovery.
+pub(super) fn current_actor_target<'a>(
+    state: &'a crate::simulation::SimulationState,
+    source: &crate::state::Entity,
+    observed: &crate::capture::PlayerObservedBody<'_>,
+) -> Option<&'a crate::state::Entity> {
+    if !observed.actor || observed.source_id == source.id {
+        return None;
+    }
+    let target = state.physical.entities.get(observed.source_id)?;
+    (target.actively_participates()
+        && target.actor.as_ref().is_some_and(|actor| actor.alive)
+        && target.physical_life() == Some(observed.physical_life?))
+    .then_some(target)
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct FollowAvailability<'a> {
+    paused: bool,
+    reason: Option<&'a str>,
+}
+
+impl<'a> FollowAvailability<'a> {
+    pub(super) fn with_name(self, name: &'a crate::text::JsText) -> RuntimeFollowOffer<'a> {
+        RuntimeFollowOffer {
+            name,
+            paused: self.paused,
+            reason: self.reason,
+        }
+    }
+}
+
+pub(super) fn follow_availability<'a>(
+    state: &'a crate::simulation::SimulationState,
+    source: &crate::state::Entity,
+    may_act: bool,
+) -> Result<Option<FollowAvailability<'a>>, RuntimeError> {
+    let rules = &state.installed.occurrence_rules.value().response.offers;
+    if rules.follow_command != "follow" {
+        return Ok(None);
+    }
+    let rules = &rules.availability;
+    let restricted = !may_act
+        || !source.actively_participates()
+        || !source
+            .actor
+            .as_ref()
+            .is_some_and(|actor| actor.alive && !actor.incapacitated)
+        || state
+            .installed
+            .capabilities
+            .capability_blocked(Some(source), "locomotion")
+            .map_err(failure)?;
+    let reason = if restricted {
+        Some(rules.follow_restricted.as_str())
+    } else if source.world_support().is_none() {
+        Some(rules.follow_unsupported.as_str())
+    } else {
+        None
+    };
+    Ok(Some(FollowAvailability {
+        paused: state.physical.header.paused,
+        reason,
+    }))
 }
 
 pub(super) fn cast_geometry_binding(

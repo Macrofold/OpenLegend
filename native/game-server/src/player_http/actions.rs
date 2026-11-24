@@ -12,7 +12,7 @@ use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
     host::CapacityError,
     runtime::{
-        NativeWorldSession, RuntimeError, RuntimeGatherOffer, RuntimeRangedMode,
+        NativeWorldSession, RuntimeCatalogueOffer, RuntimeError, RuntimeGatherOffer, RuntimeRangedMode,
         RuntimeResourceOffer,
     },
     text::JsText,
@@ -27,6 +27,7 @@ mod resources;
 mod manufacture;
 mod status;
 mod fire;
+mod follow;
 
 const TAKE_CONTROL: &str = "Take control of your character to act here.";
 const RESUME_WORLD: &str = "Resume the world to act.";
@@ -152,14 +153,19 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                                 |menu, read| {
                                     let mut gathering = Vec::new();
                                     let mut resources = resources::CatalogueRows::new(budget)?;
-                                    read.visit_resources(|body, offer| {
+                                    read.visit_contact_choices(|body, offer| {
                                         // Only a deliberately selected empty cast explains how to obtain a tool.
-                                        if matches!(&offer, RuntimeResourceOffer::Fish(cast) if cast.tools.is_empty()) {
+                                        if matches!(&offer, RuntimeCatalogueOffer::Resource(RuntimeResourceOffer::Fish(cast)) if cast.tools.is_empty()) {
                                             return Ok(());
                                         }
                                         let _alias = budget.reserve(128)?;
                                         let selected = references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id)
                                             .map_err(RuntimeError::application_refused)?;
+                                        let offer = match offer {
+                                            RuntimeCatalogueOffer::Follow(offer) =>
+                                                return resources.add(follow::choice(&selected, &offer, controls, budget)?),
+                                            RuntimeCatalogueOffer::Resource(offer) => offer,
+                                        };
                                         let batch = match offer {
                                             RuntimeResourceOffer::Gather(offer) => {
                                                 let row = gather_choice(&selected, &offer, controls, budget)?;
@@ -649,6 +655,7 @@ pub(crate) struct ContactMenu<'a> {
     revision: u64,
     selected: &'a str,
     actions: Vec<ContactAction<'a>>,
+    follow: Option<resources::Batch>,
     categories: Vec<&'a str>,
     encounter: Option<EncounterContext<'a>>,
     _storage: ByteReservation,
@@ -682,7 +689,23 @@ impl ContactMenu<'_> {
     pub(crate) fn encode(&self, references: &PlayerReferences<'_>, budget: &ByteBudget) -> Result<Bytes, RuntimeError> {
         let action = self.preferred();
         let reference = action.map(|action| self.reference(action, references)).transpose()?;
-        resource_menu_selection(self.revision, &self.actions, &self.categories,
+        struct Rows<'menu, 'data>(&'menu ContactMenu<'data>);
+        impl Serialize for Rows<'_, '_> {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                use serde::ser::SerializeSeq;
+                let menu = self.0;
+                let extra = menu.follow.as_ref().map_or(&[][..], |batch| &batch.choices[..]);
+                let mut rows = serializer.serialize_seq(Some(menu.actions.len() + extra.len()))?;
+                for choice in &menu.actions {
+                    rows.serialize_element(choice)?;
+                }
+                for choice in extra {
+                    rows.serialize_element(choice)?;
+                }
+                rows.end()
+            }
+        }
+        resource_menu_selection(self.revision, &Rows(self), &self.categories,
             action.zip(reference.as_deref()).map(|(action, reference)| PrimaryActionSelection {
                 target_id: self.selected, action_id: action.id.as_str(), reference,
             }), budget)
@@ -755,6 +778,8 @@ pub(crate) fn contact_choices<'a>(
         budget.reserve(2048 + 8 * conversant.map_or(0, JsText::storage_bytes) + selected.len())?;
     let mut actions = Vec::new();
     let mut categories = Vec::new();
+    let follow = contact.as_ref().and_then(|menu| menu.follow.as_ref())
+        .map(|offer| follow::choice(selected, offer, controlling, budget)).transpose()?;
     if let Some(name) = conversant {
         let custom = encounter.as_ref().filter(|read| read.family != EncounterFamily::Ordinary);
         if let Some(custom) = custom {
@@ -1057,5 +1082,8 @@ pub(crate) fn contact_choices<'a>(
         });
         if !categories.contains(&"Combat") { categories.push("Combat"); }
     }
-    Ok(ContactMenu { revision, selected, actions, categories, encounter, _storage: workspace })
+    if follow.is_some() && !categories.contains(&follow::category()) {
+        categories.push(follow::category());
+    }
+    Ok(ContactMenu { revision, selected, actions, follow, categories, encounter, _storage: workspace })
 }

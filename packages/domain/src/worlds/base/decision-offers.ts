@@ -1,3 +1,4 @@
+export { default as BASE_FOLLOW_MENU } from './config/follow-menu.json' with { type: 'json' };
 import { namePhrase, type Named } from '@open-legend/language';
 import { BASE_ACTION_DEFAULTS, BASE_FAMILY_FACTS } from './actions.js';
 import { BASE_MANUAL_WORK_BODY_PLANS } from './bodies.js';
