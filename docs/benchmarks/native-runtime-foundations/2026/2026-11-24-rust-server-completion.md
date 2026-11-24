@@ -48,7 +48,9 @@ Median PostgreSQL transaction commits were 10,162 and 10,050. Median inserted/up
 
 ## Scheduled checkpoint window
 
-The separate interleaved campaign `d1e5a752-6a4a-4b12-acf5-b735b08ecc71` uses the same two source commits and standard worker. It makes one rolling checkpoint due in each run while ordinary play and one-second saves continue. Admission and the start were confirmed. The local AWS session expired after the durable job started. Collection, final outcome and worker stop remain unverified. Resume this campaign after renewing access so the original case order and artifacts stay intact.
+The first scheduled-checkpoint comparison, `d1e5a752-6a4a-4b12-acf5-b735b08ecc71`, made one rolling checkpoint due during ordinary play. One earlier-Rust run and two release runs completed play, publication and cold continuation. The second earlier-Rust run saved all 34 walks and both replies, but three admission attempts failed before any checkpoint file reached staging. The last two scheduled runs did not start. The result was collected after AWS access returned. Worker generation 593 cleaned up and stopped with no hold remaining for this campaign.
+
+The original failure text did not distinguish an occupied save gate from a native refusal during the protected drain. The new gate path can wait for a momentary opening without entering the intake queue. Sustained contention still uses the existing 30-second backoff. A new comparison uses this same repair on both arms. The three successful runs above remain partial evidence.
 
 ## Evidence and failed attempt
 
