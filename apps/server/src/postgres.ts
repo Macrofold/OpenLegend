@@ -8,18 +8,7 @@ import {
 } from './performance.js';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { LiveSqlDatabase } from './live-sql-database.js';
-import { nativeSourceColumnParsers } from './native-source-preparation.js';
-import { createNativeConsumerScope } from './native-consumer.js';
-import {
-  LiveReadOverlay,
-  LiveReadRevisionError,
-  mayReadLiveTables,
-  readsPersonalHistory,
-  type LiveReadCuts,
-  type LiveReadCutsProvider,
-  type MetadataBaseline,
-} from './live-read-overlay.js';
+import type { SqlDatabase } from './sql-database.js';
 
 // The stand-alone writer and stopped backup use this same PostgreSQL key.
 const WORLD_WRITER_KEY = '187114, 1';
@@ -30,12 +19,6 @@ interface TransactionScope {
   readOnly: boolean;
   committed: (() => void)[];
   rolledBack: (() => void)[];
-  liveCuts?: LiveReadCuts;
-  liveCutOwner?: ReturnType<typeof createNativeConsumerScope>;
-  liveHead?: Record<string, unknown>;
-  liveOverlays?: Map<string, LiveReadOverlay>;
-  exactCut?: boolean;
-  actor?: { worldId: string; actorId: string };
   rollbackViewActive?: boolean;
   writeFailure?: unknown;
 }
@@ -87,10 +70,7 @@ function runTransactionCallbacks(callbacks: readonly (() => void)[]): unknown[] 
 }
 
 /** Independent bounded read and write lanes; a large recall cannot occupy the writer. */
-export class PostgresDatabase implements LiveSqlDatabase {
-  get checkpointSource() {
-    return { url: this.connectionString };
-  }
+export class PostgresDatabase implements SqlDatabase {
   private client: pg.Client;
   private ready: Promise<void>;
   private reader: pg.Client;
@@ -98,7 +78,6 @@ export class PostgresDatabase implements LiveSqlDatabase {
   private readonly readLane = new WorkLane('postgres.read', 512);
   private readonly writeLane = new WorkLane('postgres', 512);
   private transactionContext = new AsyncLocalStorage<TransactionScope>();
-  private readonly metadataBaselineRead = new AsyncLocalStorage<boolean>();
   private readonly transferAdmission = new AsyncLocalStorage<
     (bytes: number, rows: number) => void
   >();
@@ -111,46 +90,19 @@ export class PostgresDatabase implements LiveSqlDatabase {
   withoutReadTransferAdmission<T>(operation: () => T): T {
     return this.transferAdmission.exit(operation);
   }
-  readMetadataBaseline<T>(
-    actorIds: readonly string[],
-    operation: (baseline: MetadataBaseline) => Promise<T>,
-  ): Promise<T> {
-    const read = async () => {
-      const scope = this.transactionContext.getStore();
-      const actor = this.actorReadScope.getStore() ?? scope?.actor;
-      if (scope?.readOnly && actor && actorIds.some((id) => id !== actor.actorId))
-        throw new LiveReadRevisionError();
-      const overlay =
-        scope?.readOnly && scope.liveCuts ? await this.resolveLiveOverlay(scope) : undefined;
-      const head = overlay
-        ? overlay.metadataBaseline(actorIds)
-        : await this.query('SELECT world_id,revision FROM world_head WHERE id=1').then(
-            ({ rows }) => ({
-              worldId: String(rows[0]?.['world_id']),
-              revision: Number(rows[0]?.['revision']),
-            }),
-          );
-      // This consumer merges its selected pending metadata itself. Expanding the
-      // same pending bodies into SQL duplicates that work and can exceed the read
-      // allowance before SQL filters them. Body/source reads outside this callback
-      // retain normal live semantics. The captured cut was validated above.
-      // docs/projects/bookkeeping-simplification-runtime-design.md#63-reads-while-progress-is-unsaved
-      return this.metadataBaselineRead.run(true, () => operation(head));
-    };
-    return this.transactionContext.getStore()?.active ? read() : this.readTransaction(read);
+  protected get inReadScope(): boolean {
+    return this.transactionContext.getStore()?.readOnly === true;
   }
-  private readonly actorReadScope = new AsyncLocalStorage<{ worldId: string; actorId: string }>();
-  readForActor<T>(worldId: string, actorId: string, operation: () => Promise<T>): Promise<T> {
-    return this.actorReadScope.run({ worldId, actorId }, operation);
-  }
-  private readonly explicitReadCut = new AsyncLocalStorage<LiveReadCuts>();
-  readAtCut<T>(cut: LiveReadCuts, operation: () => Promise<T>): Promise<T> {
-    return this.explicitReadCut.run(cut, operation);
-  }
-  private liveReadCuts?: LiveReadCutsProvider;
-  setLiveReadCuts(provider: LiveReadCutsProvider): void {
-    this.liveReadCuts = provider;
-  }
+  protected readonly rewriteRead?: (
+    sql: string,
+    params: unknown[],
+  ) => Promise<{ sql: string; params: unknown[] }> | undefined;
+  protected readonly readColumnDecoder?: () =>
+    | {
+        types: pg.CustomTypesConfig;
+        refusal: () => unknown;
+      }
+    | undefined;
   private failed = false;
   private writeOwnershipReady = false;
   private closing = false;
@@ -158,7 +110,7 @@ export class PostgresDatabase implements LiveSqlDatabase {
     this.failed = true;
   }
   constructor(
-    private readonly connectionString: string,
+    protected readonly connectionString: string,
     private readonly readOnly = false,
     readonly writeGroups = true,
   ) {
@@ -282,7 +234,6 @@ export class PostgresDatabase implements LiveSqlDatabase {
       committed: [],
       rolledBack: [],
       rollbackViewActive: true,
-      actor: parent.actor,
     };
     let saved = false;
     let result: T | undefined;
@@ -321,81 +272,43 @@ export class PostgresDatabase implements LiveSqlDatabase {
       if (!saved) parent.rollbackViewActive = false;
     }
   }
-  private read<T>(
+  protected read<T>(
     operation: () => Promise<T>,
     snapshot: boolean,
-    liveTables = false,
-    personalHistory = false,
+    _sql?: string,
+    queuedAt = beginTiming(),
   ): Promise<T> {
-    const queuedAt = beginTiming();
-    const explicitCut = this.explicitReadCut.getStore();
-    const actor = this.actorReadScope.getStore();
     const admitted = this.transferAdmission.getStore() !== undefined;
-    // A provider can create a new native pending-cut snapshot. Only that
-    // capture and its retry belong to this read, while explicit caller cuts
-    // and independently admitted SQL results keep their own lifetimes.
-    const liveCutOwner =
-      !explicitCut && (snapshot || liveTables) && this.liveReadCuts
-        ? createNativeConsumerScope()
-        : undefined;
-    let liveCuts: LiveReadCuts | undefined;
-    try {
-      liveCuts = explicitCut ?? liveCutOwner?.runSync(() => this.liveReadCuts?.(actor));
-    } catch (error) {
-      liveCutOwner?.dispose();
-      throw error;
-    }
-    return this.readLane
-      .run(async () => {
-        endTiming('postgres.readWait', queuedAt);
-        this.readReady ??= this.ready.then(async () => {
-          await this.reader.connect();
-          await this.reader.query(
-            'SET search_path TO open_legend; SET default_transaction_read_only=on',
-          );
-        });
-        await this.readReady;
-        if (
-          snapshot ||
-          admitted ||
-          explicitCut ||
-          (liveTables &&
-            (liveCuts?.cuts.length || (personalHistory && liveCuts?.historyEligibility?.size)))
-        )
-          return this.inTransaction(
-            this.reader,
-            true,
-            operation,
-            liveCuts,
-            !!explicitCut,
-            actor,
-            liveCutOwner,
-          );
-        // One ordinary SELECT already has an atomic PostgreSQL snapshot. An
-        // admitted read needs a fixed snapshot across its sizing and body queries.
-        const scope = {
-          active: true,
-          client: this.reader,
-          readOnly: true,
-          committed: [] as (() => void)[],
-          rolledBack: [] as (() => void)[],
-        };
-        try {
-          return await this.transactionContext.run(scope, operation);
-        } finally {
-          scope.active = false;
-        }
-      })
-      .finally(() => liveCutOwner?.dispose());
+    return this.readLane.run(async () => {
+      endTiming('postgres.readWait', queuedAt);
+      this.readReady ??= this.ready.then(async () => {
+        await this.reader.connect();
+        await this.reader.query(
+          'SET search_path TO open_legend; SET default_transaction_read_only=on',
+        );
+      });
+      await this.readReady;
+      if (snapshot || admitted) return this.inTransaction(this.reader, true, operation);
+      // One ordinary SELECT already has an atomic PostgreSQL snapshot. An
+      // admitted read needs a fixed snapshot across its sizing and body queries.
+      const scope = {
+        active: true,
+        client: this.reader,
+        readOnly: true,
+        committed: [] as (() => void)[],
+        rolledBack: [] as (() => void)[],
+      };
+      try {
+        return await this.transactionContext.run(scope, operation);
+      } finally {
+        scope.active = false;
+      }
+    });
   }
   private inTransaction<T>(
     client: pg.Client,
     readOnly: boolean,
     operation: () => Promise<T>,
-    liveCuts?: LiveReadCuts,
-    exactCut = false,
-    actor?: { worldId: string; actorId: string },
-    liveCutOwner?: ReturnType<typeof createNativeConsumerScope>,
   ): Promise<T> {
     const scope: TransactionScope = {
       active: true,
@@ -403,10 +316,6 @@ export class PostgresDatabase implements LiveSqlDatabase {
       readOnly,
       committed: [] as (() => void)[],
       rolledBack: [] as (() => void)[],
-      liveCuts,
-      liveCutOwner,
-      exactCut,
-      actor,
     };
     return this.transactionContext.run(scope, async () => {
       const rollback = async (error: unknown): Promise<never> => {
@@ -492,55 +401,6 @@ export class PostgresDatabase implements LiveSqlDatabase {
     });
   }
 
-  private async resolveLiveOverlay(scope: TransactionScope): Promise<LiveReadOverlay> {
-    if (!scope.liveCuts) throw new LiveReadRevisionError();
-    const requested = this.actorReadScope.getStore(),
-      actor = requested ?? scope.actor;
-    if (
-      scope.actor &&
-      requested &&
-      (scope.actor.worldId !== requested.worldId || scope.actor.actorId !== requested.actorId)
-    )
-      throw new LiveReadRevisionError();
-    const key = actor ? JSON.stringify([actor.worldId, actor.actorId]) : '';
-    const cached = scope.liveOverlays?.get(key);
-    if (cached) return cached;
-    // Every selected durable row and the header use the same repeatable-read
-    // snapshot, whether the consumer merges bodies or only canonical metadata.
-    const value = (scope.liveHead ??=
-      (await this.query('SELECT world_id,generation,revision FROM world_head WHERE id=1'))
-        .rows[0] ?? {});
-    const prepare = (cut: LiveReadCuts) =>
-      new LiveReadOverlay(
-        cut,
-        Number(value?.['revision']),
-        String(value?.['generation']),
-        String(value?.['world_id']),
-        actor,
-      );
-    let overlay: LiveReadOverlay;
-    try {
-      overlay = prepare(scope.liveCuts);
-    } catch (error) {
-      const latest =
-        !scope.exactCut && error instanceof LiveReadRevisionError
-          ? scope.liveCutOwner
-            ? scope.liveCutOwner.runSync(() => this.liveReadCuts?.(scope.actor))
-            : this.liveReadCuts?.(scope.actor)
-          : undefined;
-      if (
-        !latest ||
-        latest.generation !== scope.liveCuts.generation ||
-        latest.timeline !== scope.liveCuts.timeline
-      )
-        throw error;
-      overlay = prepare(latest);
-      scope.liveCuts = latest;
-    }
-    scope.liveOverlays ??= new Map();
-    scope.liveOverlays.set(key, overlay);
-    return overlay;
-  }
   async query(sql: string, params: unknown[] = []) {
     return this.queryWithDispatch(sql, params);
   }
@@ -551,20 +411,8 @@ export class PostgresDatabase implements LiveSqlDatabase {
       if (this.failed)
         throw new Error('PostgreSQL unavailable; restart and reconcile pending writes.');
       const scope = this.transactionContext.getStore();
-      if (
-        !this.metadataBaselineRead.getStore() &&
-        scope?.readOnly &&
-        scope.liveCuts &&
-        (scope.liveCuts.cuts.length ||
-          scope.exactCut ||
-          (scope.liveCuts.historyEligibility?.size && readsPersonalHistory(sql))) &&
-        mayReadLiveTables(sql)
-      ) {
-        const overlay = await this.resolveLiveOverlay(scope);
-        const rewritten = overlay.rewrite(sql, params);
-        sql = rewritten.sql;
-        params = rewritten.params;
-      }
+      const rewrite = this.inReadScope ? this.rewriteRead?.(sql, params) : undefined;
+      if (rewrite) ({ sql, params } = await rewrite);
       let index = 0;
       const translated = sql.replace(/\?/g, () => `$${++index}`);
       const admit = this.transferAdmission.getStore();
@@ -597,25 +445,8 @@ export class PostgresDatabase implements LiveSqlDatabase {
         admit(bytes, rows);
       }
       const diagnostic = beginDatabaseQuery(template);
-      let columnRefusal: unknown;
-      const parsers = nativeSourceColumnParsers((error) => {
-        columnRefusal = error;
-      });
-      const types: pg.CustomTypesConfig | undefined = parsers
-        ? {
-            getTypeParser(oid, format = 'text') {
-              const parse = pg.types.getTypeParser(oid, format);
-              if (format !== 'text') return parse;
-              if (oid === pg.types.builtins.JSON || oid === pg.types.builtins.JSONB)
-                return (text: string) => parsers.json(text, () => parse(text));
-              // These are the actual text/numeric array OIDs used by current
-              // record columns, parsed by pg-types' unchanged array codecs.
-              if (Number(oid) === 1009 || Number(oid) === 1016 || Number(oid) === 1022)
-                return (text: string) => parsers.array(text, () => parse(text));
-              return parse;
-            },
-          }
-        : undefined;
+      const decoder = this.readColumnDecoder?.();
+      const types = decoder?.types;
       try {
         const result = await timed('postgres.statement', () => {
           onDispatch?.();
@@ -641,6 +472,7 @@ export class PostgresDatabase implements LiveSqlDatabase {
         // A native admission refusal inside pg's row decoder is a host error,
         // not a driver/SQL detail. Preserve it after the real query settles so
         // the caller can refuse before Ready and explicitly retry unchanged.
+        const columnRefusal = decoder?.refusal();
         if (columnRefusal !== undefined) throw columnRefusal;
         const reported = (error as { code?: unknown }).code;
         const code =
@@ -664,12 +496,7 @@ export class PostgresDatabase implements LiveSqlDatabase {
       /^\s*(SELECT|WITH)\b/i.test(sql) &&
       !/\b(?:INSERT|UPDATE|DELETE)\b/i.test(sql) &&
       !/\bFOR\s+(UPDATE|NO\s+KEY\s+UPDATE|SHARE|KEY\s+SHARE)\b/i.test(sql)
-        ? this.read(
-            () => this.query(sql, params),
-            false,
-            mayReadLiveTables(sql),
-            readsPersonalHistory(sql),
-          )
+        ? this.read(() => this.query(sql, params), false, sql)
         : this.query(sql, params);
     return {
       get: async (...params: unknown[]) => (await select(...params)).rows[0],
@@ -687,8 +514,5 @@ export class PostgresDatabase implements LiveSqlDatabase {
       await this.readReady.catch(() => undefined);
       await this.reader.end();
     }
-    // All read lanes are drained. A closed connection must no longer retain
-    // an operational world/capture through its live-overlay callback.
-    this.liveReadCuts = undefined;
   }
 }

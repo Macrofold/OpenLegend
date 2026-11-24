@@ -33,7 +33,7 @@ import { readConfig } from '../apps/server/src/config.js';
 import { SqlGameRepository } from '../apps/server/src/store.js';
 import { SaveFiles } from '../apps/server/src/save-files.js';
 import { SAVE_FORMAT } from '../apps/server/src/checkpoint-format.js';
-import { PostgresDatabase } from '../apps/server/src/postgres.js';
+import { LivePostgresDatabase } from '../apps/server/src/postgres-live.js';
 import { CognitionMaintenance } from '../apps/server/src/cognition-maintenance.js';
 import { WorkLane, OverloadError } from '../apps/server/src/work-lane.js';
 import {
@@ -436,7 +436,7 @@ try {
     OPEN_LEGEND_GOD_MODE: 'true',
     OPEN_LEGEND_SQL_WRITE_GROUPS: process.env['OPEN_LEGEND_SQL_WRITE_GROUPS'],
   });
-  const database = new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups);
+  const database = new LivePostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups);
   closeResources = async () => {
     try {
       await database.close();

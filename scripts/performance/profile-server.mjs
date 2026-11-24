@@ -50,7 +50,7 @@ import {
   startPerformanceCapture,
 } from '../../apps/server/src/performance.ts';
 import { SqlGameRepository } from '../../apps/server/src/store.ts';
-import { PostgresDatabase } from '../../apps/server/src/postgres.ts';
+import { LivePostgresDatabase } from '../../apps/server/src/postgres-live.ts';
 import { validateCurrentWorldState } from '../../apps/server/src/upgrade-world.ts';
 import { createDisposableDatabase } from '../disposable-postgres.mjs';
 
@@ -1052,7 +1052,7 @@ async function main() {
   const startGame = async (tick) => {
     const store = new SqlGameRepository(
       config.dataDirectory,
-      new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
+      new LivePostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
     );
     try {
       if (!tick) {

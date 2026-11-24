@@ -18,7 +18,7 @@ import {
 } from './authority.js';
 import { OpenIdAuthentication, browserLoginToken } from './authentication.js';
 import type { AppConfig } from './config.js';
-import { PostgresDatabase } from './postgres.js';
+import { LivePostgresDatabase } from './postgres-live.js';
 import { SqlGameRepository } from './store.js';
 import { NativeWorldService } from './native-world-service.js';
 import { NativePlayerHttp } from './native-player-http.js';
@@ -115,7 +115,7 @@ export async function createNativeGameServer(options: {
     options.store ??
     new SqlGameRepository(
       config.dataDirectory,
-      new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
+      new LivePostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
     );
   let service: NativeWorldService | undefined;
   let director: NativeNpcDirector | undefined;

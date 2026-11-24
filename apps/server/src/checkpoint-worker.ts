@@ -1,11 +1,11 @@
 import { parentPort, workerData } from 'node:worker_threads';
-import { PostgresDatabase } from './postgres.js';
+import { LivePostgresDatabase } from './postgres-live.js';
 import { writeCheckpoint } from './checkpoint.js';
 import { SaveFiles, CheckpointAllowanceError } from './save-files.js';
 import type { CheckpointSource, CheckpointRequest } from './checkpoint-worker-client.js';
 
 const source = workerData as CheckpointSource;
-const db = new PostgresDatabase(source.url, true);
+const db = new LivePostgresDatabase(source.url, true);
 const port = parentPort;
 if (!port) throw new Error('Checkpoint worker requires an owner.');
 let busy = false;

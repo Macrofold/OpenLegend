@@ -123,7 +123,7 @@ import { intentSlotsSchema } from './navigation-contracts.js';
 import type { AiClient } from '@open-legend/ai';
 import { AiDirector } from './ai-director.js';
 import { readConfig, type AppConfig } from './config.js';
-import { PostgresDatabase } from './postgres.js';
+import { LivePostgresDatabase } from './postgres-live.js';
 import { SqlGameRepository, digest } from './store.js';
 import { WorldService } from './world-service.js';
 import { commandInputSchema, requestIdSchema } from './command-input-schema.js';
@@ -550,7 +550,7 @@ async function initializeGameServer(
     options.store ??
     new SqlGameRepository(
       config.dataDirectory,
-      new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
+      new LivePostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
       {
         preserveSaveStages: config.creation.startup === 'awaiting-creation',
       },

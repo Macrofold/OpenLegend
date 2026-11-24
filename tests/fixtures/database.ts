@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createDisposableDatabase } from '../../scripts/disposable-postgres.mjs';
-import { PostgresDatabase } from '../../apps/server/src/postgres.js';
+import { LivePostgresDatabase } from '../../apps/server/src/postgres-live.js';
 import { SqlGameRepository } from '../../apps/server/src/store.js';
 import { readConfig as applicationConfig } from '../../apps/server/src/config.js';
 
@@ -27,7 +27,7 @@ export async function testRepository(
     database = await createDisposableDatabase(process.env['OPENLEGEND_TEST_DATABASE_URL']);
     databases.set(directory, database);
   }
-  const repository = new SqlGameRepository(directory, new PostgresDatabase(database.url));
+  const repository = new SqlGameRepository(directory, new LivePostgresDatabase(database.url));
   repositories.add(repository);
   const close = repository.close.bind(repository);
   repository.close = async () => {
