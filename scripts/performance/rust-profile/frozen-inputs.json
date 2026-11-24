@@ -44,44 +44,43 @@
     "archiveBytes": 29872
   },
   "tools": {
-    "campaign": "f3816cae-1af5-4a5f-8cd3-170e9061441b",
-    "sha256": "24a8641d3fa2a8b9c98090662d2e1df9b6671b2e8278ee18c8fadf6ed9240122",
+    "campaign": "92f0256e-c75c-4255-b5a2-3daf4b64581b",
+    "sha256": "e7225cd1a13f4b29cf0eb3bead0ae74b192a5a34a1075118d2d0f67e64e61ce8",
+    "archiveSha256": "622f8b0a239827b5595b8cf880aacb653d262dc0594303373f0a17ea930b94c5",
     "files": {
       "build.mjs": {
-        "sha256": "b844b6652206ed0f87667992a8efb3bc3504d0aea6af54bf5dab0bffb4e35324",
-        "bytes": 7814
+        "bytes": 7814,
+        "sha256": "b844b6652206ed0f87667992a8efb3bc3504d0aea6af54bf5dab0bffb4e35324"
       },
       "cargo-1.99.1-x86_64-unknown-linux-gnu.tar.xz": {
-        "sha256": "53f3521949404d595efb06a55c12c5658d4ed1c75566f33d3d514eaebe70bd8a",
-        "bytes": 10954816
+        "bytes": 10954816,
+        "sha256": "53f3521949404d595efb06a55c12c5658d4ed1c75566f33d3d514eaebe70bd8a"
       },
       "cargo-vendor.tar.gz": {
-        "sha256": "30c92be93d8948c31abb083435b5b21472254fc57484b7bcb34558c2dbdfc5fc",
-        "bytes": 40124897
+        "bytes": 41124236,
+        "sha256": "28f0944ac2aedc54badea22a9e204b74a275782e5f07a74aadce3e1f0f1a3cf5"
       },
       "manifest.json": {
-        "sha256": "b4be80de57ed7b779b5bb7797011f359289ac3a0682ec1a0e75133bf8013e0c4",
-        "bytes": 1718
+        "bytes": 1718,
+        "sha256": "4e5da4043b5bc9b2f5935bdde40bd3ed0634aa00f0f9e5fa9364255462276fc6"
       },
       "node-v22.23.2-linux-x64.tar.xz": {
-        "sha256": "d60acfe00a2932254bb0ad20e01b0d74397a0875595de719654b214f4b03f307",
-        "bytes": 31058332
+        "bytes": 31058332,
+        "sha256": "d60acfe00a2932254bb0ad20e01b0d74397a0875595de719654b214f4b03f307"
       },
       "rust-std-1.99.1-x86_64-unknown-linux-gnu.tar.xz": {
-        "sha256": "109b074225bf5b9ea3820890876bfdf4ed161adbfaf94b2b4b5984c85ee5d958",
-        "bytes": 31563228
+        "bytes": 31563228,
+        "sha256": "109b074225bf5b9ea3820890876bfdf4ed161adbfaf94b2b4b5984c85ee5d958"
       },
       "rustc-1.99.1-x86_64-unknown-linux-gnu.tar.xz": {
-        "sha256": "2ff05ff9c08a90861e7f6e4065b40a8b87463b4576186fd613871c3e37f2091f",
-        "bytes": 84098960
+        "bytes": 84098960,
+        "sha256": "2ff05ff9c08a90861e7f6e4065b40a8b87463b4576186fd613871c3e37f2091f"
       },
       "zig-x86_64-linux-0.15.2.tar.xz": {
-        "sha256": "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239",
-        "bytes": 53733924
+        "bytes": 53733924,
+        "sha256": "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239"
       }
-    },
-    "archiveSha256": "33263c97650ed83ff00935dfdc42d61b121b29ef918c329e43b7013f93f7b7be",
-    "archiveBytes": 251293108
+    }
   },
   "language": {
     "campaign": "f3816cae-1af5-4a5f-8cd3-170e9061441b",

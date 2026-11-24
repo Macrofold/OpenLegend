@@ -26,11 +26,15 @@ async function stageScript(file: string, source: string) {
   await writeFile(file, source, { flag: 'wx', mode: 0o600 });
 }
 
-/** Copies the immutable driver into a private case workspace and adds only
- * lifecycle observations. The gameplay calls, offered inputs and assertions
- * are shared with the frozen release comparison.
+/** Stage the frozen driver with the current stopped seed and selected observations.
+ * The gameplay schedule, outcomes and assertions stay with the pinned driver.
  */
-export async function stageFixture(plan: CasePlan, work: string, inputs: RunnerInput[]) {
+export async function stageFixture(
+  plan: CasePlan,
+  work: string,
+  inputs: RunnerInput[],
+  cargoLockSha256: string,
+) {
   const input = (id: string) => {
     const found = inputs.find((entry) => entry.id === id);
     if (!found) throw new Error(`Missing verified case input ${id}.`);
@@ -73,6 +77,19 @@ export async function stageFixture(plan: CasePlan, work: string, inputs: RunnerI
     if (path !== 'build.mjs') await symlink(join(sourceTools.root, path), join(tools, path));
   }
   let builder = await readFile(join(sourceTools.root, 'build.mjs'), 'utf8');
+  // Bind the builder to the supervisor's exact source lock. The verified vendor
+  // archive and locked offline Cargo still enforce the dependency pins.
+  builder = replace(
+    builder,
+    "assert.equal(await sha(join(root, 'native/Cargo.lock')), manifest.cargoLockSha256);",
+    `const caseLockSha256 = ${JSON.stringify(cargoLockSha256)};
+assert.equal(await sha(join(root, 'native/Cargo.lock')), caseLockSha256);`,
+  );
+  builder = replace(
+    builder,
+    '  cargoLockSha256: manifest.cargoLockSha256,',
+    '  cargoLockSha256: caseLockSha256,',
+  );
   // A disabled and enabled run use the same build configuration. Frame
   // pointers change the build independently from attaching the sampler.
   if (plan.mode === 'disabled' || plan.mode === 'enabled') {
@@ -96,6 +113,67 @@ export async function stageFixture(plan: CasePlan, work: string, inputs: RunnerI
 }
 
 function adaptWorkload(source: string) {
+  // Reuse the release comparison's first-save owner while the database is
+  // still stopped. This never launches the archived TypeScript game.
+  source = replace(
+    source,
+    `const [{ digest }, { PostgresDatabase }, { SqlGameRepository }, { WorldService }, { readConfig },
+  { entityGet }, { bodyProfile, spatialMap },
+  { starterGroundAt }, { writeRustNavigationRelease }] = await Promise.all([
+  import(root + '/apps/server/src/content-digest.ts'), import(root + '/apps/server/src/postgres.ts'), import(root + '/apps/server/src/store.ts'),
+  import(root + '/apps/server/src/world-service.ts'), import(root + '/apps/server/src/config.ts'),
+  import(root + '/packages/domain/src/entity-collection.ts'),
+  import(root + '/packages/domain/src/spatial-state.ts'), import(root + '/packages/domain/src/worlds/base/landscape.ts'),
+  import(root + '/scripts/rust-game-server-navigation.ts'),
+]);`,
+    `const [{ digest }, { PostgresDatabase }, { writeOpeningRecords }, { prepareWorldForStartup },
+  { AuthorityRepository }, { IntegrationValues },
+  { entityGet }, { bodyProfile, spatialMap },
+  { starterGroundAt }, { writeRustNavigationRelease }, { basePlaytestMilestones }] = await Promise.all([
+  import(root + '/apps/server/src/content-digest.ts'), import(root + '/apps/server/src/postgres.ts'), import(root + '/scripts/rust-opening-records.ts'),
+  import(root + '/apps/server/src/initial-world-preparation.ts'), import(root + '/apps/server/src/authority.ts'),
+  import(root + '/apps/server/src/integration-values.ts'),
+  import(root + '/packages/domain/src/entity-collection.ts'),
+  import(root + '/packages/domain/src/spatial-state.ts'), import(root + '/packages/domain/src/worlds/base/landscape.ts'),
+  import(root + '/scripts/rust-game-server-navigation.ts'),
+  import(root + '/packages/domain/src/worlds/base/playtest.ts'),
+]);`,
+  );
+  source = replace(
+    source,
+    `  const setup = new SqlGameRepository(dir, new PostgresDatabase(database));
+  try {
+    await setup.ready;
+    await setup.commit(0, { world, speed: 1, manuallyPaused: true });
+    await setup.putIntegration('world-timeline:' + world.id, 'eb0b4512-1bb7-431c-85ab-18065251efcd');
+    const source = new WorldService(setup, readConfig({ OPEN_LEGEND_DATABASE_URL: database,
+      OPEN_LEGEND_DATA_DIR: dir, AI_BUDGET_USD: '0' }));
+    try { await source.ready; await source.flush(); } finally { source.releaseHostWork(); }
+  } finally { await setup.close(); }`,
+    `  const setup = new PostgresDatabase(database);
+  try {
+    const initial = { world, speed: 1, manuallyPaused: true };
+    const binding = { issuer: 'https://local.openlegend.invalid', subject: site.accountId,
+      accountId: site.accountId, actorId: site.actorId, capabilities: ['play', 'save'] as const };
+    const owners = new Map(Object.entries(world.authorship.playerAccountIds));
+    assert.equal(owners.get(site.actorId), site.accountId);
+    const prepared = prepareWorldForStartup(initial, owners, [], false, []);
+    assert(prepared.world.events.length === 0 && prepared.world.simTime === world.simTime);
+    assert(!basePlaytestMilestones(prepared.world, site.actorId, prepared.world.events).some(({ done }) => done));
+    // Seed the authored opening before the measurement window. Only this
+    // fixture owns the fresh database; the Rust listener opens it afterward.
+    await writeOpeningRecords(setup, prepared);
+    await setup.transaction(async () => {
+      await new AuthorityRepository(setup).provision(world.id, binding);
+      await new IntegrationValues(setup).put('world-timeline:' + world.id, 'eb0b4512-1bb7-431c-85ab-18065251efcd');
+    });
+  } finally { await setup.close(); }`,
+  );
+  source = replace(
+    source,
+    "join(root, 'scripts/rust-game-server-storage.ts'), admin, release, database",
+    "join(root, 'scripts/rust-game-server-storage.ts'), release, database",
+  );
   source = replace(
     source,
     "import assert from 'node:assert/strict';",

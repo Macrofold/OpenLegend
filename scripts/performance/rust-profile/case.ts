@@ -108,7 +108,9 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
   try {
     const inputs = await verifyCaseInputs(inputsRoot, plan.inputHashes, diagnosticModes);
     phase = 'stage-fixture';
-    const fixture = await stageFixture(plan, work, inputs);
+    const lock = object(object(source.files)['native/Cargo.lock']);
+    const lockSha256 = text(lock.sha256, 'supervised Cargo lock digest', sha256);
+    const fixture = await stageFixture(plan, work, inputs, lockSha256);
     adaptedInputs = fixture.hashes;
     phase = 'build-release';
     const built = await readCaseBuild(plan, source, output, pairedBuild, () =>
