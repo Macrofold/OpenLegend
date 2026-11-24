@@ -50,7 +50,13 @@ Median PostgreSQL transaction commits were 10,162 and 10,050. Median inserted/up
 
 The first scheduled-checkpoint comparison, `d1e5a752-6a4a-4b12-acf5-b735b08ecc71`, made one rolling checkpoint due during ordinary play. One earlier-Rust run and two release runs completed play, publication and cold continuation. The second earlier-Rust run saved all 34 walks and both replies, but three admission attempts failed before any checkpoint file reached staging. The last two scheduled runs did not start. The result was collected after AWS access returned. Worker generation 593 cleaned up and stopped with no hold remaining for this campaign.
 
-The original failure text did not distinguish an occupied save gate from a native refusal during the protected drain. The new gate path can wait for a momentary opening without entering the intake queue. Sustained contention still uses the existing 30-second backoff. A new comparison uses this same repair on both arms. The three successful runs above remain partial evidence.
+The original failure text did not distinguish an occupied save gate from a native refusal during the protected drain. The three successful runs above remain partial evidence. The checkpoint now probes for a momentary opening without entering the intake queue. Sustained contention still uses the existing 30-second backoff.
+
+The uninstrumented release `1ff11741f3453db7c53045186f9bba93884bb9bf` passed the same local 180-second case. It saved all 34 walks, both steering gestures and both replies. The automatic file contained 12,907 verified rows and the complete 26-actor roster. The cold server recovered the original movement receipt. Both processes exited cleanly, all reservations released and the disposable database was removed. The retained manifest starts `121cf98c34b0` and the executable hash starts `6de6c5353c18`.
+
+A separate local diagnostic held a real ordinary intake guard for 751 ms. An extra signed walk was accepted and appeared on the live stream during the hold, then produced exactly one durable receipt. The checkpoint acquired the gate after the guard released. An induced refusal from the native world-admission owner triggered the existing 30-second retry. The next attempt published a valid checkpoint. Scheduled walks, both replies, cold continuation and cleanup still passed. This diagnostic does not enter the timing results.
+
+The clean comparison `f795c51c-f13d-4944-b880-d9171ebaa51e` uses this common repair on top of earlier Rust (`dfcbbbe8f8342b311ef78f1d72faf9df457fbfc5`) and the release (`1ff11741f3453db7c53045186f9bba93884bb9bf`). The previously qualified workload, inputs and order remain fixed. The freeze manifest starts `8ea97c118f4e`.
 
 ## Evidence and failed attempt
 
