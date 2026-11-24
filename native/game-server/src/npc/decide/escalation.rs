@@ -714,6 +714,7 @@ pub(super) async fn respond(
                 work.deadline,
                 None,
                 Some(clock),
+                None,
             )
             .await
             .map(|_| ())
@@ -835,6 +836,7 @@ fn prepare_call(
             source: input.prepared.ticket.clone(),
             speaker: work.permit.clone(),
             discovery: None,
+            stage_capture: None,
         },
         dispatch_by,
         clock: input.clock.clone(),
@@ -940,6 +942,7 @@ async fn finish_unapplied(
         source: prepared.ticket,
         speaker: work.permit.clone(),
         discovery: None,
+        stage_capture: None,
     };
     final_scope.start(turn, &work.cancellation, &mut || ())?;
     let budget = game.host.budget();

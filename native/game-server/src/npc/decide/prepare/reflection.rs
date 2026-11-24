@@ -87,7 +87,7 @@ pub(in crate::npc) async fn prepare(
     let consumer = RuntimeNpcConsumer::Reflection;
     let origin = game
         .world
-        .capture_npc_read(actor, consumer.as_str())
+        .capture_npc_read(actor, consumer.as_str(), false)
         .await
         .map_err(CallFailure::World)?;
     let scope = origin.decision_origin();

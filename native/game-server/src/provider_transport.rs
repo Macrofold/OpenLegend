@@ -220,7 +220,12 @@ impl PreparedProviderRequest {
 
     /// Read the already encoded request size for conservative provider reservation.
     pub(crate) fn buffered_body_bytes(&self) -> Option<usize> {
-        Some(self.request.body()?.as_bytes()?.len())
+        self.buffered_body().map(<[u8]>::len)
+    }
+
+    /// Inspect the immutable, funded request body without copying any headers.
+    pub(crate) fn buffered_body(&self) -> Option<&[u8]> {
+        self.request.body()?.as_bytes()
     }
 
     pub(crate) fn observer(&self) -> Option<ProviderDestination> {

@@ -43,6 +43,10 @@ pub struct AcceptedSaveInput {
 }
 
 impl AcceptedSaveInput {
+    pub(crate) fn through_cut(&self) -> u64 {
+        self.through
+    }
+
     pub(crate) fn aged_actor(&self) -> Option<&str> {
         self.history.aged_accounts().map(|aged| aged.actor.as_str())
     }

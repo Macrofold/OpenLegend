@@ -38,6 +38,7 @@ struct OwnedNote {
 pub(super) struct RequiredNotes {
     notes: Vec<OwnedNote>,
     maximum: u64,
+    stage_knowledge_revision: Option<u64>,
     _custody: ByteReservation,
 }
 
@@ -167,8 +168,16 @@ impl RuntimeNpcRead {
         Ok(Some(Box::new(RequiredNotes {
             notes,
             maximum,
+            stage_knowledge_revision: self.historical_scope.stage_capture
+                .then(|| state.reception.knowledge_revision(actor)),
             _custody: custody,
         })))
+    }
+
+    pub(super) fn stage_notes_match(&self, knowledge_revision: u64) -> bool {
+        self.required_notes.as_ref().is_none_or(|selection| {
+            selection.stage_knowledge_revision == Some(knowledge_revision)
+        })
     }
 
     /// A held call cares about the notes it actually disclosed. This check

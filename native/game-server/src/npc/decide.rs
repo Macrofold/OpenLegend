@@ -6,7 +6,8 @@ use crate::{
     authority::{Authority, AuthorizedScope},
     boot::CurrentServer,
     decision_dispatch::{
-        CallAuthority, CallFailure, DecisionDispatch, PreparedCall, decode_provider_bound,
+        CallAuthority, CallFailure, DecisionDispatch, DirectStageCapture, PreparedCall,
+        decode_provider_bound,
     },
     decision_render::{BoundSchema, OfferedAction, RenderError, provider},
     live_save::LiveSaves,
@@ -21,9 +22,9 @@ use crate::{
 use openlegend_simulation::{
     encoding::sha256_hex,
     experience::PersonalSourceRef,
-    host::{ByteBudget, CapacityError},
+    host::{ByteBudget, ByteReservation, CapacityError},
     records::SqlCell,
-    runtime::{RuntimeError, RuntimeNpcOperations},
+    runtime::{RuntimeError, RuntimeNpcOperations, RuntimeNpcStageWitness},
 };
 use serde_json::Value;
 use std::sync::Arc;
@@ -249,7 +250,7 @@ pub(super) async fn run(
             let mut collected = tokio::select! {
                 biased;
                 _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
-                prepared = tokio::time::timeout_at(work.deadline,prepare::collect(game, dispatch, models.embedding.as_deref(), &work)) => {
+                prepared = tokio::time::timeout_at(work.deadline,prepare::collect(game, dispatch, models.embedding.as_deref(), &work, dispatch.stage_captures().is_some())) => {
                     prepared.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("preparation"))?
                 }
             };
@@ -349,6 +350,7 @@ pub(super) async fn run(
                         source,
                         speaker: work.permit.clone(),
                         discovery: work.discovery(),
+                        stage_capture: None,
                     },
                     work.cancellation.clone(),
                     decode_provider_bound(
@@ -621,7 +623,8 @@ pub(super) async fn run(
             } else {
                 None
             };
-            let parsed = generate(
+            let stage_proof = prepared.context.direct_stage_witness(&prepared.ticket, &offered, budget);
+            let (parsed, mut captured_stage) = generate(
                 game,
                 dispatch,
                 &work,
@@ -635,6 +638,7 @@ pub(super) async fn run(
                     reply_player,
                     through: prepared.through,
                     queries: questions_offered,
+                    stage_proof,
                 },
                 schema,
             )
@@ -644,6 +648,7 @@ pub(super) async fn run(
             let (value, custody, ticket) = match query::Draft::read(parsed)? {
                 query::Draft::Decision(value, custody) => (value, custody, prepared.ticket),
                 query::Draft::Questions(questions, held) => {
+                    drop(captured_stage.take());
                     let prior = Arc::try_unwrap(prepared.ticket)
                         .map_err(|_| CallFailure::Stale("native-response-ticket-retained"))?;
                     let (original, current, mut binding, policy) = game
@@ -702,7 +707,7 @@ pub(super) async fn run(
                         .bind_npc(original, current, binding, origin)
                         .await
                         .map_err(prepare::binding_failure)?;
-                    let parsed = generate(
+                    let (parsed, _) = generate(
                         game,
                         dispatch,
                         &work,
@@ -716,6 +721,7 @@ pub(super) async fn run(
                             reply_player,
                             through: prepared.through,
                             queries: false,
+                            stage_proof: None,
                         },
                         schema,
                     )
@@ -742,6 +748,7 @@ pub(super) async fn run(
                 work.deadline,
                 dispatch.previews().get(&work.job.job.id),
                 None,
+                dispatch.stage_captures().zip(captured_stage),
             )
             .await
             .map(|_| ())
@@ -759,6 +766,7 @@ struct GenerationView<'a> {
     reply_player: Option<&'a String>,
     through: u64,
     queries: bool,
+    stage_proof: Option<(RuntimeNpcStageWitness, ByteReservation)>,
 }
 
 async fn generate(
@@ -771,7 +779,7 @@ async fn generate(
     level: i32,
     view: GenerationView<'_>,
     schema: BoundSchema,
-) -> Result<provider::GenerationOutput, CallFailure> {
+) -> Result<(provider::GenerationOutput, Option<Arc<DirectStageCapture>>), CallFailure> {
     let budget = game.host.budget();
     let schema = Arc::new(schema);
     let allowance = model.amount_micro_usd.to_string();
@@ -863,6 +871,13 @@ async fn generate(
             budget,
         )?
     };
+    let capture = view
+        .stage_proof
+        .zip(dispatch.stage_captures())
+        .zip(work.permit.as_ref())
+        .and_then(|((proof, captures), (_, owner))| {
+            captures.prepare(proof, &request, &id, owner.scope.grant_revision, budget)
+        });
     let macrofold = model.billing();
     let parse_budget = budget.clone();
     let mut call = side(
@@ -885,6 +900,7 @@ async fn generate(
                 source: view.ticket.clone(),
                 speaker: work.permit.clone(),
                 discovery: work.discovery(),
+                stage_capture: capture.clone(),
             },
             work.cancellation.clone(),
             decode_provider_bound(macrofold, false, parse_budget.clone(), move |value| {
@@ -902,6 +918,7 @@ async fn generate(
             }),
         )
         .await
+        .map(|result| (result, capture))
         .map_err(|error| error.at(stage))
 }
 
@@ -982,6 +999,7 @@ async fn apply_choice(
         work.deadline,
         None,
         delayed_clock,
+        None,
     )
     .await
     .map_err(|error| error.at("response-application"))
@@ -1031,6 +1049,7 @@ async fn recall_attention(
                 source: review.ticket.clone(),
                 speaker: work.permit.clone(),
                 discovery: work.discovery(),
+                stage_capture: None,
             },
             work.cancellation.clone(),
             decode_provider_bound(decision.billing(), true, budget.clone(), move |output| {
@@ -1123,6 +1142,7 @@ async fn action_attention(
                 source: prepared.ticket.clone(),
                 speaker: work.permit.clone(),
                 discovery: work.discovery(),
+                stage_capture: None,
             },
             work.cancellation.clone(),
             decode_provider_bound(decision.billing(), true, budget.clone(), move |output| {

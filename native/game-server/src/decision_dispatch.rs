@@ -33,6 +33,8 @@ mod previews;
 pub(crate) use previews::{PreviewTerminal, ReplyPreview, ReplyPreviews, ReplyReceipt};
 mod response;
 pub(crate) use response::{decode_embeddings, decode_provider, decode_provider_bound};
+mod stage_capture;
+pub(crate) use stage_capture::{DirectStageCapture, StageCaptures};
 
 pub(crate) struct PreparedCall {
     pub request: PreparedProviderRequest,
@@ -49,6 +51,7 @@ pub(crate) struct CallAuthority {
     pub source: Arc<RuntimeNpcResponseTicket>,
     pub speaker: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
     pub discovery: Option<Arc<crate::npc::discovery::DiscoveryDispatch>>,
+    pub stage_capture: Option<Arc<DirectStageCapture>>,
 }
 
 pub(crate) struct ProviderObservation<T> {
@@ -210,12 +213,24 @@ impl ProviderDisclosure for CallAuthority {
         stopped: &watch::Receiver<bool>,
         start: &mut dyn FnMut(),
     ) -> Result<(), CallFailure> {
+        let eligible_capture = self.stage_capture.as_ref().and_then(|capture| {
+            let (authority, scope) = self.speaker.as_ref()?;
+            authority.view_access(scope).ok()?.can_inspect.then_some((
+                &capture.witness,
+                &scope.scope,
+            ))
+        });
         let send = || {
             if *stopped.borrow() {
                 return Err(CallFailure::Cancelled);
             }
             match turn
-                .disclose(&self.source, start)
+                .disclose(&self.source, eligible_capture, |life| {
+                    start();
+                    if let Some((life, capture)) = life.zip(self.stage_capture.as_ref()) {
+                        capture.started(life);
+                    }
+                })
                 .map_err(CallFailure::World)?
             {
                 Ok(()) => Ok(()),
@@ -236,23 +251,43 @@ pub(crate) struct DecisionDispatch {
     game: Arc<CurrentServer>,
     network: NetworkOwner,
     previews: Arc<ReplyPreviews>,
+    stage_captures: Option<StageCaptures>,
 }
 
 impl DecisionDispatch {
     pub(crate) fn new(
         game: Arc<CurrentServer>,
         worker_capacity: usize,
+        capture_direct_stages: bool,
     ) -> Result<Self, NetworkError> {
         let network = NetworkOwner::new(worker_capacity, game.host.budget().clone(), false)?;
+        let stage_captures = capture_direct_stages.then(|| {
+            StageCaptures::new(
+                game.store.clone(),
+                game.world.clone(),
+                game.host.budget().clone(),
+            )
+        });
         Ok(Self {
             game,
             network,
             previews: Arc::new(ReplyPreviews::new()),
+            stage_captures,
         })
     }
 
     pub(crate) fn previews(&self) -> &Arc<ReplyPreviews> {
         &self.previews
+    }
+
+    pub(crate) fn stage_captures(&self) -> Option<&StageCaptures> {
+        self.stage_captures.as_ref()
+    }
+
+    pub(crate) async fn stop_stage_captures(&self) {
+        if let Some(captures) = &self.stage_captures {
+            captures.stop().await;
+        }
     }
 
     pub(crate) fn network(&self) -> &NetworkOwner {

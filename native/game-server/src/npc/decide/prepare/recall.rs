@@ -47,11 +47,14 @@ pub(in crate::npc::decide) async fn collect(
     dispatch: &Arc<DecisionDispatch>,
     embedding: Option<&EmbeddingModel>,
     work: &Work,
+    stage_capture: bool,
 ) -> Result<Collected, CallFailure> {
     ensure_running(work)?;
     let budget = game.host.budget();
     let consumer = consumer(work);
-    let mut original = capture_origin(game, work, consumer.as_str()).await?;
+    let mut original = capture_origin(
+        game, work, consumer.as_str(), stage_capture && work.permit.is_some(),
+    ).await?;
     let frame = original.take_origin_frame().map_err(packet_failure)?;
     let origin = original.decision_origin();
     let through = origin.accepted_cut;

@@ -152,6 +152,7 @@ impl Director {
         saves: Arc<LiveSaves>,
         authority: Arc<Authority>,
         limit_usd: f64,
+        capture_direct_stages: bool,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let (maximum, mut models) = settings::from_env(limit_usd)?;
         let embedding = settings::embedding_model(models.as_ref(), limit_usd)?.map(Arc::new);
@@ -169,7 +170,11 @@ impl Director {
         let reflection_model =
             settings::reflection_model(models.as_ref(), &game.cognition.reflection.default_model)?;
         let budget = game.host.budget().clone();
-        let dispatch = Arc::new(DecisionDispatch::new(game.clone(), maximum)?);
+        let dispatch = Arc::new(DecisionDispatch::new(
+            game.clone(),
+            maximum,
+            capture_direct_stages && models.is_some(),
+        )?);
         Ok(Self {
             game,
             saves,
@@ -940,6 +945,7 @@ impl Director {
         while let Some(result) = tasks.join_next().await {
             failed |= result.is_err();
         }
+        self.dispatch.stop_stage_captures().await;
         if failed {
             Err(StoreError::WriterUnavailable)
         } else {

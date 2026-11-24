@@ -80,6 +80,8 @@ pub(crate) struct NpcHistoricalScope {
     #[serde(skip)]
     permission: HistoricalPermission,
     #[serde(skip)]
+    pub(crate) stage_capture: bool,
+    #[serde(skip)]
     _storage: ByteReservation,
 }
 enum HistoricalPermission {
@@ -254,6 +256,7 @@ impl NpcHistoricalScope {
             frontier: temporal.and_then(|history| history.header().frontier.clone()),
             receipt_prefix,
             permission,
+            stage_capture: false,
             _storage: storage,
         })
     }

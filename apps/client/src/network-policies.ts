@@ -81,6 +81,7 @@ routes(
     '/api/god/triggers',
     '/api/god/trigger',
     '/api/god/intelligence-details',
+    '/api/god/intelligence-stage',
     '/api/god/intelligence-calls',
     '/api/saves/list',
     '/api/world-agent/session/list',

@@ -132,7 +132,7 @@ pub use npc::{
     RuntimeNpcOffer, RuntimeNpcOperations, RuntimeNpcPersonalSource, RuntimeNpcPersonalSources,
     RuntimeNpcPreparationStep, RuntimeNpcPresentedBody, RuntimeNpcPublication, RuntimeNpcRead,
     RuntimeNpcResponseTicket, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
-    RuntimeNpcSubjectNote,
+    RuntimeNpcStageWitness, RuntimeNpcSubjectNote,
 };
 pub use player::{InspectedRecipeRecord, RuntimeWorldStorage};
 pub use player::{RuntimePracticeOffer, RuntimeRangedChoice};

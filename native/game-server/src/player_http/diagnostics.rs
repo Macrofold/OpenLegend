@@ -1,11 +1,15 @@
-//! The existing Intelligence panel is an explicit, private inspection. Fetch
-//! only saved job and attempt facts; final current rights cover the encoding.
+//! Intelligence reads saved job and attempt facts. Opening one exact stage can
+//! additionally read its optional capture under the current disclosure fence.
 
 use super::*;
 use crate::{
     authority::RequestScope,
     player_events::SpeechReplyStatus,
-    store::diagnostics::{self, Attempt, ListRequest, Query as Inspection, ReadAccess, Root},
+    store::{
+        diagnostics::{self, Attempt, ListRequest, Query as Inspection, ReadAccess, Root, SavedStageCapture, StageOwner},
+        sql_ordinal,
+    },
+    world::HostedWorld,
 };
 use axum::Extension;
 use chrono::{DateTime, SecondsFormat, Utc};
@@ -56,6 +60,21 @@ impl Audience {
             progress.generation.to_owned(),
             storage,
         );
+        if matches!(query, Inspection::Stage(_)) {
+            let Some(life) = session.intelligence_owner_life(&scope.account_id, &scope.actor_id)?
+            else {
+                return Ok(None);
+            };
+            access.admit(512 + 8 * (scope.actor_id.len() + scope.timeline_id.len()))
+                .map_err(|_| RuntimeError::application_busy(StoreError::Capacity))?;
+            access.stage_owner = Some(StageOwner {
+                actor_key: json_record(&scope.actor_id).map_err(RuntimeError::application_refused)?,
+                timeline_key: json_record(&scope.timeline_id).map_err(RuntimeError::application_refused)?,
+                player_life: sql_ordinal(life).map_err(RuntimeError::application_refused)?,
+                grant_revision: sql_ordinal(scope.grant_revision).map_err(RuntimeError::application_refused)?,
+            });
+            return Ok(Some(Self { storage: Arc::new(access), people: BTreeMap::new() }));
+        }
         let (actor, search) = match query {
             Inspection::List(list) if !list.peek => (
                 list.actor.as_ref().map(|term| term.to_lowercase()),
@@ -66,7 +85,7 @@ impl Audience {
         let names = match query {
             Inspection::List(list) => !list.peek,
             Inspection::Trigger(_) => true,
-            Inspection::Billing(_) => false,
+            Inspection::Billing(_) | Inspection::Stage(_) => false,
         };
         let mut people = BTreeMap::new();
         let allowed = session.with_intelligence_people(
@@ -142,6 +161,7 @@ pub(super) fn router(stop: watch::Receiver<bool>) -> Router<PlayerRoutes> {
         .route("/api/god/triggers", post(list))
         .route("/api/god/trigger", post(detail))
         .route("/api/god/intelligence-details", post(billing))
+        .route("/api/god/intelligence-stage", post(stage))
         .layer(Extension(stop))
 }
 
@@ -191,6 +211,18 @@ async fn billing(
         // The attempt has a server-defined suffix after the root ID. The
         // common request byte bound and exact stored link govern this lookup.
         (!input.id.is_empty() && !input.id.contains('\0')).then_some(Inspection::Billing(input.id))
+    })
+    .await
+}
+
+async fn stage(
+    State(state): State<PlayerRoutes>,
+    Extension(stop): Extension<watch::Receiver<bool>>,
+    request: Request,
+) -> Response {
+    read::<Exact>(state, stop, request, |input| {
+        (input.id.ends_with(":attempt:0:generate") && !input.id.contains('\0'))
+            .then_some(Inspection::Stage(input.id))
     })
     .await
 }
@@ -284,6 +316,7 @@ async fn read<T: DeserializeOwned>(
             Ok(saved) => saved,
             Err(error) => return failed(WorldError::Storage(error)),
         };
+        let disclosure_world = world.clone();
         match world
             .capture(move |session| {
                 let _custody = custody;
@@ -308,7 +341,11 @@ async fn read<T: DeserializeOwned>(
                             else {
                                 return Ok(busy());
                             };
-                            let mut response = publish(&state, &query, &audience, &saved);
+                            let mut response = if matches!(query.as_ref(), Inspection::Stage(_)) {
+                                publish_stage(&state, &disclosure_world, session, scope, &saved)?
+                            } else {
+                                publish(&state, &query, &audience, &saved)
+                            };
                             response.headers_mut().insert(
                                 header::CACHE_CONTROL,
                                 axum::http::HeaderValue::from_static("private, no-store"),
@@ -407,6 +444,53 @@ struct AttemptOutput<'a> {
 #[derive(Serialize)]
 struct SavedBilling<'a> {
     saved: &'a Attempt,
+}
+
+#[derive(Serialize)]
+struct StageDetails<'a> {
+    saved: &'a Attempt,
+    capture: StageInput<'a>,
+}
+
+#[derive(Serialize)]
+#[serde(tag = "status", rename_all = "kebab-case")]
+enum StageInput<'a> {
+    Unavailable,
+    Captured { input: &'a str, redacted: bool },
+}
+
+fn publish_stage(
+    state: &PlayerRoutes,
+    world: &HostedWorld,
+    session: &NativeWorldSession,
+    scope: &RequestScope,
+    saved: &diagnostics::Selection,
+) -> Result<Response, RuntimeError> {
+    let Some(attempt) = saved.attempts.first() else {
+        return Ok(access_failure(AccessError::Forbidden));
+    };
+    let render = |capture: Option<&SavedStageCapture>| {
+        reply(state, StatusCode::OK, &Detail {
+            ok: true,
+            details: StageDetails {
+                saved: attempt,
+                capture: capture.map_or(StageInput::Unavailable, |capture| StageInput::Captured {
+                    input: &capture.input,
+                    redacted: capture.proof.redacted,
+                }),
+            },
+        })
+    };
+    let Some(capture) = &saved.stage_capture else {
+        return Ok(render(None));
+    };
+    if capture.proof.grant_revision != scope.grant_revision || !session.intelligence_person_current(
+        &scope.account_id, &scope.actor_id, &scope.actor_id, capture.proof.player_life,
+    )? {
+        return Ok(render(None));
+    }
+    Ok(world.with_current_stage_source(session, &capture.proof.witness, || render(Some(capture)))?
+        .unwrap_or_else(|| render(None)))
 }
 
 fn publish(

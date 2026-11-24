@@ -275,6 +275,25 @@ impl NativeWorldSession {
             .is_some_and(|body| body.physical_life.unwrap_or(0) == life))
     }
 
+    /// Read the signed player's own life without preparing the person directory.
+    pub fn intelligence_owner_life(
+        &self,
+        account: &str,
+        owner: &str,
+    ) -> Result<Option<u64>, RuntimeError> {
+        let accepted = self.session.accepted().map_err(failure)?;
+        if accepted.require_player_read(account, owner).is_err() {
+            return Ok(None);
+        }
+        Ok(accepted
+            .state
+            .physical
+            .entities
+            .get(owner)
+            .and_then(|person| person.actor.as_ref())
+            .map(|body| body.physical_life.unwrap_or(0)))
+    }
+
     /// The Journal may render only the installed selection against its saved
     /// source cut. The actual transfer stays inside the returned disclosure
     /// lease, whose currentness is independent of unrelated clock advances.

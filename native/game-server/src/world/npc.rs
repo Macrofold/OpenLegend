@@ -38,25 +38,29 @@ pub(crate) enum NpcBinding {
 struct NpcReadInput {
     actor: Box<str>,
     consumer: &'static str,
+    stage_capture: bool,
     _storage: ByteReservation,
 }
 
 impl NpcReadInput {
-    fn new(host: &WorldHost, actor: &str, consumer: &'static str) -> Result<Self, RuntimeError> {
+    fn new(
+        host: &WorldHost, actor: &str, consumer: &'static str, stage_capture: bool,
+    ) -> Result<Self, RuntimeError> {
         let storage = host.budget().reserve(actor.len())?;
         Ok(Self {
             actor: actor.into(),
             consumer,
+            stage_capture,
             _storage: storage,
         })
     }
 
     fn original(self, session: &mut NativeWorldSession) -> Result<RuntimeNpcRead, RuntimeError> {
-        session.read_npc_origin(&self.actor, self.consumer)
+        session.read_npc_origin(&self.actor, self.consumer, self.stage_capture)
     }
 
     fn current(self, session: &mut NativeWorldSession) -> Result<RuntimeNpcRead, RuntimeError> {
-        session.read_npc_direct(&self.actor, self.consumer)
+        session.read_npc_direct(&self.actor, self.consumer, self.stage_capture)
     }
 }
 
@@ -160,8 +164,9 @@ impl HostedWorld {
         self: &Arc<Self>,
         actor: &str,
         consumer: &'static str,
+        stage_capture: bool,
     ) -> Result<RuntimeNpcRead, WorldError> {
-        let input = NpcReadInput::new(&self.host, actor, consumer)?;
+        let input = NpcReadInput::new(&self.host, actor, consumer, stage_capture)?;
         let _turn = self.enter().await?;
         self.call(move |session| input.original(session)).await
     }
@@ -175,8 +180,9 @@ impl HostedWorld {
         consumer: &'static str,
         inspection: Option<openlegend_simulation::activity::ActivityInspectionNavigation>,
         guard_threat: Option<RuntimeNpcGuardThreat>,
+        stage_capture: bool,
     ) -> Result<RuntimeNpcRead, WorldError> {
-        let input = NpcReadInput::new(&self.host, actor, consumer)?;
+        let input = NpcReadInput::new(&self.host, actor, consumer, stage_capture)?;
         let read = self
             .prepare_actor_read(
                 game,
@@ -252,7 +258,7 @@ impl HostedWorld {
         consumer: &'static str,
         include_notes: bool,
     ) -> Result<RuntimeNpcRead, WorldError> {
-        let input = NpcReadInput::new(&self.host, actor, consumer)?;
+        let input = NpcReadInput::new(&self.host, actor, consumer, false)?;
         let step: ActorPreparationStep<RuntimeNpcRead> = if include_notes {
             NativeWorldSession::step_npc_context_with_notes
         } else {

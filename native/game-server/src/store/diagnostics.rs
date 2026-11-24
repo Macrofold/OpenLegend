@@ -9,10 +9,17 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio_postgres::Row;
 
+mod capture;
+pub(crate) use capture::{SavedStageCapture, StageCaptureWriter, StageOwner};
+
 const PAGE: usize = 25;
 // Match the explicit Intelligence history and stage bounds (LA198, LA202).
 const HISTORY: i64 = 1_000;
 const STAGES: i64 = 1_000;
+
+/// A stopped recovery package needs the original jobs and their receipts.
+/// Optional raw stages remain local to the signed diagnostic store.
+pub(super) const STAGE_BACKUP_FILTER: &str = "t.stage <> '\"rust-stage-capture\"'";
 
 const ROOT_ACCESS: &str = "((j.selection#>>'{authority,accountId}'=$1 \
     AND j.selection#>>'{authority,worldId}'=$2 \
@@ -55,6 +62,7 @@ pub(crate) enum Query {
     List(ListRequest),
     Trigger(String),
     Billing(String),
+    Stage(String),
 }
 
 pub(crate) struct ReadAccess {
@@ -65,6 +73,7 @@ pub(crate) struct ReadAccess {
     pub people: Vec<String>,
     pub search_names: Vec<String>,
     pub matching_people: Vec<String>,
+    pub stage_owner: Option<StageOwner>,
     _storage: ByteReservation,
 }
 
@@ -84,6 +93,7 @@ impl ReadAccess {
             people: Vec::new(),
             search_names: Vec::new(),
             matching_people: Vec::new(),
+            stage_owner: None,
             _storage: storage,
         }
     }
@@ -105,6 +115,7 @@ pub(crate) struct Selection {
     pub attempts: Vec<Attempt>,
     pub has_more: bool,
     pub stages_truncated: bool,
+    pub stage_capture: Option<SavedStageCapture>,
     _storage: ByteReservation,
 }
 
@@ -227,12 +238,12 @@ impl Store {
                     &budget,
                 ).await?
             }
-            Query::Trigger(id) | Query::Billing(id) => {
-                let billing = matches!(query.as_ref(), Query::Billing(_));
+            Query::Trigger(id) | Query::Billing(id) | Query::Stage(id) => {
+                let exact_attempt = !matches!(query.as_ref(), Query::Trigger(_));
                 let statement = format!("SELECT {ROOT_HEADER},{ROOT_COLUMNS},CASE WHEN $5 THEN NULL ELSE j.payload END \
                     FROM jobs j {ROLLUP} WHERE {ROOT_ACCESS} AND j.id=CASE WHEN $5 \
                     THEN (SELECT root_job_id FROM cognition_attempt_links WHERE attempt_id=$4) ELSE $4 END");
-                admitted_query(tx, &statement, &[account,world_key,people,id,&billing], &budget).await?
+                admitted_query(tx, &statement, &[account,world_key,people,id,&exact_attempt], &budget).await?
             }
         };
         let has_more = rows.len() > PAGE;
@@ -249,7 +260,7 @@ impl Store {
             let selected = match query.as_ref() {
                 Query::List(_) => None,
                 Query::Trigger(_) => Some(None),
-                Query::Billing(id) => Some(Some(id)),
+                Query::Billing(id) | Query::Stage(id) => Some(Some(id)),
             };
             if let Some(selected) = selected {
                 let statement = format!("SELECT {ATTEMPT_COLUMNS} FROM cognition_attempt_links l \
@@ -264,7 +275,13 @@ impl Store {
                 attempts = rows.iter().take(STAGES as usize).map(attempt).collect::<Result<_, _>>()?;
             }
         }
-        Ok(Selection { roots, attempts, has_more, stages_truncated, _storage: storage })
+        let stage_capture = match (query.as_ref(), roots.first(), attempts.first()) {
+            (Query::Stage(id), Some(root), Some(attempt)) if attempt.stage == "generate" => {
+                capture::read_stage(tx, &access, &root.id, id, &budget).await?
+            }
+            _ => None,
+        };
+        Ok(Selection { roots, attempts, has_more, stages_truncated, stage_capture, _storage: storage })
         })).await
     }
 }

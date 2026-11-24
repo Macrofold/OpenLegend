@@ -26,6 +26,8 @@ pub use identity_read::RuntimeNpcIdentity;
 mod origin;
 mod personal;
 mod perspectives;
+mod stage_history;
+pub use stage_history::RuntimeNpcStageWitness;
 mod presentation;
 mod queries;
 pub use crate::appraisals::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
@@ -71,6 +73,7 @@ pub struct RuntimeNpcRead {
     pub(super) serial: u64,
     history: crate::experience::CapturedHistoryCuts,
     pub(super) historical_scope: Arc<crate::capture::NpcHistoricalScope>,
+    stage_cut: Option<stage_history::StageCut>,
     reference_facts: crate::capture::NpcReferenceFacts,
     required_notes: Option<Box<knowledge::RequiredNotes>>,
     preparation: Option<PreparedNpcRead>,
@@ -589,6 +592,7 @@ impl NativeWorldSession {
             &request.consumer,
             &request.required_appraisals,
             None,
+            false,
         )
     }
 
@@ -598,8 +602,11 @@ impl NativeWorldSession {
         &mut self,
         actor: &str,
         consumer: &str,
+        stage_capture: bool,
     ) -> Result<RuntimeNpcRead, RuntimeError> {
-        self.read_npc_with_presentation(actor, consumer, &[], Some(RuntimeNpcSelfSelection::Prompt))
+        self.read_npc_with_presentation(
+            actor, consumer, &[], Some(RuntimeNpcSelfSelection::Prompt), stage_capture,
+        )
     }
 
     /// Retain the original pose and source bindings before recall and model
@@ -608,8 +615,11 @@ impl NativeWorldSession {
         &mut self,
         actor: &str,
         consumer: &str,
+        stage_capture: bool,
     ) -> Result<RuntimeNpcRead, RuntimeError> {
-        self.read_npc_with_presentation(actor, consumer, &[], Some(RuntimeNpcSelfSelection::Frame))
+        self.read_npc_with_presentation(
+            actor, consumer, &[], Some(RuntimeNpcSelfSelection::Frame), stage_capture,
+        )
     }
 
     fn read_npc_with_presentation(
@@ -618,6 +628,7 @@ impl NativeWorldSession {
         consumer: &str,
         required_appraisals: &[AppraisalScope],
         selection: Option<RuntimeNpcSelfSelection>,
+        stage_capture: bool,
     ) -> Result<RuntimeNpcRead, RuntimeError> {
         self.require_active()?;
         let serial = self
@@ -642,15 +653,18 @@ impl NativeWorldSession {
             &self.budget,
         )
         .map_err(failure)?;
-        let historical_scope = Arc::new(
-            crate::capture::NpcHistoricalScope::capture(
-                &simulation.state,
-                &read,
-                serial,
-                &self.budget,
-            )
-            .map_err(failure)?,
-        );
+        let mut historical_scope = crate::capture::NpcHistoricalScope::capture(
+            &simulation.state, &read, serial, &self.budget,
+        ).map_err(failure)?;
+        historical_scope.stage_capture = stage_capture && consumer == "chat";
+        let stage_cut = if historical_scope.stage_capture
+            && matches!(selection, Some(RuntimeNpcSelfSelection::Prompt))
+        {
+            stage_history::StageCut::capture(&simulation.state, actor_id)
+        } else {
+            None
+        };
+        let historical_scope = Arc::new(historical_scope);
         let reference_facts =
             crate::capture::NpcReferenceFacts::capture(&simulation.state, &read, &self.budget)
                 .map_err(failure)?;
@@ -709,6 +723,7 @@ impl NativeWorldSession {
             serial,
             history,
             historical_scope,
+            stage_cut,
             reference_facts,
             required_notes: None,
             preparation: None,

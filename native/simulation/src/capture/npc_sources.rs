@@ -178,6 +178,8 @@ pub(crate) struct PreparedNpcSources {
     pub scope: Arc<NpcHistoricalScope>,
     #[serde(skip)]
     personal_cut: cursor::NpcPersonalScope,
+    #[serde(skip)]
+    pub(crate) stage_knowledge_revision: Option<u64>,
     pub personal: Vec<CapturedNpcPersonalSource>,
     pub receipts: Vec<CapturedNpcReceipt>,
     pub unavailable_personal: Vec<usize>,
@@ -658,6 +660,9 @@ impl PreparedNpcSources {
             .ok_or(ExecutionError::Capacity)?,
         )?;
         Ok(Self {
+            stage_knowledge_revision: scope
+                .stage_capture
+                .then(|| state.reception.knowledge_revision(actor)),
             scope,
             personal_cut,
             personal,

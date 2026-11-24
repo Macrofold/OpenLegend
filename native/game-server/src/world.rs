@@ -3,7 +3,7 @@
 //! their inputs and never occupy a worker.
 
 use crate::{
-    authority::{AccessError, Authority, AuthorizedScope},
+    authority::{AccessError, Authority, AuthorizedScope, RequestScope},
     store::{CommitError, Store, StoreError},
 };
 use openlegend_simulation::host::{
@@ -12,6 +12,7 @@ use openlegend_simulation::host::{
 use openlegend_simulation::runtime::{
     NativeWorldSession, RuntimeActivation, RuntimeDirectOutput, RuntimeDirectPrepared,
     RuntimeDirectStep, RuntimeError, RuntimeNavigationRead, RuntimeNpcResponseTicket,
+    RuntimeNpcStageWitness,
     RuntimePlayerRead, RuntimeProvider, RuntimeProviderInput, RuntimeSave,
     RuntimeSaveAcknowledgement,
 };
@@ -577,7 +578,8 @@ impl HostedWorld {
     fn disclose_npc<T>(
         &self,
         ticket: &RuntimeNpcResponseTicket,
-        deliver: impl FnOnce() -> T,
+        stage: Option<(&RuntimeNpcStageWitness, &RequestScope)>,
+        deliver: impl FnOnce(Option<u64>) -> T,
     ) -> Result<Result<T, NpcDisclosure>, WorldError> {
         if self.closing.load(Ordering::Acquire) {
             return Err(HostError::Closed.into());
@@ -594,13 +596,50 @@ impl HostedWorld {
             Err(std::sync::TryLockError::WouldBlock) => return Ok(Err(NpcDisclosure::Busy)),
             Err(std::sync::TryLockError::Poisoned(_)) => return Err(HostError::Poisoned.into()),
         };
+        // Check the optional source under the already held session turn, then
+        // reuse the ordinary send's single publication lease for both.
+        let capture = stage.and_then(|(witness, owner)| {
+            if witness.actor_id() != ticket.actor_id() {
+                return None;
+            }
+            session.npc_stage_current(witness).ok()?.ok()?;
+            session.intelligence_owner_life(&owner.account_id, &owner.actor_id).ok()?
+        });
         match session.npc_response_publication(ticket)? {
             Ok(lease) => {
-                let result = deliver();
+                let result = deliver(capture);
                 drop(lease);
                 Ok(Ok(result))
             }
             Err(reason) => Ok(Err(NpcDisclosure::Refused(reason))),
+        }
+    }
+
+    /// Use a historical diagnostic only during a synchronous current read.
+    /// The actor's pending edit and source lease stay held through encoding.
+    pub(crate) fn with_current_stage_source<T>(
+        &self,
+        session: &NativeWorldSession,
+        witness: &RuntimeNpcStageWitness,
+        expose: impl FnOnce() -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        if self.closing.load(Ordering::Acquire) {
+            return Ok(None);
+        }
+        let pending = self
+            .pending_source_edits
+            .lock()
+            .map_err(|_| RuntimeError::application_refused("Diagnostic source is unavailable."))?;
+        if pending.contains(witness.actor_id()) {
+            return Ok(None);
+        }
+        match session.npc_stage_publication(witness)? {
+            Ok(lease) => {
+                let value = expose();
+                drop(lease);
+                Ok(Some(value))
+            }
+            Err(_) => Ok(None),
         }
     }
 
@@ -1460,9 +1499,10 @@ impl NpcDisclosureTurn<'_> {
     pub(crate) fn disclose<T>(
         self,
         ticket: &RuntimeNpcResponseTicket,
-        deliver: impl FnOnce() -> T,
+        stage: Option<(&RuntimeNpcStageWitness, &RequestScope)>,
+        deliver: impl FnOnce(Option<u64>) -> T,
     ) -> Result<Result<T, NpcDisclosure>, WorldError> {
-        self.world.disclose_npc(ticket, deliver)
+        self.world.disclose_npc(ticket, stage, deliver)
     }
 }
 

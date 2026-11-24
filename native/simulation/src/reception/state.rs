@@ -249,6 +249,15 @@ pub struct ReceptionState {
 }
 
 impl ReceptionState {
+    /// Durable revision of this observer's named subjects, marks and notes.
+    pub(crate) fn knowledge_revision(&self, observer: &str) -> u64 {
+        self.knowledge_revisions
+            .as_ref()
+            .and_then(|actors| actors.get(observer))
+            .copied()
+            .unwrap_or(0)
+    }
+
     /// Existing unfinished current-body and terrain recordings share the same
     /// temporal terminal reservation owner. Borrow them without a shadow list.
     pub(crate) fn recordings(

@@ -2469,6 +2469,7 @@ function Stage({
   setRemote,
   showJson,
   onAccessLost,
+  visible,
   supporting = [],
 }: {
   call: IntelligenceCall;
@@ -2479,9 +2480,13 @@ function Stage({
   setRemote(value: unknown): void;
   showJson(raw: RawView): void;
   onAccessLost(): void;
+  visible: boolean;
 }) {
   const [loadingBilling, setLoadingBilling] = useState(false);
   const [billingError, setBillingError] = useState('');
+  const [captureError, setCaptureError] = useState('');
+  const captureRead = useRef<AbortController | null>(null);
+  useEffect(() => () => captureRead.current?.abort(), [visible]);
   const supportingFailure = supporting.find(
     (c) => c.status === 'failed' || path(c.output, 'ok') === false,
   );
@@ -2496,6 +2501,33 @@ function Stage({
       ? `${supportingFailure.kind} failed; inspect supporting details.`
       : undefined);
   const savedBilling = path(call.output, 'savedBilling') === true;
+  async function showStageJson() {
+    const title = `${call.kind}, request and response`;
+    const value = remote === undefined ? call : { ...call, providerDetails: remote };
+    if (!savedBilling || call.kind !== 'generate') {
+      showJson({ title, value });
+      return;
+    }
+    captureRead.current?.abort();
+    const controller = new AbortController();
+    captureRead.current = controller;
+    setCaptureError('');
+    try {
+      const result = await postPrivateRead<{
+        ok: boolean;
+        message?: string;
+        details?: { capture: unknown };
+      }>('/api/god/intelligence-stage', { id: call.id }, controller.signal);
+      if (controller.signal.aborted) return;
+      if (!result.ok || !result.details)
+        throw new Error(result.message ?? 'The recorded input is unavailable.');
+      showJson({ title, value: { ...value, capture: result.details.capture } });
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      if (error instanceof AccessError) onAccessLost();
+      else setCaptureError(error instanceof Error ? error.message : String(error));
+    }
+  }
   const hasProviderDetails =
     savedBilling ||
     !!path(call.output, 'receipt', 'providerRequestId') ||
@@ -2611,16 +2643,12 @@ function Stage({
           {reason ?? 'Stage failed; open the stage to inspect input and output.'}
         </p>
       )}
+      {captureError && <p role="alert">{captureError}</p>}
       <div className="ol-diagnostic-stage-json">
         <IconButton
           icon="ui.json"
           label={`Show ${call.kind} request and response JSON`}
-          onPress={() =>
-            showJson({
-              title: `${call.kind}, request and response`,
-              value: remote === undefined ? call : { ...call, providerDetails: remote },
-            })
-          }
+          onPress={() => void showStageJson()}
         />
       </div>
     </section>
@@ -2816,6 +2844,7 @@ function TraceDetail({
               remote={remote[call.id]}
               setRemote={(value) => setRemote((current) => ({ ...current, [call.id]: value }))}
               showJson={showJson}
+              visible={visible}
               onAccessLost={() => {
                 clearPrivate();
                 setError('Inspection permission changed. Refresh to continue.');

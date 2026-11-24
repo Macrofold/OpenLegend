@@ -395,6 +395,7 @@ impl<'a> SnapshotCapture<'a> {
                     .get(table)
                     .map_or("TRUE", String::as_str)
             ),
+            None if table == "intelligence_calls" => super::super::diagnostics::STAGE_BACKUP_FILTER.to_owned(),
             None => "TRUE".to_owned(),
         };
         let output = keys

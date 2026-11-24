@@ -76,6 +76,52 @@ impl Projection {
         &self.reference_key
     }
 
+    /// This optional proof covers the entire direct addressed reply request.
+    /// The rendered prompt and the strict/guided schema use the same aliases.
+    /// The host calls this only for `generate`, after choosing its actual offers.
+    pub(super) fn direct_stage_witness(
+        &self,
+        ticket: &RuntimeNpcResponseTicket,
+        offered: &[OfferedAction<'_>],
+        budget: &ByteBudget,
+    ) -> Option<(openlegend_simulation::runtime::RuntimeNpcStageWitness, ByteReservation)> {
+        // A future projection field must prove its owner before saved capture
+        // can include it. Other provider and normal gameplay paths stay open.
+        const FIELDS: &[&str] = &[
+            "identity", "aboutMe", "body", "feelings", "capabilities", "commitments",
+            "stimulus", "triggerFacts", "conversation", "agency", "currentSupport",
+            "publicSurfaces", "now", "simTime", "recall", "experience", "surroundings",
+            "receivedSituation", "activityRequests", "possessions", "notepad", "knowledge",
+            "references", "situationQueries", "appraisals", "naming",
+        ];
+        if !offered.is_empty()
+            || self.fields["triggerFacts"]["observerRelationship"] != "addressed_speech"
+            || self.fields.as_object()?.keys().any(|key| !FIELDS.contains(&key.as_str()))
+        {
+            return None;
+        }
+        let has_items = |value: &Value| value.as_array().is_some_and(|items| !items.is_empty());
+        let agency = &self.fields["agency"];
+        // The activity menu only names authored options, own hands/supplies
+        // and the same permitted bodies. Ongoing work can contain other
+        // evidence. An authored starting goal is part of the opening.
+        if !agency["plan"].is_null() || !agency["paused"].is_null()
+            || has_items(&agency["attempts"])
+            || agency["goals"].as_array()?.iter().any(|goal| {
+                goal["author"] != "creator" || goal["sourceId"] != "creation"
+                    || goal["revision"].as_u64() != Some(0)
+            })
+            // The listening service's appraisal content serial cannot validate
+            // saved interpreted records after a restart. New appraisal choices
+            // based on the admitted personal evidence carry no such records.
+            || !self.fields["feelings"].as_str()?.is_empty()
+            || has_items(&self.fields["appraisals"]["feelings"])
+        {
+            return None;
+        }
+        ticket.stage_witness(budget).ok().flatten()
+    }
+
     pub(super) fn render_response(
         &self,
         game: &CurrentServer,
@@ -235,6 +281,8 @@ async fn finish_prepared(
     } else {
         None
     };
+    let stage_capture = reconsideration.is_none()
+        && collected.original.as_ref().is_some_and(RuntimeNpcRead::stage_capture_enabled);
     let current = capture_offers(
         game,
         work,
@@ -243,6 +291,7 @@ async fn finish_prepared(
             .as_ref()
             .map(RuntimeActivityDecisionPage::navigation),
         guard_threat,
+        stage_capture,
         "current-offers",
     ).await?;
     let through = collected.through.max(current.accepted_cut());
@@ -356,6 +405,7 @@ async fn capture_offers(
     consumer: &'static str,
     inspection: Option<openlegend_simulation::activity::ActivityInspectionNavigation>,
     guard_threat: Option<RuntimeNpcGuardThreat>,
+    stage_capture: bool,
     stage: &'static str,
 ) -> Result<RuntimeNpcRead, CallFailure> {
     game.world
@@ -365,6 +415,7 @@ async fn capture_offers(
             consumer,
             inspection,
             guard_threat,
+            stage_capture,
         )
         .await
         .map_err(|error| CallFailure::World(error).at(stage))
@@ -376,9 +427,10 @@ async fn capture_origin(
     game: &Arc<CurrentServer>,
     work: &Work,
     consumer: &'static str,
+    stage_capture: bool,
 ) -> Result<RuntimeNpcRead, CallFailure> {
     game.world
-        .capture_npc_read(&work.actor, consumer)
+        .capture_npc_read(&work.actor, consumer, stage_capture)
         .await
         .map_err(|error| CallFailure::World(error).at("original-read"))
 }

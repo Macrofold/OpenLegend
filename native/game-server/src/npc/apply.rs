@@ -46,6 +46,10 @@ pub(super) async fn apply(
     deadline: Instant,
     preview: Option<Arc<ReplyPreview>>,
     delayed_clock: Option<DelayedDecisionClock>,
+    diagnostic: Option<(
+        &crate::decision_dispatch::StageCaptures,
+        Arc<crate::decision_dispatch::DirectStageCapture>,
+    )>,
 ) -> Result<Option<RefusedChoice>, CallFailure> {
     if *cancellation.borrow() {
         return Err(CallFailure::Cancelled);
@@ -190,7 +194,13 @@ pub(super) async fn apply(
             other => CallFailure::World(other),
         })?;
     match applied {
-        Some(Applied::Accepted { .. } | Applied::Refused(_)) => Ok(None),
+        Some(Applied::Accepted { save, .. }) => {
+            if let Some((sink, capture)) = diagnostic {
+                sink.accepted(capture, save.through_cut());
+            }
+            Ok(None)
+        }
+        Some(Applied::Refused(_)) => Ok(None),
         Some(Applied::Reconsider { refusal, .. }) => Ok(Some(refusal)),
         None if delayed_clock
             .as_ref()

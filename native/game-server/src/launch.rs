@@ -300,11 +300,15 @@ impl PreparedGame {
                 Duration::from_secs_f64(grace),
             ),
         );
+        let god_mode = setting("OPEN_LEGEND_GOD_MODE", "false")? == "true";
+        let capture_direct_stages = god_mode
+            && setting("OPEN_LEGEND_CAPTURE_INTELLIGENCE", "false")? == "true";
         let decisions = Arc::new(crate::npc::Director::new(
             game.clone(),
             saves.clone(),
             authority.clone(),
             limit_usd,
+            capture_direct_stages,
         )?);
         let embedding = decisions.embedding_model();
         let batch_ms = setting("NARRATION_BATCH_MS", "750")?.parse::<u64>()?;
@@ -351,7 +355,7 @@ impl PreparedGame {
             Duration::from_secs_f64(grace),
             usize::try_from(3 * players)?,
             display,
-            setting("OPEN_LEGEND_GOD_MODE", "false")? == "true",
+            god_mode,
             http_stop.clone(),
             request_owner,
             checkpoints.clone(),

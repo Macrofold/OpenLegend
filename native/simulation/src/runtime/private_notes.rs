@@ -279,13 +279,7 @@ fn continuity_fence(
     actor: &str,
     life: u64,
 ) -> Result<String, RuntimeError> {
-    let notes_revision = state
-        .reception
-        .knowledge_revisions
-        .as_ref()
-        .and_then(|actors| actors.get(actor))
-        .copied()
-        .unwrap_or(0);
+    let notes_revision = state.reception.knowledge_revision(actor);
     let privacy = state
         .experience
         .actor(actor)
