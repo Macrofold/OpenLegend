@@ -13,11 +13,8 @@ import type { ConversationSource, CurrentMemorySource, MemoryScope } from './mem
 import type { nativeResponseReferences } from './native-response-context.js';
 import { nativeResponseSelection } from './native-response-bindings.js';
 import { nativeReceiptLocator, nativeTemporalHistoryContext } from './native-temporal-context.js';
-import {
-  expandSituation,
-  type CapturedSituation,
-  type SituationQuery,
-} from './situation-context.js';
+import { expandSituation, type CapturedSituation } from './situation-context.js';
+import { type SituationQuery } from './decision-situation-query.js';
 import {
   nativeDecisionPrompt,
   nativeDecisionPromptSize,

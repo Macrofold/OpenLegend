@@ -1,14 +1,22 @@
 import { ReceivedValueOwnership } from './received-value-ownership.js';
-import { HistoryRepository } from './history.js';
+import { auditHistoryEventCount } from './history-writer.js';
 import { HISTORY_TABLES } from './history-storage-schema.js';
 import { MEMORY_HISTORY_TABLES } from './memory-storage-schema.js';
 import { RECORD_NODES, type JsonRecord } from './world-record-schema.js';
 import { assembleWorldRecords, WorldRecords } from './world-records.js';
 import type { SqlDatabase } from './sql-database.js';
-import type { SavePayload } from './game-saves.js';
+import type { SavedWorld } from './saved-world.js';
 import { SaveFiles, type SaveFileMetadata } from './save-files.js';
 import { CHECKPOINT_ENCODING } from './checkpoint-format.js';
 import { tableRows } from './record-pages.js';
+type Rows = Record<string, unknown>[];
+export interface SavePayload {
+  format: string;
+  state: SavedWorld;
+  history: Record<(typeof HISTORY_TABLES)[number], Rows>;
+  memory?: Record<(typeof MEMORY_HISTORY_TABLES)[number], Rows>;
+}
+
 export const CHECKPOINT_TABLES = [
   ...RECORD_NODES.keys(),
   ...HISTORY_TABLES,
@@ -37,7 +45,7 @@ export async function writeCheckpoint(
     if (!settings) throw new Error('Checkpoint world settings missing.');
     const simTime = Number(JSON.parse(String(settings['payload'])).simTime);
     options.captured?.();
-    await new HistoryRepository(db).auditEventCount(head.worldId);
+    await auditHistoryEventCount(db, head.worldId);
     await new ReceivedValueOwnership(db).validate(head.worldId, 'retained');
     await files.writeStream(
       { ...identity, createdAt: new Date().toISOString(), simTime, revision: head.revision },

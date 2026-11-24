@@ -28,9 +28,9 @@ import {
   captureSituation,
   expandSituation,
   situationProposalBinding,
-  situationQuerySchema,
   temporalHistoryForModel,
 } from './situation-context.js';
+import { situationQuerySchema } from './decision-situation-query.js';
 import { boundResponseSchema } from './cognition-contracts.js';
 import { entityHandle, evidenceSourceHandle } from './entity-references.js';
 import { readableDecisionContext } from './response-context.js';

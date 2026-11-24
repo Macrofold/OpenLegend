@@ -20,8 +20,8 @@ import {
   completeSituationHistory,
   expandSituation,
   temporalHistoryForModel,
-  type SituationQuery,
 } from './situation-context.js';
+import { type SituationQuery } from './decision-situation-query.js';
 import {
   prepareSupplyOpportunityContext,
   renderSupplyOpportunityContext,

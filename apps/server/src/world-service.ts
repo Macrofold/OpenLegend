@@ -328,12 +328,8 @@ import {
   type AttributeEditRequest,
   type DefinitionPin,
 } from '@open-legend/domain';
-import {
-  CheckpointBusyError,
-  GameSaveError,
-  type SavePayload,
-  type RestoreSave,
-} from './game-saves.js';
+import { CheckpointBusyError, GameSaveError, type RestoreSave } from './game-saves.js';
+import { type SavePayload } from './checkpoint.js';
 import {
   recordDuration,
   timed,

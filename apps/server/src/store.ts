@@ -125,6 +125,7 @@ import {
 } from './game-saves.js';
 import { timed, timedSync, countMetric, recordBackgroundFailure } from './performance.js';
 import { HistoryRepository } from './history.js';
+import { auditHistoryEventCount, retainedHistoryEventCount } from './history-writer.js';
 import { writeCanonicalWorldRows, writeHistoryProjection } from './world-record-publication.js';
 import { prepareHistory, captureHistoryProjection } from './history-preparation.js';
 import type { CommitInputs } from './commit-inputs.js';
@@ -1203,8 +1204,8 @@ export class SqlGameRepository implements GameRepository {
       return {
         canonical: loaded,
         historyCount: await (active
-          ? this.history.retainedEventCount(loaded.state.world.id)
-          : this.history.auditEventCount(loaded.state.world.id)),
+          ? retainedHistoryEventCount(this.db, loaded.state.world.id)
+          : auditHistoryEventCount(this.db, loaded.state.world.id)),
       };
     });
     if (this.capturedOwner)
@@ -1299,7 +1300,8 @@ export class SqlGameRepository implements GameRepository {
         throw new Error('Native installation no longer matches the committed world head.');
       await this.receivedOwnership.validate(installed.worldId, 'retained');
       if (
-        (await this.history.retainedEventCount(installed.worldId)) !== installed.historyEventCount
+        (await retainedHistoryEventCount(this.db, installed.worldId)) !==
+        installed.historyEventCount
       )
         throw new Error('Native installation history coverage disagrees with current storage.');
     });
@@ -1666,7 +1668,7 @@ export class SqlGameRepository implements GameRepository {
       await applyNativeRestoredArchives(this.db, revision, archives);
       await this.receivedOwnership.project(owner.worldId, revision, inputs.changes, true);
       await this.receivedOwnership.validate(owner.worldId, 'retained');
-      if ((await this.history.auditEventCount(owner.worldId)) !== installation.historyEventCount)
+      if ((await auditHistoryEventCount(this.db, owner.worldId)) !== installation.historyEventCount)
         throw new Error('Native restore history coverage differs from its sealed installation.');
       await this.memories.reuseVectors(owner.worldId);
       const receipt: NativeWorldAdoption = Object.freeze({

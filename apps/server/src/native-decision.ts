@@ -55,11 +55,8 @@ import {
   type ConversationGenerate,
   type ConversationSelectionValidity,
 } from './conversation-context.js';
-import {
-  temporalHistoryForModel,
-  situationResponseCapabilities,
-  type SituationQuery,
-} from './situation-context.js';
+import { temporalHistoryForModel, situationResponseCapabilities } from './situation-context.js';
+import { type SituationQuery } from './decision-situation-query.js';
 import { contextSections, type SharedModelExperience } from './perceived-context.js';
 import { fitActionCandidates } from './decision-context.js';
 import { decisionActivityFactsFromRead } from './decision-activity-facts.js';

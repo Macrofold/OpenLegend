@@ -451,12 +451,6 @@ export class HistoryRepository extends HistoryWriter<LiveSqlDatabase> {
       throw new Error('Utterance projection disagrees with its original event.');
     return event;
   }
-  async eventCount(worldId: string): Promise<number> {
-    const row = await this.db
-      .prepare('SELECT COUNT(*) AS count FROM history_events WHERE world_id=?')
-      .get(worldId);
-    return Number(row?.['count'] ?? 0);
-  }
   /** Native utterance identity resolves only to existing permitted Talk entries.
    * The response index bounds this read; no raw event text leaves the repository.
    */
@@ -484,22 +478,6 @@ export class HistoryRepository extends HistoryWriter<LiveSqlDatabase> {
         .filter((row) => this.sourceAtCurrentCut(worldId, actorId, String(row['payload'])))
         .map((row) => String(row['id']));
     });
-  }
-  async retainedEventCount(worldId: string): Promise<number> {
-    const row = await this.db
-      .prepare('SELECT event_count FROM history_totals WHERE world_id=?')
-      .get(worldId);
-    if (!row) throw new Error('Retained history count is missing; recovery refused.');
-    return Number(row['event_count']);
-  }
-  /** Explicit physical audit: checkpoint capture/recovery already visits all retained data.
-   * Normal startup uses the transactionally maintained count instead of a lifetime scan.
-   * docs/save-and-load.md#current-history-capture-boundary */
-  async auditEventCount(worldId: string): Promise<number> {
-    const actual = await this.eventCount(worldId);
-    if (actual !== (await this.retainedEventCount(worldId)))
-      throw new Error('Retained history count disagrees with physical records; recovery refused.');
-    return actual;
   }
   /** Full reconstruction is reserved for explicit offline recovery. */
   async allEvents(worldId: string): Promise<WorldEvent[]> {

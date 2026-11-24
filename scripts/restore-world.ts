@@ -23,7 +23,8 @@ import {
   restoreDirectoryOwner,
   type RestoreAttempt,
 } from '../apps/server/src/operational-restore-attempt.js';
-import { GameSaves, recoveryFile, type SavePayload } from '../apps/server/src/game-saves.js';
+import { GameSaves, recoveryFile } from '../apps/server/src/game-saves.js';
+import { type SavePayload } from '../apps/server/src/checkpoint.js';
 import { SAVE_FORMAT } from '../apps/server/src/checkpoint-format.js';
 import { SaveFiles } from '../apps/server/src/save-files.js';
 import { readConfig } from '../apps/server/src/config.js';

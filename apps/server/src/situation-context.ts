@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import type { SituationQuery } from './decision-situation-query.js';
 import {
   captureEvidenceCut,
   captureCurrentSources,
@@ -106,45 +106,6 @@ function readableMeasurement(
       }
     : {};
 }
-
-const reference = z.string().min(1).max(120);
-// Each branch already has an exclusive literal kind. The ordinary union emits
-// provider-supported anyOf while retaining the same strict native validation.
-export const situationQuerySchema = z
-  .union([
-    z
-      .object({
-        kind: z.literal('near'),
-        anchor: reference,
-        radius: z.number().finite().min(0).max(100),
-      })
-      .strict(),
-    z.object({ kind: z.literal('separation'), first: reference, second: reference }).strict(),
-    z
-      .object({
-        kind: z.literal('historical-spatial'),
-        anchor: reference,
-        other: reference.nullable(),
-        from: z.number().finite().nonnegative(),
-        through: z.number().finite().nonnegative(),
-        radius: z.number().finite().min(0).max(100),
-      })
-      .strict(),
-    z.object({ kind: z.literal('boundaries'), anchor: reference }).strict(),
-    z
-      .object({
-        kind: z.literal('history'),
-        subject: reference.nullable(),
-        from: z.number().finite().min(0),
-        through: z.number().finite().min(0),
-      })
-      .strict(),
-    z.object({ kind: z.literal('expand'), region: reference }).strict(),
-  ])
-  .describe(
-    'near, separation and boundaries use supplied current-body references: Received situation bodies, returned query bodies, or References rows marked currentBody:true. expand uses a supplied broad-region reference. history and historical-spatial use supplied received-subject or current-body references. A communication-only person reference grants no current spatial position.',
-  );
-export type SituationQuery = z.infer<typeof situationQuerySchema>;
 
 interface SuppliedModelFact {
   source: string;

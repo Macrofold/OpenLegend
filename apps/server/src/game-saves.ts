@@ -15,6 +15,7 @@ import {
   readCheckpoint,
   readCheckpointRecords,
   type CanonicalCheckpoint,
+  type SavePayload,
 } from './checkpoint.js';
 import { CheckpointWorker, type CheckpointSource } from './checkpoint-worker-client.js';
 import { validateNativeCheckpointHistory } from './native-checkpoint-history.js';
@@ -82,12 +83,6 @@ export function recoveryFile(payload: unknown, checksum: unknown): string {
   return pointer.data.file;
 }
 type Rows = Record<string, unknown>[];
-export interface SavePayload {
-  format: string;
-  state: SavedWorld;
-  history: Record<(typeof HISTORY_TABLES)[number], Rows>;
-  memory?: Record<(typeof MEMORY_HISTORY_TABLES)[number], Rows>;
-}
 export interface RestoreSave {
   id: string;
   requestId: string;

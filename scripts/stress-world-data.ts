@@ -1,3 +1,4 @@
+import { countHistoryEvents } from '../apps/server/src/history-writer.js';
 import { entityGet, entityValues, updateWorld } from '../packages/domain/src/index.js';
 import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
@@ -227,7 +228,7 @@ try {
     offered,
     admitted,
     simTime: world.simTime,
-    eventCount: await store.history.eventCount(world.id),
+    eventCount: await countHistoryEvents(store.db, world.id),
     memories: Number(
       (await store.db.prepare('SELECT count(*) AS count FROM recall_sources').get())?.['count'],
     ),

@@ -54,6 +54,30 @@ export interface StoryJob {
 }
 const revisionOf = (text: string) => createHash('sha256').update(text).digest('hex');
 
+export async function countHistoryEvents(db: SqlDatabase, worldId: string): Promise<number> {
+  const row = await db
+    .prepare('SELECT COUNT(*) AS count FROM history_events WHERE world_id=?')
+    .get(worldId);
+  return Number(row?.['count'] ?? 0);
+}
+
+export async function retainedHistoryEventCount(db: SqlDatabase, worldId: string): Promise<number> {
+  const row = await db
+    .prepare('SELECT event_count FROM history_totals WHERE world_id=?')
+    .get(worldId);
+  if (!row) throw new Error('Retained history count is missing; recovery refused.');
+  return Number(row['event_count']);
+}
+/** Explicit physical audit: checkpoint capture/recovery already visits all retained data.
+ * Normal startup uses the transactionally maintained count instead of a lifetime scan.
+ * docs/save-and-load.md#current-history-capture-boundary */
+export async function auditHistoryEventCount(db: SqlDatabase, worldId: string): Promise<number> {
+  const actual = await countHistoryEvents(db, worldId);
+  if (actual !== (await retainedHistoryEventCount(db, worldId)))
+    throw new Error('Retained history count disagrees with physical records; recovery refused.');
+  return actual;
+}
+
 /** Project canonical occurrence, perspective and story records inside a caller's
  * transaction. The stopped opening and live writer share these exact effects.
  */
