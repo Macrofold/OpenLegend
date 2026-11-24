@@ -81,6 +81,14 @@ A signed-in conversation on the original release reproduced an advertised propos
 
 The local archive `nsc04-standalone-proposal-offer-20261122` preserves the original failure, exact exporter source at `cc319036b` plus the verified patch, and the same Node-free executable in both arms (SHA-256 `a4950d9c15471591f16ed5849fb4d3b63300a1a653142548434d3dc83708ddf4`). The archive records original and corrected release manifest hashes and confirms the corrected cognition SHA-256 `ca539de594e5c6b9582d7e6954cb716fc58edae952b4f6eea5ce86469587234e`. Controlled HTTPS incurred $0 in new and cumulative Jev cost for these checks. TypeScript, formatting and network checks passed. All 12 disposable fixture databases were removed. No speed comparison or live model-quality claim was made.
 
+## A resident proposes a short walk in the stand-alone Rust server
+
+A signed player spoke to a resident through the ordinary conversation route. Controlled HTTPS returned a spoken reply and the instruction `Ｗalk 0.35 metres forward.`, which was absent from the resident's offered choices. The native movement owner resolved the real direction, saved the new position and preserved the exact original text. The same reply appeared once. A cold request retry recovered the original outcome. The request used the four existing decision stages and bought no interpretation call.
+
+The same signed caller exercised two different failures. An unsupported phrase with the same walking prefix saved one private pending intention with its exact text and made no move. A recognized instruction missing its distance reported `needs_clarification` without saving a pending intention or moving. Both kept the authorized spoken reply. Withdrawing the original heard evidence while HTTPS held the result stopped both effects before application. Cancellation also stopped both effects and retained its separate receipt. Every case recovered the same outcome after restart.
+
+Frozen tree `fe3fc6316de7`, executable `ea6b197f275f`, archive `nsc04-npc-relative-proposal-20261123`, manifest `2012b7ffcbf8`. All five local cases cleaned up their PostgreSQL databases and released listener reservations. Provider cost was $0. These checks qualify deterministic movement, exact refusal and independent speech on the candidate. Named targets, composed actions, paid interpretation and integration with the default release still have separate scope.
+
 ## Configured offered-action fallback on the stand-alone Rust server — November 22, 2026
 
 The ordinary automatic decision keeps its original evidence, deadline and allowed actions when a completed first assessment finds no suitable action. The configured fallback can ask the stronger model once to choose among those exact offers or abstain. It uses the existing spending ledger, sends the request directly over HTTPS and checks the same evidence before disclosure and application. An uncertain first attempt cannot fund the additional call.
