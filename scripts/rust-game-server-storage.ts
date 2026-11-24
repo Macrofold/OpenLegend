@@ -56,7 +56,7 @@ import {
   MAX_BACKUP_SLOTS,
   OPERATION_TABLES,
 } from '../apps/server/src/operational-backup-format.js';
-import { HISTORY_TABLES } from '../apps/server/src/history.js';
+import { HISTORY_TABLES } from '../apps/server/src/history-storage-schema.js';
 import { storyAccountAvailableSql, storyAccountSql } from '../apps/server/src/personal-accounts.js';
 import { ACCOUNT_RETENTION_PREPARATION } from '../apps/server/src/account-retention.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from '../apps/server/src/retention-cleanup.js';
@@ -94,8 +94,8 @@ import {
   memoryVectorReuseSql,
   MAINTENANCE_BYTES,
   MAINTENANCE_SOURCES,
-  MEMORY_HISTORY_TABLES,
-} from '../apps/server/src/memory-repository.js';
+} from '../apps/server/src/memory-source-sql.js';
+import { MEMORY_HISTORY_TABLES } from '../apps/server/src/memory-storage-schema.js';
 
 import {
   enqueueLexicalSql,

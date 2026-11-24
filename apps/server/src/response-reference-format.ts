@@ -1,5 +1,5 @@
 import type { ObserverSubject, currentBodyValue } from '@open-legend/domain';
-import { modelSpatialPoint, type ModelSpatialFrame } from './perceived-context.js';
+import { modelSpatialPoint, type ModelSpatialFrame } from './model-spatial-frame.js';
 
 export interface CurrentReferenceFacts {
   readonly handle: string;

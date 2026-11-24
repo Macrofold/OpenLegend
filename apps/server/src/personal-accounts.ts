@@ -15,7 +15,7 @@ import {
   type ReceivedBatch,
   type ExperienceEntry,
 } from '@open-legend/domain';
-import type { StorySource } from './history.js';
+import type { StorySource } from './history-writer.js';
 import { receivedValueSql } from './temporal-page-storage.js';
 import type { RecordChanges } from './world-records.js';
 import type { SqlDatabase } from './sql-database.js';

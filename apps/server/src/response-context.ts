@@ -39,9 +39,8 @@ import {
   experienceForModel,
   experienceModelBindings,
   captureModelSpatialFrame,
-  modelSpatialPoint,
-  type ModelSpatialFrame,
 } from './perceived-context.js';
+import { modelSpatialPoint, type ModelSpatialFrame } from './model-spatial-frame.js';
 import type { WorldService } from './world-service.js';
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */

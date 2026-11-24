@@ -76,11 +76,13 @@ import {
   modelObservationFrame,
   modelObservedLocation,
   modelSpatialBounds,
+  modelFrameTable,
+} from './perceived-context.js';
+import {
   modelSpatialPoint,
   modelSpatialVector,
-  modelFrameTable,
   type ModelSpatialFrame,
-} from './perceived-context.js';
+} from './model-spatial-frame.js';
 
 function readableMeasurement(
   anchorFacts: Parameters<typeof presentedSpatialSubject>[0],

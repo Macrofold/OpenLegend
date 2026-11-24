@@ -22,12 +22,12 @@ import type { CognitionExecution, ExecutionLease } from './cognition-execution.j
 import { personalPronoun } from '@open-legend/language';
 export { experienceManifestForModel } from './experience-context.js';
 import {
-  MemoryPreparationError,
   RETRIEVAL_ROWS,
   CONTEXT_CANDIDATE_LIMIT,
   RETRIEVAL_BYTES,
   memorySourceProof,
 } from './memory-repository.js';
+import { MemoryPreparationError } from './memory-writer.js';
 import { worldPosition } from '@open-legend/domain';
 import type {
   RetrievedMemory,

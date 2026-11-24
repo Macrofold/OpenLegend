@@ -1,3 +1,4 @@
+import { APPRAISAL_SOURCE_BINDINGS } from './cognition-contracts.js';
 import {
   appraisalPin,
   sameDefinitionPin,
@@ -11,18 +12,15 @@ import type { NativeNpcCapture } from './native-npc-capture.js';
 import type { NativeNpcBindingSelection } from './native-npc-sources.js';
 import { nativeNpcPersonalSelection } from './native-npc-sources.js';
 import type { NativeDefinitionCapture } from './native-definition-capture.js';
-import {
-  APPRAISAL_SOURCE_BINDINGS,
-  memorySourceProof,
-  type MemoryScope,
-} from './memory-repository.js';
+import { memorySourceProof, type MemoryScope } from './memory-repository.js';
 import { nativeExperienceEntry } from './native-recall.js';
 import {
   appraisalContextFromRead,
   appraisalDecisionSchema,
   appraisalValueSchema,
 } from './appraisal-context-view.js';
-import type { ModelSpatialFrame, SharedModelExperience } from './perceived-context.js';
+import type { SharedModelExperience } from './perceived-context.js';
+import type { ModelSpatialFrame } from './model-spatial-frame.js';
 import { retainNativeSources } from './native-consumer.js';
 import { ViewChangedError } from './player-view-async.js';
 

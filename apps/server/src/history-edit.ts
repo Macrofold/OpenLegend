@@ -29,7 +29,7 @@ import { readTemporalPageRecord } from './temporal-storage.js';
 import type { SavedWorld } from './saved-world.js';
 import type { SqlDatabase } from './sql-database.js';
 import { historyKey, historyPositions, historyMapPositions } from './history-residency.js';
-import { MEMORY_SOURCE_TABLES } from './memory-repository.js';
+import { MEMORY_SOURCE_TABLES } from './memory-source-sql.js';
 
 export interface HistoryEditSelection {
   eventIds?: string[];

@@ -19,6 +19,7 @@ import {
   JUDGMENT_STATE_QUESTION_CHARACTERS,
 } from '../packages/ai/src/index.js';
 import {
+  APPRAISAL_SOURCE_BINDINGS,
   boundReflectionJsonSchema,
   boundResponseSchema,
   COGNITION_VERSION,
@@ -35,7 +36,6 @@ import {
   DEFAULT_MACROFOLD_MODEL,
   macrofoldModelParameters,
 } from '../apps/server/src/macrofold-model.js';
-import { APPRAISAL_SOURCE_BINDINGS } from '../apps/server/src/memory-repository.js';
 import {
   attentionRequest,
   decisionActionAttentionRequest,

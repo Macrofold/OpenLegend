@@ -330,20 +330,6 @@ export function perspectiveField(name: 'order' | 'type', alias = ''): string {
 }
 /** Index the existing perspective, not all world events; the same columns drive reads.
  * docs/perceived-world-events.md#4-query-and-storage-behavior */
-export async function initializePerceivedEventIndexes(
-  db: Pick<SqlDatabase, 'exec'>,
-): Promise<void> {
-  await db.exec(`
-    CREATE INDEX IF NOT EXISTS history_perspective_order ON history_perspectives(world_id,actor_id,position,event_id);
-    CREATE INDEX IF NOT EXISTS history_perspective_type_order ON history_perspectives(world_id,actor_id,event_type,position,event_id);
-    CREATE INDEX IF NOT EXISTS history_perspective_time ON history_perspectives(world_id,actor_id,((payload::jsonb->>'time')::double precision),position,event_id);
-    CREATE INDEX IF NOT EXISTS history_perspective_speech_source ON history_perspectives(world_id,actor_id,source_id,position,event_id) WHERE event_type='speech' AND source_id IS NOT NULL;
-    CREATE INDEX IF NOT EXISTS history_perspective_speech_target ON history_perspectives(world_id,actor_id,target_id,position,event_id) WHERE event_type='speech' AND target_id IS NOT NULL;
-    CREATE INDEX IF NOT EXISTS history_perspective_response_order ON history_perspectives(world_id,actor_id,position,event_id) WHERE response_action;
-    CREATE INDEX IF NOT EXISTS history_perspective_source_response_order ON history_perspectives(world_id,actor_id,source_id,position,event_id) WHERE response_action;
-  `);
-}
-
 function correctionEventIdFor(
   corrections: Record<string, string> | undefined,
   sourceId: string,

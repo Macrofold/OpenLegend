@@ -1,6 +1,7 @@
 import { ReceivedValueOwnership } from './received-value-ownership.js';
-import { HISTORY_TABLES, HistoryRepository } from './history.js';
-import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
+import { HistoryRepository } from './history.js';
+import { HISTORY_TABLES } from './history-storage-schema.js';
+import { MEMORY_HISTORY_TABLES } from './memory-storage-schema.js';
 import { RECORD_NODES, type JsonRecord } from './world-record-schema.js';
 import { assembleWorldRecords, WorldRecords } from './world-records.js';
 import type { SqlDatabase } from './sql-database.js';

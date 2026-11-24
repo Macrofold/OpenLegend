@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { AiClient } from '@open-legend/ai';
 import type { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
-import type { StoryJob } from './history.js';
+import type { StoryJob } from './history-writer.js';
 import { generationAllowance } from './cognition-budget.js';
 import { experienceForModel, experienceModelBindings } from './perceived-context.js';
 import type { ExperienceEntry } from '@open-legend/domain';

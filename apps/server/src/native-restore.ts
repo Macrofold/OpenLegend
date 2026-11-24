@@ -4,7 +4,7 @@ import type { CanonicalCheckpoint } from './checkpoint.js';
 import type { CommitInputs } from './commit-inputs.js';
 import type { GameSaves, RestoreSave } from './game-saves.js';
 import type { AuthorityFence } from './authority.js';
-import { MEMORY_SOURCE_TABLES } from './memory-repository.js';
+import { MEMORY_SOURCE_TABLES } from './memory-source-sql.js';
 import { nativeCurrentRow } from './native-current-sources.js';
 import { tableRows } from './record-pages.js';
 import {

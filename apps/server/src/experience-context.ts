@@ -32,12 +32,14 @@ import {
 } from './entity-references.js';
 import {
   captureModelSpatialFrame,
-  modelSpatialPoint,
-  modelSpatialVector,
   modelObservedLocation,
   modelObservationFrame,
-  type ModelSpatialFrame,
 } from './perceived-context.js';
+import {
+  modelSpatialPoint,
+  modelSpatialVector,
+  type ModelSpatialFrame,
+} from './model-spatial-frame.js';
 
 // Optional received details must be absent in both JSON text and structured Jev state.
 // Strict provider serialization rejects a present field whose value is undefined.

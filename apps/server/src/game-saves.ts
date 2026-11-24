@@ -1,8 +1,9 @@
 import { entityKeys } from '@open-legend/domain';
-import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
+import { MEMORY_HISTORY_TABLES } from './memory-storage-schema.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { restoredSourceVersions } from './source-version-retention.js';
-import { HISTORY_TABLES, validateHistoryEvidence } from './history.js';
+import { validateHistoryEvidence } from './history.js';
+import { HISTORY_TABLES } from './history-storage-schema.js';
 import { digest } from './content-digest.js';
 import { AUTOSAVE_LIMITS, AUTOSAVE_DEFAULTS, SAVE_FORMAT } from './checkpoint-format.js';
 import type { SavedWorld } from './saved-world.js';

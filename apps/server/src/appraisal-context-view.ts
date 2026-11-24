@@ -10,9 +10,9 @@ import { decisionAppraisalSchema, type DecisionAppraisalProposal } from './cogni
 import {
   experienceForModel,
   experienceModelBindings,
-  type ModelSpatialFrame,
   type SharedModelExperience,
 } from './perceived-context.js';
+import { type ModelSpatialFrame } from './model-spatial-frame.js';
 import type { ExperiencePresentation } from './experience-context.js';
 
 export interface AppraisalContextRead {

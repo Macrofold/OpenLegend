@@ -20,10 +20,10 @@ import type { NativeNpcActionCapture, NativeNpcCapture } from './native-npc-capt
 import {
   MemoryReadCache,
   memorySourceProof,
-  conversationCompactionKey,
   type CurrentMemorySource,
   type MemoryScope,
 } from './memory-repository.js';
+import { conversationCompactionKey } from './memory-writer.js';
 import { nativeTemporalHistoryContext } from './native-temporal-context.js';
 import {
   admitNativeSituationHistory,

@@ -11,7 +11,7 @@ import { nativeCurrentSources, nativeReceivedScene } from './native-current-capt
 import { personalEntityHandle } from './entity-references.js';
 import { presentationSubjects, type CapturedExperienceContext } from './experience-context.js';
 import { retainNativeSources } from './native-consumer.js';
-import type { ModelSpatialFrame } from './perceived-context.js';
+import type { ModelSpatialFrame } from './model-spatial-frame.js';
 import type { SituationRead } from './situation-context.js';
 
 type Facts = NativeNpcCapture['facts'];

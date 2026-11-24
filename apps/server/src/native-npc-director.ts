@@ -5,7 +5,7 @@ import type {
   DecisionResponseEvidence,
 } from './decision-failure.js';
 import { ViewChangedError } from './player-view-async.js';
-import { MemoryPreparationError } from './memory-repository.js';
+import { MemoryPreparationError } from './memory-writer.js';
 import { NpcReplyPreviews } from './npc-reply-preview.js';
 import { nativeNpcReplyPreviewHost } from './native-npc-reply-preview.js';
 import {

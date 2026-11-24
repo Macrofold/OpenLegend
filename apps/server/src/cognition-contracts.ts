@@ -7,11 +7,14 @@ import {
 export { navigationInstructions } from './navigation-contracts.js';
 import { EXPERIENCE_LIMITS } from '@open-legend/domain';
 import { z } from 'zod';
-import { worldPointFromModel, type ModelSpatialFrame } from './perceived-context.js';
+import { worldPointFromModel, type ModelSpatialFrame } from './model-spatial-frame.js';
 export const COGNITION_VERSION = 'cognition-v30-shared-evidence-conventions';
 
 /** Complete model instructions and context must fit before dispatch. */
 export const CONTEXT_BYTE_LIMIT = 100_000;
+
+/** The context and effect owner must bind the same bounded appraisal sources. */
+export const APPRAISAL_SOURCE_BINDINGS = 48;
 
 // Hard-query baselines survive unavailable optional retrieval; never expand actor scope.
 // docs/memory-architecture.md#4-jev-attention-before-context-inclusion

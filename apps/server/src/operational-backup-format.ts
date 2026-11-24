@@ -1,10 +1,10 @@
-import { WORLD_AGENT_TABLES } from './world-agent-store.js';
+import { WORLD_AGENT_TABLES } from './world-agent-storage-schema.js';
 import { ASSET_TABLES } from './asset-repository.js';
 import { AUTHORITY_TABLES } from './authority.js';
 import { CREATION_TARGET_TABLES } from './creation-target-contracts.js';
 import { COMMAND_TABLES } from './command-receipts.js';
-import { MEMORY_CACHE_TABLES, MEMORY_HISTORY_TABLES } from './memory-repository.js';
-import { HISTORY_TABLES } from './history.js';
+import { MEMORY_CACHE_TABLES, MEMORY_HISTORY_TABLES } from './memory-storage-schema.js';
+import { HISTORY_TABLES } from './history-storage-schema.js';
 
 export const BACKUP_FORMAT = 'openlegend-backup-records-1';
 export const BACKUP_OPERATIONS_FORMAT = 'operations-1';

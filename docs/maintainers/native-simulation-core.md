@@ -1091,9 +1091,7 @@ The current host join installs the existing temporal packing/residency settings 
 
 Start R1 with one real reply. R2 can proceed with its own typed maintenance request and protected save while other handoffs are converted. R3 can start on the supported opening while R4 adds the positive inventory and action families needed by Main. Join each R5 caller as soon as its behavior is ready. R6 is the release gate.
 
-Use focused correctness checks through each changed caller and reuse passing evidence while its dependencies are unchanged. The integrated R6 release exercises the complete reconnect, PostgreSQL restart and administrative recovery journey with Node absent. Measure ordinary conversion as a whole at that gate. Keep isolated comparisons for explicitly selected performance experiments.
-
-**Current cutover focus.** Finish the remaining retained gameplay and privileged callers. Signed Inspect and receipt recovery have passed. The launcher switch still requires the connected release and managed measurements.
+**Current cutover focus.** Signed Inspect, paired notes and names, saved provider usage and learned speech have passed their focused checks. Practical learned work still needs to prove that it uses the actual outputs it produces. [Stopped opening preparation](../verification/checkpoints-and-recovery.md#preparing-a-rust-opening-with-the-game-stopped) reuses the canonical history and memory writers. The remaining old host dependencies, the connected release and managed comparisons still gate the launcher switch.
 
 **Verified slices.**
 

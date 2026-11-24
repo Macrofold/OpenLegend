@@ -238,7 +238,7 @@ import {
   BASE_FOOD_ACTION_WORDING,
 } from '@open-legend/domain';
 import { resolveKnownPlaceMove } from './known-places.js';
-import type { StoryJob } from './history.js';
+import type { StoryJob } from './history-writer.js';
 import {
   prepareHistoryEdit,
   historyEditPredecessorsCurrent,
@@ -2103,7 +2103,7 @@ export class WorldService {
   private readonly liveReadCache = new Map<string, import('./live-read-overlay.js').LiveReadCuts>();
   private readonly pendingSourceReaders = new WeakMap<
     import('./world-records.js').RecordChanges,
-    (actorId?: string) => import('./memory-repository.js').PreparedMemorySources
+    (actorId?: string) => import('./memory-writer.js').PreparedMemorySources
   >();
   private readonly pendingHistoryReads = new WeakMap<
     import('./history-preparation.js').PreparedHistory,

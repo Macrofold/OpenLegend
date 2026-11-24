@@ -226,6 +226,12 @@ The same app tree and addon `5f77cf677afd2b8bd1661488dd744a52e501f67e6b5133d1911
 
 The restarted process recovered the last Walk’s exact receipt in the original signed session, preserved all 397 existing history pointers and original records, and refused both old-tab release and acquire. A fresh controller loaded the automatic checkpoint. The state refresh briefly returned HTTP 503 `busy`, then showed the same actor paused at the captured time and position under a new timeline, with all 299 saved history records restored. Both processes exited cleanly. There were zero remaining fixture databases or sessions and $0 provider cost. Archive `nsc04-node-fresh-due-20261122` (manifest `740f64c0e6cb7e0dd26c09eff8664561fd7240c228e1a58cc9060df5e40a2169`) preserves the driver, file, result and cleanup. This short local check offered no conversations. The final integrated Linux comparison still requires both saved replies in its ordinary and due windows.
 
+## Preparing a Rust opening with the game stopped
+
+The release tools use the same history and memory writers that prepare the first saved records. The stopped writer has no listener or live read cache. The same 26-actor opening produced 82 application SQL operations in the same order and identical normalized rows across 247 tables. Adding one real personal memory produced 84 operations and the same 3,342 rows, including its recall index. Both builds reopened the same world record and all four temporary databases were removed. The schema and cognition exports also matched byte for byte.
+
+The verified source trees are `6db368dd8de4` and `6fdf5d4634c6`. Results `126a76a25b4e` and `9707d683` identify the stopped comparisons. They qualify first-save preparation. The opening had no live occurrences, and its checks did not measure running games.
+
 ## Stand-alone Rust stopped operational backup
 
 The Rust command reads current gameplay and external authority from one PostgreSQL snapshot and copies every retained checkpoint for that world. The output includes private account, access, privacy and spending records. It uses the existing operational backup format and the stopped source’s normal database writer key, acquired in shared mode for the read. [Operator command](../save-and-load.md#stopped-operational-backup) · [Limits](../limits/persistence.md#sb17).

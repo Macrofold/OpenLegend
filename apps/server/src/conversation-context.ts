@@ -23,7 +23,6 @@ import type { DecisionDependencyFailure } from './decision-failure.js';
 import type { SharedModelExperience } from './perceived-context.js';
 import type { WorldService } from './world-service.js';
 import {
-  conversationCompactionKey,
   RETRIEVAL_BYTES,
   RETRIEVAL_ROWS,
   type CognitionPreparation,
@@ -32,6 +31,7 @@ import {
   type MemoryScope,
   type MemoryRepository,
 } from './memory-repository.js';
+import { conversationCompactionKey } from './memory-writer.js';
 
 // Request bounds, never fictional forgetting or a social membership.
 // docs/projects/speech-and-social-perception-tech-design.md#compaction-remains-a-derived-read

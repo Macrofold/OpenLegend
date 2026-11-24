@@ -199,26 +199,6 @@ export class LexicalProjection {
     this.backgroundAllowed = allowed;
   }
 
-  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS memory_lexical_documents (
-        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,id TEXT NOT NULL,source_kind TEXT NOT NULL,
-        source_revision TEXT NOT NULL,search_vector tsvector NOT NULL,
-        PRIMARY KEY(world_id,actor_id,id,source_kind));
-      CREATE INDEX IF NOT EXISTS memory_lexical_vector ON memory_lexical_documents USING GIN(search_vector);
-      CREATE TABLE IF NOT EXISTS memory_lexical_pending (
-        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,id TEXT NOT NULL,source_kind TEXT NOT NULL,
-        source_revision TEXT NOT NULL,generation TEXT NOT NULL,world_revision BIGINT NOT NULL,
-        removing BOOLEAN NOT NULL,bytes BIGINT NOT NULL,
-        PRIMARY KEY(world_id,actor_id,id,source_kind));
-      CREATE INDEX IF NOT EXISTS memory_lexical_due ON memory_lexical_pending(world_id,world_revision,actor_id,id,source_kind);
-      CREATE TABLE IF NOT EXISTS memory_lexical_progress (
-        world_id TEXT PRIMARY KEY,generation TEXT NOT NULL,covered_revision BIGINT NOT NULL,
-        pending_rows BIGINT NOT NULL,pending_bytes BIGINT NOT NULL,
-        incomplete_actors TEXT[] NOT NULL DEFAULT '{}');
-    `);
-  }
-
   async admit(progress: Record<string, unknown> | undefined) {
     if (progress && Number(progress['pending_rows']) > 0) {
       this.pendingKnown = true;

@@ -7,7 +7,7 @@ import {
   prepareCurrentBodyReadScope,
   type WorldState,
 } from '@open-legend/domain';
-import { MemoryPreparationError } from './memory-repository.js';
+import { MemoryPreparationError } from './memory-writer.js';
 import {
   validateEventEvidence,
   validateObservationContribution,

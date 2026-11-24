@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { perceivedEventType } from '@open-legend/domain';
 import type { Awareness, EventEvidence, WorldEvent } from '@open-legend/domain';
-import type { StorySource } from './history.js';
+import type { StorySource } from './history-writer.js';
 import { HistoryBatch } from './history-batch.js';
 import { encodeStoryAccount, encodeTemporalStoryAccount } from './personal-accounts.js';
 import type { ReceivedEventAccount } from './received-event-accounts.js';

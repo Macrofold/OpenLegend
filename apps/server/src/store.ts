@@ -72,7 +72,8 @@ import {
   compactContributionHistory,
   RESTORED_HISTORY_POSITION_TABLES,
 } from './history-residency.js';
-import { MEMORY_SOURCE_TABLES, MemoryRepository } from './memory-repository.js';
+import { MemoryRepository } from './memory-repository.js';
+import { MEMORY_SOURCE_TABLES } from './memory-source-sql.js';
 import {
   nativeRestoredArchives,
   nativeRestoredSourceBatches,

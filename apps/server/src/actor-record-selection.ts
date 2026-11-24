@@ -4,7 +4,7 @@ import { RECORD_ACTOR_PATHS, RECORD_NODES, RECORD_PARENTS } from './world-record
 import { mayReadLiveRecordTable, type LiveReadCuts } from './live-read-overlay.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import type { SourceVersionPlan } from './source-version-retention.js';
-import type { PreparedMemorySources } from './memory-repository.js';
+import type { PreparedMemorySources } from './memory-writer.js';
 import type { PreparedHistoryRead } from './history-preparation.js';
 
 const fields = new Map(

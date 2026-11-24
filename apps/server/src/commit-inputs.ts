@@ -1,6 +1,6 @@
 import type { ExperiencePrivacy } from '@open-legend/domain';
 import type { HistoryProjection } from './history-preparation.js';
-import type { PreparedMemorySources } from './memory-repository.js';
+import type { PreparedMemorySources } from './memory-writer.js';
 import type { RecordChanges } from './world-records.js';
 
 /** One immutable accepted save cut, prepared by its semantic owner. This is a

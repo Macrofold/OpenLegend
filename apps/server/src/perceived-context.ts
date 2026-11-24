@@ -22,6 +22,11 @@ import {
 } from '@open-legend/domain';
 import { entityHandle } from './entity-references.js';
 import type { AttentionCandidate } from './recall.js';
+import {
+  modelSpatialPoint,
+  modelSpatialVector,
+  type ModelSpatialFrame,
+} from './model-spatial-frame.js';
 import { digest } from './content-digest.js';
 
 /** One complete selected personal source, projected through the shared evidence owner.
@@ -80,14 +85,6 @@ export function memoryEmbeddingText(
 export const RECEIVED_HISTORY_INSTRUCTIONS =
   'Recent input contains selected personally received changes and occurrences, with dated entry baselines and recording gaps. Unchanged sensory checks are not a history diary; silence does not prove uninterrupted observation or absence of change. A participant’s receivedSubject connects that occurrence to the same received subject without revealing identity or intent. A baseline supplies already permitted facts with their original dates, not an earlier route or a fresh measurement. Partial coverage can omit retained intermediate events; request history when earlier detail is needed. Omission does not mean an event was never perceived or did not happen. History facts inherit facetDefaults; their own fields override them. Availability and coverageGap mark unchecked, unavailable or unrecorded intervals; endedFields restricts a boundary to those named field parts. An attention exit means detailed recording stopped, not that the subject visibly disappeared. Do not connect movement across a gap or reconstruct a complete past scene from held values. A history frame number indexes frames in that same history result. A supplied-fact value reuses the exact already supplied source/ordinal value; its receipt dates and role remain independent.';
 
-/** One owned frame per decision, shared by presentation and fixed-point movement.
- * Native evidence keeps its original world coordinates and acquisition frame. */
-export interface ModelSpatialFrame {
-  position: Position;
-  axes: ReturnType<typeof headingFrame>;
-  support: string | null;
-}
-
 /** Exact acquisition frames are shared only inside one rendered packet. The
  * ownership set prevents an unrelated numeric field named frame being rewritten. */
 export function modelFrameTable() {
@@ -139,26 +136,6 @@ export function captureModelSpatialFrame(world: WorldState, actorId: string): Mo
     position: { ...worldPosition(actor) },
     axes: headingFrame(actor.spatial.heading),
     support: worldSupport(actor),
-  };
-}
-export function modelSpatialVector(frame: ModelSpatialFrame, vector: Position) {
-  return {
-    right: vector.x * frame.axes.right.x + vector.z * frame.axes.right.z,
-    above: vector.y,
-    forward: vector.x * frame.axes.forward.x + vector.z * frame.axes.forward.z,
-  };
-}
-export function modelSpatialPoint(frame: ModelSpatialFrame, point: Position) {
-  return modelSpatialVector(frame, {
-    x: point.x - frame.position.x,
-    y: point.y - frame.position.y,
-    z: point.z - frame.position.z,
-  });
-}
-export function worldPointFromModel(frame: ModelSpatialFrame, right: number, forward: number) {
-  return {
-    x: frame.position.x + right * frame.axes.right.x + forward * frame.axes.forward.x,
-    z: frame.position.z + right * frame.axes.right.z + forward * frame.axes.forward.z,
   };
 }
 export function modelObservationFrame(frame: ModelSpatialFrame, observed: ObservationFrame) {

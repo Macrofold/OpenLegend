@@ -1,7 +1,7 @@
 import { entityKeys } from '../packages/domain/src/index.js';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
-import { MEMORY_HISTORY_TABLES } from '../apps/server/src/memory-repository.js';
-import { HISTORY_TABLES } from '../apps/server/src/history.js';
+import { MEMORY_HISTORY_TABLES } from '../apps/server/src/memory-storage-schema.js';
+import { HISTORY_TABLES } from '../apps/server/src/history-storage-schema.js';
 import { createHash, randomUUID } from 'node:crypto';
 import type { CommandEpoch } from '../apps/server/src/command-receipts.js';
 import { retainHotEvents } from '../apps/server/src/hot-events.js';

@@ -1,7 +1,7 @@
 import type { CommitInputs } from './commit-inputs.js';
-import type { HistoryRepository } from './history.js';
+import type { HistoryWriter } from './history-writer.js';
 import type { IntegrationValues } from './integration-values.js';
-import type { MemoryRepository } from './memory-repository.js';
+import type { MemoryWriter } from './memory-writer.js';
 import { timed } from './performance.js';
 import type { ReceivedValueOwnership } from './received-value-ownership.js';
 import type { SqlWriteBatch } from './sql-rows.js';
@@ -9,15 +9,15 @@ import type { WorldRecords } from './world-records.js';
 
 interface RecordPublicationOwners {
   readonly records: WorldRecords;
-  readonly history: HistoryRepository;
-  readonly memories: MemoryRepository;
+  readonly history: HistoryWriter;
+  readonly memories: MemoryWriter;
   readonly receivedOwnership: ReceivedValueOwnership;
 }
 
 /** Write the already selected occurrence and perspective rows in the caller's
  * transaction before gameplay/source records that can refer to them. */
 export async function writeHistoryProjection(
-  history: HistoryRepository,
+  history: HistoryWriter,
   integration: IntegrationValues,
   inputs: Pick<CommitInputs, 'worldId' | 'history' | 'changes'>,
   sharedWrites: SqlWriteBatch,

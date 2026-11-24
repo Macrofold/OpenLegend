@@ -1,14 +1,10 @@
+import { APPRAISAL_SOURCE_BINDINGS } from './cognition-contracts.js';
 import {
   appraisalContextFromRead,
   appraisalDecisionSchema,
   appraisalValueSchema,
 } from './appraisal-context-view.js';
-import {
-  APPRAISAL_SOURCE_BINDINGS,
-  memorySourceProof,
-  type MemoryRepository,
-  type MemoryScope,
-} from './memory-repository.js';
+import { memorySourceProof, type MemoryRepository, type MemoryScope } from './memory-repository.js';
 import { captureExperienceContext } from './experience-context.js';
 import { entityGet } from '@open-legend/domain';
 import {
@@ -29,7 +25,8 @@ import {
 import type { WorldService } from './world-service.js';
 import type { DecisionAppraisalProposal, AppraisalProposal } from './cognition-contracts.js';
 import { formatDecisionFeelings } from './decision-feelings.js';
-import { type SharedModelExperience, type ModelSpatialFrame } from './perceived-context.js';
+import { type SharedModelExperience } from './perceived-context.js';
+import { type ModelSpatialFrame } from './model-spatial-frame.js';
 
 interface AppraisalPreparation {
   requiredFeelings?: readonly AppraisalScope[];

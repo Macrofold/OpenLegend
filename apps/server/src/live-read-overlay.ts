@@ -29,18 +29,19 @@ import { receivedRowOwner } from './received-value-ownership.js';
 import { sqlRecordBatchesWithCount } from './sql-rows.js';
 import { LexicalPreparationError } from './lexical-projection.js';
 import {
-  MEMORY_SOURCE_ELIGIBILITY,
-  MEMORY_SOURCE_TABLES,
   pendingRecallRows,
-  MemoryPreparationError,
   SOURCE_DEPENDENCY_COLUMNS,
   PLACE_CAPSULE_COLUMNS,
+} from './memory-repository.js';
+import {
+  MemoryPreparationError,
   sourceDerivationDependencies,
   sourceIdentityDependencies,
   sourcePlaceRows,
   supportPlaceRows,
   type PreparedMemorySources,
-} from './memory-repository.js';
+} from './memory-writer.js';
+import { MEMORY_SOURCE_ELIGIBILITY, MEMORY_SOURCE_TABLES } from './memory-source-sql.js';
 
 /** Immutable accepted cuts owned by the existing pending writer. Readers retain
  * selected rows, not a second writable world or a new durable publication head. */
