@@ -17,7 +17,9 @@ mod revoke;
 pub(crate) mod recipe_grants;
 pub(crate) mod recipe_teaching;
 mod save;
-pub(crate) use edit::{CompletedKnowledgeEdit, KnowledgeEdit, KnowledgeEditCursor, edit_knowledge};
+pub(crate) use edit::{
+    CompletedKnowledgeEdit, KnowledgeEdit, KnowledgeEditCursor, NoteIdentity, edit_knowledge,
+};
 pub(crate) use revoke::revoke_knowledge_documents;
 
 #[derive(Debug, Deserialize)]

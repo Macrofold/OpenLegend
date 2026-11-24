@@ -614,6 +614,7 @@ export function Mind({
   actorId,
   owned = false,
   readOnly = false,
+  canEditKnowledge = false,
   visible = true,
   readScope,
   memoryScope,
@@ -623,6 +624,7 @@ export function Mind({
   actorId: string;
   owned?: boolean;
   readOnly?: boolean;
+  canEditKnowledge?: boolean;
   visible?: boolean;
   readScope?: string;
   memoryScope: string;
@@ -630,6 +632,7 @@ export function Mind({
   onDirtyChange?(dirty: boolean): void;
 }) {
   const [refreshRevision, setRefreshRevision] = useState(0);
+  const knowledgeWritable = !readOnly || canEditKnowledge;
   const snapshotKey = JSON.stringify([actorId, owned, readScope, evidenceEpoch, refreshRevision]);
   const [snapshot, setSnapshot] = useState<{ key: string; value: GodMindView } | null>(null),
     [error, setError] = useState(''),
@@ -788,7 +791,7 @@ export function Mind({
                   <details key={JSON.stringify(doc.subjectId)}>
                     <summary>{doc.label}</summary>
                     <p className="ol-prose">{doc.text}</p>
-                    {!readOnly && (
+                    {knowledgeWritable && (
                       <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
                     )}
                   </details>
@@ -797,11 +800,11 @@ export function Mind({
           </div>
           {/* Not keyed by the page cursor: a save changes it, and details load by subject. */}
           <KnowledgeEditor
-            key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
+            key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${knowledgeWritable}`}
             mind={mind}
             onSaved={setMind}
             owned={owned}
-            readOnly={readOnly}
+            readOnly={!knowledgeWritable}
             visible={visible && currentSnapshot}
             readScope={snapshotKey}
             readCurrent={currentSnapshot}

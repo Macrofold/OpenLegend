@@ -372,6 +372,14 @@ A PostgreSQL lock withheld the note save acknowledgement while the player state 
 
 The verified executable is `8bc993c6761864221ec06c55c5c94fc9b00571d14efba06c5f1a0a699db9da8d`. The source manifest is `0cb5aed8e5112787414a8bf2ef6cdf5d3e082ab8579e36d24973379963852143` over `392351e9a119f7d77873e3b4d899811e2b3505a8`. The storage and world definition artifacts match the Recent observations case. The `people-notes-exact-browser`, `people-notes-exact-pagination` and `people-notes-general-regression` cases are retained alongside that evidence. All six listening applications reported zero outstanding reservations after shutdown. All fixture databases were removed. These local checks incurred $0 provider cost.
 
+#### Paired name and note edits in Rust
+
+The signed owner saved a private nickname and person note together. The signed creator saved a given name and note for an eligible NPC. Both kept the exact UTF-16 values through PostgreSQL and restart. A stale name or document revision left both values intact. The caller refused renaming a note-only subject and editing another human’s private knowledge. Losing Inspect during the held database read withheld the private response to an already committed edit.
+
+Chromium’s Journal exercised the owner’s person editor. The real creator Mind saved a general pad and showed its confirmation. Revoking Create removed the editable controls. On cold sign-in the same Inspect-only caller reopened the exact saved note, selected the person by keyboard and read that permitted note. A direct write with the current revision was refused. The paired given-name write was checked through the signed HTTP caller.
+
+Owner and paired-edit executable `9c425d99fe31` with signed result `a6bdefae4d9b` and owner browser result `d1bac1a07338`. Creator browser executable `d963e75fdc53`, browser index `4d22063b5f5e` and result `bea054e7539d`. Archive `nsc04-name-knowledge-20261123`, manifest `d7408cfed0d6`, preserves the failed browser locator attempts and cleanup. The final browsers and temporary databases closed. Neither caller incurred a provider charge.
+
 ### Stand-alone private nicknames — November 22, 2026
 
 In the reviewed 163-entity Main world, Chromium opened a visible person's inspector and saved a private nickname with an emoji. The returned view kept the same observed person and advanced the name revision from 0 to 1. An altered body reference, another tab, a stale revision and a name over the installed limit were refused. An ordinary save retained the exact nickname after restart. Clearing it advanced the revision to 2, and retrying that edit with the old revision left the name unchanged. The editor uses the current contact and body reference and the existing private recognition writer. The given name and its independent evidence keep their own fields.

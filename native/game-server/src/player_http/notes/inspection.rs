@@ -13,9 +13,10 @@ pub(super) async fn inspect(
     state: &PlayerRoutes,
     scope: &Arc<AuthorizedScope>,
     actor: &str,
+    edit: Option<&EditOutcome>,
 ) -> Response {
     for _ in 0..2 {
-        match read(state, scope, actor).await {
+        match read(state, scope, actor, edit).await {
             Ok(PlayerDisclosure::Published(bytes)) => return json_response(StatusCode::OK, bytes),
             Ok(PlayerDisclosure::Changed | PlayerDisclosure::Busy)
             | Err(WorldError::Storage(StoreError::StaleCut)) => (),
@@ -34,6 +35,7 @@ async fn read(
     state: &PlayerRoutes,
     scope: &Arc<AuthorizedScope>,
     actor: &str,
+    edit: Option<&EditOutcome>,
 ) -> Result<PlayerDisclosure, WorldError> {
     let language = state.game.language().ok_or(StoreError::InvalidRecord)?;
     let world = &state.game.world;
@@ -66,6 +68,7 @@ async fn read(
                                 sources,
                                 language,
                                 budget,
+                                edit,
                             )
                         })?
                     },
@@ -107,6 +110,7 @@ fn encode<'a>(
     sources: &mut dyn Iterator<Item = (usize, &'a PersonalSourceRef, &'a str)>,
     language: &LanguageProvider,
     budget: &ByteBudget,
+    edit: Option<&EditOutcome>,
 ) -> Result<Bytes, WorldError> {
     let mut custody = budget
         .reserve(4096 + sides.len() * 256)
@@ -157,11 +161,17 @@ fn encode<'a>(
     #[derive(Serialize)]
     struct Response<'a> {
         ok: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        code: Option<&'a str>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        message: Option<&'a JsText>,
         mind: Mind<'a>,
     }
     wire::encode(
         &Response {
             ok: true,
+            code: edit.map(|outcome| outcome.code.as_str()),
+            message: edit.map(|outcome| &outcome.message),
             mind: Mind {
                 native: &mind,
                 accepted_text,

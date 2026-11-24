@@ -2705,6 +2705,7 @@ function App({
               actorId={mindId}
               owned={mindId === view.player.id}
               readOnly={!view.godMode && mindId !== view.player.id}
+              canEditKnowledge={!!(view.access?.canEditPersonMemory && view.access.canInspectMind)}
               visible={visible}
               onDirtyChange={setMindDirty}
               readScope={view.access?.scope}

@@ -238,6 +238,7 @@ pub(crate) fn router(
             .merge(diagnostics::router(stop))
             .route("/api/god/memories", post(recall::recollections))
             .route("/api/god/mind", post(notes::get))
+            .route("/api/god/knowledge", post(notes::edit))
             .route("/api/god/editor/person", post(person_editor::read))
             .route("/api/god/editor/person/memory", post(person_editor::read))
             .route("/api/god/editor/person/save", post(person_editor::save))

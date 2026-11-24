@@ -27,7 +27,10 @@ pub(crate) use learn_introduction::learn_heard_introductions;
 mod assign_name;
 #[path = "knowledge/body_individual.rs"]
 mod body_individual;
-pub(crate) use assign_name::{CompletedNameEdit, NameEdit, assign_nickname, assign_subject_name};
+pub(crate) use assign_name::{
+    CompletedNameEdit, NameEdit, NicknameSubject, assign_creator_name, assign_nickname,
+    assign_subject_name, remember_authored_subject,
+};
 pub(crate) use body_individual::{EnsuredBodyIndividual, ensure_body_individual};
 
 fn retained_flag<'de, D: serde::Deserializer<'de>>(

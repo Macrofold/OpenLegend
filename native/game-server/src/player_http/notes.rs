@@ -46,6 +46,38 @@ struct OwnerEdit {
     place: Option<PlaceReference>,
     expected_revision: i64,
     text: JsText,
+    nickname: Option<JsText>,
+    given_name: Option<JsText>,
+    name_revision: Option<i64>,
+}
+
+#[derive(Clone)]
+enum EditAccess {
+    Owner,
+    Creator(Arc<str>),
+}
+
+impl EditAccess {
+    fn actor<'a>(&'a self, scope: &'a crate::authority::RequestScope) -> &'a str {
+        match self {
+            Self::Owner => &scope.actor_id,
+            Self::Creator(actor) => actor,
+        }
+    }
+
+    fn current<T>(
+        &self,
+        authority: &Authority,
+        scope: &AuthorizedScope,
+        use_scope: impl FnOnce(&crate::authority::RequestScope) -> T,
+    ) -> Result<T, AccessError> {
+        match self {
+            Self::Owner => {
+                authority.current(scope, Capability::Play, true, |scope, _| use_scope(scope))
+            }
+            Self::Creator(_) => authority.current_recall_operator(scope, true, use_scope),
+        }
+    }
 }
 
 const FIRST_PAGE: Cursor<'static> = Cursor {
@@ -156,7 +188,7 @@ pub(super) async fn get(State(state): State<PlayerRoutes>, request: Request) -> 
         .as_ref()
         .map_or(request.actor_id.as_str(), |contact| contact.id.as_str());
     if creator && cursor.is_none() {
-        return inspection::inspect(&state, &selected, actor).await;
+        return inspection::inspect(&state, &selected, actor, None).await;
     }
     page(&state, &selected, actor, cursor.as_ref(), None).await
 }
@@ -185,10 +217,18 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
         Ok(value) => value,
         Err(error) => return error,
     };
-    if request.actor_id != selected.scope.actor_id {
-        return access_failure(AccessError::Forbidden);
-    }
+    let creator = parts.uri.path() == "/api/god/knowledge";
     let actor = request.actor_id.clone();
+    let edit_access = if creator && actor != selected.scope.actor_id && is_safe_record_id(&actor) {
+        EditAccess::Creator(Arc::from(actor.as_str()))
+    } else if !creator && actor == selected.scope.actor_id {
+        EditAccess::Owner
+    } else {
+        return access_failure(AccessError::Forbidden);
+    };
+    if creator && let Err(error) = edit_access.current(&state.authority, &selected, |_| ()) {
+        return access_failure(error);
+    }
     let OwnerEdit {
         world_id,
         generation,
@@ -196,8 +236,24 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
         place,
         expected_revision,
         text,
+        nickname,
+        given_name,
+        name_revision,
         ..
     } = request;
+    if (creator && (nickname.is_some() || place.is_some())) || (!creator && given_name.is_some()) {
+        return request_error();
+    }
+    if (nickname.is_some() || given_name.is_some())
+        && !matches!(
+            subject_id,
+            Some(KnowledgeSubject::Entity { .. } | KnowledgeSubject::Individual { .. })
+        )
+    {
+        return request_error();
+    }
+    let nickname = nickname.map(|name| (name_revision.unwrap_or(0), name));
+    let given_name = given_name.map(|name| (name_revision.unwrap_or(0), name));
     if place.as_ref().is_some_and(|place| !place.valid()) {
         return request_error();
     }
@@ -230,13 +286,28 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
     };
     let place_edit = selected_place.is_some();
     let world = state.game.world.clone();
-    let edited = execute_edit(
+    let target = edit_access.clone();
+    let edited = execute_authorized_edit(
         &state,
         selected.clone(),
         world_id,
         Some(generation),
         true,
+        edit_access,
         move |session, scope| {
+            if creator {
+                return session
+                    .begin_creator_knowledge_edit(
+                        &scope.account_id,
+                        &scope.actor_id,
+                        target.actor(scope),
+                        subject_id,
+                        expected_revision,
+                        text,
+                        given_name,
+                    )?
+                    .ok_or_else(|| AccessError::Forbidden.into());
+            }
             if let Some((place_id, evidence)) = selected_place {
                 // Read the selected proof again inside the writer turn. The
                 // shared acceptance check also covers a privacy edit arriving
@@ -258,11 +329,15 @@ pub(super) async fn edit(State(state): State<PlayerRoutes>, request: Request) ->
                 subject_id,
                 expected_revision,
                 text,
+                nickname,
             )?)
         },
     )
     .await;
     match edited {
+        Ok(Some(result)) if creator && result.outcome.ok => {
+            inspection::inspect(&state, &selected, &actor, Some(&result.outcome)).await
+        }
         Ok(Some(result)) => page(&state, &selected, &actor, None, Some(&result.outcome)).await,
         Ok(None) => refusal(
             StatusCode::SERVICE_UNAVAILABLE,
@@ -294,12 +369,53 @@ pub(super) async fn execute_edit(
     + Send
     + 'static,
 ) -> Result<Option<StagedEdit>, WorldError> {
-    let result = apply_edit(state, selected, world_id, generation, check_maintenance, begin).await?;
+    execute_authorized_edit(
+        state,
+        selected,
+        world_id,
+        generation,
+        check_maintenance,
+        EditAccess::Owner,
+        begin,
+    )
+    .await
+}
+
+async fn execute_authorized_edit(
+    state: &PlayerRoutes,
+    selected: Arc<AuthorizedScope>,
+    world_id: String,
+    generation: Option<String>,
+    check_maintenance: bool,
+    access: EditAccess,
+    begin: impl FnOnce(
+        &mut NativeWorldSession,
+        &crate::authority::RequestScope,
+    ) -> Result<CandidateKey, WorldError>
+    + Send
+    + 'static,
+) -> Result<Option<StagedEdit>, WorldError> {
+    let result = apply_authorized_edit(
+        state,
+        selected,
+        world_id,
+        generation,
+        check_maintenance,
+        access,
+        begin,
+    )
+    .await?;
     // A confirmed Save Knowledge response retains Source's durable meaning.
     // The normal background writer owns this wait; no world turn is held.
     if result.outcome.ok {
         let until = tokio::time::Instant::now() + REQUEST_TIMEOUT;
-        if state.game.world.when_durable(result.cut, until).await.is_err() {
+        if state
+            .game
+            .world
+            .when_durable(result.cut, until)
+            .await
+            .is_err()
+        {
             return Ok(None);
         }
     }
@@ -314,6 +430,32 @@ async fn apply_edit(
     world_id: String,
     generation: Option<String>,
     check_maintenance: bool,
+    begin: impl FnOnce(
+        &mut NativeWorldSession,
+        &crate::authority::RequestScope,
+    ) -> Result<CandidateKey, WorldError>
+    + Send
+    + 'static,
+) -> Result<StagedEdit, WorldError> {
+    apply_authorized_edit(
+        state,
+        selected,
+        world_id,
+        generation,
+        check_maintenance,
+        EditAccess::Owner,
+        begin,
+    )
+    .await
+}
+
+async fn apply_authorized_edit(
+    state: &PlayerRoutes,
+    selected: Arc<AuthorizedScope>,
+    world_id: String,
+    generation: Option<String>,
+    check_maintenance: bool,
+    access: EditAccess,
     begin: impl FnOnce(
         &mut NativeWorldSession,
         &crate::authority::RequestScope,
@@ -336,22 +478,24 @@ async fn apply_edit(
     let finish_authority = state.authority.clone();
     let begin_scope = selected.clone();
     let finish_world = game.world.clone();
+    let start_access = access.clone();
     let stage = state.saves.clone();
     let accept = state.saves.clone();
     game.world.request_advance_publication();
-    game
-        .world
+    game.world
         .execute_and_publish(
             #[cfg(feature = "profile-campaign")]
             openlegend_simulation::profile::sites::TURN_OTHER,
             move |session| {
                 let progress = session.accepted_progress()?;
                 if progress.world_id != world_id
-                    || generation.as_ref().is_some_and(|expected| progress.generation != expected)
+                    || generation
+                        .as_ref()
+                        .is_some_and(|expected| progress.generation != expected)
                 {
                     return Err(WorldError::ProjectionChanged);
                 }
-                begin_authority.current(&begin_scope, Capability::Play, true, |scope, _| {
+                start_access.current(&begin_authority, &begin_scope, |scope| {
                     Ok(ApplicationStart::Candidate(begin(session, scope)?))
                 })?
             },
@@ -381,9 +525,12 @@ async fn apply_edit(
                 })
             },
             move |fence, key, _| {
-                finish_authority.current(&selected, Capability::Play, true, |scope, _| {
+                access.current(&finish_authority, &selected, |scope| {
                     finish_world
-                        .with_unedited_history(&scope.actor_id, || Ok(fence.settle(key, true)?))?
+                        .with_unedited_history(
+                            access.actor(scope),
+                            || Ok(fence.settle(key, true)?),
+                        )?
                         .ok_or(WorldError::SourceEditPending)
                 })?
             },
@@ -417,7 +564,7 @@ async fn page(
             selected,
             actor,
             |session, budget, controlling| {
-                if edit.is_some() && !controlling {
+                if edit.is_some() && actor == selected.scope.actor_id && !controlling {
                     return Err(AccessError::Changed.into());
                 }
                 if let Some(outcome) = edit.filter(|outcome| !outcome.ok) {

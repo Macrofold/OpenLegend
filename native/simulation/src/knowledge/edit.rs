@@ -2,8 +2,10 @@
 //! tombstone, and its provenance never becomes a body or execution grant.
 use super::*;
 use crate::received::KnowledgeAccountChange;
+use crate::reception::ObserverSubject;
 use crate::text::JsText;
 use crate::values::is_safe_record_id;
+use crate::worlds::base_knowledge::{self, NicknameSubject};
 use std::sync::LazyLock;
 
 pub(crate) struct KnowledgeEdit {
@@ -24,6 +26,31 @@ impl CompletedKnowledgeEdit {
     }
 }
 
+pub(crate) enum NoteIdentity {
+    Nickname {
+        subject: ObserverSubject,
+        revision: i64,
+        text: JsText,
+    },
+    CreatorName(base_knowledge::NameEdit),
+    CreatorSubject(String),
+}
+
+impl NoteIdentity {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Nickname { subject, text, .. } => {
+                subject.heap_bytes()?.checked_add(text.heap_bytes()?)
+            }
+            Self::CreatorName(name) => name
+                .subject_id
+                .heap_bytes()?
+                .checked_add(name.given_name.heap_bytes()?),
+            Self::CreatorSubject(id) => id.heap_bytes(),
+        }
+    }
+}
+
 enum PrivateEdit {
     Promise(crate::experience::PromiseAmendment),
     Focus(Option<String>),
@@ -31,6 +58,7 @@ enum PrivateEdit {
     Note {
         edit: KnowledgeEdit,
         permitted: bool,
+        identity: Option<NoteIdentity>,
     },
     Nickname {
         contact: String,
@@ -83,10 +111,25 @@ impl KnowledgeEditCursor {
         permitted: bool,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        Self::note(actor_id, edit, permitted, None, budget)
+    }
+
+    pub(crate) fn note(
+        actor_id: String,
+        edit: KnowledgeEdit,
+        permitted: bool,
+        identity: Option<NoteIdentity>,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let name_bytes = identity
+            .as_ref()
+            .map_or(Some(0), NoteIdentity::heap_bytes)
+            .ok_or(ExecutionError::Capacity)?;
         let storage = budget.reserve(
             heap_sum([
                 size_of::<Self>(),
                 actor_id.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                name_bytes,
                 edit.subject_id
                     .heap_bytes()
                     .ok_or(ExecutionError::Capacity)?,
@@ -96,7 +139,11 @@ impl KnowledgeEditCursor {
         )?;
         Ok(Self {
             actor_id,
-            edit: PrivateEdit::Note { edit, permitted },
+            edit: PrivateEdit::Note {
+                edit,
+                permitted,
+                identity,
+            },
             done: false,
             _storage: storage,
         })
@@ -156,37 +203,53 @@ impl KnowledgeEditCursor {
         self.done = true;
         let checkpoint = core.journal.checkpoint(core.state)?;
         let result = match &self.edit {
-            PrivateEdit::Promise(edit) => crate::experience::amend_owned_promise(
-                core, &self.actor_id, edit, budget,
-            ).and_then(|changed| {
-                if changed {
-                    result(true, "commitment-updated", "Native obligation updated.", budget)
-                } else {
-                    result(false, "commitment-rejected", "Stale or unsupported obligation change.", budget)
-                }
-            }),
-            PrivateEdit::Focus(contact) => edit_focus(core, &self.actor_id, contact.as_deref(), budget),
-            PrivateEdit::Marker(edit) => super::cartography::edit_marker(core, &self.actor_id, edit, budget),
-            PrivateEdit::Note { edit, permitted } => edit_knowledge(
+            PrivateEdit::Promise(edit) => {
+                crate::experience::amend_owned_promise(core, &self.actor_id, edit, budget).and_then(
+                    |changed| {
+                        if changed {
+                            result(
+                                true,
+                                "commitment-updated",
+                                "Native obligation updated.",
+                                budget,
+                            )
+                        } else {
+                            result(
+                                false,
+                                "commitment-rejected",
+                                "Stale or unsupported obligation change.",
+                                budget,
+                            )
+                        }
+                    },
+                )
+            }
+            PrivateEdit::Focus(contact) => {
+                edit_focus(core, &self.actor_id, contact.as_deref(), budget)
+            }
+            PrivateEdit::Marker(edit) => {
+                super::cartography::edit_marker(core, &self.actor_id, edit, budget)
+            }
+            PrivateEdit::Note {
+                edit,
+                permitted,
+                identity,
+            } => edit_note(
                 core,
                 &self.actor_id,
                 edit,
-                if *permitted {
-                    edit.subject_id.as_slice()
-                } else {
-                    &[]
-                },
-                &[],
+                *permitted,
+                identity.as_ref(),
                 budget,
             ),
             PrivateEdit::Nickname {
                 contact,
                 revision,
                 nickname,
-            } => crate::worlds::base_knowledge::assign_nickname(
+            } => base_knowledge::assign_nickname(
                 core,
                 &self.actor_id,
-                contact,
+                NicknameSubject::Contact(contact),
                 *revision,
                 nickname,
                 budget,
@@ -213,6 +276,67 @@ impl KnowledgeEditCursor {
             }
         }
     }
+}
+
+/// The name owner and note owner share the enclosing candidate checkpoint.
+fn edit_note(
+    core: &mut CoreMutation<'_>,
+    actor: &str,
+    edit: &KnowledgeEdit,
+    permitted: bool,
+    identity: Option<&NoteIdentity>,
+    budget: &ByteBudget,
+) -> Result<CompletedKnowledgeEdit, ExecutionError> {
+    let named = match identity {
+        Some(_) if !permitted => {
+            return result(
+                false,
+                "unpermitted-subject",
+                "This person is unavailable.",
+                budget,
+            );
+        }
+        Some(NoteIdentity::Nickname {
+            subject,
+            revision,
+            text,
+        }) => Some(base_knowledge::assign_nickname(
+            core,
+            actor,
+            NicknameSubject::Remembered(subject),
+            *revision,
+            text,
+            budget,
+        )?),
+        Some(NoteIdentity::CreatorName(name)) => Some(base_knowledge::assign_creator_name(
+            core, actor, name, budget,
+        )?),
+        _ => None,
+    };
+    if let Some(named) = named {
+        let (outcome, storage) = named.into_parts();
+        if !outcome.ok {
+            return Ok(CompletedKnowledgeEdit { outcome, storage });
+        }
+    }
+    let readback = edit_knowledge(
+        core,
+        actor,
+        edit,
+        if permitted {
+            edit.subject_id.as_slice()
+        } else {
+            &[]
+        },
+        &[],
+        budget,
+    )?;
+    if readback.outcome().ok
+        && let Some(NoteIdentity::CreatorSubject(subject)) = identity
+    {
+        base_knowledge::remember_authored_subject(core, actor, subject, budget)?;
+    }
+    Ok(readback)
 }
 
 #[derive(serde::Deserialize)]
