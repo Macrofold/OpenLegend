@@ -38,17 +38,15 @@ import {
 import type { CognitionExecution, ExecutionLease } from './cognition-execution.js';
 import { ActorWork } from './actor-work.js';
 import { activeIntakeChanges, installedThinkingToken } from './interests.js';
+import type { ConsolidationBatch } from './memory-consolidation.js';
+import { decisionAllowance, interactiveAllowance } from './cognition-budget.js';
+import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
 import {
   CONSOLIDATION_DAILY_SUFFIX,
   CONSOLIDATION_HOURLY_SUFFIX,
   CONSOLIDATION_INSTRUCTIONS,
   CONSOLIDATION_OUTPUT_TOKENS,
-  type ConsolidationBatch,
-} from './memory-consolidation.js';
-import { decisionAllowance, interactiveAllowance } from './cognition-budget.js';
-import { randomUUID } from 'node:crypto';
-import { z } from 'zod';
-import {
   REFLECTION_DOWNTIME,
   hourlySummarySchema,
   LEVEL_LIMITS,

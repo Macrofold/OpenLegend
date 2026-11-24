@@ -1,9 +1,8 @@
 import { AssetRepository, ASSET_TABLES } from './asset-repository.js';
-import { AuthorityRepository, AUTHORITY_TABLES } from './authority.js';
+import { AuthorityRepository, AUTHORITY_TABLES, initializeInviteSchema } from './authority.js';
 import { CommandReceipts } from './command-receipts.js';
 import { initializeCheckpointSchema } from './checkpoint-format.js';
 import { HistoryRepository } from './history.js';
-import { InviteRepository } from './invites.js';
 import { MaintenanceRepository } from './maintenance.js';
 import { MemoryRepository } from './memory-repository.js';
 import { BACKUP_TABLES } from './operational-backup-format.js';
@@ -148,7 +147,7 @@ export async function initializeGameSchema(
   await CommandReceipts.initializeSchema(db);
   await AuthorityRepository.initializeSchema(db);
   await AssetRepository.initializeSchema(db);
-  await InviteRepository.initializeSchema(db);
+  await initializeInviteSchema(db);
   await MaintenanceRepository.initializeSchema(db);
   await db.exec(`
       CREATE TABLE IF NOT EXISTS creation_target_registration (

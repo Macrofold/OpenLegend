@@ -112,13 +112,6 @@ export function inviteCapabilities(
  * gameplay save. Callers serialize mutations through the world writer. */
 export class InviteRepository {
   constructor(private readonly db: SqlDatabase) {}
-  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS auth_invites (id TEXT PRIMARY KEY, world_id TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE, created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL, closed BOOLEAN NOT NULL, payload TEXT NOT NULL);
-      CREATE INDEX IF NOT EXISTS auth_invites_world ON auth_invites(world_id, created_at);
-      CREATE INDEX IF NOT EXISTS auth_invites_open ON auth_invites(world_id, closed, expires_at);
-    `);
-  }
   private parse(row: Record<string, unknown>): InviteRecord {
     return recordSchema.parse(JSON.parse(String(row['payload'])));
   }

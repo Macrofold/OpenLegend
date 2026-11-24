@@ -13,15 +13,13 @@ import {
   dreamSummaryTemplates,
   hourlySummaryJsonSchema,
   LEVEL_LIMITS,
-} from '../apps/server/src/cognition-contracts.js';
-import {
   CONSOLIDATION_DAILY_SUFFIX,
   CONSOLIDATION_HOURLY_SUFFIX,
   CONSOLIDATION_INPUT_CHARACTERS,
   CONSOLIDATION_INSTRUCTIONS,
   CONSOLIDATION_OUTPUT_CHARACTERS,
   CONSOLIDATION_OUTPUT_TOKENS,
-} from '../apps/server/src/memory-consolidation.js';
+} from '../apps/server/src/cognition-contracts.js';
 import { nativeSetupSettings } from '../packages/domain/src/native-install.js';
 import { EXPERIENCE_LIMITS } from '../packages/domain/src/experience.js';
 import { summaryMemoryPrefix } from '../packages/domain/src/experience-manifest.js';
