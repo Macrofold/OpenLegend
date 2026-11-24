@@ -22,6 +22,8 @@ For a tiny, self-contained edit such as a spelling correction, say what changed 
 - **Open decisions/questions.** List the choices that still need Mike.
 - **Remaining work in this session.** Report readiness for the destination or stopping point Mike agreed to. If he asked for a local commit on a feature branch, say whether it is ready for his review there. List only unfinished implementation, integration, documentation, review fixes, required checks, questions or blockers. An unrun required check stays open.
 
+When you performed cleanup, add **Cleanup** to the task handoff with one sentence saying what you removed, stopped, released or restored. Otherwise omit it.
+
 Report the exact repository/remote, ref and commit for base selection or reconciliation under [Rebase](.agents/skills/openlegend-rebase/SKILL.md#select-the-target).
 
 Notify Mike immediately and again in the final handoff for **every** worktree/checkout creation or switch and branch creation, checkout or rename, including an unchecked-out new branch or a worktree switch retaining its branch. Name absolute paths and branches; identify detached HEAD by commit. Show branch changes as `previous branch → new branch` and checkout changes as `previous path → new path`. Identify which checkout receives edits and whether the main checkout is affected. Worktrees share Git history and branch references.
@@ -175,7 +177,7 @@ A required measurement may report failure; a required pass remains unmet. Option
 
 **Each task owns its temporary files.** When scratch is needed, use the tool’s fresh temporary path so independent jobs don’t collide. Edit or remove only scratch created by your job or handed to you by its previous owner on the same task. A resumed job can reuse that location. Keep deliverables separate. Give another task only the result it needs, from a stable location under existing permissions. Reuse shared inputs and caches through their owners.
 
-Use normal tool cleanup after the last use, once retained results work with their companion files. Leave unfamiliar files alone, even inside task scratch. Preserve explicit keep requests and [required art originals and iterations](docs/asset-workflow.md#where-files-belong). If bulky scratch must stay, mention where it is and what will release it in the handoff. Routine cleanup needs no inventory, hashing, disk scan, separate agent turn or report.
+Use normal tool cleanup after the last use, once retained results work with their companion files. Leave unfamiliar files alone, even inside task scratch. Preserve explicit keep requests and [required art originals and iterations](docs/asset-workflow.md#where-files-belong). If bulky scratch must stay, mention where it is and what will release it in the handoff. Routine cleanup needs no inventory, hashing, disk scan, separate agent turn or separate report.
 
 Once agreed deliverables, affected-diff review and selected required checks pass, finish. Reopen only for a concrete finding, invalidated evidence or explicit requirement; unchanged broader qualification does not expand reconciliation. Use [Reporting work](#reporting-work).
 
