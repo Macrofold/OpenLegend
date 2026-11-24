@@ -2,7 +2,7 @@
 //! ordinary native acceptance and PostgreSQL save boundary.
 
 use crate::{
-    authority::{Authority, AuthorizedScope, Capability},
+    authority::{AccessError, Authority, AuthorizedScope, Capability},
     boot::CurrentServer,
     decision_dispatch::{CallFailure, ReplyPreview, ReplyReceipt},
     live_save::{AcceptedSaveInput, LiveSaves},
@@ -191,6 +191,9 @@ pub(super) async fn apply(
         .map_err(|error| match error {
             WorldError::SourceEditPending => CallFailure::Stale("source-edit-pending"),
             WorldError::NpcDecisionExpired => CallFailure::Stale("decision-deadline"),
+            WorldError::Access(error @ (AccessError::Changed | AccessError::Forbidden)) => {
+                CallFailure::Authority(error)
+            }
             other => CallFailure::World(other),
         })?;
     match applied {

@@ -117,7 +117,7 @@ impl Store {
                 } else if let Some(problem) = problem {
                     (AiMode::Degraded, problem.message.clone())
                 } else {
-                    (AiMode::Live, "Jev routes bounded decisions. LLMs handle conversation, reconsideration and new recipes.".into())
+                    (AiMode::Live, "AI helps NPCs make decisions and answer conversations.".into())
                 };
                 let extra = budget.reserve(4096).map_err(|_| StoreError::Capacity)?;
                 charges.merge(extra).map_err(|_| StoreError::Capacity)?;
