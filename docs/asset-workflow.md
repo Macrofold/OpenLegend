@@ -61,13 +61,15 @@ For a recipe spanning several folders, prepare a small projection of a published
 
 Generated catalogs remain outside Git until explicitly reviewed. After publication, deliberately update the small tracked catalogs, provenance and selected exact asset list that consume those outputs; do not copy the workspace wholesale into the checkout. Check that exported bounds, filenames and hashes match the published files. The scripts do not automatically edit tracked catalogs or change the game's selected release.
 
-The native starting-world replay capture also requires an explicit external destination:
+To refresh the seven starting-world replay views, prepare an untouched, paused Main opening with seed 1086 in an owned disposable PostgreSQL database. Run the matching stand-alone Rust release on loopback with local authentication, AI provider settings absent, and `AI_BUDGET_USD=0`. Take the world ID from the reviewed opening. Leave the game idle until the capture tab signs in.
 
 ```sh
-pnpm exec tsx scripts/capture-starting-art-study.ts --output /private/tmp/starting-world-study.json
+pnpm exec tsx scripts/capture-starting-art-study.ts \
+  --origin http://127.0.0.1:4311 --world "$REVIEWED_WORLD_ID" \
+  --output /private/tmp/starting-world-study.json
 ```
 
-It requires the explicit disposable-test PostgreSQL configuration from [verification guidance](../.agents/rules/verification.md), uses ordinary authenticated native travel with no paid AI calls, and refuses an existing output. Publish the resulting JSON as study data before updating its selected exact reference. Never use a real player's database to refresh a visual study.
+The command uses the running game’s normal character control, travel and permitted views. It refuses a different or already-started world and an existing output. It pauses the same world and releases its own control on completion. Stop the task-owned game and remove its disposable database under the [verification guidance](../.agents/rules/verification.md). Review the capture through the scene-study viewer and publish it as study data before changing the exact selected reference. Never capture a real player's world.
 
 ## Publish an exact revision
 

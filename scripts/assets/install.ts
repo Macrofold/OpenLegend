@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { AssetRevisionReference } from '@open-legend/assets';
 import type { OperationsView } from '@open-legend/protocol';
 import { toolHttp, toolSequence } from '../network.js';
+import { localGameOrigin, localGameSession } from './local-game.js';
 
 /** Local operator convenience, through the same browser-session, Origin, scope
  * and owner-admitted operation used by the game. No direct save/catalog writes. */
@@ -10,28 +11,11 @@ export async function installLocalAssetRelease(options: {
   operationId: string;
   reference: AssetRevisionReference;
 }): Promise<unknown> {
-  const origin = new URL(options.origin);
-  if (
-    origin.protocol !== 'http:' ||
-    !['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname) ||
-    origin.username ||
-    origin.password ||
-    origin.pathname !== '/' ||
-    origin.search ||
-    origin.hash
-  )
-    throw new Error('Local asset installation requires an exact loopback HTTP origin.');
+  const origin = localGameOrigin(options.origin);
+  if (!origin) throw new Error('Local asset installation requires an exact loopback HTTP origin.');
   return toolSequence(20_000, async (operation) => {
-    const login = await toolHttp(
-      new URL('/auth/login', origin),
-      { redirect: 'manual' },
-      { timeoutMs: 10_000, parent: operation },
-    );
-    const session = login.headers
-      .getSetCookie()
-      .find((value) => value.startsWith('ol_session='))
-      ?.split(';')[0];
-    if (login.status !== 303 || login.headers.get('Location') !== '/' || !session)
+    const session = await localGameSession(origin);
+    if (!session)
       throw new Error(
         'This command requires local operator authentication. Use the authenticated game for hosted worlds.',
       );
