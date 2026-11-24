@@ -26,6 +26,7 @@ impl CommandInput {
             selected,
             game,
             true,
+            false,
             |menu, references| {
                 let Some(binding) = menu.binding() else {
                     return Ok(None);
@@ -119,7 +120,7 @@ impl CommandInput {
                             && request.reference == encounter_preference.reference
                     })
             }
-            ContactCommand::Guard { .. } => false,
+            ContactCommand::Guard { .. } | ContactCommand::Teach { .. } => false,
         }
     }
 }

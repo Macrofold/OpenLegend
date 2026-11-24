@@ -379,7 +379,7 @@ fn begin(
         .invalidate_known_places(&mut core.state.experience, &actor)?;
     let released =
         invalidate_temporal_evidence(core, &actor, &selection.affected, &selection.scope, budget)?;
-    crate::knowledge::recipe_grants::withdraw_record_grants(
+    crate::knowledge::recipe_grants::withdraw_recipe_grants(
         core, &actor, &selection.affected, &released.sources, budget,
     )?;
     crate::reception::revoke_received_geometry_evidence(core, &actor, &selection.affected, budget)?;

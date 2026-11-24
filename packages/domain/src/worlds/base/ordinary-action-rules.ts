@@ -20,6 +20,27 @@ export const BASE_ORDINARY_ACTION_RULES = {
     interrupted: 'Injury interrupted the prepared strike.',
     bodyChanged: ' body changed.',
   },
+  teaching: {
+    noSpeech: { code: 'no-speech', message: 'This actor cannot teach through speech.' },
+    notHeard: { code: 'not-heard', message: 'Teaching needs a nearby listener.' },
+    notLearned: { code: 'not-learned', message: 'You cannot teach a technique you do not know.' },
+    capacity: {
+      code: 'knowledge-capacity',
+      message: 'The listener cannot retain this method and its exact learning proof.',
+    },
+    completed: { code: 'taught', message: 'The listener learned this specific technique.' },
+    event: 'taught',
+    verb: 'taught ',
+    methodClause: ' how to make ',
+    menu: {
+      category: 'Social',
+      labelPrefix: 'Teach ',
+      labelSeparator: ': ',
+      descriptionSuffix:
+        '\n\nShares the technique, not its materials or a finished item. You must be close enough to teach them.',
+      keywords: ['learn'],
+    },
+  },
   invalidCommand: {
     code: 'invalid-command',
     message: 'A command needs bounded actor and command IDs.',

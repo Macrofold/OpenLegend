@@ -253,6 +253,9 @@ impl HeapBytes for NativeCommand {
             Self::LearnRecord { envelope, record } => heap_sum([
                 envelope.heap_bytes()?, record.item_id.heap_bytes()?, record.record_pin.heap_bytes()?,
             ]),
+            Self::Teach { envelope, target_id, recipe_id, .. } => heap_sum([
+                envelope.heap_bytes()?, target_id.heap_bytes()?, recipe_id.heap_bytes()?,
+            ]),
             Self::InspectActivities { envelope, .. } => envelope.heap_bytes(),
             Self::EncounterPreference { envelope, binding, .. } => heap_sum([
                 envelope.heap_bytes()?, size_of::<crate::capture::EncounterPreference>(),

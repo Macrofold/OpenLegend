@@ -4435,7 +4435,8 @@ function executeCommandNative(
         break;
       }
       case 'teach': {
-        if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
+        const teaching = ordinaryRules.teaching;
+        if (!canSpeak(actor)) return reject(teaching.noSpeech.code, teaching.noSpeech.message);
         const target = entityOwn(world.entities, command.targetId);
         const recipe = getOwn(world.recipes, command.recipeId);
         if (
@@ -4444,28 +4445,25 @@ function executeCommandNative(
           target.actor.incapacitated ||
           !hearsEntity(world, target, actor)
         )
-          return reject('not-heard', 'Teaching needs a nearby listener.');
+          return reject(teaching.notHeard.code, teaching.notHeard.message);
         if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
-          return reject('not-learned', 'You cannot teach a technique you do not know.');
+          return reject(teaching.notLearned.code, teaching.notLearned.message);
         if (learnRecipe(world, target.id, recipe.id, 'taught', command.id) === 'capacity')
-          return reject(
-            'knowledge-capacity',
-            'The listener cannot retain this method and its exact learning proof.',
-          );
+          return reject(teaching.capacity.code, teaching.capacity.message);
         emit(
           world,
           events,
-          'taught',
+          teaching.event,
           subjectNarration(actor, [
-            'taught ',
+            teaching.verb,
             person(target, actor.id === target.id ? 'reflexive' : 'object'),
-            ` how to make ${recipe.name}.`,
+            `${teaching.methodClause}${recipe.name}.`,
           ]),
           actor,
           target.id,
           { recipeId: recipe.id, targetReference: true },
         );
-        result = outcome(true, 'taught', 'The listener learned this specific technique.');
+        result = outcome(true, teaching.completed.code, teaching.completed.message);
         break;
       }
       default:

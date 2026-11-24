@@ -264,7 +264,7 @@ impl Director {
                 let budget = game.host.budget();
                 Ok(
                     authority.current(&scope, Capability::Play, false, |fields, controls| {
-                        with_contact_choices(session, fields, &refs, &selected, &game, controls,
+                        with_contact_choices(session, fields, &refs, &selected, &game, controls, true,
                             |choices, references| choices.encode(references, budget))
                     }),
                 )
@@ -999,6 +999,7 @@ pub(crate) fn with_contact_choices<T>(
     selected: &str,
     game: &CurrentServer,
     controls: bool,
+    include_teaching: bool,
     consume: impl FnOnce(crate::player_http::actions::ContactMenu<'_>, &crate::player_references::PlayerReferences<'_>)
         -> Result<T, openlegend_simulation::runtime::RuntimeError>,
 ) -> Result<Option<T>, openlegend_simulation::runtime::RuntimeError> {
@@ -1013,8 +1014,8 @@ pub(crate) fn with_contact_choices<T>(
     let references = refs.scoped(scope).map_err(RuntimeError::application_refused)?;
     let mut consume = Some(consume);
     let mut alias_error = None;
-    let choices = session.with_player_strike_menu(
-        &scope.account_id, &scope.actor_id,
+    let choices = session.with_player_contact_menu(
+        &scope.account_id, &scope.actor_id, include_teaching,
         |body| match references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id) {
             Ok(alias) => alias == selected,
             Err(problem) => { alias_error = Some(problem); false }
@@ -1022,7 +1023,7 @@ pub(crate) fn with_contact_choices<T>(
         |menu| {
             let choices = crate::player_http::actions::contact_choices(
                 menu.sequence(), selected, talk.as_ref().map(|target| &target.name), Some(menu),
-                |ray| game.spatial.clear_interaction_line(ray), controls, clock.manually_paused, &references, budget,
+                &game.spatial, controls, clock.manually_paused, &references, budget,
             )?;
             consume.take().expect("one chosen context")(choices, &references)
         },
@@ -1034,7 +1035,7 @@ pub(crate) fn with_contact_choices<T>(
     let Some(talk) = talk else { return Ok(None); };
     let choices = crate::player_http::actions::contact_choices(
         session.accepted_progress()?.sequence, selected, Some(&talk.name), None,
-        |ray| game.spatial.clear_interaction_line(ray), controls, clock.manually_paused, &references, budget,
+        &game.spatial, controls, clock.manually_paused, &references, budget,
     )?;
     consume.take().expect("one chosen context")(choices, &references).map(Some)
 }

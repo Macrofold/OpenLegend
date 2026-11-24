@@ -53,6 +53,7 @@ pub(crate) struct Grant {
 pub(crate) enum GrantSource {
     Authored,
     Record,
+    Taught,
 }
 heap_record!(Grant {
     recipe_id,
@@ -224,7 +225,9 @@ pub(crate) fn install_learned_capabilities(
             }
             let valid_source = match grant.source {
                 GrantSource::Authored => grant.source_receipt.is_none(),
-                GrantSource::Record => witness_matches(temporal, &row.slot, &grant, &authority),
+                GrantSource::Record | GrantSource::Taught => {
+                    witness_matches(temporal, &row.slot, &grant, &authority)
+                }
             };
             if !valid_source {
                 return Err(InstallError::CurrentFormat);

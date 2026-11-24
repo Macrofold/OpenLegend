@@ -21,6 +21,7 @@ import {
   rangedTargetAllowed,
   rangedPolicy,
   selectedContextActions,
+  selectedOrdinaryActionRules,
   encounterPreferenceBinding,
   personalEncounter,
   canReachEntity,
@@ -923,13 +924,14 @@ function nativeActionCatalogue(
           description: control.description,
         });
       }
+      const teachingMenu = selectedOrdinaryActionRules(world).teaching.menu;
       for (const recipe of target.actor.controller === 'npc' ? observation.knownRecipes : [])
         add(
           `teach-${target.id}-${recipe.id}`,
-          `Teach ${target.name}: ${recipe.name}`,
-          'Social',
+          teachingMenu.labelPrefix + target.name + teachingMenu.labelSeparator + recipe.name,
+          teachingMenu.category,
           { type: 'teach', targetId: target.id, recipeId: recipe.id },
-          ['learn', recipe.description],
+          [...teachingMenu.keywords, recipe.description],
           target.id,
         );
     }

@@ -3,7 +3,8 @@
 use super::*;
 use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
 use crate::ground_items::inspection::{WorldStorage, owned};
-use crate::knowledge::recipe_grants::{LEARNED_EVENT, Learning, learn_record, learning_copy};
+use crate::install::GrantSource;
+use crate::knowledge::recipe_grants::{LEARNED_EVENT, Learning, learn_recipe, learning_copy};
 use crate::reception::{EventScalar, SightBatch};
 use crate::text::JsText;
 use crate::values::DefinitionPin;
@@ -255,7 +256,14 @@ impl CommandCursor {
         };
         let item_revision = record.expected_revision;
         let placement_revision = record.placement_revision;
-        let learned = learn_record(core, actor, &envelope.id, &recipe.id, &self.budget)?;
+        let learned = learn_recipe(
+            core,
+            actor,
+            &envelope.id,
+            &recipe.id,
+            GrantSource::Record,
+            &self.budget,
+        )?;
         if learned == Learning::Capacity {
             self.record_refusal("knowledge-capacity", learning_copy().capacity)?;
             return self.drive(core, None);

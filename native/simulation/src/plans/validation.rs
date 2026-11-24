@@ -169,6 +169,7 @@ pub(crate) fn valid_command(
         | NativeCommand::DescriptiveAct { .. }
         | NativeCommand::PlaceHearth { .. }
         | NativeCommand::TreatScar { .. }
+        | NativeCommand::Teach { .. }
         | NativeCommand::Respawn { .. } => false,
     }
 }

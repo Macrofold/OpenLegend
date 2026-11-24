@@ -55,6 +55,29 @@ pub(crate) struct AudienceMilestone {
     pub id: String,
     pub event_type: String,
 }
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct RecipeTeaching {
+    pub no_speech: ActionMessage,
+    pub not_heard: ActionMessage,
+    pub not_learned: ActionMessage,
+    pub capacity: ActionMessage,
+    pub completed: ActionMessage,
+    pub event: String,
+    pub verb: String,
+    pub method_clause: String,
+    pub menu: RecipeTeachingMenu,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RecipeTeachingMenu {
+    pub category: String,
+    pub label_prefix: String,
+    pub label_separator: String,
+    pub description_suffix: String,
+    pub keywords: Vec<String>,
+}
 impl AudienceMilestone {
     pub(crate) fn earned_by_audience_member(
         &self,
@@ -75,6 +98,7 @@ pub(crate) struct OrdinaryActionRules {
     pub participation: ParticipationRules,
     pub audience_milestone: AudienceMilestone,
     pub natural_contact: NaturalContactText,
+    pub teaching: RecipeTeaching,
     pub invalid_command: ActionMessage,
     pub unknown_actor: ActionMessage,
     pub inactive: ActionMessage,
@@ -180,6 +204,11 @@ impl OrdinaryActionRules {
             &self.not_active,
             &self.not_applicable,
             &self.movement_completed,
+            &self.teaching.no_speech,
+            &self.teaching.not_heard,
+            &self.teaching.not_learned,
+            &self.teaching.capacity,
+            &self.teaching.completed,
         ]
         .into_iter()
         .try_fold(0, |maximum, message| {

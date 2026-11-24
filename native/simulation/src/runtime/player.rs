@@ -17,6 +17,7 @@ pub use inventory::{
 };
 mod status_menu;
 mod hearth;
+mod teaching;
 pub use hearth::{RuntimeHearthCatalogue, RuntimeHearthShape};
 pub use status_menu::{RuntimeStatusChoice, RuntimeStatusMenu};
 use crate::capture::{
@@ -56,7 +57,7 @@ struct PlayerInteractionInput {
     utterance_event_id: Option<String>,
 }
 
-pub struct RuntimeStrikeMenu<'a> {
+pub struct RuntimeContactMenu<'a> {
     state: &'a crate::simulation::SimulationState,
     source: &'a crate::state::Entity,
     target: &'a crate::state::Entity,
@@ -64,6 +65,7 @@ pub struct RuntimeStrikeMenu<'a> {
     health: Option<&'a crate::reception::AttributeView>,
     may_act: bool,
     may_attack: bool,
+    teaching: Option<GeometryBinding>,
     pub name: &'a crate::text::JsText,
     pub ranged: &'a [RuntimeRangedChoice<'a>],
 }
@@ -113,7 +115,7 @@ impl<'a> RuntimeStrikeChoice<'a> {
     }
 }
 
-impl<'a> RuntimeStrikeMenu<'a> {
+impl<'a> RuntimeContactMenu<'a> {
     /// A borrowed current observation, never a second view or geometry query.
     pub fn encounter(&self) -> Option<crate::combat_encounters::EncounterContext<'a>> {
         crate::combat_encounters::context(self.state, self.source, self.target)
@@ -1046,15 +1048,16 @@ impl NativeWorldSession {
         )
     }
 
-    /// Admit a menu for a single currently observed combat target. The
-    /// synchronous callback borrows installed offers and the permitted name.
-    /// Final action selection repeats exact sight, reach and review checks.
-    pub fn with_player_strike_menu<T>(
+    /// Admit a menu for one currently observed person. Borrow installed
+    /// offers and the permitted name through synchronous publication. Primary
+    /// action rechecks can skip lessons, which never change that choice.
+    pub fn with_player_contact_menu<T>(
         &self,
         account: &str,
         actor: &str,
+        include_teaching: bool,
         mut matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
-        use_menu: impl FnOnce(RuntimeStrikeMenu<'_>) -> Result<T, RuntimeError>,
+        use_menu: impl FnOnce(RuntimeContactMenu<'_>) -> Result<T, RuntimeError>,
     ) -> Result<Option<T>, RuntimeError> {
         self.require_active()?;
         let simulation = self.session.accepted().map_err(failure)?;
@@ -1115,7 +1118,7 @@ impl NativeWorldSession {
                 } else {
                     None
                 };
-                let choice = RuntimeStrikeMenu {
+                let choice = RuntimeContactMenu {
                     state,
                     source,
                     target,
@@ -1123,10 +1126,20 @@ impl NativeWorldSession {
                     health,
                     may_act,
                     may_attack,
+                    teaching: (include_teaching && teaching::has_offers(state, source, target))
+                        .then(|| GeometryBinding::new(
+                            CandidateKey {
+                                id: 0,
+                                base_cut: state.accepted_cut,
+                                generation: self.session.operational_generation(),
+                            },
+                            state.installed.geometry.spatial.revision,
+                            0,
+                        )),
                     name,
                     ranged: ranged.as_ref().map_or(&[], |(choices, _)| choices.as_slice()),
                 };
-                if may_attack || choice.encounter().is_some() || may_act && choice.guard_shields().next().is_some()
+                if may_attack || choice.teaching.is_some() || choice.encounter().is_some() || may_act && choice.guard_shields().next().is_some()
                 {
                     result = Some(use_menu.take().expect("one selected contact")(choice));
                 }

@@ -1,4 +1,4 @@
-//! An admitted physical lesson retains the exact method-bearing source and
+//! An admitted lesson retains the exact method-bearing source and
 //! grants one private capability in the same candidate. Correction uses the
 //! same privacy transaction and required account that own the retained proof.
 use crate::encoding::{json_record, json_record_len};
@@ -26,16 +26,20 @@ pub(crate) enum Learning {
     Capacity,
 }
 
-/// The selected record and method were checked by the command owner. Follow
-/// Source's required account and sparse original retention, including a
+/// The command owner has admitted the exact lesson or physical record.
+/// Both use the same required account and sparse original retention, with a
 /// checkpoint before any sequence, source or grant could become observable.
-pub(crate) fn learn_record(
+pub(crate) fn learn_recipe(
     core: &mut CoreMutation<'_>,
     actor: &str,
     evidence_id: &str,
     recipe_id: &str,
+    source: GrantSource,
     budget: &ByteBudget,
 ) -> Result<Learning, ExecutionError> {
+    if source == GrantSource::Authored {
+        return Err(ExecutionError::Invariant);
+    }
     if core
         .state
         .learned_capabilities
@@ -46,7 +50,7 @@ pub(crate) fn learn_record(
         return Ok(Learning::Known);
     }
     let token = core.journal.checkpoint(core.state)?;
-    let result = prepare_and_learn(core, actor, evidence_id, recipe_id, budget);
+    let result = prepare_and_learn(core, actor, evidence_id, recipe_id, source, budget);
     match result {
         Ok(Learning::Acquired) => core.journal.keep(core.state, token)?,
         _ => core.journal.rollback_to(core.state, token)?,
@@ -59,6 +63,7 @@ fn prepare_and_learn(
     actor: &str,
     evidence_id: &str,
     recipe_id: &str,
+    source: GrantSource,
     budget: &ByteBudget,
 ) -> Result<Learning, ExecutionError> {
     let installed = Arc::clone(&core.state.installed);
@@ -90,7 +95,7 @@ fn prepare_and_learn(
             recipe_id,
             method_version: recipe.version,
             method_digest: Cow::Borrowed(&recipe.digest),
-            provenance: GrantSource::Record,
+            provenance: source,
         })
         .map_err(|_| ExecutionError::Invariant)?,
     )?;
@@ -185,7 +190,7 @@ fn prepare_and_learn(
     let grant = Grant {
         recipe_id: recipe_id.into(),
         learned_at: at,
-        source: GrantSource::Record,
+        source,
         evidence_id: evidence_id.into(),
         source_receipt: Some(locator),
     };
@@ -220,7 +225,7 @@ fn prepare_and_learn(
     Ok(Learning::Acquired)
 }
 
-pub(crate) fn withdraw_record_grants(
+pub(crate) fn withdraw_recipe_grants(
     core: &mut CoreMutation<'_>,
     actor: &str,
     affected: &IndexSet<String>,
@@ -237,7 +242,7 @@ pub(crate) fn withdraw_record_grants(
         return Ok(());
     }
     let removed = |grant: &Grant| {
-        grant.source == GrantSource::Record
+        grant.source != GrantSource::Authored
             && (affected.contains(&grant.evidence_id)
                 || grant.source_receipt.as_ref().is_some_and(|locator| {
                     let id = locator.id();

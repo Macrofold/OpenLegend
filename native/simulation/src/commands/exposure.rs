@@ -82,6 +82,7 @@ impl CommandExposure {
             | NativeCommand::TransferItem { .. }
             | NativeCommand::Handover { .. }
             | NativeCommand::LearnRecord { .. }
+            | NativeCommand::Teach { .. }
             | NativeCommand::InspectActivities { .. }
             | NativeCommand::EncounterPreference { .. } => return Ok(None),
             NativeCommand::InspectInventory { .. } => {

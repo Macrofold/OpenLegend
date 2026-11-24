@@ -135,6 +135,7 @@ pub enum RuntimePlayerCommand<'a> {
     Drop { item: &'a str, quantity: u64 },
     DropGroup { item: &'a str, group: &'a OwnedStockSelection },
     LearnRecord(&'a super::RecipeRecordSelection),
+    Teach { target: &'a str, life: u64, recipe: &'a str },
     InspectItem { item: &'a str, container: &'a str, expected_revision: u64 },
     InspectStorage { root: &'a str, after: Option<&'a str>, expected_scope: Option<&'a crate::text::JsText>, expected_revision: Option<u64> },
     TransferItem(OwnedMove<&'a str>),
@@ -206,6 +207,7 @@ impl RuntimePlayerCommand<'_> {
                     + inputs.iter().map(|(role, item)| role.len() + item.len()).sum::<usize>()
             }
             Self::LearnRecord(record) => record.item_id.len() + record.record_pin.id.len() + record.record_pin.digest.len(),
+            Self::Teach { target, recipe, .. } => target.len() + recipe.len(),
             Self::InspectItem { item, container, .. } => item.len() + container.len(),
             Self::InspectStorage { root, after, expected_scope, .. } => root.len() + after.map_or(0, str::len) + expected_scope.map_or(0, crate::text::JsText::storage_bytes),
             Self::TransferItem(selection) => selection.item_id.len() + selection.target_id.len()
@@ -313,6 +315,9 @@ impl RuntimePlayerCommand<'_> {
         }
         if let Self::LearnRecord(record) = self {
             return bind_record_learning(id, actor, record);
+        }
+        if let Self::Teach { target, life, recipe } = self {
+            return bind_teaching(player_headers(id, actor), target, life, recipe);
         }
         match self {
             Self::TransferItem(selection) => return bind_transfer(id, actor, selection, None),
@@ -427,6 +432,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
             | Self::LearnRecord(_)
+            | Self::Teach { .. }
             | Self::EncounterPreference(..)
             | Self::InspectItem { .. }
             | Self::InspectStorage { .. }
@@ -610,6 +616,7 @@ impl RuntimePlayerCommand<'_> {
             | Self::TendFire { .. }
             | Self::PlaceHearth { .. }
             | Self::LearnRecord(_)
+            | Self::Teach { .. }
             | Self::EncounterPreference(..)
             | Self::InspectItem { .. }
             | Self::InspectStorage { .. }
@@ -1383,6 +1390,50 @@ fn bind_record_learning(
         envelope: headers.envelope(encoding),
         record: record.clone(),
     }, canonical))
+}
+
+fn bind_teaching(
+    headers: CommandHeaders,
+    target: &str,
+    life: u64,
+    recipe: &str,
+) -> Result<(NativeCommand, String), serde_json::Error> {
+    if !headers.valid()
+        || !crate::values::is_safe_record_id(target)
+        || !crate::values::is_safe_record_id(recipe)
+        || life > crate::identity::MAX_SAFE_INTEGER
+    {
+        return Err(serde::ser::Error::custom("Invalid teaching selection."));
+    }
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Operation<'a> {
+        id: &'a str,
+        actor_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        human_initiated: Option<bool>,
+        #[serde(rename = "type")]
+        kind: &'static str,
+        target_id: &'a str,
+        target_life: u64,
+        recipe_id: &'a str,
+    }
+    let encoding = CommandEncoding::from_ordered(&Operation {
+        id: &headers.id,
+        actor_id: &headers.actor_id,
+        human_initiated: headers.human_initiated,
+        kind: "teach",
+        target_id: target,
+        target_life: life,
+        recipe_id: recipe,
+    }, 6 + usize::from(headers.human_initiated.is_some()))?;
+    let signature = encoding.json.get().to_owned();
+    Ok((NativeCommand::Teach {
+        envelope: headers.envelope(encoding),
+        target_id: target.to_owned(),
+        target_life: life,
+        recipe_id: recipe.to_owned(),
+    }, signature))
 }
 
 

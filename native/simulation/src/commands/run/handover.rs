@@ -392,7 +392,7 @@ impl CommandCursor {
                 .source_level(SpeechVolume::Normal),
         };
         self.binding.serial = core.journal.next_provider_serial()?;
-        self.gift_sound = Some(
+        self.selected_sound = Some(
             SoundBatch::prepare(
                 &state.physical,
                 &state.installed,
@@ -432,7 +432,7 @@ impl CommandCursor {
             target_id
         };
         let result = self
-            .gift_sound
+            .selected_sound
             .take()
             .ok_or(ExecutionError::Invariant)?
             .finish(answer, &core.state.installed.acoustics)

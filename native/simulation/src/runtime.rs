@@ -149,7 +149,7 @@ pub use player::{
     RuntimeHearthShape, RuntimeHeatContact, RuntimePickupLot, RuntimePickupOffer,
     RuntimePlayerCommand, RuntimePlayerInputState, RuntimePlayerPublication, RuntimePlayerRead,
     RuntimePreparation, RuntimeResourceOffer, RuntimeStatusChoice, RuntimeStatusMenu,
-    RuntimeStrikeMenu, TypedWalk, VisibleFuel,
+    RuntimeContactMenu, TypedWalk, VisibleFuel,
 };
 pub use reply_preview::{
     RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,

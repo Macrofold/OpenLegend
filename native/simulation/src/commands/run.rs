@@ -32,6 +32,7 @@ mod ranged;
 mod attack_timing;
 mod guard;
 mod evasion;
+mod teaching;
 mod respawn;
 mod follow;
 mod hearth;
@@ -142,6 +143,7 @@ enum Phase {
     GiftReach,
     GiftHearing,
     GiftHearingBack,
+    TeachHearing,
     GiftApply,
     GiftPrivate,
     ContactReach,
@@ -242,7 +244,7 @@ pub(crate) struct CommandCursor {
     event: Option<String>,
     after_event: Phase,
     gift_notice: Option<handover::GiftNotice>,
-    gift_sound: Option<crate::reception::SoundBatch>,
+    selected_sound: Option<crate::reception::SoundBatch>,
     gift_counterpart_notice: bool,
     pending_release: Option<String>,
     sight: Option<crate::reception::SightBatch>,
@@ -435,7 +437,7 @@ impl CommandCursor {
             event: None,
             after_event: Phase::Tail,
             gift_notice: None,
-            gift_sound: None,
+            selected_sound: None,
             gift_counterpart_notice: false,
             pending_release: None,
             sight: None,
@@ -480,7 +482,7 @@ impl CommandCursor {
             .as_ref()
             .map(|sight| sight.queries())
             .or_else(|| self.ranged_point_review.as_ref().map(|owner| owner.0.queries()))
-            .or_else(|| self.gift_sound.as_ref().map(|sound| sound.queries()))
+            .or_else(|| self.selected_sound.as_ref().map(|sound| sound.queries()))
             .or_else(|| self.contact_route.as_ref().map(|route| route.queries()))
             .or_else(|| self.follow.as_ref().and_then(|cursor| cursor.queries()))
             .or_else(|| self.evasion_path.as_ref().and_then(|cursor| cursor.queries()))
@@ -1069,6 +1071,9 @@ impl CommandCursor {
                         if matches!(self.phase, Phase::GiftHearing | Phase::GiftHearingBack) {
                             return self.accept_gift_hearing(core, answer);
                         }
+                        if matches!(self.phase, Phase::TeachHearing) {
+                            return self.finish_teaching(core, answer);
+                        }
                         if matches!(self.phase, Phase::FireSight) {
                             return self.fire_sight(core, answer);
                         }
@@ -1410,6 +1415,11 @@ impl CommandCursor {
                         NativeCommand::LearnRecord { .. } => {
                             if let Some(progress) = self.start_record_learning(core, &actor_id)? {
                                 return Ok(progress);
+                            }
+                        }
+                        NativeCommand::Teach { .. } => {
+                            if self.start_teaching(core)? {
+                                return Ok(Progress::Geometry);
                             }
                         }
                         NativeCommand::InspectInventory { world: Some(_), .. } => {
@@ -2843,6 +2853,7 @@ impl CommandCursor {
                 | Phase::GiftReach
                 | Phase::GiftHearing
                 | Phase::GiftHearingBack
+                | Phase::TeachHearing
                 | Phase::GatherSight
                 | Phase::CastSight
                 | Phase::CastLine
@@ -2938,7 +2949,7 @@ fn actor_problem(
     {
         return Ok(Some(ordinary.actions_restricted.outcome(false)));
     }
-    if matches!(command, NativeCommand::Say { .. })
+    if matches!(command, NativeCommand::Say { .. } | NativeCommand::Teach { .. })
         && core
             .state
             .installed
@@ -2968,7 +2979,7 @@ fn actor_problem(
     if entity.supported_position().is_none()
         && !matches!(
             command,
-            NativeCommand::Say { .. } | NativeCommand::Cancel { .. }
+            NativeCommand::Say { .. } | NativeCommand::Teach { .. } | NativeCommand::Cancel { .. }
         )
     {
         return Ok(Some(ordinary.unsupported_airborne.outcome(false)));

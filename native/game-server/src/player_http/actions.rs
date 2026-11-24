@@ -612,6 +612,12 @@ pub(crate) enum ContactCommand<'a> {
         kind: &'static str,
         aim_id: &'a str,
     },
+    Teach {
+        #[serde(rename = "type")]
+        kind: &'static str,
+        target_id: &'a str,
+        recipe_id: &'a str,
+    },
     Preference {
         #[serde(rename = "type")]
         kind: &'static str,
@@ -737,8 +743,8 @@ pub(crate) fn contact_choices<'a>(
     revision: u64,
     selected: &'a str,
     conversant: Option<&'a JsText>,
-    strike_menu: Option<openlegend_simulation::runtime::RuntimeStrikeMenu<'a>>,
-    line_clear: impl Fn(&openlegend_simulation::geometry::SightRay) -> bool,
+    contact: Option<openlegend_simulation::runtime::RuntimeContactMenu<'a>>,
+    spatial: &crate::spatial::SpatialProvider,
     controlling: bool,
     manually_paused: bool,
     references: &PlayerReferences<'_>,
@@ -750,7 +756,7 @@ pub(crate) fn contact_choices<'a>(
     use std::mem::size_of;
 
     let words = &*CONVERSATION;
-    let encounter = strike_menu.as_ref().and_then(|menu| menu.encounter());
+    let encounter = contact.as_ref().and_then(|menu| menu.encounter());
     let family = encounter.as_ref().map_or(EncounterFamily::Ordinary, |seen| seen.family);
     use openlegend_simulation::worlds::base_context_actions::{Choice, rank};
     let mut workspace =
@@ -791,7 +797,7 @@ pub(crate) fn contact_choices<'a>(
         });
         categories.push(words.category.as_str());
     }
-    if let Some(menu) = &strike_menu {
+    if let Some(menu) = &contact {
         let before = actions.len();
         let reason = if !controlling {
             Some(TAKE_CONTROL)
@@ -867,7 +873,7 @@ pub(crate) fn contact_choices<'a>(
             let label = if definition.auto_move_to_range()
                 && !menu
                     .reach_line(definition, budget)?
-                    .is_some_and(|ray| line_clear(&ray))
+                    .is_some_and(|ray| spatial.clear_interaction_line(&ray))
             {
                 JsText::concat(&[
                     &copy.approach_prefix.into(),
@@ -1002,6 +1008,53 @@ pub(crate) fn contact_choices<'a>(
         }
         if actions.len() != before {
             categories.push("Combat");
+        }
+        let teaching_blocked = if !controlling {
+            Some(TAKE_CONTROL)
+        } else if menu.paused() {
+            Some(RESUME_WORLD)
+        } else {
+            menu.unavailable_reason()
+        };
+        let teaching = menu.teaching(teaching_blocked, |queries| {
+            spatial.compute(queries, budget).map(|answer| answer.into_parts())
+                .map_err(RuntimeError::application_refused)
+        }, budget)?;
+        if let Some(teaching) = teaching {
+            #[derive(Deserialize)]
+            struct Fields { name: JsText, description: JsText }
+
+            let words = teaching.words;
+            if !categories.contains(&words.category.as_str()) {
+                categories.push(&words.category);
+            }
+            for (recipe_id, recipe) in teaching.recipes() {
+                let bytes = 1024 + 4 * (recipe.len() + selected.len() + recipe_id.len()
+                    + menu.name.storage_bytes() + conversant.map_or(0, JsText::storage_bytes)
+                    + words.label_prefix.len() + words.label_separator.len() + words.description_suffix.len()
+                    + teaching.method_clause.len());
+                workspace.resize(workspace.bytes().checked_add(bytes).ok_or(CapacityError)?)?;
+                let Fields { name, description } = serde_json::from_str(recipe)
+                    .map_err(RuntimeError::application_refused)?;
+                let label = JsText::concat(&[
+                    &words.label_prefix.as_str().into(), menu.name,
+                    &words.label_separator.as_str().into(), &name,
+                ]);
+                let detail = JsText::concat(&[
+                    &words.label_prefix.as_str().into(), conversant.unwrap_or(menu.name),
+                    &teaching.method_clause.into(), &name, &". ".into(), &description,
+                    &words.description_suffix.as_str().into(),
+                ]);
+                actions.push(ContactAction {
+                    id: format!("teach-{selected}-{recipe_id}"), label: Cow::Owned(label),
+                    category: &words.category, description: Cow::Owned(detail),
+                    keywords: &words.keywords, target_id: selected, enabled: teaching.reason.is_none(),
+                    reason: teaching.reason, facts: Vec::new(), priority: None,
+                    intent: ContactIntent::Command {
+                        command: ContactCommand::Teach { kind: "teach", target_id: selected, recipe_id },
+                    },
+                });
+            }
         }
     }
     if family == EncounterFamily::Attack && actions.iter().all(|action| action.priority.is_none()) {

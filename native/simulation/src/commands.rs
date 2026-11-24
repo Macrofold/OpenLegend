@@ -363,6 +363,12 @@ pub(crate) enum NativeCommand {
         envelope: CommandEnvelope,
         record: RecipeRecordSelection,
     },
+    Teach {
+        envelope: CommandEnvelope,
+        target_id: String,
+        target_life: u64,
+        recipe_id: String,
+    },
     InspectInventory {
         envelope: CommandEnvelope,
         selected: Option<InspectedItem>,
@@ -430,6 +436,34 @@ fn record_learning_input(raw: &str) -> Result<NativeCommand, serde_json::Error> 
     Ok(NativeCommand::LearnRecord {
         envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
         record: input.record,
+    })
+}
+
+fn teaching_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Input {
+        #[serde(rename = "type")]
+        _kind: String,
+        #[serde(flatten)]
+        headers: CommandHeaders,
+        target_id: String,
+        #[serde(deserialize_with = "deserialize_safe_integer")]
+        target_life: u64,
+        recipe_id: String,
+    }
+    let input: Input = serde_json::from_str(raw)?;
+    if !input.headers.valid()
+        || !is_safe_record_id(&input.target_id)
+        || !is_safe_record_id(&input.recipe_id)
+    {
+        return Err(serde::de::Error::custom("Invalid teaching selection."));
+    }
+    Ok(NativeCommand::Teach {
+        envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
+        target_id: input.target_id,
+        target_life: input.target_life,
+        recipe_id: input.recipe_id,
     })
 }
 
@@ -708,6 +742,9 @@ impl<'de> Deserialize<'de> for NativeCommand {
         }
         if tag.kind == "learn-record" {
             return record_learning_input(raw.get()).map_err(serde::de::Error::custom);
+        }
+        if tag.kind == "teach" {
+            return teaching_input(raw.get()).map_err(serde::de::Error::custom);
         }
         if tag.kind == "inspect-inventory" {
             return inventory_inspection_input(raw.get()).map_err(serde::de::Error::custom);
@@ -1113,6 +1150,7 @@ impl NativeCommand {
             | Self::Ranged { envelope, .. }
             | Self::PracticeShot { envelope, .. }
             | Self::LearnRecord { envelope, .. }
+            | Self::Teach { envelope, .. }
             | Self::InspectInventory { envelope, .. }
             | Self::InspectActivities { envelope, .. } => envelope,
         }
@@ -1156,6 +1194,7 @@ impl NativeCommand {
             | Self::Ranged { envelope, .. }
             | Self::PracticeShot { envelope, .. }
             | Self::LearnRecord { envelope, .. }
+            | Self::Teach { envelope, .. }
             | Self::InspectInventory { envelope, .. }
             | Self::InspectActivities { envelope, .. } => envelope,
         }
@@ -1196,6 +1235,7 @@ impl NativeCommand {
             Self::Guard { .. } => "guard",
             Self::PracticeShot { .. } => "practice-shot",
             Self::LearnRecord { .. } => "learn-record",
+            Self::Teach { .. } => "teach",
             Self::InspectInventory { .. } => "inspect-inventory",
             Self::InspectActivities { .. } => "inspect-activities",
         }

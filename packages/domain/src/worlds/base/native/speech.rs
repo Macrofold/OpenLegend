@@ -59,6 +59,14 @@ pub(crate) struct SpeechPlan<'a> {
     acoustics: &'a AcousticPolicy,
 }
 impl SpeechAction {
+    pub(crate) fn allows_speaker(actor: &crate::state::Entity) -> bool {
+        actor.actor.as_ref().is_some_and(|actor| {
+            actor
+                .capabilities
+                .as_ref()
+                .map_or(actor.controller != "native", |capabilities| capabilities.speech)
+        })
+    }
     /// Command-wide permission/action checks precede this exact family check.
     /// Nothing here acquires delivery, knowledge, original proof or history.
     pub(crate) fn prepare<'a>(
@@ -78,17 +86,10 @@ impl SpeechAction {
         else {
             return Err(&self.invalid_speech);
         };
-        let actor = entities
+        if !entities
             .get(&envelope.actor_id)
-            .and_then(|entity| entity.actor.as_ref());
-        if !actor.is_some_and(|actor| {
-            actor
-                .capabilities
-                .as_ref()
-                .map_or(actor.controller != "native", |capabilities| {
-                    capabilities.speech
-                })
-        }) {
+            .is_some_and(Self::allows_speaker)
+        {
             return Err(&self.no_speech);
         }
         let trimmed = text.borrowed().trimmed();

@@ -413,6 +413,7 @@ enum CommandKind {
     InspectItem,
     #[serde(rename = "learn-record")]
     LearnRecord,
+    Teach,
     Handover,
 }
 
@@ -431,7 +432,7 @@ impl CommandKind {
     }
 
     fn binds_target_life(self) -> bool {
-        self.ranged_start().is_some() || matches!(self, Self::ReleaseShot | Self::Guard | Self::Strike)
+        self.ranged_start().is_some() || matches!(self, Self::ReleaseShot | Self::Guard | Self::Strike | Self::Teach)
     }
 
     fn arrangement(self) -> Option<OwnedArrangement> {
@@ -1403,8 +1404,8 @@ impl CommandRequest {
                 (!arrangement && !matches!(command.kind, CommandKind::Pickup | CommandKind::Drop))
                     || quantity == 0 || quantity > openlegend_simulation::identity::MAX_SAFE_INTEGER
             })
-            || (!matches!(command.kind, CommandKind::Craft)
-                && (command.recipe_id.is_some() || command.tools.is_some()))
+            || (!matches!(command.kind, CommandKind::Craft | CommandKind::Teach) && command.recipe_id.is_some())
+            || (command.kind != CommandKind::Craft && command.tools.is_some())
             || command.tools.as_ref().is_some_and(|tools| {
                 tools.len() != 1 || tools.iter().any(|(role, item)| !id(role) || !id(item))
             })
@@ -1665,6 +1666,12 @@ impl CommandRequest {
                     && command.expected_action_id.is_none() && command.gathering_mode.is_none()
                     && command.recipe_id.as_deref().is_some_and(openlegend_simulation::values::is_safe_record_id)
                 => Ok(()),
+            CommandKind::Teach
+                if command.position.is_none() && command.known_place.is_none()
+                    && command.item_id.is_none() && command.expected_action_id.is_none()
+                    && command.gathering_mode.is_none() && command.target_id.as_deref().is_some_and(id)
+                    && command.recipe_id.as_deref().is_some_and(openlegend_simulation::values::is_safe_record_id)
+                => Ok(()),
             CommandKind::Say
                 if command.position.is_none()
                     && command.known_place.is_none()
@@ -1914,6 +1921,16 @@ impl PreparedRequest {
             CommandKind::LearnRecord => Ok(RuntimePlayerCommand::LearnRecord(
                 self.record.as_ref().ok_or(StoreError::InvalidRecord)?,
             )),
+            CommandKind::Teach => {
+                let Some(RuntimeRangedTarget::Subject { id, life }) = ranged_target else {
+                    return Err(StoreError::InvalidRecord.into());
+                };
+                Ok(RuntimePlayerCommand::Teach {
+                    target: id,
+                    life,
+                    recipe: input.recipe_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                })
+            }
             CommandKind::InspectItem if input.item_id.is_none() => Ok(RuntimePlayerCommand::InspectStorage {
                 root: target.ok_or(StoreError::InvalidRecord)?,
                 after: input.after.as_deref(),

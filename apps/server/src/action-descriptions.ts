@@ -1,5 +1,9 @@
 import { nativeCommandKind } from './native-command-kind.js';
-import { commandDescriptions, installedActionMeaning } from '@open-legend/domain';
+import {
+  commandDescriptions,
+  installedActionMeaning,
+  selectedOrdinaryActionRules,
+} from '@open-legend/domain';
 import {
   BASE_OUTING,
   BASE_RANGED_TEXT,
@@ -184,10 +188,12 @@ function describeCommand(
       return consumptionDescription(world, observation.actor, itemDefinition);
     case 'recover':
       return bodyPolicy(world)?.recovery?.successText ?? common;
-    case 'teach':
+    case 'teach': {
+      const teaching = selectedOrdinaryActionRules(world).teaching;
       return recipe && target
-        ? `Teach ${namePhrase(target, 'definite')} how to make ${recipe.name}. ${recipe.description}\n\nShares the technique, not its materials or a finished item. You must be close enough to teach them.`
+        ? `${teaching.menu.labelPrefix}${namePhrase(target, 'definite')}${teaching.methodClause}${recipe.name}. ${recipe.description}${teaching.menu.descriptionSuffix}`
         : common;
+    }
     default:
       return common;
   }
