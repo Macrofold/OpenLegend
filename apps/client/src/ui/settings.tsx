@@ -22,6 +22,7 @@ export type SettingsView = Pick<
 >;
 export const Settings = memo(function Settings({
   view,
+  canUseWorldAgent,
   profile,
   section,
   setSection,
@@ -45,6 +46,7 @@ export const Settings = memo(function Settings({
   cameraControls,
 }: {
   view: SettingsView;
+  canUseWorldAgent: boolean;
   profile: PlayerProfileRead;
   section: string;
   setSection(value: string): void;
@@ -68,6 +70,7 @@ export const Settings = memo(function Settings({
   cameraControls?: ReactNode;
 }) {
   const [inputProblem, setInputProblem] = useState('');
+  const canEditInventionPolicy = view.godMode && canUseWorldAgent;
   function inputChange(key: keyof ActionInputPreferences, value: string) {
     const next = { ...actionInput, [key]: value };
     const problem = inputPreferenceProblem(next);
@@ -77,7 +80,7 @@ export const Settings = memo(function Settings({
   return (
     <Tabs
       className="ol-settings"
-      selectedKey={section === 'policy' && !view.godMode ? 'reading' : section}
+      selectedKey={section === 'policy' && !canEditInventionPolicy ? 'reading' : section}
       onSelectionChange={(key) => setSection(String(key))}
     >
       <Button
@@ -97,7 +100,7 @@ export const Settings = memo(function Settings({
         <Tab id="controls" className="ol-navigation-tab">
           <span>Controls & help</span>
         </Tab>
-        {view.godMode && (
+        {canEditInventionPolicy && (
           <Tab id="policy" className="ol-navigation-tab">
             <span>World permissions</span>
           </Tab>
@@ -204,7 +207,6 @@ export const Settings = memo(function Settings({
               ['left', 'Left'],
               ['right', 'Right'],
               ['attackMode', 'Toggle attack mode (Shift + key)'],
-              ['create', 'Invention shortcut (saved but inactive)'],
             ] as const
           ).map(([key, label]) => (
             <label key={key}>
@@ -289,9 +291,8 @@ export const Settings = memo(function Settings({
             ))}
           </dl>
           <p className="ol-caption">
-            Open Game and choose Invent something to work on an invention. While writing a message,
-            Enter sends it and Shift + Enter adds a new line. Composing text takes priority over
-            game shortcuts.
+            While writing a message, Enter sends it and Shift + Enter adds a new line. Composing
+            text takes priority over game shortcuts.
           </p>
         </Section>
         <Section title="Leaving and returning">
@@ -344,7 +345,7 @@ export const Settings = memo(function Settings({
           </details>
         </Section>
       </TabPanel>
-      {view.godMode && (
+      {canEditInventionPolicy && (
         <TabPanel id="policy" shouldForceMount className="ol-settings-page">
           <InventionSettings view={view} />
         </TabPanel>

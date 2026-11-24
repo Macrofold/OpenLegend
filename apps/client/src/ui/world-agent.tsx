@@ -254,6 +254,7 @@ function WorldAgentPanel(props: Props) {
     return (
       <div className="ol-creator-workspace ol-creator-invent">
         <Inventions
+          canAuthor={!!props.enabled}
           worldId={worldId}
           accessScope={accessScope}
           requestScope={requestScope}

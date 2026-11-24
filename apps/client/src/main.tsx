@@ -1444,6 +1444,7 @@ function App({
     setPicker(null);
   }
   function invent(text = '') {
+    if (!canUseWorldAgent) return;
     setInventionSeed({ id: crypto.randomUUID(), text });
     setCraftingSection('invention');
     show('crafting');
@@ -2269,7 +2270,7 @@ function App({
         connected={connected}
         close={closePicker}
         run={(action) => run(action, picker.dispatchCommand)}
-        invent={invent}
+        invent={canUseWorldAgent ? invent : undefined}
         inspect={inspect}
         onTrade={(entity) => {
           setTradeTarget(entity.id);
@@ -2510,9 +2511,8 @@ function App({
                 operations={workBatchOperations}
                 resolutionRevision={workBatchResolution}
                 visible={visible && craftingSection === 'recipes'}
-                invent={() => {
-                  setCraftingSection('invention');
-                }}
+                inventionLabel={canUseWorldAgent ? 'Invention' : 'Saved invention requests'}
+                openInventions={() => setCraftingSection('invention')}
                 browseRecipe={(recipeId, opener) => browseActions({ recipeId }, opener)}
               />
             </div>
@@ -2620,7 +2620,7 @@ function App({
             inspectionScope={JSON.stringify([view.access?.scope, view.historyEpoch])}
             allowanceLimitUsd={view.ai.allowanceLimitUsd}
             usage={aiUsage}
-            enabled={id === 'world-editor' ? canUseWorldAgent : view.godMode}
+            enabled={id === 'world-inspection' ? view.godMode : canUseWorldAgent}
             saveTimeline={view.saveTimeline}
             key={view.worldId}
             worldId={view.worldId}
@@ -2777,19 +2777,21 @@ function App({
                 </div>
               ))}
             </Section>
-            <Section title="Create">
-              <Button
-                onPress={() => {
-                  setCraftingSection('invention');
-                  openGameTask('crafting');
-                }}
-              >
-                Invent something
-              </Button>
-              <p className="ol-caption">
-                Describe an idea, find learned recipes, or revisit a request.
-              </p>
-            </Section>
+            {canUseWorldAgent && (
+              <Section title="Create">
+                <Button
+                  onPress={() => {
+                    setCraftingSection('invention');
+                    openGameTask('crafting');
+                  }}
+                >
+                  Invent something
+                </Button>
+                <p className="ol-caption">
+                  Describe an idea, find learned recipes, or revisit a request.
+                </p>
+              </Section>
+            )}
             {(canUseWorldAgent ||
               view.godMode ||
               canInspectWorld ||
@@ -2841,6 +2843,7 @@ function App({
         return (
           <Settings
             view={settingsView ?? view}
+            canUseWorldAgent={canUseWorldAgent}
             profile={profile}
             section={settingsSection}
             setSection={setSettingsSection}

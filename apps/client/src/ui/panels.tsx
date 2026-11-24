@@ -96,7 +96,8 @@ export function Crafting({
   operations,
   resolutionRevision,
   connected,
-  invent,
+  inventionLabel,
+  openInventions,
   browseRecipe,
   visible = true,
 }: {
@@ -105,7 +106,8 @@ export function Crafting({
   resolutionRevision: number;
   connected: boolean;
   visible?: boolean;
-  invent(): void;
+  inventionLabel: string;
+  openInventions(): void;
   browseRecipe(recipeId: string, opener: Element): void;
 }) {
   const quantityId = useId();
@@ -359,8 +361,8 @@ export function Crafting({
             </select>
           </label>
         </details>
-        <Button variant="quiet" icon="action.invent" onPress={invent}>
-          Invention
+        <Button variant="quiet" icon="action.invent" onPress={openInventions}>
+          {inventionLabel}
         </Button>
       </aside>
       <section className="ol-crafting-list" aria-label="Known recipes">
@@ -403,7 +405,7 @@ export function Crafting({
           <EmptyState title={view.recipes.length ? 'No recipes match.' : 'No methods learned yet.'}>
             {view.recipes.length
               ? 'Change the filters or clear your search.'
-              : 'Learn from a recipe record or open Invention.'}
+              : 'Learn from a recipe record to see its requirements here.'}
           </EmptyState>
         )}
       </section>
