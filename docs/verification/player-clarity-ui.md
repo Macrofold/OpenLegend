@@ -355,6 +355,12 @@ The settings check resumed the restored world through its actual control. It swi
 
 Both cases used executable `d8079fdf4645`, release manifest `35e2c56faedb` and independently restored PostgreSQL databases. The [shared browser fixture](../../tests/fixtures/rust-browser.ts) starts that executable directly with Node absent from its path. It needs an explicit loopback test database and the exact executable, release and current-format backup paths. It stops the listener and drops its database after each case. Initial settings checks needed an explicit Resume and an exact inventory panel locator. Archive `nsc04-rust-browser-fixtures-20261123`, manifest `3ca3be079657`, contains both results and the screenshots. The completed checks, TypeScript, formatting and network validation passed. The unit suite and gameplay speed measurements were excluded.
 
+### Reaching the lookout from the browser
+
+The [existing elevated-scene check](../../tests/browser/spatial-world.spec.ts) clicked the actual deck, sent one signed movement command for `lookout-deck`, and waited for the active clock to carry the player to its surface three metres above the ground. Camera rotation, perspective, rotation lock, Alt cutaway and Shift-drag passed. Reload preserved the camera choices. The initial projected point lay under the minimap. The passing case used another point on the same deck and checked that the canvas received the click. The screenshots show the approach, ramp and raised deck. The minimap shows its artwork fallback in this fixture. The [separate asset check](game-asset-storage.md#preparing-a-stand-alone-runtime-asset-mount--november-22-2026) covers signed artwork delivery.
+
+The test used Rust tree `3554e437df0d`, executable `39dd07b0ae08`, browser `9789860819ab` and backup manifest `a4f54982e3e3` on November 24. Manifest `f4a365750e9a` in `nsc04-rust-lookout-browser-20261124` identifies the passing run, both screenshots and earlier setup attempts. It stopped its listener and removed its disposable database.
+
 ## Rust action search and ordinary gathering
 
 The same signed player saw the exact Gather row in the target menu and in All actions. Chromium found the reeds by target name and displayed the action's Time and Yields. Command-click accepted one action. Ordinary saving reduced the reeds from 48 to 47, and cold reopening recovered the original receipt. The signed caller rejected forged, stale and raw target IDs. The scoped ground menu also kept its own action context.
