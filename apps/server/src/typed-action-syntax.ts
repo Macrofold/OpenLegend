@@ -8,7 +8,7 @@ import {
 } from './typed-navigation.js';
 import {
   typedPointGrammar,
-  typedRelativeFormat as relativeFormat,
+  typedMovementFormat as relativeFormat,
   typedStop,
   type ActionFulfillment,
   type ResolutionCategory,

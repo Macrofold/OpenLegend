@@ -246,6 +246,32 @@ impl ResponseBindings {
     pub(crate) fn current_read(&self) -> &AcceptedActorRead {
         &self.input.reads.current
     }
+    /// Reuse the exact name presented for the bound physical reference. A new
+    /// observation, name change, lease or life cannot give old prose a target.
+    pub(super) fn proposal_target_name(&self, id: &str) -> Option<&crate::state::Named> {
+        let lease = self.input.entity_leases.get(id)?;
+        let original = self
+            .input
+            .reads
+            .original
+            .perception
+            .bodies
+            .iter()
+            .find(|body| body.source_id == id && body.lease_id == *lease)?;
+        self.input
+            .reads
+            .current
+            .perception
+            .bodies
+            .iter()
+            .find(|body| {
+                body.source_id == id
+                    && body.lease_id == *lease
+                    && body.physical_life == original.physical_life
+                    && body.name.name() == original.name.name()
+            })?;
+        Some(original.name.name())
+    }
     pub(crate) fn evidence_ids(&self) -> &[String] {
         &self.input.evidence_ids
     }

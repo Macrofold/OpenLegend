@@ -1,3 +1,4 @@
+import { typedMovementFormat, typedPointGrammar } from '@open-legend/domain';
 import { canonicalName } from '@open-legend/language';
 import type { SurfacePoint } from '@open-legend/spatial';
 import { cleanTypedActionText } from './typed-action-text.js';
@@ -45,6 +46,11 @@ export type TypedNavigationSyntax = {
   readonly kind: 'approach' | 'last-seen';
   readonly name: string;
 };
+const approach = typedPointGrammar.approach;
+const approachPattern = new RegExp(
+  `^(?:(?:${approach.verbs.join('|')})(?: ${approach.qualifiers.join('| ')})? ${typedPointGrammar.destination}|${approach.direct}) (.+)$`,
+  'u',
+);
 export function parseTypedNavigation(text: string): TypedNavigationSyntax | undefined {
   const returning =
     /^(?:go|move|walk|run|head|return)(?: back)? to (?:where|the (?:place|spot) where) (?:i|you|we) (?:last )?saw (.+)$/u.exec(
@@ -54,7 +60,7 @@ export function parseTypedNavigation(text: string): TypedNavigationSyntax | unde
       text,
     );
   if (returning) return { kind: 'last-seen', name: returning[1]! };
-  const going = /^(?:(?:go|move|walk|run|head)(?: over| up)? to|approach) (.+)$/u.exec(text);
+  const going = approachPattern.exec(text);
   return going ? { kind: 'approach', name: going[1]! } : undefined;
 }
 export interface TypedNavigationRead {
@@ -210,7 +216,7 @@ export type TypedNavigationPrepared =
     };
 export function typedNavigationDescription(value: TypedNavigationPrepared): string {
   if (value.kind === 'approach')
-    return `Walk near ${value.label}'s current position; this does not follow later movement.`;
+    return `${typedMovementFormat.approachPrefix}${value.label}${typedMovementFormat.approachSuffix}`;
   const at = (point: SurfacePoint) =>
     `x=${Number(point.x.toFixed(1))}, z=${Number(point.z.toFixed(1))}`;
   return value.stillSeen

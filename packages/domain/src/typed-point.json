@@ -3,6 +3,12 @@
   "destination": "to",
   "axes": ["x", "z"],
   "support": ["on", "surface"],
+  "approach": {
+    "verbs": ["go", "move", "walk", "run", "head"],
+    "qualifiers": ["over", "up"],
+    "direct": "approach",
+    "example": "walk to <visible name>"
+  },
   "relative": {
     "verbs": ["go", "move", "walk", "step", "run"],
     "implicitDistanceVerb": "step",

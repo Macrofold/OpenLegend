@@ -51,16 +51,21 @@ fn fulfillment(text: &JsText) -> SqlCell {
     SqlCell::Object(fields)
 }
 impl ResponseCursor {
-    pub(super) fn proposal_descriptions(
+    pub(super) fn proposal_operations(
         response: &ActorResponse,
-    ) -> impl Iterator<Item = &JsText> + Clone {
+    ) -> impl Iterator<Item = crate::response::ResponseOperation<'_>> + Clone {
         (0..response.len())
             .filter_map(|index| response.operation(index))
             .filter(|op| {
                 op.kind == ResponseKind::Act
                     && op.data.get("kind").and_then(SqlCell::as_str) == Some("proposal")
+                    && op.text("description").is_some()
             })
-            .filter_map(|op| op.text("description"))
+    }
+    pub(super) fn proposal_descriptions(
+        response: &ActorResponse,
+    ) -> impl Iterator<Item = &JsText> + Clone {
+        Self::proposal_operations(response).filter_map(|op| op.text("description"))
     }
     pub(super) fn ground_offered(
         &mut self,

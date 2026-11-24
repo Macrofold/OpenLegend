@@ -172,9 +172,9 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
   ];
   if (recallQuestion?.type !== 'noul')
     throw new Error('The installed context-attention template is unavailable.');
-  // The stand-alone host also accepts deterministic relative movement text.
+  // The stand-alone host also accepts deterministic movement text.
   const actionCapabilities = {
-    proposals: nativeCommandSupported(world, 'move') ? 'relative' : false,
+    proposals: nativeCommandSupported(world, 'move') ? 'movement' : false,
   } as const;
   const schemas = [false, true].flatMap((speech) =>
     [false, true].map((expressions) => {

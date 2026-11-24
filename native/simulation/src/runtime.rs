@@ -16,9 +16,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Weak};
 
 /// Finite lexical facts only. Native admission resolves the accepted pose and route.
-pub enum RelativeAttemptSyntax {
+pub enum MovementAttemptSyntax {
     Offset { x: f64, z: f64 },
     DistanceNeeded,
+    NamedApproach,
 }
 
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
@@ -995,10 +996,11 @@ impl RuntimeProvider {
         budget: &ByteBudget,
         mut normalize: impl FnMut(
             &crate::text::JsText,
+            Option<&crate::text::JsText>,
         ) -> Result<
             (
                 crate::text::JsText,
-                Option<RelativeAttemptSyntax>,
+                Option<MovementAttemptSyntax>,
                 ByteReservation,
             ),
             E,
@@ -1022,17 +1024,37 @@ impl RuntimeProvider {
         let mut custody = budget.reserve(bytes).map_err(failure)?;
         let mut normalized = Vec::with_capacity(count);
         let mut syntax = Vec::with_capacity(count);
-        for description in &request.descriptions {
-            let (text, relative, funding) = normalize(description)?;
+        let mut names = request.target_names.iter().peekable();
+        for (index, description) in request.descriptions.iter().enumerate() {
+            let label = names
+                .next_if(|(position, _)| *position == index)
+                .map(|(_, label)| label);
+            let (text, movement, funding) = normalize(description, label)?;
             custody.merge(funding).map_err(failure)?;
             normalized.push(text);
-            syntax.push(relative.map(|relative| match relative {
-                RelativeAttemptSyntax::Offset { x, z } => FreeTypedActionSyntax::Offset {
-                    x: Some(x),
-                    z: Some(z),
-                },
-                RelativeAttemptSyntax::DistanceNeeded => FreeTypedActionSyntax::DistanceNeeded,
-            }));
+            syntax.push(match movement {
+                None => None,
+                Some(MovementAttemptSyntax::Offset { x, z }) => {
+                    Some(FreeTypedActionSyntax::Offset {
+                        x: Some(x),
+                        z: Some(z),
+                    })
+                }
+                Some(MovementAttemptSyntax::DistanceNeeded) => {
+                    Some(FreeTypedActionSyntax::DistanceNeeded)
+                }
+                Some(MovementAttemptSyntax::NamedApproach) => {
+                    let label = label.ok_or_else(|| failure("missing bound proposal target"))?;
+                    let bytes = custody
+                        .bytes()
+                        .checked_add(label.storage_bytes())
+                        .ok_or_else(|| failure("normalization capacity"))?;
+                    custody.resize(bytes).map_err(failure)?;
+                    Some(FreeTypedActionSyntax::NamedApproach {
+                        label: label.clone(),
+                    })
+                }
+            });
         }
         let binding = request.binding;
         Ok(Some(RuntimeProviderInput {

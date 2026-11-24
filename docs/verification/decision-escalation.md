@@ -89,7 +89,13 @@ The same signed caller exercised two different failures. An unsupported phrase w
 
 Frozen tree `fe3fc6316de7`, executable `ea6b197f275f`, archive `nsc04-npc-relative-proposal-20261123`, manifest `2012b7ffcbf8`. All five local cases cleaned up their PostgreSQL databases and released listener reservations. Provider cost was $0.
 
-The joined tree `565a020df618` keeps the old addon entry separate until retirement. Its executable `a4db2778b71e` also passed the signed walking reply and held-withdrawal cases. Both reopened the same receipt after the ordinary save and dropped their fixture databases. The `nsc04-npc-relative-joined-20261124` archive retains results `5a29fb5b574c` and `e2fa7b567ac6`. Named targets, composed proposals, paid interpretation and the final default-release check remain open.
+The joined tree `565a020df618` keeps the old addon entry separate until retirement. Its executable `a4db2778b71e` also passed the signed walking reply and held-withdrawal cases. Both reopened the same receipt after the ordinary save and dropped their fixture databases. The `nsc04-npc-relative-joined-20261124` archive retains results `5a29fb5b574c` and `e2fa7b567ac6`.
+
+### Walking to a named place during a reply
+
+A signed player spoke to a resident who had directly observed the Banked campfire in detail. The actual request included that exact name and reference. The controlled reply spoke once, and its proposed walk used that same reference and the native approach action. The stream and PostgreSQL both showed the resident stop at `(25, 0, 14)`. A wrong name or a missing reference preserved the spoken reply and its exact pending intention without moving. Withdrawing the source speech during the held reply prevented both effects. The short relative walk still completed separately. The cases recovered the original receipt after reopening and sent no separate interpretation request.
+
+The November 24 cases used tree `dcd53b66a5c6` and executable `fadeb2b4e4fa`. Archive `nsc04-npc-named-approach-20261124`, manifest `063ae8a03308`, includes the five results and earlier setup attempts. The fixture that only gave the resident broad sight did not disclose a detailed target. Each listener exited and its database was removed. Remembered and composed proposals, paid interpretation and final default-release qualification remain open.
 
 ## Configured offered-action fallback on the stand-alone Rust server — November 22, 2026
 

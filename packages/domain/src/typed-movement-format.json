@@ -1,4 +1,6 @@
 {
+  "approachPrefix": "Walk near ",
+  "approachSuffix": "'s current position; this does not follow later movement.",
   "walk": "Walk ",
   "unit": " m ",
   "right": "right",

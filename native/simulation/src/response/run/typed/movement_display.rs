@@ -1,4 +1,4 @@
-//! Format a deterministic relative proposal from its accepted native preview.
+//! Format a deterministic movement proposal from its accepted native preview.
 
 use super::*;
 use std::{fmt::Write, sync::OnceLock};
@@ -6,6 +6,8 @@ use std::{fmt::Write, sync::OnceLock};
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Words {
+    approach_prefix: String,
+    approach_suffix: String,
     walk: String,
     unit: String,
     right: String,
@@ -26,9 +28,9 @@ fn words() -> &'static Words {
     static WORDS: OnceLock<Words> = OnceLock::new();
     WORDS.get_or_init(|| {
         serde_json::from_str(include_str!(
-            "../../../../../../packages/domain/src/typed-relative-format.json"
+            "../../../../../../packages/domain/src/typed-movement-format.json"
         ))
-        .expect("the build contains the shared relative movement wording")
+        .expect("the build contains the shared movement wording")
     })
 }
 
@@ -68,6 +70,39 @@ fn describe(x: f64, z: f64, destination: &crate::state::SurfacePoint) -> JsText 
     shown.into()
 }
 
+fn fulfilled(item: &Item, mut description: JsText) -> Rendered {
+    let words = words();
+    let mut fields = IndexMap::with_capacity(6);
+    fields.insert("requested".into(), item.description.clone().into());
+    let length = description.units_len();
+    let executable = if length > 1000 {
+        description.slice(0..1000)
+    } else {
+        description.clone()
+    };
+    fields.insert("executableDescription".into(), executable.into());
+    let confirm = !item.unmet.is_empty();
+    fields.insert(
+        "verdict".into(),
+        if confirm { "confirm" } else { "exact" }.into(),
+    );
+    if length > 500 {
+        description.truncate_units(500);
+    }
+    fields.insert("supported".into(), SqlCell::Array(vec![description.into()]));
+    fields.insert("omitted".into(), SqlCell::Array(Vec::new()));
+    let reason = if confirm {
+        &words.confirm
+    } else {
+        &words.complete
+    };
+    fields.insert("reason".into(), reason.as_str().into());
+    Rendered {
+        fulfillment: Some(SqlCell::Object(fields)),
+        resolution: None,
+    }
+}
+
 /// The cursor admits the result, including storage needed while assembling it.
 /// Rust can keep the typed result without preparing another formatted packet.
 pub(super) fn render(item: &Item, core: &CoreMutation<'_>) -> Result<Rendered, ExecutionError> {
@@ -86,27 +121,13 @@ pub(super) fn render(item: &Item, core: &CoreMutation<'_>) -> Result<Rendered, E
     };
     match prepared {
         Prepared::Offset { x, z, destination } => {
-            let description = describe(*x, *z, destination);
-            let mut fields = IndexMap::with_capacity(6);
-            fields.insert("requested".into(), item.description.clone().into());
-            fields.insert("executableDescription".into(), description.clone().into());
-            let confirm = !item.unmet.is_empty();
-            fields.insert(
-                "verdict".into(),
-                if confirm { "confirm" } else { "exact" }.into(),
-            );
-            fields.insert("supported".into(), SqlCell::Array(vec![description.into()]));
-            fields.insert("omitted".into(), SqlCell::Array(Vec::new()));
-            let reason = if confirm {
-                &words.confirm
-            } else {
-                &words.complete
-            };
-            fields.insert("reason".into(), reason.as_str().into());
-            Ok(Rendered {
-                fulfillment: Some(SqlCell::Object(fields)),
-                resolution: None,
-            })
+            Ok(fulfilled(item, describe(*x, *z, destination)))
+        }
+        Prepared::Approach { label, .. } => {
+            let mut description = JsText::from(words.approach_prefix.as_str());
+            description.push_text(label);
+            description.push_str(&words.approach_suffix);
+            Ok(fulfilled(item, description))
         }
         Prepared::DistanceNeeded => Ok(refused(
             "needs_clarification",

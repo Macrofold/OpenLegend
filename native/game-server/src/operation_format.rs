@@ -11,7 +11,7 @@ use openlegend_simulation::{
     geometry::GeometryBinding,
     host::{ByteBudget, ByteReservation},
     records::SqlCell,
-    runtime::{LocalFormat, RuntimeProvider, RuntimeProviderInput},
+    runtime::{LocalFormat, MovementAttemptSyntax, RuntimeProvider, RuntimeProviderInput},
 };
 use openlegend_world_host::pool::HostError;
 /// Borrow the funded request and return only the rendered value. The existing
@@ -21,12 +21,23 @@ pub(crate) fn answer(
     budget: &ByteBudget,
     language: Option<&LanguageProvider>,
 ) -> Result<Option<RuntimeProviderInput>, WorldError> {
-    if let Some(answer) = request.normalize_attempts(budget, |description| {
+    if let Some(answer) = request.normalize_attempts(budget, |description, label| {
+        use crate::language::movement_attempt::{movement_name, parse_offset, proposed_name};
         let language = language.ok_or(WorldError::ProviderKind)?;
         let (normalized, custody) = language
             .normalize_intention(description, budget)
             .map_err(WorldError::Language)?;
-        let syntax = crate::language::relative_action::parse(&normalized);
+        let mut syntax = parse_offset(&normalized);
+        if syntax.is_none()
+            && let (Some(label), Some(wanted)) = (label, proposed_name(&normalized))
+        {
+            let (named, _custody) = language
+                .normalize_intention(label, budget)
+                .map_err(WorldError::Language)?;
+            if movement_name(&named) == Some(wanted) {
+                syntax = Some(MovementAttemptSyntax::NamedApproach);
+            }
+        }
         Ok::<_, WorldError>((normalized, syntax, custody))
     })? {
         return Ok(Some(answer));

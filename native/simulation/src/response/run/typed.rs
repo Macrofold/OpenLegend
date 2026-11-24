@@ -3,8 +3,8 @@
 use super::*;
 use crate::language::FreeTypedActionSyntax;
 mod answer;
+mod movement_display;
 mod names;
-mod relative_display;
 
 #[derive(Clone, Serialize)]
 #[serde(
@@ -206,16 +206,20 @@ impl TypedGroundingCursor {
             };
             let description = op.text("description").ok_or(ExecutionError::Invariant)?;
             let slots = op.data.get("slots").filter(|slots| !slots.is_null());
-            if provider == GroundingProvider::Local
-                && matches!(
-                    syntax,
-                    FreeTypedActionSyntax::Offset { .. } | FreeTypedActionSyntax::DistanceNeeded
-                )
-                && (op.text("targetEntityId").is_some() || slots.is_some())
-            {
-                // A relative phrase chooses no entity, item or additional work.
-                // Leave the full intention unresolved rather than dropping it.
-                continue;
+            if provider == GroundingProvider::Local {
+                let has_target = op.text("targetEntityId").is_some();
+                let exact = slots.is_none()
+                    && match syntax {
+                        FreeTypedActionSyntax::Offset { .. }
+                        | FreeTypedActionSyntax::DistanceNeeded => !has_target,
+                        FreeTypedActionSyntax::NamedApproach { .. } => has_target,
+                        _ => false,
+                    };
+                if !exact {
+                    // Leave the original intention open if it asks for anything
+                    // beyond this exact deterministic movement.
+                    continue;
+                }
             }
             storage.resize(
                 storage
@@ -371,6 +375,11 @@ impl TypedGroundingCursor {
                 fields.insert("z".into(), z.map_or(SqlCell::Null, SqlCell::from));
                 fields.insert("frame".into(), "actor".into());
             }
+            FreeTypedActionSyntax::NamedApproach { .. } => {
+                let target = item.target.as_deref().ok_or(ExecutionError::Invariant)?;
+                fields.insert("place".into(), "target".into());
+                fields.insert("targetEntityId".into(), target.into());
+            }
             FreeTypedActionSyntax::Approach { .. } | FreeTypedActionSyntax::LastSeen { .. } => {
                 let roster = self.names.as_ref().ok_or(ExecutionError::Invariant)?;
                 let target = match item.selected.as_ref().ok_or(ExecutionError::Invariant)? {
@@ -411,13 +420,14 @@ impl TypedGroundingCursor {
             NativeCommand::Move { destination, .. } => destination,
             _ => return Err(ExecutionError::Invariant),
         };
-        let label_bytes = match self.items[self.index].selected.as_ref() {
-            Some(names::Selection::Body { ordinal }) => self
+        let label_bytes = match (&item.syntax, item.selected.as_ref()) {
+            (FreeTypedActionSyntax::NamedApproach { label }, _) => label.heap_bytes(),
+            (_, Some(names::Selection::Body { ordinal })) => self
                 .names
                 .as_ref()
                 .and_then(|r| r.bodies.get(*ordinal))
                 .map_or(Some(0), |b| b.label.heap_bytes()),
-            Some(names::Selection::Place { ordinal }) => self
+            (_, Some(names::Selection::Place { ordinal })) => self
                 .names
                 .as_ref()
                 .and_then(|r| r.places.get(*ordinal))
@@ -442,6 +452,10 @@ impl TypedGroundingCursor {
                 x: Some(x),
                 z: Some(z),
             } => Prepared::Offset { x, z, destination },
+            FreeTypedActionSyntax::NamedApproach { ref label } => Prepared::Approach {
+                label: label.clone(),
+                destination,
+            },
             FreeTypedActionSyntax::Approach { .. } => {
                 let Some(names::Selection::Body { ordinal }) = item.selected.as_ref() else {
                     return Err(ExecutionError::Invariant);
@@ -581,7 +595,7 @@ impl TypedGroundingCursor {
         Ok(())
     }
 
-    fn render_relative(
+    fn render_movement(
         &mut self,
         core: &CoreMutation<'_>,
     ) -> Result<(Vec<ResponseAttemptBinding>, ByteReservation), ExecutionError> {
@@ -605,7 +619,7 @@ impl TypedGroundingCursor {
                 .and_then(|bytes| bytes.checked_add(2048))
                 .ok_or(ExecutionError::Capacity)?;
             self.grow(bytes)?;
-            results.push(relative_display::render(&self.items[index], core)?);
+            results.push(movement_display::render(&self.items[index], core)?);
         }
         self.complete_results(core, results, true)
     }
@@ -858,7 +872,7 @@ impl TypedGroundingCursor {
             }
             if self.index == self.items.len() {
                 if provider == GroundingProvider::Local {
-                    let (bindings, custody) = self.render_relative(core)?;
+                    let (bindings, custody) = self.render_movement(core)?;
                     return Ok(TypedStep::Complete(bindings, custody));
                 }
                 self.prepare_request(core)?;

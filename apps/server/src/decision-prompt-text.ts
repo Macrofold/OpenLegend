@@ -1,7 +1,7 @@
 import { typedPointGrammar } from '@open-legend/domain';
 
-export type ProposalCapability = boolean | 'relative';
-export const relativeProposalInstructions = `For an unlisted relative move such as “${typedPointGrammar.relative.example}”, use proposal with the complete movement phrase. Only description and mode are filled. A proposal does not mean movement happened.`;
+export type ProposalCapability = boolean | 'movement';
+export const movementProposalInstructions = `For an unlisted relative move such as “${typedPointGrammar.relative.example}”, fill proposal description and mode. For a move such as “${typedPointGrammar.approach.example}”, copy the full visible name from the current References and put that same reference token in targetEntityId. Slots remain null. A proposal does not mean movement happened.`;
 
 const invocationRules =
   'For invoke, fill invocation using Native navigation or an optional installed activity request; actionId, verb, description and top-level targetEntityId remain null. Request families use only their exact parameters and null navigation fields; their selected mode equals act.mode. A chosen request is neither a learned method nor completed work.';
@@ -116,13 +116,13 @@ export function decisionPromptTextForCapabilities({
   proposals: ProposalCapability;
 }) {
   if (proposals === true) return decisionPromptText;
-  const relative = proposals === 'relative';
+  const movement = proposals === 'movement';
   return {
     ...decisionPromptText,
     unlistedActions: '',
-    expressionKinds: relative ? decisionPromptText.expressionKinds : 'known|expression|invoke',
-    plainKinds: relative ? decisionPromptText.plainKinds : 'known|invoke',
-    proposalArguments: relative ? `${relativeProposalInstructions} ` : '',
+    expressionKinds: movement ? decisionPromptText.expressionKinds : 'known|expression|invoke',
+    plainKinds: movement ? decisionPromptText.plainKinds : 'known|invoke',
+    proposalArguments: movement ? `${movementProposalInstructions} ` : '',
     unnamedTime: '',
     actionGoalPlanRules: `Slots are null. ${invocationRules}${goalPlanRules}`,
     references: `${referenceRules}\n`,

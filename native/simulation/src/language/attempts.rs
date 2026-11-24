@@ -2,6 +2,8 @@
 //! These language facts never decide permissions or execute an intention.
 use super::*;
 use crate::execution::ExecutionError;
+use crate::narration::{NameArticle, name_phrase};
+use crate::state::Named;
 use crate::text::JsText;
 use std::sync::Arc;
 
@@ -9,6 +11,8 @@ use std::sync::Arc;
 pub(crate) struct AttemptNormalizationRequest {
     pub binding: GeometryBinding,
     pub descriptions: Vec<JsText>,
+    #[serde(skip)]
+    pub target_names: Vec<(usize, JsText)>,
     #[serde(skip)]
     reservation: ByteReservation,
 }
@@ -29,6 +33,10 @@ pub(crate) struct AttemptNormalizationAnswer {
 pub(crate) enum FreeTypedActionSyntax {
     Approach {
         name: JsText,
+    },
+    #[serde(skip)]
+    NamedApproach {
+        label: JsText,
     },
     LastSeen {
         name: JsText,
@@ -53,7 +61,9 @@ pub(crate) enum FreeTypedActionSyntax {
 impl HeapBytes for FreeTypedActionSyntax {
     fn heap_bytes(&self) -> Option<usize> {
         match self {
-            Self::Approach { name } | Self::LastSeen { name } => name.heap_bytes(),
+            Self::Approach { name }
+            | Self::LastSeen { name }
+            | Self::NamedApproach { label: name } => name.heap_bytes(),
             Self::Unsupported { family } => family.heap_bytes(),
             Self::Stop { activity } => activity.heap_bytes(),
             Self::Point { surface_id, .. } => surface_id.heap_bytes(),
@@ -108,6 +118,7 @@ impl AttemptNormalizationRequest {
     pub(crate) fn prepare<'a>(
         binding: GeometryBinding,
         descriptions: impl Iterator<Item = &'a JsText> + Clone,
+        target_names: impl Iterator<Item = (usize, &'a Named)> + Clone,
         shared: bool,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
@@ -120,10 +131,22 @@ impl AttemptNormalizationRequest {
                 ))
             })
             .ok_or(ExecutionError::Capacity)?;
+        let (named_count, named_bytes) = target_names
+            .clone()
+            .try_fold((0_usize, 0_usize), |(count, bytes), (_, name)| {
+                Some((
+                    count.checked_add(1)?,
+                    bytes
+                        .checked_add(size_of::<(usize, JsText)>() + 128)?
+                        .checked_add(name.name.heap_bytes()?.checked_mul(8)?)?,
+                ))
+            })
+            .ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(
             heap_sum([
                 size_of::<Self>() + usize::from(shared) * 2 * size_of::<usize>(),
                 text_bytes,
+                named_bytes,
                 count
                     .checked_mul(size_of::<JsText>())
                     .ok_or(ExecutionError::Capacity)?,
@@ -135,9 +158,18 @@ impl AttemptNormalizationRequest {
             .try_reserve_exact(count)
             .map_err(|_| ExecutionError::Capacity)?;
         owned.extend(descriptions.cloned());
+        let mut selected_names = Vec::new();
+        selected_names
+            .try_reserve_exact(named_count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        selected_names.extend(
+            target_names
+                .map(|(index, name)| (index, name_phrase(name, NameArticle::Definite, false))),
+        );
         Ok(Self {
             binding,
             descriptions: owned,
+            target_names: selected_names,
             reservation,
         })
     }
@@ -183,6 +215,7 @@ impl AttemptNormalizationRequest {
         let Self {
             binding: _,
             descriptions,
+            target_names: _,
             mut reservation,
         } = self;
         // The common provider decoder funds returned text before parsing. Move

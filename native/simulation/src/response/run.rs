@@ -136,11 +136,18 @@ impl PendingNormalization {
     fn prepare<'a>(
         binding: GeometryBinding,
         descriptions: impl Iterator<Item = &'a JsText> + Clone,
+        target_names: impl Iterator<Item = (usize, &'a crate::state::Named)> + Clone,
         provider: GroundingProvider,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let shared = provider == GroundingProvider::Local;
-        let request = AttemptNormalizationRequest::prepare(binding, descriptions, shared, budget)?;
+        let request = AttemptNormalizationRequest::prepare(
+            binding,
+            descriptions,
+            target_names,
+            shared,
+            budget,
+        )?;
         Ok(match provider {
             GroundingProvider::Local => Self::Local(Arc::new(request)),
             GroundingProvider::Addon => Self::Addon(request),
@@ -249,6 +256,22 @@ impl ResponseCursor {
                             .iter()
                             .map(|candidate| &candidate.description)
                     }),
+                ),
+                Self::proposal_operations(&response).enumerate().filter_map(
+                    |(index, operation)| {
+                        if grounding_provider != GroundingProvider::Local
+                            || operation
+                                .data
+                                .get("slots")
+                                .is_some_and(|value| !value.is_null())
+                        {
+                            return None;
+                        }
+                        let target = operation.text("targetEntityId")?.as_unicode()?;
+                        bindings
+                            .proposal_target_name(target)
+                            .map(|name| (index, name))
+                    },
                 ),
                 grounding_provider,
                 budget,
@@ -687,6 +710,7 @@ impl ResponseCursor {
             self.normalization = Some(PendingNormalization::prepare(
                 Self::binding(core, self.candidate)?,
                 descriptions(),
+                std::iter::empty(),
                 self.grounding_provider,
                 &self.budget,
             )?);

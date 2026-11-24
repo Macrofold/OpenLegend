@@ -1,18 +1,27 @@
-//! Read the shared neutral relative-movement grammar. A match provides
-//! offsets only. The ordinary native command still owns the pose and route.
+//! Read the shared neutral movement grammar. A lexical match supplies only
+//! offsets or a named text suffix. Native owns the target, pose and route.
 
-use openlegend_simulation::{encoding::js_trim, runtime::RelativeAttemptSyntax, text::JsText};
+use openlegend_simulation::{encoding::js_trim, runtime::MovementAttemptSyntax, text::JsText};
 use serde::Deserialize;
 use std::{collections::HashMap, sync::OnceLock};
 
 #[derive(Deserialize)]
 struct CoordinateGrammar {
-    relative: Grammar,
+    destination: String,
+    approach: ApproachGrammar,
+    relative: OffsetGrammar,
+}
+
+#[derive(Deserialize)]
+struct ApproachGrammar {
+    verbs: Vec<String>,
+    qualifiers: Vec<String>,
+    direct: String,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct Grammar {
+struct OffsetGrammar {
     verbs: Vec<String>,
     implicit_distance_verb: String,
     units: Vec<String>,
@@ -20,16 +29,14 @@ struct Grammar {
     same_clause_join: String,
 }
 
-fn grammar() -> &'static Grammar {
+fn grammar() -> &'static CoordinateGrammar {
     static GRAMMAR: OnceLock<CoordinateGrammar> = OnceLock::new();
-    &GRAMMAR
-        .get_or_init(|| {
-            serde_json::from_str(include_str!(
-                "../../../../packages/domain/src/typed-point.json"
-            ))
-            .expect("the build contains the shared neutral coordinate grammar")
-        })
-        .relative
+    GRAMMAR.get_or_init(|| {
+        serde_json::from_str(include_str!(
+            "../../../../packages/domain/src/typed-point.json"
+        ))
+        .expect("the build contains the shared neutral coordinate grammar")
+    })
 }
 
 fn distance(input: &str, units: &[String]) -> Option<f64> {
@@ -53,7 +60,7 @@ fn distance(input: &str, units: &[String]) -> Option<f64> {
     metres.is_finite().then_some(metres)
 }
 
-fn segment(input: &str, grammar: &Grammar) -> Option<(Option<f64>, [f64; 2])> {
+fn segment(input: &str, grammar: &OffsetGrammar) -> Option<(Option<f64>, [f64; 2])> {
     let (amount, direction) = input.rsplit_once(' ').unwrap_or(("", input));
     let direction = *grammar.directions.get(direction)?;
     let amount = if amount.is_empty() {
@@ -64,10 +71,10 @@ fn segment(input: &str, grammar: &Grammar) -> Option<(Option<f64>, [f64; 2])> {
     Some((amount, direction))
 }
 
-pub(crate) fn parse(text: &JsText) -> Option<RelativeAttemptSyntax> {
+pub(crate) fn parse_offset(text: &JsText) -> Option<MovementAttemptSyntax> {
     let text = js_trim(text.as_unicode()?.trim_end_matches(['.', '!']));
     let (verb, words) = text.split_once(' ')?;
-    let grammar = grammar();
+    let grammar = &grammar().relative;
     if !grammar.verbs.iter().any(|known| known == verb) {
         return None;
     }
@@ -91,11 +98,37 @@ pub(crate) fn parse(text: &JsText) -> Option<RelativeAttemptSyntax> {
     };
     if verb != grammar.implicit_distance_verb && (first_metres.is_none() || second_metres.is_none())
     {
-        return Some(RelativeAttemptSyntax::DistanceNeeded);
+        return Some(MovementAttemptSyntax::DistanceNeeded);
     }
     let first_metres = first_metres.unwrap_or(1.0);
     let second_metres = second_metres.unwrap_or(1.0);
     let x = first_metres * first[0] + second_metres * second[0];
     let z = first_metres * first[1] + second_metres * second[1];
-    (x.is_finite() && z.is_finite()).then_some(RelativeAttemptSyntax::Offset { x, z })
+    (x.is_finite() && z.is_finite()).then_some(MovementAttemptSyntax::Offset { x, z })
+}
+
+/// Take the entire noun phrase. Its caller compares the selected current label
+/// and discards mismatches without using the phrase as a world reference.
+pub(crate) fn proposed_name(text: &JsText) -> Option<&str> {
+    let text = movement_name(text)?;
+    let (verb, rest) = text.split_once(' ')?;
+    let grammar = grammar();
+    if verb == grammar.approach.direct {
+        return Some(rest);
+    }
+    if !grammar.approach.verbs.iter().any(|known| known == verb) {
+        return None;
+    }
+    let (next, tail) = rest.split_once(' ')?;
+    if next == grammar.destination {
+        return Some(tail);
+    }
+    let (then, name) = tail.split_once(' ')?;
+    (then == grammar.destination && grammar.approach.qualifiers.iter().any(|word| word == next))
+        .then_some(name)
+}
+
+pub(crate) fn movement_name(text: &JsText) -> Option<&str> {
+    let text = js_trim(text.as_unicode()?.trim_end_matches(['.', '!', '?']));
+    (!text.is_empty()).then_some(text)
 }
