@@ -367,7 +367,9 @@ The same signed player saw the exact Gather row in the target menu and in All ac
 
 In a separate world, All actions selected the installed cutting-stone method and exact hammer. The work kept that hammer held through restart, refused the wrong tool, spent the original flint and saved one cutter. The original receipt recovered again after reopening. This case qualifies the cutting-stone method on its own.
 
-Gather used tree `565a020df618`, executable `a4db2778b71e` and report `9e3b24c1`. The cutting-stone method used tree `3554e437df0d`, executable `39dd07b0ae08` and report `a9951bb35c1b`. Both closed their disposable databases. The earlier menu exposed only two of twenty known recipes. Those other methods have separate execution checks. Escape also reached the focused search box without closing the picker. The Gather check used the visible Close control and keeps that failure recorded.
+Gather used tree `565a020df618`, executable `a4db2778b71e` and report `9e3b24c1`. The cutting-stone method used tree `3554e437df0d`, executable `39dd07b0ae08` and report `a9951bb35c1b`. Both closed their disposable databases. The earlier menu exposed only two of twenty known recipes. The additional methods have their own execution checks.
+
+The [existing action-menu check](../../tests/browser/actions.spec.ts) also passed with executable `7177869a29cb`. The first Escape closed the visible tooltip and the second closed the picker. Arrow navigation kept the exact disabled Gather row reachable while paused. Enter left the player's action unchanged. Reopening kept the saved pause, and the new tab rediscovered the same reeds after resuming. The paused menu then showed the new reference as unavailable. Earlier attempts used the old tab's reference or waited for a new observation while still paused. The `nsc04-actions-network-browser-20261124` archive records both attempts and the passing result, with manifest `70cb4c2af814`.
 
 ### Pickup, fishing and the equipped-item shortcut
 

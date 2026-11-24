@@ -381,7 +381,8 @@ test('private progress closes on hiding, retains drafts, and stops forbidden rec
 test('the actual browser helper consumes a large complete game projection and releases its request slot', async ({
   page,
 }, info) => {
-  const { game, base } = await gameFixture();
+  const game = await rustBrowserGame();
+  const { base } = game;
   try {
     await blockExternalBrowserRequests(page);
     await page.goto(base);
@@ -462,7 +463,8 @@ test('the actual browser helper consumes a large complete game projection and re
 test('operations retains the original uncertain invitation and recovers a failed refresh without resending it', async ({
   page,
 }, info) => {
-  const { game, base } = await gameFixture(true);
+  const game = await rustBrowserGame({ godMode: true });
+  const { base } = game;
   try {
     await controlledBrowser(page);
     await page.addInitScript(() => {
@@ -504,7 +506,11 @@ test('operations retains the original uncertain invitation and recovers a failed
             ? {}
             : {
                 scope: `${view.scope}:${audience}`,
-                clock: { ...view.clock, day: audience === 'renewed' ? 77 : 78 },
+                clock: {
+                  ...view.clock,
+                  day: audience === 'renewed' ? 77 : 78,
+                  seconds: view.clock.seconds + (audience === 'renewed' ? 76 : 77) * 86_400,
+                },
               }),
           ...(audience === 'replacement'
             ? { worldId: 'replacement-world', accountId: 'replacement-account' }
@@ -515,7 +521,11 @@ test('operations retains the original uncertain invitation and recovers a failed
     });
     // Establish the local fixture's normal native session. The operations UI
     // has no character-presence owner and does not create sessions on a read.
-    const session = await page.request.get(base + '/api/state');
+    await page.goto(base);
+    await enterGame(page);
+    const session = await page.request.get(base + '/api/state', {
+      headers: await browserTabHeaders(page),
+    });
     expect(session.ok()).toBe(true);
     await session.dispose();
     await page.goto(base + '/?view=operations');
@@ -636,7 +646,8 @@ function triangleGlb(): Buffer {
 test('optional icon failure leaves the game usable and real renderer resources survive late-owner replacement', async ({
   page,
 }, info) => {
-  const { game, base } = await gameFixture();
+  const game = await rustBrowserGame({ godMode: true });
+  const { base } = game;
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-renderer-network-'));
   try {
     const bytes = triangleGlb();
@@ -691,11 +702,12 @@ test('optional icon failure leaves the game usable and real renderer resources s
     const installed = JSON.parse(
       await readFile(new URL('../../assets/locks/development.json', import.meta.url), 'utf8'),
     ) as { files: Record<string, { sha256: string }> };
-    const iconsSha256 = installed.files['apps/client/src/design-system/icons/icons.json']!.sha256;
+    const iconPath = 'apps/client/src/design-system/gildmoss/icons/runtime-catalog.json';
+    const iconsSha256 = installed.files[iconPath]!.sha256;
     let iconFailures = 0;
     await page.route('**/*', async (route) => {
       const url = decodeURIComponent(route.request().url());
-      if (url.includes(iconsSha256) || url.includes('/design-system/icons/icons.json')) {
+      if (url.includes(iconsSha256) || url.includes(iconPath)) {
         iconFailures++;
         return route.abort('failed');
       }
@@ -707,11 +719,17 @@ test('optional icon failure leaves the game usable and real renderer resources s
       if (!output || output.type !== 'chunk') return route.abort('failed');
       return route.fulfill({ status: 200, contentType: 'text/javascript', body: output.code });
     });
+    // Establish the real local session without first booting an anonymous
+    // document, so one app entry means one catalog request.
+    const login = await page.request.get(base + '/auth/login');
+    expect(login.ok()).toBe(true);
+    await login.dispose();
     await page.goto(base);
     await enterGame(page);
     expect(iconFailures).toBe(1);
     await expect(page.locator('.ol-sigil').first()).toBeVisible();
-    await page.getByRole('button', { name: 'Time settings', exact: true }).click();
+    await page.getByRole('button', { name: 'Game menu (Escape)', exact: true }).click();
+    await page.getByRole('button', { name: 'Time', exact: true }).click();
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeVisible();
     const evidence = await page.evaluate(
       async (contents) => {
@@ -753,7 +771,7 @@ test('optional icon failure leaves the game usable and real renderer resources s
       indicesReleased: true,
       registryReleased: true,
     });
-    await expect(page.getByRole('button', { name: 'Time settings', exact: true })).toBeEnabled();
+    await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeEnabled();
     await info.attach('renderer-network-retirement.json', {
       body: JSON.stringify(evidence, null, 2),
       contentType: 'application/json',
