@@ -194,6 +194,12 @@ Raw fish, an unavailable item and a forged quantity override left stock unchange
 
 The frozen source was `2fbff45da34e3f4984bb923d8b619e583e392b3c` and the executable SHA-256 was `895b678ac6d8cf317eb39deba0fef1daed26d53be965afbe35d2f1ae08ba37cc`. These local gameplay checks used ordinary saves and disposable PostgreSQL. Two earlier runs caught menu failures. The server first checked for an idle world while it already held the view's publication lock. After that was repaired, the browser's ordinary quantity field still triggered a bad-request response. The menu now accepts the browser's display hints and uses the selected item's current native record to decide whether the player can eat it. The failed and passing records are retained under `nsc04-eating-20261122`. Repeated meals and NPC selection have separate callers.
 
+### Eating from All actions
+
+A signed player found the same Eat choices in All actions, Inventory and the exact item menu. Food carried in an accessible bag appeared alongside directly carried food. An NPC's private food stayed unavailable. The real All actions command used the selected lot while the player kept walking. Ordinary PostgreSQL saves preserved the first portion, exact retry and cold receipt. The final portion removed only that lot and left both the nested food and the NPC's stock alone.
+
+The local archive `nsc04-eat-catalogue-20261124` (manifest `751b567d2058`) identifies source tree `2ab406b22d11`, executable `227f5117169f` and signed result `4778b10751f2`. The locked Rust and network checks passed. Both game processes exited and the disposable database was dropped.
+
 ## Stand-alone Rust ground pickup
 
 The player selected **Pick Up** on a visible pile in **In view**. The command approached the pile, finished its installed collection time and moved the exact raw fish into the player's inventory. The fish kept its identity. The last stack left the pile empty, so the server removed the pile from sight and PostgreSQL. The player cooked the same fish and returned to the cooked meal after restarting. Reload recovered the original pickup result alongside the saved world.

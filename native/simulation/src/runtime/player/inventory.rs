@@ -309,10 +309,13 @@ impl<'a> DirectInventory<'a> {
             ).map_err(failure)?,
             equipment_ports: slot.definition.equipment_ports(),
             equipment_fits: crate::execution::equipment_fits(self.state, self.actor, slot.entity),
-            eating: self
-                .eater
-                .as_ref()
-                .and_then(|eater| eater.offer(slot.definition, self.action_problem)),
+            eating: self.eater.as_ref().and_then(|eater| {
+                eater.offer(
+                    slot.definition,
+                    self.action_problem,
+                    slot.item.available_quantity,
+                )
+            }),
             drop,
         })
     }

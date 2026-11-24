@@ -59,7 +59,7 @@ impl NativeWorldSession {
     }
 }
 
-impl RuntimeActionCatalogue<'_> {
+impl<'a> RuntimeActionCatalogue<'a> {
     /// Traverse one accepted perception capture for on-demand contact and resource offers.
     /// Gather and cast tools are prepared only for a relevant perceived site,
     /// once per family. Borrowed offers and optional geometry stay inside this
@@ -210,6 +210,90 @@ impl RuntimeActionCatalogue<'_> {
             self.budget,
             visit,
         )
+    }
+
+    /// Visit exactly the accessible carried lots during an explicit catalogue
+    /// request. The installed meter and actor eligibility are read once. Menu
+    /// rows borrow names and reasons until the caller finishes encoding.
+    pub fn visit_eating(
+        &self,
+        mut add: impl FnMut(
+            &'a str,
+            &'a crate::text::JsText,
+            crate::consumption::EatingOffer<'a>,
+        ) -> Result<(), CapacityError>,
+    ) -> Result<(), RuntimeError> {
+        let state: &'a crate::simulation::SimulationState = &self.simulation.state;
+        let actor = self.actor.id;
+        let Some(eating) = EatingRead::current(state, actor)? else {
+            return Ok(());
+        };
+        state
+            .inventory
+            .visit_owned(
+                &state.physical,
+                eating.definitions,
+                actor,
+                actor,
+                &mut |item| {
+                    if let Some((name, offer)) = eating.offer(item)? {
+                        add(item.id, name, offer)
+                            .map_err(|_| crate::execution::ExecutionError::Capacity)?;
+                    }
+                    Ok(())
+                },
+            )
+            .map_err(failure)
+    }
+}
+
+pub(super) struct EatingRead<'a> {
+    definitions: &'a crate::install::RetainedDefinitions,
+    eater: crate::consumption::Eater<'a>,
+    blocked: Option<&'a crate::worlds::InstalledActionMessage>,
+}
+
+impl<'a> EatingRead<'a> {
+    pub(super) fn current(
+        state: &'a crate::simulation::SimulationState,
+        actor: &str,
+    ) -> Result<Option<Self>, RuntimeError> {
+        let body = state
+            .physical
+            .entities
+            .get(actor)
+            .ok_or_else(|| failure("inventory owner unavailable"))?;
+        let installed = &state.installed;
+        let blocked =
+            crate::consumption::action_problem(installed, body, state.physical.header.paused)
+                .map_err(failure)?;
+        Ok(
+            crate::consumption::Eater::current(installed, &state.physical, body)
+                .map_err(failure)?
+                .map(|eater| Self {
+                    definitions: &installed.retained,
+                    eater,
+                    blocked,
+                }),
+        )
+    }
+
+    pub(super) fn offer(
+        &self,
+        item: crate::install::OwnedItem<'a>,
+    ) -> Result<
+        Option<(&'a crate::text::JsText, crate::consumption::EatingOffer<'a>)>,
+        crate::execution::ExecutionError,
+    > {
+        let definition = self
+            .definitions
+            .items
+            .get(item.definition_id)
+            .ok_or(crate::execution::ExecutionError::Invariant)?;
+        Ok(self
+            .eater
+            .offer(definition, self.blocked, item.available_quantity)
+            .map(|offer| (&item.named.name, offer)))
     }
 }
 

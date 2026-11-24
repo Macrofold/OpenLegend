@@ -9,6 +9,7 @@ pub(super) fn render(
     controlling: bool,
     gathering: &[GatherAction],
     craft: &[manufacture::ManufactureAction],
+    eating: &[preparation::EatAction<'_>],
     resources: Option<&resources::CatalogueRows<'_>>,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
@@ -159,6 +160,7 @@ pub(super) fn render(
         &'a [A],
         &'a [GatherAction],
         &'a [manufacture::ManufactureAction],
+        &'a [preparation::EatAction<'a>],
         Option<&'a resources::CatalogueRows<'a>>,
     );
     impl<T: Serialize> Serialize for Actions<'_, T> {
@@ -168,7 +170,8 @@ pub(super) fn render(
                 self.0.len()
                     + self.1.len()
                     + self.2.len()
-                    + self.3.map_or(0, resources::CatalogueRows::len),
+                    + self.3.len()
+                    + self.4.map_or(0, resources::CatalogueRows::len),
             ))?;
             for choice in self.0 {
                 sequence.serialize_element(choice)?;
@@ -179,7 +182,10 @@ pub(super) fn render(
             for choice in self.2 {
                 sequence.serialize_element(choice)?;
             }
-            if let Some(rows) = self.3 {
+            for choice in self.3 {
+                sequence.serialize_element(choice)?;
+            }
+            if let Some(rows) = self.4 {
                 for choice in rows.rows() {
                     sequence.serialize_element(choice)?;
                 }
@@ -189,7 +195,7 @@ pub(super) fn render(
     }
     let groups = [
         Some(STATES),
-        menu.treatment.is_some().then_some(BODY),
+        (menu.treatment.is_some() || !eating.is_empty()).then_some(BODY),
         (!gathering.is_empty()).then_some(GATHER.name),
         (!craft.is_empty()).then_some(manufacture::CATEGORY),
     ];
@@ -220,7 +226,7 @@ pub(super) fn render(
     }
     resource_menu_selection(
         menu.sequence,
-        &Actions(&choices, gathering, craft, resources),
+        &Actions(&choices, gathering, craft, eating, resources),
         &categories,
         None,
         budget,

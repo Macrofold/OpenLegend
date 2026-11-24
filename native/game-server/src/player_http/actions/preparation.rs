@@ -73,7 +73,7 @@ enum FoodAction<'a> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct EatAction<'a> {
+pub(super) struct EatAction<'a> {
     id: String,
     label: JsText,
     category: &'static str,
@@ -100,19 +100,60 @@ struct EatCommand<'a> {
     item_id: &'a str,
 }
 
+pub(super) fn action_blocker(controls: bool, paused: bool) -> Option<&'static str> {
+    if !controls {
+        Some(TAKE_CONTROL)
+    } else if paused {
+        Some(RESUME_WORLD)
+    } else {
+        None
+    }
+}
+
+/// Fund the owned label and row before constructing an exact Eat command.
+/// The offered name and reason remain borrowed from the accepted menu cut.
+pub(super) fn eat_choice<'a>(
+    item_id: &'a str,
+    name: &'a JsText,
+    verb: &'a str,
+    reason: Option<&'a str>,
+    custody: &mut ByteReservation,
+) -> Result<EatAction<'a>, CapacityError> {
+    custody.resize(
+        custody
+            .bytes()
+            .checked_add(512 + 4 * (item_id.len() + name.storage_bytes() + verb.len()))
+            .ok_or(CapacityError)?,
+    )?;
+    let mut label = JsText::from(verb);
+    label.push_str(" ");
+    label.push_text(name);
+    Ok(EatAction {
+        id: format!("eat-{item_id}"),
+        label,
+        category: "Body",
+        description: verb,
+        keywords: [name],
+        item_id,
+        enabled: reason.is_none(),
+        reason,
+        intent: EatIntent {
+            kind: "command",
+            command: EatCommand {
+                kind: "eat",
+                item_id,
+            },
+        },
+    })
+}
+
 pub(super) fn render<'a>(
     menu: RuntimeFoodMenu<'a>,
     controls: bool,
     selected_item: Option<&'a str>,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
-    let blocker = if !controls {
-        Some("Take control of your character to act here.")
-    } else if menu.paused {
-        Some("Resume the world to act.")
-    } else {
-        None
-    };
+    let blocker = action_blocker(controls, menu.paused);
     let mut custody = budget.reserve(0)?;
     let mut actions = Vec::new();
     let mut push = |preparation: &'a RuntimePreparation<'a>,
@@ -214,23 +255,13 @@ pub(super) fn render<'a>(
         };
     }
     if let Some((item_id, (name, offer))) = selected_item.zip(menu.eating) {
-        custody.resize(custody.bytes().checked_add(512 + 4 * (item_id.len() + name.storage_bytes() + offer.label.len()))
-            .ok_or(CapacityError)?)?;
-        let reason = blocker.or(offer.reason);
-        let mut label = JsText::from(offer.label);
-        label.push_str(" ");
-        label.push_text(name);
-        actions.push(FoodAction::Eating(EatAction {
-            id: format!("eat-{item_id}"),
-            label,
-            category: "Body",
-            description: offer.label,
-            keywords: [name],
+        actions.push(FoodAction::Eating(eat_choice(
             item_id,
-            enabled: reason.is_none(),
-            reason,
-            intent: EatIntent { kind: "command", command: EatCommand { kind: "eat", item_id } },
-        }));
+            name,
+            offer.label,
+            blocker.or(offer.reason),
+            &mut custody,
+        )?));
         if has_cooking {
             return resource_menu_categories(menu.sequence, &actions, &[CATEGORY, "Body"], budget);
         }

@@ -189,7 +189,30 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                                         craft.push(row);
                                         Ok(())
                                     })?;
-                                    status::render(menu, controls, &gathering, &craft, Some(&resources), budget)
+                                    let mut eating = Vec::new();
+                                    let mut eating_custody = budget.reserve(0)?;
+                                    let blocker = preparation::action_blocker(controls, menu.paused);
+                                    read.visit_eating(|item, name, offer| {
+                                        let row = preparation::eat_choice(
+                                            item,
+                                            name,
+                                            offer.label,
+                                            blocker.or(offer.reason),
+                                            &mut eating_custody,
+                                        )?;
+                                        eating.try_reserve(1).map_err(|_| CapacityError)?;
+                                        eating.push(row);
+                                        Ok(())
+                                    })?;
+                                    status::render(
+                                        menu,
+                                        controls,
+                                        &gathering,
+                                        &craft,
+                                        &eating,
+                                        Some(&resources),
+                                        budget,
+                                    )
                                 },
                             ).map(Some);
                         }
@@ -200,7 +223,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                                 &scope.actor_id,
                                 |body| references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id)
                                     .map_err(RuntimeError::application_refused),
-                                |menu| status::render(menu, controls, &[], &[], None, budget),
+                                |menu| status::render(menu, controls, &[], &[], &[], None, budget),
                             ).map(Some);
                         }
                         if ground && for_menu.is_none() {

@@ -196,13 +196,17 @@ impl<'a> Eater<'a> {
         &self,
         food: &ItemDefinitionRead,
         blocked: Option<&'a crate::worlds::InstalledActionMessage>,
+        available_quantity: u64,
     ) -> Option<EatingOffer<'a>> {
         food.nutrition.filter(|value| *value != 0.0)?;
         Some(EatingOffer {
             label: &self.policy.label,
             reason: blocked
                 .map(|value| value.message.as_str())
-                .or_else(|| self.portion(food).err()),
+                .or_else(|| self.portion(food).err())
+                .or_else(|| {
+                    (available_quantity == 0).then_some(self.policy.unavailable_text.as_str())
+                }),
         })
     }
 }

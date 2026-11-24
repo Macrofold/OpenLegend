@@ -17,7 +17,7 @@ pub use inventory::{
 };
 mod catalogue;
 pub use catalogue::{RuntimeActionCatalogue, RuntimeCatalogueOffer};
-use catalogue::{current_actor_target, follow_availability};
+use catalogue::{EatingRead, current_actor_target, follow_availability};
 mod status_menu;
 mod hearth;
 mod teaching;
@@ -1281,14 +1281,11 @@ impl NativeWorldSession {
             None
         };
         let eating = if let Some(item) = selected {
-            let definition = installed.retained.items.get(item.definition_id)
-                .ok_or_else(|| failure("inventory definition unavailable"))?;
-            let entity = state.physical.entities.get(actor).ok_or_else(|| failure("inventory owner unavailable"))?;
-            let blocked = crate::consumption::action_problem(installed, entity, state.physical.header.paused)
-                .map_err(failure)?;
-            crate::consumption::Eater::current(installed, &state.physical, entity).map_err(failure)?
-                .and_then(|eater| eater.offer(definition, blocked))
-                .map(|eating| (&definition.named.name, eating))
+            EatingRead::current(state, actor)?
+                .map(|read| read.offer(item))
+                .transpose()
+                .map_err(failure)?
+                .flatten()
         } else {
             None
         };
