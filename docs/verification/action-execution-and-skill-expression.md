@@ -32,6 +32,14 @@ A signed Chromium player moved diagonally with bounded renewals. Releasing one k
 
 Local evidence is in `nsc04-rust-wasd-20261124` (manifest `18990daf6252`). Executable `51535373c681` served browser build `a03afb1ed116`. The held reply result is `7013da4d24d5` and the ordinary browser result is `cb52caff698`. Formatting, TypeScript, network checks and the production browser build passed. The dedicated databases and browser processes closed.
 
+### Reconnect and recover a timed attack
+
+A signed Chromium player had both a timed preparation and accepted steering when the network went offline. The browser cleared the timing ring. It returned at the position saved after the movement lease expired, and sent an independent direction only after a fresh key press. No old steering or attack release replayed and no projectile was created.
+
+In a separate case, Rust accepted Prepare and only its HTTP reply was dropped. **Check result** recovered the original request and exact accepted result. The same preparation became ready without a second Prepare. The player chose Release once and spent one stone. PostgreSQL saved one launch and one completed flight. The original signed session recovered both command receipts after restart.
+
+Local archive `nsc04-timed-input-reconnect-20261124` (manifest `e9b3194bbdd1`) identifies executable `227f5117169f`, browser `a03afb1ed116`, and results `98d67cda7d87` and `90d37c07b823`. The three listeners closed with zero tracked reservations and both disposable databases were dropped.
+
 ## October 25, 2026 UTC — remove the aggregate injury meter
 
 The overall injury field, its event delta and movement coefficient are removed from body state, response profiles, history and story selection. Damage/healing still use the shared health owner; defense, susceptibility, interruptions, death, scars and independent status effects remain. Body-part wounds are not implemented. The [current body contract](../architecture.md#actor-means-any-living-being) and [care proposal](../projects/recovery-and-care-feature-spec.md) distinguish these retained foundations from future injuries.
