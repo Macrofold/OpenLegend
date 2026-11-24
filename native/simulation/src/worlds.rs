@@ -57,6 +57,9 @@ pub(crate) use base_time::InstalledTimeRules;
 pub(crate) mod base_speech;
 pub(crate) use base_speech::SpeechAction as InstalledSpeechAction;
 
+#[path = "../../../packages/domain/src/worlds/base/native/spoken_reference.rs"]
+pub mod base_spoken_reference;
+
 #[path = "../../../packages/domain/src/worlds/base/native/promises.rs"]
 pub(crate) mod base_promises;
 pub(crate) use base_promises::PromiseRules as InstalledPromiseRules;

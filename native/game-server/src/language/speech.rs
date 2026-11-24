@@ -1,17 +1,20 @@
 //! Source's Intl.Segmenter('und', {granularity:'word'}) uses ICU word
 //! boundaries and marks rule statuses outside UBRK_WORD_NONE as word-like.
 //! Spellings and UTF-16 indices stay tied to the input's original units.
-use super::{LanguageError, LanguageProvider, symbol};
+use super::{LanguageError, LanguageProvider, SpokenReference, symbol};
 use libloading::Library;
 use openlegend_simulation::{
     geometry::GeometryBinding,
     host::{ByteBudget, ByteReservation},
+    reception::{Intelligibility, PerceivedSpeech, SpeechPerception, SpeechSegment},
     runtime::{RuntimeError, RuntimeProviderInput},
     speech::SpeechWord,
     text::JsText,
+    worlds::base_spoken_reference::{SpokenWords, match_passage},
 };
 use std::{
     ffi::{c_char, c_void},
+    ops::Range,
     ptr::NonNull,
 };
 
@@ -163,6 +166,76 @@ impl LanguageProvider {
         })
     }
 
+    /// Evaluate the bundled world's experiment on one listener's existing
+    /// speech and learned self-names. Each heard passage gets its own ICU
+    /// word scan. Scratch is released before return; a match borrows the
+    /// original passage, without yielding identity or mutation authority.
+    pub fn match_base_spoken_reference<'a>(
+        &self,
+        speech: &'a PerceivedSpeech,
+        self_names: &[&JsText],
+        budget: &ByteBudget,
+    ) -> Result<SpokenReference<'a>, LanguageError> {
+        if speech.perception != SpeechPerception::Heard
+            || speech.intelligibility == Intelligibility::None
+            || self_names.is_empty()
+        {
+            return Ok(SpokenReference::None);
+        }
+        let names_bytes = self_names
+            .iter()
+            .try_fold(0usize, |bytes, name| {
+                bytes
+                    .checked_add(size_of::<SpokenWords>())?
+                    .checked_add(spoken_words_bytes(name.units_len()).ok()?)
+            })
+            .ok_or(LanguageError::Capacity)?;
+        let _names = budget
+            .reserve(names_bytes)
+            .map_err(|_| LanguageError::Capacity)?;
+        let mut names = Vec::with_capacity(self_names.len());
+        for name in self_names {
+            names.push(self.spoken_words(name, budget)?);
+        }
+        if names.iter().all(|name| name.spans.is_empty()) {
+            return Ok(SpokenReference::None);
+        }
+        let mut result = SpokenReference::None;
+        for (index, segment) in speech.segments.iter().enumerate() {
+            let SpeechSegment::Heard { text } = segment else {
+                continue;
+            };
+            let _passage = budget
+                .reserve(spoken_words_bytes(text.units_len())?)
+                .map_err(|_| LanguageError::Capacity)?;
+            let heard = self.spoken_words(text, budget)?;
+            match match_passage(
+                text,
+                &heard,
+                &names,
+                index == 0,
+                index + 1 == speech.segments.len(),
+            ) {
+                found @ SpokenReference::PossiblePersonalReference { .. } => return Ok(found),
+                SpokenReference::NameOnly => result = SpokenReference::NameOnly,
+                SpokenReference::None => {}
+            }
+        }
+        Ok(result)
+    }
+
+    fn spoken_words(
+        &self,
+        text: &JsText,
+        budget: &ByteBudget,
+    ) -> Result<SpokenWords, LanguageError> {
+        let mut units = Vec::with_capacity(text.units_len());
+        units.extend(text.units());
+        let mut spans = Vec::with_capacity(units.len());
+        self.speech_boundaries(&units, budget, |span| spans.push(span.start..span.end))?;
+        Ok(SpokenWords { units, spans })
+    }
+
     fn speech_boundaries(
         &self,
         input: &[u16],
@@ -223,4 +296,10 @@ impl LanguageProvider {
         }
         Ok(())
     }
+}
+
+fn spoken_words_bytes(units: usize) -> Result<usize, LanguageError> {
+    units
+        .checked_mul(size_of::<u16>() + size_of::<Range<usize>>())
+        .ok_or(LanguageError::Capacity)
 }

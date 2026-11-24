@@ -50,6 +50,8 @@ A personally recognized name or established form of address can draw attention e
 
 If two listeners know the same name as their own, both may orient. Neither gains certain identification from the shared name. Further context might identify one, leave both unsure, or give someone a genuine need to clarify. An alias matters only to someone who knows it. This exception does not test each conversation against every listener's biography, family, commercial interests or secrets. Overhearing “the mill floods at thaw” can matter through an already chosen supported watch or during a later justified thought. A private plan alone buys no search or call about that line.
 
+The [bundled spoken-clause experiment](../../worlds/base/speech.md#overheard-personal-references-experiment) tests a few recognizable forms. General interpretation remains available during an otherwise justified thought. Live use requires the [witness comparison](../../projects/witness-decisions-and-memory-tech-design.md#6-build-order-and-experiment-gates).
+
 The [56 medieval examples](medieval-examples.md) apply the same rules to routine work, surprises, politics and emergencies. Their model-call column identifies the first unresolved choice. Actual dispatch still requires current evidence, permission, capacity and funding.
 
 ## General behavior without a catalogue of lives

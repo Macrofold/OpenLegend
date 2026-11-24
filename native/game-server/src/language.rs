@@ -23,6 +23,7 @@ mod lexical;
 pub(crate) mod movement_attempt;
 mod speech;
 pub use lexical::LexicalVector;
+pub use openlegend_simulation::worlds::base_spoken_reference::{ClauseKind, SpokenReference};
 
 const NODE_DATA_SHA: &str = "2cac4f3277df9fa37f8ebd5d3459d4151e99f7d84d99fca5b7392fcd3c880ea9";
 const MAX_LIBRARY_BYTES: u64 = 128 * 1024 * 1024;

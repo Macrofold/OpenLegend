@@ -24,6 +24,12 @@ Neutral blurred placeholders may express an unintelligible run where the existin
 
 Recognition and spoken-name learning remain with [observer knowledge](knowledge.md); native reactions to the fixed acoustic cue remain with [animal sound responses](animal-sound-responses.md). Neither is derived from a guessed interpretation of missing words.
 
+## Overheard personal references experiment
+
+The [Rust matcher](../../../packages/domain/src/worlds/base/native/spoken_reference.rs) compares whole known self-names using the pinned word boundaries. Names preserve their spelling and case, with flexible spacing between name words. The finite grammar recognizes a name followed by “stole,” “did not steal,” or “didn't steal” (including a curly apostrophe), with “it,” “the money,” or “the toll money” as the complement. “Did [name] steal …?” is a supported question. Grammar words accept ordinary capitalization. A complete clause needs a received utterance or sentence boundary, or a paired double quote, straight or curly. A masked gap, ellipsis, or period belonging to a recognized initial or abbreviated title supplies no sentence break. After a gap, a straight quote can close something the listener missed, so it does not establish a quotation opening.
+
+“Oren” alone can draw attention. “Oren … money” with missing words can only give name recognition. “Oren pocketed the toll money” stays ordinary speech because that predicate is outside this experiment. Support for a name or clause never establishes who the speaker meant or whether a claim is true. The [live comparison](../../projects/witness-decisions-and-memory-tech-design.md#6-build-order-and-experiment-gates) determines whether this grammar is worth enabling. Expand the wording only when a repeatable play case shows an important missed interaction.
+
 ## Maintained records
 
 - Implementation and qualification: [NST01–NST10](../../maintainers/npc-speech-streaming.md), coordinated with [SPK](../../maintainers/speech-and-social-perception.md).
