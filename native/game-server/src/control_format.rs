@@ -18,9 +18,24 @@ const WORDS_JSON: &str = include_str!("../../../apps/server/src/world-control-di
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Words<'a> {
+    speeds: Vec<f64>,
     paused: &'a str,
     running_prefix: &'a str,
     running_suffix: &'a str,
+}
+
+fn words() -> Result<&'static Words<'static>, WorldError> {
+    static WORDS: OnceLock<Option<Words<'static>>> = OnceLock::new();
+    WORDS
+        .get_or_init(|| serde_json::from_str(WORDS_JSON).ok())
+        .as_ref()
+        .ok_or(WorldError::ProviderKind)
+}
+
+/// The same application debug choices are admitted by the host and displayed
+/// by the permitted browser. The installed world still owns its normal rate.
+pub(crate) fn speeds() -> Result<&'static [f64], WorldError> {
+    Ok(&words()?.speeds)
 }
 
 pub(crate) fn answer(
@@ -29,11 +44,7 @@ pub(crate) fn answer(
     speed: f64,
     budget: &ByteBudget,
 ) -> Result<RuntimeProviderInput, WorldError> {
-    static WORDS: OnceLock<Option<Words<'static>>> = OnceLock::new();
-    let words = WORDS
-        .get_or_init(|| serde_json::from_str(WORDS_JSON).ok())
-        .as_ref()
-        .ok_or(WorldError::ProviderKind)?;
+    let words = words()?;
     // Cover the word storage, temporary numeric rendering and answer wrapper
     // before constructing any of them. The answer retains only its own bytes.
     let workspace = budget

@@ -198,7 +198,7 @@ import { NativeActorRoster, type PreparedNativeActorRoster } from './native-acto
 import { NativeNavigation } from './native-navigation.js';
 import { beginNativeCommand } from './native-command.js';
 import { NativeInventoryReads } from './native-inventory-reads.js';
-import { worldSpeedRefusal, worldControlOutcome } from './world-control-outcome.js';
+import { CONTROL_SPEEDS, worldSpeedRefusal, worldControlOutcome } from './world-control-outcome.js';
 import {
   withNativeSourcePreparation,
   prepareNativeSource,
@@ -4629,6 +4629,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           privateDraftScope: privateDraftScopeKey(scope),
           commandRecoveryScope: commandRecoveryScopeKey(scope),
           canManageSaves,
+          timeSpeeds:
+            this.config.godMode && this.currentScope(scope, 'create') ? CONTROL_SPEEDS : undefined,
           accountId: scope.accountId,
           actorId: scope.actorId,
           controlGeneration: scope.controlGeneration,

@@ -10,7 +10,7 @@ export function worldControlOutcome(paused: boolean, speed: number) {
   };
 }
 
-export const CONTROL_SPEEDS: readonly number[] = [0.5, 1, 3, 8];
+export const CONTROL_SPEEDS: readonly number[] = display.speeds;
 
 /** Speed is application control policy, independent of the simulation owner. */
 export function worldSpeedRefusal(

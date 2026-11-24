@@ -1071,6 +1071,8 @@ export interface GameView {
     /** Another page holds current control, including while its stream is starting. */
     controlledElsewhere: boolean;
     canManageSaves: boolean;
+    /** Current creator debugging choices, provided only when available. */
+    timeSpeeds?: readonly number[];
     /** Creator or access manager: may open the separate World operations console. */
     canOperate?: boolean;
     /** May open the World Agent with both current creator and inspection grants. */

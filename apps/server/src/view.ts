@@ -1,3 +1,4 @@
+import { CONTROL_SPEEDS } from './world-control-outcome.js';
 import {
   memoizer,
   optional,
@@ -1012,6 +1013,10 @@ export async function projectView(
       privateDraftScope: privateDraftScopeKey(scope),
       commandRecoveryScope: commandRecoveryScopeKey(scope),
       canManageSaves: service.mayManageSaves(scope),
+      timeSpeeds:
+        service.config.godMode && service.currentScope(scope, 'create')
+          ? CONTROL_SPEEDS
+          : undefined,
       accountId: scope.accountId,
       actorId: scope.actorId,
       controlGeneration: scope.controlGeneration,

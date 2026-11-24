@@ -36,6 +36,11 @@ const TICK_SLICE: Duration = Duration::from_millis(32);
 const SUSPENDED_GAP: Duration = Duration::from_secs(2);
 const MAX_GAME_OFFER: f64 = 86400.0;
 
+struct SpeedChange {
+    value: f64,
+    creator: Arc<AuthorizedScope>,
+}
+
 struct Advance {
     seconds: f64,
     navigation_pending: bool,
@@ -110,6 +115,75 @@ impl Drop for CheckpointInterval<'_> {
     }
 }
 
+/// One monotonic host cursor for wall time and the still owed game time. The
+/// clock loop and a rare speed change use it under the same save-intake gate.
+struct ElapsedOffers {
+    through: Instant,
+    suspended: Duration,
+    cutover: Instant,
+    accepted_at: Option<f64>,
+    debt: f64,
+}
+
+impl ElapsedOffers {
+    fn new(start: Instant) -> Self {
+        Self {
+            through: start,
+            suspended: Duration::ZERO,
+            cutover: start,
+            accepted_at: None,
+            debt: 0.0,
+        }
+    }
+
+    fn discard(&mut self, through: Instant) {
+        self.through = through;
+        self.accepted_at = None;
+        openlegend_simulation::profile_count!(RELEASE_DEBT, (self.debt * 1_000_000.0) as u64);
+        self.debt = 0.0;
+    }
+
+    fn reset(&mut self, at: Instant, suspended: Duration) {
+        self.cutover = at;
+        self.suspended = suspended;
+        self.discard(at);
+    }
+
+    /// Credit only this interval and subtract the native progress that actually
+    /// committed since the last sample. Refusal consumes no owed game time.
+    fn admit(
+        &mut self,
+        through: Instant,
+        suspended: Duration,
+        accepted_at: f64,
+        ratio: f64,
+        next_ratio: Option<f64>,
+        inputs: Option<&WorldInputs>,
+    ) -> Result<Duration, WorldError> {
+        let gap = suspended.saturating_sub(self.suspended);
+        self.suspended = suspended;
+        let advance = self.accepted_at.map_or(0.0, |previous| accepted_at - previous);
+        let mut debt = (self.debt - advance).max(0.0);
+        if !gap.is_zero() {
+            if let Some(inputs) = inputs {
+                inputs.exclude()?;
+            }
+            openlegend_simulation::profile_count!(RELEASE_DEBT, (debt * 1_000_000.0) as u64);
+            debt = 0.0;
+        }
+        let elapsed = through.saturating_duration_since(self.through).saturating_sub(gap);
+        if let Some(inputs) = inputs {
+            inputs.credit(through - elapsed, through, accepted_at + debt, ratio, next_ratio)?;
+        }
+        let offered = elapsed.as_secs_f64() * ratio;
+        self.through = through;
+        self.accepted_at = Some(accepted_at);
+        self.debt = debt + offered;
+        openlegend_simulation::profile_count!(OFFERED, (offered * 1_000_000.0) as u64);
+        Ok(elapsed)
+    }
+}
+
 pub struct GameClock {
     game: Arc<CurrentServer>,
     saves: Arc<LiveSaves>,
@@ -119,7 +193,8 @@ pub struct GameClock {
     exit_grace: Duration,
     inputs: Option<Arc<WorldInputs>>,
     started: Instant,
-    accepted_reset: Arc<Mutex<Instant>>,
+    elapsed: Arc<Mutex<ElapsedOffers>>,
+    suspension: watch::Sender<Duration>,
     maintenance: Arc<OperatorMaintenance>,
     identity: Arc<tokio::sync::Mutex<RequestIdentity>>,
 }
@@ -142,7 +217,8 @@ impl GameClock {
             exit_grace: Duration::ZERO,
             inputs: None,
             started,
-            accepted_reset: Arc::new(Mutex::new(started)),
+            elapsed: Arc::new(Mutex::new(ElapsedOffers::new(started))),
+            suspension: watch::channel(Duration::ZERO).0,
             maintenance: Arc::new(OperatorMaintenance::default()),
             identity,
         }
@@ -197,7 +273,8 @@ impl GameClock {
         let store = self.game.store.clone();
         let budget = self.game.host.budget().clone();
         let persisted_operator = operator.as_ref().map(|(_, scope)| scope.clone());
-        let clock = self.accepted_reset.clone();
+        let elapsed = self.elapsed.clone();
+        let suspension = self.suspension.clone();
         let inputs = self.inputs.clone();
         let saves = self.saves.clone();
         let maintenance = self.maintenance.clone();
@@ -254,7 +331,10 @@ impl GameClock {
                             .map_err(|_| HostError::Poisoned)?
                             .take()
                             .ok_or(StoreError::StaleCut)?;
-                        *clock.lock().map_err(|_| HostError::Poisoned)? = Instant::now();
+                        elapsed
+                            .lock()
+                            .map_err(|_| HostError::Poisoned)?
+                            .reset(Instant::now(), *suspension.borrow());
                         if let Some(inputs) = inputs {
                             inputs.exclude()?;
                         }
@@ -321,19 +401,25 @@ impl GameClock {
         if paused == current.paused {
             return Ok((current, false));
         }
-        self.persist_control(RuntimeClock { paused, ..current }, true, || Ok(()))
+        self.persist_control(current, RuntimeClock { paused, ..current }, true, None, || Ok(()))
             .await?;
         Ok((RuntimeClock { paused, ..current }, true))
     }
 
-    pub(crate) async fn manual_pause(
+    pub(crate) async fn manual_control(
         &self,
         authority: Arc<Authority>,
         scope: Arc<AuthorizedScope>,
         setting: Option<bool>,
+        speed: Option<f64>,
     ) -> Result<bool, WorldError> {
-        self.set_manual_pause(setting, false, move || {
-            Ok(authority.current(&scope, Capability::Play, true, |_, _| ())?)
+        let change = speed.map(|value| SpeedChange { value, creator: scope.clone() });
+        self.set_manual_control(setting, change, false, move || {
+            authority.current(&scope, Capability::Play, true, |_, _| ())?;
+            if speed.is_some() {
+                authority.current(&scope, Capability::Create, true, |_, _| ())?;
+            }
+            Ok(())
         })
         .await
     }
@@ -345,23 +431,24 @@ impl GameClock {
         authority: Arc<Authority>,
         scope: Arc<AuthorizedScope>,
     ) -> Result<(), WorldError> {
-        self.set_manual_pause(Some(true), true, move || {
+        self.set_manual_control(Some(true), None, true, move || {
             Ok(authority.current(&scope, Capability::Save, false, |_, _| ())?)
         })
         .await?;
         Ok(())
     }
 
-    async fn set_manual_pause(
+    async fn set_manual_control(
         &self,
         setting: Option<bool>,
+        speed: Option<SpeedChange>,
         recovery: bool,
         validate: impl Fn() -> Result<(), WorldError> + Send + 'static,
     ) -> Result<bool, WorldError> {
         validate()?;
         let _protected = self.saves.enter_protected().await?;
         let previous = self.game.world.capture(NativeWorldSession::clock).await?;
-        if previous.maintenance && !recovery {
+        if previous.maintenance && !recovery && (setting.is_some() || speed.is_none()) {
             return Err(WorldError::OperatorMaintenance);
         }
         let visible = match &self.presence {
@@ -373,13 +460,18 @@ impl GameClock {
         }
         let manual = setting.unwrap_or(previous.manually_paused);
         let paused = previous.maintenance || manual || !(visible || previous.exit_exposure_active);
-        if manual != previous.manually_paused || paused != previous.paused {
+        let (speed, creator) = match speed {
+            Some(change) => (change.value, Some(change.creator)),
+            None => (previous.speed, None),
+        };
+        if manual != previous.manually_paused || paused != previous.paused || speed != previous.speed {
             let active = RuntimeClock {
                 paused,
                 manually_paused: manual,
+                speed,
                 ..previous
             };
-            self.persist_control(active, previous.paused || paused, validate)
+            self.persist_control(previous, active, previous.paused || paused, creator, validate)
                 .await?;
         } else {
             validate()?;
@@ -391,13 +483,21 @@ impl GameClock {
     /// transition. The caller supplies the current authorization check.
     async fn persist_control(
         &self,
+        previous: RuntimeClock,
         next: RuntimeClock,
         reset_elapsed: bool,
+        creator: Option<Arc<AuthorizedScope>>,
         validate: impl FnOnce() -> Result<(), WorldError> + Send + 'static,
     ) -> Result<(), WorldError> {
         let provider = self.game.clone();
         let store = self.game.store.clone();
         let world = self.game.world.clone();
+        let elapsed = self.elapsed.clone();
+        let suspension = self.suspension.clone();
+        let inputs = self.inputs.clone();
+        let checkpoints = self.checkpoints.clone();
+        let saves = self.saves.clone();
+        let base_ratio = self.base_ratio;
         self.game
             .world
             .execute_protected_then(
@@ -408,11 +508,13 @@ impl GameClock {
                     let game = provider.clone();
                     async move { game.answer_operation(question).await }
                 },
-                |value, _| {
+                move |value, _| {
                     let RuntimeDirectOutput::Prepared(value) = value else {
                         unreachable!("host control cannot preview")
                     };
-                    value.metadata_control().map(MetadataProjection::new)
+                    value.metadata_control().map(|metadata| {
+                        MetadataProjection::new(metadata).with_clock_creator(creator.clone())
+                    })
                 },
                 validate,
                 move |projection, prefix| -> ProtectedCommit<'_> {
@@ -421,23 +523,36 @@ impl GameClock {
                     )
                 },
                 move |_| {
+                    let mut offers = elapsed.lock().map_err(|_| HostError::Poisoned)?;
+                    let suspended = *suspension.borrow();
+                    let at = Instant::now();
+                    if reset_elapsed {
+                        offers.reset(at, suspended);
+                        if let Some(inputs) = inputs {
+                            inputs.exclude()?;
+                        }
+                        if !next.paused {
+                            saves.resume_semantic_index();
+                        }
+                    } else if previous.speed != next.speed {
+                        // The accepted change does not rescale earlier time or
+                        // either held input. The new ratio starts at this cut.
+                        let running = offers.admit(
+                            at,
+                            suspended,
+                            previous.at,
+                            base_ratio * previous.speed,
+                            Some(base_ratio * next.speed),
+                            inputs.as_deref(),
+                        )?;
+                        offers.cutover = at;
+                        checkpoints.advance(running);
+                    }
                     world.publish_decision_clock(next.paused);
                     Ok(())
                 },
             )
             .await?;
-        if reset_elapsed {
-            *self
-                .accepted_reset
-                .lock()
-                .map_err(|_| HostError::Poisoned)? = Instant::now();
-            if let Some(inputs) = &self.inputs {
-                inputs.exclude()?;
-            }
-            if !next.paused {
-                self.saves.resume_semantic_index();
-            }
-        }
         self.saves.signal_view();
         Ok(())
     }
@@ -765,7 +880,14 @@ impl GameClock {
     /// catch-up publications. It must be joined before the save task drains.
     pub async fn run(&self, stop: watch::Receiver<bool>) -> Result<(), WorldError> {
         let started = Instant::now();
-        let (offered, sample) = watch::channel(Duration::ZERO);
+        let offered = self.suspension.clone();
+        let sample = offered.subscribe();
+        {
+            let mut clock = self.elapsed.lock().map_err(|_| HostError::Poisoned)?;
+            if clock.cutover <= started {
+                clock.discard(started);
+            }
+        }
         // Sample suspension independently. An operation waiting for geometry
         // or the next accepted turn must not discard the elapsed time it owes.
         let mut sampler = tokio::task::JoinSet::new();
@@ -788,7 +910,7 @@ impl GameClock {
             }
         });
         let mut route = tokio::task::JoinSet::new();
-        let result = self.run_offers(stop, started, sample, &mut route).await;
+        let result = self.run_offers(stop, sample, &mut route).await;
         // A deferred route holds the server while it awaits geometry. Join
         // its cancellation before the listener can release the world owner.
         route.shutdown().await;
@@ -799,19 +921,11 @@ impl GameClock {
     async fn run_offers(
         &self,
         mut stop: watch::Receiver<bool>,
-        started: Instant,
         mut sample: watch::Receiver<Duration>,
         route: &mut tokio::task::JoinSet<Result<(), WorldError>>,
     ) -> Result<(), WorldError> {
-        let mut previous = started;
-        let mut excluded = Duration::ZERO;
-        let mut debt = 0.0;
         let mut more = false;
         let mut was_paused = true;
-        let mut reset = *self
-            .accepted_reset
-            .lock()
-            .map_err(|_| HostError::Poisoned)?;
         while !*stop.borrow() {
             if more {
                 tokio::task::yield_now().await;
@@ -821,8 +935,8 @@ impl GameClock {
                     _ = sample.changed() => (),
                 }
             }
+            let suspended = *sample.borrow_and_update();
             let now = Instant::now();
-            let elapsed = now.saturating_duration_since(previous);
             let (clock, changed) = match self.clock_with_presence().await {
                 Err(WorldError::Storage(StoreError::WriterUnavailable)
                     | WorldError::Access(AccessError::Busy | AccessError::Changed)
@@ -843,52 +957,39 @@ impl GameClock {
                 elapsed: Duration::ZERO,
             };
             let _ordinary = self.saves.enter_ordinary().await;
-            let from = previous;
-            previous = now;
-            let suspended = *sample.borrow_and_update();
-            let gap = suspended.saturating_sub(excluded);
-            excluded = suspended;
-            let latest_reset = *self
-                .accepted_reset
-                .lock()
-                .map_err(|_| HostError::Poisoned)?;
-            if clock.paused || changed || latest_reset != reset {
-                reset = latest_reset;
-                previous = if clock.paused {
-                    Instant::now()
-                } else {
-                    latest_reset
-                };
-                if clock.paused
-                    && !was_paused
-                    && let Some(inputs) = &self.inputs
-                {
-                    inputs.exclude()?;
+            let debt = {
+                let mut offers = self.elapsed.lock().map_err(|_| HostError::Poisoned)?;
+                // A protected clock commit may have passed this sample while it
+                // waited for admission. Retry the existing wake without charging
+                // that old cut against a newer rate or discarding its frontier.
+                if offers.cutover > now {
+                    more = true;
+                    continue;
                 }
-                was_paused = true;
-                openlegend_simulation::profile_count!(RELEASE_DEBT, (debt * 1_000_000.0) as u64);
-                debt = 0.0;
-                more = false;
-                continue;
-            }
-            was_paused = false;
-            if !gap.is_zero() {
-                if let Some(inputs) = &self.inputs {
-                    inputs.exclude()?;
+                if clock.paused || changed {
+                    offers.suspended = suspended;
+                    offers.discard(now);
+                    if clock.paused
+                        && !was_paused
+                        && let Some(inputs) = &self.inputs
+                    {
+                        inputs.exclude()?;
+                    }
+                    was_paused = true;
+                    more = false;
+                    continue;
                 }
-                openlegend_simulation::profile_count!(RELEASE_DEBT, (debt * 1_000_000.0) as u64);
-                debt = 0.0;
-            }
-            let ratio = clock.speed * self.base_ratio;
-            let admitted = elapsed.saturating_sub(gap);
-            if let Some(inputs) = &self.inputs {
-                let entrance = if gap.is_zero() { from } else { now - admitted };
-                inputs.credit(entrance, now, clock.at + debt, ratio)?;
-            }
-            checkpoint.elapsed = admitted;
-            let offered = admitted.as_secs_f64() * ratio;
-            debt += offered;
-            openlegend_simulation::profile_count!(OFFERED, (offered * 1_000_000.0) as u64);
+                was_paused = false;
+                checkpoint.elapsed = offers.admit(
+                    now,
+                    suspended,
+                    clock.at,
+                    clock.speed * self.base_ratio,
+                    None,
+                    self.inputs.as_deref(),
+                )?;
+                offers.debt
+            };
             more = false;
             if debt < 1e-6 {
                 continue;
@@ -920,8 +1021,8 @@ impl GameClock {
             };
             let routes = match result {
                 Ok(Some(advance)) => {
-                    debt = (debt - advance.seconds).max(0.0);
-                    more = debt >= 1e-6 && advance.seconds > 0.0 && !advance.navigation_pending;
+                    more = debt - advance.seconds >= 1e-6
+                        && advance.seconds > 0.0 && !advance.navigation_pending;
                     (advance.deferred_routes || advance.navigation_pending)
                         .then_some(advance.navigation_pending)
                 }

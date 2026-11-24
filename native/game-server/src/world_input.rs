@@ -418,19 +418,22 @@ impl WorldInputs {
 
     /// Only the host's real elapsed interval credits movement. The stored
     /// frontier lets an intention arriving between offers begin at its own time.
+    /// A changed clock speed uses the old rate for this interval and admits
+    /// new intentions at the next rate from the very same cut.
     pub(crate) fn credit(
         &self,
         from: Instant,
         to: Instant,
         frontier: f64,
         ratio: f64,
+        next_ratio: Option<f64>,
     ) -> Result<(), AccessError> {
         let mut state = self.state.lock().map_err(|_| AccessError::Availability)?;
         let end = frontier + to.saturating_duration_since(from).as_secs_f64() * ratio;
         state.clock = Some(ClockAccount {
             through: to,
             frontier: end,
-            ratio,
+            ratio: next_ratio.unwrap_or(ratio),
         });
         for input in state.actors.values_mut() {
             if let Some(window) = &mut input.steering

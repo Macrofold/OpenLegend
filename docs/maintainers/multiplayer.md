@@ -77,7 +77,7 @@ The [continued browser investigation](../verification/multiplayer-entry-maintena
 
 The October 22 implementation review corrected an events-connection cleanup gap: a tab closed during authentication could otherwise remain registered indefinitely and block automatic return or character departure. Existing browser checks now wait for native cleanup after real document closure before refocus or simulated-time advancement; their deadlines and gameplay assertions remain. [Review evidence](../verification/custom-models.md#requested-full-implementation-review--october-22) retains the reproduced leak, fix and exact-head CI outcome.
 
-The current [time and tab-control browser check](../../tests/browser/time.spec.ts) stops at the former **Time settings** button before it reaches the second tab. Update its clock steps to exercise the current authorized Time controls. A focused two-tab check on November 21 displayed **Open Legend is open in another tab.** at a 390-pixel viewport and transferred control with **Resume Here**.
+The [current Rust time and tab-control journey](../verification/multiplayer-entry-maintenance.md#stand-alone-rust-time-controls--november-23-2026) uses **Game → Time** for a signed creator. It covers actual clock progress, manual pause, reload, both departures, two-tab transfers, narrow layout, shared logout and fresh sign-in. The separate clock checks qualify the rate boundary through contention, cold reopening and refusal after Creator access is removed.
 
 ## Identity provider — Auth0
 

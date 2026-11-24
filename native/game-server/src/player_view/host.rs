@@ -96,6 +96,10 @@ pub(crate) async fn capture_host(
             controlling: access.controlling,
             controlled_elsewhere,
             can_manage_saves: access.can_save,
+            time_speeds: (god_mode && access.can_create)
+                .then(crate::control_format::speeds)
+                .transpose()
+                .map_err(ViewError::World)?,
             can_operate: access.can_operate,
             can_inspect_mind: (god_mode && access.can_inspect).then_some(true),
             can_inspect_intelligence: (god_mode && access.can_inspect).then_some(true),

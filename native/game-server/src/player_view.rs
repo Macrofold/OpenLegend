@@ -95,6 +95,8 @@ pub struct PlayerAccess {
     pub controlling: bool,
     pub controlled_elsewhere: bool,
     pub can_manage_saves: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_speeds: Option<&'static [f64]>,
     pub can_operate: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub can_inspect_mind: Option<bool>,

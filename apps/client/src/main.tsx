@@ -173,7 +173,6 @@ type PanelId =
   | 'intelligence'
   | 'help'
   | 'mind';
-const timeSpeeds = [0.5, 1, 3, 8];
 const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?: boolean }> = {
   trade: { title: 'Trade', side: 'right', wide: true },
   map: { title: 'Map', side: 'left', wide: true },
@@ -1958,7 +1957,8 @@ function App({
         e.preventDefault();
         if (e.repeat) return;
         if (e.key.toLowerCase() === 'p') void pause();
-        else if (view.godMode) {
+        else if (view.access?.timeSpeeds) {
+          const timeSpeeds = view.access.timeSpeeds;
           const speed =
             e.code === 'BracketRight'
               ? timeSpeeds.find((value) => value > view.clock.speed)
@@ -2393,13 +2393,13 @@ function App({
           </Section>
         );
       case 'time':
-        return view.godMode ? (
+        return view.access?.timeSpeeds ? (
           <>
             <DaylightDial clock={view.clock} />
             {pauseButton}
             <SegmentedControl
               label="Time speed"
-              options={timeSpeeds.map((n) => ({ value: String(n), label: `${n}×` }))}
+              options={view.access.timeSpeeds.map((n) => ({ value: String(n), label: `${n}×` }))}
               value={String(view.clock.speed)}
               disabled={!connected || speedPending}
               onChange={(value) => void changeSpeed(Number(value))}
@@ -2802,7 +2802,9 @@ function App({
                     </p>
                   </>
                 )}
-                {view.godMode && <Button onPress={() => openGameTask('time')}>Time</Button>}
+                {view.access?.timeSpeeds && (
+                  <Button onPress={() => openGameTask('time')}>Time</Button>
+                )}
                 {canInspectWorld && (
                   <Button onPress={() => openGameTask('world-inspection')}>Inspect world</Button>
                 )}

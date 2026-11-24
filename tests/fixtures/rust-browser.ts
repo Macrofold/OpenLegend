@@ -17,7 +17,7 @@ function input(name: string): string {
 /** Restore a current-format, local-auth fixture backup into one owned database
  * before serving the production browser. The test runner owns all three
  * lifetimes (process, database, private checkpoint directory) until close. */
-export async function rustBrowserGame() {
+export async function rustBrowserGame(options: { godMode?: boolean } = {}) {
   const executable = input('OPENLEGEND_TEST_RUST_EXECUTABLE');
   const release = input('OPENLEGEND_TEST_RUST_RELEASE');
   const backup = input('OPENLEGEND_TEST_RUST_BACKUP');
@@ -45,6 +45,7 @@ export async function rustBrowserGame() {
       OPEN_LEGEND_DATA_DIR: directory,
       OPEN_LEGEND_DATABASE_URL: url.href,
       AI_BUDGET_USD: '0',
+      OPEN_LEGEND_GOD_MODE: String(options.godMode ?? false),
     };
     await run(executable, ['restore-world', release, backup], { env, timeout: 60_000 });
 

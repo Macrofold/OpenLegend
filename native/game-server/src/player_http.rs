@@ -428,12 +428,31 @@ async fn manual_clock(State(state): State<PlayerRoutes>, request: Request) -> Re
             Ok(input) => input,
             Err(error) => return error,
         };
-    if input.speed.is_some() {
-        return refusal(
-            StatusCode::OK,
-            "forbidden",
-            "Game speed is available in God mode only.",
-        );
+    if let Some(speed) = input.speed {
+        if !state.god_mode {
+            return refusal(
+                StatusCode::OK,
+                "forbidden",
+                "Game speed is available in God mode only.",
+            );
+        }
+        if let Err(error) = state
+            .authority
+            .current(&authorized, Capability::Create, true, |_, _| ())
+        {
+            return access_failure(error);
+        }
+        match crate::control_format::speeds() {
+            Ok(choices) if choices.contains(&speed) => {}
+            Ok(_) => {
+                return refusal(
+                    StatusCode::OK,
+                    "speed",
+                    "Choose one of the available game speeds.",
+                );
+            }
+            Err(error) => return failed(error),
+        }
     }
     if input
         .client_id
@@ -455,7 +474,7 @@ async fn manual_clock(State(state): State<PlayerRoutes>, request: Request) -> Re
     }
     match state
         .clock
-        .manual_pause(state.authority.clone(), authorized, input.paused)
+        .manual_control(state.authority.clone(), authorized, input.paused, input.speed)
         .await
     {
         Ok(true) => control_response(&state, true, "control", "World controls updated."),
@@ -468,6 +487,11 @@ async fn manual_clock(State(state): State<PlayerRoutes>, request: Request) -> Re
             StatusCode::CONFLICT,
             "maintenance",
             crate::operator_maintenance::HOLD_MESSAGE,
+        ),
+        Err(WorldError::RecoveryRequired) => refusal(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "recovery-required",
+            "The clock change is unconfirmed. Reopen the world before changing its clock again.",
         ),
         Err(error) => failed(error),
     }
