@@ -314,6 +314,12 @@ The earlier browser erased the recovery reference in the same scenario, even tho
 
 The fixed browser tree and index were `b397a3bb7886` and `bbb12de09a41`. Both browsers used Rust executable `0e50d59d18f9`. The local archive `nsc04-browser-stream-receipts-20261123` (`ee1ee7994b99`) preserves results `616efa7979dc`, `79ab7d04a2bd`, `62ef0ddd076e` and `f1ce462f9640`, plus the earlier fixture failures. All browsers, listeners and disposable databases were closed. This is local correctness evidence.
 
+### Reconnecting after the reply to an accepted walk is lost
+
+A real scene click sent one Walk in signed Chrome. After Rust accepted the request, the fixture immediately dropped its response. The running stream showed the player reach the exact clicked position. Repeating the command under its original control returned the same action with one unchanged saved receipt. After closing the stream, the replacement stream showed the completed position and the receipt endpoint recovered that same result. A fresh control scope could not replay the effect. After restart, the same signed session recovered the position and receipt through HTTP, then saved a new walk.
+
+Closing the only stream at the instant of acceptance in an earlier diagnostic started the authored departure and interrupted active work. A separate retry used the old full command under a new control generation and correctly received an idempotency conflict. The passing run maintains the real reply loss and exercises receipt recovery under the fresh scope. It uses executable `3861b9d24ef7`, tree `25101021c9b8`, browser index `a982d38f9d` and result `d8bafa9d48e6`. Archive `nsc04-lost-walk-20261123`, manifest `be4f8f285eae`, preserves the earlier outcomes. Both listeners closed with zero tracked reservations. No temporary databases remained.
+
 ## Stand-alone Rust public spectator map — November 22, 2026
 
 A separately signed-in spectator opened World operations in Chromium. It drew six bodies and the authored terrain without names, identifiers, inventories, speech or a private note saved during the run. The initial response matched the Source projection of the same opening, including each body’s category, position and order. The normal five-second refresh showed the player move from x=24.0 to x=23.3. Spectating alone left the clock paused and opened no gameplay stream. The spectator’s direct character state, controls, stream and walk requests were refused. An inspect-only account could see permitted status without the map.
