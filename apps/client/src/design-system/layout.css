@@ -2335,14 +2335,27 @@ body,
   padding: var(--space-3);
   color: var(--ink-muted);
 }
-.ol-json-detail > div {
+.ol-json-detail > div:first-child {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--line);
 }
-.ol-json-detail textarea {
+.ol-memory-edit-fields {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-3);
+}
+.ol-memory-edit-fields > label {
+  display: grid;
+  gap: var(--space-1);
+}
+.ol-json-detail > textarea,
+.ol-memory-edit-fields > textarea {
   width: 100%;
   min-height: 0;
   padding: var(--space-3);

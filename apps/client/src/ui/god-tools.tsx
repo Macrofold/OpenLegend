@@ -553,7 +553,7 @@ function MemoryEditor({
           {current.json === undefined ? (
             <LoadingIndicator active label="Loading JSON" className="ol-json-loading" />
           ) : edit ? (
-            <>
+            <div className="ol-memory-edit-fields">
               <label>
                 Memory importance
                 <input
@@ -597,7 +597,7 @@ function MemoryEditor({
                 </p>
               )}
               <textarea readOnly aria-label="Memory JSON" value={current.json} />
-            </>
+            </div>
           ) : (
             update && (
               <JsonDraft
