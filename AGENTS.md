@@ -173,9 +173,9 @@ Continue across stages; progress reports, a first implementation or an intermedi
 
 A required measurement may report failure; a required pass remains unmet. Optional diagnostics/improvements do not enlarge delivery scope. Unavailable external evidence stays unaccepted; finish independent authorized work first.
 
-**Clean up as part of finishing.** Separate temporary outputs from deliverables. Use the creating tool’s normal cleanup for its known disposable files once their last user is done and the retained results work with their companion files. Keep this quick. Routine cleanup needs no inventory, hashes, disk scan, separate agent turn or cleanup report.
+**Each task owns its temporary files.** Use, edit and clean up only scratch created for this task by you or its tools. Keep deliverables separate. If another task needs an output, put it in its intended shared location before handing it over. Reuse shared inputs and caches through their existing owners.
 
-Mention a bulky leftover in the existing handoff only if it needs another decision or a later use. Give its location and what will release it. Preserve active work, explicit keep requests and [required art originals and iterations](docs/asset-workflow.md#where-files-belong). Leave uncertain files with their owner. Names, patterns and age alone never authorize deletion.
+Use normal tool cleanup after the last use, once retained results work with their companion files. Leave unfamiliar files alone, even inside task scratch. Preserve explicit keep requests and [required art originals and iterations](docs/asset-workflow.md#where-files-belong). If bulky scratch must stay, mention where it is and what will release it in the handoff. Routine cleanup needs no inventory, hashing, disk scan, separate agent turn or report.
 
 Once agreed deliverables, affected-diff review and selected required checks pass, finish. Reopen only for a concrete finding, invalidated evidence or explicit requirement; unchanged broader qualification does not expand reconciliation. Use [Reporting work](#reporting-work).
 
