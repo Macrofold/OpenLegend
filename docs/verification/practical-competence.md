@@ -175,7 +175,13 @@ A disposable PostgreSQL opening used the unchanged target from Main seed 1086 an
 
 The player walked past the target, saved through the ordinary autosave, and reopened the same PostgreSQL world with Node absent from the server runtime. The full saved target row and named placement matched across restart. The browser resumed control and the next walk saved its new position. In a separate startup within the same disposable database, the server refused an uninstalled attribute reference and left the damaged row untouched. Both ordinary shutdowns succeeded and the fixture database was dropped.
 
-Frozen source `9549f272a1e63b5bcde890d078fc2317dd76eb19`, binary SHA-256 `34dadc648aae21ddc90e1c6220f421aed646f666392625d5e84166e710d60001`. The qualification covers the standing target's installation, permitted observation and saved continuation. The stand-alone practice command, ammunition holds, released flights and earned practice remain open under [NSC04-R4](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server).
+Frozen source tree `9549f272a1e63b5bcde890d078fc2317dd76eb19`, binary SHA-256 `34dadc648aae21ddc90e1c6220f421aed646f666392625d5e84166e710d60001`. This check covers the standing target's installation, permitted observation and saved continuation. The [live sling check](#live-sling-practice-through-the-rust-browser--november-22-2026) covers taking the shot on Rust.
+
+## Completed practice history on the stand-alone Rust server — November 22, 2026
+
+Source equipped the authored Field sling in the same opening and fired a real practice shot. Release at game second 18 spent one of three stones. The target was hit at second 21.71079506305589. Rust opened the resulting current PostgreSQL world and returned the player's rank and one release with the exact occurrence and event IDs and the original activity description. The target's public view did not contain private practice evidence. The committed release and terminal ammunition claim matched Source. After an ordinary walk and save, Rust reopened the same database, restored control, showed the same practice evidence and saved another walk. Both Rust processes exited cleanly. Node was absent from their runtime.
+
+Frozen source tree `8600875ef82789624b5cd5dc07e7d6d8fa021fde`, binary SHA-256 `02fe0228d0fbbaaf0a2c9c7b728712baa8220781797b29f6a9710bb35a1a53f9`. Retained result `sling-practice-20261121/projectile/caller-h5r/result.json` starts `6329e163cc5b`. This run qualifies opening and continuing after a completed shot.
 
 ## Live sling practice through the Rust browser — November 22, 2026
 
