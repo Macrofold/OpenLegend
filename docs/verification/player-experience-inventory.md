@@ -167,6 +167,12 @@ Inspection recorded one private item observation. Exact request replay returned 
 
 The executable `a88679b62616…` uses tree `b54a54463821…` and the existing production browser bundle `71d2b21a3a5b…`, with Node absent from the Rust server process. The comparisons are recorded in `source-control-r3`, `native-baseline`, `native-candidate`, `native-stale`, and `native-stock` under `nsc04-authored-cache-20261122`. The pinned build, TypeScript and network checks, affected formatting, and generated opening check passed. The disposable databases and processes were removed. This was a correctness check.
 
+## Inventory refresh during another player's movement
+
+Two players signed in separately through the Rust listener. One received 20 distinct position updates from the other's walks while keeping inventory search and focus. Those updates caused zero inventory reads. One ordinary Drop from the open inventory then refreshed the exact carried lot and kept the search in place. The browser recorded no page errors or model calls.
+
+The check used executable `39dd07b0ae08` and saved opening manifest `33473af970d4`. Local archive `nsc04-r6-inventory-browser-20261124` retains the passing result `91d1c4300480`, the executable and fixture identities, and two setup failures before sign-in. Chrome and the PostgreSQL fixtures closed.
+
 ## Grouped Move and Drop on the stand-alone Rust server — November 22, 2026
 
 A signed-in Chrome player opened a pouch holding two equivalent two-unit lots. The **Move an amount…** control moved three units into the enclosing bag. One original lot moved whole and the other kept a one-unit remainder. The new one-unit lot kept its own identity. The enclosing bag’s packed load stayed at seven because the move was within its contents. **Drop an amount…** then moved four units from three separate lots into one ground pile and wrote one drop event. The enclosing bag’s load fell to three and the pouch’s load stayed at one.

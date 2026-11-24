@@ -14,13 +14,35 @@ function input(name: string): string {
   return value;
 }
 
-/** Restore a current-format, local-auth fixture backup into one owned database
+/** Restore a current-format local or loopback sign-in backup into one owned database
  * before serving the production browser. The test runner owns all three
  * lifetimes (process, database, private checkpoint directory) until close. */
-export async function rustBrowserGame(options: { godMode?: boolean } = {}) {
+export async function rustBrowserGame({
+  godMode = false,
+  oidc,
+}: {
+  godMode?: boolean;
+  oidc?: { origin: string; issuer: string; clientId: string };
+} = {}) {
   const executable = input('OPENLEGEND_TEST_RUST_EXECUTABLE');
   const release = input('OPENLEGEND_TEST_RUST_RELEASE');
   const backup = input('OPENLEGEND_TEST_RUST_BACKUP');
+  const origin = oidc ? new URL(oidc.origin) : undefined;
+  if (oidc) {
+    const issuer = new URL(oidc.issuer);
+    if (
+      origin?.protocol !== 'http:' ||
+      origin.hostname !== '127.0.0.1' ||
+      origin.origin !== oidc.origin ||
+      !origin.port ||
+      issuer.protocol !== 'http:' ||
+      !['127.0.0.1', 'localhost'].includes(issuer.hostname) ||
+      !oidc.clientId
+    )
+      throw new Error(
+        'The Rust browser fixture requires its loopback sign-in provider and origin.',
+      );
+  }
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-browser-rust-'));
   let closeDatabase: (() => Promise<void>) | undefined;
   let closeServer: (() => Promise<void>) | undefined;
@@ -39,13 +61,19 @@ export async function rustBrowserGame(options: { godMode?: boolean } = {}) {
     url.searchParams.set('sslmode', 'disable');
     const env = {
       PATH: '/usr/bin:/bin',
-      PORT: '0',
-      OPEN_LEGEND_AUTH_MODE: 'local',
+      PORT: origin?.port ?? '0',
+      OPEN_LEGEND_AUTH_MODE: oidc ? 'oidc' : 'local',
       OPEN_LEGEND_HOST: '127.0.0.1',
       OPEN_LEGEND_DATA_DIR: directory,
       OPEN_LEGEND_DATABASE_URL: url.href,
       AI_BUDGET_USD: '0',
-      OPEN_LEGEND_GOD_MODE: String(options.godMode ?? false),
+      OPEN_LEGEND_GOD_MODE: String(godMode),
+      ...(oidc && {
+        OPEN_LEGEND_PUBLIC_ORIGIN: oidc.origin,
+        OPEN_LEGEND_OIDC_LOOPBACK_HTTP: 'true',
+        OPEN_LEGEND_OIDC_ISSUER: oidc.issuer,
+        OPEN_LEGEND_OIDC_CLIENT_ID: oidc.clientId,
+      }),
     };
     await run(executable, ['restore-world', release, backup], { env, timeout: 60_000 });
 
