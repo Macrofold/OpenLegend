@@ -2,12 +2,12 @@ import {
   compileDecisionTask,
   prepareDecisionTask,
   type DecisionTask,
-} from '../../apps/server/src/decision-task.js';
+} from '../../apps/server/src/decision-task-compiler.js';
 import type { JudgmentAnswer } from '../../packages/ai/src/index.js';
 import { modelInput } from './corpus.js';
 import type { BenchmarkTaskAdapter } from './run.js';
 
-/** Reuse production wording and typed decoding. Large retained contexts are allowed
+/** Reuse the original fallback prompt and typed decoder. Large retained contexts are allowed
  * only by this offline study; transport and financial admission remain bounded. */
 export function fallbackTaskAdapter(
   referenceReport: NonNullable<BenchmarkTaskAdapter['referenceReport']>,

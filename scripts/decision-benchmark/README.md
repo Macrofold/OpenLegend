@@ -30,6 +30,8 @@ A native choice can select a complete structured proposal: action, source-linked
 
 ## Commands
 
+Validation and fallback preparation run without a game server. The fallback compiler uses the recorded prompt, schema and strict decoder without importing live request handling. The offline check validated 4,000 questions and prepared the same 48 fallback cases with matching request digests. It made no provider calls.
+
 Run from the repository root. Generated output must be outside the repository.
 
 ```sh
