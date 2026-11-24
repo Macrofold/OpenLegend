@@ -33,7 +33,7 @@ pub(super) async fn regenerate(State(state): State<PlayerRoutes>, request: Reque
     };
     let (parts, body) = request.into_parts();
     let selected = match scope(&state.authority, &parts.headers, None).await {
-        Ok(selected) => selected,
+        Ok(selected) => Arc::new(selected),
         Err(error) => return access_failure(error),
     };
     let (input, custody): (Regenerate, _) =
@@ -66,16 +66,23 @@ pub(super) async fn regenerate(State(state): State<PlayerRoutes>, request: Reque
         state
             .authority
             .current(&selected, Capability::Play, false, |_, _| ())?;
-        let fields = &selected.scope;
+        let authority = state.authority.clone();
+        let regeneration = selected.clone();
         let ok = state
             .game
             .store
             .regenerate_story(
-                fields.world_id.clone(),
-                fields.account_id.clone(),
-                fields.actor_id.clone(),
+                selected.scope.clone(),
                 input.id,
                 input.request_id,
+                move || {
+                    authority
+                        .current(&regeneration, Capability::Play, false, |_, _| ())
+                        .map_err(|error| match error {
+                            AccessError::Availability => StoreError::WriterUnavailable,
+                            _ => StoreError::StaleCut,
+                        })
+                },
             )
             .await
             .map_err(WorldError::Commit)?;

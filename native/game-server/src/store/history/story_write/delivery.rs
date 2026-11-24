@@ -7,10 +7,13 @@ use super::super::{
     transcript::{VerifiedEventBody, retained_event},
 };
 use super::{StoryJob, StorySource, TranscriptItem};
-use crate::language::LanguageProvider;
 use crate::store::{
     CommitError, DurableHead, Store, StoreError, StoreResult, durable_head, ordinal,
     read::admitted_query, sql_ordinal,
+};
+use crate::{
+    authority::{RequestScope, assert_saved_grant},
+    language::LanguageProvider,
 };
 use openlegend_simulation::{
     encoding::json_record, host::ByteReservation, narration::native_text,
@@ -377,42 +380,65 @@ impl Store {
 
     /// Repeat the same explicit request without requeueing or spending. The
     /// published passage never changes its Journal ID or chronological anchor.
+    /// The caller rechecks in-memory authority before commit, including logout
+    /// or a grant change waiting behind this transaction.
     pub(crate) async fn regenerate_story(
         self: &Arc<Self>,
-        world: String,
-        owner: String,
-        actor: String,
+        scope: RequestScope,
         id: String,
         request: String,
+        authorize: impl FnOnce() -> StoreResult<()> + Send + 'static,
     ) -> Result<bool, CommitError> {
         let store = self.clone();
         self.operational(move |tx| Box::pin(async move {
+            let (world, owner, actor) = (&scope.world_id, &scope.account_id, &scope.actor_id);
             let key = format!("story-regeneration:{world}:{owner}:{request}");
-            if let Some(prior) = tx.query_opt("SELECT value FROM meta WHERE key=$1", &[&key]).await? {
-                return Ok(prior.try_get::<_, &str>(0)? == id);
+            let prior = tx.query_opt(
+                "SELECT value, EXISTS (SELECT 1 FROM story_jobs
+                   WHERE world_id=$2 AND owner_id=$3 AND actor_id=$4 AND id=$5)
+                 FROM meta WHERE key=$1",
+                &[&key, &world, &owner, &actor, &id],
+            ).await?;
+            if let Some(prior) = prior {
+                if prior.try_get::<_, &str>(0)? != id || !prior.try_get::<_, bool>(1)? {
+                    return Ok(false);
+                }
+                assert_saved_grant(tx, &scope, "play").await?;
+                authorize()?;
+                return Ok(true);
             }
-            let Some((mut job,_custody)) = store.story_job(tx,&world,&owner,&id).await? else { return Ok(false); };
-            if job.actor_id != actor || !matches!(job.state.as_str(),"completed"|"fallback"|"failed") { return Ok(false); }
-            let head = durable_head(tx).await?.filter(|head| head.world_id == world).ok_or(StoreError::StaleCut)?;
-            let grant_revision = story_grant(tx,&world,&owner,&actor).await?;
-            let story = ClaimedStory { head, grant_revision, job, _custody };
-            if store.story_sources_current(tx,&story,&[],&story.job.state,StorySourceScope::RetainedPassage).await?.is_none() { return Ok(false); }
-            job=story.job;
-            job.previous_item=Some(job.item.clone());
-            job.state="queued".into();
-            job.item.status="pending".into();
-            job.item.revision=job.item.revision.checked_add(1).ok_or(StoreError::Capacity)?;
-            let voice=tx.query_opt("SELECT CASE WHEN octet_length(value)<=64 THEN value END FROM meta WHERE key=$1", &[&format!("integration:narrator-voice:{owner}")]).await?;
+            let Some((mut job, _custody)) = store.story_job(tx, world, owner, &id).await? else {
+                return Ok(false);
+            };
+            if job.actor_id != *actor || !matches!(job.state.as_str(), "completed" | "fallback" | "failed") {
+                return Ok(false);
+            }
+            let head = durable_head(tx).await?.filter(|head| head.world_id == *world)
+                .ok_or(StoreError::StaleCut)?;
+            let story = ClaimedStory { head, grant_revision: Some(scope.grant_revision), job, _custody };
+            if store.story_sources_current(tx, &story, &[], &story.job.state, StorySourceScope::RetainedPassage).await?.is_none() {
+                return Ok(false);
+            }
+            job = story.job;
+            job.previous_item = Some(job.item.clone());
+            job.state = "queued".into();
+            job.item.status = "pending".into();
+            job.item.revision = job.item.revision.checked_add(1).ok_or(StoreError::Capacity)?;
+            let voice = tx.query_opt("SELECT CASE WHEN octet_length(value)<=64 THEN value END FROM meta WHERE key=$1", &[&format!("integration:narrator-voice:{owner}")]).await?;
             if let Some(voice) = voice {
-                let voice: &str=voice.try_get::<_,Option<&str>>(0)?.ok_or(StoreError::InvalidRecord)?;
-                job.voice = serde_json::from_str(voice).map_err(|_|StoreError::InvalidRecord)?;
-                if !matches!(job.voice.as_str(),"restrained"|"lyrical"|"wry") { return Err(StoreError::InvalidRecord); }
+                let voice: &str = voice.try_get::<_, Option<&str>>(0)?.ok_or(StoreError::InvalidRecord)?;
+                job.voice = serde_json::from_str(voice).map_err(|_| StoreError::InvalidRecord)?;
+                if !matches!(job.voice.as_str(), "restrained" | "lyrical" | "wry") { return Err(StoreError::InvalidRecord); }
             }
             job.item.voice.clone_from(&job.voice);
-            tx.execute("DELETE FROM story_banners WHERE world_id=$1 AND owner_id=$2 AND id=$3",&[&world,&owner,&id]).await?;
-            write_story(tx,&world,&job).await?;
-            write_narration(tx,&world,&job.item,&owner,false).await?;
-            tx.execute("INSERT INTO meta VALUES ($1,$2)",&[&key,&id]).await?;
+            tx.execute("DELETE FROM story_banners WHERE world_id=$1 AND owner_id=$2 AND id=$3", &[&world, &owner, &id]).await?;
+            write_story(tx, world, &job).await?;
+            write_narration(tx, world, &job.item, owner, false).await?;
+            tx.execute("INSERT INTO meta VALUES ($1,$2)", &[&key, &id]).await?;
+            // The writer may have waited on storage after HTTP authorization.
+            // A rejected scope rolls back the queue, the banner and its receipt.
+            assert_saved_grant(tx, &scope, "play").await?;
+            authorize()?;
             Ok(true)
         })).await
     }

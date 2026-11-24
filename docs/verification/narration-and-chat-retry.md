@@ -114,6 +114,14 @@ On November 22, 2026, a signed-in Chromium player picked up and inspected a fish
 
 The Rust tree was `b204838e7bb57c64d8963dbec3619c1dd2bdd4cf` and the executable SHA-256 was `821bc304db84393599fbe3268b6d3423caba5595d1a88cca98f74373eee97629`. The `nsc04-journal-queued-resume-20261122` archive has manifest `1fbb1a57398aeae58fe581101f0e49c3cf8e47317d94119bcca9338587a396c8`. It includes the initial browser pause timeout and the completed repeat using the signed pause and resume endpoint. Both disposable databases were removed. No paid call or speed comparison ran.
 
+### Signed regeneration and cold retry — November 24, 2026
+
+A signed player picked up and inspected a fish, then read its completed private Journal entry. An explicit regeneration used one more controlled HTTPS request and saved a replacement at the same ID, time and order. Repeating the same request before shutdown and from a fresh signed session after restart returned the original result. The saved passage, banner and two settled attempts stayed unchanged across the cold retry. Using the same request ID for a different story was refused.
+
+An earlier control held the original story row during regeneration, signed out before releasing it, and got a stale-authority response. That control still requeued the entry, removed its banner and recorded the request. The replacement checks the exact initiating session and grant in the writer before committing. The November 24 gameplay run verifies valid regeneration and replay. A signed run of the repaired held-signout case remains open. The earlier two-account checks remain the evidence for denying a non-owner.
+
+The normal check used tree `a564f16ffe3662e53dc9f7c8744f1a5a40aa273e` and executable `55bbc1883e3f062249d9cd3dfe4c6baa467681b20e5ae562ae68c4459f2e28fd`. Both runs closed their listeners and removed their disposable PostgreSQL databases. The `nsc04-journal-regeneration-20261124` archive has manifest `97d45c3f56059f83599865476514b45723a8ae971ee6422c25727b3297ddb369`. Provider charges were $0. No performance comparison ran.
+
 ## Speaking through the Rust browser — November 22, 2026
 
 Chromium signed in to a freshly activated 12-entity Solo world and used Speak → Say. The player received the exact utterance, including the emoji. PostgreSQL saved one speech event. Replaying the command returned the same result, a forged recipient was refused, and the original receipt survived a cold restart. A second run with zero allowance refused the command without publishing an event. A 5,347-byte JSON request containing escaped text also saved and reopened once with its exact text. The same authenticated camp speech check on independent Source and Rust databases matched the command result, speech fields and cold receipt. These were correctness runs with a controlled provider and zero dispatches.
