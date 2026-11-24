@@ -173,7 +173,7 @@ Continue across stages; progress reports, a first implementation or an intermedi
 
 A required measurement may report failure; a required pass remains unmet. Optional diagnostics/improvements do not enlarge delivery scope. Unavailable external evidence stays unaccepted; finish independent authorized work first.
 
-**Each task owns its temporary files.** Use, edit and clean up only scratch created for this task by you or its tools. Keep deliverables separate. If another task needs an output, put it in its intended shared location before handing it over. Reuse shared inputs and caches through their existing owners.
+**Each task owns its temporary files.** When scratch is needed, use the tool’s fresh temporary path so independent jobs don’t collide. Edit or remove only scratch created by your job or handed to you by its previous owner on the same task. A resumed job can reuse that location. Keep deliverables separate. Give another task only the result it needs, from a stable location under existing permissions. Reuse shared inputs and caches through their owners.
 
 Use normal tool cleanup after the last use, once retained results work with their companion files. Leave unfamiliar files alone, even inside task scratch. Preserve explicit keep requests and [required art originals and iterations](docs/asset-workflow.md#where-files-belong). If bulky scratch must stay, mention where it is and what will release it in the handoff. Routine cleanup needs no inventory, hashing, disk scan, separate agent turn or report.
 
