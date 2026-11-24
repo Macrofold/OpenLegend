@@ -23,6 +23,7 @@ pub(super) fn action(source: &ResponseActionChoice) -> ResponseActionChoice {
             .as_ref()
             .map(SqlCell::clone_within_heap_bound),
         handover: source.handover.clone(),
+        learned: source.learned.clone(),
         purpose: source.purpose.as_ref().map(|purpose| PurposeBinding {
             definition: purpose.definition.clone(),
             id: purpose.id.clone(),

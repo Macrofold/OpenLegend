@@ -28,13 +28,19 @@ struct BoundMove<'a> {
     destination: &'a SqlCell,
 }
 
-pub(crate) fn bind_single_invoke(
+pub(crate) fn bind_pending_invoke(
     execution: &ActivityExecution,
     actor: &str,
     id: &str,
     world: &InstalledWorld,
     budget: &ByteBudget,
 ) -> Result<(NativeCommand, ByteReservation), ExecutionError> {
+    if execution.method_id.is_some() {
+        let speech = execution
+            .pending_speech()?
+            .ok_or(ExecutionError::UnsupportedFamily)?;
+        return NativeCommand::learned_speech(id, actor, speech, budget);
+    }
     let invocation = execution.single_invoke()?;
     let destination = invocation.movement_point(world)?;
     let command = BoundMove {

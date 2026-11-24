@@ -12,6 +12,10 @@ pub(super) enum ActionIntent {
     Complete(ComponentResult),
     Command(NativeCommand),
     Plan(PlanEditInput),
+    Learned {
+        input: crate::plans::RequestedActivityInput,
+        _funding: crate::host::ByteReservation,
+    },
     Invoke,
     Expression,
     CancelPlan,
@@ -115,13 +119,17 @@ fn target_current(
         )
 }
 fn raw_subjects(raw: &SqlCell) -> impl Iterator<Item = &str> {
-    let ranged = raw.get("rangedTarget").filter(|target| {
-        target.get("kind").and_then(SqlCell::as_str) == Some("subject")
-    });
-    [raw.get("targetId"), raw.get("heatId"), ranged.and_then(|target| target.get("id"))]
-        .into_iter()
-        .flatten()
-        .filter_map(SqlCell::as_str)
+    let ranged = raw
+        .get("rangedTarget")
+        .filter(|target| target.get("kind").and_then(SqlCell::as_str) == Some("subject"));
+    [
+        raw.get("targetId"),
+        raw.get("heatId"),
+        ranged.and_then(|target| target.get("id")),
+    ]
+    .into_iter()
+    .flatten()
+    .filter_map(SqlCell::as_str)
 }
 fn raw_targets<'a>(raw: &'a SqlCell, actor: &'a str) -> impl Iterator<Item = &'a str> {
     raw_subjects(raw).filter(move |id| !id.is_empty() && *id != actor)
@@ -543,6 +551,29 @@ pub(super) fn prepare(
             {
                 return result(false, "stale-plan", "The current task changed.", budget);
             }
+            if let Some(choice) = &choice.learned {
+                let copy = &crate::activity::LEARNED_ACTIVITY_COPY.unknown;
+                let Some(method) = choice.source.current(core.state, actor, budget)? else {
+                    return result(false, copy.code, copy.message, budget);
+                };
+                let (execution, mut funding) =
+                    crate::plans::ActivityExecution::initial_learned_speech(&method, budget)?;
+                funding.resize(
+                    funding
+                        .bytes()
+                        .checked_add(actor.len())
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
+                return Ok(ActionIntent::Learned {
+                    input: crate::plans::RequestedActivityInput {
+                        id,
+                        actor_id: actor.to_owned(),
+                        mode: PlanMode::Enqueue,
+                        execution,
+                    },
+                    _funding: funding,
+                });
+            }
             if let Some(raw) = &choice.invocation {
                 let selected = match supported(raw, actor, &id, budget)? {
                     Ok(command) => command,
@@ -698,9 +729,10 @@ pub(super) fn prepare(
                 );
             }
             if target.is_some_and(|target| {
-                binding.commands.iter().any(|raw| {
-                    raw_subjects(raw).any(|id| id != target)
-                })
+                binding
+                    .commands
+                    .iter()
+                    .any(|raw| raw_subjects(raw).any(|id| id != target))
             }) {
                 return result(
                     false,

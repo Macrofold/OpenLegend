@@ -125,6 +125,8 @@ pub(crate) struct ResponseActionChoice {
     pub invocation: Option<crate::records::SqlCell>,
     #[serde(skip)]
     pub handover: Option<crate::handover::NpcHandover>,
+    #[serde(skip)]
+    pub learned: Option<std::sync::Arc<crate::activity::LearnedSpeechChoice>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub purpose: Option<PurposeBinding>,
     pub transition: crate::commands::WorkTransitionMode,

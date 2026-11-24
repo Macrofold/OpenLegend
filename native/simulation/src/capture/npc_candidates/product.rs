@@ -51,6 +51,9 @@ pub enum NpcOfferMeaning {
         page: &'static str,
     },
     Inspection,
+    Learned {
+        choice: std::sync::Arc<crate::activity::LearnedSpeechChoice>,
+    },
     Continuation {
         action_type: Option<String>,
         plan_pending: bool,
@@ -127,20 +130,28 @@ pub(crate) enum PreparedNpcInstruction {
     Continue,
     Command(NativeCommand),
     Handover(crate::handover::NpcHandover),
+    Learned(std::sync::Arc<crate::activity::LearnedSpeechChoice>),
 }
 
 impl PreparedNpcInstruction {
     pub(crate) fn command(&self) -> Option<&NativeCommand> {
         match self {
             Self::Command(command) => Some(command),
-            Self::Continue | Self::Handover(_) => None,
+            Self::Continue | Self::Handover(_) | Self::Learned(_) => None,
         }
     }
 
     pub(crate) fn handover(&self) -> Option<&crate::handover::NpcHandover> {
         match self {
             Self::Handover(choice) => Some(choice),
-            Self::Continue | Self::Command(_) => None,
+            Self::Continue | Self::Command(_) | Self::Learned(_) => None,
+        }
+    }
+
+    pub(crate) fn learned(&self) -> Option<&std::sync::Arc<crate::activity::LearnedSpeechChoice>> {
+        match self {
+            Self::Learned(choice) => Some(choice),
+            _ => None,
         }
     }
 
@@ -170,6 +181,14 @@ pub(crate) struct PreparedNpcCandidates {
     pub(super) _storage: ByteReservation,
 }
 impl PreparedNpcCandidates {
+    pub(crate) fn learned_sources(
+        &self,
+    ) -> impl Iterator<Item = &crate::activity::LearnedSpeechSource> {
+        self.offers
+            .iter()
+            .filter_map(|offer| offer.command.learned().map(|choice| &choice.source))
+            .chain(self.work_context.learned_sources())
+    }
     pub(crate) fn offers(&self) -> &[PreparedNpcOffer] {
         &self.offers
     }

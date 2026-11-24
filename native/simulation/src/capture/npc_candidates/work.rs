@@ -1,6 +1,7 @@
 //! Current intentions and work-handling facts, read through the same pause and
 //! display owners used by command admission. These facts do not pause work.
 use super::*;
+use crate::text::JsText;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -21,6 +22,8 @@ pub(crate) struct NpcWorkContext {
     plan: Option<RemainingPlan>,
     suspended: Option<RemainingPlan>,
     #[serde(skip)]
+    learned_sources: [Option<crate::activity::LearnedSpeechSource>; 2],
+    #[serde(skip)]
     storage: ByteReservation,
 }
 impl NpcWorkContext {
@@ -29,12 +32,19 @@ impl NpcWorkContext {
         plan.as_ref().map(|plan| plan.views.as_slice())
     }
 
+    pub(crate) fn learned_sources(
+        &self,
+    ) -> impl Iterator<Item = &crate::activity::LearnedSpeechSource> {
+        self.learned_sources.iter().flatten()
+    }
+
     pub(super) fn prepare(
         core: &CoreMutation<'_>,
         actor: &str,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let pause = crate::plans::prepare_suspension(core, actor, budget)?;
+        let actor_id = actor;
         let actor = core
             .state
             .physical
@@ -60,8 +70,14 @@ impl NpcWorkContext {
             .iter()
             .chain(actor.agency.suspended_plan())
         {
-            if plan.activity.is_some() {
-                return Err(ExecutionError::UnsupportedFamily);
+            if let Some(activity) = &plan.activity {
+                if activity.method_id.is_none() {
+                    return Err(ExecutionError::UnsupportedFamily);
+                }
+                crate::plans::require_supported_activity(plan)?;
+                // This method's existing and still unbound speech are funded
+                // together by the activity view below.
+                continue;
             }
             bytes = bytes
                 .checked_add(
@@ -82,7 +98,7 @@ impl NpcWorkContext {
         }
         let mut storage = budget.reserve(bytes)?;
         storage.merge(pause.storage)?;
-        let remaining = |plan: &crate::plans::ActorPlan, paused| RemainingPlan {
+        let ordinary = |plan: &crate::plans::ActorPlan, paused| RemainingPlan {
             status: plan.status,
             paused,
             views: Vec::with_capacity(
@@ -97,6 +113,93 @@ impl NpcWorkContext {
                     .count(),
             ),
         };
+        let mut remaining =
+            |plan: Option<&crate::plans::ActorPlan>, paused| -> Result<_, ExecutionError> {
+                let Some(plan) = plan else {
+                    return Ok((None, None));
+                };
+                let Some(execution) = &plan.activity else {
+                    return Ok((Some(ordinary(plan, paused)), None));
+                };
+                let mut facts = RemainingPlan {
+                    status: plan.status,
+                    paused,
+                    views: Vec::new(),
+                };
+                if matches!(
+                    plan.status,
+                    crate::plans::PlanStatus::Completed | crate::plans::PlanStatus::Cancelled
+                ) {
+                    return Ok((Some(facts), None));
+                }
+                let id = execution
+                    .method_id
+                    .as_deref()
+                    .ok_or(ExecutionError::Invariant)?;
+                let Some(method) =
+                    crate::activity::current_learned_speech(core.state, actor_id, id, budget)?
+                        .filter(|method| method.bindings() == &execution.bindings)
+                else {
+                    // Withheld source text cannot pass as an anonymous quotation.
+                    // The admitted plan status still reflects current work.
+                    return Ok((Some(facts), None));
+                };
+                let queued = plan.steps.iter().filter(|step| {
+                    matches!(
+                        step.status,
+                        crate::plans::StepStatus::Queued | crate::plans::StepStatus::Running
+                    )
+                });
+                let count = queued
+                    .clone()
+                    .count()
+                    .checked_add(execution.pending.len())
+                    .ok_or(ExecutionError::Capacity)?;
+                storage.merge(
+                    budget.reserve(
+                        count
+                            .checked_mul(size_of::<crate::activity::ActivityView>())
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?,
+                )?;
+                facts
+                    .views
+                    .try_reserve_exact(count)
+                    .map_err(|_| ExecutionError::Capacity)?;
+                let mut speech = |name: &JsText, words: &JsText| -> Result<(), ExecutionError> {
+                    let bytes = words
+                        .storage_bytes()
+                        .checked_add(name.storage_bytes())
+                        .and_then(|n| n.checked_mul(8))
+                        .and_then(|n| n.checked_add(4096))
+                        .ok_or(ExecutionError::Capacity)?;
+                    let mut owned = budget.reserve(bytes)?;
+                    let view = crate::activity::learned_speech_view(core.state, name, words)?;
+                    owned.resize(view.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+                    storage.merge(owned)?;
+                    facts.views.push(view);
+                    Ok(())
+                };
+                for step in queued {
+                    let (name, text) = step
+                        .command
+                        .learned_speech_fields()
+                        .ok_or(ExecutionError::Invariant)?;
+                    speech(name, text)?;
+                }
+                for frame in execution.pending.iter().rev() {
+                    let leaf = method.leaf(&frame.node).ok_or(ExecutionError::Invariant)?;
+                    speech(leaf.purpose, leaf.text)?;
+                }
+                Ok((
+                    Some(facts),
+                    (count > 0)
+                        .then(|| method.hold_source(budget))
+                        .transpose()?,
+                ))
+            };
+        let (plan, current_source) = remaining(actor.agency.plan.as_ref(), false)?;
+        let (suspended, paused_source) = remaining(actor.agency.suspended_plan(), true)?;
         Ok(Self {
             lost_work_seconds: actor
                 .action
@@ -114,15 +217,9 @@ impl NpcWorkContext {
             combat_until: actor.combat_ready_at.unwrap_or(0.0),
             evade_until: actor.evasion_ready_at.unwrap_or(0.0),
             suspension_problem: pause.outcome,
-            plan: actor
-                .agency
-                .plan
-                .as_ref()
-                .map(|plan| remaining(plan, false)),
-            suspended: actor
-                .agency
-                .suspended_plan()
-                .map(|plan| remaining(plan, true)),
+            plan,
+            suspended,
+            learned_sources: [current_source, paused_source],
             storage,
         })
     }
@@ -155,6 +252,13 @@ impl NpcCandidateCursor {
         }) else {
             return Ok(false);
         };
+        if plan
+            .activity
+            .as_ref()
+            .is_some_and(|activity| activity.method_id.is_some())
+        {
+            return Ok(false); // Prepared above with its matching personal source.
+        }
         let Some(step) = plan.steps.get(index) else {
             return Ok(false);
         };

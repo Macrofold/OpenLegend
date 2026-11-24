@@ -419,7 +419,6 @@ fn assemble_selected_core(
         actor_response_limits: actor_response,
     });
     super::physical::validate_physical_item_references(&physical, &installed)?;
-    crate::plans::validate_installation(&physical, &installed, &activity, budget)?;
     let outings = crate::outings::OutingState::install(
         &mut import, &mut children, &installed, &physical, budget,
     )?;
@@ -611,6 +610,7 @@ fn assemble_selected_core(
         learned_capabilities,
         appraisals,
     };
+    crate::plans::validate_installation(&state, budget)?;
     crate::gathering::validate_saved_work(&state, budget)?;
     Ok(CoreInstallation {
         state,

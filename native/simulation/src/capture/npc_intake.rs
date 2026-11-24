@@ -93,7 +93,9 @@ impl NpcIntakeCapture {
         self.packets.as_ref().map(|packet| packet.json.as_str())
     }
     pub(crate) fn inputs_json(&self) -> Option<&str> {
-        self.packets.as_ref().map(|packet| packet.inputs_json.as_str())
+        self.packets
+            .as_ref()
+            .map(|packet| packet.inputs_json.as_str())
     }
     pub(crate) fn matches_queue(&self, queued: &NpcQueueInputs) -> bool {
         self.eligible
@@ -829,15 +831,10 @@ fn prepare(
         return Ok(PreparedIntake::QueuePacket(text, storage));
     }
 
-    // The ordinary reader still needs this installed plan shape for the
-    // prepared-result semantics. A witness cannot bless a new shape.
-    if actor
-        .agency
-        .plan
-        .as_ref()
-        .is_some_and(|plan| plan.activity.is_some())
-    {
-        return Err(ExecutionError::UnsupportedFamily);
+    // Compact intake describes only admitted plan identity, status and step
+    // outcomes. Use the same finite support owner as the executor.
+    if let Some(plan) = &actor.agency.plan {
+        crate::plans::require_supported_activity(plan)?;
     }
     let _event_storage = budget.reserve(
         unseen
@@ -933,13 +930,15 @@ fn prepare(
     // Only the old bridge publishes this structured label. The Rust
     // scheduler's literal review wording never consumed that object.
     let names = packets
-        .then(|| InstalledPersonalNameReader::prepare(
-            &state.physical,
-            &state.reception,
-            &state.installed,
-            &state.experience,
-            id,
-        ))
+        .then(|| {
+            InstalledPersonalNameReader::prepare(
+                &state.physical,
+                &state.reception,
+                &state.installed,
+                &state.experience,
+                id,
+            )
+        })
         .transpose()?;
     let _stimulus_index_storage = budget.reserve(
         crate::host::retained_size::tree_node_bound::<&str, f64>()
@@ -1016,7 +1015,10 @@ fn prepare(
                 .value()
                 .outward_states(subject),
             since: seen.max(changed),
-            label: names.as_ref().map(|names| names.observer_name(source)).transpose()?,
+            label: names
+                .as_ref()
+                .map(|names| names.observer_name(source))
+                .transpose()?,
         });
     }
     let (prepared_result, _result_storage) = result::capture(state, actor, id, budget)?;
@@ -1133,13 +1135,11 @@ fn prepare(
             agency: AgencyRead(&actor.agency),
             attributes: attributes.rows(),
         },
-        attention: raw(
-            &attention
-                .bridge
-                .as_ref()
-                .ok_or(ExecutionError::Invariant)?
-                .json,
-        )?,
+        attention: raw(&attention
+            .bridge
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .json)?,
         protection_labels: &protection_labels,
         actions_blocked: input.actions_blocked,
         speech_blocked: input.speech_blocked,
@@ -1156,11 +1156,16 @@ fn prepare(
     storage.resize(json.capacity())?;
     storage.merge(inputs_storage)?;
     Ok(PreparedIntake::Trigger(
-        new_trigger(Some(NpcIntakePackets {
-            json,
-            inputs_json,
-            _storage: storage,
-        }), tokens, dependencies, attention.semantic_causes),
+        new_trigger(
+            Some(NpcIntakePackets {
+                json,
+                inputs_json,
+                _storage: storage,
+            }),
+            tokens,
+            dependencies,
+            attention.semantic_causes,
+        ),
         None,
     ))
 }

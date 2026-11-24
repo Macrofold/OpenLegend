@@ -65,6 +65,9 @@ impl DecisionPolicy {
         offer: &NpcDescriptionOffer,
     ) -> Result<JsText, WorldError> {
         use NpcOfferMeaning as Meaning;
+        if let Meaning::Learned { choice } = &offer.meaning {
+            return Ok(choice.description.clone());
+        }
         if matches!(offer.meaning, Meaning::Handover { .. }) {
             return Ok(JsText::default());
         }
@@ -86,6 +89,7 @@ impl DecisionPolicy {
             None => input.myself(),
         };
         let mut result = match &offer.meaning {
+            Meaning::Learned { .. } => return Err(WorldError::ProviderKind),
             Meaning::Activities => text(&words["activities"])?.to_owned(),
             Meaning::Inspection => text(&words["inspection"])?.to_owned(),
             Meaning::ActivityPage { page } => {

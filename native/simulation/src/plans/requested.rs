@@ -142,7 +142,11 @@ impl RequestedActivityCursor {
     }
     fn pristine(&self, core: &CoreMutation<'_>) -> Result<(), ExecutionError> {
         let value = self.execution.as_ref().ok_or(ExecutionError::Invariant)?;
-        value.single_invoke()?;
+        let learned = value.method_id.is_some();
+        value.required_pending_key()?;
+        if learned && !value.current_speech(core.state, &self.actor, &self.budget)? {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
         value
             .validate_structure(
                 &core.state.activity.limits,
@@ -154,9 +158,9 @@ impl RequestedActivityCursor {
                 crate::install::InstallError::Capacity => ExecutionError::Capacity,
                 _ => ExecutionError::UnsupportedFamily,
             })?;
-        if value.pending.len() != 1
+        if (!learned && value.pending.len() != 1)
             || value.serial != 0
-            || value.processed != 0
+            || value.processed != if learned { 1 } else { 0 }
             || value.outputs.object_len() != Some(0)
             || value.active_key.is_some()
             || value.archived_steps.is_some()
@@ -179,7 +183,7 @@ impl RequestedActivityCursor {
         let mut id = String::with_capacity(bytes);
         id.push_str(&self.id);
         id.push_str(":first");
-        let (command, _storage) = super::activity::bind_single_invoke(
+        let (command, _storage) = super::activity::bind_pending_invoke(
             self.execution.as_ref().ok_or(ExecutionError::Invariant)?,
             &self.actor,
             &id,
@@ -202,6 +206,10 @@ impl RequestedActivityCursor {
     }
     fn install(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         let actor = self.actor(core)?;
+        let learned = self
+            .execution
+            .as_ref()
+            .is_some_and(|activity| activity.method_id.is_some());
         if self.mode == PlanMode::Enqueue
             && actor
                 .agency
@@ -254,7 +262,8 @@ impl RequestedActivityCursor {
             .as_ref()
             .is_some_and(|p| p.status == PlanStatus::Active)
             || self.mode == PlanMode::Interrupt && actor.action.is_some()
-            || self.mode == PlanMode::Enqueue
+            || !learned
+                && self.mode == PlanMode::Enqueue
                 && actor
                     .agency
                     .plan
@@ -310,15 +319,15 @@ impl RequestedActivityCursor {
             .as_ref()
             .ok_or(ExecutionError::Invariant)?;
         let execution = current.activity.as_ref().ok_or(ExecutionError::Invariant)?;
-        let (id, _id) = execution.single_step_id(&current.id, &self.budget)?;
-        let (command, _command) = super::activity::bind_single_invoke(
+        let (id, _id) = execution.next_step_id(&current.id, &self.budget)?;
+        let (command, _command) = super::activity::bind_pending_invoke(
             execution,
             &self.actor,
             &id,
             &core.state.installed,
             &self.budget,
         )?;
-        let index = super::activity::append_single_invoke(core, &self.actor, command)?;
+        let index = super::activity::append_invoke(core, &self.actor, command)?;
         let current = self
             .actor(core)?
             .agency
@@ -364,6 +373,23 @@ impl RequestedActivityCursor {
                     self.pristine(core)?;
                     let actor = self.actor(core)?;
                     self.basis = actor.agency.plan.as_ref().map_or(0, |p| p.revision);
+                    if self
+                        .execution
+                        .as_ref()
+                        .is_some_and(|activity| activity.method_id.is_some())
+                        && (actor.action.is_some()
+                            || actor
+                                .agency
+                                .plan
+                                .as_ref()
+                                .is_some_and(|plan| plan.status == PlanStatus::Active))
+                    {
+                        self.outcome = Some(RequestedActivityStart::Refused(
+                            crate::activity::LEARNED_ACTIVITY_COPY.busy.outcome(false),
+                        ));
+                        self.phase = Phase::Done;
+                        continue;
+                    }
                     let should_check = self.mode != PlanMode::Enqueue
                         || actor.action.is_none()
                             && !actor

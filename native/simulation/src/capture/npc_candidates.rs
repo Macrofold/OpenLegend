@@ -69,6 +69,7 @@ enum Enumerate {
     ActivityHistoryNext,
     ActivityMethodsNext,
     Inventory,
+    Learned,
     Continue,
     GiftProposal(usize, usize, usize),
     Follow(usize, usize),

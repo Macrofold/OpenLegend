@@ -25,6 +25,7 @@ import {
 
 export type NativeNpcOfferMeaning =
   | { readonly kind: 'activities' | 'inspection' }
+  | { readonly kind: 'learned'; readonly choice: { readonly description: string } }
   | { readonly kind: 'activity-page'; readonly page: 'history' | 'methods' }
   | {
       readonly kind: 'continuation';
@@ -280,6 +281,9 @@ export function formatNativeNpcCandidateDescriptions(
       case 'activities':
       case 'inspection':
         base = decisionOfferDescription({ kind: meaning.kind });
+        break;
+      case 'learned':
+        base = { description: meaning.choice.description };
         break;
       case 'activity-page':
         base = {

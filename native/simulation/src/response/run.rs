@@ -22,7 +22,8 @@ use crate::language::{
 use crate::language::{CanonicalJsonAnswer, CanonicalJsonRequest, PreparedCanonicalJson};
 use crate::plans::{
     PlanControlCursor, PlanControlKind, PlanControlStep, PlanEditCursor, PlanEditInput,
-    PlanEditStep,
+    PlanEditStep, RequestedActivityAnswer, RequestedActivityCursor, RequestedActivityStart,
+    RequestedActivityStep,
 };
 use crate::records::SqlCell;
 use crate::text::JsText;
@@ -98,6 +99,7 @@ enum Active {
         input: PlanEditInput,
     },
     Plan(PlanEditCursor),
+    Learned(RequestedActivityCursor),
     Control {
         cursor: PlanControlCursor,
         discard: bool,
@@ -126,6 +128,7 @@ pub(crate) struct ResponseCursor {
     candidate: CandidateKey,
     protected: bool,
     checkpoint: Option<CandidateCheckpoint>,
+    learned_child: Option<CandidateCheckpoint>,
     canonical: Option<CanonicalJsonRequest>,
     source_check: Option<crate::capture::NpcSourcesCursor>,
     appraisal_creates: Option<AppraisalCreatesRequest>,
@@ -242,6 +245,7 @@ impl ResponseCursor {
             candidate,
             protected,
             checkpoint: Some(checkpoint),
+            learned_child: None,
             canonical,
             source_check,
             appraisal_creates,
@@ -309,8 +313,12 @@ impl ResponseCursor {
             match active {
                 Active::Command(cursor) => cursor.abort(core)?,
                 Active::Choice { cursor, .. } => cursor.abort(core)?,
+                Active::Learned(cursor) => cursor.abort(core)?,
                 _ => {}
             }
+        }
+        if let Some(child) = self.learned_child.take() {
+            core.journal.rollback_to(core.state, child)?;
         }
         if let Some(checkpoint) = self.checkpoint.take() {
             core.journal.rollback_to(core.state, checkpoint)?;
@@ -679,6 +687,12 @@ impl ResponseCursor {
                     self.active = Some(Active::Plan(PlanEditCursor::new(input, &self.budget)?));
                 }
             }
+            ActionIntent::Learned { input, _funding } => {
+                let binding = Self::binding(core, self.candidate)?;
+                let cursor = RequestedActivityCursor::new(input, binding, &self.budget)?;
+                self.learned_child = Some(core.journal.checkpoint(core.state)?);
+                self.active = Some(Active::Learned(cursor));
+            }
             ActionIntent::CancelPlan => {
                 self.active = Some(Active::Control {
                     cursor: PlanControlCursor::new(
@@ -844,7 +858,9 @@ impl ResponseCursor {
         } else {
             0
         };
-        let mut bytes = op.data.heap_bytes()
+        let mut bytes = op
+            .data
+            .heap_bytes()
             .and_then(|n| n.checked_add(handover_bytes))
             .ok_or(ExecutionError::Capacity)?;
         let mut add = |raw: &SqlCell| -> Result<(), ExecutionError> {
@@ -1091,6 +1107,7 @@ impl ResponseCursor {
                     .or_else(|| match self.active.as_ref()? {
                         Active::Choice { cursor, .. } => cursor.geometry_request(),
                         Active::Invocation(cursor) => cursor.geometry_request(),
+                        Active::Learned(cursor) => cursor.geometry_request(),
                         Active::Expression(cursor) => cursor.geometry_request(),
                         _ => None,
                     })
@@ -1102,6 +1119,9 @@ impl ResponseCursor {
                 } else {
                     match self.active.as_mut() {
                         Some(Active::Choice { cursor, .. }) => {
+                            cursor.display_cursor().ok_or(ExecutionError::Invariant)?
+                        }
+                        Some(Active::Learned(cursor)) => {
                             cursor.display_cursor().ok_or(ExecutionError::Invariant)?
                         }
                         _ => return Err(ExecutionError::Invariant.into()),
@@ -1285,9 +1305,13 @@ impl ResponseCursor {
                     let command = self.command.take().ok_or(ExecutionError::Invariant)?;
                     // Only an actually selected native offer can supply an
                     // independent older disclosure proof to ordinary Handover.
-                    let trade_evidence = self.response.operation(self.index)
-                        .filter(|op| op.kind == ResponseKind::Act
-                            && op.data.get("kind").and_then(SqlCell::as_str) == Some("known"))
+                    let trade_evidence = self
+                        .response
+                        .operation(self.index)
+                        .filter(|op| {
+                            op.kind == ResponseKind::Act
+                                && op.data.get("kind").and_then(SqlCell::as_str) == Some("known")
+                        })
                         .and_then(|op| op.text("actionId"))
                         .and_then(JsText::as_unicode)
                         .and_then(|id| self.bindings.input.actions.get(id))
@@ -1435,6 +1459,76 @@ impl ResponseCursor {
                             } else {
                                 Progress::Display
                             });
+                        }
+                    }
+                    Active::Learned(cursor) => {
+                        let mut reply = match answer.take() {
+                            Some(ResponseAnswer::Geometry(value)) => {
+                                Some(RequestedActivityAnswer::Geometry(value))
+                            }
+                            Some(ResponseAnswer::Display(value)) => {
+                                Some(RequestedActivityAnswer::Display(value))
+                            }
+                            None => None,
+                            _ => return Err(ExecutionError::InvalidCheckpoint.into()),
+                        };
+                        loop {
+                            match cursor.step(core, reply.take())? {
+                                RequestedActivityStep::Geometry(_) => {
+                                    self.active = Some(active);
+                                    return Ok(Progress::Geometry);
+                                }
+                                RequestedActivityStep::Display(_) => {
+                                    self.active = Some(active);
+                                    return Ok(Progress::Display);
+                                }
+                                RequestedActivityStep::Personal(pending) => {
+                                    let prepared = crate::experience::prepare_activity_result(
+                                        core,
+                                        pending,
+                                        &self.budget,
+                                    )?;
+                                    let schema = core.state.installed.schema.clone();
+                                    reply = Some(RequestedActivityAnswer::Personal(
+                                        crate::experience::acquire_activity_result(
+                                            core, prepared, &schema,
+                                        )?,
+                                    ));
+                                }
+                                RequestedActivityStep::Complete(value) => {
+                                    let result = if let RequestedActivityStart::Refused(outcome) =
+                                        value
+                                    {
+                                        self.record_choice_refusal(core, outcome);
+                                        let storage = self.budget.reserve(
+                                            outcome.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                                        )?;
+                                        let outcome = outcome.clone();
+                                        core.journal.rollback_to(
+                                            core.state,
+                                            self.learned_child
+                                                .take()
+                                                .ok_or(ExecutionError::Invariant)?,
+                                        )?;
+                                        ComponentResult { outcome, storage }
+                                    } else {
+                                        let child = self
+                                            .learned_child
+                                            .take()
+                                            .ok_or(ExecutionError::Invariant)?;
+                                        core.journal.keep(core.state, child)?;
+                                        let reply = &crate::activity::LEARNED_ACTIVITY_COPY.queued;
+                                        ComponentResult::prepare(
+                                            true,
+                                            reply.code,
+                                            reply.message.into(),
+                                            &self.budget,
+                                        )?
+                                    };
+                                    self.store(core, result)?;
+                                    break;
+                                }
+                            }
                         }
                     }
                     Active::Plan(cursor) => {

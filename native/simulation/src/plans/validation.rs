@@ -54,7 +54,12 @@ pub(crate) fn valid_command(
                 .all(|n| n.is_finite())
                 && is_safe_record_id(&destination.surface_id)
         }
-        NativeCommand::Follow { target_id, distance, parameters, envelope } => {
+        NativeCommand::Follow {
+            target_id,
+            distance,
+            parameters,
+            envelope,
+        } => {
             is_safe_record_id(target_id)
                 && parameters
                     .distance(
@@ -76,11 +81,17 @@ pub(crate) fn valid_command(
             is_safe_record_id(target_id)
                 && envelope.human_initiated != Some(true)
                 && match (weapon_item_id, target_life, auto_equip) {
-                    (None, None, None) => world.retained.native_strike_read.contains_key(definition_id),
+                    (None, None, None) => world
+                        .retained
+                        .native_strike_read
+                        .contains_key(definition_id),
                     (Some(item), Some(life), Some(true)) => {
                         is_safe_record_id(item)
                             && *life <= crate::identity::MAX_SAFE_INTEGER
-                            && world.retained.items.get(definition_id)
+                            && world
+                                .retained
+                                .items
+                                .get(definition_id)
                                 .is_some_and(|definition| definition.melee_profile().is_some())
                     }
                     _ => false,
@@ -89,7 +100,9 @@ pub(crate) fn valid_command(
         NativeCommand::Ranged { intent, envelope } => {
             world.manifest.ranged_policy.is_some()
                 && envelope.human_initiated.is_none()
-                && intent.npc_subject().is_some_and(|target| target != envelope.actor_id)
+                && intent
+                    .npc_subject()
+                    .is_some_and(|target| target != envelope.actor_id)
         }
         NativeCommand::Guard {
             envelope,
@@ -118,14 +131,30 @@ pub(crate) fn valid_command(
             definition_id,
             ..
         } => is_safe_record_id(target_id) && is_safe_record_id(definition_id),
-        NativeCommand::Fish { target_id, item_id, .. } =>
-            is_safe_record_id(target_id) && is_safe_record_id(item_id),
-        NativeCommand::Pickup { target_id, item_id, quantity, .. } =>
-            is_safe_record_id(target_id) && item_id.as_deref().is_none_or(is_safe_record_id)
-                && quantity.is_none_or(|quantity| quantity > 0 && item_id.is_some()),
+        NativeCommand::Fish {
+            target_id, item_id, ..
+        } => is_safe_record_id(target_id) && is_safe_record_id(item_id),
+        NativeCommand::Pickup {
+            target_id,
+            item_id,
+            quantity,
+            ..
+        } => {
+            is_safe_record_id(target_id)
+                && item_id.as_deref().is_none_or(is_safe_record_id)
+                && quantity.is_none_or(|quantity| quantity > 0 && item_id.is_some())
+        }
         NativeCommand::Craft { recipe_id, .. } => is_safe_record_id(recipe_id),
-        NativeCommand::Cook { heat_id, definition, inputs, .. } =>
-            is_safe_record_id(heat_id) && definition.is_valid() && crate::food_preparation::valid_inputs(inputs),
+        NativeCommand::Cook {
+            heat_id,
+            definition,
+            inputs,
+            ..
+        } => {
+            is_safe_record_id(heat_id)
+                && definition.is_valid()
+                && crate::food_preparation::valid_inputs(inputs)
+        }
         NativeCommand::TendFire {
             target_id,
             operation,
@@ -182,7 +211,9 @@ fn step(
     world: &crate::simulation::InstalledWorld,
 ) -> Result<(), InstallError> {
     if step.activity_key.as_ref().is_some_and(|key| {
-        !crate::values::is_safe_record_text(key) || !matches!(step.command, NativeCommand::Move { .. })
+        !crate::values::is_safe_record_text(key)
+            || !(matches!(step.command, NativeCommand::Move { .. })
+                || step.command.learned_speech_fields().is_some())
     }) {
         return Err(InstallError::UnsupportedFamily("activity graph plan step"));
     }
@@ -226,11 +257,12 @@ fn step(
     Ok(())
 }
 pub(crate) fn validate_installation(
-    physical: &crate::simulation::PhysicalState,
-    world: &crate::simulation::InstalledWorld,
-    activity_limits: &crate::activity::ActivityLimits,
+    state: &crate::simulation::SimulationState,
     budget: &crate::host::ByteBudget,
 ) -> Result<(), InstallError> {
+    let physical = &state.physical;
+    let world = &state.installed;
+    let activity_limits = &state.activity.limits;
     for id in physical.entities.ordered_ids() {
         let entity = physical
             .entities
@@ -340,7 +372,7 @@ pub(crate) fn validate_installation(
                     budget,
                 )?;
             }
-            super::activity::validate_installed_activity(plan, id, world)
+            super::activity::validate_installed_activity(plan, id, state)
                 .map_err(|_| InstallError::UnsupportedFamily("chosen activity graph"))?;
             if !is_safe_record_id(&plan.id)
                 || plan.revision == 0

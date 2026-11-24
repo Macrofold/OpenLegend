@@ -696,6 +696,79 @@ fn bind_directed_speech(
     Ok((command, signature))
 }
 
+impl NativeCommand {
+    /// The selected learned frontier uses ordinary, untargeted speech. These
+    /// are its two rendered fields after the concrete command has been bound.
+    /// Live work, saved plans and historical rows share this same shape.
+    pub(crate) fn learned_speech_fields(&self) -> Option<(&JsText, &JsText)> {
+        match self {
+            Self::Say {
+                envelope, text, target_id: None, target_role: None,
+                volume: None, self_introduction: None,
+            } if envelope.chosen_purpose.is_none() && envelope.cooperation.is_none()
+                && envelope.combat_help_id.is_none() && envelope.human_initiated.is_none() =>
+            {
+                Some((envelope.purpose.as_ref()?, text))
+            }
+            _ => None,
+        }
+    }
+
+    /// Bind the exact ordered activity leaf used by saved plan receipts. The
+    /// plan owns eligibility and progress. This does not send speech, read its
+    /// source or perform a second command decode. The caller retains funding
+    /// for the new command until its eventual owner takes it.
+    pub(crate) fn learned_speech(
+        id: &str,
+        actor: &str,
+        leaf: crate::activity::LearnedSpeechLeaf<'_>,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<(Self, crate::host::ByteReservation), crate::execution::ExecutionError> {
+        use crate::execution::ExecutionError;
+        use crate::host::retained_size::HeapBytes;
+
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Bound<'a> {
+            id: &'a str,
+            actor_id: &'a str,
+            #[serde(rename = "type")]
+            kind: &'static str,
+            purpose: &'a JsText,
+            text: &'a JsText,
+        }
+        let input = Bound {
+            id,
+            actor_id: actor,
+            kind: "say",
+            purpose: leaf.purpose,
+            text: leaf.text,
+        };
+        let encoded =
+            crate::encoding::json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
+        let bytes = encoded
+            .checked_mul(8)
+            .and_then(|n| n.checked_add(leaf.text.heap_bytes()?))
+            .and_then(|n| n.checked_add(leaf.purpose.heap_bytes()?))
+            .and_then(|n| n.checked_add(id.len()))
+            .and_then(|n| n.checked_add(actor.len()))
+            .and_then(|n| n.checked_add(std::mem::size_of::<Self>()))
+            .ok_or(ExecutionError::Capacity)?;
+        let mut storage = budget.reserve(bytes)?;
+        let mut headers = player_headers(id, actor);
+        headers.human_initiated = None;
+        headers.purpose = Some(leaf.purpose.clone());
+        if !headers.valid() {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        let encoding =
+            CommandEncoding::from_ordered(&input, 5).map_err(|_| ExecutionError::Invariant)?;
+        let command = bound_speech(headers.envelope(encoding), leaf.text, None, None);
+        storage.resize(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        Ok((command, storage))
+    }
+}
+
 fn bound_speech(
     envelope: CommandEnvelope,
     text: &JsText,

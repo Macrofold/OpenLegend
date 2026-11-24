@@ -88,6 +88,21 @@ pub(crate) fn install_activity(
         }
     }
     let library = super::learning::install_library(import, &language, &limits, budget)?;
+    for collection in collections.values() {
+        for record in collection.records.values() {
+            if let Some(id) = &record.occurrence.method_id {
+                let method = library.methods.get(id).ok_or(InstallError::CurrentFormat)?;
+                if method
+                    .body()
+                    .get("name")
+                    .and_then(crate::records::SqlCell::as_text)
+                    != record.occurrence.parent_name.as_ref()
+                {
+                    return Err(InstallError::CurrentFormat);
+                }
+            }
+        }
+    }
     let learning: IndexMap<String, LearningCursor> = map(import, "activity_learning", "learning")?;
     let current = map(import, "activity_current", "current")?;
     let active = map(import, "activity_active", "active")?;

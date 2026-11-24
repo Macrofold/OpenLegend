@@ -27,6 +27,11 @@ pub(crate) use learning::LearningLanguage;
 pub use learning::{LearningHistoryRequest, LearningJudgment};
 pub use learning::RuntimeInspectedSkill;
 pub(crate) use learning::inspected_activities;
+pub use learning::LearnedSpeechChoice;
+pub(crate) use learning::{
+    LEARNED_ACTIVITY_COPY, LearnedSpeech, LearnedSpeechLeaf, LearnedSpeechSource, current_learned_speech, speech_leaf,
+    stored_learned_speech, visit_learned_speech,
+};
 pub(crate) use learning::{
     CompletedActivityLearning, LearningFormatAnswer, LearningFormatRequest, LearningHistoryAnswer,
     LearningPreparationAnswer, LearningPreparationCursor,
@@ -37,7 +42,7 @@ pub(crate) use learning::{
 mod inspection;
 pub(crate) use inspection::{
     ActivityInspection, COPY as ACTIVITY_INSPECTION_COPY, INSPECTION_ROWS, acquisition_count,
-    ordinal as activity_ordinal,
+    ordinal as activity_ordinal, learned_speech_view,
 };
 
 pub fn inspection_event() -> &'static str {

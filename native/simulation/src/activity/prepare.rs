@@ -24,11 +24,14 @@ pub(super) fn start_record(
         .and_then(|entity| entity.actor.as_ref())
         .and_then(|actor| actor.agency.plan.as_ref())
         .filter(|plan| Some(plan.id.as_str()) == parent_id);
+    let method = plan.and_then(|plan| plan.activity.as_ref()).and_then(|value| value.method_id.as_deref());
     let parent_name = match plan.and_then(|plan| plan.activity.as_ref()) {
+        Some(_) if method.is_some() => {
+            let id = method.ok_or(ActivityError::InvalidStructure)?;
+            Some(state.library.methods.get(id).and_then(|value| value.body().get("name"))
+                .and_then(crate::records::SqlCell::as_text).ok_or(ActivityError::InvalidStructure)?)
+        }
         Some(activity) => {
-            // The plan owner admits only this requested single-invocation
-            // envelope. Record its real request name without materializing
-            // a method, output binding or a synthetic parent occurrence.
             activity.single_invoke().map_err(|_| ActivityError::UnsupportedFamily)?;
             Some(&activity.request.as_ref().ok_or(ActivityError::InvalidStructure)?.name)
         }
@@ -113,6 +116,7 @@ pub(super) fn start_record(
             id.len() * 6,
             action_id.len() * 4,
             parent_id.map_or(0, str::len),
+            method.map_or(0, str::len),
             parent_name
                 .map_or(Some(0), HeapBytes::heap_bytes)
                 .ok_or(ActivityError::Capacity)?,
@@ -145,7 +149,7 @@ pub(super) fn start_record(
         action_id: action_id.to_owned(),
         parent_id: parent_id.map(str::to_owned),
         parent_name: parent_name.cloned(),
-        method_id: None,
+        method_id: method.map(str::to_owned),
         at,
         ended_at: None,
         command: command

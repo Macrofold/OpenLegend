@@ -63,14 +63,17 @@ impl<'a> SingleInvoke<'a> {
 pub(crate) fn validate_installed_activity(
     plan: &ActorPlan,
     actor: &str,
-    world: &crate::simulation::InstalledWorld,
+    state: &crate::simulation::SimulationState,
 ) -> Result<(), ExecutionError> {
     require_supported_activity(plan)?;
     let Some(execution) = &plan.activity else {
         return Ok(());
     };
+    if execution.method_id.is_some() {
+        return validate_saved_learned_plan(state, plan, execution, actor);
+    }
     let invocation = execution.single_invoke()?;
-    invocation.movement_point(world)?;
+    invocation.movement_point(&state.installed)?;
     if execution.cooperation.is_some() || execution.combat_help_id.is_some() {
         return Err(unsupported());
     }
@@ -102,6 +105,9 @@ fn plan<'a>(core: &'a CoreMutation<'_>, actor: &str) -> Result<&'a ActorPlan, Ex
 /// cancellation and resumption; copying an inverse does not open execution.
 pub(crate) fn require_supported_activity(plan: &ActorPlan) -> Result<(), ExecutionError> {
     if let Some(execution) = &plan.activity {
+        if execution.method_id.is_some() {
+            return execution.require_learned_speech();
+        }
         let invocation = execution.single_invoke()?;
         if plan.steps.iter().any(|step| {
             step.activity_key.as_ref().is_some_and(|key| {
@@ -117,6 +123,92 @@ pub(crate) fn require_supported_activity(plan: &ActorPlan) -> Result<(), Executi
 }
 
 impl ActivityExecution {
+    /// Only the fixed, untargeted, already-bound speech sequence is opened
+    /// here. Cold installation and the actual frontier own exact semantic
+    /// checks; pause, undo and replay need only the admitted execution class.
+    fn require_learned_speech(&self) -> Result<(), ExecutionError> {
+        if self.method_id.is_none()
+            || self.request.is_some()
+            || self.control.is_some()
+            || self.cooperation.is_some()
+            || self.combat_help_id.is_some()
+            || self.human_initiated.is_some()
+            || self.completed_units.is_some()
+            || self.attempts.is_some()
+            || self.last_attempt_id.is_some()
+            || self.spent.is_some()
+            || self.interrupted.is_some()
+            || self.terminal.is_some()
+            || self.target_episodes.object_len() != Some(0)
+            || self.outputs.as_object().is_none()
+        {
+            return Err(unsupported());
+        }
+        Ok(())
+    }
+
+    pub(crate) fn pending_speech(
+        &self,
+    ) -> Result<Option<crate::activity::LearnedSpeechLeaf<'_>>, ExecutionError> {
+        self.require_learned_speech()?;
+        self.pending
+            .last()
+            .map(|frame| {
+                if frame.iteration != 0 || frame.started_at.is_some() {
+                    return Err(unsupported());
+                }
+                crate::activity::speech_leaf(&frame.node, &self.bindings).ok_or_else(unsupported)
+            })
+            .transpose()
+    }
+
+    pub(crate) fn current_speech(
+        &self,
+        state: &crate::simulation::SimulationState,
+        actor: &str,
+        budget: &ByteBudget,
+    ) -> Result<bool, ExecutionError> {
+        let Some(method) = self.method_id.as_deref() else {
+            return Ok(true);
+        };
+        Ok(
+            crate::activity::current_learned_speech(state, actor, method, budget)?
+                .is_some_and(|current| current.bindings() == &self.bindings),
+        )
+    }
+
+    pub(crate) fn required_pending_key(&self) -> Result<&JsText, ExecutionError> {
+        if self.method_id.is_some() {
+            return self
+                .pending_speech()?
+                .map(|leaf| leaf.key)
+                .ok_or_else(unsupported);
+        }
+        self.pending_single_invoke()?
+            .map(|leaf| leaf.key)
+            .ok_or_else(unsupported)
+    }
+
+    fn matches_pending(
+        &self,
+        plan: &ActorPlan,
+        actor: &str,
+        command: &NativeCommand,
+        serial: u64,
+    ) -> Result<bool, ExecutionError> {
+        if self.method_id.is_some() {
+            let leaf = self.pending_speech()?.ok_or_else(unsupported)?;
+            return Ok(matches_speech(plan, actor, command, serial, &leaf));
+        }
+        Ok(command_matches(
+            &self.single_invoke()?,
+            plan,
+            actor,
+            command,
+            serial,
+        ))
+    }
+
     /// This first executable shape has no counted/finite control, learned
     /// support, quantity or compound nodes. Their complete saved envelopes are
     /// still copied by the inverse owner, never treated as this smaller shape.
@@ -192,12 +284,12 @@ impl ActivityExecution {
 
     /// The command binder keeps this allocation alive until its independently
     /// funded command is handed to append_single_invoke. No ID is issued here.
-    pub(crate) fn single_step_id(
+    pub(crate) fn next_step_id(
         &self,
         plan_id: &str,
         budget: &ByteBudget,
     ) -> Result<(String, ByteReservation), ExecutionError> {
-        self.single_invoke()?;
+        self.required_pending_key()?;
         let serial = self
             .serial
             .checked_add(1)
@@ -230,13 +322,6 @@ fn command_matches(
     else {
         return false;
     };
-    let Some(suffix) = envelope
-        .id
-        .strip_prefix(&plan.id)
-        .and_then(|suffix| suffix.strip_prefix(":step:"))
-    else {
-        return false;
-    };
     let Some(role) = invocation
         .args
         .get("destination")
@@ -250,9 +335,7 @@ fn command_matches(
     };
     invocation.args.len() == 1
         && invocation.family == command.kind()
-        && !suffix.starts_with('0')
-        && suffix.bytes().all(|byte| byte.is_ascii_digit())
-        && suffix.parse::<u64>() == Ok(serial)
+        && command_serial(plan, command) == Some(serial)
         && envelope.actor_id == actor
         && envelope.purpose.as_ref() == Some(invocation.name)
         && envelope.chosen_purpose
@@ -268,10 +351,88 @@ fn command_matches(
         && destination.matches_cell(point)
 }
 
+fn command_serial(plan: &ActorPlan, command: &NativeCommand) -> Option<u64> {
+    let suffix = command
+        .envelope()
+        .id
+        .strip_prefix(&plan.id)?
+        .strip_prefix(":step:")?;
+    if suffix.starts_with('0') || !suffix.bytes().all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+    suffix.parse().ok()
+}
+
+fn matches_speech(
+    plan: &ActorPlan,
+    actor: &str,
+    command: &NativeCommand,
+    serial: u64,
+    leaf: &crate::activity::LearnedSpeechLeaf<'_>,
+) -> bool {
+    command.learned_speech_fields() == Some((leaf.purpose, leaf.text))
+        && command.envelope().actor_id == actor
+        && command_serial(plan, command) == Some(serial)
+}
+
+/// Reconnect saved leaf IDs to the original immutable definition after the
+/// library exists. A revoked owner can still reopen; the live ready path stops
+/// any unfinished work, while already performed steps retain their receipts.
+fn validate_saved_learned_plan(
+    state: &crate::simulation::SimulationState,
+    plan: &ActorPlan,
+    execution: &ActivityExecution,
+    actor: &str,
+) -> Result<(), ExecutionError> {
+    let method = crate::activity::stored_learned_speech(
+        state,
+        execution.method_id.as_deref().ok_or_else(unsupported)?,
+        &execution.bindings,
+    )
+    .ok_or_else(unsupported)?;
+    let serial = usize::try_from(execution.serial).map_err(|_| unsupported())?;
+    let children = method.children();
+    let pending = children.get(serial..).ok_or_else(unsupported)?;
+    let archived =
+        usize::try_from(execution.archived_steps.unwrap_or(0)).map_err(|_| unsupported())?;
+    if (plan.status != PlanStatus::Cancelled || !execution.pending.is_empty())
+        && (pending.len() != execution.pending.len()
+            || pending
+                .iter()
+                .rev()
+                .zip(&execution.pending)
+                .any(|(node, frame)| {
+                    *node != frame.node || frame.iteration != 0 || frame.started_at.is_some()
+                }))
+        || execution.processed != execution.serial + 1
+        || archived.checked_add(plan.steps.len()) != Some(serial)
+        || (plan.status == PlanStatus::Completed && !pending.is_empty())
+        || plan.steps.iter().enumerate().any(|(index, step)| {
+            let position = archived + index;
+            let Some(leaf) = method.leaf(&children[position]) else {
+                return true;
+            };
+            step.activity_key.as_ref() != Some(leaf.key)
+                || !matches_speech(plan, actor, &step.command, (position + 1) as u64, &leaf)
+        })
+        || execution.outputs.as_object().is_none_or(|outputs| {
+            outputs.iter().any(|(key, value)| {
+                value.as_array().is_none_or(|outputs| !outputs.is_empty())
+                    || !children[..serial]
+                        .iter()
+                        .any(|node| node.get("key").and_then(SqlCell::as_str) == Some(key.as_str()))
+            })
+        })
+    {
+        return Err(unsupported());
+    }
+    Ok(())
+}
+
 /// Append the real bound leaf, without dispatch, result/evidence creation or a
 /// revision increment. Source increments the dispatch revision in its common
 /// plan owner, not when activityFrontier appends this queued step.
-pub(crate) fn append_single_invoke(
+pub(crate) fn append_invoke(
     core: &mut CoreMutation<'_>,
     actor: &str,
     command: NativeCommand,
@@ -282,7 +443,7 @@ pub(crate) fn append_single_invoke(
         .map_err(|_| ExecutionError::Capacity)?;
     let current = plan(core, actor)?;
     let execution = current.activity.as_ref().ok_or_else(unsupported)?;
-    let invocation = execution.single_invoke()?;
+    let key = execution.required_pending_key()?;
     let serial = execution
         .serial
         .checked_add(1)
@@ -294,7 +455,6 @@ pub(crate) fn append_single_invoke(
         .filter(|n| *n <= core.state.activity.limits.expanded_work)
         .ok_or(ExecutionError::UnsupportedFamily)?;
     if current.status != PlanStatus::Active
-        || execution.pending.len() != 1
         || maximum == 0
         || current.steps.len() > maximum
         || current
@@ -304,8 +464,8 @@ pub(crate) fn append_single_invoke(
         || execution
             .cancelled_keys
             .as_ref()
-            .is_some_and(|keys| keys.iter().any(|key| key == invocation.key))
-        || !command_matches(&invocation, current, actor, &command, serial)
+            .is_some_and(|keys| keys.contains(key))
+        || !execution.matches_pending(current, actor, &command, serial)?
     {
         return Err(unsupported());
     }
@@ -344,7 +504,7 @@ pub(crate) fn append_single_invoke(
     let growth = command
         .heap_bytes()
         .and_then(|n| n.checked_add(command.envelope().id.len()))
-        .and_then(|n| n.checked_add(invocation.key.heap_bytes()?.checked_mul(2)?))
+        .and_then(|n| n.checked_add(key.heap_bytes()?.checked_mul(2)?))
         .and_then(|n| {
             n.checked_add(if archive {
                 0
@@ -364,7 +524,7 @@ pub(crate) fn append_single_invoke(
     core.physical().reserve_plan_growth(growth)?;
     let (key, next_history) = {
         let current = plan(core, actor)?;
-        let invocation = current.activity.as_ref().unwrap().single_invoke()?;
+        let key = current.activity.as_ref().unwrap().required_pending_key()?;
         let next_history = if archive {
             let history = &core
                 .state
@@ -389,7 +549,7 @@ pub(crate) fn append_single_invoke(
         } else {
             None
         };
-        (invocation.key.clone(), next_history)
+        (key.clone(), next_history)
     };
     if let Some(history) = next_history {
         core.physical().replace_plan_history(actor, history)?;
@@ -440,6 +600,9 @@ pub(crate) fn record_single_result(
     let current = plan(core, actor)?;
     let step = current.steps.get(index).ok_or(ExecutionError::Invariant)?;
     let execution = current.activity.as_ref().ok_or_else(unsupported)?;
+    if execution.method_id.is_some() {
+        return record_speech_result(core, actor, index, result);
+    }
     let invocation = execution.single_invoke()?;
     if step.status != StepStatus::Running
         || step.activity_key.as_ref() != Some(invocation.key)
@@ -489,6 +652,71 @@ pub(crate) fn record_single_result(
         .ok_or(ExecutionError::Invariant)?;
     // Present empty is the actual Move result, distinct from an absent entry.
     execution.outputs = outputs;
+    if !result.ok {
+        execution.reason = Some(result.message.clone());
+    }
+    Ok(())
+}
+
+fn record_speech_result(
+    core: &mut CoreMutation<'_>,
+    actor: &str,
+    index: usize,
+    result: &Outcome,
+) -> Result<(), ExecutionError> {
+    let current = plan(core, actor)?;
+    let step = current.steps.get(index).ok_or(ExecutionError::Invariant)?;
+    let key = step
+        .activity_key
+        .as_ref()
+        .and_then(JsText::as_unicode)
+        .ok_or_else(unsupported)?;
+    if step.status != StepStatus::Running
+        || step.command.learned_speech_fields().is_none()
+        || result
+            .outputs
+            .as_ref()
+            .is_some_and(|outputs| !outputs.is_empty())
+    {
+        return Err(unsupported());
+    }
+    let current_size = current
+        .activity
+        .as_ref()
+        .and_then(|value| value.outputs.object_len())
+        .ok_or_else(unsupported)?;
+    let growth = map_storage::<String, SqlCell>(current_size + 1)
+        .and_then(|n| n.checked_add(key.len()))
+        .and_then(|n| {
+            n.checked_add(if result.ok {
+                0
+            } else {
+                result.message.heap_bytes()?
+            })
+        })
+        .ok_or(ExecutionError::Capacity)?;
+    core.physical().reserve_plan_growth(growth)?;
+    let key = plan(core, actor)?.steps[index]
+        .activity_key
+        .as_ref()
+        .and_then(JsText::as_unicode)
+        .ok_or(ExecutionError::Invariant)?
+        .to_owned();
+    let mut physical = core.physical();
+    let execution = physical
+        .plan_mut(actor)?
+        .as_mut()
+        .and_then(|plan| plan.activity.as_mut())
+        .ok_or(ExecutionError::Invariant)?;
+    let SqlCell::Object(outputs) = &mut execution.outputs else {
+        return Err(ExecutionError::Invariant);
+    };
+    outputs
+        .try_reserve(1)
+        .map_err(|_| ExecutionError::Capacity)?;
+    if outputs.insert(key, SqlCell::Array(Vec::new())).is_some() {
+        return Err(ExecutionError::Invariant);
+    }
     if !result.ok {
         execution.reason = Some(result.message.clone());
     }

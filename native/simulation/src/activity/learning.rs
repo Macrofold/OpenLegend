@@ -9,7 +9,13 @@ mod cursor;
 mod discovery;
 mod format;
 mod history;
+mod invocation;
 mod library;
+pub use invocation::LearnedSpeechChoice;
+pub(crate) use invocation::{
+    LEARNED_ACTIVITY_COPY, LearnedSpeech, LearnedSpeechLeaf, LearnedSpeechSource, current_learned_speech, speech_leaf,
+    stored_learned_speech, visit_learned_speech,
+};
 mod models;
 mod normalize;
 mod publication;
@@ -29,7 +35,7 @@ pub(crate) use publication::{
     LearningPublicationRequest, LearningPublicationStep,
 };
 pub use read::RuntimeInspectedSkill;
-pub(crate) use read::{inspected_activities, learning_signatures};
 pub(super) use read::visit_current;
+pub(crate) use read::{inspected_activities, learning_signatures};
 
 pub(super) use models::{LearningAcquisition, LearningMethod};

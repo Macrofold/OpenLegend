@@ -278,6 +278,10 @@ impl NpcDescriptionsRequest {
                             .checked_add(choice.description.storage_bytes())?;
                         0
                     }
+                    NpcOfferMeaning::Learned { choice } => {
+                        prepared_text_bytes = prepared_text_bytes.checked_add(choice.description.storage_bytes())?;
+                        0
+                    }
                     _ => 0,
                 };
                 bytes

@@ -1,3 +1,4 @@
+import activityLearningCopy from './activity-learning-copy.json' with { type: 'json' };
 import { isNativeInputField } from './native-inputs.js';
 import type { NativeExecutionPermissions } from './construction-permissions.js';
 import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
@@ -862,7 +863,7 @@ export function activityFrontier(
     );
   };
   if (!method) {
-    block('This method no longer has permitted supporting knowledge.');
+    block(activityLearningCopy.invocation.withdrawn.message);
     return;
   }
   const cancelled = execution.cancelledKeys && new Set(execution.cancelledKeys);
@@ -1033,8 +1034,8 @@ export function startLearnedActivity(
   if (!actor || !method || !method.executable)
     return outcome(
       false,
-      'unknown-method',
-      'No personally learned compatible method is available.',
+      activityLearningCopy.invocation.unknown.code,
+      activityLearningCopy.invocation.unknown.message,
     );
   if (
     Object.keys(bindings).length !== Object.keys(method.roles).length ||
@@ -1069,7 +1070,11 @@ export function startLearnedActivity(
     return outcome(true, 'resumed', 'Continue only the remaining work.');
   }
   if (actor.action || actor.agency.plan?.status === 'active')
-    return outcome(false, 'busy', 'Cancel or finish current work before choosing a new activity.');
+    return outcome(
+      false,
+      activityLearningCopy.invocation.busy.code,
+      activityLearningCopy.invocation.busy.message,
+    );
   actor.agency.plan = {
     id,
     // Revisions keep increasing across paused work so stale plan edits never match.
@@ -1101,7 +1106,11 @@ export function startLearnedActivity(
     );
     if (!preview.ok) return preview;
   }
-  return outcome(true, 'queued', 'Selected the learned task.');
+  return outcome(
+    true,
+    activityLearningCopy.invocation.queued.code,
+    activityLearningCopy.invocation.queued.message,
+  );
 }
 
 function timeConditions(node: ActivityNode): number[] {

@@ -413,6 +413,51 @@ impl PlanReadyCursor {
                         self.phase = Phase::Complete;
                         continue;
                     }
+                    if let Some(execution) = &plan.activity
+                        && !execution.current_speech(core.state, &self.actor, &self.budget)?
+                    {
+                        let refusal = &crate::activity::LEARNED_ACTIVITY_COPY.withdrawn;
+                        let installed = core.state.installed.clone();
+                        let importance = installed.ordinary_actions.value().plan.result_importance;
+                        let _report = self.budget.reserve(
+                            refusal
+                                .message
+                                .len()
+                                .checked_mul(4)
+                                .ok_or(ExecutionError::Capacity)?,
+                        )?;
+                        let reason: crate::text::JsText = refusal.message.into();
+                        let evidence = super::memory::append_report(
+                            core,
+                            &self.actor,
+                            reason.clone(),
+                            importance,
+                        )?;
+                        let bytes = reason
+                            .heap_bytes()
+                            .and_then(|n| n.checked_add(evidence.heap_bytes()?))
+                            .ok_or(ExecutionError::Capacity)?;
+                        core.physical().reserve_plan_growth(bytes)?;
+                        let mut physical = core.physical();
+                        let plan = physical
+                            .plan_mut(&self.actor)?
+                            .as_mut()
+                            .ok_or(ExecutionError::Invariant)?;
+                        plan.activity
+                            .as_mut()
+                            .ok_or(ExecutionError::Invariant)?
+                            .reason = Some(reason);
+                        plan.result_evidence = evidence;
+                        plan.status = PlanStatus::Blocked;
+                        plan.revision = plan
+                            .revision
+                            .checked_add(1)
+                            .filter(|n| *n <= crate::identity::MAX_SAFE_INTEGER)
+                            .ok_or(ExecutionError::Invariant)?;
+                        physical.advance_agency_revision(&self.actor)?;
+                        self.phase = Phase::Complete;
+                        continue;
+                    }
                     if !plan.steps.iter().any(|s| s.status == StepStatus::Queued)
                         && let Some(execution) = &plan.activity
                     {
@@ -420,18 +465,16 @@ impl PlanReadyCursor {
                         // selected single Move finishes through finishAction;
                         // empty-active standalone graphs need their separate
                         // Source completion report before becoming supported.
-                        if execution.pending_single_invoke()?.is_none() {
-                            return Err(ExecutionError::UnsupportedFamily);
-                        }
-                        let (id, _identity) = execution.single_step_id(&plan.id, &self.budget)?;
-                        let (command, _storage) = super::activity::bind_single_invoke(
+                        execution.required_pending_key()?;
+                        let (id, _identity) = execution.next_step_id(&plan.id, &self.budget)?;
+                        let (command, _storage) = super::activity::bind_pending_invoke(
                             execution,
                             &self.actor,
                             &id,
                             &core.state.installed,
                             &self.budget,
                         )?;
-                        super::activity::append_single_invoke(core, &self.actor, command)?;
+                        super::activity::append_invoke(core, &self.actor, command)?;
                         continue;
                     }
                     let Some(next) = plan.steps.iter().find(|s| s.status == StepStatus::Queued)

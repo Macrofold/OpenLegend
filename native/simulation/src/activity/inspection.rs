@@ -93,7 +93,9 @@ impl RuntimeActivityDecisionPage {
         self.entries.iter().map(|entry| &entry.text)
     }
     pub fn method_texts(&self) -> impl Iterator<Item = (&JsText, &'static str)> {
-        self.methods.iter().map(|method| (&method.text, method.status))
+        self.methods
+            .iter()
+            .map(|method| (&method.text, method.status))
     }
     pub fn admitted_bytes(&self) -> usize {
         self.storage.bytes()
@@ -335,7 +337,17 @@ impl ActivityInspection {
             }
             let body = method.body();
             let name = field_text(body, "name")?;
-            let text = render_method(body, acquisition.body(), state, budget)?;
+            let bindings = acquisition
+                .body()
+                .get("bindings")
+                .ok_or(ExecutionError::Invariant)?;
+            let text = render_method(
+                body,
+                bindings,
+                state,
+                super::LEARNED_ACTIVITY_COPY.label,
+                budget,
+            )?;
             if method_bytes + text.utf8_len() > INSPECTION_BYTES {
                 method_next = Some(at);
                 return Ok(());
@@ -476,14 +488,14 @@ fn item_name(
 
 /// The installed learned format admits a sequence of named native steps.
 /// Display past output and future dependencies without granting live roles.
-fn render_method(
+pub(in crate::activity) fn render_method(
     body: &SqlCell,
-    acquired: &SqlCell,
+    bindings: &SqlCell,
     state: &SimulationState,
+    title: &str,
     budget: &ByteBudget,
 ) -> Result<JsText, ExecutionError> {
     use crate::host::retained_size::HeapBytes;
-    let bindings = acquired.get("bindings").ok_or(ExecutionError::Invariant)?;
     let _workspace = budget.reserve(
         body.heap_bytes()
             .and_then(|n| n.checked_add(bindings.heap_bytes()?))
@@ -503,7 +515,7 @@ fn render_method(
             .get("args")
             .and_then(SqlCell::as_object)
             .ok_or(ExecutionError::Invariant)?;
-        let mut view = method_step(state, step, args.get("text"), acquired)?;
+        let mut view = method_step(state, step, args.get("text"), bindings)?;
         let facts = &mut view.facts;
         for arg in args.values() {
             if let Some(output) = arg.get("output").and_then(SqlCell::as_str) {
@@ -554,7 +566,7 @@ fn render_method(
     let limits = &state.activity.display;
     project_activity(
         &root,
-        Some("Can do"),
+        Some(title),
         limits,
         limits.display_bytes,
         limits.depth,
@@ -567,34 +579,19 @@ fn method_step(
     state: &SimulationState,
     step: &SqlCell,
     text: Option<&SqlCell>,
-    acquisition: &SqlCell,
+    bindings: &SqlCell,
 ) -> Result<ActivityView, ExecutionError> {
-    use crate::worlds::activity_display::{OrdinaryAction, format};
     let name = field_text(step, "name")?.clone();
     if field(step, "command")? == "say" {
         let role = text
             .and_then(|arg| arg.get("role"))
             .and_then(SqlCell::as_str)
             .ok_or(ExecutionError::Invariant)?;
-        let words = acquisition
-            .get("bindings")
-            .and_then(|bindings| bindings.get(role))
+        let words = bindings
+            .get(role)
             .and_then(SqlCell::as_text)
             .ok_or(ExecutionError::Invariant)?;
-        let profile = &state.installed.content.profile;
-        // Wording comes from the installed world. Access to this acquisition
-        // does not discover its addressee or authorize another utterance.
-        let mut view = format(
-            (&profile.id, profile.version),
-            OrdinaryAction::Say(words.clone()),
-            None,
-            None,
-            None,
-            None,
-        )
-        .ok_or(ExecutionError::UnsupportedFamily)?;
-        view.name = name;
-        return Ok(view);
+        return learned_speech_view(state, &name, words);
     }
     Ok(ActivityView {
         name,
@@ -605,6 +602,28 @@ fn method_step(
         children: None,
         result: None,
     })
+}
+
+/// Use the installed ordinary speech description for a learned leaf. The
+/// caller owns current source permissions and has already funded its size.
+pub(crate) fn learned_speech_view(
+    state: &SimulationState,
+    name: &JsText,
+    words: &JsText,
+) -> Result<ActivityView, ExecutionError> {
+    use crate::worlds::activity_display::{OrdinaryAction, format};
+    let profile = &state.installed.content.profile;
+    let mut view = format(
+        (&profile.id, profile.version),
+        OrdinaryAction::Say(words.clone()),
+        None,
+        None,
+        None,
+        None,
+    )
+    .ok_or(ExecutionError::UnsupportedFamily)?;
+    view.name = name.clone();
+    Ok(view)
 }
 
 fn grow(owner: &mut ByteReservation, bytes: usize) -> Result<(), ExecutionError> {

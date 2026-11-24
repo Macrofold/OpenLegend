@@ -307,6 +307,11 @@ impl<'a> PlayerSelfFacts<'a> {
         }) else {
             return Ok(None);
         };
+        if activity.method_id.is_some() {
+            // This decision is an autonomous NPC's work, and the current
+            // player agency does not supply a personal method menu.
+            return Ok(None);
+        }
         activity.single_invoke().map_err(|_| "an unconverted activity graph")?;
         let name = &activity.request.as_ref().ok_or("a missing own activity request")?.name;
         let status = match plan.status {

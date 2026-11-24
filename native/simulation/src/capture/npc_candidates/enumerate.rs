@@ -100,7 +100,7 @@ impl NpcCandidateCursor {
                 }
             }
             Enumerate::Inventory => {
-                self.stage = Enumerate::Continue;
+                self.stage = Enumerate::Learned;
                 if core.state.inventory.has_children(&self.actor) {
                     return Ok(true);
                 }
@@ -116,6 +116,32 @@ impl NpcCandidateCursor {
                     guard,
                     WorkTransitionMode::Continue,
                 )?;
+            }
+            Enumerate::Learned => {
+                self.stage = Enumerate::Continue;
+                if actor.alive && !actor.incapacitated && actor.action.is_none()
+                    && !actor.agency.plan.as_ref().is_some_and(|plan| plan.status == crate::plans::PlanStatus::Active)
+                {
+                    let mut count = 0;
+                    let budget = self.budget.clone();
+                    crate::activity::visit_learned_speech(core.state, actor_entity.id.as_str(), &budget, |method| {
+                        if count == 4 { return Ok(false); }
+                        let choice = method.retain_choice(core.state, &budget)?;
+                        let (id, guard) = self.id(&["learned-", method.id()])?;
+                        self.append(PreparedNpcOffer {
+                            description: None,
+                            id,
+                            meaning: NpcOfferMeaning::Learned { choice: choice.clone() },
+                            command: PreparedNpcInstruction::Learned(choice),
+                            transition: WorkTransitionMode::Enqueue,
+                            temporary: None,
+                            next_at: None,
+                            _storage: guard,
+                        })?;
+                        count += 1;
+                        Ok(count < 4)
+                    })?;
+                }
             }
             Enumerate::Continue => {
                 self.stage = Enumerate::Follow(0, 0);

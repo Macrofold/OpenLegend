@@ -87,6 +87,7 @@ pub(crate) fn prepare_ordinary_actions(
             ResponseActionChoice {
                 invocation,
                 handover: handover.cloned(),
+                learned: offer.command.learned().cloned(),
                 purpose: command.and_then(|command| command.envelope().chosen_purpose.clone()),
                 transition: offer.transition,
                 expected_work: current.work.clone(),

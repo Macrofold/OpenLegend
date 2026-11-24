@@ -286,8 +286,7 @@ impl ActivityOccurrence {
         limits: &ActivityLimits,
         display: &ActivityDisplayLimits,
     ) -> Result<(), ActivityError> {
-        if self.stock_resolution.is_some() || self.method_id.is_some()
-        {
+        if self.stock_resolution.is_some() {
             return Err(ActivityError::UnsupportedFamily);
         }
         // Inventory inspection is a valid Source historical occurrence even
@@ -305,6 +304,10 @@ impl ActivityOccurrence {
             .release
             .as_ref()
             .is_some_and(|release| !release.valid_for(&self.command))
+            || self.method_id.as_ref().is_some_and(|id| {
+                !is_safe_record_id(id) || self.parent_id.is_none() || self.parent_name.is_none()
+                    || self.command.learned_speech_fields().is_none()
+            })
             || self.actor_id != actor_id
             || !is_safe_record_id(&self.id)
             || !is_safe_record_id(&self.action_id)

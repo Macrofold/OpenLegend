@@ -1,3 +1,4 @@
+import activityLearningCopy from '../../../packages/domain/src/activity-learning-copy.json' with { type: 'json' };
 import { entityGet } from '@open-legend/domain';
 import { isNativeInputField, preparationDefinition } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
@@ -551,7 +552,7 @@ export function learnedActivityCandidates(
     if (!available || (mode === 'decision' && results.length >= 4)) continue;
     results.push({
       id: `learned-${method.id}`,
-      description: `${rebound ? 'Choose this attempt with the currently described compatible objects in place of an unavailable earlier binding. ' : ''}${renderActivity(activityChoiceView(world, actorId, method, bindings), 'Can do')}. Learned from my own attempts; future success is uncertain.`,
+      description: `${rebound ? 'Choose this attempt with the currently described compatible objects in place of an unavailable earlier binding. ' : ''}${renderActivity(activityChoiceView(world, actorId, method, bindings), 'Can do')}${activityLearningCopy.invocation.tentative}`,
       command: { type: 'activity', methodId: method.id, bindings },
     });
   }

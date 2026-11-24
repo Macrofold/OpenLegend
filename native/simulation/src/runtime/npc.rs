@@ -31,10 +31,8 @@ pub use stage_history::RuntimeNpcStageWitness;
 mod presentation;
 mod queries;
 pub use crate::appraisals::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
+pub use crate::response::{AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal};
 pub use appraisal_read::RuntimeNpcAppraisalRecord;
-pub use crate::response::{
-    AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal,
-};
 pub(super) use bindings::ActiveNpcResponse;
 pub use bindings::{
     RuntimeNpcBindingInput, RuntimeNpcBindingRequest, RuntimeNpcConsumer, RuntimeNpcOperations,
@@ -45,7 +43,10 @@ pub(crate) use held_sources::HeldSourceProof;
 pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};
 pub use personal::{RuntimeNpcGuardThreat, RuntimeNpcPersonalSource, RuntimeNpcPersonalSources};
 pub use presentation::{RuntimeNpcObservedBody, RuntimeNpcPresentedBody};
-pub use queries::{RuntimeNpcBoundaryFact, RuntimeNpcHistoricalPose, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence};
+pub use queries::{
+    RuntimeNpcBoundaryFact, RuntimeNpcHistoricalPose, RuntimeNpcSeparation,
+    RuntimeNpcSeparationEvidence,
+};
 
 /// A brief dispatch gate, never retained while SQL or a provider is awaited.
 /// Historical disclosure and current response semantics are separate routes.
@@ -446,6 +447,21 @@ impl NativeWorldSession {
         {
             return Ok(Err("native-response-additional-history"));
         }
+        if disclosure {
+            for choice in ticket
+                .original
+                .learned_activity_sources()
+                .chain(ticket.current.learned_activity_sources())
+            {
+                if choice
+                    .current(state, actor_id, &self.budget)
+                    .map_err(failure)?
+                    .is_none()
+                {
+                    return Ok(Err("native-response-learned-activity"));
+                }
+            }
+        }
         if disclosure
             && !crate::handover::GiftSource::choices_current(
                 state,
@@ -462,11 +478,17 @@ impl NativeWorldSession {
         {
             return Ok(Err("native-response-gift-terms"));
         }
-        if disclosure && ticket.bindings.actions.values()
-            .filter_map(|choice| choice.handover.as_ref())
-            .any(|choice| choice.trade_evidence().is_some_and(|evidence| {
-                !evidence.current(state, actor_id, choice.target())
-            }))
+        if disclosure
+            && ticket
+                .bindings
+                .actions
+                .values()
+                .filter_map(|choice| choice.handover.as_ref())
+                .any(|choice| {
+                    choice
+                        .trade_evidence()
+                        .is_some_and(|evidence| !evidence.current(state, actor_id, choice.target()))
+                })
         {
             return Ok(Err("native-response-trade-disclosure"));
         }
@@ -935,8 +957,11 @@ impl NativeWorldSession {
         read: &mut RuntimeNpcRead,
         sources: crate::capture::PreparedNpcSources,
     ) -> Result<usize, RuntimeError> {
-        sources.validate_origin(&read.read, &self.budget).map_err(failure)?;
-        self.held_receipts.register(&sources, &read.receipt_payload, &self.budget)
+        sources
+            .validate_origin(&read.read, &self.budget)
+            .map_err(failure)?;
+        self.held_receipts
+            .register(&sources, &read.receipt_payload, &self.budget)
             .map_err(failure)?;
         let inventories = Arc::get_mut(&mut read.sources)
             .ok_or_else(|| failure("NPC sources are already issued"))?;
@@ -991,6 +1016,32 @@ impl RuntimeNpcRead {
             ));
         }
         Ok(())
+    }
+
+    /// Historical prompt capture is optional. A selected personal method's
+    /// source and binding need their own historical witness before this kind
+    /// of prompt can be retained.
+    pub(super) fn has_learned_activity_offer(&self) -> bool {
+        self.learned_activity_sources().next().is_some()
+    }
+
+    fn learned_activity_sources(
+        &self,
+    ) -> impl Iterator<Item = &crate::activity::LearnedSpeechSource> {
+        let direct = self
+            .preparation
+            .as_ref()
+            .into_iter()
+            .flat_map(|read| match read {
+                PreparedNpcRead::Offers(_) => None,
+                PreparedNpcRead::Recall(_) => Some(read.work_context()),
+            })
+            .flat_map(|work| work.learned_sources());
+        self.candidates()
+            .into_iter()
+            .chain(self.action_catalogue.as_ref().map(|held| &held.candidates))
+            .flat_map(PreparedNpcCandidates::learned_sources)
+            .chain(direct)
     }
 
     fn candidates(&self) -> Option<&PreparedNpcCandidates> {

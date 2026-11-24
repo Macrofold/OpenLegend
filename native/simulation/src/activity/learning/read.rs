@@ -87,6 +87,21 @@ pub(in crate::activity) fn visit_current<'a>(
         &'a models::LearningAcquisition,
     ) -> Result<(), ExecutionError>,
 ) -> Result<(), ExecutionError> {
+    visit_current_while(state, actor, budget, |method, acquisition| {
+        visit(method, acquisition)?;
+        Ok(true)
+    })
+}
+
+pub(super) fn visit_current_while<'a>(
+    state: &'a SimulationState,
+    actor: &str,
+    budget: &ByteBudget,
+    mut visit: impl FnMut(
+        &'a models::LearningMethod,
+        &'a models::LearningAcquisition,
+    ) -> Result<bool, ExecutionError>,
+) -> Result<(), ExecutionError> {
     let Some(owner) = state
         .activity
         .library
@@ -98,94 +113,134 @@ pub(in crate::activity) fn visit_current<'a>(
     };
     let (manifest, _manifest) = super::format::manifest_shape(state, budget)?;
     for acquisition in owner.values() {
-        if !acquisition
-            .body()
-            .get("supports")
-            .and_then(SqlCell::as_array)
-            .is_some_and(|s| {
-                s.iter()
-                    .any(|s| s.get("revoked").and_then(SqlCell::as_bool) != Some(true))
-            })
-        {
+        if !has_support(acquisition) {
             continue;
         }
-        let method = acquisition
-            .body()
-            .get("methodId")
-            .and_then(SqlCell::as_str)
-            .and_then(|id| state.activity.library.methods.get(id))
-            .ok_or(ExecutionError::Invariant)?;
-        let _decode = budget.reserve(
-            crate::experience::encoded_body_bound(method.manifest())
-                .map_err(|_| ExecutionError::Capacity)?,
-        )?;
-        let expected: SqlCell =
-            serde_json::from_str(method.manifest()).map_err(|_| ExecutionError::Invariant)?;
-        if expected != manifest {
-            continue;
-        }
-        let roles = method
-            .body()
-            .get("roles")
-            .and_then(SqlCell::as_object)
-            .ok_or(ExecutionError::Invariant)?;
-        let mut current = true;
-        for role in roles.values() {
-            if let Some(host) = role.get("targetHost") {
-                let _decode = budget.reserve(
-                    crate::encoding::json_record_len(host)
-                        .map_err(|_| ExecutionError::Invariant)?
-                        .checked_mul(4)
-                        .ok_or(ExecutionError::Capacity)?,
-                )?;
-                let pin: crate::values::DefinitionPin = serde_json::from_str(
-                    &crate::encoding::json_record(host).map_err(|_| ExecutionError::Invariant)?,
-                )
-                .map_err(|_| ExecutionError::Invariant)?;
-                if !state.installed.manifest.activity_hosts.contains(&pin) {
-                    current = false;
-                    break;
-                }
-            }
-            let mut pins = [None, None];
-            if let Some(id) = role.get("definitionId").and_then(SqlCell::as_str) {
-                pins[0] = Some((
-                    id,
-                    role.get("definitionVersion"),
-                    role.get("definitionDigest"),
-                ));
-            }
-            if let Some(pin) = role.get("gatheredDefinition") {
-                if let Some(id) = pin.get("id").and_then(SqlCell::as_str) {
-                    pins[1] = Some((id, pin.get("version"), pin.get("digest")));
-                }
-            }
-            for (id, version, digest) in pins.into_iter().flatten() {
-                let Some(raw) = state.installed.retained.item_definitions.get(id) else {
-                    current = false;
-                    break;
-                };
-                let _decode = budget.reserve(
-                    crate::experience::encoded_body_bound(raw)
-                        .map_err(|_| ExecutionError::Capacity)?,
-                )?;
-                let definition: SqlCell =
-                    serde_json::from_str(raw).map_err(|_| ExecutionError::Invariant)?;
-                if definition.get("id").and_then(SqlCell::as_str) != Some(id)
-                    || definition.get("version") != version
-                    || definition.get("digest") != digest
-                {
-                    current = false;
-                    break;
-                }
-            }
-            if !current {
-                break;
-            }
-        }
-        if current {
-            visit(method, acquisition)?;
+        let method = method_for_acquisition(state, acquisition)?;
+        if matches_installation(state, method, &manifest, budget)? && !visit(method, acquisition)? {
+            break;
         }
     }
     Ok(())
+}
+
+fn has_support(acquisition: &models::LearningAcquisition) -> bool {
+    acquisition
+        .body()
+        .get("supports")
+        .and_then(SqlCell::as_array)
+        .is_some_and(|supports| {
+            supports
+                .iter()
+                .any(|support| support.get("revoked").and_then(SqlCell::as_bool) != Some(true))
+        })
+}
+
+fn method_for_acquisition<'a>(
+    state: &'a SimulationState,
+    acquisition: &models::LearningAcquisition,
+) -> Result<&'a models::LearningMethod, ExecutionError> {
+    acquisition
+        .body()
+        .get("methodId")
+        .and_then(SqlCell::as_str)
+        .and_then(|id| state.activity.library.methods.get(id))
+        .map(std::sync::Arc::as_ref)
+        .ok_or(ExecutionError::Invariant)
+}
+
+/// Resolve one personal method from the caller’s current accepted cut. This
+/// does one owner/id lookup and compares the installed manifest and any role
+/// pins. It does not inspect another acquisition or prepare a history page.
+/// The caller borrows the result for this cut, and may hold it across a wait
+/// only with independent custody and a fresh result before use.
+pub(in crate::activity) fn current_acquisition<'a>(
+    state: &'a SimulationState,
+    actor: &str,
+    id: &str,
+    budget: &ByteBudget,
+) -> Result<Option<(&'a models::LearningMethod, &'a models::LearningAcquisition)>, ExecutionError> {
+    let Some(acquisition) = state
+        .activity
+        .library
+        .acquisitions
+        .get(actor)
+        .and_then(|owner| owner.get(id))
+        .filter(|acquisition| has_support(acquisition))
+    else {
+        return Ok(None);
+    };
+    let method = method_for_acquisition(state, acquisition)?;
+    let (manifest, _manifest) = super::format::manifest_shape(state, budget)?;
+    Ok(matches_installation(state, method, &manifest, budget)?
+        .then_some((method, acquisition.as_ref())))
+}
+
+fn matches_installation(
+    state: &SimulationState,
+    method: &models::LearningMethod,
+    manifest: &SqlCell,
+    budget: &ByteBudget,
+) -> Result<bool, ExecutionError> {
+    let _decode = budget.reserve(
+        crate::experience::encoded_body_bound(method.manifest())
+            .map_err(|_| ExecutionError::Capacity)?,
+    )?;
+    let expected: SqlCell =
+        serde_json::from_str(method.manifest()).map_err(|_| ExecutionError::Invariant)?;
+    if &expected != manifest {
+        return Ok(false);
+    }
+    let roles = method
+        .body()
+        .get("roles")
+        .and_then(SqlCell::as_object)
+        .ok_or(ExecutionError::Invariant)?;
+    for role in roles.values() {
+        if let Some(host) = role.get("targetHost") {
+            let _decode = budget.reserve(
+                crate::encoding::json_record_len(host)
+                    .map_err(|_| ExecutionError::Invariant)?
+                    .checked_mul(4)
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            let pin: crate::values::DefinitionPin = serde_json::from_str(
+                &crate::encoding::json_record(host).map_err(|_| ExecutionError::Invariant)?,
+            )
+            .map_err(|_| ExecutionError::Invariant)?;
+            if !state.installed.manifest.activity_hosts.contains(&pin) {
+                return Ok(false);
+            }
+        }
+        let mut pins = [None, None];
+        if let Some(id) = role.get("definitionId").and_then(SqlCell::as_str) {
+            pins[0] = Some((
+                id,
+                role.get("definitionVersion"),
+                role.get("definitionDigest"),
+            ));
+        }
+        if let Some(pin) = role.get("gatheredDefinition") {
+            if let Some(id) = pin.get("id").and_then(SqlCell::as_str) {
+                pins[1] = Some((id, pin.get("version"), pin.get("digest")));
+            }
+        }
+        for (id, version, digest) in pins.into_iter().flatten() {
+            let Some(raw) = state.installed.retained.item_definitions.get(id) else {
+                return Ok(false);
+            };
+            let _decode = budget.reserve(
+                crate::experience::encoded_body_bound(raw).map_err(|_| ExecutionError::Capacity)?,
+            )?;
+            let definition: SqlCell =
+                serde_json::from_str(raw).map_err(|_| ExecutionError::Invariant)?;
+            if definition.get("id").and_then(SqlCell::as_str) != Some(id)
+                || definition.get("version") != version
+                || definition.get("digest") != digest
+            {
+                return Ok(false);
+            }
+        }
+    }
+    Ok(true)
 }
