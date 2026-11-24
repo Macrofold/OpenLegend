@@ -19,14 +19,14 @@ Before reusing a helper, check whether an earlier stage already prepared the res
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Module/crate `//!`                  | Non-obvious responsibility, ownership, shared invariants and the entrypoint or contract needed to navigate the module. |
 | Item `///`                          | Caller-facing contract, effects, outcomes, cost and reuse facts needed before choosing the callable or type.           |
-| Local `//`                          | Why this particular ordering, check, arithmetic or apparently redundant step must survive an edit.                     |
+| Local `//`                          | Non-obvious constraint or tradeoff behind an ordering, check, arithmetic or apparently redundant step.                 |
 | Canonical design/technical document | Cross-system contract, fuller tradeoff or accepted design; link it rather than copying it into every caller.           |
 
 Keep the critical fact near the decision even when a deeper explanation exists elsewhere. Factor genuinely shared rules into their owner and document exceptions at the affected item. Do not replace a necessary local fact with only “see module docs.”
 
 For non-obvious requirements, tradeoffs or extension seams, state the condition, reason and consequence of changing them. “Do not remove,” “intentional” and “for performance” are insufficient by themselves. Preserve real bug-prevention rationale without copying a debugging diary. Explain why the tempting alternative fails and, when useful, link the existing regression check or issue. Do not invent historical intent from implementation; a verified present constraint is enough.
 
-Describe current behavior precisely. Keep proposals and unfinished work in the existing tracker, with a local pointer only when it helps avoid misuse. A world-specific rule remains owned by its world; a comment must not silently universalize it.
+Describe current behavior precisely, separating caller guarantees from implementation details that may change. Keep proposals and unfinished work in the existing tracker, with a local pointer only when it helps avoid misuse. A world-specific rule remains owned by its world; a comment must not silently universalize it.
 
 ## References and Rust conventions
 
@@ -40,7 +40,7 @@ Avoid restating types, obvious control flow, self-evident accessors, exhaustive 
 
 When behavior, effects, cost, ownership or a documented assumption changes, inspect affected callers, callees and canonical contracts until the changed assumption's impact is understood. Search references where the change crosses files; update affected comments, examples and links in the same change. This is bounded dependency review, not a requirement to read every transitive path for every edit.
 
-Review removed comments as carefully as added ones. Move useful rationale with its semantic owner; remove it only after establishing that the constraint no longer applies. Check the final wording against the actual implementation, including meaningful failure paths and words such as “only,” “before” and “unchanged.”
+Review removed comments as carefully as added ones. Preserve relevant constraints and rationale with their semantic owner; correct or remove stale, redundant or obvious wording without losing unique information needed for safe use or change. Check the final wording against the actual implementation, including meaningful failure paths and words such as “only,” “before” and “unchanged.”
 
 If code, comments and accepted requirements disagree, establish the intended contract before reconciling them. Do not rewrite a comment to excuse a defect or preserve a stale restriction by default. Unknown rationale is an investigation gap, not permission to invent it. Existing tests and static checks provide evidence, but comments are maintained claims, not enforcement or proof.
 
