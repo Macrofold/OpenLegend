@@ -8,6 +8,7 @@ import {
 } from './typed-navigation.js';
 import {
   typedPointGrammar,
+  typedRelativeFormat as relativeFormat,
   typedStop,
   type ActionFulfillment,
   type ResolutionCategory,
@@ -32,25 +33,19 @@ export type FreeTypedActionSyntax =
   | { readonly kind: 'offset'; readonly x: number; readonly z: number }
   | { readonly kind: 'distance-needed' };
 
-const directions: Readonly<Record<string, { readonly x: number; readonly z: number }>> = {
-  forward: { x: 0, z: 1 },
-  forwards: { x: 0, z: 1 },
-  ahead: { x: 0, z: 1 },
-  back: { x: 0, z: -1 },
-  backward: { x: 0, z: -1 },
-  backwards: { x: 0, z: -1 },
-  left: { x: -1, z: 0 },
-  right: { x: 1, z: 0 },
-};
+const relative = typedPointGrammar.relative;
+const directions: Readonly<Record<string, readonly number[]>> = relative.directions;
 const number = '(-?[0-9]+(?:\\.[0-9]+)?)';
 const [x, z] = typedPointGrammar.axes;
 const point = new RegExp(
   `^(?:${typedPointGrammar.verbs.join('|')})(?: ${typedPointGrammar.destination})? +(?:${x} *= *)?${number} *, *(?:${z} *= *)?${number}(?: +(?:${typedPointGrammar.support.join('|')}) +([a-z0-9_:-]+))?$`,
   'u',
 );
-const part =
-  '(?:(\\d+(?:\\.\\d+)?) ?(?:m|metres|meters|steps|units)? )?(forwards?|ahead|backwards?|back|left|right)';
-const offset = new RegExp(`^(?:go|move|walk|step|run) ${part}(?: (?:and|then) ${part})?$`, 'u');
+const part = `(?:(\\d+(?:\\.\\d+)?) ?(?:${relative.units.join('|')})? )?(${Object.keys(directions).join('|')})`;
+const offset = new RegExp(
+  `^(?:${relative.verbs.join('|')}) ${part}(?: (?:${relative.sameClauseJoin}|then) ${part})?$`,
+  'u',
+);
 
 /** Input is one already-cleaned clause in Source's bounded composition parser. */
 export function parseFreeTypedActionClause(text: string): FreeTypedActionSyntax | null {
@@ -76,7 +71,7 @@ export function parseFreeTypedActionClause(text: string): FreeTypedActionSyntax 
       return { kind: 'unsupported', family: 'wait' };
     return null;
   }
-  const stepping = text.startsWith('step');
+  const stepping = text.startsWith(relative.implicitDistanceVerb);
   let x = 0,
     z = 0;
   for (const [amount, direction] of [
@@ -85,10 +80,10 @@ export function parseFreeTypedActionClause(text: string): FreeTypedActionSyntax 
   ] as const) {
     if (!direction) continue;
     if (amount === undefined && !stepping) return { kind: 'distance-needed' };
-    const metres = amount === undefined ? 1 : Number(amount),
-      value = directions[direction]!;
-    x += value.x * metres;
-    z += value.z * metres;
+    const metres = amount === undefined ? 1 : Number(amount);
+    const [right, forward] = directions[direction]!;
+    x += right! * metres;
+    z += forward! * metres;
   }
   return { kind: 'offset', x, z };
 }
@@ -124,10 +119,7 @@ export function typedActionFulfillment(
     verdict: confirm || unmet.length > 0 ? 'confirm' : missing.length ? 'partial' : 'exact',
     supported: [description.slice(0, 500)],
     omitted: missing.slice(0, 8),
-    reason:
-      confirm || unmet.length > 0
-        ? 'Accept only the shown native action; it does not keep every requested detail.'
-        : 'Complete typed form bound without inference.',
+    reason: confirm || unmet.length > 0 ? relativeFormat.confirm : relativeFormat.complete,
   };
 }
 export function typedInvocationRefusal(
@@ -144,7 +136,7 @@ export function typedInvocationRefusal(
       : 'blocked') as ResolutionCategory,
     reason:
       outcome.code === 'invalid-invocation'
-        ? `That request is outside what moving or following allows (distance ${limits.minimumDistance}–${limits.maximumDistance} m, offsets up to ${limits.offset} m).`
+        ? `${relativeFormat.outsidePrefix}${limits.minimumDistance}–${limits.maximumDistance}${relativeFormat.outsideOffsets}${limits.offset}${relativeFormat.outsideSuffix}`
         : outcome.message,
   };
 }
@@ -180,7 +172,14 @@ export function freeTypedActionDescription(
   if (value.kind === 'stop') return 'Stop current work; materials already used stay spent.';
   if (value.kind === 'point')
     return `Walk to ${at(value.destination)} on ${value.destination.surfaceId}.`;
-  return `Walk ${[value.x ? `${Math.abs(value.x)} m ${value.x > 0 ? 'right' : 'left'}` : '', value.z ? `${Math.abs(value.z)} m ${value.z > 0 ? 'forward' : 'back'}` : ''].filter(Boolean).join(' and ')} of your current facing, to ${at(value.destination)}.`;
+  const format = relativeFormat;
+  const axes = [
+    value.x ? `${Math.abs(value.x)}${format.unit}${value.x > 0 ? format.right : format.left}` : '',
+    value.z
+      ? `${Math.abs(value.z)}${format.unit}${value.z > 0 ? format.forward : format.back}`
+      : '',
+  ];
+  return `${format.walk}${axes.filter(Boolean).join(format.join)}${format.destination}${at(value.destination)}.`;
 }
 
 /** Native supplies only its already-bound command's finite result. This shared
@@ -213,7 +212,7 @@ export function formatFreeTypedActionPreparation(request: {
   else if (value.kind === 'distance-needed')
     resolution = {
       category: 'needs_clarification',
-      reason: 'Say how far, for example "move 3 m left".',
+      reason: relativeFormat.distanceNeeded,
     };
   else if (value.kind === 'invocation-refused')
     resolution = typedInvocationRefusal(value.outcome, request.limits);

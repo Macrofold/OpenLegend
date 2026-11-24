@@ -757,10 +757,16 @@ impl NativeWorldSession {
         let ticket = owner
             .as_ref()
             .ok_or_else(|| failure("NPC response ticket was released"))?;
-        self.begin_npc_response_with(ticket, protected, false, |limits, budget| {
-            crate::response::ActorResponse::decode(response, limits, budget)
-                .map_err(response_failure)
-        })
+        self.begin_npc_response_with(
+            ticket,
+            protected,
+            false,
+            crate::response::GroundingProvider::Addon,
+            |limits, budget| {
+                crate::response::ActorResponse::decode(response, limits, budget)
+                    .map_err(response_failure)
+            },
+        )
     }
 
     /// The application transfers its external decoder's exact operation
@@ -776,6 +782,7 @@ impl NativeWorldSession {
             ticket,
             protected,
             response.reconsider_choice,
+            crate::response::GroundingProvider::Local,
             move |limits, budget| {
                 if !budget.owns(&response.custody) {
                     return Err(failure("NPC response belongs to another native budget"));
@@ -791,6 +798,7 @@ impl NativeWorldSession {
         ticket: &RuntimeNpcResponseTicket,
         protected: bool,
         reconsider_choice: bool,
+        grounding_provider: crate::response::GroundingProvider,
         prepare: impl FnOnce(
             &crate::response::ResponseLimits,
             &ByteBudget,
@@ -870,6 +878,7 @@ impl NativeWorldSession {
                 bindings,
                 protected,
                 reconsider_choice,
+                grounding_provider,
             )
             .map_err(failure)?;
         ticket.phase.store(APPLYING, Ordering::Release);

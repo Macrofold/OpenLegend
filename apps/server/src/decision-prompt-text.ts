@@ -1,3 +1,8 @@
+import { typedPointGrammar } from '@open-legend/domain';
+
+export type ProposalCapability = boolean | 'relative';
+export const relativeProposalInstructions = `For an unlisted relative move such as “${typedPointGrammar.relative.example}”, use proposal with the complete movement phrase. Only description and mode are filled. A proposal does not mean movement happened.`;
+
 const invocationRules =
   'For invoke, fill invocation using Native navigation or an optional installed activity request; actionId, verb, description and top-level targetEntityId remain null. Request families use only their exact parameters and null navigation fields; their selected mode equals act.mode. A chosen request is neither a learned method nor completed work.';
 const goalPlanRules =
@@ -105,14 +110,19 @@ export const decisionPromptText = {
 } as const;
 
 /** Select the same action capabilities as the response schema. */
-export function decisionPromptTextForCapabilities({ proposals }: { proposals: boolean }) {
-  if (proposals) return decisionPromptText;
+export function decisionPromptTextForCapabilities({
+  proposals,
+}: {
+  proposals: ProposalCapability;
+}) {
+  if (proposals === true) return decisionPromptText;
+  const relative = proposals === 'relative';
   return {
     ...decisionPromptText,
     unlistedActions: '',
-    expressionKinds: 'known|expression|invoke',
-    plainKinds: 'known|invoke',
-    proposalArguments: '',
+    expressionKinds: relative ? decisionPromptText.expressionKinds : 'known|expression|invoke',
+    plainKinds: relative ? decisionPromptText.plainKinds : 'known|invoke',
+    proposalArguments: relative ? `${relativeProposalInstructions} ` : '',
     unnamedTime: '',
     actionGoalPlanRules: `Slots are null. ${invocationRules}${goalPlanRules}`,
     references: `${referenceRules}\n`,

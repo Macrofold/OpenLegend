@@ -21,6 +21,16 @@ pub(crate) fn answer(
     budget: &ByteBudget,
     language: Option<&LanguageProvider>,
 ) -> Result<Option<RuntimeProviderInput>, WorldError> {
+    if let Some(answer) = request.normalize_attempts(budget, |description| {
+        let language = language.ok_or(WorldError::ProviderKind)?;
+        let (normalized, custody) = language
+            .normalize_intention(description, budget)
+            .map_err(WorldError::Language)?;
+        let syntax = crate::language::relative_action::parse(&normalized);
+        Ok::<_, WorldError>((normalized, syntax, custody))
+    })? {
+        return Ok(Some(answer));
+    }
     if let Some(answer) = request.format_activity_learning(budget)? {
         return Ok(Some(answer));
     }

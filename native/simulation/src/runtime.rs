@@ -15,6 +15,12 @@ use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Weak};
 
+/// Finite lexical facts only. Native admission resolves the accepted pose and route.
+pub enum RelativeAttemptSyntax {
+    Offset { x: f64, z: f64 },
+    DistanceNeeded,
+}
+
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod account_retention;
 mod control;
@@ -135,7 +141,7 @@ pub use npc::{
     RuntimeNpcStageWitness, RuntimeNpcSubjectNote,
 };
 pub use player::{InspectedRecipeRecord, RuntimeWorldStorage};
-pub use player::{RuntimePracticeOffer, RuntimeRangedChoice};
+pub use player::{RuntimeActionCatalogue, RuntimePracticeOffer, RuntimeRangedChoice};
 pub use crate::projectile::{RuntimeRangedMode, RuntimeRangedTarget};
 pub use player::{OBJECT_HISTORY_SELECTION, RuntimeObjectHistoryEntry, RuntimeObjectHistoryRead};
 pub use player::{
@@ -348,6 +354,7 @@ pub struct RuntimeProviderInput {
 enum RuntimeAnswerBody {
     Json(String),
     Geometry(Box<crate::geometry::GeometryAnswers>),
+    NormalizedAttempts(Box<crate::language::AttemptNormalizationAnswer>),
     Utterance(Box<crate::speech::UtteranceAnswer>),
     Words(Box<crate::language::WordsAnswer>),
     Collation(Box<crate::language::CollationAnswer>),
@@ -656,6 +663,16 @@ fn provider_response(
                         return Err(failure("local formatter answer belongs to another request"));
                     }
                     ProviderResponse::local_format(question.kind(), binding, output, input.custody)
+                }
+                RuntimeAnswerBody::NormalizedAttempts(answer) => {
+                    if question.attempt_normalization().is_none() {
+                        return Err(failure("normalization requires its original descriptions"));
+                    }
+                    ProviderResponse::attempt_normalization(
+                        question.binding(),
+                        answer,
+                        input.custody,
+                    )
                 }
                 RuntimeAnswerBody::Words(answer) => {
                     if question.words().is_none() {
@@ -969,6 +986,63 @@ impl RuntimeProvider {
     ) -> Result<Option<T>, RuntimeError> {
         let request = self.question()?;
         Ok(request.geometry().map(compute))
+    }
+
+    /// Normalize the candidate's already funded descriptions in one local batch.
+    /// The callback returns lexical facts and their storage, never commands or access.
+    pub fn normalize_attempts<E>(
+        &self,
+        budget: &ByteBudget,
+        mut normalize: impl FnMut(
+            &crate::text::JsText,
+        ) -> Result<
+            (
+                crate::text::JsText,
+                Option<RelativeAttemptSyntax>,
+                ByteReservation,
+            ),
+            E,
+        >,
+    ) -> Result<Option<RuntimeProviderInput>, E>
+    where
+        E: From<RuntimeError>,
+    {
+        use crate::language::{AttemptNormalizationAnswer, FreeTypedActionSyntax};
+        use crate::text::JsText;
+        use std::mem::size_of;
+        let question = self.question()?;
+        let Some(request) = question.attempt_normalization() else {
+            return Ok(None);
+        };
+        let count = request.descriptions.len();
+        let bytes = count
+            .checked_mul(size_of::<JsText>() + size_of::<Option<FreeTypedActionSyntax>>())
+            .and_then(|bytes| bytes.checked_add(size_of::<AttemptNormalizationAnswer>()))
+            .ok_or_else(|| failure("normalization capacity"))?;
+        let mut custody = budget.reserve(bytes).map_err(failure)?;
+        let mut normalized = Vec::with_capacity(count);
+        let mut syntax = Vec::with_capacity(count);
+        for description in &request.descriptions {
+            let (text, relative, funding) = normalize(description)?;
+            custody.merge(funding).map_err(failure)?;
+            normalized.push(text);
+            syntax.push(relative.map(|relative| match relative {
+                RelativeAttemptSyntax::Offset { x, z } => FreeTypedActionSyntax::Offset {
+                    x: Some(x),
+                    z: Some(z),
+                },
+                RelativeAttemptSyntax::DistanceNeeded => FreeTypedActionSyntax::DistanceNeeded,
+            }));
+        }
+        let binding = request.binding;
+        Ok(Some(RuntimeProviderInput {
+            body: RuntimeAnswerBody::NormalizedAttempts(Box::new(AttemptNormalizationAnswer {
+                binding,
+                normalized,
+                syntax,
+            })),
+            custody,
+        }))
     }
 
     /// Give the formatter the proposed clock scalars and exact request binding.

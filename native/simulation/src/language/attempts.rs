@@ -3,6 +3,7 @@
 use super::*;
 use crate::execution::ExecutionError;
 use crate::text::JsText;
+use std::sync::Arc;
 
 #[derive(Serialize)]
 pub(crate) struct AttemptNormalizationRequest {
@@ -60,8 +61,20 @@ impl HeapBytes for FreeTypedActionSyntax {
         }
     }
 }
+enum OriginalDescriptions {
+    Owned(Vec<JsText>),
+    Shared(Arc<AttemptNormalizationRequest>),
+}
+impl OriginalDescriptions {
+    fn values(&self) -> &[JsText] {
+        match self {
+            Self::Owned(descriptions) => descriptions,
+            Self::Shared(request) => &request.descriptions,
+        }
+    }
+}
 pub(crate) struct NormalizedAttemptFacts {
-    descriptions: Vec<JsText>,
+    descriptions: OriginalDescriptions,
     normalized: Vec<JsText>,
     syntax: Vec<Option<FreeTypedActionSyntax>>,
     _reservation: ByteReservation,
@@ -85,7 +98,7 @@ impl NormalizedAttempt<'_> {
 impl NormalizedAttemptFacts {
     pub(crate) fn get(&self, index: usize) -> Option<NormalizedAttempt<'_>> {
         Some(NormalizedAttempt {
-            description: self.descriptions.get(index)?,
+            description: self.descriptions.values().get(index)?,
             normalized: self.normalized.get(index)?,
             syntax: self.syntax.get(index)?.as_ref(),
         })
@@ -95,6 +108,7 @@ impl AttemptNormalizationRequest {
     pub(crate) fn prepare<'a>(
         binding: GeometryBinding,
         descriptions: impl Iterator<Item = &'a JsText> + Clone,
+        shared: bool,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let (count, text_bytes) = descriptions
@@ -108,7 +122,7 @@ impl AttemptNormalizationRequest {
             .ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(
             heap_sum([
-                size_of::<Self>(),
+                size_of::<Self>() + usize::from(shared) * 2 * size_of::<usize>(),
                 text_bytes,
                 count
                     .checked_mul(size_of::<JsText>())
@@ -127,16 +141,45 @@ impl AttemptNormalizationRequest {
             reservation,
         })
     }
-    pub(crate) fn finish(
-        self,
+    pub(crate) fn finish_shared(
+        self: Arc<Self>,
         answer: AttemptNormalizationAnswer,
+        budget: &ByteBudget,
     ) -> Result<NormalizedAttemptFacts, ExecutionError> {
+        self.check(&answer)?;
+        // The typed provider and cursor share the exact funded originals.
+        let reservation = budget.reserve(
+            heap_sum([
+                answer
+                    .normalized
+                    .heap_bytes()
+                    .ok_or(ExecutionError::Capacity)?,
+                answer.syntax.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                size_of::<NormalizedAttemptFacts>(),
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok(NormalizedAttemptFacts {
+            descriptions: OriginalDescriptions::Shared(self),
+            normalized: answer.normalized,
+            syntax: answer.syntax,
+            _reservation: reservation,
+        })
+    }
+    fn check(&self, answer: &AttemptNormalizationAnswer) -> Result<(), ExecutionError> {
         if answer.binding != self.binding
             || answer.normalized.len() != self.descriptions.len()
             || answer.syntax.len() != self.descriptions.len()
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
+        Ok(())
+    }
+    pub(crate) fn finish(
+        self,
+        answer: AttemptNormalizationAnswer,
+    ) -> Result<NormalizedAttemptFacts, ExecutionError> {
+        self.check(&answer)?;
         let Self {
             binding: _,
             descriptions,
@@ -155,7 +198,7 @@ impl AttemptNormalizationRequest {
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         Ok(NormalizedAttemptFacts {
-            descriptions,
+            descriptions: OriginalDescriptions::Owned(descriptions),
             normalized: answer.normalized,
             syntax: answer.syntax,
             _reservation: reservation,

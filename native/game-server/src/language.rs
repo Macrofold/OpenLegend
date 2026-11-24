@@ -20,6 +20,7 @@ use std::{
 
 pub(crate) mod canonical;
 mod lexical;
+pub(crate) mod relative_action;
 mod speech;
 pub use lexical::LexicalVector;
 

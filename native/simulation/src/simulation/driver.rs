@@ -147,6 +147,7 @@ enum QuestionBody {
     ChoiceDescriptions(Arc<crate::capture::NpcDescriptionsRequest>),
     Utterance(UtteranceRequest),
     Words(WordsProviderRequest),
+    AttemptNormalization(Arc<crate::language::AttemptNormalizationRequest>),
     Collation(CollationProviderRequest),
     Maintenance(crate::cognition::format::MaintenanceFormatRequest),
     ActivityHistory(Box<crate::activity::LearningHistoryRequest>),
@@ -199,6 +200,15 @@ pub(crate) struct QuestionEnvelope<'a, T: ?Sized> {
 }
 
 impl ProviderQuestion {
+    pub(crate) fn attempt_normalization(
+        &self,
+    ) -> Option<&crate::language::AttemptNormalizationRequest> {
+        match &self.body {
+            QuestionBody::AttemptNormalization(request) => Some(request),
+            _ => None,
+        }
+    }
+
     pub(crate) fn kind(&self) -> ProviderKind {
         self.kind
     }
@@ -689,6 +699,7 @@ impl ProviderQuestion {
 enum AnswerBody {
     Json(String),
     Geometry(Box<GeometryAnswers>),
+    Normalization(Box<crate::language::AttemptNormalizationAnswer>),
     Utterance(Box<UtteranceAnswer>),
     Words(Box<WordsAnswer>),
     Collation(Box<CollationAnswer>),
@@ -960,6 +971,22 @@ impl ProviderResponse {
             binding,
             body: AnswerBody::PersonalHistory(answer),
             _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn attempt_normalization(
+        binding: GeometryBinding,
+        answer: Box<crate::language::AttemptNormalizationAnswer>,
+        custody: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::Normalization,
+            binding,
+            body: AnswerBody::Normalization(answer),
+            _reservation: custody,
         })
     }
 
@@ -2243,6 +2270,11 @@ impl OperationDriver {
                     AnswerBody::Geometry(value) => {
                         (Some(Answer::Geometry(*value)), Some(_reservation), None)
                     }
+                    AnswerBody::Normalization(value) => (
+                        Some(Answer::Normalization(*value)),
+                        Some(_reservation),
+                        None,
+                    ),
                     AnswerBody::Utterance(value) => {
                         (Some(Answer::Utterance(*value)), Some(_reservation), None)
                     }
@@ -3167,6 +3199,17 @@ fn poll_response(
             }
             ResponseStep::Digest(q) => {
                 return digest_question(answer, q, budget, ResponseReply::Digest);
+            }
+            ResponseStep::LocalNormalization(q) => {
+                return Ok(Poll::Question(
+                    ProviderQuestion::prepare_bound(
+                        ProviderKind::Normalization,
+                        q.binding,
+                        QuestionBody::AttemptNormalization(Arc::clone(q)),
+                        budget,
+                    )?,
+                    ResponseReply::Normalization,
+                ));
             }
             ResponseStep::Normalization(q) => {
                 return question(

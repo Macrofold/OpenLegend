@@ -705,6 +705,7 @@ impl Session {
         bindings: Arc<crate::response::ResponseBindings>,
         protected: bool,
         reconsider_choice: bool,
+        grounding_provider: crate::response::GroundingProvider,
     ) -> Result<CandidateKey, SessionError> {
         if protected && !self.save_barrier_complete() {
             return Err(FenceError::Busy.into());
@@ -723,6 +724,7 @@ impl Session {
                 key,
                 protected,
                 reconsider_choice,
+                grounding_provider,
                 &self.budget,
             )
             .map_err(DriveError::from)?;

@@ -4,6 +4,7 @@ use super::*;
 use crate::language::FreeTypedActionSyntax;
 mod answer;
 mod names;
+mod relative_display;
 
 #[derive(Clone, Serialize)]
 #[serde(
@@ -164,6 +165,7 @@ impl TypedGroundingCursor {
         bindings: &ResponseBindings,
         grounded: &[ResponseAttemptBinding],
         operations: &[(usize, usize)],
+        provider: GroundingProvider,
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, ExecutionError> {
@@ -204,6 +206,17 @@ impl TypedGroundingCursor {
             };
             let description = op.text("description").ok_or(ExecutionError::Invariant)?;
             let slots = op.data.get("slots").filter(|slots| !slots.is_null());
+            if provider == GroundingProvider::Local
+                && matches!(
+                    syntax,
+                    FreeTypedActionSyntax::Offset { .. } | FreeTypedActionSyntax::DistanceNeeded
+                )
+                && (op.text("targetEntityId").is_some() || slots.is_some())
+            {
+                // A relative phrase chooses no entity, item or additional work.
+                // Leave the full intention unresolved rather than dropping it.
+                continue;
+            }
             storage.resize(
                 storage
                     .bytes()
@@ -458,7 +471,7 @@ impl TypedGroundingCursor {
         self.index += 1;
         Ok(())
     }
-    fn prepare_request(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+    fn collect_unmet(&mut self, core: &CoreMutation<'_>) -> Result<(), ExecutionError> {
         for index in 0..self.items.len() {
             let bound = self.items[index]
                 .slots
@@ -496,6 +509,10 @@ impl TypedGroundingCursor {
                 item.unmet.push(text);
             }
         }
+        Ok(())
+    }
+    fn prepare_request(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        self.collect_unmet(core)?;
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Limits {
@@ -563,6 +580,35 @@ impl TypedGroundingCursor {
         });
         Ok(())
     }
+
+    fn render_relative(
+        &mut self,
+        core: &CoreMutation<'_>,
+    ) -> Result<(Vec<ResponseAttemptBinding>, ByteReservation), ExecutionError> {
+        self.collect_unmet(core)?;
+        let count = self.items.len();
+        let _list = self.budget.reserve(
+            count
+                .checked_mul(size_of::<Rendered>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut results = Vec::with_capacity(count);
+        for index in 0..count {
+            let item = &self.items[index];
+            let bytes = item
+                .description
+                .storage_bytes()
+                .checked_add(item.prepared.heap_bytes().ok_or(ExecutionError::Capacity)?)
+                .and_then(|bytes| bytes.checked_add(item.unmet.heap_bytes()?))
+                .and_then(|bytes| bytes.checked_mul(3))
+                .and_then(|bytes| bytes.checked_add(map_storage::<String, SqlCell>(6)?))
+                .and_then(|bytes| bytes.checked_add(2048))
+                .ok_or(ExecutionError::Capacity)?;
+            self.grow(bytes)?;
+            results.push(relative_display::render(&self.items[index], core)?);
+        }
+        self.complete_results(core, results, true)
+    }
     fn complete(
         &mut self,
         core: &CoreMutation<'_>,
@@ -581,6 +627,14 @@ impl TypedGroundingCursor {
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
+        self.complete_results(core, results, false)
+    }
+    fn complete_results(
+        &mut self,
+        core: &CoreMutation<'_>,
+        results: Vec<Rendered>,
+        locally_funded: bool,
+    ) -> Result<(Vec<ResponseAttemptBinding>, ByteReservation), ExecutionError> {
         self.grow(
             self.items
                 .len()
@@ -656,7 +710,7 @@ impl TypedGroundingCursor {
                 self.grow(value.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
                 resolution = Some(value);
             }
-            if let Some(fulfillment) = &rendered.fulfillment {
+            if !locally_funded && let Some(fulfillment) = &rendered.fulfillment {
                 self.grow(fulfillment.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
             }
             let mut commands = Vec::new();
@@ -696,6 +750,7 @@ impl TypedGroundingCursor {
         &'a mut self,
         core: &mut CoreMutation<'_>,
         mut answer: Option<TypedAnswer>,
+        provider: GroundingProvider,
     ) -> Result<TypedStep<'a>, ExecutionError> {
         if self.storage.is_none() {
             return Err(ExecutionError::InvalidCheckpoint);
@@ -802,6 +857,10 @@ impl TypedGroundingCursor {
                 return Err(ExecutionError::InvalidCheckpoint);
             }
             if self.index == self.items.len() {
+                if provider == GroundingProvider::Local {
+                    let (bindings, custody) = self.render_relative(core)?;
+                    return Ok(TypedStep::Complete(bindings, custody));
+                }
                 self.prepare_request(core)?;
                 return Ok(TypedStep::Render(
                     self.request.as_ref().ok_or(ExecutionError::Invariant)?,

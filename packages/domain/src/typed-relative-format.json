@@ -1,0 +1,16 @@
+{
+  "walk": "Walk ",
+  "unit": " m ",
+  "right": "right",
+  "left": "left",
+  "forward": "forward",
+  "back": "back",
+  "join": " and ",
+  "destination": " of your current facing, to ",
+  "complete": "Complete typed form bound without inference.",
+  "confirm": "Accept only the shown native action; it does not keep every requested detail.",
+  "distanceNeeded": "Say how far, for example \"move 3 m left\".",
+  "outsidePrefix": "That request is outside what moving or following allows (distance ",
+  "outsideOffsets": " m, offsets up to ",
+  "outsideSuffix": " m)."
+}

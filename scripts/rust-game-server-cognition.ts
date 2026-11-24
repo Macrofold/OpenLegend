@@ -7,6 +7,7 @@ import {
   itemOutputFamilies,
   knowledgePolicyInstructions,
   namedClockTimes,
+  nativeCommandSupported,
   STIMULUS_POLICY,
   selectedAttentionPolicy,
   selectedActivityChoiceFormatter,
@@ -171,8 +172,10 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
   ];
   if (recallQuestion?.type !== 'noul')
     throw new Error('The installed context-attention template is unavailable.');
-  // The stand-alone host accepts installed actions and exact invocations.
-  const actionCapabilities = { proposals: false };
+  // The stand-alone host also accepts deterministic relative movement text.
+  const actionCapabilities = {
+    proposals: nativeCommandSupported(world, 'move') ? 'relative' : false,
+  } as const;
   const schemas = [false, true].flatMap((speech) =>
     [false, true].map((expressions) => {
       const bound = boundResponseSchema(
@@ -228,7 +231,7 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
     contextBytes: CONTEXT_BYTE_LIMIT,
     text: decisionPromptTextForCapabilities(actionCapabilities),
     // The renderer lists stopping times only for proposal slots.
-    namedTimes: actionCapabilities.proposals ? namedTimes : [],
+    namedTimes: [],
     outputFamilies: itemOutputFamilies(world),
     navigation: navigationInstructions(world, true),
     activityCoverage: ACTIVITY_COVERAGE,

@@ -87,7 +87,9 @@ A signed player spoke to a resident through the ordinary conversation route. Con
 
 The same signed caller exercised two different failures. An unsupported phrase with the same walking prefix saved one private pending intention with its exact text and made no move. A recognized instruction missing its distance reported `needs_clarification` without saving a pending intention or moving. Both kept the authorized spoken reply. Withdrawing the original heard evidence while HTTPS held the result stopped both effects before application. Cancellation also stopped both effects and retained its separate receipt. Every case recovered the same outcome after restart.
 
-Frozen tree `fe3fc6316de7`, executable `ea6b197f275f`, archive `nsc04-npc-relative-proposal-20261123`, manifest `2012b7ffcbf8`. All five local cases cleaned up their PostgreSQL databases and released listener reservations. Provider cost was $0. These checks qualify deterministic movement, exact refusal and independent speech on the candidate. Named targets, composed actions, paid interpretation and integration with the default release still have separate scope.
+Frozen tree `fe3fc6316de7`, executable `ea6b197f275f`, archive `nsc04-npc-relative-proposal-20261123`, manifest `2012b7ffcbf8`. All five local cases cleaned up their PostgreSQL databases and released listener reservations. Provider cost was $0.
+
+The joined tree `565a020df618` keeps the old addon entry separate until retirement. Its executable `a4db2778b71e` also passed the signed walking reply and held-withdrawal cases. Both reopened the same receipt after the ordinary save and dropped their fixture databases. The `nsc04-npc-relative-joined-20261124` archive retains results `5a29fb5b574c` and `e2fa7b567ac6`. Named targets, composed proposals, paid interpretation and the final default-release check remain open.
 
 ## Configured offered-action fallback on the stand-alone Rust server — November 22, 2026
 
