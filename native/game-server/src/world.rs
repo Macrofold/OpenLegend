@@ -416,6 +416,18 @@ pub(crate) struct PlayerDisclosureTurn {
 }
 
 impl PlayerDisclosureTurn {
+    /// Consume the existing fair turn during an immediate authorized
+    /// handoff. Never hold it while waiting for a provider or socket.
+    pub(crate) fn accepted<T>(
+        self,
+        select: impl FnOnce(&NativeWorldSession) -> Result<Option<T>, RuntimeError>,
+    ) -> Result<Option<T>, WorldError> {
+        if self.world.closing.load(Ordering::Acquire) {
+            return Err(HostError::Closed.into());
+        }
+        self.world.publication_in_turn(select)
+    }
+
     /// Consume the turn during the body poll that acquired it. Only the
     /// authorized result bytes leave this call for transport.
     pub(crate) fn disclose(
@@ -692,6 +704,13 @@ impl HostedWorld {
             #[cfg(feature = "profile-campaign")]
             openlegend_simulation::profile::sites::TURN_VIEW,
         );
+        self.publication_in_turn(select)
+    }
+
+    fn publication_in_turn<T>(
+        &self,
+        select: impl FnOnce(&NativeWorldSession) -> Result<Option<T>, RuntimeError>,
+    ) -> Result<Option<T>, WorldError> {
         let session = match self.session.try_lock() {
             Ok(session) => session,
             Err(std::sync::TryLockError::WouldBlock) => return Ok(None),

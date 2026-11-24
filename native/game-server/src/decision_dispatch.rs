@@ -57,6 +57,7 @@ pub(crate) struct CallAuthority {
 pub(crate) struct ProviderObservation<T> {
     pub value: Result<T, CallFailure>,
     pub provider_request_id: Option<String>,
+    pub macrofold_run: Option<uuid::Uuid>,
     pub model: Option<String>,
     pub usage: Option<ModelUsage>,
     pub charged_microusd: Option<u64>,
@@ -415,13 +416,18 @@ impl DecisionDispatch {
                 usage: None,
                 estimated_cost_usd: None,
                 proof: ModelExecutionProof {
+                    macrofold_run: observer
+                        .as_ref()
+                        .and_then(|destination| destination.macrofold_run(run.inference_id?)),
                     macrofold_requested_deployment: requested,
                     ..ModelExecutionProof::default()
                 },
             };
         let result = if intent.is_ok() {
             let permit = &permit;
-            let discovery = permit.discovery().filter(|ticket| ticket.first_send_pending());
+            let discovery = permit
+                .discovery()
+                .filter(|ticket| ticket.first_send_pending());
             let (first, settlement) = match discovery {
                 Some(ticket) => {
                     let (first, notified) = tokio::sync::oneshot::channel();
@@ -657,6 +663,13 @@ impl DecisionDispatch {
             .as_mut()
             .map(|value| std::mem::take(&mut value.proof))
             .unwrap_or_default();
+        let run = accepted_run
+            .as_ref()
+            .and_then(|run| run.inference_id)
+            .or_else(|| observation.as_ref().and_then(|result| result.macrofold_run));
+        proof.macrofold_run = observer
+            .as_ref()
+            .and_then(|destination| destination.macrofold_run(run?));
         proof.macrofold_requested_deployment = requested;
         if let Some(deployment) = deployment {
             deployment.observe(

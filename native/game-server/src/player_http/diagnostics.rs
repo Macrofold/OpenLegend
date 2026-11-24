@@ -4,9 +4,14 @@
 use super::*;
 use crate::{
     authority::RequestScope,
+    network::NetworkError,
     player_events::SpeechReplyStatus,
+    provider_transport::usage::ObservedUsage,
     store::{
-        diagnostics::{self, Attempt, ListRequest, Query as Inspection, ReadAccess, Root, SavedStageCapture, StageOwner},
+        diagnostics::{
+            self, Attempt, ListRequest, Query as Inspection, ReadAccess, Root, SavedStageCapture,
+            StageOwner,
+        },
         sql_ordinal,
     },
     world::HostedWorld,
@@ -26,6 +31,14 @@ use tokio::sync::watch;
 #[serde(deny_unknown_fields)]
 struct Exact {
     id: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct BillingRead {
+    id: String,
+    #[serde(default)]
+    refresh: bool,
 }
 
 struct Audience {
@@ -60,20 +73,27 @@ impl Audience {
             progress.generation.to_owned(),
             storage,
         );
-        if matches!(query, Inspection::Stage(_)) {
+        if matches!(query, Inspection::Stage(_) | Inspection::BillingRefresh(_)) {
             let Some(life) = session.intelligence_owner_life(&scope.account_id, &scope.actor_id)?
             else {
                 return Ok(None);
             };
-            access.admit(512 + 8 * (scope.actor_id.len() + scope.timeline_id.len()))
+            access
+                .admit(512 + 8 * (scope.actor_id.len() + scope.timeline_id.len()))
                 .map_err(|_| RuntimeError::application_busy(StoreError::Capacity))?;
             access.stage_owner = Some(StageOwner {
-                actor_key: json_record(&scope.actor_id).map_err(RuntimeError::application_refused)?,
-                timeline_key: json_record(&scope.timeline_id).map_err(RuntimeError::application_refused)?,
+                actor_key: json_record(&scope.actor_id)
+                    .map_err(RuntimeError::application_refused)?,
+                timeline_key: json_record(&scope.timeline_id)
+                    .map_err(RuntimeError::application_refused)?,
                 player_life: sql_ordinal(life).map_err(RuntimeError::application_refused)?,
-                grant_revision: sql_ordinal(scope.grant_revision).map_err(RuntimeError::application_refused)?,
+                grant_revision: sql_ordinal(scope.grant_revision)
+                    .map_err(RuntimeError::application_refused)?,
             });
-            return Ok(Some(Self { storage: Arc::new(access), people: BTreeMap::new() }));
+            return Ok(Some(Self {
+                storage: Arc::new(access),
+                people: BTreeMap::new(),
+            }));
         }
         let (actor, search) = match query {
             Inspection::List(list) if !list.peek => (
@@ -85,7 +105,7 @@ impl Audience {
         let names = match query {
             Inspection::List(list) => !list.peek,
             Inspection::Trigger(_) => true,
-            Inspection::Billing(_) | Inspection::Stage(_) => false,
+            Inspection::Billing(_) | Inspection::BillingRefresh(_) | Inspection::Stage(_) => false,
         };
         let mut people = BTreeMap::new();
         let allowed = session.with_intelligence_people(
@@ -127,6 +147,22 @@ impl Audience {
             storage: Arc::new(access),
             people,
         }))
+    }
+
+    fn billing_owner_current(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+    ) -> Result<bool, RuntimeError> {
+        let Some(owner) = &self.storage.stage_owner else {
+            return Ok(false);
+        };
+        Ok(
+            session.accepted_progress()?.generation == self.storage.generation
+                && session
+                    .intelligence_owner_life(&scope.account_id, &scope.actor_id)?
+                    .is_some_and(|life| sql_ordinal(life).ok() == Some(owner.player_life)),
+        )
     }
 
     fn current(
@@ -207,10 +243,14 @@ async fn billing(
     Extension(stop): Extension<watch::Receiver<bool>>,
     request: Request,
 ) -> Response {
-    read::<Exact>(state, stop, request, |input| {
+    read::<BillingRead>(state, stop, request, |input| {
         // The attempt has a server-defined suffix after the root ID. The
         // common request byte bound and exact stored link govern this lookup.
-        (!input.id.is_empty() && !input.id.contains('\0')).then_some(Inspection::Billing(input.id))
+        (!input.id.is_empty() && !input.id.contains('\0')).then_some(if input.refresh {
+            Inspection::BillingRefresh(input.id)
+        } else {
+            Inspection::Billing(input.id)
+        })
     })
     .await
 }
@@ -276,6 +316,10 @@ async fn read<T: DeserializeOwned>(
             "Check the diagnostic search or request ID.",
         );
     };
+    let refresh = matches!(query.as_ref(), Inspection::BillingRefresh(_));
+    if refresh && !state.god_mode {
+        return access_failure(AccessError::Forbidden);
+    }
     // A queued world callback can still run after the HTTP future is
     // canceled. Its admitted input and listener ownership end with that work.
     let custody = Arc::new((slot, storage, state._request_owner.clone()));
@@ -316,6 +360,14 @@ async fn read<T: DeserializeOwned>(
             Ok(saved) => saved,
             Err(error) => return failed(WorldError::Storage(error)),
         };
+        let observed = if refresh {
+            match provider_usage(&state, &selected, &audience, &saved, &stop).await {
+                Ok(usage) => usage,
+                Err(error) => return access_failure(error),
+            }
+        } else {
+            None
+        };
         let disclosure_world = world.clone();
         match world
             .capture(move |session| {
@@ -330,7 +382,9 @@ async fn read<T: DeserializeOwned>(
                     match state
                         .authority
                         .current_private_view(&selected, true, |scope, _| {
-                            if !audience.current(session, scope, &saved.roots)? {
+                            if !audience.current(session, scope, &saved.roots)?
+                                || refresh && !audience.billing_owner_current(session, scope)?
+                            {
                                 return Ok(access_failure(AccessError::Changed));
                             }
                             let budget = state.game.host.budget();
@@ -344,7 +398,7 @@ async fn read<T: DeserializeOwned>(
                             let mut response = if matches!(query.as_ref(), Inspection::Stage(_)) {
                                 publish_stage(&state, &disclosure_world, session, scope, &saved)?
                             } else {
-                                publish(&state, &query, &audience, &saved)
+                                publish(&state, &query, &audience, &saved, observed.as_ref())
                             };
                             response.headers_mut().insert(
                                 header::CACHE_CONTROL,
@@ -367,6 +421,77 @@ async fn read<T: DeserializeOwned>(
         biased;
         _ = crate::launch::stopped(stopping) => access_failure(AccessError::Changed),
         response = read => response,
+    }
+}
+
+enum UsageError {
+    Scope(AccessError),
+    Unavailable,
+}
+impl From<NetworkError> for UsageError {
+    fn from(_: NetworkError) -> Self {
+        Self::Unavailable
+    }
+}
+
+// PostgreSQL already supplied the exact current owner's linked attempt.
+// Recheck its signed live scope and physical life at every network start.
+async fn provider_usage(
+    state: &PlayerRoutes,
+    selected: &AuthorizedScope,
+    audience: &Audience,
+    saved: &diagnostics::Selection,
+    stop: &watch::Receiver<bool>,
+) -> Result<Option<ObservedUsage>, AccessError> {
+    let Some((run, from)) = saved
+        .attempts
+        .first()
+        .and_then(Attempt::original_macrofold_run)
+    else {
+        return Ok(None);
+    };
+    let Some((destination, network)) = state.decisions.usage_transport() else {
+        return Ok(None);
+    };
+    let authorize = || async move {
+        let turn = state
+            .game
+            .world
+            .clone()
+            .player_disclosure_turn()
+            .await
+            .map_err(|_| UsageError::Unavailable)?;
+        Ok(move |start: &mut dyn FnMut()| {
+            let timeline = stop.borrow();
+            if *timeline {
+                return Err(UsageError::Scope(AccessError::Changed));
+            }
+            turn.accepted(|session| {
+                let current = state
+                    .authority
+                    .current_private_view(selected, true, |scope, _| {
+                        if audience.billing_owner_current(session, scope)? {
+                            start();
+                            return Ok(Ok(()));
+                        }
+                        Ok::<_, RuntimeError>(Err(UsageError::Scope(AccessError::Changed)))
+                    });
+                Ok(Some(match current {
+                    Ok(result) => result?,
+                    Err(error) => Err(UsageError::Scope(error)),
+                }))
+            })
+            .map_err(|_| UsageError::Unavailable)?
+            .ok_or(UsageError::Unavailable)?
+        })
+    };
+    match destination
+        .observe_macrofold_usage(network, run, from, state.game.host.budget(), authorize)
+        .await
+    {
+        Ok(usage) => Ok(usage),
+        Err(UsageError::Unavailable) => Ok(None),
+        Err(UsageError::Scope(error)) => Err(error),
     }
 }
 
@@ -438,12 +563,23 @@ struct Trigger<'a> {
 struct AttemptOutput<'a> {
     receipt: Option<&'a diagnostics::SavedReceipt>,
     saved_billing: bool,
+    provider_refresh_available: bool,
     reason: &'static str,
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct SavedBilling<'a> {
     saved: &'a Attempt,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    provider_usage: Option<ProviderUsage<'a>>,
+}
+
+#[derive(Serialize)]
+#[serde(tag = "status", rename_all = "kebab-case")]
+enum ProviderUsage<'a> {
+    Unavailable,
+    Observed { usage: &'a ObservedUsage },
 }
 
 #[derive(Serialize)]
@@ -498,6 +634,7 @@ fn publish(
     query: &Inspection,
     audience: &Audience,
     saved: &diagnostics::Selection,
+    observed: Option<&ObservedUsage>,
 ) -> Response {
     let world_id = &audience.storage.world;
     if let Inspection::List(input) = query {
@@ -542,14 +679,24 @@ fn publish(
     let Some(root) = saved.roots.first() else {
         return access_failure(AccessError::Forbidden);
     };
-    if matches!(query, Inspection::Billing(_)) {
+    if matches!(
+        query,
+        Inspection::Billing(_) | Inspection::BillingRefresh(_)
+    ) {
         return match saved.attempts.first() {
             Some(stage) => reply(
                 state,
                 StatusCode::OK,
                 &Detail {
                     ok: true,
-                    details: SavedBilling { saved: stage },
+                    details: SavedBilling {
+                        saved: stage,
+                        provider_usage: matches!(query, Inspection::BillingRefresh(_)).then(|| {
+                            observed.map_or(ProviderUsage::Unavailable, |usage| {
+                                ProviderUsage::Observed { usage }
+                            })
+                        }),
+                    },
                 },
             ),
             None => access_failure(AccessError::Forbidden),
@@ -565,12 +712,12 @@ fn publish(
                 children: saved
                     .attempts
                     .iter()
-                    .map(|stage| attempt_call(stage, root, world_id))
+                    .map(|stage| attempt_call(stage, root, world_id, state.god_mode))
                     .collect(),
                 coverage: if saved.stages_truncated {
-                    "Showing the first 1,000 saved attempts. Prompts, replies and live provider details are unavailable."
+                    "Showing the first 1,000 saved attempts. Select an eligible stage for more details."
                 } else {
-                    "Showing saved outcomes and billing records. Prompts, replies and live provider details are unavailable."
+                    "Showing saved outcomes and billing records. Select an eligible stage for more details."
                 },
             },
         },
@@ -626,6 +773,7 @@ fn attempt_call<'a>(
     attempt: &'a Attempt,
     root: &'a Root,
     world: &'a str,
+    god_mode: bool,
 ) -> Call<'a, AttemptOutput<'a>> {
     let receipt = attempt.receipt.as_ref();
     let (status, reason) = match attempt.status.as_str() {
@@ -659,6 +807,8 @@ fn attempt_call<'a>(
         output: AttemptOutput {
             receipt,
             saved_billing: true,
+            provider_refresh_available: god_mode && root.owned && root.kind == "chat"
+                && attempt.original_macrofold_run().is_some(),
             reason,
         },
         exchanges: [],

@@ -206,6 +206,16 @@ impl ModelTargets {
     }
 }
 
+impl super::Director {
+    /// Only the currently configured host credential can observe an old Run.
+    pub(crate) fn usage_transport(
+        &self,
+    ) -> Option<(&ProviderDestination, &crate::network::NetworkOwner)> {
+        let selected = &self.models.as_ref()?.routes.judgment.destination;
+        Some((selected, self.dispatch.network()))
+    }
+}
+
 pub(super) struct ConfiguredModels {
     pub(super) routes: Models,
     interactive: u64,

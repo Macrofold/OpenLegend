@@ -12,6 +12,7 @@ use tokio::time::Instant;
 
 pub(crate) struct ActiveRun {
     pub(crate) id: String,
+    pub(crate) inference_id: Option<uuid::Uuid>,
     status_url: String,
     result_url: String,
     _custody: ByteReservation,
@@ -71,6 +72,7 @@ impl ProviderDestination {
             .map_err(|_| NetworkError::Capacity)?;
         Ok(ActiveRun {
             id: id.to_owned(),
+            inference_id: admission.inference_id(),
             status_url: status_url.to_owned(),
             result_url: result_url.to_owned(),
             _custody,

@@ -7,12 +7,14 @@ use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use reqwest::{Method, Url, header};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::future::{Future, ready};
 
 const FILE_REPLY_BYTES: usize = 16_000;
 const METADATA_REPLY_BYTES: usize = 64_000;
 
 #[derive(Clone, Copy)]
 pub(crate) enum WorkspaceRead<'a> {
+    Identity,
     FileOperation(&'a str),
     Run(&'a str),
     RunResult(&'a str),
@@ -21,6 +23,7 @@ pub(crate) enum WorkspaceRead<'a> {
         id: &'a str,
         from: &'a str,
         to: &'a str,
+        workspace: Option<&'a str>,
     },
     Models,
 }
@@ -101,6 +104,21 @@ pub(crate) async fn exchange<E: From<NetworkError>>(
     file: bool,
     start: impl FnOnce(&mut dyn FnMut()) -> Result<(), E>,
 ) -> Result<OwnedWorkspaceReply, E> {
+    exchange_after(prepared, operation, budget, file, ready(Ok(start))).await
+}
+
+/// Fund the transport before waiting for an authorization turn. The returned
+/// callback owns that turn only through the client's first request poll.
+pub(crate) async fn exchange_after<E: From<NetworkError>, Start>(
+    prepared: PreparedProviderRequest,
+    operation: &NetworkOperation<'_>,
+    budget: &ByteBudget,
+    file: bool,
+    authorize: impl Future<Output = Result<Start, E>>,
+) -> Result<OwnedWorkspaceReply, E>
+where
+    Start: FnOnce(&mut dyn FnMut()) -> Result<(), E>,
+{
     let PreparedProviderRequest { request, _body, .. } = prepared;
     let maximum = if file {
         FILE_REPLY_BYTES
@@ -110,6 +128,9 @@ pub(crate) async fn exchange<E: From<NetworkError>>(
     let mut storage = budget
         .reserve(maximum * 2 + 512)
         .map_err(|_| NetworkError::Capacity)?;
+    let start = tokio::time::timeout_at(operation.deadline(), authorize)
+        .await
+        .map_err(|_| NetworkError::Deadline)??;
     let remaining = operation
         .deadline()
         .saturating_duration_since(tokio::time::Instant::now());
@@ -186,6 +207,7 @@ impl ProviderDestination {
             }
         };
         let url = match read {
+            WorkspaceRead::Identity => self.workspace_endpoint(&["v1", "me"])?,
             WorkspaceRead::FileOperation(id) => {
                 self.workspace_endpoint(&["v1", "operations", checked(id)?])?
             }
@@ -205,13 +227,22 @@ impl ProviderDestination {
                 url.query_pairs_mut().append_pair("limit", "100");
                 url
             }
-            WorkspaceRead::RunUsage { id, from, to } => {
+            WorkspaceRead::RunUsage {
+                id,
+                from,
+                to,
+                workspace,
+            } => {
                 let mut url = self.workspace_endpoint(&["v1", "billing", "usage"])?;
                 url.query_pairs_mut()
                     .append_pair("run_id", checked(id)?)
                     .append_pair("from", from)
                     .append_pair("to", to)
                     .append_pair("limit", "100");
+                if let Some(workspace) = workspace {
+                    url.query_pairs_mut()
+                        .append_pair("workspace_id", checked(workspace)?);
+                }
                 url
             }
         };

@@ -46,6 +46,7 @@ where
         let mut observation = ProviderObservation {
             value: Err(CallFailure::Invalid),
             provider_request_id: http.trace_id.clone(),
+            macrofold_run: None,
             model: None,
             usage: None,
             charged_microusd: None,
@@ -56,6 +57,7 @@ where
         if let Some(binding) = billing {
             let result = if let Some(observed) = &body.observed {
                 observation.provider_request_id = Some(observed.run.id.clone());
+                observation.macrofold_run = observed.run.inference_id;
                 macrofold::observed_terminal(
                     &observed.run.id,
                     &observed.status,
@@ -69,6 +71,7 @@ where
                     .ok()
                     .and_then(|admission| {
                         observation.provider_request_id = Some(admission.run_id.to_owned());
+                        observation.macrofold_run = admission.inference_id();
                         admission.terminal(binding).ok().flatten()
                     })
             };
@@ -161,6 +164,7 @@ pub(crate) fn decode_embeddings(
     let mut observed = ProviderObservation {
         value: Err(CallFailure::Invalid),
         provider_request_id: http.trace_id.clone(),
+        macrofold_run: None,
         model: None,
         usage: None,
         charged_microusd: None,

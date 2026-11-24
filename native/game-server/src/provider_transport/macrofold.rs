@@ -112,6 +112,19 @@ impl<'a> MacrofoldAdmission<'a> {
         Ok(value)
     }
 
+    /// Only the inference admission envelope supplies durable Run identity. HTTP
+    /// trace IDs and upstream model request IDs have a different owner.
+    pub(crate) fn inference_id(&self) -> Option<uuid::Uuid> {
+        if self.kind.is_some_and(|kind| kind != "inference")
+            || !self
+                .status
+                .is_some_and(|status| status == "running" || run_status(status).is_some())
+        {
+            return None;
+        }
+        uuid::Uuid::parse_str(self.run_id).ok()
+    }
+
     pub(crate) fn terminal(
         &self,
         binding: BillingBinding,
@@ -530,7 +543,7 @@ fn reasoning(value: &RawValue, output: u64) -> Option<u64> {
     (detail.reasoning_tokens <= output).then_some(detail.reasoning_tokens)
 }
 
-fn decimal_count(value: &str) -> Option<u64> {
+pub(super) fn decimal_count(value: &str) -> Option<u64> {
     if value.is_empty() || !value.bytes().all(|c| c.is_ascii_digit()) {
         return None;
     }

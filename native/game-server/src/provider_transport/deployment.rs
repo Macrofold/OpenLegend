@@ -630,6 +630,8 @@ impl DeploymentAttribution {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ModelExecutionProof {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) macrofold_run: Option<super::usage::MacrofoldRun>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) macrofold_requested_deployment: Option<DeploymentSelection>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) macrofold_deployment: Option<DeploymentRevision>,

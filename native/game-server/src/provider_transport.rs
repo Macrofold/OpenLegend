@@ -17,6 +17,7 @@ pub(crate) mod deployment;
 mod events;
 mod follow;
 pub(crate) mod macrofold;
+pub(crate) mod usage;
 pub(crate) mod workspace;
 pub(crate) use events::{InferenceEvent, InferenceEvents};
 pub(crate) use follow::{ActiveRun, ObservedRun};

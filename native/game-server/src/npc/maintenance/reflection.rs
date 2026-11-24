@@ -479,6 +479,7 @@ pub(super) async fn run(
                 id: &accepted.run_id,
                 from: &receipt.started_at,
                 to: &at,
+                workspace: None,
             },
         )
         .await

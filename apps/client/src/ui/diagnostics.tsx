@@ -1943,6 +1943,8 @@ function BillingDetails({ value }: { value: unknown }) {
     const receipt = object(saved['receipt']);
     const usage = object(receipt?.['usage']);
     const status = valueText(saved['status']);
+    const provider = object(data?.['providerUsage']);
+    const observed = object(provider?.['usage']);
     return (
       <section className="ol-diagnostic-card">
         <strong>Saved billing</strong>
@@ -1979,6 +1981,21 @@ function BillingDetails({ value }: { value: unknown }) {
           )}
         </dl>
         <p className="ol-caption">From the server’s saved spending record.</p>
+        {provider && (
+          <>
+            <strong>Provider usage</strong>
+            {observed ? (
+              <dl className="ol-diagnostic-metrics">
+                <Labeled label="Macrofold charge">{money(observed['chargedMicroUsd'])}</Labeled>
+                <Labeled label="Tokens">
+                  {`${valueText(observed['inputTokens']) ?? '?'} in / ${valueText(observed['outputTokens']) ?? '?'} out`}
+                </Labeled>
+              </dl>
+            ) : (
+              <p>No complete provider usage report is available.</p>
+            )}
+          </>
+        )}
       </section>
     );
   }
@@ -2489,7 +2506,14 @@ function Stage({
   const [billingError, setBillingError] = useState('');
   const [captureError, setCaptureError] = useState('');
   const captureRead = useRef<AbortController | null>(null);
-  useEffect(() => () => captureRead.current?.abort(), [visible]);
+  const billingRead = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => {
+      captureRead.current?.abort();
+      billingRead.current?.abort();
+    },
+    [visible],
+  );
   const supportingFailure = supporting.find(
     (c) => c.status === 'failed' || path(c.output, 'ok') === false,
   );
@@ -2504,6 +2528,38 @@ function Stage({
       ? `${supportingFailure.kind} failed; inspect supporting details.`
       : undefined);
   const savedBilling = path(call.output, 'savedBilling') === true;
+  const providerRefreshAvailable = path(call.output, 'providerRefreshAvailable') === true;
+  async function loadBilling(refresh = false) {
+    billingRead.current?.abort();
+    const controller = new AbortController();
+    billingRead.current = controller;
+    setLoadingBilling(true);
+    setBillingError('');
+    try {
+      const result = await postPrivateRead<{
+        ok: boolean;
+        details?: unknown;
+        message?: string;
+      }>(
+        '/api/god/intelligence-details',
+        refresh ? { id: call.id, refresh: true } : { id: call.id },
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      if (!result.ok) throw new Error(result.message ?? 'Billing details are unavailable.');
+      setRemote(result.details);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      if (error instanceof AccessError) onAccessLost();
+      else setBillingError(error instanceof Error ? error.message : String(error));
+    } finally {
+      if (billingRead.current === controller) {
+        billingRead.current = null;
+        setLoadingBilling(false);
+      }
+    }
+  }
+
   async function showStageJson() {
     const title = `${call.kind}, request and response`;
     const value = remote === undefined ? call : { ...call, providerDetails: remote };
@@ -2604,25 +2660,7 @@ function Stage({
               size="sm"
               variant="quiet"
               busy={loadingBilling}
-              onPress={async () => {
-                setLoadingBilling(true);
-                setBillingError('');
-                try {
-                  const result = await postPrivateRead<{
-                    ok: boolean;
-                    details?: unknown;
-                    message?: string;
-                  }>('/api/god/intelligence-details', { id: call.id });
-                  if (!result.ok)
-                    throw new Error(result.message ?? 'Provider details unavailable.');
-                  setRemote(result.details);
-                } catch (error) {
-                  if (error instanceof AccessError) onAccessLost();
-                  setBillingError(error instanceof Error ? error.message : String(error));
-                } finally {
-                  setLoadingBilling(false);
-                }
-              }}
+              onPress={() => void loadBilling()}
             >
               {savedBilling
                 ? remote === undefined
@@ -2632,6 +2670,16 @@ function Stage({
                   ? 'Fetch billing details'
                   : 'Refresh billing details'}
             </Button>
+            {providerRefreshAvailable && (
+              <Button
+                size="sm"
+                variant="quiet"
+                busy={loadingBilling}
+                onPress={() => void loadBilling(true)}
+              >
+                Check provider usage
+              </Button>
+            )}
           </div>
         )}
         {billingError && (

@@ -62,6 +62,7 @@ pub(crate) enum Query {
     List(ListRequest),
     Trigger(String),
     Billing(String),
+    BillingRefresh(String),
     Stage(String),
 }
 
@@ -155,6 +156,10 @@ pub(crate) struct Attempt {
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SavedReceipt {
+    #[serde(skip_serializing)]
+    request_id: Option<String>,
+    #[serde(skip_serializing)]
+    macrofold_run: Option<crate::provider_transport::usage::MacrofoldRun>,
     pub model: String,
     pub requested_model: String,
     pub model_version_status: String,
@@ -171,6 +176,22 @@ pub(crate) struct SavedReceipt {
     pub macrofold_billing_mode: Option<String>,
     pub estimated_cost_usd: Option<f64>,
     pub usage: Option<Usage>,
+}
+
+impl Attempt {
+    pub(crate) fn original_macrofold_run(
+        &self,
+    ) -> Option<(&crate::provider_transport::usage::MacrofoldRun, &str)> {
+        let receipt = self.receipt.as_ref()?;
+        if !self.dispatch_intent
+            || !receipt.transport_started
+            || !receipt.dispatched
+            || receipt.request_id.as_deref() != Some(self.id.as_str())
+        {
+            return None;
+        }
+        Some((receipt.macrofold_run.as_ref()?, &receipt.started_at))
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -238,6 +259,17 @@ impl Store {
                     &budget,
                 ).await?
             }
+            Query::BillingRefresh(id) => {
+                let owner = access.stage_owner.as_ref().ok_or(StoreError::StaleCut)?;
+                let statement = format!("SELECT {ROOT_HEADER},{ROOT_COLUMNS},NULL::text \
+                    FROM jobs j {ROLLUP} WHERE {ROOT_ACCESS} AND j.selection->>'kind'='chat' \
+                    AND j.selection#>>'{{authority,actorId}}'=$5 \
+                    AND j.selection#>>'{{authority,timelineId}}'=$6 \
+                    AND j.id=(SELECT root_job_id FROM cognition_attempt_links WHERE attempt_id=$4)");
+                admitted_query(tx, &statement,
+                    &[account,world_key,people,id,&owner.actor_key,&owner.timeline_key], &budget
+                ).await?
+            }
             Query::Trigger(id) | Query::Billing(id) | Query::Stage(id) => {
                 let exact_attempt = !matches!(query.as_ref(), Query::Trigger(_));
                 let statement = format!("SELECT {ROOT_HEADER},{ROOT_COLUMNS},CASE WHEN $5 THEN NULL ELSE j.payload END \
@@ -260,7 +292,7 @@ impl Store {
             let selected = match query.as_ref() {
                 Query::List(_) => None,
                 Query::Trigger(_) => Some(None),
-                Query::Billing(id) | Query::Stage(id) => Some(Some(id)),
+                Query::Billing(id) | Query::BillingRefresh(id) | Query::Stage(id) => Some(Some(id)),
             };
             if let Some(selected) = selected {
                 let statement = format!("SELECT {ATTEMPT_COLUMNS} FROM cognition_attempt_links l \
