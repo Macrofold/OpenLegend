@@ -175,6 +175,18 @@ fn critical(
 fn selected(audience: AttributeAudience, d: &AttributeDefinition) -> bool {
     audience == AttributeAudience::Owner || d.disclosure == "public"
 }
+
+/// Check whether the exact amount of an observed body's health change may
+/// enter a public-health account without building the full attribute view.
+pub(crate) fn shows_body_health(entity: &Entity, definitions: &Catalog) -> bool {
+    definitions.values().any(|definition| {
+        let definition = definition.value();
+        definition.implementation == "native-health-v1"
+            && selected(AttributeAudience::Public, definition)
+            && matches!(read_attribute(entity, definition, None), Ok(Some(_)))
+    })
+}
+
 fn capture_inputs(
     entity: &Entity,
     definitions: &Catalog,

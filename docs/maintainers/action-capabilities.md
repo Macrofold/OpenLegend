@@ -212,7 +212,7 @@ PW10 contributes only to AC08.1/8.2: the chosen camp activity uses the existing 
 
 PW03/PW10 add a concrete AC09.1/9.2/9.5 consumer: ordinary transfers and closed activity requests retain native scope/resource semantics without authoring during use. Two woven designs passed native craft/custody scenarios; injected director finite/watch choices passed existing response admission. Family descriptors and action/predicate adapters remain separate contracts. The complete text/menu/NPC/plan and live-preference matrix remains open ([PW03](parallel-batch-01-playable-week.md#pw03--craftable-containers-and-camp-supplies), [PW10](parallel-batch-01-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods)).
 
-AC09.1 includes the Rust Craft preview. Add the kept-tool facts from the selected recipe and move Craft's preview and start wording to the authored action display definition. Verify the player sees exactly which materials are spent and which tools are held through the signed preview and Craft callers. Actual stock and holds stay with the existing Craft owner.
+AC09.1 includes the Rust Craft preview. The recipe menu and All actions show the selected method's materials, duration, and already-selected kept tool. The saved activity uses the same facts, and the Base action display definition supplies the preview and start wording to Rust and TypeScript. Craft still owns stock, replacement and reservations. Signed gameplay and a rendered All actions tooltip verify the result. [Caller evidence](../benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#post-cutover-sling-craft-and-storage-follow-up)
 
 ### AC09.6 — Equipped contact strikes (implemented; acceptance partial)
 

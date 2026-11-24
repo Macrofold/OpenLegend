@@ -19,6 +19,16 @@
   "followName": "Follow",
   "cookName": "Cook",
   "eatName": "Eat",
+  "craft": {
+    "name": "Make",
+    "recipeChoice": "Craft {recipe}",
+    "batchChoice": "Craft one batch",
+    "materials": "Materials",
+    "keptTools": "Kept tools",
+    "workName": "Work",
+    "work": "{seconds} game seconds. Materials are spent when work starts and stay spent if work stops.",
+    "started": "started crafting {recipe}."
+  },
   "status": {
     "name": "Act",
     "activatePrefix": "Begin ",

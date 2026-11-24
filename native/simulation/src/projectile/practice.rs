@@ -4,18 +4,72 @@
 
 use crate::execution::ExecutionError;
 use crate::install::{ItemDefinitionRead, OwnedItem, VerifiedDefinition, owned_by};
-use crate::simulation::SimulationState;
-use crate::state::{Action, Entity};
+use crate::simulation::{InstalledWorld, SimulationState};
+use crate::state::{Action, Entity, PracticeProgress};
 use crate::status::{AttributeDefinition, PracticeProfile};
-use crate::values::AttributeValue;
+use crate::values::DefinitionPin;
+
+#[derive(Clone, Copy)]
+pub(crate) struct PracticeHandling {
+    pub rank: u64,
+    pub accuracy: f64,
+}
 
 pub(crate) struct PracticeChoice<'a> {
     pub profile: &'a PracticeProfile,
     pub definition: &'a VerifiedDefinition<AttributeDefinition>,
     pub weapon: Option<(OwnedItem<'a>, &'a ItemDefinitionRead)>,
     pub ammunition: Option<(OwnedItem<'a>, &'a ItemDefinitionRead)>,
-    pub accuracy: Option<f64>,
+    pub handling: Option<PracticeHandling>,
     pub reason: Option<&'a str>,
+}
+
+fn tool_family<'a>(
+    world: &'a InstalledWorld,
+    tool: &ItemDefinitionRead,
+) -> Option<&'a DefinitionPin> {
+    world
+        .retained
+        .manufacture
+        .get(tool.recipe_id.as_deref()?)?
+        .family
+        .as_ref()
+}
+
+fn handling(
+    progress: &PracticeProgress,
+    profile: &PracticeProfile,
+    base_accuracy: f64,
+) -> PracticeHandling {
+    let rank = progress.rank(profile);
+    PracticeHandling {
+        rank,
+        accuracy: if rank == 1 {
+            base_accuracy + profile.miss_reduction * (1.0 - base_accuracy)
+        } else {
+            base_accuracy
+        },
+    }
+}
+
+/// At ordinary launch, resolve the exact tool family against installed
+/// practice definitions and read the actor's current rank once. A world with
+/// no matching skill or an inapplicable actor keeps the weapon's own handling.
+pub(crate) fn release_handling<'a>(
+    state: &'a SimulationState,
+    actor: &Entity,
+    tool: &DefinitionPin,
+    base_accuracy: f64,
+) -> Option<(&'a VerifiedDefinition<AttributeDefinition>, PracticeHandling)> {
+    let progress = actor.actor.as_ref()?.practice.as_ref()?;
+    let item = state.installed.retained.items.get(&tool.id)?;
+    let family = tool_family(&state.installed, item)?;
+    let (definition, profile) = state.installed.attributes.values().find_map(|definition| {
+        let profile = definition.value().practice.as_ref()?;
+        (&profile.family == family).then_some((definition, profile))
+    })?;
+    let progress = progress.get(&definition.value().id)?;
+    Some((definition, handling(progress, profile, base_accuracy)))
 }
 
 fn profile<'a>(
@@ -45,32 +99,15 @@ pub(crate) fn practice_choice<'a>(
     };
     let physical = &state.physical;
     let installed = &state.installed;
-    let retained = &installed.retained;
     let weapon = super::loadout::weapon(state, actor, weapon_id, false, |tool| {
-        tool.recipe_id
-            .as_ref()
-            .and_then(|recipe| retained.manufacture.get(recipe))
-            .and_then(|method| method.family.as_ref())
-            == Some(&practice.family)
+        tool_family(installed, tool) == Some(&practice.family)
     })?;
-    let accuracy = weapon
-        .and_then(|(_, tool)| tool.ranged_weapon.as_ref())
-        .map(|weapon| {
-            match crate::status::read_attribute(
-                actor,
-                definition.value(),
-                physical.pending_values.as_ref(),
-            )? {
-                Some(AttributeValue::Number(0.0)) => Ok(Some(weapon.accuracy)),
-                Some(AttributeValue::Number(1.0)) => Ok(Some(
-                    weapon.accuracy + practice.miss_reduction * (1.0 - weapon.accuracy),
-                )),
-                _ => Ok::<_, ExecutionError>(None),
-            }
-        })
-        .transpose()?
-        .flatten();
-    let ammunition = match weapon.and_then(|(_, tool)| tool.ranged_weapon.as_ref()) {
+    let ranged = weapon.and_then(|(_, tool)| tool.ranged_weapon.as_ref());
+    let handling = ranged.and_then(|weapon| {
+        let progress = actor.actor.as_ref()?.practice.as_ref()?.get(&definition.value().id)?;
+        Some(handling(progress, practice, weapon.accuracy))
+    });
+    let ammunition = match ranged {
         Some(weapon) => super::loadout::ammunition(
             state,
             actor,
@@ -103,7 +140,7 @@ pub(crate) fn practice_choice<'a>(
     let reason = if weapon.is_none() {
         Some(practice.presentation.missing_tool.as_str())
     } else if ammunition.is_none()
-        || accuracy.is_none()
+        || handling.is_none()
         || target.world_support().is_none()
         || !actor.actively_participates()
         || actor.actor.as_ref().is_none_or(|body| {
@@ -134,7 +171,7 @@ pub(crate) fn practice_choice<'a>(
         definition,
         weapon,
         ammunition,
-        accuracy,
+        handling,
         reason,
     }))
 }
@@ -274,12 +311,7 @@ pub(crate) fn valid_saved(
                 .as_ref()
                 .zip(ammo.ammunition.as_ref())
                 .is_some_and(|(weapon, ammo)| weapon.ammunition_kind == ammo.kind)
-            && tool
-                .recipe_id
-                .as_ref()
-                .and_then(|recipe| installed.retained.manufacture.get(recipe))
-                .and_then(|method| method.family.as_ref())
-                == Some(&profile.family)
+            && tool_family(installed, tool) == Some(&profile.family)
     });
     definition.pin() == pin
         && tool.is_some_and(|tool| tool.equipped)

@@ -57,7 +57,7 @@ use crate::host::retained_size::HeapBytes;
 use crate::projectile::loadout::installed_loadout;
 use crate::projectile::point_review::{PointReview, PointReviewStep};
 use crate::projectile::{
-    ContactPolicy, RangedAim, RangedTarget, RuntimeRangedTarget, loadout, selected_body,
+    ContactPolicy, RangedAim, RangedTarget, RuntimeRangedTarget, loadout, practice, selected_body,
 };
 use crate::reception::{EventScalar, SightBatch};
 
@@ -823,6 +823,20 @@ impl MoveAdvanceCursor {
             .ok_or(ExecutionError::Invariant)?;
         let hold = aim.reservation_id.clone();
         let kind = weapon.ammunition_kind.clone();
+        let (release, accuracy) =
+            match practice::release_handling(state, actor, &aim.tool, weapon.accuracy) {
+                Some((definition, handling)) => (
+                    Some(self.prepare_practice_release(
+                        aim,
+                        directed,
+                        &ammo,
+                        definition.pin(),
+                        handling,
+                    )?),
+                    handling.accuracy,
+                ),
+                None => (None, weapon.accuracy),
+            };
         let mut flight = ProjectileFlight::from_action(
             actor,
             action,
@@ -841,7 +855,7 @@ impl MoveAdvanceCursor {
             now,
             weapon,
             nominal * outgoing,
-            weapon.accuracy,
+            accuracy,
         )?;
         if let Some((evidence, mut storage)) = committed {
             let point_only = directed.is_none() && indicated.is_none();
@@ -873,6 +887,7 @@ impl MoveAdvanceCursor {
                 ("semanticTrigger".into(), EventScalar::Boolean(true)),
             ]),
         )?;
+        self.practice_release = release;
         let mut result = installed
             .ordinary_actions
             .value()

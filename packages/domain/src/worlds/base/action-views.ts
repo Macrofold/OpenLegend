@@ -95,6 +95,10 @@ export function equippedTargetAction<T extends { command: { type: string; itemId
 export function nativeActivityView(world: WorldState, command: Command): ActivityView {
   return activityView(world, command);
 }
+
+export function craftStartedText(recipeName: string): string {
+  return activityDisplay.craft.started.replace('{recipe}', () => recipeName);
+}
 function toolName(name: string, ordinal: number, count: number): string {
   return count > 1
     ? name + gatheringCopy.sameNamedToolSuffix.replace('{ordinal}', String(ordinal))
@@ -207,7 +211,7 @@ function activityView(
     guard: 'Guard with shield',
     evade: bodyPolicy(world)?.evasion?.label,
     gather: gatheringCopy.name,
-    craft: 'Make',
+    craft: activityDisplay.craft.name,
     pickup: 'Pick up',
     drop: 'Put down',
     'transfer-item': 'Move an item',
@@ -571,21 +575,11 @@ function activityView(
       });
     }
   }
-  const recipe = command.type === 'craft' ? world.recipes[command.recipeId] : undefined;
-  if (recipe) {
-    if (recipe.retainedTools.length)
-      view.facts.push({
-        name: 'kept tools',
-        value: recipe.retainedTools
-          .map(
-            (tool) =>
-              `${tool.quantity} ${tool.allowedDefinitions.map((pin) => world.itemDefinitions[pin.id]!.name).join(' or ')}`,
-          )
-          .join('; '),
-        critical: true,
-      });
+  if (command.type === 'craft' && world.recipes[command.recipeId]) {
+    const recipe = world.recipes[command.recipeId]!;
+    const copy = activityDisplay.craft;
     view.facts.push({
-      name: 'materials',
+      name: copy.materials,
       value: recipe.inputs
         .map(
           (input) =>
@@ -594,9 +588,28 @@ function activityView(
         .join(', '),
       critical: true,
     });
+    if (recipe.retainedTools.length)
+      view.facts.push({
+        name: copy.keptTools,
+        value: recipe.retainedTools
+          .map((tool) => {
+            const itemId = command.tools?.[tool.role];
+            const item =
+              itemId && accessiblePossession(world, command.actorId, itemId)
+                ? itemFor(world, itemId)
+                : undefined;
+            const definitions =
+              item && tool.allowedDefinitions.some((pin) => pin.id === item.definitionId)
+                ? [item.definitionId]
+                : tool.allowedDefinitions.map((pin) => pin.id);
+            return `${tool.quantity} ${definitions.map((id) => world.itemDefinitions[id]!.name).join(' or ')}`;
+          })
+          .join('; '),
+        critical: true,
+      });
     view.facts.push({
-      name: 'work',
-      value: `${recipe.workSeconds} game seconds; materials are spent when work starts and are not returned on interruption`,
+      name: copy.workName,
+      value: copy.work.replace('{seconds}', String(recipe.workSeconds)),
       critical: true,
     });
   }

@@ -29,7 +29,7 @@ pub(super) struct ManufactureAction {
     category: &'static str,
     description: JsText,
     keywords: [JsText; 1],
-    facts: [(&'static str, String); 1],
+    facts: Vec<(&'static str, JsText)>,
     enabled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     reason: Option<JsText>,
@@ -58,19 +58,20 @@ fn prepare(
 ) -> Result<ManufactureAction, RuntimeError> {
     let bytes = 2048usize
         .checked_add(recipe.len().checked_mul(2).ok_or(CapacityError)?)
+        .and_then(|n| n.checked_add(offer.name.storage_bytes()))
+        .and_then(|n| n.checked_add(offer.description.storage_bytes()))
+        .and_then(|n| n.checked_add(offer.missing.map_or(0, |(_, name)| name.storage_bytes())))
         .and_then(|n| {
             n.checked_add(
                 offer
-                    .name
-                    .storage_bytes()
-                    .checked_mul(if show_recipe_name { 2 } else { 1 })?,
+                    .tool()
+                    .map_or(0, |(role, item)| role.len() + item.len()),
             )
         })
-        .and_then(|n| n.checked_add(offer.description.storage_bytes()))
-        .and_then(|n| n.checked_add(offer.missing.map_or(0, |(_, name)| name.storage_bytes())))
-        .and_then(|n| n.checked_add(offer.tool.map_or(0, |(role, item)| role.len() + item.len())))
         .ok_or(CapacityError)?;
-    let storage = budget.reserve(bytes)?;
+    let mut storage = budget.reserve(bytes)?;
+    let (label, facts, display_storage) = offer.display(show_recipe_name, budget)?;
+    storage.merge(display_storage)?;
     let reason = if !controlling {
         Some(TAKE_CONTROL.into())
     } else if offer.paused {
@@ -89,21 +90,11 @@ fn prepare(
     };
     Ok(ManufactureAction {
         id: format!("craft-{recipe}"),
-        label: if show_recipe_name {
-            JsText::concat(&[&"Craft ".into(), offer.name])
-        } else {
-            "Craft one batch".into()
-        },
+        label,
         category: CATEGORY,
         description: offer.description.clone(),
         keywords: [offer.name.clone()],
-        facts: [(
-            "Work",
-            format!(
-                "{} game seconds. Materials are spent at the start.",
-                offer.work_seconds
-            ),
-        )],
+        facts,
         enabled: reason.is_none(),
         reason,
         intent: Intent {
@@ -112,7 +103,7 @@ fn prepare(
                 kind: "craft",
                 recipe_id: recipe.to_owned(),
                 tools: offer
-                    .tool
+                    .tool()
                     .map(|(role, item)| BTreeMap::from([(role.to_owned(), item.to_owned())])),
             },
         },

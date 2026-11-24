@@ -886,17 +886,34 @@ impl Terminal {
                     }
                 }
                 Phase::Retire => {
-                    if (self.seen || self.saw_point && self.saw_selected)
-                        && flight.practice
+                    if selected.is_some()
+                        && (self.seen || self.saw_point && self.saw_selected)
                         && source.is_some()
                     {
-                        let exact = &flight.source_id;
-                        let action = &flight.action_id;
-                        let _names = budget.reserve(exact.len() + action.len())?;
-                        let (source, action, life) =
-                            (exact.clone(), action.clone(), flight.source_life);
-                        let hit = self.seen && self.hit && self.body == flight.target_id;
-                        core.record_observed_practice_contact(&source, life, &action, hit)?;
+                        let hit = self.seen
+                            && self.hit
+                            && self.body == flight.target_id
+                            && self.body_life.unwrap_or(0) == flight.target_life.unwrap_or(0);
+                        core.journal
+                            .activity
+                            .observe_practice_contact(
+                                &mut core.state.activity,
+                                &flight.source_id,
+                                &flight.action_id,
+                                hit,
+                                || {
+                                    (hit
+                                        && !flight.practice
+                                        && target.is_some_and(|body| {
+                                            crate::status::shows_body_health(
+                                                body,
+                                                &installed.attributes,
+                                            )
+                                        }))
+                                    .then_some(self.loss)
+                                },
+                            )
+                            .map_err(ExecutionError::Activity)?;
                     }
                     core.physical().retire_projectile(&self.shot)?;
                     return Ok(None);

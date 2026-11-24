@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 /// The live release supplies the exact equipped weapon, ammunition lot and
 /// installed rule used by the committed shot. No browser input reaches this owner.
 pub(crate) struct PracticeReleaseFacts<'a> {
-    pub aim: &'a AimedLife,
+    pub aim: Option<&'a AimedLife>,
     pub definition: &'a AttributeDefinition,
     pub tool: &'a DefinitionPin,
     pub ammunition: &'a str,
@@ -60,7 +60,7 @@ pub(crate) struct ActivityRelease {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    damage: Option<f64>,
+    pub(super) damage: Option<f64>,
 }
 
 impl ActivityRelease {
@@ -71,7 +71,7 @@ impl ActivityRelease {
     ) -> Option<usize> {
         heap_sum([
             event.len(),
-            facts.aim.heap_bytes()?,
+            facts.aim.map_or(Some(0), HeapBytes::heap_bytes)?,
             facts.tool.heap_bytes()?,
             profile.family.heap_bytes()?,
             facts.ammunition.len(),
@@ -86,7 +86,7 @@ impl ActivityRelease {
     ) -> Self {
         Self {
             event_id: event.to_owned(),
-            aim_target: Some(facts.aim.clone()),
+            aim_target: facts.aim.cloned(),
             tool: facts.tool.clone(),
             family: Some(profile.family.clone()),
             competence: Some(facts.competence as f64),

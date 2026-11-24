@@ -568,10 +568,7 @@ impl ActivityJournal {
         let entry = state
             .active(action)?
             .ok_or(ActivityError::InvalidStructure)?;
-        if entry.actor_id != actor
-            || !matches!(&entry.command, NativeCommand::PracticeShot { .. })
-            || entry.release.is_some()
-        {
+        if entry.actor_id != actor || entry.release.is_some() {
             return Err(ActivityError::InvalidStructure);
         }
         self.reserve(
@@ -613,6 +610,7 @@ impl ActivityJournal {
         actor: &str,
         action: &str,
         hit: bool,
+        damage: impl FnOnce() -> Option<f64>,
     ) -> Result<(), ActivityError> {
         let Some(owner) = state.collections.get(actor) else {
             return Ok(());
@@ -622,12 +620,12 @@ impl ActivityJournal {
             Ok(_) | Err(ActivityError::Unavailable) => return Ok(()),
             Err(error) => return Err(error),
         };
-        let release = entry
-            .release
-            .as_ref()
-            .ok_or(ActivityError::InvalidStructure)?;
+        let Some(release) = entry.release.as_ref() else {
+            return Ok(());
+        };
+        let damage = damage();
         if let Some(prior) = release.hit {
-            return if prior == hit {
+            return if prior == hit && release.damage == damage {
                 Ok(())
             } else {
                 Err(ActivityError::InvalidStructure)
@@ -640,13 +638,14 @@ impl ActivityJournal {
             id: id.clone(),
             before: ReleaseBefore::Unobserved,
         })?;
-        state
+        let release = state
             .collections
             .get_mut(actor)
             .and_then(|owner| owner.records.get_mut(&id))
             .and_then(|record| record.occurrence.release.as_mut())
-            .ok_or(ActivityError::InvalidStructure)?
-            .hit = Some(hit);
+            .ok_or(ActivityError::InvalidStructure)?;
+        release.hit = Some(hit);
+        release.damage = damage;
         Ok(())
     }
 
@@ -810,11 +809,12 @@ impl ActivityJournal {
                     match before {
                         ReleaseBefore::Missing => entry.release = None,
                         ReleaseBefore::Unobserved => {
-                            entry
+                            let release = entry
                                 .release
                                 .as_mut()
-                                .ok_or(ActivityError::InvalidStructure)?
-                                .hit = None;
+                                .ok_or(ActivityError::InvalidStructure)?;
+                            release.hit = None;
+                            release.damage = None;
                         }
                     }
                     self.settle_record(state, &actor, &id)?;

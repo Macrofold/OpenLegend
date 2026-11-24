@@ -277,7 +277,11 @@ import {
   activityCompletionProblem,
   type ActivityOutput,
 } from './action-experience.js';
-import { nativeActivityView, selectedRoutineMovement } from './world-composition.js';
+import {
+  craftStartedText,
+  nativeActivityView,
+  selectedRoutineMovement,
+} from './world-composition.js';
 import {
   validateInstalledRecipe,
   recipeVisibleDependencies,
@@ -4651,7 +4655,9 @@ function executeCommandNative(
                           ? FOLLOW_OUTCOMES.started
                           : action.evasion
                             ? BASE_EVASION_TEXT.started
-                            : `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+                            : action.type === 'craft'
+                              ? craftStartedText(world, world.recipes[action.recipeId!]!.name)
+                              : `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type}.`,
                     ),
         actor,
         action.targetId,

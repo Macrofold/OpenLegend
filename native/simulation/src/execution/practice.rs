@@ -70,35 +70,6 @@ impl CoreMutation<'_> {
             .credit_practice(actor, &facts.definition.id, occurrence, event, profile)
     }
 
-    /// The flight caller already proved the exact outcome was observed. Check
-    /// the original physical life again before adding its own private result.
-    pub(crate) fn record_observed_practice_contact(
-        &mut self,
-        actor: &str,
-        source_life: u64,
-        action: &str,
-        hit: bool,
-    ) -> Result<(), ExecutionError> {
-        let still_present = self
-            .state
-            .physical
-            .entities
-            .get(actor)
-            .is_some_and(|entity| {
-                entity.actively_participates()
-                    && entity.actor.as_ref().is_some_and(|body| {
-                        body.alive && body.physical_life.unwrap_or(0) == source_life
-                    })
-            });
-        if still_present {
-            self.journal
-                .activity
-                .observe_practice_contact(&mut self.state.activity, actor, action, hit)
-                .map_err(ExecutionError::Activity)?;
-        }
-        Ok(())
-    }
-
     pub(crate) fn revoke_practice_support(
         &mut self,
         actor_id: &str,

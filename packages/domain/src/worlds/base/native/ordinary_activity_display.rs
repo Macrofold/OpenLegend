@@ -25,6 +25,8 @@ struct DisplayWords<'a> {
     cook_name: &'a str,
     eat_name: &'a str,
     #[serde(borrow)]
+    craft: CraftWords<'a>,
+    #[serde(borrow)]
     status: StatusWords<'a>,
     #[serde(borrow)]
     strike: StrikeWords<'a>,
@@ -32,6 +34,19 @@ struct DisplayWords<'a> {
     ranged: RangedWords<'a>,
     #[serde(borrow)]
     observed: ObservedWords<'a>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CraftWords<'a> {
+    name: &'a str,
+    recipe_choice: &'a str,
+    batch_choice: &'a str,
+    materials: &'a str,
+    kept_tools: &'a str,
+    work_name: &'a str,
+    work: &'a str,
+    pub(crate) started: &'a str,
 }
 
 #[derive(Deserialize)]
@@ -131,6 +146,7 @@ pub enum OrdinaryAction {
         selected_tool: JsText,
         tool_description: Option<JsText>,
     },
+    Craft(Vec<(&'static str, JsText)>),
     Production {
         name: JsText,
         details: Vec<ActivityFact>,
@@ -204,6 +220,74 @@ fn selected_words(profile: (&str, u64)) -> Option<&'static DisplayWords<'static>
         words()
     } else {
         None
+    }
+}
+
+pub(crate) fn craft_words(profile: (&str, u64)) -> Option<&'static CraftWords<'static>> {
+    Some(&selected_words(profile)?.craft)
+}
+
+impl CraftWords<'static> {
+    pub(crate) fn choice(&self, name: Option<&JsText>) -> JsText {
+        name.map_or_else(
+            || self.batch_choice.into(),
+            |name| crate::text::substitute_fields(self.recipe_choice, &[("recipe", name.into())]),
+        )
+    }
+
+    /// Format only the selected method's installed inputs and its already
+    /// admitted tool binding. The caller keeps the returned reservation as
+    /// long as it owns the rendered facts.
+    pub(crate) fn facts(
+        &self,
+        method: &crate::manufacturing::InstalledMethod,
+        definitions: &crate::install::RetainedDefinitions,
+        tool: Option<&crate::manufacturing::ToolBinding>,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<
+        (Vec<(&'static str, JsText)>, crate::host::ByteReservation),
+        crate::execution::ExecutionError,
+    > {
+        use crate::execution::ExecutionError;
+        let pieces = method.inputs.iter().map(|input| {
+            (
+                input.quantity,
+                &definitions.items[&input.definition_id].named.name,
+            )
+        });
+        let tool = tool.map(|tool| {
+            (
+                tool.quantity,
+                &definitions.items[&tool.definition.id].named.name,
+            )
+        });
+        let mut bound = 2048;
+        for (_, name) in pieces.clone().chain(tool) {
+            bound = crate::host::retained_size::heap_sum([bound, 64, 4 * name.storage_bytes()])
+                .ok_or(ExecutionError::Capacity)?;
+        }
+        let storage = budget.reserve(bound)?;
+        let mut materials = JsText::default();
+        for (quantity, name) in pieces {
+            if !materials.is_empty() {
+                materials.push_str(", ");
+            }
+            materials.push_str(&format!("{quantity} "));
+            materials.push_text(name);
+        }
+        let seconds = number(method.work_seconds).ok_or(ExecutionError::Invariant)?;
+        let mut facts = Vec::with_capacity(3);
+        facts.push((self.materials, materials));
+        if let Some((quantity, name)) = tool {
+            let mut kept: JsText = format!("{quantity} ").into();
+            kept.push_text(name);
+            facts.push((self.kept_tools, kept));
+        }
+        facts.push((
+            self.work_name,
+            self.work.replace("{seconds}", &seconds).into(),
+        ));
+        Ok((facts, storage))
     }
 }
 
@@ -460,6 +544,10 @@ pub fn format(
         OrdinaryAction::Production { name, details } => {
             facts.extend(details);
             purpose.unwrap_or(name)
+        }
+        OrdinaryAction::Craft(details) => {
+            facts.extend(details.into_iter().map(|(name, value)| fact(name, value)));
+            purpose.unwrap_or_else(|| words.craft.name.into())
         }
     };
     Some(ActivityView {

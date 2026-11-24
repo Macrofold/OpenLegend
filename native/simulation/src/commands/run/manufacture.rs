@@ -1,7 +1,6 @@
 //! Exact known manufacture starts through the same command and receipt
 //! boundary as ordinary work. The read-only stock plan spends nothing.
 use super::*;
-use crate::activity::{ActivityDetail, ActivityFact, ActivityScalar};
 use crate::manufacturing::{self, MaterialChoice, ToolRequest};
 use crate::text::JsText;
 
@@ -89,64 +88,38 @@ impl CommandCursor {
         &mut self,
         core: &CoreMutation<'_>,
     ) -> Result<(), ExecutionError> {
-        use crate::worlds::activity_display::{OrdinaryAction, format};
-        let NativeCommand::Craft {
-            envelope,
-            recipe_id,
-            ..
-        } = &self.command
-        else {
-            return Err(ExecutionError::Invariant);
-        };
+        use crate::worlds::activity_display::{OrdinaryAction, craft_words, format};
+        let envelope = self.command.envelope();
         let installed = &core.state.installed;
-        let method = installed
-            .retained
-            .manufacture
-            .get(recipe_id)
-            .ok_or(ExecutionError::Invariant)?;
-        let mut storage = self.budget.reserve(
-            2048 + 3 * method.name.storage_bytes()
-                + method
-                    .inputs
-                    .iter()
-                    .map(|input| {
-                        64 + 4 * installed.retained.items[&input.definition_id]
-                            .named
-                            .name
-                            .storage_bytes()
-                    })
-                    .sum::<usize>(),
-        )?;
-        let mut materials = JsText::default();
-        for input in &method.inputs {
-            if !materials.is_empty() {
-                materials.push_str(", ");
-            }
-            materials.push_str(&format!("{} ", input.quantity));
-            materials.push_text(&installed.retained.items[&input.definition_id].named.name);
-        }
-        let work = format!(
-            "{} game seconds; materials are spent when work starts and are not returned on interruption",
-            method.work_seconds,
-        );
-        let fact = |name: &str, value: JsText| ActivityFact {
-            name: name.into(),
-            value: ActivityDetail::Scalar(ActivityScalar::String(value)),
-            critical: true,
-            sentence: None,
-        };
+        let action = self.action.as_ref().ok_or(ExecutionError::Invariant)?;
+        let method =
+            manufacturing::current(&installed.retained, action).ok_or(ExecutionError::Invariant)?;
+        let tool = action.manufacture_tools.as_deref().and_then(<[_]>::first);
         let profile = &installed.content.profile;
+        let profile = (profile.id.as_str(), profile.version);
+        let wording = craft_words(profile).ok_or(ExecutionError::UnsupportedFamily)?;
+        let (details, mut storage) =
+            wording.facts(method, &installed.retained, tool, &self.budget)?;
+        let chosen_purpose = envelope
+            .chosen_purpose
+            .as_ref()
+            .map(|binding| &binding.description);
+        storage.resize(
+            crate::host::retained_size::heap_sum([
+                storage.bytes(),
+                envelope
+                    .purpose
+                    .heap_bytes()
+                    .ok_or(ExecutionError::Capacity)?,
+                chosen_purpose.map_or(0, JsText::storage_bytes),
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
         let view = format(
-            (&profile.id, profile.version),
-            OrdinaryAction::Production {
-                name: "Make".into(),
-                details: vec![fact("materials", materials), fact("work", work.into())],
-            },
+            profile,
+            OrdinaryAction::Craft(details),
             envelope.purpose.clone(),
-            envelope
-                .chosen_purpose
-                .as_ref()
-                .map(|binding| binding.description.clone()),
+            chosen_purpose.cloned(),
             None,
             None,
         )
@@ -214,12 +187,16 @@ impl CommandCursor {
             .get(recipe_id)
             .ok_or(ExecutionError::Invariant)?;
         let event = &installed.ordinary_actions.value().action_started_event;
-        let _workspace = self
-            .budget
-            .reserve(512 + event.len() + 3 * actor.len() + 2 * method.name.storage_bytes())?;
-        let mut text: JsText = "started crafting ".into();
-        text.push_text(&method.name);
-        text.push_str(".");
+        let profile = &installed.content.profile;
+        let wording = crate::worlds::activity_display::craft_words((&profile.id, profile.version))
+            .ok_or(ExecutionError::UnsupportedFamily)?;
+        let _workspace = self.budget.reserve(
+            512 + event.len()
+                + 3 * actor.len()
+                + 2 * (wording.started.len() + method.name.storage_bytes()),
+        )?;
+        let text =
+            crate::text::substitute_fields(wording.started, &[("recipe", (&method.name).into())]);
         let event = event.clone();
         let occurrence = crate::native_controller::feeding::stage_subject(
             core,

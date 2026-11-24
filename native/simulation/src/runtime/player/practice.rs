@@ -63,8 +63,8 @@ pub(super) fn offer<T>(
     } else {
         words.missing_tool.as_str().into()
     };
-    let chance = if let Some(accuracy) = choice.accuracy {
-        let percent = crate::encoding::json_record(&(100.0 * accuracy)).map_err(failure)?;
+    let chance = if let Some(handling) = choice.handling {
+        let percent = crate::encoding::json_record(&(100.0 * handling.accuracy)).map_err(failure)?;
         let fields = [("accuracyPercent", TextRef::from(percent.as_str()))];
         enlarge(substituted_fields_bound(&words.target_chance, &fields))?;
         substitute_fields(&words.target_chance, &fields)

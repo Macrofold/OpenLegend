@@ -353,30 +353,34 @@ impl LiveSaves {
             .transpose()?;
         let total = std::mem::size_of::<AcceptedSaveInput>() + 2 * std::mem::size_of::<usize>();
         let custody = self.budget.reserve(total)?;
-        let mut pending = self.pending.lock().map_err(|_| CapacityError)?;
-        if pending.fault {
-            return Err(RuntimeError::application_busy(
-                StoreError::WriterUnavailable,
-            ));
-        }
+        // These products depend only on this candidate. Keep receipt readers
+        // independent while preparing them, then stage the queue before Ready.
         let history = products.retain_history();
         let memory_writes =
             OrdinaryProjection::validate_candidate(&self.store, products.changes(), &history)
                 .map_err(RuntimeError::application_refused)?;
-        let old = pending.queue.capacity();
-        if pending.queue.len() == old {
-            let next = old.checked_mul(2).ok_or(CapacityError)?.max(8);
-            let slot = std::mem::size_of::<(Instant, Arc<AcceptedSaveInput>)>();
-            let growing = self
-                .budget
-                .reserve(next.checked_mul(slot).ok_or(CapacityError)?)?;
-            pending
-                .queue
-                .try_reserve_exact(next - old)
-                .map_err(|_| CapacityError)?;
-            pending.queue_custody = growing;
-        }
         let wake = self.stage_schedule(products)?;
+        {
+            let mut pending = self.pending.lock().map_err(|_| CapacityError)?;
+            if pending.fault {
+                return Err(RuntimeError::application_busy(
+                    StoreError::WriterUnavailable,
+                ));
+            }
+            let old = pending.queue.capacity();
+            if pending.queue.len() == old {
+                let next = old.checked_mul(2).ok_or(CapacityError)?.max(8);
+                let slot = std::mem::size_of::<(Instant, Arc<AcceptedSaveInput>)>();
+                let growing = self
+                    .budget
+                    .reserve(next.checked_mul(slot).ok_or(CapacityError)?)?;
+                pending
+                    .queue
+                    .try_reserve_exact(next - old)
+                    .map_err(|_| CapacityError)?;
+                pending.queue_custody = growing;
+            }
+        }
         Ok(Arc::new(AcceptedSaveInput {
             through: products.progress().through_cut,
             history,

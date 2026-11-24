@@ -44,6 +44,7 @@ import {
 import type { AssemblyFamily } from './assembly-types.js';
 import { baseContextActions } from './worlds/base/context-actions.js';
 import {
+  craftStartedText as baseCraftStartedText,
   nativeActivityView as baseActivityView,
   sharedNativeActivityName as baseActivityName,
 } from './worlds/base/action-views.js';
@@ -770,6 +771,12 @@ export function nativeActivityView(world: WorldState, command: Command) {
   selectedCreationProfileForWorld(world);
   return baseActivityView(world, command);
 }
+
+export function craftStartedText(world: Pick<WorldState, 'profile'>, recipeName: string) {
+  selectedCreationProfileForWorld(world);
+  return baseCraftStartedText(recipeName);
+}
+
 export function sharedNativeActivityName(world: WorldState, command: Command) {
   selectedCreationProfileForWorld(world);
   return baseActivityName(world, command);

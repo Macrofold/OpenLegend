@@ -1,19 +1,59 @@
 //! The recipe catalogue reads only one actor's current known method and
 //! its accessible materials under the ordinary disclosure lease.
 use super::*;
+use crate::execution::ExecutionError;
 use crate::manufacturing::{self, MaterialChoice, ToolRequest};
 use crate::text::JsText;
 
 pub struct RuntimeManufactureOffer<'a> {
     pub name: &'a JsText,
     pub description: &'a JsText,
-    pub work_seconds: f64,
     pub sequence: u64,
     pub paused: bool,
     pub can_act: bool,
     pub missing: Option<(u64, &'a JsText)>,
     pub missing_tool: bool,
-    pub tool: Option<(&'a str, &'a str)>,
+    tool: Option<&'a manufacturing::ToolBinding>,
+    installed: &'a crate::simulation::InstalledWorld,
+    method: &'a manufacturing::InstalledMethod,
+}
+
+impl RuntimeManufactureOffer<'_> {
+    pub fn tool(&self) -> Option<(&str, &str)> {
+        self.tool
+            .map(|tool| (tool.role.as_str(), tool.item_id.as_str()))
+    }
+
+    /// Format the admitted recipe's own quantities and exact kept tool without
+    /// scanning inventory again. The caller owns the reservation through encoding.
+    pub fn display(
+        &self,
+        named: bool,
+        budget: &ByteBudget,
+    ) -> Result<(JsText, Vec<(&'static str, JsText)>, ByteReservation), RuntimeError> {
+        let profile = &self.installed.content.profile;
+        let words = crate::worlds::activity_display::craft_words((&profile.id, profile.version))
+            .ok_or_else(|| failure("manufacture display unavailable"))?;
+        let (facts, mut storage) = words
+            .facts(self.method, &self.installed.retained, self.tool, budget)
+            .map_err(manufacture_refusal)?;
+        if named {
+            storage.resize(
+                storage
+                    .bytes()
+                    .checked_add(4 * self.name.storage_bytes())
+                    .ok_or(CapacityError)?,
+            )?;
+        }
+        Ok((words.choice(named.then_some(self.name)), facts, storage))
+    }
+}
+
+fn manufacture_refusal(error: ExecutionError) -> RuntimeError {
+    match error {
+        ExecutionError::Capacity => RuntimeError::from(CapacityError),
+        other => failure(other),
+    }
 }
 
 #[derive(serde::Deserialize)]
@@ -238,16 +278,9 @@ impl<'a> ManufactureOffers<'a> {
         let state = self.state;
         let stock =
             manufacturing::materials(state, self.actor, method, ToolRequest::Offer, self.budget)
-                .map_err(failure)?;
+                .map_err(manufacture_refusal)?;
         let (missing, missing_tool, tool) = match &stock {
-            MaterialChoice::Available(stock) => (
-                None,
-                false,
-                stock
-                    .tool
-                    .as_ref()
-                    .map(|tool| (tool.role.as_str(), tool.item_id.as_str())),
-            ),
+            MaterialChoice::Available(stock) => (None, false, stock.tool.as_ref()),
             MaterialChoice::Missing(row) => (
                 Some((
                     row.quantity,
@@ -263,13 +296,14 @@ impl<'a> ManufactureOffers<'a> {
         use_offer(RuntimeManufactureOffer {
             name: &method.name,
             description: &method.description,
-            work_seconds: method.work_seconds,
             sequence: state.physical.header.sequence,
             paused: state.physical.header.paused,
             can_act: self.can_act,
             missing,
             missing_tool,
             tool,
+            installed: &state.installed,
+            method,
         })
     }
 }

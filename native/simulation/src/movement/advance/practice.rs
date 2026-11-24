@@ -2,24 +2,58 @@
 //! Contact has a separate clock boundary and an independent saved owner.
 use super::*;
 use crate::body::{ProjectileContact, ScarEffect, scar_factor};
-use crate::host::retained_size::HeapBytes;
-use crate::projectile::{ContactPolicy, ProjectileFlight, practice};
+use crate::host::retained_size::{HeapBytes, heap_sum};
+use crate::projectile::{AimedLife, ContactPolicy, ProjectileFlight, RangedAim, practice};
+use crate::projectile::practice::PracticeHandling;
 use crate::reception::EventScalar;
+use crate::values::DefinitionPin;
 use indexmap::IndexMap;
 use serde::Serialize;
 
 pub(super) struct PendingPracticeRelease {
-    aim: crate::projectile::AimedLife,
-    definition: crate::values::DefinitionPin,
-    tool: crate::values::DefinitionPin,
+    aim: Option<AimedLife>,
+    definition: DefinitionPin,
+    tool: DefinitionPin,
     ammunition: String,
     ammunition_definition: String,
-    competence: u64,
-    accuracy: f64,
+    handling: PracticeHandling,
     _storage: ByteReservation,
 }
 
 impl MoveAdvanceCursor {
+    /// Holds the exact launch facts only until the shared release occurrence
+    /// completes. The projectile, debit, evidence and credit share its rollback.
+    pub(super) fn prepare_practice_release(
+        &self,
+        aim: &RangedAim,
+        target: Option<(&str, u64)>,
+        ammunition: &str,
+        definition: &DefinitionPin,
+        handling: PracticeHandling,
+    ) -> Result<PendingPracticeRelease, ExecutionError> {
+        let bytes = heap_sum([
+            target.map_or(0, |(id, _)| id.len()),
+            ammunition.len(),
+            aim.tool.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            definition.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            aim.ammunition.id.len(),
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let storage = self.budget.reserve(bytes)?;
+        Ok(PendingPracticeRelease {
+            aim: target.map(|(id, life)| AimedLife {
+                id: id.to_owned(),
+                life,
+            }),
+            definition: definition.clone(),
+            tool: aim.tool.clone(),
+            ammunition: ammunition.to_owned(),
+            ammunition_definition: aim.ammunition.id.clone(),
+            handling,
+            _storage: storage,
+        })
+    }
+
     pub(super) fn complete_practice_release(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -41,13 +75,13 @@ impl MoveAdvanceCursor {
             action,
             emitted,
             crate::activity::PracticeReleaseFacts {
-                aim: &release.aim,
+                aim: release.aim.as_ref(),
                 definition,
                 tool: &release.tool,
                 ammunition: &release.ammunition,
                 ammunition_definition: &release.ammunition_definition,
-                competence: release.competence,
-                accuracy: release.accuracy,
+                competence: release.handling.rank,
+                accuracy: release.handling.accuracy,
             },
         )?;
         if !improved {
@@ -273,38 +307,15 @@ impl MoveAdvanceCursor {
                     combat.projectile_contact
                 }),
         };
-        let accuracy = offer.accuracy.ok_or(ExecutionError::Invariant)?;
-        let rank = match crate::status::read_attribute(
-            actor,
-            offer.definition.value(),
-            core.state.physical.pending_values.as_ref(),
-        )? {
-            Some(crate::values::AttributeValue::Number(0.0)) => 0,
-            Some(crate::values::AttributeValue::Number(1.0)) => 1,
-            _ => return Err(ExecutionError::Invariant),
-        };
+        let handling = offer.handling.ok_or(ExecutionError::Invariant)?;
         let aim_target = aim.aim_target.as_ref().ok_or(ExecutionError::Invariant)?;
-        let release_storage = self.budget.reserve(
-            512 + aim_target.id.len()
-                + ammo_id.len()
-                + aim.tool.heap_bytes().ok_or(ExecutionError::Capacity)?
-                + offer
-                    .definition
-                    .pin()
-                    .heap_bytes()
-                    .ok_or(ExecutionError::Capacity)?
-                + aim.ammunition.id.len(),
-        )?;
-        self.practice_release = Some(PendingPracticeRelease {
-            aim: aim_target.clone(),
-            definition: offer.definition.pin().clone(),
-            tool: aim.tool.clone(),
-            ammunition: ammo_id.clone(),
-            ammunition_definition: aim.ammunition.id.clone(),
-            competence: rank,
-            accuracy,
-            _storage: release_storage,
-        });
+        self.practice_release = Some(self.prepare_practice_release(
+            aim,
+            Some((&aim_target.id, aim_target.life)),
+            &ammo_id,
+            offer.definition.pin(),
+            handling,
+        )?);
         let kind = weapon.ammunition_kind.clone();
         let injury = (weapon.damage + ammunition.damage_bonus) * outgoing;
         // Keep the prepared launch inputs immutable while the original action
@@ -320,7 +331,7 @@ impl MoveAdvanceCursor {
             at,
             weapon,
             injury,
-            accuracy,
+            handling.accuracy,
         )?;
         let projectile =
             self.commit_projectile(core, &hold, ammo_id, recovery, flight, flight_storage)?;

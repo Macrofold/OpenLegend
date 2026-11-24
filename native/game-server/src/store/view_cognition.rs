@@ -21,23 +21,6 @@ pub(crate) struct AiDisplay {
     pub limit_usd: f64,
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct JobScope {
-    account_id: String,
-    actor_id: String,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ReplyJob {
-    id: String,
-    status: SpeechReplyStatus,
-    message: JsText,
-    authority: Option<JobScope>,
-    player_speech_event_id: Option<String>,
-}
-
 impl Store {
     /// Read the finite recent job window and narrator eligibility in one
     /// independent read-only snapshot. Each decoded product
@@ -198,8 +181,9 @@ impl Store {
         })).await
     }
 
-    /// Read only reply outcomes bound to the exact player-authored speech
-    /// selected by the accepted view. No event or job body leaves the store.
+    /// Read the latest permitted reply for each selected speech event using
+    /// the job index in a single operational snapshot. The caller owns the
+    /// result's custody and rechecks the authorized view before disclosure.
     pub(crate) async fn player_speech_replies<'a>(
         &self,
         scope: &RequestScope,
@@ -218,28 +202,46 @@ impl Store {
         if ids.is_empty() {
             return Ok(None);
         }
+        let key_bytes = scope
+            .account_id
+            .len()
+            .checked_add(scope.actor_id.len())
+            .and_then(|length| length.checked_mul(6))
+            .and_then(|length| length.checked_add(64))
+            .and_then(|length| length.checked_add(parameters.bytes()))
+            .ok_or(StoreError::Capacity)?;
+        parameters
+            .resize(key_bytes)
+            .map_err(|_| StoreError::Capacity)?;
+        let account = json_record(&scope.account_id).map_err(|_| StoreError::InvalidRecord)?;
+        let actor = json_record(&scope.actor_id).map_err(|_| StoreError::InvalidRecord)?;
         let budget = self.budget.clone();
-        let account = scope.account_id.clone();
-        let actor = scope.actor_id.clone();
         self.read_operational(move |tx| {
             Box::pin(async move {
+                // Apply owner selection before choosing the latest attempt.
+                // Routing keys and message text retain their JSON encoding.
                 let (mut custody, rows) = admitted_query(
                     tx,
-                    "SELECT payload FROM jobs WHERE (selection #>> '{playerSpeechEventId}')=ANY($1) \
-                     AND (selection #>> '{kind}')='chat' ORDER BY created_at DESC,id DESC",
-                    &[&ids],
+                    "SELECT DISTINCT ON (selection #>> '{playerSpeechEventId}') \
+                       selection #>> '{playerSpeechEventId}' AS speech, id, \
+                       (selection->'status')::text AS status, selection->>'displayMessage' AS message \
+                     FROM jobs WHERE selection #>> '{kind}'='chat' \
+                       AND selection #>> '{playerSpeechEventId}'=ANY($1) \
+                       AND (selection->'authority'='null'::jsonb OR \
+                         (selection #>> '{authority,accountId}'=$2 AND \
+                          selection #>> '{authority,actorId}'=$3)) \
+                     ORDER BY selection #>> '{playerSpeechEventId}',created_at DESC,id DESC",
+                    &[&ids, &account, &actor],
                     &budget,
                 ).await?;
-                drop(parameters);
-                let mut result = IndexMap::new();
+                drop((ids, account, actor, parameters));
+                let mut result = IndexMap::with_capacity(rows.len());
+                let invalid = |_| StoreError::InvalidRecord;
                 for row in &rows {
-                    let payload: &str = row.try_get(0)?;
-                    let job: ReplyJob = serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
-                    let Some(id) = job.player_speech_event_id else { return Err(StoreError::InvalidRecord) };
-                    if job.authority.as_ref().is_some_and(|owner| owner.account_id != account || owner.actor_id != actor) {
-                        continue;
-                    }
-                    result.entry(id).or_insert(SpeechReply { id: job.id, status: job.status, message: job.message });
+                    let speech: String = serde_json::from_str(row.try_get(0)?).map_err(invalid)?;
+                    let status = serde_json::from_str(row.try_get(2)?).map_err(invalid)?;
+                    let message = serde_json::from_str(row.try_get(3)?).map_err(invalid)?;
+                    result.insert(speech, SpeechReply { id: row.try_get(1)?, status, message });
                 }
                 drop(rows);
                 if result.is_empty() {
