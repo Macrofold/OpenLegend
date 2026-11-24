@@ -1252,7 +1252,7 @@ The matched comparisons used the same 26-actor stand-alone opening, ordinary clo
 
 The [isolated reply-packet comparison](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-npc-background-work.md#full-versus-smaller-reply-packet) retains the smaller packet with lower transient reservations in all three pairs. Complete CPU savings remain inconclusive because the runs did different amounts of background NPC work.
 
-[Save admission](../../native/game-server/src/live_save.rs) prepares the candidate's history, memory writes and wakeups before taking the receipt queue lock. [Live reply status](../../native/game-server/src/store/view_cognition.rs) selects the latest permitted attempt for each speech in PostgreSQL and reads only the display fields. Both retain their existing acceptance, snapshot and disclosure checks. [Follow-up checks](../benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#post-cutover-sling-craft-and-storage-follow-up).
+[Save admission](../../native/game-server/src/live_save.rs) prepares the candidate's history, memory writes and wakeups before taking the receipt queue lock. [Live reply status](../../native/game-server/src/store/view_cognition.rs) selects the latest permitted attempt for each speech in PostgreSQL and reads only the display fields. Both retain their existing acceptance, snapshot and disclosure checks. Measure the remaining snapshot and transfer-check traffic with more concurrent viewers before considering reuse across views. [Follow-up checks](../benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#post-cutover-sling-craft-and-storage-follow-up).
 
 ## Overlap and dependencies
 

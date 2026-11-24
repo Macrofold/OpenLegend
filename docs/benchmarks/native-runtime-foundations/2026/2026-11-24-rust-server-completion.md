@@ -121,3 +121,22 @@ Optimized release `5156acf42710`, tree `e65071ff43b1`, passed the following loca
 - **Craft preview.** Signed recipe and All actions offers matched the prepared-world TypeScript view for a hammer, an exact selected knife from two allowed definitions, and a recipe without a kept tool. The saved action used the same facts and authored start message. Replacing the work reused the hammer and spent only the second flint. The cold receipt returned the same result and the work produced one cutter. A real browser selected Resume Here and rendered the Trim tooltip with one Supple branch, one Knife and its 90-game-second cost. Results `850468e95f57` and `eb0e689f9567`.
 - **Conversation reply status.** The speaker saw the latest permitted status for the original attempt and both retries. A nearby signed witness heard the speech and received no private status. The cold view and exact receipt recovered one accepted reply. Result `44a411c96819`.
 - **Save receipt while the writer waits.** The accepted walk could be recovered while PostgreSQL held the writer. The ordinary save wrote one receipt and the correct position. The cold server returned that receipt and position. An authorized Load restored the earlier checkpoint on a fresh timeline and rejected the old scope. Result `9549f3f562bf`.
+
+### Save queue and reply lookup profile
+
+The managed `m7i.xlarge` profile measured the original paths in `f093a3e10` with temporary probes in `fcaa92c074c5`. Each of three recorder-off and three recorder-on runs used a fresh database and the same 26-actor opening, 1,246 scenery records and 180-second steady window. Each run finished 34 walks, two steering gestures, two controlled saved replies and cold continuation. Entries below are median / average / p95 across three runs per column.
+
+| Measure                                                  |               Recorder off |                 Recorder on |
+| -------------------------------------------------------- | -------------------------: | --------------------------: |
+| Server CPU (% of one logical core)                       |      43.42 / 43.23 / 44.21 |       43.43 / 43.55 / 44.97 |
+| Exclusive PostgreSQL CPU (% of one logical core)         |         6.08 / 6.11 / 6.30 |          6.44 / 6.32 / 6.70 |
+| Achieved game speed (% of intended rate)                 | 100.000 / 99.991 / 100.000 | 100.028 / 100.030 / 100.061 |
+| Server and PostgreSQL CPU per completed game-second (ms) |         8.25 / 8.22 / 8.42 |          8.31 / 8.31 / 8.61 |
+
+The three captures dropped zero observations. Across 11,586 save staging calls, the timed hold was **49.5–50.0 µs median, 66.6 µs average and 166–168 µs p95**. The longest hold was 0.913 ms. The 96 sampled receipt lock acquisitions averaged 0.28 µs and all were below 1 µs. The ordinary opening showed little lock contention. The repair keeps candidate memory and scheduling preparation out of the lock while retaining the final fault and capacity check.
+
+The 7,654 reply lookups ran at 14.2 per second. Their elapsed time was **0.84–0.85 ms median, 1.06 ms average and 2.15–2.17 ms p95**. They returned 3,373–3,441 full job rows and 2.90–2.96 MB of job text per run. The compact query keeps the exact snapshot and transfer-size check. The signed retry case above establishes the reduced query work after the change. End-to-end CPU and latency effects of the repairs remain unmeasured.
+
+Campaign `81e117ac-95f8-43b2-8756-e770f176999d` exhausted its build allowance before gameplay and cleaned up. The retry `00715088-867a-4446-b063-3b1fa6262710` increased the build allowance and preserved the selected probes and inputs. Collected manifest `f68f4003b581` and reduced report `7a464caaaddd` identify the results. The direct timings support attribution. Recorder overhead remains unqualified because there is no fixed-work safety proof and one pair exceeded the frozen game-time tolerance.
+
+Both campaigns completed worker cleanup. EC2 and the runner confirmed the retained worker stopped at generation 596. The two campaigns settled at $0.281890 and $0.424636 estimated use, with zero hold remaining for either. Controlled model spend was $0.
