@@ -15,13 +15,13 @@ pub(super) struct CookingChoices {
 }
 
 impl CookingChoices {
-    fn prepare(
-        core: &CoreMutation<'_>,
+    pub(super) fn prepare(
+        state: &crate::simulation::SimulationState,
         actor: &str,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        let choices = crate::food_preparation::choices(core.state, actor, None, budget)?;
-        let definitions = &core.state.installed.retained.preparations;
+        let choices = crate::food_preparation::choices(state, actor, None, budget)?;
+        let definitions = &state.installed.retained.preparations;
         let mut count = 0usize;
         let bytes = choices
             .rows
@@ -50,6 +50,10 @@ impl CookingChoices {
             recipes,
             _storage: storage,
         })
+    }
+
+    pub(super) fn inputs(&self, recipe: usize) -> Option<&IndexMap<String, String>> {
+        self.recipes.iter().find(|choice| choice.recipe == recipe).map(|choice| &choice.ingredients)
     }
 }
 
@@ -87,7 +91,7 @@ impl NpcCandidateCursor {
             return Ok(());
         };
         if self.cooking.is_none() {
-            self.cooking = Some(CookingChoices::prepare(core, &self.actor, &self.budget)?);
+            self.cooking = Some(CookingChoices::prepare(core.state, &self.actor, &self.budget)?);
         }
         let choices = self.cooking.as_ref().ok_or(ExecutionError::Invariant)?;
         if choices.recipes.is_empty() {

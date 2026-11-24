@@ -198,10 +198,10 @@ function activityView(
     'shoot-once': BASE_RANGED_TEXT.shotName,
     'release-shot': BASE_RANGED_TEXT.shootingName,
     harvest: 'Harvest',
-    cook: 'Cook',
+    cook: activityDisplay.cookName,
     fish: BASE_FOOD_ACTION_WORDING.fishingLabel,
     'tend-fire': 'Tend a fire',
-    eat: 'Eat',
+    eat: activityDisplay.eatName,
     equip: BASE_EQUIPMENT_COPY.equipLabel,
     guard: 'Guard with shield',
     evade: bodyPolicy(world)?.evasion?.label,
@@ -622,6 +622,8 @@ export function sharedNativeActivityName(world: WorldState, command: Command): s
     command.type === 'say' ||
     command.type === 'status-effect' ||
     command.type === 'follow' ||
+    command.type === 'cook' ||
+    command.type === 'eat' ||
     (command.type === 'strike' && !command.weaponItemId && !command.manualExecution)
   ) {
     const effect =
@@ -634,6 +636,9 @@ export function sharedNativeActivityName(world: WorldState, command: Command): s
         purpose: command.purpose,
         ...(command.type === 'status-effect' ? { operation: command.operation } : {}),
       },
+      ...(command.type === 'cook'
+        ? { preparationName: preparationDefinition(world, command)?.name }
+        : {}),
       ...(effect
         ? {
             effect: {

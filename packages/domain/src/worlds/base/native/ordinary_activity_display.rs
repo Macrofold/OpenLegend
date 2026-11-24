@@ -20,6 +20,8 @@ struct DisplayWords<'a> {
     #[serde(borrow)]
     say: SayWords<'a>,
     follow_name: &'a str,
+    cook_name: &'a str,
+    eat_name: &'a str,
     #[serde(borrow)]
     status: StatusWords<'a>,
     #[serde(borrow)]
@@ -225,6 +227,7 @@ pub(crate) fn shared_name(
     purpose: Option<&JsText>,
     operation: Option<&str>,
     effect: Option<(&str, Option<&str>, Option<&str>)>,
+    preparation_name: Option<&JsText>,
 ) -> Option<JsText> {
     if profile != ("grounded-wilderness", 1) {
         return None;
@@ -242,6 +245,8 @@ pub(crate) fn shared_name(
         "move" => words.r#move.name,
         "say" => words.say.name,
         "follow" => words.follow_name,
+        "cook" => words.cook_name,
+        "eat" => words.eat_name,
         "strike" => words.strike.name,
         "status-effect" => words.status.name,
         _ => return None,
@@ -249,6 +254,7 @@ pub(crate) fn shared_name(
     Some(
         purpose
             .filter(|text| *text == words.stable_learned_purpose)
+            .or(preparation_name.filter(|_| kind == "cook"))
             .cloned()
             .unwrap_or_else(|| fallback.into()),
     )

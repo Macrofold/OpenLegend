@@ -178,6 +178,7 @@ pub(crate) fn valid_command(
                     .as_ref()
                     .is_none_or(|v| world.acoustics.value().volume(v).is_some())
         }
+        NativeCommand::Eat { item_id, .. } => command.is_learned_leaf() && is_safe_record_id(item_id),
         NativeCommand::Outing { .. }
         | NativeCommand::EncounterPreference { .. }
         | NativeCommand::Handover { .. }
@@ -186,7 +187,6 @@ pub(crate) fn valid_command(
         | NativeCommand::Drop { .. }
         | NativeCommand::TransferItem { .. }
         | NativeCommand::Equipment { .. }
-        | NativeCommand::Eat { .. }
         | NativeCommand::Guard { .. }
         | NativeCommand::PracticeShot { .. }
         | NativeCommand::ReleaseStrike { .. }
@@ -213,7 +213,7 @@ fn step(
     if step.activity_key.as_ref().is_some_and(|key| {
         !crate::values::is_safe_record_text(key)
             || !(matches!(step.command, NativeCommand::Move { .. })
-                || step.command.learned_speech_fields().is_some())
+                || step.command.is_learned_leaf())
     }) {
         return Err(InstallError::UnsupportedFamily("activity graph plan step"));
     }

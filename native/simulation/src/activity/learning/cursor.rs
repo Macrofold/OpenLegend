@@ -8,7 +8,7 @@ use super::format::{
 use super::history::{
     LearningHistory, LearningHistoryAnswer, LearningHistoryCursor, LearningHistoryRequest,
 };
-use super::normalize::{NormalizationRead, NormalizedActivity};
+use super::normalize::{NormalizationRead, NormalizedActivity, current_preparation_for_learning};
 use super::*;
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::geometry::GeometryBinding;
@@ -99,6 +99,12 @@ impl PreparedActivityLearning {
                 .rows
                 .get(index)
                 .ok_or(ExecutionError::Invariant)?;
+            if !current_preparation_for_learning(
+                &state.installed.retained.preparations,
+                &row.entry.command,
+            ) {
+                return Ok(false);
+            }
             if let Some(evidence) = &row.entry.result_evidence
                 && !evidence.recent_eligible(state, &self.history.actor, budget)?
             {
@@ -223,6 +229,7 @@ impl LearningPreparationCursor {
         NormalizationRead {
             history: self.history()?,
             language: &state.activity.language,
+            preparations: &state.installed.retained.preparations,
             limits: &state.activity.limits,
             names: &self.names.as_ref().ok_or(ExecutionError::Invariant)?.texts,
             places: &self.places,

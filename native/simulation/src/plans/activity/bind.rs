@@ -1,6 +1,7 @@
 //! The one selected invocation binds through the existing command codec.
 //! This constructs transport, not a second physical or permission executor.
 use super::ActivityExecution;
+use crate::activity::LearnedLeaf;
 use crate::commands::{CooperationBinding, NativeCommand, PurposeBinding};
 use crate::execution::ExecutionError;
 use crate::host::{ByteBudget, ByteReservation};
@@ -36,10 +37,18 @@ pub(crate) fn bind_pending_invoke(
     budget: &ByteBudget,
 ) -> Result<(NativeCommand, ByteReservation), ExecutionError> {
     if execution.method_id.is_some() {
-        let speech = execution
-            .pending_speech()?
+        let leaf = execution
+            .pending_learned(world)?
             .ok_or(ExecutionError::UnsupportedFamily)?;
-        return NativeCommand::learned_speech(id, actor, speech, budget);
+        return match leaf {
+            LearnedLeaf::Speech(speech) => NativeCommand::learned_speech(id, actor, speech, budget),
+            LearnedLeaf::Prepare(step) => step.bind(id, actor, &execution.bindings, budget),
+            LearnedLeaf::Consume(step) => NativeCommand::learned_consumption(
+                id, actor, step.purpose,
+                step.product(&execution.outputs).ok_or(ExecutionError::InvalidCheckpoint)?,
+                budget,
+            ),
+        };
     }
     let invocation = execution.single_invoke()?;
     let destination = invocation.movement_point(world)?;

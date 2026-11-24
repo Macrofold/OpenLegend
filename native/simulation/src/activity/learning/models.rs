@@ -316,18 +316,25 @@ pub(super) fn validate_method(
         if text(child, "kind")? != "invoke" || prior.contains_key(text(child, "key")?) {
             return Err(invalid());
         }
+        let command = text(child, "command")?;
         let shape = language
             .commands
-            .get(text(child, "command")?)
+            .get(command)
             .ok_or(ActivityError::UnsupportedFamily)?;
         let args = child
             .get("args")
             .and_then(SqlCell::as_object)
             .ok_or_else(invalid)?;
         if shape.required.iter().any(|field| !args.contains_key(field))
-            || args
-                .keys()
-                .any(|field| !shape.required.contains(field) && !shape.optional.contains(field))
+            || command == "cook"
+                && !args
+                    .keys()
+                    .any(|field| super::syntax::cook_input_role(field).is_some())
+            || args.keys().any(|field| {
+                !shape.required.contains(field)
+                    && !shape.optional.contains(field)
+                    && shape.binding(command, field).is_none()
+            })
         {
             return Err(ActivityError::UnsupportedFamily);
         }
@@ -341,7 +348,7 @@ pub(super) fn validate_method(
                 {
                     return Err(invalid());
                 }
-                let binding = shape.bindings.get(field).ok_or_else(invalid)?;
+                let binding = shape.binding(command, field).ok_or_else(invalid)?;
                 let kind = text(rule, "kind")?;
 
                 if !match kind {
@@ -358,8 +365,7 @@ pub(super) fn validate_method(
                 positive(arg, "quantity")?;
                 let port = text(arg, "port")?;
                 if !shape
-                    .bindings
-                    .get(field)
+                    .binding(command, field)
                     .is_some_and(|binding| binding.output)
                     || !prior.get(output).is_some_and(|ports| ports.contains(&port))
                 {
@@ -367,7 +373,7 @@ pub(super) fn validate_method(
                 }
             } else {
                 fields(arg, &["literal"])?;
-                if shape.bindings.contains_key(field)
+                if shape.binding(command, field).is_some()
                     || arg.get("literal").is_none_or(|value| {
                         !matches!(
                             value,
@@ -419,9 +425,11 @@ pub(super) fn validate_method(
         let columns = array(rule, "commandFields")?;
         if columns.is_empty()
             || columns.len() > 8
-            || columns
-                .iter()
-                .any(|name| name.as_str().is_none_or(|name| !is_safe_record_id(name)))
+            || columns.iter().any(|name| {
+                name.as_str().is_none_or(|name| {
+                    !is_safe_record_id(name) && super::syntax::cook_input_role(name).is_none()
+                })
+            })
         {
             return Err(invalid());
         }
@@ -430,8 +438,8 @@ pub(super) fn validate_method(
             let column = column.as_str().ok_or_else(invalid)?;
             let binding = language
                 .commands
-                .values()
-                .find_map(|shape| shape.bindings.get(column))
+                .iter()
+                .find_map(|(command, shape)| shape.binding(command, column))
                 .ok_or_else(invalid)?;
             if !match kind {
                 "self" => binding.self_allowed,

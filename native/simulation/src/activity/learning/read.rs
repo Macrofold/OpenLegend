@@ -226,17 +226,13 @@ fn matches_installation(
             }
         }
         for (id, version, digest) in pins.into_iter().flatten() {
-            let Some(raw) = state.installed.retained.item_definitions.get(id) else {
+            // Item JSON has no digest field. The installer computes the
+            // canonical pin once for claims, recipes and learned item roles.
+            let Some(item) = state.installed.retained.items.get(id) else {
                 return Ok(false);
             };
-            let _decode = budget.reserve(
-                crate::experience::encoded_body_bound(raw).map_err(|_| ExecutionError::Capacity)?,
-            )?;
-            let definition: SqlCell =
-                serde_json::from_str(raw).map_err(|_| ExecutionError::Invariant)?;
-            if definition.get("id").and_then(SqlCell::as_str) != Some(id)
-                || definition.get("version") != version
-                || definition.get("digest") != digest
+            if version.and_then(SqlCell::as_u64) != Some(item.pin.version)
+                || digest.and_then(SqlCell::as_str) != Some(item.pin.digest.as_str())
             {
                 return Ok(false);
             }

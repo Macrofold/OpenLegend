@@ -21,6 +21,29 @@ pub(super) fn strings<'a>(values: impl IntoIterator<Item = &'a str>) -> SqlCell 
 fn number(n: usize) -> SqlCell {
     SqlCell::Number(n.into())
 }
+pub(super) fn current_preparation<'a>(
+    preparations: &'a IndexMap<String, crate::food_preparation::InstalledPreparation>,
+    definition: &crate::values::DefinitionPin,
+) -> Option<&'a crate::food_preparation::InstalledPreparation> {
+    preparations
+        .get(&definition.id)
+        .filter(|recipe| recipe.pin == *definition)
+}
+
+/// Recheck the historical Cook dependency at a fresh learning boundary. The
+/// prior command and results remain immutable even when this pin changes.
+pub(super) fn current_preparation_for_learning(
+    preparations: &IndexMap<String, crate::food_preparation::InstalledPreparation>,
+    command: &crate::commands::NativeCommand,
+) -> bool {
+    match command {
+        crate::commands::NativeCommand::Cook { definition, .. } => {
+            current_preparation(preparations, definition).is_some()
+        }
+        _ => true,
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct NormalizedActivity {
@@ -42,6 +65,7 @@ impl NormalizedActivity {
 pub(super) struct NormalizationRead<'a> {
     pub history: &'a LearningHistory,
     pub language: &'a InstalledLearningLanguage,
+    pub preparations: &'a IndexMap<String, crate::food_preparation::InstalledPreparation>,
     pub limits: &'a ActivityLimits,
     pub names: &'a [Option<JsText>],
     /// Exact Source canonicalJson(point), prepared and compared as one batch.
@@ -133,30 +157,91 @@ impl NormalizationRead<'_> {
             let entry = &self.history.rows[at].entry;
             let fields: SqlCell = serde_json::from_str(entry.command.source_encoding())
                 .map_err(|_| ExecutionError::Invariant)?;
-            let Some(fields) = fields.as_object() else {
+            let SqlCell::Object(mut fields) = fields else {
                 return Err(ExecutionError::UnsupportedFamily);
             };
-            let syntax = &self.language.commands[entry.command.kind()];
+            let (cook_quantities, _cook_workspace) =
+                if let crate::commands::NativeCommand::Cook {
+                    definition, inputs, ..
+                } = &entry.command
+                {
+                    let Some(recipe) = current_preparation(self.preparations, definition)
+                        .filter(|recipe| recipe.matches_inputs(inputs))
+                    else {
+                        // Historical outcomes remain exact, but a changed recipe cannot
+                        // supply the ingredient quantities for a new replayable method.
+                        return Ok(None);
+                    };
+                    let Some(SqlCell::Object(source_inputs)) = fields.shift_remove("inputs") else {
+                        return Err(ExecutionError::Invariant);
+                    };
+                    let field_count = fields
+                        .len()
+                        .checked_add(source_inputs.len())
+                        .ok_or(ExecutionError::Capacity)?;
+                    let role_names = source_inputs
+                        .keys()
+                        .try_fold(0_usize, |bytes, role| {
+                            bytes.checked_add(role.len() + "input:".len())
+                        })
+                        .ok_or(ExecutionError::Capacity)?;
+                    let workspace = budget.reserve(
+                        map_storage::<String, SqlCell>(field_count)
+                            .and_then(|bytes| bytes.checked_add(role_names))
+                            .and_then(|bytes| {
+                                bytes.checked_add(map_storage::<&str, u64>(source_inputs.len())?)
+                            })
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    fields
+                        .try_reserve(source_inputs.len())
+                        .map_err(|_| ExecutionError::Capacity)?;
+                    // Match Source's activityCommandFields order. The stored source
+                    // command remains unchanged with its original exact lot IDs.
+                    for (role, item) in source_inputs {
+                        fields.insert(format!("input:{role}"), item);
+                    }
+                    let quantities = recipe
+                        .definition
+                        .inputs
+                        .iter()
+                        .map(|ingredient| (ingredient.role.as_str(), ingredient.quantity))
+                        .collect::<IndexMap<_, _>>();
+                    (Some(quantities), Some(workspace))
+                } else {
+                    (None, None)
+                };
+            let command = entry.command.kind();
+            let syntax = &self.language.commands[command];
             let mut args = IndexMap::new();
-            for (field, value) in fields {
+            for (field, value) in &fields {
                 if ["id", "actorId", "type", "purpose", "chosenPurpose"].contains(&field.as_str()) {
                     continue;
                 }
                 if entry.command.kind() == "follow" && field == "until" {
                     return Ok(None);
                 }
-                let binding = syntax.bindings.get(field);
+                let binding = syntax.binding(command, field);
                 if let (Some(value), Some(rule)) = (
                     value.as_str(),
                     binding.filter(|b| b.kind == super::syntax::BindingKind::Object),
                 ) {
                     if let Some((step, port)) = outputs.get(value).filter(|_| rule.output) {
+                        let quantity = match (
+                            cook_quantities.as_ref(),
+                            super::syntax::cook_input_role(field),
+                        ) {
+                            (Some(quantities), Some(role)) => {
+                                *quantities.get(role).ok_or(ExecutionError::Invariant)?
+                            }
+                            _ => 1,
+                        };
                         args.insert(
                             field.clone(),
                             object([
                                 ("output", string(step.as_str())),
                                 ("port", string(port.as_str())),
-                                ("quantity", number(1)),
+                                ("quantity", SqlCell::Number(quantity.into())),
                             ]),
                         );
                         continue;

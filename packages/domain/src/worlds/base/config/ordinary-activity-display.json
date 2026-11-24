@@ -17,6 +17,8 @@
     "reply": "Speaking does not promise that anyone hears, answers or agrees"
   },
   "followName": "Follow",
+  "cookName": "Cook",
+  "eatName": "Eat",
   "status": {
     "name": "Act",
     "activatePrefix": "Begin ",

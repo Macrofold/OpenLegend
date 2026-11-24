@@ -34,8 +34,11 @@ enum Input {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct OwnedName {
     command: OwnedNameCommand,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    preparation_name: Option<JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
     effect: Option<OwnedEffect>,
 }
@@ -131,6 +134,7 @@ impl LearningFormatRequest {
                 |bytes, name| {
                     bytes
                         .checked_add(name.command.purpose.map_or(0, JsText::storage_bytes))?
+                        .checked_add(name.preparation_name.map_or(0, JsText::storage_bytes))?
                         .checked_add(name.effect.as_ref().map_or(0, |words| {
                             words.label.len()
                                 + words.activate.map_or(0, str::len)
@@ -150,6 +154,7 @@ impl LearningFormatRequest {
                                 purpose: name.command.purpose.cloned(),
                                 operation: name.command.operation,
                             },
+                            preparation_name: name.preparation_name.cloned(),
                             effect: name.effect.map(|effect| OwnedEffect {
                                 label: effect.label.to_owned(),
                                 activate: effect.activate.map(str::to_owned),
@@ -288,6 +293,7 @@ impl LearningFormatRequest {
                                         words.deactivate.as_deref(),
                                     )
                                 }),
+                                name.preparation_name.as_ref(),
                             )
                             .ok_or(ExecutionError::UnsupportedFamily)
                         })
@@ -399,8 +405,11 @@ impl OwnedDescription {
     }
 }
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(super) struct NameRead<'a> {
     command: NameCommand<'a>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    preparation_name: Option<&'a JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
     effect: Option<Effect<'a>>,
 }
@@ -433,9 +442,23 @@ pub(super) fn name_read<'a>(
             | NativeCommand::StatusEffect { .. }
             | NativeCommand::Follow { .. }
             | NativeCommand::Strike { .. }
+            | NativeCommand::Cook { .. }
+            | NativeCommand::Eat { .. }
     ) {
         return None;
     }
+    let preparation_name = if let NativeCommand::Cook { definition, .. } = &entry.command {
+        Some(
+            &super::normalize::current_preparation(
+                &state.installed.retained.preparations,
+                definition,
+            )?
+            .definition
+            .name,
+        )
+    } else {
+        None
+    };
     let (operation, effect) = if let NativeCommand::StatusEffect {
         definition_id,
         operation,
@@ -469,6 +492,7 @@ pub(super) fn name_read<'a>(
             purpose: entry.command.envelope().purpose.as_ref(),
             operation,
         },
+        preparation_name,
         effect,
     })
 }

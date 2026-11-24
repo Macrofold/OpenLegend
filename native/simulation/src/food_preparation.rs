@@ -100,7 +100,7 @@ pub fn valid_inputs(inputs: &IndexMap<String, String>) -> bool {
             .all(|(role, id)| valid_role(role) && is_safe_record_id(id))
 }
 
-fn valid_role(role: &str) -> bool {
+pub(crate) fn valid_role(role: &str) -> bool {
     let mut bytes = role.bytes();
     is_safe_record_id(role)
         && bytes.next().is_some_and(|byte| byte.is_ascii_lowercase())

@@ -27,10 +27,10 @@ pub(crate) use learning::LearningLanguage;
 pub use learning::{LearningHistoryRequest, LearningJudgment};
 pub use learning::RuntimeInspectedSkill;
 pub(crate) use learning::inspected_activities;
-pub use learning::LearnedSpeechChoice;
+pub use learning::LearnedSequenceChoice;
 pub(crate) use learning::{
-    LEARNED_ACTIVITY_COPY, LearnedSpeech, LearnedSpeechLeaf, LearnedSpeechSource, current_learned_speech, speech_leaf,
-    stored_learned_speech, visit_learned_speech,
+    LEARNED_ACTIVITY_COPY, LearnedLeaf, LearnedSequence, LearnedSpeechLeaf, LearnedSequenceSource, activity_product_cell, current_learned_sequence,
+    stored_learned_sequence, visit_learned_sequence,
 };
 pub(crate) use learning::{
     CompletedActivityLearning, LearningFormatAnswer, LearningFormatRequest, LearningHistoryAnswer,

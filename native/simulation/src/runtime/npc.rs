@@ -1027,7 +1027,7 @@ impl RuntimeNpcRead {
 
     fn learned_activity_sources(
         &self,
-    ) -> impl Iterator<Item = &crate::activity::LearnedSpeechSource> {
+    ) -> impl Iterator<Item = &crate::activity::LearnedSequenceSource> {
         let direct = self
             .preparation
             .as_ref()

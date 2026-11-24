@@ -52,7 +52,7 @@ pub enum NpcOfferMeaning {
     },
     Inspection,
     Learned {
-        choice: std::sync::Arc<crate::activity::LearnedSpeechChoice>,
+        choice: std::sync::Arc<crate::activity::LearnedSequenceChoice>,
     },
     Continuation {
         action_type: Option<String>,
@@ -130,7 +130,7 @@ pub(crate) enum PreparedNpcInstruction {
     Continue,
     Command(NativeCommand),
     Handover(crate::handover::NpcHandover),
-    Learned(std::sync::Arc<crate::activity::LearnedSpeechChoice>),
+    Learned(std::sync::Arc<crate::activity::LearnedSequenceChoice>),
 }
 
 impl PreparedNpcInstruction {
@@ -148,7 +148,7 @@ impl PreparedNpcInstruction {
         }
     }
 
-    pub(crate) fn learned(&self) -> Option<&std::sync::Arc<crate::activity::LearnedSpeechChoice>> {
+    pub(crate) fn learned(&self) -> Option<&std::sync::Arc<crate::activity::LearnedSequenceChoice>> {
         match self {
             Self::Learned(choice) => Some(choice),
             _ => None,
@@ -183,7 +183,7 @@ pub(crate) struct PreparedNpcCandidates {
 impl PreparedNpcCandidates {
     pub(crate) fn learned_sources(
         &self,
-    ) -> impl Iterator<Item = &crate::activity::LearnedSpeechSource> {
+    ) -> impl Iterator<Item = &crate::activity::LearnedSequenceSource> {
         self.offers
             .iter()
             .filter_map(|offer| offer.command.learned().map(|choice| &choice.source))

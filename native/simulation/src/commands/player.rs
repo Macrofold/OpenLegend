@@ -697,6 +697,17 @@ fn bind_directed_speech(
 }
 
 impl NativeCommand {
+    pub(crate) fn is_learned_leaf(&self) -> bool {
+        let envelope = self.envelope();
+        self.learned_speech_fields().is_some()
+            || (matches!(self, Self::Cook { .. } | Self::Eat { .. })
+                && envelope.purpose.is_some()
+                && envelope.chosen_purpose.is_none()
+                && envelope.human_initiated.is_none()
+                && envelope.cooperation.is_none()
+                && envelope.combat_help_id.is_none())
+    }
+
     /// The selected learned frontier uses ordinary, untargeted speech. These
     /// are its two rendered fields after the concrete command has been bound.
     /// Live work, saved plans and historical rows share this same shape.
@@ -730,43 +741,129 @@ impl NativeCommand {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Bound<'a> {
-            id: &'a str,
-            actor_id: &'a str,
-            #[serde(rename = "type")]
-            kind: &'static str,
-            purpose: &'a JsText,
+            #[serde(flatten)]
+            command: LearnedHeader<'a>,
             text: &'a JsText,
         }
         let input = Bound {
-            id,
-            actor_id: actor,
-            kind: "say",
-            purpose: leaf.purpose,
+            command: LearnedHeader { id, actor_id: actor, kind: "say", purpose: leaf.purpose },
             text: leaf.text,
         };
-        let encoded =
-            crate::encoding::json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
-        let bytes = encoded
-            .checked_mul(8)
-            .and_then(|n| n.checked_add(leaf.text.heap_bytes()?))
-            .and_then(|n| n.checked_add(leaf.purpose.heap_bytes()?))
-            .and_then(|n| n.checked_add(id.len()))
-            .and_then(|n| n.checked_add(actor.len()))
-            .and_then(|n| n.checked_add(std::mem::size_of::<Self>()))
-            .ok_or(ExecutionError::Capacity)?;
-        let mut storage = budget.reserve(bytes)?;
-        let mut headers = player_headers(id, actor);
-        headers.human_initiated = None;
-        headers.purpose = Some(leaf.purpose.clone());
-        if !headers.valid() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
-        let encoding =
-            CommandEncoding::from_ordered(&input, 5).map_err(|_| ExecutionError::Invariant)?;
-        let command = bound_speech(headers.envelope(encoding), leaf.text, None, None);
+        let retained = leaf.text.heap_bytes().ok_or(ExecutionError::Capacity)?;
+        let (envelope, mut storage) = learned_envelope(&input.command, &input, 5, retained, budget)?;
+        let command = bound_speech(envelope, leaf.text, None, None);
         storage.resize(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
         Ok((command, storage))
     }
+
+    /// Bind an admitted learned preparation to already selected stock. The
+    /// ordinary Cook owner still checks the exact recipe, lot custody and heat.
+    pub(crate) fn learned_preparation(
+        id: &str,
+        actor: &str,
+        purpose: &JsText,
+        heat: &str,
+        pin: &DefinitionPin,
+        inputs: IndexMap<String, String>,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<(Self, crate::host::ByteReservation), crate::execution::ExecutionError> {
+        use crate::execution::ExecutionError;
+        use crate::host::retained_size::HeapBytes;
+
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Bound<'a> {
+            #[serde(flatten)]
+            command: LearnedHeader<'a>,
+            preparation_id: &'a str,
+            preparation_version: u64,
+            preparation_digest: &'a str,
+            heat_id: &'a str,
+            #[serde(serialize_with = "crate::encoding::serialize_js_map")]
+            inputs: &'a IndexMap<String, String>,
+        }
+        let input = Bound {
+            command: LearnedHeader { id, actor_id: actor, kind: "cook", purpose },
+            preparation_id: &pin.id,
+            preparation_version: pin.version,
+            preparation_digest: &pin.digest,
+            heat_id: heat,
+            inputs: &inputs,
+        };
+        let retained = inputs
+            .heap_bytes()
+            .and_then(|bytes| bytes.checked_add(pin.heap_bytes()?))
+            .and_then(|bytes| bytes.checked_add(heat.len()))
+            .ok_or(ExecutionError::Capacity)?;
+        let (envelope, mut storage) = learned_envelope(&input.command, &input, 9, retained, budget)?;
+        let command = Self::Cook { envelope, heat_id: heat.to_owned(), definition: pin.clone(), inputs };
+        storage.resize(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        Ok((command, storage))
+    }
+
+    pub(crate) fn learned_consumption(
+        id: &str,
+        actor: &str,
+        purpose: &JsText,
+        item: &str,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<(Self, crate::host::ByteReservation), crate::execution::ExecutionError> {
+        use crate::execution::ExecutionError;
+        use crate::host::retained_size::HeapBytes;
+
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Bound<'a> {
+            #[serde(flatten)]
+            command: LearnedHeader<'a>,
+            item_id: &'a str,
+        }
+        let input = Bound { command: LearnedHeader { id, actor_id: actor, kind: "eat", purpose }, item_id: item };
+        let (envelope, mut storage) = learned_envelope(&input.command, &input, 5, item.len(), budget)?;
+        let command = Self::Eat { envelope, item_id: item.to_owned() };
+        storage.resize(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        Ok((command, storage))
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct LearnedHeader<'a> {
+    id: &'a str,
+    actor_id: &'a str,
+    #[serde(rename = "type")]
+    kind: &'static str,
+    purpose: &'a JsText,
+}
+
+/// The command's history and exact saved receipt retain the canonical input.
+/// Serialize it once for that storage owner and build the typed command in place.
+fn learned_envelope(
+    header: &LearnedHeader<'_>,
+    input: &impl Serialize,
+    fields: usize,
+    retained: usize,
+    budget: &crate::host::ByteBudget,
+) -> Result<(CommandEnvelope, crate::host::ByteReservation), crate::execution::ExecutionError> {
+    use crate::execution::ExecutionError;
+    let bytes = crate::encoding::json_record_len(input)
+        .map_err(|_| ExecutionError::Invariant)?
+        .checked_mul(8)
+        .and_then(|n| n.checked_add(retained))
+        .and_then(|n| n.checked_add(header.purpose.storage_bytes()))
+        .and_then(|n| n.checked_add(header.id.len()))
+        .and_then(|n| n.checked_add(header.actor_id.len()))
+        .and_then(|n| n.checked_add(std::mem::size_of::<NativeCommand>()))
+        .ok_or(ExecutionError::Capacity)?;
+    let storage = budget.reserve(bytes)?;
+    let mut headers = player_headers(header.id, header.actor_id);
+    headers.human_initiated = None;
+    headers.purpose = Some(header.purpose.clone());
+    if !headers.valid() {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    let encoding = CommandEncoding::from_ordered(input, fields).map_err(|_| ExecutionError::Invariant)?;
+    Ok((headers.envelope(encoding), storage))
 }
 
 fn bound_speech(

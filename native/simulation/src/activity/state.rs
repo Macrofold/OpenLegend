@@ -306,7 +306,7 @@ impl ActivityOccurrence {
             .is_some_and(|release| !release.valid_for(&self.command))
             || self.method_id.as_ref().is_some_and(|id| {
                 !is_safe_record_id(id) || self.parent_id.is_none() || self.parent_name.is_none()
-                    || self.command.learned_speech_fields().is_none()
+                    || !self.command.is_learned_leaf()
             })
             || self.actor_id != actor_id
             || !is_safe_record_id(&self.id)

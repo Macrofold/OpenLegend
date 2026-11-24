@@ -26,6 +26,27 @@ pub(super) struct CommandFields {
     pub optional: Vec<String>,
     pub bindings: IndexMap<String, BindingField>,
 }
+/// The flattened activity field for one installed Cook ingredient role.
+pub(super) fn cook_input_role(field: &str) -> Option<&str> {
+    field
+        .strip_prefix("input:")
+        .filter(|role| crate::food_preparation::valid_role(role))
+}
+
+const COOK_INPUT: BindingField = BindingField {
+    kind: BindingKind::Object,
+    output: true,
+    self_allowed: false,
+};
+
+impl CommandFields {
+    pub(super) fn binding(&self, command: &str, field: &str) -> Option<&BindingField> {
+        self.bindings.get(field).or_else(|| {
+            (command == "cook" && cook_input_role(field).is_some()).then_some(&COOK_INPUT)
+        })
+    }
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct LearningLanguage {

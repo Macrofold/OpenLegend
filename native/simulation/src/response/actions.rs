@@ -556,8 +556,9 @@ pub(super) fn prepare(
                 let Some(method) = choice.source.current(core.state, actor, budget)? else {
                     return result(false, copy.code, copy.message, budget);
                 };
+                let bindings = choice.selected.as_ref().unwrap_or_else(|| method.bindings());
                 let (execution, mut funding) =
-                    crate::plans::ActivityExecution::initial_learned_speech(&method, budget)?;
+                    crate::plans::ActivityExecution::initial_learned_sequence(&method, bindings, budget)?;
                 funding.resize(
                     funding
                         .bytes()

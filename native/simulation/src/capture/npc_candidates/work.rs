@@ -22,7 +22,7 @@ pub(crate) struct NpcWorkContext {
     plan: Option<RemainingPlan>,
     suspended: Option<RemainingPlan>,
     #[serde(skip)]
-    learned_sources: [Option<crate::activity::LearnedSpeechSource>; 2],
+    learned_sources: [Option<crate::activity::LearnedSequenceSource>; 2],
     #[serde(skip)]
     storage: ByteReservation,
 }
@@ -34,7 +34,7 @@ impl NpcWorkContext {
 
     pub(crate) fn learned_sources(
         &self,
-    ) -> impl Iterator<Item = &crate::activity::LearnedSpeechSource> {
+    ) -> impl Iterator<Item = &crate::activity::LearnedSequenceSource> {
         self.learned_sources.iter().flatten()
     }
 
@@ -137,8 +137,8 @@ impl NpcWorkContext {
                     .as_deref()
                     .ok_or(ExecutionError::Invariant)?;
                 let Some(method) =
-                    crate::activity::current_learned_speech(core.state, actor_id, id, budget)?
-                        .filter(|method| method.bindings() == &execution.bindings)
+                    crate::activity::current_learned_sequence(core.state, actor_id, id, budget)?
+                        .filter(|method| method.permits_bindings(&execution.bindings))
                 else {
                     // Withheld source text cannot pass as an anonymous quotation.
                     // The admitted plan status still reflects current work.
@@ -166,30 +166,43 @@ impl NpcWorkContext {
                     .views
                     .try_reserve_exact(count)
                     .map_err(|_| ExecutionError::Capacity)?;
-                let mut speech = |name: &JsText, words: &JsText| -> Result<(), ExecutionError> {
+                let mut detail = |name: &JsText, words: Option<&JsText>| -> Result<(), ExecutionError> {
                     let bytes = words
-                        .storage_bytes()
+                        .map_or(0, JsText::storage_bytes)
                         .checked_add(name.storage_bytes())
                         .and_then(|n| n.checked_mul(8))
                         .and_then(|n| n.checked_add(4096))
                         .ok_or(ExecutionError::Capacity)?;
                     let mut owned = budget.reserve(bytes)?;
-                    let view = crate::activity::learned_speech_view(core.state, name, words)?;
+                    let view = if let Some(words) = words {
+                        crate::activity::learned_speech_view(core.state, name, words)?
+                    } else {
+                        crate::activity::ActivityView {
+                            name: name.clone(), facts: Vec::new(), actor: None, target: None,
+                            tool: None, children: None, result: None,
+                        }
+                    };
                     owned.resize(view.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
                     storage.merge(owned)?;
                     facts.views.push(view);
                     Ok(())
                 };
                 for step in queued {
-                    let (name, text) = step
-                        .command
-                        .learned_speech_fields()
-                        .ok_or(ExecutionError::Invariant)?;
-                    speech(name, text)?;
+                    let command = &step.command;
+                    if !command.is_learned_leaf() {
+                        return Err(ExecutionError::Invariant);
+                    }
+                    let name = command.envelope().purpose.as_ref().ok_or(ExecutionError::Invariant)?;
+                    detail(name, command.learned_speech_fields().map(|(_, words)| words))?;
                 }
                 for frame in execution.pending.iter().rev() {
-                    let leaf = method.leaf(&frame.node).ok_or(ExecutionError::Invariant)?;
-                    speech(leaf.purpose, leaf.text)?;
+                    let leaf = method.leaf(&frame.node, &execution.bindings, &core.state.installed)
+                        .ok_or(ExecutionError::Invariant)?;
+                    let words = match &leaf {
+                        crate::activity::LearnedLeaf::Speech(step) => Some(step.text),
+                        _ => None,
+                    };
+                    detail(leaf.purpose(), words)?;
                 }
                 Ok((
                     Some(facts),

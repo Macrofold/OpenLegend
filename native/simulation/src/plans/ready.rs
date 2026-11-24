@@ -414,7 +414,7 @@ impl PlanReadyCursor {
                         continue;
                     }
                     if let Some(execution) = &plan.activity
-                        && !execution.current_speech(core.state, &self.actor, &self.budget)?
+                        && !execution.learned_source_current(core.state, &self.actor, &self.budget)?
                     {
                         let refusal = &crate::activity::LEARNED_ACTIVITY_COPY.withdrawn;
                         let installed = core.state.installed.clone();

@@ -9,14 +9,21 @@ import display from './config/ordinary-activity-display.json' with { type: 'json
 type DisplayPurpose = { purpose?: string; chosenPurpose?: string };
 export type OrdinaryActivityNameInput = {
   command: DisplayPurpose & {
-    type: 'move' | 'say' | 'status-effect' | 'follow' | 'strike';
+    type: 'move' | 'say' | 'status-effect' | 'follow' | 'strike' | 'cook' | 'eat';
     operation?: 'activate' | 'deactivate';
   };
   effect?: { label: string; activate?: string; deactivate?: string };
+  preparationName?: string;
 };
 /** The name is independent of target sight and result facts. Keep the same
  * authored name factory for ordinary displays and shared learned templates. */
-export function ordinaryActivityName({ command, effect }: OrdinaryActivityNameInput): string {
+export function ordinaryActivityName({
+  command,
+  effect,
+  preparationName,
+}: OrdinaryActivityNameInput): string {
+  if (command.type === 'cook') return command.purpose ?? preparationName ?? display.cookName;
+  if (command.type === 'eat') return command.purpose ?? display.eatName;
   if (command.type === 'status-effect' && effect)
     return command.operation === 'activate'
       ? (effect.activate ?? `${display.status.activatePrefix}${effect.label}`)

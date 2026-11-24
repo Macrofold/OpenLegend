@@ -10,12 +10,14 @@ mod discovery;
 mod format;
 mod history;
 mod invocation;
+mod meal;
 mod library;
-pub use invocation::LearnedSpeechChoice;
+pub use invocation::LearnedSequenceChoice;
 pub(crate) use invocation::{
-    LEARNED_ACTIVITY_COPY, LearnedSpeech, LearnedSpeechLeaf, LearnedSpeechSource, current_learned_speech, speech_leaf,
-    stored_learned_speech, visit_learned_speech,
+    LEARNED_ACTIVITY_COPY, LearnedLeaf, LearnedSequence, LearnedSpeechLeaf, LearnedSequenceSource, current_learned_sequence,
+    stored_learned_sequence, visit_learned_sequence,
 };
+pub(crate) use meal::produced as activity_product_cell;
 mod models;
 mod normalize;
 mod publication;

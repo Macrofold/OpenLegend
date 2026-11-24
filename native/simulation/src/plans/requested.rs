@@ -144,7 +144,7 @@ impl RequestedActivityCursor {
         let value = self.execution.as_ref().ok_or(ExecutionError::Invariant)?;
         let learned = value.method_id.is_some();
         value.required_pending_key()?;
-        if learned && !value.current_speech(core.state, &self.actor, &self.budget)? {
+        if learned && !value.learned_source_current(core.state, &self.actor, &self.budget)? {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         value

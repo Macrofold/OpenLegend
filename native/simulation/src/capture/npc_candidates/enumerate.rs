@@ -38,18 +38,41 @@ impl NpcCandidateCursor {
         let mut ordinary = [const { None }; SUGGESTIONS];
         let mut remaining = selected.len();
         let mut count = 0;
-        crate::activity::visit_learned_speech(state, actor, &self.budget, |method| {
-            if let Some(index) = selected.iter().position(|id| id == method.id()) {
-                inspected[index] = Some(method);
+        let heat = self.targets.iter().find(|target| target.visible && target.heat_lit == Some(true));
+        let cooking = &mut self.cooking;
+        crate::activity::visit_learned_sequence(state, actor, &self.budget, |method| {
+            let inspected_at = selected.iter().position(|id| id == method.id());
+            if inspected_at.is_none() && count >= SUGGESTIONS {
+                return Ok(remaining > 0);
+            }
+            let rebound = if let Some(meal) = method.meal() {
+                let Some(heat) = heat else { return Ok(true) };
+                if cooking.is_none() {
+                    *cooking = Some(cooking::CookingChoices::prepare(state, actor, &self.budget)?);
+                }
+                let recipe = state.installed.retained.preparations
+                    .get_index_of(&meal.cook.recipe.pin.id).ok_or(ExecutionError::Invariant)?;
+                let Some(inputs) = cooking.as_ref().and_then(|choices| choices.inputs(recipe)) else {
+                    return Ok(true);
+                };
+                let Some(bindings) = meal.cook.bind_roles(&heat.id, inputs, &self.budget)? else {
+                    return Ok(true);
+                };
+                Some(bindings)
+            } else {
+                None
+            };
+            if let Some(index) = inspected_at {
+                inspected[index] = Some((method, rebound));
                 remaining -= 1;
             } else if count < SUGGESTIONS {
-                ordinary[count] = Some(method);
+                ordinary[count] = Some((method, rebound));
             }
             count += 1;
             Ok(remaining > 0 || count < SUGGESTIONS)
         })?;
-        for method in inspected.into_iter().chain(ordinary).flatten() {
-            let choice = method.retain_choice(state, &self.budget)?;
+        for (method, rebound) in inspected.into_iter().chain(ordinary).flatten() {
+            let choice = method.retain_choice(state, rebound, &self.budget)?;
             let (id, guard) = self.id(&["learned-", method.id()])?;
             self.append(PreparedNpcOffer {
                 description: None,

@@ -6,7 +6,7 @@ use super::cursor::{
 };
 use super::format::{LearningFormatAnswer, LearningFormatRequest};
 use super::history::{LearningHistoryAnswer, LearningHistoryCursor, LearningHistoryRequest};
-use super::normalize::NormalizationRead;
+use super::normalize::{NormalizationRead, current_preparation_for_learning};
 use super::*;
 use crate::commands::Outcome;
 use crate::execution::{CoreMutation, ExecutionError};
@@ -263,7 +263,14 @@ impl LearningPublicationCursor {
                 let Some(row) = context.history.entry(id) else {
                     return Ok(false);
                 };
-                if row.entry.actor_id != actor || row.entry.revoked == Some(true) || row.denied {
+                if row.entry.actor_id != actor
+                    || row.entry.revoked == Some(true)
+                    || row.denied
+                    || !current_preparation_for_learning(
+                        &core.state.installed.retained.preparations,
+                        &row.entry.command,
+                    )
+                {
                     return Ok(false);
                 }
             }
@@ -313,6 +320,7 @@ impl LearningPublicationCursor {
             let read = NormalizationRead {
                 history: &context.history,
                 language: &core.state.activity.language,
+                preparations: &core.state.installed.retained.preparations,
                 limits: &core.state.activity.limits,
                 names: &context.names.texts,
                 places: &context.places,

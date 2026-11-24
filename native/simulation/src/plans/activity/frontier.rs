@@ -106,7 +106,7 @@ fn plan<'a>(core: &'a CoreMutation<'_>, actor: &str) -> Result<&'a ActorPlan, Ex
 pub(crate) fn require_supported_activity(plan: &ActorPlan) -> Result<(), ExecutionError> {
     if let Some(execution) = &plan.activity {
         if execution.method_id.is_some() {
-            return execution.require_learned_speech();
+            return execution.require_learned_sequence();
         }
         let invocation = execution.single_invoke()?;
         if plan.steps.iter().any(|step| {
@@ -123,10 +123,9 @@ pub(crate) fn require_supported_activity(plan: &ActorPlan) -> Result<(), Executi
 }
 
 impl ActivityExecution {
-    /// Only the fixed, untargeted, already-bound speech sequence is opened
-    /// here. Cold installation and the actual frontier own exact semantic
-    /// checks; pause, undo and replay need only the admitted execution class.
-    fn require_learned_speech(&self) -> Result<(), ExecutionError> {
+    /// Cold installation and the live frontier own exact step checks. Pause,
+    /// undo and replay just need the supported learned execution envelope.
+    fn require_learned_sequence(&self) -> Result<(), ExecutionError> {
         if self.method_id.is_none()
             || self.request.is_some()
             || self.control.is_some()
@@ -147,22 +146,24 @@ impl ActivityExecution {
         Ok(())
     }
 
-    pub(crate) fn pending_speech(
-        &self,
-    ) -> Result<Option<crate::activity::LearnedSpeechLeaf<'_>>, ExecutionError> {
-        self.require_learned_speech()?;
+    pub(crate) fn pending_learned<'a>(
+        &'a self,
+        world: &'a crate::simulation::InstalledWorld,
+    ) -> Result<Option<crate::activity::LearnedLeaf<'a>>, ExecutionError> {
+        self.require_learned_sequence()?;
         self.pending
             .last()
             .map(|frame| {
                 if frame.iteration != 0 || frame.started_at.is_some() {
                     return Err(unsupported());
                 }
-                crate::activity::speech_leaf(&frame.node, &self.bindings).ok_or_else(unsupported)
+                crate::activity::LearnedLeaf::from_step(&frame.node, &self.bindings, world)
+                    .ok_or_else(unsupported)
             })
             .transpose()
     }
 
-    pub(crate) fn current_speech(
+    pub(crate) fn learned_source_current(
         &self,
         state: &crate::simulation::SimulationState,
         actor: &str,
@@ -172,16 +173,18 @@ impl ActivityExecution {
             return Ok(true);
         };
         Ok(
-            crate::activity::current_learned_speech(state, actor, method, budget)?
-                .is_some_and(|current| current.bindings() == &self.bindings),
+            crate::activity::current_learned_sequence(state, actor, method, budget)?
+                .is_some_and(|current| current.permits_bindings(&self.bindings)),
         )
     }
 
     pub(crate) fn required_pending_key(&self) -> Result<&JsText, ExecutionError> {
         if self.method_id.is_some() {
+            self.require_learned_sequence()?;
             return self
-                .pending_speech()?
-                .map(|leaf| leaf.key)
+                .pending.last()
+                .and_then(|frame| frame.node.get("key"))
+                .and_then(SqlCell::as_text)
                 .ok_or_else(unsupported);
         }
         self.pending_single_invoke()?
@@ -195,10 +198,11 @@ impl ActivityExecution {
         actor: &str,
         command: &NativeCommand,
         serial: u64,
+        world: &crate::simulation::InstalledWorld,
     ) -> Result<bool, ExecutionError> {
         if self.method_id.is_some() {
-            let leaf = self.pending_speech()?.ok_or_else(unsupported)?;
-            return Ok(matches_speech(plan, actor, command, serial, &leaf));
+            let leaf = self.pending_learned(world)?.ok_or_else(unsupported)?;
+            return Ok(self.matches_learned(plan, actor, command, serial, &leaf));
         }
         Ok(command_matches(
             &self.single_invoke()?,
@@ -207,6 +211,19 @@ impl ActivityExecution {
             command,
             serial,
         ))
+    }
+
+    fn matches_learned(
+        &self,
+        plan: &ActorPlan,
+        actor: &str,
+        command: &NativeCommand,
+        serial: u64,
+        leaf: &crate::activity::LearnedLeaf<'_>,
+    ) -> bool {
+        command.envelope().actor_id == actor
+            && command_serial(plan, command) == Some(serial)
+            && leaf.matches(&self.bindings, &self.outputs, command)
     }
 
     /// This first executable shape has no counted/finite control, learned
@@ -363,18 +380,6 @@ fn command_serial(plan: &ActorPlan, command: &NativeCommand) -> Option<u64> {
     suffix.parse().ok()
 }
 
-fn matches_speech(
-    plan: &ActorPlan,
-    actor: &str,
-    command: &NativeCommand,
-    serial: u64,
-    leaf: &crate::activity::LearnedSpeechLeaf<'_>,
-) -> bool {
-    command.learned_speech_fields() == Some((leaf.purpose, leaf.text))
-        && command.envelope().actor_id == actor
-        && command_serial(plan, command) == Some(serial)
-}
-
 /// Reconnect saved leaf IDs to the original immutable definition after the
 /// library exists. A revoked owner can still reopen; the live ready path stops
 /// any unfinished work, while already performed steps retain their receipts.
@@ -384,7 +389,7 @@ fn validate_saved_learned_plan(
     execution: &ActivityExecution,
     actor: &str,
 ) -> Result<(), ExecutionError> {
-    let method = crate::activity::stored_learned_speech(
+    let method = crate::activity::stored_learned_sequence(
         state,
         execution.method_id.as_deref().ok_or_else(unsupported)?,
         &execution.bindings,
@@ -409,18 +414,44 @@ fn validate_saved_learned_plan(
         || (plan.status == PlanStatus::Completed && !pending.is_empty())
         || plan.steps.iter().enumerate().any(|(index, step)| {
             let position = archived + index;
-            let Some(leaf) = method.leaf(&children[position]) else {
+            let Some(leaf) = method.leaf(&children[position], &execution.bindings, &state.installed) else {
                 return true;
             };
-            step.activity_key.as_ref() != Some(leaf.key)
-                || !matches_speech(plan, actor, &step.command, (position + 1) as u64, &leaf)
+            step.activity_key.as_ref() != Some(leaf.key())
+                || !execution.matches_learned(plan, actor, &step.command, (position + 1) as u64, &leaf)
+                || (matches!(leaf, crate::activity::LearnedLeaf::Prepare(_))
+                    && step.status == StepStatus::Completed
+                    && execution.outputs.get_text(leaf.key()).and_then(SqlCell::as_array)
+                        .is_none_or(|products| products.is_empty()))
         })
         || execution.outputs.as_object().is_none_or(|outputs| {
             outputs.iter().any(|(key, value)| {
-                value.as_array().is_none_or(|outputs| !outputs.is_empty())
-                    || !children[..serial]
-                        .iter()
-                        .any(|node| node.get("key").and_then(SqlCell::as_str) == Some(key.as_str()))
+                let Some(position) = children[..serial].iter().position(|node|
+                    node.get("key").and_then(SqlCell::as_str) == Some(key.as_str())
+                ) else { return true };
+                let Some(outputs) = value.as_array() else { return true };
+                if outputs.is_empty() {
+                    return false;
+                }
+                // An Eat step is admitted only from the exact preceding Cook
+                // outcome. Merely owning a matching item cannot validate it.
+                let history = state.physical.entities.get(actor)
+                    .and_then(|actor| actor.actor.as_ref())
+                    .map(|actor| actor.agency.history.as_slice()).unwrap_or_default();
+                let step = plan.steps.iter().chain(history).find(|step|
+                    command_serial(plan, &step.command) == Some((position + 1) as u64)
+                        && matches!(step.command, NativeCommand::Cook { .. })
+                );
+                !step.and_then(|step| step.outcome.as_ref())
+                    .filter(|outcome| outcome.ok)
+                    .and_then(|outcome| outcome.outputs.as_ref())
+                    .is_some_and(|actual| actual.len() == outputs.len() && actual.iter().zip(outputs).all(|(actual, saved)|
+                        saved.object_len() == Some(4)
+                            && saved.get("port").and_then(SqlCell::as_str) == Some(actual.port.as_str())
+                            && saved.get("itemId").and_then(SqlCell::as_str) == Some(actual.item_id.as_str())
+                            && saved.get("definitionId").and_then(SqlCell::as_str) == Some(actual.definition_id.as_str())
+                            && saved.get("quantity").and_then(SqlCell::as_u64) == Some(actual.quantity)
+                    ))
             })
         })
     {
@@ -465,7 +496,7 @@ pub(crate) fn append_invoke(
             .cancelled_keys
             .as_ref()
             .is_some_and(|keys| keys.contains(key))
-        || !execution.matches_pending(current, actor, &command, serial)?
+        || !execution.matches_pending(current, actor, &command, serial, &core.state.installed)?
     {
         return Err(unsupported());
     }
@@ -601,7 +632,7 @@ pub(crate) fn record_single_result(
     let step = current.steps.get(index).ok_or(ExecutionError::Invariant)?;
     let execution = current.activity.as_ref().ok_or_else(unsupported)?;
     if execution.method_id.is_some() {
-        return record_speech_result(core, actor, index, result);
+        return record_learned_result(core, actor, index, result);
     }
     let invocation = execution.single_invoke()?;
     if step.status != StepStatus::Running
@@ -658,7 +689,7 @@ pub(crate) fn record_single_result(
     Ok(())
 }
 
-fn record_speech_result(
+fn record_learned_result(
     core: &mut CoreMutation<'_>,
     actor: &str,
     index: usize,
@@ -671,12 +702,10 @@ fn record_speech_result(
         .as_ref()
         .and_then(JsText::as_unicode)
         .ok_or_else(unsupported)?;
+    let produced = result.outputs.as_deref().unwrap_or_default();
     if step.status != StepStatus::Running
-        || step.command.learned_speech_fields().is_none()
-        || result
-            .outputs
-            .as_ref()
-            .is_some_and(|outputs| !outputs.is_empty())
+        || !step.command.is_learned_leaf()
+        || (!produced.is_empty() && (!result.ok || !matches!(step.command, NativeCommand::Cook { .. })))
     {
         return Err(unsupported());
     }
@@ -687,6 +716,14 @@ fn record_speech_result(
         .ok_or_else(unsupported)?;
     let growth = map_storage::<String, SqlCell>(current_size + 1)
         .and_then(|n| n.checked_add(key.len()))
+        .and_then(|n| produced.iter().try_fold(n, |n, output| {
+            n.checked_add(size_of::<SqlCell>())?
+                .checked_add(map_storage::<String, SqlCell>(4)?)?
+                .checked_add(32)?
+                .checked_add(output.port.len())?
+                .checked_add(output.item_id.len())?
+                .checked_add(output.definition_id.len())
+        }))
         .and_then(|n| {
             n.checked_add(if result.ok {
                 0
@@ -714,7 +751,8 @@ fn record_speech_result(
     outputs
         .try_reserve(1)
         .map_err(|_| ExecutionError::Capacity)?;
-    if outputs.insert(key, SqlCell::Array(Vec::new())).is_some() {
+    let products = SqlCell::Array(produced.iter().map(crate::activity::activity_product_cell).collect());
+    if outputs.insert(key, products).is_some() {
         return Err(ExecutionError::Invariant);
     }
     if !result.ok {
