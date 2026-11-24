@@ -23,8 +23,17 @@ pub(crate) fn pickup_pile<'a>(
         .retained
         .item_handling_read
         .can_handle(&actor.spatial.body.id)
-        && is_item_pile(&state.installed.observation_rules.value().pile_kind, pile))
+        && (is_item_pile(&state.installed.observation_rules.value().pile_kind, pile)
+            || is_remains_root(pile)))
     .then_some(pile)
+}
+
+/// A dead body's ground stock can be reached through an observed contact.
+/// The body itself stays with the remains and is never retired by pickup.
+pub(crate) fn is_remains_root(entity: &Entity) -> bool {
+    entity.remains.is_some()
+        && entity.actor.as_ref().is_some_and(|body| !body.alive)
+        && entity.physical_root()
 }
 
 /// The finite root shared by pickup, placement and the current row writer.
@@ -55,11 +64,16 @@ fn portable_lot<'a>(
 ) -> Option<GroundLot<'a>> {
     let lot = entity.item.as_ref()?;
     let definition = state.installed.retained.items.get(&lot.definition_pin.id)?;
-    (definition.portable
-        && lot.quantity > 0
-        && entity.retirement.is_none()
-        && matches!(&entity.placement, Some(Placement::Contained { parent_entity_id, .. })
-            if parent_entity_id == &pile.id))
+    let direct = match &entity.placement {
+        Some(Placement::Contained {
+            parent_entity_id, ..
+        }) => parent_entity_id == &pile.id,
+        Some(Placement::Attached {
+            parent_entity_id, ..
+        }) => parent_entity_id == &pile.id && is_remains_root(pile),
+        _ => false,
+    };
+    (definition.portable && lot.quantity > 0 && entity.retirement.is_none() && direct)
     .then_some(GroundLot {
         entity,
         lot,

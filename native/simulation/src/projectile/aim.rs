@@ -99,7 +99,7 @@ pub enum RuntimeRangedMode {
 }
 
 impl RuntimeRangedMode {
-    pub(crate) fn kind(self) -> &'static str {
+    pub fn kind(self) -> &'static str {
         match self {
             Self::Aim => "aim",
             Self::ShootOnce => "shoot-once",

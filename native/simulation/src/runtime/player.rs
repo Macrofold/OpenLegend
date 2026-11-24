@@ -437,6 +437,7 @@ pub struct RuntimeFoodMenu<'a> {
 }
 
 mod practice;
+mod equipped;
 pub use practice::RuntimePracticeOffer;
 mod ranged;
 pub use ranged::RuntimeRangedChoice;
@@ -565,6 +566,8 @@ impl RuntimeFishOffer<'_> {
 }
 
 pub struct RuntimeFishTool<'a> {
+    kind: &'a str,
+    order: usize,
     pub id: &'a str,
     pub name: &'a crate::text::JsText,
 }
@@ -576,49 +579,12 @@ fn fish_offer<'a, T>(
     source: crate::casts::Source<'a>,
     binding: GeometryBinding,
     budget: &'a ByteBudget,
+    tools: &[RuntimeFishTool<'_>],
+    report_exhausted: bool,
     consume: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
 ) -> Result<T, RuntimeError> {
-    let mut _custody = budget.reserve(0)?;
-    let mut tools = Vec::new();
     let rules = &source.rules.definition;
-    let installed = &state.installed.retained;
-    state
-        .inventory
-        .visit_owned(
-            &state.physical,
-            installed,
-            actor,
-            actor,
-            &mut |item| {
-                let definition = installed
-                    .items
-                    .get(item.definition_id)
-                    .ok_or(crate::execution::ExecutionError::Invariant)?;
-                if item.available_quantity != 0
-                    && definition.fishing_kind() == Some(rules.tool_kind.as_str())
-                {
-                    if tools.len() == tools.capacity() {
-                        let next = tools.capacity().checked_mul(2).ok_or(CapacityError)?.max(4);
-                        let bytes = next
-                            .checked_mul(size_of::<RuntimeFishTool<'_>>())
-                            .ok_or(CapacityError)?;
-                        // Keep the old vector funded until the replacement succeeds.
-                        let replacement = budget.reserve(bytes)?;
-                        tools
-                            .try_reserve_exact(next - tools.len())
-                            .map_err(|_| CapacityError)?;
-                        _custody = replacement;
-                    }
-                    tools.push(RuntimeFishTool {
-                        id: item.id,
-                        name: &item.named.name,
-                    });
-                }
-                Ok(())
-            },
-        )
-        .map_err(failure)?;
-    let exhausted = source.stock.quantity == 0;
+    let exhausted = report_exhausted && source.stock.quantity == 0;
     consume(RuntimeResourceOffer::Fish(RuntimeFishOffer {
         name,
         available_text: &rules.available_text,
@@ -633,7 +599,7 @@ fn fish_offer<'a, T>(
         exhausted,
         paused: state.physical.header.paused,
         sequence: state.physical.header.sequence,
-        tools: &tools,
+        tools,
         state,
         actor,
         source,
@@ -1000,6 +966,30 @@ impl NativeWorldSession {
         &self,
         account: &str,
         actor: &str,
+        matches: impl FnMut(&crate::capture::PlayerObservedBody<'_>) -> bool,
+        use_offer: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
+    ) -> Result<Option<T>, RuntimeError> {
+        self.with_resource_offer_for(account, actor, None, matches, use_offer)
+    }
+
+    /// Read only the existing resource choices which can use this exact held
+    /// tool. The caller has selected it under this same accepted world turn.
+    pub fn with_player_equipped_resource_offer<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        equipment: &str,
+        matches: impl FnMut(&crate::capture::PlayerObservedBody<'_>) -> bool,
+        use_offer: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
+    ) -> Result<Option<T>, RuntimeError> {
+        self.with_resource_offer_for(account, actor, Some(equipment), matches, use_offer)
+    }
+
+    fn with_resource_offer_for<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        equipment: Option<&str>,
         mut matches: impl FnMut(&crate::capture::PlayerObservedBody<'_>) -> bool,
         use_offer: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
     ) -> Result<Option<T>, RuntimeError> {
@@ -1018,8 +1008,7 @@ impl NativeWorldSession {
                 let name = &body.name.name;
                 let id = body.source_id;
                 let state = &simulation.state;
-                let pile_kind = &state.installed.observation_rules.value().pile_kind;
-                if observed.kind == *pile_kind {
+                if equipment.is_none() && pickup::observed_source(state, observed) {
                     if !matches(&body) {
                         return false;
                     }
@@ -1038,52 +1027,53 @@ impl NativeWorldSession {
                         return false;
                     }
                     let encode = encode.take().expect("one selected source");
-                    result = Some(practice::offer(state, actor, &body.name, target, &self.budget, encode));
+                    result = Some(practice::offer(state, actor, &body.name, target, equipment, &self.budget, encode));
                     return true;
                 }
                 if observed.kind != "resource" || !matches(&body) {
                     return false;
                 }
-                if let Some(source) = crate::casts::source(state, id) {
+                if equipment.is_none() && let Some(source) = crate::casts::source(state, id) {
                     let encode = encode.take().expect("one selected source");
-                    let binding = GeometryBinding::new(
-                        CandidateKey {
-                            id: 0,
-                            base_cut: state.accepted_cut,
-                            generation: self.session.operational_generation(),
-                        },
-                        state.installed.geometry.spatial.revision,
-                        0,
-                    );
-                    result = Some(fish_offer(
-                        state,
-                        actor,
-                        name,
-                        source,
-                        binding,
-                        &self.budget,
-                        encode,
-                    ));
+                    result = Some((|| {
+                        let tools = catalogue::FishTools::prepare(
+                            state, actor, Some(&source.rules.definition.tool_kind), &self.budget,
+                        )?;
+                        let binding = catalogue::cast_geometry_binding(
+                            state, self.session.operational_generation(),
+                        );
+                        let selected = tools.for_kind(&source.rules.definition.tool_kind);
+                        fish_offer(state, actor, name, source, binding, &self.budget, selected, true, encode)
+                    })());
                     return true;
                 }
                 let Some((gathering, quantity)) = menu_gathering(state, &body) else {
                     return false;
                 };
                 let encode = encode.take().expect("one selected source");
-                result = Some((|| {
+                result = (|| {
                     let actor = gathering_actor(state, actor)?;
                     let mut amount = gathering.base_yield;
-                    crate::gathering::visit_tool_yields(state, actor.id, |material, count| {
-                        if material == gathering.definition.pin.id {
-                            amount = amount.max(count);
-                        }
-                        Ok(())
-                    })
-                    .map_err(failure)?;
+                    if let Some(item) = equipment {
+                        let Some((_, count)) = crate::gathering::exact_tool(
+                            state, actor.id, item, crate::gathering::GatheringMode::EquippedTool,
+                            &gathering.definition.pin.id,
+                        ).map_err(failure)? else {
+                            return Ok(None);
+                        };
+                        amount = amount.max(count);
+                    } else {
+                        crate::gathering::visit_tool_yields(state, actor.id, |material, count| {
+                            if material == gathering.definition.pin.id {
+                                amount = amount.max(count);
+                            }
+                            Ok(())
+                        }).map_err(failure)?;
+                    }
                     encode(RuntimeResourceOffer::Gather(gather_menu_offer(
                         state, &body, gathering, quantity, actor, amount,
-                    )))
-                })());
+                    ))).map(Some)
+                })().transpose();
                 true
             })
             .map_err(failure)?;
@@ -1129,6 +1119,31 @@ impl NativeWorldSession {
         account: &str,
         actor: &str,
         include_teaching: bool,
+        matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+        use_menu: impl FnOnce(RuntimeContactMenu<'_>) -> Result<T, RuntimeError>,
+    ) -> Result<Option<T>, RuntimeError> {
+        self.with_contact_menu_for(account, actor, include_teaching, None, matches, use_menu)
+    }
+
+    /// The exact held-tool shortcut has no lessons or automatic equipment
+    /// choices. Ranged preparation binds the original first matching lot.
+    pub fn with_player_equipped_contact_menu<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        equipment: &str,
+        matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+        use_menu: impl FnOnce(RuntimeContactMenu<'_>) -> Result<T, RuntimeError>,
+    ) -> Result<Option<T>, RuntimeError> {
+        self.with_contact_menu_for(account, actor, false, Some(equipment), matches, use_menu)
+    }
+
+    fn with_contact_menu_for<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        include_teaching: bool,
+        equipment: Option<&str>,
         mut matches: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
         use_menu: impl FnOnce(RuntimeContactMenu<'_>) -> Result<T, RuntimeError>,
     ) -> Result<Option<T>, RuntimeError> {
@@ -1181,7 +1196,7 @@ impl NativeWorldSession {
                     crate::contact::may_target(&state.installed, source, target, life)
                 });
                 let ranged = if may_attack {
-                    match ranged::choices(state, source, target, observed_name, &self.budget) {
+                    match ranged::choices(state, source, target, observed_name, equipment, &self.budget) {
                         Ok(value) => Some(value),
                         Err(error) => {
                             result = Some(Err(failure(error)));

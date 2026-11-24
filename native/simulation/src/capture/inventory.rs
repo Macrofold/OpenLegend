@@ -19,6 +19,7 @@ pub(super) struct OwnInventory<'a> {
     pub(super) held: Vec<(&'a str, f64)>,
     pub(super) craft_stock: IndexMap<&'a str, u64>,
     pub(super) equipped: Vec<OwnedItem<'a>>,
+    pub(super) equipped_target: Option<(usize, OwnedItem<'a>)>,
     pub(super) ranged_source: Option<PlayerRangedSource<'a>>,
     pub(super) melee_source: Option<PlayerMeleeSource<'a>>,
     custody: ByteReservation,
@@ -66,6 +67,7 @@ pub(super) fn capture<'a>(
         held: Vec::new(),
         craft_stock: IndexMap::new(),
         equipped: Vec::new(),
+        equipped_target: None,
         ranged_source,
         melee_source: None,
         custody: budget.reserve(0)?,
@@ -129,6 +131,15 @@ pub(super) fn capture<'a>(
                     push(&mut read.items, item, &mut read.custody)?;
                 }
                 if item.equipped {
+                    if let Some(rank) = installed.retained.items.get(item.definition_id)
+                        .and_then(|definition| crate::worlds::base_context_actions::equipped_use_rank(
+                            (&installed.content.profile.id, installed.content.profile.version),
+                            definition,
+                        ))
+                        && read.equipped_target.is_none_or(|(prior, _)| rank < prior)
+                    {
+                        read.equipped_target = Some((rank, item));
+                    }
                     if read.ranged_source.is_none() && read.melee_source.is_none()
                         && let Some(strike) = crate::contact::ContactRead::equipped(
                             installed, &state.physical.entities, actor, item.id,

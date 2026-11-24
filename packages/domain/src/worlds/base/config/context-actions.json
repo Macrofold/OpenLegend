@@ -14,6 +14,8 @@
     "strike": 40,
     "aim": 30
   },
+  "equippedUseOrder": ["ranged", "melee", "gather"],
+  "equippedActionOrder": ["strike", "aim", "shoot-once", "gather", "hunt", "practice-shot"],
   "speak": 100,
   "unavailableLabel": "Attack unavailable",
   "unavailableDescription": "Choose a usable attack in the full menu when one becomes available.",

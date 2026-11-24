@@ -9,6 +9,7 @@ pub(super) fn render(
     controlling: bool,
     gathering: &[GatherAction],
     craft: &[manufacture::ManufactureAction],
+    resources: Option<&resources::CatalogueRows<'_>>,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     #[derive(Serialize)]
@@ -158,12 +159,17 @@ pub(super) fn render(
         &'a [A],
         &'a [GatherAction],
         &'a [manufacture::ManufactureAction],
+        Option<&'a resources::CatalogueRows<'a>>,
     );
     impl<T: Serialize> Serialize for Actions<'_, T> {
         fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             use serde::ser::SerializeSeq;
-            let mut sequence =
-                serializer.serialize_seq(Some(self.0.len() + self.1.len() + self.2.len()))?;
+            let mut sequence = serializer.serialize_seq(Some(
+                self.0.len()
+                    + self.1.len()
+                    + self.2.len()
+                    + self.3.map_or(0, resources::CatalogueRows::len),
+            ))?;
             for choice in self.0 {
                 sequence.serialize_element(choice)?;
             }
@@ -172,6 +178,11 @@ pub(super) fn render(
             }
             for choice in self.2 {
                 sequence.serialize_element(choice)?;
+            }
+            if let Some(rows) = self.3 {
+                for choice in rows.rows() {
+                    sequence.serialize_element(choice)?;
+                }
             }
             sequence.end()
         }
@@ -182,15 +193,21 @@ pub(super) fn render(
         (!gathering.is_empty()).then_some(GATHER.name),
         (!craft.is_empty()).then_some(manufacture::CATEGORY),
     ];
-    let mut categories = [""; 4];
+    let mut categories = [""; 6];
     let mut length = 0;
-    for category in groups.into_iter().flatten() {
-        categories[length] = category;
-        length += 1;
+    for category in groups
+        .into_iter()
+        .flatten()
+        .chain(resources.into_iter().flat_map(|rows| rows.groups()))
+    {
+        if !categories[..length].contains(&category) {
+            categories[length] = category;
+            length += 1;
+        }
     }
     resource_menu_selection(
         menu.sequence,
-        &Actions(&choices, gathering, craft),
+        &Actions(&choices, gathering, craft, resources),
         &categories[..length],
         None,
         budget,

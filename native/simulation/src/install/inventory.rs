@@ -150,7 +150,7 @@ impl Equipment {
 
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum EquipmentUse {
+pub(crate) enum EquipmentUse {
     Melee,
     Ranged,
     Gather,
@@ -365,9 +365,13 @@ impl ItemDefinitionRead {
     }
 
     pub(crate) fn equips_for_gathering(&self) -> bool {
+        self.equips_for(EquipmentUse::Gather)
+    }
+
+    pub(crate) fn equips_for(&self, uses: EquipmentUse) -> bool {
         self.equipment
             .as_ref()
-            .is_some_and(|gear| gear.uses.contains(&EquipmentUse::Gather))
+            .is_some_and(|gear| gear.uses.contains(&uses))
     }
 
     pub(crate) fn packing_load(&self) -> Option<u64> {

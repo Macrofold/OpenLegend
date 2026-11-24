@@ -195,10 +195,18 @@ pub struct PlayerBodyView {
     inventory: Vec<ItemBinding>,
     inventory_revision: u64,
     equipment_ports: Vec<EquipmentBinding>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    equipped_target_item: Option<EquippedTargetItem>,
     action_attempts: Vec<Attempt>,
     #[serde(skip_serializing_if = "Option::is_none")]
     activity: Option<ActivityStatus>,
     action_wording: PublicArt,
+}
+
+#[derive(PartialEq, Serialize)]
+struct EquippedTargetItem {
+    id: String,
+    name: JsText,
 }
 
 #[derive(PartialEq, Serialize)]
@@ -514,6 +522,17 @@ pub fn prepare_self(
     });
     let (inventory, equipment_ports) =
         inventory::prepare(&facts, &scene.observed.item_art, &mut custody)?;
+    let equipped_target_item = facts.equipped_target.map(|item| {
+        let bytes = custody.bytes()
+            .checked_add(item.id.len())
+            .and_then(|n| n.checked_add(item.named.name.storage_bytes()))
+            .ok_or(SceneError::Capacity)?;
+        custody.resize(bytes)?;
+        Ok::<_, SceneError>(EquippedTargetItem {
+            id: item.id.to_owned(),
+            name: item.named.name.clone(),
+        })
+    }).transpose()?;
     let mut recipes = Vec::with_capacity(facts.known_recipes.len());
     for recipe in facts.known_recipes {
         let template = policy.authored_recipes.get(recipe).ok_or(SceneError::Capture)?;
@@ -878,6 +897,7 @@ pub fn prepare_self(
             inventory,
             inventory_revision: facts.inventory_revision,
             equipment_ports,
+            equipped_target_item,
             action_attempts: attempts,
             activity,
             action_wording: policy.action_wording.clone(),
@@ -959,6 +979,7 @@ impl BodyFields<'_> {
           "nameForm"=>name.name_form, "indefiniteArticle"=>name.indefinite_article,"portrait"=>portrait,
           "departureNotice"=>departure_notice,"bodyState"=>body_state,"evasion"=>evasion,
           "attackSource"=>attack_source,"attackModeNotice"=>attack_mode_notice,"traits"=>traits,"activity"=>activity,
+          "equippedTargetItem"=>equipped_target_item,
         )
     }
     pub(crate) fn entries<S: serde::ser::SerializeMap>(&self, map: &mut S) -> Result<(), S::Error> {
@@ -976,6 +997,7 @@ impl BodyFields<'_> {
           "nameForm"=>name.name_form, "indefiniteArticle"=>name.indefinite_article,"portrait"=>portrait,
           "departureNotice"=>departure_notice,"bodyState"=>body_state,"evasion"=>evasion,
           "attackSource"=>attack_source,"attackModeNotice"=>attack_mode_notice,"traits"=>traits,"activity"=>activity,
+          "equippedTargetItem"=>equipped_target_item,
         });
         Ok(())
     }

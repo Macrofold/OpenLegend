@@ -26,6 +26,7 @@ pub(super) fn choices<'a>(
     source: &'a Entity,
     target: &'a Entity,
     name: &Named,
+    exact_equipment: Option<&str>,
     budget: &ByteBudget,
 ) -> Result<(Vec<RuntimeRangedChoice<'a>>, ByteReservation), ExecutionError> {
     let installed = &state.installed;
@@ -46,7 +47,7 @@ pub(super) fn choices<'a>(
     {
         return Ok((Vec::new(), custody));
     }
-    let mut stock = IndexMap::<&str, &str>::new();
+    let mut stock = IndexMap::<&str, (&str, bool)>::new();
     let mut tools = Vec::<(OwnedItem<'_>, &ItemDefinitionRead)>::new();
     let state_items = &state.physical.entities;
     state.inventory.visit_owned_until(
@@ -67,22 +68,23 @@ pub(super) fn choices<'a>(
             if let Some(ammo) = definition
                 .ammunition
                 .as_ref()
-                .filter(|_| owned.available_quantity > 0)
+                .filter(|_| exact_equipment.is_some() || owned.available_quantity > 0)
             {
                 if !stock.contains_key(ammo.kind.as_str()) {
                     custody.resize(
                         custody
                             .bytes()
                             .checked_add(
-                                map_storage::<&str, &str>(4).ok_or(ExecutionError::Capacity)?,
+                                map_storage::<&str, (&str, bool)>(4).ok_or(ExecutionError::Capacity)?,
                             )
                             .ok_or(ExecutionError::Capacity)?,
                     )?;
                     stock.try_reserve(1).map_err(|_| ExecutionError::Capacity)?;
-                    stock.insert(ammo.kind.as_str(), owned.id);
+                    stock.insert(ammo.kind.as_str(), (owned.id, owned.available_quantity > 0));
                 }
             }
             if definition.ranged_weapon.is_some()
+                && exact_equipment.is_none_or(|id| owned.equipped && owned.id == id)
                 && (owned.equipped
                     || (owned.quantity == 1
                         && owned.available_quantity == 1
@@ -149,7 +151,7 @@ pub(super) fn choices<'a>(
             .ranged_weapon
             .as_ref()
             .ok_or(ExecutionError::Invariant)?;
-        let Some(ammo) = stock.get(weapon.ammunition_kind.as_str()).copied() else {
+        let Some((ammo, free)) = stock.get(weapon.ammunition_kind.as_str()).copied() else {
             continue;
         };
         for (mode, label, description) in modes {
@@ -180,7 +182,9 @@ pub(super) fn choices<'a>(
                 ammunition: ammo,
                 label: substitute_fields(&text.menu.title, &fields),
                 description: (*description).clone(),
-                reason,
+                reason: reason.or_else(|| (!free).then_some(
+                    installed.ordinary_actions.value().not_applicable.message.as_str(),
+                )),
                 auto_equip: !tool.equipped,
             });
         }

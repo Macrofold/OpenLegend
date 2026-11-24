@@ -238,6 +238,7 @@ pub(super) struct OwnPlayerView<'a> {
     #[serde(skip)]
     pub craft_stock: &'a indexmap::IndexMap<&'a str, u64>,
     pub equipped: &'a [crate::install::OwnedItem<'a>],
+    pub equipped_target: Option<crate::install::OwnedItem<'a>>,
     #[serde(skip)]
     pub ranged_source: Option<super::PlayerRangedSource<'a>>,
     #[serde(skip)]

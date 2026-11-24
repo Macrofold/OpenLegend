@@ -1052,6 +1052,7 @@ pub(crate) fn with_actor_self<T>(
                 equipped: &inventory.equipped,
                 ranged_source: inventory.ranged_source,
                 melee_source: inventory.melee_source,
+                equipped_target: inventory.equipped_target.map(|(_, item)| item),
                 knowledge_revision: state
                     .reception
                     .knowledge_revisions

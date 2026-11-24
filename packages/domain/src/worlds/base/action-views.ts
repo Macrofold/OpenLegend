@@ -8,7 +8,8 @@ import {
   appendObservedActivityFacts,
   sharedOrdinaryActivityName,
 } from './ordinary-activity-view.js';
-import { equippedItem } from '../../equipment.js';
+import { equippedItem, type EquipmentUse } from '../../equipment.js';
+import contextActions from './config/context-actions.json' with { type: 'json' };
 import { bodyPolicy } from '../../body-policy.js';
 import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
 import { practiceDefinition, toolPracticeDefinition } from '../../practical-competence.js';
@@ -59,11 +60,10 @@ type ViewPossessions = {
 
 /** This world's preferred held item for the explicit target-use gesture. */
 export function preferredTargetEquipment(world: WorldState, actorId: string) {
-  return (
-    equippedItem(world, actorId, 'ranged') ??
-    equippedItem(world, actorId, 'melee') ??
-    equippedItem(world, actorId, 'gather')
-  );
+  for (const use of contextActions.equippedUseOrder as EquipmentUse[]) {
+    const item = equippedItem(world, actorId, use);
+    if (item) return item;
+  }
 }
 
 /** Select the same preferred use regardless of catalogue construction order.
@@ -76,17 +76,18 @@ export function equippedTargetAction<T extends { command: { type: string; itemId
 ): T | undefined {
   if (!equipment) return;
   const definition = world.itemDefinitions[equipment.definitionId];
-  const exact = offers.filter((offer) => offer.command.itemId === equipment.id);
-  return (
-    (exact.find((offer) => offer.command.type === 'strike') ??
-      (definition?.rangedWeapon &&
-        exact.find((offer) => ['aim', 'shoot-once'].includes(offer.command.type))) ??
-      (definition?.gatheringTool?.resourceId === target.resource?.definitionId &&
-        exact.find((offer) => offer.command.type === 'gather')) ??
-      (definition?.rangedWeapon && exact.find((offer) => offer.command.type === 'hunt')) ??
-      exact.find((offer) => offer.command.type === 'practice-shot')) ||
-    undefined
-  );
+  for (const kind of contextActions.equippedActionOrder) {
+    if (['aim', 'shoot-once', 'hunt'].includes(kind) && !definition?.rangedWeapon) continue;
+    if (
+      kind === 'gather' &&
+      definition?.gatheringTool?.resourceId !== target.resource?.definitionId
+    )
+      continue;
+    const exact = offers.find(
+      (offer) => offer.command.itemId === equipment.id && offer.command.type === kind,
+    );
+    if (exact) return exact;
+  }
 }
 
 /** Bundled-world disclosure and wording; the engine stores the permitted view.

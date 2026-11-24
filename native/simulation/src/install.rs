@@ -22,7 +22,7 @@ mod content;
 pub(crate) use coaching::ClosedCoachingState;
 mod inventory;
 pub use crate::consumption::EatingOffer;
-pub(crate) use inventory::Inventory;
+pub(crate) use inventory::{EquipmentUse, Inventory};
 pub(crate) use inventory::ItemDefinitionRead;
 pub(crate) use inventory::{MeleeProfile, equipped_melee};
 pub(crate) use inventory::RemovedInventoryChild;

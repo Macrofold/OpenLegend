@@ -151,6 +151,8 @@ The stand-alone browser used **Open** and displayed the exact lot. Signed reques
 
 The refusal and successful caller are retained under `nsc04-remains-custody-20261122`. The successful Rust source tree was `f94ac175749fac814f08935ef541345aad403203` and executable SHA-256 was `262fdbe50d831c48ac2ac546cfd772218818ef83f3d9e8669fde887b097a3171`. The locked app and addon checks and stand-alone build passed. The warm and cold listeners released all reservations and the disposable databases closed. This case verifies an NPC body and its custody.
 
+A second signed journey used the ordinary **Pick Up** action from the visible and inspected body. After a two-unit cord moved, the unchanged River line was still on the body. A forged raw target, a living body and a fresh attempt at the already moved cord were refused. The last item then moved through the same action, and a new inspection read an empty inventory. The body stayed physically present and dead. The strike and both pickup receipts returned after restart, with the exact lots still in the player's possession. The passing report is `8a3aeacea6b2` on Rust executable `a4db2778b71e`, in `nsc04-resource-targeting-20261124`.
+
 #### Belongings when remains disappear
 
 The stand-alone clock now checks the installed ground-pile footprint when remains with belongings reach the removal deadline. It uses the existing ground-pile and inventory operations to move whole lots while keeping their identities and declared ownership. An obstructed location leaves the body and its belongings in place while ordinary game time continues. [The authored remains rule](../worlds/base/survival.md#death-and-remains) sets the deadlines and this placement condition.

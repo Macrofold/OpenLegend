@@ -116,7 +116,10 @@ impl CoreMutation<'_> {
             };
             received = Some(item);
         }
-        if received.is_some() && self.state.inventory.has_children(pile) {
+        if received.is_some()
+            && (self.state.inventory.has_children(pile)
+                || self.state.physical.entities.get(pile).is_some_and(crate::ground_items::is_remains_root))
+        {
             self.journal.physical.change(PhysicalChange::ObservationParameters {
                 entity_id: pile.into(), request_detail: true,
             })?;
@@ -250,7 +253,14 @@ impl CoreMutation<'_> {
     }
 
     pub(crate) fn retire_empty_pickup_pile(&mut self, pile: &str) -> Result<(), ExecutionError> {
-        if self.state.inventory.has_children(pile) {
+        if self.state.inventory.has_children(pile)
+            || !self.state.physical.entities.get(pile).is_some_and(|entity| {
+                crate::ground_items::is_item_pile(
+                    &self.state.installed.observation_rules.value().pile_kind,
+                    entity,
+                )
+            })
+        {
             return Ok(());
         }
         self.physical().remove_physical_root(pile)

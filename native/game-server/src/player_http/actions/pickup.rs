@@ -1,40 +1,7 @@
 //! An observed pile offers only still-present portable lots and their current amounts.
 use super::*;
 use openlegend_simulation::runtime::RuntimePickupOffer;
-use openlegend_simulation::text::TextRef;
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Action<'a> {
-    id: String,
-    label: JsText,
-    category: &'a str,
-    description: TextRef<'a>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    item_id: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pickup_limit: Option<u64>,
-    enabled: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    reason: Option<&'a str>,
-    intent: Intent<'a>,
-}
-
-#[derive(Serialize)]
-struct Intent<'a> {
-    kind: &'static str,
-    command: Command<'a>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Command<'a> {
-    #[serde(rename = "type")]
-    kind: &'static str,
-    target_id: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    item_id: Option<&'a str>,
-}
+use resources::{Batch, Choice, Command, Intent};
 
 pub(super) fn render(
     target: &str,
@@ -42,66 +9,99 @@ pub(super) fn render(
     controlling: bool,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
+    choices(target, &offer, controlling, budget)?.render(offer.sequence, budget)
+}
+
+pub(super) fn choices(
+    target: &str,
+    offer: &RuntimePickupOffer<'_>,
+    controlling: bool,
+    budget: &ByteBudget,
+) -> Result<Batch, RuntimeError> {
     let reason = if controlling {
         offer.reason
     } else {
-        Some("Take control of your character to act here.")
+        Some(TAKE_CONTROL)
     };
     let multiple = offer.items.len() > 1;
     let all = multiple && offer.all_available;
-    let group_bytes = if all {
-        size_of::<Action>() + target.len() + offer.all_label.len() + 32
+    let common = offer
+        .label
+        .len()
+        .checked_mul(2)
+        .and_then(|n| n.checked_add(offer.all_label.len()))
+        .and_then(|n| n.checked_add(target.len().checked_mul(3)?))
+        .and_then(|n| n.checked_add(reason.map_or(0, str::len)))
+        .ok_or(CapacityError)?;
+    let all_bytes = if all {
+        common
+            .checked_add(offer.all_label.len())
+            .and_then(|n| n.checked_add(offer.all_description.len()))
+            .and_then(|n| n.checked_add("pickup-all-".len()))
+            .ok_or(CapacityError)?
     } else {
         0
     };
     let bytes = offer
         .items
         .iter()
-        .try_fold(group_bytes, |sum, item| {
-            sum.checked_add(size_of::<Action>() + item.id.len() + 32)?
-                .checked_add(3 * item.name.storage_bytes() + 4 * offer.label.len())
+        .try_fold(all_bytes, |sum, item| {
+            sum.checked_add(common)?
+                .checked_add(item.id.len().checked_mul(3)?)?
+                .checked_add(item.name.storage_bytes().checked_mul(13)?)?
+                .checked_add(offer.label.len())?
+                .checked_add(48)
         })
-        .ok_or_else(|| RuntimeError::from(CapacityError))?;
-    let _scratch = budget.reserve(bytes)?;
-    let intent = |item_id| Intent {
-        kind: "command",
-        command: Command {
-            kind: "pickup",
-            target_id: target,
-            item_id,
+        .ok_or(CapacityError)?;
+    let count = offer
+        .items
+        .len()
+        .checked_add(usize::from(all))
+        .ok_or(CapacityError)?;
+    let mut batch = Batch::prepare(offer.label, count, bytes, budget)?;
+    let choice = |id, label, description, item_id: Option<&str>, pickup_limit| Choice {
+        id,
+        label,
+        category: offer.label.to_owned(),
+        description,
+        keywords: [offer.label.into(), offer.all_label.into()],
+        target_id: target.to_owned(),
+        item_id: item_id.map(str::to_owned),
+        pickup_limit,
+        facts: None,
+        enabled: reason.is_none(),
+        reason: reason.map(JsText::from),
+        intent: Intent::Command {
+            command: Command {
+                kind: "pickup",
+                target_id: target.to_owned(),
+                item_id: item_id.map(str::to_owned),
+                ammunition_id: None,
+            },
         },
     };
-    let mut actions = Vec::with_capacity(offer.items.len() + usize::from(all));
     if all {
-        actions.push(Action {
-            id: format!("pickup-all-{target}"),
-            label: offer.all_label.into(),
-            category: offer.label,
-            description: offer.all_description.into(),
-            item_id: None,
-            pickup_limit: None,
-            enabled: reason.is_none(),
-            reason,
-            intent: intent(None),
-        });
+        batch.choices.push(choice(
+            format!("pickup-all-{target}"),
+            offer.all_label.into(),
+            offer.all_description.into(),
+            None,
+            None,
+        ));
     }
-    actions.extend(offer.items.iter().map(|item| {
+    for item in offer.items {
         let label = if multiple {
             JsText::concat(&[item.name, &format!(" × {}", item.quantity).into()])
         } else {
             offer.label.into()
         };
-        Action {
-            id: format!("pickup-{}", item.id),
+        batch.choices.push(choice(
+            format!("pickup-{}", item.id),
             label,
-            category: offer.label,
-            description: item.name.into(),
-            item_id: Some(item.id),
-            pickup_limit: item.partial_limit,
-            enabled: reason.is_none(),
-            reason,
-            intent: intent(Some(item.id)),
-        }
-    }));
-    resource_menu(offer.sequence, &actions, offer.label, budget)
+            item.name.clone(),
+            Some(item.id),
+            item.partial_limit,
+        ));
+    }
+    Ok(batch)
 }

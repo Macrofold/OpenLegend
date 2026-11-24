@@ -21,6 +21,7 @@ pub(super) fn offer<T>(
     actor: &str,
     observed_name: &Named,
     target: &Entity,
+    equipment: Option<&str>,
     budget: &ByteBudget,
     render: impl FnOnce(RuntimeResourceOffer<'_>) -> Result<T, RuntimeError>,
 ) -> Result<T, RuntimeError> {
@@ -29,7 +30,7 @@ pub(super) fn offer<T>(
         .entities
         .get(actor)
         .ok_or_else(|| failure("missing practice actor"))?;
-    let choice = practice_choice(state, entity, target, None, None, None)
+    let choice = practice_choice(state, entity, target, equipment, None, None)
         .map_err(failure)?
         .ok_or_else(|| failure("missing installed practice target"))?;
     let profile = choice.profile;

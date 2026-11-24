@@ -5,11 +5,16 @@ use crate::{
     capture::PlayerObservedBody,
     execution::ExecutionError,
     ground_items::{GroundLot, inspection::WorldStorage, pickup_contents, pickup_lot, pickup_pile},
-    reception::{ObservedPileItem, SensoryFacet},
+    reception::{ObservedBody, ObservedPileItem, SensoryFacet},
     simulation::SimulationState,
     state::{Entity, InventoryInspection},
     text::JsText,
 };
+
+pub(super) fn observed_source(state: &SimulationState, observed: &ObservedBody) -> bool {
+    observed.kind == *state.installed.observation_rules.value().pile_kind
+        || observed.remains_phase.is_some()
+}
 
 pub(super) struct PickupRead<'a> {
     state: &'a SimulationState,

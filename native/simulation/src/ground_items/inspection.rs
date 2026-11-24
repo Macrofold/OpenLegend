@@ -51,13 +51,7 @@ impl<'a> WorldStorage<'a> {
             if let Some(Placement::World { revision, .. }) = root.placement.as_ref() {
                 // Only actual remains open another actor's inventory here. The
                 // observed contact and physical reach still bind that access.
-                if root.actor.as_ref().is_some_and(|body| {
-                    body.alive
-                        || !root
-                            .remains
-                            .as_ref()
-                            .is_some_and(|remains| remains.phase != "removed")
-                }) {
+                if root.actor.is_some() && !super::is_remains_root(root) {
                     return None;
                 }
                 let permitted = if root.container.is_some() {

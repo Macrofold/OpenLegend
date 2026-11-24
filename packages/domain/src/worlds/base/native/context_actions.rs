@@ -1,5 +1,8 @@
 //! Base selects the preferred family and ranks its existing exact menu rows.
-use crate::combat_encounters::EncounterFamily;
+use crate::{
+    combat_encounters::EncounterFamily,
+    install::{EquipmentUse, ItemDefinitionRead},
+};
 use serde::Deserialize;
 use std::{collections::BTreeMap, sync::LazyLock};
 
@@ -7,6 +10,8 @@ use std::{collections::BTreeMap, sync::LazyLock};
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Ranks {
     priority: BTreeMap<String, u32>,
+    equipped_use_order: Vec<EquipmentUse>,
+    equipped_action_order: Vec<String>,
     speak: u32,
     combat: CombatRanks,
     unavailable_label: String,
@@ -55,6 +60,27 @@ pub enum Choice<'a> {
         exact: bool,
         carried: bool,
     },
+}
+
+/// The installed world's held-tool shortcut compares only already-equipped
+/// items. A lower rank is preferred; existing attachment order breaks ties.
+pub(crate) fn equipped_use_rank(profile: (&str, u64), item: &ItemDefinitionRead) -> Option<usize> {
+    if !matches!(profile, ("grounded-wilderness", 1)) {
+        return None;
+    }
+    RANKS
+        .equipped_use_order
+        .iter()
+        .position(|uses| item.equips_for(*uses))
+}
+
+/// Choose among the exact held item's already-permitted target actions. The
+/// caller still owns the current component's scope, tool and eligibility.
+pub fn equipped_action_rank(kind: &str) -> Option<usize> {
+    RANKS
+        .equipped_action_order
+        .iter()
+        .position(|allowed| allowed == kind)
 }
 
 pub fn unavailable() -> (&'static str, &'static str) {

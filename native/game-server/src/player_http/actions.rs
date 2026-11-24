@@ -12,15 +12,18 @@ use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
     host::CapacityError,
     runtime::{
-        NativeWorldSession, RuntimeError, RuntimeFishOffer, RuntimeGatherOffer, RuntimeRangedMode,
+        NativeWorldSession, RuntimeError, RuntimeGatherOffer, RuntimeRangedMode,
         RuntimeResourceOffer,
     },
     text::JsText,
 };
 use std::{borrow::Cow, sync::LazyLock};
 mod preparation;
+mod equipped;
+mod fish;
 mod pickup;
 mod practice;
+mod resources;
 mod manufacture;
 mod status;
 mod fire;
@@ -59,6 +62,8 @@ struct Position {
 struct MenuRequest {
     #[serde(default)]
     catalogue: bool,
+    #[serde(default)]
+    equipped: bool,
     target_id: Option<String>,
     item_id: Option<String>,
     // The inventory picker identifies a display group and its available amount.
@@ -97,7 +102,10 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
         .filter(|id| crate::npc::valid_request_id(id));
     let item = input.item_id.filter(|id| crate::npc::valid_request_id(id));
     let recipe = input.recipe_id.filter(|id| crate::npc::valid_request_id(id));
-    if recipe.is_some() && (target.is_some() || item.is_some()) {
+    if input.equipped
+        && (input.catalogue || ground || target.is_none() || item.is_none() || recipe.is_some())
+        || recipe.is_some() && (target.is_some() || item.is_some())
+    {
         return access_failure(AccessError::Changed);
     }
     if !ground && !input.catalogue && target.is_none() && item.is_none() && recipe.is_none() {
@@ -112,6 +120,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
     let game = state.game.clone();
     let scoped = access.clone();
     let catalogue = input.catalogue;
+    let equipped = input.equipped;
     let authority = state.authority.clone();
     let tokens = state.references.clone();
     let resource = state
@@ -125,6 +134,12 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                 |scope, controls| -> Result<_, RuntimeError> {
                     let budget = game.host.budget();
                     let _workspace = budget.reserve(2048)?;
+                    if equipped {
+                        return equipped::render(
+                            session, scope, &tokens, for_menu.as_deref().expect("checked target"),
+                            item.as_deref().expect("checked equipped item"), &game, controls,
+                        );
+                    }
                     let own_status = for_menu.as_deref() == Some(scope.actor_id.as_str());
                     if item.is_none() && recipe.is_none() {
                         if catalogue && for_menu.is_none() {
@@ -136,14 +151,30 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                                     .map_err(RuntimeError::application_refused),
                                 |menu, read| {
                                     let mut gathering = Vec::new();
-                                    read.visit_gathering(|body, offer| {
+                                    let mut resources = resources::CatalogueRows::new(budget)?;
+                                    read.visit_resources(|body, offer| {
+                                        // Only a deliberately selected empty cast explains how to obtain a tool.
+                                        if matches!(&offer, RuntimeResourceOffer::Fish(cast) if cast.tools.is_empty()) {
+                                            return Ok(());
+                                        }
                                         let _alias = budget.reserve(128)?;
                                         let selected = references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id)
                                             .map_err(RuntimeError::application_refused)?;
-                                        let row = gather_choice(&selected, &offer, controls, budget)?;
-                                        gathering.try_reserve(1).map_err(|_| CapacityError)?;
-                                        gathering.push(row);
-                                        Ok(())
+                                        let batch = match offer {
+                                            RuntimeResourceOffer::Gather(offer) => {
+                                                let row = gather_choice(&selected, &offer, controls, budget)?;
+                                                gathering.try_reserve(1).map_err(|_| CapacityError)?;
+                                                gathering.push(row);
+                                                return Ok(());
+                                            }
+                                            RuntimeResourceOffer::Pickup(offer) => pickup::choices(&selected, &offer, controls, budget)?,
+                                            RuntimeResourceOffer::Practice(offer) => practice::choices(&selected, &offer, controls, budget)?,
+                                            RuntimeResourceOffer::Fish(offer) => fish::choices(&selected, &offer, controls, budget, |queries| {
+                                                game.spatial.compute(queries, budget).map(|answer| answer.into_parts())
+                                                    .map_err(RuntimeError::application_refused)
+                                            })?,
+                                        };
+                                        resources.add(batch)
                                     })?;
                                     let mut craft = Vec::new();
                                     read.visit_known_manufacture(|recipe_id, offer| {
@@ -152,7 +183,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                                         craft.push(row);
                                         Ok(())
                                     })?;
-                                    status::render(menu, controls, &gathering, &craft, budget)
+                                    status::render(menu, controls, &gathering, &craft, Some(&resources), budget)
                                 },
                             ).map(Some);
                         }
@@ -163,7 +194,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                                 &scope.actor_id,
                                 |body| references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id)
                                     .map_err(RuntimeError::application_refused),
-                                |menu| status::render(menu, controls, &[], &[], budget),
+                                |menu| status::render(menu, controls, &[], &[], None, budget),
                             ).map(Some);
                         }
                         if ground && for_menu.is_none() {
@@ -206,23 +237,10 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                             RuntimeResourceOffer::Practice(offer) => {
                                 practice::render(selected, offer, controls, budget)
                             }
-                            RuntimeResourceOffer::Fish(offer) => {
-                                let available = if !controls {
-                                    Some(TAKE_CONTROL)
-                                } else if offer.paused {
-                                    Some(RESUME_WORLD)
-                                } else if !offer.tools.is_empty() && !offer.exhausted {
-                                    offer.geometry_problem(|queries| {
-                                        game.spatial
-                                            .compute(queries, budget)
-                                            .map(|answer| answer.into_parts())
-                                            .map_err(RuntimeError::application_refused)
-                                    })?
-                                } else {
-                                    None
-                                };
-                                fishing(selected, &offer, available, budget)
-                            }
+                            RuntimeResourceOffer::Fish(offer) => fish::render(selected, &offer, controls, budget, |queries| {
+                                game.spatial.compute(queries, budget).map(|answer| answer.into_parts())
+                                    .map_err(RuntimeError::application_refused)
+                            }),
                         },
                     )?;
                     if offered.is_some() {
@@ -302,14 +320,13 @@ struct ResourceCommand<'a> {
     kind: &'static str,
     target_id: Cow<'a, str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    item_id: Option<&'a str>,
+    item_id: Option<Cow<'a, str>>,
 }
 
 #[derive(Serialize)]
 #[serde(tag = "kind", rename_all = "lowercase")]
 enum ResourceIntent<'a> {
     Command { command: ResourceCommand<'a> },
-    Unavailable,
 }
 
 #[derive(Serialize)]
@@ -537,79 +554,6 @@ pub(crate) fn fresh_gather_selection(
             ResolvedContact::new(offer.target, None, budget).map(GatherSelection::Current)
         })?;
     Ok(result.unwrap_or(GatherSelection::Stale))
-}
-
-fn fishing(
-    selected: &str,
-    offer: &RuntimeFishOffer<'_>,
-    unavailable: Option<&str>,
-    budget: &ByteBudget,
-) -> Result<Bytes, RuntimeError> {
-    let _workspace = budget.reserve(2048)?;
-    let supply = [("Supply", offer.supply)];
-    if offer.tools.is_empty() {
-        return resource_menu(
-            offer.sequence,
-            &[ResourceAction {
-                id: format!("fish-{selected}"),
-                label: offer.available_text.clone(),
-                category: GATHER.name,
-                description: offer.description,
-                keywords: [Cow::Borrowed(offer.name), Cow::Borrowed(offer.available_text)],
-                target_id: Cow::Borrowed(selected),
-                enabled: false,
-                reason: Some(offer.tool_required_text),
-                facts: supply,
-                intent: ResourceIntent::Unavailable,
-            }],
-            GATHER.name,
-            budget,
-        );
-    }
-    let bytes = offer.tools.iter().try_fold(0_usize, |total, tool| {
-        offer
-            .action_label
-            .storage_bytes()
-            .checked_add(tool.name.storage_bytes())
-            .and_then(|bytes| bytes.checked_mul(6))
-            .and_then(|bytes| bytes.checked_add(128 + std::mem::size_of::<ResourceAction<'_, [(&str, &JsText); 1]>>()))
-            .and_then(|bytes| total.checked_add(bytes))
-            .ok_or(CapacityError)
-    })?;
-    let _actions = budget.reserve(bytes)?;
-    let mut actions = Vec::new();
-    actions
-        .try_reserve_exact(offer.tools.len())
-        .map_err(|_| CapacityError)?;
-    let unavailable = unavailable.map(JsText::from);
-    let reason = unavailable
-        .as_ref()
-        .or_else(|| offer.exhausted.then_some(offer.supply));
-    let space = JsText::from(" ");
-    for tool in offer.tools {
-        // A tuple digest disambiguates tools even when a name or ID contains a delimiter.
-        let binding =
-            json_record(&(selected, tool.id)).map_err(RuntimeError::application_refused)?;
-        actions.push(ResourceAction {
-            id: format!("fish-{}", sha256_hex(binding.as_bytes())),
-            label: JsText::concat(&[offer.action_label, &space, tool.name]),
-            category: GATHER.name,
-            description: offer.description,
-            keywords: [Cow::Borrowed(offer.name), Cow::Borrowed(tool.name)],
-            target_id: Cow::Borrowed(selected),
-            enabled: reason.is_none(),
-            reason,
-            facts: supply,
-            intent: ResourceIntent::Command {
-                command: ResourceCommand {
-                    kind: "fish",
-                    target_id: Cow::Borrowed(selected),
-                    item_id: Some(tool.id),
-                },
-            },
-        });
-    }
-    resource_menu(offer.sequence, &actions, GATHER.name, budget)
 }
 
 #[derive(Deserialize, Serialize)]
@@ -987,11 +931,7 @@ pub(crate) fn contact_choices<'a>(
         // Projection stays inside the accepted contact read. Borrow the
         // installed descriptions as far as the one outgoing menu encode.
         for choice in menu.ranged {
-            let kind = match choice.mode {
-                RuntimeRangedMode::Aim => "aim",
-                RuntimeRangedMode::ShootOnce => "shoot-once",
-                RuntimeRangedMode::Hunt => "hunt",
-            };
+            let kind = choice.mode.kind();
             let bytes = (2 * size_of::<ContactAction<'_>>() + 1)
                 .checked_add(kind.len())
                 .and_then(|size| size.checked_add(selected.len()))
