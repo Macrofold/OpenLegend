@@ -1,25 +1,14 @@
-import { enterGame } from '../fixtures/browser.js';
-import { testRepository, closeTestDatabases } from '../fixtures/database.js';
-import { test, expect } from '@playwright/test';
-import { createGameServer } from '../../apps/server/src/http.js';
-import { readConfig } from '../fixtures/database.js';
+import { type AiUsageView } from '@open-legend/protocol';
+import { expect, test } from '@playwright/test';
+import { blockExternalBrowserRequests, enterGame } from '../fixtures/browser.js';
+import { browserTabHeaders, rustBrowserGame } from '../fixtures/rust-browser.js';
 
 test('camera gestures never issue commands and cancellation restores context menus', async ({
   page,
 }) => {
-  // Native UI fixture: independent save, no provider keys, zero spending allowance.
-  const game = await createGameServer({
-    config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: await testRepository(),
-    production: true,
-    tick: false,
-  });
-  await new Promise<void>((resolve, reject) => {
-    game.server.once('error', reject);
-    game.server.listen(0, '127.0.0.1', resolve);
-  });
-  const address = game.server.address();
-  if (!address || typeof address === 'string') throw new Error('Missing listener');
+  test.setTimeout(120_000);
+  await blockExternalBrowserRequests(page);
+  const game = await rustBrowserGame();
   const commands: unknown[] = [];
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -43,7 +32,7 @@ test('camera gestures never issue commands and cancellation restores context men
       );
     }, point);
   try {
-    await page.goto(`http://127.0.0.1:${address.port}`);
+    await page.goto(game.base);
     await enterGame(page);
     await expect(canvas).toHaveAttribute('data-ready', 'true');
     if (await page.getByRole('button', { name: 'Pause world', exact: true }).isVisible())
@@ -103,12 +92,15 @@ test('camera gestures never issue commands and cancellation restores context men
     }
 
     expect(commands).toEqual([]);
-    expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);
+    const usage = await page.request.get(game.base + '/api/ai/usage', {
+      headers: await browserTabHeaders(page),
+    });
+    expect(usage.ok()).toBe(true);
+    expect(((await usage.json()) as AiUsageView).usage.llmCalls).toBe(0);
+    await usage.dispose();
     expect(errors).toEqual([]);
   } finally {
     await page.close();
     await game.close();
   }
 });
-
-test.afterAll(closeTestDatabases);
