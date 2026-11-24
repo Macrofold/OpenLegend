@@ -195,6 +195,15 @@ impl NpcCandidateCursor {
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
+        if inspection.as_ref().is_some_and(|page| {
+            !page.current(
+                core.state,
+                &read.perception.actor_id,
+                read.perception.evidence.cut().observer.physical_life,
+            )
+        }) {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
         let selection = NpcObservationSelection::prepare(core.state, read, expanded, budget)?;
         let offered_bodies = coverage.map_or(&[][..], |_| selection.body_ordinals());
         let bytes = offered_bodies

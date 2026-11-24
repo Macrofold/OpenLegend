@@ -182,7 +182,7 @@ impl NativeWorldSession {
             read,
             method_after,
             historical_account,
-            |page| page.into_decision(read.after, method_after as u64),
+            |page| page.into_decision(),
         )?;
         if let Some(page) = &page {
             let decision = read.decision.as_mut().expect("checked decision source");
@@ -266,6 +266,7 @@ impl NativeWorldSession {
                 state,
                 read.origin.actor_id(),
                 method_after,
+                read.decision.as_ref().map(|decision| (&read.origin.scope, &decision.selection)),
                 |source| {
                     let Some(recent) = &read.recent else {
                         return Ok(None);

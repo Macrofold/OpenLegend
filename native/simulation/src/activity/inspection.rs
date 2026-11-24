@@ -2,11 +2,12 @@
 //! acquisitions. It never retries an action or turns old bindings into offers.
 
 use super::*;
+use crate::capture::NpcHistoricalScope;
 use crate::execution::ExecutionError;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::records::{InstalledRow, SqlCell};
 use crate::simulation::SimulationState;
-use std::{mem::size_of, sync::LazyLock};
+use std::{mem::size_of, sync::{Arc, LazyLock}};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,7 +36,7 @@ pub(crate) static COPY: LazyLock<InspectionCopy<'static>> = LazyLock::new(|| {
 
 pub(crate) const INSPECTION_ROWS: usize = 16;
 const INSPECTION_BYTES: usize = 16_384;
-const METHODS_PER_PAGE: usize = 4;
+pub(crate) const METHODS_PER_PAGE: usize = 4;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -47,6 +48,8 @@ pub struct RuntimeActivityPage<'a> {
     next: Option<i64>,
     methods: Vec<InspectionMethod>,
     method_next: Option<usize>,
+    #[serde(skip)]
+    navigation: Option<ActivityInspectionNavigation>,
     #[serde(skip)]
     recent_entries: u32,
     #[serde(skip)]
@@ -72,22 +75,49 @@ struct InspectionMethod {
 pub struct RuntimeActivityDecisionPage {
     entries: Vec<InspectionEntry>,
     methods: Vec<InspectionMethod>,
-    navigation: ActivityInspectionNavigation,
+    navigation: Option<ActivityInspectionNavigation>,
     pub(crate) recent_entries: u32,
     storage: ByteReservation,
 }
 
-#[derive(Clone, Copy)]
+/// The exact displayed methods, continuation cursors and original private read.
+/// The signed history response does not return these internal selection IDs.
 pub struct ActivityInspectionNavigation {
-    pub(crate) after: i64,
-    pub(crate) method_after: u64,
+    scope: Arc<NpcHistoricalScope>,
+    selection: LearningInspection,
+    methods: Vec<String>,
     pub(crate) next: Option<i64>,
     pub(crate) method_next: Option<usize>,
+    storage: ByteReservation,
+}
+
+impl ActivityInspectionNavigation {
+    pub(crate) fn current(&self, state: &SimulationState, actor: &str, life: u64) -> bool {
+        self.scope.actor_id == actor
+            && self.scope.physical_life == life
+            && self.scope.still_permitted(state)
+            && state.activity.learning.get(actor).and_then(|cursor| cursor.inspection.as_ref())
+                == Some(&self.selection)
+    }
+
+    pub(crate) fn after(&self) -> i64 {
+        self.selection.after
+    }
+
+    pub(crate) fn method_after(&self) -> u64 {
+        self.selection.method_after.unwrap_or_default()
+    }
+
+    pub(crate) fn methods(&self) -> &[String] {
+        &self.methods
+    }
 }
 
 impl RuntimeActivityDecisionPage {
-    pub fn navigation(&self) -> ActivityInspectionNavigation {
-        self.navigation
+    /// Move the independently admitted selection into one decision preparation.
+    /// The caller can still render the retained page text for this decision.
+    pub fn take_navigation(&mut self) -> Option<ActivityInspectionNavigation> {
+        self.navigation.take()
     }
     pub fn action_texts(&self) -> impl Iterator<Item = &JsText> {
         self.entries.iter().map(|entry| &entry.text)
@@ -103,20 +133,11 @@ impl RuntimeActivityDecisionPage {
 }
 
 impl RuntimeActivityPage<'_> {
-    pub(crate) fn into_decision(
-        self,
-        after: i64,
-        method_after: u64,
-    ) -> RuntimeActivityDecisionPage {
+    pub(crate) fn into_decision(self) -> RuntimeActivityDecisionPage {
         RuntimeActivityDecisionPage {
             entries: self.entries,
             methods: self.methods,
-            navigation: ActivityInspectionNavigation {
-                after,
-                method_after,
-                next: self.next,
-                method_next: self.method_next,
-            },
+            navigation: self.navigation,
             recent_entries: self.recent_entries,
             storage: self._storage,
         }
@@ -266,6 +287,7 @@ impl ActivityInspection {
         state: &'a SimulationState,
         actor: &str,
         method_after: usize,
+        decision: Option<(&Arc<NpcHistoricalScope>, &LearningInspection)>,
         recent: impl Fn(&ResultEvidence) -> Result<Option<JsText>, ExecutionError>,
         budget: &ByteBudget,
     ) -> Result<RuntimeActivityPage<'a>, ExecutionError> {
@@ -324,6 +346,21 @@ impl ActivityInspection {
         let mut methods = Vec::with_capacity(METHODS_PER_PAGE);
         let mut method_bytes = 0;
         let mut method_next = None;
+        let mut navigation = decision
+            .map(|(scope, selection)| {
+                let storage = budget.reserve(
+                    METHODS_PER_PAGE * size_of::<String>() + selection.event_id.len(),
+                )?;
+                Ok::<_, ExecutionError>(ActivityInspectionNavigation {
+                    scope: Arc::clone(scope),
+                    selection: selection.clone(),
+                    methods: Vec::with_capacity(METHODS_PER_PAGE),
+                    next: None,
+                    method_next: None,
+                    storage,
+                })
+            })
+            .transpose()?;
         let mut index = 0;
         learning::visit_current(state, actor, budget, |method, acquisition| {
             let at = index;
@@ -354,6 +391,10 @@ impl ActivityInspection {
             }
             method_bytes += text.utf8_len();
             grow(&mut storage, name.storage_bytes())?;
+            if let Some(navigation) = &mut navigation {
+                grow(&mut navigation.storage, method.id().len())?;
+                navigation.methods.push(method.id().to_owned());
+            }
             methods.push(InspectionMethod {
                 name: name.clone(),
                 status: if body.get("executable").and_then(SqlCell::as_bool) == Some(true) {
@@ -376,6 +417,11 @@ impl ActivityInspection {
                 .map(|entry| entry.text.storage_bytes() + entry.name.storage_bytes())
                 .sum::<usize>();
         storage.resize(retained)?;
+        let next = remaining.then_some(through);
+        if let Some(navigation) = &mut navigation {
+            navigation.next = next;
+            navigation.method_next = method_next;
+        }
         Ok(RuntimeActivityPage {
             world_id: &state.physical.header.id,
             generation: &state.generation,
@@ -390,9 +436,10 @@ impl ActivityInspection {
                 "No completed actions are waiting for learning."
             },
             entries,
-            next: remaining.then_some(through),
+            next,
             methods,
             method_next,
+            navigation,
             recent_entries,
             _storage: storage,
         })

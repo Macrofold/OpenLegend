@@ -25,6 +25,46 @@ impl NpcCandidateCursor {
         self.start(core, id, meaning, command, guard, WorkTransitionMode::Continue)
     }
 
+    /// Read one current personal library. Put displayed methods ahead of the
+    /// usual suggestions, keeping their page order and suppressing duplicates.
+    fn offer_learned(
+        &mut self,
+        state: &crate::simulation::SimulationState,
+        actor: &str,
+    ) -> Result<(), ExecutionError> {
+        const SUGGESTIONS: usize = 4;
+        let selected = self.inspection.as_ref().map_or(&[][..], |page| page.methods());
+        let mut inspected = [const { None }; crate::activity::METHODS_PER_PAGE];
+        let mut ordinary = [const { None }; SUGGESTIONS];
+        let mut remaining = selected.len();
+        let mut count = 0;
+        crate::activity::visit_learned_speech(state, actor, &self.budget, |method| {
+            if let Some(index) = selected.iter().position(|id| id == method.id()) {
+                inspected[index] = Some(method);
+                remaining -= 1;
+            } else if count < SUGGESTIONS {
+                ordinary[count] = Some(method);
+            }
+            count += 1;
+            Ok(remaining > 0 || count < SUGGESTIONS)
+        })?;
+        for method in inspected.into_iter().chain(ordinary).flatten() {
+            let choice = method.retain_choice(state, &self.budget)?;
+            let (id, guard) = self.id(&["learned-", method.id()])?;
+            self.append(PreparedNpcOffer {
+                description: None,
+                id,
+                meaning: NpcOfferMeaning::Learned { choice: choice.clone() },
+                command: PreparedNpcInstruction::Learned(choice),
+                transition: WorkTransitionMode::Enqueue,
+                temporary: None,
+                next_at: None,
+                _storage: guard,
+            })?;
+        }
+        Ok(())
+    }
+
     pub(super) fn enumerate(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -85,18 +125,18 @@ impl NpcCandidateCursor {
             }
             Enumerate::ActivityHistoryNext => {
                 self.stage = Enumerate::ActivityMethodsNext;
-                if let Some(page) = self.inspection
+                if let Some(page) = &self.inspection
                     && let Some(after) = page.next
                 {
-                    self.offer_inspection(core, preparation_id, after, page.method_after, Some("history"))?;
+                    self.offer_inspection(core, preparation_id, after, page.method_after(), Some("history"))?;
                 }
             }
             Enumerate::ActivityMethodsNext => {
                 self.stage = Enumerate::Inventory;
-                if let Some(page) = self.inspection
+                if let Some(page) = &self.inspection
                     && let Some(after) = page.method_next
                 {
-                    self.offer_inspection(core, preparation_id, page.after, after as u64, Some("methods"))?;
+                    self.offer_inspection(core, preparation_id, page.after(), after as u64, Some("methods"))?;
                 }
             }
             Enumerate::Inventory => {
@@ -122,25 +162,7 @@ impl NpcCandidateCursor {
                 if actor.alive && !actor.incapacitated && actor.action.is_none()
                     && !actor.agency.plan.as_ref().is_some_and(|plan| plan.status == crate::plans::PlanStatus::Active)
                 {
-                    let mut count = 0;
-                    let budget = self.budget.clone();
-                    crate::activity::visit_learned_speech(core.state, actor_entity.id.as_str(), &budget, |method| {
-                        if count == 4 { return Ok(false); }
-                        let choice = method.retain_choice(core.state, &budget)?;
-                        let (id, guard) = self.id(&["learned-", method.id()])?;
-                        self.append(PreparedNpcOffer {
-                            description: None,
-                            id,
-                            meaning: NpcOfferMeaning::Learned { choice: choice.clone() },
-                            command: PreparedNpcInstruction::Learned(choice),
-                            transition: WorkTransitionMode::Enqueue,
-                            temporary: None,
-                            next_at: None,
-                            _storage: guard,
-                        })?;
-                        count += 1;
-                        Ok(count < 4)
-                    })?;
+                    self.offer_learned(core.state, actor_entity.id.as_str())?;
                 }
             }
             Enumerate::Continue => {

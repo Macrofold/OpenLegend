@@ -249,7 +249,7 @@ async fn finish_prepared(
 ) -> Result<Prepared, CallFailure> {
     ensure_running(work)?;
     let budget = game.host.budget();
-    let inspection = if let Some(trigger) = work.automatic.as_ref().and_then(|work| work.evidence.as_deref())
+    let mut inspection = if let Some(trigger) = work.automatic.as_ref().and_then(|work| work.evidence.as_deref())
         && collected.sources.as_ref().is_some_and(|selected| {
             collected.required.iter().any(|&row| {
                 selected.personal.get(row).is_some_and(|source| {
@@ -288,8 +288,8 @@ async fn finish_prepared(
         work,
         consumer(work).as_str(),
         inspection
-            .as_ref()
-            .map(RuntimeActivityDecisionPage::navigation),
+            .as_mut()
+            .and_then(RuntimeActivityDecisionPage::take_navigation),
         guard_threat,
         stage_capture,
         "current-offers",

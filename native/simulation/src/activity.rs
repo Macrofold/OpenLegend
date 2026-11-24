@@ -49,6 +49,7 @@ pub fn inspection_event() -> &'static str {
     ACTIVITY_INSPECTION_COPY.event
 }
 pub use inspection::{ActivityInspectionNavigation, RuntimeActivityDecisionPage, RuntimeActivityPage};
+pub(crate) use inspection::METHODS_PER_PAGE;
 
 pub fn inspection_next_label(kind: &str) -> Option<&'static str> {
     match kind {
