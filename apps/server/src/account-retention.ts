@@ -47,6 +47,7 @@ import {
 import type { RetentionMetadataView } from './retention-metadata.js';
 import type { RetainedSourceChanges } from './retention-record-metadata.js';
 import { sqlRowBatches } from './sql-rows.js';
+import { ACCOUNT_RETENTION_PREPARATION } from './retention-metadata-queries.js';
 
 const tables = {
   awareness: 'mind_awareness',
@@ -54,11 +55,7 @@ const tables = {
   summary: 'mind_summaries',
 } as const;
 type Kind = keyof typeof tables;
-export const ACCOUNT_RETENTION_PREPARATION = Object.freeze({
-  rows: 64,
-  bytes: 4 * 1024 * 1024,
-  metadataRows: 8192,
-});
+export { ACCOUNT_RETENTION_PREPARATION } from './retention-metadata-queries.js';
 const maximumPreparationBytes = ACCOUNT_RETENTION_PREPARATION.bytes;
 interface Candidate {
   kind: Kind;

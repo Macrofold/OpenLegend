@@ -1,4 +1,4 @@
-import { sourceVersionPriority } from './source-version-retention.js';
+import { sourceVersionPriority } from './source-version-queries.js';
 
 export const restoreArchiveSelectionRows = 256;
 

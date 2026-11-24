@@ -58,15 +58,15 @@ import {
 } from '../apps/server/src/operational-backup-format.js';
 import { HISTORY_TABLES } from '../apps/server/src/history-storage-schema.js';
 import { storyAccountAvailableSql, storyAccountSql } from '../apps/server/src/personal-accounts.js';
-import { ACCOUNT_RETENTION_PREPARATION } from '../apps/server/src/account-retention.js';
-import { SUPPORT_MEMBERSHIP_PREPARATION } from '../apps/server/src/retention-cleanup.js';
-import { SOURCE_RETENTION_CLOSURE_ROUNDS } from '../apps/server/src/source-version-retention.js';
+import { SOURCE_RETENTION_CLOSURE_ROUNDS } from '../apps/server/src/source-version-queries.js';
 import {
+  ACCOUNT_RETENTION_PREPARATION,
+  SUPPORT_MEMBERSHIP_PREPARATION,
   accountRetentionCandidatesSql,
   accountTables,
   restoreRetentionMembershipSql,
   restoreSupportMembershipSql,
-} from '../apps/server/src/retention-metadata.js';
+} from '../apps/server/src/retention-metadata-queries.js';
 import {
   restoreArchiveSelectionRows,
   restoreArchiveSelectionSql,

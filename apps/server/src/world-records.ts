@@ -20,12 +20,13 @@ import {
   temporalPagePosition,
   temporalBlockExpiredSql,
   validateTemporalPageSources,
+  readTemporalPageRecord,
+  validateTemporalPageValueReferences,
   type PendingTemporalPage,
 } from './temporal-page-storage.js';
 import { sqlRecordBatchesWithCount, SqlWriteBatch } from './sql-rows.js';
 import { recordDatabaseRows } from './performance.js';
 import { tableRows } from './record-pages.js';
-import { readTemporalPageRecord, validateTemporalPageValueReferences } from './temporal-storage.js';
 import { hotEventDependencies, HOT_EVENT_RECENT_ROWS } from './hot-events.js';
 import {
   HISTORY_TABLES,

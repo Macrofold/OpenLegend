@@ -1,3 +1,8 @@
+export const SOURCE_RETENTION_CLOSURE_ROUNDS = 4;
+export type SourceVersionCategory = 'optional' | 'required' | 'speech';
+export const sourceVersionPriority = (category: SourceVersionCategory) =>
+  category === 'required' ? 2 : category === 'speech' ? 1 : 0;
+
 export const SOURCE_VERSION_TABLES = {
   awareness: 'mind_awareness',
   memory: 'mind_memories',

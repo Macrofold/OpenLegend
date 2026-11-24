@@ -1,5 +1,6 @@
 import {
   appendedRecordCount,
+  canonicalJson,
   receivedBatchStorageBytes,
   receivedBatchChargeDirectory,
   immutableDataSnapshot,
@@ -75,6 +76,7 @@ function projectionInputs(world: TemporalStorageSource, actorId: string) {
     ? { sources: world.sources, disclosure: world.actors.get(actorId)?.disclosure }
     : { world, sources: world.receivedValues?.sources };
 }
+export const maximumTemporalPreparationRows = 8192;
 export const TEMPORAL_PAGE_TARGET_BYTES = 64 * 1024;
 export const temporalPageRecordId = (actorId: string, id: string) =>
   JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'pages', id]);
@@ -383,6 +385,24 @@ export function decodeTemporalPagePayload(payload: string): TemporalPage {
   return body;
 }
 const restoredProjections = new WeakMap<TemporalPage, Record<string, unknown>>();
+export class MemoryRetentionError extends Error {
+  override readonly name = 'MemoryRetentionError';
+}
+
+/** This projection controls payload reclamation, so a malformed saved index
+ * must refuse before it can erase a still-owned value. */
+export function readTemporalPageRecord(row: Record<string, unknown>): TemporalPage {
+  const chunk = decodeTemporalPageRow(row);
+  validateTemporalPageValueReferences(chunk, row['value_refs']);
+  return chunk;
+}
+export function validateTemporalPageValueReferences(
+  chunk: TemporalPage,
+  references: unknown,
+): void {
+  if (canonicalJson(references) !== canonicalJson(temporalPageValueReferences(chunk)))
+    throw new MemoryRetentionError('Temporal value ownership metadata disagrees with its receipt.');
+}
 export function decodeTemporalPageRow(row: Record<string, unknown>): TemporalPage {
   const body = decodeTemporalPagePayload(String(row['payload']));
   if (

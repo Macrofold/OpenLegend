@@ -18,9 +18,11 @@ import { personalAccountRecordId, personalAccountRevision } from './personal-acc
 import type { SavedWorld } from './saved-world.js';
 import type { SqlDatabase } from './sql-database.js';
 import type { RecordChanges, RowChange } from './world-records.js';
-import { type RetentionMetadataView } from './retention-metadata.js';
+import type { RetentionRow, RetentionTable } from './retention-metadata-queries.js';
 import {
   sourceArchiveChargesSql,
+  sourceVersionPriority,
+  type SourceVersionCategory as Category,
   sourceDependentClassesSql,
   sourceLearningRevisionSql,
   sourcePredecessorSql,
@@ -28,9 +30,8 @@ import {
   SOURCE_VERSION_TABLES as tables,
 } from './source-version-queries.js';
 
-export const SOURCE_RETENTION_CLOSURE_ROUNDS = 4;
+export { SOURCE_RETENTION_CLOSURE_ROUNDS } from './source-version-queries.js';
 
-type Category = 'optional' | 'required' | 'speech';
 export interface VersionKey {
   actorId: string;
   kind: string;
@@ -59,7 +60,7 @@ export interface SourceVersionContext {
 }
 export interface SourceVersionPreparation {
   /** Exact current headers immediately before these mutations, including pending rows. */
-  before: Pick<RetentionMetadataView, 'get'>;
+  before: { get(table: RetentionTable, id: string): RetentionRow | undefined };
   actorIds?: readonly string[];
   /** Selected original bodies already hydrated by account retirement. */
   previous?: ReadonlyMap<string, ReadonlyMap<string, unknown>>;
@@ -203,8 +204,6 @@ const zero = () => ({
   required: { bytes: 0, count: 0 },
   speech: { bytes: 0, count: 0 },
 });
-export const sourceVersionPriority = (category: Category) =>
-  category === 'required' ? 2 : category === 'speech' ? 1 : 0;
 export function sourceVersionPreparationNeeded(
   before: Pick<WorldState, 'memories' | 'experience'> | undefined,
   after: WorldState,
@@ -276,7 +275,7 @@ export async function prepareSourceVersionPlan(
     actorId: string;
     kind: keyof typeof tables;
     recordId: string;
-    prior: ReturnType<RetentionMetadataView['get']>;
+    prior: RetentionRow | undefined;
     row?: RowChange;
     next?: ExperienceEntry;
     nextMetadata?: AccountRetentionMetadata;

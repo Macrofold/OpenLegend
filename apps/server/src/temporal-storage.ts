@@ -1,16 +1,16 @@
 import { currentContactEntries, currentContactGet, entityGet } from '@open-legend/domain';
 import {
   receiptLookupBuckets,
-  decodeTemporalPageRow,
+  maximumTemporalPreparationRows,
+  MemoryRetentionError,
+  readTemporalPageRecord,
   temporalPageRecordId,
-  temporalPageValueReferences,
 } from './temporal-page-storage.js';
 import {
   selectedTemporalPolicy,
   captureTemporalReadContext,
   captureTemporalReceiptPrefix,
   receivedDirectoryContains,
-  canonicalJson,
   immutableDataSnapshot,
   appendedRecordCount,
   selectedAttentionPolicy,
@@ -41,24 +41,13 @@ import type { MemoryScope } from './memory-repository.js';
 import type { SourceVersionPlan } from './source-version-retention.js';
 
 export const maximumTemporalPreparationBytes = 4 * 1024 * 1024;
-export const maximumTemporalPreparationRows = 8192;
-export { temporalPageRecordId } from './temporal-page-storage.js';
-export { temporalPageValueReferences } from './temporal-page-storage.js';
+export {
+  maximumTemporalPreparationRows,
+  MemoryRetentionError,
+  readTemporalPageRecord,
+  temporalPageRecordId,
+} from './temporal-page-storage.js';
 
-/** This projection controls payload reclamation, so a malformed saved index
- * must refuse before it can erase a still-owned value. */
-export function readTemporalPageRecord(row: Record<string, unknown>): TemporalPage {
-  const chunk = decodeTemporalPageRow(row);
-  validateTemporalPageValueReferences(chunk, row['value_refs']);
-  return chunk;
-}
-export function validateTemporalPageValueReferences(
-  chunk: TemporalPage,
-  references: unknown,
-): void {
-  if (canonicalJson(references) !== canonicalJson(temporalPageValueReferences(chunk)))
-    throw new MemoryRetentionError('Temporal value ownership metadata disagrees with its receipt.');
-}
 export function temporalPageSourceId(actorId: string, recordId: string): string | undefined {
   const path = JSON.parse(recordId) as unknown;
   if (!Array.isArray(path) || typeof path.at(-1) !== 'string') return;
@@ -308,10 +297,6 @@ export function* retentionDueActors(world: WorldState): Generator<string> {
 }
 export function retentionNeedsPreparation(world: WorldState): boolean {
   return !retentionDueActors(world).next().done;
-}
-
-export class MemoryRetentionError extends Error {
-  override readonly name = 'MemoryRetentionError';
 }
 
 /** Read metadata before bodies. The caller retains the same authority/privacy

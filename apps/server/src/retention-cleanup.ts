@@ -14,13 +14,10 @@ import {
 import type { SavedWorld } from './saved-world.js';
 import type { SqlDatabase } from './sql-database.js';
 import type { RetentionMetadataView } from './retention-metadata.js';
-import { maximumTemporalPreparationRows } from './temporal-storage.js';
+import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-metadata-queries.js';
 
 type Support = NonNullable<TemporalActorHistory['supports']>[string];
-export const SUPPORT_MEMBERSHIP_PREPARATION = Object.freeze({
-  bytes: 4 * 1024 * 1024,
-  rows: maximumTemporalPreparationRows,
-});
+export { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-metadata-queries.js';
 export interface SupportCleanupGroup {
   actorId: string;
   candidates: Array<{ capsule: Support; aliases: string[] }>;
