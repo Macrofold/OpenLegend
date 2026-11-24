@@ -730,6 +730,11 @@ impl DecisionDispatch {
         }
         result?;
         let value = observation.ok_or(CallFailure::Invalid)?.value;
+        // Completing accounting preserves the provider result without
+        // extending the original deadline for delivering its value.
+        if value.is_ok() && Instant::now() >= deadline {
+            return Err(CallFailure::Stale("decision-deadline").at("response-delivery"));
+        }
         // A language reply can report uncertain execution without an answer.
         // Embedding observations also use this flag when only pricing is unknown.
         if route != crate::provider_transport::ProviderRoute::Embedding

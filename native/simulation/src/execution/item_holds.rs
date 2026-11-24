@@ -96,13 +96,17 @@ impl CoreMutation<'_> {
         Ok(())
     }
 
-    /// The prepared craft owns both the kept tool and its already staged
-    /// input spend. The original command checkpoint rolls back either.
-    pub(crate) fn reserve_craft_tool(
-        &mut self,
-        actor: &str,
-        action: &Action,
-    ) -> Result<(), ExecutionError> {
+    /// Claim the installed craft's exact kept tool before preparing the input
+    /// debit. The original command checkpoint rolls back both if refused.
+    pub(crate) fn reserve_craft_tool(&mut self, actor: &str) -> Result<(), ExecutionError> {
+        let physical = &self.state.physical;
+        let action = physical
+            .entities
+            .get(actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.is_manufacturing())
+            .ok_or(ExecutionError::Invariant)?;
         let Some(tools) = action.manufacture_tools.as_deref() else {
             return Err(ExecutionError::Invariant);
         };
@@ -111,7 +115,6 @@ impl CoreMutation<'_> {
             [tool] => tool,
             _ => return Err(ExecutionError::Invariant),
         };
-        let physical = &self.state.physical;
         let lot = physical
             .entities
             .get(&tool.item_id)

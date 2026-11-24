@@ -49,7 +49,7 @@ impl CommandCursor {
             ToolRequest::Exact(tools.as_ref()),
             &self.budget,
         )?;
-        let claims = match stock {
+        let mut claims = match stock {
             MaterialChoice::Available(stock) => stock,
             MaterialChoice::MissingTool => {
                 return self.refuse_craft(
@@ -66,12 +66,6 @@ impl CommandCursor {
                 return self.refuse_craft("missing-material", reason);
             }
         };
-        let Some(debits) = core.plan_owned_debits(&envelope.actor_id, &claims.amounts)? else {
-            return self.refuse_craft(
-                "missing-material",
-                "The required materials are no longer available.".into(),
-            );
-        };
         self.action_storage = Some(self.budget.reserve(
             512 + envelope.id.len()
                 + recipe_id.len()
@@ -84,9 +78,9 @@ impl CommandCursor {
             method.pin.clone(),
             method.work_seconds,
             method.totals.clone(),
-            claims.tool,
+            claims.tool.take(),
         ));
-        self.production_debits = Some(debits);
+        self.craft_stock = Some(claims);
         self.phase = Phase::Prepared;
         Ok(())
     }
@@ -167,27 +161,41 @@ impl CommandCursor {
         &mut self,
         core: &mut CoreMutation<'_>,
         actor: &str,
-        action: &Action,
+        action_id: &str,
     ) -> Result<bool, ExecutionError> {
         let installed = core.state.installed.clone();
+        let action = core
+            .state
+            .physical
+            .entities
+            .get(actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?;
         let method =
             manufacturing::current(&installed.retained, action).ok_or(ExecutionError::Invariant)?;
-        let debits = self
-            .production_debits
-            .take()
-            .ok_or(ExecutionError::Invariant)?;
-        // The command's original candidate checkpoint rolls back both the
-        // record and every prior claim if the checked result cannot fit.
-        core.record_owned_debit_sources(actor, &action.id, &debits)?;
-        if !manufacturing::finish_fits(core, method, actor, &action.id, &self.budget)? {
+        let stock = self.craft_stock.take().ok_or(ExecutionError::Invariant)?;
+        // The replaced action's holds are already released in this candidate.
+        // Include the new tool claim in the exact debit and inventory revisions.
+        // A refusal rolls the replacement and both actions' claims back together.
+        core.reserve_craft_tool(actor)?;
+        let Some(debits) = core.plan_owned_debits(actor, &stock.amounts)? else {
+            self.refuse_craft(
+                "missing-material",
+                "The required materials are no longer available.".into(),
+            )?;
+            return Ok(false);
+        };
+        core.record_owned_debit_sources(actor, action_id, &debits)?;
+        if !manufacturing::finish_fits(core, method, actor, action_id, &self.budget)? {
             self.refuse_craft(
                 "experience-capacity",
                 "This work will not fit in the action record.".into(),
             )?;
             return Ok(false);
         }
-        core.reserve_craft_tool(actor, action)?;
-        core.use_owned_lots(actor, &action.id, debits)?;
+        core.use_owned_lots(actor, action_id, debits)?;
         Ok(true)
     }
 

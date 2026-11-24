@@ -3,7 +3,7 @@
 
 use super::*;
 use crate::{
-    authority::{Authority, RequestScope},
+    authority::{Authority, AuthorizedScope, RequestScope},
     player_command::PlayerCommands,
     player_references::PlayerReferences,
     presence::Presence,
@@ -16,6 +16,7 @@ use std::sync::LazyLock;
 static PLACE_VIEW_EPOCH: LazyLock<uuid::Uuid> = LazyLock::new(uuid::Uuid::new_v4);
 
 pub(crate) struct ViewHostInput {
+    pub(super) audience: Arc<AuthorizedScope>,
     access: PlayerAccess,
     checkpoint: Option<CheckpointContext>,
     command_epoch: String,
@@ -46,7 +47,7 @@ pub(crate) fn checkpoint_context(
 /// check the same grant and operational revision again at disclosure.
 pub(crate) async fn capture_host(
     authority: &Authority,
-    grant: &AuthorizedScope,
+    audience: Arc<AuthorizedScope>,
     commands: &PlayerCommands,
     presence: &Presence,
     telemetry: ViewTelemetry,
@@ -54,7 +55,10 @@ pub(crate) async fn capture_host(
     god_mode: bool,
     budget: &ByteBudget,
 ) -> Result<ViewHostInput, ViewError> {
-    let scope = &grant.scope;
+    let scope = &audience.scope;
+    if !scope.embodied() {
+        return Err(ViewError::Changed);
+    }
     let capacity = 8192_usize
         .checked_add(
             16 * (scope.account_id.len()
@@ -66,12 +70,11 @@ pub(crate) async fn capture_host(
         .ok_or(ViewError::Capacity)?;
     let custody = budget.reserve(capacity).map_err(|_| ViewError::Capacity)?;
     let access = authority
-        .view_access(grant)
+        .view_access(&audience)
         .map_err(|problem| ViewError::World(problem.into()))?;
     let key = scope.key().map_err(ViewError::Encoding)?;
-    let private = scope.recovery_fields();
     let private_draft_scope = sha256_hex(
-        json_record(&private)
+        json_record(&scope.recovery_fields())
             .map_err(ViewError::Encoding)?
             .as_bytes(),
     );
@@ -120,22 +123,13 @@ pub(crate) async fn capture_host(
         telemetry,
         narrator,
         custody,
+        audience,
     })
 }
 
 impl ViewHostInput {
     pub(super) fn controlling(&self) -> bool {
         self.access.controlling
-    }
-    pub(super) fn matches(
-        &self,
-        scope: &crate::authority::RequestScope,
-    ) -> Result<bool, ViewError> {
-        Ok(scope.embodied()
-            && scope.key().map_err(ViewError::Encoding)? == self.access.scope
-            && scope.actor_id == self.access.actor_id
-            && scope.account_id == self.access.account_id
-            && scope.control_generation == self.access.control_generation)
     }
     pub(super) fn assemble(
         self,

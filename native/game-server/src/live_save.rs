@@ -795,6 +795,9 @@ impl LiveSaves {
                 memory_writes.push(memories.clone());
             }
         }
+        // Receipt recovery can inspect the pending queue independently while
+        // the world turn prepares history and recall for this owned prefix.
+        drop(pending);
         let eligibility = session.capture_save_history_cuts(through, &histories)?;
         let (recall, recall_hard_bytes) = session.with_ordinary_recall(through, |read| {
             let hard_bytes = i64::try_from(read.hard_bytes).map_err(|_| StoreError::Capacity)?;

@@ -30,6 +30,7 @@ Product preparation is complete. Runtime evidence is recorded separately below; 
 - [x] Count actual eligible released shots once, including misses, with improvement applying only to later shots.
 - [x] Deliver the real inert-target route with one-shot selection, material use, actual result, occupied/invalid refusal and selected finish-or-cancel behavior.
 - [x] Show scoped useful outcomes and inspectable progress through existing character/action surfaces; qualify the complete independent journey.
+- [ ] Restore handling and practice credit for ordinary Rust sling releases. The inert target uses the installed handling definition and records credit at release. Ordinary Shoot and Hunt release through the same projectile owner but use the weapon's base accuracy and omit that credit. Share the installed handling lookup and committed-release accounting while preserving each action's own target requirements. Verify hits and misses, interruption before release, a mix of hunting and inert-target shots, the next shot's learned handling, exact receipt retry and cold continuation. [Authored rule](../worlds/base/practical-competence.md#what-earns-the-improvement).
 
 ## PC04 — Voluntary coaching
 

@@ -80,7 +80,11 @@ impl Views {
         }))
     }
 
-    async fn prepare(&self, tab: &Tab) -> Result<ViewAttempt, ViewError> {
+    async fn prepare(
+        &self,
+        tab: &Tab,
+        original: Option<&crate::authority::RequestScope>,
+    ) -> Result<ViewAttempt, ViewError> {
         openlegend_simulation::profile_body!(VIEW, {
             let _admitted = self
                 .routes
@@ -106,6 +110,11 @@ impl Views {
             if scope.scope.world_id != self.routes.expected_world {
                 return Err(world_access(AccessError::Changed));
             }
+            // A blocked stream can miss the grant-change fence while it is
+            // active. Rebinding its token must not attach a new audience to it.
+            if original.is_some_and(|original| !original.same_view_connection(&scope.scope)) {
+                return Err(world_access(AccessError::Changed));
+            }
             if scope.scope.actor_id.is_empty() {
                 return Err(world_access(AccessError::Characterless));
             }
@@ -119,7 +128,7 @@ impl Views {
                 .map_err(ViewError::Store)?;
             let host = capture_host(
                 authority,
-                &scope,
+                scope.clone(),
                 &self.routes.commands,
                 &self.routes.presence,
                 telemetry,
@@ -131,7 +140,6 @@ impl Views {
             let mut view = prepare_view(
                 game,
                 game.view_policy().clone(),
-                scope.clone(),
                 self.routes.references.clone(),
                 &self.routes.inputs,
                 &self.routes.commands,
@@ -172,7 +180,7 @@ impl Views {
             if refusal.busy() || retry_access(&refusal) {
                 tokio::time::sleep(VIEW_CADENCE).await;
             }
-            let attempt = match self.prepare(tab).await {
+            let attempt = match self.prepare(tab, None).await {
                 Err(error) if error.changed() || error.busy() || retry_access(&error) => {
                     refusal = error;
                     continue;
@@ -384,10 +392,10 @@ async fn events(
     }
     let prepare: PrepareView = {
         let views = views.clone();
-        Arc::new(move || {
+        Arc::new(move |original| {
             let views = views.clone();
             let tab = tab.clone();
-            Box::pin(async move { views.prepare(&tab).await })
+            Box::pin(async move { views.prepare(&tab, Some(&original.scope)).await })
         })
     };
     let authority = &views.routes.authority;

@@ -72,6 +72,7 @@ struct Terminal {
     sight: Option<SightBatch>,
     injury: Option<HealthChangeCursor>,
     before: Option<f64>,
+    after: f64,
     loss: f64,
     raw_injury: f64,
     prevented_injury: f64,
@@ -403,6 +404,7 @@ impl Terminal {
                 sight: None,
                 injury: None,
                 before: None,
+                after: 0.0,
                 loss: 0.0,
                 raw_injury: 0.0,
                 prevented_injury: 0.0,
@@ -601,8 +603,8 @@ impl Terminal {
                         .and_then(|id| core.state.physical.entities.get(id))
                         .and_then(|entry| entry.actor.as_ref())
                         .map_or(0.0, |actor| actor.health);
-                    self.loss =
-                        (self.before.take().ok_or(ExecutionError::Invariant)? - current).max(0.0);
+                    self.loss = (self.before.ok_or(ExecutionError::Invariant)? - current).max(0.0);
+                    self.after = current;
                     self.injury = None;
                     self.phase = Phase::Physical;
                     continue;
@@ -707,6 +709,32 @@ impl Terminal {
                         ("damage", number(self.loss)),
                         ("semanticTrigger", EventScalar::Boolean(true)),
                     ]));
+                    if let Some(before) = self.before {
+                        // The occurrence owner filters these exact values to the
+                        // struck actor. An observed strike need not expose health.
+                        fields.extend(
+                            [
+                                ("rawInjury", self.raw_injury),
+                                ("preventedInjury", self.prevented_injury),
+                                ("healthBefore", before),
+                                ("healthAfter", self.after),
+                            ]
+                            .into_iter()
+                            .map(|(key, value)| (key.into(), number(value))),
+                        );
+                        if let Some(combat) = installed
+                            .body_policy
+                            .as_ref()
+                            .and_then(|body| body.value().combat.as_ref())
+                        {
+                            fields.insert(
+                                "importance".into(),
+                                number(combat.impact_attention.importance),
+                            );
+                            fields
+                                .insert("urgency".into(), number(combat.impact_attention.urgency));
+                        }
+                    }
                     let clause = if self.hit {
                         &words.contact_hit
                     } else {
@@ -772,6 +800,10 @@ impl Terminal {
                     }
                     if let Some(life) = self.body_life {
                         fields.insert("contactLife".into(), number(life as f64));
+                    }
+                    if let Some(before) = self.before {
+                        fields.insert("healthBefore".into(), number(before));
+                        fields.insert("healthAfter".into(), number(self.after));
                     }
                     EventEmissionIntent {
                         event_type: words.projectile_ended.clone(),

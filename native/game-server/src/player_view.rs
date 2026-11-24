@@ -2,7 +2,6 @@
 //! HTTP owner can hand the selected view or patch to a current stream.
 
 use crate::{
-    authority::AuthorizedScope,
     boot::CurrentServer,
     live_save::LiveSaves,
     player_events::{PreparedPlayerEvents, SpeechReply, prepare as prepare_events},
@@ -333,17 +332,14 @@ struct ControlCommand {
 pub(crate) async fn prepare_view(
     game: &CurrentServer,
     policy: Arc<PlayerViewPolicy>,
-    audience: Arc<AuthorizedScope>,
     references: Arc<ReferenceIssuer>,
     inputs: &WorldInputs,
     commands: &crate::player_command::PlayerCommands,
     saves: Arc<LiveSaves>,
     mut host: ViewHostInput,
 ) -> Result<PreparedPlayerView, ViewError> {
-    let scope = Arc::new(audience.scope.clone());
-    if !host.matches(&scope)? {
-        return Err(ViewError::Changed);
-    }
+    let audience = Arc::clone(&host.audience);
+    let scope = &audience.scope;
     let (read, (own, input_facts, revision, save_failed, can_review_attack)) = game
         .world
         .capture_player(
@@ -353,7 +349,7 @@ pub(crate) async fn prepare_view(
             {
                 let policy = Arc::clone(&policy);
                 let references = Arc::clone(&references);
-                let scope = Arc::clone(&scope);
+                let audience = Arc::clone(&audience);
                 move |facts, budget| {
                     // Sample the notice before its save status. A fault that
                     // arrives later must still wake the stream for a new view.
@@ -368,7 +364,7 @@ pub(crate) async fn prepare_view(
                         .is_some_and(|execution| execution.ready && !execution.release_requested
                             && execution.assessment.is_none());
                     let projected = (|| {
-                        let scoped = references.scoped(&scope)?;
+                        let scoped = references.scoped(&audience.scope)?;
                         prepare_self(facts, &policy.scene, &scoped, false, false, budget)
                     })();
                     Ok((projected, input_facts, revision, save_failed, can_review_attack))
@@ -397,14 +393,16 @@ pub(crate) async fn prepare_view(
         );
     }
     let attack_review = if can_review_attack && host.controlling() && !read.clock().paused {
-        commands.pending_attack_review(&scope).map_err(ViewError::World)?
+        commands
+            .pending_attack_review(scope)
+            .map_err(ViewError::World)?
     } else {
         None
     };
     let input_scope = if host.controlling() {
         Some(
             inputs
-                .for_view(audience, input_facts, read.clock().paused)
+                .for_view(Arc::clone(&audience), input_facts, read.clock().paused)
                 .map_err(|error| ViewError::World(WorldError::Access(error)))?,
         )
     } else {
@@ -415,6 +413,7 @@ pub(crate) async fn prepare_view(
     game.host
         .compute(move || {
             let mut read = read;
+            let scope = &audience.scope;
             if let Some(queries) = read.control_queries() {
                 let (answer, custody) = spatial
                     .compute(queries, &budget)
@@ -423,7 +422,7 @@ pub(crate) async fn prepare_view(
                 read.finish_controls_direct(answer, custody, &budget)
                     .map_err(runtime)?;
             }
-            let scoped = references.scoped(&scope).map_err(ViewError::Encoding)?;
+            let scoped = references.scoped(scope).map_err(ViewError::Encoding)?;
             let (mut host, narrator) =
                 host.assemble(revision, save_failed, &read, &policy, &scoped)?;
             if let Some(mut banner) = narrator {

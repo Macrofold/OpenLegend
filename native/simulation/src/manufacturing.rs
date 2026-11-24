@@ -7,7 +7,7 @@ use crate::host::{
 };
 use crate::install::{InstallError, ItemDefinitionRead, RetainedMap};
 use crate::simulation::{PhysicalState, SimulationState};
-use crate::state::{Action, Yield};
+use crate::state::{Action, Entity, Yield};
 use crate::text::JsText;
 use crate::values::{DefinitionPin, deserialize_safe_integer, is_safe_record_id};
 use indexmap::IndexMap;
@@ -725,7 +725,8 @@ pub(crate) enum MaterialChoice<'a> {
 }
 
 /// Prepare only this method's materials from actual accessible inventory.
-/// Select exact lots in stable object order and buy no outputs or IDs.
+/// Select exact lots in stable object order against the holds that will remain
+/// after replacing the actor's current action. Reserve no items or IDs here.
 pub(crate) fn materials<'a>(
     state: &SimulationState,
     actor: &str,
@@ -733,8 +734,11 @@ pub(crate) fn materials<'a>(
     request: ToolRequest<'_>,
     budget: &ByteBudget,
 ) -> Result<MaterialChoice<'a>, ExecutionError> {
-    let installed = &state.installed;
-    let retained = &installed.retained;
+    let physical = &state.physical;
+    let owner = physical
+        .entities
+        .get(actor)
+        .ok_or(ExecutionError::MissingActor)?;
     let role = method.retained_tool.as_ref();
     let exact = match (role, request) {
         (_, ToolRequest::Offer) | (None, ToolRequest::Exact(None)) => None,
@@ -747,41 +751,49 @@ pub(crate) fn materials<'a>(
         _ => return Ok(MaterialChoice::MissingTool),
     };
     let mut chosen: Option<(&str, &DefinitionPin)> = None;
-    let mut storage =
-        budget.reserve(size_of::<Vec<(&str, u64)>>() * method.totals.len() + size_of::<Stock>())?;
-    let mut lots = vec![Vec::<(&str, u64)>::new(); method.totals.len()];
-    state.inventory.visit_owned(
-        &state.physical,
-        retained,
-        actor,
-        actor,
-        &mut |item| {
-            if let Some(role) = role
-                && item.available_quantity >= role.quantity
-                && exact.is_none_or(|id| id == item.id)
-                && let Some(pin) = role
-                    .allowed_definitions
+    let mut storage = budget
+        .reserve(size_of::<Vec<(&Entity, u64)>>() * method.totals.len() + size_of::<Stock>())?;
+    let mut lots = vec![Vec::<(&Entity, u64)>::new(); method.totals.len()];
+    state
+        .inventory
+        .visit_owned_until(&physical.entities, actor, actor, &mut |entity, _| {
+            let lot = entity.item.as_ref().ok_or(ExecutionError::Invariant)?;
+            let tool = role.and_then(|role| {
+                exact.is_none_or(|id| id == entity.id).then_some(())?;
+                role.allowed_definitions
                     .iter()
-                    .find(|pin| pin.id == item.definition_id)
-                && chosen
-                    .is_none_or(|(prior, _)| crate::encoding::js_string_cmp(item.id, prior).is_lt())
-            {
-                chosen = Some((item.id, pin));
-            }
-            if let Some(index) = method
+                    .find(|pin| *pin == &lot.definition_pin)
+                    .map(|pin| (role, pin))
+            });
+            let material = method
                 .totals
                 .iter()
-                .position(|total| total.definition_id == item.definition_id)
+                .position(|total| total.definition_id == lot.definition_pin.id);
+            if tool.is_none() && material.is_none() {
+                return Ok(false);
+            }
+            let held = physical
+                .holds
+                .quantity_after_replacement(&entity.id, owner, budget)?;
+            let available = lot.quantity.saturating_sub(held);
+            if let Some((role, pin)) = tool
+                && available >= role.quantity
+                && chosen.is_none_or(|(prior, _)| {
+                    crate::encoding::js_string_cmp(&entity.id, prior).is_lt()
+                })
             {
+                chosen = Some((&entity.id, pin));
+            }
+            if let Some(index) = material.filter(|_| available > 0) {
                 storage.resize(
                     storage
                         .bytes()
-                        .checked_add(4 * size_of::<(&str, u64)>())
+                        .checked_add(4 * size_of::<(&Entity, u64)>())
                         .ok_or(ExecutionError::Capacity)?,
                 )?;
-                lots[index].push((item.id, item.available_quantity));
+                lots[index].push((entity, held));
             }
-            Ok(())
+            Ok(false)
         },
     )?;
     let tool = match (role, chosen) {
@@ -807,25 +819,27 @@ pub(crate) fn materials<'a>(
     };
     let mut amounts = IndexMap::new();
     for (need, lots) in method.totals.iter().zip(&mut lots) {
-        lots.sort_by(|left, right| crate::encoding::js_string_cmp(left.0, right.0));
+        lots.sort_by(|left, right| crate::encoding::js_string_cmp(&left.0.id, &right.0.id));
         let mut remaining = need.quantity;
-        for (id, free) in lots.iter() {
+        for &(entity, held) in lots.iter() {
             let keep = tool
                 .as_ref()
-                .filter(|tool| tool.item_id == *id)
+                .filter(|tool| tool.item_id == entity.id)
                 .map_or(0, |tool| tool.quantity);
-            let amount = remaining.min(free.saturating_sub(keep));
-            if amount > 0 {
+            let held = held.saturating_add(keep);
+            let lot = entity.item.as_ref().ok_or(ExecutionError::Invariant)?;
+            let amount = remaining.min(lot.quantity.saturating_sub(held));
+            if crate::execution::can_debit_lot_after_hold(state, entity, amount, held) {
                 storage.resize(
                     storage
                         .bytes()
                         .checked_add(
-                            id.len()
+                            entity.id.len()
                                 + map_storage::<String, u64>(1).ok_or(ExecutionError::Capacity)?,
                         )
                         .ok_or(ExecutionError::Capacity)?,
                 )?;
-                amounts.insert((*id).into(), amount);
+                amounts.insert(entity.id.clone(), amount);
                 remaining -= amount;
             }
             if remaining == 0 {
@@ -836,6 +850,14 @@ pub(crate) fn materials<'a>(
             return Ok(MaterialChoice::Missing(need));
         }
     }
+    drop(lots);
+    storage.resize(
+        amounts
+            .heap_bytes()
+            .and_then(|bytes| bytes.checked_add(tool.heap_bytes()?))
+            .and_then(|bytes| bytes.checked_add(size_of::<Stock>()))
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
     Ok(MaterialChoice::Available(Stock {
         _storage: storage,
         amounts,

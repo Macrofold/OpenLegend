@@ -121,10 +121,16 @@ impl RequestScope {
         self.audience == Audience::Embodied
     }
 
+    /// A player stream may follow control changes for its original audience.
+    /// A new session, grant, character or timeline needs a fresh connection.
+    pub(crate) fn same_view_connection(&self, next: &Self) -> bool {
+        self.connection_id == next.connection_id && self.recovery_fields() == next.recovery_fields()
+    }
+
     /// The existing private draft and command-recovery identity excludes page
     /// and control changes. Neither digest provides admission or permission.
-    pub(crate) fn recovery_fields(&self) -> impl Serialize + '_ {
-        #[derive(Serialize)]
+    pub(crate) fn recovery_fields(&self) -> impl Serialize + Eq + '_ {
+        #[derive(Eq, PartialEq, Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Scope<'a> {
             account_id: &'a str,

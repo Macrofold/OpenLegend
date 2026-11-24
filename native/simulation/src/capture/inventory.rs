@@ -105,7 +105,18 @@ pub(super) fn capture<'a>(
                     &mut read.custody,
                 )?;
                 if reads_recipes {
-                    let quantity = item.available_quantity;
+                    // Starting another craft replaces current work. The recipe
+                    // counts may use that work's released holds; the inventory
+                    // and other action reads above still need free stock now.
+                    let quantity = if item.available_quantity == item.quantity {
+                        item.quantity
+                    } else {
+                        let held = state
+                            .physical
+                            .holds
+                            .quantity_after_replacement(item.id, actor, budget)?;
+                        item.quantity.saturating_sub(held)
+                    };
                     if let Some(total) = read.craft_stock.get_mut(item.definition_id) {
                         *total = total
                             .saturating_add(quantity)

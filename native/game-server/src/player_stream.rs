@@ -35,7 +35,7 @@ pub(crate) struct ViewAttempt {
 }
 
 pub(crate) type Preparation = Pin<Box<dyn Future<Output = Result<ViewAttempt, ViewError>> + Send>>;
-pub(crate) type PrepareView = Arc<dyn Fn() -> Preparation + Send + Sync>;
+pub(crate) type PrepareView = Arc<dyn Fn(Arc<AuthorizedScope>) -> Preparation + Send + Sync>;
 
 type NextFrame = Pin<Box<dyn Future<Output = Next> + Send>>;
 
@@ -105,6 +105,7 @@ impl PlayerStream {
         let after = self.after;
         let heartbeat = self.heartbeat;
         let prepare = self.prepare.clone();
+        let scope = self.scope.clone();
         let world = self.world.clone();
         let first = self.first.take();
         let covered = self.covered_revision.filter(|_| !self.fresh_attempt);
@@ -125,7 +126,7 @@ impl PlayerStream {
                             return Next::Stop;
                         }
                         sleep_until(after).await;
-                        match prepare().await {
+                        match prepare(scope).await {
                             Ok(attempt) => attempt,
                             Err(error) => return Next::View(Err(error)),
                         }

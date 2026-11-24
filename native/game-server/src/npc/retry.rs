@@ -237,10 +237,19 @@ impl Director {
                 },
                 budget,
             )?;
+            let authority = self.authority.clone();
+            let selected = retry.scope.clone();
             if !self
                 .game
                 .store
-                .admit_conversation_retry(job.clone(), stopped.clone())
+                .admit_conversation_retry(job.clone(), stopped.clone(), move || {
+                    authority
+                        .current(&selected, Capability::Play, true, |_, _| ())
+                        .map_err(|error| match error {
+                            AccessError::Availability => StoreError::WriterUnavailable,
+                            _ => StoreError::StaleCut,
+                        })
+                })
                 .await
                 .map_err(WorldError::Commit)?
             {

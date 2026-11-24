@@ -2,7 +2,10 @@
 //! The pending prefix owns initial admission and final gameplay application.
 
 use super::{CommitError, Store, StoreError, StoreResult, read::admitted_query};
-use crate::{authority::RequestScope, player_events::SpeechReplyStatus};
+use crate::{
+    authority::{RequestScope, assert_saved_grant},
+    player_events::SpeechReplyStatus,
+};
 use indexmap::IndexMap;
 use openlegend_simulation::{
     encoding::{json_record, json_record_len, json_tree_allocation_bound},
@@ -216,10 +219,12 @@ impl Store {
     /// An explicit retry can supersede only the latest failed attempt for
     /// this exact speech and timeline. Keep the test and the write in one
     /// transaction even though the resident slot already orders local work.
+    /// Recheck live authority after the write has returned and can still roll back.
     pub(crate) async fn admit_conversation_retry(
         self: &Arc<Self>,
         record: Arc<AdmittedJob>,
         stopped: tokio::sync::watch::Receiver<bool>,
+        authorize: impl FnOnce() -> StoreResult<()> + Send + 'static,
     ) -> Result<bool, CommitError> {
         if *stopped.borrow() {
             return Ok(false);
@@ -231,7 +236,7 @@ impl Store {
                     return Err(StoreError::Cancelled);
                 }
                 let job = &record.job;
-                let scope = job.authority.as_ref().ok_or(StoreError::InvalidRecord)?;
+                let selected = job.authority.as_ref().ok_or(StoreError::InvalidRecord)?;
                 let original = job.retry_of.as_deref().ok_or(StoreError::InvalidRecord)?;
                 let speech = job
                     .player_speech_event_id
@@ -239,10 +244,10 @@ impl Store {
                     .ok_or(StoreError::InvalidRecord)?;
                 let key_bytes = [
                     speech,
-                    &scope.account_id,
-                    &scope.actor_id,
-                    &scope.world_id,
-                    &scope.timeline_id,
+                    &selected.account_id,
+                    &selected.actor_id,
+                    &selected.world_id,
+                    &selected.timeline_id,
                 ]
                 .into_iter()
                 .map(str::len)
@@ -252,7 +257,7 @@ impl Store {
                     .reserve(512 + key_bytes * 12)
                     .map_err(|_| StoreError::Capacity)?;
                 let speech = json_record(speech).map_err(|_| StoreError::InvalidRecord)?;
-                let scope = JobAuthority::encode(scope)?;
+                let scope = JobAuthority::encode(selected)?;
                 let eligible: bool = tx
                     .query_one(
                         "SELECT COALESCE((SELECT id=$2 AND selection->>'status'='failed' FROM jobs \
@@ -277,6 +282,7 @@ impl Store {
                 if !eligible {
                     return Ok(false);
                 }
+                assert_saved_grant(tx, selected, "play").await?;
                 if *stopped.borrow() {
                     return Err(StoreError::Cancelled);
                 }
@@ -286,6 +292,7 @@ impl Store {
                 if *stopped.borrow() {
                     return Err(StoreError::Cancelled);
                 }
+                authorize()?;
                 Ok(true)
             })
         })

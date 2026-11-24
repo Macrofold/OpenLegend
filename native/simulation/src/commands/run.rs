@@ -237,6 +237,7 @@ pub(crate) struct CommandCursor {
     resolved: Option<SurfacePoint>,
     action: Option<Action>,
     action_storage: Option<ByteReservation>,
+    craft_stock: Option<crate::manufacturing::Stock>,
     production_debits: Option<crate::execution::OwnedDebits>,
     activity_id: Option<String>,
     interrupt_at: usize,
@@ -430,6 +431,7 @@ impl CommandCursor {
             resolved: None,
             action: None,
             action_storage: None,
+            craft_stock: None,
             production_debits: None,
             activity_id: None,
             interrupt_at: 0,
@@ -2072,11 +2074,9 @@ impl CommandCursor {
                     let action_id = action.id.clone();
                     let place_hearth = action.is_placing_hearth();
                     let projectile = action.is_projectile_action();
+                    let manufacturing = action.is_manufacturing();
                     let guard_heading = action.guard.as_ref().map(|guard| guard.facing);
                     let evasion_repeat = action.evasion.as_ref().map(|evasion| evasion.repeat_at);
-                    if action.is_manufacturing() && !self.admit_craft_record(core, &actor_id, &action)? {
-                        continue;
-                    }
                     if action.is_cooking() && !self.admit_cook_record(core, &actor_id, &action)? {
                         continue;
                     }
@@ -2094,6 +2094,9 @@ impl CommandCursor {
                             behavior: Some(false),
                         },
                     )?;
+                    if manufacturing && !self.admit_craft_record(core, &actor_id, &action_id)? {
+                        continue;
+                    }
                     if guard_heading.is_some() && !self.equip_guard(core)? {
                         continue;
                     }

@@ -212,6 +212,8 @@ PW10 contributes only to AC08.1/8.2: the chosen camp activity uses the existing 
 
 PW03/PW10 add a concrete AC09.1/9.2/9.5 consumer: ordinary transfers and closed activity requests retain native scope/resource semantics without authoring during use. Two woven designs passed native craft/custody scenarios; injected director finite/watch choices passed existing response admission. Family descriptors and action/predicate adapters remain separate contracts. The complete text/menu/NPC/plan and live-preference matrix remains open ([PW03](parallel-batch-01-playable-week.md#pw03--craftable-containers-and-camp-supplies), [PW10](parallel-batch-01-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods)).
 
+AC09.1 includes the Rust Craft preview. Add the kept-tool facts from the selected recipe and move Craft's preview and start wording to the authored action display definition. Verify the player sees exactly which materials are spent and which tools are held through the signed preview and Craft callers. Actual stock and holds stay with the existing Craft owner.
+
 ### AC09.6 — Equipped contact strikes (implemented; acceptance partial)
 
 **October 15 source-audit gap:** the accepted [melee contract](../projects/embodied-survival-tech-design.md#timed-execution) consumes one saved random draw for every physically eligible strike. `kernel.ts` currently bypasses that draw for accuracy exactly one. Correct the guaranteed-accuracy edge and qualify the exact next random value across ordinary/guaranteed hits, misses, invalid range and same-version continuation; preserve one effect and recovery. Existing fixture hit/miss passes do not establish this case.
