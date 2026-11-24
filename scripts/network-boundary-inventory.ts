@@ -164,6 +164,8 @@ export const continuousBrowserPaths = new Set([
 export const dynamicModuleOwners: Readonly<Record<string, string>> = {
   'scripts/compare-world-survival.ts':
     'Loads exact selected local domain/spatial source paths for offline comparison.',
+  'scripts/performance/workspace-bindings.ts':
+    'Verifies the managed case’s declared local workspace package bindings without loading them.',
 };
 
 /** Generated cloud source is checked against its canonical source by the required
