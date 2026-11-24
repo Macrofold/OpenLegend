@@ -380,6 +380,7 @@ impl NpcCandidateCursor {
                 "follow" => NativeCommand::Follow {
                     envelope,
                     target_id: target()?,
+                    target_life: None,
                     distance: None,
                     parameters: crate::movement::follow::FollowParameters {
                         relation: None, on_lost: None, until: None, complete: None,

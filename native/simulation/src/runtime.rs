@@ -62,6 +62,7 @@ pub use maintenance::{
     RuntimeReflectionOpportunity, RuntimeReflectionTicket,
 };
 mod npc;
+pub(crate) use npc::remembered_places::RememberedPlaces;
 mod npc_intake;
 pub use npc_intake::{
     NpcQueueInputs, NpcScheduleCause, NpcScheduleFacts, NpcSchedulePopulation, NpcScheduleSources,

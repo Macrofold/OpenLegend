@@ -7,9 +7,15 @@ use std::mem::size_of;
 
 pub(crate) struct SuspensionPreparation {
     pub outcome: Option<Outcome>,
-    pub restart: Option<(usize, String)>,
+    pub(super) restart: Option<SuspendedStep>,
     pub storage: ByteReservation,
 }
+pub(super) struct SuspendedStep {
+    pub(super) index: usize,
+    pub(super) id: String,
+    pub(super) follow_target_life: Option<u64>,
+}
+
 pub(crate) enum ActionPauseRefusal {
     State,
     Attack,
@@ -35,7 +41,7 @@ pub(crate) fn action_pause_refusal(
     }
     // New action families must join their committed-work law before admission;
     // an unknown action cannot be guessed safely pausable by an offer reader.
-    if action.kind != "move" || action.has_unconverted_fields() {
+    if !(action.kind == "move" || action.is_following()) || action.has_unconverted_fields() {
         return Err(ExecutionError::UnsupportedFamily);
     }
     Ok(None)
@@ -143,7 +149,27 @@ pub(crate) fn prepare_suspension(
         if !crate::values::is_safe_record_id(&id) {
             prepared.outcome = Some(rules.pause_too_often.outcome(false));
         } else {
-            prepared.restart = Some((index, id));
+            let follow_target_life = actor
+                .action
+                .as_ref()
+                .filter(|action| action.is_following())
+                .map(|action| {
+                    let crate::commands::NativeCommand::Follow {
+                        target_id,
+                        target_life,
+                        ..
+                    } = &step.command else {
+                        return Err(ExecutionError::Invariant);
+                    };
+                    let life = action.target_life.ok_or(ExecutionError::Invariant)?;
+                    if action.target_id.as_ref() != Some(target_id)
+                        || target_life.is_some_and(|expected| expected != life)
+                    {
+                        return Err(ExecutionError::Invariant);
+                    }
+                    Ok(life)
+                }).transpose()?;
+            prepared.restart = Some(SuspendedStep { index, id, follow_target_life });
         }
     }
     Ok(prepared)

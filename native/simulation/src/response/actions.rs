@@ -468,6 +468,8 @@ pub(super) fn prepare(
         .ok_or(ExecutionError::Invariant)?;
     let invalid = (kind != "invoke" && truthy(data.get("invocation")))
         || (kind != "proposal" && truthy(data.get("slots")))
+        || (truthy(data.get("rememberedPlaceId"))
+            && (kind != "proposal" || truthy(data.get("targetEntityId")) || truthy(data.get("slots"))))
         || match kind {
             "invoke" => {
                 !truthy(data.get("invocation"))
@@ -708,6 +710,16 @@ pub(super) fn prepare(
                     .into_parts(),
                 )));
             };
+            if let Some(place) = op.text("rememberedPlaceId").and_then(JsText::as_unicode)
+                && bindings.remembered_move_current(core.state, place, description).is_none()
+            {
+                return result(
+                    false,
+                    "stale-remembered-place",
+                    super::run::remembered_unavailable(),
+                    budget,
+                );
+            }
             if binding.manifest_revision != Some(core.state.installed.manifest.revision) {
                 return result(
                     false,

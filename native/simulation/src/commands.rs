@@ -328,6 +328,7 @@ pub(crate) enum NativeCommand {
     Follow {
         envelope: CommandEnvelope,
         target_id: String,
+        target_life: Option<u64>,
         distance: Option<f64>,
         parameters: crate::movement::follow::FollowParameters,
     },
@@ -572,6 +573,8 @@ fn follow_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
         #[serde(flatten)]
         headers: CommandHeaders,
         target_id: String,
+        #[serde(default, deserialize_with = "deserialize_present_safe_integer")]
+        target_life: Option<u64>,
         #[serde(default, deserialize_with = "deserialize_present_option")]
         distance: Option<f64>,
         #[serde(default, deserialize_with = "deserialize_present_option")]
@@ -592,6 +595,7 @@ fn follow_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     Ok(NativeCommand::Follow {
         envelope: input.headers.envelope(CommandEncoding::decode(raw)?),
         target_id: input.target_id,
+        target_life: input.target_life,
         distance: input.distance,
         parameters: crate::movement::follow::FollowParameters {
             relation: input.relation,
@@ -1109,9 +1113,30 @@ impl<'de> Deserialize<'de> for NativeCommand {
     }
 }
 impl NativeCommand {
-    /// Pausing changes the id at its actual existing property position.
-    pub(crate) fn restart_id(&mut self, id: String) -> Result<(), serde_json::Error> {
-        let encoding = self.envelope().encoding.edit(Some(&id), &[])?;
+    /// Bound the replacement id and the optional safe integer life pin. The
+    /// suspension caller adds this to the command's admitted edit workspace.
+    pub(crate) fn restart_added_bytes(
+        id_bytes: usize, follow_target_life: Option<u64>,
+    ) -> Option<usize> {
+        id_bytes.checked_add(if follow_target_life.is_some() {
+            ",\"targetLife\":".len() + 16
+        } else {
+            0
+        })
+    }
+
+    /// Pausing changes the id at its existing property position. A suspended
+    /// Follow keeps its original target's physical life alongside its deadline.
+    pub(crate) fn restart_id(
+        &mut self, id: String, follow_target_life: Option<u64>,
+    ) -> Result<(), serde_json::Error> {
+        let encoding = self.envelope().encoding.edit(Some(&id), &[], follow_target_life)?;
+        if let Some(life) = follow_target_life {
+            let Self::Follow { target_life, .. } = self else {
+                return Err(serde::ser::Error::custom("Only Follow restarts pin a physical life."));
+            };
+            *target_life = Some(life);
+        }
         let envelope = self.envelope_mut();
         envelope.encoding = encoding;
         envelope.id = id;
@@ -1256,7 +1281,7 @@ impl NativeCommand {
             let encoding = self
                 .envelope()
                 .encoding
-                .edit(None, &["humanInitiated", "combatHelpId", "cooperation"])?;
+                .edit(None, &["humanInitiated", "combatHelpId", "cooperation"], None)?;
             let envelope = value.envelope_mut();
             envelope.encoding = encoding;
             envelope.human_initiated = None;

@@ -58,7 +58,7 @@ pub(crate) struct PlanControlCursor {
     index: usize,
     ending: Option<Ending>,
     pending: Option<PendingActivityResult>,
-    restart: Option<(usize, String)>,
+    restart: Option<super::suspension::SuspendedStep>,
     refused: Option<Outcome>,
     previous_revision: Option<u64>,
     budget: ByteBudget,
@@ -579,7 +579,7 @@ impl PlanControlCursor {
                         let index = self
                             .restart
                             .as_ref()
-                            .map(|(i, _)| *i)
+                            .map(|step| step.index)
                             .ok_or(ExecutionError::Invariant)?;
                         let result = self.message(&rules.paused_step, false)?;
                         if self.ending(core, &action, result, Destination::Suspend(index))? {
@@ -590,7 +590,8 @@ impl PlanControlCursor {
                     }
                 }
                 Phase::SuspendRestart => {
-                    if let Some((index, restart)) = self.restart.take() {
+                    if let Some(restart) = self.restart.take() {
+                        let index = restart.index;
                         let step = self
                             .actor(core)?
                             .agency
@@ -604,24 +605,24 @@ impl PlanControlCursor {
                                 .checked_mul(2)
                                 .ok_or(ExecutionError::Capacity)?,
                         )?;
-                        self.reserve(
-                            step.command
-                                .source_edit_heap_bound(restart.len())
-                                .ok_or(ExecutionError::Capacity)?,
-                        )?;
+                        let edit_bytes = crate::commands::NativeCommand::restart_added_bytes(
+                            restart.id.len(), restart.follow_target_life,
+                        ).ok_or(ExecutionError::Capacity)?;
+                        self.reserve(step.command.source_edit_heap_bound(edit_bytes)
+                            .ok_or(ExecutionError::Capacity)?)?;
                         let mut archived = step.clone();
                         archived.status = StepStatus::Cancelled;
                         archived.outcome = Some(self.message(&rules.paused_restart, false)?);
                         let mut next = step.clone();
                         core.physical().reserve_plan_growth(
                             next.heap_bytes()
-                                .and_then(|bytes| bytes.checked_add(restart.len().checked_mul(2)?))
+                                .and_then(|bytes| bytes.checked_add(restart.id.len().checked_add(edit_bytes)?))
                                 .ok_or(ExecutionError::Capacity)?,
                         )?;
                         self.archive(core, std::slice::from_ref(&archived))?;
-                        next.id = restart.clone();
+                        next.id = restart.id.clone();
                         next.command
-                            .restart_id(restart)
+                            .restart_id(restart.id, restart.follow_target_life)
                             .map_err(|_| ExecutionError::Invariant)?;
                         next.status = StepStatus::Queued;
                         next.action_id = None;

@@ -149,11 +149,7 @@ impl PlanEditCursor {
                     .checked_mul(size_of::<PlanStep>())
                     .ok_or(ExecutionError::Capacity)?,
                 |bytes, command| {
-                    let target = match command {
-                        NativeCommand::Say { target_id, .. } => target_id.as_ref(),
-                        NativeCommand::StatusEffect { target_id, .. } => Some(target_id),
-                        _ => None,
-                    };
+                    let target = super::command_episode_subject(command);
                     let episode = target.and_then(|id| {
                         core.state
                             .reception
@@ -168,7 +164,7 @@ impl PlanEditCursor {
                         command.envelope().id.len(),
                         map_storage::<String, Option<String>>(usize::from(target.is_some()))
                             .ok_or(ExecutionError::Capacity)?,
-                        target.map_or(0, String::len),
+                        target.map_or(0, str::len),
                         episode.map_or(0, String::len),
                     ])
                     .ok_or(ExecutionError::Capacity)

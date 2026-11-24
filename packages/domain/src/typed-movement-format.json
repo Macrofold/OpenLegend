@@ -1,4 +1,8 @@
 {
+  "rememberedRequest": "Walk to where I last saw ",
+  "lastSeenPrefix": "Walk to where you last saw ",
+  "lastSeenStop": " This does not track it.",
+  "lastSeenUnavailable": "That remembered place changed or is no longer available.",
   "approachPrefix": "Walk near ",
   "approachSuffix": "'s current position; this does not follow later movement.",
   "walk": "Walk ",

@@ -195,7 +195,7 @@ fn valid_operation(value: &SqlCell) -> bool {
                     "description",
                     "mode",
                 ],
-                &["invocation", "slots"],
+                &["invocation", "slots", "rememberedPlaceId"],
             ) && get("kind")
                 .is_some_and(|v| one_of(v, &["known", "expression", "proposal", "invoke"]))
                 && get("mode").is_some_and(|v| one_of(v, &["enqueue", "replace", "interrupt"]))
@@ -205,6 +205,7 @@ fn valid_operation(value: &SqlCell) -> bool {
                     nullable_text,
                 )
                 && nullable(get("slots"), slots)
+                && nullable(get("rememberedPlaceId"), safe_id)
         }
         ResponseKind::Goal => {
             exact(

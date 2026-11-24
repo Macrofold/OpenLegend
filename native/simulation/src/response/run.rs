@@ -31,6 +31,7 @@ use std::sync::Arc;
 mod grounding;
 mod typed;
 pub(crate) use typed::{TypedActionAnswer, TypedActionRequest};
+pub(super) use typed::remembered_unavailable;
 use typed::{TypedAnswer, TypedGroundingCursor, TypedStep};
 
 pub(crate) enum ResponseAnswer {

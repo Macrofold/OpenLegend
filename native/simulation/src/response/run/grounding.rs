@@ -200,6 +200,10 @@ impl ResponseCursor {
                 break;
             }
             operations.push((index, position));
+            if op.text("rememberedPlaceId").is_some() {
+                // An explicit place must use its own guarded movement.
+                continue;
+            }
             let language = normalized.get(position).ok_or(ExecutionError::Invariant)?;
             if let Some((_, _, bound)) = seen.iter().find(|(prior, prior_position, _)| {
                 let prior_op = self

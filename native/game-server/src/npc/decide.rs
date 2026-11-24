@@ -351,6 +351,7 @@ pub(super) async fn run(
                         speaker: work.permit.clone(),
                         discovery: work.discovery(),
                         stage_capture: None,
+                        remembered_places: false,
                     },
                     work.cancellation.clone(),
                     decode_provider_bound(
@@ -614,16 +615,37 @@ pub(super) async fn run(
                     .present(&mut prepared.context.fields["receivedSituation"])
                     .map_err(|error| error.at("generation-preparation"))?;
             }
+            ensure_running(&work)?;
+            let remembered = if prepared.context.offers_remembered_places(game) {
+                let ticket = Arc::clone(&prepared.ticket);
+                match game.world
+                    .capture(move |session| session.prepare_npc_remembered_places(&ticket))
+                    .await
+                {
+                    Ok(()) => Some(prepared.ticket.as_ref()),
+                    // The optional catalogue has not been disclosed. The
+                    // original response keeps its normal checks and admission.
+                    Err(error) if error.is_admission_refusal() => None,
+                    Err(error) => return Err(prepare::binding_failure(error)
+                        .at("remembered-place-preparation")),
+                }
+            } else {
+                None
+            };
             let (response, schema) = prepared
                 .context
-                .render_response(game, &offered, include_actions, None)
+                .render_response(game, &offered, include_actions, None, remembered)
                 .map_err(|error| error.at("generation-preparation"))?;
             let reply_player = if prepared.addressed {
                 prepared.context.preview_player.as_ref()
             } else {
                 None
             };
-            let stage_proof = prepared.context.direct_stage_witness(&prepared.ticket, &offered, budget);
+            let stage_proof = if schema.discloses_remembered_places() {
+                None
+            } else {
+                prepared.context.direct_stage_witness(&prepared.ticket, &offered, budget)
+            };
             let (parsed, mut captured_stage) = generate(
                 game,
                 dispatch,
@@ -693,7 +715,7 @@ pub(super) async fn run(
                         )?;
                         let (mut response, schema) = prepared
                             .context
-                            .render_response(game, &offered, include_actions, Some(&answers))
+                            .render_response(game, &offered, include_actions, Some(&answers), None)
                             .map_err(|error| error.at("situation-query-preparation"))?;
                         response.append_received_evidence(&answers).map_err(generation_failure)?;
                         answers.bind(&mut binding)?;
@@ -880,6 +902,7 @@ async fn generate(
         });
     let macrofold = model.billing();
     let parse_budget = budget.clone();
+    let remembered_places = schema.discloses_remembered_places();
     let mut call = side(
         work,
         model,
@@ -901,6 +924,7 @@ async fn generate(
                 speaker: work.permit.clone(),
                 discovery: work.discovery(),
                 stage_capture: capture.clone(),
+                remembered_places,
             },
             work.cancellation.clone(),
             decode_provider_bound(macrofold, false, parse_budget.clone(), move |value| {
@@ -1050,6 +1074,7 @@ async fn recall_attention(
                 speaker: work.permit.clone(),
                 discovery: work.discovery(),
                 stage_capture: None,
+                remembered_places: false,
             },
             work.cancellation.clone(),
             decode_provider_bound(decision.billing(), true, budget.clone(), move |output| {
@@ -1143,6 +1168,7 @@ async fn action_attention(
                 speaker: work.permit.clone(),
                 discovery: work.discovery(),
                 stage_capture: None,
+                remembered_places: false,
             },
             work.cancellation.clone(),
             decode_provider_bound(decision.billing(), true, budget.clone(), move |output| {

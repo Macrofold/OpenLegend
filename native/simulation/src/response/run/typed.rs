@@ -4,6 +4,7 @@ use super::*;
 use crate::language::FreeTypedActionSyntax;
 mod answer;
 mod movement_display;
+pub(in crate::response) use movement_display::remembered_unavailable;
 mod names;
 
 #[derive(Clone, Serialize)]
@@ -80,6 +81,7 @@ struct Item {
     duplicate: Option<usize>,
     operation_id: String,
     target: Option<String>,
+    remembered: Option<String>,
     depends: Vec<String>,
     selected: Option<names::Selection>,
     description: JsText,
@@ -155,6 +157,7 @@ pub(super) struct TypedGroundingCursor {
     request: Option<TypedActionRequest>,
     name_request: Option<TypedActionRequest>,
     names: Option<names::Roster>,
+    places: Option<Arc<crate::runtime::RememberedPlaces>>,
     budget: ByteBudget,
     storage: Option<ByteReservation>,
 }
@@ -201,11 +204,18 @@ impl TypedGroundingCursor {
                 continue;
             }
             let language = normalized.get(position).ok_or(ExecutionError::Invariant)?;
-            let Some(syntax) = language.syntax() else {
-                continue;
-            };
             let description = op.text("description").ok_or(ExecutionError::Invariant)?;
             let slots = op.data.get("slots").filter(|slots| !slots.is_null());
+            let remembered = op.text("rememberedPlaceId").and_then(JsText::as_unicode);
+            let syntax = if let Some(selected) = remembered {
+                if provider != GroundingProvider::Local || bindings.remembered_move(selected, description).is_none() {
+                    continue;
+                }
+                &FreeTypedActionSyntax::RememberedPlace
+            } else {
+                let Some(syntax) = language.syntax() else { continue };
+                syntax
+            };
             if provider == GroundingProvider::Local {
                 let has_target = op.text("targetEntityId").is_some();
                 let exact = slots.is_none()
@@ -213,6 +223,7 @@ impl TypedGroundingCursor {
                         FreeTypedActionSyntax::Offset { .. }
                         | FreeTypedActionSyntax::DistanceNeeded => !has_target,
                         FreeTypedActionSyntax::NamedApproach { .. } => has_target,
+                        FreeTypedActionSyntax::RememberedPlace => !has_target,
                         _ => false,
                     };
                 if !exact {
@@ -227,6 +238,7 @@ impl TypedGroundingCursor {
                     .checked_add(op.local_id.len())
                     .and_then(|n| n.checked_add(description.heap_bytes()?))
                     .and_then(|n| n.checked_add(syntax.heap_bytes()?))
+                    .and_then(|n| n.checked_add(remembered.map_or(0, str::len)))
                     .and_then(|n| n.checked_add(slots.map_or(Some(0), HeapBytes::heap_bytes)?))
                     .and_then(|n| {
                         n.checked_add(
@@ -244,6 +256,7 @@ impl TypedGroundingCursor {
                     .get(prior.position)
                     .is_some_and(|prior| prior.normalized() == language.normalized())
                     && previous.data.get("targetEntityId") == op.data.get("targetEntityId")
+                    && previous.data.get("rememberedPlaceId") == op.data.get("rememberedPlaceId")
                     && previous.data.get("mode") == op.data.get("mode")
                     && super::grounding::same_slots(previous.data, op.data)
             });
@@ -256,6 +269,7 @@ impl TypedGroundingCursor {
                     .text("targetEntityId")
                     .and_then(JsText::as_unicode)
                     .map(str::to_owned),
+                remembered: remembered.map(str::to_owned),
                 depends: Vec::new(),
                 selected: None,
                 description: description.clone(),
@@ -279,6 +293,7 @@ impl TypedGroundingCursor {
             request: None,
             name_request: None,
             names: None,
+            places: bindings.native_guard().and_then(|native| native.remembered_places.clone()),
             budget: budget.clone(),
             storage: Some(storage),
         }))
@@ -414,6 +429,39 @@ impl TypedGroundingCursor {
         )?));
         Ok(())
     }
+    fn original_place(&self) -> Option<&crate::state::RememberedPlace> {
+        let item = &self.items[self.index];
+        self.places.as_ref()?.get(item.remembered.as_deref()?, &item.description)
+    }
+
+    fn prepare_remembered(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+    ) -> Result<(), ExecutionError> {
+        let selected = self.original_place().filter(|original| {
+            // Same actor/life and permission are checked by the response
+            // owner. Never replace the original point with later sight.
+            core.state.physical.entities.get(&self.actor)
+                .and_then(|entity| entity.actor.as_ref())
+                .is_some_and(|actor| crate::runtime::RememberedPlaces::entry_current(actor, original))
+        });
+        let Some(selected) = selected else {
+            let reason = movement_display::remembered_unavailable();
+            self.grow("blocked".len() + reason.len())?;
+            self.items[self.index].prepared = Some(Prepared::NamedRefused {
+                category: "blocked".into(),
+                reason: reason.into(),
+            });
+            self.index += 1;
+            return Ok(());
+        };
+        let (command, custody) = crate::commands::movement_destination(
+            &self.actor, &self.items[self.index].operation_id, &selected.point, &self.budget,
+        )?;
+        self.merge(custody)?;
+        self.begin_preview(core, command)
+    }
+
     fn finish_command(&mut self) -> Result<(), ExecutionError> {
         let item = &self.items[self.index];
         let destination = match item.command.as_ref().ok_or(ExecutionError::Invariant)? {
@@ -422,6 +470,8 @@ impl TypedGroundingCursor {
         };
         let label_bytes = match (&item.syntax, item.selected.as_ref()) {
             (FreeTypedActionSyntax::NamedApproach { label }, _) => label.heap_bytes(),
+            (FreeTypedActionSyntax::RememberedPlace, _) => self.original_place()
+                .ok_or(ExecutionError::Invariant)?.label.heap_bytes(),
             (_, Some(names::Selection::Body { ordinal })) => self
                 .names
                 .as_ref()
@@ -441,6 +491,12 @@ impl TypedGroundingCursor {
             .and_then(|n| n.checked_add(label_bytes))
             .ok_or(ExecutionError::Capacity)?;
         self.grow(bytes)?;
+        let remembered = if matches!(self.items[self.index].syntax, FreeTypedActionSyntax::RememberedPlace) {
+            let original = self.original_place().ok_or(ExecutionError::Invariant)?;
+            Some((original.label.clone(), original.at))
+        } else {
+            None
+        };
         let item = &mut self.items[self.index];
         let destination = match item.command.as_ref().ok_or(ExecutionError::Invariant)? {
             NativeCommand::Move { destination, .. } => destination.physical().clone(),
@@ -466,6 +522,10 @@ impl TypedGroundingCursor {
                         .clone(),
                     destination,
                 }
+            }
+            FreeTypedActionSyntax::RememberedPlace => {
+                let (label, at) = remembered.ok_or(ExecutionError::Invariant)?;
+                Prepared::LastSeen { label, at, still_seen: false, sim_time: self.at, destination }
             }
             FreeTypedActionSyntax::LastSeen { .. } => {
                 let Some(names::Selection::Place { ordinal }) = item.selected.as_ref() else {
@@ -609,6 +669,12 @@ impl TypedGroundingCursor {
         let mut results = Vec::with_capacity(count);
         for index in 0..count {
             let item = &self.items[index];
+            let transient_name = match item.prepared.as_ref() {
+                Some(Prepared::LastSeen { label, .. } | Prepared::Approach { label, .. })
+                    if label.as_unicode().is_none() =>
+                        label.storage_bytes().checked_mul(20).ok_or(ExecutionError::Capacity)?,
+                _ => 0,
+            };
             let bytes = item
                 .description
                 .storage_bytes()
@@ -617,6 +683,7 @@ impl TypedGroundingCursor {
                 .and_then(|bytes| bytes.checked_mul(3))
                 .and_then(|bytes| bytes.checked_add(map_storage::<String, SqlCell>(6)?))
                 .and_then(|bytes| bytes.checked_add(2048))
+                .and_then(|bytes| bytes.checked_add(transient_name))
                 .ok_or(ExecutionError::Capacity)?;
             self.grow(bytes)?;
             results.push(movement_display::render(&self.items[index], core)?);
@@ -753,6 +820,7 @@ impl TypedGroundingCursor {
         }
         self.items = Vec::new();
         self.request = None;
+        self.places = None;
         let mut storage = self
             .storage
             .take()
@@ -895,6 +963,8 @@ impl TypedGroundingCursor {
                 continue;
             }
             match &self.items[self.index].syntax {
+                FreeTypedActionSyntax::RememberedPlace => self.prepare_remembered(core)?,
+
                 FreeTypedActionSyntax::Stop { activity } => {
                     let current = core
                         .state

@@ -52,6 +52,7 @@ pub(crate) struct CallAuthority {
     pub speaker: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
     pub discovery: Option<Arc<crate::npc::discovery::DiscoveryDispatch>>,
     pub stage_capture: Option<Arc<DirectStageCapture>>,
+    pub remembered_places: bool,
 }
 
 pub(crate) struct ProviderObservation<T> {
@@ -226,7 +227,7 @@ impl ProviderDisclosure for CallAuthority {
                 return Err(CallFailure::Cancelled);
             }
             match turn
-                .disclose(&self.source, eligible_capture, |life| {
+                .disclose(&self.source, eligible_capture, self.remembered_places, |life| {
                     start();
                     if let Some((life, capture)) = life.zip(self.stage_capture.as_ref()) {
                         capture.started(life);

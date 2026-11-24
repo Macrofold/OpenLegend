@@ -75,7 +75,9 @@ impl AgencyOrder {
 }
 
 impl ActorAgency {
-    pub(crate) fn serialize_without_semantic<S: Serializer>(
+    /// Bind current work for an ordinary decision. Semantic continuation and
+    /// remembered locations have their own admission and disclosure checks.
+    pub(crate) fn serialize_for_decision<S: Serializer>(
         &self,
         serializer: S,
     ) -> Result<S::Ok, S::Error> {
@@ -84,7 +86,7 @@ impl ActorAgency {
     fn serialize_fields<S: Serializer>(
         &self,
         serializer: S,
-        include_semantic: bool,
+        include_saved_fields: bool,
     ) -> Result<S::Ok, S::Error> {
         // New canonical fields require an explicit serialization and validity
         // decision here instead of silently disappearing from either consumer.
@@ -104,7 +106,7 @@ impl ActorAgency {
         for field in &order.fields[..order.len as usize] {
             match field {
                 Field::Semantic => {
-                    if include_semantic {
+                    if include_saved_fields {
                         if let Some(value) = semantic {
                             map.serialize_entry("semantic", value)?;
                         }
@@ -126,7 +128,7 @@ impl ActorAgency {
                 Field::History => map.serialize_entry("history", history)?,
                 Field::Attempts => map.serialize_entry("attempts", attempts)?,
                 Field::Places => {
-                    if let Some(value) = places {
+                    if include_saved_fields && let Some(value) = places {
                         map.serialize_entry("places", value)?;
                     }
                 }

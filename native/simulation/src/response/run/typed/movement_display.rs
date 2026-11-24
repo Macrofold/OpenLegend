@@ -7,6 +7,9 @@ use std::{fmt::Write, sync::OnceLock};
 #[serde(rename_all = "camelCase")]
 struct Words {
     approach_prefix: String,
+    last_seen_prefix: String,
+    last_seen_stop: String,
+    last_seen_unavailable: String,
     approach_suffix: String,
     walk: String,
     unit: String,
@@ -32,6 +35,10 @@ fn words() -> &'static Words {
         ))
         .expect("the build contains the shared movement wording")
     })
+}
+
+pub(in crate::response) fn remembered_unavailable() -> &'static str {
+    &words().last_seen_unavailable
 }
 
 fn coordinate(value: f64) -> f64 {
@@ -129,6 +136,16 @@ pub(super) fn render(item: &Item, core: &CoreMutation<'_>) -> Result<Rendered, E
             description.push_str(&words.approach_suffix);
             Ok(fulfilled(item, description))
         }
+        Prepared::LastSeen { label, at, still_seen: false, sim_time, destination } => {
+            let mut description = JsText::from(words.last_seen_prefix.as_str());
+            description.push_text(label);
+            let x = coordinate(destination.x);
+            let z = coordinate(destination.z);
+            let minutes = ((sim_time - at).max(0.0) / 60.0).round();
+            description.push_str(&format!(" (x={x}, z={z}, {minutes} min ago).{}", words.last_seen_stop));
+            Ok(fulfilled(item, description))
+        }
+        Prepared::NamedRefused { category, reason } => Ok(refused(category, reason.clone())),
         Prepared::DistanceNeeded => Ok(refused(
             "needs_clarification",
             words.distance_needed.as_str().into(),

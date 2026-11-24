@@ -56,11 +56,13 @@ pub(crate) fn valid_command(
         }
         NativeCommand::Follow {
             target_id,
+            target_life,
             distance,
             parameters,
             envelope,
         } => {
             is_safe_record_id(target_id)
+                && target_life.is_none_or(|life| life <= crate::identity::MAX_SAFE_INTEGER)
                 && parameters
                     .distance(
                         &world.occurrence_rules.value().response.offers,

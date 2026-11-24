@@ -122,12 +122,17 @@ impl Projection {
         ticket.stage_witness(budget).ok().flatten()
     }
 
+    pub(super) fn offers_remembered_places(&self, game: &CurrentServer) -> bool {
+        game.cognition.can_offer_remembered_places(self.speaks, self.expressions)
+    }
+
     pub(super) fn render_response(
         &self,
         game: &CurrentServer,
         offered: &[OfferedAction<'_>],
         include_actions: bool,
         expansion: Option<&super::query::Answers<'_>>,
+        remembered: Option<&RuntimeNpcResponseTicket>,
     ) -> Result<(PreparedPrompt, BoundSchema), CallFailure> {
         let budget = game.host.budget();
         let aliases = offered
@@ -139,7 +144,7 @@ impl Projection {
             .get("situationQueries")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        let prompt = game
+        let mut prompt = game
             .cognition
             .generation_prompt(fields, offered, include_actions, queries, budget)
             .map_err(super::generation_failure)
@@ -159,6 +164,24 @@ impl Projection {
         let retention = history
             .as_ref()
             .map_or(&[][..], |(aliases, _)| aliases.as_slice());
+        let place_count = remembered.map_or(0, |ticket| ticket.remembered_move_choices().len());
+        let _place_rows = if place_count == 0 {
+            None
+        } else {
+            Some(budget.reserve(
+                place_count.checked_mul(std::mem::size_of::<(&str, &JsText)>() + std::mem::size_of::<&str>())
+                    .ok_or_else(|| capacity(CapacityError))?,
+            ).map_err(capacity)?)
+        };
+        let mut places = Vec::with_capacity(place_count);
+        if let Some(ticket) = remembered {
+            places.extend(ticket.remembered_move_choices());
+        }
+        let remembered_places = if prompt.append_remembered_places(&places).map_err(super::generation_failure)? {
+            places.iter().map(|(id, _)| *id).collect()
+        } else {
+            Vec::new()
+        };
         let schema = game
             .cognition
             .response_schema(
@@ -174,6 +197,7 @@ impl Projection {
                     attention: &self.attention,
                     retention,
                     appraisal: self.appraisal_schema.as_ref(),
+                    remembered_places: &remembered_places,
                 },
                 budget,
             )

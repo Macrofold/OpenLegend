@@ -272,6 +272,25 @@ impl ResponseBindings {
             })?;
         Some(original.name.name())
     }
+    /// This selector grants one saved point from the original accepted
+    /// actor cut. It supplies no body, current position or speaking identity.
+    pub(super) fn remembered_move(
+        &self,
+        selected: &str,
+        request: &JsText,
+    ) -> Option<&crate::state::RememberedPlace> {
+        self.input.native.as_ref()?.remembered_places.as_ref()?.get(selected, request)
+    }
+    pub(super) fn remembered_move_current(
+        &self,
+        state: &SimulationState,
+        selected: &str,
+        request: &JsText,
+    ) -> Option<&crate::state::RememberedPlace> {
+        let place = self.remembered_move(selected, request)?;
+        let actor = state.physical.entities.get(self.actor_id())?.actor.as_ref()?;
+        crate::runtime::RememberedPlaces::entry_current(actor, place).then_some(place)
+    }
     pub(crate) fn evidence_ids(&self) -> &[String] {
         &self.input.evidence_ids
     }

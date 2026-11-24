@@ -4,7 +4,7 @@ use super::*;
 use crate::capture::{NpcBindingMaps, NpcBindingRead, NpcBindingSelection};
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::response::ResponseEnvelopeError;
-use std::sync::atomic::AtomicU8;
+use std::sync::{OnceLock, atomic::AtomicU8};
 mod copies;
 
 pub use crate::capture::{
@@ -332,6 +332,7 @@ pub struct RuntimeNpcResponseTicket {
     // together without cloning the permitted reads or rebuilding them anew.
     query_selection: Option<(NpcBindingSelection, ByteReservation)>,
     pub(super) checks_query_evidence: bool,
+    pub(super) remembered_places: OnceLock<Arc<super::remembered_places::RememberedPlaces>>,
 }
 
 /// An ordered response from the stand-alone host, with the memory that owns
@@ -540,6 +541,17 @@ impl RuntimeNpcResponseTicket {
         Ok((remaining, custody))
     }
 
+    /// Borrow the funded direct-generation sighting labels and selectors.
+    /// The final send checks those labels; only a chosen destination is checked
+    /// against the original complete record when executing the response.
+    pub fn remembered_move_choices(
+        &self,
+    ) -> impl ExactSizeIterator<Item = (&str, &crate::text::JsText)> {
+        super::remembered_places::RememberedPlaces::choices(
+            self.remembered_places.get().map(Arc::as_ref),
+        )
+    }
+
     pub fn actor_id(&self) -> &str {
         &self.current.read.perception.actor_id
     }
@@ -743,6 +755,7 @@ impl NativeWorldSession {
         ticket.attempt_candidates = Arc::new(attempt_candidates);
         ticket._custody = Arc::new(custody);
         ticket.original.query_expanded = false;
+        ticket.remembered_places = OnceLock::new();
         ticket.phase.store(FRESH, Ordering::Release);
         Ok(())
     }
@@ -978,6 +991,7 @@ impl NativeWorldSession {
                 perspective_snapshots: Arc::clone(&ticket.original.perspectives),
                 appraisals: maps.appraisals.clone(),
                 attempt_candidates: Arc::clone(&ticket.attempt_candidates),
+                remembered_places: ticket.remembered_places.get().cloned(),
                 _original_custody: Arc::clone(&ticket.original._custody),
                 _current_custody: Arc::clone(&ticket.current._custody),
                 _ticket_custody: Arc::clone(&ticket._custody),
@@ -1242,6 +1256,7 @@ impl NativeWorldSession {
             _custody: Arc::new(custody),
             query_selection,
             checks_query_evidence,
+            remembered_places: OnceLock::new(),
         })
     }
 }

@@ -47,7 +47,7 @@ struct Action<'a> {
 struct Agency<'a>(&'a ActorAgency);
 impl Serialize for Agency<'_> {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        self.0.serialize_without_semantic(s)
+        self.0.serialize_for_decision(s)
     }
 }
 struct Attribute<'a> {

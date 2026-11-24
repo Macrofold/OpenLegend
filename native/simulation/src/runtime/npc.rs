@@ -29,6 +29,7 @@ mod perspectives;
 mod stage_history;
 pub use stage_history::RuntimeNpcStageWitness;
 mod presentation;
+pub(crate) mod remembered_places;
 mod queries;
 pub use crate::appraisals::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
 pub use crate::response::{AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal};
@@ -390,7 +391,51 @@ impl NativeWorldSession {
         &self,
         ticket: &RuntimeNpcResponseTicket,
     ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
-        self.npc_response_authority(ticket, true)
+        self.npc_response_authority(ticket, true, false)
+    }
+
+    /// Prepare the optional actor-owned sightings only for the actual direct
+    /// generation. The ticket funds this accepted cut through prompt use and
+    /// the selected action. Conversation evidence has its separate older cut.
+    pub fn prepare_npc_remembered_places(
+        &self,
+        ticket: &RuntimeNpcResponseTicket,
+    ) -> Result<(), RuntimeError> {
+        self.require_active()?;
+        ticket.require_prepared()?;
+        if !self.npc_host_current(&ticket.current) || ticket.remembered_places.get().is_some() {
+            return Ok(());
+        }
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let cut = &ticket.current.historical_scope;
+        let Some(actor) = state
+            .physical
+            .entities
+            .get(ticket.actor_id())
+            .and_then(|entity| entity.actor.as_ref())
+            .filter(|actor| actor.alive && actor.physical_life.unwrap_or(0) == cut.physical_life)
+        else {
+            return Ok(());
+        };
+        match remembered_places::RememberedPlaces::capture(actor, ticket.current.serial, &self.budget) {
+            Ok(Some(places)) => {
+                let _ = ticket.remembered_places.set(places);
+            }
+            Ok(None) => {}
+            Err(error) if error.is_capacity() => {}
+            Err(error) => return Err(error),
+        }
+        Ok(())
+    }
+
+    /// The actual generation message can carry actor-owned sighting labels.
+    /// Reuse the existing synchronous publication lease for that disclosure.
+    pub fn npc_response_publication_with_places(
+        &self,
+        ticket: &RuntimeNpcResponseTicket,
+        remembered_places: bool,
+    ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
+        self.npc_response_authority(ticket, true, remembered_places)
     }
 
     /// Applying an answer checks the selected gift at the consent writer.
@@ -399,13 +444,14 @@ impl NativeWorldSession {
         &self,
         ticket: &RuntimeNpcResponseTicket,
     ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
-        self.npc_response_authority(ticket, false)
+        self.npc_response_authority(ticket, false, false)
     }
 
     fn npc_response_authority(
         &self,
         ticket: &RuntimeNpcResponseTicket,
         disclosure: bool,
+        remembered_places: bool,
     ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
         use crate::response::ResponseValidityRoute;
         self.require_active()?;
@@ -417,6 +463,18 @@ impl NativeWorldSession {
         }
         let state = &self.session.accepted().map_err(failure)?.state;
         let actor_id = &ticket.current.read.perception.actor_id;
+        if remembered_places
+            && !ticket.remembered_places.get().is_some_and(|places| {
+                state
+                    .physical
+                    .entities
+                    .get(actor_id)
+                    .and_then(|entity| entity.actor.as_ref())
+                    .is_some_and(|actor| places.labels_current(actor))
+            })
+        {
+            return Ok(Err("native-response-remembered-place"));
+        }
         // Paid source disclosure follows the admitted consumer's Source gate.
         // Paused/participating/response-body checks belong to the actual
         // response effect owner; source-only reflection has its own native
@@ -690,15 +748,14 @@ impl NativeWorldSession {
         let reference_facts =
             crate::capture::NpcReferenceFacts::capture(&simulation.state, &read, &self.budget)
                 .map_err(failure)?;
-        let attempts = &simulation
+        let actor = simulation
             .state
             .physical
             .entities
             .get(actor_id)
             .and_then(|entity| entity.actor.as_ref())
-            .ok_or_else(|| failure("NPC actor disappeared"))?
-            .agency
-            .attempts;
+            .ok_or_else(|| failure("NPC actor disappeared"))?;
+        let attempts = &actor.agency.attempts;
         let intent_bytes = attempts.iter().try_fold(
             attempts
                 .len()
@@ -709,14 +766,7 @@ impl NativeWorldSession {
                     .ok_or_else(|| failure("capacity"))
             },
         )?;
-        let work_generation = simulation
-            .state
-            .physical
-            .entities
-            .get(actor_id)
-            .and_then(|entity| entity.actor.as_ref())
-            .ok_or_else(|| failure("NPC actor disappeared"))?
-            .plan_generation;
+        let work_generation = actor.plan_generation;
         let custody = self
             .budget
             .reserve(

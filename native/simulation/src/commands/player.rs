@@ -1112,6 +1112,7 @@ fn bind_follow(
     Ok((NativeCommand::Follow {
         envelope: headers.envelope(encoding),
         target_id: target.into(),
+        target_life: None,
         distance,
         parameters: crate::movement::follow::FollowParameters { relation: None, on_lost: None, until, complete },
     }, signature))

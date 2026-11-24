@@ -49,7 +49,7 @@ impl FollowStop {
 
 #[derive(Clone, Copy)]
 pub(crate) enum FollowMode<'a> {
-    Start(FollowParameters, f64),
+    Start(FollowParameters, f64, Option<u64>),
     Active(&'a Action),
 }
 
@@ -87,7 +87,7 @@ pub(crate) struct FollowCursor {
     target: String,
     parent_id: Option<String>,
     first: Option<(FollowParameters, f64)>,
-    target_life: u64,
+    target_life: Option<u64>,
     prior_working: bool,
     prior_route_empty: bool,
     phase: Phase,
@@ -111,13 +111,13 @@ impl FollowCursor {
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let (parent, prior, target_life, prior_working, prior_route_empty, first) = match mode {
-            FollowMode::Start(parameters, distance) => {
-                (None, None, 0, false, false, Some((parameters, distance)))
+            FollowMode::Start(parameters, distance, target_life) => {
+                (None, None, target_life, false, false, Some((parameters, distance)))
             }
             FollowMode::Active(action) => (
                 Some(action.id.as_str()),
                 action.follow.as_ref(),
-                action.target_life.ok_or(ExecutionError::Invariant)?,
+                Some(action.target_life.ok_or(ExecutionError::Invariant)?),
                 action.stage == "working",
                 action.path.is_empty() && action.navigation.is_none(),
                 None,
@@ -210,7 +210,7 @@ impl FollowCursor {
         self.phase = Phase::Done;
         Ok(FollowDecision::Update(FollowUpdate {
             parent_id: self.parent_id.take(),
-            target_life: self.target_life,
+            target_life: self.target_life.ok_or(ExecutionError::Invariant)?,
             state: self.state.take().ok_or(ExecutionError::Invariant)?,
             route,
             sighting: self.saw,
@@ -364,10 +364,12 @@ impl FollowCursor {
         else {
             return self.stop(FollowStop::Dead);
         };
-        if self.first.is_none() && target_life != self.target_life {
+        // A restarted Follow knows its original physical life. Compare it
+        // only after sight, as for a continuous Follow.
+        if self.target_life.is_some_and(|expected| target_life != expected) {
             return self.stop(FollowStop::Changed);
         }
-        self.target_life = target_life;
+        self.target_life = Some(target_life);
         if let Some((parameters, distance)) = self.first.take() {
             self.state = Some(
                 parameters.start(

@@ -220,7 +220,8 @@ fn command_episode_subject(command: &NativeCommand) -> Option<&str> {
         NativeCommand::StatusEffect { target_id, .. } => Some(target_id.as_str()),
         NativeCommand::Guard { facing, .. } => facing.subject_id(),
         NativeCommand::Ranged { intent, .. } => intent.npc_subject(),
-        NativeCommand::Strike { target_id, target_life: Some(_), .. } => Some(target_id),
+        NativeCommand::Strike { target_id, target_life: Some(_), .. }
+        | NativeCommand::Follow { target_id, .. } => Some(target_id),
         _ => None,
     }
 }

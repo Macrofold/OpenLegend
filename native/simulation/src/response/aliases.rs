@@ -285,7 +285,11 @@ impl ActorResponse {
                 if let Some(target) = act.get_mut("targetEntityId") {
                     scalar(target, aliases.physical, storage)?;
                 }
-                if let Some(description) = act.get_mut("description") {
+                let exact_remembered_request = act.get("rememberedPlaceId")
+                    .is_some_and(|selector| !selector.is_null());
+                if !exact_remembered_request
+                    && let Some(description) = act.get_mut("description")
+                {
                     prose(description, aliases, false, budget, storage)?;
                 }
                 if let Some(slots) = act.get_mut("slots").filter(|value| !value.is_null()) {

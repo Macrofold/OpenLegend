@@ -9,6 +9,7 @@ impl CommandCursor {
         let NativeCommand::Follow {
             envelope,
             target_id,
+            target_life,
             distance,
             parameters,
         } = &self.command
@@ -39,7 +40,7 @@ impl CommandCursor {
             core,
             &envelope.actor_id,
             target_id,
-            FollowMode::Start(*parameters, distance),
+            FollowMode::Start(*parameters, distance, *target_life),
             self.binding,
             &self.budget,
         )?);

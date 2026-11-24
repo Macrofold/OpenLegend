@@ -643,7 +643,7 @@ pub(super) async fn respond(
     prepared.context.fields["situationQueries"] = false.into();
     let (prompt, bound) = prepared
         .context
-        .render_response(game, &offered, actions, None)?;
+        .render_response(game, &offered, actions, None, None)?;
     drop(offered);
     drop(offered_custody);
     const WRAPPER: &str = " Put the existing structured character response in answers.q0.value with status answered and reason null. If you cannot give a supported answer, use status abstained, a null value, and one of the allowed reasons.";
@@ -837,6 +837,7 @@ fn prepare_call(
             speaker: work.permit.clone(),
             discovery: None,
             stage_capture: None,
+            remembered_places: false,
         },
         dispatch_by,
         clock: input.clock.clone(),
@@ -943,6 +944,7 @@ async fn finish_unapplied(
         speaker: work.permit.clone(),
         discovery: None,
         stage_capture: None,
+        remembered_places: false,
     };
     final_scope.start(turn, &work.cancellation, &mut || ())?;
     let budget = game.host.budget();

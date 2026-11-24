@@ -97,6 +97,14 @@ A signed player spoke to a resident who had directly observed the Banked campfir
 
 The November 24 cases used tree `dcd53b66a5c6` and executable `fadeb2b4e4fa`. Archive `nsc04-npc-named-approach-20261124`, manifest `063ae8a03308`, includes the five results and earlier setup attempts. The fixture that only gave the resident broad sight did not disclose a detailed target. Each listener exited and its database was removed. Remembered and composed proposals, paid interpretation and final default-release qualification remain open.
 
+### Walking to a place the NPC remembers
+
+A signed conversation offered the resident its own saved sightings. The request described a remembered location without sending a coordinate or a current reference to the hidden person. The resident walked to the exact remembered point, spoke once and recovered its response after restart. Changed wording kept one unresolved intention and allowed the independent speech. Withdrawing the heard words during a held reply prevented both effects.
+
+An ordinary sight update can refresh a remembered time while a follower stands still. That refresh no longer invalidates the whole decision. Replacing the selected point during a held reply refused the original walk and kept the single spoken reply. The same update during a reply that selected no place left the current Follow and speech intact. A separate reply interrupted Follow for a short walk. The saved suspension kept the original target's life, encounter and deadline, and resumed the same plan afterward. Restart recovered the exact original response.
+
+Local archive `nsc04-remembered-npc-walk-20261124` retains the release controls on executable `ebe0f6e4ba70` and the focused correction on Debug executable `8832f8923a46`. The control results include the exact withdrawal `b384d4e13373` and the definite pre-send refusal during the stationary Follow `ec14e6dd58ca`. The corrected selected, unselected and pause/resume results are `660856397832`, `7a05d52bf7be` and `854352cf776e`. Debug used a larger thread stack after a setup overflow. These results establish gameplay and cleanup with controlled HTTPS. The joined release owns ordinary-stack qualification and performance evidence.
+
 ## Configured offered-action fallback on the stand-alone Rust server — November 22, 2026
 
 The ordinary automatic decision keeps its original evidence, deadline and allowed actions when a completed first assessment finds no suitable action. The configured fallback can ask the stronger model once to choose among those exact offers or abstain. It uses the existing spending ledger, sends the request directly over HTTPS and checks the same evidence before disclosure and application. An uncertain first attempt cannot fund the additional call.

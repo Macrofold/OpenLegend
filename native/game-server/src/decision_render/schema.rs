@@ -17,6 +17,7 @@ pub(crate) struct ResponseReferences<'a> {
     pub(crate) attention: &'a [String],
     pub(crate) retention: &'a [String],
     pub(crate) appraisal: Option<&'a Value>,
+    pub(crate) remembered_places: &'a [&'a str],
 }
 
 impl ResponseReferences<'_> {
@@ -37,11 +38,16 @@ impl ResponseReferences<'_> {
 pub(crate) struct BoundSchema {
     value: Value,
     _custody: ByteReservation,
+    remembered_places: bool,
 }
 
 impl BoundSchema {
     pub(crate) fn value(&self) -> &Value {
         &self.value
+    }
+
+    pub(crate) fn discloses_remembered_places(&self) -> bool {
+        self.remembered_places
     }
 
     pub(crate) fn preview_root_fields(&self) -> &serde_json::Map<String, Value> {
@@ -104,6 +110,7 @@ impl DecisionPolicy {
             attention: &[],
             retention: evidence,
             appraisal: None,
+            remembered_places: &[],
         };
         let template = &self.reflection.schema;
         let custody = budget
@@ -116,7 +123,14 @@ impl DecisionPolicy {
         Ok(BoundSchema {
             value,
             _custody: custody,
+            remembered_places: false,
         })
+    }
+
+    pub(crate) fn can_offer_remembered_places(&self, speech: bool, expressions: bool) -> bool {
+        self.schemas.iter().find(|variant| {
+            variant.speech == speech && variant.expressions == expressions
+        }).is_some_and(|variant| variants_with_actions(&variant.schema) != 0)
     }
 
     pub(crate) fn response_schema(
@@ -136,7 +150,13 @@ impl DecisionPolicy {
             .find(|variant| variant.speech == speech && variant.expressions == expressions)
             .ok_or(RenderError::Contract)?
             .schema;
-        let additional = references.appraisal.map_or(0, tree_bytes);
+        let remembered_bytes = references.remembered_places.iter().fold(0usize, |size, id| {
+            size.saturating_add(id.len().saturating_add(64))
+        });
+        let additional = references.appraisal.map_or(0, tree_bytes)
+            .saturating_add(if remembered_bytes == 0 { 0 } else {
+                remembered_bytes.saturating_add(1024).saturating_mul(variants_with_actions(template))
+            });
         let bytes = bound_bytes(template, references, self).saturating_add(additional);
         let custody = budget.reserve(bytes).map_err(|_| RenderError::Capacity)?;
         let mut value = template.clone();
@@ -154,6 +174,18 @@ impl DecisionPolicy {
         let variants = value["properties"]["operations"]["items"]["anyOf"]
             .as_array_mut()
             .ok_or(RenderError::Contract)?;
+        let remembered_places = !references.remembered_places.is_empty();
+        if remembered_places {
+            for action in variants.iter_mut().filter_map(|variant| {
+                variant["properties"].as_object_mut()?.get_mut("act")
+            }).filter(|action| proposal_branch(action)) {
+                action["properties"]["rememberedPlaceId"] = json!({
+                    "anyOf": [{"type":"string","enum":references.remembered_places},{"type":"null"}],
+                });
+                action["required"].as_array_mut().ok_or(RenderError::Contract)?
+                    .push("rememberedPlaceId".into());
+            }
+        }
         variants.retain_mut(|variant| {
             let Some(properties) = variant["properties"].as_object_mut() else {
                 return false;
@@ -191,8 +223,22 @@ impl DecisionPolicy {
         Ok(BoundSchema {
             value,
             _custody: custody,
+            remembered_places,
         })
     }
+}
+
+fn proposal_branch(action: &Value) -> bool {
+    let kind = &action["properties"]["kind"];
+    action["type"] == "object"
+        && (kind["const"] == "proposal" || kind["enum"].as_array()
+            .is_some_and(|kinds| kinds.iter().any(|kind| kind == "proposal")))
+}
+
+fn variants_with_actions(template: &Value) -> usize {
+    template["properties"]["operations"]["items"]["anyOf"].as_array().map_or(0, |variants| {
+        variants.iter().filter(|variant| proposal_branch(&variant["properties"]["act"])).count()
+    })
 }
 
 fn alias_group<'a>(policy: &'a DecisionPolicy, value: &Value) -> Option<&'a str> {

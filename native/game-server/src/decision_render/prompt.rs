@@ -86,6 +86,35 @@ impl PreparedPrompt {
         write_json_record(evidence, &mut *self).map_err(|_| self.failure())
     }
 
+    /// Append the actor's exact saved sighting labels and separate selectors.
+    /// The chosen selector never grants a current body or exposes raw coordinates.
+    pub(crate) fn append_remembered_places(
+        &mut self,
+        places: &[(&str, &openlegend_simulation::text::JsText)],
+    ) -> Result<bool, RenderError> {
+        if places.is_empty() {
+            return Ok(false);
+        }
+        let bound = places.iter().try_fold(512usize, |bytes, (id, label)| {
+            bytes.checked_add(id.len() + 12)?.checked_add(label.storage_bytes().checked_mul(6)?)
+        }).ok_or(RenderError::Capacity)?;
+        if bound > self.remaining() {
+            return Ok(false);
+        }
+        self.section()?;
+        self.text("Saved places from your own earlier actions. To visit one stored location, copy its exact proposed sentence into description and its selector into rememberedPlaceId. Leave targetEntityId and slots null. The move ends at that old point. Use rememberedPlaceId null for other actions.
+")?;
+        for (id, name) in places {
+            self.text("- ")?;
+            self.text(id)?;
+            self.text(": ")?;
+            write_json_record(name, &mut *self).map_err(|_| self.failure())?;
+            self.text("
+")?;
+        }
+        Ok(true)
+    }
+
     fn text(&mut self, text: &str) -> Result<(), RenderError> {
         self.write_all(text.as_bytes()).map_err(|_| self.failure())
     }

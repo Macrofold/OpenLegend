@@ -49,6 +49,7 @@ pub(crate) struct ResponseNativeGuard {
     pub(crate) perspective_snapshots: Arc<Vec<crate::capture::NpcPerspectiveSnapshot>>,
     pub(crate) appraisals: Option<Arc<PreparedResponseAppraisals>>,
     pub(crate) attempt_candidates: Arc<Vec<ResponseAttemptCandidate>>,
+    pub(crate) remembered_places: Option<Arc<crate::runtime::RememberedPlaces>>,
     pub(crate) _original_custody: Arc<ByteReservation>,
     pub(crate) _current_custody: Arc<ByteReservation>,
     pub(crate) _ticket_custody: Arc<ByteReservation>,

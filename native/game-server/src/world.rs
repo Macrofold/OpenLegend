@@ -591,6 +591,7 @@ impl HostedWorld {
         &self,
         ticket: &RuntimeNpcResponseTicket,
         stage: Option<(&RuntimeNpcStageWitness, &RequestScope)>,
+        remembered_places: bool,
         deliver: impl FnOnce(Option<u64>) -> T,
     ) -> Result<Result<T, NpcDisclosure>, WorldError> {
         if self.closing.load(Ordering::Acquire) {
@@ -617,7 +618,7 @@ impl HostedWorld {
             session.npc_stage_current(witness).ok()?.ok()?;
             session.intelligence_owner_life(&owner.account_id, &owner.actor_id).ok()?
         });
-        match session.npc_response_publication(ticket)? {
+        match session.npc_response_publication_with_places(ticket, remembered_places)? {
             Ok(lease) => {
                 let result = deliver(capture);
                 drop(lease);
@@ -1519,9 +1520,10 @@ impl NpcDisclosureTurn<'_> {
         self,
         ticket: &RuntimeNpcResponseTicket,
         stage: Option<(&RuntimeNpcStageWitness, &RequestScope)>,
+        remembered_places: bool,
         deliver: impl FnOnce(Option<u64>) -> T,
     ) -> Result<Result<T, NpcDisclosure>, WorldError> {
-        self.world.disclose_npc(ticket, stage, deliver)
+        self.world.disclose_npc(ticket, stage, remembered_places, deliver)
     }
 }
 

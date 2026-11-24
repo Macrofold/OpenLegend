@@ -41,6 +41,7 @@ impl CommandEncoding {
         &self,
         id: Option<&str>,
         remove: &[&str],
+        follow_target_life: Option<u64>,
     ) -> Result<Self, serde_json::Error> {
         let mut fields: IndexMap<String, Box<RawValue>> = serde_json::from_str(self.json.get())?;
         if let Some(id) = id {
@@ -51,6 +52,9 @@ impl CommandEncoding {
         }
         for key in remove {
             fields.shift_remove(*key);
+        }
+        if let Some(life) = follow_target_life {
+            fields.insert("targetLife".into(), RawValue::from_string(json_record(&life)?)?);
         }
         let count = fields.len();
         let json = Arc::from(RawValue::from_string(json_record(&fields)?)?);

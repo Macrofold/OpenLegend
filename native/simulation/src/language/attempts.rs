@@ -41,6 +41,8 @@ pub(crate) enum FreeTypedActionSyntax {
     LastSeen {
         name: JsText,
     },
+    #[serde(skip)]
+    RememberedPlace,
     Unsupported {
         family: String,
     },
