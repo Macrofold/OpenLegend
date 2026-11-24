@@ -89,13 +89,13 @@ Keep the existing `JEV_MODEL`, `OPENAI_MODEL`, and price settings for the initia
 
 ## 4. Restart the server
 
-Environment changes take effect at server startup. If you started the server in a terminal, press **Control+C in that terminal**, then run this from the repository root:
+Environment changes take effect at server startup. If you started the server in a terminal, press **Control+C in that terminal**. From the repository root, start it again with the same reviewed release directory and database.
 
 ```sh
-pnpm run dev
+pnpm dev "$reviewed_release"
 ```
 
-For the built client, use `pnpm run build` followed by `pnpm start` instead. Do not run both servers on the same port. If Codex is running the current server, ask it to **restart Open Legend** after saving `.env`; it can restart the existing process without resetting the world. Do not delete `.data` to resolve configuration or port errors.
+`pnpm dev` loads `.env` and serves the browser files in the reviewed release. For a launch with explicitly exported settings, use the [production command](../README.md#run-the-stand-alone-rust-server). If Codex is running the game, ask it to **restart Open Legend** after saving `.env`. Keep the existing `.data` directory and PostgreSQL state when changing ports or credentials. Follow [local setup](../README.md#run-locally) to resolve a port or configuration problem.
 
 ## 5. Refresh and inspect configuration
 

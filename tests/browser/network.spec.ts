@@ -6,28 +6,16 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 import { clientViteConfiguration } from '../../apps/client/vite.config.js';
-import { createGameServer } from '../../apps/server/src/http.js';
-import { testRepository, closeTestDatabases, readConfig } from '../fixtures/database.js';
 import { blockExternalBrowserRequests, enterGame } from '../fixtures/browser.js';
 import { browserTabHeaders, rustBrowserGame } from '../fixtures/rust-browser.js';
-import type {
-  AiUsageView,
-  GameView,
-  InviteView,
-  OperationsView,
-  WorldAgentSessionStatus,
-} from '@open-legend/protocol';
+import type { AiUsageView, GameView, InviteView, OperationsView } from '@open-legend/protocol';
 
 interface NetworkProbe {
   holdState: boolean;
   stateRequests: number;
   eventRequests: number;
-  privateRequests: number;
-  privateOpened: number;
-  privateClosed: number;
   heartbeats: number;
   eventMode: 'native' | 'incomplete' | 'forbidden';
-  privateMode: 'native' | 'forbidden';
   releaseState?: () => Promise<number>;
   stateSignal?: AbortSignal;
 }
@@ -52,12 +40,8 @@ async function controlledBrowser(page: Page, holdState = false) {
       holdState: hold,
       stateRequests: 0,
       eventRequests: 0,
-      privateRequests: 0,
-      privateOpened: 0,
-      privateClosed: 0,
       heartbeats: 0,
       eventMode: 'native',
-      privateMode: 'native',
     });
     window.fetch = async (input, init) => {
       const path = new URL(
@@ -78,13 +62,8 @@ async function controlledBrowser(page: Page, holdState = false) {
             };
           });
       }
-      const privateProgress = path === '/api/world-agent/session/progress';
-      if (privateProgress) probe.privateRequests++;
       if (path === '/api/events') probe.eventRequests++;
-      if (
-        (path === '/api/events' && probe.eventMode === 'forbidden') ||
-        (privateProgress && probe.privateMode === 'forbidden')
-      )
+      if (path === '/api/events' && probe.eventMode === 'forbidden')
         return Response.json({ ok: false }, { status: 403 });
       if (path === '/api/events' && probe.eventMode === 'incomplete') {
         let timer = 0;
@@ -107,9 +86,7 @@ async function controlledBrowser(page: Page, holdState = false) {
         );
       }
       const response = await original(input, init);
-      if ((path !== '/api/events' && !privateProgress) || !response.body || response.status !== 200)
-        return response;
-      if (privateProgress) probe.privateOpened++;
+      if (path !== '/api/events' || !response.body || response.status !== 200) return response;
       // Observe the same native stream, without a clone/second reader. This
       // fixture records complete real server heartbeat comments for N17.
       const reader = response.body.getReader();
@@ -126,11 +103,9 @@ async function controlledBrowser(page: Page, holdState = false) {
                 controller.close();
                 return;
               }
-              if (!privateProgress) {
-                const text = tail + decoder.decode(item.value, { stream: true });
-                probe.heartbeats += (text.match(/: heartbeat\n\n/g) ?? []).length;
-                tail = text.slice(-12);
-              }
+              const text = tail + decoder.decode(item.value, { stream: true });
+              probe.heartbeats += (text.match(/: heartbeat\n\n/g) ?? []).length;
+              tail = text.slice(-12);
               controller.enqueue(item.value);
             } catch (error) {
               if (!cancelled) controller.error(error);
@@ -138,7 +113,6 @@ async function controlledBrowser(page: Page, holdState = false) {
           },
           cancel(reason) {
             cancelled = true;
-            if (privateProgress) probe.privateClosed++;
             return reader.cancel(reason);
           },
         }),
@@ -146,26 +120,6 @@ async function controlledBrowser(page: Page, holdState = false) {
       );
     };
   }, holdState);
-}
-
-async function gameFixture(godMode = false) {
-  const game = await createGameServer({
-    config: readConfig({
-      AI_BUDGET_USD: '0',
-      OPEN_LEGEND_WORLD_PRESET: 'solo',
-      OPEN_LEGEND_GOD_MODE: String(godMode),
-    }),
-    store: await testRepository(),
-    production: true,
-    tick: false,
-  });
-  await new Promise<void>((resolve, reject) => {
-    game.server.once('error', reject);
-    game.server.listen(0, '127.0.0.1', resolve);
-  });
-  const address = game.server.address();
-  if (!address || typeof address === 'string') throw new Error('Missing listener');
-  return { game, base: `http://127.0.0.1:${address.port}` };
 }
 
 test('resumed entry expires an ignored request before delayed timers or a late reply, then explicit retry enters the actual game', async ({
@@ -296,85 +250,6 @@ test('quiet main streams heartbeat, partial trickles expire, and forbidden recon
     } finally {
       await close();
     }
-  }
-});
-
-test('private progress closes on hiding, retains drafts, and stops forbidden reconnect until explicit refresh', async ({
-  page,
-}, info) => {
-  const { game, base } = await gameFixture(true);
-  try {
-    await controlledBrowser(page);
-    const paid: string[] = [];
-    page.on('request', (request) => {
-      if (/\/api\/(?:world-agent\/messages|chat|ai\/cancel)$/.test(new URL(request.url()).pathname))
-        paid.push(request.url());
-    });
-    await page.route('**/api/world-agent/session/status', async (route) => {
-      const native = await route.fetch();
-      const status = (await native.json()) as WorldAgentSessionStatus & { ok: boolean };
-      if (status.ok && status.data?.available)
-        status.availability = {
-          ...status.availability,
-          configured: true,
-          reason: 'Controlled availability; no provider call.',
-        };
-      await route.fulfill({ response: native, json: status });
-    });
-    await page.goto(base);
-    await enterGame(page);
-    await page.getByRole('button', { name: 'Game', exact: true }).click();
-    await page.getByRole('button', { name: 'World editor', exact: true }).click();
-    await page.getByRole('button', { name: 'Start conversation', exact: true }).click();
-    const input = page.getByRole('textbox', { name: 'Message to World Agent', exact: true });
-    await expect(input).toBeVisible();
-    await input.fill('An unsent private draft');
-    await expect
-      .poll(() => page.evaluate(() => window.__networkProbe.privateOpened))
-      .toBeGreaterThanOrEqual(1);
-    await page.evaluate(() => {
-      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
-    await expect
-      .poll(() => page.evaluate(() => window.__networkProbe.privateClosed))
-      .toBeGreaterThanOrEqual(1);
-    const before = await page.evaluate(() => window.__networkProbe.privateRequests);
-    await page.evaluate(() => {
-      window.__networkProbe.privateMode = 'forbidden';
-      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
-      document.dispatchEvent(new Event('visibilitychange'));
-      window.dispatchEvent(new Event('focus'));
-    });
-    await enterGame(page);
-    await expect
-      .poll(() => page.evaluate(() => window.__networkProbe.privateRequests))
-      .toBeGreaterThan(before);
-    await expect(
-      page.getByText('Access changed. Reopen the conversation with current access.', {
-        exact: true,
-      }),
-    ).toBeVisible();
-    const forbidden = await page.evaluate(() => window.__networkProbe.privateRequests);
-    await page.clock.fastForward(20_000);
-    expect(await page.evaluate(() => window.__networkProbe.privateRequests)).toBe(forbidden);
-    await page.screenshot({ path: info.outputPath('bounded-private-progress.png') });
-    await page.evaluate(() => {
-      window.__networkProbe.privateMode = 'native';
-    });
-    await page
-      .locator('#world-editorPanel')
-      .getByRole('button', { name: 'Options', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Refresh this session', exact: true }).click();
-    await expect
-      .poll(() => page.evaluate(() => window.__networkProbe.privateRequests))
-      .toBeGreaterThan(forbidden);
-    await expect(input).toHaveValue('An unsent private draft');
-    expect(paid).toEqual([]);
-  } finally {
-    await page.close();
-    await game.close();
   }
 });
 
@@ -784,5 +659,3 @@ test('optional icon failure leaves the game usable and real renderer resources s
     await rm(directory, { recursive: true, force: true });
   }
 });
-
-test.afterAll(closeTestDatabases);

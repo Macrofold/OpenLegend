@@ -37,8 +37,7 @@ pub(crate) use expression::{
     CompletedExpression, ExpressionAnswer, ExpressionCursor, ExpressionStep,
 };
 pub(crate) use run::{
-    CompletedResponse, GroundingProvider, ResponseAnswer, ResponseCursor, ResponseStep,
-    TypedActionAnswer, TypedActionRequest,
+    CompletedResponse, ResponseAnswer, ResponseCursor, ResponseStep,
 };
 mod think;
 pub(crate) use think::{CompletedThought, Thought, remember_thought};

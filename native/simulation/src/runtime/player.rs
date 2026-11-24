@@ -2,39 +2,42 @@
 //! read borrow survives a provider/SQL await; the immutable evidence owner does.
 use super::*;
 mod inventory;
-mod pickup;
 mod object_history;
-mod world_storage;
 mod offer_recipients;
-pub use offer_recipients::{
-    RuntimeOfferCursor, RuntimeOfferPage, RuntimeOfferProblem, RuntimeOfferSelection, RuntimeOfferSource,
-};
-pub use object_history::{OBJECT_HISTORY_SELECTION, RuntimeObjectHistoryEntry, RuntimeObjectHistoryRead};
-pub use world_storage::{InspectedRecipeRecord, RuntimeWorldStorage};
+mod pickup;
+mod world_storage;
 pub use inventory::{
     DirectInventory, InventoryContainer, InventoryCrumb, InventoryGroup, ResolvedInventoryGroup,
     StockGroupRefusal, StockGroupRequest, stock_group_limit_message,
 };
+pub use object_history::{
+    OBJECT_HISTORY_SELECTION, RuntimeObjectHistoryEntry, RuntimeObjectHistoryRead,
+};
+pub use offer_recipients::{
+    RuntimeOfferCursor, RuntimeOfferPage, RuntimeOfferProblem, RuntimeOfferSelection,
+    RuntimeOfferSource,
+};
+pub use world_storage::{InspectedRecipeRecord, RuntimeWorldStorage};
 mod catalogue;
-pub use catalogue::{RuntimeActionCatalogue, RuntimeCatalogueOffer};
 use catalogue::{EatingRead, current_actor_target, follow_availability};
-mod status_menu;
+pub use catalogue::{RuntimeActionCatalogue, RuntimeCatalogueOffer};
 mod hearth;
+mod status_menu;
 mod teaching;
-pub use hearth::{RuntimeHearthCatalogue, RuntimeHearthShape};
-pub use status_menu::{RuntimeStatusChoice, RuntimeStatusMenu};
 use crate::capture::{
     CapturedPlayerControls, PlayerControlFacts, PlayerControlPreparation, PlayerPerception,
     PlayerSelfFacts,
 };
-pub use crate::commands::player::RuntimePlayerCommand;
 pub use crate::commands::invocation::CoordinateRefusal;
+pub use crate::commands::player::RuntimePlayerCommand;
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, RoutePlan};
 use crate::host::{CapacityError, PublicationLease};
 use crate::simulation::AcceptedActorRead;
 pub use crate::simulation::{InteractionMode, PlayerInteractionFacts};
+pub use hearth::{RuntimeHearthCatalogue, RuntimeHearthShape};
 use indexmap::IndexMap;
 use serde_json::value::RawValue;
+pub use status_menu::{RuntimeStatusChoice, RuntimeStatusMenu};
 use std::mem::size_of;
 
 #[derive(Deserialize)]
@@ -102,7 +105,9 @@ impl<'a> RuntimeStrikeChoice<'a> {
     pub fn label_source_bytes(self) -> usize {
         match self.0.kind {
             crate::contact::ContactKind::Natural(strike) => strike.label.storage_bytes(),
-            crate::contact::ContactKind::Equipped { definition, .. } => definition.named.name.storage_bytes(),
+            crate::contact::ContactKind::Equipped { definition, .. } => {
+                definition.named.name.storage_bytes()
+            }
         }
     }
 
@@ -131,21 +136,44 @@ impl<'a> RuntimeContactMenu<'a> {
         crate::combat_encounters::context(self.state, self.source, self.target)
     }
 
-    pub fn release_words(&self) -> Option<(&'a crate::text::JsText, &'a crate::text::JsText, &'a str)> {
-        let words = &self.state.installed.occurrence_rules.value().ranged.as_ref()?.menu;
-        Some((&words.release_label, &words.release_description, &words.release_not_ready))
+    pub fn release_words(
+        &self,
+    ) -> Option<(&'a crate::text::JsText, &'a crate::text::JsText, &'a str)> {
+        let words = &self
+            .state
+            .installed
+            .occurrence_rules
+            .value()
+            .ranged
+            .as_ref()?
+            .menu;
+        Some((
+            &words.release_label,
+            &words.release_description,
+            &words.release_not_ready,
+        ))
     }
 
     pub fn recover_reason(&self) -> Option<&'a str> {
         let body = self.source.actor.as_ref()?;
         let now = self.state.physical.header.sim_time;
         (body.combat_ready_at.is_some_and(|ready| ready > now)
-            || body.action.as_ref().is_some_and(|action| action.strike_phase == Some(crate::contact::StrikePhase::Recovery)))
-            .then_some(crate::worlds::base_context_actions::recovering())
+            || body.action.as_ref().is_some_and(|action| {
+                action.strike_phase == Some(crate::contact::StrikePhase::Recovery)
+            }))
+        .then_some(crate::worlds::base_context_actions::recovering())
     }
 
     pub fn unavailable_reason(&self) -> Option<&'a str> {
-        (!self.may_act).then_some(self.state.installed.ordinary_actions.value().actions_restricted.message.as_str())
+        (!self.may_act).then_some(
+            self.state
+                .installed
+                .ordinary_actions
+                .value()
+                .actions_restricted
+                .message
+                .as_str(),
+        )
     }
 
     pub fn paused(&self) -> bool {
@@ -163,10 +191,7 @@ impl<'a> RuntimeContactMenu<'a> {
 
     /// Render the selected actor's received target facts. Only the matching
     /// public attribute from this read may appear in the returned view.
-    pub fn view(
-        &self,
-        choice: RuntimeStrikeChoice<'a>,
-    ) -> Option<crate::activity::ActivityView> {
+    pub fn view(&self, choice: RuntimeStrikeChoice<'a>) -> Option<crate::activity::ActivityView> {
         use crate::worlds::activity_display as display;
         let purpose = match choice.0.kind {
             crate::contact::ContactKind::Natural(_) => None,
@@ -213,16 +238,42 @@ impl<'a> RuntimeContactMenu<'a> {
     ) -> impl Iterator<Item = Result<RuntimeStrikeChoice<'a>, RuntimeError>> + 'b {
         let installed = &self.state.installed;
         let entities = &self.state.physical.entities;
-        let held = self.may_attack.then(|| self.state.inventory.children(entities, &self.source.id, true))
-            .into_iter().flatten()
-            .filter_map(|item| crate::contact::ContactRead::equipped(installed, entities, self.source, &item.id));
-        let carried = self.may_attack.then(|| self.state.inventory.children(entities, &self.source.id, false))
-            .into_iter().flatten()
-            .filter(|item| matches!(item.placement, Some(crate::state::Placement::Contained { .. })))
-            .filter_map(move |item| match crate::contact::ContactRead::carried(self.state, self.source, item, budget) {
-                Ok(Some(read)) => Some(Ok(RuntimeStrikeChoice(read, Some(self.source.inventory_revision.unwrap_or_default())))),
-                Ok(None) => None,
-                Err(error) => Some(Err(failure(error))),
+        let held = self
+            .may_attack
+            .then(|| {
+                self.state
+                    .inventory
+                    .children(entities, &self.source.id, true)
+            })
+            .into_iter()
+            .flatten()
+            .filter_map(|item| {
+                crate::contact::ContactRead::equipped(installed, entities, self.source, &item.id)
+            });
+        let carried = self
+            .may_attack
+            .then(|| {
+                self.state
+                    .inventory
+                    .children(entities, &self.source.id, false)
+            })
+            .into_iter()
+            .flatten()
+            .filter(|item| {
+                matches!(
+                    item.placement,
+                    Some(crate::state::Placement::Contained { .. })
+                )
+            })
+            .filter_map(move |item| {
+                match crate::contact::ContactRead::carried(self.state, self.source, item, budget) {
+                    Ok(Some(read)) => Some(Ok(RuntimeStrikeChoice(
+                        read,
+                        Some(self.source.inventory_revision.unwrap_or_default()),
+                    ))),
+                    Ok(None) => None,
+                    Err(error) => Some(Err(failure(error))),
+                }
             });
         installed
             .retained
@@ -244,21 +295,41 @@ impl<'a> RuntimeContactMenu<'a> {
         if choice.equipment_revision().is_none() {
             return Ok(None);
         }
-        let item = choice.weapon()
+        let item = choice
+            .weapon()
             .and_then(|id| self.state.physical.entities.get(id))
             .ok_or_else(|| failure(crate::execution::ExecutionError::Invariant))?;
         crate::commands::equipment_preview(self.state, self.source, item, budget)
-            .map(Some).map_err(failure)
+            .map(Some)
+            .map_err(failure)
     }
 
     /// Borrow only equipped shields from this accepted contact cut.
-    pub fn guard_shields(&self) -> impl Iterator<Item = (&'a str, &'a crate::text::JsText, &'a str)> + '_ {
-        self.may_act.then(|| self.state.inventory.children(&self.state.physical.entities, &self.source.id, true)).into_iter().flatten()
+    pub fn guard_shields(
+        &self,
+    ) -> impl Iterator<Item = (&'a str, &'a crate::text::JsText, &'a str)> + '_ {
+        self.may_act
+            .then(|| {
+                self.state
+                    .inventory
+                    .children(&self.state.physical.entities, &self.source.id, true)
+            })
+            .into_iter()
+            .flatten()
             .filter_map(|shield| {
                 let lot = shield.item.as_ref()?;
-                let definition = self.state.installed.retained.items.get(&lot.definition_pin.id)?;
+                let definition = self
+                    .state
+                    .installed
+                    .retained
+                    .items
+                    .get(&lot.definition_pin.id)?;
                 let profile = definition.contact_defense.as_ref()?;
-                definition.can_guard().then_some((shield.id.as_str(), &definition.named.name, profile.label.as_str()))
+                definition.can_guard().then_some((
+                    shield.id.as_str(),
+                    &definition.named.name,
+                    profile.label.as_str(),
+                ))
             })
     }
 
@@ -268,9 +339,21 @@ impl<'a> RuntimeContactMenu<'a> {
         let same_direction = self.source.world_position().is_some_and(|origin| {
             (origin.x - self.body.position.x).hypot(origin.z - self.body.position.z) <= 1e-8
         });
-        (same_direction || source.action.as_ref().is_some_and(crate::state::Action::is_guard) ||
-            source.combat_ready_at.is_some_and(|at| at > current))
-            .then_some(self.state.installed.ordinary_actions.value().not_applicable.message.as_str())
+        (same_direction
+            || source
+                .action
+                .as_ref()
+                .is_some_and(crate::state::Action::is_guard)
+            || source.combat_ready_at.is_some_and(|at| at > current))
+        .then_some(
+            self.state
+                .installed
+                .ordinary_actions
+                .value()
+                .not_applicable
+                .message
+                .as_str(),
+        )
     }
 }
 
@@ -365,10 +448,21 @@ fn gathering_actor<'a>(
     state: &'a crate::simulation::SimulationState,
     actor: &'a str,
 ) -> Result<GatheringActor<'a>, RuntimeError> {
-    let entity = state.physical.entities.get(actor).ok_or_else(|| failure("missing gather actor"))?;
+    let entity = state
+        .physical
+        .entities
+        .get(actor)
+        .ok_or_else(|| failure("missing gather actor"))?;
     let available = entity.actively_participates()
-        && entity.actor.as_ref().is_some_and(|actor| actor.alive && !actor.incapacitated);
-    let blocked = state.installed.capabilities.capability_blocked(Some(entity), "actions").map_err(failure)?;
+        && entity
+            .actor
+            .as_ref()
+            .is_some_and(|actor| actor.alive && !actor.incapacitated);
+    let blocked = state
+        .installed
+        .capabilities
+        .capability_blocked(Some(entity), "actions")
+        .map_err(failure)?;
     Ok(GatheringActor {
         id: actor,
         life: entity.physical_life(),
@@ -432,8 +526,8 @@ pub struct RuntimePreparation<'a> {
 }
 
 mod fire;
-pub use fire::{RuntimeFireChoice, RuntimeFireMenu};
 pub use crate::fire_care::{FireOperation, VisibleFuel};
+pub use fire::{RuntimeFireChoice, RuntimeFireMenu};
 
 pub struct RuntimeFoodMenu<'a> {
     pub sequence: u64,
@@ -444,8 +538,8 @@ pub struct RuntimeFoodMenu<'a> {
     pub eating: Option<(&'a crate::text::JsText, crate::consumption::EatingOffer<'a>)>,
 }
 
-mod practice;
 mod equipped;
+mod practice;
 pub use practice::RuntimePracticeOffer;
 mod ranged;
 pub use ranged::RuntimeRangedChoice;
@@ -624,36 +718,80 @@ impl NativeWorldSession {
     /// Typed work observes only the admitted player's live body and selected
     /// action kind. The ordinary command owns all resulting cancellation.
     pub fn player_typed_stop_current(
-        &self, account: &str, actor: &str, kind: Option<&str>,
+        &self,
+        account: &str,
+        actor: &str,
+        kind: Option<&str>,
     ) -> Result<(bool, bool), RuntimeError> {
         let current = self.session.accepted().map_err(failure)?;
-        current.require_player_read(account, actor).map_err(failure)?;
-        let actor = current.state.physical.entities.get(actor).ok_or_else(|| failure("missing current actor"))?;
-        let body = actor.actor.as_ref().ok_or_else(|| failure("missing current actor body"))?;
-        let restricted = current.state.installed.capabilities
-            .capability_blocked(Some(actor), "actions").map_err(failure)?;
-        Ok((body.alive && !body.incapacitated && !restricted,
-            kind.is_none_or(|kind| body.action.as_ref().is_some_and(|action| action.kind == kind))))
+        current
+            .require_player_read(account, actor)
+            .map_err(failure)?;
+        let actor = current
+            .state
+            .physical
+            .entities
+            .get(actor)
+            .ok_or_else(|| failure("missing current actor"))?;
+        let body = actor
+            .actor
+            .as_ref()
+            .ok_or_else(|| failure("missing current actor body"))?;
+        let restricted = current
+            .state
+            .installed
+            .capabilities
+            .capability_blocked(Some(actor), "actions")
+            .map_err(failure)?;
+        Ok((
+            body.alive && !body.incapacitated && !restricted,
+            kind.is_none_or(|kind| {
+                body.action
+                    .as_ref()
+                    .is_some_and(|action| action.kind == kind)
+            }),
+        ))
     }
 
     /// Use the same current floor binding and choice/plan owners as a
     /// structured response. The plan is the effect, not an immediate walk.
     pub fn begin_player_typed_walk(
-        &mut self, request: &str, account: &str, actor: &str, input: TypedWalk<'_>,
+        &mut self,
+        request: &str,
+        account: &str,
+        actor: &str,
+        input: TypedWalk<'_>,
     ) -> Result<Result<CandidateKey, CoordinateRefusal>, RuntimeError> {
         self.require_active()?;
         let accepted = self.session.accepted().map_err(failure)?;
-        accepted.require_player_read(account, actor).map_err(failure)?;
+        accepted
+            .require_player_read(account, actor)
+            .map_err(failure)?;
         let (surface, y) = match crate::commands::invocation::installed_coordinate(
-            &accepted.state.installed, input.x, input.z, input.support,
+            &accepted.state.installed,
+            input.x,
+            input.z,
+            input.support,
         ) {
             Ok(value) => value,
             Err(reason) => return Ok(Err(reason)),
         };
         let _surface = self.budget.reserve(surface.len())?;
-        let point = crate::state::SurfacePoint { x: input.x, y, z: input.z, surface_id: surface.into() };
-        self.begin_bound_player_command(request, actor, RuntimePlayerCommand::Move(&point),
-            false, None, Some(input.mode)).map(Ok)
+        let point = crate::state::SurfacePoint {
+            x: input.x,
+            y,
+            z: input.z,
+            surface_id: surface.into(),
+        };
+        self.begin_bound_player_command(
+            request,
+            actor,
+            RuntimePlayerCommand::Move(&point),
+            false,
+            None,
+            Some(input.mode),
+        )
+        .map(Ok)
     }
 
     /// Admit a decoded browser movement or stop on the same command journal
@@ -682,7 +820,11 @@ impl NativeWorldSession {
     }
 
     fn begin_bound_player_command(
-        &mut self, id: &str, actor: &str, command: RuntimePlayerCommand<'_>, preview: bool,
+        &mut self,
+        id: &str,
+        actor: &str,
+        command: RuntimePlayerCommand<'_>,
+        preview: bool,
         materials: Option<std::sync::Arc<crate::construction_gather::MaterialGrants>>,
         plan: Option<crate::plans::PlanMode>,
     ) -> Result<CandidateKey, RuntimeError> {
@@ -697,25 +839,44 @@ impl NativeWorldSession {
             .ok_or(CapacityError)?;
         let _workspace = self.budget.reserve(bytes)?;
         let strike = match command {
-            RuntimePlayerCommand::Strike { permission, equipment_revision, timed_begin, .. } => {
-                Some(crate::contact::review::PlayerStrike {
-                    permission, equipment_revision,
-                    execution: timed_begin.then_some(crate::attack_execution::PlayerAttackInput::Begin),
-                })
+            RuntimePlayerCommand::Strike {
+                permission,
+                equipment_revision,
+                timed_begin,
+                ..
+            } => Some(crate::contact::review::PlayerStrike {
+                permission,
+                equipment_revision,
+                execution: timed_begin.then_some(crate::attack_execution::PlayerAttackInput::Begin),
+            }),
+            RuntimePlayerCommand::RangedStart {
+                permission,
+                timed_begin,
+                ..
+            } => Some(crate::contact::review::PlayerStrike {
+                permission,
+                equipment_revision: None,
+                execution: timed_begin.then_some(crate::attack_execution::PlayerAttackInput::Begin),
+            }),
+            RuntimePlayerCommand::RangedRelease {
+                permission,
+                input,
+                may_wait,
+                ..
             }
-            RuntimePlayerCommand::RangedStart { permission, timed_begin, .. } => {
-                Some(crate::contact::review::PlayerStrike {
-                    permission, equipment_revision: None,
-                    execution: timed_begin.then_some(crate::attack_execution::PlayerAttackInput::Begin),
-                })
-            }
-            RuntimePlayerCommand::RangedRelease { permission, input, may_wait, .. }
-            | RuntimePlayerCommand::ReleaseStrike { permission, input, may_wait, .. } => {
-                Some(crate::contact::review::PlayerStrike {
-                    permission, equipment_revision: None,
-                    execution: Some(crate::attack_execution::PlayerAttackInput::Release { input, may_wait }),
-                })
-            }
+            | RuntimePlayerCommand::ReleaseStrike {
+                permission,
+                input,
+                may_wait,
+                ..
+            } => Some(crate::contact::review::PlayerStrike {
+                permission,
+                equipment_revision: None,
+                execution: Some(crate::attack_execution::PlayerAttackInput::Release {
+                    input,
+                    may_wait,
+                }),
+            }),
             _ => None,
         };
         let trade_evidence = match command {
@@ -781,7 +942,9 @@ impl NativeWorldSession {
         read: impl FnOnce(Option<(&str, bool)>) -> T,
     ) -> Result<T, RuntimeError> {
         self.require_active()?;
-        self.session.accepted().map_err(failure)?
+        self.session
+            .accepted()
+            .map_err(failure)?
             .with_player_attack(account, actor, read)
             .map_err(failure)
     }
@@ -1030,28 +1193,57 @@ impl NativeWorldSession {
                     }
                     return true;
                 }
-                if let Some(target) = state.physical.entities.get(id).filter(|target| target.practice_target.is_some()) {
+                if let Some(target) = state
+                    .physical
+                    .entities
+                    .get(id)
+                    .filter(|target| target.practice_target.is_some())
+                {
                     if !matches(&body) {
                         return false;
                     }
                     let encode = encode.take().expect("one selected source");
-                    result = Some(practice::offer(state, actor, &body.name, target, equipment, &self.budget, encode));
+                    result = Some(practice::offer(
+                        state,
+                        actor,
+                        &body.name,
+                        target,
+                        equipment,
+                        &self.budget,
+                        encode,
+                    ));
                     return true;
                 }
                 if observed.kind != "resource" || !matches(&body) {
                     return false;
                 }
-                if equipment.is_none() && let Some(source) = crate::casts::source(state, id) {
+                if equipment.is_none()
+                    && let Some(source) = crate::casts::source(state, id)
+                {
                     let encode = encode.take().expect("one selected source");
                     result = Some((|| {
                         let tools = catalogue::FishTools::prepare(
-                            state, actor, Some(&source.rules.definition.tool_kind), &self.budget,
+                            state,
+                            actor,
+                            Some(&source.rules.definition.tool_kind),
+                            &self.budget,
                         )?;
                         let binding = catalogue::cast_geometry_binding(
-                            state, self.session.operational_generation(),
+                            state,
+                            self.session.operational_generation(),
                         );
                         let selected = tools.for_kind(&source.rules.definition.tool_kind);
-                        fish_offer(state, actor, name, source, binding, &self.budget, selected, true, encode)
+                        fish_offer(
+                            state,
+                            actor,
+                            name,
+                            source,
+                            binding,
+                            &self.budget,
+                            selected,
+                            true,
+                            encode,
+                        )
                     })());
                     return true;
                 }
@@ -1064,9 +1256,14 @@ impl NativeWorldSession {
                     let mut amount = gathering.base_yield;
                     if let Some(item) = equipment {
                         let Some((_, count)) = crate::gathering::exact_tool(
-                            state, actor.id, item, crate::gathering::GatheringMode::EquippedTool,
+                            state,
+                            actor.id,
+                            item,
+                            crate::gathering::GatheringMode::EquippedTool,
                             &gathering.definition.pin.id,
-                        ).map_err(failure)? else {
+                        )
+                        .map_err(failure)?
+                        else {
                             return Ok(None);
                         };
                         amount = amount.max(count);
@@ -1076,12 +1273,15 @@ impl NativeWorldSession {
                                 amount = amount.max(count);
                             }
                             Ok(())
-                        }).map_err(failure)?;
+                        })
+                        .map_err(failure)?;
                     }
                     encode(RuntimeResourceOffer::Gather(gather_menu_offer(
                         state, &body, gathering, quantity, actor, amount,
-                    ))).map(Some)
-                })().transpose();
+                    )))
+                    .map(Some)
+                })()
+                .transpose();
                 true
             })
             .map_err(failure)?;
@@ -1098,7 +1298,9 @@ impl NativeWorldSession {
     ) -> Result<T, RuntimeError> {
         self.require_active()?;
         let simulation = self.session.accepted().map_err(failure)?;
-        simulation.require_player_read(account, actor).map_err(failure)?;
+        simulation
+            .require_player_read(account, actor)
+            .map_err(failure)?;
         let _lease = self.session.fence().begin_publication().map_err(failure)?;
         publish(simulation.state.physical.header.sequence)
     }
@@ -1168,7 +1370,11 @@ impl NativeWorldSession {
         {
             return Ok(None);
         }
-        let may_act = !state.installed.capabilities.capability_blocked(Some(source), "actions").map_err(failure)?;
+        let may_act = !state
+            .installed
+            .capabilities
+            .capability_blocked(Some(source), "actions")
+            .map_err(failure)?;
         let _lease = self.session.fence().begin_publication().map_err(failure)?;
         let mut result = None;
         let mut use_menu = Some(use_menu);
@@ -1194,11 +1400,19 @@ impl NativeWorldSession {
                 if !matches(observed) {
                     return false;
                 }
-                let may_attack = may_act && life.is_some_and(|life| {
-                    crate::contact::may_target(&state.installed, source, target, life)
-                });
+                let may_attack = may_act
+                    && life.is_some_and(|life| {
+                        crate::contact::may_target(&state.installed, source, target, life)
+                    });
                 let ranged = if may_attack {
-                    match ranged::choices(state, source, target, observed_name, equipment, &self.budget) {
+                    match ranged::choices(
+                        state,
+                        source,
+                        target,
+                        observed_name,
+                        equipment,
+                        &self.budget,
+                    ) {
                         Ok(value) => Some(value),
                         Err(error) => {
                             result = Some(Err(failure(error)));
@@ -1228,18 +1442,23 @@ impl NativeWorldSession {
                     may_act,
                     may_attack,
                     follow,
-                    teaching: (detail_choices && teaching::has_offers(state, source, target))
-                        .then(|| GeometryBinding::new(
-                            CandidateKey {
-                                id: 0,
-                                base_cut: state.accepted_cut,
-                                generation: self.session.operational_generation(),
-                            },
-                            state.installed.geometry.spatial.revision,
-                            0,
-                        )),
+                    teaching: (detail_choices && teaching::has_offers(state, source, target)).then(
+                        || {
+                            GeometryBinding::new(
+                                CandidateKey {
+                                    id: 0,
+                                    base_cut: state.accepted_cut,
+                                    generation: self.session.operational_generation(),
+                                },
+                                state.installed.geometry.spatial.revision,
+                                0,
+                            )
+                        },
+                    ),
                     name,
-                    ranged: ranged.as_ref().map_or(&[], |(choices, _)| choices.as_slice()),
+                    ranged: ranged
+                        .as_ref()
+                        .map_or(&[], |(choices, _)| choices.as_slice()),
                 };
                 if may_attack
                     || choice.teaching.is_some()
@@ -1262,8 +1481,12 @@ impl NativeWorldSession {
         account: &str,
         actor: &str,
         item: Option<&str>,
-        mut contact: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> Result<Option<String>, RuntimeError>,
-        compute: impl FnOnce(&GeometryQueries) -> Result<(GeometryAnswers, ByteReservation), RuntimeError>,
+        mut contact: impl FnMut(
+            crate::capture::PlayerObservedBody<'_>,
+        ) -> Result<Option<String>, RuntimeError>,
+        compute: impl FnOnce(
+            &GeometryQueries,
+        ) -> Result<(GeometryAnswers, ByteReservation), RuntimeError>,
         use_menu: impl FnOnce(RuntimeFoodMenu<'_>) -> Result<T, RuntimeError>,
     ) -> Result<Option<T>, RuntimeError> {
         self.require_active()?;
@@ -1272,8 +1495,10 @@ impl NativeWorldSession {
         let _lease = self.session.fence().begin_publication().map_err(failure)?;
         let installed = &state.installed;
         let selected = if let Some(item) = item {
-            let Some(selected) = crate::install::owned_by(&state.physical, &installed.retained, actor, item)
-                .map_err(failure)? else {
+            let Some(selected) =
+                crate::install::owned_by(&state.physical, &installed.retained, actor, item)
+                    .map_err(failure)?
+            else {
                 return Ok(None);
             };
             Some(selected)
@@ -1290,56 +1515,84 @@ impl NativeWorldSession {
             None
         };
         let has_preparation = installed.retained.preparations.values().any(|recipe| {
-            selected.is_none_or(|lot| recipe.definition.inputs.iter().any(|input| input.definition_id == lot.definition_id))
+            selected.is_none_or(|lot| {
+                recipe
+                    .definition
+                    .inputs
+                    .iter()
+                    .any(|input| input.definition_id == lot.definition_id)
+            })
         });
         let fire_rule = installed.fire_care.as_ref().filter(|_| item.is_none());
         if !has_preparation && fire_rule.is_none() {
-            let Some(eating) = eating else { return Ok(None) };
-            simulation.require_player_owner(account, actor).map_err(failure)?;
+            let Some(eating) = eating else {
+                return Ok(None);
+            };
+            simulation
+                .require_player_owner(account, actor)
+                .map_err(failure)?;
             return use_menu(RuntimeFoodMenu {
-                sequence: state.physical.header.sequence, paused: state.physical.header.paused,
-                preparations: &[], heat: &[], eating: Some(eating), fire: None,
-            }).map(Some);
+                sequence: state.physical.header.sequence,
+                paused: state.physical.header.paused,
+                preparations: &[],
+                heat: &[],
+                eating: Some(eating),
+                fire: None,
+            })
+            .map(Some);
         }
         let mut heat = Vec::new();
         let mut selected_fire = None;
         let mut storage = self.budget.reserve(0)?;
         let mut error = None;
-        simulation.visit_accepted_player_contacts(account, actor, &self.budget, |body| {
-            let Some(crate::reception::SensoryFacet::Body { body: observed }) =
-                body.body_facet().map(|facet| &facet.value)
-            else {
-                return false;
-            };
-            let Some(lit) = observed.heat_lit else {
-                return false;
-            };
-            let name = &body.name.name;
-            // Reference issuance and allocation both happen in this closure.
-            let next = (|| -> Result<bool, RuntimeError> {
-                // The exact selected contact is also the disclosure cut for
-                // its coarse fuel label. An old/lost body cannot read live heat.
-                let current_fire = fire_rule.and_then(|_| crate::fire_care::target(
-                    &state.physical, body.source_id,
-                )).filter(|fire| fire.physical_life() == body.physical_life);
-                let Some(target) = contact(body)? else {
-                    return Ok(false);
+        simulation
+            .visit_accepted_player_contacts(account, actor, &self.budget, |body| {
+                let Some(crate::reception::SensoryFacet::Body { body: observed }) =
+                    body.body_facet().map(|facet| &facet.value)
+                else {
+                    return false;
                 };
-                storage.resize(storage.bytes().checked_add(
-                    4 * std::mem::size_of::<RuntimeHeatContact>() + target.len() + name.storage_bytes()
-                ).ok_or(crate::host::CapacityError)?)?;
-                selected_fire = current_fire;
-                heat.push(RuntimeHeatContact { target, name: name.clone(), lit });
-                Ok(item.is_none())
-            })();
-            match next {
-                Ok(done) => done,
-                Err(problem) => {
-                    error = Some(problem);
-                    true
+                let Some(lit) = observed.heat_lit else {
+                    return false;
+                };
+                let name = &body.name.name;
+                // Reference issuance and allocation both happen in this closure.
+                let next = (|| -> Result<bool, RuntimeError> {
+                    // The exact selected contact is also the disclosure cut for
+                    // its coarse fuel label. An old/lost body cannot read live heat.
+                    let current_fire = fire_rule
+                        .and_then(|_| crate::fire_care::target(&state.physical, body.source_id))
+                        .filter(|fire| fire.physical_life() == body.physical_life);
+                    let Some(target) = contact(body)? else {
+                        return Ok(false);
+                    };
+                    storage.resize(
+                        storage
+                            .bytes()
+                            .checked_add(
+                                4 * std::mem::size_of::<RuntimeHeatContact>()
+                                    + target.len()
+                                    + name.storage_bytes(),
+                            )
+                            .ok_or(crate::host::CapacityError)?,
+                    )?;
+                    selected_fire = current_fire;
+                    heat.push(RuntimeHeatContact {
+                        target,
+                        name: name.clone(),
+                        lit,
+                    });
+                    Ok(item.is_none())
+                })();
+                match next {
+                    Ok(done) => done,
+                    Err(problem) => {
+                        error = Some(problem);
+                        true
+                    }
                 }
-            }
-        }).map_err(failure)?;
+            })
+            .map_err(failure)?;
         if let Some(error) = error {
             return Err(error);
         }
@@ -1348,31 +1601,60 @@ impl NativeWorldSession {
         }
         let fire = if let Some((fire, rule)) = selected_fire.zip(fire_rule) {
             let binding = GeometryBinding::new(
-                CandidateKey { id: 0, base_cut: state.accepted_cut, generation: self.session.operational_generation() },
-                installed.geometry.spatial.revision, 0,
+                CandidateKey {
+                    id: 0,
+                    base_cut: state.accepted_cut,
+                    generation: self.session.operational_generation(),
+                },
+                installed.geometry.spatial.revision,
+                0,
             );
             let sight = crate::reception::SightBatch::prepare(
-                &state.physical, installed, actor, &[&fire.id], binding, &self.budget,
-            ).map_err(failure)?;
+                &state.physical,
+                installed,
+                actor,
+                &[&fire.id],
+                binding,
+                &self.budget,
+            )
+            .map_err(failure)?;
             let (answer, _storage) = compute(sight.queries())?;
             if sight.finish(answer).map_err(failure)?.seen(&fire.id) == Some(true) {
-                Some(fire::choices(state, rule.value(), actor, fire, &self.budget)?)
-            } else { None }
-        } else { None };
-        let choices = has_preparation.then(|| crate::food_preparation::choices(
-            state, actor, item, &self.budget,
-        )).transpose().map_err(failure)?;
-        let choices = choices.as_ref().map_or(&[][..], |choices| choices.rows.as_slice());
+                Some(fire::choices(
+                    state,
+                    rule.value(),
+                    actor,
+                    fire,
+                    &self.budget,
+                )?)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        let choices = has_preparation
+            .then(|| crate::food_preparation::choices(state, actor, item, &self.budget))
+            .transpose()
+            .map_err(failure)?;
+        let choices = choices
+            .as_ref()
+            .map_or(&[][..], |choices| choices.rows.as_slice());
         let _rows = self.budget.reserve(
-            choices.len().checked_mul(std::mem::size_of::<RuntimePreparation<'_>>())
+            choices
+                .len()
+                .checked_mul(std::mem::size_of::<RuntimePreparation<'_>>())
                 .ok_or(crate::host::CapacityError)?,
         )?;
-        let rows: Vec<_> = choices.iter().map(|choice| RuntimePreparation {
-            pin: &choice.recipe.pin,
-            name: &choice.recipe.definition.name,
-            description: &choice.recipe.definition.description,
-            inputs: choice.inputs.as_ref(),
-        }).collect();
+        let rows: Vec<_> = choices
+            .iter()
+            .map(|choice| RuntimePreparation {
+                pin: &choice.recipe.pin,
+                name: &choice.recipe.definition.name,
+                description: &choice.recipe.definition.description,
+                inputs: choice.inputs.as_ref(),
+            })
+            .collect();
         use_menu(RuntimeFoodMenu {
             sequence: state.physical.header.sequence,
             paused: state.physical.header.paused,
@@ -1380,7 +1662,8 @@ impl NativeWorldSession {
             preparations: &rows,
             fire,
             eating,
-        }).map(Some)
+        })
+        .map(Some)
     }
 
     /// Inspect the authoritative actor, recipient and payer in one accepted
@@ -1461,7 +1744,8 @@ impl NativeWorldSession {
             .then(|| capture_view_source(&self.session, state, actor, &read, &self.budget))
             .transpose()?;
         let outings = if app_view && state.installed.travel && state.outings.has_rows() {
-            crate::outings::view::PreparedOutings::prepare(state, actor, &self.budget).map_err(failure)?
+            crate::outings::view::PreparedOutings::prepare(state, actor, &self.budget)
+                .map_err(failure)?
         } else {
             None
         };
@@ -1534,7 +1818,11 @@ impl NativeWorldSession {
                 return Ok(None);
             }
         }
-        if read.outings.as_ref().is_some_and(|values| !values.current(&simulation.state, &read.actor)) {
+        if read
+            .outings
+            .as_ref()
+            .is_some_and(|values| !values.current(&simulation.state, &read.actor))
+        {
             return Ok(None);
         }
         if let Some(narrator) = &read.narrator {
@@ -1690,29 +1978,11 @@ impl RuntimePlayerRead {
         PlayerPerception::new(&self.read.perception).map_err(failure)
     }
 
-    pub fn control_question(
-        &self,
-        budget: &ByteBudget,
-    ) -> Result<Option<RuntimeJson>, RuntimeError> {
-        self.control_queries()
-            .map(|queries| RuntimeJson::encode(queries, budget))
-            .transpose()
-    }
-
     /// The capture owns this immutable input through its control preparation.
     pub fn control_queries(&self) -> Option<&crate::geometry::GeometryQueries> {
         self.preparation
             .as_ref()
             .map(PlayerControlPreparation::queries)
-    }
-    pub fn finish_controls(
-        &mut self,
-        bytes: &[u8],
-        budget: &ByteBudget,
-    ) -> Result<(), RuntimeError> {
-        let _decode = decode_preparation(bytes, budget)?;
-        let answers: GeometryAnswers = serde_json::from_slice(bytes).map_err(failure)?;
-        self.apply_controls(answers)
     }
 
     /// Reuse the control validator with a typed physical answer instead of

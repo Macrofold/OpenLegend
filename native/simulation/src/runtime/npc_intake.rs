@@ -41,64 +41,26 @@ impl RuntimeNpcTrigger {
     }
 
     pub fn inputs(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        let raw: &serde_json::value::RawValue =
-            serde_json::from_str(self.read.inputs_json().ok_or_else(|| failure("not an addon trigger"))?)
-                .map_err(failure)?;
+        let raw: &serde_json::value::RawValue = serde_json::from_str(
+            self.read
+                .inputs_json()
+                .ok_or_else(|| failure("not an addon trigger"))?,
+        )
+        .map_err(failure)?;
         RuntimeJson::encode(raw, budget)
     }
 
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        let raw: &serde_json::value::RawValue =
-            serde_json::from_str(self.read.json().ok_or_else(|| failure("not an addon trigger"))?)
-                .map_err(failure)?;
+        let raw: &serde_json::value::RawValue = serde_json::from_str(
+            self.read
+                .json()
+                .ok_or_else(|| failure("not an addon trigger"))?,
+        )
+        .map_err(failure)?;
         RuntimeJson::encode(raw, budget)
     }
 }
 impl NativeWorldSession {
-    /// The short gate spans only synchronous queue acknowledgement. It is
-    /// released before schedule SQL, model dispatch or any other async work.
-    pub fn inspect_npc_trigger(
-        &self,
-        trigger: &RuntimeNpcTrigger,
-    ) -> Result<Option<RuntimeNpcInspection>, RuntimeError> {
-        if !self.npc_trigger_current(trigger)? {
-            return Ok(None);
-        }
-        let storage = self
-            .budget
-            .reserve(std::mem::size_of::<RuntimeNpcInspection>())
-            .map_err(failure)?;
-        let fence = self.session.fence();
-        let lease = fence.begin_publication().map_err(fence_failure)?;
-        Ok(Some(RuntimeNpcInspection {
-            _lease: lease,
-            fence,
-            _storage: storage,
-        }))
-    }
-    pub fn read_npc_trigger(&self, input: &[u8]) -> Result<RuntimeNpcTrigger, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let request = serde_json::from_slice(input).map_err(failure)?;
-        let state = &self.session.accepted().map_err(session_failure)?.state;
-        let read =
-            crate::capture::npc_intake::capture(state, request, &self.budget).map_err(failure)?;
-        Ok(RuntimeNpcTrigger { read })
-    }
-    pub fn read_npc_queue_inputs(&self, input: &[u8]) -> Result<RuntimeJson, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let request = serde_json::from_slice(input).map_err(failure)?;
-        let state = &self.session.accepted().map_err(session_failure)?.state;
-        let (text, custody) =
-            crate::capture::npc_intake::capture_queue_packet(state, &request, &self.budget)
-                .map_err(failure)?;
-        Ok(RuntimeJson {
-            bytes: text.into_bytes(),
-            custody,
-            handoff: None,
-        })
-    }
     /// The Rust scheduler keeps the exact acknowledged queue inputs together
     /// with their reservation, so neither side transfers a JSON packet.
     pub fn read_npc_queue_inputs_direct(
@@ -167,16 +129,27 @@ impl NativeWorldSession {
         let operation = match operation {
             RuntimeDiscoveryOperation::Reserve { interval } => {
                 if interval > crate::identity::MAX_SAFE_INTEGER {
-                    return Err(failure("NPC discovery interval exceeds the supported range"));
+                    return Err(failure(
+                        "NPC discovery interval exceeds the supported range",
+                    ));
                 }
-                NpcIntakeOperation::ReserveDiscovery { interval, reservation }
+                NpcIntakeOperation::ReserveDiscovery {
+                    interval,
+                    reservation,
+                }
             }
             RuntimeDiscoveryOperation::Settle { dispatched } => {
-                NpcIntakeOperation::SettleDiscovery { reservation, dispatched }
+                NpcIntakeOperation::SettleDiscovery {
+                    reservation,
+                    dispatched,
+                }
             }
         };
         self.session
-            .begin_npc_intake(NpcIntakeRequest { actor_id, operation })
+            .begin_npc_intake(NpcIntakeRequest {
+                actor_id,
+                operation,
+            })
             .map_err(session_failure)
     }
 

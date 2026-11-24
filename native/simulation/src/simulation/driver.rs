@@ -60,8 +60,6 @@ pub(crate) enum ProviderKind {
     AppraisalOutcomes,
     #[serde(rename = "choice-descriptions")]
     ChoiceDescriptions,
-    #[serde(rename = "typed-actions")]
-    TypedActions,
     #[serde(rename = "maintenance-format")]
     MaintenanceFormat,
     #[serde(rename = "consolidation-format")]
@@ -217,26 +215,11 @@ impl ProviderQuestion {
         self.binding
     }
 
-    pub(crate) fn json(&self) -> Option<&str> {
-        match &self.body {
-            QuestionBody::Json(json) => Some(json),
-            _ => None,
-        }
-    }
-
     pub(crate) fn geometry(&self) -> Option<&GeometryQueries> {
         match &self.body {
             QuestionBody::Geometry(queries) => Some(queries),
             _ => None,
         }
-    }
-
-    pub(crate) fn geometry_envelope(&self) -> Option<QuestionEnvelope<'_, GeometryQueries>> {
-        self.geometry().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
     }
 
     pub(crate) fn control(&self) -> Option<&super::host_control::ControlFormat> {
@@ -246,31 +229,11 @@ impl ProviderQuestion {
         }
     }
 
-    pub(crate) fn control_envelope(
-        &self,
-    ) -> Option<QuestionEnvelope<'_, super::host_control::ControlFormat>> {
-        self.control().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
-    }
-
     pub(crate) fn display(&self) -> Option<&crate::commands::ActivityDisplayRequest> {
         match &self.body {
             QuestionBody::Display(request) => Some(request),
             _ => None,
         }
-    }
-
-    pub(crate) fn display_envelope(
-        &self,
-    ) -> Option<QuestionEnvelope<'_, crate::commands::ActivityDisplayRequest>> {
-        self.display().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
     }
 
     pub(crate) fn plan_command(&self) -> Option<&crate::plans::PlanCommandRequest> {
@@ -280,40 +243,11 @@ impl ProviderQuestion {
         }
     }
 
-    pub(crate) fn plan_command_envelope(
-        &self,
-    ) -> Option<QuestionEnvelope<'_, crate::plans::PlanCommandRequest>> {
-        self.plan_command().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
-    }
-
     pub(crate) fn digest(&self) -> Option<&crate::language::CanonicalJsonValue> {
         match &self.body {
             QuestionBody::Digest(input) => Some(input),
             _ => None,
         }
-    }
-
-    pub(crate) fn digest_envelope(&self) -> Option<impl Serialize + '_> {
-        #[derive(Serialize)]
-        struct Digest<'a> {
-            binding: GeometryBinding,
-            value: &'a crate::records::SqlCell,
-        }
-        #[derive(Serialize)]
-        struct Envelope<'a> {
-            kind: ProviderKind,
-            binding: GeometryBinding,
-            value: Digest<'a>,
-        }
-        self.digest().map(|input| Envelope {
-            kind: self.kind,
-            binding: self.binding,
-            value: Digest { binding: self.binding, value: &input.value },
-        })
     }
 
     pub(crate) fn choice_descriptions(&self) -> Option<&crate::capture::NpcDescriptionsRequest> {
@@ -323,29 +257,11 @@ impl ProviderQuestion {
         }
     }
 
-    pub(crate) fn choice_descriptions_envelope(
-        &self,
-    ) -> Option<QuestionEnvelope<'_, crate::capture::NpcDescriptionsRequest>> {
-        self.choice_descriptions().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
-    }
-
     pub(crate) fn utterance(&self) -> Option<&UtteranceRequest> {
         match &self.body {
             QuestionBody::Utterance(ask) => Some(ask),
             _ => None,
         }
-    }
-
-    pub(crate) fn utterance_envelope(&self) -> Option<QuestionEnvelope<'_, UtteranceRequest>> {
-        self.utterance().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
     }
 
     pub(crate) fn words(&self) -> Option<&WordsProviderRequest> {
@@ -355,14 +271,6 @@ impl ProviderQuestion {
         }
     }
 
-    pub(crate) fn words_envelope(&self) -> Option<QuestionEnvelope<'_, WordsProviderRequest>> {
-        self.words().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
-    }
-
     pub(crate) fn collation(&self) -> Option<&CollationProviderRequest> {
         match &self.body {
             QuestionBody::Collation(request) => Some(request),
@@ -370,117 +278,74 @@ impl ProviderQuestion {
         }
     }
 
-    pub(crate) fn collation_envelope(&self) -> Option<QuestionEnvelope<'_, CollationProviderRequest>> {
-        self.collation().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
-    }
-
-    pub(crate) fn maintenance(&self) -> Option<&crate::cognition::format::MaintenanceFormatRequest> {
+    pub(crate) fn maintenance(
+        &self,
+    ) -> Option<&crate::cognition::format::MaintenanceFormatRequest> {
         match &self.body {
             QuestionBody::Maintenance(ask) => Some(ask),
             _ => None,
         }
     }
 
-    pub(crate) fn maintenance_envelope(
-        &self,
-    ) -> Option<QuestionEnvelope<'_, crate::cognition::format::MaintenanceFormatRequest>> {
-        self.maintenance().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
-    }
-
     pub(crate) fn support_membership(
         &self,
-    ) -> Option<(&crate::received::SupportMembershipRequest, Option<&crate::records::ChangedRows>)> {
+    ) -> Option<(
+        &crate::received::SupportMembershipRequest,
+        Option<&crate::records::ChangedRows>,
+    )> {
         match &self.body {
-            QuestionBody::SupportMembership(question, projection) => {
-                Some((&question.request, projection.as_ref().map(|projection| &projection.changes)))
-            }
+            QuestionBody::SupportMembership(question, projection) => Some((
+                &question.request,
+                projection.as_ref().map(|projection| &projection.changes),
+            )),
             _ => None,
         }
-    }
-
-    pub(crate) fn support_membership_envelope(&self) -> Option<impl Serialize + '_> {
-        self.support_membership().map(|(request, restore_projection)| restore::RestoreQuestion {
-            kind: self.kind,
-            binding: self.binding,
-            value: restore::RestoreReadRequest { request, restore_projection },
-        })
     }
 
     pub(crate) fn restore_retention(
         &self,
-    ) -> Option<(&crate::experience::retention::RestoreRetentionQuestion, &crate::records::ChangedRows)> {
+    ) -> Option<(
+        &crate::experience::retention::RestoreRetentionQuestion,
+        &crate::records::ChangedRows,
+    )> {
         match &self.body {
-            QuestionBody::RestoreRetention(request, projection) => Some((request, &projection.changes)),
-            _ => None,
-        }
-    }
-
-    pub(crate) fn restore_retention_envelope(&self) -> Option<impl Serialize + '_> {
-        self.restore_retention().map(|(request, restore_projection)| restore::RestoreQuestion {
-            kind: self.kind,
-            binding: self.binding,
-            value: restore::RestoreReadRequest { request, restore_projection: Some(restore_projection) },
-        })
-    }
-
-    pub(crate) fn restore_archives(
-        &self,
-    ) -> Option<(&crate::restore::RestoreArchivesRequest, &crate::records::ChangedRows)> {
-        match &self.body {
-            QuestionBody::RestoreArchives(request, projection) => Some((request.value(), &projection.changes)),
-            _ => None,
-        }
-    }
-
-    pub(crate) fn restore_archives_envelope(&self) -> Option<impl Serialize + '_> {
-        self.restore_archives().map(|(request, restore_projection)| restore::RestoreQuestion {
-            kind: self.kind,
-            binding: self.binding,
-            value: restore::RestoreReadRequest { request, restore_projection: Some(restore_projection) },
-        })
-    }
-
-    pub(crate) fn personal_history(
-        &self,
-    ) -> Option<(&crate::experience::HistoryEditReadRequest, Option<&crate::records::ChangedRows>)> {
-        match &self.body {
-            QuestionBody::PersonalHistory { request, projection } => {
-                Some((request.request(), projection.as_ref().map(|view| &view.changes)))
+            QuestionBody::RestoreRetention(request, projection) => {
+                Some((request, &projection.changes))
             }
             _ => None,
         }
     }
 
-    pub(crate) fn personal_history_envelope(
+    pub(crate) fn restore_archives(
         &self,
-    ) -> Option<impl Serialize + '_> {
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct HistoryRead<'a> {
-            #[serde(flatten)]
-            request: &'a crate::experience::HistoryEditReadRequest,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            restore_projection: Option<&'a crate::records::ChangedRows>,
+    ) -> Option<(
+        &crate::restore::RestoreArchivesRequest,
+        &crate::records::ChangedRows,
+    )> {
+        match &self.body {
+            QuestionBody::RestoreArchives(request, projection) => {
+                Some((request.value(), &projection.changes))
+            }
+            _ => None,
         }
-        #[derive(Serialize)]
-        struct Envelope<'a> {
-            kind: ProviderKind,
-            binding: GeometryBinding,
-            value: HistoryRead<'a>,
+    }
+
+    pub(crate) fn personal_history(
+        &self,
+    ) -> Option<(
+        &crate::experience::HistoryEditReadRequest,
+        Option<&crate::records::ChangedRows>,
+    )> {
+        match &self.body {
+            QuestionBody::PersonalHistory {
+                request,
+                projection,
+            } => Some((
+                request.request(),
+                projection.as_ref().map(|view| &view.changes),
+            )),
+            _ => None,
         }
-        self.personal_history().map(|(request, restore_projection)| Envelope {
-            kind: self.kind,
-            binding: self.binding,
-            value: HistoryRead { request, restore_projection },
-        })
     }
 
     pub(crate) fn known_places(&self) -> Option<&KnownPlacesRequest> {
@@ -490,27 +355,11 @@ impl ProviderQuestion {
         }
     }
 
-    pub(crate) fn known_places_envelope(&self) -> Option<QuestionEnvelope<'_, KnownPlacesRequest>> {
-        self.known_places().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
-    }
-
     pub(crate) fn source_versions(&self) -> Option<&Arc<source_versions::SourceVersionsRequest>> {
         match &self.body {
             QuestionBody::SourceVersions(request) => Some(request),
             _ => None,
         }
-    }
-
-    pub(crate) fn source_versions_envelope(&self) -> Option<QuestionEnvelope<'_, source_versions::SourceVersionsRequest>> {
-        self.source_versions().map(|request| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value: request.as_ref(),
-        })
     }
 
     pub(crate) fn npc_sources(&self) -> Option<&crate::capture::NpcSourcesRequest> {
@@ -520,31 +369,11 @@ impl ProviderQuestion {
         }
     }
 
-    pub(crate) fn npc_sources_envelope(
-        &self,
-    ) -> Option<QuestionEnvelope<'_, crate::capture::NpcSourcesRequest>> {
-        self.npc_sources().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
-    }
-
     pub(crate) fn appraisal_outcomes(&self) -> Option<&crate::response::AppraisalCreatesRequest> {
         match &self.body {
             QuestionBody::AppraisalOutcomes(request) => Some(request),
             _ => None,
         }
-    }
-
-    pub(crate) fn appraisal_outcomes_envelope(
-        &self,
-    ) -> Option<QuestionEnvelope<'_, crate::response::AppraisalCreatesRequest>> {
-        self.appraisal_outcomes().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
     }
 
     fn prepare_appraisal_outcomes(
@@ -567,16 +396,6 @@ impl ProviderQuestion {
         }
     }
 
-    pub(crate) fn learning_history_envelope(
-        &self,
-    ) -> Option<QuestionEnvelope<'_, crate::activity::LearningHistoryRequest>> {
-        self.learning_history().map(|value| QuestionEnvelope {
-            kind: self.kind,
-            binding: self.binding,
-            value,
-        })
-    }
-
     pub(crate) fn learning_format(&self) -> Option<&crate::activity::LearningFormatRequest> {
         match &self.body {
             QuestionBody::ActivityLearningFormat(ask) => Some(ask),
@@ -584,19 +403,16 @@ impl ProviderQuestion {
         }
     }
 
-    pub(crate) fn learning_format_envelope(
-        &self,
-    ) -> Option<QuestionEnvelope<'_, crate::activity::LearningFormatRequest>> {
-        self.learning_format().map(|value| QuestionEnvelope { kind: self.kind, binding: self.binding, value })
-    }
-
     fn prepare_learning_history(
         value: &crate::activity::LearningHistoryRequest,
         budget: &ByteBudget,
     ) -> Result<Arc<Self>, DriveError> {
         use crate::host::retained_size::HeapBytes;
-        let bytes = value.heap_bytes()
-            .and_then(|bytes| bytes.checked_add(size_of::<crate::activity::LearningHistoryRequest>()))
+        let bytes = value
+            .heap_bytes()
+            .and_then(|bytes| {
+                bytes.checked_add(size_of::<crate::activity::LearningHistoryRequest>())
+            })
             .ok_or(DriveError::Capacity)?;
         let reservation = budget.reserve(bytes).map_err(|_| DriveError::Capacity)?;
         Ok(Arc::new(Self {
@@ -697,7 +513,6 @@ impl ProviderQuestion {
 }
 
 enum AnswerBody {
-    Json(String),
     Geometry(Box<GeometryAnswers>),
     Normalization(Box<crate::language::AttemptNormalizationAnswer>),
     Utterance(Box<UtteranceAnswer>),
@@ -724,7 +539,10 @@ pub enum LocalFormat {
     Control(JsText),
     Canonical(String),
     Digest(String),
-    ChoiceDescriptions { descriptions: Vec<JsText>, activity_labels: Vec<JsText> },
+    ChoiceDescriptions {
+        descriptions: Vec<JsText>,
+        activity_labels: Vec<JsText>,
+    },
 }
 
 impl LocalFormat {
@@ -734,8 +552,12 @@ impl LocalFormat {
             Self::Display(view) => view.heap_bytes()?,
             Self::Control(message) => message.storage_bytes(),
             Self::Canonical(canonical) | Self::Digest(canonical) => canonical.capacity(),
-            Self::ChoiceDescriptions { descriptions, activity_labels } =>
-                descriptions.heap_bytes()?.checked_add(activity_labels.heap_bytes()?)?,
+            Self::ChoiceDescriptions {
+                descriptions,
+                activity_labels,
+            } => descriptions
+                .heap_bytes()?
+                .checked_add(activity_labels.heap_bytes()?)?,
         };
         value.checked_add(size_of::<Self>())
     }
@@ -747,7 +569,11 @@ impl LocalFormat {
                 | (Self::Control(_), ProviderKind::Control)
                 | (Self::Canonical(_), ProviderKind::Canonical)
                 | (Self::Digest(_), ProviderKind::Digest)
-                | (Self::ChoiceDescriptions { .. }, ProviderKind::ChoiceDescriptions))
+                | (
+                    Self::ChoiceDescriptions { .. },
+                    ProviderKind::ChoiceDescriptions
+                )
+        )
     }
 
     fn into_answer(self, binding: GeometryBinding) -> Answer {
@@ -759,12 +585,14 @@ impl LocalFormat {
             Self::Digest(canonical) => {
                 Answer::Digest(crate::language::CanonicalJsonAnswer { binding, canonical })
             }
-            Self::ChoiceDescriptions { descriptions, activity_labels } =>
-                Answer::ChoiceDescriptions(crate::capture::NpcDescriptionsAnswer {
-                    binding,
-                    descriptions,
-                    activity_labels,
-                }),
+            Self::ChoiceDescriptions {
+                descriptions,
+                activity_labels,
+            } => Answer::ChoiceDescriptions(crate::capture::NpcDescriptionsAnswer {
+                binding,
+                descriptions,
+                activity_labels,
+            }),
             Self::Canonical(canonical) => Answer::Canonical(Canonical { binding, canonical }),
         }
     }
@@ -778,25 +606,6 @@ pub(crate) struct ProviderResponse {
     _reservation: ByteReservation,
 }
 impl ProviderResponse {
-    pub(crate) fn new(
-        kind: ProviderKind,
-        binding: GeometryBinding,
-        json: String,
-        reservation: ByteReservation,
-    ) -> Result<Self, DriveError> {
-        let funded = reservation.bytes() >= json.capacity();
-        let response = Self {
-            kind,
-            binding,
-            body: AnswerBody::Json(json),
-            _reservation: reservation,
-        };
-        if !funded {
-            return Err(DriveError::Capacity);
-        }
-        Ok(response)
-    }
-
     pub(crate) fn geometry(
         binding: GeometryBinding,
         answer: Box<GeometryAnswers>,
@@ -1046,8 +855,12 @@ impl ProviderResponse {
         if binding != answer.binding {
             return Err(DriveError::StaleResponse);
         }
-        Ok(Self { kind: ProviderKind::ActivityLearningFormat, binding,
-            body: AnswerBody::ActivityLearningFormat(answer), _reservation: reservation })
+        Ok(Self {
+            kind: ProviderKind::ActivityLearningFormat,
+            binding,
+            body: AnswerBody::ActivityLearningFormat(answer),
+            _reservation: reservation,
+        })
     }
 
     pub(crate) fn maintenance(
@@ -1078,123 +891,13 @@ struct Canonical {
     binding: GeometryBinding,
     canonical: String,
 }
-use crate::encoding::{JsonAllocationShape as DecodeShape, JsonShapeError};
+use crate::encoding::JsonShapeError;
 impl From<JsonShapeError> for DriveError {
     fn from(error: JsonShapeError) -> Self {
         match error {
             JsonShapeError::Capacity => Self::Capacity,
             JsonShapeError::MalformedResponse => Self::MalformedResponse,
         }
-    }
-}
-impl DecodeShape {
-    fn bound(&self, kind: ProviderKind, wire: usize) -> Result<usize, DriveError> {
-        use crate::host::retained_size::map_storage;
-        use crate::{
-            activity::{ActivityDetail, ActivityFact},
-            geometry::*,
-        };
-        // A newly decoded Vec grows to at most four slots per live element
-        // (including its minimum non-byte capacity). These are every supported
-        // response array's largest inline elements, rather than a byte multiplier.
-        let element = match kind {
-            ProviderKind::Geometry => [
-                size_of::<RoutePlan>(),
-                size_of::<NavigationAnswer>(),
-                size_of::<Option<PhysicalFeature>>(),
-                size_of::<PhysicalFeatureAnswer>(),
-                size_of::<ConvexViewAnswer>(),
-                size_of::<Option<StandingSelection>>(),
-                size_of::<Option<SurfacePoint>>(),
-                size_of::<Option<SurfaceLineAnswer>>(),
-                size_of::<SightSweep>(),
-                size_of::<BodySweepAnswer>(),
-            ]
-            .into_iter()
-            .max()
-            .unwrap_or(0),
-            ProviderKind::Display => [
-                size_of::<ActivityView>(),
-                size_of::<ActivityFact>(),
-                size_of::<ActivityDetail>(),
-            ]
-            .into_iter()
-            .max()
-            .unwrap_or(0),
-            ProviderKind::SupportMembership => size_of::<usize>(),
-            ProviderKind::Utterance => size_of::<SpeechWord>(),
-            ProviderKind::Words => size_of::<Vec<JsText>>().max(size_of::<JsText>()),
-            ProviderKind::Collation => size_of::<u32>(),
-            ProviderKind::Canonical
-            | ProviderKind::Digest
-            | ProviderKind::History
-            | ProviderKind::Control
-            | ProviderKind::Sources
-            | ProviderKind::AppraisalOutcomes
-            | ProviderKind::MaintenanceFormat
-            | ProviderKind::ConsolidationFormat
-            | ProviderKind::ActivityHistory
-            | ProviderKind::ActivityLearningFormat
-            | ProviderKind::RestoreArchives
-            | ProviderKind::RestoreRetention
-            | ProviderKind::SourceVersions
-            | ProviderKind::KnownPlaces => 0,
-            ProviderKind::Normalization => {
-                size_of::<JsText>().max(size_of::<Option<crate::language::FreeTypedActionSyntax>>())
-            }
-            ProviderKind::ChoiceDescriptions => size_of::<JsText>(),
-            ProviderKind::TypedActions => crate::response::TypedActionAnswer::array_element_bytes(),
-        };
-        let arrays = self
-            .array_items
-            .checked_mul(4)
-            .and_then(|n| n.checked_mul(element))
-            .ok_or(DriveError::Capacity)?;
-        // Tagged route enums temporarily buffer map members before constructing
-        // their typed fields. Activity detail fields additionally keep both their
-        // raw-entry and typed maps until each level has completed. One-entry map
-        // allocation bounds each entry of these fresh (never sparse) maps.
-        let map_entry = if matches!(kind, ProviderKind::Display) {
-            map_storage::<JsText, ActivityDetail>(1)
-                .ok_or(DriveError::Capacity)?
-                .checked_add(
-                    map_storage::<JsText, Box<serde_json::value::RawValue>>(1)
-                        .ok_or(DriveError::Capacity)?,
-                )
-                .ok_or(DriveError::Capacity)?
-        } else if matches!(kind, ProviderKind::Geometry) {
-            4 * size_of::<(String, serde_json::Value)>()
-        } else {
-            0
-        };
-        let maps = self
-            .members
-            .checked_mul(map_entry)
-            .ok_or(DriveError::Capacity)?;
-        // JsText may coexist with its original raw text, Unicode trial/scratch,
-        // a growing u16 buffer, and growing/final immutable quoted text. Raw
-        // ActivityDetail parsing retains at most its owning raw value plus five
-        // current levels (depth 0..4). This funds preparation, not resident size.
-        let text_copies = 1 + 2 + 2 * size_of::<u16>() + 2 + 2 + 1;
-        let raw_levels = if matches!(kind, ProviderKind::Display) {
-            6
-        } else {
-            0
-        };
-        let text = wire
-            .checked_mul(text_copies + raw_levels)
-            .and_then(|n| {
-                n.checked_add(
-                    self.strings
-                        .checked_mul(8 * size_of::<u16>() + 2 * size_of::<usize>())?,
-                )
-            })
-            .ok_or(DriveError::Capacity)?;
-        size_of::<Answer>()
-            .checked_add(arrays)
-            .and_then(|n| n.checked_add(maps))
-            .and_then(|n| n.checked_add(text))
-            .ok_or(DriveError::Capacity)
     }
 }
 enum Answer {
@@ -1205,7 +908,6 @@ enum Answer {
     Display(Formatted),
     Canonical(Canonical),
     Normalization(crate::language::AttemptNormalizationAnswer),
-    TypedActions(crate::response::TypedActionAnswer),
     MaintenanceFormat(crate::cognition::format::MaintenanceFormatAnswer),
     ConsolidationFormat(crate::experience::consolidation::ConsolidationFormatAnswer),
     Digest(crate::language::CanonicalJsonAnswer),
@@ -1223,76 +925,6 @@ enum Answer {
     KnownPlaces(KnownPlacesAnswer),
 }
 impl Answer {
-    fn decode(
-        kind: ProviderKind,
-        binding: GeometryBinding,
-        json: &str,
-        budget: &ByteBudget,
-    ) -> Result<Self, DriveError> {
-        let parse = |error: serde_json::Error| {
-            drop(error);
-            DriveError::MalformedResponse
-        };
-        let value = match kind {
-            ProviderKind::KnownPlaces => {
-                Self::KnownPlaces(KnownPlacesAnswer::decode(json, budget)?)
-            }
-            ProviderKind::RestoreRetention => Self::RestoreRetention(
-                crate::experience::retention::RestoreRetentionAnswer::decode(json, budget)?,
-            ),
-            ProviderKind::SourceVersions => {
-                Self::SourceVersions(SourceVersionsAnswer::decode(json, budget)?)
-            }
-            ProviderKind::SupportMembership => {
-                Self::SupportMembership(serde_json::from_str(json).map_err(parse)?)
-            }
-            ProviderKind::Geometry => Self::Geometry(serde_json::from_str(json).map_err(parse)?),
-            ProviderKind::Utterance => Self::Utterance(serde_json::from_str(json).map_err(parse)?),
-            ProviderKind::Collation => Self::Collation(serde_json::from_str(json).map_err(parse)?),
-            ProviderKind::Words => Self::Words(serde_json::from_str(json).map_err(parse)?),
-            ProviderKind::Normalization => {
-                Self::Normalization(serde_json::from_str(json).map_err(parse)?)
-            }
-            ProviderKind::Display => Self::Display(serde_json::from_str(json).map_err(parse)?),
-            ProviderKind::Canonical => Self::Canonical(serde_json::from_str(json).map_err(parse)?),
-            ProviderKind::Digest => Self::Digest(serde_json::from_str(json).map_err(parse)?),
-            ProviderKind::Control => Self::Control(serde_json::from_str(json).map_err(parse)?),
-            ProviderKind::Sources => {
-                Self::Sources(crate::capture::NpcSourcesAnswer::decode(json, budget)?)
-            }
-            ProviderKind::AppraisalOutcomes => Self::AppraisalOutcomes(
-                crate::response::AppraisalCreatesAnswer::decode(json, budget)?,
-            ),
-            ProviderKind::ChoiceDescriptions => {
-                Self::ChoiceDescriptions(serde_json::from_str(json).map_err(parse)?)
-            }
-            ProviderKind::TypedActions => {
-                Self::TypedActions(serde_json::from_str(json).map_err(parse)?)
-            }
-            ProviderKind::MaintenanceFormat => Self::MaintenanceFormat(
-                crate::cognition::format::MaintenanceFormatAnswer::decode(json, budget)?,
-            ),
-            ProviderKind::ActivityHistory => Self::ActivityHistory(
-                crate::activity::LearningHistoryAnswer::decode(json, budget)?,
-            ),
-            ProviderKind::ActivityLearningFormat => Self::ActivityLearningFormat(
-                crate::activity::LearningFormatAnswer::decode(json, budget)?,
-            ),
-            ProviderKind::ConsolidationFormat => Self::ConsolidationFormat(
-                crate::experience::consolidation::ConsolidationFormatAnswer::decode(json, budget)?,
-            ),
-            ProviderKind::History => {
-                Self::History(crate::experience::HistoryEditAnswer::decode(json, budget)?)
-            }
-            ProviderKind::RestoreArchives => {
-                Self::RestoreArchives(crate::restore::RestoreArchivesAnswer::decode(json, budget)?)
-            }
-        };
-        if value.binding(binding.geometry_revision) != binding {
-            return Err(DriveError::StaleResponse);
-        }
-        Ok(value)
-    }
     fn binding(&self, geometry_revision: u64) -> GeometryBinding {
         match self {
             Self::KnownPlaces(v) => v.binding,
@@ -1311,7 +943,6 @@ impl Answer {
             Self::Sources(v) => v.binding(),
             Self::AppraisalOutcomes(v) => v.binding,
             Self::ChoiceDescriptions(v) => v.binding,
-            Self::TypedActions(v) => v.binding,
             Self::MaintenanceFormat(v) => v.binding,
             Self::ConsolidationFormat(v) => v.binding,
             Self::ActivityHistory(v) => v.binding,
@@ -1338,7 +969,6 @@ impl Answer {
             Self::Sources(_) => ProviderKind::Sources,
             Self::AppraisalOutcomes(_) => ProviderKind::AppraisalOutcomes,
             Self::ChoiceDescriptions(_) => ProviderKind::ChoiceDescriptions,
-            Self::TypedActions(_) => ProviderKind::TypedActions,
             Self::MaintenanceFormat(_) => ProviderKind::MaintenanceFormat,
             Self::ConsolidationFormat(_) => ProviderKind::ConsolidationFormat,
             Self::ActivityHistory(_) => ProviderKind::ActivityHistory,
@@ -1477,22 +1107,28 @@ fn collation_question<V, R>(
     // including when the original candidate is canceled during that read.
     let strings = request.strings();
     let bytes = strings.iter().try_fold(
-        strings.len().checked_mul(size_of::<String>()).ok_or(DriveError::Capacity)?,
-        |bytes, value| bytes.checked_add(value.len()).ok_or(DriveError::Capacity)
+        strings
+            .len()
+            .checked_mul(size_of::<String>())
+            .ok_or(DriveError::Capacity)?,
+        |bytes, value| bytes.checked_add(value.len()).ok_or(DriveError::Capacity),
     )?;
     let reservation = budget.reserve(bytes).map_err(|_| DriveError::Capacity)?;
     let backing = ProviderQuestion::reserve_backing(budget)?;
     let binding = request.binding();
-    Ok(Poll::Question(Arc::new(ProviderQuestion {
-        kind: ProviderKind::Collation,
-        binding,
-        body: QuestionBody::Collation(CollationProviderRequest {
+    Ok(Poll::Question(
+        Arc::new(ProviderQuestion {
+            kind: ProviderKind::Collation,
             binding,
-            strings: strings.to_vec(),
+            body: QuestionBody::Collation(CollationProviderRequest {
+                binding,
+                strings: strings.to_vec(),
+            }),
+            _reservation: reservation,
+            backing,
         }),
-        _reservation: reservation,
-        backing,
-    }), route))
+        route,
+    ))
 }
 
 fn maintenance_question<V, R>(
@@ -1925,7 +1561,7 @@ impl OperationCursor {
                             budget,
                         )?;
                         Ok(Poll::Question(pending, OperationReply::SupportRetention))
-                    },
+                    }
                     crate::received::SupportRetentionStep::Complete(done) => Ok(Poll::Complete(
                         DriverCompletion::Operation(CompletedOperation::SupportRetention(done)),
                     )),
@@ -2254,92 +1890,42 @@ impl OperationDriver {
         let route = input
             .as_ref()
             .and_then(|_| self.pending.as_ref().map(|(_, route)| *route));
-        // Decode an encoded answer only at the addon boundary. The typed
-        // provider moves its actual admitted body into the same validators.
-        let (mut answer, input_custody, decoded_custody) = match input {
+        // Move the typed answer into the existing validators while its
+        // independent funding remains held for this continuation.
+        let (mut answer, input_custody) = match input {
             Some(ProviderResponse {
-                kind,
                 binding,
                 body,
                 _reservation,
+                ..
             }) => {
                 if !_reservation.shares_owner(&self._reservation) {
                     return Err(DriveError::StaleResponse);
                 }
-                match body {
-                    AnswerBody::Geometry(value) => {
-                        (Some(Answer::Geometry(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::Normalization(value) => (
-                        Some(Answer::Normalization(*value)),
-                        Some(_reservation),
-                        None,
-                    ),
-                    AnswerBody::Utterance(value) => {
-                        (Some(Answer::Utterance(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::Collation(value) => {
-                        (Some(Answer::Collation(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::LocalFormat(value) => {
-                        (Some(value.into_answer(binding)), Some(_reservation), None)
-                    }
-                    AnswerBody::Words(value) => {
-                        (Some(Answer::Words(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::NpcSources(value) => {
-                        (Some(Answer::Sources(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::KnownPlaces(value) => {
-                        (Some(Answer::KnownPlaces(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::SourceVersions(value) => {
-                        (Some(Answer::SourceVersions(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::SupportMembership(value) => {
-                        (Some(Answer::SupportMembership(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::RestoreArchives(value) => {
-                        (Some(Answer::RestoreArchives(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::RestoreRetention(value) => {
-                        (Some(Answer::RestoreRetention(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::PersonalHistory(value) => {
-                        (Some(Answer::History(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::AppraisalOutcomes(value) => {
-                        (Some(Answer::AppraisalOutcomes(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::ActivityHistory(value) => {
-                        (Some(Answer::ActivityHistory(*value)), Some(_reservation), None)
-                    }
+                let answer = match body {
+                    AnswerBody::Geometry(value) => Answer::Geometry(*value),
+                    AnswerBody::Normalization(value) => Answer::Normalization(*value),
+                    AnswerBody::Utterance(value) => Answer::Utterance(*value),
+                    AnswerBody::Collation(value) => Answer::Collation(*value),
+                    AnswerBody::LocalFormat(value) => value.into_answer(binding),
+                    AnswerBody::Words(value) => Answer::Words(*value),
+                    AnswerBody::NpcSources(value) => Answer::Sources(*value),
+                    AnswerBody::KnownPlaces(value) => Answer::KnownPlaces(*value),
+                    AnswerBody::SourceVersions(value) => Answer::SourceVersions(*value),
+                    AnswerBody::SupportMembership(value) => Answer::SupportMembership(*value),
+                    AnswerBody::RestoreArchives(value) => Answer::RestoreArchives(*value),
+                    AnswerBody::RestoreRetention(value) => Answer::RestoreRetention(*value),
+                    AnswerBody::PersonalHistory(value) => Answer::History(*value),
+                    AnswerBody::AppraisalOutcomes(value) => Answer::AppraisalOutcomes(*value),
+                    AnswerBody::ActivityHistory(value) => Answer::ActivityHistory(*value),
                     AnswerBody::ActivityLearningFormat(value) => {
-                        (Some(Answer::ActivityLearningFormat(*value)), Some(_reservation), None)
+                        Answer::ActivityLearningFormat(*value)
                     }
-                    AnswerBody::Maintenance(value) => {
-                        (Some(Answer::MaintenanceFormat(*value)), Some(_reservation), None)
-                    }
-                    AnswerBody::Json(json) => {
-                        let decoded = if matches!(
-                            kind,
-                            ProviderKind::History
-                                | ProviderKind::Sources
-                                | ProviderKind::AppraisalOutcomes
-                                | ProviderKind::SourceVersions
-                                | ProviderKind::KnownPlaces
-                        ) {
-                            None
-                        } else {
-                            let bytes = DecodeShape::read(&json)?.bound(kind, json.len())?;
-                            Some(budget.reserve(bytes).map_err(|_| DriveError::Capacity)?)
-                        };
-                        let value = Answer::decode(kind, binding, &json, budget)?;
-                        (Some(value), Some(_reservation), decoded)
-                    }
-                }
+                    AnswerBody::Maintenance(value) => Answer::MaintenanceFormat(*value),
+                };
+                (Some(answer), Some(_reservation))
             }
-            None => (None, None, None),
+            None => (None, None),
         };
         let result = if self.known_places.is_some() {
             if route.is_some_and(|route| !matches!(route, OperationReply::KnownPlaces)) {
@@ -2383,7 +1969,6 @@ impl OperationDriver {
             self.cursor.poll(core, &mut answer, route, budget)
         };
         drop(answer);
-        drop(decoded_custody);
         drop(input_custody);
         match result {
             Ok(Poll::Continue) => {
@@ -2595,7 +2180,10 @@ fn personal_history_question<V, R>(
         ProviderQuestion::prepare_bound(
             ProviderKind::History,
             binding,
-            QuestionBody::PersonalHistory { request, projection },
+            QuestionBody::PersonalHistory {
+                request,
+                projection,
+            },
             budget,
         )?,
         route,
@@ -2613,7 +2201,9 @@ fn poll_forget(
     let supplied = privacy_reply(answer, route)?;
     match cursor.step(core, supplied, budget)? {
         Step::Complete(done) => Ok(Poll::Complete(done)),
-        Step::Collation(request) => collation_question(answer, request, budget, ForgetReply::Collation),
+        Step::Collation(request) => {
+            collation_question(answer, request, budget, ForgetReply::Collation)
+        }
         Step::History(request) => personal_history_question(
             answer,
             request
@@ -3103,7 +2693,6 @@ enum ResponseReply {
     Sources,
     Digest,
     Normalization,
-    TypedActions,
     Geometry,
     Display(DisplayReply),
     Command(CommandReply),
@@ -3162,13 +2751,6 @@ fn poll_response(
             };
             Some(ResponseAnswer::Normalization(value))
         }
-        Some(ResponseReply::TypedActions) => {
-            route = None;
-            let Answer::TypedActions(value) = direct(answer, ProviderKind::TypedActions)? else {
-                return Err(DriveError::StaleResponse);
-            };
-            Some(ResponseAnswer::Typed(value))
-        }
         Some(ResponseReply::Geometry) => {
             route = None;
             let Answer::Geometry(value) = direct(answer, ProviderKind::Geometry)? else {
@@ -3181,26 +2763,21 @@ fn poll_response(
     loop {
         match cursor.step(core, supplied.take())? {
             ResponseStep::AppraisalCreates(q) => {
-                return appraisal_outcomes_question(answer, q, budget, ResponseReply::AppraisalCreates);
+                return appraisal_outcomes_question(
+                    answer,
+                    q,
+                    budget,
+                    ResponseReply::AppraisalCreates,
+                );
             }
             ResponseStep::Sources(q) => {
                 return npc_sources_question(answer, q, budget, ResponseReply::Sources);
             }
             ResponseStep::Complete(value) => return Ok(Poll::Complete(value)),
-            ResponseStep::Typed(q) => {
-                return question(
-                    answer,
-                    ProviderKind::TypedActions,
-                    q.binding,
-                    q,
-                    budget,
-                    ResponseReply::TypedActions,
-                );
-            }
             ResponseStep::Digest(q) => {
                 return digest_question(answer, q, budget, ResponseReply::Digest);
             }
-            ResponseStep::LocalNormalization(q) => {
+            ResponseStep::Normalization(q) => {
                 return Ok(Poll::Question(
                     ProviderQuestion::prepare_bound(
                         ProviderKind::Normalization,
@@ -3210,16 +2787,6 @@ fn poll_response(
                     )?,
                     ResponseReply::Normalization,
                 ));
-            }
-            ResponseStep::Normalization(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Normalization,
-                    q.binding,
-                    q,
-                    budget,
-                    ResponseReply::Normalization,
-                );
             }
             ResponseStep::Geometry(q) => {
                 return geometry_question(answer, q, budget, ResponseReply::Geometry);

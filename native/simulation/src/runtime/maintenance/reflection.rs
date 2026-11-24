@@ -294,17 +294,6 @@ impl NativeWorldSession {
         )?;
         self.session.begin_reflection(input).map_err(failure)
     }
-    pub fn bind_reflection(
-        &self,
-        body: &RuntimeMaintenanceRead,
-        workspace: &RuntimeMaintenanceRead,
-        owner: &mut Option<RuntimeNpcResponseTicket>,
-        input: &[u8],
-    ) -> Result<RuntimeReflectionTicket, RuntimeError> {
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input: RuntimeReflectionBinding = serde_json::from_slice(input).map_err(failure)?;
-        self.bind_reflection_direct(body, workspace, owner, input)
-    }
 
     /// Resolve the offered evidence aliases against their genuine captured
     /// ordinals. The original NPC ticket stays owned on refusal.

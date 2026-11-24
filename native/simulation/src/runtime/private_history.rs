@@ -546,16 +546,6 @@ impl NativeWorldSession {
         let state = &self.session.publication_read().map_err(failure)?.state;
         Ok(read.scope.still_permitted(state))
     }
-    pub fn begin_history_sources(
-        &mut self,
-        read: &mut RuntimePrivateHistoryRead,
-        input: &[u8],
-    ) -> Result<CandidateKey, RuntimeError> {
-        let _decode = decode_preparation(input, &self.budget)?;
-        let selection: crate::capture::NpcSourceSelection =
-            serde_json::from_slice(input).map_err(failure)?;
-        self.begin_history_sources_direct(read, selection)
-    }
 
     /// Bind already admitted application selections. Canonical body
     /// hydration, evidence eligibility and release stay with this cursor.
@@ -786,18 +776,6 @@ impl NativeWorldSession {
             }
             _ => return Err(failure("history read produced executable effects")),
         })
-    }
-    pub fn cancel_history_sources(
-        &mut self,
-        read: &RuntimePrivateHistoryRead,
-    ) -> Result<(), RuntimeError> {
-        if let Some(key) = read
-            .candidate
-            .filter(|key| self.session.is_npc_sources(*key))
-        {
-            self.session.cancel(key).map_err(failure)?;
-        }
-        Ok(())
     }
     /// Persisted personal pages already own their bounded decoded bodies.
     /// Recheck those exact source references without loading every body again.

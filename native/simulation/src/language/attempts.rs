@@ -1,4 +1,4 @@
-//! One finite normalization batch uses Source's actual Node Unicode rules.
+//! A finite local normalization batch for exact movement proposals.
 //! These language facts never decide permissions or execute an intention.
 use super::*;
 use crate::execution::ExecutionError;
@@ -7,86 +7,34 @@ use crate::state::Named;
 use crate::text::JsText;
 use std::sync::Arc;
 
-#[derive(Serialize)]
 pub(crate) struct AttemptNormalizationRequest {
     pub binding: GeometryBinding,
     pub descriptions: Vec<JsText>,
-    #[serde(skip)]
     pub target_names: Vec<(usize, JsText)>,
-    #[serde(skip)]
-    reservation: ByteReservation,
+    _reservation: ByteReservation,
 }
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
 pub(crate) struct AttemptNormalizationAnswer {
     pub binding: GeometryBinding,
     pub normalized: Vec<JsText>,
     pub syntax: Vec<Option<FreeTypedActionSyntax>>,
 }
-#[derive(Clone, Deserialize)]
-#[serde(
-    tag = "kind",
-    rename_all = "kebab-case",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
+#[derive(Clone)]
 pub(crate) enum FreeTypedActionSyntax {
-    Approach {
-        name: JsText,
-    },
-    #[serde(skip)]
-    NamedApproach {
-        label: JsText,
-    },
-    LastSeen {
-        name: JsText,
-    },
-    #[serde(skip)]
+    NamedApproach { label: JsText },
     RememberedPlace,
-    Unsupported {
-        family: String,
-    },
-    Stop {
-        activity: Option<String>,
-    },
-    Point {
-        x: Option<f64>,
-        z: Option<f64>,
-        surface_id: Option<String>,
-    },
-    Offset {
-        x: Option<f64>,
-        z: Option<f64>,
-    },
+    Offset { x: Option<f64>, z: Option<f64> },
     DistanceNeeded,
 }
 impl HeapBytes for FreeTypedActionSyntax {
     fn heap_bytes(&self) -> Option<usize> {
         match self {
-            Self::Approach { name }
-            | Self::LastSeen { name }
-            | Self::NamedApproach { label: name } => name.heap_bytes(),
-            Self::Unsupported { family } => family.heap_bytes(),
-            Self::Stop { activity } => activity.heap_bytes(),
-            Self::Point { surface_id, .. } => surface_id.heap_bytes(),
+            Self::NamedApproach { label } => label.heap_bytes(),
             _ => Some(0),
         }
     }
 }
-enum OriginalDescriptions {
-    Owned(Vec<JsText>),
-    Shared(Arc<AttemptNormalizationRequest>),
-}
-impl OriginalDescriptions {
-    fn values(&self) -> &[JsText] {
-        match self {
-            Self::Owned(descriptions) => descriptions,
-            Self::Shared(request) => &request.descriptions,
-        }
-    }
-}
 pub(crate) struct NormalizedAttemptFacts {
-    descriptions: OriginalDescriptions,
+    descriptions: Arc<AttemptNormalizationRequest>,
     normalized: Vec<JsText>,
     syntax: Vec<Option<FreeTypedActionSyntax>>,
     _reservation: ByteReservation,
@@ -110,7 +58,7 @@ impl NormalizedAttempt<'_> {
 impl NormalizedAttemptFacts {
     pub(crate) fn get(&self, index: usize) -> Option<NormalizedAttempt<'_>> {
         Some(NormalizedAttempt {
-            description: self.descriptions.values().get(index)?,
+            description: self.descriptions.descriptions.get(index)?,
             normalized: self.normalized.get(index)?,
             syntax: self.syntax.get(index)?.as_ref(),
         })
@@ -121,7 +69,6 @@ impl AttemptNormalizationRequest {
         binding: GeometryBinding,
         descriptions: impl Iterator<Item = &'a JsText> + Clone,
         target_names: impl Iterator<Item = (usize, &'a Named)> + Clone,
-        shared: bool,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let (count, text_bytes) = descriptions
@@ -146,7 +93,7 @@ impl AttemptNormalizationRequest {
             .ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(
             heap_sum([
-                size_of::<Self>() + usize::from(shared) * 2 * size_of::<usize>(),
+                size_of::<Self>() + 2 * size_of::<usize>(),
                 text_bytes,
                 named_bytes,
                 count
@@ -172,7 +119,7 @@ impl AttemptNormalizationRequest {
             binding,
             descriptions: owned,
             target_names: selected_names,
-            reservation,
+            _reservation: reservation,
         })
     }
     pub(crate) fn finish_shared(
@@ -194,7 +141,7 @@ impl AttemptNormalizationRequest {
             .ok_or(ExecutionError::Capacity)?,
         )?;
         Ok(NormalizedAttemptFacts {
-            descriptions: OriginalDescriptions::Shared(self),
+            descriptions: self,
             normalized: answer.normalized,
             syntax: answer.syntax,
             _reservation: reservation,
@@ -208,35 +155,5 @@ impl AttemptNormalizationRequest {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         Ok(())
-    }
-    pub(crate) fn finish(
-        self,
-        answer: AttemptNormalizationAnswer,
-    ) -> Result<NormalizedAttemptFacts, ExecutionError> {
-        self.check(&answer)?;
-        let Self {
-            binding: _,
-            descriptions,
-            target_names: _,
-            mut reservation,
-        } = self;
-        // The common provider decoder funds returned text before parsing. Move
-        // its actual result into this request's custody before that guard drops;
-        // do not guess Unicode expansion ratios or recompute another version.
-        reservation.resize(
-            answer
-                .normalized
-                .heap_bytes()
-                .and_then(|n| n.checked_add(descriptions.heap_bytes()?))
-                .and_then(|n| n.checked_add(answer.syntax.heap_bytes()?))
-                .and_then(|n| n.checked_add(size_of::<NormalizedAttemptFacts>()))
-                .ok_or(ExecutionError::Capacity)?,
-        )?;
-        Ok(NormalizedAttemptFacts {
-            descriptions: OriginalDescriptions::Owned(descriptions),
-            normalized: answer.normalized,
-            syntax: answer.syntax,
-            _reservation: reservation,
-        })
     }
 }

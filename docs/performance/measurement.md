@@ -35,7 +35,7 @@ Give before and after explicit column labels, or define an arrow as control → 
 
 When the task calls for timing a hierarchy of operations and qualifying the cost of its probes, use the [hierarchical profiling design](hierarchical-profiling.md). It specifies direct parent and child timings, per-unit distributions, three repetitions, hardware comparisons and local artifacts. The maintained [simulation inventory](simulation-inventory.md) maps server/world components and candidate workloads; select its IDs or supply another explicit inventory. Its [planned opening campaign](simulation-inventory.md#initial-run-plan) specifies 27 runs, with expensive children detailed only on the standard machine; broader catalogue scenarios are deferred. Its new tooling is a target tracked by PC07–PC10, not a capability supplied by existing timing rings or CPU samples.
 
-The complete-server harness, `scripts/profile-server.ts`, keeps its historical crowded comparison by default. Set `OPENLEGEND_PROFILE_STANDARD=1` to measure the authored opening without diagnostic additions; the report identifies that fixture explicitly. It cannot be combined with the expanded fixture. Compare like workloads and retain both ordinary-play and capacity results.
+Use the [stand-alone Rust campaigns](../maintainers/performance-profiling.md#stand-alone-rust-campaigns) for current full-server profiling. Keep the historical TypeScript measurements with their recorded source and fixtures. Compare like workloads and retain both ordinary-play and capacity results.
 
 ### Instrumentation that can be switched off
 

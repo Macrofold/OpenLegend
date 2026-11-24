@@ -272,24 +272,6 @@ impl NativeWorldSession {
         })
     }
 
-    /// The host additionally checks its current session/control lease before
-    /// publishing. Older cuts can prove lost exposure and withdraw words; only
-    /// the host's exact current-cut gate grants a positive disclosure.
-    pub fn finish_reply_preview(
-        &self,
-        read: RuntimeReplyPreviewRead,
-        bytes: &[u8],
-    ) -> Result<RuntimeJson, RuntimeError> {
-        let _decode = (!bytes.is_empty())
-            .then(|| decode_preparation(bytes, &self.budget))
-            .transpose()?;
-        let answers = (!bytes.is_empty())
-            .then(|| serde_json::from_slice(bytes).map_err(failure))
-            .transpose()?;
-        let facts = self.finish_reply_preview_direct(read, answers)?;
-        RuntimeJson::encode(&facts, &self.budget)
-    }
-
     /// Consume the same exact query and original world cut without encoding
     /// its input and answer just to move them between Rust owners.
     pub fn finish_reply_preview_direct(

@@ -3,6 +3,7 @@
 
 use super::{Work, apply_choice, effects, generation_failure, prepare};
 use crate::npc::apply::RefusedChoice;
+pub(super) use crate::store::EscalationReason as Reason;
 use crate::{
     boot::CurrentServer,
     decision_dispatch::{
@@ -53,16 +54,6 @@ enum Mode {
     Off,
     Observe,
     Apply,
-}
-
-#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "kebab-case")]
-pub(super) enum Reason {
-    SemanticEscalation,
-    Abstained,
-    NativeRejection,
-    InvalidOutput,
-    RouteUnavailable,
 }
 
 #[derive(Deserialize)]
@@ -331,6 +322,7 @@ struct Disclosure {
     fingerprint: String,
     kind: &'static str,
     owner_stop: watch::Receiver<bool>,
+    reason: Reason,
     rejected: Option<RefusedChoice>,
     level_ceiling_micro_usd: u64,
 }
@@ -354,6 +346,7 @@ impl ProviderDisclosure for Disclosure {
                     self.fingerprint.clone(),
                     self.kind,
                     self.level_ceiling_micro_usd,
+                    self.reason,
                     self.rejected.as_ref().map(|choice| choice.code.as_ref()),
                 )
                 .await
@@ -533,6 +526,7 @@ pub(super) async fn run(
             instructions: INSTRUCTIONS,
             prompt: &prompt,
             kind: "thought",
+            reason,
             eligible,
             clock: clock.clone(),
             rejected: rejected.map(|value| value.choice),
@@ -666,6 +660,7 @@ pub(super) async fn respond(
             instructions: &instructions,
             prompt: prompt.as_str(),
             kind: "chat",
+            reason: Reason::SemanticEscalation,
             eligible,
             clock: clock.clone(),
             rejected: None,
@@ -756,6 +751,7 @@ struct HigherInput<'a> {
     instructions: &'a str,
     prompt: &'a str,
     kind: &'static str,
+    reason: Reason,
     eligible: Instant,
     clock: DelayedDecisionClock,
     rejected: Option<RefusedChoice>,
@@ -844,6 +840,7 @@ fn prepare_call(
         kind: input.kind,
         owner_stop: work.cancellation.clone(),
         fingerprint: work.job.job.fingerprint.clone(),
+        reason: input.reason,
         rejected: input.rejected,
         level_ceiling_micro_usd: route.level_ceiling_micro_usd,
     };

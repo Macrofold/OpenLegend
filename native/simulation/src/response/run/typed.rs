@@ -1,23 +1,12 @@
-//! Free lexical forms bind through the real invocation/command preparation
-//! owners before one pure formatting batch. Returned words grant no commands.
+//! Exact movement proposals use the ordinary invocation and command owners.
+//! Descriptions report their prepared outcome and grant no commands.
 use super::*;
 use crate::language::FreeTypedActionSyntax;
-mod answer;
 mod movement_display;
 pub(in crate::response) use movement_display::remembered_unavailable;
-mod names;
 
-#[derive(Clone, Serialize)]
-#[serde(
-    tag = "kind",
-    rename_all = "kebab-case",
-    rename_all_fields = "camelCase"
-)]
+#[derive(Clone)]
 enum Prepared {
-    Unknown,
-    Unsupported {
-        family: String,
-    },
     NamedRefused {
         category: String,
         reason: JsText,
@@ -33,17 +22,10 @@ enum Prepared {
         sim_time: f64,
         destination: crate::state::SurfacePoint,
     },
-    Stop,
-    Point {
-        destination: crate::state::SurfacePoint,
-    },
     Offset {
         x: f64,
         z: f64,
         destination: crate::state::SurfacePoint,
-    },
-    NotStopping {
-        activity: String,
     },
     DistanceNeeded,
     InvocationRefused {
@@ -56,11 +38,7 @@ enum Prepared {
 impl HeapBytes for Prepared {
     fn heap_bytes(&self) -> Option<usize> {
         match self {
-            Self::Point { destination } | Self::Offset { destination, .. } => {
-                destination.heap_bytes()
-            }
-            Self::NotStopping { activity } => activity.heap_bytes(),
-            Self::Unsupported { family } => family.heap_bytes(),
+            Self::Offset { destination, .. } => destination.heap_bytes(),
             Self::NamedRefused { category, reason } => {
                 category.heap_bytes()?.checked_add(reason.heap_bytes()?)
             }
@@ -83,7 +61,6 @@ struct Item {
     target: Option<String>,
     remembered: Option<String>,
     depends: Vec<String>,
-    selected: Option<names::Selection>,
     description: JsText,
     syntax: FreeTypedActionSyntax,
     slots: Option<SqlCell>,
@@ -91,43 +68,10 @@ struct Item {
     prepared: Option<Prepared>,
     unmet: Vec<JsText>,
 }
-pub(crate) struct TypedActionRequest {
-    pub binding: GeometryBinding,
-    json: String,
-    _storage: ByteReservation,
-}
-impl Serialize for TypedActionRequest {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let raw: &serde_json::value::RawValue =
-            serde_json::from_str(&self.json).map_err(serde::ser::Error::custom)?;
-        raw.serialize(serializer)
-    }
-}
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct TypedActionAnswer {
-    pub binding: GeometryBinding,
-    output: TypedActionOutput,
-}
-enum TypedActionOutput {
-    Name { selection: names::Selection },
-    Format { results: Vec<Rendered> },
-}
-impl TypedActionAnswer {
-    pub(crate) fn array_element_bytes() -> usize {
-        size_of::<Rendered>().max(size_of::<SqlCell>())
-    }
-}
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
 struct Rendered {
-    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     fulfillment: Option<SqlCell>,
-    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     resolution: Option<ResolutionWords>,
 }
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
 struct ResolutionWords {
     category: String,
     reason: JsText,
@@ -135,12 +79,10 @@ struct ResolutionWords {
 pub(super) enum TypedAnswer {
     Geometry(GeometryAnswers),
     Display(CompletedActivityDisplay),
-    Render(TypedActionAnswer),
 }
 pub(super) enum TypedStep<'a> {
     Geometry(&'a GeometryQueries),
     Display(&'a mut crate::commands::ActivityDisplayCursor),
-    Render(&'a TypedActionRequest),
     Complete(Vec<ResponseAttemptBinding>, ByteReservation),
 }
 enum Active {
@@ -154,9 +96,6 @@ pub(super) struct TypedGroundingCursor {
     items: Vec<Item>,
     index: usize,
     active: Option<Active>,
-    request: Option<TypedActionRequest>,
-    name_request: Option<TypedActionRequest>,
-    names: Option<names::Roster>,
     places: Option<Arc<crate::runtime::RememberedPlaces>>,
     budget: ByteBudget,
     storage: Option<ByteReservation>,
@@ -168,7 +107,6 @@ impl TypedGroundingCursor {
         bindings: &ResponseBindings,
         grounded: &[ResponseAttemptBinding],
         operations: &[(usize, usize)],
-        provider: GroundingProvider,
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, ExecutionError> {
@@ -208,29 +146,28 @@ impl TypedGroundingCursor {
             let slots = op.data.get("slots").filter(|slots| !slots.is_null());
             let remembered = op.text("rememberedPlaceId").and_then(JsText::as_unicode);
             let syntax = if let Some(selected) = remembered {
-                if provider != GroundingProvider::Local || bindings.remembered_move(selected, description).is_none() {
+                if bindings.remembered_move(selected, description).is_none() {
                     continue;
                 }
                 &FreeTypedActionSyntax::RememberedPlace
             } else {
-                let Some(syntax) = language.syntax() else { continue };
+                let Some(syntax) = language.syntax() else {
+                    continue;
+                };
                 syntax
             };
-            if provider == GroundingProvider::Local {
-                let has_target = op.text("targetEntityId").is_some();
-                let exact = slots.is_none()
-                    && match syntax {
-                        FreeTypedActionSyntax::Offset { .. }
-                        | FreeTypedActionSyntax::DistanceNeeded => !has_target,
-                        FreeTypedActionSyntax::NamedApproach { .. } => has_target,
-                        FreeTypedActionSyntax::RememberedPlace => !has_target,
-                        _ => false,
-                    };
-                if !exact {
-                    // Leave the original intention open if it asks for anything
-                    // beyond this exact deterministic movement.
-                    continue;
-                }
+            let has_target = op.text("targetEntityId").is_some();
+            let exact = slots.is_none()
+                && match syntax {
+                    FreeTypedActionSyntax::Offset { .. }
+                    | FreeTypedActionSyntax::DistanceNeeded => !has_target,
+                    FreeTypedActionSyntax::NamedApproach { .. } => has_target,
+                    FreeTypedActionSyntax::RememberedPlace => !has_target,
+                };
+            if !exact {
+                // Leave the original intention open if it asks for anything
+                // beyond this exact deterministic movement.
+                continue;
             }
             storage.resize(
                 storage
@@ -271,7 +208,6 @@ impl TypedGroundingCursor {
                     .map(str::to_owned),
                 remembered: remembered.map(str::to_owned),
                 depends: Vec::new(),
-                selected: None,
                 description: description.clone(),
                 syntax: syntax.clone(),
                 slots: slots.cloned(),
@@ -290,10 +226,9 @@ impl TypedGroundingCursor {
             items,
             index: 0,
             active: None,
-            request: None,
-            name_request: None,
-            names: None,
-            places: bindings.native_guard().and_then(|native| native.remembered_places.clone()),
+            places: bindings
+                .native_guard()
+                .and_then(|native| native.remembered_places.clone()),
             budget: budget.clone(),
             storage: Some(storage),
         }))
@@ -318,13 +253,6 @@ impl TypedGroundingCursor {
             .merge(storage)?;
         Ok(())
     }
-    fn binding(&self, core: &mut CoreMutation<'_>) -> Result<GeometryBinding, ExecutionError> {
-        Ok(GeometryBinding::new(
-            self.candidate,
-            core.state.installed.geometry.spatial.revision,
-            core.journal.next_provider_serial()?,
-        ))
-    }
     pub(super) fn geometry_request(&self) -> Option<&GeometryQueries> {
         match self.active.as_ref()? {
             Active::Invocation(cursor) => cursor.geometry_request(),
@@ -337,17 +265,11 @@ impl TypedGroundingCursor {
             _ => None,
         }
     }
-    pub(super) fn request(&self) -> Option<&TypedActionRequest> {
-        self.name_request.as_ref().or(self.request.as_ref())
-    }
     pub(super) fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         if let Some(Active::Preview(cursor)) = self.active.as_mut() {
             cursor.abort(core)?;
         }
         self.active = None;
-        self.request = None;
-        self.name_request = None;
-        self.names = None;
         self.storage = None;
         Ok(())
     }
@@ -378,13 +300,6 @@ impl TypedGroundingCursor {
             fields.insert(key.into(), SqlCell::Null);
         }
         match &item.syntax {
-            FreeTypedActionSyntax::Point { x, z, surface_id } => {
-                fields.insert("x".into(), x.map_or(SqlCell::Null, SqlCell::from));
-                fields.insert("z".into(), z.map_or(SqlCell::Null, SqlCell::from));
-                if let Some(surface) = surface_id {
-                    fields.insert("surfaceId".into(), surface.clone().into());
-                }
-            }
             FreeTypedActionSyntax::Offset { x, z } => {
                 fields.insert("x".into(), x.map_or(SqlCell::Null, SqlCell::from));
                 fields.insert("z".into(), z.map_or(SqlCell::Null, SqlCell::from));
@@ -394,28 +309,6 @@ impl TypedGroundingCursor {
                 let target = item.target.as_deref().ok_or(ExecutionError::Invariant)?;
                 fields.insert("place".into(), "target".into());
                 fields.insert("targetEntityId".into(), target.into());
-            }
-            FreeTypedActionSyntax::Approach { .. } | FreeTypedActionSyntax::LastSeen { .. } => {
-                let roster = self.names.as_ref().ok_or(ExecutionError::Invariant)?;
-                let target = match item.selected.as_ref().ok_or(ExecutionError::Invariant)? {
-                    names::Selection::Body { ordinal } => {
-                        &roster
-                            .bodies
-                            .get(*ordinal)
-                            .ok_or(ExecutionError::InvalidCheckpoint)?
-                            .id
-                    }
-                    names::Selection::Place { ordinal } => {
-                        &roster
-                            .places
-                            .get(*ordinal)
-                            .ok_or(ExecutionError::InvalidCheckpoint)?
-                            .subject_id
-                    }
-                    _ => return Err(ExecutionError::Invariant),
-                };
-                fields.insert("place".into(), "target".into());
-                fields.insert("targetEntityId".into(), target.as_str().into());
             }
             _ => return Err(ExecutionError::Invariant),
         }
@@ -431,19 +324,23 @@ impl TypedGroundingCursor {
     }
     fn original_place(&self) -> Option<&crate::state::RememberedPlace> {
         let item = &self.items[self.index];
-        self.places.as_ref()?.get(item.remembered.as_deref()?, &item.description)
+        self.places
+            .as_ref()?
+            .get(item.remembered.as_deref()?, &item.description)
     }
 
-    fn prepare_remembered(
-        &mut self,
-        core: &mut CoreMutation<'_>,
-    ) -> Result<(), ExecutionError> {
+    fn prepare_remembered(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         let selected = self.original_place().filter(|original| {
             // Same actor/life and permission are checked by the response
             // owner. Never replace the original point with later sight.
-            core.state.physical.entities.get(&self.actor)
+            core.state
+                .physical
+                .entities
+                .get(&self.actor)
                 .and_then(|entity| entity.actor.as_ref())
-                .is_some_and(|actor| crate::runtime::RememberedPlaces::entry_current(actor, original))
+                .is_some_and(|actor| {
+                    crate::runtime::RememberedPlaces::entry_current(actor, original)
+                })
         });
         let Some(selected) = selected else {
             let reason = movement_display::remembered_unavailable();
@@ -456,7 +353,10 @@ impl TypedGroundingCursor {
             return Ok(());
         };
         let (command, custody) = crate::commands::movement_destination(
-            &self.actor, &self.items[self.index].operation_id, &selected.point, &self.budget,
+            &self.actor,
+            &self.items[self.index].operation_id,
+            &selected.point,
+            &self.budget,
         )?;
         self.merge(custody)?;
         self.begin_preview(core, command)
@@ -468,20 +368,13 @@ impl TypedGroundingCursor {
             NativeCommand::Move { destination, .. } => destination,
             _ => return Err(ExecutionError::Invariant),
         };
-        let label_bytes = match (&item.syntax, item.selected.as_ref()) {
-            (FreeTypedActionSyntax::NamedApproach { label }, _) => label.heap_bytes(),
-            (FreeTypedActionSyntax::RememberedPlace, _) => self.original_place()
-                .ok_or(ExecutionError::Invariant)?.label.heap_bytes(),
-            (_, Some(names::Selection::Body { ordinal })) => self
-                .names
-                .as_ref()
-                .and_then(|r| r.bodies.get(*ordinal))
-                .map_or(Some(0), |b| b.label.heap_bytes()),
-            (_, Some(names::Selection::Place { ordinal })) => self
-                .names
-                .as_ref()
-                .and_then(|r| r.places.get(*ordinal))
-                .map_or(Some(0), |p| p.label.heap_bytes()),
+        let label_bytes = match &item.syntax {
+            FreeTypedActionSyntax::NamedApproach { label } => label.heap_bytes(),
+            FreeTypedActionSyntax::RememberedPlace => self
+                .original_place()
+                .ok_or(ExecutionError::Invariant)?
+                .label
+                .heap_bytes(),
             _ => Some(0),
         }
         .ok_or(ExecutionError::Capacity)?;
@@ -491,7 +384,10 @@ impl TypedGroundingCursor {
             .and_then(|n| n.checked_add(label_bytes))
             .ok_or(ExecutionError::Capacity)?;
         self.grow(bytes)?;
-        let remembered = if matches!(self.items[self.index].syntax, FreeTypedActionSyntax::RememberedPlace) {
+        let remembered = if matches!(
+            self.items[self.index].syntax,
+            FreeTypedActionSyntax::RememberedPlace
+        ) {
             let original = self.original_place().ok_or(ExecutionError::Invariant)?;
             Some((original.label.clone(), original.at))
         } else {
@@ -503,7 +399,6 @@ impl TypedGroundingCursor {
             _ => return Err(ExecutionError::Invariant),
         };
         item.prepared = Some(match item.syntax {
-            FreeTypedActionSyntax::Point { .. } => Prepared::Point { destination },
             FreeTypedActionSyntax::Offset {
                 x: Some(x),
                 z: Some(z),
@@ -512,30 +407,12 @@ impl TypedGroundingCursor {
                 label: label.clone(),
                 destination,
             },
-            FreeTypedActionSyntax::Approach { .. } => {
-                let Some(names::Selection::Body { ordinal }) = item.selected.as_ref() else {
-                    return Err(ExecutionError::Invariant);
-                };
-                Prepared::Approach {
-                    label: self.names.as_ref().ok_or(ExecutionError::Invariant)?.bodies[*ordinal]
-                        .label
-                        .clone(),
-                    destination,
-                }
-            }
             FreeTypedActionSyntax::RememberedPlace => {
                 let (label, at) = remembered.ok_or(ExecutionError::Invariant)?;
-                Prepared::LastSeen { label, at, still_seen: false, sim_time: self.at, destination }
-            }
-            FreeTypedActionSyntax::LastSeen { .. } => {
-                let Some(names::Selection::Place { ordinal }) = item.selected.as_ref() else {
-                    return Err(ExecutionError::Invariant);
-                };
-                let place = &self.names.as_ref().ok_or(ExecutionError::Invariant)?.places[*ordinal];
                 Prepared::LastSeen {
-                    label: place.label.clone(),
-                    at: place.at,
-                    still_seen: place.still_seen,
+                    label,
+                    at,
+                    still_seen: false,
                     sim_time: self.at,
                     destination,
                 }
@@ -585,73 +462,27 @@ impl TypedGroundingCursor {
         }
         Ok(())
     }
-    fn prepare_request(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
-        self.collect_unmet(core)?;
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Limits {
-            minimum_distance: f64,
-            maximum_distance: f64,
-            offset: f64,
-        }
-        #[derive(Serialize)]
-        struct Request<'a> {
-            requested: &'a JsText,
-            prepared: &'a Prepared,
-            unmet: &'a [JsText],
-        }
-        #[derive(Serialize)]
-        struct Input<'a> {
-            phase: &'static str,
-            binding: GeometryBinding,
-            limits: Limits,
-            requests: Vec<Request<'a>>,
-        }
-        let _list = self.budget.reserve(
-            self.items
-                .len()
-                .checked_mul(size_of::<Request>())
-                .ok_or(ExecutionError::Capacity)?,
+    fn binding(&self, core: &mut CoreMutation<'_>) -> Result<GeometryBinding, ExecutionError> {
+        Ok(GeometryBinding::new(
+            self.candidate,
+            core.state.installed.geometry.spatial.revision,
+            core.journal.next_provider_serial()?,
+        ))
+    }
+    fn begin_preview(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        command: NativeCommand,
+    ) -> Result<(), ExecutionError> {
+        self.grow(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        let preview = CommandChoiceCursor::new(
+            command.clone(),
+            crate::commands::WorkTransitionMode::Replace,
+            self.binding(core)?,
+            &self.budget,
         )?;
-        let binding = self.binding(core)?;
-        let follow = &core
-            .state
-            .installed
-            .occurrence_rules
-            .value()
-            .response
-            .offers
-            .follow;
-        let mut requests = Vec::with_capacity(self.items.len());
-        for item in &self.items {
-            requests.push(Request {
-                requested: &item.description,
-                prepared: item.prepared.as_ref().ok_or(ExecutionError::Invariant)?,
-                unmet: &item.unmet,
-            });
-        }
-        let input = Input {
-            phase: "format",
-            binding,
-            limits: Limits {
-                minimum_distance: follow.minimum_distance,
-                maximum_distance: follow.maximum_distance,
-                offset: core.state.installed.actor_response_limits.invocation.offset,
-            },
-            requests,
-        };
-        let length =
-            crate::encoding::json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
-        let mut storage = self
-            .budget
-            .reserve(length.checked_mul(2).ok_or(ExecutionError::Capacity)?)?;
-        let json = crate::encoding::json_record(&input).map_err(|_| ExecutionError::Invariant)?;
-        storage.resize(json.capacity())?;
-        self.request = Some(TypedActionRequest {
-            binding,
-            json,
-            _storage: storage,
-        });
+        self.items[self.index].command = Some(command);
+        self.active = Some(Active::Preview(preview));
         Ok(())
     }
 
@@ -672,7 +503,12 @@ impl TypedGroundingCursor {
             let transient_name = match item.prepared.as_ref() {
                 Some(Prepared::LastSeen { label, .. } | Prepared::Approach { label, .. })
                     if label.as_unicode().is_none() =>
-                        label.storage_bytes().checked_mul(20).ok_or(ExecutionError::Capacity)?,
+                {
+                    label
+                        .storage_bytes()
+                        .checked_mul(20)
+                        .ok_or(ExecutionError::Capacity)?
+                }
                 _ => 0,
             };
             let bytes = item
@@ -688,33 +524,12 @@ impl TypedGroundingCursor {
             self.grow(bytes)?;
             results.push(movement_display::render(&self.items[index], core)?);
         }
-        self.complete_results(core, results, true)
-    }
-    fn complete(
-        &mut self,
-        core: &CoreMutation<'_>,
-        answer: TypedActionAnswer,
-    ) -> Result<(Vec<ResponseAttemptBinding>, ByteReservation), ExecutionError> {
-        let TypedActionOutput::Format { results } = answer.output else {
-            return Err(ExecutionError::InvalidCheckpoint);
-        };
-        if answer.binding
-            != self
-                .request
-                .as_ref()
-                .ok_or(ExecutionError::Invariant)?
-                .binding
-            || results.len() != self.items.len()
-        {
-            return Err(ExecutionError::InvalidCheckpoint);
-        }
-        self.complete_results(core, results, false)
+        self.complete_results(core, results)
     }
     fn complete_results(
         &mut self,
         core: &CoreMutation<'_>,
         results: Vec<Rendered>,
-        locally_funded: bool,
     ) -> Result<(Vec<ResponseAttemptBinding>, ByteReservation), ExecutionError> {
         self.grow(
             self.items
@@ -727,19 +542,9 @@ impl TypedGroundingCursor {
             let successful = matches!(
                 self.items[index].prepared,
                 Some(
-                    Prepared::Stop
-                        | Prepared::Point { .. }
-                        | Prepared::Offset { .. }
-                        | Prepared::Approach { .. }
-                        | Prepared::LastSeen { .. }
+                    Prepared::Offset { .. } | Prepared::Approach { .. } | Prepared::LastSeen { .. }
                 )
             );
-            if matches!(self.items[index].prepared, Some(Prepared::Unknown)) {
-                if rendered.fulfillment.is_some() || rendered.resolution.is_some() {
-                    return Err(ExecutionError::InvalidCheckpoint);
-                }
-                continue;
-            }
             if successful != rendered.fulfillment.is_some()
                 || successful == rendered.resolution.is_some()
             {
@@ -791,9 +596,6 @@ impl TypedGroundingCursor {
                 self.grow(value.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
                 resolution = Some(value);
             }
-            if !locally_funded && let Some(fulfillment) = &rendered.fulfillment {
-                self.grow(fulfillment.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
-            }
             let mut commands = Vec::new();
             if let Some(command) = self.items[index].command.take() {
                 self.grow(
@@ -819,7 +621,6 @@ impl TypedGroundingCursor {
             });
         }
         self.items = Vec::new();
-        self.request = None;
         self.places = None;
         let mut storage = self
             .storage
@@ -832,37 +633,11 @@ impl TypedGroundingCursor {
         &'a mut self,
         core: &mut CoreMutation<'_>,
         mut answer: Option<TypedAnswer>,
-        provider: GroundingProvider,
     ) -> Result<TypedStep<'a>, ExecutionError> {
         if self.storage.is_none() {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         self.at = core.state.physical.header.sim_time;
-        if self.name_request.is_some() {
-            match answer.take() {
-                Some(TypedAnswer::Render(value)) => self.finish_name(core, value)?,
-                Some(_) => return Err(ExecutionError::InvalidCheckpoint),
-                None => {
-                    return Ok(TypedStep::Render(
-                        self.name_request
-                            .as_ref()
-                            .ok_or(ExecutionError::Invariant)?,
-                    ));
-                }
-            }
-        }
-        if self.request.is_some() {
-            return match answer.take() {
-                Some(TypedAnswer::Render(value)) => {
-                    let (bindings, storage) = self.complete(core, value)?;
-                    Ok(TypedStep::Complete(bindings, storage))
-                }
-                Some(_) => Err(ExecutionError::InvalidCheckpoint),
-                None => Ok(TypedStep::Render(
-                    self.request.as_ref().ok_or(ExecutionError::Invariant)?,
-                )),
-            };
-        }
         loop {
             if let Some(mut active) = self.active.take() {
                 match &mut active {
@@ -939,14 +714,8 @@ impl TypedGroundingCursor {
                 return Err(ExecutionError::InvalidCheckpoint);
             }
             if self.index == self.items.len() {
-                if provider == GroundingProvider::Local {
-                    let (bindings, custody) = self.render_movement(core)?;
-                    return Ok(TypedStep::Complete(bindings, custody));
-                }
-                self.prepare_request(core)?;
-                return Ok(TypedStep::Render(
-                    self.request.as_ref().ok_or(ExecutionError::Invariant)?,
-                ));
+                let (bindings, custody) = self.render_movement(core)?;
+                return Ok(TypedStep::Complete(bindings, custody));
             }
             if let Some(prior) = self.items[self.index].duplicate {
                 let bound = self.items[prior]
@@ -965,105 +734,13 @@ impl TypedGroundingCursor {
             match &self.items[self.index].syntax {
                 FreeTypedActionSyntax::RememberedPlace => self.prepare_remembered(core)?,
 
-                FreeTypedActionSyntax::Stop { activity } => {
-                    let current = core
-                        .state
-                        .physical
-                        .entities
-                        .get(&self.actor)
-                        .and_then(|entity| entity.actor.as_ref())
-                        .and_then(|actor| actor.action.as_ref())
-                        .map(|action| action.kind.as_str());
-                    let expected = match activity.as_deref() {
-                        None => None,
-                        Some("following") => Some("follow"),
-                        Some("gathering") => Some("gather"),
-                        Some("moving" | "walking") => Some("move"),
-                        _ => return Err(ExecutionError::InvalidCheckpoint),
-                    };
-                    if expected.is_some() && expected != current {
-                        let name = activity.as_ref().ok_or(ExecutionError::Invariant)?;
-                        let bytes = name.len();
-                        self.grow(bytes)?;
-                        self.items[self.index].prepared = Some(Prepared::NotStopping {
-                            activity: self.items[self.index].syntax_activity()?.into(),
-                        });
-                    } else {
-                        self.grow(
-                            map_storage::<String, SqlCell>(3)
-                                .and_then(|n| {
-                                    n.checked_add(
-                                        self.actor.len()
-                                            + self.items[self.index].operation_id.len()
-                                            + 128,
-                                    )
-                                })
-                                .ok_or(ExecutionError::Capacity)?,
-                        )?;
-                        let mut fields = IndexMap::with_capacity(3);
-                        fields.insert(
-                            "id".into(),
-                            self.items[self.index].operation_id.as_str().into(),
-                        );
-                        fields.insert("actorId".into(), self.actor.as_str().into());
-                        fields.insert("type".into(), "cancel".into());
-                        self.items[self.index].command = actions::command(
-                            &SqlCell::Object(fields),
-                            &self.actor,
-                            &self.items[self.index].operation_id,
-                            &self.budget,
-                        )?;
-                        self.items[self.index].prepared = Some(Prepared::Stop);
-                    }
-                    self.index += 1;
-                }
                 FreeTypedActionSyntax::DistanceNeeded => {
                     self.items[self.index].prepared = Some(Prepared::DistanceNeeded);
                     self.index += 1;
                 }
-                FreeTypedActionSyntax::Approach { .. } | FreeTypedActionSyntax::LastSeen { .. } => {
-                    if self.items[self.index]
-                        .slots
-                        .as_ref()
-                        .and_then(|s| s.get("until"))
-                        .is_some_and(|v| !v.is_null())
-                    {
-                        self.items[self.index].prepared = Some(Prepared::Unsupported {
-                            family: "movement-wait".into(),
-                        });
-                        self.index += 1;
-                    } else {
-                        self.prepare_name(core)?;
-                        return Ok(TypedStep::Render(
-                            self.name_request
-                                .as_ref()
-                                .ok_or(ExecutionError::Invariant)?,
-                        ));
-                    }
-                }
-                FreeTypedActionSyntax::Unsupported { family } => {
-                    let bytes = family.len();
-                    self.grow(bytes)?;
-                    self.items[self.index].prepared = Some(Prepared::Unsupported {
-                        family: match &self.items[self.index].syntax {
-                            FreeTypedActionSyntax::Unsupported { family } => family.clone(),
-                            _ => return Err(ExecutionError::Invariant),
-                        },
-                    });
-                    self.index += 1;
-                }
-                _ => self.invocation(core)?,
+                FreeTypedActionSyntax::Offset { .. }
+                | FreeTypedActionSyntax::NamedApproach { .. } => self.invocation(core)?,
             }
-        }
-    }
-}
-impl Item {
-    fn syntax_activity(&self) -> Result<&str, ExecutionError> {
-        match &self.syntax {
-            FreeTypedActionSyntax::Stop {
-                activity: Some(activity),
-            } => Ok(activity),
-            _ => Err(ExecutionError::Invariant),
         }
     }
 }

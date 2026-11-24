@@ -48,7 +48,11 @@ impl RuntimeMaintenancePublication {
         storage: ByteReservation,
     ) -> Result<Self, RuntimeError> {
         let lease = fence.begin_publication().map_err(failure)?;
-        Ok(Self { _lease: lease, fence, _storage: storage })
+        Ok(Self {
+            _lease: lease,
+            fence,
+            _storage: storage,
+        })
     }
 
     pub fn is_current(&self) -> bool {
@@ -95,7 +99,10 @@ impl NativeWorldSession {
                 || entity.actor.as_ref().is_none_or(|body| {
                     !body.alive
                         || body.controller != "npc"
-                        || body.capabilities.as_ref().is_some_and(|rules| !rules.inner_world)
+                        || body
+                            .capabilities
+                            .as_ref()
+                            .is_some_and(|rules| !rules.inner_world)
                 })
         }) {
             return Ok(None);
@@ -149,66 +156,6 @@ impl NativeWorldSession {
         }))
     }
 
-    pub fn maintenance_population(&self) -> Result<RuntimeJson, RuntimeError> {
-        self.require_active()?;
-        RuntimeJson::encode(
-            &crate::capture::maintenance::population(
-                &self.session.accepted().map_err(failure)?.state,
-            ),
-            &self.budget,
-        )
-    }
-    pub fn maintenance_pressure(&self, input: &[u8]) -> Result<RuntimeJson, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let thresholds = serde_json::from_slice(input).map_err(failure)?;
-        let pressure = crate::capture::maintenance::resident_pressure(
-            &self.session.accepted().map_err(failure)?.state,
-            &thresholds,
-        )
-        .map_err(failure)?;
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Pressure {
-            resident_pressure: bool,
-        }
-        RuntimeJson::encode(
-            &Pressure {
-                resident_pressure: pressure,
-            },
-            &self.budget,
-        )
-    }
-    pub fn maintenance_inputs_current(
-        &self,
-        read: &RuntimeMaintenanceRead,
-    ) -> Result<bool, RuntimeError> {
-        self.require_active()?;
-        if !self.work_is_current(read.host_generation) {
-            return Ok(false);
-        }
-        read.read
-            .inputs_current(
-                &self.session.publication_read().map_err(failure)?.state,
-                &self.budget,
-            )
-            .map_err(failure)
-    }
-    pub fn read_maintenance(&self, input: &[u8]) -> Result<RuntimeMaintenanceRead, RuntimeError> {
-        let _decode = decode_preparation(input, &self.budget)?;
-        let request = serde_json::from_slice(input).map_err(failure)?;
-        self.require_active()?;
-        let read = crate::capture::maintenance::MaintenanceCapture::capture(
-            &self.session.accepted().map_err(failure)?.state,
-            request,
-            &self.budget,
-        )
-        .map_err(failure)?;
-        Ok(RuntimeMaintenanceRead {
-            read: Arc::new(read),
-            host_generation: self.work_generation(),
-        })
-    }
     pub fn read_maintenance_direct(
         &self,
         actor_id: String,
@@ -243,95 +190,6 @@ impl NativeWorldSession {
                 &self.session.publication_read().map_err(failure)?.state,
                 &admission,
             )
-            .map_err(failure)
-    }
-    pub fn maintenance_files(
-        &self,
-        read: &RuntimeMaintenanceRead,
-    ) -> Result<RuntimeJson, RuntimeError> {
-        self.require_active()?;
-        let (json, storage) = read
-            .read
-            .files(
-                &self.session.accepted().map_err(failure)?.state,
-                &self.budget,
-            )
-            .map_err(failure)?;
-        Ok(RuntimeJson {
-            bytes: json.into_bytes(),
-            custody: storage,
-            handoff: None,
-        })
-    }
-    pub fn maintenance_raw_times(
-        &self,
-        read: &RuntimeMaintenanceRead,
-    ) -> Result<RuntimeJson, RuntimeError> {
-        self.require_active()?;
-        if !read
-            .read
-            .scope_current(&self.session.accepted().map_err(failure)?.state)
-        {
-            return Err(failure("maintenance admission changed"));
-        }
-        let (json, storage) = crate::capture::maintenance::raw_times(
-            &self.session.accepted().map_err(failure)?.state,
-            &read.read.request.actor_id,
-            &self.budget,
-        )
-        .map_err(failure)?;
-        Ok(RuntimeJson {
-            bytes: json.into_bytes(),
-            custody: storage,
-            handoff: None,
-        })
-    }
-    pub fn maintenance_publication(
-        &self,
-        read: &RuntimeMaintenanceRead,
-        input: &[u8],
-    ) -> Result<Option<RuntimeMaintenancePublication>, RuntimeError> {
-        self.session.accepted().map_err(failure)?;
-        if !self.maintenance_current(read, input)? {
-            return Ok(None);
-        }
-        let storage = self
-            .budget
-            .reserve(std::mem::size_of::<RuntimeMaintenancePublication>())
-            .map_err(failure)?;
-        let fence = self.session.fence();
-        let lease = fence.begin_publication().map_err(failure)?;
-        Ok(Some(RuntimeMaintenancePublication {
-            _lease: lease,
-            fence,
-            _storage: storage,
-        }))
-    }
-    pub fn begin_support_retention(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input: SupportInput = serde_json::from_slice(input).map_err(failure)?;
-        self.session
-            .begin_support_retention(input.actor_ids, input.preparation)
-            .map_err(failure)
-    }
-    pub fn begin_knowledge_retention(
-        &mut self,
-        input: &[u8],
-    ) -> Result<CandidateKey, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input: RecentInput = serde_json::from_slice(input).map_err(failure)?;
-        self.session
-            .begin_knowledge_retention(input.actor_ids)
-            .map_err(failure)
-    }
-    pub fn begin_recent_retention(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input: RecentInput = serde_json::from_slice(input).map_err(failure)?;
-        self.session
-            .begin_recent_retention(input.actor_ids)
             .map_err(failure)
     }
 }

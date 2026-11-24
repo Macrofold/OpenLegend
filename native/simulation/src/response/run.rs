@@ -30,7 +30,6 @@ use crate::text::JsText;
 use std::sync::Arc;
 mod grounding;
 mod typed;
-pub(crate) use typed::{TypedActionAnswer, TypedActionRequest};
 pub(super) use typed::remembered_unavailable;
 use typed::{TypedAnswer, TypedGroundingCursor, TypedStep};
 
@@ -39,7 +38,6 @@ pub(crate) enum ResponseAnswer {
     Sources(crate::capture::NpcSourcesAnswer),
     Digest(CanonicalJsonAnswer),
     Normalization(AttemptNormalizationAnswer),
-    Typed(TypedActionAnswer),
     Geometry(GeometryAnswers),
     Display(CompletedActivityDisplay),
     Command(CompletedCommandOperation),
@@ -49,9 +47,7 @@ pub(crate) enum ResponseStep<'a> {
     AppraisalCreates(&'a AppraisalCreatesRequest),
     Sources(&'a Arc<crate::capture::NpcSourcesRequest>),
     Digest(&'a CanonicalJsonRequest),
-    Normalization(&'a AttemptNormalizationRequest),
-    LocalNormalization(&'a Arc<AttemptNormalizationRequest>),
-    Typed(&'a TypedActionRequest),
+    Normalization(&'a Arc<AttemptNormalizationRequest>),
     Geometry(&'a GeometryQueries),
     Display(&'a mut crate::commands::ActivityDisplayCursor),
     Command(&'a mut CommandOperation),
@@ -116,62 +112,12 @@ enum Progress {
     Sources,
     Digest,
     Normalization,
-    Typed,
     Geometry,
     Display,
     Command,
     Event,
     Complete(CompletedResponse),
 }
-/// Trusted choice at the existing Rust-owned or addon response intake.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum GroundingProvider {
-    Local,
-    Addon,
-}
-enum PendingNormalization {
-    Local(Arc<AttemptNormalizationRequest>),
-    Addon(AttemptNormalizationRequest),
-}
-impl PendingNormalization {
-    fn prepare<'a>(
-        binding: GeometryBinding,
-        descriptions: impl Iterator<Item = &'a JsText> + Clone,
-        target_names: impl Iterator<Item = (usize, &'a crate::state::Named)> + Clone,
-        provider: GroundingProvider,
-        budget: &ByteBudget,
-    ) -> Result<Self, ExecutionError> {
-        let shared = provider == GroundingProvider::Local;
-        let request = AttemptNormalizationRequest::prepare(
-            binding,
-            descriptions,
-            target_names,
-            shared,
-            budget,
-        )?;
-        Ok(match provider {
-            GroundingProvider::Local => Self::Local(Arc::new(request)),
-            GroundingProvider::Addon => Self::Addon(request),
-        })
-    }
-    fn step(&self) -> ResponseStep<'_> {
-        match self {
-            Self::Local(request) => ResponseStep::LocalNormalization(request),
-            Self::Addon(request) => ResponseStep::Normalization(request),
-        }
-    }
-    fn finish(
-        self,
-        answer: AttemptNormalizationAnswer,
-        budget: &ByteBudget,
-    ) -> Result<NormalizedAttemptFacts, ExecutionError> {
-        match self {
-            Self::Local(request) => request.finish_shared(answer, budget),
-            Self::Addon(request) => request.finish(answer),
-        }
-    }
-}
-
 pub(crate) struct ResponseCursor {
     id: String,
     response: ActorResponse,
@@ -188,8 +134,7 @@ pub(crate) struct ResponseCursor {
     preparing_grounding: bool,
     canonical_purpose: CanonicalPurpose,
     digest: Option<PreparedCanonicalJson>,
-    normalization: Option<PendingNormalization>,
-    grounding_provider: GroundingProvider,
+    normalization: Option<Arc<AttemptNormalizationRequest>>,
     normalized: Option<NormalizedAttemptFacts>,
     typed_grounding: Option<TypedGroundingCursor>,
     active: Option<Active>,
@@ -217,7 +162,6 @@ impl ResponseCursor {
         candidate: CandidateKey,
         protected: bool,
         reconsider_choice: bool,
-        grounding_provider: GroundingProvider,
         budget: &ByteBudget,
     ) -> Result<Self, CommandOperationError> {
         if !is_safe_record_id(id)
@@ -248,7 +192,7 @@ impl ResponseCursor {
         let preparing_grounding = bindings.input.native.is_some()
             && Self::proposal_descriptions(&response).next().is_some();
         let normalization = if preparing_grounding {
-            Some(PendingNormalization::prepare(
+            Some(Arc::new(AttemptNormalizationRequest::prepare(
                 Self::binding(core, candidate)?,
                 Self::proposal_descriptions(&response).chain(
                     bindings.input.native.iter().flat_map(|native| {
@@ -260,11 +204,10 @@ impl ResponseCursor {
                 ),
                 Self::proposal_operations(&response).enumerate().filter_map(
                     |(index, operation)| {
-                        if grounding_provider != GroundingProvider::Local
-                            || operation
-                                .data
-                                .get("slots")
-                                .is_some_and(|value| !value.is_null())
+                        if operation
+                            .data
+                            .get("slots")
+                            .is_some_and(|value| !value.is_null())
                         {
                             return None;
                         }
@@ -274,9 +217,8 @@ impl ResponseCursor {
                             .map(|name| (index, name))
                     },
                 ),
-                grounding_provider,
                 budget,
-            )?)
+            )?))
         } else {
             None
         };
@@ -325,7 +267,6 @@ impl ResponseCursor {
             canonical_purpose: CanonicalPurpose::Response,
             digest: None,
             normalization,
-            grounding_provider,
             normalized: None,
             typed_grounding: None,
             active: None,
@@ -708,13 +649,12 @@ impl ResponseCursor {
                 .filter_map(|op| op.text("description"))
         };
         if self.normalized.is_none() && descriptions().next().is_some() {
-            self.normalization = Some(PendingNormalization::prepare(
+            self.normalization = Some(Arc::new(AttemptNormalizationRequest::prepare(
                 Self::binding(core, self.candidate)?,
                 descriptions(),
                 std::iter::empty(),
-                self.grounding_provider,
                 &self.budget,
-            )?);
+            )?));
             return Ok(Some(Progress::Normalization));
         }
         Ok(None)
@@ -1162,15 +1102,9 @@ impl ResponseCursor {
             Progress::Digest => {
                 ResponseStep::Digest(self.canonical.as_ref().ok_or(ExecutionError::Invariant)?)
             }
-            Progress::Normalization => self
-                .normalization
-                .as_ref()
-                .ok_or(ExecutionError::Invariant)?
-                .step(),
-            Progress::Typed => ResponseStep::Typed(
-                self.typed_grounding
+            Progress::Normalization => ResponseStep::Normalization(
+                self.normalization
                     .as_ref()
-                    .and_then(TypedGroundingCursor::request)
                     .ok_or(ExecutionError::Invariant)?,
             ),
             Progress::Geometry => ResponseStep::Geometry(
@@ -1281,7 +1215,7 @@ impl ResponseCursor {
                     self.normalization
                         .take()
                         .ok_or(ExecutionError::Invariant)?
-                        .finish(supplied, &self.budget)?,
+                        .finish_shared(supplied, &self.budget)?,
                 );
                 let operations = self.ground_offered(core)?;
                 self.typed_grounding = TypedGroundingCursor::prepare(
@@ -1290,23 +1224,20 @@ impl ResponseCursor {
                     &self.bindings,
                     &self.attempt_bindings,
                     &operations,
-                    self.grounding_provider,
                     self.candidate,
                     &self.budget,
                 )?;
             }
             if let Some(cursor) = self.typed_grounding.as_mut() {
                 let supplied = match answer.take() {
-                    Some(ResponseAnswer::Typed(value)) => Some(TypedAnswer::Render(value)),
                     Some(ResponseAnswer::Geometry(value)) => Some(TypedAnswer::Geometry(value)),
                     Some(ResponseAnswer::Display(value)) => Some(TypedAnswer::Display(value)),
                     Some(_) => return Err(ExecutionError::InvalidCheckpoint.into()),
                     None => None,
                 };
-                let completed = match cursor.step(core, supplied, self.grounding_provider)? {
+                let completed = match cursor.step(core, supplied)? {
                     TypedStep::Geometry(_) => return Ok(Progress::Geometry),
                     TypedStep::Display(_) => return Ok(Progress::Display),
-                    TypedStep::Render(_) => return Ok(Progress::Typed),
                     TypedStep::Complete(bindings, storage) => Some((bindings, storage)),
                 };
                 if let Some((bindings, storage)) = completed {
@@ -1460,7 +1391,7 @@ impl ResponseCursor {
                         self.normalization
                             .take()
                             .ok_or(ExecutionError::Invariant)?
-                            .finish(value, &self.budget)?,
+                            .finish_shared(value, &self.budget)?,
                     );
                 }
                 Some(_) => return Err(ExecutionError::InvalidCheckpoint.into()),

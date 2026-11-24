@@ -1,3 +1,4 @@
+import type { GamePatch, GameView } from '@open-legend/protocol';
 import { afterEach, expect, it, vi } from 'vitest';
 
 afterEach(() => {
@@ -325,8 +326,19 @@ function publicView(): import('@open-legend/protocol').GameView {
   };
 }
 
-it('roundtrips optional-field removal through the actual JSON patch producer and consumer', async () => {
-  const { projectPatch } = await import('../../server/src/view.js');
+function wirePatch(previous: GameView, changes: Partial<GamePatch>): GamePatch {
+  const patch: GamePatch = {
+    schemaVersion: previous.schemaVersion,
+    baseRevision: previous.revision,
+    revision: previous.revision + 1,
+    evaluationCut: previous.evaluationCut,
+    scope: previous.access?.scope,
+    ...changes,
+  };
+  return JSON.parse(JSON.stringify(patch)) as GamePatch;
+}
+
+it('applies explicit optional-field removal from a JSON game patch', async () => {
   const { applyGamePatch } = await import('./api.js');
   const previous = publicView();
   previous.sightConfirmedThrough = 10;
@@ -357,9 +369,17 @@ it('roundtrips optional-field removal through the actual JSON patch producer and
   delete next.historyEpoch;
   next.worldEventsRevision = '';
   next.ai.allowanceLimitUsd = 0;
-  const patch = projectPatch(previous, next);
-  expect(patch).not.toBeNull();
-  const wire: import('@open-legend/protocol').GamePatch = JSON.parse(JSON.stringify(patch));
+  const wire = wirePatch(previous, {
+    sightConfirmedThrough: null,
+    worldEventsRevision: '',
+    player: { actionAnimation: null, scars: [] },
+    ai: { allowanceLimitUsd: 0 },
+    remove: {
+      view: ['commandEpoch', 'historyEpoch'],
+      player: ['activity', 'bodyState'],
+      clock: ['preparingNavigation'],
+    },
+  });
   const received = applyGamePatch(previous, wire);
   expect(received).toEqual(JSON.parse(JSON.stringify(next)));
   expect(Object.hasOwn(received.player, 'activity')).toBe(false);
@@ -372,7 +392,6 @@ it('roundtrips optional-field removal through the actual JSON patch producer and
 });
 
 it('retains entity removal/order and refuses an update for a different audience or base revision', async () => {
-  const { projectPatch } = await import('../../server/src/view.js');
   const { applyGamePatch } = await import('./api.js');
   const previous = publicView();
   const entity = (id: string): import('@open-legend/protocol').EntityView => ({
@@ -397,22 +416,20 @@ it('retains entity removal/order and refuses an update for a different audience 
   });
   previous.entities = [entity('one'), entity('two'), entity('three')];
   const next = { ...previous, revision: 2, entities: [entity('three'), entity('four')] };
-  const patch = projectPatch(previous, next);
-  expect(patch).not.toBeNull();
-  const wire: import('@open-legend/protocol').GamePatch = JSON.parse(JSON.stringify(patch));
+  const wire = wirePatch(previous, {
+    entities: {
+      add: [next.entities[1]!],
+      update: [],
+      remove: ['one', 'two'],
+      order: ['three', 'four'],
+    },
+  });
   expect(applyGamePatch(previous, wire)).toEqual(next);
   expect(() => applyGamePatch(previous, { ...wire, scope: 'different' })).toThrow();
   expect(() => applyGamePatch(previous, { ...wire, baseRevision: 0 })).toThrow();
-  expect(
-    projectPatch(previous, { ...next, access: { ...previous.access!, scope: 'different' } }),
-  ).toBeNull();
-  expect(
-    projectPatch(previous, { ...next, vision: { ...next.vision, enabled: false } }),
-  ).toBeNull();
 });
 
 it('applies small entity field changes atomically and keeps unchanged public objects', async () => {
-  const { projectPatch } = await import('../../server/src/view.js');
   const { applyGamePatch } = await import('./api.js');
   const previous = publicView();
   const entity: import('@open-legend/protocol').EntityView = {
@@ -442,16 +459,19 @@ it('applies small entity field changes atomically and keeps unchanged public obj
   const moved = { ...entity, position: { x: 1, y: 0, z: 0 }, actionAnimation: null };
   delete moved.canTalk;
   const next = { ...previous, revision: 2, entities: [moved, stationary] };
-  const patch = projectPatch(previous, next)!;
-  expect(patch.entities?.add).toEqual([]);
-  expect(patch.entities?.update).toEqual([
-    {
-      id: 'moving',
-      set: { position: moved.position, actionAnimation: null },
-      remove: ['canTalk'],
+  const wire = wirePatch(previous, {
+    entities: {
+      add: [],
+      update: [
+        {
+          id: 'moving',
+          set: { position: moved.position, actionAnimation: null },
+          remove: ['canTalk'],
+        },
+      ],
+      remove: [],
     },
-  ]);
-  const wire = JSON.parse(JSON.stringify(patch)) as import('@open-legend/protocol').GamePatch;
+  });
   const received = applyGamePatch(previous, wire);
   expect(received).toEqual(next);
   expect(received.entities[1]).toBe(stationary);
@@ -470,7 +490,6 @@ it('applies small entity field changes atomically and keeps unchanged public obj
 
 it('keeps inventory preparation stable through received movement but updates relevant controls and roots', async () => {
   const { inventoryPresentation } = await import('./ui/inventory-presentation');
-  const { projectPatch } = await import('../../server/src/view.js');
   const { applyGamePatch } = await import('./api.js');
   const previous = publicView();
   const resident: import('@open-legend/protocol').EntityView = {
@@ -501,15 +520,16 @@ it('keeps inventory preparation stable through received movement but updates rel
   };
   previous.entities = [resident, box];
   const initial = inventoryPresentation(previous);
-  const next = {
-    ...previous,
-    revision: 2,
-    clock: { ...previous.clock, seconds: 1 },
-    entities: [{ ...resident, position: { x: 2, y: 0, z: 1 } }, box],
-  };
   const received = applyGamePatch(
     previous,
-    JSON.parse(JSON.stringify(projectPatch(previous, next))),
+    wirePatch(previous, {
+      clock: { seconds: 1 },
+      entities: {
+        add: [],
+        update: [{ id: 'resident', set: { position: { x: 2, y: 0, z: 1 } } }],
+        remove: [],
+      },
+    }),
   );
   expect(inventoryPresentation(received, initial)).toBe(initial);
   const movedBox = {

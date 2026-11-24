@@ -21,13 +21,6 @@ pub(super) struct RestoreReadRequest<'a, T: ?Sized> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(super) restore_projection: Option<&'a crate::records::ChangedRows>,
 }
-#[derive(Serialize)]
-pub(super) struct RestoreQuestion<'a, T: ?Sized> {
-    pub(super) kind: ProviderKind,
-    pub(super) binding: GeometryBinding,
-    pub(super) value: RestoreReadRequest<'a, T>,
-}
-
 pub(super) fn poll_restore(
     cursor: &mut RestoreReconcileCursor,
     core: &mut CoreMutation<'_>,

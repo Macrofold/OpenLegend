@@ -378,7 +378,7 @@ Earlier feeling conversion supported only the known fear/discomfort format and d
 
 **Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots; partial/selective backup is not current behavior.
 
-[Package contract](../../apps/server/src/operational-backup.ts) · [Stopped Rust export](../../native/game-server/src/store/checkpoint/backup.rs).
+[Operator procedure](../save-and-load.md#stopped-operational-backup) · [Stopped Rust export](../../native/game-server/src/store/checkpoint/backup.rs).
 
 ## SB18
 
@@ -388,7 +388,7 @@ Earlier feeling conversion supported only the known fear/discomfort format and d
 
 **Reason / tradeoff:** The files cannot join the PostgreSQL transaction, so durable ownership evidence and an in-transaction commit marker distinguish an orphan from a committed slot after process death. The small marker files and one database meta record per successful restore cost space; refusing ambiguous/shared ownership is safer than deleting a usable recovery point. First use of an unmarked same-world directory relies on the operator's exclusive-directory choice; the marker cannot prove past ownership. Servers must be stopped for operational restore; the marker is an operational-restore guard, not a general cross-process file lock. [Implementation](../../apps/server/src/operational-restore-attempt.ts), [slot publication](../../apps/server/src/operational-backup.ts).
 
-[TypeScript operator command](../../scripts/restore-world.ts) · [Stand-alone Rust backup restore](../../native/game-server/src/store/checkpoint/backup/restore.rs).
+[Operator procedure](../save-and-load.md#stopped-operational-backup) · [Rust backup restore](../../native/game-server/src/store/checkpoint/backup/restore.rs).
 
 ## SB19
 

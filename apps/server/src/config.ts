@@ -11,7 +11,7 @@ import {
   numberSetting,
   readGenerationConfig,
 } from './generation-config.js';
-import { resolve } from 'node:path';
+import { readStorageLocation } from './storage-location.js';
 import {
   creationDestinationSchema,
   readCreationSourceConfig,
@@ -24,19 +24,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   const { macrofoldKey } = generation;
   const macrofoldJevModel = env['MACROFOLD_JEV_MODEL'] ?? 'typesafe/jev-1.13';
   const jevModel = env['JEV_MODEL'] ?? 'jev-1.13.0';
-  const databaseUrl = env['OPEN_LEGEND_DATABASE_URL']?.trim() ?? '';
-  try {
-    const url = databaseUrl ? new URL(databaseUrl) : undefined;
-    if (
-      !url ||
-      !['postgres:', 'postgresql:'].includes(url.protocol) ||
-      !url.hostname ||
-      url.pathname.length < 2
-    )
-      throw new Error();
-  } catch {
-    throw new Error('OPEN_LEGEND_DATABASE_URL is required and must be a PostgreSQL URL.');
-  }
+  const { databaseUrl, dataDirectory } = readStorageLocation(env);
   const sqlWriteGroups = z.enum(['on', 'off']).parse(env['OPEN_LEGEND_SQL_WRITE_GROUPS'] ?? 'on');
   const selectedWorldPreset = z
     .enum(BASE_STARTING_WORLD_PRESETS)
@@ -170,7 +158,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     host,
     godMode: env['OPEN_LEGEND_GOD_MODE'] === 'true',
     port,
-    dataDirectory: resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data'),
+    dataDirectory,
     seed: numberSetting(env, 'WORLD_SEED', 1086, 1, 0x7fffffff),
     baseRatio: 60,
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,

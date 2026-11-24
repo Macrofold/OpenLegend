@@ -6,10 +6,10 @@ use crate::host::{
     ByteBudget, ByteReservation, CandidateFence, CandidateKey, CapacityError, FenceError,
     ResidentReservation,
 };
+pub use crate::simulation::LocalFormat;
 use crate::simulation::{
     CompletedOperation, ProviderQuestion, ProviderResponse, Session, SessionStep,
 };
-pub use crate::simulation::LocalFormat;
 use serde::ser::{SerializeMap, SerializeSeq};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -26,8 +26,8 @@ static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod account_retention;
 mod control;
 pub use crate::commands::{PlayerTravelDestination, PlayerTravelIntent, RuntimeGuardFacing};
-pub use crate::contact::{StrikePermission, StrikeReviewOffer};
 pub use crate::contact::review::TimedReleaseReview;
+pub use crate::contact::{StrikePermission, StrikeReviewOffer};
 pub use crate::experience::{RetentionPreparation, render_account_summary};
 pub use crate::outings::view::{OutingViews, PlayerOuting};
 pub use crate::plans::PlanMode;
@@ -39,7 +39,6 @@ pub use direct_history::{
     HistoryAccount, HistoryTemporal, RuntimeHistory, RuntimeHistoryCuts,
     RuntimeMetadataPersistence, RuntimeRecallDecoder, RuntimeRecallRead, metadata_rows,
 };
-mod handoff;
 mod inspection;
 pub use inspection::{
     RuntimeDefinitionCatalogue, RuntimeDefinitionInspection, RuntimeDefinitionKind,
@@ -67,8 +66,7 @@ mod npc_intake;
 pub use npc_intake::{
     NpcQueueInputs, NpcScheduleCause, NpcScheduleFacts, NpcSchedulePopulation, NpcScheduleSources,
     RuntimeDiscoveryOperation, RuntimeNpcInspection, RuntimeNpcIntakeSelection, RuntimeNpcTrigger,
-    ScheduleBodyInput,
-    ScheduleEvidence,
+    ScheduleBodyInput, ScheduleEvidence,
 };
 mod npc_labels;
 mod overview;
@@ -82,13 +80,13 @@ mod player;
 mod player_expression;
 pub use player_expression::PlayerExpressionBinding;
 mod manufacture;
-pub use manufacture::RuntimeManufactureOffer;
 pub use crate::food_preparation::valid_inputs as valid_preparation_inputs;
+pub use manufacture::RuntimeManufactureOffer;
 mod player_places;
 mod privacy;
 pub use privacy::{RuntimePersonalHistory, RuntimePrivacyEdit};
-mod private_history;
 mod person_editor;
+mod private_history;
 pub use person_editor::{PersonEditorCut, PersonMemoryEdit};
 mod private_notes;
 pub use private_notes::{
@@ -97,11 +95,11 @@ pub use private_notes::{
 };
 mod reply_preview;
 pub use private_history::{
-    RuntimePromisePosition, RuntimePromisePresentation, RuntimePromiseSelection, RuntimePromiseView, RuntimeResidentPromise,
     RuntimeActivityInspection, RuntimePlayerTranscriptRead, RuntimePrivateHistoryPublication,
-    RuntimePrivateHistoryRead,
-    RuntimeRecentBrowse, RuntimeRecentPosition, RuntimeRecentReceipt, RuntimeRecentSourceRead,
-    RuntimeRecordedEventRoles,
+    RuntimePrivateHistoryRead, RuntimePromisePosition, RuntimePromisePresentation,
+    RuntimePromiseSelection, RuntimePromiseView, RuntimeRecentBrowse, RuntimeRecentPosition,
+    RuntimeRecentReceipt, RuntimeRecentSourceRead, RuntimeRecordedEventRoles,
+    RuntimeResidentPromise,
 };
 mod navigation;
 mod read_cut;
@@ -115,21 +113,11 @@ pub use read_cut::{
     RuntimeKnownPlaceRead, RuntimeMemoryPageRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead,
 };
 mod restore;
-pub use restore::{
-    AccountBodiesReply, AccountBodyRow, AccountCandidate, AccountMetadataReply, RestoreAccountAnswer,
-    RestoreAccountBinding, RestoreAccountQuery, RestoreAccountRequest, RuntimeRestoreAccounts,
-    RestoreArchive, RestoreArchiveCategory, RestoreArchiveMatch, RestoreArchivePlacement, RestoreArchiveSelection, RestoreBinding, RestoreGrant, RestoreInput,
-    RestoreMetadataInput, RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreArchives, RuntimeRestoreMembership, RuntimeRestoreSupport,
-    RuntimeRestorePlacement,
-};
-mod retained_values;
-pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
-pub use handoff::RuntimeOutputHandoff;
-mod consumer;
 pub use crate::capture::npc_self::{RuntimeNpcSelf, RuntimeNpcSelfPrompt};
 pub use crate::capture::{NpcActivityChoice, NpcActivityFacts};
+pub use crate::projectile::{RuntimeRangedMode, RuntimeRangedTarget};
+pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
 pub use crate::time::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput};
-pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
     AppraisalSelection, AppraisalSourceAlias, NpcChoiceRecovery, PersonalOrdinal,
@@ -142,25 +130,36 @@ pub use npc::{
     RuntimeNpcResponseTicket, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
     RuntimeNpcStageWitness, RuntimeNpcSubjectNote,
 };
-pub use player::{InspectedRecipeRecord, RuntimeCatalogueOffer, RuntimeFollowOffer, RuntimeWorldStorage};
-pub use player::{RuntimeActionCatalogue, RuntimePracticeOffer, RuntimeRangedChoice};
-pub use crate::projectile::{RuntimeRangedMode, RuntimeRangedTarget};
-pub use player::{OBJECT_HISTORY_SELECTION, RuntimeObjectHistoryEntry, RuntimeObjectHistoryRead};
-pub use player::{
-    RuntimeOfferCursor, RuntimeOfferPage, RuntimeOfferProblem, RuntimeOfferSelection, RuntimeOfferSource,
-};
 pub use player::{
     CoordinateRefusal, DirectInventory, FireOperation, InteractionMode, InventoryContainer,
     InventoryCrumb, InventoryGroup, PlayerInteractionFacts, ResolvedInventoryGroup,
-    RuntimeFireChoice, RuntimeFireMenu, RuntimeFishOffer, StockGroupRefusal, StockGroupRequest, stock_group_limit_message,
-    RuntimeFishTool, RuntimeFoodMenu, RuntimeGatherOffer, RuntimeHearthCatalogue,
-    RuntimeHearthShape, RuntimeHeatContact, RuntimePickupLot, RuntimePickupOffer,
-    RuntimePlayerCommand, RuntimePlayerInputState, RuntimePlayerPublication, RuntimePlayerRead,
-    RuntimePreparation, RuntimeResourceOffer, RuntimeStatusChoice, RuntimeStatusMenu,
-    RuntimeContactMenu, TypedWalk, VisibleFuel,
+    RuntimeContactMenu, RuntimeFireChoice, RuntimeFireMenu, RuntimeFishOffer, RuntimeFishTool,
+    RuntimeFoodMenu, RuntimeGatherOffer, RuntimeHearthCatalogue, RuntimeHearthShape,
+    RuntimeHeatContact, RuntimePickupLot, RuntimePickupOffer, RuntimePlayerCommand,
+    RuntimePlayerInputState, RuntimePlayerPublication, RuntimePlayerRead, RuntimePreparation,
+    RuntimeResourceOffer, RuntimeStatusChoice, RuntimeStatusMenu, StockGroupRefusal,
+    StockGroupRequest, TypedWalk, VisibleFuel, stock_group_limit_message,
+};
+pub use player::{
+    InspectedRecipeRecord, RuntimeCatalogueOffer, RuntimeFollowOffer, RuntimeWorldStorage,
+};
+pub use player::{OBJECT_HISTORY_SELECTION, RuntimeObjectHistoryEntry, RuntimeObjectHistoryRead};
+pub use player::{RuntimeActionCatalogue, RuntimePracticeOffer, RuntimeRangedChoice};
+pub use player::{
+    RuntimeOfferCursor, RuntimeOfferPage, RuntimeOfferProblem, RuntimeOfferSelection,
+    RuntimeOfferSource,
 };
 pub use reply_preview::{
     RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,
+};
+pub use restore::{
+    AccountBodiesReply, AccountBodyRow, AccountCandidate, AccountMetadataReply,
+    RestoreAccountAnswer, RestoreAccountBinding, RestoreAccountQuery, RestoreAccountRequest,
+    RestoreArchive, RestoreArchiveCategory, RestoreArchiveMatch, RestoreArchivePlacement,
+    RestoreArchiveSelection, RestoreBinding, RestoreGrant, RestoreInput, RestoreMetadataInput,
+    RestorePrivacyInput, RestoreRetentionPreparation, RuntimeRestoreAccounts,
+    RuntimeRestoreArchives, RuntimeRestoreMembership, RuntimeRestorePlacement,
+    RuntimeRestoreSupport,
 };
 
 #[derive(Debug)]
@@ -278,10 +277,16 @@ fn session_failure(error: crate::simulation::SessionError) -> RuntimeError {
             ..failure(error)
         };
     }
-    if matches!(&error, SessionError::Drive(DriveError::Semantic(
-        AdvanceError::Execution(ExecutionError::ConstructionGatherNeedsAuthority)
-    ))) {
-        return RuntimeError { refusal: Refusal::ConstructionGatherNeedsAuthority, ..failure(error) };
+    if matches!(
+        &error,
+        SessionError::Drive(DriveError::Semantic(AdvanceError::Execution(
+            ExecutionError::ConstructionGatherNeedsAuthority
+        )))
+    ) {
+        return RuntimeError {
+            refusal: Refusal::ConstructionGatherNeedsAuthority,
+            ..failure(error)
+        };
     }
     let capacity = match &error {
         SessionError::Drive(DriveError::Capacity) => true,
@@ -346,15 +351,14 @@ fn decode_preparation(bytes: &[u8], budget: &ByteBudget) -> Result<ByteReservati
         .ok_or_else(|| failure("capacity"))?;
     budget.reserve(bound).map_err(failure)
 }
-/// The bridge transfers the existing charge for its copied UTF-8 allocation.
-/// Field order keeps the String funded through its actual destruction, including
-/// stale-question and malformed-answer refusal. This input grants no authority.
+/// Transfer a provider answer together with its independently funded storage.
+/// The body is dropped first, including when its question is stale. This input
+/// grants no authority.
 pub struct RuntimeProviderInput {
     body: RuntimeAnswerBody,
     custody: ByteReservation,
 }
 enum RuntimeAnswerBody {
-    Json(String),
     Geometry(Box<crate::geometry::GeometryAnswers>),
     NormalizedAttempts(Box<crate::language::AttemptNormalizationAnswer>),
     Utterance(Box<crate::speech::UtteranceAnswer>),
@@ -374,15 +378,6 @@ enum RuntimeAnswerBody {
     ActivityLearningFormat(Box<crate::activity::LearningFormatAnswer>),
 }
 impl RuntimeProviderInput {
-    /// The caller already admitted and owns this String's backing. Its actual
-    /// capacity and host budget are checked at the continuation boundary.
-    pub fn new(json: String, custody: ByteReservation) -> Self {
-        Self {
-            body: RuntimeAnswerBody::Json(json),
-            custody,
-        }
-    }
-
     pub fn geometry(
         answers: crate::geometry::GeometryAnswers,
         mut custody: ByteReservation,
@@ -456,7 +451,9 @@ impl RuntimeProviderInput {
         groups: Vec<u32>,
         mut custody: ByteReservation,
     ) -> Result<Self, RuntimeError> {
-        let bytes = order.capacity().checked_add(groups.capacity())
+        let bytes = order
+            .capacity()
+            .checked_add(groups.capacity())
             .and_then(|n| n.checked_mul(size_of::<u32>()))
             .and_then(|n| n.checked_add(size_of::<crate::language::CollationAnswer>()))
             .ok_or_else(|| failure("capacity"))?;
@@ -546,11 +543,12 @@ impl RuntimeProviderInput {
         mut storage: ByteReservation,
     ) -> Result<Self, RuntimeError> {
         let header = storage.split_off(0)?;
-        let answer = crate::simulation::SourceVersionsAnswer::adopt(binding, plan, maximum, storage)
-            .map_err(|error| match error {
-                crate::simulation::DriveError::Capacity => CapacityError.into(),
-                error => failure(error),
-            })?;
+        let answer =
+            crate::simulation::SourceVersionsAnswer::adopt(binding, plan, maximum, storage)
+                .map_err(|error| match error {
+                    crate::simulation::DriveError::Capacity => CapacityError.into(),
+                    error => failure(error),
+                })?;
         Ok(Self {
             body: RuntimeAnswerBody::SourceVersions(Box::new(answer)),
             custody: header,
@@ -564,7 +562,9 @@ impl RuntimeProviderInput {
         budget: &ByteBudget,
     ) -> Result<Self, RuntimeError> {
         if !budget.owns(&storage) {
-            return Err(failure("prior appraisal rows belong to another native budget"));
+            return Err(failure(
+                "prior appraisal rows belong to another native budget",
+            ));
         }
         let custody = budget.reserve(size_of::<crate::response::AppraisalCreatesAnswer>())?;
         Ok(Self {
@@ -637,9 +637,6 @@ fn provider_response(
                 return Err(failure("provider answer belongs to another native budget"));
             }
             match input.body {
-                RuntimeAnswerBody::Json(json) => {
-                    ProviderResponse::new(question.kind(), question.binding(), json, input.custody)
-                }
                 RuntimeAnswerBody::Geometry(answer) => {
                     if question.geometry().is_none() {
                         return Err(failure(
@@ -656,7 +653,9 @@ fn provider_response(
                 }
                 RuntimeAnswerBody::Collation(answer) => {
                     if question.collation().is_none() {
-                        return Err(failure("collation ranks require the actual strings request"));
+                        return Err(failure(
+                            "collation ranks require the actual strings request",
+                        ));
                     }
                     ProviderResponse::collation(question.binding(), answer, input.custody)
                 }
@@ -704,13 +703,17 @@ fn provider_response(
                 }
                 RuntimeAnswerBody::RestoreArchives(answer) => {
                     if question.restore_archives().is_none() {
-                        return Err(failure("archive selection requires its original restore request"));
+                        return Err(failure(
+                            "archive selection requires its original restore request",
+                        ));
                     }
                     ProviderResponse::restore_archives(question.binding(), answer, input.custody)
                 }
                 RuntimeAnswerBody::RestoreRetention(answer) => {
                     if question.restore_retention().is_none() {
-                        return Err(failure("account selection requires its original restore request"));
+                        return Err(failure(
+                            "account selection requires its original restore request",
+                        ));
                     }
                     ProviderResponse::restore_retention(question.binding(), answer, input.custody)
                 }
@@ -759,11 +762,10 @@ fn provider_response(
 }
 
 /// A detached immutable JSON encoding, never a writable canonical record.
-/// The Node bridge must transfer both parts to the actual buffer finalizer.
+/// The encoded bytes keep independent allocation custody.
 pub struct RuntimeJson {
     bytes: Vec<u8>,
     custody: ByteReservation,
-    handoff: Option<RuntimeOutputHandoff>,
 }
 impl RuntimeJson {
     /// Join already encoded semantic-owner products without constructing a
@@ -780,16 +782,7 @@ impl RuntimeJson {
             bytes.extend_from_slice(part);
         }
         custody.resize(bytes.capacity())?;
-        Ok(Self {
-            bytes,
-            custody,
-            handoff: None,
-        })
-    }
-    /// Reserve decoded consumer custody before the actual JavaScript parser.
-    /// The result's finite value/consumer wrapper has its own carrier allowance.
-    pub fn consumer(&self, budget: &ByteBudget) -> Result<RuntimeConsumer, RuntimeError> {
-        consumer::prepare(&self.bytes, budget, 64 * std::mem::size_of::<u64>())
+        Ok(Self { bytes, custody })
     }
     /// Count and encode a detached packet. Its reservation belongs to the
     /// returned buffer, with byte refusal distinct from a serializer error.
@@ -806,17 +799,10 @@ impl RuntimeJson {
         )?;
         let bytes = json_record(value).map_err(failure)?.into_bytes();
         custody.resize(bytes.capacity())?;
-        Ok(Self {
-            bytes,
-            custody,
-            handoff: None,
-        })
+        Ok(Self { bytes, custody })
     }
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
-    }
-    pub fn into_parts(self) -> (Vec<u8>, ByteReservation, Option<RuntimeOutputHandoff>) {
-        (self.bytes, self.custody, self.handoff)
     }
 }
 
@@ -961,11 +947,10 @@ impl RuntimeProvider {
         question: &Arc<ProviderQuestion>,
         budget: &ByteBudget,
     ) -> Result<Self, RuntimeError> {
-        // Actual RuntimeProvider/Arc plus the same supported opaque Node class
-        // carrier allowance as RuntimeConsumer. This is per wrapper, not per
-        // question body or a claim about total V8/RSS memory.
+        // Charge this Rust owner's storage. The fixed question allocation and
+        // its Weak references share the separate backing reservation below.
         let bytes = std::mem::size_of::<Self>()
-            .checked_add(2 * std::mem::size_of::<usize>() + 32 * std::mem::size_of::<u64>())
+            .checked_add(2 * std::mem::size_of::<usize>())
             .and_then(|n| n.checked_add(std::mem::align_of::<Self>() - 1))
             .ok_or_else(|| failure("native provider allocation overflow"))?;
         let wrapper = budget.reserve(bytes).map_err(failure)?;
@@ -1147,11 +1132,14 @@ impl RuntimeProvider {
     pub fn with_choice_descriptions<T>(
         &self,
         format: impl FnOnce(
-            crate::geometry::GeometryBinding, &crate::capture::NpcDescriptionsRequest,
+            crate::geometry::GeometryBinding,
+            &crate::capture::NpcDescriptionsRequest,
         ) -> T,
     ) -> Result<Option<T>, RuntimeError> {
         let question = self.question()?;
-        Ok(question.choice_descriptions().map(|request| format(question.binding(), request)))
+        Ok(question
+            .choice_descriptions()
+            .map(|request| format(question.binding(), request)))
     }
 
     /// Borrow the exact authorized speech string for local ICU preparation.
@@ -1185,7 +1173,9 @@ impl RuntimeProvider {
         compare: impl FnOnce(crate::geometry::GeometryBinding, &[String]) -> T,
     ) -> Result<Option<T>, RuntimeError> {
         let question = self.question()?;
-        Ok(question.collation().map(|ask| compare(ask.binding, &ask.strings)))
+        Ok(question
+            .collation()
+            .map(|ask| compare(ask.binding, &ask.strings)))
     }
 
     /// Lend the active mind publication to the pure ICU formatter. A provider
@@ -1216,110 +1206,6 @@ impl RuntimeProvider {
             body: RuntimeAnswerBody::ActivityLearningFormat(Box::new(answer)),
             custody,
         }))
-    }
-
-    pub fn json(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        let question = self.question()?;
-        if let Some(geometry) = question.geometry_envelope() {
-            return RuntimeJson::encode(&geometry, budget);
-        }
-        if let Some(control) = question.control_envelope() {
-            return RuntimeJson::encode(&control, budget);
-        }
-        if let Some(display) = question.display_envelope() {
-            return RuntimeJson::encode(&display, budget);
-        }
-        if let Some(command) = question.plan_command_envelope() {
-            return RuntimeJson::encode(&command, budget);
-        }
-        if let Some(digest) = question.digest_envelope() {
-            return RuntimeJson::encode(&digest, budget);
-        }
-        if let Some(descriptions) = question.choice_descriptions_envelope() {
-            return RuntimeJson::encode(&descriptions, budget);
-        }
-        if let Some(utterance) = question.utterance_envelope() {
-            return RuntimeJson::encode(&utterance, budget);
-        }
-        if let Some(words) = question.words_envelope() {
-            return RuntimeJson::encode(&words, budget);
-        }
-        if let Some(collation) = question.collation_envelope() {
-            return RuntimeJson::encode(&collation, budget);
-        }
-        if let Some(maintenance) = question.maintenance_envelope() {
-            return RuntimeJson::encode(&maintenance, budget);
-        }
-        if let Some(places) = question.known_places_envelope() {
-            return RuntimeJson::encode(&places, budget);
-        }
-        if let Some(support) = question.support_membership_envelope() {
-            return RuntimeJson::encode(&support, budget);
-        }
-        if let Some(accounts) = question.restore_retention_envelope() {
-            return RuntimeJson::encode(&accounts, budget);
-        }
-        if let Some(archives) = question.restore_archives_envelope() {
-            return RuntimeJson::encode(&archives, budget);
-        }
-        if let Some(history) = question.personal_history_envelope() {
-            return RuntimeJson::encode(&history, budget);
-        }
-        if let Some(versions) = question.source_versions_envelope() {
-            return RuntimeJson::encode(&versions, budget);
-        }
-        if let Some(sources) = question.npc_sources_envelope() {
-            return RuntimeJson::encode(&sources, budget);
-        }
-        if let Some(appraisals) = question.appraisal_outcomes_envelope() {
-            return RuntimeJson::encode(&appraisals, budget);
-        }
-        if let Some(history) = question.learning_history_envelope() {
-            return RuntimeJson::encode(&history, budget);
-        }
-        if let Some(learning) = question.learning_format_envelope() {
-            return RuntimeJson::encode(&learning, budget);
-        }
-        // Other provider families already own an encoded body. Copy only this
-        // selected output; JavaScript buffers can never alias canonical bytes.
-        let json = question
-            .json()
-            .ok_or_else(|| failure("missing provider request"))?;
-        let mut custody = budget.reserve(json.len()).map_err(failure)?;
-        let bytes = json.as_bytes().to_vec();
-        custody.resize(bytes.capacity()).map_err(failure)?;
-        Ok(RuntimeJson {
-            bytes,
-            custody,
-            handoff: None,
-        })
-    }
-}
-
-pub struct RuntimePrepared {
-    prepared: crate::simulation::session::PreparedCandidate,
-    output: Option<RuntimeJson>,
-    handoff: RuntimeOutputHandoff,
-}
-impl RuntimePrepared {
-    pub fn key(&self) -> CandidateKey {
-        self.prepared.key
-    }
-    pub fn allocation(&self) -> crate::values::WorkVector {
-        self.prepared.allocation
-    }
-    /// The server reserves this complete allocation first. Its current input
-    /// and authority check then runs immediately before fence.settle().
-    pub fn ready(&self) -> Result<(), RuntimeError> {
-        if self.output.is_some() || !self.handoff.is_complete() {
-            return Err(failure(
-                "prepared output has not transferred to the application",
-            ));
-        }
-        self.prepared.ready().map_err(failure)
-    }
-    pub fn take_output(&mut self) -> Option<RuntimeJson> {
-        self.output.take()
     }
 }
 
@@ -1362,15 +1248,6 @@ impl<T> RuntimeDirectPrepared<T> {
     }
 }
 
-pub enum RuntimeStep {
-    Continue,
-    Provider(RuntimeProvider),
-    Prepared(RuntimePrepared),
-    Preview(RuntimeJson),
-}
-
-/// One resident writer, parked between finite compute calls. The private
-/// session owns every canonical mutation, rollback and accepted save suffix.
 pub struct NativeWorldSession {
     // Session already admits its resident size. Carry only its owning pointer
     // across HTTP and SQL futures, which have smaller poll stacks than the
@@ -1527,14 +1404,16 @@ impl NativeWorldSession {
         let held_receipts = npc::HeldReceiptRegistry::new(generation, &budget).map_err(failure)?;
         let navigation = navigation::PreparedNavigationCache::new(&budget)?;
         Ok(Self {
-            session: Box::new(Session::new(
-                installed,
-                generation,
-                budget.clone(),
-                pending_save_budget,
-                temporal_save_limits,
-            )
-            .map_err(failure)?),
+            session: Box::new(
+                Session::new(
+                    installed,
+                    generation,
+                    budget.clone(),
+                    pending_save_budget,
+                    temporal_save_limits,
+                )
+                .map_err(failure)?,
+            ),
             budget,
             world_work_limit,
             prepared_output: None,
@@ -1613,7 +1492,6 @@ impl NativeWorldSession {
         Ok(RuntimeJson {
             bytes: json.into_bytes(),
             custody,
-            handoff: None,
         })
     }
     pub fn world_id(&self) -> Result<&str, RuntimeError> {
@@ -1684,7 +1562,8 @@ impl NativeWorldSession {
         inputs: Vec<AdmittedWorldInput>,
         materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
     ) -> Result<CandidateKey, RuntimeError> {
-        let material_gather = crate::construction_gather::ConstructionGather::for_advance(materials);
+        let material_gather =
+            crate::construction_gather::ConstructionGather::for_advance(materials);
         self.begin_advance_with_materials(seconds, maximum_intervals, inputs, material_gather)
     }
 
@@ -1703,7 +1582,14 @@ impl NativeWorldSession {
         let (prepared, _transfer) = self.navigation.take(&self.budget)?;
         let (action_routes, _actions) = self.navigation.prepare_actions(&self.budget)?;
         self.session
-            .begin_advance(seconds, maximum_intervals, prepared, &action_routes, inputs, material_gather)
+            .begin_advance(
+                seconds,
+                maximum_intervals,
+                prepared,
+                &action_routes,
+                inputs,
+                material_gather,
+            )
             .map_err(session_failure)
     }
     pub fn begin_command(
@@ -1741,62 +1627,10 @@ impl NativeWorldSession {
             .begin_command_preview(command, canonical)
             .map_err(failure)
     }
-    pub fn step(
-        &mut self,
-        key: CandidateKey,
-        answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
-    ) -> Result<RuntimeStep, RuntimeError> {
-        let step = self.step_session(key, answer, true)?;
-        Ok(match step {
-            SessionStep::Continue => RuntimeStep::Continue,
-            SessionStep::Question(question) => {
-                RuntimeStep::Provider(self.prepare_provider(key, question)?)
-            }
-            SessionStep::Preview(preview) => {
-                RuntimeStep::Preview(RuntimeJson::encode(preview.outcome(), &self.budget)?)
-            }
-            SessionStep::NpcCandidates(_)
-            | SessionStep::NpcSources(_)
-            | SessionStep::LearningBatch(_) => {
-                return Err(failure(
-                    "NPC read preparation requires its originating read",
-                ));
-            }
-            SessionStep::Prepared(prepared) => {
-                if self.restoring == Some(key) {
-                    if let Err(error) = self.session.prepare_restore_adoption(key) {
-                        self.session.cancel(key).map_err(failure)?;
-                        return Err(failure(error));
-                    }
-                }
-                let products = self.prepared_products(key)?;
-                let output = (|| {
-                    let handoff = RuntimeOutputHandoff::new(&self.budget)?;
-                    let mut output = RuntimeJson::encode(&products, &self.budget)?;
-                    output.handoff = Some(handoff.clone());
-                    Ok::<_, RuntimeError>((output, handoff))
-                })();
-                let (output, handoff) = match output {
-                    Ok(output) => output,
-                    Err(error) => {
-                        self.session.cancel(key).map_err(failure)?;
-                        return Err(error);
-                    }
-                };
-                self.prepared_output = Some(key);
-                RuntimeStep::Prepared(RuntimePrepared {
-                    prepared,
-                    output: Some(output),
-                    handoff,
-                })
-            }
-        })
-    }
     fn step_session(
         &mut self,
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
-        include_actor_cuts: bool,
     ) -> Result<SessionStep, RuntimeError> {
         if self.session.is_npc_candidates(key) || self.session.is_npc_sources(key) {
             return Err(failure("NPC discovery requires its originating read"));
@@ -1811,21 +1645,21 @@ impl NativeWorldSession {
                     policy_id: &self.history_policy_id,
                     policy_revision: self.history_policy_revision,
                 },
-                include_actor_cuts,
+                false,
             )
             .map_err(session_failure)
     }
 
-    /// Drive the same candidate as the addon's step. The output callback runs
-    /// only on a completed result, before Ready, and borrows from the actual
-    /// candidate. An allocation or application preparation error rolls back.
+    /// The output callback runs on a completed result, before Ready, and
+    /// borrows from the actual candidate. Allocation or application preparation
+    /// failure rolls back the candidate.
     pub fn step_direct<T>(
         &mut self,
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
         stage: impl FnOnce(RuntimeDirectOutput<'_>, &ByteBudget) -> Result<T, RuntimeError>,
     ) -> Result<RuntimeDirectStep<T>, RuntimeError> {
-        Ok(match self.step_session(key, answer, false)? {
+        Ok(match self.step_session(key, answer)? {
             SessionStep::Continue => RuntimeDirectStep::Continue,
             SessionStep::Question(question) => {
                 RuntimeDirectStep::Provider(self.prepare_provider(key, question)?)
@@ -1915,7 +1749,10 @@ impl NativeWorldSession {
             progress,
             restore,
             consolidation_recall,
-            material_acquisitions: self.session.prepared_material_acquisitions(key).map_err(failure)?,
+            material_acquisitions: self
+                .session
+                .prepared_material_acquisitions(key)
+                .map_err(failure)?,
             state,
         })
     }
@@ -2051,10 +1888,6 @@ pub struct RuntimeSave {
     prefix: Arc<crate::records::save::SavePrefix>,
 }
 impl RuntimeSave {
-    pub fn json(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        RuntimeJson::encode(self.rows(), budget)
-    }
-
     /// The immutable save handle owns these rows through write and ACK. A
     /// direct SQL writer binds their existing typed cells without re-encoding.
     pub fn rows(&self) -> &crate::records::SaveRows {
@@ -2116,9 +1949,18 @@ impl RuntimePreparedProducts<'_> {
         actor: &str,
     ) -> Option<crate::attack_execution::AttackExecutionView<'_>> {
         let id = self.outcome().action_id.as_deref()?;
-        self.state.physical.entities.get(actor)?.actor.as_ref()?.action.as_ref()
+        self.state
+            .physical
+            .entities
+            .get(actor)?
+            .actor
+            .as_ref()?
+            .action
+            .as_ref()
             .filter(|action| action.id == id)?
-            .attack_execution.as_ref().map(|execution| execution.player_view())
+            .attack_execution
+            .as_ref()
+            .map(|execution| execution.player_view())
     }
 
     pub fn strike_review(&self) -> Option<&StrikeReviewOffer> {

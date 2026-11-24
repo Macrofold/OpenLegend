@@ -160,6 +160,12 @@ The first signed checks exposed fixture errors around database ownership, OpenSS
 
 Review found that the first passing build could still publish a held database read after shutdown began. The real control returned the old request with HTTP 200 after PostgreSQL released it (`5e6f78e5994e`). The repaired build ended the request before PostgreSQL released the lock, with HTTP 403 `stale-scope` and no details. It uses the listener's retirement signal shared with checkpoint replacement and retains the request's admission until any in-flight capture stops. The same browser, revocation and cold checks passed on tree `add03d209c70`, executable `bc6115bb85f7` and result `f544078ff6ef`. The listeners served without Node on their path and the disposable databases were removed. Controlled provider cost was $0. These are local correctness checks.
 
+### Higher-decision reason and outcome
+
+On November 24, 2026, the signed Intelligence panel showed the recorded reason for asking a higher-level model, its applied outcome and the whole decision’s recorded cost. A walk reached PostgreSQL while the higher reply was held. One reply was saved, and cold reopening returned the same reason and outcome. The ordinary reply without a higher attempt had no higher-decision summary. Missing preparation and transport timings display “Not recorded.”
+
+Revoking Inspect denied both the old and current scopes. Stopping the listener during a held reply retained the reason, cancellation and uncertain spending reservation after reopening. Retrying the original request sent no new inference and applied no effect. Tree `a6e9d1bf76985`, executable `ec9569aed602`, and archive `nsc04-decision-summary-20261124` manifest `2442d6bf0249` identify the rendered result and the refusal, ordinary and retirement checks. The fixture removed all four databases. Actual external provider spend was $0.
+
 ### Exact input for a saved direct NPC reply
 
 With creator tools and capture enabled, the browser loaded the exact provider request only when the signed requester clicked the final stage's JSON icon. The displayed 42,486 bytes matched the controlled HTTPS request. Revoking Inspect cleared the panel. Opening the diagnostic list and clicking the icon sent no provider requests.

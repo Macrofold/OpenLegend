@@ -79,16 +79,6 @@ impl NativeWorldSession {
         Ok(due.then(|| state.generation.clone()))
     }
 
-    pub fn prepare_activity_learning(
-        &mut self,
-        input: &[u8],
-    ) -> Result<RuntimeActivityLearning, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let Actor { actor_id } = serde_json::from_slice(input).map_err(failure)?;
-        self.prepare_activity_learning_direct(&actor_id)
-    }
-
     pub fn prepare_activity_learning_direct(
         &mut self,
         actor_id: &str,
@@ -162,73 +152,6 @@ impl NativeWorldSession {
                 ));
             }
         })
-    }
-    pub fn cancel_activity_learning(
-        &mut self,
-        read: &RuntimeActivityLearning,
-    ) -> Result<(), RuntimeError> {
-        if let Some(key) = read
-            .key
-            .filter(|key| self.session.is_learning_preparation(*key))
-        {
-            self.session.cancel(key).map_err(failure)?;
-        }
-        Ok(())
-    }
-    pub fn begin_activity_learning_publication(
-        &mut self,
-        read: &RuntimeActivityLearning,
-        input: &[u8],
-        admission: Option<&RuntimeMaintenanceRead>,
-    ) -> Result<CandidateKey, RuntimeError> {
-        self.require_active()?;
-        if !self.work_is_current(read.host_generation) {
-            return Err(stale("activity-learning-maintenance-boundary"));
-        }
-        if read.key.is_some() {
-            return Err(failure("learning preparation is unfinished"));
-        }
-        let _decode = decode_preparation(input, &self.budget)?;
-        let publication: Publication = serde_json::from_slice(input).map_err(failure)?;
-        let admission = match (admission, publication.admission) {
-            (None, None) => None,
-            (Some(read), Some(admission)) => Some((Arc::clone(&read.read), admission)),
-            _ => {
-                return Err(failure(
-                    "learning publication lost its maintenance admission",
-                ));
-            }
-        };
-        let request = crate::activity::LearningPublicationRequest {
-            judgments: publication.judgments,
-            dispatched: publication.dispatched,
-            protected: false,
-        };
-        self.session
-            .begin_learning_publication(
-                Arc::clone(
-                    read.batch
-                        .as_ref()
-                        .ok_or_else(|| failure("learning preparation is unfinished"))?,
-                ),
-                request,
-                admission,
-            )
-            .map_err(failure)
-    }
-    pub fn acquired_activity_signatures(&self, input: &[u8]) -> Result<RuntimeJson, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let Actor { actor_id } = serde_json::from_slice(input).map_err(failure)?;
-        let (signatures, storage) = crate::activity::learning_signatures(
-            &self.session.accepted().map_err(failure)?.state,
-            &actor_id,
-            &self.budget,
-        )
-        .map_err(failure)?;
-        let output = RuntimeJson::encode(&signatures, &self.budget)?;
-        drop(storage);
-        Ok(output)
     }
 
     pub fn activity_learning_known(

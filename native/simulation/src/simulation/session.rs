@@ -671,13 +671,9 @@ impl Session {
                 self.simulation.state.installed.geometry.spatial.revision,
                 journal.next_provider_serial()?,
             );
-            let cursor = crate::commands::CommandCursor::from_start(
-                input,
-                options,
-                binding,
-                &self.budget,
-            )?
-            .with_typed_plan(typed_plan);
+            let cursor =
+                crate::commands::CommandCursor::from_start(input, options, binding, &self.budget)?
+                    .with_typed_plan(typed_plan);
             let cursor = match strike {
                 Some(strike) => cursor.for_player_contact(strike)?,
                 None => cursor,
@@ -705,7 +701,6 @@ impl Session {
         bindings: Arc<crate::response::ResponseBindings>,
         protected: bool,
         reconsider_choice: bool,
-        grounding_provider: crate::response::GroundingProvider,
     ) -> Result<CandidateKey, SessionError> {
         if protected && !self.save_barrier_complete() {
             return Err(FenceError::Busy.into());
@@ -724,7 +719,6 @@ impl Session {
                 key,
                 protected,
                 reconsider_choice,
-                grounding_provider,
                 &self.budget,
             )
             .map_err(DriveError::from)?;
@@ -957,7 +951,8 @@ impl Session {
             return Err(ExecutionError::InvalidCheckpoint.into());
         }
         let (key, mut journal) = self.begin()?;
-        journal.material_gather = crate::construction_gather::ConstructionGather::for_command(materials);
+        journal.material_gather =
+            crate::construction_gather::ConstructionGather::for_command(materials);
         let driver = {
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,

@@ -761,9 +761,6 @@ impl ReceivedValues {
 
     /// Transient revision of the actual resident key set, scoped to this
     /// installation. Phase deduplication and borrowed records do not change it.
-    pub(crate) fn membership_revision(&self) -> u64 {
-        self.membership_revision
-    }
 
     fn next_membership_revision(&self) -> Result<u64, ReceivedError> {
         self.membership_revision

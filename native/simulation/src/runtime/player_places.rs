@@ -34,21 +34,6 @@ pub struct RuntimePlaceFacts<'a> {
     pub current: Option<bool>,
 }
 impl NativeWorldSession {
-    pub fn player_places(&self, input: &[u8]) -> Result<RuntimeJson, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let request: PlaceRequest = serde_json::from_slice(input).map_err(failure)?;
-        self.with_player_place_facts(
-            &request.account_id,
-            &request.actor_id,
-            request
-                .entries
-                .iter()
-                .map(|row| (row.place_id.as_str(), row.exposure.as_ref())),
-            |facts| RuntimeJson::encode(facts, &self.budget),
-        )?
-    }
-
     /// Borrow only notes and optional physical validity for places selected by
     /// the private evidence owner. The result cannot grant that permission.
     pub fn with_player_place_facts<'a, T>(

@@ -18,7 +18,7 @@ One real second equals one game minute at normal speed; that does not mean sixty
 
 The game uses Recast/Detour in one reused navigation worker and Rapier capsule/cylinder queries for physical clearance. Clear moves need no worker; detours follow smoothed arbitrary-angle routes. **Preparing navigation** is technical waiting, not elapsed game time. Ordinary 2D sprites remain front-facing under both camera orbit and pitch, without changing their image proportions. They respond to ambient/local lighting and cast artwork-derived volume shadows onto the actual receiving surfaces; physical bodies do not rotate with the artwork. **Settings & help → Camera & graphics** configures nearby character-visible see-through reveal, radius and strength. See [presentation](docs/world-presentation.md), [implementation evidence](docs/verification/recast-integration.md), and [final browser/runtime observations](docs/verification/recast-finalization.md); high-end art, crowd dynamics and arbitrary 3D model delivery remain future work.
 
-For authoring, start with [player/NPC target scenarios](docs/invention-scenarios.md), [unified World Agent](docs/world-agent-runtime.md), [MCP integration](docs/world-agent-mcp.md), and [relationship graph](docs/invention-graph.md). The finite workshop, read-only MCP endpoint and supported unified owner conversation are implemented, with explicit setup and bounded write adapters. General composition, unsupported mechanics and broader production qualification remain targets; merely configuring a harness does not establish live acceptance.
+For world-authoring designs, start with [player/NPC target scenarios](docs/invention-scenarios.md), [unified World Agent](docs/world-agent-runtime.md), and the [relationship graph](docs/invention-graph.md). The Rust game supports permitted [read-only world inspection](#world-owner-relationship-inspection). The [release scope](docs/projects/rust-server-completion-feature-spec.md#rust-cutover-scope) tracks the deferred write tools.
 
 ## Play the elevated world
 
@@ -32,7 +32,7 @@ A shared simulation of people, memory, survival, and worlds whose mechanics can 
 
 **Create a world by playing it. Share what you discover.**
 
-The implementation supports **local play and authenticated shared-world play** with native survival, durable saves, non-player characters (NPCs) that choose their own actions, and a PlayCanvas scene. Live Jev and LLM adapters support conversation, NPC decisions about what to do next, and the invention of usable recipes. Those live routes require your server-side keys and a spending allowance; without them, native survival works and AI features explicitly report unavailable.
+The implementation supports **local play and authenticated shared-world play** with native survival, durable saves, non-player characters (NPCs) that choose their own actions, and a PlayCanvas scene. Live Jev and LLM adapters support conversation, NPC decisions about what to do next, and private Journal prose. Those live routes require your server-side keys and a spending allowance; without them, native survival works and AI features explicitly report unavailable.
 
 Hosted operations and scale qualification, regional replication, arbitrary invented physics, marketplace, memberships and creator fund remain future work. Automated fixture tests are not evidence of live model quality. See [verification status](docs/verification.md).
 
@@ -52,17 +52,21 @@ Hearing uses pinned acoustic/sense descriptors and persists event-time fragments
 
 ## Run locally
 
-With God mode enabled, open **Game → World Agent → More conversation tools → Choose a starting world**. The supplied openings are **Main world** and **Solo testing ground**. Main world uses the same complete authored setup as default development startup: camp residents, survival/crafting, shelter, fishing, practice, expeditions, the missing-belonging investigation and distant Broken Watchpost rivals. For a directly playable solo development world, set `OPEN_LEGEND_WORLD_PRESET=solo` with a separate PostgreSQL database and `OPEN_LEGEND_DATA_DIR`; it creates one person with basic supplies and pouch-making knowledge. The preset applies only to an empty database. Existing compatible progress is reopened rather than regenerated. [Starting content and boundaries](docs/worlds/base/playable-openings.md).
+Choose a reviewed **Main world** or **Solo testing ground** release. Main includes the full authored camp and its surrounding world. Solo begins with one person, basic supplies and pouch-making knowledge. Use an independent database and checkpoint directory for each world. A new database needs the explicit [review and activation procedure](docs/projects/parallel-batch-07-playable-world-creation-tech-design.md#activate-a-reviewed-rust-opening-from-the-operator-workstation). Ordinary startup opens the selected current world.
 
-Use **Node.js 22.13+** and **pnpm 10.33.0**, pinned in `package.json`. Node 22 LTS is the tested baseline. If pnpm is not installed, use `corepack enable` with Node 22, or follow the [pnpm installation guide](https://pnpm.io/10.x/installation).
+Use Node.js 22.15 or later on Unix and pnpm 10.33.0, as specified in `package.json`. See the [pnpm installation guide](https://pnpm.io/10.x/installation) if needed. Node builds the browser and prepares releases. The Rust executable serves them.
 
 ```sh
 pnpm install --frozen-lockfile
 cp .env.example .env
-# Create a PostgreSQL database with pgvector available, then set
-# OPEN_LEGEND_DATABASE_URL=postgresql://localhost/openlegend in .env.
-pnpm run dev
+# Set OPEN_LEGEND_DATABASE_URL and OPEN_LEGEND_DATA_DIR for your selected world.
+: "${reviewed_release:?Set the reviewed release directory}"
+(cd native && cargo build --locked --release -p openlegend-game-server)
+pnpm run build
+pnpm dev "$reviewed_release"
 ```
+
+`pnpm dev` loads `.env` with the existing Node parser and then replaces that process with the Rust launcher. The server reads the browser from the selected release's `browser/` directory. Use the new browser output when preparing a release and restart to serve it.
 
 PostgreSQL with pgvector is required for local development and production. The configured role needs access to the game database and permission to initialize its schemas; install/enable the vector extension beforehand if that role cannot create extensions. Missing `OPEN_LEGEND_DATABASE_URL` fails startup clearly. No SQLite fallback or conversion is provided. Database-dependent checks require `OPENLEGEND_TEST_DATABASE_URL` pointing to a loopback PostgreSQL administrative database: fixtures create and drop their own uniquely named databases, never the named administrative database.
 
@@ -80,40 +84,41 @@ Stop or coordinate with an active writer before replacement, then verify the act
 
 The supplied `.env.example` selects port 3211: open **http://127.0.0.1:3211**. Without an explicit `PORT`, the server defaults to 3210. For live AI, follow the [setup guide](docs/live-ai-setup.md): a configured Macrofold key selects that backend; direct Jev/OpenAI keys select the direct path otherwise. Immediate conversation and decision inference can use the direct adapters; independent workspace reflection and the unified owner authoring harness require Macrofold and an authorized existing Worker. Shared Worker capacity is owner-managed, not a second per-agent compute allowance. Set a chosen nonzero `AI_BUDGET_USD` and restart only when ready to permit paid work. The default is $50 per agent per UTC calendar month; set zero to disable paid dispatch. Keys never go to the browser. The allowance and attempt/usage records persist in PostgreSQL across reloads and restarts; gameplay checkpoint restore cannot rewind charges, reservations or uncertain calls.
 
-If another app uses the selected port, choose a free one, for example `PORT=3212 pnpm run dev`, and open **http://127.0.0.1:3212**. Set that `PORT` in your `.env` to keep the choice across restarts.
+If another app uses the selected port, choose a free one, for example `PORT=3212 pnpm dev "$reviewed_release"`, and open **http://127.0.0.1:3212**. Set that `PORT` in your `.env` to keep the choice across restarts.
 
 Follow the [step-by-step live AI setup guide](docs/live-ai-setup.md) for key creation, local configuration and the first real conversation.
 
 Choose **Speak** from the scene to address your surroundings, or choose a person to address them. The server checks character AI configuration and the available allowance before sending. An eligible listener can hear the words without generating a reply. If the service is unavailable, you can keep editing the draft, open **AI settings and allowance** or **Check availability** again. Unsent drafts survive a reload within the same browser tab.
 
-Click the ground to walk; click a thing to **Look closer**, or right-click / Control-click for its actions. Object menus stay scoped to that object, self menus contain personal work, and empty-ground menus offer walking. The object menu’s **All actions** includes known blocked choices with reachable explanations; **Settings & help → Browse known actions** opens the complete permitted browser. Hover or keyboard-focus an action for a one-second explanation with actual material/time facts. Search retains **Search actions or invent something…**: unmatched Enter opens an editable invention draft, and only explicit submission dispatches it.
+Click the ground to walk; click a thing to **Look closer**, or right-click / Control-click for its actions. Object menus stay scoped to that object, self menus contain personal work, and empty-ground menus offer walking. The object menu’s **All actions** includes known blocked choices with reachable explanations; **Settings & help → Browse known actions** opens the complete permitted browser. Hover or keyboard-focus an action for a one-second explanation with actual material/time facts. Search finds the currently available or known blocked choices.
 
 With `OPEN_LEGEND_GOD_MODE=true`, right-click a dead actor to **Revive**, or right-click blank walkable ground and choose **Add something**. The creation pullouts group known Items, Actors and Environment. Choose an item and quantity to place it on the ground. Player Inventory also offers **Add item (God mode)**. Portable ground items can be picked up individually or with **Pick Up All**; inventory details support dropping a chosen quantity, exact split/merge, individual equipment and moving possessions through nested finite bags. Contents are searchable and paginated. God mode can record a declared owner separately from custody; this grants no access or movement rights. Creating a person accepts a name, personality, backstory, described trait tags and initial goals. Leaving traits empty assigns the usual three saved random traits. God mode also offers **Grant cognition and speech** for an ordinary animal. Revival fully restores the body even after harvesting; harvested inventory is preserved. These owner-only mutations work while paused and are labeled **God mode**.
 
 Right-drag rotates and tilts continuously; Shift + right-drag or middle-drag pans. Outside attack mode, left-drag does not pan or act on release. In attack mode, primary dragging tracks aim and release submits the chosen attack. A stationary right-click opens actions on release. Scroll to zoom or use the camera buttons to zoom/recenter and the visible icons for rotation, tilt and projection. Follow keeps the player centered; panning or choosing a floor stops following. Hover or focus the information icon for shortcuts. Dismissing a menu by clicking the world never walks.
 
-The main workspace has **Character** (C), **Skills**, **Journal** (J), **Map** (M) and **Crafting** (K). Inventory belongs to Character. V opens **In view**, and Shift+S or Shift+A opens the **Speak** or **Act** bar. See the [design system](apps/client/src/design-system/README.md). The main destinations share a workspace. Object inspectors can open separately. **Game** opens Checkpoints when permitted, Settings & help, Intelligence & allowance, creation and World operations when authorized. **Settings & help → World permissions** lets local god mode change independent player/NPC invention locks. NPC invention starts locked; unlocking permits private supported-technique proposals and revisions, with construction still a separate decision. Existing crafts and actions remain usable. Settings also offers Wilderness, Fantasy, Sci-fi and Gildmoss themes, 90–130% HUD scale, reduced motion and asset credits. Themes never change game rules. Character traits are sampled from a configurable bank and saved; hover or focus a trait for its description.
+The main workspace has **Character** (C), **Skills**, **Journal** (J), **Map** (M) and **Crafting** (K). Inventory belongs to Character. V opens **In view** and Shift+S opens the **Speak** bar. See the [design system](apps/client/src/design-system/README.md). The main destinations share a workspace. Object inspectors can open separately. **Game** opens Checkpoints when permitted, Settings & help, Intelligence & allowance, creation and World operations when authorized. The [Rust release scope](docs/projects/rust-server-completion-feature-spec.md#rust-cutover-scope) lists the deferred invention, authoring and construction features. Settings also offers Wilderness, Fantasy, Sci-fi and Gildmoss themes, 90–130% HUD scale, reduced motion and asset credits. Themes never change game rules. Character traits are sampled from a configurable bank and saved; hover or focus a trait for its description.
 
 The [selected stealth player-experience design](docs/projects/stealth-player-experience-feature-spec.md) extends the shipped WASD controls with ordinary Move-work steering, independent physical looking, crouch/pace/watch controls and stricter current-versus-historical presentation. Those extensions are **designed, not implemented or UX-qualified**. [SPX01–SPX07](docs/maintainers/stealth-player-experience.md) tracks delivery.
 
 WASD samples camera-relative direction when movement keys change and holds that world direction while the keys remain unchanged. Shift+T toggles attack mode; plain T keeps equipped-item targeting. Tap for an ordinary attack, or hold to choose an animated timed release where the weapon supports it; Escape or Cancel ends an unfinished attempt. Release over a visible opponent or animal to aim at its center, ahead of movement your character has seen; release over ground or scenery to aim at that exact point. What is under the cursor when you release decides the shot. The ring cycles once per second. Visible Prepare/Release/Attack normally controls retain standard keyboard focus and activation. Ordinary Craft keeps its material work and output without a fitting exercise. [Interaction controls](docs/ui-ux/world-interaction.md#real-time-movement-and-skilled-attack-controls-nd38) describe input, recovery and current qualification.
 
-Select a resource and Gather. Your character approaches it, completes the work, then adds up to two units to Inventory (merging with an existing stack). Reeds/grass yield Reed fibers, fallen branches yield Supple branch, river stones yield Small stone, and berry bushes yield Wild berries. Work stops while paused; another movement/work command replaces unfinished work. The ordinary starting character is empty-handed; gather and prepare fibers/cord or obtain supplies before crafting. Speak to Ada, then open **Game → Invent something → Invent** to describe a physical sling made from cord and prepared fibers. A live model proposes a new recipe; the engine independently checks it. **Requests** retains proposals and their clarification or revision follow-ups across restart. Similar inventions offers reuse, modification or a new recipe; similarity search requires the configured PostgreSQL/vector and embedding services, with an explicit continue option when unavailable. Results show ingredient blockers and a separate native Craft action. Crafting labels known recipes as Player-created or NPC-created and can filter by either. Craft the admitted recipe, equip the ranged weapon, carry stones, hunt, harvest, cook raw meat at the starting fire, and eat. Inventing a bow and then arrows exercises the same ranged rules; bone from a hunted animal can provide a point. Gathering, preparing fibers/cord, eating and resting use ordinary code.
+Select a resource and Gather. Your character approaches it, completes the work, then adds up to two units to Inventory (merging with an existing stack). Reeds/grass yield Reed fibers, fallen branches yield Supple branch, river stones yield Small stone, and berry bushes yield Wild berries. Work stops while paused; another movement/work command replaces unfinished work. The ordinary starting character is empty-handed; gather and prepare fibers/cord or obtain supplies before crafting. For a method your character knows, choose it in Crafting and check the required stock. For example, make and equip a Field sling, carry stones, hunt, harvest, cook the meat at a fire and eat. A known bow and arrows use the same aiming controls with their own ammunition.
 
 Pause and **0.5× / 1× / 3× / 8×** controls use one simulation clock. At **1×, one real second advances one game minute**: a full game day takes 24 real minutes (48 minutes at 0.5×, 8 minutes at 3×, 3 minutes at 8×). **Time settings** explains the current cadence and tab behavior. Leaving the tab pauses your play; returning to the sole game tab resumes automatically. If another open tab controls your character, **Resume Here** deliberately transfers control. Shared-world progression follows the presence of other controlling players; manual world pause always wins. Closing all game connections pauses progression after disconnect detection; server downtime and computer sleep produce no offline catch-up. An already dispatched model request may still incur usage, but a paused world cannot accept its effects.
 
-World creators and authorized operators can open **Game → Checkpoints** to create a named checkpoint or choose one to load paused. Ordinary players have no save controls; their gameplay persists through database commits. Each named save appears under **Choose a checkpoint**. Saves live in `.data/saves/<save-id>/` as `metadata.json` and streamed `world.jsonl`; incompatible development slots are refused, with no older-format reader; `.data/` is gitignored. Named manual saves have no fixed count ceiling. The server keeps three rolling world autosaves at five-minute intervals of running wall time, and “Before last load” points to a durable recovery package. The menu shows autosave completion and failures. New packages have explicit record/work limits and a 256 MiB total bound; loading large worlds pauses play and uses more memory than capture. Stop the server and use `scripts/backup-world.ts NEW_BACKUP_DIRECTORY` for a consistent operational backup of PostgreSQL records and retained save files. Copying `.data` alone does not back up the running world. A separate world requires a separate PostgreSQL database URL and `OPEN_LEGEND_DATA_DIR`; the latter selects checkpoint files only. There is no silent save reset or destructive reset button. For a production client build served locally:
+World creators and authorized operators can open **Game → Checkpoints** to create a named checkpoint or choose one to load paused. Ordinary players have no save controls; their gameplay persists through database commits. Each named save appears under **Choose a checkpoint**. Saves live in `.data/saves/<save-id>/` as `metadata.json` and streamed `world.jsonl`; incompatible development slots are refused, with no older-format reader; `.data/` is gitignored. Named manual saves have no fixed count ceiling. The server keeps three rolling world autosaves at five-minute intervals of running wall time, and “Before last load” points to a durable recovery package. The menu shows autosave completion and failures. New packages have explicit record/work limits and a 256 MiB total bound; loading large worlds pauses play and uses more memory than capture. Stop the server and run `"$game_server" backup-world "$reviewed_release" "$new_backup_directory"` with the same database URL and checkpoint directory. See the [stopped backup and restore procedures](docs/save-and-load.md#stopped-operational-backup) for restoring into an empty database or replacing a damaged world. Copying `.data` alone does not back up the running world. A separate world requires a separate PostgreSQL database URL and `OPEN_LEGEND_DATA_DIR`; the latter selects checkpoint files only. There is no silent save reset or destructive reset button.
+
+For an ordinary production launch, export the operator settings and run the installed executable directly:
 
 ```sh
-pnpm run build
-pnpm start
+"$game_server" serve "$reviewed_release"
 ```
+
+Locally, `pnpm start "$reviewed_release" "$game_server"` uses those same exported settings. It can select the checkout's release executable when the second argument is omitted.
 
 Local authentication binds only to loopback. Shared play uses the explicit OIDC configuration below; hosted operational/security and capacity qualification remain open.
 
-Current worlds use independent canonical SQL records with atomic revision fencing and coupled receipts/history. Incompatible development data follows the [development save policy](AGENTS.md#development-save-policy). Explicit actions save immediately; routine simulation flushes once per real second and on clean shutdown. The browser bootstraps once and receives typed SSE updates. God-mode Person/World Events editors support atomic delta saves, discard, and independent draggable windows; see [current architecture and limits](docs/architecture.md#public-updates-and-owner-editors).
-
-Invent also supports bounded gathering tools: a compatible carried tool improves the yield from an existing finite resource. Complete recipe JSON can be supplied in the expandable proposal field for native validation without paid generation. See [the invention workflow](docs/architecture.md#shared-invention-workflow) for current limits.
+Current worlds use independent canonical SQL records with atomic revision fencing and coupled receipts/history. Incompatible development data follows the [development save policy](AGENTS.md#development-save-policy). Ordinary play saves once per real second and on clean shutdown. Protected operations keep their own atomic commits. The browser bootstraps once and receives typed SSE updates. God-mode Person/World Events editors support atomic delta saves, discard, and independent draggable windows; see [current architecture and limits](docs/architecture.md#public-updates-and-owner-editors).
 
 ## Configure authenticated shared play
 
@@ -121,29 +126,13 @@ Set `OPEN_LEGEND_AUTH_MODE=oidc`, an exact `OPEN_LEGEND_PUBLIC_ORIGIN` (for exam
 
 For HTTP loopback sign-in, opening another loopback address on the same port redirects browser navigation to `OPEN_LEGEND_PUBLIC_ORIGIN`, preserving the page path and query. For example, `http://127.0.0.1:3211` opens the configured `http://localhost:3211` game. Startup prints the configured public address. API requests still require that exact origin; use it for scripts and registered sign-in callbacks.
 
-The operator supplies `OPEN_LEGEND_ACCOUNT_BINDINGS` as a JSON array of exact verified issuer/subject mappings. For example, replace the issuer/subject placeholders with values from your provider:
-
-```json
-[
-  {
-    "issuer": "https://identity.example.org/realms/openlegend",
-    "subject": "provider-user-subject",
-    "accountId": "local-player",
-    "actorId": "entity-0001",
-    "capabilities": ["play", "create", "inspect", "save", "manage-access"]
-  }
-]
-```
-
-Use existing actor/account IDs for an existing world; the default new world's first two people are `entity-0001` and `entity-0002`. Bind a second verified subject to a different account and actor with `play` for an ordinary player. Omit `actorId` for a characterless operator, for example `"capabilities": ["spectate", "inspect", "save", "manage-access"]`; a binding without a character cannot include `play`. `spectate` shows a public world overview without names, possessions or speech. Email, display names and first login never grant access. Bootstrap mappings apply once: changing this environment variable does not undo a later grant revocation or rebind. Current administrators use the revisioned `/api/access` and `/api/access/binding` operations described by the [authority design](docs/projects/completed/multiplayer-authority-tech-design.md); game restore does not rewind their audit or historical human privacy ownership. Creator tools also require the host's `OPEN_LEGEND_GOD_MODE=true`; inspection never grants access to another human's private character.
+Set up the first operator in the reviewed opening's destination account mapping. Use exact verified issuer and subject values, and select the existing account and character the operator is authorized to control. A characterless operator can receive `inspect`, `save` and `manage-access`. `play` requires a character. `spectate` exposes the public overview without names, possessions or speech. Email, display names and first sign-in grant no access. For an existing world, use the current [access and account binding controls](docs/projects/completed/multiplayer-authority-tech-design.md). Checkpoint recovery preserves their audit and historical privacy ownership. God mode and current inspection permission are required for private creator tools.
 
 After the first operator exists, invite everyone else from **World operations** (`/?view=operations`; also **Game → World operations** for creators and access managers). Choose a player (bound to a living person without a human owner), spectator or operator role and a 1-hour to 30-day expiry, then send the link, which is shown once. The invitee signs in through the same OIDC provider; no database edits are needed. Revoke unused links or remove an account's access in the same console. There is no open sign-up. Accounts without a character land in World operations automatically.
 
 Creators schedule maintenance in World operations with an explicit time zone. Players see the announced window in the world's zone and their own local time. At the start the world pauses without later catch-up; ordinary actions are refused while creators can still edit. The world stays paused past the announced end until a creator chooses **Mark ready and resume**, including after a server restart. Scheduled windows can be rescheduled or cancelled, and active ones extended.
 
 The entry screen welcomes signed-out visitors with a primary **Sign in** action. Accounts without world access see invitation guidance and **Change account** to reopen the login form; connection failures offer **Retry connection** with optional details. One tab controls each account's current character; a displaced tab uses **Resume Here** to take over explicitly. **Game → Log Out** revokes the server session. Sessions default to eight hours (`OPEN_LEGEND_SESSION_HOURS`, 0.1–24). In the bundled world, leaving starts a visible, fully vulnerable fade lasting 300 game seconds: five seconds at normal speed. Pause, navigation preparation and downtime do not spend that exposure; a lone player’s fade keeps ordinary simulation running. The server’s fifteen-real-second fallback (`OPEN_LEGEND_EXIT_GRACE_SECONDS`, 1–60) applies only to worlds without an installed simulated departure duration; it does not shorten this fade. See [player danger and departure](docs/worlds/base/player-danger.md#five-simulated-seconds-to-leave). Return reuses the same character and possessions and validates its placement. Shared automatic pause follows currently present controlling accounts; returning to a sole tab is automatic, while moving control between open tabs requires Resume Here. See [current authority and participation](docs/architecture.md#account-authority-and-participation) and [qualified native/browser evidence](docs/verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence).
-
-For a reviewable draft, open **Game → Invent something → Invent**, describe the idea, select **Save a proposal to review before learning**, then choose **Prepare a proposal**. The workshop can inspect known recipes and the systems available to your character, then check the proposal. In **Requests**, **Apply saved proposal** learns the saved recipe if it passes the current checks. Craft the item separately. **What can I invent?** reads the supported catalogue without an AI call. `INVENTION_WORKSHOP_MAX_USD` bounds linked workshop generation (default $5) under the normal spending cap; supplied previews and Apply need no model. The unified owner conversation instead uses the native Macrofold harness with the approved Open Legend MCP connector. See [scope and limits](docs/architecture.md#invention-workshop-tools).
 
 ### Run the stand-alone Rust server
 
@@ -153,22 +142,9 @@ Set `OPEN_LEGEND_DATABASE_URL` through the operator's environment and run `openl
 
 Stop the world writer before running `openlegend-game-server recover-checkpoint RELEASE_DIRECTORY CHECKPOINT_DIRECTORY SLOT_ID OPERATION_UUID [FLOOR_SLOT_ID]`. Select a validated checkpoint and use the same operation UUID to recover its original result after an interrupted acknowledgement. `FLOOR_SLOT_ID` identifies the current authority baseline when recovery needs a separately captured floor. Recovery keeps operational rights and current privacy, then atomically installs the recovered gameplay and derived records. The next `serve` validates and opens its new timeline. [Recovery contract](docs/save-and-load.md#loading-as-an-authority-transition)
 
-## Try the extensible attribute demo
+## Alternate world demos
 
-The optional native `reservoir-demo` preset replaces the player/resident's food and fatigue with charge and a categorical disposition. Open **In view → Charged capacitor → Recharge**. Ada can replenish autonomously from the same finite supply. This demonstrates attribute interfaces; it is not live-model acceptance or an electrical simulation.
-
-Create a separate empty PostgreSQL database with pgvector for the demo, and use both its distinct URL and a distinct checkpoint directory. Adapt the URL for your local role and authentication. Do not point the demo at your existing game database; changing the directory or preset alone does not create a new world. Disable paid work:
-
-```sh
-OPEN_LEGEND_DATABASE_URL=postgresql://127.0.0.1/openlegend_reservoir_demo \
-OPEN_LEGEND_DATA_DIR=/tmp/openlegend-reservoir-demo \
-OPEN_LEGEND_WORLD_PRESET=reservoir-demo AI_BUDGET_USD=0 PORT=3218 \
-node --import tsx apps/server/src/main.ts
-```
-
-Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only when the selected database has no world; preset selection does not rewrite an existing current-format world. Current-format worlds reopen without regeneration; incompatible data follows the [development save policy](AGENTS.md#development-save-policy). Use a separate PostgreSQL database and save directory when creating a different world. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
-
-For the coarse touch-only resident, select another empty PostgreSQL database, its own checkpoint directory and `OPEN_LEGEND_WORLD_PRESET=touch-demo`. The player retains sight; the resident receives only unidentified contacts and short direct probe choices. God inspection is administrative evidence, not the resident's knowledge. See the [implemented limits](docs/architecture.md#registered-senses-and-coarse-contact).
+The reservoir demo replaces food and fatigue with charge and a categorical disposition. The touch demo gives the resident unidentified contacts and short direct probe choices while the player retains sight. These illustrate the installed [attribute](docs/architecture.md#extensible-attribute-foundation) and [sense](docs/architecture.md#registered-senses-and-coarse-contact) interfaces. The Main and Solo releases are the standard playable openings. An alternate world needs its own reviewed release, independent PostgreSQL database and checkpoint directory.
 
 ## Develop
 
@@ -182,22 +158,18 @@ pnpm run test:browser
 
 The browser check needs Playwright Chromium (`pnpm exec playwright install chromium`) and uses isolated, no-cost saves. See [contributing](CONTRIBUTING.md), [architecture](docs/architecture.md), [extension guidance](docs/extending.md), [AI providers](docs/ai-providers.md), and [verification](docs/verification.md).
 
-| Module              | Responsibility                                                                         |
-| ------------------- | -------------------------------------------------------------------------------------- |
-| `packages/domain`   | Pure simulation, entities/components, inventory, recipes, events, memory and knowledge |
-| `packages/ai`       | Replaceable typed Jev / LLM execution with validated results and receipts              |
-| `packages/protocol` | Public client DTOs and command intentions                                              |
-| `packages/language` | Shared English name/article presentation, without world or simulation dependencies     |
-| `apps/server`       | Context, routing, durable spending, persistence, admission and HTTP                    |
-| `apps/client`       | PlayCanvas world and React / React Aria HUD                                            |
+| Module               | Responsibility                                                                |
+| -------------------- | ----------------------------------------------------------------------------- |
+| `native/simulation`  | Authoritative world execution, observations, memory and deterministic effects |
+| `native/game-server` | HTTP, authentication, privacy, PostgreSQL, scheduling and provider requests   |
+| `native/world-host`  | Bounded world execution and work ownership                                    |
+| `packages/domain`    | Authored world definitions and deterministic opening preparation              |
+| `packages/ai`        | Typed build and evaluation tooling for model providers                        |
+| `packages/protocol`  | Browser wire data and player intentions                                       |
+| `apps/server`        | Shared release preparation, storage definitions and asset tooling             |
+| `apps/client`        | PlayCanvas world and React interface                                          |
 
 See the [base-world mechanics](docs/worlds/base/README.md) for authored rules and their separation from the engine.
-
-## Text actions and revised-action approval
-
-Open **Character → Describe an action** to submit a character intention separately from dialogue. Exact requests such as `go to x=12, z=14` and unqualified following of a currently recognized or explicitly selected actor can run without AI. Other wording uses configured Jev first, then bounded interpretation when needed. Disclosed tolerable omissions can run as partial fulfillment; uncertain revisions wait for **Accept revised action** or **Decline / withdraw**. Follow means remaining near a visible living target, not stealth, scent tracking, or a sunset deadline. Use the explicit support identifier when floors overlap. Choose Queue or Replace deliberately. Invention does not need to be unlocked.
-
-See [action capabilities](docs/action-capabilities.md), its [workflow reconciliation boundary](docs/action-capabilities.md#mechanical-workflow-reconciliation), and [runtime evidence](docs/verification/integration-summaries.md#action-capability-native-slice).
 
 ## Explore the project
 
@@ -234,7 +206,7 @@ First-party material in this repository is licensed under **GNU AGPL version 3 o
 
 The licensing guide explains the intended separation between the shared engine, future permissive SDKs, private world data, and separately licensed mechanics packs. Linked third-party artwork and other external references retain their own rights. The AGPL decision does not change the license of Macrofold or any other repository.
 
-For repeatable native performance experiments, use the [stress profiling guide](docs/maintainers/performance-profiling.md), including the 500-ground-gem scenario.
+For repeatable native performance experiments, use the [stand-alone Rust campaigns](docs/maintainers/performance-profiling.md#stand-alone-rust-campaigns).
 
 Documentation maintenance: [Feature document structure](docs/feature-documentation.md), [limits and constraints](docs/openlegend-limits-decisions.md), and [limits to revisit](docs/maintainers/limits-audit.md).
 The native perception/runtime changes and their measured limits are documented in [perception performance verification](docs/verification/integration-summaries.md#perception-performance-implementation).
@@ -245,4 +217,4 @@ With God mode enabled, **Game → Inspect world** includes demand-driven definit
 
 ### Unified World Agent authoring
 
-With God mode enabled, open **Game → World Agent**. Select **New chat** for a fresh conversation or choose an existing one from the list. For a new chat, **Owner spending controls** shows the session ceiling (default $5). Choose **Start conversation** before sending a message. Opening the session and reading its history use no model calls. Configure the writable MCP connection and Macrofold first; the panel explains missing configuration rather than substituting tool-less chat. Exact draft reviews show native coverage and full payloads; Approve and Apply remain distinct from crafting or world resume. **Stop this request** cancels the active request. **Options → End conversation and keep history** closes the session. Players can also use **Game → Invent something** for the recipe workflow. See [setup and supported scope](docs/world-agent-mcp.md) and [current evidence](docs/verification/invention-foundation.md#unified-authoring-interface-and-native-write-journey).
+The [writable authoring design](docs/world-agent-mcp.md) and [earlier TypeScript verification](docs/verification/invention-foundation.md#unified-authoring-interface-and-native-write-journey) retain the workshop and review workflow. World Agent writes and player recipe invention are deferred in the [Rust release scope](docs/projects/rust-server-completion-feature-spec.md#rust-cutover-scope).

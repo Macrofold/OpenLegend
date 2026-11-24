@@ -81,22 +81,6 @@ impl NativeWorldSession {
             .map_err(failure)
     }
 
-    pub fn read_account_retention(
-        &self,
-        input: &[u8],
-    ) -> Result<RuntimeAccountRetention, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input: Request = serde_json::from_slice(input).map_err(failure)?;
-        let read = AccountRetentionRead::capture(
-            &self.session.accepted().map_err(failure)?.state,
-            &input.actor_id,
-            input.preparation,
-            &self.budget,
-        )
-        .map_err(failure)?;
-        Ok(RuntimeAccountRetention { read: Some(read) })
-    }
     pub fn begin_account_retention(
         &mut self,
         read: &mut RuntimeAccountRetention,

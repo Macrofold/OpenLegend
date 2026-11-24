@@ -12,7 +12,7 @@ import { initializeWorldAgentSchema } from './world-agent-storage-schema.js';
 import { WORLD_RECORD_TABLES } from './world-record-schema.js';
 import { WorldRecords } from './world-records.js';
 
-export const DATABASE_SCHEMA = '65';
+export const DATABASE_SCHEMA = '66';
 
 /** Detect gameplay or operational leftovers without counting their rows. An
  * external art catalog and the creation registration may predate a world. */
@@ -113,7 +113,12 @@ export async function initializeGameSchema(
         attempt_id TEXT PRIMARY KEY REFERENCES attempts(id), root_job_id TEXT NOT NULL,
         category TEXT NOT NULL, level INTEGER, stage TEXT NOT NULL,
         execution_class TEXT NOT NULL CHECK(execution_class IN ('primary','background')),
-        dispatch_intent BOOLEAN NOT NULL DEFAULT false
+        dispatch_intent BOOLEAN NOT NULL DEFAULT false,
+        escalation_reason TEXT CHECK(escalation_reason IS NULL OR (
+          stage='decision-escalation' AND level IS NOT DISTINCT FROM 4 AND escalation_reason IN (
+            'semantic-escalation','abstained','native-rejection','invalid-output','route-unavailable'
+          )
+        ))
       );
       CREATE INDEX IF NOT EXISTS cognition_attempt_root ON cognition_attempt_links(root_job_id,attempt_id);
       CREATE INDEX IF NOT EXISTS attempts_unsettled ON attempts(id) WHERE status IN ('reserved','uncertain');

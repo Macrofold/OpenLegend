@@ -1,10 +1,10 @@
 # Native and full-server profiling
 
-Use the section for the tool you intend to run. In the older TypeScript tools, names such as `stress-native.ts` refer to deterministic game rules without a model making decisions. Those tools call the domain package’s `advanceWorld` and measure the TypeScript simulation.
+For current server work, use the [Rust campaign commands](#stand-alone-rust-campaigns) with the [measured gameplay workload](../benchmarks/native-runtime-foundations/2026/2026-11-18-rust-game-server.md#required-work-and-evidence).
 
-For the **stand-alone Rust executable**, use the [Rust campaign commands](#stand-alone-rust-campaigns) with the [measured gameplay workload](../benchmarks/native-runtime-foundations/2026/2026-11-18-rust-game-server.md#required-work-and-evidence).
+The earlier TypeScript recipes below belong to the source revisions recorded with their results. Names such as `stress-native.ts` refer to deterministic game rules without a model making decisions. Those runs measured the domain package’s `advanceWorld`.
 
-| What do you need to observe?                                                                | Installed tool and instructions                                                                      |
+| What do you need to observe?                                                                | Earlier TypeScript instructions                                                                      |
 | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | The cost of advancing the simulation without a server, database or provider                 | [Native CPU isolation](#native-cpu-isolation)                                                        |
 | A server with its clock running, a separate process moving a player, live updates and saves | [Full-server workload](#full-server-workload)                                                        |
@@ -31,9 +31,9 @@ To restore inputs on a clean checkout, use the campaign and archive hashes in [t
 
 ## Choose collection explicitly
 
-Ordinary `pnpm dev` / `pnpm start` skip optional server performance collection. Set `OPEN_LEGEND_PROFILING=on` before starting to collect it; absent or `off` disables it, and other values (including empty) are refused. Restart to change the choice. Browser scene collection is independent: add `?profile=1` to that tab’s URL. Its Stop releases unfinished GPU timer queries immediately and preserves one completed bounded report; Start begins a fresh capture. The visible FPS meter remains available without profiling.
+Ordinary Rust launches skip optional server performance collection. Use a [Rust campaign](#stand-alone-rust-campaigns) with an enabled recorder to collect it. Browser scene collection is independent. Add `?profile=1` to that tab’s URL. Stop releases unfinished GPU timer queries and preserves one completed report. Start begins a fresh capture. The visible FPS meter remains available during ordinary play.
 
-The server tools `scripts/profile-server.ts` and `scripts/performance/profile-server.mjs`, and the browser tool `scripts/performance/profile-browser.mjs`, accept `--app-profiling=on|off` after their ordinary arguments and default to `on`. Tools own one capture through setup, replacement factories and teardown. Use matching server and browser choices for an overhead comparison; readiness and reports identify each separately. Off-mode phase attribution is disabled/null, never a measured zero. External HTTP, process and browser callback observations remain active and must be reported as instruments.
+The earlier TypeScript server tools `scripts/profile-server.ts` and `scripts/performance/profile-server.mjs`, and the browser tool `scripts/performance/profile-browser.mjs`, accept `--app-profiling=on|off` after their ordinary arguments and default to `on`. Tools own one capture through setup, replacement factories and teardown. Use matching server and browser choices for an overhead comparison; readiness and reports identify each separately. Off-mode phase attribution is disabled/null, never a measured zero. External HTTP, process and browser callback observations remain active and must be reported as instruments.
 
 Off rejects CPU/allocation/native-count/detailed-trace combinations. The browser’s fixed-coordinate path supports off mode; survival, near-start and wait-for-resume inputs currently require opted-in scene inspection and are refused. Missing scene movement evidence cannot pass a movement-completion gate. An overhead comparison needs identical scene, accepted workload, observation cadence and host conditions; a faster collector does not prove smooth play at 3× speed. The PC06 overhead comparison has its own recorded run allowance. For a new task, use its authorized scope and spending limit. [PC01–PC06](profiling-controls.md), [architecture](../projects/profiling-controls-tech-design.md) and [runtime evidence](../verification/performance/profiling-controls.md) retain exact limits and remaining qualification.
 
@@ -47,9 +47,11 @@ Follow the shared [reporting format](../performance/measurement.md#reporting-res
 
 PostgreSQL is required locally and in production. All database-dependent profiling uses owned disposable PostgreSQL databases. Historical SQLite measurements remain evidence of the version exercised, not current backend acceptance.
 
-The separate-process server driver (`scripts/performance/profile-server.mjs`) accepts an explicit `OPEN_LEGEND_PROFILE_POSTGRES_URL` for a loopback PostgreSQL service. It creates a uniquely named database and owns loopback/local-cookie authentication with paid providers disabled; it never inherits a developer’s federated login, resets the administrative database or uses `OPEN_LEGEND_DATABASE_URL`. Missing the profiling URL fails clearly. The PostgreSQL history-only comparison remains repository-path evidence, not full-server qualification. Use [PF00/PF11](performance.md) and the [AR integration tracker](action-reconciliation.md) for remaining work; a working profiler does not complete capacity acceptance.
+The historical separate-process TypeScript driver (`scripts/performance/profile-server.mjs`) accepts an explicit `OPEN_LEGEND_PROFILE_POSTGRES_URL` for a loopback PostgreSQL service. It creates a uniquely named database and owns loopback/local-cookie authentication with paid providers disabled; it never inherits a developer’s federated login, resets the administrative database or uses `OPEN_LEGEND_DATABASE_URL`. Missing the profiling URL fails clearly. The PostgreSQL history-only comparison remains repository-path evidence, not full-server qualification. Use [PF00/PF11](performance.md) and the [AR integration tracker](action-reconciliation.md) for remaining work; a working profiler does not complete capacity acceptance.
 
 ## Native CPU isolation
+
+The commands from here through the scene-profiler section use their recorded TypeScript source revisions. Use the current Rust campaigns above for present server work.
 
 ```sh
 node --import tsx scripts/stress-native.ts scripts/performance/scenarios/gems.json /tmp/gems.cpuprofile > /tmp/gems-report.json
@@ -62,7 +64,7 @@ Copy an example JSON and configure:
 
 | Field                              | Meaning                                                                                                                                                                                                                                                               |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `input`                            | Optional SavedWorld or `backup-world.ts` materialized backup; relative to the scenario file. Omit for a seed world. Input is read only.                                                                                                                               |
+| `input`                            | Optional materialized SavedWorld JSON; relative to the scenario file. Omit for a seed world. The input is read only.                                                                                                                                                  |
 | `seed`                             | Default 73; initializes a new world and deterministic placement shuffle. An input save retains its own gameplay RNG.                                                                                                                                                  |
 | `people`, `animals`                | Additional people and deer, admitted through real spawn transitions; default zero. Fail explicitly if the map lacks free walkable tiles.                                                                                                                              |
 | `birds`, `mapSize`                 | Additional fixture-only native birds (default zero; requires the starter bird body), and optional square fixture map size from 28 to 256 tiles. Birds use copied ordinary bodies, 12-metre flight loops at 0.6 m/s and waits `(index * 7) % 53`; no fixture RNG draw. |
@@ -193,6 +195,8 @@ The output directory must not exist; its parent must exist. Arguments are wall s
 This is a service/persistence workload with an independently scheduled bounded speech producer, not a full graphical client, live AI, network SSE or production PostgreSQL. Full-view JSON bytes are not actual delta traffic. Run the same fixture on the target host, include cold tails, and extend qualification with genuine concurrency before making broader capacity claims. Do not interpret `async` calls or zero storage errors as proof of frame-time responsiveness.
 
 ## Full-server scene profiler
+
+This section records the retired server profiler and its workload. Reproduce those measurements from their pinned sources. Use the current Rust campaign for new runs. [Rust profiling](#full-server-workload)
 
 `node --expose-gc --import tsx scripts/profile-server.ts /tmp/NEW-scene-report.json 30` runs a disposable PostgreSQL game with real HTTP commands, presence heartbeats, SSE and the server timer at 3×. The initial player view has 20 other agents, 20 animals and 100 objects; one additional seeded animal begins outside view. Populations move naturally, so initial visibility is not a guarantee of sustained density.
 

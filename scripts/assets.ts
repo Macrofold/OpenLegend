@@ -790,15 +790,15 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
     const additionalStorages: S3AssetStorage[] = [];
     try {
       if (command === 'recovery-restore-world') {
-        const { readConfig } = await import('../apps/server/src/config.js');
+        const { readStorageLocation } = await import('../apps/server/src/storage-location.js');
         const { restoreRustWorld } = await import('./assets/restore-rust-world.js');
-        const config = readConfig();
+        const { databaseUrl, dataDirectory } = readStorageLocation();
         const result = await restoreRustWorld(storage, {
           serverDirectory: await realpath(required('server-directory')),
           release: await realpath(required('server-release')),
           backup: await realpath(required('source-root')),
-          databaseUrl: config.databaseUrl,
-          dataDirectory: config.dataDirectory,
+          databaseUrl,
+          dataDirectory,
           domain: authorityDomain,
         });
         console.log(JSON.stringify(result));
@@ -834,9 +834,9 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
             }),
           );
         } else if (command === 'recovery-create') {
-          const { readConfig } = await import('../apps/server/src/config.js');
+          const { readStorageLocation } = await import('../apps/server/src/storage-location.js');
           const { backupRustWorld } = await import('./assets/restore-rust-world.js');
-          const config = readConfig();
+          const { databaseUrl, dataDirectory } = readStorageLocation();
           const directory = await outsideRepository(required('output'));
           for (const source of await sourceConfigurations())
             additionalStorages.push(new S3AssetStorage(source, 'recovery-writer'));
@@ -849,10 +849,10 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
                 {
                   serverDirectory: await realpath(required('server-directory')),
                   release: await realpath(required('server-release')),
-                  databaseUrl: config.databaseUrl,
+                  databaseUrl,
                   dataDirectory: values['source-root']
                     ? await realpath(values['source-root'])
-                    : config.dataDirectory,
+                    : dataDirectory,
                 },
                 destination,
               );

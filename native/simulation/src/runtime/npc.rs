@@ -29,8 +29,8 @@ mod perspectives;
 mod stage_history;
 pub use stage_history::RuntimeNpcStageWitness;
 mod presentation;
-pub(crate) mod remembered_places;
 mod queries;
+pub(crate) mod remembered_places;
 pub use crate::appraisals::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
 pub use crate::response::{AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal};
 pub use appraisal_read::RuntimeNpcAppraisalRecord;
@@ -195,16 +195,6 @@ impl NativeWorldSession {
         self.work_is_current(read.host_generation)
     }
 
-    /// One query continuation moves the actual read owners back to preparation.
-    /// Serialized context can neither recreate a read nor replace its old cut.
-    pub fn open_npc_response(
-        &self,
-        ticket: &mut Option<RuntimeNpcResponseTicket>,
-    ) -> Result<(RuntimeNpcRead, RuntimeNpcRead), RuntimeError> {
-        let owned = self.take_npc_response_for_query(ticket)?;
-        Ok((owned.original, owned.current))
-    }
-
     /// Recover the funded selection alongside the exact captured reads.
     /// A second binding must recheck the permissions of this same evidence.
     pub fn open_npc_response_direct(
@@ -296,22 +286,6 @@ impl NativeWorldSession {
             .ok_or_else(|| failure("NPC response was released"))?;
         owned.original.query_expanded = true;
         Ok(owned)
-    }
-
-    pub fn npc_history_publication(
-        &self,
-        read: &RuntimeNpcRead,
-        input: &[u8],
-    ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let request: NpcPublicationRequest = serde_json::from_slice(input).map_err(failure)?;
-        match self.npc_history_permitted(read, &request.consumer, &request.perspectives)? {
-            Ok(()) => Ok(Ok(RuntimeNpcPublication {
-                _lease: self.session.fence().begin_publication().map_err(failure)?,
-            })),
-            Err(reason) => Ok(Err(reason)),
-        }
     }
 
     /// The paid retrieval query contains only the admitted historical trigger
@@ -417,7 +391,11 @@ impl NativeWorldSession {
         else {
             return Ok(());
         };
-        match remembered_places::RememberedPlaces::capture(actor, ticket.current.serial, &self.budget) {
+        match remembered_places::RememberedPlaces::capture(
+            actor,
+            ticket.current.serial,
+            &self.budget,
+        ) {
             Ok(Some(places)) => {
                 let _ = ticket.remembered_places.set(places);
             }
@@ -685,7 +663,11 @@ impl NativeWorldSession {
         stage_capture: bool,
     ) -> Result<RuntimeNpcRead, RuntimeError> {
         self.read_npc_with_presentation(
-            actor, consumer, &[], Some(RuntimeNpcSelfSelection::Prompt), stage_capture,
+            actor,
+            consumer,
+            &[],
+            Some(RuntimeNpcSelfSelection::Prompt),
+            stage_capture,
         )
     }
 
@@ -698,7 +680,11 @@ impl NativeWorldSession {
         stage_capture: bool,
     ) -> Result<RuntimeNpcRead, RuntimeError> {
         self.read_npc_with_presentation(
-            actor, consumer, &[], Some(RuntimeNpcSelfSelection::Frame), stage_capture,
+            actor,
+            consumer,
+            &[],
+            Some(RuntimeNpcSelfSelection::Frame),
+            stage_capture,
         )
     }
 
@@ -734,8 +720,12 @@ impl NativeWorldSession {
         )
         .map_err(failure)?;
         let mut historical_scope = crate::capture::NpcHistoricalScope::capture(
-            &simulation.state, &read, serial, &self.budget,
-        ).map_err(failure)?;
+            &simulation.state,
+            &read,
+            serial,
+            &self.budget,
+        )
+        .map_err(failure)?;
         historical_scope.stage_capture = stage_capture && consumer == "chat";
         let stage_cut = if historical_scope.stage_capture
             && matches!(selection, Some(RuntimeNpcSelfSelection::Prompt))
@@ -924,15 +914,6 @@ impl NativeWorldSession {
             }
             _ => return Err(failure("NPC discovery produced an executable completion")),
         })
-    }
-    pub fn cancel_npc_preparation(&mut self, read: &RuntimeNpcRead) -> Result<(), RuntimeError> {
-        if let Some(key) = read
-            .candidate_key
-            .filter(|key| self.session.is_npc_candidates(*key) || self.session.is_npc_sources(*key))
-        {
-            self.session.cancel(key).map_err(failure)?;
-        }
-        Ok(())
     }
     pub fn begin_npc_sources(
         &mut self,
@@ -1176,7 +1157,6 @@ impl RuntimeNpcRead {
         Ok(RuntimeJson {
             bytes: encoded.into_bytes(),
             custody,
-            handoff: None,
         })
     }
     pub fn latest_sources_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {

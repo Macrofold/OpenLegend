@@ -7,7 +7,8 @@ mod archives;
 pub(crate) mod assets;
 mod attempts;
 pub(crate) use attempts::{
-    AttemptAdmission, AttemptRequest, InferenceClass, ModelReceipt, ModelUsage, ReservedAttempt,
+    AttemptAdmission, AttemptRequest, EscalationReason, InferenceClass, ModelReceipt, ModelUsage,
+    ReservedAttempt,
 };
 pub(crate) mod checkpoint;
 pub(crate) mod creation;

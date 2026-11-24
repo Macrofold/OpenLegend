@@ -4,7 +4,7 @@
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | In progress | Asset storage and shared tooling are delivered; game packaging, hosted rollout and production qualification remain open. | 2026-10-24   |
 
-**Hosting design, researched 2 October 2026; asset operations implemented under AS.** This is the execution companion to the [technical design](production-deployment-tech-design.md). The Dockerfile, application CDK, game deployment workflows and release-specific maintenance gate still need implementation. Asset storage is deployed and its shared publisher is implemented; use the [canonical asset workflow](../asset-workflow.md) for supported commands and [AS verification](../verification/game-asset-storage.md) for actual results. Other command examples remain proposed until exercised. [PD01–PD12](../maintainers/production-deployment.md) owns tasks and acceptance; this document owns the deployment procedure, not another checklist.
+**Hosting design, researched 2 October 2026; asset operations implemented under AS.** This is the execution companion to the [technical design](production-deployment-tech-design.md). The Dockerfile, application CDK, the protected game release procedure and its release-specific maintenance gate still need implementation. Asset storage is deployed and its shared publisher is implemented; use the [canonical asset workflow](../asset-workflow.md) for supported commands and [AS verification](../verification/game-asset-storage.md) for actual results. Other command examples remain proposed until exercised. [PD01–PD12](../maintainers/production-deployment.md) owns tasks and acceptance; this document owns the deployment procedure, not another checklist.
 
 The release-specific write gate remains future work. Existing [maintenance controls](completed/multiplayer-entry-maintenance.md) already pause ordinary play and retain the notice across restart; reuse that owner rather than rebuilding maintenance.
 
@@ -21,17 +21,11 @@ The proposed implementation adds these artifacts:
 - A protected build/release procedure and a separately authorized asset-publication workflow. Run directly controlled repository checks under the [verification policy](../../.agents/rules/verification.md#choose-the-execution-location); deployment success does not replace those checks. Do not add GitHub CI as part of deployment work.
 - A narrow operator release command implementing the phases below, with a durable release record. Do not build a generic workflow platform or an administration dashboard before the first safe release.
 
-**Current packaging facts matter.** At the reviewed revision, `pnpm run build` generates configuration, type-checks with `tsc --noEmit`, and builds the browser into `dist/client`. It does **not** produce a compiled server. `pnpm start` regenerates configuration and executes `apps/server/src/main.ts` through `tsx`. A Docker recipe that copies only `dist/` and runs `node dist/server.js` will not run this application. See [package scripts](../../package.json), [client output](../../apps/client/vite.config.ts) and [server entry](../../apps/server/src/main.ts).
+Build the browser into `dist/client` with `pnpm run build`, using the pinned package manager and frozen lockfile. Build the Rust release executable from `native/` with the pinned toolchain and `cargo build --locked --offline --release -p openlegend-game-server`. Use the [existing release preparation](../../README.md#run-the-stand-alone-rust-server) to package the approved browser, installed world data, navigation, language, fallback artwork and licenses.
 
-Initially retain the verified Node/tsx execution path. Build with the pinned pnpm version and frozen lockfile; generate authored configuration during the image build, retain the server/workspace modules, required runtime data, spatial/WASM resources, fallback art and licenses, and use an exec-form Node entrypoint. The intended launch command after build-time generation is:
+Transfer the executable and its reviewed release directory into the runtime image. Qualify the image with an exec-form entrypoint such as `["/app/openlegend-game-server", "serve", "/app/release"]`. Build-time Node and pnpm stay in the build environment. The deployed process serves the existing browser and validates the configured PostgreSQL world on startup. Use a pinned runtime image, a matching CPU architecture and tested system libraries. Keep dependency upgrades out of the deployment change.
 
-```sh
-node --import tsx apps/server/src/main.ts --production
-```
-
-Qualify that command in the actual image before bypassing `pnpm start`. Do not prune dependencies merely because they are labeled development-only: current startup generation and workspace loading must first be accounted for. A compiled-server build is a later packaging improvement, not a launch prerequisite. Use a pinned supported Node base-image digest and one explicitly tested architecture; compare ARM only after native/WASM dependency checks. Do not upgrade application dependencies in a deployment-only change.
-
-Run non-root, forward SIGTERM to Node, and preserve the existing shutdown handler. Make the root filesystem read-only only after removing runtime source generation; allow narrowly scoped temporary and save-directory writes. Verify EFS access-point UID/GID permissions. Bound CPU, memory, ephemeral disk and log volume using the staging workload, not guessed players-per-core.
+Run non-root and deliver SIGTERM to the Rust process. Verify bounded drain and ordinary PostgreSQL saves on shutdown. Mount only the required checkpoint and temporary write locations before making the rest of the image read-only. Verify EFS access-point UID/GID permissions. Set CPU, memory, ephemeral disk and log limits from the staging workload.
 
 ## 2. Provision and configure once
 
@@ -39,7 +33,7 @@ For the proposed hosted-game rollout, plan separate production/nonproduction AWS
 
 Application CDK owns the proposed game infrastructure, service configuration and task definitions. The existing asset CloudFormation template retains its separate ownership and review/apply workflow. The release pipeline supplies an explicit approved image digest and desired world count to the runtime stack. Persist that release input and reuse it for future infrastructure deployments; never let a routine CDK deployment reset the application to a hard-coded old image. Console changes are emergency operations that must be reconciled back into the reviewed configuration.
 
-Implement separate IAM roles for image publishing, infrastructure deployment, task startup and runtime access. Restrict `iam:PassRole`; the game role must not administer the database, provision fleets or alter arbitrary S3 content. Backup/restore jobs use separate operator roles. Use GitHub OIDC rather than stored AWS access keys, and restrict both the token audience and the repository/environment subject. Fork pull requests receive no deployment credentials. [C01]
+Implement separate IAM roles for image publishing, infrastructure deployment, task startup and runtime access. Restrict `iam:PassRole`; the game role must not administer the database, provision fleets or alter arbitrary S3 content. Backup/restore jobs use separate operator roles. Use a separately authorized short-lived operator session for release actions. Pull-request code receives no deployment credentials. [C01]
 
 Set exact Auth0 issuer/callback/logout origins, secure cookies and application public origin. Inject database/provider credentials from Secrets Manager; do not bake them into the image or pass them in logged commands. Verify database TLS and trusted CA configuration. A private subnet alone is not encryption or least privilege. Measure NAT, VPC endpoint, cross-AZ, ALB, public IPv4 and log costs; provider calls still need a deliberately configured outbound path.
 
@@ -76,7 +70,7 @@ DIGEST="$(aws ecr describe-images --repository-name "$ECR_REPOSITORY" \
 RELEASE_IMAGE="$REPOSITORY_URI@$DIGEST"
 ```
 
-Build only from the checked, clean source revision; use immutable ECR tags and retain the image digest, build provenance, dependency inventory and scan result in the release record. CI should build once and promote that digest, not rebuild after staging approval. Environment secrets remain runtime inputs. A source SHA label alone does not prove which bytes were deployed.
+Build only from the checked, clean source revision; use immutable ECR tags and retain the image digest, build provenance, dependency inventory and scan result in the release record. Build each candidate once and promote the verified digest. Environment secrets remain runtime inputs. A source SHA label alone does not prove which bytes were deployed.
 
 ## 3. Replace a world, not a stateless web replica
 
@@ -123,12 +117,14 @@ Verify zero desired/running/pending counts and enumerate tasks again, including 
 The existing offline backup entry point can run in an authorized one-off operator task with database access and the correct EFS mount. It refuses an existing destination. Keep its output in protected storage and record verification before continuing:
 
 ```sh
-# Existing repository command; the game server must already be stopped.
+# Use the stopped server's exact executable, release and storage settings.
+: "${GAME_SERVER:?Set the absolute path to the deployed Rust executable}"
+: "${GAME_RELEASE_DIRECTORY:?Set the deployed reviewed release directory}"
 : "${NEW_BACKUP_DIRECTORY:?Set a new protected backup destination}"
-node --import tsx scripts/backup-world.ts "$NEW_BACKUP_DIRECTORY"
+"$GAME_SERVER" backup-world "$GAME_RELEASE_DIRECTORY" "$NEW_BACKUP_DIRECTORY"
 ```
 
-See [the actual backup command](../../scripts/backup-world.ts). The ECS operator-task definition, scheduling and remote backup upload are still PD06 implementation work. Do not invent a running backup service merely from the availability of this local command.
+See [the stopped backup procedure](../save-and-load.md#stopped-operational-backup). The ECS operator task, scheduling and remote backup upload remain PD06 work.
 
 ```sh
 # After backup/compatibility checks; keep the application maintenance gate closed.
@@ -151,21 +147,21 @@ Add distinct minimal liveness and readiness endpoints. Liveness must not depend 
 
 **Enforce maintenance/authority in the application even when readiness is false.** Reuse the existing gameplay maintenance gate, and qualify the stronger release gate against creator editing and already-admitted continuations as well as ordinary player commands. ALB can route to unhealthy targets when all targets are unhealthy; a failing health check is not an access-control barrier. Existing streams also need command admission checks and bounded shutdown. Configure SSE heartbeats, proxy buffering, idle timeout and jittered reconnect; test slow/background/mobile browsers and old cursors. [C08]
 
-## 4. CI/CD that an operator can understand
+## 4. Verify and promote one release
 
 Retain one release record from source to deployment: source commit, image digest, configuration schema, database/extension versions, world-module/content pins, approved model/prompt policy, task definition, backup boundary and checks. Secrets are references, never copied into this record.
 
-**Pull requests:** run the existing checks with disposable PostgreSQL and no paid AI; validate the Docker build, CDK synthesis/diff and changed configuration. Keep third-party actions pinned to reviewed commit SHAs. Do not give untrusted PR code cloud credentials or use a privileged `pull_request_target` job to build it.
+**Pull requests and release preparation.** Follow the [verification policy](../../.agents/rules/verification.md#choose-the-execution-location) for local and authorized managed checks. GitHub Actions remain disabled. Use disposable PostgreSQL and zero paid AI for ordinary checks. For deployment changes, validate the Docker build, CDK synthesis and diff, and changed configuration through the approved operator environment.
 
 **Trusted build:** after required checks, build/push the immutable image, scan it, record provenance and retention, then deploy that digest to a disposable native-only staging world. Auth0 end-to-end, graphics and live AI qualification are separate checks, not inferred from unit tests or a healthy task.
 
-**Production promotion:** use a protected GitHub environment with required approval and a manually selected qualified release. Obtain short-lived OIDC credentials only in the deployment job. Serialize by environment/world with `cancel-in-progress: false`; still persist phases because runner loss or an operator cancellation can interrupt the job. Every retry reads the release phase and actual world/cloud state before performing a write. Do not automatically rerun a partly completed paid or destructive operation. [C01] [C09]
+**Production promotion.** The authorized operator selects the qualified release and uses a short-lived deployment session. Keep one active promotion per world and persist its phases across interruptions. Before retrying, read the recorded release phase and reconcile it with the actual world and cloud state. A partly completed paid or destructive operation requires explicit recovery. [C01] [C09]
 
 **Rollback:** retain old images and compatible content. Cancel admission to the new release, drain it and use the same stopped-world procedure with a compatible old image. Schema, content and outstanding AI job compatibility must be established; application rollback does not undo an incompatible database change or a financial charge. Never enable automatic database restoration on a failed deployment.
 
 **Routine operation:** use CloudWatch logs/alarms and restricted sampled OpenTelemetry traces first, with one operator view linking release, world health, joins, storage, AI and cost. For example, `aws logs tail "$LOG_GROUP" --since 30m` can inspect an authorized log group. ECS Exec is restricted break-glass access, not the deployment process; an interactive shell cannot replace durable configuration. Alerts need an owner and a containment/recovery instruction.
 
-**Version gap to close:** current CI runs `pgvector/pgvector:pg16`; the proposed production database is PostgreSQL 18 with a supported pgvector release. Add qualification on the exact selected production major/extension before launch. A passing PG16 workflow is not that evidence. This is environment qualification, not permission to add legacy-save compatibility.
+**Database version qualification.** Existing PostgreSQL 16 evidence covers its recorded pgvector environment. Before launch, qualify the selected production database and extension together. The proposed environment uses PostgreSQL 18 with a supported pgvector release.
 
 ## 5. Publish assets independently
 

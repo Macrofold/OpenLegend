@@ -12,9 +12,6 @@ importers:
         specifier: 4.23.13
         version: 4.23.13
     devDependencies:
-      '@napi-rs/cli':
-        specifier: 3.10.12
-        version: 3.10.12(@emnapi/core@2.0.0-beta.3)(@emnapi/runtime@2.0.0-beta.3)(@types/node@22.20.4)
       '@open-legend/assets':
         specifier: workspace:*
         version: link:packages/assets
@@ -97,12 +94,6 @@ importers:
       '@aws-sdk/credential-providers':
         specifier: 3.1152.0
         version: 3.1152.0
-      '@modelcontextprotocol/node':
-        specifier: 2.0.0
-        version: 2.0.0(@modelcontextprotocol/server@2.0.0)(hono@4.13.9)
-      '@modelcontextprotocol/server':
-        specifier: 2.0.0
-        version: 2.0.0
       '@open-legend/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -115,9 +106,6 @@ importers:
       '@open-legend/language':
         specifier: workspace:*
         version: link:../../packages/language
-      '@open-legend/native-simulation':
-        specifier: workspace:*
-        version: link:../../native
       '@open-legend/network':
         specifier: workspace:*
         version: link:../../packages/network
@@ -130,9 +118,6 @@ importers:
       '@smithy/node-http-handler':
         specifier: 4.12.1
         version: 4.12.1
-      openid-client:
-        specifier: 6.8.8
-        version: 6.8.8
       pg:
         specifier: 8.16.3
         version: 8.16.3
@@ -146,8 +131,6 @@ importers:
       '@types/pg':
         specifier: 8.15.5
         version: 8.15.5
-
-  native: {}
 
   packages/ai:
     dependencies:

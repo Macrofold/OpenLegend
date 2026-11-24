@@ -11,6 +11,43 @@ use openlegend_simulation::{encoding::json_record, identity::MAX_SAFE_INTEGER};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+/// The selected reason is part of the admitted higher attempt, not a receipt
+/// inferred from the model route, execution status, or eventual result.
+#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum EscalationReason {
+    SemanticEscalation,
+    Abstained,
+    NativeRejection,
+    InvalidOutput,
+    RouteUnavailable,
+}
+
+impl EscalationReason {
+    fn sql(self) -> &'static str {
+        match self {
+            Self::SemanticEscalation => "semantic-escalation",
+            Self::Abstained => "abstained",
+            Self::NativeRejection => "native-rejection",
+            Self::InvalidOutput => "invalid-output",
+            Self::RouteUnavailable => "route-unavailable",
+        }
+    }
+
+    pub(super) fn read_sql(value: &str) -> StoreResult<Self> {
+        [
+            Self::SemanticEscalation,
+            Self::Abstained,
+            Self::NativeRejection,
+            Self::InvalidOutput,
+            Self::RouteUnavailable,
+        ]
+        .into_iter()
+        .find(|reason| reason.sql() == value)
+        .ok_or(StoreError::InvalidRecord)
+    }
+}
+
 enum AttemptClaim {
     Semantic(Arc<SemanticClaim>),
     Reflection(Arc<ReflectionScope>, ReflectionCue),
@@ -18,6 +55,7 @@ enum AttemptClaim {
         fingerprint: String,
         kind: &'static str,
         level_ceiling: u64,
+        reason: EscalationReason,
         rejected: Option<String>,
     },
 }
@@ -215,9 +253,13 @@ impl Store {
         fingerprint: String,
         kind: &'static str,
         level_ceiling: u64,
+        reason: EscalationReason,
         rejected: Option<&str>,
     ) -> Result<AttemptAdmission, CommitError> {
-        if !matches!(kind, "thought" | "chat") || (kind == "chat" && rejected.is_some()) {
+        if !matches!(kind, "thought" | "chat")
+            || (kind == "chat" && rejected.is_some())
+            || (reason == EscalationReason::NativeRejection) != rejected.is_some()
+        {
             return Err(CommitError::RolledBack(StoreError::InvalidRecord));
         }
         // This bounded copy is only needed when custody reaches SQL.
@@ -231,6 +273,7 @@ impl Store {
                 fingerprint,
                 kind,
                 level_ceiling,
+                reason,
                 rejected: rejected.map(str::to_owned),
             }),
         )
@@ -265,6 +308,10 @@ impl Store {
             if exposure(tx, &request.actor).await?.checked_add(amount).is_none_or(|sum| sum > ceiling) {
                 return Ok(AttemptAdmission::Exhausted);
             }
+            let escalation_reason = match &claim {
+                Some(AttemptClaim::EscalatedDecision { reason, .. }) => Some(reason.sql()),
+                _ => None,
+            };
             let claimed = match claim {
                 Some(AttemptClaim::Semantic(claim)) =>
                     claim.scope.actor == request.actor && claim.take(tx, &request.id).await?,
@@ -299,9 +346,9 @@ impl Store {
             tx.execute("INSERT INTO attempt_scopes(attempt_id,actor_id) VALUES($1,$2)", &[&request.id, &request.actor]).await?;
             let execution = if request.background { "background" } else { "primary" };
             tx.execute(
-                "INSERT INTO cognition_attempt_links(attempt_id,root_job_id,category,level,stage,execution_class) \
-                 VALUES($1,$2,$3,$4,$5,$6)",
-                &[&request.id,&request.job,&request.category,&request.level,&request.stage,&execution],
+                "INSERT INTO cognition_attempt_links(attempt_id,root_job_id,category,level,stage,execution_class,escalation_reason) \
+                 VALUES($1,$2,$3,$4,$5,$6,$7)",
+                &[&request.id,&request.job,&request.category,&request.level,&request.stage,&execution,&escalation_reason],
             ).await?;
             Ok(AttemptAdmission::Reserved(ReservedAttempt { id: request.id, provider: request.provider }))
         })).await

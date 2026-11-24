@@ -2,7 +2,10 @@
 //! load a conversation body for a list, or issue a provider request to inspect
 //! a past stage. All related rows come from one independently held snapshot.
 
-use super::{Store, StoreError, StoreResult, TerminalOutcome, durable_head, read::admitted_query};
+use super::{
+    EscalationReason, Store, StoreError, StoreResult, TerminalOutcome, durable_head,
+    read::admitted_query,
+};
 use crate::player_events::SpeechReplyStatus;
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use serde::{Deserialize, Serialize};
@@ -34,9 +37,14 @@ const ROOT_HEADER: &str = "j.id,j.created_at,(j.selection->>'completedAt')::bigi
 
 const ROOT_COLUMNS: &str = "stats.level,stats.stages,stats.settled,stats.incomplete";
 
+// Higher reservation admits at most one exact attempt for a root. Read its
+// reason and the whole ledger independently of the bounded stage history.
 const ROLLUP: &str = "LEFT JOIN LATERAL (SELECT max(l.level) AS level,count(a.id) AS stages, \
     COALESCE(sum(a.spent) FILTER (WHERE a.status='settled'),0)::bigint AS settled, \
-    COALESCE(bool_or(a.status<>'settled'),false) AS incomplete \
+    COALESCE(bool_or(a.status<>'settled'),false) AS incomplete,
+    max(l.escalation_reason) AS escalation_reason,
+    COALESCE(sum(CASE a.status WHEN 'reserved' THEN a.reserved WHEN 'uncertain' THEN a.spent ELSE 0 END),0)::bigint AS held,
+    count(a.id) FILTER (WHERE a.status<>'settled') AS unpriced \
     FROM cognition_attempt_links l JOIN attempts a ON a.id=l.attempt_id WHERE l.root_job_id=j.id) stats ON true";
 
 const ATTEMPT_COLUMNS: &str = "a.id,l.stage,l.level,a.provider,a.status,a.created_at, \
@@ -133,6 +141,13 @@ pub(crate) struct Root {
     pub settled_micro_usd: i64,
     pub cost_incomplete: bool,
     pub outcome: Option<TerminalOutcome>,
+    pub decision: Option<DecisionTotals>,
+}
+
+pub(crate) struct DecisionTotals {
+    pub reason: EscalationReason,
+    pub held_micro_usd: i64,
+    pub unpriced_attempts: i64,
 }
 
 #[derive(Serialize)]
@@ -270,12 +285,16 @@ impl Store {
                     &[account,world_key,people,id,&owner.actor_key,&owner.timeline_key], &budget
                 ).await?
             }
-            Query::Trigger(id) | Query::Billing(id) | Query::Stage(id) => {
-                let exact_attempt = !matches!(query.as_ref(), Query::Trigger(_));
-                let statement = format!("SELECT {ROOT_HEADER},{ROOT_COLUMNS},CASE WHEN $5 THEN NULL ELSE j.payload END \
-                    FROM jobs j {ROLLUP} WHERE {ROOT_ACCESS} AND j.id=CASE WHEN $5 \
-                    THEN (SELECT root_job_id FROM cognition_attempt_links WHERE attempt_id=$4) ELSE $4 END");
-                admitted_query(tx, &statement, &[account,world_key,people,id,&exact_attempt], &budget).await?
+            Query::Trigger(id) => {
+                let statement = format!("SELECT {ROOT_HEADER},{ROOT_COLUMNS},j.payload, \
+                    stats.escalation_reason,stats.held,stats.unpriced \
+                    FROM jobs j {ROLLUP} WHERE {ROOT_ACCESS} AND j.id=$4");
+                admitted_query(tx, &statement, &[account,world_key,people,id], &budget).await?
+            }
+            Query::Billing(id) | Query::Stage(id) => {
+                let statement = format!("SELECT {ROOT_HEADER},{ROOT_COLUMNS} FROM jobs j {ROLLUP} \
+                    WHERE {ROOT_ACCESS} AND j.id=(SELECT root_job_id FROM cognition_attempt_links WHERE attempt_id=$4)");
+                admitted_query(tx, &statement, &[account,world_key,people,id], &budget).await?
             }
         };
         let has_more = rows.len() > PAGE;
@@ -349,15 +368,26 @@ fn root(row: &Row, detail: bool) -> StoreResult<Root> {
         "stale" => SpeechReplyStatus::Stale,
         _ => return Err(StoreError::InvalidRecord),
     };
-    let outcome = if detail {
+    let (outcome, decision) = if detail {
         let value: &str = row.try_get(11)?;
         // The current canonical TEXT can contain isolated UTF-16 units. Only
         // the terminal outcome is decoded; unknown fields stay skipped.
-        serde_json::from_str::<Detail>(value)
+        let outcome = serde_json::from_str::<Detail>(value)
             .map_err(|_| StoreError::InvalidRecord)?
-            .outcome
+            .outcome;
+        let decision = row
+            .try_get::<_, Option<&str>>(12)?
+            .map(|value| -> StoreResult<_> {
+                Ok(DecisionTotals {
+                    reason: EscalationReason::read_sql(value)?,
+                    held_micro_usd: row.try_get(13)?,
+                    unpriced_attempts: row.try_get(14)?,
+                })
+            })
+            .transpose()?;
+        (outcome, decision)
     } else {
-        None
+        (None, None)
     };
     Ok(Root {
         id: row.try_get(0)?,
@@ -372,6 +402,7 @@ fn root(row: &Row, detail: bool) -> StoreResult<Root> {
         settled_micro_usd: row.try_get(9)?,
         cost_incomplete: row.try_get(10)?,
         outcome,
+        decision,
     })
 }
 

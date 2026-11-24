@@ -320,28 +320,12 @@ fn operation(value: &SqlCell) -> Option<ResponseOperation<'_>> {
     })
 }
 impl ActorResponse {
-    pub(crate) fn decode(
-        source: &str,
-        limits: &ResponseLimits,
-        budget: &ByteBudget,
-    ) -> Result<Self, ResponseEnvelopeError> {
-        let mut reservation = budget.reserve(
-            crate::experience::encoded_body_bound(source)
-                .map_err(|_| ResponseEnvelopeError::Capacity)?,
-        )?;
-        let value: SqlCell =
-            serde_json::from_str(source).map_err(|_| ResponseEnvelopeError::Malformed)?;
-        reservation.resize(Self::retained_bytes(&value).ok_or(ResponseEnvelopeError::Capacity)?)?;
-        Self::admit(value, limits, reservation)
-    }
-
     pub(crate) fn retained_bytes(value: &SqlCell) -> Option<usize> {
         value.heap_bytes()?.checked_add(size_of::<Self>())
     }
 
     /// Check the current response grammar and byte bound directly on the
-    /// already funded value. Keeping its fields in order preserves replay
-    /// digests for both the in-process and the bytes-based entry points.
+    /// already funded value. Keeping its fields in order preserves replay digests.
     pub(crate) fn admit(
         value: SqlCell,
         limits: &ResponseLimits,

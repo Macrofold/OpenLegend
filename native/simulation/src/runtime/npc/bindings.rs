@@ -60,7 +60,12 @@ impl RuntimeNpcBindingRequest {
         current: &RuntimeNpcRead,
         alias: &str,
     ) -> Option<usize> {
-        let selected = self.request.selection.entities.iter().find(|row| row.alias == alias)?;
+        let selected = self
+            .request
+            .selection
+            .entities
+            .iter()
+            .find(|row| row.alias == alias)?;
         match selected.source {
             NpcEntityOrdinal::Body { ordinal } => {
                 let anchor = current.read.perception.bodies.get(ordinal)?;
@@ -97,8 +102,10 @@ impl RuntimeNpcBindingRequest {
         first: &str,
         second: &str,
     ) -> super::RuntimeNpcSeparationEvidence {
-        match self.received_anchor(original, current, first)
-            .zip(self.received_anchor(original, current, second)) {
+        match self
+            .received_anchor(original, current, first)
+            .zip(self.received_anchor(original, current, second))
+        {
             Some((first, second)) => original.query_separation(first, second),
             None => super::RuntimeNpcSeparationEvidence::UNAVAILABLE,
         }
@@ -113,9 +120,16 @@ impl RuntimeNpcBindingRequest {
         let subject = original.read.perception.bodies.get(ordinal)?;
         self.request.selection.entities.iter().find_map(|row| {
             let matched = match row.source {
-                NpcEntityOrdinal::Body { ordinal } => current.read.perception.bodies.get(ordinal)
-                    .is_some_and(|body| body.source_id == subject.source_id
-                        && body.physical_life == subject.physical_life && body.lease_id == subject.lease_id),
+                NpcEntityOrdinal::Body { ordinal } => current
+                    .read
+                    .perception
+                    .bodies
+                    .get(ordinal)
+                    .is_some_and(|body| {
+                        body.source_id == subject.source_id
+                            && body.physical_life == subject.physical_life
+                            && body.lease_id == subject.lease_id
+                    }),
                 NpcEntityOrdinal::ReceivedBody { ordinal: index } => index == ordinal,
                 _ => false,
             };
@@ -131,7 +145,9 @@ impl RuntimeNpcBindingRequest {
             return Ok(());
         }
         self._custody.resize(
-            self._custody.bytes().checked_add(size_of::<NpcEntityAlias>() + alias.len())
+            self._custody
+                .bytes()
+                .checked_add(size_of::<NpcEntityAlias>() + alias.len())
                 .ok_or(CapacityError)?,
         )?;
         entities.try_reserve_exact(1).map_err(|_| CapacityError)?;
@@ -464,10 +480,7 @@ impl RuntimeNpcResponseTicket {
     pub fn received_query_origin(
         &self,
     ) -> Option<(&RuntimeNpcRead, crate::attention::SceneRegionLimits)> {
-        Some((
-            &self.original,
-            self.original.read.perception.query_regions?,
-        ))
+        Some((&self.original, self.original.read.perception.query_regions?))
     }
 
     pub(super) fn into_query(
@@ -604,187 +617,9 @@ impl NativeWorldSession {
             }
         }
     }
-    pub fn rebind_npc_response(
-        &mut self,
-        ticket: &mut RuntimeNpcResponseTicket,
-        request: &[u8],
-    ) -> Result<(), RuntimeError> {
-        self.require_active()?;
-        if ticket.bindings.purpose != NpcBindingPurpose::Decision {
-            return Err(failure(
-                "private reflection cannot become a decision response",
-            ));
-        }
-        let phase = ticket.phase.load(Ordering::Acquire);
-        if phase != FRESH && phase != SETTLED {
-            return Err(failure("NPC response continuation is not available"));
-        }
-        let _decode = decode_preparation(request, &self.budget)?;
-        let request: RebindRequest = serde_json::from_slice(request).map_err(failure)?;
-        if !crate::values::is_safe_record_id(&request.decision_id)
-            || request.decision_id.encode_utf16().count() > 100
-            || request.decision_id == ticket.decision_id
-        {
-            return Err(failure("invalid new response identity"));
-        }
-        // Prior cursors must release their immutable allocations before this
-        // trusted metadata rebind. Settlement alone cannot force uniqueness.
-        if Arc::strong_count(&ticket._custody) != 1
-            || ticket
-                .bindings
-                .appraisals
-                .as_ref()
-                .is_some_and(|owner| Arc::strong_count(owner) != 1)
-        {
-            return Err(failure("NPC response continuation is still retained"));
-        }
-        let original = ticket
-            .original
-            .candidates()
-            .ok_or_else(|| failure("original NPC choices unavailable"))?;
-        let current = ticket
-            .current
-            .action_catalogue
-            .as_ref()
-            .map(|catalogue| &catalogue.candidates)
-            .or(ticket.current.candidates())
-            .ok_or_else(|| failure("current NPC choices unavailable"))?;
-        let controls = ticket
-            .bindings
-            .actions
-            .keys()
-            .filter(|alias| !ticket.bindings.ordinary_aliases.contains(alias))
-            .count();
-        let (mut actions, ordinary_aliases, mut action_storage) =
-            crate::capture::prepare_ordinary_actions(
-                Some(original),
-                current,
-                &request.actions,
-                &ticket.current.read.perception.actor_id,
-                &request.decision_id,
-                controls,
-                &self.budget,
-            )
-            .map_err(failure)?;
-        let control_bytes = ticket
-            .bindings
-            .actions
-            .iter()
-            .filter(|(alias, _)| !ticket.bindings.ordinary_aliases.contains(alias))
-            .try_fold(0usize, |n, (alias, value)| {
-                n.checked_add(alias.heap_bytes()?)?
-                    .checked_add(value.heap_bytes()?)
-            })
-            .ok_or_else(|| failure("capacity"))?;
-        action_storage
-            .resize(
-                action_storage
-                    .bytes()
-                    .checked_add(control_bytes)
-                    .ok_or_else(|| failure("capacity"))?,
-            )
-            .map_err(failure)?;
-        for (alias, value) in &ticket.bindings.actions {
-            if !ticket.bindings.ordinary_aliases.contains(alias) {
-                if actions.contains_key(alias) {
-                    return Err(failure("ordinary action conflicts with explicit control"));
-                }
-                actions.insert(alias.clone(), value.clone());
-            }
-        }
-        let catalogue = match request.prototype_source {
-            NpcCatalogueSource::Original => original,
-            NpcCatalogueSource::Current => current,
-        };
-        let (attempt_candidates, attempt_storage) = crate::response::capture_attempt_candidates(
-            catalogue,
-            &ticket.current.read.perception.actor_id,
-            &request.decision_id,
-            &self.budget,
-        )
-        .map_err(failure)?;
-        let mut custody = self
-            .budget
-            .reserve(
-                ticket_overhead()?
-                    .checked_add(request.decision_id.capacity())
-                    .ok_or_else(|| failure("capacity"))?,
-            )
-            .map_err(failure)?;
-        custody.merge(attempt_storage).map_err(failure)?;
-        let old_actions = heap_sum([
-            ticket
-                .bindings
-                .actions
-                .heap_bytes()
-                .ok_or_else(|| failure("capacity"))?,
-            ticket
-                .bindings
-                .ordinary_aliases
-                .heap_bytes()
-                .ok_or_else(|| failure("capacity"))?,
-        ])
-        .ok_or_else(|| failure("capacity"))?;
-        let final_map_bytes = ticket
-            .bindings
-            .storage
-            .bytes()
-            .checked_sub(old_actions)
-            .and_then(|n| n.checked_add(action_storage.bytes()))
-            .ok_or_else(|| failure("capacity"))?;
-        // All potentially failing allocations finish before replacing aliases.
-        if let Some(appraisals) = ticket.bindings.appraisals.as_mut() {
-            Arc::get_mut(appraisals)
-                .ok_or_else(|| failure("NPC appraisals are still retained"))?
-                .rebind_decision(&request.decision_id)
-                .map_err(failure)?;
-        }
-        ticket
-            .bindings
-            .storage
-            .merge(action_storage)
-            .map_err(failure)?;
-        ticket.bindings.actions = actions;
-        ticket.bindings.ordinary_aliases = ordinary_aliases;
-        ticket
-            .bindings
-            .storage
-            .resize(final_map_bytes)
-            .map_err(failure)?;
-        ticket.decision_id = request.decision_id;
-        ticket.attempt_candidates = Arc::new(attempt_candidates);
-        ticket._custody = Arc::new(custody);
-        ticket.original.query_expanded = false;
-        ticket.remembered_places = OnceLock::new();
-        ticket.phase.store(FRESH, Ordering::Release);
-        Ok(())
-    }
-    /// Each execution copies only its bounded issued maps. Original captures
-    /// and their exact funding survive as a nonexecuting continuation.
-    pub fn begin_npc_response(
-        &mut self,
-        owner: &mut Option<RuntimeNpcResponseTicket>,
-        response: &str,
-        protected: bool,
-    ) -> Result<CandidateKey, RuntimeError> {
-        let ticket = owner
-            .as_ref()
-            .ok_or_else(|| failure("NPC response ticket was released"))?;
-        self.begin_npc_response_with(
-            ticket,
-            protected,
-            false,
-            crate::response::GroundingProvider::Addon,
-            |limits, budget| {
-                crate::response::ActorResponse::decode(response, limits, budget)
-                    .map_err(response_failure)
-            },
-        )
-    }
-
     /// The application transfers its external decoder's exact operation
-    /// fields without another trip through JSON. This is the same candidate
-    /// admission, including receipt hashing, as the bytes-based entry point.
+    /// fields without another trip through JSON. The candidate still
+    /// validates the ticket and prepares the canonical durable receipt.
     pub fn begin_npc_response_owned(
         &mut self,
         ticket: &RuntimeNpcResponseTicket,
@@ -795,7 +630,6 @@ impl NativeWorldSession {
             ticket,
             protected,
             response.reconsider_choice,
-            crate::response::GroundingProvider::Local,
             move |limits, budget| {
                 if !budget.owns(&response.custody) {
                     return Err(failure("NPC response belongs to another native budget"));
@@ -811,7 +645,6 @@ impl NativeWorldSession {
         ticket: &RuntimeNpcResponseTicket,
         protected: bool,
         reconsider_choice: bool,
-        grounding_provider: crate::response::GroundingProvider,
         prepare: impl FnOnce(
             &crate::response::ResponseLimits,
             &ByteBudget,
@@ -891,7 +724,6 @@ impl NativeWorldSession {
                 bindings,
                 protected,
                 reconsider_choice,
-                grounding_provider,
             )
             .map_err(failure)?;
         ticket.phase.store(APPLYING, Ordering::Release);
@@ -1016,21 +848,6 @@ impl NativeWorldSession {
         Ok(Arc::new(
             ResponseBindings::new(input, storage).map_err(failure)?,
         ))
-    }
-    /// An unsuccessful selection leaves both handles available. Captures move
-    /// only after the whole finite binding has been checked and funded.
-    pub fn bind_npc_response(
-        &mut self,
-        original: &mut Option<RuntimeNpcRead>,
-        current: &mut Option<RuntimeNpcRead>,
-        request: &[u8],
-        trigger: Option<&RuntimeNpcTrigger>,
-        action_read: Option<&mut Option<RuntimeNpcRead>>,
-    ) -> Result<RuntimeNpcResponseTicket, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(request, &self.budget)?;
-        let request: BindingRequest = serde_json::from_slice(request).map_err(failure)?;
-        self.bind_npc_response_selected(original, current, request, trigger, action_read, None)
     }
 
     pub fn bind_npc_response_direct(

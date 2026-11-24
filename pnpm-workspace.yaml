@@ -1,7 +1,6 @@
 packages:
   - 'packages/*'
   - 'apps/*'
-  - 'native'
 
 # Native tooling used by tsx/Vite and macOS file watching.
 allowBuilds:

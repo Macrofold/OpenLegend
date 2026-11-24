@@ -38,17 +38,6 @@ pub struct RuntimeConsolidationDream {
     _storage: ByteReservation,
 }
 impl NativeWorldSession {
-    pub fn bind_consolidation_dream(
-        &self,
-        ticket: &RuntimeConsolidationTicket,
-        input: &[u8],
-    ) -> Result<RuntimeConsolidationDream, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input: Binding = serde_json::from_slice(input).map_err(failure)?;
-        self.bind_consolidation_dream_owned(ticket, input)
-    }
-
     fn bind_consolidation_dream_owned(
         &self,
         ticket: &RuntimeConsolidationTicket,

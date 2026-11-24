@@ -61,16 +61,6 @@ enum SubmittedDream<'a> {
     Direct(RuntimePreparedDream),
 }
 impl NativeWorldSession {
-    pub fn bind_consolidation(
-        &mut self,
-        body: &RuntimeMaintenanceRead,
-        input: &[u8],
-    ) -> Result<RuntimeConsolidationTicket, RuntimeError> {
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input = serde_json::from_slice(input).map_err(failure)?;
-        self.bind_consolidation_owned(body, input, true)
-    }
-
     /// Binds an owned, actor-scoped selection to the live native maintenance read.
     /// The ticket admits its own custody and checks the exact sources again when applied.
     pub fn bind_consolidation_direct(
@@ -269,17 +259,6 @@ impl NativeWorldSession {
             _ => return Err(failure("consolidation source preparation produced effects")),
         })
     }
-    pub fn cancel_consolidation_sources(
-        &mut self,
-        ticket: &mut RuntimeConsolidationTicket,
-    ) -> Result<(), RuntimeError> {
-        if let Some(key) = ticket.candidate.take() {
-            if self.session.is_npc_sources(key) {
-                self.session.cancel(key).map_err(failure)?;
-            }
-        }
-        Ok(())
-    }
     pub fn consolidation_current(
         &self,
         ticket: &RuntimeConsolidationTicket,
@@ -333,29 +312,6 @@ impl NativeWorldSession {
             fence,
             _storage: storage,
         }))
-    }
-    pub fn consolidation_interpretation(
-        &self,
-        ticket: &mut RuntimeConsolidationTicket,
-    ) -> Result<RuntimeJson, RuntimeError> {
-        self.require_active()?;
-        let state = &self.session.accepted().map_err(failure)?.state;
-        if !ticket.scope.still_permitted(state) || ticket.sources.is_none() {
-            return Err(failure("consolidation source preparation is unavailable"));
-        }
-        if ticket.interpretation.is_none() {
-            ticket.interpretation = Some(Arc::new(
-                MaintenanceInterpretation::capture(state, &ticket.scope.actor_id, &self.budget)
-                    .map_err(failure)?,
-            ));
-        }
-        RuntimeJson::encode(
-            ticket
-                .interpretation
-                .as_ref()
-                .ok_or_else(|| failure("interpretation scope unavailable"))?,
-            &self.budget,
-        )
     }
     pub fn begin_consolidation(
         &mut self,

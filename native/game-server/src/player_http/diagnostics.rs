@@ -555,7 +555,94 @@ struct Detail<T> {
 struct Trigger<'a> {
     root: Call<'a, Option<&'a crate::store::TerminalOutcome>>,
     children: Vec<Call<'a, AttemptOutput<'a>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    decision: Option<DecisionInspection>,
     coverage: &'static str,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DecisionInspection {
+    reason: &'static str,
+    immediate: &'static str,
+    #[serde(rename = "final")]
+    eventual: &'static str,
+    immediate_ms: Option<i64>,
+    total_ms: Option<i64>,
+    queue_ms: Option<i64>,
+    preparation_ms: Option<i64>,
+    provider_ms: Option<i64>,
+    accounting_ms: Option<i64>,
+    estimated_cost_usd: f64,
+    held_usd: f64,
+    unpriced_attempts: i64,
+    attempts: i64,
+}
+
+fn decision_inspection(root: &diagnostics::Root) -> Option<DecisionInspection> {
+    use crate::store::EscalationReason;
+
+    let totals = root.decision.as_ref()?;
+    let (reason, immediate) = match totals.reason {
+        EscalationReason::SemanticEscalation => (
+            "The first decision requested deeper reasoning.",
+            "The immediate choice was deferred",
+        ),
+        EscalationReason::Abstained => (
+            "The first decision did not find a suitable answer.",
+            "The fast decision did not choose an action",
+        ),
+        EscalationReason::NativeRejection => (
+            "The game rejected the proposed operation.",
+            "The proposed operation was refused",
+        ),
+        EscalationReason::InvalidOutput => (
+            "The first model returned an unusable structured answer.",
+            "The fast answer was unusable",
+        ),
+        EscalationReason::RouteUnavailable => (
+            "The fast model could not accept this request.",
+            "The fast request could not start",
+        ),
+    };
+    let eventual = match (root.status, root.outcome.as_ref()) {
+        (_, Some(outcome)) if outcome.applied => "The game applied the result",
+        (_, Some(outcome))
+            if outcome.stage == "decision-escalation" && outcome.condition == "continued" =>
+        {
+            "The character continued their current work"
+        }
+        (_, Some(outcome))
+            if outcome.stage == "decision-escalation" && outcome.condition == "abstained" =>
+        {
+            "The higher decision did not find a suitable answer"
+        }
+        (SpeechReplyStatus::Completed, _) => "The decision completed",
+        (SpeechReplyStatus::Failed, _) => "The decision ended without applying a result",
+        (SpeechReplyStatus::Cancelled, _) => "The decision was cancelled",
+        (SpeechReplyStatus::Stale, _) => "The decision was no longer current",
+        _ => "Waiting for reconsideration",
+    };
+    Some(DecisionInspection {
+        reason,
+        immediate,
+        eventual,
+        total_ms: root
+            .completed_at
+            .and_then(|end| end.checked_sub(root.started_at))
+            .filter(|elapsed| *elapsed >= 0),
+        // Receipts expose the complete attempt elapsed in the stage view.
+        // It does not split the queue, preparation, transport, or accounting.
+        immediate_ms: None,
+        queue_ms: None,
+        preparation_ms: None,
+        provider_ms: None,
+        accounting_ms: None,
+        estimated_cost_usd: root.settled_micro_usd as f64 / 1_000_000.0,
+        held_usd: totals.held_micro_usd as f64 / 1_000_000.0,
+        unpriced_attempts: totals.unpriced_attempts,
+        attempts: root.stage_count,
+    })
 }
 
 #[derive(Serialize)]
@@ -606,26 +693,38 @@ fn publish_stage(
         return Ok(access_failure(AccessError::Forbidden));
     };
     let render = |capture: Option<&SavedStageCapture>| {
-        reply(state, StatusCode::OK, &Detail {
-            ok: true,
-            details: StageDetails {
-                saved: attempt,
-                capture: capture.map_or(StageInput::Unavailable, |capture| StageInput::Captured {
-                    input: &capture.input,
-                    redacted: capture.proof.redacted,
-                }),
+        reply(
+            state,
+            StatusCode::OK,
+            &Detail {
+                ok: true,
+                details: StageDetails {
+                    saved: attempt,
+                    capture: capture.map_or(StageInput::Unavailable, |capture| {
+                        StageInput::Captured {
+                            input: &capture.input,
+                            redacted: capture.proof.redacted,
+                        }
+                    }),
+                },
             },
-        })
+        )
     };
     let Some(capture) = &saved.stage_capture else {
         return Ok(render(None));
     };
-    if capture.proof.grant_revision != scope.grant_revision || !session.intelligence_person_current(
-        &scope.account_id, &scope.actor_id, &scope.actor_id, capture.proof.player_life,
-    )? {
+    if capture.proof.grant_revision != scope.grant_revision
+        || !session.intelligence_person_current(
+            &scope.account_id,
+            &scope.actor_id,
+            &scope.actor_id,
+            capture.proof.player_life,
+        )?
+    {
         return Ok(render(None));
     }
-    Ok(world.with_current_stage_source(session, &capture.proof.witness, || render(Some(capture)))?
+    Ok(world
+        .with_current_stage_source(session, &capture.proof.witness, || render(Some(capture)))?
         .unwrap_or_else(|| render(None)))
 }
 
@@ -714,6 +813,7 @@ fn publish(
                     .iter()
                     .map(|stage| attempt_call(stage, root, world_id, state.god_mode))
                     .collect(),
+                decision: decision_inspection(root),
                 coverage: if saved.stages_truncated {
                     "Showing the first 1,000 saved attempts. Select an eligible stage for more details."
                 } else {
@@ -807,7 +907,9 @@ fn attempt_call<'a>(
         output: AttemptOutput {
             receipt,
             saved_billing: true,
-            provider_refresh_available: god_mode && root.owned && root.kind == "chat"
+            provider_refresh_available: god_mode
+                && root.owned
+                && root.kind == "chat"
                 && attempt.original_macrofold_run().is_some(),
             reason,
         },

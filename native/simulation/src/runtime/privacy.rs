@@ -61,15 +61,6 @@ impl NativeWorldSession {
                 .map_or(0, |experience| experience.privacy.revision())
                 == privacy_revision)
     }
-    /// Application authority and retained-source admission remain with the
-    /// existing creator service. Native owns the actual protected-obligation
-    /// check, scoped erasure, transition, rollback and accepted save products.
-    pub fn begin_forget(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input: ForgetInput = serde_json::from_slice(input).map_err(failure)?;
-        self.begin_recall_edit_direct(&input.actor_id, &input.source_id, None)
-    }
 
     /// Begin the same protected edit from trusted, already decoded application
     /// arguments. Storage and rollback stay with the semantic cursor.
@@ -88,16 +79,6 @@ impl NativeWorldSession {
         self.session
             .begin_recall_edit(actor_id, source_id, edit, held, self.history_edit_limits)
             .map_err(failure)
-    }
-    pub fn begin_correct(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
-        self.require_active()?;
-        let _decode = decode_preparation(input, &self.budget)?;
-        let input: CorrectInput = serde_json::from_slice(input).map_err(failure)?;
-        self.begin_recall_edit_direct(
-            &input.actor_id,
-            &input.source_id,
-            Some(input.correction_event_id),
-        )
     }
 }
 
@@ -120,18 +101,27 @@ pub struct RuntimePersonalHistory(Arc<ProviderQuestion>);
 
 impl RuntimePersonalHistory {
     pub fn request(&self) -> &crate::experience::HistoryEditReadRequest {
-        self.0.personal_history().expect("personal history question").0
+        self.0
+            .personal_history()
+            .expect("personal history question")
+            .0
     }
 
     pub fn projection(&self) -> Option<&crate::records::ChangedRows> {
-        self.0.personal_history().expect("personal history question").1
+        self.0
+            .personal_history()
+            .expect("personal history question")
+            .1
     }
 }
 
 impl RuntimeProvider {
     pub fn personal_history(&self) -> Result<Option<RuntimePersonalHistory>, RuntimeError> {
         let question = self.question()?;
-        Ok(question.personal_history().is_some().then_some(RuntimePersonalHistory(question)))
+        Ok(question
+            .personal_history()
+            .is_some()
+            .then_some(RuntimePersonalHistory(question)))
     }
 }
 
