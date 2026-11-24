@@ -234,6 +234,8 @@ The verified source trees are `6db368dd8de4` and `6fdf5d4634c6`. Results `126a76
 
 The durable PostgreSQL client then stopped importing the old live overlay. The stopped writer repeated the same memory-opening records and query order. The old live adapter still saw the one prepared memory only through its selected read cut, refused a stale explicit cut and completed its existing fresh retry. Its metadata read stayed durable, and its real native allocator admitted the same 668-byte row before decoding. Source `8d4f50fa852b`, results `d327b441` and `5bb84592`. Archive `nsc04-retained-storage-cutover-20261123`, manifest `f28d81cfe75d`, includes the exact callers and earlier fixture refusals.
 
+The stopped checkpoint writer and release exporter also use the shared history-count audit and situation-query schema. Both writers emitted the same 3,186-row checkpoint and reopened the same personal memory. Each refused a changed revision and an incorrect history count without publishing a checkpoint. The schema and cognition exports matched byte for byte. Source `959436650b06`, result `1fa46c09636`, archive `nsc04-pure-checkpoint-export-20261123`, manifest `85ae3ca2df65`.
+
 ## Stand-alone Rust stopped operational backup
 
 The Rust command reads current gameplay and external authority from one PostgreSQL snapshot and copies every retained checkpoint for that world. The output includes private account, access, privacy and spending records. It uses the existing operational backup format and the stopped source’s normal database writer key, acquired in shared mode for the read. [Operator command](../save-and-load.md#stopped-operational-backup) · [Limits](../limits/persistence.md#sb17).
