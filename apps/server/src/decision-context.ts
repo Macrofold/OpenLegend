@@ -18,7 +18,9 @@ import {
 import {
   captureSituation,
   completeSituationHistory,
+  expandSituation,
   temporalHistoryForModel,
+  type SituationQuery,
 } from './situation-context.js';
 import {
   prepareSupplyOpportunityContext,
@@ -62,7 +64,7 @@ import {
   intentionEntityReferences,
   capturePersonalAttributionReader,
 } from './entity-references.js';
-import { digest } from './store.js';
+import { digest } from './content-digest.js';
 import { contextSections, type SharedModelExperience } from './perceived-context.js';
 import { type AttemptBinding } from '@open-legend/domain';
 import {
@@ -1590,6 +1592,34 @@ function actionEntityReferences(
       Object.entries(prepared.visibleEntityReferences).filter(([, id]) => targets.has(id)),
     ),
   };
+}
+
+/** Both model routes expand only the original received cut and extend its exact
+ * source proofs before offering the newly disclosed handles to native admission. */
+export async function expandDecisionSituation(
+  prepared: Awaited<ReturnType<typeof prepareDecision>>,
+  queries: readonly SituationQuery[],
+) {
+  await prepared.validateConversation();
+  const expansion = await expandSituation(
+    prepared.situation,
+    [...queries],
+    prepared.readSituationHistory,
+  );
+  await prepared.validateConversation(false);
+  for (const id of expansion.expandedIds) {
+    const body = prepared.situation.bodyBindings.get(id);
+    if (!body) continue;
+    const { handle, leaseId, subject, episode } = body;
+    prepared.entityReferences[handle] = id;
+    prepared.binding.physicalEntityReferences![handle] = id;
+    prepared.binding.entityLeases![id] = leaseId;
+    if (subject) (prepared.binding.identityReferences ??= {})[handle] = subject;
+    if (!prepared.binding.entityIds.includes(id)) prepared.binding.entityIds.push(id);
+    if (episode) (prepared.binding.entityEpisodes ??= {})[id] = episode;
+  }
+  const { expandedIds: _expandedIds, ...disclosed } = expansion;
+  return disclosed;
 }
 
 /** Generation adds private capabilities after recall/action selection. Fit their

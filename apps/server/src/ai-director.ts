@@ -20,7 +20,6 @@ import { readableDecisionContext } from './response-context.js';
 import { entityHandle } from './entity-references.js';
 import { situationProposalBinding, situationResponseCapabilities } from './situation-context.js';
 import {
-  expandDecisionSituation,
   readSituationQueryResponse,
   SITUATION_QUERY_INSTRUCTIONS,
   withSituationQueries,
@@ -156,6 +155,7 @@ import { ThoughtIntakeInputs } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
 import {
+  expandDecisionSituation,
   fallbackDecisionActions,
   fitDecisionEnvelope,
   prepareDecision,

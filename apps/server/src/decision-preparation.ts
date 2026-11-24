@@ -16,7 +16,11 @@ import {
   type DecisionAppraisalProposal,
   responseSchema,
 } from './cognition-contracts.js';
-import { fallbackDecisionActions, prepareDecision } from './decision-context.js';
+import {
+  expandDecisionSituation,
+  fallbackDecisionActions,
+  prepareDecision,
+} from './decision-context.js';
 import type { PreparedReconsideration } from './decision-escalator.js';
 import { decisionValidity } from './decision-validity.js';
 import { resolveResponseEntities } from './entity-references.js';
@@ -27,7 +31,6 @@ import { DECISION_LIMITS } from './decision-state.js';
 import type { DecisionReason } from './decision-state.js';
 import type { WorldService } from './world-service.js';
 import {
-  expandDecisionSituation,
   readSituationQueryResponse,
   SITUATION_QUERY_INSTRUCTIONS,
   withSituationQueries,
