@@ -1,3 +1,4 @@
+import arms from './config/armament-manufacture.json' with { type: 'json' };
 import { quadraticRoots, SPATIAL_LIMITS, type WorldPoint } from '@open-legend/spatial';
 import { bodyCenter } from '../../spatial.js';
 import type { Entity, WorldState } from '../../types.js';
@@ -42,7 +43,7 @@ export function baseObservedAimPoint(
 }
 
 /** Bundled straight-flight tuning. See docs/worlds/base/ranged-counterplay.md. */
-export const BASE_PROJECTILE_SPEED = { stone: 0.5, arrow: 3 } as const;
+export const BASE_PROJECTILE_SPEED = { stone: 0.5, arrow: arms.arrowFlightSpeed } as const;
 export const BASE_PROJECTILE_CONTACT_WARNING =
   'This shot can injure any body in its path, including someone other than your target. Once fired, it cannot be recalled.';
 

@@ -1,3 +1,4 @@
+import arms from './config/armament-manufacture.json' with { type: 'json' };
 import { entitySet, entityValues } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
@@ -75,36 +76,8 @@ export function watchpostReservations(offset: { x: number; z: number }) {
     },
   ];
 }
-export const FIELD_BOW_METHOD: RecipeCandidate = {
-  family: { id: 'base:flex', version: 1 },
-  name: 'Field bow',
-  description: 'An authored flexible branch bow with a cord string.',
-  inputs: [
-    { definitionId: 'wood', quantity: 1, role: 'body' },
-    { definitionId: 'cord', quantity: 1, role: 'binding' },
-  ],
-  output: {
-    name: 'Field bow',
-    description:
-      'A bow held in both hands. It launches compatible finite arrows; a carried knife or shield requires changing equipment.',
-  },
-  parameters: { workSeconds: 180, damage: 18, range: 24, accuracy: 0.75 },
-};
-export const FIELD_ARROW_METHOD: RecipeCandidate = {
-  family: { id: 'base:arrow', version: 1 },
-  name: 'Field arrow',
-  description: 'A shaft with a bone point and fiber fletching.',
-  inputs: [
-    { definitionId: 'wood', quantity: 1, role: 'shaft' },
-    { definitionId: 'bone', quantity: 1, role: 'point' },
-    { definitionId: 'prepared_fiber', quantity: 1, role: 'fletching' },
-  ],
-  output: {
-    name: 'Field arrow',
-    description: 'One ordinary compatible arrow. Its point adds no injury beyond the bow’s shot.',
-  },
-  parameters: { workSeconds: 72, damageBonus: 0 },
-};
+export const FIELD_BOW_METHOD: RecipeCandidate = arms.bowCandidate;
+export const FIELD_ARROW_METHOD: RecipeCandidate = arms.arrowCandidate;
 export function installWatchpost(
   world: WorldState,
   makeActor: typeof createActor,

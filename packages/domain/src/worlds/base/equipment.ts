@@ -1,3 +1,4 @@
+import arms from './config/armament-manufacture.json' with { type: 'json' };
 import outputRules from './config/recipe-output-rules.json' with { type: 'json' };
 import type { EquipmentProfile, EquipmentPort } from '../../equipment.js';
 
@@ -17,9 +18,12 @@ export const BASE_GATHER_EQUIPMENT: EquipmentProfile = {
   uses: ['gather'],
 };
 export const BASE_RANGED_WEAPON_EQUIPMENT: EquipmentProfile = {
-  ports: ['main-hand', 'off-hand'],
+  ports: arms.rangedPorts,
   uses: ['ranged'],
 };
-export const BASE_SHIELD_EQUIPMENT: EquipmentProfile = { ports: ['off-hand'], uses: ['guard'] };
+export const BASE_SHIELD_EQUIPMENT: EquipmentProfile = {
+  ports: arms.shieldPorts,
+  uses: ['guard'],
+};
 
 export const BASE_CLOAK_EQUIPMENT: EquipmentProfile = { ports: ['back'], uses: [] };

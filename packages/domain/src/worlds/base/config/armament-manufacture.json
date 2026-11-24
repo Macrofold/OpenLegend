@@ -1,0 +1,76 @@
+{
+  "shieldCandidate": {
+    "family": { "id": "base:shield", "version": 1 },
+    "name": "Wooden shield",
+    "description": "Bind three worked branches into a rigid shield using two fiber cords.",
+    "inputs": [
+      { "definitionId": "wood", "quantity": 3, "role": "body" },
+      { "definitionId": "cord", "quantity": 2, "role": "binding" }
+    ],
+    "output": {
+      "name": "Wooden shield",
+      "description": "A wooden off-hand shield that can share both hands with a knife. Choose Guard to reduce one timely front contact blow."
+    },
+    "parameters": { "reduction": 0.5, "coverageDegrees": 120 }
+  },
+  "bowCandidate": {
+    "family": { "id": "base:flex", "version": 1 },
+    "name": "Field bow",
+    "description": "An authored flexible branch bow with a cord string.",
+    "inputs": [
+      { "definitionId": "wood", "quantity": 1, "role": "body" },
+      { "definitionId": "cord", "quantity": 1, "role": "binding" }
+    ],
+    "output": {
+      "name": "Field bow",
+      "description": "A bow held in both hands. It launches compatible finite arrows; a carried knife or shield requires changing equipment."
+    },
+    "parameters": { "workSeconds": 180, "damage": 18, "range": 24, "accuracy": 0.75 }
+  },
+  "arrowCandidate": {
+    "family": { "id": "base:arrow", "version": 1 },
+    "name": "Field arrow",
+    "description": "A shaft with a bone point and fiber fletching.",
+    "inputs": [
+      { "definitionId": "wood", "quantity": 1, "role": "shaft" },
+      { "definitionId": "bone", "quantity": 1, "role": "point" },
+      { "definitionId": "prepared_fiber", "quantity": 1, "role": "fletching" }
+    ],
+    "output": {
+      "name": "Field arrow",
+      "description": "One ordinary compatible arrow. Its point adds no injury beyond the bow’s shot."
+    },
+    "parameters": { "workSeconds": 72, "damageBonus": 0 }
+  },
+  "shieldWorkSeconds": 240,
+  "shieldPackingLoad": 3,
+  "guard": {
+    "preparationSeconds": 15,
+    "readySeconds": 180,
+    "recoverySeconds": 60,
+    "label": "Guard",
+    "preparingLabel": "Preparing guard",
+    "readyLabel": "Guard ready",
+    "recoveryLabel": "Recovering from guard"
+  },
+  "shieldPorts": ["off-hand"],
+  "rangedPorts": ["main-hand", "off-hand"],
+  "arrowFlightSpeed": 3,
+  "bowRecoverySeconds": 24,
+  "bowExecution": {
+    "profile": {
+      "kind": "timed-release",
+      "periodSeconds": 1,
+      "center": 0.5,
+      "greenWidth": 0.06,
+      "ordinaryWidth": 0.15,
+      "labels": {
+        "instruction": "Release in the inner patterned band for strong timing, or the outer band for ordinary timing. Timing does not guarantee a hit.",
+        "poor": "Poor timing",
+        "ordinary": "Ordinary timing",
+        "excellent": "Strong timing"
+      }
+    },
+    "contact": { "positive": 0.2, "negative": 0.1 }
+  }
+}

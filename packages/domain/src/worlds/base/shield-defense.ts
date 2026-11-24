@@ -1,3 +1,4 @@
+import arms from './config/armament-manufacture.json' with { type: 'json' };
 import { entityGet } from '../../entity-collection.js';
 import type { ContactDefenseProfile } from '../../contact-defense.js';
 import type { Entity, WorldState } from '../../types.js';
@@ -6,15 +7,8 @@ import equipmentCopy from './equipment-copy.json' with { type: 'json' };
 export { equipmentCopy as BASE_EQUIPMENT_COPY };
 
 export const BASE_GUARD_PROFILE: ContactDefenseProfile = {
-  reduction: 0.5,
-  coverageDegrees: 120,
-  preparationSeconds: 15,
-  readySeconds: 180,
-  recoverySeconds: 60,
-  label: 'Guard',
-  preparingLabel: 'Preparing guard',
-  readyLabel: 'Guard ready',
-  recoveryLabel: 'Recovering from guard',
+  ...arms.shieldCandidate.parameters,
+  ...arms.guard,
 };
 export const BASE_GUARD_TEXT = {
   description:

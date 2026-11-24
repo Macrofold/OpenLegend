@@ -7,6 +7,10 @@ use crate::values::DefinitionPin;
 use serde::Deserialize;
 use std::sync::LazyLock;
 
+#[path = "manufactured_armament.rs"]
+mod armament;
+use armament::Armament;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct LineRules {
@@ -191,6 +195,7 @@ pub(crate) enum Rules {
     FieldSling,
     GatheringTool,
     WovenContainer,
+    Armament(Armament),
 }
 
 pub(crate) fn selected(profile: (&str, u64), family: &str) -> Option<Rules> {
@@ -204,7 +209,7 @@ pub(crate) fn selected(profile: (&str, u64), family: &str) -> Option<Rules> {
         GATHERING_FAMILY => Some(Rules::GatheringTool),
         WOVEN_FAMILY => Some(Rules::WovenContainer),
         family if family == SLING.candidate.family.id => Some(Rules::FieldSling),
-        _ => None,
+        family => Armament::selected(family).map(Rules::Armament),
     }
 }
 
@@ -224,6 +229,7 @@ struct SlingParameters {
 impl Rules {
     pub(crate) fn supports(&self, candidate: &Candidate<'_>) -> Result<bool, InstallError> {
         match self {
+            Self::Armament(arms) => arms.supports(candidate),
             Self::RiverLine => {
                 serde_json::from_str::<LineParameters>(candidate.parameters.get())
                     .map_err(|_| InstallError::DefinitionBody)?;
@@ -267,6 +273,9 @@ impl Rules {
         item_defaults: (bool, Option<u64>),
     ) -> Result<bool, InstallError> {
         match self {
+            Self::Armament(arms) => {
+                arms.validates(work, candidate, definition, output, body, item_defaults)
+            }
             Self::RiverLine => Ok(LINE.validates(work, &candidate.inputs, definition, output)),
             Self::GatheringTool => {
                 gathering_product(work, candidate, definition, output, body, item_defaults)
@@ -417,30 +426,6 @@ fn gathering_product<'a>(
     else {
         return Ok(false);
     };
-    let inherited = |property: &JsText| {
-        !OUTPUTS
-            .excluded_inherited_properties
-            .iter()
-            .any(|excluded| property == excluded.as_str())
-    };
-    let properties = &output.properties;
-    let exact_properties = properties.windows(2).all(|pair| pair[0] < pair[1])
-        && properties.iter().all(|property| {
-            inherited(property)
-                && candidate.inputs.iter().any(|input| {
-                    definition(&input.definition_id)
-                        .is_some_and(|material| material.properties.contains(property))
-                })
-        })
-        && candidate.inputs.iter().all(|input| {
-            definition(&input.definition_id).is_some_and(|material| {
-                material
-                    .properties
-                    .iter()
-                    .filter(|property| inherited(property))
-                    .all(|property| properties.binary_search(property).is_ok())
-            })
-        });
     Ok(work == rules.work_seconds
         && definition(&rules.resource_id).is_some_and(|resource| resource.recipe_id.is_none())
         && output.gathering_tool_yield() == Some((rules.resource_id.as_str(), rules.quantity))
@@ -450,7 +435,7 @@ fn gathering_product<'a>(
         && output.equipment_ports() == Some(OUTPUTS.gathering_tool_ports.as_slice())
         && product.equipment.uses == ["gather"]
         && product.mechanism_fields == OUTPUTS.constructed_story_fields
-        && exact_properties)
+        && matches_inherited_properties(candidate, definition, &output.properties, None))
 }
 
 /// Check the portable item produced by the exact authored methods. Capacity
@@ -549,4 +534,39 @@ fn woven_product<'a>(
             .as_ref()
             == parameters.contents_exposure_profile.as_ref()
         && product.mechanism_fields == OUTPUTS.constructed_story_fields)
+}
+
+/// The compiler and verifier agree about the set, including strict order and
+/// any authored property the finished consumer adds independently of materials.
+fn matches_inherited_properties<'a>(
+    candidate: &Candidate<'_>,
+    definition: impl Fn(&str) -> Option<&'a ItemDefinitionRead>,
+    properties: &[JsText],
+    included: Option<&str>,
+) -> bool {
+    let inherited = |property: &JsText| {
+        !OUTPUTS
+            .excluded_inherited_properties
+            .iter()
+            .any(|excluded| property == excluded.as_str())
+    };
+    properties.windows(2).all(|pair| pair[0] < pair[1])
+        && included.is_none_or(|required| properties.iter().any(|property| property == required))
+        && properties.iter().all(|property| {
+            included.is_some_and(|required| property == required)
+                || inherited(property)
+                    && candidate.inputs.iter().any(|input| {
+                        definition(&input.definition_id)
+                            .is_some_and(|material| material.properties.contains(property))
+                    })
+        })
+        && candidate.inputs.iter().all(|input| {
+            definition(&input.definition_id).is_some_and(|material| {
+                material
+                    .properties
+                    .iter()
+                    .filter(|property| inherited(property))
+                    .all(|property| properties.binary_search(property).is_ok())
+            })
+        })
 }
