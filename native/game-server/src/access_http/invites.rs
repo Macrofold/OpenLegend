@@ -50,6 +50,9 @@ pub(super) async fn landing(
 pub(crate) struct Enrollment {
     pub(crate) game: Arc<CurrentServer>,
     pub(crate) saves: Arc<LiveSaves>,
+    // Release this after the last enrollment reference to the world. Axum
+    // can finish serving before Hyper drops the connection's router state.
+    pub(crate) _request_owner: tokio::sync::watch::Sender<()>,
 }
 
 pub(super) async fn complete(

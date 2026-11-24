@@ -357,7 +357,7 @@ impl PreparedGame {
             display,
             god_mode,
             http_stop.clone(),
-            request_owner,
+            request_owner.clone(),
             checkpoints.clone(),
             loads.clone(),
             definitions,
@@ -407,6 +407,7 @@ impl PreparedGame {
                 Some(access_http::Enrollment {
                     game: game.clone(),
                     saves: saves.clone(),
+                    _request_owner: request_owner,
                 }),
                 Some(presence),
             )
@@ -469,7 +470,7 @@ impl PreparedGame {
         )
         .await;
         // Axum can report a finished connection before Hyper drops its
-        // service and response body. Wait for their player owners as well.
+        // service and response body. Wait for every router that owns the world.
         let _ = requests_released.changed().await;
         game.world.drain_operations().await;
         let game = Arc::try_unwrap(game).map_err(|_| "The listener left a running world owner")?;

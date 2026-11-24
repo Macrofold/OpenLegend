@@ -196,6 +196,12 @@ The earlier link redirect reached `/auth/login` with a cross-site navigation mar
 
 The browser and held-HTTPS journeys passed on release source `bd71e9b9e9e025c5e5334aae8b5126482e099f8b`, executable SHA-256 `80c6b75ab66f43dc921311aabba0945466bb5cdfbd2eea0a0b41489b4470bebd`. The refusal response reads the same submitted scope after the finished control fence evicts its cache, then encodes under the current grant. The complete browser journey with that check passed on debug source `0e24d86b970da0e631fb6c5934e0bac33b1fb9f7`, executable SHA-256 `7f0ce4a25e95a3f12f1e1a44e46c249c99f3056553ab3c57895e259e048dec12`. The current inactive scope received its refusal, and an old control request after revocation received HTTP 403. Neither wrote a receipt. These isolated builds enabled the existing lexical worker. Results and earlier refusals are under `nsc04-rust-invites-20261121.M4c1OzPZ/participation-release-browser`, `participation-refusal-scope-browser`, `provider-check/participation-release`, `browser-entry-block` and `diagnostic-real-control` in the local verification archive. The listeners exited cleanly and the disposable databases were dropped.
 
+### Shutdown while a signed invitation is in progress
+
+On November 23, 2026, the verifier held the real PostgreSQL read for a signed spectator invitation and disconnected the caller. The old listener tried to close the world while the sign-in route still owned it. On the repaired release, shutdown waited for that request owner. Releasing the database hold let the accepted operation settle once and the listener exit normally. All three native allocation counters returned to zero.
+
+The matched local checks used executable `9c425d99fe31` for the old behavior and `d963e75fdc53` from tree `1f987ddfbd18` for the fix. The `nsc04-oidc-retirement-20261123` archive holds results `48f0d9eef0e9` and `093ec03b1292` and the exact caller. Both disposable databases closed. This is a shutdown correctness check. No paid calls or speed measurements ran.
+
 ### Stand-alone Rust grant changes — November 22, 2026
 
 The real access endpoint accepts an authorized change to an existing grant. A change closes the old private stream before the database writes begin. Retaining Play keeps the controlling session. Removing Play releases its control in the same transaction as the new rights and audit, and preserves private character ownership. Restoring Play requires a new control claim.
