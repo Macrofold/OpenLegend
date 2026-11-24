@@ -3,7 +3,6 @@ import { AuthorityRepository, AUTHORITY_TABLES, initializeInviteSchema } from '.
 import { CommandReceipts } from './command-receipts.js';
 import { initializeCheckpointSchema } from './checkpoint-format.js';
 import { HistoryRepository } from './history.js';
-import { MaintenanceRepository } from './maintenance.js';
 import { MemoryRepository } from './memory-repository.js';
 import { BACKUP_TABLES } from './operational-backup-format.js';
 import { ReceivedValueOwnership } from './received-value-ownership.js';
@@ -148,7 +147,10 @@ export async function initializeGameSchema(
   await AuthorityRepository.initializeSchema(db);
   await AssetRepository.initializeSchema(db);
   await initializeInviteSchema(db);
-  await MaintenanceRepository.initializeSchema(db);
+  // Creator maintenance belongs to the installation and survives world rewind.
+  await db.exec(
+    'CREATE TABLE IF NOT EXISTS ops_maintenance (world_id TEXT NOT NULL, id TEXT NOT NULL, updated_at BIGINT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,id))',
+  );
   await db.exec(`
       CREATE TABLE IF NOT EXISTS creation_target_registration (
         id BIGINT PRIMARY KEY CHECK(id=1), target_id TEXT NOT NULL UNIQUE,
