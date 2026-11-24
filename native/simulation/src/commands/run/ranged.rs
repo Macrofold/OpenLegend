@@ -130,7 +130,13 @@ impl CommandCursor {
             loadout::StockAdmission::Replace(&self.budget),
         )?
         else {
-            self.refuse(&ordinary.not_applicable);
+            let profile = &installed.content.profile;
+            let message = crate::worlds::activity_display::ranged_ammunition_unavailable((
+                &profile.id,
+                profile.version,
+            ))
+            .unwrap_or(&ordinary.not_applicable.message);
+            self.discovery_result(false, &ordinary.not_applicable.code, message)?;
             return Ok(false);
         };
         let permission_size = permission

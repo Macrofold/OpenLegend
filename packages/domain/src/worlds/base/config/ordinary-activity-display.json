@@ -47,7 +47,8 @@
     "afterApproach": " after any approach",
     "withoutApproach": " without automatic approach",
     "approach": "Move to within {distance} m; the route length is not known",
-    "stock": "Uses one {ammunition}; {quantity} in this carried stack"
+    "stock": "Uses one {ammunition}; {quantity} in this carried stack",
+    "ammunitionUnavailable": "The selected ammunition is unavailable."
   },
   "observed": {
     "distanceName": "distance",

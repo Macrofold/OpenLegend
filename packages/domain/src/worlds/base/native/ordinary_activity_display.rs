@@ -67,6 +67,7 @@ struct RangedWords<'a> {
     after_approach: &'a str,
     approach: &'a str,
     stock: &'a str,
+    ammunition_unavailable: &'a str,
 }
 
 /// Extra context for a human choosing a strike, never added to NPC offers or
@@ -198,6 +199,18 @@ fn words() -> Option<&'static DisplayWords<'static>> {
         .as_ref()
 }
 
+fn selected_words(profile: (&str, u64)) -> Option<&'static DisplayWords<'static>> {
+    if profile == ("grounded-wilderness", 1) {
+        words()
+    } else {
+        None
+    }
+}
+
+pub(crate) fn ranged_ammunition_unavailable(profile: (&str, u64)) -> Option<&'static str> {
+    Some(selected_words(profile)?.ranged.ammunition_unavailable)
+}
+
 fn fact(name: &str, value: JsText) -> ActivityFact {
     ActivityFact {
         name: name.into(),
@@ -231,10 +244,7 @@ pub(crate) fn shared_name(
     effect: Option<(&str, Option<&str>, Option<&str>)>,
     preparation_name: Option<&JsText>,
 ) -> Option<JsText> {
-    if profile != ("grounded-wilderness", 1) {
-        return None;
-    }
-    let words = words()?;
+    let words = selected_words(profile)?;
     if let ("status-effect", Some((label, activate, deactivate))) = (kind, effect) {
         let (name, prefix) = if operation == Some("activate") {
             (activate, words.status.activate_prefix)
@@ -302,10 +312,7 @@ pub fn format(
     actor: Option<ObservedActor>,
     target: Option<ObservedTarget>,
 ) -> Option<ActivityView> {
-    if profile != ("grounded-wilderness", 1) {
-        return None;
-    }
-    let words = words()?;
+    let words = selected_words(profile)?;
     let mut facts = Vec::new();
     if let Some(purpose) = chosen_purpose {
         facts.push(fact(words.chosen_purpose, purpose));

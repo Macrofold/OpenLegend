@@ -1,4 +1,5 @@
 import arms from './config/armament-manufacture.json' with { type: 'json' };
+import display from './config/ordinary-activity-display.json' with { type: 'json' };
 import { quadraticRoots, SPATIAL_LIMITS, type WorldPoint } from '@open-legend/spatial';
 import { bodyCenter } from '../../spatial.js';
 import type { Entity, WorldState } from '../../types.js';
@@ -68,7 +69,7 @@ export const BASE_RANGED_TEXT = {
   readyLabel: 'Aim ready',
   notReady: 'The selected aim is still preparing.',
   cancelled: 'Aim ended without firing. No projectile was spent.',
-  ammunitionUnavailable: 'The selected ammunition is unavailable.',
+  ammunitionUnavailable: display.ranged.ammunitionUnavailable,
   reservationUnavailable: 'One projectile could not be reserved.',
   selectedChanged: 'The selected body, tool or ammunition changed.',
   targetLost: 'The selected target is no longer perceived.',
