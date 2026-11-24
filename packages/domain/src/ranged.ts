@@ -967,6 +967,7 @@ function finishProjectile(
   events: WorldEvent[],
 ): void {
   const id = flight.id;
+  const { ranged: words, projectileContactEvent } = selectedOccurrenceRules(world);
   const source = entityGet(world.entities, flight.sourceId),
     target = contact?.body;
   // Injury can separate a player's living participant into a corpse. Capture
@@ -1021,12 +1022,10 @@ function finishProjectile(
     emit(
       world,
       events,
-      'projectile-contact',
+      projectileContactEvent,
       subjectNarration(target, [
-        result === 'hit' ? BASE_RANGED_TEXT.contactHit : BASE_RANGED_TEXT.contactStopped,
-        ...(knownSource
-          ? [BASE_RANGED_TEXT.contactSource, person(knownSource.id, 'object'), '.']
-          : []),
+        result === 'hit' ? words.contactHit : words.contactStopped,
+        ...(knownSource ? [words.contactSource, person(knownSource.id, 'object'), '.'] : []),
       ]),
       target,
       target.id,
@@ -1052,8 +1051,8 @@ function finishProjectile(
   emit(
     world,
     events,
-    'projectile-ended',
-    'A committed projectile terminated.',
+    words.projectileEnded,
+    words.terminated,
     source,
     flight.targetId,
     {
@@ -1106,10 +1105,10 @@ function finishProjectile(
     emit(
       world,
       events,
-      'shot-ended',
+      words.shotEnded,
       observed
         ? subjectNarration(source, [
-            reportedHit ? BASE_RANGED_TEXT.observedHit : BASE_RANGED_TEXT.observedNoInjury,
+            reportedHit ? words.observedHit : words.observedNoInjury,
             person(reported!, 'object'),
             '.',
           ])
@@ -1117,9 +1116,9 @@ function finishProjectile(
             source,
             observedPoint
               ? contact
-                ? BASE_RANGED_TEXT.observedCover
-                : BASE_RANGED_TEXT.observedRangeEnd
-              : BASE_RANGED_TEXT.stopped,
+                ? words.observedCover
+                : words.observedRangeEnd
+              : words.stopped,
           ),
       source,
       observed ? reported?.id : undefined,
