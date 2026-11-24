@@ -4,7 +4,7 @@ Part of the [performance contract](../performance.md). Use the planning and repo
 
 ## Planning comparisons
 
-Game-server comparisons use the [selected stand-alone Rust host](../projects/rust-server-completion-feature-spec.md#scope-and-product-decisions). Earlier TypeScript and Node-hosted server results are historical.
+Game-server comparisons use the [selected stand-alone Rust host](../projects/completed/2026/rust-server-completion-feature-spec.md#scope-and-product-decisions). Earlier TypeScript and Node-hosted server results are historical.
 
 1. **Decide what the result will settle.** In the existing task plan, name the real caller, the required outcomes, the workload and the decision. For example, a walk must reach the player’s view and the required save must complete. Decide how many repetitions to run and which results would pass, fail or remain inconclusive. Follow any thresholds, workloads and repetitions already agreed for that project. Changing those obligations requires an explicit scope decision before running a substitute.
 2. **Pick the smallest comparison that answers the question.** A diagnostic through the real caller can measure how much a helper costs and how often it runs. To claim an improvement to ordinary play, measure the complete representative journey. Verify that the build loaded the change and that the inputs actually exercise it. Keep instrumentation for finding a cause separate from the clean timings used to claim an improvement.

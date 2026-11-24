@@ -1,19 +1,19 @@
 # Complete game on the Rust server
 
-| Status      | Current progress                                                                 | Last updated |
-| ----------- | -------------------------------------------------------------------------------- | ------------ |
-| In progress | Rust is the default server, and the separate checkpoint comparison remains open. | 2026-11-24   |
+| Status    | Current progress                                                                            | Last updated |
+| --------- | ------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The Rust-only release passed the retained gameplay, operations and managed workload checks. | 2026-11-24   |
 
 ## What a player should be able to do
 
 Start Main, meet someone at camp, obtain supplies, and gather, make or use something useful. A player can learn a known method from a permitted source and use it in play. An NPC can remember what they personally noticed and answer a conversation while the world keeps moving. Another player can join, learn a different account of the same events and act independently. Leaving the browser and coming back returns each person to their permitted view of the living world.
 
-That journey joins physical action with personal knowledge that outlasts the session. Keep the simpler Solo start, the other supported authored openings, retained character tools and operations. The [playable openings](../worlds/base/playable-openings.md), [repertoire priorities](../repertoires/gameplay-priorities.md) and [feature owners](../features/README.md) supply the content.
+That journey joins physical action with personal knowledge that outlasts the session. Keep the simpler Solo start, the other supported authored openings, retained character tools and operations. The [playable openings](../../../worlds/base/playable-openings.md), [repertoire priorities](../../../repertoires/gameplay-priorities.md) and [feature owners](../../../features/README.md) supply the content.
 
 ## Scope and product decisions
 
 - **One live server.** Stand-alone Rust is the selected server for all supported gameplay and operations. Retire the TypeScript and Node-hosted server paths through the cutover. TypeScript server development and TypeScript-versus-Rust comparisons are closed. A new world, long-lived character memory, a privileged edit and exceptional recovery must work without starting a Node game process.
-- **Client transition.** [Unreal Engine 5](../spatial-world.md#client-replacement-path) is the client direction. Use the existing browser to qualify the server through its real callers. Limit TypeScript client work to what the transition needs. Keep build-time and authoring tools while they still have a caller.
+- **Client transition.** [Unreal Engine 5](../../../spatial-world.md#client-replacement-path) is the client direction. Use the existing browser to qualify the server through its real callers. Limit TypeScript client work to what the transition needs. Keep build-time and authoring tools while they still have a caller.
 - **Preserve useful behavior through its actual callers.** Include the player, autonomous character, second observer, retained privileged readers and operators, and offline-to-online restart. Preserve explicit failures and uncertainty as well as successful outcomes. Remove superseded plumbing once its retained callers have moved or the product owner has deferred the feature.
 - **World rules have one author.** The bundled world's occasions for sleep, memory, feeding, warnings and conversation belong to that world. The engine supports installed capabilities and protects access, ordering and resources. A body without human language memory can forage and flee without generating a human journal or buying a model call.
 
@@ -37,16 +37,16 @@ The deferrals apply to the named capabilities and their callers. Shared command 
 | A player inspects an item, follows a lead or returns to the journal                  | Inspection can reveal what was actually examined. Lists can be paged. Omitted contents stay unknown. The player can reopen history, methods, notes, dispositions or commitments. An authorized Journal passage resolves to private prose, an allowed authored description or an explicit failure. Withdrawn text disappears from view.                                                                                 |
 | A permitted inspector or administrator acts                                          | Inspect the retained state within granted scope. Manage invitations, rights, saves and recovery with the same separation of duties. Operators can recover a scheduled checkpoint. Reconnecting players see the current running world. A stale checkpoint cannot grant access, rewind spending or revive forgotten information.                                                                                         |
 
-Exercise installed Main and Solo, then use the existing smaller presets to activate retained branches absent from either one. Preserve full current starting content. Verify install, execution, save and reload for retained authored combinations. Unknown families fail admission explicitly. Follow the [development save policy](../../AGENTS.md#development-save-policy).
+Exercise installed Main and Solo, then use the existing smaller presets to activate retained branches absent from either one. Preserve full current starting content. Verify install, execution, save and reload for retained authored combinations. Unknown families fail admission explicitly. Follow the [development save policy](../../../../AGENTS.md#development-save-policy).
 
 ## Completion and evidence
 
-**Required passes.** Close the retained rows in the [caller and field inventory](../maintainers/native-simulation-core-coverage.md#full-server-conversion-inventory), including non-HTTP work. Complete the journeys above on the Rust release with Node unavailable to the running server. Run past the actual memory deadlines. Exercise a fresh install, a warm world with retained positive optional state, a cold restart and a separate administrative recovery. Change the ordinary development and production launchers only after these pass. Then retire both superseded hosts and their exclusively used interfaces.
+**Required passes.** Close the retained rows in the [caller and field inventory](../../../maintainers/native-simulation-core-coverage.md#full-server-conversion-inventory), including non-HTTP work. Complete the journeys above on the Rust release with Node unavailable to the running server. Run past the actual memory deadlines. Exercise a fresh install, a warm world with retained positive optional state, a cold restart and a separate administrative recovery. Change the ordinary development and production launchers only after these pass. Then retire both superseded hosts and their exclusively used interfaces.
 
-**Required measurements.** Use the [technical comparison rules](rust-server-completion-tech-design.md#verification-and-cutover) for uncertain changes to CPU, memory, waiting or gameplay. Compare equivalent completed work between qualified stand-alone Rust builds. The earlier [RGS08 decision](../maintainers/completed/2026/rust-game-server.md) qualified three game hours in one opening. It established useful movement, conversation and saving evidence. That window could not establish the review of routine accounts older than six game hours. Controlled replies establish application behavior. Model quality and uncoached enjoyment keep their existing evaluation owners.
+**Required measurements.** Use the [technical comparison rules](rust-server-completion-tech-design.md#verification-and-cutover) for uncertain changes to CPU, memory, waiting or gameplay. Compare equivalent completed work between qualified stand-alone Rust builds. The earlier [RGS08 decision](../../../maintainers/completed/2026/rust-game-server.md) qualified three game hours in one opening. It established useful movement, conversation and saving evidence. That window could not establish the review of routine accounts older than six game hours. Controlled replies establish application behavior. Model quality and uncoached enjoyment keep their existing evaluation owners.
 
 ## Maintained records
 
-- [Implementation and dependencies](../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server)
-- [Technical design](rust-server-completion-tech-design.md) and [current architecture](../architecture.md#stand-alone-rust-host)
-- [Adoption and resource constraints](../limits/native-simulation-core.md#nsc-l01--proof-and-adoption-scope) and [memory policy](../memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall)
+- [Implementation and dependencies](../../../maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server)
+- [Technical design](rust-server-completion-tech-design.md) and [current architecture](../../../architecture.md#stand-alone-rust-host)
+- [Adoption and resource constraints](../../../limits/native-simulation-core.md#nsc-l01--proof-and-adoption-scope) and [memory policy](../../../memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall)

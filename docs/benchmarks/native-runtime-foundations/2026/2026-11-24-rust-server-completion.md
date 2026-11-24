@@ -54,9 +54,43 @@ The original failure text did not distinguish an occupied save gate from a nativ
 
 The uninstrumented release `1ff11741f3453db7c53045186f9bba93884bb9bf` passed the same local 180-second case. It saved all 34 walks, both steering gestures and both replies. The automatic file contained 12,907 verified rows and the complete 26-actor roster. The cold server recovered the original movement receipt. Both processes exited cleanly, all reservations released and the disposable database was removed. The retained manifest starts `121cf98c34b0` and the executable hash starts `6de6c5353c18`.
 
-A separate local diagnostic held a real ordinary intake guard for 751 ms. An extra signed walk was accepted and appeared on the live stream during the hold, then produced exactly one durable receipt. The checkpoint acquired the gate after the guard released. An induced refusal from the native world-admission owner triggered the existing 30-second retry. The next attempt published a valid checkpoint. Scheduled walks, both replies, cold continuation and cleanup still passed. This diagnostic does not enter the timing results.
+A separate local diagnostic held a real ordinary intake guard for 751 ms. An extra signed walk was accepted and appeared on the live stream during the hold, then produced exactly one durable receipt. The checkpoint acquired the gate after the guard released. An induced refusal from the native world-admission owner triggered the existing 30-second retry. The next attempt published a valid checkpoint. Scheduled walks, both replies, cold continuation and cleanup still passed. The diagnostic manifest starts `bb6e52ad135e`. Its measurements do not enter the clean timings.
 
-The clean comparison `f795c51c-f13d-4944-b880-d9171ebaa51e` uses this common repair on top of earlier Rust (`dfcbbbe8f8342b311ef78f1d72faf9df457fbfc5`) and the release (`1ff11741f3453db7c53045186f9bba93884bb9bf`). The previously qualified workload, inputs and order remain fixed. The freeze manifest starts `8ea97c118f4e`.
+The clean comparison `f795c51c-f13d-4944-b880-d9171ebaa51e` used the common repair on top of earlier Rust (`dfcbbbe8f8342b311ef78f1d72faf9df457fbfc5`) and the release (`1ff11741f3453db7c53045186f9bba93884bb9bf`). All six runs on the same standard 16 GiB worker completed the frozen 180-second workload and published one verified scheduled file during play. Each used an independent database, saved 34 walks, two steering gestures and two replies, then reopened the latest world and recovered the original command receipt. A signed operator listed the checkpoint while still connected. The freeze starts `8ea97c118f4e`, collected manifest `d579ecba3a0d`, cleanup receipt `4871d20b29a3` and reduced report `833448c625ff`. The case receipts include each exact release executable and source archive.
+
+Cells report median / average / p95, across three interleaved runs per arm or 96 timed walks per arm for the three latency rows. Server CPU includes all Rust threads and the checkpoint writer. The PostgreSQL figures use an exclusive database process group.
+
+| Measure                                                 |                Earlier Rust |                Release Rust |
+| ------------------------------------------------------- | --------------------------: | --------------------------: |
+| Server CPU (% of one logical core)                      |       53.13 / 52.32 / 53.28 |       51.39 / 52.14 / 55.29 |
+| Exclusive PostgreSQL CPU (% of one logical core)        |          7.77 / 7.74 / 8.09 |          7.35 / 7.49 / 8.36 |
+| Achieved game speed (% of intended rate)                |   99.973 / 99.982 / 100.000 |  100.000 / 99.991 / 100.000 |
+| Command response (ms)                                   |        9.23 / 10.22 / 18.10 |          6.86 / 7.12 / 9.77 |
+| First moved position received by the stream (ms)        |      75.42 / 67.35 / 117.64 |       57.44 / 59.65 / 91.21 |
+| First observation of the committed command (ms)         |  625.75 / 611.00 / 1,116.90 |  643.68 / 600.35 / 1,080.62 |
+| Combined CPU per completed game second (ms)             |       10.15 / 10.01 / 10.23 |         9.79 / 9.94 / 10.61 |
+| Concurrent server RSS plus PostgreSQL memory peak (MiB) |       592.7 / 573.8 / 602.2 |       586.8 / 594.4 / 620.2 |
+| Transient reservation peak (MiB)                        |       137.0 / 137.7 / 140.9 |       139.4 / 139.5 / 141.5 |
+| Resident reservation peak (MiB)                         |       178.5 / 179.7 / 182.9 |       177.3 / 178.7 / 185.7 |
+| Pending-save reservation peak (MiB)                     |             7.1 / 7.2 / 7.4 |             7.4 / 7.5 / 7.6 |
+| Database growth (MiB)                                   |          33.4 / 35.1 / 39.0 |          32.2 / 33.6 / 40.6 |
+| WAL growth (MiB)                                        |       104.7 / 108.1 / 118.4 |       107.6 / 108.9 / 126.9 |
+| Checkpoint output window (ms)                           |     947.8 / 968.3 / 1,018.4 |     924.6 / 940.2 / 1,018.8 |
+| Retained file (MiB)                                     |          29.7 / 30.0 / 31.7 |          29.2 / 29.9 / 32.5 |
+| Concurrent memory peak during file output (MiB)         |       571.4 / 545.7 / 585.8 |       579.8 / 588.7 / 609.8 |
+| Cold reopening to a usable permitted view (ms)          | 1,113.5 / 1,151.7 / 1,231.2 | 1,112.8 / 1,128.4 / 1,236.4 |
+
+The 10,800 offered game seconds yielded 10,797.03–10,800.02 in earlier Rust and 10,796.98–10,800.05 in release Rust at the stream boundaries. Internal clock debt was unavailable. Combined CPU per game second changed by −3.6%, −2.4% and +3.7% in the matched pairs. Autonomous NPC job medians were 223 and 183 through drain, with 162 recorded NPC occurrences in every run. The sampled CPU result is inconclusive. Command response and movement receipt both met their respective latency targets. Their p99 values were 19.9 and 139.3 ms in earlier Rust and 15.4 and 108.4 ms in release Rust.
+
+The sampled file-writing windows included 9–11 memory cuts per run. The verified files contained 12,598–14,038 rows on the release and 12,697–13,624 on the earlier build, using each arm's actual captured cut. No first-movement receipt or PostgreSQL receipt observation landed strictly inside a file-writing window. The full windows establish gameplay with checkpoints enabled. The effect on a walk or commit during the write itself remains unmeasured. The driver checks for committed rows every 100 ms. Exact commit acknowledgement, save scheduling age, save phases and prepared SQL bytes remain unavailable from this clean comparison.
+
+Median database transaction commits were 9,664 and 9,394, including the fixture's reads. Median inserted/updated/deleted tuple counts were 28,402 / 77,198 / 10,496 and 28,407 / 74,909 / 10,800. These are PostgreSQL counters, with exact statement and transferred-row counts unavailable. The signed client used 0.97 / 0.98 / 0.99% and 0.97 / 0.97 / 0.97% of one core. The fixture driver used 1.33 / 1.32 / 1.34% and 1.31 / 1.33 / 1.43%. Both are separate from the server and PostgreSQL totals. The launcher used at most 0.02 CPU seconds in a steady window.
+
+## Release decision
+
+Retain stand-alone Rust as the sole live server for the approved game scope. The Node-free release passes the required starting-world, privacy, reconnect, persistence and recovery journeys. Both managed windows complete the same scheduled play at the authored rate. The release delivers movement sooner in these runs and combined CPU varies across the matched pairs. The result qualifies the retained gameplay and operations at the measured opening.
+
+The scheduled campaign cleaned up its processes, databases and workspaces. EC2 and the pool confirmed the stop at generation 594. The runner settled at $0.611604 estimated use with no remaining campaign hold. Controlled provider spend was $0.
 
 ## Evidence and failed attempt
 

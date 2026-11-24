@@ -10,7 +10,7 @@ The selected Main opening and its useful content are owned by [first-playable wo
 
 ## Stand-alone Rust host
 
-Stand-alone Rust is the selected game server. Use the [full-game design](projects/rust-server-completion-feature-spec.md) and [source coverage](maintainers/native-simulation-core-coverage.md#full-server-conversion-inventory) for verified behavior and remaining cutover work. The [client replacement path](spatial-world.md#client-replacement-path) owns the move to Unreal Engine 5.
+Stand-alone Rust is the sole live game server. The [release qualification](benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#release-decision) and [source coverage](maintainers/native-simulation-core-coverage.md#full-server-conversion-inventory) define the verified scope. Node remains a build and authoring tool. The [client replacement path](spatial-world.md#client-replacement-path) owns the move to Unreal Engine 5.
 
 `openlegend-game-server` serves the existing browser and its player protocol. The executable owns sessions, permission checks, world advancement, accepted commands, permitted NPC decisions and PostgreSQL writes for the selected installation. Build tools provide the browser, exact authored definitions, storage manifest, navigation and language assets. At runtime the executable uses those installed artifacts with its native world host. The installed world owns its gameplay rules and wording. [Release setup](../README.md#run-the-stand-alone-rust-server) · [Selected route and family coverage](maintainers/native-simulation-core-coverage.md)
 

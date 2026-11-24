@@ -397,7 +397,7 @@ Extend the existing [hierarchical measurement owner](../performance/hierarchical
 
 ### 9.4 Full adoption inventory and removal targets
 
-For the chosen stand-alone host, use the [complete game-server design](rust-server-completion-tech-design.md) alongside this family inventory. It covers non-simulation callers, due maintenance, typed in-process handoffs, default launch and retirement of both former live servers.
+For the chosen stand-alone host, use the [complete game-server design](completed/2026/rust-server-completion-tech-design.md) alongside this family inventory. It covers non-simulation callers, due maintenance, typed in-process handoffs, default launch and retirement of both former live servers.
 
 Before converting an owner, classify its complete caller and stored-field closure as native mutation, scoped read, authored data, immutable formatting, storage transport or unused. Search direct/type-only imports and re-exports, relative domain imports, `WorldService` methods and raw-world access through wrappers; searching runtime imports alone misses callers. Source inspection at `0d1e25f4f` found 162 domain import/re-export files across non-test `apps`, `packages` and `scripts`, plus `action-retrieval.ts`, `autosaves.ts` and `maintenance.ts` reading `service.world.id` without a domain import. These counts are an audit baseline, not a completeness test or requirement to port metadata readers. Refresh the closure against the actual implementation base.
 

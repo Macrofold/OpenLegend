@@ -58,7 +58,7 @@ pub(crate) struct CommandRequest {
 // Deliberately select only the ordinary operations whose real semantic
 // binders exist in this listener. Unknown fields cannot alter an executed
 // operation. Player-written actions and typed plans are deferred. See
-// docs/projects/rust-server-completion-feature-spec.md#rust-cutover-scope.
+// docs/projects/completed/2026/rust-server-completion-feature-spec.md#rust-cutover-scope.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct CommandInput {
