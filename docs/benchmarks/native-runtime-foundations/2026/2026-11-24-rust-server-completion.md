@@ -46,6 +46,10 @@ Cells again report median / average / p95 across the three runs. Reservation max
 
 Median PostgreSQL transaction commits were 10,162 and 10,050. Median inserted/updated/deleted tuple counts were 30,664 / 80,124 / 11,561 and 32,865 / 83,546 / 13,579. These are database work counters. Exact server statements, rows transferred and prepared bytes are unavailable. Client and fixture driver CPU are outside the server and PostgreSQL totals. Rust worker threads are already included in the server process. The launcher used at most 0.02 CPU seconds in any steady window.
 
+## Scheduled checkpoint window
+
+The separate interleaved campaign `d1e5a752-6a4a-4b12-acf5-b735b08ecc71` uses the same two source commits and standard worker. It makes one rolling checkpoint due in each run while ordinary play and one-second saves continue. Admission and the start were confirmed. The local AWS session expired after the durable job started. Collection, final outcome and worker stop remain unverified. Resume this campaign after renewing access so the original case order and artifacts stay intact.
+
 ## Evidence and failed attempt
 
 The ordinary campaign `07a0b62f-f70b-4630-8139-0fde436db25c` is collected for worker slot 2, generation 592. The result manifest starts `5b499c0e4e88` and the reduced report starts `04d1eec5b3f4`. Each case has its exact source archive, executable, tools, input and independent database receipts. The first campaign `4f2ad20f-ac46-4a53-9f1c-4a66f1581ea9` completed one earlier-Rust case. Its candidate stopped before build because the managed tool still imported the removed workspace-binding file. The restored checker qualified all 22 bindings on a clean release install and the rerun. No result from the first campaign enters the matched statistics.
