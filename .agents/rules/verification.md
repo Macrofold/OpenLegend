@@ -27,6 +27,8 @@ Use focused checks by default. `pnpm check` runs the full unit suite among other
 
 Exercise changed behavior, including review fixes, through the real caller in a representative scenario and a meaningful failure case where feasible. Group checks around a connected player journey. Check an assumption early if it could harm real resources or invalidate substantial dependent work. Otherwise check the connected behavior once it and its callers are implemented. Changes involving permissions, private knowledge, saves and committed effects get the same timing decision. UI work needs actual interaction and visual inspection when available. Findings-only reviews and design-only work do not automatically require running the game.
 
+A shared build can serve several checks even when each needs its own session, database or process. Share a running game when each step leaves the next in its required starting state and each outcome can be observed separately. Preserve the conditions that expose the behavior, such as a cold start, independent player sessions or a request still waiting during revocation. After a change or failure, keep earlier results only for claims their caller, setup and dependencies still support. If repeating a cheap check is simpler than establishing that its evidence still applies, repeat it.
+
 ### Prepare a representative scenario
 
 Before designing a fix around a fixture, show how a supported producer and its admission rules reach the case, or identify the requested new path. Inserting a value by hand can exercise a helper without demonstrating that a player can reach it.
