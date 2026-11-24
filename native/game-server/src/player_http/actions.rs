@@ -85,6 +85,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
             Ok(value) => value,
             Err(response) => return response,
         };
+    let ground = input.position.is_some();
     if input.position.is_some_and(|p| {
         ![p.x, p.y, p.z].iter().all(|v| v.is_finite())
             || !crate::npc::valid_request_id(&p.surface_id)
@@ -99,7 +100,7 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
     if recipe.is_some() && (target.is_some() || item.is_some()) {
         return access_failure(AccessError::Changed);
     }
-    if !input.catalogue && target.is_none() && item.is_none() && recipe.is_none() {
+    if !ground && !input.catalogue && target.is_none() && item.is_none() && recipe.is_none() {
         return refusal(
             StatusCode::BAD_REQUEST,
             "unsupported-action-context",
@@ -125,18 +126,52 @@ pub(super) async fn menu(State(state): State<PlayerRoutes>, request: Request) ->
                     let budget = game.host.budget();
                     let _workspace = budget.reserve(2048)?;
                     let own_status = for_menu.as_deref() == Some(scope.actor_id.as_str());
-                    if item.is_none()
-                        && recipe.is_none()
-                        && (own_status || catalogue && for_menu.is_none())
-                    {
-                        let references = tokens.scoped(scope).map_err(RuntimeError::application_refused)?;
-                        return session.with_player_status_menu(
-                            &scope.account_id,
-                            &scope.actor_id,
-                            |body| references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id)
-                                .map_err(RuntimeError::application_refused),
-                            |menu| status::render(menu, controls, budget),
-                        ).map(Some);
+                    if item.is_none() && recipe.is_none() {
+                        if catalogue && for_menu.is_none() {
+                            let references = tokens.scoped(scope).map_err(RuntimeError::application_refused)?;
+                            return session.with_player_action_catalogue(
+                                &scope.account_id,
+                                &scope.actor_id,
+                                |body| references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id)
+                                    .map_err(RuntimeError::application_refused),
+                                |menu, read| {
+                                    let mut gathering = Vec::new();
+                                    read.visit_gathering(|body, offer| {
+                                        let _alias = budget.reserve(128)?;
+                                        let selected = references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id)
+                                            .map_err(RuntimeError::application_refused)?;
+                                        let row = gather_choice(&selected, &offer, controls, budget)?;
+                                        gathering.try_reserve(1).map_err(|_| CapacityError)?;
+                                        gathering.push(row);
+                                        Ok(())
+                                    })?;
+                                    let mut craft = Vec::new();
+                                    read.visit_known_manufacture(|recipe_id, offer| {
+                                        let row = manufacture::choice(recipe_id, &offer, controls, budget)?;
+                                        craft.try_reserve(1).map_err(|_| CapacityError)?;
+                                        craft.push(row);
+                                        Ok(())
+                                    })?;
+                                    status::render(menu, controls, &gathering, &craft, budget)
+                                },
+                            ).map(Some);
+                        }
+                        if own_status {
+                            let references = tokens.scoped(scope).map_err(RuntimeError::application_refused)?;
+                            return session.with_player_status_menu(
+                                &scope.account_id,
+                                &scope.actor_id,
+                                |body| references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id)
+                                    .map_err(RuntimeError::application_refused),
+                                |menu| status::render(menu, controls, &[], &[], budget),
+                            ).map(Some);
+                        }
+                        if ground && for_menu.is_none() {
+                            return session.with_player_ground_catalogue(
+                                &scope.account_id, &scope.actor_id,
+                                |revision| resource_menu_categories::<()>(revision, &[], &[], budget),
+                            ).map(Some);
+                        }
                     }
                     if let Some(recipe) = recipe.as_deref() {
                         return session.with_player_manufacture_offer(
@@ -265,7 +300,7 @@ fn with_selected_resource<T>(
 struct ResourceCommand<'a> {
     #[serde(rename = "type")]
     kind: &'static str,
-    target_id: &'a str,
+    target_id: Cow<'a, str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     item_id: Option<&'a str>,
 }
@@ -279,18 +314,17 @@ enum ResourceIntent<'a> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct ResourceAction<'a> {
+struct ResourceAction<'a, Facts: Serialize> {
     id: String,
     label: JsText,
     category: &'static str,
     description: &'a JsText,
-    keywords: [&'a JsText; 2],
-    target_id: &'a str,
+    keywords: [Cow<'a, JsText>; 2],
+    target_id: Cow<'a, str>,
     enabled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     reason: Option<&'a JsText>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    facts: Option<[(&'static str, &'a JsText); 1]>,
+    facts: Facts,
     intent: ResourceIntent<'a>,
 }
 
@@ -312,18 +346,18 @@ fn resource_menu_categories<T: Serialize>(
     resource_menu_selection(revision, actions, categories, None, budget)
 }
 
-fn resource_menu_selection<T: Serialize>(
+fn resource_menu_selection<T: Serialize + ?Sized>(
     revision: u64,
-    actions: &[T],
+    actions: &T,
     categories: &[&str],
     primary_action: Option<PrimaryActionSelection<&str>>,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     #[derive(Serialize)]
     #[serde(rename_all = "camelCase")]
-    struct Catalogue<'a, T> {
+    struct Catalogue<'a, T: ?Sized> {
         revision: u64,
-        actions: &'a [T],
+        actions: &'a T,
         categories: &'a [&'a str],
         #[serde(skip_serializing_if = "Option::is_none")]
         default_action_id: Option<&'a str>,
@@ -331,7 +365,7 @@ fn resource_menu_selection<T: Serialize>(
         primary_action: Option<PrimaryActionSelection<&'a str>>,
     }
     #[derive(Serialize)]
-    struct Menu<'a, T> {
+    struct Menu<'a, T: ?Sized> {
         ok: bool,
         catalogue: Catalogue<'a, T>,
     }
@@ -370,6 +404,14 @@ static GATHER: LazyLock<GatherMenuCopy> = LazyLock::new(|| {
     .expect("authored gathering menu")
 });
 
+#[derive(Serialize)]
+#[serde(transparent)]
+pub(super) struct GatherAction {
+    row: ResourceAction<'static, [(&'static str, JsText); 3]>,
+    #[serde(skip)]
+    _workspace: ByteReservation,
+}
+
 fn gathering(
     selected: &str,
     offer: &RuntimeGatherOffer<'_>,
@@ -377,36 +419,39 @@ fn gathering(
     controlling: bool,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
-    static TAKE_CONTROL_TEXT: LazyLock<JsText> = LazyLock::new(|| JsText::from(TAKE_CONTROL));
-    static RESUME_WORLD_TEXT: LazyLock<JsText> = LazyLock::new(|| JsText::from(RESUME_WORLD));
-    let reason = if !controlling {
-        Some(&*TAKE_CONTROL_TEXT)
-    } else if offer.paused {
-        Some(&*RESUME_WORLD_TEXT)
-    } else {
-        None
-    };
-    let (action, reference, _workspace) = gather_choice(selected, offer, references, reason, budget)?;
+    let action = gather_choice(selected, offer, controlling, budget)?;
+    let reference = gathering_reference(references, offer, &action)?;
     resource_menu_selection(
         offer.sequence,
         std::slice::from_ref(&action),
         &[GATHER.name],
         Some(PrimaryActionSelection {
             target_id: selected,
-            action_id: &action.id,
+            action_id: &action.row.id,
             reference: &reference,
         }),
         budget,
     )
 }
 
-fn gather_choice<'a>(
-    selected: &'a str,
-    offer: &RuntimeGatherOffer<'a>,
-    references: &PlayerReferences<'_>,
-    reason: Option<&'static JsText>,
+fn gather_choice(
+    selected: &str,
+    offer: &RuntimeGatherOffer<'_>,
+    controlling: bool,
     budget: &ByteBudget,
-) -> Result<(ResourceAction<'a>, String, ByteReservation), RuntimeError> {
+) -> Result<GatherAction, RuntimeError> {
+    static TAKE_CONTROL_TEXT: LazyLock<JsText> = LazyLock::new(|| JsText::from(TAKE_CONTROL));
+    static RESUME_WORLD_TEXT: LazyLock<JsText> = LazyLock::new(|| JsText::from(RESUME_WORLD));
+    static UNAVAILABLE: LazyLock<JsText> = LazyLock::new(|| JsText::from("Your character cannot do that now."));
+    let reason = if !controlling {
+        Some(&*TAKE_CONTROL_TEXT)
+    } else if offer.paused {
+        Some(&*RESUME_WORLD_TEXT)
+    } else if !offer.can_act {
+        Some(&*UNAVAILABLE)
+    } else {
+        (offer.quantity == 0).then_some(&GATHER.menu_empty)
+    };
     let workspace = budget.reserve(
         4096 + 8 * (offer.name.storage_bytes() + offer.material.storage_bytes() + selected.len())
             + offer.label.map_or(0, |label| 8 * label.storage_bytes()),
@@ -415,37 +460,43 @@ fn gather_choice<'a>(
         .label
         .cloned()
         .unwrap_or_else(|| JsText::concat(&[&GATHER.fallback_prefix, offer.name]));
-    let reason = reason.or_else(|| (offer.quantity == 0).then_some(&GATHER.menu_empty));
-    let action = ResourceAction {
-        id: format!("gather-{selected}"),
-        label,
-        category: GATHER.name,
-        description: &GATHER.menu_description,
-        keywords: [offer.material, &GATHER.menu_keyword],
-        target_id: selected,
-        enabled: reason.is_none(),
-        reason,
-        facts: None,
-        intent: ResourceIntent::Command {
-            command: ResourceCommand {
-                kind: "gather",
-                target_id: selected,
-                item_id: None,
+    Ok(GatherAction {
+        row: ResourceAction {
+            id: format!("gather-{selected}"),
+            label,
+            category: GATHER.name,
+            description: &GATHER.menu_description,
+            keywords: [Cow::Owned(offer.material.clone()), Cow::Borrowed(&GATHER.menu_keyword)],
+            target_id: Cow::Owned(selected.to_owned()),
+            enabled: reason.is_none(),
+            reason,
+            facts: openlegend_simulation::worlds::activity_display::gathering_facts(
+                offer.work_seconds, offer.menu_yield, offer.material, offer.name,
+            ),
+            intent: ResourceIntent::Command {
+                command: ResourceCommand { kind: "gather", target_id: Cow::Owned(selected.to_owned()), item_id: None },
             },
         },
-    };
-    // Exact contact, installed material and authored yield define this choice.
-    // Unrelated accepted updates and remaining stock above zero leave it usable.
-    let reference = references
+        _workspace: workspace,
+    })
+}
+
+fn gathering_reference(
+    references: &PlayerReferences<'_>,
+    offer: &RuntimeGatherOffer<'_>,
+    action: &GatherAction,
+) -> Result<String, RuntimeError> {
+    // A changed work time or effective yield changes the reviewed choice.
+    // Unrelated accepted updates do not change this exact contact and rule.
+    references
         .primary_action(&(
             offer.target,
             offer.actor_life,
             offer.material_pin,
             offer.bare_hand_quantity,
-            &action,
+            action,
         ))
-        .map_err(RuntimeError::application_refused)?;
-    Ok((action, reference, workspace))
+        .map_err(RuntimeError::application_refused)
 }
 
 pub(crate) enum GatherSelection {
@@ -473,17 +524,14 @@ pub(crate) fn fresh_gather_selection(
             let RuntimeResourceOffer::Gather(offer) = offer else {
                 return Ok(GatherSelection::Stale);
             };
-            let (action, reference, _workspace) =
-                gather_choice(&requested.target_id, &offer, &references, None, budget)?;
-            if action.id != requested.action_id || reference != requested.reference {
+            let action = gather_choice(&requested.target_id, &offer, true, budget)?;
+            let reference = gathering_reference(&references, &offer, &action)?;
+            if action.row.id != requested.action_id || reference != requested.reference {
                 return Ok(GatherSelection::Stale);
             }
-            if !action.enabled {
+            if let Some(reason) = action.row.reason {
                 return Ok(GatherSelection::Unavailable(
-                    GATHER
-                        .menu_empty
-                        .as_unicode()
-                        .unwrap_or("This action is unavailable now."),
+                    reason.as_unicode().unwrap_or("This action is unavailable now."),
                 ));
             }
             ResolvedContact::new(offer.target, None, budget).map(GatherSelection::Current)
@@ -498,7 +546,7 @@ fn fishing(
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     let _workspace = budget.reserve(2048)?;
-    let supply = Some([("Supply", offer.supply)]);
+    let supply = [("Supply", offer.supply)];
     if offer.tools.is_empty() {
         return resource_menu(
             offer.sequence,
@@ -507,8 +555,8 @@ fn fishing(
                 label: offer.available_text.clone(),
                 category: GATHER.name,
                 description: offer.description,
-                keywords: [offer.name, offer.available_text],
-                target_id: selected,
+                keywords: [Cow::Borrowed(offer.name), Cow::Borrowed(offer.available_text)],
+                target_id: Cow::Borrowed(selected),
                 enabled: false,
                 reason: Some(offer.tool_required_text),
                 facts: supply,
@@ -524,7 +572,7 @@ fn fishing(
             .storage_bytes()
             .checked_add(tool.name.storage_bytes())
             .and_then(|bytes| bytes.checked_mul(6))
-            .and_then(|bytes| bytes.checked_add(128 + std::mem::size_of::<ResourceAction<'_>>()))
+            .and_then(|bytes| bytes.checked_add(128 + std::mem::size_of::<ResourceAction<'_, [(&str, &JsText); 1]>>()))
             .and_then(|bytes| total.checked_add(bytes))
             .ok_or(CapacityError)
     })?;
@@ -547,15 +595,15 @@ fn fishing(
             label: JsText::concat(&[offer.action_label, &space, tool.name]),
             category: GATHER.name,
             description: offer.description,
-            keywords: [offer.name, tool.name],
-            target_id: selected,
+            keywords: [Cow::Borrowed(offer.name), Cow::Borrowed(tool.name)],
+            target_id: Cow::Borrowed(selected),
             enabled: reason.is_none(),
             reason,
             facts: supply,
             intent: ResourceIntent::Command {
                 command: ResourceCommand {
                     kind: "fish",
-                    target_id: selected,
+                    target_id: Cow::Borrowed(selected),
                     item_id: Some(tool.id),
                 },
             },

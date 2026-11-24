@@ -15,6 +15,8 @@ pub use inventory::{
     DirectInventory, InventoryContainer, InventoryCrumb, InventoryGroup, ResolvedInventoryGroup,
     StockGroupRefusal, StockGroupRequest, stock_group_limit_message,
 };
+mod catalogue;
+pub use catalogue::RuntimeActionCatalogue;
 mod status_menu;
 mod hearth;
 mod teaching;
@@ -333,12 +335,78 @@ pub struct RuntimeGatherOffer<'a> {
     pub actor_life: Option<u64>,
     pub material_pin: &'a crate::values::DefinitionPin,
     pub bare_hand_quantity: u64,
+    pub menu_yield: u64,
+    pub work_seconds: f64,
+    pub can_act: bool,
     pub paused: bool,
     pub name: &'a crate::text::JsText,
     pub material: &'a crate::text::JsText,
     pub label: Option<&'a crate::text::JsText>,
     pub quantity: u64,
     pub sequence: u64,
+}
+
+#[derive(Clone, Copy)]
+struct GatheringActor<'a> {
+    id: &'a str,
+    life: Option<u64>,
+    can_act: bool,
+}
+
+fn gathering_actor<'a>(
+    state: &'a crate::simulation::SimulationState,
+    actor: &'a str,
+) -> Result<GatheringActor<'a>, RuntimeError> {
+    let entity = state.physical.entities.get(actor).ok_or_else(|| failure("missing gather actor"))?;
+    let available = entity.actively_participates()
+        && entity.actor.as_ref().is_some_and(|actor| actor.alive && !actor.incapacitated);
+    let blocked = state.installed.capabilities.capability_blocked(Some(entity), "actions").map_err(failure)?;
+    Ok(GatheringActor {
+        id: actor,
+        life: entity.physical_life(),
+        can_act: available && !blocked,
+    })
+}
+
+fn menu_gathering<'a>(
+    state: &'a crate::simulation::SimulationState,
+    body: &crate::capture::PlayerObservedBody<'_>,
+) -> Option<(crate::gathering::Source<'a>, u64)> {
+    let crate::reception::SensoryFacet::Body { body: observed } = &body.body_facet()?.value else {
+        return None;
+    };
+    if observed.kind != "resource" {
+        return None;
+    }
+    let (definition, quantity) = observed.subtype.as_ref().zip(observed.quantity)?;
+    let source = crate::gathering::source(state, body.source_id)
+        .filter(|source| &source.stock.definition_id == definition)?;
+    Some((source, quantity as u64))
+}
+
+fn gather_menu_offer<'a>(
+    state: &crate::simulation::SimulationState,
+    body: &crate::capture::PlayerObservedBody<'a>,
+    source: crate::gathering::Source<'a>,
+    quantity: u64,
+    actor: GatheringActor<'_>,
+    amount: u64,
+) -> RuntimeGatherOffer<'a> {
+    RuntimeGatherOffer {
+        target: body.source_id,
+        actor_life: actor.life,
+        material_pin: &source.definition.pin,
+        bare_hand_quantity: source.base_yield,
+        menu_yield: amount.min(quantity),
+        work_seconds: source.stock.work_seconds,
+        can_act: actor.can_act,
+        paused: state.physical.header.paused,
+        name: &body.name.name,
+        material: &source.definition.named.name,
+        label: source.definition.gather_label.as_ref(),
+        quantity,
+        sequence: state.physical.header.sequence,
+    }
 }
 
 /// Only the permitted heat contacts passed by the current scope are offered.
@@ -937,7 +1005,6 @@ impl NativeWorldSession {
     ) -> Result<Option<T>, RuntimeError> {
         self.require_active()?;
         let simulation = self.session.accepted().map_err(failure)?;
-        let sequence = simulation.state.physical.header.sequence;
         let _lease = self.session.fence().begin_publication().map_err(failure)?;
         let mut encode = Some(use_offer);
         let mut result = None;
@@ -999,37 +1066,43 @@ impl NativeWorldSession {
                     ));
                     return true;
                 }
-                let Some((definition, quantity)) = observed.subtype.as_ref().zip(observed.quantity)
-                else {
+                let Some((gathering, quantity)) = menu_gathering(state, &body) else {
                     return false;
                 };
-                let Some(gathering) = crate::gathering::source(state, id)
-                    .filter(|source| &source.stock.definition_id == definition)
-                else {
-                    return false;
-                };
-                let item = gathering.definition;
                 let encode = encode.take().expect("one selected source");
-                result = Some(encode(RuntimeResourceOffer::Gather(RuntimeGatherOffer {
-                    target: id,
-                    actor_life: state
-                        .physical
-                        .entities
-                        .get(actor)
-                        .and_then(|actor| actor.physical_life()),
-                    material_pin: &item.pin,
-                    bare_hand_quantity: gathering.base_yield,
-                    paused: state.physical.header.paused,
-                    name,
-                    material: &item.named.name,
-                    label: item.gather_label.as_ref(),
-                    quantity: quantity as u64,
-                    sequence,
-                })));
+                result = Some((|| {
+                    let actor = gathering_actor(state, actor)?;
+                    let mut amount = gathering.base_yield;
+                    crate::gathering::visit_tool_yields(state, actor.id, |material, count| {
+                        if material == gathering.definition.pin.id {
+                            amount = amount.max(count);
+                        }
+                        Ok(())
+                    })
+                    .map_err(failure)?;
+                    encode(RuntimeResourceOffer::Gather(gather_menu_offer(
+                        state, &body, gathering, quantity, actor, amount,
+                    )))
+                })());
                 true
             })
             .map_err(failure)?;
         result.transpose()
+    }
+
+    /// Publish an empty ground catalogue from the current permitted actor cut.
+    /// The point is presentational here. Actual movement owns physical validation.
+    pub fn with_player_ground_catalogue<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        publish: impl FnOnce(u64) -> Result<T, RuntimeError>,
+    ) -> Result<T, RuntimeError> {
+        self.require_active()?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        simulation.require_player_read(account, actor).map_err(failure)?;
+        let _lease = self.session.fence().begin_publication().map_err(failure)?;
+        publish(simulation.state.physical.header.sequence)
     }
 
     /// Check stock only for the exact contact already matched by the caller

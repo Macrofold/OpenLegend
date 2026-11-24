@@ -160,28 +160,84 @@ impl NativeWorldSession {
         {
             return Ok(None);
         }
-        let installed = &state.installed;
-        let Some(method) = installed.retained.manufacture.get(recipe) else {
+        let Some(method) = state.installed.retained.manufacture.get(recipe) else {
             return Ok(None);
         };
+        ManufactureOffers::new(state, actor, &self.budget)?
+            .publish(method, use_offer)
+            .map(Some)
+    }
+}
+
+/// Visit the caller's installed known recipes and prepare each one's material
+/// and tool prerequisites. The enclosing catalogue owns the accepted scope
+/// and publication lease. Each offer borrows temporary stock until its
+/// callback returns; the caller must fund any row it keeps.
+pub(super) fn visit_known_manufacture(
+    state: &crate::simulation::SimulationState,
+    actor: &str,
+    budget: &ByteBudget,
+    mut visit: impl FnMut(&str, RuntimeManufactureOffer<'_>) -> Result<(), RuntimeError>,
+) -> Result<(), RuntimeError> {
+    let known = state.learned_capabilities.known_recipes(actor);
+    if known.is_empty() {
+        return Ok(());
+    }
+    let offers = ManufactureOffers::new(state, actor, budget)?;
+    for id in known {
+        if let Some(method) = state.installed.retained.manufacture.get(id) {
+            offers.publish(method, |offer| visit(id, offer))?;
+        }
+    }
+    Ok(())
+}
+
+struct ManufactureOffers<'a> {
+    state: &'a crate::simulation::SimulationState,
+    actor: &'a str,
+    budget: &'a ByteBudget,
+    can_act: bool,
+}
+
+impl<'a> ManufactureOffers<'a> {
+    fn new(
+        state: &'a crate::simulation::SimulationState,
+        actor: &'a str,
+        budget: &'a ByteBudget,
+    ) -> Result<Self, RuntimeError> {
         let body = state
             .physical
             .entities
             .get(actor)
             .ok_or_else(|| failure("manufacture actor unavailable"))?;
-        let actor = body
+        let action_state = body
             .actor
             .as_ref()
             .ok_or_else(|| failure("manufacture actor unavailable"))?;
         let can_act = body.actively_participates()
-            && actor.alive
-            && !actor.incapacitated
-            && !installed
+            && action_state.alive
+            && !action_state.incapacitated
+            && !state
+                .installed
                 .capabilities
                 .capability_blocked(Some(body), "actions")
                 .map_err(failure)?;
+        Ok(Self {
+            state,
+            actor,
+            budget,
+            can_act,
+        })
+    }
+
+    fn publish<T>(
+        &self,
+        method: &manufacturing::InstalledMethod,
+        use_offer: impl FnOnce(RuntimeManufactureOffer<'_>) -> Result<T, RuntimeError>,
+    ) -> Result<T, RuntimeError> {
+        let state = self.state;
         let stock =
-            manufacturing::materials(state, &body.id, method, ToolRequest::Offer, &self.budget)
+            manufacturing::materials(state, self.actor, method, ToolRequest::Offer, self.budget)
                 .map_err(failure)?;
         let (missing, missing_tool, tool) = match &stock {
             MaterialChoice::Available(stock) => (
@@ -195,7 +251,9 @@ impl NativeWorldSession {
             MaterialChoice::Missing(row) => (
                 Some((
                     row.quantity,
-                    &installed.retained.items[&row.definition_id].named.name,
+                    &state.installed.retained.items[&row.definition_id]
+                        .named
+                        .name,
                 )),
                 false,
                 None,
@@ -208,11 +266,10 @@ impl NativeWorldSession {
             work_seconds: method.work_seconds,
             sequence: state.physical.header.sequence,
             paused: state.physical.header.paused,
-            can_act,
+            can_act: self.can_act,
             missing,
             missing_tool,
             tool,
         })
-        .map(Some)
     }
 }

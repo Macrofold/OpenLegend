@@ -7,6 +7,8 @@ use std::{borrow::Cow, mem::size_of};
 pub(super) fn render(
     menu: RuntimeStatusMenu<'_>,
     controlling: bool,
+    gathering: &[GatherAction],
+    craft: &[manufacture::ManufactureAction],
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
     #[derive(Serialize)]
@@ -151,8 +153,46 @@ pub(super) fn render(
                 },
             },
         }));
-        resource_menu_categories(menu.sequence, &choices, &[STATES, BODY], budget)
-    } else {
-        resource_menu(menu.sequence, &choices, STATES, budget)
     }
+    struct Actions<'a, A>(
+        &'a [A],
+        &'a [GatherAction],
+        &'a [manufacture::ManufactureAction],
+    );
+    impl<T: Serialize> Serialize for Actions<'_, T> {
+        fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            use serde::ser::SerializeSeq;
+            let mut sequence =
+                serializer.serialize_seq(Some(self.0.len() + self.1.len() + self.2.len()))?;
+            for choice in self.0 {
+                sequence.serialize_element(choice)?;
+            }
+            for choice in self.1 {
+                sequence.serialize_element(choice)?;
+            }
+            for choice in self.2 {
+                sequence.serialize_element(choice)?;
+            }
+            sequence.end()
+        }
+    }
+    let groups = [
+        Some(STATES),
+        menu.treatment.is_some().then_some(BODY),
+        (!gathering.is_empty()).then_some(GATHER.name),
+        (!craft.is_empty()).then_some(manufacture::CATEGORY),
+    ];
+    let mut categories = [""; 4];
+    let mut length = 0;
+    for category in groups.into_iter().flatten() {
+        categories[length] = category;
+        length += 1;
+    }
+    resource_menu_selection(
+        menu.sequence,
+        &Actions(&choices, gathering, craft),
+        &categories[..length],
+        None,
+        budget,
+    )
 }

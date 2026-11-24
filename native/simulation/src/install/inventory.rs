@@ -352,11 +352,16 @@ impl ItemDefinitionRead {
     pub(crate) fn has_no_container(&self) -> bool { self.container.is_none() }
     pub(crate) fn can_consume_as_plain_material(&self) -> bool { self.plain_material }
 
-    pub(crate) fn gathering_yield(&self, resource: &str) -> Option<u64> {
+    pub(crate) fn gathering_tool_yield(&self) -> Option<(&str, u64)> {
         self.gathering_tool
             .as_ref()
-            .filter(|tool| tool.resource_id == resource)
-            .map(|tool| tool.quantity)
+            .map(|tool| (tool.resource_id.as_str(), tool.quantity))
+    }
+
+    pub(crate) fn gathering_yield(&self, resource: &str) -> Option<u64> {
+        self.gathering_tool_yield()
+            .filter(|(material, _)| *material == resource)
+            .map(|(_, quantity)| quantity)
     }
 
     pub(crate) fn equips_for_gathering(&self) -> bool {

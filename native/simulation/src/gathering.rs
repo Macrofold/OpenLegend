@@ -119,24 +119,35 @@ pub(crate) fn quantity(
         return Ok(None);
     };
     if binding.mode == GatheringMode::AvailableTools {
-        let definitions = &state.installed.retained;
-        state.inventory.visit_owned(
-            &state.physical,
-            definitions,
-            actor,
-            actor,
-            &mut |item| {
-                if item.available_quantity > 0
-                    && let Some(value) = definitions.items[item.definition_id]
-                        .gathering_yield(&source.definition.pin.id)
-                {
-                    amount = amount.max(value);
-                }
-                Ok(())
-            },
-        )?;
+        visit_tool_yields(state, actor, |material, quantity| {
+            if material == source.definition.pin.id {
+                amount = amount.max(quantity);
+            }
+            Ok(())
+        })?;
     }
     Ok(Some(amount.min(source.stock.quantity)))
+}
+
+/// Read the exact currently spendable carried tools. Explicit catalogue reads
+/// can index the best yield per installed material once for all observed sites.
+pub(crate) fn visit_tool_yields<'a>(
+    state: &'a SimulationState,
+    actor: &str,
+    mut visit: impl FnMut(&'a str, u64) -> Result<(), ExecutionError>,
+) -> Result<(), ExecutionError> {
+    let definitions = &state.installed.retained;
+    state
+        .inventory
+        .visit_owned(&state.physical, definitions, actor, actor, &mut |item| {
+            if item.available_quantity > 0
+                && let Some((material, quantity)) =
+                    definitions.items[item.definition_id].gathering_tool_yield()
+            {
+                visit(material, quantity)?;
+            }
+            Ok(())
+        })
 }
 
 pub(crate) fn bound_yield(

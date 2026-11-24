@@ -7,6 +7,10 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Copy {
     pub name: String,
+    pub menu_yield_name: String,
+    pub menu_time_name: String,
+    pub menu_time_seconds: String,
+    pub menu_time_minutes: String,
     pub started: String,
     pub gathered_event: String,
     pub gathered: String,
@@ -46,4 +50,31 @@ pub(crate) fn tool_name(name: &JsText, ordinal: u64, count: u64) -> JsText {
         .same_named_tool_suffix
         .replace("{ordinal}", &ordinal.to_string());
     JsText::concat(&[name, &suffix.into()])
+}
+
+pub fn catalogue_facts(
+    work_seconds: f64,
+    yield_units: u64,
+    material: &JsText,
+    target: &JsText,
+) -> [(&'static str, JsText); 3] {
+    let duration = if work_seconds < 60. {
+        WORDS
+            .menu_time_seconds
+            .replace("{time}", &work_seconds.to_string())
+    } else {
+        let text = crate::worlds::activity_display::tenth(work_seconds / 60.);
+        WORDS
+            .menu_time_minutes
+            .replace("{time}", text.strip_suffix(".0").unwrap_or(&text))
+    };
+    let amount = format!("{yield_units} ");
+    [
+        ("Target", target.clone()),
+        (
+            &WORDS.menu_yield_name,
+            JsText::concat(&[&amount.into(), material]),
+        ),
+        (&WORDS.menu_time_name, duration.into()),
+    ]
 }

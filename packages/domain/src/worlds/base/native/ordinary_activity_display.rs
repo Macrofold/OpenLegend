@@ -10,6 +10,8 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 
+pub use crate::worlds::base_gathering::catalogue_facts as gathering_facts;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct DisplayWords<'a> {
