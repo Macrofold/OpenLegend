@@ -31,6 +31,7 @@ use tokio::{
 
 pub const SAVE_INTERVAL: Duration = Duration::from_secs(1);
 const MAX_SAVE_AGE: Duration = Duration::from_secs(5);
+const CHECKPOINT_INTAKE_PROBE: Duration = Duration::from_millis(25);
 
 pub struct AcceptedSaveInput {
     through: u64,
@@ -247,13 +248,26 @@ impl LiveSaves {
         self.drain_protected(self.intake.write().await).await
     }
 
-    /// Automatic checkpoint admission must leave the intake queue unchanged
-    /// on contention. Once admitted it uses the normal durable prefix drain.
-    pub(crate) async fn try_enter_protected(
+    /// A due automatic checkpoint probes for an opening for one save interval.
+    /// It never queues for intake or repeats a durable drain after a refusal.
+    pub(crate) async fn enter_automatic_checkpoint(
         self: &Arc<Self>,
-    ) -> Result<RwLockWriteGuard<'_, ()>, WorldError> {
-        let held = self.intake.try_write().map_err(|_| HostError::Busy)?;
-        self.drain_protected(held).await
+    ) -> Result<Option<RwLockWriteGuard<'_, ()>>, WorldError> {
+        let held = tokio::time::timeout(SAVE_INTERVAL, async {
+            loop {
+                if let Ok(held) = self.intake.try_write() {
+                    return held;
+                }
+                // Probe between the normal 50 ms clock wakes without
+                // holding an intake guard or preparing another checkpoint.
+                tokio::time::sleep(CHECKPOINT_INTAKE_PROBE).await;
+            }
+        })
+        .await;
+        match held {
+            Ok(held) => self.drain_protected(held).await.map(Some),
+            Err(_) => Ok(None),
+        }
     }
 
     async fn drain_protected<'a>(

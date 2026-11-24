@@ -370,7 +370,7 @@ impl CheckpointSchedule {
                         .await;
                     }
                 }
-                Err(CaptureError::World(error)) if error.is_admission_refusal() => {
+                Err(error) if error.is_admission_refusal() => {
                     busy += 1;
                     let retry = wait_for.saturating_sub(RETRY.as_nanos() as u64);
                     self.elapsed.fetch_max(retry, Ordering::AcqRel);

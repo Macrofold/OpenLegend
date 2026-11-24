@@ -10,13 +10,11 @@ Implementation starting points: [checkpoint-format.ts](../../apps/server/src/che
 
 ## LA167
 
-**Changed — current checkpoint path (2026-09-28, C05) · Restrictiveness: Safe.**
+**Current stand-alone Rust checkpoint path · Restrictiveness: Safe.**
 
-Only one checkpoint capture runs at once. The slot is reserved before the world mutation queue, so a waiting capture never holds that queue. One manual save may wait for the capture in progress and runs before the next automatic save; automatic saves never wait in admission: while a capture runs or a manual save waits, the due automatic save is held and starts on the first tick after the slot frees, with no failure recorded; if the world mutation queue refuses it as busy, it retries after 30 s of running time, and the third consecutive busy refusal is recorded as a checkpoint failure ([SB12](#sb12)). A second, different manual save while one waits receives busy; identical requests share completion. Restore fences concurrent mutation; simulation can continue while a pinned checkpoint is written.
+Only one checkpoint capture runs at once. One manual save may wait and runs before the next automatic save. If the slot is occupied or a manual save is waiting, the automatic opportunity remains due until a later running tick. A due automatic capture probes the save gate without joining its queue. It checks every 25 ms for up to one ordinary one-second save interval before deferring. If the gate stays occupied or the host refuses the protected drain, the existing retry waits 30 s of running time. The third consecutive admission refusal is reported ([SB12](#sb12)). A second, different manual save while one waits receives busy. Identical requests share completion. Restore fences concurrent mutation. Simulation can continue while a pinned checkpoint is written.
 
-**Reason / tradeoff:** Bound capture work and preserve a coherent revision while not failing routine manual intent behind an autosave. Single-capture admission is tunable; atomic restore/authorization are correctness requirements. [Admission](../../apps/server/src/game-saves.ts) (`admit`).
-
-[Implementation starting point](../../apps/server/src/game-saves.ts).
+**Reason / tradeoff:** A normal clock turn can occupy the save gate for part of its 50 ms cadence. Short probes give that turn time to finish without blocking new commands or repeating snapshot setup. The longer retry still bounds sustained contention. Single-capture admission is tunable. Atomic restore and authorization are required. [Save gate](../../native/game-server/src/live_save.rs) · [Checkpoint schedule](../../native/game-server/src/store/checkpoint/schedule.rs).
 
 Original finding and recommendation superseded by the merged implementation; the ID remains stable.
 

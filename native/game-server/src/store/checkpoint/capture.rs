@@ -30,6 +30,7 @@ pub(crate) enum CaptureError {
     File(io::Error),
     Format,
     Busy,
+    IntakeBusy,
     Conflict,
     Deadline,
 }
@@ -41,6 +42,7 @@ impl std::fmt::Display for CaptureError {
             Self::File(error) => error.kind().fmt(out),
             Self::Format => out.write_str("Checkpoint output could not be completed"),
             Self::Busy => out.write_str("A checkpoint is already waiting to be saved"),
+            Self::IntakeBusy => out.write_str("Gameplay is still using the save gate."),
             Self::Conflict => out.write_str("Save identity conflicts"),
             Self::Deadline => out.write_str("Checkpoint capture reached its time limit"),
         }
@@ -48,6 +50,13 @@ impl std::fmt::Display for CaptureError {
 }
 
 impl std::error::Error for CaptureError {}
+
+impl CaptureError {
+    pub(super) fn is_admission_refusal(&self) -> bool {
+        matches!(self, Self::IntakeBusy)
+            || matches!(self, Self::World(error) if error.is_admission_refusal())
+    }
+}
 
 impl From<WorldError> for CaptureError {
     fn from(error: WorldError) -> Self {
@@ -105,7 +114,12 @@ impl Store {
         // Recovery runs after the old listener, clock and final save have
         // joined. Running-world callers always pass the accepted-save owner.
         let barrier = match saves {
-            Some(saves) if kind == MetadataKind::Auto => Some(saves.try_enter_protected().await?),
+            Some(saves) if kind == MetadataKind::Auto => Some(
+                saves
+                    .enter_automatic_checkpoint()
+                    .await?
+                    .ok_or(CaptureError::IntakeBusy)?,
+            ),
             Some(saves) => Some(saves.enter_protected().await?),
             None if kind == MetadataKind::Recovery => None,
             None => return Err(CaptureError::Format),
