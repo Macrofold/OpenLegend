@@ -1,8 +1,8 @@
 # Complete game on the Rust server
 
-| Status      | Current progress                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Reviewed River Camp, Main and Solo can open and resume in Rust. Retained gameplay and cutover checks remain open. | 2026-11-22   |
+| Status      | Current progress                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------- | ------------ |
+| In progress | Rust is the default server, and the separate checkpoint comparison remains open. | 2026-11-24   |
 
 ## What a player should be able to do
 

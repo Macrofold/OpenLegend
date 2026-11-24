@@ -1,8 +1,8 @@
 # Complete Rust server — technical design
 
-| Status      | Current progress                                                                                                                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Typed conversations, reviewed openings, scheduled memory work and selected player and operator routes have real caller evidence. The feature specification defines the retained cutover scope. | 2026-11-22   |
+| Status      | Current progress                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Local release and managed ordinary-play checks pass, with the checkpoint comparison still open. | 2026-11-24   |
 
 ## Ownership and the unit of delivery
 

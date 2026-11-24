@@ -2,6 +2,7 @@
 
 Each report preserves its actual revision, workload, failures and decision. [Current implementation and remaining work](../../maintainers/native-runtime-foundations.md) remain in the existing tracker.
 
+- [Stand-alone Rust release qualification — November 24, 2026](2026/2026-11-24-rust-server-completion.md) compares the default release and the preceding stand-alone build on retained gameplay.
 - [Stand-alone Rust hot-path comparisons — November 20, 2026](2026/2026-11-20-rust-hot-path-comparisons.md): isolated changes to observation, display reads, save preparation and NPC decisions.
 - [Current Rust server profiling — November 20, 2026](2026/2026-11-20-current-rust-server-profile.md): 18 current-build replays, CPU and memory breakdown, SQL traffic, and the next performance experiments in priority order.
 - [Perception and player-view experiments — November 20, 2026](2026/2026-11-20-perception-cost-experiments.md): three managed gameplay comparisons covering repeated perception work, bystander detail and player-view transactions.
