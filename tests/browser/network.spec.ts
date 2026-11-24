@@ -9,7 +9,9 @@ import { clientViteConfiguration } from '../../apps/client/vite.config.js';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { testRepository, closeTestDatabases, readConfig } from '../fixtures/database.js';
 import { blockExternalBrowserRequests, enterGame } from '../fixtures/browser.js';
+import { browserTabHeaders, rustBrowserGame } from '../fixtures/rust-browser.js';
 import type {
+  AiUsageView,
   GameView,
   InviteView,
   OperationsView,
@@ -26,7 +28,8 @@ interface NetworkProbe {
   heartbeats: number;
   eventMode: 'native' | 'incomplete' | 'forbidden';
   privateMode: 'native' | 'forbidden';
-  releaseState?: () => Promise<void>;
+  releaseState?: () => Promise<number>;
+  stateSignal?: AbortSignal;
 }
 declare global {
   interface Window {
@@ -65,10 +68,13 @@ async function controlledBrowser(page: Page, holdState = false) {
         probe.stateRequests++;
         if (probe.holdState)
           return new Promise<Response>((resolve) => {
+            probe.stateSignal = init?.signal ?? undefined;
             probe.releaseState = async () => {
               // Ignore the original cancelled signal, then deliver its late
               // native read. It must never replace the expired entry result.
-              resolve(await original(input, { ...init, signal: undefined }));
+              const response = await original(input, { ...init, signal: undefined });
+              resolve(response);
+              return response.status;
             };
           });
       }
@@ -165,23 +171,32 @@ async function gameFixture(godMode = false) {
 test('resumed entry expires an ignored request before delayed timers or a late reply, then explicit retry enters the actual game', async ({
   page,
 }, info) => {
-  const { game, base } = await gameFixture();
+  const { base, close } = await rustBrowserGame();
   try {
     await controlledBrowser(page, true);
-    await page.goto(base);
+    await page.goto(base + '/auth/login');
     await expect.poll(() => page.evaluate(() => window.__networkProbe.stateRequests)).toBe(1);
+    await page.bringToFront();
+    await expect.poll(() => page.evaluate(() => document.visibilityState)).toBe('visible');
     // Move only wall time: unlike fastForward, this does not execute the
     // deadline timer. The application's visible-document resume check must
     // expire the request before it can consume a queued native response.
     const resumedAt = await page.evaluate(() => Date.now() + 15_001);
     await page.clock.setSystemTime(resumedAt);
-    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    const expired = await page.evaluate(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      return { wallTime: Date.now(), cancelled: window.__networkProbe.stateSignal?.aborted };
+    });
+    expect(expired.wallTime).toBeGreaterThanOrEqual(resumedAt);
+    expect(expired.cancelled, 'Resuming a visible document cancels the expired state read').toBe(
+      true,
+    );
     await expect(
       page.getByRole('heading', { name: 'We couldn’t connect to your world' }),
     ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Retry connection', exact: true })).toBeEnabled();
     await page.screenshot({ path: info.outputPath('bounded-initial-entry.png') });
-    await page.evaluate(() => window.__networkProbe.releaseState!());
+    expect(await page.evaluate(() => window.__networkProbe.releaseState!())).toBe(200);
     await expect(
       page.getByRole('heading', { name: 'We couldn’t connect to your world' }),
     ).toBeVisible();
@@ -190,11 +205,25 @@ test('resumed entry expires an ignored request before delayed timers or a late r
     });
     await page.getByRole('button', { name: 'Retry connection', exact: true }).click();
     await enterGame(page);
-    await expect(page.getByRole('button', { name: 'Time settings', exact: true })).toBeEnabled();
-    expect(await game.service.store.recentJobs()).toEqual([]);
+    await expect(page.getByRole('button', { name: 'Character (C)', exact: true })).toBeEnabled();
+    const usage = await page.request.get(base + '/api/ai/usage', {
+      headers: await browserTabHeaders(page),
+    });
+    try {
+      expect(usage.ok()).toBe(true);
+      expect(((await usage.json()) as AiUsageView).usage).toMatchObject({
+        jevCalls: 0,
+        llmCalls: 0,
+      });
+    } finally {
+      await usage.dispose();
+    }
   } finally {
-    await page.close();
-    await game.close();
+    try {
+      await page.close();
+    } finally {
+      await close();
+    }
   }
 });
 
@@ -202,13 +231,30 @@ test('quiet main streams heartbeat, partial trickles expire, and forbidden recon
   page,
 }, info) => {
   test.setTimeout(120_000);
-  const { game, base } = await gameFixture();
+  const { base, close } = await rustBrowserGame();
   try {
     await controlledBrowser(page);
     await page.goto(base);
     await enterGame(page);
-    await page.getByRole('button', { name: 'Pause world', exact: true }).click();
-    await expect.poll(() => game.service.pauseReason).toBe('manual');
+    const headers = await browserTabHeaders(page);
+    await page.getByRole('button', { name: 'Game menu (Escape)', exact: true }).click();
+    const pause = page.getByRole('button', { name: 'Pause world', exact: true });
+    await expect(
+      pause.or(page.getByRole('button', { name: 'Resume world', exact: true })),
+    ).toBeVisible();
+    if (await pause.isVisible()) await pause.click();
+    await page.getByRole('button', { name: 'Back to the world', exact: true }).click();
+    await expect
+      .poll(async () => {
+        const reply = await page.request.get(base + '/api/state', { headers });
+        try {
+          expect(reply.ok()).toBe(true);
+          return (await reply.json()) as GameView;
+        } finally {
+          await reply.dispose();
+        }
+      })
+      .toMatchObject({ clock: { paused: true, pauseReason: 'manual' } });
     const connections = await page.evaluate(() => window.__networkProbe.eventRequests);
     // More than one complete liveness window, under the real server's cadence.
     await expect
@@ -245,8 +291,11 @@ test('quiet main streams heartbeat, partial trickles expire, and forbidden recon
       rejected,
     );
   } finally {
-    await page.close();
-    await game.close();
+    try {
+      await page.close();
+    } finally {
+      await close();
+    }
   }
 });
 

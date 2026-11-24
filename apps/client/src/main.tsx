@@ -849,7 +849,9 @@ function App({
         if (e.persisted) void bootstrap();
       };
     const focus = () => {
-      if (isPaused()) void bootstrap(true);
+      // The original entry owns its deadline and Retry action. Foreground
+      // recovery is for a tab that has already accepted a view.
+      if (latest.current && isPaused()) void bootstrap(true);
     };
     const visibility = () => {
       // A visible tab need not receive a separate window-focus event. Reuse
