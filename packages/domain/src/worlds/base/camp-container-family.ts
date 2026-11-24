@@ -1,22 +1,24 @@
 import { contentsExposureProfile } from '../../contents-exposure.js';
 import { definitionPin } from '../../world-modules.js';
 import type { RecipeFamilyDescriptor } from '../../invention-families.js';
-import type { RecipeCandidate } from '../../types.js';
+import { MATERIAL_PROPERTIES, type MaterialProperty, type RecipeCandidate } from '../../types.js';
 import { BASE_BINDING_MATERIAL, CONSTRUCTED_ITEM_STORY_FIELDS } from './items.js';
+import woven from './config/woven-container-rules.json' with { type: 'json' };
 
 /** Authored tradeoffs, included in the trusted family pin. Descriptions, validation
  * and output compilation share these rules; names never grant container effects.
  * docs/worlds/base/camp-containers.md#first-family-rules */
-const rules = {
-  minimumPouchQuantity: 2,
-  maximumPouchQuantity: 8,
-  bindingDivisor: 2,
-  capacityPerPouchUnit: 4,
-  emptyPackingLoadDivisor: 3,
-  workSecondsPerMaterial: 24,
-  outputQuantity: 1,
-  maximumDepth: 16,
-};
+const { rules } = woven;
+function materialProperties(properties: readonly string[]): MaterialProperty[] {
+  return properties.map((property) => {
+    const defined = MATERIAL_PROPERTIES.find((current) => current === property);
+    if (!defined) throw new Error('Unknown authored woven-container property.');
+    return defined;
+  });
+}
+const pouchProperties = materialProperties(woven.pouchProperties);
+const bindingProperties = materialProperties(woven.bindingProperties);
+const productProperties = materialProperties(woven.productProperties);
 
 function pouchQuantity(candidate: RecipeCandidate): number {
   const pouch = candidate.inputs.find((input) => input.role === 'pouch');
@@ -38,14 +40,14 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
         {
           id: 'pouch',
           label: 'Pouch',
-          properties: ['fiber', 'flexible', 'pouch'],
+          properties: pouchProperties,
           required: true,
           accepts: { native: true, generatedMaterials: [] },
         },
         {
           id: 'binding',
           label: 'Binding',
-          properties: ['binding'],
+          properties: bindingProperties,
           required: true,
           accepts: { native: true, generatedMaterials: [BASE_BINDING_MATERIAL] },
         },
@@ -168,7 +170,7 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
         portable: true,
         ...(profile ? { contentsExposure: { profile: definitionPin(profile) } } : {}),
         packingLoad,
-        properties: ['fiber', 'pouch'],
+        properties: [...productProperties],
         container: {
           capacity,
           maximumDepth: rules.maximumDepth,

@@ -3,6 +3,7 @@
 use crate::install::{InstallError, ItemDefinitionRead};
 use crate::manufacturing::{Candidate, FixedTransform, Input};
 use crate::text::JsText;
+use crate::values::DefinitionPin;
 use serde::Deserialize;
 use std::sync::LazyLock;
 
@@ -45,6 +46,7 @@ static SLING: LazyLock<AuthoredSling> = LazyLock::new(|| {
 });
 
 const GATHERING_FAMILY: &str = "base:gathering-tool";
+const WOVEN_FAMILY: &str = "base:woven-container";
 const RETAINED_FIXED_TRANSFORMS: [&str; 4] = [
     "base:clean-fibers",
     "base:knap-cutting-stone",
@@ -55,6 +57,7 @@ const RETAINED_FIXED_TRANSFORMS: [&str; 4] = [
 struct AuthoredMethods {
     fixed: Vec<FixedTransform>,
     gathering: Vec<(Candidate<'static>, GatheringParameters)>,
+    woven: Vec<(Candidate<'static>, WovenParameters)>,
 }
 
 static AUTHORED: LazyLock<AuthoredMethods> = LazyLock::new(|| {
@@ -74,18 +77,31 @@ static AUTHORED: LazyLock<AuthoredMethods> = LazyLock::new(|| {
             .expect("Base manufacture catalogue is a build input");
     let mut fixed = Vec::new();
     let mut gathering = Vec::new();
+    let pouch: Candidate<'static> =
+        serde_json::from_str(include_str!("../config/woven-pouch-method.json"))
+            .expect("Base woven pouch method is a build input");
+    let mut woven = vec![(
+        pouch,
+        WovenParameters {
+            contents_exposure_profile: None,
+        },
+    )];
     for row in source.methods {
         if let Some(recipe) = row.definition
             && RETAINED_FIXED_TRANSFORMS.contains(&recipe.id.as_str())
         {
             fixed.push(recipe);
         }
-        if let Some(candidate) = row.candidate
-            && candidate.family.id == GATHERING_FAMILY
-        {
-            let parameters = serde_json::from_str(candidate.parameters.get())
-                .expect("Base uses a valid finite gathering tool");
-            gathering.push((candidate, parameters));
+        if let Some(candidate) = row.candidate {
+            if candidate.family.id == GATHERING_FAMILY {
+                let parameters = serde_json::from_str(candidate.parameters.get())
+                    .expect("Base uses a valid finite gathering tool");
+                gathering.push((candidate, parameters));
+            } else if candidate.family.id == WOVEN_FAMILY {
+                let parameters = serde_json::from_str(candidate.parameters.get())
+                    .expect("Base uses a valid finite woven container");
+                woven.push((candidate, parameters));
+            }
         }
     }
     assert_eq!(
@@ -93,7 +109,11 @@ static AUTHORED: LazyLock<AuthoredMethods> = LazyLock::new(|| {
         RETAINED_FIXED_TRANSFORMS.len(),
         "missing retained Base transform"
     );
-    AuthoredMethods { fixed, gathering }
+    AuthoredMethods {
+        fixed,
+        gathering,
+        woven,
+    }
 });
 
 #[derive(Deserialize, PartialEq)]
@@ -129,10 +149,48 @@ static OUTPUTS: LazyLock<OutputRules> = LazyLock::new(|| {
         .expect("Base manufacture output rules are a build input")
 });
 
+#[derive(Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct WovenParameters {
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option"
+    )]
+    contents_exposure_profile: Option<DefinitionPin>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct WovenRules {
+    minimum_pouch_quantity: u64,
+    maximum_pouch_quantity: u64,
+    binding_divisor: u64,
+    capacity_per_pouch_unit: u64,
+    empty_packing_load_divisor: u64,
+    work_seconds_per_material: u64,
+    output_quantity: u64,
+    maximum_depth: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct WovenConfig {
+    rules: WovenRules,
+    pouch_properties: Vec<JsText>,
+    binding_properties: Vec<JsText>,
+    product_properties: Vec<JsText>,
+}
+
+static WOVEN: LazyLock<WovenConfig> = LazyLock::new(|| {
+    serde_json::from_str(include_str!("../config/woven-container-rules.json"))
+        .expect("Base woven container rules are a build input")
+});
+
 pub(crate) enum Rules {
     RiverLine,
     FieldSling,
     GatheringTool,
+    WovenContainer,
 }
 
 pub(crate) fn selected(profile: (&str, u64), family: &str) -> Option<Rules> {
@@ -142,10 +200,12 @@ pub(crate) fn selected(profile: (&str, u64), family: &str) -> Option<Rules> {
     if family == LINE.family_id {
         return Some(Rules::RiverLine);
     }
-    if family == GATHERING_FAMILY {
-        return Some(Rules::GatheringTool);
+    match family {
+        GATHERING_FAMILY => Some(Rules::GatheringTool),
+        WOVEN_FAMILY => Some(Rules::WovenContainer),
+        family if family == SLING.candidate.family.id => Some(Rules::FieldSling),
+        _ => None,
     }
-    (family == SLING.candidate.family.id).then_some(Rules::FieldSling)
 }
 
 #[derive(Deserialize)]
@@ -177,6 +237,13 @@ impl Rules {
                     candidate.same_choices(authored) && &parameters == expected
                 }))
             }
+            Self::WovenContainer => {
+                let parameters: WovenParameters = serde_json::from_str(candidate.parameters.get())
+                    .map_err(|_| InstallError::DefinitionBody)?;
+                Ok(AUTHORED.woven.iter().any(|(authored, expected)| {
+                    candidate.same_choices(authored) && &parameters == expected
+                }))
+            }
             Self::FieldSling => {
                 if !candidate.same_choices(&SLING.candidate) {
                     return Ok(false);
@@ -204,6 +271,7 @@ impl Rules {
             Self::GatheringTool => {
                 gathering_product(work, candidate, definition, output, body, item_defaults)
             }
+            Self::WovenContainer => woven_product(work, candidate, definition, output, body),
             Self::FieldSling => {
                 #[derive(Deserialize)]
                 #[serde(rename_all = "camelCase")]
@@ -383,4 +451,102 @@ fn gathering_product<'a>(
         && product.equipment.uses == ["gather"]
         && product.mechanism_fields == OUTPUTS.constructed_story_fields
         && exact_properties)
+}
+
+/// Check the portable item produced by the exact authored methods. Capacity
+/// and exposure remain the existing item and inventory owners' state.
+fn woven_product<'a>(
+    work: f64,
+    candidate: &Candidate<'_>,
+    definition: impl Fn(&str) -> Option<&'a ItemDefinitionRead>,
+    output: &ItemDefinitionRead,
+    body: &str,
+) -> Result<bool, InstallError> {
+    use serde::de::IgnoredAny;
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct ContentsExposure {
+        profile: DefinitionPin,
+    }
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Product {
+        mechanism_fields: StoryFields,
+        #[serde(
+            default,
+            deserialize_with = "crate::values::deserialize_present_option"
+        )]
+        contents_exposure: Option<ContentsExposure>,
+        #[serde(rename = "id")]
+        _id: IgnoredAny,
+        #[serde(rename = "version")]
+        _version: IgnoredAny,
+        #[serde(rename = "name")]
+        _name: IgnoredAny,
+        #[serde(rename = "description")]
+        _description: IgnoredAny,
+        #[serde(rename = "properties")]
+        _properties: IgnoredAny,
+        #[serde(rename = "portable")]
+        _portable: IgnoredAny,
+        #[serde(rename = "packingLoad")]
+        _packing_load: IgnoredAny,
+        #[serde(rename = "container")]
+        _container: IgnoredAny,
+        #[serde(rename = "characteristics")]
+        _characteristics: IgnoredAny,
+        #[serde(rename = "recipeId")]
+        _recipe_id: IgnoredAny,
+        #[serde(rename = "recipeRecord")]
+        _recipe_record: Option<IgnoredAny>,
+    }
+    let product: Product = serde_json::from_str(body).map_err(|_| InstallError::DefinitionBody)?;
+    let Some((_, parameters)) = AUTHORED
+        .woven
+        .iter()
+        .find(|(expected, _)| candidate.same_choices(expected))
+    else {
+        return Ok(false);
+    };
+    let Some(pouch) = candidate.inputs.iter().find(|input| input.role == "pouch") else {
+        return Ok(false);
+    };
+    let Some(binding) = candidate
+        .inputs
+        .iter()
+        .find(|input| input.role == "binding")
+    else {
+        return Ok(false);
+    };
+    let woven = &*WOVEN;
+    let rules = &woven.rules;
+    let material_valid = |input: &Input, properties: &[JsText]| {
+        definition(&input.definition_id).is_some_and(|material| {
+            material.recipe_id.is_none()
+                && material.nutrition.is_none()
+                && properties
+                    .iter()
+                    .all(|property| material.properties.contains(property))
+        })
+    };
+    let quantity = pouch.quantity;
+    Ok(rules.output_quantity == 1
+        && (rules.minimum_pouch_quantity..=rules.maximum_pouch_quantity).contains(&quantity)
+        && binding.quantity == quantity.div_ceil(rules.binding_divisor)
+        && material_valid(pouch, &woven.pouch_properties)
+        && material_valid(binding, &woven.binding_properties)
+        && work == (rules.work_seconds_per_material * (quantity + binding.quantity)) as f64
+        && &output.named.name == candidate.output_name()
+        && output.portable
+        && output.properties == woven.product_properties
+        && output.packing_load() == Some(quantity.div_ceil(rules.empty_packing_load_divisor))
+        && output.container_capacity() == Some(rules.capacity_per_pouch_unit * quantity)
+        && output.container_maximum_depth() == Some(rules.maximum_depth)
+        && output.has_open_contents() == parameters.contents_exposure_profile.is_some()
+        && product
+            .contents_exposure
+            .map(|exposure| exposure.profile)
+            .as_ref()
+            == parameters.contents_exposure_profile.as_ref()
+        && product.mechanism_fields == OUTPUTS.constructed_story_fields)
 }

@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "minimumPouchQuantity": 2,
+    "maximumPouchQuantity": 8,
+    "bindingDivisor": 2,
+    "capacityPerPouchUnit": 4,
+    "emptyPackingLoadDivisor": 3,
+    "workSecondsPerMaterial": 24,
+    "outputQuantity": 1,
+    "maximumDepth": 16
+  },
+  "pouchProperties": ["fiber", "flexible", "pouch"],
+  "bindingProperties": ["binding"],
+  "productProperties": ["fiber", "pouch"]
+}
