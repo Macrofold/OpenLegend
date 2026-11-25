@@ -1,8 +1,8 @@
 # Witness decisions and personal memory — technical design
 
-| Status      | Current progress                                                                                                   | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Scripted gameplay passed, including the dense crowd. The remaining comparison and playability gates are in PS04-A. | 2026-11-24   |
+| Status      | Current progress                                                                                                                                  | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The selected behavior passed scripted gameplay checks. Scoped comparisons are recorded. Uncoached play and sustained scale remain open in PS04-A. | 2026-11-24   |
 
 A player can make fifty people witness the same performance and still get fifty different accounts of it. The implementation must answer three separate questions: **what reached this witness, what requires their choice now, and what can they recall later?** The [feature](../features/noticing-and-remembering/README.md) owns those answers. The steps below extend the existing perception, decision and memory owners. A quiet witness can supply a useful lead later even if the server never asked a model about the performance.
 
