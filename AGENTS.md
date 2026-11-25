@@ -169,7 +169,9 @@ Before completion apply [required review](.agents/skills/openlegend-review/SKILL
 
 ## Completion and handoff — every task
 
-Finish the agreed implementation, integration, documentation, review fixes and verification. Run each required manual end-to-end check. If it exposes a defect in promised behavior, fix the defect and verify it through the affected caller. When Mike asks for new automated tests, write them and make them pass. For other tasks follow [test selection](.agents/rules/verification.md#select-checks-for-the-task).
+Finish the agreed implementation, integration, documentation, review fixes and verification. Run each required hands-on end-to-end check yourself. If it exposes a defect in promised behavior, fix the defect and verify it through the affected caller. When Mike asks for new automated tests, write them and make them pass. For other tasks follow [test selection](.agents/rules/verification.md#select-checks-for-the-task).
+
+**Human playtests are separate from development.** Mike decides whether, when and where to run them. Keep gathering feedback from human participants outside agent work plans, implementation checklists and completion criteria, even when an older design lists it there. Continue development and run the required gameplay and browser checks yourself. Never wait for a human playtest or its results to start, continue or finish a development task.
 
 Continue across stages; progress reports, a first implementation or an intermediate checkpoint are not completion. Do not relabel agreed scope as follow-up work. Respect explicit scope/batch/time limits and mandatory conflict, permission, budget or platform limits; absent those, there is no default early-stop window. Report genuine blockers with unfinished work and reasons; do not idle, expand scope or claim completion.
 

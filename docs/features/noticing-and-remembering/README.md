@@ -17,12 +17,14 @@ The outputs can coexist: a physical effect, an observable sign of attention, an 
 
 ## Design decisions and remaining questions
 
-The witness, decision and memory rules above are specified. Two questions depend on play evidence.
+The witness, decision and memory rules above are specified. The following questions guide verification.
 
-| Question                                                           | Status                 | What would settle it                                                                                                                                             |
-| ------------------------------------------------------------------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Could witnesses who follow someone closely keep less route detail? | Conditional experiment | Keep the detail unless profiling shows a material cost and a measured reduction preserves what a bystander and a deliberate follower can notice, do and recount. |
-| Do quiet and crowded scenes feel lively at an affordable cost?     | Needs play evidence    | Count warranted and missed reactions and actual requests. Let players watch the scene and question its witnesses. No fixed fraction of the crowd has to react.   |
+| Question                                                                         | Status                   | What would settle it                                                                                                                                             |
+| -------------------------------------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Could witnesses who follow someone closely keep less route detail?               | Conditional experiment   | Keep the detail unless profiling shows a material cost and a measured reduction preserves what a bystander and a deliberate follower can notice, do and recount. |
+| Do quiet and crowded scenes produce appropriate reactions at an affordable cost? | Gameplay and cost checks | Count warranted and missed reactions and actual requests. Question witnesses through the ordinary player path. No fixed fraction of the crowd has to react.      |
+
+Mike can separately use the [playtest questions](scenarios-and-acceptance.md#questions-for-human-playtests) to see how human players read a scene.
 
 Examples apply where the world supports the activity. They require no particular new ability or art asset.
 

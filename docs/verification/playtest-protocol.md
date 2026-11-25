@@ -1,5 +1,7 @@
 # Bounded live playtest protocol
 
+Use this procedure to run a focused check in the real game. Mike plans any separate sessions with human participants under the [human playtest boundary](../../AGENTS.md#completion-and-handoff--every-task).
+
 Use a backed-up or isolated save. Choose the player action and the outcome the check must demonstrate. A controlled provider response can verify the request, reply handling and resulting gameplay. To judge what a live model actually chooses or says, use an authorized live call with an explicit spending cap. Record the receipt and any uncertain charge. A timeout must not repeat a paid request or consume gameplay resources for an action that did not execute. See [verification and spending](../../.agents/rules/verification.md#spending).
 
 ## Live invention and survival journey

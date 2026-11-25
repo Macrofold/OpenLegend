@@ -8,6 +8,8 @@
 
 ## Working objective
 
+Mike decides whether and when to run participant sessions. The session plan and its findings support his product decisions separately from [development completion](../../AGENTS.md#completion-and-handoff--every-task).
+
 Determine whether intended adult browser survival-adventure/sandbox players understand the world, make meaningful choices, value their camp and relationships, and want another activity or session. Examine useful invention and independent character consequences within the same game, not only as separate technical demonstrations.
 
 Use early partial tests to resolve specific uncertainties while the complete experience is being built. State the missing coverage rather than redefining the first playable. Participant feedback informs creative judgment; it does not allocate the game's direction by vote.
