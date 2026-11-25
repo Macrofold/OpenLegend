@@ -7,6 +7,10 @@ use indexmap::{IndexMap, IndexSet};
 use std::collections::BTreeMap;
 use std::mem::size_of;
 
+fn folds_prior_writes(next: &ChangedRows, table: &str) -> bool {
+    next.writes.contains_key(table) || next.deletes.contains_key(table)
+}
+
 /// Folding moves immutable payloads and SQL cells; it does not copy their rich
 /// bodies. Fund the actual temporary key indexes, row vectors and mask/reference
 /// sets separately from the persistent pending-save bytes.
@@ -20,14 +24,20 @@ pub(crate) fn merge_workspace_bound(previous: &ChangedRows, next: &ChangedRows) 
         let incoming = next.writes.get(table).map_or(0, Vec::len);
         let old = previous.writes.get(table).map_or(0, Vec::len);
         let count = old.checked_add(incoming)?;
+        bytes = bytes.checked_add(count.checked_mul(tree_node_bound::<&String, ()>()?)?)?;
+        if !folds_prior_writes(next, table) {
+            // The previous vector and its row allocations move unchanged.
+            // Validation still needs its temporary identity set.
+            bytes = bytes.checked_add(tree_node_bound::<String, Vec<ChangedRow>>()?)?;
+            continue;
+        }
         bytes = bytes
             .checked_add(tree_node_bound::<String, IndexMap<String, ChangedRow>>()?)?
             .checked_add(table.capacity().checked_mul(2)?)?
             .checked_add(map_storage::<String, ChangedRow>(
                 count.checked_mul(2)?.checked_add(1)?,
             )?)?
-            .checked_add(count.checked_mul(4)?.checked_mul(size_of::<ChangedRow>())?)?
-            .checked_add(count.checked_mul(tree_node_bound::<&String, ()>()?)?)?;
+            .checked_add(count.checked_mul(4)?.checked_mul(size_of::<ChangedRow>())?)?;
         for row in previous
             .writes
             .get(table)
@@ -157,16 +167,20 @@ pub(crate) fn merge_changes(
     // cannot silently become an accepted partial save.
     schema.validate_changes(&previous)?;
     schema.validate_changes(&next)?;
-    let mut writes: BTreeMap<String, IndexMap<String, ChangedRow>> = previous
-        .writes
-        .into_iter()
-        .map(|(table, rows)| {
-            (
+    let mut unchanged_writes = BTreeMap::new();
+    let mut writes: BTreeMap<String, IndexMap<String, ChangedRow>> = BTreeMap::new();
+    // An ordinary temporal capture touches only its page table. Move already
+    // ordered rows from other tables with their original allocation and order.
+    for (table, rows) in previous.writes {
+        if folds_prior_writes(&next, &table) {
+            writes.insert(
                 table,
                 rows.into_iter().map(|row| (row.id.clone(), row)).collect(),
-            )
-        })
-        .collect();
+            );
+        } else if !rows.is_empty() {
+            unchanged_writes.insert(table, rows);
+        }
+    }
     let mut deletes: BTreeMap<String, IndexSet<String>> = previous
         .deletes
         .into_iter()
@@ -228,11 +242,13 @@ pub(crate) fn merge_changes(
     for (table, ids) in next.expired {
         expired.entry(table).or_default().extend(ids);
     }
-    let writes: BTreeMap<_, Vec<_>> = writes
-        .into_iter()
-        .filter(|(_, rows)| !rows.is_empty())
-        .map(|(table, rows)| (table, rows.into_values().collect()))
-        .collect();
+    unchanged_writes.extend(
+        writes
+            .into_iter()
+            .filter(|(_, rows)| !rows.is_empty())
+            .map(|(table, rows)| (table, rows.into_values().collect())),
+    );
+    let writes = unchanged_writes;
     let rows = writes.values().map(Vec::len).sum();
     Ok(ChangedRows {
         writes,

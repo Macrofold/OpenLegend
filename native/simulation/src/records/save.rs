@@ -477,7 +477,6 @@ impl SaveJournal {
         if self.next_prefix > MAX_SAFE_INTEGER {
             return Err(SaveError::Binding);
         }
-        schema.validate_changes(&self.suffix)?;
         let fixed = size_of::<SavePrefix>()
             .checked_add(2 * size_of::<usize>())
             .and_then(|n| n.checked_add(self.world_id.len()))
@@ -496,6 +495,7 @@ impl SaveJournal {
         let _workspace = scratch
             .reserve(workspace_bytes)
             .map_err(|_| SaveError::Capacity)?;
+        schema.validate_changes(&self.suffix)?;
         let additional = new
             .checked_add(workspace_bytes)
             .and_then(|n| n.checked_add(index))
