@@ -2,7 +2,10 @@
 //! This read never replaces an earlier speaker label with a later known name.
 use super::*;
 use crate::host::retained_size::heap_sum;
-use crate::reception::{CurrentBodyReadScope, ObserverSubject, ReferenceRole};
+use crate::reception::{
+    CurrentBodyReadScope, ExperienceModality, FacetRole, ObservationContribution,
+    ObservationExposure, ObservationOrigin, ObserverSubject, ReferenceRole,
+};
 use crate::worlds::InstalledPersonalNameReader;
 
 #[derive(Serialize)]
@@ -26,12 +29,18 @@ pub struct RoleFacts {
     pub target_contact: Option<Contact>,
     #[serde(skip)]
     _guard: ByteReservation,
+    #[serde(skip)]
+    pub(super) acquired_visual_contact: bool,
 }
 pub(crate) struct RoleReader<'a> {
     state: &'a SimulationState,
     actor: &'a str,
     names: InstalledPersonalNameReader<'a>,
     body: Option<CurrentBodyReadScope<'a>>,
+}
+enum ActorBinding<'a> {
+    Saved(&'a AwarenessSourceBody),
+    ObservedExpression(&'a ObservationExposure),
 }
 impl<'a> RoleReader<'a> {
     pub fn prepare(state: &'a SimulationState, actor: &'a str) -> Result<Self, ExperienceError> {
@@ -83,25 +92,118 @@ impl<'a> RoleReader<'a> {
             &body.field.id,
         )))
     }
+    /// The acquired role proves event-time sight. The current body must
+    /// still be independently eligible in that same exposure. A changed
+    /// body detail can have a newer sample within the ongoing exposure.
+    fn expression_contact(
+        &self,
+        id: &str,
+        exposure: &ObservationExposure,
+    ) -> Result<Option<(&str, u64, &str)>, ExperienceError> {
+        let Some(scope) = self
+            .body
+            .as_ref()
+            .filter(|scope| scope.state().observer.as_ref() == Some(&exposure.observer))
+        else {
+            return Ok(None);
+        };
+        let Some(body) = scope
+            .native_body(id)
+            .map_err(|_| ExperienceError::Unavailable)?
+        else {
+            return Ok(None);
+        };
+        let Some(life) = body.grant.subject_physical_life else {
+            return Ok(None);
+        };
+        let grant = body.grant;
+        if grant.exposure != exposure.episode_id
+            || !crate::encoding::json_record_eq(
+                &(
+                    &grant.exposure,
+                    &grant.channel.id,
+                    grant.channel.version,
+                    &grant.channel.digest,
+                ),
+                &exposure.track,
+            )
+            .map_err(|_| ExperienceError::Unavailable)?
+        {
+            return Ok(None);
+        }
+        Ok(Some((
+            grant.subject_id.as_str(),
+            life,
+            body.field.id.as_str(),
+        )))
+    }
+    fn received_actor<'event>(
+        &self,
+        event: &'event SensoryFacet,
+        origin: Option<&ObservationOrigin>,
+    ) -> (Option<&'event str>, Option<ActorBinding<'event>>) {
+        let SensoryFacet::Event {
+            event_type,
+            modality,
+            references,
+            participants,
+            ..
+        } = event
+        else {
+            return (None, None);
+        };
+        let Some((ordinal, reference)) = references
+            .iter()
+            .enumerate()
+            .find(|(_, reference)| reference.role == ReferenceRole::Actor)
+        else {
+            return (None, None);
+        };
+        let binding = if *modality == ExperienceModality::Observed
+            && event_type
+                == &self
+                    .state
+                    .installed
+                    .occurrence_rules
+                    .value()
+                    .response
+                    .expression
+                    .event_type
+            && matches!(origin, Some(ObservationOrigin::Occurrence { .. }))
+        {
+            participants
+                .iter()
+                .flatten()
+                .find(|participant| participant.reference_ordinal == ordinal as u64)
+                .map(|participant| {
+                    ActorBinding::ObservedExpression(participant.participant.exposure())
+                })
+        } else {
+            None
+        };
+        (Some(&reference.id), binding)
+    }
     pub fn capture(
         &self,
         evidence: &Evidence<'_>,
         budget: &ByteBudget,
     ) -> Result<RoleFacts, ExperienceError> {
         // The canonical source remains borrowed. Only these small routing
-        // fields are decoded; speech words and acquired originals stay opaque.
+        // fields are decoded. A retained observed expression also needs its
+        // acquired actor role if the view can still offer a live contact.
         #[derive(Deserialize)]
         struct SpeechRole {
             #[serde(default)]
             addressee: Option<crate::reception::SpeechParticipant>,
         }
-        let (source_id, target_id, source_subject, source_body, addressee, _parse_guard);
+        let (source_id, target_id, source_subject, binding, addressee, _parse_guard);
         let subject;
         let body;
         let source;
         let target;
         let speech;
         let facets;
+        let observation;
         let pool_values = match evidence {
             Evidence::Temporal { values, .. } => values.as_ref(),
             _ => None,
@@ -121,6 +223,38 @@ impl<'a> RoleReader<'a> {
                     bytes.checked_add(raw.get().len().checked_mul(32)?)
                 })
                 .ok_or_else(capacity)?;
+                let expression = &self
+                    .state
+                    .installed
+                    .occurrence_rules
+                    .value()
+                    .response
+                    .expression
+                    .event_type;
+                let expression_observation = match (value.observation, value.event_type) {
+                    (Some(original), Some(event_type))
+                        if value.source_body.is_none()
+                            && self.body.is_some()
+                            && crate::encoding::json_record_eq(expression, event_type.get())
+                                .map_err(|_| ExperienceError::Unavailable)?
+                            && crate::encoding::json_record_eq(
+                                &ExperienceModality::Observed,
+                                value.modality.get(),
+                            )
+                            .map_err(|_| ExperienceError::Unavailable)? =>
+                    {
+                        Some(original.get())
+                    }
+                    _ => None,
+                };
+                let bound = bound
+                    .checked_add(
+                        expression_observation
+                            .map(super::encoded_body_bound)
+                            .transpose()?
+                            .unwrap_or(0),
+                    )
+                    .ok_or_else(capacity)?;
                 _parse_guard = budget.reserve(bound).map_err(|_| capacity())?;
                 source = value
                     .source_id
@@ -150,7 +284,40 @@ impl<'a> RoleReader<'a> {
                 source_id = source.as_deref();
                 target_id = target.as_deref();
                 source_subject = subject.as_ref();
-                source_body = body.as_ref();
+                observation = expression_observation
+                    .map(serde_json::from_str::<ObservationContribution>)
+                    .transpose()
+                    .map_err(|_| ExperienceError::InvalidBody("expression acquired role"))?;
+                binding = if let Some(body) = &body {
+                    Some(ActorBinding::Saved(body))
+                } else {
+                    observation.as_ref().and_then(|original| {
+                        let event = original.facets.iter().find(|facet| {
+                            facet.role == FacetRole::Direct
+                                && matches!(facet.value, SensoryFacet::Event { .. })
+                        })?;
+                        let privacy = self
+                            .state
+                            .experience
+                            .actor(self.actor)
+                            .map(|actor| &actor.privacy);
+                        if !crate::experience::retained_observation_eligible(
+                            &self.state.experience,
+                            self.actor,
+                            original,
+                            &self.state.installed.account_law(),
+                        ) || !super::super::evidence::member_unrevoked(
+                            privacy,
+                            &original.id,
+                            event.ordinal,
+                        ) {
+                            return None;
+                        }
+                        let (actor, binding) =
+                            self.received_actor(&event.value, Some(&original.origin));
+                        binding.filter(|_| actor == source_id)
+                    })
+                };
                 addressee = speech
                     .as_ref()
                     .is_some_and(|speech| speech.addressee.is_some());
@@ -171,7 +338,7 @@ impl<'a> RoleReader<'a> {
                     .map_err(|_| capacity())?;
                 let mut values = Vec::new();
                 values.try_reserve_exact(count).map_err(|_| capacity())?;
-                match evidence {
+                let origin = match evidence {
                     Evidence::Temporal {
                         receipt, members, ..
                     } => {
@@ -184,6 +351,7 @@ impl<'a> RoleReader<'a> {
                                 return Err(ExperienceError::Unavailable);
                             }
                         }
+                        receipt.origin.as_ref()
                     }
                     Evidence::Current {
                         original, members, ..
@@ -191,36 +359,34 @@ impl<'a> RoleReader<'a> {
                         for &index in members {
                             values.push(&original.observation().facets[index].value);
                         }
+                        Some(&original.observation().origin)
                     }
                     _ => unreachable!(),
-                }
+                };
                 facets = values;
-                let Some(SensoryFacet::Event {
-                    references,
-                    source_subject: subject,
-                    ..
-                }) = facets
+                let Some(
+                    event @ SensoryFacet::Event {
+                        source_subject: subject,
+                        ..
+                    },
+                ) = facets
                     .iter()
                     .find(|value| matches!(value, SensoryFacet::Event { .. }))
                     .copied()
                 else {
                     return Err(ExperienceError::Unavailable);
                 };
-                source_id = references
-                    .iter()
-                    .find(|reference| reference.role == ReferenceRole::Actor)
-                    .map(|reference| reference.id.as_str());
+                (source_id, binding) = self.received_actor(event, origin);
                 target_id = None;
                 source_subject = subject.as_ref();
-                source_body = None;
                 addressee = false;
             }
         }
-        self.project(
+        self.project_bound_roles(
             source_id,
             target_id,
             source_subject,
-            source_body,
+            binding,
             addressee,
             budget,
         )
@@ -237,9 +403,27 @@ impl<'a> RoleReader<'a> {
         addressee: bool,
         budget: &ByteBudget,
     ) -> Result<RoleFacts, ExperienceError> {
+        self.project_bound_roles(
+            source_id,
+            target_id,
+            source_subject,
+            source_body.map(ActorBinding::Saved),
+            addressee,
+            budget,
+        )
+    }
+    fn project_bound_roles(
+        &self,
+        source_id: Option<&str>,
+        target_id: Option<&str>,
+        source_subject: Option<&ObserverSubject>,
+        binding: Option<ActorBinding<'_>>,
+        addressee: bool,
+        budget: &ByteBudget,
+    ) -> Result<RoleFacts, ExperienceError> {
         let mut self_contact = false;
         let mut actor_contact = None;
-        if let Some(body) = source_body {
+        if let Some(ActorBinding::Saved(body)) = binding {
             let physical = self
                 .state
                 .physical
@@ -255,6 +439,10 @@ impl<'a> RoleReader<'a> {
                     .current(&body.entity_id)?
                     .filter(|(_, _, lease)| body.lease_id.as_deref() == Some(*lease));
             }
+        } else if let Some(ActorBinding::ObservedExpression(exposure)) = binding
+            && let Some(id) = source_id
+        {
+            actor_contact = self.expression_contact(id, exposure)?;
         }
         let communication = source_subject
             .filter(|subject| matches!(subject, ObserverSubject::Individual { .. }))
@@ -308,6 +496,8 @@ impl<'a> RoleReader<'a> {
             target_communication_id: target.map(str::to_owned),
             target_contact: target_contact.map(contact),
             _guard: guard,
+            acquired_visual_contact: actor_contact.is_some()
+                && matches!(binding, Some(ActorBinding::ObservedExpression(_))),
         };
         // String::to_owned allocates these exact slices; all retained clones
         // remain with the detached account's guard until JSON handoff finishes.

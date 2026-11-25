@@ -187,7 +187,9 @@ fn stage_sensitivity_expression(
     budget: &ByteBudget,
 ) -> Result<Option<StagedVisualOccurrence>, ExecutionError> {
     use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
+    use crate::host::retained_size::map_storage;
     use crate::narration::{Narration, NarrationPart, PersonRole};
+    use crate::reception::EventScalar;
     let installed = Arc::clone(&core.state.installed);
     let Some(verb) = installed
         .event_appraisal_rules
@@ -215,6 +217,8 @@ fn stage_sensitivity_expression(
                 .ok_or(ExecutionError::Capacity)?,
             expression.len(),
             verb.len(),
+            map_storage::<String, EventScalar>(2).ok_or(ExecutionError::Capacity)?,
+            "mechanicaldescriptive".len(),
             128,
         ])
         .ok_or(ExecutionError::Capacity)?,
@@ -241,7 +245,10 @@ fn stage_sensitivity_expression(
         audience: AudienceSelection::Physical,
         source_id: Some(observer.to_owned()),
         target_id: None,
-        data: None,
+        data: Some(indexmap::indexmap! {
+            "mechanical".into() => EventScalar::Boolean(false),
+            "descriptive".into() => EventScalar::Boolean(true),
+        }),
         scope: EventScope::External,
         origin: None,
         exposure: None,

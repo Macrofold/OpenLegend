@@ -127,6 +127,7 @@ struct AccountSnapshot {
     evidence: Snapshot,
     roles: Option<RoleFacts>,
     projected_awareness_bytes: usize,
+    acquired_visual_contact: bool,
     _original_pin: Arc<crate::host::SharedMemoryPin>,
 }
 pub(super) struct PlayerEventFence {
@@ -134,6 +135,7 @@ pub(super) struct PlayerEventFence {
     generation: String,
     actor_id: String,
     physical_life: u64,
+    privacy_revision: u64,
     accounts: IndexMap<String, AccountSnapshot>,
     _guard: ByteReservation,
 }
@@ -238,6 +240,10 @@ impl PlayerEventFence {
                 AccountSnapshot {
                     original,
                     evidence,
+                    acquired_visual_contact: account
+                        .roles
+                        .as_ref()
+                        .is_some_and(|roles| roles.acquired_visual_contact),
                     roles: if direct { account.roles } else { None },
                     projected_awareness_bytes,
                     _original_pin: original_pin,
@@ -255,6 +261,10 @@ impl PlayerEventFence {
                 .and_then(|entity| entity.actor.as_ref())
                 .and_then(|actor| actor.physical_life)
                 .unwrap_or(0),
+            privacy_revision: state
+                .experience
+                .actor(actor_id)
+                .map_or(0, |actor| actor.privacy.revision()),
             accounts: retained,
             _guard: guard,
         })
@@ -305,11 +315,29 @@ impl PlayerEventFence {
         // pointer is pruned. Source's post-await check rereads personal facts;
         // it does not require the original to remain in the newer hot window.
         let current = select_player_accounts(state, actor, wanted, originals, budget)?;
+        let privacy_revision = state
+            .experience
+            .actor(actor)
+            .map_or(0, |actor| actor.privacy.revision());
         for id in ids {
             let Some(after) = current.selected.get(id.as_str()) else {
                 return Ok(false);
             };
-            if !same_evidence(&self.accounts[id].evidence, &after.evidence, budget)? {
+            let before = &self.accounts[id];
+            // The retained account can outlive a revocation of its acquired
+            // member. A fresh read checks that member again before issuing a contact.
+            if before.acquired_visual_contact
+                && matches!(before.evidence, Snapshot::Awareness(..))
+                && privacy_revision != self.privacy_revision
+            {
+                return Ok(false);
+            }
+            if !same_evidence(
+                &before.evidence,
+                &after.evidence,
+                before.acquired_visual_contact,
+                budget,
+            )? {
                 return Ok(false);
             }
         }
@@ -373,6 +401,7 @@ fn first_current<'a>(value: &'a Evidence<'_>, kind: &str) -> Option<&'a SensoryF
 fn same_evidence(
     before: &Snapshot,
     after: &Evidence<'_>,
+    acquired_contact: bool,
     budget: &ByteBudget,
 ) -> Result<bool, ExperienceError> {
     if let Snapshot::Awareness(source, _) = before {
@@ -414,6 +443,23 @@ fn same_evidence(
     if matches!(after, Evidence::Awareness(_)) {
         return Ok(false);
     }
+    // An occurrence contact also used the acquired actor's exact exposure
+    // and chronology. Equal wording alone cannot keep that contact valid.
+    if acquired_contact {
+        let before_origin = match before {
+            Snapshot::Temporal { receipt, .. } => receipt.origin.as_ref(),
+            Snapshot::Current { original, .. } => Some(&original.observation().origin),
+            _ => None,
+        };
+        let after_origin = match after {
+            Evidence::Temporal { receipt, .. } => receipt.origin.as_ref(),
+            Evidence::Current { original, .. } => Some(&original.observation().origin),
+            _ => None,
+        };
+        if before_origin != after_origin {
+            return Ok(false);
+        }
+    }
     let equal = match (
         first_snapshot(before, "event"),
         first_current(after, "event"),
@@ -429,6 +475,7 @@ fn same_evidence(
                 content: ac,
                 data: ad,
                 references: ar,
+                participants: ap,
                 ..
             }),
             Some(SensoryFacet::Event {
@@ -441,6 +488,7 @@ fn same_evidence(
                 content: bc,
                 data: bd,
                 references: br,
+                participants: bp,
                 ..
             }),
         ) => {
@@ -453,6 +501,7 @@ fn same_evidence(
                 && ac == bc
                 && ad == bd
                 && ar == br
+                && (!acquired_contact || ap == bp)
         }
         _ => false,
     };
