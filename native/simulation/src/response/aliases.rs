@@ -268,7 +268,14 @@ impl ActorResponse {
                         let subject = object(reference)?
                             .get_mut("subjectId")
                             .ok_or_else(invalid)?;
-                        scalar(subject, aliases.entities, storage)?;
+                        if let Some(identity) =
+                            subject.as_str().and_then(|key| aliases.identities.get(key))
+                        {
+                            // Carry the issued personal identity, not its current body or alias.
+                            *subject = resolved_subject_cell(identity, storage)?;
+                        } else {
+                            scalar(subject, aliases.entities, storage)?;
+                        }
                     }
                 }
             }
@@ -332,7 +339,7 @@ impl ActorResponse {
     }
 }
 
-fn reflection_subject_cell(
+fn resolved_subject_cell(
     subject: &crate::reception::ObserverSubject,
     storage: &mut ByteReservation,
 ) -> Result<SqlCell, ExecutionError> {
@@ -371,7 +378,7 @@ impl ResponseAliases<'_> {
                     .as_str()
                     .and_then(|key| self.identities.get(key))
                     .ok_or_else(invalid)?;
-                *subject = reflection_subject_cell(selected, storage)?;
+                *subject = resolved_subject_cell(selected, storage)?;
             }
             let SqlCell::Array(links) = record.get_mut("evidence").ok_or_else(invalid)? else {
                 return Err(invalid());
@@ -426,7 +433,7 @@ impl ResponseAliases<'_> {
                         };
                         &owned
                     };
-                    *subject = reflection_subject_cell(selected, storage)?;
+                    *subject = resolved_subject_cell(selected, storage)?;
                 } else if field == "nameChanges" {
                     return Err(invalid());
                 }

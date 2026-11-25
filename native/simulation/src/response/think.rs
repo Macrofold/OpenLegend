@@ -6,6 +6,7 @@ use crate::experience::{
     LiteralRange, LiteralReference, LiteralReferences, acquire_memory, prepare_memory_admission,
 };
 use crate::narration::{NarratedAccount, Narration, NarrationPart, PersonRole};
+use crate::reception::ObserverSubject;
 use crate::text::JsText;
 
 #[derive(Deserialize)]
@@ -19,8 +20,16 @@ pub(crate) struct Thought {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ThoughtReference {
-    subject_id: String,
+    subject_id: ThoughtSubject,
     range: LiteralRange,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum ThoughtSubject {
+    /// The response resolver writes this from the ticket's issued identity map.
+    Identity(ObserverSubject),
+    Entity(String),
 }
 pub(crate) struct CompletedThought {
     outcome: Outcome,
@@ -141,35 +150,41 @@ pub(crate) fn remember_thought(
         })
         .transpose()?;
     if !thought.references.is_empty() {
-        use crate::reception::ObserverSubject;
         let units = thought.text.units_len();
         let prefix = summary
             .units_len()
             .checked_sub(units)
             .ok_or(ExecutionError::Invariant)?;
-        let names = crate::worlds::InstalledPersonalNameReader::prepare(
-            &core.state.physical,
-            &core.state.reception,
-            &core.state.installed,
-            &core.state.experience,
-            actor,
-        )?;
+        let names = thought.references.iter()
+            .any(|mention| matches!(&mention.subject_id, ThoughtSubject::Entity(id) if id != actor))
+            .then(|| crate::worlds::InstalledPersonalNameReader::prepare(
+                &core.state.physical,
+                &core.state.reception,
+                &core.state.installed,
+                &core.state.experience,
+                actor,
+            ))
+            .transpose()?;
         for mention in &thought.references {
-            if mention.range.end > units
-                || mention.range.start >= mention.range.end
-                || !permitted.contains(&mention.subject_id)
-            {
+            if mention.range.end > units || mention.range.start >= mention.range.end {
                 return result(false, budget);
             }
-            let subject = if mention.subject_id == actor {
-                ObserverSubject::Entity {
-                    entity_id: mention.subject_id.clone(),
-                }
-            } else {
-                let Some(subject) = names.current_body_subject(&mention.subject_id)? else {
+            let subject = match &mention.subject_id {
+                ThoughtSubject::Identity(subject) => subject.clone(),
+                ThoughtSubject::Entity(id) if !permitted.contains(id) => {
                     return result(false, budget);
-                };
-                subject
+                }
+                ThoughtSubject::Entity(id) if id == actor => ObserverSubject::Entity {
+                    entity_id: id.clone(),
+                },
+                ThoughtSubject::Entity(id) => {
+                    let Some(subject) = names.as_ref().ok_or(ExecutionError::Invariant)?
+                        .current_body_subject(id)?
+                    else {
+                        return result(false, budget);
+                    };
+                    subject
+                }
             };
             literal_references.bind(
                 LiteralReference::Subject { subject },

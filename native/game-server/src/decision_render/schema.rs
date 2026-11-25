@@ -153,7 +153,12 @@ impl DecisionPolicy {
         let remembered_bytes = references.remembered_places.iter().fold(0usize, |size, id| {
             size.saturating_add(id.len().saturating_add(64))
         });
+        // Only the annotated Think branch gains these already presented identities.
+        let remembered_identity_bytes = references.identity.iter()
+            .filter(|alias| !references.entity.contains(alias))
+            .fold(0usize, |size, alias| size.saturating_add(alias.len().saturating_add(64)));
         let additional = references.appraisal.map_or(0, tree_bytes)
+            .saturating_add(remembered_identity_bytes)
             .saturating_add(if remembered_bytes == 0 { 0 } else {
                 remembered_bytes.saturating_add(1024).saturating_mul(variants_with_actions(template))
             });
@@ -208,6 +213,23 @@ impl DecisionPolicy {
                 }
                 name["properties"]["subjectId"] =
                     json!({"type":"string","enum":references.identity});
+            }
+            if remembered_identity_bytes != 0
+                && let Some(branches) = properties.get_mut("think")
+                    .and_then(|think| think.get_mut("anyOf"))
+                    .and_then(Value::as_array_mut)
+            {
+                for branch in branches {
+                    if let Some(aliases) = branch
+                        .pointer_mut("/properties/references/items/properties/subjectId/enum")
+                        .and_then(Value::as_array_mut)
+                    {
+                        aliases.extend(references.identity.iter()
+                            .filter(|alias| !references.entity.contains(alias))
+                            .cloned()
+                            .map(Value::String));
+                    }
+                }
             }
             !(references.attention.is_empty() && properties["observe"]["type"] != "null"
                 || references.retention.is_empty() && properties["remember"]["type"] != "null")
