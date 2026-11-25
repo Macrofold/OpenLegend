@@ -60,6 +60,7 @@ pub(crate) struct InstalledWorld {
     pub acoustics: VerifiedDefinition<AcousticPolicy>,
     pub response_profiles: IndexMap<String, VerifiedDefinition<NativeResponseProfile>>,
     pub status_policy: InstalledStatusPolicy,
+    pub calendar: crate::values::DefinitionPin,
     pub capabilities: StatusCapabilities,
     pub status_work: CompiledStatusWorkMap,
     pub population_work: crate::status::StatusInstallationWork,

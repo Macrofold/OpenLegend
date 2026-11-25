@@ -373,7 +373,12 @@ fn assemble_selected_core(
     definition_storage
         .merge(
             budget
-                .reserve_record(actor_response.heap_bytes().ok_or(InstallError::Capacity)?)
+                .reserve_record(
+                    actor_response
+                        .heap_bytes()
+                        .and_then(|bytes| bytes.checked_add(meanings.calendar.heap_bytes()?))
+                        .ok_or(InstallError::Capacity)?,
+                )
                 .map_err(|_| InstallError::Capacity)?,
         )
         .map_err(|_| InstallError::Capacity)?;
@@ -390,6 +395,7 @@ fn assemble_selected_core(
         acoustics: meanings.acoustics,
         response_profiles: meanings.response_profiles,
         status_policy: meanings.status_policy,
+        calendar: meanings.calendar,
         capabilities: meanings.capabilities,
         status_work: meanings.status_work,
         population_work: meanings.population_work,

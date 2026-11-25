@@ -1,6 +1,6 @@
 use super::{DecisionPolicy, OfferedAction, RenderError};
 use openlegend_simulation::{
-    encoding::write_json_record,
+    encoding::{json_record_len, write_json_record},
     host::{ByteBudget, ByteReservation},
 };
 use serde_json::{Map, Value};
@@ -113,6 +113,50 @@ impl PreparedPrompt {
 ")?;
         }
         Ok(true)
+    }
+
+    /// Only entries actually written to the request enter its response schema.
+    /// Required evidence and instructions are already in the prompt.
+    pub(crate) fn append_thought_references<'a>(
+        &mut self,
+        references: &'a [Value],
+    ) -> Result<Vec<&'a str>, RenderError> {
+        const GUIDE: &str = concat!(
+            "## Thought references\n",
+            "Optional references for private thoughts. Keep your own words. Leave unknown references unbound. ",
+            "To annotate a passage in think.text, use a listed reference as subjectId in think.references ",
+            "with its start (inclusive) and end (exclusive) in UTF-16 units. ",
+            "These references grant no physical targets. A quotation must copy exact received words ",
+            "from one passage and cannot fill a gap. Interpret relative time using the moment ",
+            "of the cited evidence, or this decision for your own plans. ",
+            "A remembered interval keeps the original gameSeconds.\n",
+        );
+        let mut listed = Vec::new();
+        let Some(mut remaining) = self.remaining().checked_sub(SECTION_BREAK.len() + GUIDE.len() + 2)
+        else {
+            return Ok(listed);
+        };
+        for entry in references {
+            let length = json_record_len(entry).map_err(|_| RenderError::Contract)?;
+            let Some(after) = remaining.checked_sub(length + usize::from(!listed.is_empty())) else {
+                continue;
+            };
+            let id = entry["reference"].as_str().ok_or(RenderError::Contract)?;
+            if listed.is_empty() {
+                self.section()?;
+                self.text(GUIDE)?;
+                self.text("[")?;
+            } else {
+                self.text(",")?;
+            }
+            self.json(entry)?;
+            listed.push(id);
+            remaining = after;
+        }
+        if !listed.is_empty() {
+            self.text("]")?;
+        }
+        Ok(listed)
     }
 
     fn text(&mut self, text: &str) -> Result<(), RenderError> {

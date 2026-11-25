@@ -9,7 +9,7 @@ mod copies;
 
 pub use crate::capture::{
     NpcActionOrdinal, NpcAliasOrdinal, NpcBindingPurpose, NpcCatalogueSource, NpcEntityAlias,
-    NpcEntityOrdinal, NpcPersonalEvidence,
+    NpcEntityOrdinal, NpcPersonalEvidence, NpcThoughtAlias,
 };
 use crate::host::retained_size::heap_record;
 pub use crate::response::ResponseConsumer as RuntimeNpcConsumer;
@@ -30,6 +30,7 @@ pub struct RuntimeNpcBindingInput {
     pub evidence: Vec<NpcPersonalEvidence>,
     pub entities: Vec<NpcEntityAlias>,
     pub identities: Vec<crate::capture::NpcSubjectAlias>,
+    pub thought_references: Vec<NpcThoughtAlias>,
     pub knowledge: Vec<NpcAliasOrdinal>,
     pub attention: Vec<NpcAliasOrdinal>,
     pub presented: Vec<usize>,
@@ -254,6 +255,7 @@ impl RuntimeNpcBindingInput {
             self.entities.heap_bytes().ok_or(CapacityError)?,
             self.knowledge.heap_bytes().ok_or(CapacityError)?,
             self.identities.heap_bytes().ok_or(CapacityError)?,
+            self.thought_references.heap_bytes().ok_or(CapacityError)?,
             self.attention.heap_bytes().ok_or(CapacityError)?,
             self.presented.heap_bytes().ok_or(CapacityError)?,
             self.appraisals.heap_bytes().ok_or(CapacityError)?,
@@ -281,6 +283,7 @@ impl RuntimeNpcBindingInput {
                     evidence: self.evidence,
                     entities: self.entities,
                     identities: self.identities,
+                    thought_references: self.thought_references,
                     knowledge: self.knowledge,
                     observations: Vec::new(),
                     current: Vec::new(),
@@ -712,6 +715,7 @@ impl NativeWorldSession {
                     knowledge: &ticket.bindings.knowledge_references,
                     identities: &ticket.bindings.identity_references,
                 },
+                &ticket.bindings.thought_references,
                 &self.budget,
             )
             .map_err(failure)?;
@@ -819,6 +823,7 @@ impl NativeWorldSession {
                 scope: Arc::clone(&ticket.original.historical_scope),
                 sources: Arc::clone(&ticket.original.sources),
                 selected_personal: maps.selected_personal.clone(),
+                thought_references: Arc::clone(&maps.thought_references),
                 perspectives: maps.perspectives.clone(),
                 perspective_snapshots: Arc::clone(&ticket.original.perspectives),
                 appraisals: maps.appraisals.clone(),
@@ -940,6 +945,7 @@ impl NativeWorldSession {
             NpcBindingRead {
                 original: &first.read,
                 current: &fresh.read,
+                current_installed: &fresh.installed,
                 references: &fresh.reference_facts,
                 original_references: &first.reference_facts,
                 sources: &first.sources,

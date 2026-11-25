@@ -142,6 +142,32 @@ impl<'a> TextSlice<'a> {
             })
         }
     }
+    /// Borrow valid Unicode without changing the code-unit range. A slice
+    /// that splits a surrogate pair has no equivalent Unicode string.
+    pub(crate) fn as_unicode(self) -> Option<&'a str> {
+        let text = self.source.as_unicode()?;
+        if text.is_ascii() {
+            return text.get(self.start..self.end);
+        }
+        let mut units = 0;
+        let mut start = None;
+        for (byte, character) in text
+            .char_indices()
+            .chain(std::iter::once((text.len(), '\0')))
+        {
+            if units == self.start {
+                start = Some(byte);
+            }
+            if units == self.end {
+                return Some(&text[start?..byte]);
+            }
+            if units > self.end {
+                break;
+            }
+            units += character.len_utf16();
+        }
+        None
+    }
     pub fn equals_str(self, value: &str) -> bool {
         self.units().eq(value.encode_utf16())
     }

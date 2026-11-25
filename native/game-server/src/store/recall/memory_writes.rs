@@ -33,7 +33,7 @@ struct Memory {
 
 enum Output {
     Activity(ActivityMemory),
-    Impression(Box<Placement>),
+    Retained(Box<Placement>),
     Commitment(Box<Placement>),
 }
 
@@ -45,7 +45,7 @@ impl Output {
                 .capacity()
                 .checked_add(row.id.capacity())?
                 .checked_add(row.source.capacity()),
-            Self::Impression(placement) | Self::Commitment(placement) => placement
+            Self::Retained(placement) | Self::Commitment(placement) => placement
                 .retained_bytes()?
                 .checked_add(size_of::<Placement>()),
         }
@@ -54,7 +54,7 @@ impl Output {
     fn placement(&self) -> Option<&Placement> {
         match self {
             Self::Activity(_) => None,
-            Self::Impression(placement) | Self::Commitment(placement) => Some(placement),
+            Self::Retained(placement) | Self::Commitment(placement) => Some(placement),
         }
     }
 }
@@ -174,7 +174,7 @@ impl Store {
                     output: if kind == "commitment" {
                         Output::Commitment(placement)
                     } else {
-                        Output::Impression(placement)
+                        Output::Retained(placement)
                     },
                 });
                 continue;
@@ -199,14 +199,15 @@ impl Store {
                         None => body.event_type.is_none(),
                     }
             };
+            let has_source_reference = body
+                .literal_references
+                .as_ref()
+                .is_some_and(|value| value.source_references().next().is_some());
             if body.kind != "episode"
                 || !admitted
                 || body.actor_id != field(actor_column)?
                 || body.id != field(id_column)?
-                || body
-                    .literal_references
-                    .as_ref()
-                    .is_some_and(|value| value.source_references().next().is_some())
+                || has_source_reference && body.response_id.is_none()
                 || body.source_receipt != body.retention.receipt
                 || body
                     .source_receipt
@@ -216,6 +217,29 @@ impl Store {
                     != body.event_type.as_ref().map(|_| body.actor_id.as_str())
             {
                 return Err(StoreError::DerivedProjectionRequired);
+            }
+            // A thought that quotes evidence needs the same durable privacy
+            // edges as other accounts with exact dependencies.
+            if has_source_reference {
+                let placement = compile_memory_write(
+                    history.world_id(),
+                    AccountImage {
+                        record: &row.id,
+                        actor: &body.actor_id,
+                        id: &body.id,
+                        revision,
+                        payload: &row.payload,
+                    },
+                    kind,
+                )?;
+                prepared.push(Memory {
+                    record_id: row.id.clone(),
+                    revision: revision.to_owned(),
+                    create: true,
+                    aged_replacement: false,
+                    output: Output::Retained(Box::new(placement)),
+                });
+                continue;
             }
             let source = json_record(&Source {
                 world_id: history.world_id(),

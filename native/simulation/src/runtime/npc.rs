@@ -43,7 +43,7 @@ pub(super) use held_sources::HeldReceiptRegistry;
 pub(crate) use held_sources::HeldSourceProof;
 pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};
 pub use personal::{RuntimeNpcGuardThreat, RuntimeNpcPersonalSource, RuntimeNpcPersonalSources};
-pub use presentation::{RuntimeNpcObservedBody, RuntimeNpcPresentedBody};
+pub use presentation::{RuntimeNpcObservedBody, RuntimeNpcPresentedBody, RuntimeNpcThoughtObject};
 pub use queries::{
     RuntimeNpcBoundaryFact, RuntimeNpcHistoricalPose, RuntimeNpcSeparation,
     RuntimeNpcSeparationEvidence,
@@ -70,6 +70,7 @@ pub struct NpcChoiceRecovery {
 }
 
 pub struct RuntimeNpcRead {
+    installed: Arc<crate::simulation::InstalledWorld>,
     pub(super) read: Arc<AcceptedActorRead>,
     own: Option<RuntimeNpcSelf>,
     pub(super) serial: u64,
@@ -782,6 +783,7 @@ impl NativeWorldSession {
         Ok(RuntimeNpcRead {
             own: read.take_npc_self(),
             read: Arc::new(read),
+            installed: Arc::clone(&simulation.state.installed),
             serial,
             history,
             historical_scope,

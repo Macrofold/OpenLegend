@@ -8,7 +8,7 @@ use crate::{
 };
 use openlegend_simulation::{
     encoding::{json_record, json_record_len},
-    experience::{LiteralRange, PersonalSourceKind},
+    experience::{LiteralRange, LiteralReference, PersonalSourceKind},
     host::{ByteBudget, ByteReservation, CapacityError},
     records::SqlCell,
     runtime::{
@@ -186,6 +186,51 @@ struct Facts<'a> {
 struct OfferedReference {
     handle: String,
     passage: JsText,
+    #[serde(flatten)]
+    detail: ReferenceDetail,
+}
+
+// Use only the admitted literal and interpreted time endpoints. Native IDs
+// and calendar definition pins belong to the stored references.
+#[derive(Serialize)]
+#[serde(
+    tag = "kind",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
+enum ReferenceDetail {
+    Subject,
+    Object,
+    Place,
+    Category,
+    Time { game_seconds: ReferenceInterval },
+    PersonalSource,
+    ExactQuotation,
+}
+
+#[derive(Serialize)]
+struct ReferenceInterval {
+    from: f64,
+    through: f64,
+}
+
+impl From<&LiteralReference> for ReferenceDetail {
+    fn from(reference: &LiteralReference) -> Self {
+        match reference {
+            LiteralReference::Subject { .. } => Self::Subject,
+            LiteralReference::Object { .. } => Self::Object,
+            LiteralReference::Place { .. } => Self::Place,
+            LiteralReference::Category { .. } => Self::Category,
+            LiteralReference::Time { from, through, .. } => Self::Time {
+                game_seconds: ReferenceInterval {
+                    from: *from,
+                    through: *through,
+                },
+            },
+            LiteralReference::Source { quote: Some(_), .. } => Self::ExactQuotation,
+            LiteralReference::Source { quote: None, .. } => Self::PersonalSource,
+        }
+    }
 }
 
 /// Prepare one network string per admitted partition. The authoritative
@@ -243,6 +288,7 @@ pub(super) fn partitions(
                 OfferedReference {
                     handle: format!("{handle}.r{}", binding.reference),
                     passage: reading.text.slice(range.start..range.end),
+                    detail: (&reading.references.references[binding.reference]).into(),
                 }
             })
             .collect();
@@ -427,6 +473,7 @@ impl Annotated {
                 .filter(|&index| index < source_keys.len())
                 .ok_or(CallFailure::Invalid)?;
             if reference >= sources[source].2
+                || occurrence.reference != format!("s{source}.r{reference}")
                 || keys.insert(occurrence.key, bindings.len()).is_some()
             {
                 return Err(CallFailure::Invalid);

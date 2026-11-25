@@ -22,7 +22,39 @@ pub struct RuntimeNpcObservedBody<'a> {
     pub confirmed_through: f64,
 }
 
+pub struct RuntimeNpcThoughtObject<'a> {
+    pub name: &'a Named,
+    pub category: Option<&'a Named>,
+}
+
 impl RuntimeNpcRead {
+    /// Read the body facet once for an already-selected object. Only its
+    /// acquired visible subtype can supply an installed category.
+    pub fn thought_object(&self, ordinal: usize) -> Option<RuntimeNpcThoughtObject<'_>> {
+        if !self
+            .preparation
+            .as_ref()?
+            .selection()
+            .contains_body(ordinal)
+        {
+            return None;
+        }
+        let body = self.read.perception.bodies.get(ordinal)?;
+        let observed = crate::capture::npc_thoughts::observed_body(&self.read.perception, body)?;
+        Some(RuntimeNpcThoughtObject {
+            name: body.name.name(),
+            category: crate::capture::npc_thoughts::observed_category(&self.installed, observed)
+                .map(|definition| &definition.named),
+        })
+    }
+
+    pub fn thought_next_day(&self, at: f64) -> Option<(f64, f64)> {
+        crate::time::local_clock::next_local_day(
+            at,
+            self.installed.status_policy.clock_offset_hours,
+        )
+    }
+
     /// The already selected body may supply an acquired interpretation
     /// subject independently of its current physical reference.
     pub fn has_interpretation_subject(&self, ordinal: usize) -> bool {

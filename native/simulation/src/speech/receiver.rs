@@ -205,13 +205,44 @@ fn named_identity(
         .filter(|name| !name.is_empty())
         .or_else(|| (!identity.given_name.is_empty()).then_some(&identity.given_name))
 }
+const UNHEARD_TRANSCRIPT: &str = "[…]";
+
+pub(crate) fn heard_segment(segment: &SpeechSegment) -> Option<&crate::text::JsText> {
+    match segment {
+        SpeechSegment::Heard { text } if !text.trim_is_empty() => Some(text),
+        _ => None,
+    }
+}
+
+/// An exact quote points inside a single intact heard segment, using offsets
+/// in the listener's own transcript. No quote covers a substituted gap.
+pub(crate) fn quoted_segments(
+    segments: &[SpeechSegment],
+) -> impl Iterator<Item = (usize, crate::experience::LiteralRange, &crate::text::JsText)> {
+    let mut next = 0usize;
+    segments
+        .iter()
+        .enumerate()
+        .filter_map(move |(index, segment)| {
+            let start = next;
+            let units = match segment {
+                SpeechSegment::Heard { text } => text.units_len(),
+                SpeechSegment::Unintelligible => UNHEARD_TRANSCRIPT.encode_utf16().count(),
+            };
+            let end = start.checked_add(units)?;
+            next = end.checked_add(1)?;
+            heard_segment(segment)
+                .map(|text| (index, crate::experience::LiteralRange { start, end }, text))
+        })
+}
+
 fn transcript_size(segments: &[SpeechSegment]) -> Option<usize> {
     segments
         .iter()
         .try_fold(segments.len().saturating_sub(1), |bytes, segment| {
             bytes.checked_add(match segment {
                 SpeechSegment::Heard { text } => text.storage_bytes(),
-                SpeechSegment::Unintelligible => "[…]".len(),
+                SpeechSegment::Unintelligible => UNHEARD_TRANSCRIPT.len(),
             })
         })
 }
@@ -223,7 +254,7 @@ fn transcript(segments: &[SpeechSegment], _bytes: usize) -> crate::text::JsText 
         }
         match segment {
             SpeechSegment::Heard { text } => result.push_text(text),
-            SpeechSegment::Unintelligible => result.push_str("[…]"),
+            SpeechSegment::Unintelligible => result.push_str(UNHEARD_TRANSCRIPT),
         }
     }
     result

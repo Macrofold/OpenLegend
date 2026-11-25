@@ -12,10 +12,12 @@ use openlegend_simulation::{
         NpcCatalogueSource, NpcEntityAlias, NpcEntityOrdinal, NpcPersonalEvidence,
     },
     encoding::{json_record, sha256_hex},
-    experience::{PersonalSourceKind, PersonalSourceRef},
+    experience::{LiteralReference, PersonalSourceKind, PersonalSourceRef},
     host::{ByteBudget, ByteReservation, CapacityError},
     narration::{NameArticle, name_phrase, native_text},
-    reception::{AttributeDisplay, AttributeKnowledge, KnowledgeDocument, KnowledgeOrigin},
+    reception::{
+        AttributeDisplay, AttributeKnowledge, KnowledgeDocument, KnowledgeOrigin, ObserverSubject,
+    },
     records::SqlCell,
     runtime::{
         NpcActivityFacts, RuntimeError, RuntimeNpcBindingInput, RuntimeNpcConsumer,
@@ -29,11 +31,17 @@ use openlegend_simulation::{
 };
 use serde::Serialize;
 use serde_json::{Value, json};
-use std::{borrow::Cow, collections::HashMap, fmt::Write as _, sync::Arc};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, hash_map::Entry},
+    fmt::Write as _,
+    sync::Arc,
+};
 
 mod appraisal;
 mod identity;
 mod recall;
+mod thought;
 pub(in crate::npc) mod reflection;
 pub(super) use openlegend_simulation::runtime::RuntimeNpcDecisionFrame as ReceivedFrame;
 pub(super) use recall::{Collected, RecallReview, collect};
@@ -54,6 +62,7 @@ pub(super) struct Projection {
     pub(super) offers: Vec<NativeOffer>,
     reference_key: String,
     refs: Vec<String>,
+    thought_references: Vec<Value>,
     physical: Vec<String>,
     knowledge: Vec<String>,
     names: Vec<String>,
@@ -182,6 +191,14 @@ impl Projection {
         } else {
             Vec::new()
         };
+        if let Some(answers) = expansion {
+            prompt
+                .append_received_evidence(answers)
+                .map_err(super::generation_failure)?;
+        }
+        let thought = prompt
+            .append_thought_references(&self.thought_references)
+            .map_err(super::generation_failure)?;
         let schema = game
             .cognition
             .response_schema(
@@ -193,6 +210,7 @@ impl Projection {
                     action: &aliases,
                     knowledge: &self.knowledge,
                     identity: &self.names,
+                    thought: &thought,
                     physical,
                     attention: &self.attention,
                     retention,
@@ -467,7 +485,7 @@ fn project(
     selected: Option<&PersonalSources>,
     rows: &[usize],
     purpose: ProjectionPurpose,
-    original_read: Option<(&RuntimeNpcRead, &mut ByteReservation)>,
+    mut original_read: Option<(&RuntimeNpcRead, &mut ByteReservation)>,
     remaining_offers: Option<&[String]>,
 ) -> Result<(RuntimeNpcBindingInput, Projection, bool, bool), CallFailure> {
     let consumer = consumer(work);
@@ -487,6 +505,8 @@ fn project(
         source: NpcEntityOrdinal::Myself,
     }];
     let mut descriptions = Vec::new();
+    let mut thought =
+        thought::Offers::new(original_read.as_mut().map(|(_, custody)| &mut **custody));
     if decision {
         descriptions.push(format!("Myself: {own_name} (ID:{self_reference})"));
     }
@@ -566,12 +586,25 @@ fn project(
     let mut conversation = Vec::new();
     let mut recall = Vec::new();
     let mut rendered_trigger = None;
-    let mut historical_references = Vec::new();
-    for (index, &(_, entry)) in source_entries.iter().enumerate() {
+    let mut historical_subjects = HashMap::<&ObserverSubject, String>::new();
+    let mut historical_reference_count = 0;
+    let mut heard_sources = None;
+    if decision && let Some(index) = trigger_index {
+        let (ordinal, trigger) = source_entries[index];
+        thought.personal(
+            read,
+            &reference_key,
+            selected.ok_or(CallFailure::Invalid)?.ordinal,
+            ordinal,
+            trigger,
+        );
+    }
+    for (index, &(ordinal, entry)) in source_entries.iter().enumerate() {
         let value = &entry.value;
         let (display, at) = personal_description(entry)?;
         let event_time = display_time(at);
         let mut fact = experience_fact(entry, &display, at, &event_time);
+        let inventory = selected.ok_or(CallFailure::Invalid)?.ordinal;
         if let Some(references) = &value.literal_references {
             let literal = match entry.reference.kind {
                 PersonalSourceKind::Memory => value.summary.as_ref(),
@@ -581,50 +614,71 @@ fn project(
                 },
             }
             .ok_or(CallFailure::Invalid)?;
-            let mut bindings = Vec::new();
-            use openlegend_simulation::{experience::LiteralReference, reception::ObserverSubject};
+            let mut bindings = Vec::with_capacity(references.bindings.len());
+            let mut account_aliases = vec![None; references.references.len()];
+            let mut issue = || {
+                let id = alias(&reference_key, "past-reference", historical_reference_count);
+                historical_reference_count += 1;
+                id
+            };
             for binding in &references.bindings {
                 let reference = references
                     .references
                     .get(binding.reference)
                     .ok_or(CallFailure::Invalid)?;
-                let current_self = matches!(reference, LiteralReference::Subject {
-                    subject: ObserverSubject::Entity { entity_id },
-                } if entity_id == &work.actor);
-                let id = if current_self {
-                    self_reference.as_str()
-                } else {
-                    // A historical individual does not inherit a current
-                    // action handle even when the same body is in view.
-                    let ordinal = historical_references
-                        .iter()
-                        .position(|(prior, _)| *prior == reference)
-                        .unwrap_or_else(|| {
-                            let ordinal = historical_references.len();
-                            historical_references.push((
-                                reference,
-                                alias(&reference_key, "past-reference", ordinal),
-                            ));
-                            ordinal
-                        });
-                    historical_references[ordinal].1.as_str()
+                // Proof for withdrawal does not give the NPC another claim
+                // to cite. The quote-bearing form below displays its words.
+                if matches!(reference, LiteralReference::Source { quote: None, .. }) {
+                    continue;
+                }
+                let (id, first) = match reference {
+                    LiteralReference::Subject {
+                        subject: ObserverSubject::Entity { entity_id },
+                    } if entity_id == &work.actor => (self_reference.as_str(), false),
+                    LiteralReference::Subject { subject } => {
+                        // Established person identity can tie separate accounts
+                        // together without granting a current action target.
+                        match historical_subjects.entry(subject) {
+                            Entry::Occupied(entry) => (entry.into_mut().as_str(), false),
+                            Entry::Vacant(entry) => (entry.insert(issue()).as_str(), true),
+                        }
+                    }
+                    _ => {
+                        // The same place or interval in two accounts can have
+                        // separate proof and withdrawal dependencies.
+                        let slot = &mut account_aliases[binding.reference];
+                        let first = slot.is_none();
+                        (slot.get_or_insert_with(&mut issue).as_str(), first)
+                    }
                 };
                 let range = binding.range;
-                let passage = literal.slice(range.start..range.end);
-                let kind = match reference {
-                    LiteralReference::Subject { .. } => "subject",
-                    LiteralReference::Object { .. } => "object",
-                    LiteralReference::Place { .. } => "place",
-                    LiteralReference::Category { .. } => "category",
-                    LiteralReference::Time { .. } => "time",
-                    LiteralReference::Source { quote: Some(_), .. } => "exactQuotation",
-                    LiteralReference::Source { quote: None, .. } => "personalSource",
-                };
-                let mut display = json!({"passage":prompt_text(&passage),"kind":kind,"reference":id,"offset":range.start});
-                if let LiteralReference::Time { from, through, .. } = reference {
-                    display["gameSeconds"] = json!({"from":from,"through":through});
+                let rendered = thought::display(
+                    id,
+                    reference,
+                    &literal.slice(range.start..range.end),
+                    range.start,
+                );
+                if decision && first {
+                    let attribution = match reference {
+                        LiteralReference::Source {
+                            source,
+                            quote: Some(_),
+                        } => heard_sources
+                            .get_or_insert_with(|| thought.heard_sources(&source_entries))
+                            .get(source)
+                            .copied(),
+                        _ => None,
+                    };
+                    thought.inherited(
+                        id,
+                        inventory,
+                        ordinal,
+                        binding.reference,
+                        &rendered,
+                        attribution,
+                    );
                 }
-                bindings.push(display);
+                bindings.push(rendered);
             }
             if !bindings.is_empty() {
                 fact["personalReferences"] = Value::Array(bindings);
@@ -639,6 +693,15 @@ fn project(
         experience.push(fact);
         if Some(index) == trigger_index {
             rendered_trigger = Some((entry, display, at, event_time));
+        }
+        if decision && Some(index) != trigger_index {
+            thought.personal(read, &reference_key, inventory, ordinal, entry);
+        }
+    }
+    if decision {
+        thought.next_day(read, &reference_key, now, None);
+        for &ordinal in read.selected_body_ordinals().map_err(packet_failure)? {
+            thought.body(read, &reference_key, ordinal);
         }
     }
     let (stimulus, trigger_facts) = if let Some((trigger, display, at, event_time)) =
@@ -732,6 +795,7 @@ fn project(
             ordinal: note.ordinal,
         });
     }
+    let (thought_references, thought_selectors) = thought.into_parts();
     let (appraisal, naming) = if let Some((original, custody)) = original_read {
         let appraisal = appraisal::prepare(
             &game.cognition,
@@ -842,6 +906,7 @@ fn project(
             .as_ref()
             .map_or_else(Vec::new, |trigger| trigger.causes.clone()),
         evidence,
+        thought_references: thought_selectors,
         entities,
         identities: naming.bindings,
         knowledge,
@@ -856,6 +921,7 @@ fn project(
             offers,
             reference_key,
             refs,
+            thought_references,
             physical,
             knowledge: knowledge_aliases,
             names: naming.aliases,

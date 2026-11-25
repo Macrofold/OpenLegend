@@ -310,13 +310,9 @@ pub(super) fn released(
                 .unwrap_or_default(),
         );
     }
-    if let Some(references) = &references {
-        for reference in &references.references {
-            if let LiteralReference::Source { source, .. } = reference {
-                dependencies.push(raw(source)?);
-            }
-        }
-    }
+    // The retained literal carries its own withdrawal links. Copying those
+    // citations into impression provenance would keep their source bodies
+    // alive even after the wording they support has faded.
     for dependency in super::super::manifest_dependencies::observation_dependencies(&originals)? {
         dependencies.push(raw(&dependency)?);
     }

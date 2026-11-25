@@ -611,8 +611,8 @@ pub(crate) fn generation_output(
     }
     let size = SqlCell::json_decode_bound(text).ok_or(RenderError::InvalidResponse)?;
     let custody = budget.reserve(size).map_err(|_| RenderError::Capacity)?;
-    let value = serde_json::from_str(text).map_err(|_| RenderError::InvalidResponse)?;
-    schema.validate(&value)?;
+    let mut value = serde_json::from_str(text).map_err(|_| RenderError::InvalidResponse)?;
+    schema.validate_generation(&mut value)?;
     Ok(GenerationOutput { value, custody })
 }
 

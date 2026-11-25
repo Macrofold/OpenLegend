@@ -156,6 +156,30 @@ pub(crate) fn prepare_memory_admission(
     activity: Option<ActivityRecordingContext<'_>>,
     budget: &ByteBudget,
 ) -> Result<MemoryAdmission, MemoryAcquisitionError> {
+    prepare_admission(core, actor_id, draft, activity, None, budget)
+}
+
+/// Thought references were resolved from the NPC's captured evidence and
+/// checked against the submitted words. They need not be live resident rows.
+/// Attach them here so the exact body, indexes and charges have one writer.
+pub(crate) fn prepare_thought_admission(
+    core: &mut CoreMutation<'_>,
+    actor_id: &str,
+    draft: String,
+    references: &LiteralReferences,
+    budget: &ByteBudget,
+) -> Result<MemoryAdmission, MemoryAcquisitionError> {
+    prepare_admission(core, actor_id, draft, None, Some(references), budget)
+}
+
+fn prepare_admission(
+    core: &mut CoreMutation<'_>,
+    actor_id: &str,
+    draft: String,
+    activity: Option<ActivityRecordingContext<'_>>,
+    thought_references: Option<&LiteralReferences>,
+    budget: &ByteBudget,
+) -> Result<MemoryAdmission, MemoryAcquisitionError> {
     let Some(actor) = core.state.physical.entities.get(actor_id) else {
         return Ok(MemoryAdmission::Complete(None));
     };
@@ -168,8 +192,13 @@ pub(crate) fn prepare_memory_admission(
         .ok_or(ExperienceError::ForeignOwner)?
         .physical_life
         .unwrap_or(0);
+    let annotations_bytes = thought_references
+        .map_or(Some(0), LiteralReferences::storage_bytes)
+        .and_then(|bytes| bytes.checked_mul(8))
+        .ok_or(ExperienceError::Capacity)?;
     let bound = encoded_body_bound(&draft)?
         .checked_add(draft.capacity())
+        .and_then(|bytes| bytes.checked_add(annotations_bytes))
         .ok_or(ExperienceError::Capacity)?;
     let reservation = budget
         .reserve(bound)
@@ -186,8 +215,15 @@ pub(crate) fn prepare_memory_admission(
     if summary.trim_is_empty() {
         return Ok(MemoryAdmission::Complete(None));
     }
-    let projected = body.projection()?;
-    if let Some(annotations) = body.get::<LiteralReferences>("literalReferences")? {
+    if let Some(annotations) = thought_references {
+        if body.contains("literalReferences") {
+            return Err(ExperienceError::InvalidBody("thought references have two owners").into());
+        }
+        if !annotations.is_empty() {
+            annotations.validate(&summary)?;
+            body.set("literalReferences", annotations)?;
+        }
+    } else if let Some(annotations) = body.get::<LiteralReferences>("literalReferences")? {
         annotations.validate(&summary)?;
         super::literal::validate_sources(
             &annotations,
@@ -197,6 +233,7 @@ pub(crate) fn prepare_memory_admission(
             budget,
         )?;
     }
+    let projected = body.projection()?;
     let kind = text(&projected, "kind")?.to_owned();
     let source = text(&projected, "source")?.to_owned();
     let importance = number(&projected, "importance")?.clamp(0.0, 10.0);

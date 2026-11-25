@@ -401,9 +401,9 @@ pub(super) fn compile_placement(
     compile_account(world, kind, image, data, Some(decoder))
 }
 
-/// Native interpretations and commitments carry no additional direct
-/// observations, recognition or place discoveries. Their exact event links,
-/// impression provenance and current recall policy use the same SQL compiler.
+/// Native interpretations, commitments and quoted thoughts carry no
+/// additional observations or recognition. Prepare their exact dependencies
+/// with the same compiler that rebuilds the indexes after a restore.
 pub(super) fn compile_memory_write(
     world: &str,
     image: AccountImage<'_>,
@@ -412,6 +412,13 @@ pub(super) fn compile_memory_write(
     let data: Body =
         serde_json::from_str(image.payload).map_err(|_| StoreError::DerivedProjectionRequired)?;
     let supported = match kind {
+        "episode" => {
+            data.literal_references
+                .as_ref()
+                .is_some_and(|references| references.source_references().next().is_some())
+                && data.impression.is_none()
+                && data.obligation.is_none()
+        }
         "impression" => {
             data.source.as_deref() == Some("inferred")
                 && data.impression.is_some()
@@ -515,10 +522,11 @@ fn compile_account(
     };
     let mut manifest_observations = Vec::new();
     if let Some(references) = &data.literal_references {
-        for reference in &references.references {
-            if let openlegend_simulation::experience::LiteralReference::Source { source, .. } =
-                reference
-            {
+        let mut seen = HashSet::new();
+        for source in references.source_references() {
+            // Several passages can cite one exact revision. The stored
+            // dependency connects accounts independently of those ranges.
+            if seen.insert((source.kind, source.id.as_str(), source.revision.as_str())) {
                 builder.personal(source, "literal-reference")?;
             }
         }

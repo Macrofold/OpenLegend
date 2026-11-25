@@ -213,6 +213,7 @@ impl PreparedNpcSources {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let actor = scope.actor_id.as_str();
+        let privacy = state.experience.actor(actor).map(|actor| &actor.privacy);
         // All decode/carrier memory is admitted by the caller before parsing
         // the provider answer. This owner additionally funds its actual maps
         // and future detached output before constructing them.
@@ -419,7 +420,6 @@ impl PreparedNpcSources {
             if requested != reference {
                 continue;
             }
-            let privacy = state.experience.actor(actor).map(|actor| &actor.privacy);
             if privacy.is_some_and(|privacy| {
                 privacy.is_forgotten(&reference.id)
                     || parent
@@ -530,6 +530,17 @@ impl PreparedNpcSources {
                 }
                 None
             };
+            // Check the authorized source and any parent first. A revoked
+            // record need not decode or reserve its original observations.
+            if privacy.is_some_and(|privacy| {
+                privacy.revoked(&header.reference.id)
+                    || header
+                        .privacy_dependencies
+                        .iter()
+                        .any(|id| privacy.revoked(id))
+            }) {
+                continue;
+            }
             let original_capture =
                 record.capture_originals(&mut originals, personal_cut.at, budget)?;
             if personal_by_id[index]
@@ -548,23 +559,11 @@ impl PreparedNpcSources {
             &state.experience,
             actor,
         )?;
-        for (index, requested) in selection.personal.iter().enumerate() {
-            let Some((record, original_capture, through)) = personal_by_id[index].take() else {
+        for (index, source) in personal_by_id.iter_mut().enumerate() {
+            let Some((record, original_capture, through)) = source.take() else {
                 unavailable_personal.push(index);
                 continue;
             };
-            let privacy = state.experience.actor(actor).map(|actor| &actor.privacy);
-            if privacy.is_some_and(|privacy| {
-                privacy.is_forgotten(&requested.id)
-                    || record
-                        .header()
-                        .event_id
-                        .as_deref()
-                        .is_some_and(|id| privacy.is_forgotten(id))
-            }) {
-                unavailable_personal.push(index);
-                continue;
-            }
             personal.push(CapturedNpcPersonalSource {
                 selection: index,
                 attribution: NpcSourceAttribution::capture(state, actor, &record, &names, budget)?,
@@ -596,7 +595,6 @@ impl PreparedNpcSources {
                 continue;
             };
             let receipt = capture.receipt();
-            let privacy = state.experience.actor(actor).map(|actor| &actor.privacy);
             let mut eligible = scope.includes_receipt(receipt)
                 && !privacy.is_some_and(|privacy| {
                     privacy.revoked(&receipt.id)

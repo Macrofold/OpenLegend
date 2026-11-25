@@ -254,6 +254,7 @@ pub(in crate::npc) async fn prepare(
         purpose: NpcBindingPurpose::Reflection,
         actions: Vec::new(),
         semantic_causes: Vec::new(),
+        thought_references: Vec::new(),
         evidence: indices
             .into_iter()
             .map(|ordinal| NpcPersonalEvidence {

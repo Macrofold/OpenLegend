@@ -5,9 +5,10 @@ use super::{ExperienceError, PersonalSourceKind, PersonalSourceRef};
 use crate::host::retained_size::HeapBytes;
 use crate::narration::NativeText;
 use crate::reception::ObserverSubject;
-use crate::text::JsText;
+use crate::text::{JsText, TextSlice};
 use crate::values::{DefinitionPin, is_safe_record_id};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -17,7 +18,7 @@ pub struct LiteralRange {
 }
 
 impl LiteralRange {
-    fn fits(self, units: &[u16]) -> bool {
+    pub(crate) fn fits(self, units: &[u16]) -> bool {
         let valid_boundary = |offset: usize| {
             offset <= units.len()
                 && !(offset > 0
@@ -26,6 +27,87 @@ impl LiteralRange {
                     && (0xdc00..=0xdfff).contains(&units[offset]))
         };
         self.start < self.end && valid_boundary(self.start) && valid_boundary(self.end)
+    }
+
+    pub(crate) fn shifted(self, offset: usize) -> Option<Self> {
+        Some(Self {
+            start: self.start.checked_add(offset)?,
+            end: self.end.checked_add(offset)?,
+        })
+    }
+
+    fn selected_text(self, literal: &JsText) -> Option<TextSlice<'_>> {
+        if self.start >= self.end {
+            return None;
+        }
+        let passage = literal.borrowed().slice(self.start..self.end)?;
+        match literal {
+            JsText::Unicode(_) => passage.as_unicode()?,
+            JsText::Utf16 { units, .. } if self.fits(units) => return Some(passage),
+            JsText::Utf16 { .. } => return None,
+        };
+        Some(passage)
+    }
+
+    /// Find a single complete occurrence in an exact received passage. The
+    /// ordinary Unicode path searches borrowed strings. An exceptional text
+    /// with isolated surrogates is compared as code units without changing it.
+    pub(crate) fn unique_quotation(
+        passage: &JsText,
+        quote: TextSlice<'_>,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<Option<Self>, ExperienceError> {
+        if quote.is_empty() {
+            return Ok(None);
+        }
+        if let (Some(passage), Some(needle)) = (passage.as_unicode(), quote.as_unicode()) {
+            let Some(start) = passage.find(needle) else {
+                return Ok(None);
+            };
+            // Advance by one scalar so overlapping occurrences also count.
+            let next = start
+                + needle
+                    .chars()
+                    .next()
+                    .expect("nonempty quotation")
+                    .len_utf8();
+            if passage[next..].contains(needle) {
+                return Ok(None);
+            }
+            let start = passage[..start].encode_utf16().count();
+            return Ok(Some(Self {
+                start,
+                end: start + quote.units_len(),
+            }));
+        }
+        let _storage;
+        let units = match passage {
+            JsText::Utf16 { units, .. } => Cow::Borrowed(units.as_slice()),
+            JsText::Unicode(_) => {
+                _storage = budget
+                    .reserve(
+                        passage
+                            .units_len()
+                            .checked_mul(2)
+                            .ok_or(ExperienceError::Capacity)?,
+                    )
+                    .map_err(|_| ExperienceError::Capacity)?;
+                Cow::Owned(passage.units().collect::<Vec<_>>())
+            }
+        };
+        let mut matches =
+            units
+                .windows(quote.units_len())
+                .enumerate()
+                .filter_map(|(start, candidate)| {
+                    let range = Self {
+                        start,
+                        end: start + quote.units_len(),
+                    };
+                    (range.fits(&units) && candidate.iter().copied().eq(quote.units()))
+                        .then_some(range)
+                });
+        Ok(matches.next().filter(|_| matches.next().is_none()))
     }
 }
 
@@ -130,7 +212,18 @@ impl LiteralReferences {
         }
         let units: Vec<_> = text.units().collect();
         for binding in &self.bindings {
-            if binding.reference >= self.references.len() || !binding.range.fits(&units) {
+            let reference = self.references.get(binding.reference).ok_or(INVALID)?;
+            if !binding.range.fits(&units) {
+                return Err(INVALID);
+            }
+            // Width is part of the exact quote contract even when an optional
+            // original has aged out and can no longer be loaded at restore.
+            if let LiteralReference::Source {
+                quote: Some(quote), ..
+            } = reference
+                && quote.end.checked_sub(quote.start)
+                    != Some(binding.range.end - binding.range.start)
+            {
                 return Err(INVALID);
             }
         }
@@ -266,6 +359,53 @@ pub(super) fn validate_sources(
             return Err(ExperienceError::Revoked);
         }
         if let Some(range) = quote {
+            let validate_match = |source_text: &JsText, range: LiteralRange| {
+                let quote = range.selected_text(source_text).ok_or(INVALID)?;
+                for binding in annotations
+                    .bindings
+                    .iter()
+                    .filter(|binding| binding.reference == index)
+                {
+                    let text = literal
+                        .borrowed()
+                        .slice(binding.range.start..binding.range.end)
+                        .ok_or(INVALID)?;
+                    if !quote.units().eq(text.units()) {
+                        return Err(INVALID);
+                    }
+                }
+                Ok(())
+            };
+            if source.kind == PersonalSourceKind::Awareness {
+                #[derive(Deserialize)]
+                struct SpeechAccount {
+                    speech: Option<ReceivedSpeech>,
+                }
+                #[derive(Deserialize)]
+                struct ReceivedSpeech {
+                    segments: Vec<crate::reception::SpeechSegment>,
+                }
+                let _decode = budget
+                    .reserve(super::encoded_body_bound(record.payload())?)
+                    .map_err(|_| ExperienceError::Capacity)?;
+                let facts: SpeechAccount =
+                    serde_json::from_str(record.payload()).map_err(|_| INVALID)?;
+                if let Some(speech) = facts.speech {
+                    let (_, segment, words) = crate::speech::quoted_segments(&speech.segments)
+                        .find(|(_, segment, _)| {
+                            segment.start <= range.start && range.end <= segment.end
+                        })
+                        .ok_or(INVALID)?;
+                    validate_match(
+                        words,
+                        LiteralRange {
+                            start: range.start - segment.start,
+                            end: range.end - segment.start,
+                        },
+                    )?;
+                    continue;
+                }
+            }
             let (source_text, _storage) =
                 super::consolidation::consolidation_reading(record, budget).map_err(|error| {
                     match error {
@@ -273,34 +413,7 @@ pub(super) fn validate_sources(
                         _ => INVALID,
                     }
                 })?;
-            let _range_storage = budget
-                .reserve(
-                    source_text
-                        .units_len()
-                        .checked_mul(2)
-                        .ok_or(ExperienceError::Capacity)?,
-                )
-                .map_err(|_| ExperienceError::Capacity)?;
-            if !range.fits(&source_text.units().collect::<Vec<_>>()) {
-                return Err(INVALID);
-            }
-            let quote = source_text
-                .borrowed()
-                .slice(range.start..range.end)
-                .ok_or(INVALID)?;
-            for binding in annotations
-                .bindings
-                .iter()
-                .filter(|binding| binding.reference == index)
-            {
-                let text = literal
-                    .borrowed()
-                    .slice(binding.range.start..binding.range.end)
-                    .ok_or(INVALID)?;
-                if !quote.units().eq(text.units()) {
-                    return Err(INVALID);
-                }
-            }
+            validate_match(&source_text, *range)?;
         }
     }
     Ok(())

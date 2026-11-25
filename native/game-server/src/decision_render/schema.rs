@@ -13,6 +13,7 @@ pub(crate) struct ResponseReferences<'a> {
     pub(crate) action: &'a [String],
     pub(crate) knowledge: &'a [String],
     pub(crate) identity: &'a [String],
+    pub(crate) thought: &'a [&'a str],
     pub(crate) physical: &'a [String],
     pub(crate) attention: &'a [String],
     pub(crate) retention: &'a [String],
@@ -77,6 +78,75 @@ impl BoundSchema {
         Err(RenderError::InvalidResponse)
     }
 
+    /// An unavailable optional thought reference leaves its literal wording
+    /// intact. The published schema still constrains references to offers, and
+    /// malformed annotations or other invalid operations still fail.
+    pub(crate) fn validate_generation(&self, value: &mut SqlCell) -> Result<(), RenderError> {
+        let strict = self.validate(value);
+        if strict.is_ok() || !self.discard_unoffered_thought_references(value) {
+            return strict;
+        }
+        self.validate(value)
+    }
+
+    fn discard_unoffered_thought_references(&self, value: &mut SqlCell) -> bool {
+        let Some(references) = self.value["properties"]["operations"]["items"]["anyOf"]
+            .as_array()
+            .and_then(|operations| {
+                operations.iter().find_map(|operation| {
+                    operation["properties"]["think"]["anyOf"]
+                        .as_array()?
+                        .iter()
+                        .find_map(|think| think.pointer("/properties/references"))
+                })
+            })
+        else {
+            return false;
+        };
+        let item = &references["items"];
+        let handle = &item["properties"]["subjectId"];
+        if references["type"] != "array" || item["type"] != "object" || handle["type"] != "string" {
+            return false;
+        }
+        let SqlCell::Object(root) = value else {
+            return false;
+        };
+        let Some(SqlCell::Array(operations)) = root.get_mut("operations") else {
+            return false;
+        };
+        let mut changed = false;
+        for operation in operations {
+            let SqlCell::Object(operation) = operation else {
+                continue;
+            };
+            let Some(SqlCell::Object(think)) = operation.get_mut("think") else {
+                continue;
+            };
+            let Some(SqlCell::Array(entries)) = think.get_mut("references") else {
+                continue;
+            };
+            let before = entries.len();
+            if !within_count(before, &references["minItems"], &references["maxItems"]) {
+                continue;
+            }
+            entries.retain(|entry| {
+                let unoffered = entry
+                    .get("subjectId")
+                    .is_some_and(|value| !matches_schema(handle, value));
+                !unoffered
+                    || !matches_object(item, entry, |key, schema, value| {
+                        if key == "subjectId" {
+                            matches_type("string", schema, value)
+                        } else {
+                            matches_schema(schema, value)
+                        }
+                    })
+            });
+            changed |= entries.len() != before;
+        }
+        changed
+    }
+
     /// A provisional first operation must be a complete, independent speech
     /// offer using this request's own entity alias. The final response still
     /// needs complete schema and native effect validation.
@@ -106,6 +176,7 @@ impl DecisionPolicy {
             action: &[],
             knowledge: &[],
             identity: subjects,
+            thought: &[],
             physical: &[],
             attention: &[],
             retention: evidence,
@@ -153,18 +224,22 @@ impl DecisionPolicy {
         let remembered_bytes = references.remembered_places.iter().fold(0usize, |size, id| {
             size.saturating_add(id.len().saturating_add(64))
         });
-        // Only the annotated Think branch gains these already presented identities.
-        let remembered_identity_bytes = references
-            .identity
-            .iter()
-            .filter(|alias| !references.entity.contains(alias))
-            .fold(0usize, |size, alias| {
-                size.saturating_add(alias.len().saturating_add(64))
-            });
+        // These aliases can annotate a thought but never target an action.
+        let thought_aliases = || {
+            references
+                .identity
+                .iter()
+                .filter(|alias| !references.entity.contains(alias))
+                .map(String::as_str)
+                .chain(references.thought.iter().copied())
+        };
+        let thought_reference_bytes = thought_aliases().fold(0usize, |size, alias| {
+            size.saturating_add(alias.len().saturating_add(64))
+        });
         let additional = references
             .appraisal
             .map_or(0, tree_bytes)
-            .saturating_add(remembered_identity_bytes)
+            .saturating_add(thought_reference_bytes)
             .saturating_add(if remembered_bytes == 0 {
                 0
             } else {
@@ -224,7 +299,7 @@ impl DecisionPolicy {
                 name["properties"]["subjectId"] =
                     json!({"type":"string","enum":references.identity});
             }
-            if remembered_identity_bytes != 0
+            if thought_reference_bytes != 0
                 && let Some(branches) = properties
                     .get_mut("think")
                     .and_then(|think| think.get_mut("anyOf"))
@@ -235,14 +310,7 @@ impl DecisionPolicy {
                         .pointer_mut("/properties/references/items/properties/subjectId/enum")
                         .and_then(Value::as_array_mut)
                     {
-                        aliases.extend(
-                            references
-                                .identity
-                                .iter()
-                                .filter(|alias| !references.entity.contains(alias))
-                                .cloned()
-                                .map(Value::String),
-                        );
+                        aliases.extend(thought_aliases().map(|alias| Value::String(alias.into())));
                     }
                 }
             }
@@ -602,25 +670,32 @@ fn matches_type(kind: &str, schema: &Value, value: &impl SchemaValue) -> bool {
                     .iter()
                     .all(|item| matches_schema(&schema["items"], item))
         }),
-        "object" => value.members().is_some_and(|mut members| {
-            let Some(properties) = schema["properties"].as_object() else {
-                return false;
-            };
-            let Some(required) = schema["required"].as_array() else {
-                return false;
-            };
-            schema["additionalProperties"] == json!(false)
-                && required
-                    .iter()
-                    .all(|key| key.as_str().is_some_and(|key| value.field(key).is_some()))
-                && members.all(|(key, value)| {
-                    properties
-                        .get(key)
-                        .is_some_and(|child| matches_schema(child, value))
-                })
-        }),
+        "object" => matches_object(schema, value, |_, schema, value| matches_schema(schema, value)),
         _ => false,
     }
+}
+
+fn matches_object<T: SchemaValue>(
+    schema: &Value,
+    value: &T,
+    mut matches_member: impl FnMut(&str, &Value, &T) -> bool,
+) -> bool {
+    let (Some(mut members), Some(properties), Some(required)) = (
+        value.members(),
+        schema["properties"].as_object(),
+        schema["required"].as_array(),
+    ) else {
+        return false;
+    };
+    schema["additionalProperties"] == json!(false)
+        && required
+            .iter()
+            .all(|key| key.as_str().is_some_and(|key| value.field(key).is_some()))
+        && members.all(|(key, value)| {
+            properties
+                .get(key)
+                .is_some_and(|schema| matches_member(key, schema, value))
+        })
 }
 
 fn within_count(count: usize, minimum: &Value, maximum: &Value) -> bool {

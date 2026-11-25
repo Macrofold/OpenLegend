@@ -983,11 +983,18 @@ fn validate_group_references(
     budget: &ByteBudget,
 ) -> Result<LiteralReferences, ExecutionError> {
     let mut result = LiteralReferences::default();
+    let unchanged = match group {
+        [index] if bound_literal(&sources[*index]) == Some(literal) => Some(*index),
+        _ => None,
+    };
     if bindings.is_empty() {
+        if let Some(index) = unchanged {
+            return Ok(sources[index].record.read_literal_references(budget)?.0);
+        }
         return Ok(result);
     }
+
     let mut prepared = IndexMap::new();
-    let invalid = ExecutionError::InvalidCheckpoint;
     for binding in bindings {
         let index = *positions
             .get(&binding.source_key)
@@ -996,13 +1003,10 @@ fn validate_group_references(
         let (table, original, _storage) = match prepared.entry(index) {
             indexmap::map::Entry::Occupied(entry) => entry.into_mut(),
             indexmap::map::Entry::Vacant(entry) => {
-                let record = &sources[index].record;
-                let table = crate::experience::literal::decode_record(
-                    record.header().reference.kind,
-                    record.payload(),
-                )?;
-                let (source, storage) = consolidation_reading(record, budget)?;
-                entry.insert((table, source, storage))
+                let source = &sources[index];
+                let original = bound_literal(source).ok_or(ExecutionError::InvalidCheckpoint)?;
+                let (references, custody) = source.record.read_literal_references(budget)?;
+                entry.insert((references, original, custody))
             }
         };
         let reference = table
@@ -1028,10 +1032,27 @@ fn validate_group_references(
                     .is_some_and(|original| original.units().eq(passage.units()))
             });
         if !identical_passage {
-            return Err(invalid);
+            return Err(ExecutionError::InvalidCheckpoint);
         }
         result.bind(reference.clone(), range);
     }
     result.validate(literal)?;
-    Ok(result)
+    // Exact singleton wording already has admitted ranges. Even a valid
+    // proposal can omit a range or attach an identical term to a new role.
+    Ok(unchanged
+        .and_then(|index| prepared.swap_remove(&index))
+        .map_or(result, |(table, _, _)| table))
+}
+
+fn bound_literal(source: &Source) -> Option<&JsText> {
+    if !source.record.header().has_literal_references {
+        return None;
+    }
+    let field = match source.reference.kind {
+        PersonalSourceKind::Memory => "summary",
+        PersonalSourceKind::Awareness | PersonalSourceKind::Summary => "text",
+    };
+    // Current-format admission requires annotated text to be a literal.
+    // Reuse the exact text in the account already held for publication.
+    source.value.get(field)?.as_text()
 }

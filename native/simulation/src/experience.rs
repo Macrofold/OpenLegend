@@ -77,7 +77,7 @@ mod literal;
 pub use literal::{LiteralBinding, LiteralRange, LiteralReference, LiteralReferences};
 pub(crate) use memory::{
     MemoryAcquisitionError, MemoryAdmission, acquire_memory, encoded_body_bound,
-    prepare_memory_admission,
+    prepare_memory_admission, prepare_thought_admission,
 };
 mod save;
 pub(crate) use save::{
@@ -185,7 +185,7 @@ impl PersonalSourceKind {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PersonalSourceRef {
     pub kind: PersonalSourceKind,

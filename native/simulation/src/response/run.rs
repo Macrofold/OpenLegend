@@ -1804,6 +1804,7 @@ impl ResponseCursor {
                         &self.id,
                         &thought,
                         &self.bindings.input.entity_ids,
+                        self.bindings.native_guard().map(|native| native.thought_references.as_ref()),
                         &self.budget,
                     )?;
                     self.store(core, ComponentResult::from_parts(result.into_parts()))?;

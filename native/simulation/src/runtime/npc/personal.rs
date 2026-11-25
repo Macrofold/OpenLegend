@@ -7,8 +7,8 @@ use crate::{
     host::CapacityError,
     narration::NativeText,
     reception::{
-        EventScalar, ExperienceModality, SpeechAddressing, SpeechParticipant, TriggerKind,
-        combat_observation::ATTACK_CUE_EVENT,
+        EncounterExposure, EventScalar, ExperienceModality, SpeechAddressing, SpeechParticipant,
+        SpeechSegment, TriggerKind, combat_observation::ATTACK_CUE_EVENT,
     },
     simulation::SimulationState,
     text::JsText,
@@ -51,6 +51,7 @@ pub struct RuntimeNpcPersonalFacts {
     pub summary: Option<JsText>,
     pub literal_references: Option<crate::experience::LiteralReferences>,
     event_data: Option<GuardCueFacts>,
+    exposure: Option<EncounterExposure>,
 }
 
 #[derive(Deserialize)]
@@ -93,6 +94,30 @@ pub struct RuntimeNpcPersonalSpeech {
     pub speaker: Option<SpeechParticipant>,
     pub addressee: Option<SpeechParticipant>,
     pub addressing: Option<SpeechAddressing>,
+    segments: Vec<SpeechSegment>,
+}
+
+impl RuntimeNpcPersonalSource {
+    pub fn thought_place(&self) -> Option<&JsText> {
+        if self.reference.kind != crate::experience::PersonalSourceKind::Awareness {
+            return None;
+        }
+        crate::capture::npc_thoughts::place(self.value.exposure.as_ref()).map(|(_, label)| label)
+    }
+
+    /// Only intact, received speech segments can be quoted. Do not rebuild a
+    /// quote from the display text, which may include a mask or a narrator.
+    pub fn thought_quotations(&self) -> impl Iterator<Item = (usize, &JsText)> {
+        let speech = (self.reference.kind == crate::experience::PersonalSourceKind::Awareness)
+            .then_some(&self.value.speech)
+            .and_then(Option::as_ref);
+        speech
+            .into_iter()
+            .flat_map(|speech| speech.segments.iter().enumerate())
+            .filter_map(|(ordinal, segment)| {
+                crate::speech::heard_segment(segment).map(|text| (ordinal, text))
+            })
+    }
 }
 
 impl RuntimeNpcPersonalSources {
@@ -142,6 +167,22 @@ impl RuntimeNpcPersonalSources {
 }
 
 impl RuntimeNpcRead {
+    /// A selected prior inspection can describe the item even after it leaves
+    /// view. A matching installed definition supplies the category name.
+    pub fn thought_inspection<'a>(
+        &'a self,
+        entry: &'a RuntimeNpcPersonalSource,
+    ) -> Option<(&'a JsText, Option<&'a crate::state::Named>)> {
+        use crate::capture::npc_thoughts::{inspected_category, inspection};
+
+        if entry.reference.kind != crate::experience::PersonalSourceKind::Awareness {
+            return None;
+        }
+        let (_, definition, label) = inspection(entry.value.exposure.as_ref())?;
+        let category = inspected_category(&self.installed, definition).map(|item| &item.named);
+        Some((label, category))
+    }
+
     /// Reuse an original personal read after its private source candidate
     /// has been cancelled. Its accepted cut, body and access witnesses are
     /// unchanged. The host calls this only after cleaning up this exact key.
@@ -164,7 +205,10 @@ impl RuntimeNpcRead {
         }
         let sources = Arc::get_mut(&mut self.sources)
             .ok_or_else(|| failure("NPC sources are already issued"))?;
-        if sources.last().is_none_or(|source| !source.receipts.is_empty()) {
+        if sources
+            .last()
+            .is_none_or(|source| !source.receipts.is_empty())
+        {
             return Err(failure("NPC personal-only sources are unavailable"));
         }
         sources.pop();

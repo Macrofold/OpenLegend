@@ -713,11 +713,10 @@ pub(super) async fn run(
                             regions.as_ref(),
                             &historical,
                         )?;
-                        let (mut response, schema) = prepared
+                        let (response, schema) = prepared
                             .context
                             .render_response(game, &offered, include_actions, Some(&answers), None)
                             .map_err(|error| error.at("situation-query-preparation"))?;
-                        response.append_received_evidence(&answers).map_err(generation_failure)?;
                         answers.bind(&mut binding)?;
                         (response, schema)
                     };

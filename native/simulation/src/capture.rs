@@ -35,6 +35,8 @@ pub(crate) mod npc_intake;
 mod npc_references;
 pub(crate) mod npc_self;
 mod npc_subject;
+pub(crate) mod npc_thoughts;
+pub use npc_thoughts::{NpcThoughtAlias, NpcThoughtOrdinal};
 pub use npc_bindings::{
     NpcActionOrdinal, NpcAliasOrdinal, NpcBindingPurpose, NpcCatalogueSource, NpcEntityAlias,
     NpcEntityOrdinal, NpcPersonalEvidence, NpcSubjectAlias, NpcSubjectOrdinal,

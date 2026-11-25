@@ -557,6 +557,7 @@ impl Collected {
         } else {
             0
         };
+        let sources = self.sources.as_ref().map_or(0, |data| data.admitted_bytes());
         let bytes = presentation
             .checked_add(plans)
             .and_then(|bytes| bytes.checked_add(attention))
@@ -564,13 +565,7 @@ impl Collected {
             .and_then(|bytes| bytes.checked_add(offers))
             .and_then(|bytes| bytes.checked_add(notes))
             .and_then(|bytes| bytes.checked_add(own.projection_bytes()?))
-            .and_then(|n| {
-                n.checked_add(
-                    self.sources
-                        .as_ref()
-                        .map_or(0, |data| data.admitted_bytes()),
-                )
-            })
+            .and_then(|n| n.checked_add(sources))
             .and_then(|n| n.checked_add(32_768))
             .ok_or_else(|| capacity(CapacityError))?;
         budget.reserve(bytes).map_err(capacity)

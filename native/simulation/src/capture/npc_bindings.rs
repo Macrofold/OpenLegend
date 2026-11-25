@@ -2,6 +2,7 @@
 //! Commands, subjects and proof stay with the two actual native captures.
 use super::{
     NpcObservationSelection, NpcReferenceFacts, PreparedNpcCandidates, PreparedNpcSources,
+    npc_thoughts::{NpcThoughtAlias, ThoughtOffer},
 };
 use crate::execution::ExecutionError;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
@@ -192,6 +193,8 @@ pub(crate) struct NpcBindingSelection {
     pub evidence: Vec<NpcPersonalEvidence>,
     pub entities: Vec<NpcEntityAlias>,
     pub identities: Vec<NpcSubjectAlias>,
+    #[serde(default)]
+    pub thought_references: Vec<NpcThoughtAlias>,
     pub knowledge: Vec<NpcAliasOrdinal>,
     pub observations: Vec<NpcObservationAlias>,
     pub current: Vec<NpcAliasOrdinal>,
@@ -217,6 +220,7 @@ pub(crate) struct NpcBindingMaps {
     pub intention_references: IndexMap<String, String>,
     pub knowledge_references: IndexMap<String, ObserverSubject>,
     pub identity_references: IndexMap<String, ObserverSubject>,
+    pub thought_references: Arc<IndexMap<String, ThoughtOffer>>,
     pub entity_leases: IndexMap<String, String>,
     pub expected_encounters: IndexMap<String, String>,
     pub situation: ResponseSituation,
@@ -282,6 +286,7 @@ fn insert<T: PartialEq>(
 pub(crate) struct NpcBindingRead<'a> {
     pub original: &'a AcceptedActorRead,
     pub current: &'a AcceptedActorRead,
+    pub current_installed: &'a crate::simulation::InstalledWorld,
     pub references: &'a NpcReferenceFacts,
     pub original_references: &'a NpcReferenceFacts,
     pub sources: &'a [PreparedNpcSources],
@@ -297,7 +302,7 @@ pub(crate) struct NpcBindingRead<'a> {
     pub invocation_id: &'a str,
 }
 impl NpcBindingRead<'_> {
-    fn body(&self, ordinal: usize) -> Result<&super::CapturedBodyBinding, ExecutionError> {
+    pub(super) fn body(&self, ordinal: usize) -> Result<&super::CapturedBodyBinding, ExecutionError> {
         if !self
             .current_selection
             .ok_or_else(invalid)?
@@ -870,6 +875,13 @@ impl NpcBindingMaps {
                 fact.subject.clone(),
             )?;
         }
+        let thought_references = super::npc_thoughts::prepare(
+            &read,
+            &selection.thought_references,
+            &selected_personal,
+            &mut storage,
+            budget,
+        )?;
         let mut situation = ResponseSituation {
             privacy_revision: original.privacy_revision,
             attention_references: IndexMap::with_capacity(selection.attention.len()),
@@ -1032,6 +1044,10 @@ impl NpcBindingMaps {
                 identity_references
                     .heap_bytes()
                     .ok_or(ExecutionError::Capacity)?,
+                thought_references
+                    .heap_bytes()
+                    .and_then(|bytes| bytes.checked_add(size_of::<IndexMap<String, ThoughtOffer>>() + 2 * size_of::<usize>()))
+                    .ok_or(ExecutionError::Capacity)?,
                 entity_leases.heap_bytes().ok_or(ExecutionError::Capacity)?,
                 expected_encounters
                     .heap_bytes()
@@ -1055,6 +1071,7 @@ impl NpcBindingMaps {
             intention_references,
             identity_references,
             knowledge_references,
+            thought_references: Arc::new(thought_references),
             entity_leases,
             expected_encounters,
             situation,

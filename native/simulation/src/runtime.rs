@@ -129,7 +129,7 @@ pub use npc::{
     RuntimeNpcOffer, RuntimeNpcOperations, RuntimeNpcPersonalSource, RuntimeNpcPersonalSources,
     RuntimeNpcPreparationStep, RuntimeNpcPresentedBody, RuntimeNpcPublication, RuntimeNpcRead,
     RuntimeNpcResponseTicket, RuntimeNpcSeparation, RuntimeNpcSeparationEvidence,
-    RuntimeNpcStageWitness, RuntimeNpcSubjectNote,
+    RuntimeNpcStageWitness, RuntimeNpcSubjectNote, RuntimeNpcThoughtObject,
 };
 pub use player::{
     CoordinateRefusal, DirectInventory, FireOperation, InteractionMode, InventoryContainer,

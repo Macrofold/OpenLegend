@@ -2,6 +2,8 @@
 
 - [Attention and personal memory core](verification/attention-and-memory-core.md) — native detail, geometry, familiarity, exact-source retention and discovery restart checks; semantic, browser and scale qualification remain explicit.
 
+- [Witness memory references](verification/witness-memory-references.md) — signed NPC decisions, exact and masked speech, original calendar meaning, PostgreSQL restart, and hourly and daily summaries.
+
 - [Personal perception foundation](verification/personal-perception-foundation.md) — supported-channel evidence, local recognition, faithful retention, complete place preparation and safe player/NPC publication; future sensing and full integrated acceptance remain open.
 
 - [Gildmoss interface](verification/gildmoss-interface.md) — native/private-map/trade/storage review, actual running-game interactions and remaining screen, responsive and performance qualification.

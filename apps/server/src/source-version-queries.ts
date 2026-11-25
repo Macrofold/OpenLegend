@@ -1,3 +1,5 @@
+import { digest } from './content-digest.js';
+
 export const SOURCE_RETENTION_CLOSURE_ROUNDS = 4;
 export type SourceVersionCategory = 'optional' | 'required' | 'speech';
 export const sourceVersionPriority = (category: SourceVersionCategory) =>
@@ -27,6 +29,7 @@ export const sourceLearningRevisionSql = (table: AccountTable, keys: string, wor
   FROM jsonb_to_recordset(${keys}::jsonb) q(actor_id text,source_id text)
   JOIN ${table} t ON t.world_id=${world} AND t.actor_id=q.actor_id AND t.source_id=q.source_id`;
 
+/** Literal references follow privacy withdrawal but do not retain a source body. */
 export function sourceDependentClassesSql(
   keys: string,
   owners: string,
@@ -47,7 +50,8 @@ export function sourceDependentClassesSql(
   FROM requested q JOIN mind_source_dependencies d ON d.world_id=${world} AND d.actor_id=q.actor_id
     AND d.source_kind=q.kind AND d.source_id=q.id AND d.source_revision=q.revision
   JOIN accounts a ON a.actor_id=d.actor_id AND a.kind=d.derived_kind AND a.source_id=d.derived_id
-  WHERE a.retention_class<>'sensory' AND NOT EXISTS(SELECT 1 FROM changed c WHERE c.actor_id=d.actor_id AND c.kind=d.derived_kind AND c.id=d.derived_id)`;
+  WHERE a.retention_class<>'sensory' AND d.support_key<>'${digest('literal-reference')}'
+    AND NOT EXISTS(SELECT 1 FROM changed c WHERE c.actor_id=d.actor_id AND c.kind=d.derived_kind AND c.id=d.derived_id)`;
 }
 
 export const sourceArchiveChargesSql = (keys: string, world: string) => `

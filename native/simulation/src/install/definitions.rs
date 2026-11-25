@@ -72,6 +72,7 @@ pub(crate) struct PhysicalMeanings {
     pub body_policy: Option<VerifiedDefinition<crate::body::BodyPolicy>>,
     pub response_profiles: IndexMap<String, VerifiedDefinition<NativeResponseProfile>>,
     pub status_policy: InstalledStatusPolicy,
+    pub calendar: DefinitionPin,
     pub capabilities: StatusCapabilities,
     pub status_work: CompiledStatusWorkMap,
     pub population_work: crate::status::StatusInstallationWork,
@@ -338,6 +339,7 @@ pub(crate) fn install_physical_meanings(
     }
     let status_policy =
         InstalledStatusPolicy::parse_verified(&status_row.payload, &input.status_policy, budget)?;
+    let calendar = crate::time::local_clock::fixed_day_pin(status_policy.clock_offset_hours);
     // Work invocation identity uses Source canonicalJson(definition), while
     // the stored policy preserves its authored property order. JSON key order
     // changes the pin even when all current values and byte counts agree.
@@ -414,6 +416,7 @@ pub(crate) fn install_physical_meanings(
         body_policy,
         response_profiles,
         status_policy,
+        calendar,
         capabilities,
         status_work,
         population_work,

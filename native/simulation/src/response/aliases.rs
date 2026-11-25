@@ -198,6 +198,7 @@ impl ActorResponse {
     pub(crate) fn resolve_entities(
         &mut self,
         aliases: &ResponseAliases<'_>,
+        thoughts: &IndexMap<String, crate::capture::npc_thoughts::ThoughtOffer>,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
         let root = object(&mut self.value)?;
@@ -273,8 +274,11 @@ impl ActorResponse {
                         {
                             // Carry the issued personal identity, not its current body or alias.
                             *subject = resolved_subject_cell(identity, storage)?;
-                        } else {
+                        } else if subject.as_str().is_some_and(|id| aliases.entities.contains_key(id)) {
                             scalar(subject, aliases.entities, storage)?;
+                        } else if !subject.as_str().is_some_and(|id| thoughts.contains_key(id)) {
+                            // An unavailable annotation never changes its literal.
+                            *subject = SqlCell::Null;
                         }
                     }
                 }

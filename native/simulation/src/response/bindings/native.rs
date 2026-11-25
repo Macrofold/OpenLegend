@@ -45,6 +45,7 @@ pub(crate) struct ResponseNativeGuard {
     /// Optional recall bodies are not proofs of the emitted request. Only its
     /// actual evidence/appraisal/trigger selections participate in this guard.
     pub(crate) selected_personal: Vec<(usize, usize)>,
+    pub(crate) thought_references: Arc<IndexMap<String, crate::capture::npc_thoughts::ThoughtOffer>>,
     pub(crate) perspectives: Vec<crate::capture::NpcPerspectiveOrdinal>,
     pub(crate) perspective_snapshots: Arc<Vec<crate::capture::NpcPerspectiveSnapshot>>,
     pub(crate) appraisals: Option<Arc<PreparedResponseAppraisals>>,
