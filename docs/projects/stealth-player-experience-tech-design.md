@@ -1,8 +1,8 @@
 # Playable stealth controls and an honest player perspective — technical design
 
-| Status      | Current progress                                                                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | SPX01 publication and recent-history consumers implemented; current movement/action controls are connected; future producers and full player qualification remain open. | 2026-10-29   |
+| Status      | Current progress                                                                                                                                                                          | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | SPX01 publication, recent history and current movement/action controls are connected. Live sightings now omit unused inspection IDs. Future producers and full qualification remain open. | 2026-11-25   |
 
 Architecture used for this design: **2026-10-29 17:49 UTC**.
 
@@ -75,7 +75,6 @@ Each independently changeable facet carries:
 | temporalRole          | Current at the evaluation cut, historical, or explicitly inferred.                                                                                  |
 | quality               | The A-owned possible/supported/ambiguous distinction when applicable; omit invented confidence percentages.                                         |
 | precision             | Only the admitted spatial/detail precision.                                                                                                         |
-| sourceReference       | An opaque permitted reference for personal inspection when available; not native evidence/support tuples.                                           |
 | observationContinuity | Opaque scope-local continuity binding only when A supports it; it authorizes no extra fact.                                                         |
 
 A's concrete fact families remain canonical. For `CapturedCurrentFacet`, public `measurementAt` comes from `valueMeasuredThrough`; `confirmedThrough` retains its separate availability meaning. Preserve a meaningful measurement interval when the facet supplies one. Native `valueAcquiredAt` determines when the value entered the captured evidence and cannot be backdated by its original fact key or publication. G does not require every field on a facet where it has no meaning, and may compose these semantics into existing structures rather than wrapping every scalar. A missing field is absent, not zero/false. Explicit patch removal must remove the old field; omitted unchanged fields in a patch are different from revoked fields.
@@ -116,6 +115,8 @@ The existing binder must distinguish these roles before any read or command:
 | Creator inspection reference    | Only in the explicit current authorized audience                  | Cannot be replayed in ordinary play or used as personal evidence                                    |
 
 The same inspector shell can show live, historical and cue content with a clear heading and distinct permitted actions. It must not fetch a current body when a historical link was selected. Acquired occurrence links open Events (J); historical contact links open this inspector with their exact eligible observation reference. View source dispatches to the owning permitted occurrence or personal-record reader, when available. Character records keeps its existing story/promises/known-places role rather than becoming a duplicate sensory log. Keep navigation/drafts where safe; suppress protected body/detail immediately on authority or evidence loss. Historical retained eligibility is rechecked after awaited/cached reads using existing private retrieval fences.
+
+Provide an observation reference when a history or inspection response offers a link to that observation. Ordinary live sightings carry the permitted values and times; the unused separately generated inspection ID has been removed from those updates.
 
 Map an unknown voice's useful response to ambient **Who's there?**, not a fabricated directed conversation target. A remembered known person's directed communication remains subject to SPK's actual binding/audibility rules.
 

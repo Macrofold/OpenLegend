@@ -1,8 +1,8 @@
 # Better decisions without stopping the game — technical design
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Luna Low is enabled by default; background concurrency is expanded to 100, with broader release qualification open. | 2026-10-22   |
+| Status      | Current progress                                                                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Luna Low is enabled by default. The response schema requests decision status and reason before the answer for future streaming. Broader release qualification remains open. | 2026-11-25   |
 
 Design synchronized **2026-10-22T21:59:22Z**. Existing provider, storage, action and world-boundary architecture used **2026-10-22T21:59:22Z**. [Feature specification](decision-escalation-feature-spec.md).
 
@@ -231,21 +231,21 @@ Use the following shape for every fallback request; build it from the existing s
 ```ts
 // Contract notation, not a second implementation or arbitrary model-defined union.
 type Answer<Value> =
-  | { status: 'answered'; value: Value; reason: null }
+  | { status: 'answered'; reason: null; value: Value }
   | {
       status: 'abstained';
-      value: null;
       reason:
         | 'insufficient-evidence'
         | 'conflicting-evidence'
         | 'no-suitable-option'
         | 'unsupported';
+      value: null;
     };
 // Example for a request with exactly one offered-choice question:
 type Output = { answers: { q0: Answer<{ choice: 'a0' | 'a1' }> } };
 ```
 
-For strict provider schemas, a fixed object with required `status/value/reason` and nullable value/reason is acceptable; the shared local decoder enforces the two legal combinations above. This follows the existing response schema's avoidance of unsupported nested `oneOf` forms. Missing/null answered values, a reason attached to an answered value, extra questions, unoffered handles or an invalid whole envelope end the attempt as unusable. Do not trim prose around malformed JSON, invent an omitted answer, request a repair, or convert abstention to a zero score. Whole-envelope failure yields zero effects; a valid envelope with some abstentions can resolve its independent answered groups.
+For strict provider schemas, a fixed object with required `status`, `reason`, and `value` and nullable reason/value is acceptable. The provider-facing schema requests this order so the [streaming speech reader](npc-speech-streaming-tech-design.md#generated-record-contract) can see the status and reason before a long answer. The completed-answer decoder accepts any field order and enforces the two legal combinations above. This follows the existing response schema's avoidance of unsupported nested `oneOf` forms. Missing/null answered values, a reason attached to an answered value, extra questions, unoffered handles or an invalid whole envelope end the attempt as unusable. Do not trim prose around malformed JSON, invent an omitted answer, request a repair, or convert abstention to a zero score. Whole-envelope failure yields zero effects; a valid envelope with some abstentions can resolve its independent answered groups.
 
 | Question kind       | Exact answered `value`                                                           | Binding/decoding rule                                                                                                                                                                                                                                                                                                         |
 | ------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -279,7 +279,7 @@ This is a **hypothetical authored fixture**, not a claim that the bundled world 
 }
 ```
 
-The trusted instructions and permitted context above accompany this question object in the real request. A usable output is `{"answers":{"q0":{"status":"answered","value":{"choice":"a1"},"reason":null}}}`. It proposes one exact bound action. If the plant disappears before commitment, reject it and end unresolved; do not substitute another plant or call again. `a0` is structurally/legal valid but may be inferior under the fixture's task rubric; the runtime must not call it a factual violation. `sprint` is an invalid handle and produces no effect. A valid abstention has `value:null` and an explicit allowed reason, costs one attempt, and produces no new action.
+The trusted instructions and permitted context above accompany this question object in the real request. A usable output is `{"answers":{"q0":{"status":"answered","reason":null,"value":{"choice":"a1"}}}}`. It proposes one exact bound action. If the plant disappears before commitment, reject it and end unresolved; do not substitute another plant or call again. `a0` is structurally/legal valid but may be inferior under the fixture's task rubric; the runtime must not call it a factual violation. `sprint` is an invalid handle and produces no effect. A valid abstention has `value:null` and an explicit allowed reason, costs one attempt, and produces no new action.
 
 ## Structured answers and actual effects
 

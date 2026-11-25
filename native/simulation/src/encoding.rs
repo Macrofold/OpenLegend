@@ -34,7 +34,19 @@ pub(crate) fn js_property_cmp(left: &str, right: &str) -> std::cmp::Ordering {
 /// ECMAScript whitespace differs from Rust's Unicode White_Space property.
 /// Validation reads the trimmed slice; it never rewrites authored content.
 pub fn js_trim(value: &str) -> &str {
-    value.trim_matches(is_js_whitespace)
+    let (part, content_end) = js_trim_part(value, false);
+    &part[..content_end]
+}
+
+/// Keep leading whitespace after an earlier content part. The returned end
+/// excludes trailing whitespace until a later part makes it internal.
+pub(crate) fn js_trim_part(value: &str, follows_content: bool) -> (&str, usize) {
+    let part = if follows_content {
+        value
+    } else {
+        value.trim_start_matches(is_js_whitespace)
+    };
+    (part, part.trim_end_matches(is_js_whitespace).len())
 }
 
 pub fn is_js_whitespace(character: char) -> bool {

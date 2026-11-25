@@ -506,7 +506,6 @@ function App({
       cancelPrimaryAction: () => {},
     }),
     retryEntry = useRef(() => {});
-  latest.current = view;
   const settingsView = useMemo(
     () =>
       view
@@ -641,11 +640,10 @@ function App({
         scene.current?.resetTransientCaptions();
       }
       acceptAccess(next);
-      setView((current) => {
-        if (!reset && current?.worldId === next.worldId && next.revision < current.revision)
-          return current;
-        return next;
-      });
+      // Later stream frames and player actions must see the accepted view even
+      // when React has not rendered it yet.
+      latest.current = next;
+      setView(next);
     },
     [resetApplication, acceptView],
   );
@@ -803,6 +801,7 @@ function App({
             return;
           }
           if (e instanceof WorldCreationHostError) {
+            latest.current = null;
             setView(null);
             streamView = undefined;
             setEntryStatus({ kind: 'creation-host', host: e.host });

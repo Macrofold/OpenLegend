@@ -61,7 +61,6 @@ struct ObservedAt {
     acquired_at: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     confirmed_through: Option<f64>,
-    source_reference: String,
 }
 
 #[derive(PartialEq, Serialize)]
@@ -245,19 +244,17 @@ fn project_contact(
         return Err(SceneError::Unsupported("the installed assembly contact"));
     }
     let time = |at| (Some(at) != sight).then_some(at);
-    let (measured, acquired, confirmed, source) = received.description_support.as_ref().map_or(
+    let (measured, acquired, confirmed) = received.description_support.as_ref().map_or(
         (
             received.value_measured_through,
             received.value_acquired_at,
             received.confirmed_through,
-            &received.confirmation,
         ),
         |detail| {
             (
                 detail.description_measured_through,
                 detail.description_acquired_at,
                 detail.confirmed_through,
-                &detail.confirmation,
             )
         },
     );
@@ -360,7 +357,6 @@ fn project_contact(
             measurement_at: time(measured),
             acquired_at: time(acquired),
             confirmed_through: time(confirmed),
-            source_reference: references.evidence(source)?,
         },
         kind: kind.clone(),
         subtype: body.subtype.clone().unwrap_or_else(|| body.kind.clone()),

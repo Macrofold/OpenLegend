@@ -2,9 +2,20 @@
 
 ## Scope and status
 
-**Design done; implementation pending, October 18, 2026.** [The feature specification](../projects/npc-speech-streaming-feature-spec.md) and [technical design](../projects/npc-speech-streaming-tech-design.md) select immediate growing public text for all NPC dialogue producers. One occurrence fixes its audience at first durable text, retains every accepted prefix, closes once and enters semantic consumers once. No physical speaking duration, environmental progression or audio is selected. [NST-L01–NST-L09](../limits/npc-speech-streaming.md) own the new constraints.
+**Design done; implementation started, November 25, 2026.** [The feature specification](../projects/npc-speech-streaming-feature-spec.md) and [technical design](../projects/npc-speech-streaming-tech-design.md) select immediate growing public text for all NPC dialogue producers. One occurrence fixes its audience at first durable text, retains every accepted prefix, closes once and enters semantic consumers once. No physical speaking duration, environmental progression or audio is selected. [NST-L01–NST-L09](../limits/npc-speech-streaming.md) own the new constraints.
 
 This completes the public-text design slice of [NC19](narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies) and [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech). It does not check off runtime delivery, NP05's separate historical scope, residual private/full-harness caller qualification, SPK/HE acceptance or optional ND16/DG26 media/acoustics. Do not copy these task bodies into their trackers; link the applicable NST ID.
+
+### November 25 implementation start
+
+The Rust rollout starts from the local reply-status branch on the assigned `codex/native-simulation-proof` base `3a408a1f22f4869570abd40339900bf0665ee78b`. The player goal is one growing NPC caption and Events entry, with the first accepted words visible before generation finishes. Preserve the existing complete-reply and administrator retry behavior while the replacement is built.
+
+1. Reuse the native speech admission and text owners to prepare a bounded, chunk-independent speech body. Prepare the early response eligibility fields through the existing response schema owner.
+2. Extend native speech and the protected PostgreSQL publication path together so an open utterance saves one identity and each listener's permitted words. Update semantic readers to consider it only at closure. Preserve current-format restoration, source authority, fixed hearing and existing provider settlement.
+3. Route qualified provider progress through the screened publication owner. Verify an intentionally held generation through the real signed stream, growing captions and Events, then exercise interruption, reconnect, restoration and changed permission. Use the existing current caption and Events owners.
+4. Use the approved [PD07 passage checker and trusted release inputs](production-deployment.md#adult-content-and-companion-safety-release-requirements) for player enablement and qualify the selected provider routes and workloads under NST09. The Rust codebase currently has neither that qualified checker nor durable open speech. Controlled local cases can verify delivery before enablement. Retire the old private preview after its replacement passes, preserving provider accounting and recovery.
+
+The first changes share bounded speech text preparation with the existing private preview, request decision status and reason ahead of the full fallback answer, and make the browser's accepted game view available synchronously before rendering. The larger milestones remain open. Next, integrate native open speech, same-record PostgreSQL saves and exclusion of incomplete words from NPC reasoning before routing passages to captions and Events.
 
 ## Dependency order
 
@@ -72,9 +83,11 @@ NST01 data-shape changes include all current-format validators/serializers in th
 ## NST04 — Generated records, exact canonicalization and parser
 
 - [ ] Replace generation-facing speech with strict start/text/end records plus the existing non-speech operation variant. Update request-bound schema, Zod/native normalization, prompt prose, examples and decision-escalation response task together. Apply the shared [generated-text writing contract](../ui-ux/player-facing-language.md#authored-generated-and-composed-text), preserving character voice, perspective and knowledge. Share instructions for a prompt meaningful first phrase/sentence and exact literal continuation; keep valid short replies short, without filler, compulsory splitting or a minimum piece count.
-- [ ] Change `compileDecisionTask`'s generated q0 property order and prompt/examples to `status, reason, value`, allowing the exact answered/null gate to complete before response records. Keep arbitrary-order decoding safe and bounded; later gate fields must withhold earlier records.
+- [x] Request q0 fields in the order `status, reason, value` in the shared compiler and Rust escalation schema, instructions and examples. Completed decoders still accept valid answers in arbitrary order.
+- [ ] Withhold early speech records until the streamed q0 status and reason are both admitted. Keep arbitrary-order decoding safe and bounded.
 - [ ] Extend the approved JSON parser wrapper with typed complete-record array selection and narrowly selected complete escalation status/reason scalars. Validate actual ancestor path/array parent/index, duplicate keys, local IDs/dependencies, Unicode and all aggregate bounds.
-- [ ] Reuse NST01's pure canonicalizer for generated normalization and verify exact joins/whole-field trim across arbitrary transport splits under the generated raw bounds. Derive part identity from trusted parsed position; do not accept model-supplied public sequence/count/receipt metadata.
+- [x] Add bounded native text assembly and share its whitespace rules with complete speech. Use the same raw generated-text limit in preview and completed admission. Focused checks covered literal spaces, Unicode, size refusal and budget refusal.
+- [ ] Reuse the canonicalizer in the new record parser and final normalizer. Verify exact joins across arbitrary transport splits in the real provider path. Derive part identity from trusted parsed position; do not accept model-supplied public sequence/count/receipt metadata.
 - [ ] Define the leading-speech barrier and final ordered native normalizer. Retain optional empty decisions, all non-speech kinds, permitted invention envelopes and no early effects after a barrier.
 
 **Exit:** Q02–Q03/Q10 pass independent expected-output fixtures for reordered properties, escaped strings, duplicate keys/IDs, wrong path or object masquerading as array, malformed suffix, missing end, oversized raw text, and every operation combination. Completed and streamed adapters produce the same normalized response for valid input.

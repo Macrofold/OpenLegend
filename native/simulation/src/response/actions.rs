@@ -428,7 +428,10 @@ pub(super) fn prepare(
             })
         });
         let text = op.text("text").ok_or(ExecutionError::Invariant)?;
-        if text.trim_is_empty() || text.units_len() > 1200 || !valid {
+        if text.trim_is_empty()
+            || text.units_len() > crate::speech::GENERATED_SPEECH_UTF16_LIMIT
+            || !valid
+        {
             return result(
                 false,
                 "invalid-speech",

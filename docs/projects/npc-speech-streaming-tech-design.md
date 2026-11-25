@@ -1,8 +1,8 @@
 # Shared NPC speech streaming — technical design
 
-| Status      | Current progress                                                                                    | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Selected text-only contract is designed; implementation and qualification are owned by NST01–NST10. | 2026-10-18   |
+| Status      | Current progress                                                                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Implementation has started on the Rust server. The tracked prerequisites are underway, and accepted text still publishes only after generation completes. | 2026-11-25   |
 
 ## Design authority and implementation baseline
 
@@ -170,7 +170,7 @@ Use a strict object root and nested `anyOf` object variants with required fields
 
 Compile permitted envelope-key sets from the caller-bound schema. Require actual object root/`answers`/`q0`/`value` containers and an actual `records` array at the selected escalation path. The q0 key must be this request's trusted response task/group. Observe complete status/reason scalars from that exact object. Token/container callbacks reject an already observed unsupported key, duplicate key or wrong container immediately, including invalid keys before otherwise valid records. Records arriving before required status/reason remain private. Never combine proof from another answer, object or duplicated envelope.
 
-Change [the decision task compiler](../../apps/server/src/decision-task.ts)'s generated q0 schema property order and matching prompt/example order from `status, value, reason` to **`status, reason, value`**. Ask the model to emit both gate fields before starting the response value; otherwise the ordinary schema-ordered output would delay all speech until the value is complete. The decoder still accepts arbitrary valid property order and withholds early records until the exact gate is available. Generation order improves useful progress; it is never trusted as proof of admission.
+The [shared decision task compiler](../../apps/server/src/decision-task-compiler.ts) and [Rust escalation](../../native/game-server/src/npc/decide/escalation.rs) request **`status, reason, value`** in the schema and instructions so a streaming reader can consider both gate fields before a long response value. The completed-answer decoder accepts arbitrary valid property order. The future early reader must withhold records until the exact gate is available. Generation order improves useful progress; it is never trusted as proof of admission.
 
 The parser's selected-document ceiling is `Math.min(1_000_000, admittedLevel.visibleOutputBytes + (actorInventionEnabledForThisRequest ? 80_000 : 0))` UTF-8 bytes. At the inspected ordinary generative levels it is 40,000 bytes, or 120,000 with that separately admitted invention envelope. Count the entire selected structured document, including wrappers, JSON escaping and the escalation answer envelope. Record encoding receives no extra allowance. Independently enforce the existing 40,000-byte normalized `ActorResponse`, sixteen operations and field limits, and recheck native envelope validity after entity/appraisal resolution. Provider framing/body/token limits are additional bounds. Passing one limit never waives another.
 

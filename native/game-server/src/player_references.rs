@@ -8,7 +8,7 @@ use openlegend_simulation::{
     encoding::{append_hex, json_record, sha256_hex, write_json_record},
     host::{ByteBudget, ByteReservation},
     received::TemporalReceiptLocator,
-    reception::{EvidenceSource, ObserverSubject},
+    reception::ObserverSubject,
     runtime::{NativeWorldSession, RuntimeError},
 };
 use ring::{aead, hmac};
@@ -505,17 +505,6 @@ impl PlayerReferences<'_> {
             }
         }
         Ok(reference)
-    }
-
-    pub fn evidence(&self, source: &EvidenceSource) -> Result<String, serde_json::Error> {
-        self.personal_source(&(
-            "evidence",
-            source.family,
-            &source.observer.actor_id,
-            source.observer.physical_life,
-            &source.id,
-            &source.revision,
-        ))
     }
 
     pub fn trade_draft(

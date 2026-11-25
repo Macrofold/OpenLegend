@@ -14,6 +14,7 @@ use openlegend_simulation::{
     host::{ByteBudget, ByteReservation, CapacityError},
     narration::{NameArticle, name_phrase},
     runtime::RuntimeError,
+    speech::{GENERATED_SPEECH_UTF16_LIMIT, SpeechText},
     text::JsText,
     worlds::base_observed::SpeechVolume,
 };
@@ -100,17 +101,26 @@ impl PreviewAttempt {
         let Some(talk) = self.schema.preview_talk(&operation, &self.player_alias) else {
             return Ok(None);
         };
-        let text = talk["text"].as_str().ok_or(CallFailure::Invalid)?;
+        let part = talk["text"].as_str().ok_or(CallFailure::Invalid)?;
+        let Ok(mut speech) = SpeechText::new(GENERATED_SPEECH_UTF16_LIMIT, budget) else {
+            return Ok(None);
+        };
+        if speech.append(part).is_err() || speech.canonical().is_empty() {
+            return Ok(None);
+        }
+        let (text, mut custody) = speech.into_canonical();
         let local_id = operation["localId"].as_str().ok_or(CallFailure::Invalid)?;
         let volume =
             serde_json::from_value(talk["volume"].clone()).map_err(|_| CallFailure::Invalid)?;
-        let Ok(custody) =
-            budget.reserve(std::mem::size_of::<PreviewSpeech>() + text.len() + local_id.len())
+        let Ok(extra) = budget.reserve(std::mem::size_of::<PreviewSpeech>() + local_id.len())
         else {
             return Ok(None);
         };
+        if custody.merge(extra).is_err() {
+            return Ok(None);
+        }
         Ok(Some(PreviewSpeech {
-            text: text.into(),
+            text,
             local_id: local_id.to_owned(),
             volume,
             _custody: custody,

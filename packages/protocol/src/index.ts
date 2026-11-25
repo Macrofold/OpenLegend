@@ -510,7 +510,6 @@ export interface EntityView extends Named {
         measurementAt?: number;
         acquiredAt?: number;
         confirmedThrough?: number;
-        sourceReference: string;
       };
   /** Recent movement between compatible received positions; no route or prediction. */
   observedMoving?: boolean;

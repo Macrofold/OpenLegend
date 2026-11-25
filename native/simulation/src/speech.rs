@@ -18,6 +18,10 @@ mod awareness;
 pub(crate) use awareness::*;
 mod receiver;
 pub(crate) use receiver::*;
+mod text;
+pub use text::{SpeechText, SpeechTextError};
+
+pub const GENERATED_SPEECH_UTF16_LIMIT: usize = 1200;
 
 #[derive(Clone, Copy, Deserialize)]
 #[serde(deny_unknown_fields)]
