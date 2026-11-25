@@ -12,8 +12,7 @@ use openlegend_simulation::host::{
 use openlegend_simulation::runtime::{
     NativeWorldSession, RuntimeActivation, RuntimeDirectOutput, RuntimeDirectPrepared,
     RuntimeDirectStep, RuntimeError, RuntimeNavigationRead, RuntimeNpcResponseTicket,
-    RuntimeNpcStageWitness,
-    RuntimePlayerRead, RuntimeProvider, RuntimeProviderInput, RuntimeSave,
+    RuntimeClock, RuntimeNpcStageWitness, RuntimePlayerRead, RuntimeProvider, RuntimeProviderInput, RuntimeSave,
     RuntimeSaveAcknowledgement,
 };
 use openlegend_world_host::{
@@ -885,6 +884,7 @@ impl HostedWorld {
         window: usize,
         prepare: impl FnOnce(
             openlegend_simulation::capture::PlayerSelfFacts<'_>,
+            RuntimeClock,
             &ByteBudget,
         ) -> Result<T, openlegend_simulation::host::CapacityError>
         + Send

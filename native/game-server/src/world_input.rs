@@ -40,6 +40,36 @@ pub(crate) struct InputScope {
     expiry_ms: u64,
 }
 
+#[derive(Clone, Copy, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SteeringProfile {
+    pub(crate) metres_per_game_second: f64,
+    pub(crate) max_slope: f64,
+    pub(crate) effective_at: f64,
+}
+
+#[derive(Clone, Copy, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SteeringProgress {
+    retired_through: u64,
+    // Includes accepted time from directions retired between publications.
+    total_game_seconds: f64,
+    active: Option<ActiveSteeringProgress>,
+}
+
+#[derive(Clone, Copy, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ActiveSteeringProgress {
+    sequence: u64,
+    game_seconds: f64,
+}
+
+pub(crate) struct InputView {
+    pub(crate) scope: InputScope,
+    pub(crate) profile: Option<SteeringProfile>,
+    pub(crate) progress: SteeringProgress,
+}
+
 #[derive(Deserialize)]
 #[serde(
     tag = "kind",
@@ -86,6 +116,7 @@ struct Window {
     expires: Instant,
     direction: Direction,
     renewal: u64,
+    game_seconds: f64,
 }
 
 struct Input {
@@ -94,8 +125,11 @@ struct Input {
     paused: bool,
     scope: InputScope,
     sequence: u64,
+    total_game_seconds: f64,
     steering: Option<Window>,
     attack: AttackState,
+    profile: Option<SteeringProfile>,
+    published_progress: Option<(u64, SteeringProgress)>,
     held_for_advance: Option<u64>,
     _custody: ByteReservation,
 }
@@ -138,8 +172,15 @@ pub(crate) struct TimedReviewUpdates {
 }
 
 struct InputProof {
-    steering: Option<(u64, Uuid, f64)>,
+    steering: Option<OfferedWindow>,
     release: Option<ReleaseProof>,
+}
+
+struct OfferedWindow {
+    sequence: u64,
+    token: Uuid,
+    starts: f64,
+    ends: f64,
 }
 
 impl WorldInputs {
@@ -207,19 +248,47 @@ impl WorldInputs {
             if !current { continue; }
             let Ok(revision) = revision(&mut state) else { continue; };
             let input = &mut state.actors[actor];
-            input.stop_for_review(revision, Uuid::new_v4());
+            input.replace_movement_token(revision, Uuid::new_v4());
             input.attack.end_pending_review();
             self.reviews.publish_late(review.pending.clone());
         }
     }
 
+    /// Freeze steering with the pose being prepared under the accepted world
+    /// turn. Ordinary stream reads reuse the same progress within a publication
+    /// revision. An explicit state read can recover input-only changes sooner.
     pub(crate) fn for_view(
         &self,
         audience: Arc<AuthorizedScope>,
         facts: RuntimePlayerInputState,
         paused: bool,
-    ) -> Result<InputScope, AccessError> {
-        self.use_input(audience, facts, paused, |input, _| input.scope.clone())
+        profile: Option<SteeringProfile>,
+        revision: u64,
+        fresh_state: bool,
+    ) -> Result<InputView, AccessError> {
+        self.use_input(audience, facts, paused, |input, _| {
+            if !matches!((input.profile, profile), (Some(previous), Some(next))
+                if previous.metres_per_game_second == next.metres_per_game_second
+                    && previous.max_slope == next.max_slope)
+            {
+                input.profile = profile;
+            }
+            let progress = match input.published_progress {
+                Some((published, progress)) if !fresh_state && published == revision => progress,
+                _ => {
+                    let progress = input.progress();
+                    if !fresh_state {
+                        input.published_progress = Some((revision, progress));
+                    }
+                    progress
+                }
+            };
+            InputView {
+                scope: input.scope.clone(),
+                profile: input.profile,
+                progress,
+            }
+        })
     }
 
     pub(crate) fn update(
@@ -353,8 +422,11 @@ impl WorldInputs {
                             life: facts.physical_life,
                             paused,
                             sequence: 0,
+                            total_game_seconds: 0.0,
                             steering: None,
                             attack: AttackState::default(),
+                            profile: None,
+                            published_progress: None,
                             held_for_advance: None,
                             scope: InputScope {
                                 revision,
@@ -402,9 +474,12 @@ impl WorldInputs {
         let now = Instant::now();
         for (permit, proof) in snapshot.permits.iter().zip(&snapshot.windows) {
             let current = state.actors.get(&permit.scope.actor_id).ok_or(AccessError::Changed)?;
-            let steering = proof.steering.is_none_or(|(sequence, token, starts)| {
-                current.sequence == sequence && current.scope.movement_input_token == token
-                    && current.steering.as_ref().is_some_and(|window| window.expires > now && window.starts == starts)
+            let steering = proof.steering.as_ref().is_none_or(|offered| {
+                current.sequence == offered.sequence
+                    && current.scope.movement_input_token == offered.token
+                    && current.steering.as_ref().is_some_and(|window| {
+                        window.expires > now && window.starts == offered.starts
+                    })
             });
             let release = proof.release.as_ref().is_none_or(|release| {
                 current.attack.accepts(release, current.scope.attack_input_token, now)
@@ -414,6 +489,38 @@ impl WorldInputs {
             }
         }
         self.authority.current_inputs(&snapshot.permits, accept)
+    }
+
+    /// Publish only settled time using the window this candidate actually saw.
+    /// The clock calls this inside the same turn as its accepted publication.
+    pub(crate) fn record_accepted(
+        &self,
+        snapshot: &InputSnapshot,
+        previous_at: f64,
+        accepted_at: f64,
+    ) -> Result<(), AccessError> {
+        if snapshot.windows.is_empty() || accepted_at <= previous_at {
+            return Ok(());
+        }
+        let mut state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        for (permit, proof) in snapshot.permits.iter().zip(&snapshot.windows) {
+            let Some(offered) = &proof.steering else {
+                continue;
+            };
+            let seconds = accepted_at.min(offered.ends) - previous_at.max(offered.starts);
+            if seconds <= 0.0 {
+                continue;
+            }
+            if let Some(input) = state.actors.get_mut(&permit.scope.actor_id)
+                && input.sequence == offered.sequence
+                && input.scope.movement_input_token == offered.token
+                && let Some(window) = &mut input.steering
+            {
+                window.game_seconds += seconds;
+                input.total_game_seconds += seconds;
+            }
+        }
+        Ok(())
     }
 
     /// Only the host's real elapsed interval credits movement. The stored
@@ -540,7 +647,12 @@ impl WorldInputs {
             });
             result.permits.push(audience.clone());
             result.windows.push(InputProof {
-                steering: steering.map(|window| (input.sequence, input.scope.movement_input_token, window.starts)),
+                steering: steering.map(|window| OfferedWindow {
+                    sequence: input.sequence,
+                    token: input.scope.movement_input_token,
+                    starts: window.starts,
+                    ends: window.ends,
+                }),
                 release: release_proof,
             });
         }
@@ -577,11 +689,13 @@ impl Drop for InputSnapshot {
 }
 
 impl Input {
-    fn stop_for_review(&mut self, revision: u64, movement_token: Uuid) {
+    fn replace_movement_token(&mut self, revision: u64, movement_token: Uuid) {
         self.scope.revision = revision;
         self.scope.movement_input_token = movement_token;
         self.steering = None;
         self.sequence = 0;
+        self.total_game_seconds = 0.0;
+        self.published_progress = None;
         self.held_for_advance = None;
     }
 
@@ -591,6 +705,18 @@ impl Input {
                 && movement.movement_sequence == self.sequence
                 && (window.renewal + 1..=MAX_SAFE_INTEGER).contains(&sequence)
         })
+    }
+
+    fn progress(&self) -> SteeringProgress {
+        let active = self.steering.as_ref().map(|window| ActiveSteeringProgress {
+            sequence: self.sequence,
+            game_seconds: window.game_seconds,
+        });
+        SteeringProgress {
+            retired_through: self.sequence - u64::from(active.is_some()),
+            total_game_seconds: self.total_game_seconds,
+            active,
+        }
     }
 
     fn apply(
@@ -635,6 +761,7 @@ impl Input {
                             z: direction.z,
                         },
                         renewal: 0,
+                        game_seconds: 0.0,
                     })
                 } else {
                     None
@@ -688,14 +815,13 @@ fn valid_direction(direction: &Direction) -> bool {
 }
 
 fn expire_inputs(state: &mut State, actor: &str, now: Instant) -> Result<(), AccessError> {
-    if state.actors[actor].steering.as_ref().is_some_and(|window| window.expires <= now) {
+    if state.actors[actor]
+        .steering
+        .as_ref()
+        .is_some_and(|window| window.expires <= now)
+    {
         let revision = revision(state)?;
-        let input = &mut state.actors[actor];
-        input.scope.revision = revision;
-        input.scope.movement_input_token = Uuid::new_v4();
-        input.steering = None;
-        input.sequence = 0;
-        input.held_for_advance = None;
+        state.actors[actor].replace_movement_token(revision, Uuid::new_v4());
     }
     expire_attack(state, actor, now)?;
     Ok(())

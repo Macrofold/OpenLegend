@@ -137,6 +137,7 @@ pub struct PlayerSelfFacts<'a> {
     pub hearing_floor: Option<f64>,
     pub known_recipes: &'a [String],
     own: &'a OwnPlayerView<'a>,
+    movement: (&'a crate::simulation::InstalledWorld, &'a crate::state::Entity),
 }
 
 pub enum PlayerSelfAttribution<'a> {
@@ -194,6 +195,19 @@ pub struct PlayerActivity<'a> {
 }
 
 impl<'a> PlayerSelfFacts<'a> {
+    /// Effective speed for the grounded steering preview. The host may read
+    /// this for its current controller without exposing the underlying rules.
+    pub fn steering_speed(&self) -> Option<f64> {
+        if !self.can_steer || self.support_surface_id.is_none() {
+            return None;
+        }
+        let (world, actor) = self.movement;
+        world
+            .movement_speed(actor)
+            .ok()
+            .filter(|speed| speed.is_finite() && *speed > 0.0)
+    }
+
     pub fn death(&self) -> Option<PlayerDeathFacts<'a>> {
         self.pending_death.map(|death| PlayerDeathFacts {
             at: death.at,
@@ -397,6 +411,7 @@ impl OwnActorProduct<'_> {
             speech_blocked: self.speech_blocked,
             actions_blocked: self.actions_blocked,
             can_steer: player.can_steer,
+            movement: self.movement,
             seed: player.seed,
             module_revision: player.module_revision,
             spatial_revision: player.spatial_revision,

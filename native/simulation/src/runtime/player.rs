@@ -1719,7 +1719,7 @@ impl NativeWorldSession {
         actor: &str,
         event_window: usize,
     ) -> Result<RuntimePlayerRead, RuntimeError> {
-        self.read_player_via(account, actor, event_window, false, |simulation, budget| {
+        self.read_player_via(account, actor, event_window, false, |simulation, _, budget| {
             simulation
                 .read_player(account, actor, budget)
                 .map(|read| (read, ()))
@@ -1735,10 +1735,12 @@ impl NativeWorldSession {
         account: &str,
         actor: &str,
         event_window: usize,
-        prepare: impl FnOnce(PlayerSelfFacts<'_>, &ByteBudget) -> Result<T, CapacityError>,
+        prepare: impl FnOnce(PlayerSelfFacts<'_>, RuntimeClock, &ByteBudget) -> Result<T, CapacityError>,
     ) -> Result<(RuntimePlayerRead, T), RuntimeError> {
-        self.read_player_via(account, actor, event_window, true, |simulation, budget| {
-            simulation.read_player_direct(account, actor, budget, prepare)
+        self.read_player_via(account, actor, event_window, true, |simulation, clock, budget| {
+            simulation.read_player_direct(account, actor, budget, |facts, budget| {
+                prepare(facts, clock, budget)
+            })
         })
     }
 
@@ -1750,6 +1752,7 @@ impl NativeWorldSession {
         app_view: bool,
         capture: impl FnOnce(
             &crate::simulation::Simulation,
+            RuntimeClock,
             &ByteBudget,
         )
             -> Result<(AcceptedActorRead, T), crate::simulation::ActorReadError>,
@@ -1762,7 +1765,7 @@ impl NativeWorldSession {
             .filter(|serial| *serial <= crate::identity::MAX_SAFE_INTEGER)
             .ok_or_else(|| failure("read identity exhausted"))?;
         let simulation = self.session.accepted().map_err(failure)?;
-        let (read, prepared) = capture(simulation, &self.budget).map_err(failure)?;
+        let (read, prepared) = capture(simulation, clock, &self.budget).map_err(failure)?;
         let events = simulation
             .read_player_events(account, actor, event_window, app_view, &self.budget)
             .map_err(failure)?;

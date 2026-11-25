@@ -18,13 +18,18 @@ impl PlayerChanges<'_> {
             || before.history != after.history
             || before.inventory_read_revision != after.inventory_read_revision
             || before.input_scope != after.input_scope
+            || before.steering_profile != after.steering_profile
+            || before.steering_progress != after.steering_progress
             || before.can_use_inventory != after.can_use_inventory
             || before.controls != after.controls
     }
     pub(super) fn removed(&self) -> Vec<&'static str> {
         let Self { before, after } = self;
         let mut output = after.body.delta(before.body).removed();
-        output.extend(removed!(before,after;"history"=>history,"inputScope"=>input_scope));
+        output.extend(removed!(before,after;
+            "history"=>history,"inputScope"=>input_scope,
+            "steeringProfile"=>steering_profile,"steeringProgress"=>steering_progress
+        ));
         output
     }
 }
@@ -37,7 +42,10 @@ impl Serialize for PlayerChanges<'_> {
         fields!(map,before,after;required {
           "memoryRevision"=>memory_revision,"inventoryReadRevision"=>inventory_read_revision,
           "canUseInventory"=>can_use_inventory,"controls"=>controls,"outings"=>outings,
-        } optional {"history"=>history,"inputScope"=>input_scope});
+        } optional {
+          "history"=>history,"inputScope"=>input_scope,
+          "steeringProfile"=>steering_profile,"steeringProgress"=>steering_progress,
+        });
         map.end()
     }
 }

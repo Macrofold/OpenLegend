@@ -41,7 +41,7 @@ The [feature journeys](../projects/combat-and-threat-responses-feature-spec.md#p
 
 ## Real-time movement and skilled attack controls (ND38)
 
-**Implemented desktop controls; evidence and remaining independent player acceptance are tracked in ASE.** [ND38's feature](../projects/action-execution-and-skill-expression-feature-spec.md) and [technical input contract](../projects/action-execution-and-skill-expression-tech-design.md#1-player-input-and-shared-attempt-lifecycle) define the following defaults. These defaults share the current scene, action, input and receipt owners.
+**Implemented browser player controls; evidence and remaining independent player acceptance are tracked in ASE.** The installed Unreal player’s follow view maps mouse turning during held steering through its [movement contract](../projects/unreal-engine-5-migration-movement.md#open-legends-movement-contract). [ND38's feature](../projects/action-execution-and-skill-expression-feature-spec.md) and [technical input contract](../projects/action-execution-and-skill-expression-tech-design.md#1-player-input-and-shared-attempt-lifecycle) define the following defaults. These defaults share the current scene, action, input and receipt owners.
 
 | Default                      | Meaning and scope                                                                                                                                                                  |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

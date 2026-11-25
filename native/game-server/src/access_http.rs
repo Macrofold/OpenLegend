@@ -1,9 +1,9 @@
-//! Existing local-browser authentication endpoints. The listener routes these
+//! Browser and desktop authentication endpoints. The listener routes these
 //! through the same current SQL accounts, sessions and grants as gameplay.
 
 use crate::{
     authority::{AccessError, Authority, WorldGrant},
-    oidc::Oidc,
+    oidc::{Oidc, PendingLogins},
     presence::Presence,
     wire,
 };
@@ -16,8 +16,10 @@ use axum::{
     routing::{get, post},
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+use uuid::Uuid;
 
+pub(crate) mod desktop;
 mod invites;
 pub(crate) use invites::Enrollment;
 
@@ -27,6 +29,7 @@ struct AccessRoutes {
     identity: IdentityMode,
     enrollment: Option<Enrollment>,
     presence: Option<Arc<Presence>>,
+    pending: Arc<Mutex<PendingLogins>>,
 }
 
 #[derive(Clone)]
@@ -52,6 +55,7 @@ pub(crate) fn local_router(
     access_router(
         AccessRoutes {
             authority,
+            pending: Arc::new(Mutex::new(PendingLogins::default())),
             identity: IdentityMode::Local(port),
             enrollment: None,
             presence,
@@ -70,6 +74,7 @@ pub(crate) fn oidc_router(
     access_router(
         AccessRoutes {
             authority,
+            pending: oidc.pending(),
             identity: IdentityMode::Oidc(oidc),
             enrollment,
             presence,
@@ -87,7 +92,14 @@ fn access_router(state: AccessRoutes, game: Router) -> Router {
         .route("/auth/invite", get(invites::landing))
         .route("/auth/login", get(login))
         .route("/auth/callback", get(callback))
+        .route("/auth/desktop/start", get(desktop::start))
+        .route(
+            "/auth/desktop/confirm/{attempt}",
+            get(desktop::confirm).post(desktop::approve),
+        )
+        .route("/api/desktop/bootstrap", get(desktop::bootstrap))
         .route("/api/session", get(session))
+        .route("/api/session/desktop/exchange", post(desktop::exchange))
         .route("/api/session/logout", post(logout))
         .layer(DefaultBodyLimit::max(1024))
         .with_state(state.clone())
@@ -144,13 +156,17 @@ async fn check_origin(
     let matches_origin = headers
         .get(header::ORIGIN)
         .is_some_and(|value| value.as_bytes() == expected.as_bytes());
-    // The public page, an invitation link and an identity redirect may
-    // complete a browser navigation begun on another site. Private API
-    // reads and all mutating API routes keep their existing origin checks.
+    let path = request.uri().path();
+    let desktop_confirmation = path.starts_with("/auth/desktop/confirm/");
+    let post = request.method() == axum::http::Method::POST;
+    // A cross-site provider redirect can keep its fetch metadata through
+    // the following confirmation GET. Approval still requires a same-origin
+    // POST and the exact browser session and grant bound to the attempt.
     let external_entry = matches!(origin, BrowserOrigin::Configured(_))
         && request.method() == axum::http::Method::GET
-        && (request.uri().path() == "/auth/callback"
-            || (matches!(request.uri().path(), "/" | "/auth/invite")
+        && (path == "/auth/callback"
+            || ((matches!(path, "/" | "/auth/invite" | "/auth/desktop/start")
+                || desktop_confirmation)
                 && headers
                     .get("sec-fetch-mode")
                     .is_some_and(|value| value == "navigate")
@@ -162,9 +178,7 @@ async fn check_origin(
             .get("sec-fetch-site")
             .is_some_and(|value| value == "cross-site")
             || (headers.contains_key(header::ORIGIN) && !matches_origin)
-            || (request.uri().path().starts_with("/api/")
-                && request.method() == axum::http::Method::POST
-                && !matches_origin))
+            || ((path.starts_with("/api/") || desktop_confirmation) && post && !matches_origin))
     {
         return refusal(
             StatusCode::FORBIDDEN,
@@ -172,8 +186,10 @@ async fn check_origin(
             "Use the game in its own browser tab.",
         );
     }
-    let private =
-        request.uri().path().starts_with("/api/") || request.uri().path().starts_with("/auth/");
+    // The browser form must keep its same-origin Origin header. The start
+    // and the callback redirect carry handoff material and send no referrer.
+    let desktop_redirect = path == "/auth/desktop/start" || (desktop_confirmation && post);
+    let private = path.starts_with("/api/") || path.starts_with("/auth/");
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     if private {
@@ -184,7 +200,14 @@ async fn check_origin(
         HeaderValue::from_static("nosniff"),
     );
     headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
-    headers.insert("referrer-policy", HeaderValue::from_static("same-origin"));
+    headers.insert(
+        header::REFERRER_POLICY,
+        HeaderValue::from_static(if desktop_redirect {
+            "no-referrer"
+        } else {
+            "same-origin"
+        }),
+    );
     response
 }
 
@@ -229,7 +252,13 @@ async fn login(State(state): State<AccessRoutes>, Query(query): Query<LoginQuery
             Err(error) => access_failure(error),
         },
         IdentityMode::Oidc(oidc) => {
-            start_oidc(oidc, query.change_account.as_deref() == Some("true"), None).await
+            start_oidc(
+                oidc,
+                query.change_account.as_deref() == Some("true"),
+                None,
+                None,
+            )
+            .await
         }
     }
 }
@@ -240,13 +269,17 @@ async fn start_oidc(
     oidc: &Arc<Oidc>,
     change_account: bool,
     invitation: Option<crate::authority::invites::InviteHash>,
+    desktop_attempt: Option<Uuid>,
 ) -> Response {
     let mut nonce = [0_u8; 32];
     if getrandom::fill(&mut nonce).is_err() {
         return access_failure(AccessError::Availability);
     }
     let token = openlegend_simulation::encoding::sha256_hex(&nonce);
-    match oidc.begin(&token, change_account, invitation).await {
+    match oidc
+        .begin(&token, change_account, invitation, desktop_attempt)
+        .await
+    {
         Ok(location) => redirect(
             location.as_str(),
             &[set_cookie(
@@ -310,8 +343,27 @@ async fn callback(
             } else {
                 (login, "/")
             };
+            let mut destination = location.to_owned();
+            if let Some(attempt) = login.desktop_attempt {
+                if matches!(
+                    location,
+                    "/" | "/?entry=invite-accepted"
+                        | "/?entry=invite-accepted&view=operations"
+                        | "/?entry=already-member"
+                ) {
+                    match desktop::bind_browser(&state, attempt, &login.token).await {
+                        Ok(path) => destination = path,
+                        Err(_) => {
+                            desktop::discard_attempt(&state, attempt);
+                            destination = "/?entry=desktop-sign-in-unavailable".into();
+                        }
+                    }
+                } else {
+                    desktop::discard_attempt(&state, attempt);
+                }
+            }
             redirect(
-                location,
+                &destination,
                 &[
                     set_cookie(
                         "ol_session",
@@ -390,30 +442,34 @@ async fn logout(
     let Some(token) = read_cookie(&headers, "ol_session") else {
         return access_failure(AccessError::Session);
     };
-    match state.authority.logout(token).await {
-        Ok(session) => {
-            if let Some(presence) = &state.presence
-                && let Err(error) = presence.session_ended(&session)
+    let presence = state.presence.clone();
+    let result = state
+        .authority
+        .logout(token, move |session| {
+            if let Some(presence) = presence
+                && let Err(error) = presence.session_ended(session)
             {
                 eprintln!("Failed to reconcile a revoked session: {error:?}");
             }
-            (
-                [(
-                    header::SET_COOKIE,
-                    set_cookie(
-                        "ol_session",
-                        "",
-                        match &state.identity {
-                            IdentityMode::Local(_) => false,
-                            IdentityMode::Oidc(oidc) => oidc.origin().starts_with("https:"),
-                        },
-                        Some(0),
-                    ),
-                )],
-                Json(serde_json::json!({"ok": true, "message": "Signed out."})),
-            )
-                .into_response()
-        }
+        })
+        .await;
+    match result {
+        Ok(()) => (
+            [(
+                header::SET_COOKIE,
+                set_cookie(
+                    "ol_session",
+                    "",
+                    match &state.identity {
+                        IdentityMode::Local(_) => false,
+                        IdentityMode::Oidc(oidc) => oidc.origin().starts_with("https:"),
+                    },
+                    Some(0),
+                ),
+            )],
+            Json(serde_json::json!({"ok": true, "message": "Signed out."})),
+        )
+            .into_response(),
         Err(error) => access_failure(error),
     }
 }

@@ -418,7 +418,7 @@ impl WorldInputs {
             // Opening a review withdraws held movement in the same gate.
             // The next view advertises its replacement token. Delayed
             // direction packets from before the modal can never restart it.
-            current.stop_for_review(revision, token);
+            current.replace_movement_token(revision, token);
         }
         current.attack.version = version;
         current.attack.gesture = Some(gesture);

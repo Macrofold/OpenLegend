@@ -16,6 +16,10 @@ Earlier revisions were released under Apache-2.0. Existing grants for those revi
 
 The imported UI assets have separate notices in [design-system assets](apps/client/src/design-system/README.md): Game-icons.net silhouettes are CC BY 3.0 with per-icon authors, Lucide utilities are ISC, and bundled fonts use SIL OFL 1.1. These assets are licensed imports, distinct from the unlicensed-to-us art reference board.
 
+## Unreal desktop client
+
+The [Unreal client licensing decision](docs/features/unreal-player/README.md#decisions-and-needs-design) selects MIT for newly authored Open Legend client code in the separate Unreal project. The [Unreal project notice](apps/unreal/LICENSE) covers newly authored client material and identifies its copyright holders. The client connects to the AGPL Rust host over the public interface. Unreal Engine and third-party dependencies retain their own terms. Reusing existing AGPL material under MIT requires permission from the applicable rights holders.
+
 ## Why AGPL
 
 The primary adoption path is expected to be people playing and creating hosted worlds. Open Legend benefits when operators who improve its shared engine make covered improvements available. This favors AGPL reciprocity over permitting closed engine forks by default.

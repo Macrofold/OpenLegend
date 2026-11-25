@@ -10,18 +10,22 @@ use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
+use std::future::Future;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tokio_postgres::Row;
+use tokio::time::Instant;
+use tokio_postgres::{Row, Transaction};
 use uuid::Uuid;
 
 pub(crate) mod binding;
 pub(crate) mod bootstrap;
 mod control;
+mod desktop;
 pub(crate) mod invites;
 mod managed_access;
-pub(crate) use control::{DepartureControl, PendingExit, RestoredExitAttempts};
 pub use control::{ControlChange, ControlOperation, ControlRequest};
+pub(crate) use control::{DepartureControl, PendingExit, RestoredExitAttempts};
+pub(crate) use desktop::DesktopBrowser;
 pub(crate) use managed_access::{AccessUpdateError, UpdateGrant, assert_saved_grant};
 
 pub(crate) const LOCAL_ISSUER: &str = "https://local.openlegend.invalid";
@@ -255,6 +259,62 @@ fn digest_text(digest: TokenHash) -> String {
     openlegend_simulation::encoding::hex_bytes(&digest)
 }
 
+/// Use the same issuer, limits and lifetime for browser and desktop sessions.
+struct SessionSeed {
+    token: String,
+    hash: String,
+    id: String,
+}
+
+impl SessionSeed {
+    fn new() -> Result<Self, AccessError> {
+        let mut bytes = [0_u8; 32];
+        getrandom::fill(&mut bytes).map_err(|_| AccessError::Availability)?;
+        let token = digest_text(bytes);
+        Ok(Self {
+            hash: digest_text(token_hash(&token)?),
+            token,
+            id: Uuid::new_v4().to_string(),
+        })
+    }
+
+    async fn insert(
+        self,
+        tx: &Transaction<'_>,
+        account: &str,
+        now: i64,
+        duration: i64,
+        limit: i64,
+    ) -> Result<String, StoreError> {
+        let expires = now.checked_add(duration).ok_or(StoreError::InvalidRecord)?;
+        tx.execute("DELETE FROM auth_sessions WHERE expires_at <= $1", &[&now])
+            .await?;
+        let count: i64 = tx
+            .query_one("SELECT count(*) FROM auth_sessions", &[])
+            .await?
+            .try_get(0)?;
+        if count >= limit {
+            return Err(StoreError::Capacity);
+        }
+        tx.execute(
+            "INSERT INTO auth_sessions VALUES ($1,$2,$3,1,$4)",
+            &[&self.id, &self.hash, &account, &expires],
+        )
+        .await?;
+        Ok(self.token)
+    }
+}
+
+fn session_world_grant(current: &Access) -> Option<&WorldGrant> {
+    current.grant.as_ref().filter(|grant| {
+        if grant.actor_id.is_some() {
+            grant.capabilities.contains(&Capability::Play)
+        } else {
+            !grant.capabilities.is_empty()
+        }
+    })
+}
+
 impl Authority {
     /// The account write serializes with logout. A scope superseded before
     /// writer admission cannot change the profile for that request.
@@ -367,96 +427,104 @@ impl Authority {
         }
     }
 
-    pub async fn sign_in_local(&self) -> Result<String, AccessError> {
+    pub async fn sign_in_local(self: &Arc<Self>) -> Result<String, AccessError> {
         if !self.local {
             return Err(AccessError::Forbidden);
         }
-        self.login(LOCAL_ISSUER, LOCAL_SUBJECT, None).await
+        self.login(LOCAL_ISSUER, LOCAL_SUBJECT, None, None).await
     }
 
     /// Called only with an identity of the configured, verified issuer. The
     /// account identity and body grant come from SQL, never browser fields.
     pub(crate) async fn sign_in_verified(
-        &self,
+        self: &Arc<Self>,
         issuer: &str,
         subject: &str,
         previous: Option<&str>,
+        deadline: Instant,
     ) -> Result<String, AccessError> {
         if self.local {
             return Err(AccessError::Forbidden);
         }
-        self.login(issuer, subject, previous).await
+        self.login(issuer, subject, previous, Some(deadline)).await
     }
 
     async fn login(
-        &self,
+        self: &Arc<Self>,
         issuer: &str,
         subject: &str,
         previous: Option<&str>,
+        deadline: Option<Instant>,
     ) -> Result<String, AccessError> {
         let previous = previous.and_then(|token| token_hash(token).ok());
-        let _change = self.changes.lock().await;
-        let _fence = previous.map(|key| self.begin_revocation(key)).transpose()?;
-        let previous = previous.map(digest_text);
-        let mut bytes = [0_u8; 32];
-        getrandom::fill(&mut bytes).map_err(|_| AccessError::Availability)?;
-        let token = digest_text(bytes);
-        let hash = digest_text(token_hash(&token)?);
-        let uuid = Uuid::new_v4().to_string();
+        // The verified identity text may outlive the provider's response.
+        let text_bytes = issuer
+            .len()
+            .checked_add(subject.len())
+            .ok_or(AccessError::Busy)?;
+        let custody = self
+            .budget
+            .reserve(text_bytes)
+            .map_err(|_| AccessError::Busy)?;
         let client_identity = (issuer.to_owned(), subject.to_owned());
-        let duration = self.duration_ms;
-        let limit = self.session_capacity;
-        self.store
-            .operational(move |tx| {
-                Box::pin(async move {
-                    let now = now_ms();
-                    let expires = now.checked_add(duration).ok_or(StoreError::InvalidRecord)?;
-                    let (issuer, subject) = client_identity;
-                    let account = match tx
-                        .query_opt(
-                            "SELECT id FROM auth_accounts WHERE issuer=$1 AND subject=$2",
-                            &[&issuer, &subject],
-                        )
-                        .await?
-                    {
-                        Some(row) => row.try_get::<_, String>(0)?,
-                        None => {
-                            let id = Uuid::new_v4().to_string();
+        let authority = self.clone();
+        self.finish_session_change(async move {
+            let _custody = custody;
+            let current = move || deadline.is_none_or(|until| until > Instant::now());
+            if !current() {
+                return Err(AccessError::Session);
+            }
+            let _fence = previous
+                .map(|key| authority.begin_revocation(key))
+                .transpose()?;
+            let previous = previous.map(digest_text);
+            let session = SessionSeed::new()?;
+            let duration = authority.duration_ms;
+            let limit = authority.session_capacity;
+            let token = authority
+                .store
+                .operational(move |tx| {
+                    Box::pin(async move {
+                        // The shared writer may have been busy after admission.
+                        if !current() {
+                            return Ok(None);
+                        }
+                        let now = now_ms();
+                        let (issuer, subject) = client_identity;
+                        let account = match tx
+                            .query_opt(
+                                "SELECT id FROM auth_accounts WHERE issuer=$1 AND subject=$2",
+                                &[&issuer, &subject],
+                            )
+                            .await?
+                        {
+                            Some(row) => row.try_get::<_, String>(0)?,
+                            None => {
+                                let id = Uuid::new_v4().to_string();
+                                tx.execute(
+                                    "INSERT INTO auth_accounts VALUES ($1,$2,$3)",
+                                    &[&id, &issuer, &subject],
+                                )
+                                .await?;
+                                id
+                            }
+                        };
+                        let token = session.insert(tx, &account, now, duration, limit).await?;
+                        if let Some(previous) = previous {
                             tx.execute(
-                                "INSERT INTO auth_accounts VALUES ($1,$2,$3)",
-                                &[&id, &issuer, &subject],
+                                "UPDATE auth_sessions SET revision=revision+1,expires_at=$1 \
+                                 WHERE token_hash=$2 AND expires_at>$1",
+                                &[&now, &previous],
                             )
                             .await?;
-                            id
                         }
-                    };
-                    tx.execute("DELETE FROM auth_sessions WHERE expires_at <= $1", &[&now])
-                        .await?;
-                    let count: i64 = tx
-                        .query_one("SELECT count(*) FROM auth_sessions", &[])
-                        .await?
-                        .try_get(0)?;
-                    if count >= limit {
-                        return Err(StoreError::Capacity);
-                    }
-                    tx.execute(
-                        "INSERT INTO auth_sessions VALUES ($1,$2,$3,1,$4)",
-                        &[&uuid, &hash, &account, &expires],
-                    )
-                    .await?;
-                    if let Some(previous) = previous {
-                        tx.execute(
-                            "UPDATE auth_sessions SET revision=revision+1,expires_at=$1 \
-                             WHERE token_hash=$2 AND expires_at>$1",
-                            &[&now, &previous],
-                        )
-                        .await?;
-                    }
-                    Ok(())
+                        Ok(Some(token))
+                    })
                 })
-            })
-            .await?;
-        Ok(token)
+                .await?;
+            token.ok_or(AccessError::Session)
+        })
+        .await
     }
 
     /// Read the session and synchronously hand off its currently permitted
@@ -468,13 +536,7 @@ impl Authority {
     ) -> Result<T, AccessError> {
         let (key, access) = self.access(token).await?;
         self.current_session(key, &access, |current| {
-            let grant = current.grant.as_ref().filter(|grant| {
-                if grant.actor_id.is_some() {
-                    grant.capabilities.contains(&Capability::Play)
-                } else {
-                    !grant.capabilities.is_empty()
-                }
-            });
+            let grant = session_world_grant(current);
             publish(&current.account, grant.map_or(&[], std::slice::from_ref))
         })
     }
@@ -741,24 +803,50 @@ impl Authority {
         Ok((grant, controls))
     }
 
-    pub async fn logout(&self, token: &str) -> Result<String, AccessError> {
+    /// The request can stop while waiting for session-change admission.
+    /// Once admitted, keep the permit and caller-owned fence, resources and
+    /// post-commit work until completion, even after the HTTP connection closes.
+    /// Dropping a dispatched COMMIT would stop ordinary world writes.
+    async fn finish_session_change<T: Send + 'static>(
+        &self,
+        write: impl Future<Output = Result<T, AccessError>> + Send + 'static,
+    ) -> Result<T, AccessError> {
+        let change = self.changes.clone().lock_owned().await;
+        tokio::spawn(async move {
+            let _change = change;
+            write.await
+        })
+        .await
+        .map_err(|_| AccessError::Availability)?
+    }
+
+    pub(crate) async fn logout(
+        self: &Arc<Self>,
+        token: &str,
+        after_revocation: impl FnOnce(&str) + Send + 'static,
+    ) -> Result<(), AccessError> {
         let (key, access) = self.access(token).await?;
-        let _change = self.changes.lock().await;
-        let _fence = self.begin_revocation(key)?;
-        let row = access.clone();
-        self.store
-            .operational(move |tx| {
-                Box::pin(async move {
-                    tx.execute(
-                        "UPDATE auth_sessions SET revision=revision+1,expires_at=$1 WHERE id=$2",
-                        &[&now_ms(), &row.session],
-                    )
-                    .await?;
-                    Ok(())
+        let authority = self.clone();
+        self.finish_session_change(async move {
+            let _fence = authority.begin_revocation(key)?;
+            let row = access.clone();
+            authority
+                .store
+                .operational(move |tx| {
+                    Box::pin(async move {
+                        tx.execute(
+                            "UPDATE auth_sessions SET revision=revision+1,expires_at=$1 WHERE id=$2",
+                            &[&now_ms(), &row.session],
+                        )
+                        .await?;
+                        Ok(())
+                    })
                 })
-            })
-            .await?;
-        Ok(access.session.clone())
+                .await?;
+            after_revocation(&access.session);
+            Ok(())
+        })
+        .await
     }
 
     fn begin_revocation(&self, key: TokenHash) -> Result<AccessChange<'_>, AccessError> {

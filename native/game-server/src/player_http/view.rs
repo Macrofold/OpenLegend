@@ -84,6 +84,7 @@ impl Views {
         &self,
         tab: &Tab,
         original: Option<&crate::authority::RequestScope>,
+        fresh_state: bool,
     ) -> Result<ViewAttempt, ViewError> {
         openlegend_simulation::profile_body!(VIEW, {
             let _admitted = self
@@ -142,6 +143,7 @@ impl Views {
                 game.view_policy().clone(),
                 self.routes.references.clone(),
                 &self.routes.inputs,
+                fresh_state,
                 &self.routes.commands,
                 self.routes.saves.clone(),
                 host,
@@ -180,7 +182,7 @@ impl Views {
             if refusal.busy() || retry_access(&refusal) {
                 tokio::time::sleep(VIEW_CADENCE).await;
             }
-            let attempt = match self.prepare(tab, None).await {
+            let attempt = match self.prepare(tab, None, encode_http).await {
                 Err(error) if error.changed() || error.busy() || retry_access(&error) => {
                     refusal = error;
                     continue;
@@ -395,7 +397,7 @@ async fn events(
         Arc::new(move |original| {
             let views = views.clone();
             let tab = tab.clone();
-            Box::pin(async move { views.prepare(&tab, Some(&original.scope)).await })
+            Box::pin(async move { views.prepare(&tab, Some(&original.scope), false).await })
         })
     };
     let authority = &views.routes.authority;

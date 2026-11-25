@@ -38,7 +38,7 @@ pub(super) async fn landing(
         && let Some(hash) = query.token.as_deref().and_then(invite_hash)
     {
         match state.authority.invite_landing(hash).await {
-            Ok(true) => return start_oidc(oidc, false, Some(hash)).await,
+            Ok(true) => return start_oidc(oidc, false, Some(hash), None).await,
             Ok(false) => (),
             Err(_) => return access_failure(AccessError::Availability),
         }

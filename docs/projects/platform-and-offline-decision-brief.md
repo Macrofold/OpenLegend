@@ -1,3 +1,3 @@
-# Platform and offline decision
+# Platform and offline decisions
 
-The completed [DG35 decision brief and retained research](completed/platform-and-offline-decision-brief.md) records Mike's October 14, 2026 choice: stay with the browser for now. No additional platform or offline product is selected. This page is navigation only; the completed brief is the sole decision owner.
+The [desktop player contract](../features/unreal-player/desktop-access.md) selects installed Windows and Apple Silicon Mac games for ordinary hosted play. The [migration brief](unreal-engine-5-migration-feature-spec.md#desktop-audience-comparisons) records comparable games and audience tradeoffs. PlayCanvas remains the running player until the replacement passes its cutover gates. Retained browser tools, consumer browser streaming or native web play, other player platforms and offline simulation have separate requirements. The [completed DG35 brief](completed/platform-and-offline-decision-brief.md) preserves the earlier browser-first decision and its evidence. [ND34](../maintainers/needs-design.md#nd34--additional-distribution-platforms-and-offline-play) tracks the scope of that change.

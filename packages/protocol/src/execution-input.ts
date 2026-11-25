@@ -17,6 +17,19 @@ export interface WorldInputScope {
   renewalIntervalMs: number;
   expiryMs: number;
 }
+export interface SteeringProfile {
+  metresPerGameSecond: number;
+  /** Maximum walkable rise/run. */
+  maxSlope: number;
+  effectiveAt: number;
+}
+/** Time processed at the confirmed pose, including a blocked step. */
+export interface SteeringProgress {
+  retiredThrough: number;
+  /** Settled game-seconds for this movement token, including retired directions. */
+  totalGameSeconds: number;
+  active: { sequence: number; gameSeconds: number } | null;
+}
 export interface AttackInputIdentity {
   inputEpoch: string;
   attackInputToken: string;

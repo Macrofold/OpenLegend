@@ -9,7 +9,7 @@ use crate::{
     player_scene::{PreparedContacts, PreparedSelf, SceneError, prepare_contacts, prepare_self},
     store::{NarrationBanner, StoreError},
     world::WorldError,
-    world_input::{InputScope, WorldInputs},
+    world_input::{InputScope, InputView, SteeringProfile, SteeringProgress, WorldInputs},
 };
 use indexmap::IndexMap;
 use openlegend_simulation::{
@@ -273,7 +273,7 @@ pub struct PreparedPlayerView {
 struct ViewOwned {
     policy: Arc<PlayerViewPolicy>,
     host: ViewHostFacts,
-    input_scope: Option<InputScope>,
+    input: Option<InputView>,
     attack_review: Option<crate::player_command::LateReviewInvite>,
     own: PreparedSelf,
     contacts: PreparedContacts,
@@ -333,14 +333,16 @@ pub(crate) async fn prepare_view(
     game: &CurrentServer,
     policy: Arc<PlayerViewPolicy>,
     references: Arc<ReferenceIssuer>,
-    inputs: &WorldInputs,
+    inputs: &Arc<WorldInputs>,
+    fresh_state: bool,
     commands: &crate::player_command::PlayerCommands,
     saves: Arc<LiveSaves>,
     mut host: ViewHostInput,
 ) -> Result<PreparedPlayerView, ViewError> {
     let audience = Arc::clone(&host.audience);
     let scope = &audience.scope;
-    let (read, (own, input_facts, revision, save_failed, can_review_attack)) = game
+    let controlling = host.controlling();
+    let (read, (own, input, revision, save_failed, can_review_attack)) = game
         .world
         .capture_player(
             scope.account_id.clone(),
@@ -349,25 +351,45 @@ pub(crate) async fn prepare_view(
             {
                 let policy = Arc::clone(&policy);
                 let references = Arc::clone(&references);
+                let inputs = Arc::clone(inputs);
                 let audience = Arc::clone(&audience);
-                move |facts, budget| {
+                move |facts, clock, budget| {
                     // Sample the notice before its save status. A fault that
                     // arrives later must still wake the stream for a new view.
                     let revision = saves.publication_revision();
                     let save_failed = saves.has_failed();
-                    let input_facts = RuntimePlayerInputState {
-                        physical_life: facts.physical_life,
-                        alive: facts.alive,
-                        can_steer: facts.can_steer,
-                    };
                     let can_review_attack = facts.action.and_then(|action| action.execution)
                         .is_some_and(|execution| execution.ready && !execution.release_requested
                             && execution.assessment.is_none());
+                    let input = controlling.then(|| {
+                        let input_facts = RuntimePlayerInputState {
+                            physical_life: facts.physical_life,
+                            alive: facts.alive,
+                            can_steer: facts.can_steer,
+                        };
+                        let profile = if clock.paused || save_failed {
+                            None
+                        } else {
+                            facts.steering_speed().map(|speed| SteeringProfile {
+                                metres_per_game_second: speed,
+                                max_slope: facts.body_profile.max_slope,
+                                effective_at: clock.at,
+                            })
+                        };
+                        inputs.for_view(
+                            Arc::clone(&audience),
+                            input_facts,
+                            clock.paused,
+                            profile,
+                            revision,
+                            fresh_state,
+                        )
+                    });
                     let projected = (|| {
                         let scoped = references.scoped(&audience.scope)?;
                         prepare_self(facts, &policy.scene, &scoped, false, false, budget)
                     })();
-                    Ok((projected, input_facts, revision, save_failed, can_review_attack))
+                    Ok((projected, input, revision, save_failed, can_review_attack))
                 }
             },
         )
@@ -399,15 +421,9 @@ pub(crate) async fn prepare_view(
     } else {
         None
     };
-    let input_scope = if host.controlling() {
-        Some(
-            inputs
-                .for_view(Arc::clone(&audience), input_facts, read.clock().paused)
-                .map_err(|error| ViewError::World(WorldError::Access(error)))?,
-        )
-    } else {
-        None
-    };
+    let input = input
+        .transpose()
+        .map_err(|error| ViewError::World(WorldError::Access(error)))?;
     let spatial = Arc::clone(&game.spatial);
     let budget = game.host.budget().clone();
     game.host
@@ -480,7 +496,7 @@ pub(crate) async fn prepare_view(
                 owned: ViewOwned {
                     policy,
                     host,
-                    input_scope,
+                    input,
                     attack_review,
                     own,
                     contacts,
@@ -721,6 +737,10 @@ struct PlayerWire<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     input_scope: Option<&'a InputScope>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    steering_profile: Option<&'a Option<SteeringProfile>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    steering_progress: Option<&'a SteeringProgress>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     attack_review: Option<&'a crate::player_command::LateReviewInvite>,
     can_use_inventory: bool,
     work: Option<()>,
@@ -795,7 +815,9 @@ impl ViewOwned {
             history: self.history_text.as_deref(),
             inventory_read_revision: &self.host.inventory,
             construction_revision: self.policy.world.construction_revision.as_deref(),
-            input_scope: self.input_scope.as_ref(),
+            input_scope: self.input.as_ref().map(|input| &input.scope),
+            steering_profile: self.input.as_ref().map(|input| &input.profile),
+            steering_progress: self.input.as_ref().map(|input| &input.progress),
             attack_review: None,
             can_use_inventory,
             work: None,

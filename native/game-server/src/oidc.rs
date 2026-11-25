@@ -2,6 +2,7 @@
 //! this browser and is consumed once, before any token exchange.
 
 use crate::{
+    access_http::desktop,
     authority::{AccessError, Authority, invites::InviteHash, now_ms},
     network::{NetworkError, NetworkOperation, NetworkOwner, permitted_destination},
 };
@@ -22,10 +23,11 @@ use std::{
     time::Duration,
 };
 use tokio::{sync::watch, time::Instant};
+use uuid::Uuid;
 
 const OPERATION: Duration = Duration::from_secs(30);
 const EXCHANGE: Duration = Duration::from_secs(10);
-const PENDING_LIFETIME: Duration = Duration::from_secs(300);
+pub(crate) const PENDING_LIFETIME: Duration = Duration::from_secs(300);
 const BODY_BYTES: usize = 1_048_576;
 const PENDING_CAPACITY: usize = 256;
 // SDK parsing can overlap its received body and the validated key/token
@@ -89,6 +91,7 @@ impl<'a> AsyncHttpClient<'a> for SdkExchange<'_> {
 struct Pending {
     browser: [u8; 32],
     invitation: Option<InviteHash>,
+    desktop_attempt: Option<Uuid>,
     verifier: PkceCodeVerifier,
     nonce: Nonce,
     until: Instant,
@@ -99,8 +102,32 @@ struct Pending {
 pub(crate) struct LoginCompletion {
     pub(crate) token: String,
     pub(crate) invitation: Option<InviteHash>,
+    pub(crate) desktop_attempt: Option<Uuid>,
     pub(crate) deadline: Instant,
     pub(crate) expires_at: i64,
+}
+
+#[derive(Default)]
+pub(crate) struct PendingLogins {
+    oidc: HashMap<String, Pending>,
+    pub(crate) desktop: desktop::Attempts,
+}
+
+impl PendingLogins {
+    /// Give browser identity-provider requests and desktop handoffs a shared
+    /// bound. Both owners hold the same per-attempt allocation until release.
+    pub(crate) fn admit(
+        &mut self,
+        budget: &ByteBudget,
+        now: Instant,
+    ) -> Result<ByteReservation, NetworkError> {
+        self.oidc.retain(|_, attempt| attempt.until > now);
+        self.desktop.retain(|_, attempt| attempt.current(now));
+        if self.oidc.len() + self.desktop.len() >= PENDING_CAPACITY {
+            return Err(NetworkError::Busy);
+        }
+        budget.reserve(2048).map_err(|_| NetworkError::Capacity)
+    }
 }
 
 pub struct Oidc {
@@ -111,7 +138,7 @@ pub struct Oidc {
     redirect: RedirectUrl,
     network: NetworkOwner,
     allow_loopback_http: bool,
-    pending: Mutex<HashMap<String, Pending>>,
+    pending: Arc<Mutex<PendingLogins>>,
     budget: ByteBudget,
     discovery: Mutex<Option<Discovery>>,
 }
@@ -148,7 +175,7 @@ impl Oidc {
             redirect,
             network,
             allow_loopback_http,
-            pending: Mutex::new(HashMap::new()),
+            pending: Arc::new(Mutex::new(PendingLogins::default())),
             budget,
             discovery: Mutex::new(None),
         }))
@@ -160,6 +187,10 @@ impl Oidc {
 
     pub(crate) fn issuer(&self) -> &str {
         self.issuer.as_str()
+    }
+
+    pub(crate) fn pending(&self) -> Arc<Mutex<PendingLogins>> {
+        self.pending.clone()
     }
 
     async fn discover(&self) -> Result<Arc<Discovered>, OidcError> {
@@ -223,6 +254,7 @@ impl Oidc {
         browser: &str,
         change_account: bool,
         invitation: Option<InviteHash>,
+        desktop_attempt: Option<Uuid>,
     ) -> Result<reqwest::Url, OidcError> {
         let operation = self.network.admit(Instant::now() + OPERATION, 4096)?;
         let client = self.client(operation.deadline()).await?;
@@ -244,19 +276,13 @@ impl Oidc {
         if operation.deadline() <= now {
             return Err(OidcError::Network(NetworkError::Deadline));
         }
-        pending.retain(|_, attempt| attempt.until > now);
-        if pending.len() >= PENDING_CAPACITY {
-            return Err(OidcError::Network(NetworkError::Busy));
-        }
-        let custody = self
-            .budget
-            .reserve(2048)
-            .map_err(|_| NetworkError::Capacity)?;
-        pending.insert(
+        let custody = pending.admit(&self.budget, now)?;
+        pending.oidc.insert(
             state.secret().clone(),
             Pending {
                 browser: Sha256::digest(browser.as_bytes()).into(),
                 invitation,
+                desktop_attempt,
                 verifier,
                 nonce,
                 until: now + PENDING_LIFETIME,
@@ -269,7 +295,7 @@ impl Oidc {
 
     pub(crate) async fn complete(
         self: &Arc<Self>,
-        authority: &Authority,
+        authority: &Arc<Authority>,
         state: &str,
         code: Option<String>,
         browser: Option<&str>,
@@ -278,11 +304,11 @@ impl Oidc {
         let now = Instant::now();
         let until = {
             let mut pending = self.pending.lock().map_err(|_| AccessError::Availability)?;
-            let attempt = pending.get(state).ok_or(AccessError::Session)?;
+            let attempt = pending.oidc.get(state).ok_or(AccessError::Session)?;
             let wall_remaining = attempt.expires_at.saturating_sub(now_ms());
             let deadline = attempt.until;
             if deadline <= now || wall_remaining <= 0 {
-                pending.remove(state);
+                pending.oidc.remove(state);
                 return Err(AccessError::Session);
             }
             deadline
@@ -300,6 +326,7 @@ impl Oidc {
             .pending
             .lock()
             .map_err(|_| AccessError::Availability)?
+            .oidc
             .remove(state)
             .ok_or(AccessError::Session)?;
         if browser.map(|token| <[u8; 32]>::from(Sha256::digest(token.as_bytes())))
@@ -353,11 +380,13 @@ impl Oidc {
                     claims.issuer().as_str(),
                     claims.subject().as_str(),
                     previous,
+                    until,
                 )
                 .await?;
             Ok(LoginCompletion {
                 token,
                 invitation: pending.invitation,
+                desktop_attempt: pending.desktop_attempt,
                 deadline: until,
                 expires_at: pending.expires_at,
             })
@@ -366,4 +395,11 @@ impl Oidc {
             .await
             .map_err(|_| AccessError::Session)?
     }
+}
+
+// The desktop grant uses the same S256 challenge as the hosted OIDC exchange.
+pub(crate) fn desktop_challenge(verifier: String) -> String {
+    PkceCodeChallenge::from_code_verifier_sha256(&PkceCodeVerifier::new(verifier))
+        .as_str()
+        .to_owned()
 }

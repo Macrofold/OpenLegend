@@ -12,7 +12,7 @@ Physical data is renderer-independent. The current `WorldRenderer` boundary acce
 
 ## Client replacement path
 
-The renderer boundary preserves a future choice of presentation technology; it is not a completed portable-client SDK or a promise of cheap migration. [Engine and distribution tradeoffs](../archive/02-research/engines-art-and-audio.md#distribution-and-engine-tradeoffs) own the rationale and reconsideration criteria. The narrow interface exists today, but a dedicated authorized rendering projection and complete input extraction remain [SW10.1–SW10.2](maintainers/spatial-world.md#sw10--renderer-boundary-and-mixed-representation).
+The [UE5 playable-client feature spec](features/unreal-player/README.md) selects an installed client for ordinary play. The existing renderer boundary preserves the meaning of a permitted view and an intention. A portable-client SDK and packaged Unreal integration remain undelivered. [Engine and distribution tradeoffs](../archive/02-research/engines-art-and-audio.md#distribution-and-engine-tradeoffs) own the rationale and reconsideration criteria. The narrow interface exists today, but a dedicated authorized rendering projection and complete input extraction remain [SW10.1–SW10.2](maintainers/spatial-world.md#sw10--renderer-boundary-and-mixed-representation).
 
 Unreal Engine 5 is the selected client direction. The existing browser remains the client for Rust server qualification and receives only work needed for the transition. The UE5 client needs its own UI, input and connection lifecycle around the existing permitted server views and intentions. The TypeScript `WorldRenderer` interface shows where those responsibilities separate today. Use its behavior as a reference when defining the cross-language interface.
 
@@ -25,15 +25,15 @@ Unreal Engine 5 is the selected client direction. The existing browser remains t
 | Art and asset metadata                                          | Reuse licensed source assets and semantic IDs where compatible; convert import settings, shaders, rigs and generated-asset loading as needed. Standard file formats do not guarantee identical appearance |
 | Accounts, reconnection and platform lifecycle                   | Adapt and qualify for the target platform without moving authorization into the client                                                                                                                    |
 
-A future migration should proceed through one playable slice:
+Apply these behavioral checks to the selected migration:
 
-1. Identify the concrete product or production blocker and define equivalent visual, interaction and device acceptance criteria before selecting another engine.
+1. Use the selected landscape, player interaction and agent-production goals to define visual, interaction and device acceptance criteria.
 2. Complete the relevant SW10 separation work only as needed by that slice. Consume scoped public contracts, never database access or raw world state. Do not create a universal graphics wrapper in advance.
 3. Connect the candidate client to the same server. Demonstrate movement, inspection, conversation and invention with existing admission, plus representative art and animation.
 4. Check differing player knowledge, stale/removed targets, reconnect and save/load timeline changes. Client physics, lighting, visibility and animation must not become a second authority for movement, perception or consequences.
-5. Compare production effort, frame times, memory, startup/download, input usability and deployment cost. Commit to a full replacement only when the evidence warrants its migration and maintenance cost.
+5. Compare production effort, frame times, memory, startup/download, input usability and deployment cost. Switch the primary player after the migration's packaged-game and ordinary-play gates pass.
 
-An installed client can still depend on hosted simulation and AI. Offline play would be a separate architecture decision: the current TypeScript server/domain would need a local host or a deliberate port, and provider-dependent behavior needs its own offline policy. A renderer change does not deliver that capability.
+An installed client can still depend on hosted simulation and AI. Offline play would be a separate architecture decision: a local world host and a separate policy for provider-dependent behavior would need qualification, including on a chosen Rust installation. A renderer change does not deliver that capability.
 
 ## The decision
 

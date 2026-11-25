@@ -1,0 +1,18 @@
+{
+  "models": {
+    "study:mike-field-tunic": "apps/client/src/props/art-study/source-mike/mike-field-tunic-motion.glb",
+    "study:ada-field-tunic": "apps/client/src/props/art-study/source-people/ada-field-tunic-motion.glb",
+    "animal:hare": "apps/client/src/props/library-animals/hare-field.glb",
+    "study:deer-woodland-doe": "apps/client/src/props/art-study/source-woodland-doe/woodland-doe-quiet-motion.glb",
+    "study:stag-branching-antlers": "apps/client/src/props/art-study/source-woodland-stag/woodland-stag-quiet-motion.glb"
+  },
+  "map": "apps/client/src/design-system/gildmoss/art/world/base/map-starting-land-parchment.jpg",
+  "notices": [
+    "apps/client/src/props/art-study/source-mike/catalog.json",
+    "apps/client/src/props/art-study/source-people/catalog.json",
+    "apps/client/src/props/library-animals/ATTRIBUTION.md",
+    "apps/client/src/props/library-animals/CC0-1.0.txt",
+    "apps/client/src/props/art-study/source-woodland-doe/catalog.json",
+    "apps/client/src/props/art-study/source-woodland-stag/catalog.json"
+  ]
+}

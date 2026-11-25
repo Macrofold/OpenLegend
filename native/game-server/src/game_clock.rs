@@ -43,10 +43,36 @@ struct SpeedChange {
 
 struct Advance {
     seconds: f64,
+    accepted_at: f64,
     navigation_pending: bool,
     deferred_routes: bool,
     save: Option<Arc<AcceptedSaveInput>>,
     timed_reviews: Option<TimedReviewUpdates>,
+}
+
+type OfferedInputs = (Arc<WorldInputs>, Arc<Mutex<Option<InputSnapshot>>>);
+
+fn publish_accepted_inputs(
+    offer: Option<&OfferedInputs>,
+    previous_at: f64,
+    accepted_at: f64,
+    reviews: Option<&TimedReviewUpdates>,
+) -> Result<(), WorldError> {
+    if let Some((inputs, snapshot)) = offer {
+        {
+            let snapshot = snapshot.lock().map_err(|_| HostError::Poisoned)?;
+            inputs.record_accepted(
+                snapshot.as_ref().ok_or(HostError::Poisoned)?,
+                previous_at,
+                accepted_at,
+            )?;
+        }
+        // A released attack review may retire the steering token for this interval.
+        if let Some(reviews) = reviews {
+            inputs.publish_timed_reviews(reviews);
+        }
+    }
+    Ok(())
 }
 
 struct ProtectedAdvance {
@@ -668,7 +694,7 @@ impl GameClock {
                 let recheck = inputs.clone();
                 let review_inputs = inputs.clone();
                 let review_snapshots = settlement.clone();
-                let publish_inputs = inputs.clone();
+                let publication_inputs = recheck.clone().zip(settlement.clone());
                 let advance = self.game.world.execute_and_publish(
                     #[cfg(feature = "profile-campaign")]
                     openlegend_simulation::profile::sites::TURN_CLOCK,
@@ -706,7 +732,8 @@ impl GameClock {
                         if !result.ok {
                             return Err(RuntimeError::application_refused(&result.code));
                         }
-                        let seconds = product.progress().at - clock.at;
+                        let accepted_at = product.progress().at;
+                        let seconds = accepted_at - clock.at;
                         let navigation_pending = result.code == "navigation-pending";
                         let deferred_routes = product.has_deferred_navigation();
                         let save = if navigation_pending && seconds == 0.0 {
@@ -716,6 +743,7 @@ impl GameClock {
                         };
                         Ok(Advance {
                             seconds,
+                            accepted_at,
                             navigation_pending,
                             deferred_routes,
                             save,
@@ -742,9 +770,13 @@ impl GameClock {
                         }
                     },
                     move |staged| {
-                        if let Some((inputs, reviews)) = publish_inputs.as_ref().zip(staged.timed_reviews.as_ref()) {
-                            inputs.publish_timed_reviews(reviews);
-                        }
+                        publish_accepted_inputs(
+                            publication_inputs.as_ref(),
+                            clock.at,
+                            staged.accepted_at,
+                            staged.timed_reviews.as_ref(),
+                        )
+                        .expect("accepted input publication owner");
                         accept.accept(staged.save.as_ref().expect("accepted clock has save input"))
                     },
                 );
@@ -793,13 +825,14 @@ impl GameClock {
         let language = self.game.language().cloned();
         let staging_store = store.clone();
         let staging_saves = self.saves.clone();
+        let accepted_saves = self.saves.clone();
         let inputs = self.inputs.clone();
         let settlement = inputs.as_ref().map(|_| Arc::new(Mutex::new(None::<InputSnapshot>)));
         let capture = settlement.clone();
         let recheck = inputs.clone();
         let review_inputs = inputs.clone();
         let review_snapshots = settlement.clone();
-        let publish_inputs = inputs.clone();
+        let publication_inputs = recheck.clone().zip(settlement.clone());
         let result = self.game.world.execute_protected_then(
             move |session| begin_current_offer(session, clock, seconds, inputs, capture, Some(materials)),
             move |question| {
@@ -821,6 +854,7 @@ impl GameClock {
                 Ok(ProtectedAdvance {
                     advance: Advance {
                         seconds: product.progress().at - clock.at,
+                        accepted_at: product.progress().at,
                         navigation_pending: result.code == "navigation-pending",
                         deferred_routes: product.has_deferred_navigation(),
                         save: None,
@@ -855,18 +889,19 @@ impl GameClock {
                 })
             },
             move |candidate| {
-                if let Some((inputs, reviews)) = publish_inputs.as_ref().zip(candidate.advance.timed_reviews.as_ref()) {
-                    inputs.publish_timed_reviews(reviews);
-                }
+                publish_accepted_inputs(
+                    publication_inputs.as_ref(),
+                    clock.at,
+                    candidate.advance.accepted_at,
+                    candidate.advance.timed_reviews.as_ref(),
+                )?;
+                accepted_saves.accept_schedule(candidate.wake.as_ref());
+                candidate.save.acknowledged(&accepted_saves);
                 Ok(())
             },
         ).await;
         match result {
-            Ok(Some(candidate)) => {
-                self.saves.accept_schedule(candidate.wake.as_ref());
-                candidate.save.acknowledged(&self.saves);
-                Ok(Some(candidate.advance))
-            }
+            Ok(Some(candidate)) => Ok(Some(candidate.advance)),
             Err(WorldError::Access(AccessError::Changed)
                 | WorldError::Commit(CommitError::RolledBack(StoreError::StaleCut))) => {
                 Err(WorldError::ClockChanged)

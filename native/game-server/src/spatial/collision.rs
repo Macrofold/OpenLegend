@@ -8,7 +8,7 @@ use parry3d::{
     shape::{Capsule, Cuboid, Cylinder, Shape, SharedShape},
 };
 
-use super::{Bounds, Point, SKIN, SpatialError, add, scale, sub};
+use super::{Bounds, EPS, Point, SKIN, SpatialError, add, scale, sub};
 use openlegend_simulation::state::BodyProfile;
 
 fn vector(p: Point) -> Vector {
@@ -47,7 +47,7 @@ impl Solid {
     }
 
     pub(super) fn sweep(&self, from: Point, to: Point, body: &BodyProfile) -> Option<f64> {
-        sweep(&self.pose, self.shape.as_ref(), from, to, body)
+        sweep(&self.pose, self.shape.as_ref(), from, to, body, false)
     }
 }
 
@@ -82,6 +82,7 @@ pub(super) fn sweep_box(
         from,
         to,
         body,
+        true,
     )
 }
 
@@ -91,6 +92,7 @@ fn sweep(
     from: Point,
     to: Point,
     body: &BodyProfile,
+    can_leave_skin: bool,
 ) -> Option<f64> {
     let centre = Point {
         y: from.y + body.height / 2.0,
@@ -114,9 +116,10 @@ fn sweep(
             query::contact(&pos, shape, other_pos, other, 0.0).expect("supported shape contact")?;
         (f64::from(contact.dist) < -1e-5).then_some(0.0)
     } else {
+        let velocity = vector(velocity);
         let hit = query::cast_shapes(
             &pos,
-            vector(velocity),
+            velocity,
             shape,
             other_pos,
             Vector::ZERO,
@@ -129,6 +132,21 @@ fn sweep(
             },
         )
         .expect("supported shape cast")?;
+        if can_leave_skin && hit.time_of_impact == 0.0 {
+            // A rounded stop against another body can land just inside the skin.
+            // Let a separating or tangent move leave that margin if the contact
+            // plane keeps at least half the nominal clearance over the entire
+            // leg. Keep that margin for the f32 contact calculation.
+            let inward = hit.normal1.dot(velocity);
+            let gap = (other_pos.translation - pos.translation + other_pos.rotation * hit.witness2
+                - hit.witness1)
+                .dot(hit.normal1);
+            if inward <= (EPS as f32) * velocity.length()
+                && gap - inward.max(0.0) > -(SKIN as f32) / 2.0
+            {
+                return None;
+            }
+        }
         Some(f64::from(hit.time_of_impact))
     }
 }

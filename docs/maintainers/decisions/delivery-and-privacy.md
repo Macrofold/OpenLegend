@@ -16,7 +16,7 @@ Scope/dependencies: Before external test; R06 and R17. Original decision status:
 
 ### D9 — Minimum client devices
 
-Exact browser/device qualification remains open; a later mobile/tablet or native expansion requires its own selected scope
+The [desktop feature](../../features/unreal-player/desktop-access.md) selects Windows and Apple Silicon Mac and ordinary keyboard and pointing-device input. The M2 MacBook Air and a modest Windows laptop are targets to measure. Exact supported devices, settings/response, and additional accessibility and input commitments remain open until qualified. Browser tools retain independent qualification. Mobile/tablet and console play remain conditional.
 
 Scope/dependencies: Before performance promises; R01; [DG35 decision](../../projects/completed/platform-and-offline-decision-brief.md). Original decision status: **open**.
 

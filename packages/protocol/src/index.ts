@@ -21,6 +21,8 @@ import type {
   AttackExecutionView,
   AttackModeNotice,
   WorldInputScope,
+  SteeringProfile,
+  SteeringProgress,
   TimedReleaseProfile,
 } from './execution-input.js';
 export * from './execution-input.js';
@@ -1173,6 +1175,8 @@ export interface GameView {
   };
   player: Named & {
     inputScope?: WorldInputScope;
+    steeringProfile?: SteeringProfile | null;
+    steeringProgress?: SteeringProgress;
     attackModeNotice?: AttackModeNotice;
     /** A freshly permitted review for a release awaiting an explicit decision. */
     attackReview?: {

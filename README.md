@@ -20,7 +20,11 @@ The game uses Recast/Detour in one reused navigation worker and Rapier capsule/c
 
 For world-authoring designs, start with [player/NPC target scenarios](docs/invention-scenarios.md), [unified World Agent](docs/world-agent-runtime.md), and the [relationship graph](docs/invention-graph.md). The Rust game supports permitted [read-only world inspection](#world-owner-relationship-inspection). The [release scope](docs/projects/completed/2026/rust-server-completion-feature-spec.md#rust-cutover-scope) tracks the deferred write tools.
 
-## Play the elevated world
+## Play in Unreal Engine 5
+
+Use the [Unreal desktop project](apps/unreal/README.md) to package and open the native player against an existing Rust world. Use the same server and PostgreSQL world for desktop and browser access. The browser still provides the original player and existing tools while the [retained gameplay paths](docs/maintainers/unreal-engine-5-migration.md) are being connected.
+
+## Play the elevated world in the browser
 
 The current world supports real elevation and stacked surfaces with generated sprites and simple 3D scenery. The timber lookout in the northeast has a ramp, a passage underneath and a gatherable crate; a small native bird flies between heights and perches on the deck. The bottom-right camera toolbar provides zoom, recenter, follow-player, sight and hearing controls; Camera settings contains orbit, pitch, projection and rotation lock. Shift + right-drag or middle-drag pans; right-drag orbits/tilts; wheel zooms. Outside attack mode, left-drag does not pan or act on release. In attack mode, primary dragging tracks aim and release submits the chosen attack. With the canvas focused, arrows rotate/tilt, Shift + arrows pans and Home recenters. P pauses/resumes the world; Shift + ] speeds up and Shift + [ slows down through 0.5×, 1×, 3× and 8×. Held Option (Alt) reveals already perceived subjects through scenery; it does not grant new sight. Camera presentation does not change the body's physical supporting surface.
 

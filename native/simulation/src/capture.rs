@@ -776,6 +776,8 @@ pub(crate) struct OwnActorProduct<'a> {
     npc: Option<OwnNpcObservation<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     player: Option<OwnPlayerView<'a>>,
+    #[serde(skip)]
+    movement: (&'a crate::simulation::InstalledWorld, &'a crate::state::Entity),
 }
 
 /// Prepare the first-person section once for either bridge output or direct
@@ -1038,6 +1040,7 @@ pub(crate) fn with_actor_self<T>(
                 .and_then(|owners| owners.get(actor_id))
                 .map(OwnNpcMapLabels),
         }),
+        movement: (&state.installed, entity),
         player: if private {
             None
         } else {
