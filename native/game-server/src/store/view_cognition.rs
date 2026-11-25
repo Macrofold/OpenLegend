@@ -33,19 +33,23 @@ impl Store {
         let account = scope.account_id.clone();
         let actor = scope.actor_id.clone();
         let world = scope.world_id.clone();
+        let timeline = scope.timeline_id.clone();
         let budget = self.budget.clone();
         let store = Arc::clone(self);
         self.read_operational(move |tx| {
             Box::pin(async move {
                 let invalid = |_| StoreError::InvalidRecord;
                 let _keys = budget.reserve(
-                    (account.len() + actor.len()).checked_mul(6)
+                    (account.len() + actor.len() + world.len() + timeline.len()).checked_mul(6)
                         .and_then(|bytes| bytes.checked_add(64)).ok_or(StoreError::Capacity)?,
                 ).map_err(|_| StoreError::Capacity)?;
                 let account_key = json_record(&account).map_err(invalid)?;
                 let actor_key = json_record(&actor).map_err(invalid)?;
+                let world_key = json_record(&world).map_err(invalid)?;
+                let timeline_key = json_record(&timeline).map_err(invalid)?;
                 // Keep the existing newest-12 window before applying permission.
-                // Only an explicit unowned job may qualify through speech.
+                // Restore retains owned jobs for accounting. Their private
+                // display stays within the world and timeline of the request.
                 let (mut charges, rows) = admitted_query(
                     tx,
                     "WITH recent AS (SELECT id, selection, created_at FROM jobs \
@@ -61,19 +65,23 @@ impl Store {
                          recent.selection #>> '{request,invention,actorId}'=$3 OR \
                          (recent.selection->>'kind'='thought' AND recent.selection->>'npcId'=$3) \
                        ELSE recent.selection #>> '{authority,accountId}'=$2 AND \
-                         recent.selection #>> '{authority,actorId}'=$3 \
+                         recent.selection #>> '{authority,actorId}'=$3 AND \
+                         recent.selection #>> '{authority,worldId}'=$4 AND \
+                         recent.selection #>> '{authority,timelineId}'=$5 \
                        END,false) AS permitted) scope \
                      LEFT JOIN history_events h ON NOT permitted \
                        AND recent.selection->'authority'='null'::jsonb AND h.world_id=$1 \
                        AND h.id=((recent.selection->>'playerSpeechEventId')::json #>> '{}') \
                      WHERE permitted OR h.id IS NOT NULL \
                      ORDER BY recent.created_at DESC,recent.id DESC",
-                    &[&world, &account_key, &actor_key],
+                    &[&world, &account_key, &actor_key, &world_key, &timeline_key],
                     &budget,
                 )
                 .await?;
                 drop(account_key);
                 drop(actor_key);
+                drop(world_key);
+                drop(timeline_key);
                 drop(_keys);
                 let mut jobs = Vec::with_capacity(rows.len());
                 for row in &rows {

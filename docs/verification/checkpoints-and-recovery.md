@@ -156,6 +156,12 @@ The November 21, 2026 browser, held-generation and stopped-server cases used sou
 
 Final shutdown reports after releasing the listener, retained requests and shared PostgreSQL Store. Checkpoint handoff reports separately because the same Store remains open for the replacement world. The [activity-learning and maintenance replay](attention-and-memory-core.md) confirmed zero transient, resident and pending-save reservations at final shutdown, including a recovered checkpoint and continued play.
 
+#### Player reply status after Load — November 25, 2026
+
+A signed player created a checkpoint, completed a conversation, then loaded the checkpoint. The original reply job stayed in PostgreSQL for accounting. The earlier server still showed that job in signed state and on the reconnected stream. The repaired server filters player-owned jobs by the current account, actor, world and timeline in the existing read. Both signed views omitted the old job. The exact receipt endpoint refused it. After reconnecting and resuming, the same player completed a new conversation. Its saved reply appeared in both views and its exact receipt resolved. Two fixture rows checked that an owned job from another world stayed hidden and supported ownerless activity stayed visible.
+
+The local PostgreSQL check used controlled HTTPS responses and revision `f7e3e320079da3fe2dd51a62a0c66e0f37e1a116` with the scoped job-read fix. Debug executable SHA-256 was `e7175b32fd8fa8f84808222427beda739a92b93c258b01b08b617409f536b6b5`. The first repaired attempt disconnected its own stream before Resume and received the expected away refusal. The passing run kept the reconnected stream open. Shutdown released tracked reservations and the disposable database was dropped. Replay and results are in the local verification archive `native-runtime-foundations/review-reply-timeline-20261125.4IAnb5`. New and cumulative Jev costs were $0 and total task commitments were $0 with no outstanding reservations.
+
 #### Direct Rust checkpoint archive selection
 
 The checkpoint reader now uses typed archive requests, selected positions and the prospective SQL rows already prepared by Rust. It queries the original archive keys inside the recovery transaction and discards the temporary SQL view before returning the independently funded answer.
