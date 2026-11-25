@@ -142,6 +142,35 @@ impl RuntimeNpcPersonalSources {
 }
 
 impl RuntimeNpcRead {
+    /// Reuse an original personal read after its private source candidate
+    /// has been cancelled. Its accepted cut, body and access witnesses are
+    /// unchanged. The host calls this only after cleaning up this exact key.
+    pub fn release_abandoned_source_candidate(
+        &mut self,
+        key: crate::host::CandidateKey,
+    ) -> Result<(), RuntimeError> {
+        if self.candidate_key.is_some_and(|active| active != key) {
+            return Err(failure("NPC source preparation has a different owner"));
+        }
+        self.candidate_key = None;
+        Ok(())
+    }
+
+    /// Drop the unissued personal inventory that could not be decoded. It
+    /// grants no receipt lease, and a shared inventory stays with its reader.
+    pub fn discard_unissued_personal_sources(&mut self) -> Result<(), RuntimeError> {
+        if self.candidate_key.is_some() {
+            return Err(failure("NPC source preparation is active"));
+        }
+        let sources = Arc::get_mut(&mut self.sources)
+            .ok_or_else(|| failure("NPC sources are already issued"))?;
+        if sources.last().is_none_or(|source| !source.receipts.is_empty()) {
+            return Err(failure("NPC personal-only sources are unavailable"));
+        }
+        sources.pop();
+        Ok(())
+    }
+
     /// Decode only the selected personal bodies at their stored JSON boundary.
     /// The result independently owns its prompt text while a binding consumes
     /// the read. Source validity, selected ordinals and leases stay with that read.

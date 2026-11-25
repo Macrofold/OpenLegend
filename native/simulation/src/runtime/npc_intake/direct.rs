@@ -73,7 +73,7 @@ impl NativeWorldSession {
         };
         let (read, facts) =
             crate::capture::npc_intake::capture_schedule(state, request, &self.budget)
-                .map_err(failure)?;
+                .map_err(|error| session_failure(error.into()))?;
         Ok((RuntimeNpcTrigger { read }, facts))
     }
 
@@ -157,20 +157,20 @@ impl NativeWorldSession {
         if !self.npc_trigger_current(trigger)? {
             return Ok(None);
         }
-        let state = &self.session.accepted().map_err(failure)?.state;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
         if !trigger.read.matches_actor(actor) {
             return Ok(None);
         }
         let mut storage = self
             .budget
             .reserve(256 + selected.len() * size_of::<PersonalSourceRef>())
-            .map_err(failure)?;
+            .map_err(RuntimeError::from)?;
         let mut references = Vec::with_capacity(selected.len());
         for (kind, id) in selected {
             let Some(collection) = state
                 .experience
                 .optional_collection(actor, *kind)
-                .map_err(failure)?
+                .map_err(|error| session_failure(error.into()))?
             else {
                 return Ok(None);
             };
@@ -183,9 +183,9 @@ impl NativeWorldSession {
                     storage
                         .bytes()
                         .checked_add(reference.id.len() + reference.revision.len())
-                        .ok_or_else(|| failure("capacity"))?,
+                        .ok_or(CapacityError)?,
                 )
-                .map_err(failure)?;
+                .map_err(RuntimeError::from)?;
             references.push(reference.clone());
         }
         Ok(Some(NpcScheduleSources {

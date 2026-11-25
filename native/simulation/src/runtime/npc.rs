@@ -890,7 +890,7 @@ impl NativeWorldSession {
                 if !(self.session.is_npc_candidates(key) || self.session.is_npc_sources(key)) {
                     read.candidate_key = None;
                 }
-                return Err(failure(error));
+                return Err(session_failure(error));
             }
         };
         Ok(match step {
@@ -941,7 +941,7 @@ impl NativeWorldSession {
         let key = self
             .session
             .begin_npc_sources(Arc::clone(&read.historical_scope), request)
-            .map_err(failure)?;
+            .map_err(session_failure)?;
         read.candidate_key = Some(key);
         Ok(key)
     }
@@ -958,7 +958,7 @@ impl NativeWorldSession {
                 .len()
                 .checked_add(1)
                 .and_then(|n| n.max(4).checked_next_power_of_two())
-                .ok_or_else(|| failure("capacity"))?;
+                .ok_or(CapacityError)?;
             let bytes = read._custody.bytes();
             Arc::get_mut(&mut read._custody)
                 .ok_or_else(|| failure("NPC source custody is already issued"))?
@@ -967,18 +967,22 @@ impl NativeWorldSession {
                         .checked_add(
                             capacity
                                 .checked_sub(read.sources.capacity())
-                                .ok_or_else(|| failure("capacity"))?
+                                .ok_or(CapacityError)?
                                 .checked_mul(size_of::<crate::capture::PreparedNpcSources>())
-                                .ok_or_else(|| failure("capacity"))?,
+                                .ok_or(CapacityError)?,
                         )
-                        .ok_or_else(|| failure("capacity"))?,
-                )
-                .map_err(failure)?;
+                        .ok_or(CapacityError)?,
+                )?;
             let additional = capacity - read.sources.len();
-            Arc::get_mut(&mut read.sources)
+            let reserved = Arc::get_mut(&mut read.sources)
                 .ok_or_else(|| failure("NPC sources are already issued"))?
-                .try_reserve_exact(additional)
-                .map_err(failure)?;
+                .try_reserve_exact(additional);
+            if reserved.is_err() {
+                Arc::get_mut(&mut read._custody)
+                    .expect("unissued NPC source custody")
+                    .resize(bytes)?;
+                return Err(CapacityError.into());
+            }
         }
         Ok(())
     }
@@ -990,10 +994,10 @@ impl NativeWorldSession {
     ) -> Result<usize, RuntimeError> {
         sources
             .validate_origin(&read.read, &self.budget)
-            .map_err(failure)?;
+            .map_err(|error| session_failure(error.into()))?;
         self.held_receipts
             .register(&sources, &read.receipt_payload, &self.budget)
-            .map_err(failure)?;
+            .map_err(|error| session_failure(error.into()))?;
         let inventories = Arc::get_mut(&mut read.sources)
             .ok_or_else(|| failure("NPC sources are already issued"))?;
         let ordinal = inventories.len();

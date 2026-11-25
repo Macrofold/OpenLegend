@@ -14,7 +14,10 @@ use crate::{
     world::{NpcBinding, WorldError},
 };
 mod semantic;
-use openlegend_simulation::capture::{NpcPersonalSelection, NpcSourceSelection};
+use openlegend_simulation::{
+    capture::{NpcPersonalSelection, NpcSourceSelection},
+    experience::PersonalSourceRef,
+};
 use std::{
     collections::{HashMap, HashSet},
     mem::size_of,
@@ -76,7 +79,7 @@ pub(in crate::npc::decide) async fn collect(
         at: origin.at,
         identity_through: origin.identity_through,
     };
-    let references = match game.store.recall_references(scope).await {
+    let mut references = match game.store.recall_references(scope).await {
         Err(StoreError::Capacity) => {
             ensure_running(work)?;
             game.store.required_recall_references(scope).await
@@ -84,7 +87,7 @@ pub(in crate::npc::decide) async fn collect(
         result => result,
     }
     .map_err(|error| CallFailure::World(WorldError::Storage(error)))?;
-    let semantic = match embedding.filter(|_| references.fills_direct_limit) {
+    let mut semantic = match embedding.filter(|_| references.fills_direct_limit) {
         Some(model) => match semantic::rank(game, dispatch, model, work, &origin).await {
             Err(error)
                 if matches!(error.cause().1, CallFailure::World(blocked)
@@ -97,103 +100,89 @@ pub(in crate::npc::decide) async fn collect(
         },
         None => None,
     };
-    let ranked = semantic
-        .as_ref()
-        .map_or(&[][..], |(rows, _)| rows.as_slice());
-    let mut selected = Vec::new();
-    let mut included = HashSet::new();
-    let _selection = budget
-        .reserve(
-            references
-                .required
-                .iter()
-                .chain(ranked)
-                .chain(&references.optional)
-                .chain(&work.source)
-                .try_fold(1024usize, |bytes, reference| {
-                    bytes
-                        .checked_add(reference.id.len())?
-                        .checked_add(reference.revision.len())?
-                        .checked_add(768)
-                })
-                .ok_or_else(|| capacity(CapacityError))?,
-        )
-        .map_err(capacity)?;
-    let mut optional_count = 0;
-    for (reference, required) in work
-        .source
-        .iter()
-        .map(|reference| (reference, true))
-        .chain(
-            references
-                .required
-                .iter()
-                .map(|reference| (reference, true)),
-        )
-        .chain(ranked.iter().map(|reference| (reference, false)))
-        .chain(
-            references
-                .optional
-                .iter()
-                .map(|reference| (reference, false)),
-        )
-    {
-        if (required || optional_count < 300)
-            && included.insert((
-                reference.kind,
-                reference.id.as_str(),
-                reference.revision.as_str(),
-            ))
-        {
-            selected.push((reference, required));
-            optional_count += usize::from(!required);
+    // The optional attempt may fail at admission, body transfer or decoding.
+    // Shed that work once and continue with the same exact origin and causes.
+    let mut include_optional = semantic.is_some() || !references.optional.is_empty();
+    let (source_data, required_count, selected_count, _selection) = loop {
+        if !include_optional {
+            semantic = None;
+            references.discard_optional();
         }
-    }
+        let ranked = semantic
+            .as_ref()
+            .map_or(&[][..], |(rows, _)| rows.as_slice());
+        let selection = pick_sources(
+            work.source.iter().chain(&references.required),
+            ranked.iter().chain(&references.optional),
+            budget,
+        );
+        let selection = match selection {
+            Err(_) if include_optional => {
+                include_optional = false;
+                continue;
+            }
+            result => result.map_err(capacity)?,
+        };
+        let count = selection.request.personal.len();
+        if count == 0 {
+            break (None, 0, 0, selection.custody);
+        }
+        ensure_running(work)?;
+        let has_optional = selection.required_count < count;
+        original = if has_optional {
+            match game
+                .world
+                .try_npc_sources_with_optional(
+                    game.clone(), original, selection.request, selection.transfer,
+                )
+                .await
+                .map_err(|error| CallFailure::World(error).at("original-sources"))?
+            {
+                Ok(read) => read,
+                Err(read) => {
+                    original = read;
+                    include_optional = false;
+                    continue;
+                }
+            }
+        } else {
+            game.world
+                .select_npc_sources(game.clone(), original, selection.request, selection.transfer)
+                .await
+                .map_err(|error| CallFailure::World(error).at("original-sources"))?
+        };
+        match original.personal_sources(budget) {
+            Err(error) if error.is_capacity() && has_optional => {
+                original.discard_unissued_personal_sources().map_err(packet_failure)?;
+                include_optional = false;
+            }
+            result => {
+                break (
+                    Some(result.map_err(packet_failure)?),
+                    selection.required_count,
+                    count,
+                    selection.custody,
+                );
+            }
+        }
+    };
     let mut required = Vec::new();
     let mut optional = Vec::new();
-    let source_data = if selected.is_empty() {
-        None
-    } else {
-        ensure_running(work)?;
-        let selection_bytes = selected
-            .iter()
-            .try_fold(0usize, |bytes, (reference, _)| {
-                bytes
-                    .checked_add(size_of::<NpcPersonalSelection>())?
-                    .checked_add(reference.id.len())?
-                    .checked_add(reference.revision.len())
-            })
-            .ok_or_else(|| capacity(CapacityError))?;
-        let selection_storage = budget.reserve(selection_bytes).map_err(capacity)?;
-        let select = NpcSourceSelection {
-            personal: selected
-                .iter()
-                .map(|(reference, _)| NpcPersonalSelection {
-                    reference: (*reference).clone(),
-                    through: None,
-                })
-                .collect(),
-            receipts: Vec::new(),
-            consolidation_job: None,
-        };
-        original = game
-            .world
-            .select_npc_sources(game.clone(), original, select, selection_storage)
-            .await
-            .map_err(|error| CallFailure::World(error).at("original-sources"))?;
-        let data = original.personal_sources(budget).map_err(packet_failure)?;
+    if let Some(data) = &source_data {
         for &index in &data.unavailable_personal {
-            if selected.get(index).ok_or(CallFailure::Invalid)?.1 {
+            if index >= selected_count {
+                return Err(CallFailure::Invalid);
+            }
+            if index < required_count {
                 return Err(CallFailure::Stale("decision-selected-account-withdrawn"));
             }
         }
         let personal = &data.personal;
         for (row, source) in personal.iter().enumerate() {
-            if selected
-                .get(source.selection)
-                .ok_or(CallFailure::Invalid)?
-                .1
-            {
+            if source.selection >= selected_count {
+                return Err(CallFailure::Invalid);
+            }
+            if source.selection < required_count {
                 required.push(row);
             } else {
                 optional.push(row);
@@ -229,8 +218,7 @@ pub(in crate::npc::decide) async fn collect(
                 true
             }
         });
-        Some(data)
-    };
+    }
     Ok(Collected {
         original: Some(original),
         attention,
@@ -240,6 +228,71 @@ pub(in crate::npc::decide) async fn collect(
         frame,
         through,
         _selection,
+    })
+}
+
+struct PersonalSelection {
+    request: NpcSourceSelection,
+    required_count: usize,
+    custody: ByteReservation,
+    transfer: ByteReservation,
+}
+
+fn pick_sources<'a>(
+    required: impl Iterator<Item = &'a PersonalSourceRef> + Clone,
+    optional: impl Iterator<Item = &'a PersonalSourceRef> + Clone,
+    budget: &ByteBudget,
+) -> Result<PersonalSelection, CapacityError> {
+    let custody = budget.reserve(
+        required
+            .clone()
+            .chain(optional.clone())
+            .try_fold(1024_usize, |bytes, reference| {
+                bytes
+                    .checked_add(reference.id.len())?
+                    .checked_add(reference.revision.len())?
+                    .checked_add(768)
+            })
+            .ok_or(CapacityError)?,
+    )?;
+    let mut included = HashSet::new();
+    let mut first = |reference: &&'a PersonalSourceRef| {
+        included.insert((
+            reference.kind,
+            reference.id.as_str(),
+            reference.revision.as_str(),
+        ))
+    };
+    let mut selected: Vec<_> = required.filter(&mut first).collect();
+    let required_count = selected.len();
+    selected.extend(optional.filter(first).take(300));
+    let transfer = budget.reserve(
+        selected
+            .iter()
+            .try_fold(0_usize, |bytes, reference| {
+                bytes
+                    .checked_add(size_of::<NpcPersonalSelection>())?
+                    .checked_add(reference.id.len())?
+                    .checked_add(reference.revision.len())
+            })
+            .ok_or(CapacityError)?,
+    )?;
+    let request = NpcSourceSelection {
+        personal: selected
+            .into_iter()
+            .map(|reference| NpcPersonalSelection {
+                reference: reference.clone(),
+                through: None,
+            })
+            .collect(),
+        receipts: Vec::new(),
+        consolidation_job: None,
+    };
+    Ok(PersonalSelection {
+        request,
+        required_count,
+        custody,
+        transfer,
     })
 }
 

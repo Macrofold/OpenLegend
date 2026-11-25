@@ -31,6 +31,24 @@ pub(crate) struct RecallReferences {
     _custody: ByteReservation,
 }
 
+impl RecallReferences {
+    /// Release the optional keys before attempting the same required sources.
+    pub(crate) fn discard_optional(&mut self) {
+        let optional_bytes = self
+            .optional
+            .iter()
+            .map(|reference| {
+                size_of::<PersonalSourceRef>() + reference.id.len() + reference.revision.len()
+            })
+            .sum::<usize>();
+        self.optional = Vec::new();
+        self.fills_direct_limit = false;
+        self._custody
+            .resize(self._custody.bytes() - optional_bytes)
+            .expect("release only the already funded optional reference bytes");
+    }
+}
+
 // Awareness uses the occurrence allocation order (identityThrough). Personal
 // memories and summaries can use other sequence clocks. Their at and exact
 // revisions travel to the historical cursor instead of comparing clocks here.

@@ -18,6 +18,28 @@ type ActorPreparationStep<T> = fn(
     CandidateKey,
     Option<(&RuntimeProvider, RuntimeProviderInput)>,
 ) -> Result<RuntimeNpcPreparationStep, RuntimeError>;
+type ReleaseCapacityRefusal<T> = fn(&mut T, CandidateKey) -> Result<(), RuntimeError>;
+
+enum ActorPreparation<T> {
+    Complete(T),
+    Capacity(T, WorldError),
+}
+
+impl<T> ActorPreparation<T> {
+    fn result(self) -> Result<T, WorldError> {
+        match self {
+            Self::Complete(read) => Ok(read),
+            Self::Capacity(_, error) => Err(error),
+        }
+    }
+}
+
+fn source_preparation_capacity(error: &WorldError) -> bool {
+    matches!(
+        error,
+        WorldError::Storage(StoreError::Capacity) | WorldError::Host(HostError::Capacity)
+    ) || matches!(error, WorldError::Simulation(error) if error.is_capacity())
+}
 
 pub(crate) struct NpcHistoryRows {
     pub(crate) inventory: Option<usize>,
@@ -282,7 +304,47 @@ impl HostedWorld {
         request: NpcSourceSelection,
         selection_storage: ByteReservation,
     ) -> Result<RuntimeNpcRead, WorldError> {
-        self.prepare_actor_read(
+        self.prepare_npc_source_attempt(game, read, request, selection_storage, None)
+            .await?
+            .result()
+    }
+
+    /// Return the original read only when optional source preparation could
+    /// not fit. The failed candidate has already released its own custody.
+    pub(crate) async fn try_npc_sources_with_optional(
+        self: &Arc<Self>,
+        game: Arc<CurrentServer>,
+        read: RuntimeNpcRead,
+        request: NpcSourceSelection,
+        selection_storage: ByteReservation,
+    ) -> Result<Result<RuntimeNpcRead, RuntimeNpcRead>, WorldError> {
+        if !request.receipts.is_empty() || request.consolidation_job.is_some() {
+            return Err(StoreError::InvalidRecord.into());
+        }
+        match self
+            .prepare_npc_source_attempt(
+                game,
+                read,
+                request,
+                selection_storage,
+                Some(RuntimeNpcRead::release_abandoned_source_candidate),
+            )
+            .await?
+        {
+            ActorPreparation::Complete(read) => Ok(Ok(read)),
+            ActorPreparation::Capacity(read, _) => Ok(Err(read)),
+        }
+    }
+
+    async fn prepare_npc_source_attempt(
+        self: &Arc<Self>,
+        game: Arc<CurrentServer>,
+        read: RuntimeNpcRead,
+        request: NpcSourceSelection,
+        selection_storage: ByteReservation,
+        release_on_capacity: Option<ReleaseCapacityRefusal<RuntimeNpcRead>>,
+    ) -> Result<ActorPreparation<RuntimeNpcRead>, WorldError> {
+        self.prepare_actor_read_attempt(
             game,
             move |_| Ok(read),
             move |session, read| {
@@ -290,6 +352,7 @@ impl HostedWorld {
                 session.begin_npc_sources_direct(read, request)
             },
             NativeWorldSession::step_npc_preparation,
+            release_on_capacity,
         )
         .await
     }
@@ -305,6 +368,21 @@ impl HostedWorld {
         + 'static,
         advance: ActorPreparationStep<T>,
     ) -> Result<T, WorldError> {
+        self.prepare_actor_read_attempt(game, read, begin, advance, None)
+            .await?
+            .result()
+    }
+
+    async fn prepare_actor_read_attempt<T: Send + 'static>(
+        self: &Arc<Self>,
+        game: Arc<CurrentServer>,
+        read: impl FnOnce(&mut NativeWorldSession) -> Result<T, RuntimeError> + Send + 'static,
+        begin: impl FnOnce(&mut NativeWorldSession, &mut T) -> Result<CandidateKey, RuntimeError>
+        + Send
+        + 'static,
+        advance: ActorPreparationStep<T>,
+        release_on_capacity: Option<ReleaseCapacityRefusal<T>>,
+    ) -> Result<ActorPreparation<T>, WorldError> {
         let queued = self
             .waiting
             .clone()
@@ -330,20 +408,28 @@ impl HostedWorld {
                 if world.closing.load(Ordering::Acquire) {
                     return Err(HostError::Closed.into());
                 }
-                let (key, selected) = world
+                let (started, selected) = world
                     .call(move |session| {
                         let mut read = read(session)?;
-                        let key = begin(session, &mut read)?;
-                        Ok((key, read))
+                        let started = begin(session, &mut read);
+                        Ok((started, read))
                     })
                     .await?;
+                let key = match started {
+                    Ok(key) => key,
+                    Err(error) if release_on_capacity.is_some() && error.is_capacity() => {
+                        return Ok(ActorPreparation::Capacity(selected, error.into()));
+                    }
+                    Err(error) => return Err(error.into()),
+                };
+                let mut selected = Some(selected);
                 let result = async {
-                    let mut read = selected;
                     let mut answer: Option<(RuntimeProvider, RuntimeProviderInput)> = None;
                     loop {
                         if send.is_closed() {
                             return Err(HostError::Cancelled.into());
                         }
+                        let mut read = selected.take().expect("owned actor preparation");
                         let (next, step) = world
                             .call(move |session| {
                                 let (ticket, input) = match answer {
@@ -351,13 +437,13 @@ impl HostedWorld {
                                     None => (None, None),
                                 };
                                 let result =
-                                    advance(session, &mut read, key, ticket.as_ref().zip(input))?;
+                                    advance(session, &mut read, key, ticket.as_ref().zip(input));
                                 Ok((read, result))
                             })
                             .await?;
-                        read = next;
-                        match step {
-                            RuntimeNpcPreparationStep::Complete => return Ok(read),
+                        selected = Some(next);
+                        match step? {
+                            RuntimeNpcPreparationStep::Complete => return Ok(()),
                             RuntimeNpcPreparationStep::Continue => answer = None,
                             RuntimeNpcPreparationStep::Provider(question) => {
                                 answer = Some(tokio::select! {
@@ -370,10 +456,22 @@ impl HostedWorld {
                     }
                 }
                 .await;
-                if result.is_err() {
-                    world.cleanup_candidate(key).await?;
+                match result {
+                    Ok(()) => Ok(ActorPreparation::Complete(
+                        selected.expect("completed actor preparation"),
+                    )),
+                    Err(error) => {
+                        world.cleanup_candidate(key).await?;
+                        if let Some(release) = release_on_capacity
+                            && source_preparation_capacity(&error)
+                            && let Some(mut read) = selected
+                        {
+                            release(&mut read, key)?;
+                            return Ok(ActorPreparation::Capacity(read, error));
+                        }
+                        Err(error)
+                    }
                 }
-                result
             }
             .await;
             let _ = send.send(result);

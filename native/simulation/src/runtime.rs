@@ -264,12 +264,14 @@ fn session_failure(error: crate::simulation::SessionError) -> RuntimeError {
     use crate::commands::CommandOperationError;
     use crate::events::EventError;
     use crate::execution::ExecutionError;
+    use crate::experience::ExperienceError;
     use crate::reception::ObserverReceptionError;
-    use crate::simulation::{DriveError, SessionError};
+    use crate::records::save::SaveError;
+    use crate::simulation::{DriveError, PublicationError, SessionError};
     use crate::time::AdvanceError;
 
     fn allocation(error: &ExecutionError) -> bool {
-        matches!(error, ExecutionError::Capacity)
+        matches!(error, ExecutionError::Capacity | ExecutionError::Experience(ExperienceError::Capacity))
             || matches!(error, ExecutionError::Received(error) if *error == crate::received::ReceivedError::TRANSIENT_CAPACITY)
     }
 
@@ -292,8 +294,11 @@ fn session_failure(error: crate::simulation::SessionError) -> RuntimeError {
     }
     let capacity = match &error {
         SessionError::Drive(DriveError::Capacity)
-        | SessionError::Save(crate::records::save::SaveError::Capacity) => true,
+        | SessionError::Save(SaveError::Capacity)
+        | SessionError::Publication(PublicationError::Save(SaveError::Capacity))
+        | SessionError::History(ExperienceError::Capacity) => true,
         SessionError::Execution(error)
+        | SessionError::Publication(PublicationError::Execution(error))
         | SessionError::Drive(DriveError::Semantic(
             AdvanceError::Execution(error)
             | AdvanceError::Command(
