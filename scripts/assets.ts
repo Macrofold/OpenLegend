@@ -32,6 +32,8 @@ import {
   type AssetUse,
 } from '../apps/server/src/asset-repository.js';
 import { AssetPublisher, prepareAssetManifest } from '../apps/server/src/asset-publication.js';
+import { openAssetAuthority, syncAssetAuthority } from '../apps/server/src/asset-authority.js';
+import { readStorageLocation } from '../apps/server/src/storage-location.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { createAssetResolver } from '../apps/server/src/asset-runtime.js';
 import { externalAssetPath } from '../apps/server/src/asset-directories.js';
@@ -150,6 +152,21 @@ function destination(): AssetDomain {
     visibility: accessDomain === 'public' ? 'public' : 'restricted',
   };
 }
+function worldStorage() {
+  const storage = readStorageLocation();
+  const target = new URL(storage.databaseUrl);
+  const authority = configuration.authority;
+  if (
+    authority &&
+    target.hostname.toLowerCase() === authority.host.toLowerCase() &&
+    Number(target.port || '5432') === authority.port &&
+    decodeURIComponent(target.pathname.slice(1)) === authority.database
+  )
+    throw new Error(
+      'Set OPEN_LEGEND_DATABASE_URL to the game database before syncing or restoring.',
+    );
+  return storage;
+}
 async function repository<T>(
   operation: (
     repo: AssetRepository,
@@ -158,19 +175,18 @@ async function repository<T>(
     database: PostgresDatabase,
   ) => Promise<T>,
   readOnly = false,
+  source: 'authority' | 'game' = 'authority',
 ): Promise<T> {
-  const url = process.env['OPEN_LEGEND_DATABASE_URL'];
-  if (!url || !['postgres:', 'postgresql:'].includes(new URL(url).protocol))
-    throw new Error(
-      'Publication needs OPEN_LEGEND_DATABASE_URL for the owning PostgreSQL database.',
-    );
   const storage = new S3AssetStorage(configuration, readOnly ? 'authoring' : 'publication');
   let database: PostgresDatabase | undefined;
   try {
     const principal = { accountId: await storage.principal() };
-    database = new PostgresDatabase(url, readOnly);
+    database =
+      source === 'game'
+        ? new PostgresDatabase(worldStorage().databaseUrl, readOnly)
+        : await openAssetAuthority(configuration, readOnly);
     const repo = new AssetRepository(database);
-    if (!readOnly) await repo.initialize();
+    if (!readOnly) await database.transaction(() => repo.initialize());
     return await operation(repo, storage, principal, database);
   } finally {
     try {
@@ -244,6 +260,7 @@ async function run(): Promise<void> {
   login --page /restricted/curated-private/PUBLISHED/PAGE.html
   install --operation ID [--origin http://127.0.0.1:3211]
   mount-runtime [--public] --server-release DIRECTORY --output NEW_DIRECTORY
+  sync   (refresh the stopped local game database from the shared asset catalog)
   authority-export --output /outside/repository/current-authority.json
   recovery-initialize --output /outside/repository/authority-work
   recovery-create --operation CHECKPOINT --output /outside/repository/checkpoint-work [--source-config FROZEN_ENV_CONFIG]
@@ -256,7 +273,8 @@ async function run(): Promise<void> {
 All commands accept --config FILE; pulls/viewers accept --index FILE.
 serve defaults to assets/locks/studies.json; other asset reads default to development.json.
 --public uses anonymous HTTPS delivery; private reads require current SQL permission.
-Publishing opens the existing exclusive PostgreSQL writer; stop the local game first.
+Private authoring and publication use the shared database in assets/config.json.
+sync uses OPEN_LEGEND_DATABASE_URL and requires the local game to be stopped.
 AWS credentials remain in the named CLI/SDK session and are never written to a lock.`);
     return;
   }
@@ -764,6 +782,23 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
     });
     return;
   }
+  if (command === 'sync') {
+    const { databaseUrl } = worldStorage();
+    const authority = await openAssetAuthority(configuration, true);
+    let game: PostgresDatabase | undefined;
+    try {
+      game = new PostgresDatabase(databaseUrl);
+      await new AssetRepository(game).initialize();
+      console.log(JSON.stringify({ synced: await syncAssetAuthority(authority, game) }, null, 2));
+    } finally {
+      try {
+        await game?.close();
+      } finally {
+        await authority.close();
+      }
+    }
+    return;
+  }
   if (command === 'authority-export') {
     const output = await outsideRepository(required('output'));
     await repository(async (repo) => {
@@ -790,9 +825,8 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
     const additionalStorages: S3AssetStorage[] = [];
     try {
       if (command === 'recovery-restore-world') {
-        const { readStorageLocation } = await import('../apps/server/src/storage-location.js');
         const { restoreRustWorld } = await import('./assets/restore-rust-world.js');
-        const { databaseUrl, dataDirectory } = readStorageLocation();
+        const { databaseUrl, dataDirectory } = worldStorage();
         const result = await restoreRustWorld(storage, {
           serverDirectory: await realpath(required('server-directory')),
           release: await realpath(required('server-release')),
@@ -820,86 +854,89 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
         );
         return;
       }
-      await repository(async (repo, _readerStorage, _principal, database) => {
-        if (command === 'recovery-initialize') {
-          const result = await workflows.initializeRecoveryAuthority(repo, storage, {
-            domain: authorityDomain,
-            directory: await outsideRepository(required('output')),
-          });
-          console.log(
-            JSON.stringify({
+      await repository(
+        async (repo, _readerStorage, _principal, database) => {
+          if (command === 'recovery-initialize') {
+            const result = await workflows.initializeRecoveryAuthority(repo, storage, {
+              domain: authorityDomain,
+              directory: await outsideRepository(required('output')),
+            });
+            console.log(
+              JSON.stringify({
+                authorityDomain,
+                generation: result.generation,
+                status: result.status,
+              }),
+            );
+          } else if (command === 'recovery-create') {
+            const { backupRustWorld } = await import('./assets/restore-rust-world.js');
+            const { databaseUrl, dataDirectory } = worldStorage();
+            const directory = await outsideRepository(required('output'));
+            for (const source of await sourceConfigurations())
+              additionalStorages.push(new S3AssetStorage(source, 'recovery-writer'));
+            const locator = await workflows.createAssetRecoveryCheckpoint(repo, storage, {
+              checkpointId: required('operation'),
               authorityDomain,
-              generation: result.generation,
-              status: result.status,
-            }),
-          );
-        } else if (command === 'recovery-create') {
-          const { readStorageLocation } = await import('../apps/server/src/storage-location.js');
-          const { backupRustWorld } = await import('./assets/restore-rust-world.js');
-          const { databaseUrl, dataDirectory } = readStorageLocation();
-          const directory = await outsideRepository(required('output'));
-          for (const source of await sourceConfigurations())
-            additionalStorages.push(new S3AssetStorage(source, 'recovery-writer'));
-          const locator = await workflows.createAssetRecoveryCheckpoint(repo, storage, {
-            checkpointId: required('operation'),
-            authorityDomain,
-            withStoppedSource: (capture) => database.withStoppedWorld(capture),
-            backupWorld: async (destination) => {
-              await backupRustWorld(
-                {
-                  serverDirectory: await realpath(required('server-directory')),
-                  release: await realpath(required('server-release')),
-                  databaseUrl,
-                  dataDirectory: values['source-root']
-                    ? await realpath(values['source-root'])
-                    : dataDirectory,
-                },
-                destination,
-              );
-            },
-            directory,
-            sourceStorages: additionalStorages,
-          });
-          await writeExactOutput(join(directory, 'locator.json'), locator);
-          console.log(JSON.stringify(locator));
-        } else if (command === 'recovery-restore-catalog') {
-          await workflows.restoreAssetRecoveryCatalog(
-            repo,
-            await realpath(required('source-root')),
-          );
-          console.log(
-            JSON.stringify({
-              restored: true,
-              access: 'quarantined until current authority is reconciled',
-            }),
-          );
-        } else if (command === 'recovery-reconcile') {
-          const generation = await workflows.reconcileRecoveredAssetAuthority(repo, storage, {
-            domain: authorityDomain,
-            directory: await outsideRepository(required('output')),
-          });
-          console.log(JSON.stringify({ reconciled: generation }));
-        } else if (command === 'recovery-restore-objects') {
-          const checkpoint = JSON.parse(
-            await readAssetManifestText(
-              join(await realpath(required('source-root')), 'manifest.json'),
-              64 * 1024 * 1024,
-            ),
-          ) as import('./assets/recovery.js').AssetRecoveryCheckpoint;
-          const result = await workflows.restoreAssetRecoveryObjects(repo, storage, checkpoint, {
-            quarantineDomain: required('quarantine-domain'),
-          });
-          const output = await outsideRepository(required('output'));
-          await writeExactOutput(output, result);
-          console.log(
-            JSON.stringify({
-              restored: result.restored,
-              unavailable: result.unavailable.length,
-              receipt: output,
-            }),
-          );
-        } else throw new Error('Unknown recovery command.');
-      }, command === 'recovery-create');
+              withStoppedSource: (capture) => database.withStoppedWorld(capture),
+              backupWorld: async (destination) => {
+                await backupRustWorld(
+                  {
+                    serverDirectory: await realpath(required('server-directory')),
+                    release: await realpath(required('server-release')),
+                    databaseUrl,
+                    dataDirectory: values['source-root']
+                      ? await realpath(values['source-root'])
+                      : dataDirectory,
+                  },
+                  destination,
+                );
+              },
+              directory,
+              sourceStorages: additionalStorages,
+            });
+            await writeExactOutput(join(directory, 'locator.json'), locator);
+            console.log(JSON.stringify(locator));
+          } else if (command === 'recovery-restore-catalog') {
+            await workflows.restoreAssetRecoveryCatalog(
+              repo,
+              await realpath(required('source-root')),
+            );
+            console.log(
+              JSON.stringify({
+                restored: true,
+                access: 'quarantined until current authority is reconciled',
+              }),
+            );
+          } else if (command === 'recovery-reconcile') {
+            const generation = await workflows.reconcileRecoveredAssetAuthority(repo, storage, {
+              domain: authorityDomain,
+              directory: await outsideRepository(required('output')),
+            });
+            console.log(JSON.stringify({ reconciled: generation }));
+          } else if (command === 'recovery-restore-objects') {
+            const checkpoint = JSON.parse(
+              await readAssetManifestText(
+                join(await realpath(required('source-root')), 'manifest.json'),
+                64 * 1024 * 1024,
+              ),
+            ) as import('./assets/recovery.js').AssetRecoveryCheckpoint;
+            const result = await workflows.restoreAssetRecoveryObjects(repo, storage, checkpoint, {
+              quarantineDomain: required('quarantine-domain'),
+            });
+            const output = await outsideRepository(required('output'));
+            await writeExactOutput(output, result);
+            console.log(
+              JSON.stringify({
+                restored: result.restored,
+                unavailable: result.unavailable.length,
+                receipt: output,
+              }),
+            );
+          } else throw new Error('Unknown recovery command.');
+        },
+        command === 'recovery-create',
+        command === 'recovery-initialize' ? 'authority' : 'game',
+      );
     } finally {
       storage.close();
       for (const source of additionalStorages) source.close();

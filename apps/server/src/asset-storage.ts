@@ -15,6 +15,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import { fromIni, fromTemporaryCredentials } from '@aws-sdk/credential-providers';
+import { Signer } from '@aws-sdk/rds-signer';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { createNetworkOwner, type NetworkOperation, type NetworkPhase } from '@open-legend/network';
 import {
@@ -40,6 +41,14 @@ const transferNetwork = createNetworkOwner({ role: 'tool-asset-transfer', capaci
 const storageOperation = new AsyncLocalStorage<NetworkOperation>();
 const storageParent = new AsyncLocalStorage<NetworkOperation>();
 const responseByteLimit = new AsyncLocalStorage<number>();
+/** Finite per-request limits; AssetHttpHandler also clips each request to its
+ * operation's remaining time. */
+const assetTransport = {
+  connectionTimeout: 10_000,
+  requestTimeout: 30_000,
+  socketTimeout: 30_000,
+  throwOnRequestTimeout: true,
+};
 
 /** A finite operator workflow owns its original deadline across storage clients.
  * Each leaf still admits its existing service slot; nested SDK phases reuse it. */
@@ -148,6 +157,48 @@ class AssetHttpHandler extends NodeHttpHandler {
   }
 }
 
+/** Where the shared asset authority (AS09) accepts an IAM database sign-in. */
+export interface AssetAuthoritySignIn {
+  profile: string;
+  region: string;
+  host: string;
+  port: number;
+  user: string;
+}
+
+/** Signs the shared asset authority's short-lived IAM database password from the
+ * person's own sign-in. Looking up that sign-in can reach STS, SSO or the AWS
+ * sign-in service, so it shares the AWS credential sequence budget (NET-L02) and
+ * any enclosing workflow's earlier deadline; the signature itself is local work.
+ * docs/projects/game-asset-storage-tech-design.md#12-shared-asset-authority-across-machines */
+export async function signAssetAuthorityToken(signIn: AssetAuthoritySignIn): Promise<string> {
+  const handler = new AssetHttpHandler(assetTransport);
+  try {
+    return await metadataNetwork.run(
+      { timeoutMs: 30_000, parent: storageParent.getStore() },
+      (operation) =>
+        storageOperation.run(operation, async () => {
+          const credentials = await waitSdkValue(operation, 'credentials', () =>
+            fromIni({
+              profile: signIn.profile,
+              clientConfig: { region: signIn.region, maxAttempts: 1, requestHandler: handler },
+            })(),
+          );
+          operation.throwIfStopped();
+          return new Signer({
+            hostname: signIn.host,
+            port: signIn.port,
+            username: signIn.user,
+            region: signIn.region,
+            credentials,
+          }).getAuthToken();
+        }),
+    );
+  } finally {
+    handler.destroy();
+  }
+}
+
 export interface AssetStorageConfiguration {
   profile: string;
   region: string;
@@ -221,12 +272,7 @@ export class S3AssetStorage {
     // Nested STS/SSO/sign-in clients receive the same finite transport settings.
     // The enclosing operation additionally bounds credential providers that do
     // not expose an abort hook, and rejects their late values before S3 starts.
-    this.handler = new AssetHttpHandler({
-      connectionTimeout: 10_000,
-      requestTimeout: 30_000,
-      socketTimeout: 30_000,
-      throwOnRequestTimeout: true,
-    });
+    this.handler = new AssetHttpHandler(assetTransport);
     const options = { region: configuration.region, maxAttempts: 1, requestHandler: this.handler };
     const master = fromIni({ profile: configuration.profile, clientConfig: options });
     const masterCredentials = () => this.sdk(() => master(), 'credentials');

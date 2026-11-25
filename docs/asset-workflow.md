@@ -14,7 +14,7 @@ Mike authorized public access to the migrated current art, sources and studies. 
 
 ## Start and select a small scope
 
-Run commands from the repository root. `pnpm assets help` lists the implemented options. The current curated collection is public: use explicit `--public` pulls through `assets.openlegend.ai` without AWS credentials or PostgreSQL. For private collections and operator work, `assets/config.json` selects the explicit `openlegend` AWS profile, project, Region, buckets, role permissions and local cache limits. Credentials stay in the AWS CLI/SDK session. Follow [AWS access guidance](../.agents/rules/aws.md) if that session needs authentication. `OPEN_LEGEND_DATABASE_URL` selects the existing PostgreSQL authority that records publication and current permissions.
+Run commands from the repository root. `pnpm assets help` lists the implemented options. The current curated collection is public: use explicit `--public` pulls through `assets.openlegend.ai` without AWS credentials or PostgreSQL. For private collections and operator work, `assets/config.json` selects the explicit `openlegend` AWS profile, project, Region, buckets, role permissions and local cache limits. Credentials stay in the AWS CLI/SDK session. Follow [AWS access guidance](../.agents/rules/aws.md) if that session needs authentication. Private reads and publication use the [shared asset authority](#shared-asset-authority).
 
 Pulls, inspection and installation use `assets/locks/development.json` unless `--index FILE` selects another exact list. The local study server defaults to `assets/locks/studies.json` and passes that same selection to both its browser build and delivery handler. Inspect the intended list before pulling:
 
@@ -75,9 +75,7 @@ The command uses the running game’s normal character control, travel and permi
 
 Prepare a small current-format manifest using the [shared asset types](../packages/assets/src/index.ts). It names an owner, asset, revision, files and exact dependencies, plus real rights-evidence references and relevant provenance. Each file includes SHA-256, bytes and media type. Calculate these from the actual exported file; do not copy an old digest after editing. New authoring work can be outside Git. The full tracked-repository audit command is `pnpm assets inventory --output /private/tmp/openlegend-assets.ndjson`; it does not inventory unrelated external workspaces.
 
-Publication uses the existing exclusive PostgreSQL writer. Stop the local game before a publication operation, then reopen it afterward. Inspection, pulls, verification and the local viewer use read-only authority access and can coexist with the game.
-
-The asset catalog and its current permissions have their own storage owner. A fresh game can initialize in a database containing only the exact registered asset tables, including a catalog created by the asset CLI; those rows remain unchanged. Unversioned gameplay or unknown tables still refuse before initialization. For an empty database, initializing `SqlGameRepository` first also establishes the shared schema and current game marker. Close the initializer before publication. Establish current asset permissions through the existing recovery reconciliation owner, publish the selected runtime release, and start the game normally. Do not write a schema marker manually or weaken current-format admission.
+Publication writes to the shared asset catalog and can run while the local game is open. Each machine's private pulls check its own sign-in and the current grants. Run `pnpm assets sync` with the local Rust game stopped when a world needs the published release in the game database.
 
 For example, given a reviewed private source manifest at `/private/tmp/doe-source.manifest.json` and its files under `/private/tmp/doe-source/`:
 
@@ -93,6 +91,20 @@ pnpm assets publish --manifest /private/tmp/doe-source.manifest.json --boundary 
 For public studies, select `art-studies/public`, approve `public-study` and source access as applicable, review the public projection, and pass `--public-reviewed` to publication. Runtime use has its own `private-runtime` or `public-runtime` approval. These are decisions about the intended collection, not permission to turn an arbitrary private source bundle into public game output. `grant`, `withdraw` and `authority-export` administer current access and restrictions through the same authority. Withdrawal cannot retract already downloaded files.
 
 `withdraw` removes the selected revision's current access, removes its recorded hosted copies where they are no longer shared by an allowed revision, and waits for the exact public cache invalidation. For a file that must be prohibited across revisions, add `--prohibit-bytes`; `--path MANIFEST_PATH` narrows that prohibition to one exact file while still withdrawing the selected revision. Supply frozen `--source-config` files when its recorded copies span trusted environments. Keep the same operation ID and exact request when resuming interrupted removal. Protected historical S3 versions remain available only through the separate recovery rules; a completed removal cannot recall copies already downloaded by someone else.
+
+### Shared asset authority
+
+S3 stores the exact asset bytes. The project's PostgreSQL catalog on Amazon Aurora records their revisions and who can use them. Each computer connects using its own Open Legend AWS sign-in. The catalog already exists. A fresh checkout can inspect Git indexes and draft manifests offline.
+
+On each computer, from the shell where you run the asset CLI (Ubuntu on Windows):
+
+1. Sign in with the project's AWS CLI, `~/.local/bin/aws login --profile openlegend --region us-east-2`. Verify the session with `~/.local/bin/aws sts get-caller-identity --profile openlegend --region us-east-2`.
+2. Install the [Amazon RDS trust bundle](https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem) at `~/.postgresql/rds-global-bundle.pem`. From Ubuntu or macOS, run `mkdir -p ~/.postgresql && curl -fsSLo ~/.postgresql/rds-global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem`.
+3. The project owner adds the computer's current public IPv4 address as a single /32 to the existing `openlegend-asset-db` security group on TCP 5432 if it is missing. The same home network generally uses one public address for both computers.
+
+Use `pnpm assets workspace --all --index assets/locks/NAME.json --output NEW_EXTERNAL_FOLDER` to materialize an authorized release for editing. The Unreal [project guide](../apps/unreal/README.md) covers saving, publishing and restoring Content. `pnpm assets sync` is a separate operation for games that reference catalog assets. It takes the local world's normal writer lock, copies a consistent shared snapshot, keeps world save claims, bindings and pins, and refuses to replace the local records if a saved revision is missing from the shared catalog.
+
+For Rust world backups and isolated restores, select the world database with `OPEN_LEGEND_DATABASE_URL`. Synchronize the stopped source before a combined recovery capture. Capture still checks its signed independent recovery marker. A catalog restore targets the isolated game database. Recovery-authority initialization is a shared administrative operation. The existing catalog already has its recovery authority.
 
 ### Select development or production runtime storage
 
@@ -138,7 +150,7 @@ To replace an existing world's artwork after publication, reopen the game and us
 
 For local authentication, `pnpm assets install --operation selected-art-release` performs the same guarded operation using the release selected by `--index` (or the default list). It checks the existing saved selection and never writes the save directly. OIDC worlds use the signed-in browser control; the command does not impersonate that account or change authentication. Stop/reopen the game around publication, then select the published release explicitly.
 
-A clean code checkout can pull, verify and copy explicitly public files with `--public` without AWS credentials or PostgreSQL. Running a world has an additional prerequisite: its owning PostgreSQL database must contain the real records of the selected release's publication and current permissions. Downloading public bytes does not create those records or grant game installation. On a fresh machine, restore the verified publication catalog and reconcile the independently current authority through the recovery workflow below before creating the world or installing its release. An existing local world uses its existing owning database; ordinary asset installation does not require resetting it.
+A clean code checkout can pull, verify and copy explicitly public files with `--public` without AWS credentials or PostgreSQL. Running a world has an additional prerequisite: its owning PostgreSQL database must contain the real records of the selected release's publication and current permissions. Downloading public bytes does not create those records or grant game installation. On a fresh machine, run `pnpm assets sync` with the intended game database configured and stopped before creating a world that needs these records or installing its release. An existing local world uses its existing owning database; ordinary asset installation does not require resetting it.
 
 ### Prepare the Rust runtime asset mount
 

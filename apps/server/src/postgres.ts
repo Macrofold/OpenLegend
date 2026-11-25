@@ -113,15 +113,18 @@ export class PostgresDatabase implements SqlDatabase {
     protected readonly connectionString: string,
     private readonly readOnly = false,
     readonly writeGroups = true,
+    private readonly role: 'world' | 'authority' = 'world',
   ) {
+    // The shared Aurora cluster may be resuming from idle.
+    const connectionTimeoutMillis = role === 'authority' ? 60_000 : 5_000;
     this.client = new pg.Client({
       connectionString,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis,
       statement_timeout: 5000,
     });
     this.reader = new pg.Client({
       connectionString,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis,
       statement_timeout: 5000,
     });
     this.reader.on('error', () => {
@@ -142,6 +145,13 @@ export class PostgresDatabase implements SqlDatabase {
     if (this.readOnly) {
       await this.client.query(
         'SET search_path TO open_legend; SET default_transaction_read_only=on',
+      );
+      return;
+    }
+    if (this.role === 'authority') {
+      // Serialize creation as well as later mutations when two fresh publishers connect.
+      await this.client.query(
+        'BEGIN; SELECT pg_advisory_xact_lock(187114, 2); CREATE SCHEMA IF NOT EXISTS open_legend; SET search_path TO open_legend; COMMIT',
       );
       return;
     }
@@ -354,6 +364,9 @@ export class PostgresDatabase implements SqlDatabase {
               : 'BEGIN',
         );
         if (!readOnly && !this.writeGroups) await this.query("SET LOCAL statement_timeout = '30s'");
+        // Every publisher holds this lock before its permission and revision reads.
+        if (!readOnly && this.role === 'authority')
+          await this.query('SELECT pg_advisory_xact_lock(187114, 2)');
         result = await operation();
         if (scope.writeFailure !== undefined) throw scope.writeFailure;
       } catch (error) {

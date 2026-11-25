@@ -15,6 +15,7 @@ export const sdkOwners: Readonly<Record<string, readonly string[]>> = {
     '@aws-sdk/client-s3',
     '@aws-sdk/client-sts',
     '@aws-sdk/credential-providers',
+    '@aws-sdk/rds-signer',
     '@smithy/node-http-handler',
   ],
   'infrastructure/assets/study-access.cts': ['@aws-sdk/client-secrets-manager'],
@@ -146,6 +147,8 @@ export const networkDependencies: Readonly<Record<string, string>> = {
   '@aws-sdk/client-s3': 'asset-storage.ts',
   '@aws-sdk/client-sts': 'asset-storage.ts',
   '@aws-sdk/credential-providers': 'asset-storage.ts',
+  '@aws-sdk/rds-signer':
+    'asset-storage.ts signs the database token from a bounded credential lookup.',
   '@smithy/node-http-handler': 'asset-storage.ts',
   '@aws-sdk/client-secrets-manager':
     'Generated study-access source; the runtime supplies this exact SDK family.',

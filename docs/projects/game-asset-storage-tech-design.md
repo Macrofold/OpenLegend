@@ -331,6 +331,10 @@ Required scenarios include the existing mercenary/deer source-study chain; two w
 
 No unresolved owner decision blocks the accepted curated implementation. Verified project/Region, owned hostname, narrow roles and the completed current-tree migration are configured; the [tracker](../maintainers/game-asset-storage.md) and [evidence](../verification/game-asset-storage.md) retain actual qualification. The current configured world uses the installed exact artwork selected through its normal signed-in owner control. Mike authorized replacing old development progress with the current ordinary opening; authentication, asset authority and accounting remain preserved. The AST inventory distinguishes configured policies from measured capacity. No achieved recovery-time or recovery-point objective is inferred from a successful copy. Git history rewriting remains separately authorized and coordinated.
 
+## 12. Shared asset authority across machines
+
+Publication, private reads, grants and the operator viewer use one IAM-authenticated Aurora catalog. The existing AWS storage adapter obtains the selected profile's credentials under its 30-second request budget and signs an RDS token locally. Connections verify the server against the configured RDS CA. Each write transaction takes the catalog's PostgreSQL transaction-scoped advisory lock before its permission and revision reads. Rust worlds retain their independent exclusive world writer. A stopped world can synchronize its shared catalog rows while preserving its own save and pin records. The [workstation instructions](../asset-workflow.md#shared-asset-authority) describe sign-in, access, authoring and recovery targets.
+
 ## Maintained records
 
 - Behavior: [Feature specification](game-asset-storage-feature-spec.md).

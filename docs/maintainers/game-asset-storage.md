@@ -91,6 +91,10 @@ The configured maximum cache size and broad concurrent-client throughput remain 
 - [ ] Inventory affected refs/tags/PRs/clones/worktrees and retained commit links; establish backup/restore and old-to-new commit/recovery mappings before proposing the concrete operation.
 - [ ] If authorized, remove only inventoried externalized blobs from the agreed histories, coordinate remote updates and clone/worktree resynchronization, and verify recoverability plus actual clone/object-size reduction. **Exit:** no lost code/art, no silently reset unrelated checkout and no broken historic recipe reference. Until then, deleting current files reduces checkout/build weight but leaves old reachable Git blobs.
 
+## Sharing private assets between workstations
+
+The native development workflow uses the existing [shared asset authority](../asset-workflow.md#shared-asset-authority) for publishing and receiving private revisions from a single checkout. Rust world recovery selects its isolated target using the local database configuration. A live, two-machine private round trip on this branch still requires authorized AWS sessions and network access on both machines.
+
 ## Verification status
 
 The [implementation review](../verification/game-asset-storage.md#implementation-review) records corrected dependency-use checks during withdrawal, recoverable authority admission, enforced transaction boundaries, cache queue/lifecycle work, study selection, build enforcement and renderer cleanup. Root and scoped guidance already route these tasks through asset, performance and authorization owners; no duplicate AGENTS rules are added.

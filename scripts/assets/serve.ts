@@ -10,7 +10,7 @@ import { S3AssetStorage } from '../../apps/server/src/asset-storage.js';
 import { createAssetResolver } from '../../apps/server/src/asset-runtime.js';
 import { createClientAssets, type ClientAssets } from '../../apps/server/src/client-assets.js';
 import { AssetRepository, AssetAccessError } from '../../apps/server/src/asset-repository.js';
-import { PostgresDatabase } from '../../apps/server/src/postgres.js';
+import { openAssetAuthority } from '../../apps/server/src/asset-authority.js';
 
 export interface AssetWorkServerOptions {
   configPath?: string;
@@ -88,18 +88,13 @@ export async function serveAssetWork(options: AssetWorkServerOptions): Promise<A
   } finally {
     identity.close();
   }
-  const databaseUrl = process.env['OPEN_LEGEND_DATABASE_URL'];
-  if (!databaseUrl || !['postgres:', 'postgresql:'].includes(new URL(databaseUrl).protocol))
-    throw new Error(
-      'The operator viewer requires OPEN_LEGEND_DATABASE_URL for current asset permissions.',
-    );
   // Both the browser projection and exact delivery must use the same selection.
   // Inspector pages need recorded scenes and alternatives outside the game pack.
   const indexPath = options.indexPath
     ? resolve(options.indexPath)
     : resolve(assetRepositoryRoot, 'assets/locks/studies.json');
   const resolver = await createAssetResolver({ ...options, indexPath });
-  const database = new PostgresDatabase(databaseUrl, true);
+  const database = await openAssetAuthority(configuration, true);
   const authority = new AssetRepository(database);
   const currentPermission = async (reference: ArtifactReference): Promise<boolean> => {
     try {

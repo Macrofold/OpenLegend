@@ -94,6 +94,9 @@ importers:
       '@aws-sdk/credential-providers':
         specifier: 3.1152.0
         version: 3.1152.0
+      '@aws-sdk/rds-signer':
+        specifier: 3.1152.0
+        version: 3.1152.0
       '@open-legend/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -250,6 +253,10 @@ packages:
 
   '@aws-sdk/nested-clients@3.997.48':
     resolution: {integrity: sha512-B01jdXJtAW/XOiUzGdI2mz67WyEHbGEc9X6Euzw3bjLAa+txTqdZDER4X2FsIEcXzV2ABqudVZ5thali8tCCzQ==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/rds-signer@3.1152.0':
+    resolution: {integrity: sha512-voiR4jQzbJ28iBuYEAs+HEejlSARbpo+O+uHfn4/MbbA/9/x5O01gDpX5a2jVKwaknZ06LZQU/uFK1e+mhLXnw==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/signature-v4-multi-region@3.996.48':
@@ -2071,6 +2078,15 @@ snapshots:
       '@smithy/core': 3.36.0
       '@smithy/fetch-http-handler': 5.8.0
       '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/rds-signer@3.1152.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.3
+      '@aws-sdk/credential-providers': 3.1152.0
+      '@smithy/core': 3.36.0
+      '@smithy/signature-v4': 5.7.4
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 

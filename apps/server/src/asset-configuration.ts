@@ -41,6 +41,19 @@ const schema = z
       maxEntries: positive,
       maxConcurrent: positive,
     }),
+    // The shared asset authority every machine publishes to and syncs from:
+    // docs/asset-workflow.md#shared-asset-authority. It names no password; each
+    // connection signs a short-lived IAM token with the selected profile.
+    authority: z
+      .object({
+        host: z.string().min(1),
+        port: positive,
+        database: z.string().min(1),
+        user: z.string().min(1),
+        certificateBundle: z.string().min(1),
+      })
+      .strict()
+      .optional(),
     publication: z.object({
       maxRevisions: positive,
       maxFiles: positive,
