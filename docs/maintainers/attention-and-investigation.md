@@ -1,6 +1,6 @@
 # Attention and investigation — implementation work
 
-**Design complete; runtime implementation and qualification remain open.** This tracker owns SAD-E's selected attention methods, accepted work, native extension and preparation-evidence producer. [Feature](../projects/attention-and-investigation-feature-spec.md), [technical design](../projects/attention-and-investigation-tech-design.md), [world policy](../worlds/base/attention-and-investigation.md) and [limits](../limits/attention-and-investigation.md) are its canonical inputs. The parent [stealth tracker](stealth-awareness.md) keeps shared integration and SAI-E/F; AC, AG, EPR, CTR and SPK keep their broader tasks.
+**Recognized-presence watches delivered; broader implementation and qualification remain open.** This tracker owns SAD-E's selected attention methods, accepted work, native extension and preparation-evidence producer. [Feature](../projects/attention-and-investigation-feature-spec.md), [technical design](../projects/attention-and-investigation-tech-design.md), [world policy](../worlds/base/attention-and-investigation.md) and [limits](../limits/attention-and-investigation.md) are its canonical inputs. The parent [stealth tracker](stealth-awareness.md) keeps shared integration and SAI-E/F; AC, AG, EPR, CTR and SPK keep their broader tasks.
 
 Ordinary detailed attention and temporal memory are [PS04-A](product-scalability.md#ps04-a--core-attention-and-recording), not prerequisites to be unlocked by Watch. Integrate its current-work preference, shared received-source/history admission and cause-resolution contract; ATI still supplies actual chosen physical coverage/preparation.
 
@@ -25,6 +25,8 @@ Parent: **SAD-E**; selected **DG02, ND13 and ND16**, with ND11/ND19 consumers.
 ## ATI01 — Admit actual observation work
 
 Dependencies: A acquired evidence/identity; B orientation; AC07; existing prospective-work/activity/action-experience owners. Parent modules: **DG02, ND13, ND16**.
+
+The [witness delivery](product-scalability.md#ps04-a--core-attention-and-recording) supports one recognized person's presence at a known place on an existing plan step. Signed and NPC-selected walks, exact identity and location evidence, refusal, observed departure and re-entry, withdrawal and cold return have connected checks. The remaining methods and wider observation-work integration stay below.
 
 - [ ] Add the closed observation/anticipation terms, installed method definitions with [one supported event or level per watch](../projects/witness-decisions-and-memory-tech-design.md#watches-and-affected-rules) and one finite control in its exclusive existing activity, direct-action or native ownership, with scoped terms revision. Reuse exact life, plan/step/activity and action identities. Add current-format serialization with each new owner field; ATI07 completes cross-owner restoration and lifecycle qualification.
 - [ ] Give menu offers, explicit requests, interpretation/NPC proposals and plan dispatch the same read-only availability and atomic admission. Fence changes during waits; preserve current work when refused/pending.

@@ -155,15 +155,19 @@ pub(crate) fn remember_thought(
             .units_len()
             .checked_sub(units)
             .ok_or(ExecutionError::Invariant)?;
-        let names = thought.references.iter()
+        let names = thought
+            .references
+            .iter()
             .any(|mention| matches!(&mention.subject_id, ThoughtSubject::Entity(id) if id != actor))
-            .then(|| crate::worlds::InstalledPersonalNameReader::prepare(
-                &core.state.physical,
-                &core.state.reception,
-                &core.state.installed,
-                &core.state.experience,
-                actor,
-            ))
+            .then(|| {
+                crate::worlds::InstalledPersonalNameReader::prepare(
+                    &core.state.physical,
+                    &core.state.reception,
+                    &core.state.installed,
+                    &core.state.experience,
+                    actor,
+                )
+            })
             .transpose()?;
         for mention in &thought.references {
             if mention.range.end > units || mention.range.start >= mention.range.end {
@@ -178,7 +182,9 @@ pub(crate) fn remember_thought(
                     entity_id: id.clone(),
                 },
                 ThoughtSubject::Entity(id) => {
-                    let Some(subject) = names.as_ref().ok_or(ExecutionError::Invariant)?
+                    let Some(subject) = names
+                        .as_ref()
+                        .ok_or(ExecutionError::Invariant)?
                         .current_body_subject(id)?
                     else {
                         return result(false, budget);

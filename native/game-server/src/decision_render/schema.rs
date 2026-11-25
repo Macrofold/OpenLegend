@@ -154,13 +154,23 @@ impl DecisionPolicy {
             size.saturating_add(id.len().saturating_add(64))
         });
         // Only the annotated Think branch gains these already presented identities.
-        let remembered_identity_bytes = references.identity.iter()
+        let remembered_identity_bytes = references
+            .identity
+            .iter()
             .filter(|alias| !references.entity.contains(alias))
-            .fold(0usize, |size, alias| size.saturating_add(alias.len().saturating_add(64)));
-        let additional = references.appraisal.map_or(0, tree_bytes)
+            .fold(0usize, |size, alias| {
+                size.saturating_add(alias.len().saturating_add(64))
+            });
+        let additional = references
+            .appraisal
+            .map_or(0, tree_bytes)
             .saturating_add(remembered_identity_bytes)
-            .saturating_add(if remembered_bytes == 0 { 0 } else {
-                remembered_bytes.saturating_add(1024).saturating_mul(variants_with_actions(template))
+            .saturating_add(if remembered_bytes == 0 {
+                0
+            } else {
+                remembered_bytes
+                    .saturating_add(1024)
+                    .saturating_mul(variants_with_actions(template))
             });
         let bytes = bound_bytes(template, references, self).saturating_add(additional);
         let custody = budget.reserve(bytes).map_err(|_| RenderError::Capacity)?;
@@ -215,7 +225,8 @@ impl DecisionPolicy {
                     json!({"type":"string","enum":references.identity});
             }
             if remembered_identity_bytes != 0
-                && let Some(branches) = properties.get_mut("think")
+                && let Some(branches) = properties
+                    .get_mut("think")
                     .and_then(|think| think.get_mut("anyOf"))
                     .and_then(Value::as_array_mut)
             {
@@ -224,10 +235,14 @@ impl DecisionPolicy {
                         .pointer_mut("/properties/references/items/properties/subjectId/enum")
                         .and_then(Value::as_array_mut)
                     {
-                        aliases.extend(references.identity.iter()
-                            .filter(|alias| !references.entity.contains(alias))
-                            .cloned()
-                            .map(Value::String));
+                        aliases.extend(
+                            references
+                                .identity
+                                .iter()
+                                .filter(|alias| !references.entity.contains(alias))
+                                .cloned()
+                                .map(Value::String),
+                        );
                     }
                 }
             }

@@ -289,7 +289,9 @@ impl ActorResponse {
                 )?;
             }
             if let Some(plan) = operation.get_mut("plan").filter(|value| !value.is_null())
-                && let Some(watch) = object(plan)?.get_mut("watch").filter(|value| !value.is_null())
+                && let Some(watch) = object(plan)?
+                    .get_mut("watch")
+                    .filter(|value| !value.is_null())
             {
                 let subject = object(watch)?.get_mut("subjectId").ok_or_else(invalid)?;
                 scalar(subject, aliases.physical, storage)?;

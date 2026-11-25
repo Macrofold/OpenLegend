@@ -536,17 +536,15 @@ impl PersonalVisualCursor {
                         while let Some(subject) = changed.get_index(self.sensitivity_at) {
                             self.sensitivity_at += 1;
                             if crate::appraisals::receive_appearance_sensitivity(
-                                    core,
-                                    &visual.observer.actor_id,
-                                    subject,
-                                    budget,
-                                )?
-                                && let Some(staged) = stage_sensitivity_expression(
-                                    core,
-                                    &visual.observer.actor_id,
-                                    budget,
-                                )?
-                            {
+                                core,
+                                &visual.observer.actor_id,
+                                subject,
+                                budget,
+                            )? && let Some(staged) = stage_sensitivity_expression(
+                                core,
+                                &visual.observer.actor_id,
+                                budget,
+                            )? {
                                 self.occurrence_waiting = true;
                                 return Ok(PersonalVisualStep::Occurrence(staged));
                             }

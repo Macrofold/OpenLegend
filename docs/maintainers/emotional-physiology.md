@@ -99,7 +99,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 
 ## EP06 — Authored emotion profiles and meaningful character context
 
-**Status: Not started.** Dependencies: EP01–EP05 as applicable; existing world manifest/body/trait/personal context owners. Contract: feature specification, EP-C10 and the canonical base psychological policy.
+**Status: Appearance sensitivity implemented; remaining profiles open.** Dependencies: EP01–EP05 as applicable; existing world manifest/body/trait/personal context owners. Contract: feature specification, EP-C10 and the canonical base psychological policy. The [witness delivery](product-scalability.md#ps04-a--core-attention-and-recording) applies one installed appearance rule on recognized sight without a model call. It keeps the feeling private and records its outward expression separately.
 
 - [ ] Install fear/anger review policies, fear’s mechanical mapping, the joy profile, native startle profiles, and the explicit composure binding. Preserve existing source-linked and authored grief, adding independent review only to the explicitly revised source-linked pin. Source all labels/scales/units from the installed definitions.
 - [ ] Keep courage, sensitivity, temperament, persistence, expression and coping as distinct contextual influences; no personality-word parsing or automatic action script.
