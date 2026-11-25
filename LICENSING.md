@@ -16,6 +16,12 @@ Earlier revisions were released under Apache-2.0. Existing grants for those revi
 
 The imported UI assets have separate notices in [design-system assets](apps/client/src/design-system/README.md): Game-icons.net silhouettes are CC BY 3.0 with per-icon authors, Lucide utilities are ISC, and bundled fonts use SIL OFL 1.1. These assets are licensed imports, distinct from the unlicensed-to-us art reference board.
 
+## Native Unreal client
+
+The project owner selected **Apache License 2.0** for new, original Open Legend client source in [apps/unreal/Source](apps/unreal/Source/). That directory carries the [component license](apps/unreal/Source/LICENSE). New original client source files carry an Apache-2.0 SPDX notice. Contributions use the target component's license.
+
+The client exchanges player requests and scoped replies with the separately running Rust server through its network interface. The server and existing repository tooling retain their current licenses. An Apache grant covers only material the contributor can license. Before adding generated bindings, copied implementation, plugins, artwork or other third-party material, establish its rights and preserve the required notices. Epic's engine installation and distribution terms apply separately. Review the actual dependencies, assets and packaging before releasing a build. [Epic's Unreal Engine agreement](https://www.unrealengine.com/eula/unreal)
+
 ## Why AGPL
 
 The primary adoption path is expected to be people playing and creating hosted worlds. Open Legend benefits when operators who improve its shared engine make covered improvements available. This favors AGPL reciprocity over permitting closed engine forks by default.
@@ -27,6 +33,7 @@ AGPL permits commercial operation, paid access, and self-hosting. Section 13 req
 | Component                                                                                  | Policy                                                                                           | Current status                                                              |
 | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | Core simulation, authoritative game server, and application code without a separate notice | AGPL-3.0-only                                                                                    | Applied to the implemented local game and first-party UI                    |
+| Original native Unreal player source in `apps/unreal/Source/`                              | Apache-2.0                                                                                       | Applied to the independently written client                                 |
 | Standalone creator SDKs, integration libraries, and reusable examples                      | Apache-2.0 when explicitly released as independent components                                    | Planned; no SDK/library/example directory is currently designated Apache    |
 | World state, character memories, player records, and histories                             | Private access by default; not automatically distributed with engine source                      | Product direction; no live hosted world exists                              |
 | Independent original world content, assets, and mechanics packs                            | Creator-selected terms, compatible with inherited material and dependencies                      | Supported product direction; individual packages must declare actual rights |

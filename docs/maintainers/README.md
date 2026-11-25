@@ -1,5 +1,7 @@
 # Maintainer work index
 
+[Native Unreal player development and qualification](unreal-engine-5-migration.md) tracks the desktop client and its connection to the Rust world.
+
 [Documentation map](../README.md) · [Unfinished projects](../projects/README.md) · [Decision owners](decisions/README.md) · [Research](../research/README.md) · [Completed tracker records](completed/2026/)
 
 Use this page to find the owner of work. Focused trackers own task status; specifications own behavior, limits inventories own restrictions, and topic verification reports own actual evidence. A linked proposal or completed design does not establish implemented or qualified behavior.

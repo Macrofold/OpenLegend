@@ -12,6 +12,8 @@ Physical data is renderer-independent. The current `WorldRenderer` boundary acce
 
 ## Client replacement path
 
+See the [native player contract](features/unreal-player/README.md) and [development setup](../apps/unreal/README.md) for the selected Unreal client.
+
 The renderer boundary preserves a future choice of presentation technology; it is not a completed portable-client SDK or a promise of cheap migration. [Engine and distribution tradeoffs](../archive/02-research/engines-art-and-audio.md#distribution-and-engine-tradeoffs) own the rationale and reconsideration criteria. The narrow interface exists today, but a dedicated authorized rendering projection and complete input extraction remain [SW10.1–SW10.2](maintainers/spatial-world.md#sw10--renderer-boundary-and-mixed-representation).
 
 Unreal Engine 5 is the selected client direction. The existing browser remains the client for Rust server qualification and receives only work needed for the transition. The UE5 client needs its own UI, input and connection lifecycle around the existing permitted server views and intentions. The TypeScript `WorldRenderer` interface shows where those responsibilities separate today. Use its behavior as a reference when defining the cross-language interface.

@@ -1,5 +1,7 @@
 # Open Legend
 
+**Develop the native game** from one checkout. On Windows, double-click [OpenLegend.cmd](OpenLegend.cmd) to build the client, start the Rust world and open Unreal Editor. On macOS, run `python3 apps/unreal/prepare_workspace.py play`. See [initial setup, daily development and sharing assets](apps/unreal/README.md).
+
 For models, images, fonts, captures, editable sources and studies, follow [Working with game assets](docs/asset-workflow.md). Substantial files live in S3 and are delivered through `assets.openlegend.ai`; exact checked-in selections identify the files needed by each game/study build. Public downloads use `pnpm assets pull --public --path PATH` or a selected prefix without AWS credentials. Keep new art workspaces and generated outputs outside the checkout, then publish verified permanent references.
 
 ## Gameplay priorities and repertoire library
