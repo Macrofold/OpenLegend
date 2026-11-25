@@ -48,6 +48,15 @@ export const sdkOwners: Readonly<Record<string, readonly string[]>> = {
     '@aws-sdk/client-lambda',
     '@aws-sdk/client-ssm',
   ],
+  'scripts/verification-workers/deploy-controller.mjs': [
+    '@aws-sdk/client-cloudformation',
+    '@aws-sdk/client-sts',
+    '@aws-sdk/client-ec2',
+    '@aws-sdk/client-dynamodb',
+    '@aws-sdk/lib-dynamodb',
+    '@aws-sdk/client-lambda',
+    '@aws-sdk/client-ssm',
+  ],
   'scripts/verification-workers/quarantine.mjs': ['@aws-sdk/client-ec2', '@aws-sdk/client-ssm'],
   'scripts/verification-workers/supervisor.mjs': [
     '@aws-sdk/client-dynamodb',

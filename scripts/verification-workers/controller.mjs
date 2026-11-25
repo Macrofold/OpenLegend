@@ -42,6 +42,7 @@ import { campaigns } from './campaigns.mjs';
 import { mapBounded } from './parallel.mjs';
 import { machine, launchRejected, bootReady } from './machine.mjs';
 import { images } from './images.mjs';
+import { stoppedQuarantineProof } from './quarantine.mjs';
 import { selectedHardware, observedMachine, isRetainedWorker } from './hardware.mjs';
 import {
   defaults,
@@ -53,6 +54,7 @@ import {
   id,
   integer,
   estimate,
+  workerAffinity,
 } from './contracts.mjs';
 const options = clientOptions();
 const db = DynamoDBDocumentClient.from(new DynamoDBClient(options), {
@@ -221,6 +223,178 @@ async function finishRun(run, worker, outcome) {
   delete worker.plan;
   await transact([put(run), put(worker)]);
 }
+
+function retirementCompute(receipt, run, worker) {
+  const windows = receipt.estimatedPowerWindows;
+  if (!Array.isArray(windows) || !windows.length || windows.length > 32)
+    throw new Error('Retirement needs bounded start and stop evidence.');
+  const claimedAt = integer(run.claimedAt, 'original claim time', 1, now());
+  const stopRequestedAt = integer(
+    worker.stopRequestedAt,
+    'shutdown request time',
+    claimedAt,
+    now(),
+  );
+  let stoppedAt = Math.floor(claimedAt / 1000) * 1000;
+  let computeDurationMs = 0;
+  const events = new Set();
+  for (const { startAt, stopAt, startEventId, stopEventId } of windows) {
+    integer(startAt, 'observed start time', stoppedAt, now());
+    stoppedAt = integer(stopAt, 'observed stop time', startAt, now());
+    for (const eventId of [startEventId, stopEventId]) {
+      id(eventId);
+      if (events.has(eventId)) throw new Error('Retirement repeats a power event.');
+      events.add(eventId);
+    }
+    // Estimate usage from accepted start and stop requests, with one second
+    // of timestamp precision and EC2's one-minute minimum per start.
+    computeDurationMs += Math.max(60000, stopAt - startAt + 1000);
+  }
+  if (
+    Math.abs(stoppedAt - stopRequestedAt) > 30000 ||
+    computeDurationMs !== receipt.computeDurationMs
+  )
+    throw new Error('Retirement duration does not match the recorded power windows and shutdown.');
+  return { computeDurationMs, stoppedAt };
+}
+
+// Preserve the claim until EC2 confirms the original machine is gone. See
+// docs/projects/verification-workers-tech-design.md#closeout-of-the-two-stopped-november-failures.
+async function retireQuarantine(event) {
+  const { workerId, instanceId, runId, campaignId, generation, evidenceSha256 } = event;
+  workerAffinity({ workerId, instanceId });
+  id(runId);
+  id(campaignId);
+  integer(generation, 'retirement generation', 1, Number.MAX_SAFE_INTEGER);
+  if (typeof evidenceSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(evidenceSha256))
+    throw new Error('Retirement requires a protected evidence checksum.');
+  const campaign = await read(`campaign:${campaignId}`);
+  authenticate(campaign, event.secret);
+  const run = await read(`run:${runId}`);
+  if (
+    !run ||
+    run.campaignId !== campaignId ||
+    run.workerId !== workerId ||
+    run.generation !== generation ||
+    run.machine?.instanceId !== instanceId
+  )
+    throw new Error('Retirement does not match its original run.');
+  if (run.phase === 'finished') {
+    if (run.lifecycle?.quarantineCloseoutSha256 !== evidenceSha256)
+      throw new Error('Run is closed under different retirement evidence.');
+    return publicRun(run);
+  }
+  const worker = await read(`worker:${workerId}`);
+  fence(worker, { runId, generation }, now(), true);
+  if (worker.instanceId !== instanceId) throw new Error('Registered retirement instance changed.');
+  if (worker.state === 'retiring' && worker.quarantineRetirement) {
+    if (worker.quarantineRetirement.evidenceSha256 !== evidenceSha256)
+      throw new Error('Retirement already admitted with different evidence.');
+    return { workerId, runId, state: 'retiring', pending: true };
+  }
+  const pool = await read('pool');
+  if (
+    pool?.admissionClosed ||
+    !campaign.cancelledAt ||
+    !campaign.active?.includes(runId) ||
+    campaign.usage?.[workerId]
+  )
+    throw new Error(
+      'Retirement needs a cancelled claim with no earlier unsettled use of this slot.',
+    );
+
+  // Per-worker supervisor roles cannot write this private operator prefix.
+  const receipt = await getObject(`control/quarantine-closeout/${evidenceSha256}.json`, 16384);
+  if (
+    !receipt ||
+    digest(receipt) !== evidenceSha256 ||
+    receipt.workerId !== workerId ||
+    receipt.runId !== runId ||
+    receipt.campaignId !== campaignId ||
+    receipt.instanceId !== instanceId ||
+    receipt.generation !== generation ||
+    typeof receipt.approvedBy !== 'string' ||
+    !receipt.approvedBy.trim() ||
+    typeof receipt.evidence?.sha256 !== 'string' ||
+    !/^[a-f0-9]{64}$/.test(receipt.evidence.sha256) ||
+    !Number.isSafeInteger(receipt.evidence.files) ||
+    receipt.evidence.files <= 0 ||
+    (run.artifacts && receipt.evidence.sha256 !== run.collection?.manifestHash)
+  )
+    throw new Error('Protected retirement evidence is missing, damaged or for another claim.');
+  const compute = retirementCompute(receipt, run, worker);
+  const { volumes } = await stoppedQuarantineProof({
+    expected: { workerId, runId, campaignId, instanceId, generation },
+    worker,
+    run,
+    campaign,
+    pool,
+    poolName: config.pool,
+    ec2,
+    ssm,
+    send,
+  });
+  if (
+    volumes.length !== 1 ||
+    volumes[0].volumeId !== receipt.rootVolumeId ||
+    !volumes[0].root ||
+    volumes[0].deleteOnTermination !== true
+  )
+    throw new Error('Retirement evidence does not cover the attached disk that AWS will remove.');
+
+  const admitted = await lock('pool', async () => {
+    const current = await read('pool');
+    if (current?.admissionClosed || current?.owners?.[workerId] !== campaignId)
+      throw new Error('The stopped claim closed or changed during retirement verification.');
+    await scheduleState('ENABLED');
+    worker.state = 'retiring';
+    worker.quarantineRetirement = { ...compute, evidenceSha256 };
+    await write(worker);
+    return true;
+  });
+  if (admitted?.busy) return admitted;
+  await send(ec2, TerminateInstancesCommand, { InstanceIds: [worker.instanceId] });
+  return { workerId, runId, state: 'retiring', pending: true };
+}
+
+async function finishQuarantineRetirement(worker) {
+  const { computeDurationMs, stoppedAt, evidenceSha256 } = worker.quarantineRetirement;
+  const run = await read(`run:${worker.runId}`);
+  if (
+    run?.phase !== 'failed' ||
+    run.workerId !== worker.workerId ||
+    run.generation !== worker.generation ||
+    run.machine?.instanceId !== worker.instanceId
+  )
+    throw new Error('Retiring machine no longer matches the original failed run.');
+  const terminatedAt = now();
+  run.phase = 'finished';
+  run.outcome = 'interrupted';
+  run.finishedAt = terminatedAt;
+  run.lifecycle = {
+    ...run.lifecycle,
+    status: 'retired',
+    workerId: worker.workerId,
+    generation: worker.generation,
+    instanceId: worker.instanceId,
+    stoppedAt,
+    terminatedAt,
+    computeDurationMs,
+    quarantineCloseoutSha256: evidenceSha256,
+  };
+  await object(`${prefix(run)}/lifecycle.json`, run.lifecycle);
+  await transact([
+    put(run),
+    put({
+      pk: worker.pk,
+      workerId: worker.workerId,
+      generation: worker.generation,
+      state: 'empty',
+    }),
+  ]);
+  return publicRun(run);
+}
+
 async function rejectedCreation(run, worker, error) {
   run.phase = 'finished';
   run.outcome = 'not-started';
@@ -671,6 +845,7 @@ async function operation(event, context) {
       }
       const { run, worker } = await runAndWorker(event, true, true);
       if (run.phase === 'finished') return publicRun(run);
+      if (worker.quarantineRetirement) throw new Error('This failed machine is being retired.');
       if (event.kind === 'failure') {
         worker.state = 'quarantined';
         run.phase = 'failed';
@@ -818,6 +993,7 @@ async function operation(event, context) {
         return publicRun(run);
       }
       const worker = await read(`worker:${run.workerId}`);
+      if (worker.quarantineRetirement) return publicRun(run);
       if (run.phase === 'awaiting-client' && run.completion?.clean && run.artifacts) {
         await finishRun(
           run,
@@ -843,8 +1019,11 @@ async function operation(event, context) {
       if (admitted !== true) throw new Error('Worker allocation is busy or reserved.');
       return { workerId: worker.workerId, state: worker.state };
     }
+    case 'quarantine-retire':
+      return retireQuarantine(event);
     case 'recover': {
       const worker = await read(`worker:${id(event.workerId)}`);
+      if (worker.quarantineRetirement) throw new Error('This failed machine is being retired.');
       if (worker.state === 'leased' && worker.leaseUntil > now())
         throw new Error('Healthy claims cannot be taken over.');
       if (!worker.runId && worker.state === 'available')
@@ -1049,6 +1228,7 @@ async function operation(event, context) {
       } else if (worker.state === 'retiring') {
         const state = await power(worker);
         if (state === 'terminated') {
+          if (worker.quarantineRetirement) return finishQuarantineRetirement(worker);
           if (worker.lastRunId) {
             const previous = await read(`run:${worker.lastRunId}`);
             previous.lifecycle = {
@@ -1151,9 +1331,9 @@ export async function handler(event, context) {
           worker?.runId ? read(`run:${worker.runId}`) : undefined,
         )
       : undefined;
-  const result = await (recoveryRun?.campaignId
-    ? lock(`campaign:${recoveryRun.campaignId}`, work)
-    : work());
+  const campaignId =
+    event.action === 'quarantine-retire' ? id(event.campaignId) : recoveryRun?.campaignId;
+  const result = await (campaignId ? lock(`campaign:${campaignId}`, work) : work());
   if (result?.phase === 'finished' && result.campaignId)
     await campaignOwner({ action: 'campaign-notify', campaignId: result.campaignId });
   return result;

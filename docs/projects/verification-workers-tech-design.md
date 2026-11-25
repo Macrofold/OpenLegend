@@ -107,7 +107,21 @@ The worker keeps up to four checked Rust executables, each at most 768 MiB, in i
 
 ### Integrated runner follow-up review
 
-The maintained planner executes an untimed preparation case before three matched build pairs. The report qualifies only actual hits of that case's verified executable, with matching inputs, workload and worker. The controller source keeps reservations through worker replacement and closes unclaimed assignments that reach their deadline. The [review evidence](../maintainers/verification-workers.md#integrated-runner-follow-up-review--november-25-2026) records local and managed checks, including the deployment qualification still open for the controller change.
+The maintained planner executes an untimed preparation case before three matched build pairs. The report qualifies only actual hits of that case's verified executable, with matching inputs, workload and worker. The deployed controller keeps reservations through worker replacement and closes unclaimed assignments that reach their deadline. The [review evidence](../maintainers/verification-workers.md#integrated-runner-follow-up-review--november-25-2026) records local and managed checks. The [rollout record](../maintainers/verification-workers.md#controller-only-scheduler-rollout--november-25-2026) tracks deployment verification and the remaining live replacement check.
+
+### Controller-only updates with stopped quarantines
+
+An operator updating only the controller bundle names the current bundle and each stopped quarantine to preserve. Check the live assignments, attached disks, command completion, existing exports and spending records before updating. Close admission and wait for existing controller calls to finish. Execute an AWS change set only if it changes the bundle references on the existing controller with the previous template and all other parameters held fixed. Compare the quarantine evidence while requests are still paused. Restore controller access, verify that it loaded the expected bundle and reopen admission. An unknown stack outcome or changed quarantine evidence keeps admission closed for investigation. A stopped worker whose results have yet to be exported keeps its attached storage.
+
+From the checked-out controller source, run `pnpm verify:worker deploy --controller-only CONFIG.json` after confirming authorization for the live stack. The JSON fields are `authorizationRef`, `expectedBundleDigest` and `preservedQuarantines`. Include the registered `workerId`, `instanceId`, `runId`, `generation` and `campaignId` of every quarantine. An empty list requires an idle pool with no quarantines. The optional `stackName` defaults to `openlegend-verification`. Keep the printed change-set identifier and quarantine checksums. If the operation leaves admission closed, inspect the printed operation and exact AWS stack events before touching the gate or controller concurrency.
+
+Verify with disposable cases for an unrelated infrastructure change, unexpected active work, an uncertain update and a successful controller-only update. On the approved pool, compare both stopped workers and their records before and after, then use an available worker for a normal managed job to check execution, collection and settlement.
+
+### Closeout of the two stopped November failures
+
+Preserve the acknowledged export from slot 1 and read the exact failed run's diagnostics for slot 3 from a temporary snapshot of its stopped root disk. Verify the retained bytes before allowing the original disks to be deleted. Leave the failed tests recorded as interrupted and retain their financial history. Verify exact ownership and stopped power before retirement, keep the assignments unavailable until AWS confirms deletion, and reconcile only from supported running intervals. Check that the original disk charges end and remove the temporary snapshot after its selected files have been verified. This operation applies only to the two explicitly approved November workers.
+
+The operator invokes `pnpm verify:worker retire SLOT --quarantine VERIFIED_RECEIPT.json` with the original batch's saved credential. The receipt ties the exact failed test and stopped instance to an independently verified archive and the AWS power events used for estimated compute cost. The controller keeps the failed assignment fenced until it observes termination and then closes it as interrupted. Ordinary `retire SLOT` continues to require an idle worker.
 
 ### Network and execution boundary
 

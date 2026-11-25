@@ -29,6 +29,23 @@ import { upload, getJson } from './artifacts.mjs';
 import { template } from './infrastructure.mjs';
 import { coordination as controlCoordination } from './coordination.mjs';
 import { quarantinedDeploymentEvidence } from './quarantine.mjs';
+
+export async function buildWorkerBundle(name, directory) {
+  const outfile = join(directory, `${name}.mjs`);
+  await build({
+    entryPoints: [`scripts/verification-workers/${name}.mjs`],
+    outfile,
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    target: 'node24',
+    banner: {
+      js: "import{createRequire as __createRequire}from'node:module';const require=__createRequire(import.meta.url);",
+    },
+  });
+  return outfile;
+}
+
 export function deploymentPoolQuiescent(pool, preserved) {
   const owners = Object.entries(pool?.owners ?? {});
   return (
@@ -131,24 +148,16 @@ export async function deploy(home, args) {
     stack = await wait();
   }
   const outputs = Object.fromEntries(stack.Outputs.map((x) => [x.OutputKey, x.OutputValue]));
-  for (const name of ['controller', 'supervisor'])
-    await build({
-      entryPoints: [`scripts/verification-workers/${name}.mjs`],
-      outfile: join(directory, `${name}.mjs`),
-      bundle: true,
-      platform: 'node',
-      format: 'esm',
-      target: 'node24',
-      banner: {
-        js: "import{createRequire as __createRequire}from'node:module';const require=__createRequire(import.meta.url);",
-      },
-    });
-  const controllerDigest = await hashFile(join(directory, 'controller.mjs')),
-    supervisorDigest = await hashFile(join(directory, 'supervisor.mjs'));
+  const [controllerPath, supervisorPath] = await Promise.all([
+    buildWorkerBundle('controller', directory),
+    buildWorkerBundle('supervisor', directory),
+  ]);
+  const controllerDigest = await hashFile(controllerPath),
+    supervisorDigest = await hashFile(supervisorPath);
   const controllerKey = `control/controller-${controllerDigest}.mjs`,
     supervisorKey = `control/supervisor-${supervisorDigest}.mjs`;
-  await upload(outputs.Bucket, controllerKey, join(directory, 'controller.mjs'));
-  await upload(outputs.Bucket, supervisorKey, join(directory, 'supervisor.mjs'));
+  await upload(outputs.Bucket, controllerKey, controllerPath);
+  await upload(outputs.Bucket, supervisorKey, supervisorPath);
   let script = await readFile('scripts/verification-workers/bootstrap.sh', 'utf8');
   script = script.replace(
     '__WORKSPACE_CHECK__',

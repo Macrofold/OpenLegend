@@ -768,6 +768,11 @@ async function main() {
     throw new Error('Use device status or device release OWNER_ID [--confirmed-closed].');
   }
   if (action === 'deploy') {
+    if (rest[0] === '--controller-only') {
+      if (rest.length !== 2) throw new Error('Use deploy --controller-only CONFIG.json.');
+      const { deployControllerOnly } = await import('./deploy-controller.mjs');
+      return console.log(JSON.stringify(await deployControllerOnly(rest[1]), null, 2));
+    }
     const { deploy } = await import('./deploy.mjs');
     return deploy(home, rest);
   }
@@ -907,7 +912,42 @@ async function main() {
       }),
     );
   }
-  if (action === 'retire') return console.log(await invoke(config, { action, workerId: rest[0] }));
+  if (action === 'retire') {
+    const workerId = id(rest[0]);
+    if (rest.length === 1) return console.log(await invoke(config, { action, workerId }));
+    if (rest.length !== 3 || rest[1] !== '--quarantine')
+      throw new Error('Use retire SLOT or retire SLOT --quarantine VERIFIED_RECEIPT.json.');
+    const source = resolve(rest[2]);
+    const receipt = await json(source);
+    if (receipt.workerId !== workerId) throw new Error('Receipt names a different worker.');
+    const campaignId = id(receipt.campaignId);
+    const { secret } = await campaignState(campaignId);
+    const evidenceSha256 = digest(receipt);
+    const key = `control/quarantine-closeout/${evidenceSha256}.json`;
+    try {
+      await upload(config.bucket, key, source, false, true);
+    } catch (error) {
+      if (error.name !== 'PreconditionFailed') throw error;
+    }
+    if (digest(await getJson(config.bucket, key, 64 * 1024)) !== evidenceSha256)
+      throw new Error('The stored quarantine evidence differs from the verified receipt.');
+    return console.log(
+      JSON.stringify(
+        await invoke(config, {
+          action: 'quarantine-retire',
+          workerId,
+          campaignId,
+          runId: receipt.runId,
+          instanceId: receipt.instanceId,
+          generation: receipt.generation,
+          evidenceSha256,
+          secret,
+        }),
+        null,
+        2,
+      ),
+    );
+  }
   if (action === 'recover') {
     const until = Date.now() + 600000;
     do {

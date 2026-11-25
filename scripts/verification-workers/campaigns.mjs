@@ -274,10 +274,15 @@ export function campaigns(api) {
             ),
           )
         : (grant?.microUsd ?? 0);
-      compute += Math.ceil(
-        (Math.max(60000, endedAt - uses[index].startedAt) / 3600000) *
-          runs[index].machine.hourlyMicroUsd,
-      );
+      const computeDurationMs = life.quarantineCloseoutSha256
+        ? integer(
+            life.computeDurationMs,
+            'quarantined running time',
+            60000,
+            Number.MAX_SAFE_INTEGER,
+          )
+        : Math.max(60000, endedAt - uses[index].startedAt);
+      compute += Math.ceil((computeDurationMs / 3600000) * runs[index].machine.hourlyMicroUsd);
     }
     if (!paid) {
       // Hardware must be confirmed quiescent before financial monitoring can become passive.
