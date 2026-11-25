@@ -4,9 +4,10 @@ import { runRemoteProcess } from '@open-legend/network/node';
 import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { prepareReusableCaseBuild } from './build-cache.js';
 import { readCaseBuild } from './case-build.js';
 import { readRaw, writeCaseEvidence } from './case-evidence.js';
-import { jsonFile, object, sha256, text, writeJson } from './contract.js';
+import { buildMode, jsonFile, object, sha256, text, writeJson } from './contract.js';
 import type { CasePlan } from './contract.js';
 import { writeCpuEvidence } from './cpu-evidence.js';
 import { stageFixture } from './fixture.js';
@@ -25,6 +26,7 @@ function environment(name: string) {
  * worker and independent database. This function never allocates a machine.
  */
 export async function runCase(plan: CasePlan, outputDirectory: string): Promise<void> {
+  const preparationStarted = performance.now();
   const initializedAt = new Date().toISOString();
   const sourcePath = environment('OPENLEGEND_VERIFICATION_MANIFEST');
   const inputsRoot = environment('OPENLEGEND_JOB_INPUTS');
@@ -58,6 +60,8 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
   let phase = 'verify-inputs';
   let failure: unknown;
   let executableSha256: string | null = null;
+  let preparationMs: number | null = null;
+  let gameplayMs: number | null = null;
   let adaptedInputs;
   let raw: Record<string, unknown> = {};
   let cleanup = 'case-workspace-released; supervisor owns database and worker cleanup';
@@ -83,9 +87,11 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
   }
   const diagnosticModes: ('sampled' | 'sql')[] =
     plan.mode === 'sampled' || plan.mode === 'sql' ? [plan.mode] : [];
+  const cacheMode = buildMode(plan.mode);
   const usesFramePointers = plan.mode === 'sampled' || plan.mode === 'sampling-control';
   const usesFeature = plan.mode === 'enabled' || plan.mode === 'disabled';
-  const rustflags = usesFramePointers ? '-C force-frame-pointers=yes' : undefined;
+  const rustflags =
+    usesFramePointers || cacheMode === 'changed-build' ? '-C force-frame-pointers=yes' : undefined;
   try {
     const inputs = await verifyCaseInputs(inputsRoot, plan.inputHashes, diagnosticModes);
     phase = 'stage-fixture';
@@ -94,16 +100,42 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
     const fixture = await stageFixture(plan, work, inputs, lockSha256);
     adaptedInputs = fixture.hashes;
     phase = 'build-release';
-    const built = await readCaseBuild(plan, source, output, pairedBuild, () =>
-      run(process.execPath, [fixture.build, 'direct', output, plan.source], {
-        ...process.env,
-        RUSTFLAGS: rustflags,
-        CARGO_PROFILE_RELEASE_DEBUG: usesFramePointers ? 'line-tables-only' : undefined,
-        CARGO_PROFILE_RELEASE_STRIP: usesFramePointers ? 'none' : undefined,
-      }),
-    );
+    const build = (staged?: string) =>
+      run(
+        process.execPath,
+        [fixture.build, 'direct', output, plan.source, ...(staged ? [staged] : [])],
+        {
+          ...process.env,
+          RUSTFLAGS: rustflags,
+          CARGO_PROFILE_RELEASE_DEBUG: usesFramePointers ? 'line-tables-only' : undefined,
+          CARGO_PROFILE_RELEASE_STRIP: usesFramePointers ? 'none' : undefined,
+        },
+      );
+    const built = cacheMode
+      ? await prepareReusableCaseBuild(
+          {
+            mode: cacheMode,
+            sourcePath,
+            source,
+            home,
+            work,
+            output,
+            inputs,
+            recipeSha256: fixture.hashes.build,
+            rustflags,
+          },
+          build,
+        )
+      : await readCaseBuild(plan, source, output, pairedBuild, build);
     executableSha256 = text(object(built.executable).sha256, 'release executable digest', sha256);
+    if (plan.repetition === 0) {
+      const reuse = object(built.buildReuse, 'cache preparation receipt');
+      if (reuse.status !== 'hit' && reuse.retained !== true)
+        throw new Error('The untimed preparer could not retain the executable for the comparison.');
+    }
     phase = 'ordinary-play';
+    const gameplayStarted = performance.now();
+    preparationMs = gameplayStarted - preparationStarted;
     try {
       await run(process.execPath, [fixture.launch, 'direct', output, plan.source], {
         ...process.env,
@@ -126,6 +158,8 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
       // if the driver did not finish writing its result.
       raw = await readRaw(output).catch(() => ({}));
       throw error;
+    } finally {
+      gameplayMs = performance.now() - gameplayStarted;
     }
     phase = 'reduce-instrument';
     raw = await readRaw(output);
@@ -186,8 +220,9 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
     build: {
       profile: 'release',
       features: usesFeature ? ['profile-campaign'] : [],
-      framePointers: usesFramePointers,
+      framePointers: rustflags !== undefined,
     },
+    ...(cacheMode ? { preparationMs, gameplayMs } : {}),
     initializedAt,
     completedAt,
   });

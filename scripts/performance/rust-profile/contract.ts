@@ -3,6 +3,9 @@ import { createReadStream } from 'node:fs';
 import { lstat, readFile, realpath, writeFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 
+export const buildModes = ['fresh-build', 'reuse-build', 'changed-build', 'corrupt-build'] as const;
+export type BuildMode = (typeof buildModes)[number];
+
 export const modes = [
   'untouched',
   'default',
@@ -11,8 +14,13 @@ export const modes = [
   'sampling-control',
   'sampled',
   'sql',
+  ...buildModes,
 ] as const;
 export type Mode = (typeof modes)[number];
+
+export function buildMode(mode: Mode): BuildMode | undefined {
+  return buildModes.find((buildMode) => buildMode === mode);
+}
 export const coreArtifacts = [
   'manifest.json',
   'timeline.json',

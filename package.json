@@ -27,12 +27,26 @@
     "network:check": "tsx scripts/generate-study-access.ts --check && tsx scripts/check-network-boundaries.ts",
     "network:generate": "tsx scripts/generate-study-access.ts",
     "tokens:generate": "tsx scripts/generate-interface-tokens.ts",
-    "tokens:check": "tsx scripts/generate-interface-tokens.ts --check"
+    "tokens:check": "tsx scripts/generate-interface-tokens.ts --check",
+    "verify:worker": "node --import tsx scripts/verification-workers/cli.mjs"
   },
   "dependencies": {
     "tsx": "4.23.13"
   },
   "devDependencies": {
+    "@aws-sdk/client-cloudformation": "3.1161.0",
+    "@aws-sdk/client-cloudtrail": "3.1161.0",
+    "@aws-sdk/client-dynamodb": "3.1161.0",
+    "@aws-sdk/client-ec2": "3.1161.0",
+    "@aws-sdk/client-lambda": "3.1161.0",
+    "@aws-sdk/client-s3": "3.1152.0",
+    "@aws-sdk/client-scheduler": "3.1161.0",
+    "@aws-sdk/client-service-quotas": "3.1161.0",
+    "@aws-sdk/client-ssm": "3.1161.0",
+    "@aws-sdk/client-sts": "3.1152.0",
+    "@aws-sdk/credential-providers": "3.1152.0",
+    "@aws-sdk/lib-dynamodb": "3.1161.0",
+    "@open-legend/ai": "workspace:*",
     "@open-legend/assets": "workspace:*",
     "@open-legend/network": "workspace:*",
     "@playwright/test": "1.58.2",

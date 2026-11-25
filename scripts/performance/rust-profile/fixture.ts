@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { hashFile } from './contract.js';
+import { buildMode, hashFile } from './contract.js';
 import type { CasePlan } from './contract.js';
 import type { RunnerInput } from './inputs.js';
 
@@ -90,6 +90,43 @@ assert.equal(await sha(join(root, 'native/Cargo.lock')), caseLockSha256);`,
     '  cargoLockSha256: manifest.cargoLockSha256,',
     '  cargoLockSha256: caseLockSha256,',
   );
+  // The pinned recipe materializes the whole ELF before hashing it. Keep its
+  // architecture and digest checks while reading large release files in chunks.
+  builder = replace(
+    builder,
+    `async function sha(path) {
+  const digest = createHash('sha256');
+  for await (const contents of createReadStream(path)) digest.update(contents);
+  return digest.digest('hex');
+}
+async function x64Elf(path) {
+  const bytes = await readFile(path);
+  assert.equal(bytes.subarray(0, 6).toString('hex'), '7f454c460201');
+  assert.equal(bytes.readUInt16LE(18), 62);
+  return { path, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+}`,
+    `async function inspectFile(path, header) {
+  const digest = createHash('sha256');
+  let bytes = 0;
+  for await (const contents of createReadStream(path)) {
+    if (header && bytes < header.length) contents.copy(header, bytes, 0, header.length - bytes);
+    digest.update(contents);
+    bytes += contents.length;
+  }
+  return { bytes, sha256: digest.digest('hex') };
+}
+async function sha(path) {
+  return (await inspectFile(path)).sha256;
+}
+async function x64Elf(path) {
+  const header = Buffer.alloc(20);
+  const inspected = await inspectFile(path, header);
+  assert(inspected.bytes >= header.length, 'Truncated ELF header');
+  assert.equal(header.subarray(0, 6).toString('hex'), '7f454c460201');
+  assert.equal(header.readUInt16LE(18), 62);
+  return { path, ...inspected };
+}`,
+  );
   // A disabled and enabled run use the same build configuration. Frame
   // pointers change the build independently from attaching the sampler.
   if (plan.mode === 'disabled' || plan.mode === 'enabled') {
@@ -99,6 +136,7 @@ assert.equal(await sha(join(root, 'native/Cargo.lock')), caseLockSha256);`,
       "'--bin', 'openlegend-game-server', '--features', 'profile-campaign'], env, true);",
     );
   }
+  if (buildMode(plan.mode)) builder = adaptBuilderForReuse(builder);
   await writeFile(build, builder, { flag: 'wx', mode: 0o600 });
   return {
     build,
@@ -112,7 +150,90 @@ assert.equal(await sha(join(root, 'native/Cargo.lock')), caseLockSha256);`,
   };
 }
 
+/** Keep the pinned recipe's Node, browser and language checks per case. Only
+ * the Rust toolchain extraction and compilation may use a verified executable.
+ */
+function adaptBuilderForReuse(builder: string) {
+  builder = replace(
+    builder,
+    'const [arm, results, expected] = process.argv.slice(2);',
+    "const [arm, results, expected, stagedExecutable] = process.argv.slice(2);\nassert.equal(arm, 'direct');",
+  );
+  builder = replace(
+    builder,
+    "if (arm === 'source' && file.name !== 'node') continue;",
+    "if (stagedExecutable && file.name !== 'node') continue;",
+  );
+  builder = replace(
+    builder,
+    "if (arm !== 'source') {\n  const zig",
+    'if (!stagedExecutable) {\n  const zig',
+  );
+  // Only these variables reach Cargo, rustc, Zig and dependency build scripts.
+  // Do not forward provider/database configuration or experiment-specific paths.
+  builder = replace(
+    builder,
+    `    run('cargo', ['build', '--locked', '--offline', '--release',
+      '--manifest-path', 'native/Cargo.toml', '-p', 'openlegend-game-server',
+      '--bin', 'openlegend-game-server'], env, true);
+    receipt.executable = await x64Elf(join(env.CARGO_TARGET_DIR, 'release', 'openlegend-game-server'));
+    const language = join(inputs, 'language');
+    const library = await x64Elf(join(language, 'libopenlegend_icu.so'));
+    const pin = JSON.parse(await readFile(join(language, 'language.json'), 'utf8'));
+    assert.equal(pin.nodeDataSha256, manifest.nodeDataSha256);
+    assert.equal(pin.librarySha256, library.sha256);
+    receipt.language = { directory: language, library, pin };`,
+    `    const cargoEnv = {
+      PATH: join(rust, 'bin') + ':/usr/bin:/bin', HOME: process.env.HOME,
+      LANG: 'C.UTF-8', TZ: 'UTC',
+      CARGO_HOME: env.CARGO_HOME, CARGO_TARGET_DIR: env.CARGO_TARGET_DIR,
+      CARGO_BUILD_JOBS: env.CARGO_BUILD_JOBS, CARGO_NET_OFFLINE: env.CARGO_NET_OFFLINE,
+      CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: cc,
+      CC_x86_64_unknown_linux_gnu: cc, AR_x86_64_unknown_linux_gnu: ar,
+      ZIG_GLOBAL_CACHE_DIR: env.ZIG_GLOBAL_CACHE_DIR, ZIG_LOCAL_CACHE_DIR: join(home, 'zig-local'),
+      ...(process.env.RUSTFLAGS === undefined ? {} : { RUSTFLAGS: process.env.RUSTFLAGS }),
+    };
+    const timing = join(home, 'rust-compilation.tsv');
+    const started = performance.now();
+    run('/usr/bin/time', ['-f', '%U\\t%S', '-o', timing, 'cargo',
+      'build', '--locked', '--offline', '--release',
+      '--manifest-path', 'native/Cargo.toml', '-p', 'openlegend-game-server',
+      '--bin', 'openlegend-game-server'], cargoEnv, true);
+    const elapsedMs = performance.now() - started;
+    const [userSeconds, systemSeconds] = (await readFile(timing, 'utf8')).trim().split('\\t').map(Number);
+    assert(Number.isFinite(userSeconds) && Number.isFinite(systemSeconds));
+    receipt.rustCompilation = { elapsedMs, userSeconds, systemSeconds };`,
+  );
+  return replace(
+    builder,
+    '// Git-dependent asset inventory is checked before source packaging.',
+    `const executableCheckStarted = performance.now();
+receipt.executable = await x64Elf(stagedExecutable ?? join(env.CARGO_TARGET_DIR, 'release', 'openlegend-game-server'));
+const interfaceCheck = spawnSync(receipt.executable.path, [], {
+  cwd: root, env: { LANG: 'C.UTF-8' }, encoding: 'utf8', timeout: 5_000, maxBuffer: 64 * 1024,
+});
+assert.equal(interfaceCheck.status, 1);
+assert.match(interfaceCheck.stderr, /serve\\|check-open\\|initialize-storage RELEASE_DIRECTORY/);
+receipt.executableValidationMs = performance.now() - executableCheckStarted;
+const language = join(inputs, 'language');
+const library = await x64Elf(join(language, 'libopenlegend_icu.so'));
+const pin = JSON.parse(await readFile(join(language, 'language.json'), 'utf8'));
+assert.equal(pin.nodeDataSha256, manifest.nodeDataSha256);
+assert.equal(pin.librarySha256, library.sha256);
+receipt.language = { directory: language, library, pin };
+
+// Git-dependent asset inventory is checked before source packaging.`,
+  );
+}
+
 function adaptWorkload(source: string) {
+  // The archived Node driver guessed the Rust host's admission limit. Source
+  // provenance identifies the real configuration; this is not a runtime reading.
+  source = replace(
+    source,
+    "    nativeTransientAllowanceBytes: arm === 'source' ? undefined : 2 * 1024 ** 3,\n",
+    '',
+  );
   // Reuse the release comparison's first-save owner while the database is
   // still stopped. This never launches the archived TypeScript game.
   source = replace(

@@ -1,4 +1,5 @@
 import {
+  buildMode,
   digest,
   identifier,
   integer,
@@ -191,17 +192,36 @@ export function compare(
   proofError?: string,
 ) {
   const reasons = new Set<string>();
+  const buildComparison = buildMode(plan.measured);
+  const requiresPrime = plan.baseline === 'fresh-build';
+  const prime = runs.find((run) => run.plan.repetition === 0);
+  const timed = runs.filter((run) => run.plan.repetition > 0);
   if (proofError) reasons.add(proofError);
-  if (runs.length !== 6 || !runs.every(completeWork))
+  if (timed.length !== 6 || runs.length !== (requiresPrime ? 7 : 6) || !runs.every(completeWork))
     reasons.add('Missing checks, coverage, or promised work.');
-  const windows = new Map(runs.map((run) => [run, windowEvidence(run, plan)]));
+  if (
+    requiresPrime &&
+    (!prime?.build ||
+      (prime.build.status !== 'hit' && (!prime.build.retained || prime.build.status === 'fresh')))
+  )
+    reasons.add('The untimed case did not prepare a retained executable.');
+  if (
+    buildComparison &&
+    (runs.some((run) => !run.sourceArchive) ||
+      new Set(runs.map((run) => run.sourceArchive)).size !== 1)
+  )
+    reasons.add('Build comparisons require the same verified source archive.');
+  const windows = new Map(timed.map((run) => [run, windowEvidence(run, plan)]));
   if ([...windows.values()].some((window) => !window.resources))
     reasons.add('The frozen steady window or its resource sample duration is unverified.');
   if ([...windows.values()].some((window) => window.wire === false))
     reasons.add('A PostgreSQL wire sample does not span the frozen steady window.');
   if ([...windows.values()].some((window) => window.stacks === false))
     reasons.add('CPU stack samples were not selected from the frozen steady window.');
-  if (runs.some((run) => !run.database) || new Set(runs.map((run) => run.database)).size !== 6)
+  if (
+    runs.some((run) => !run.database) ||
+    new Set(runs.map((run) => run.database)).size !== runs.length
+  )
     reasons.add('Fresh databases not verified for all cases.');
   if (runs.some((run) => !run.instanceId))
     reasons.add('Worker identity is missing for one or more cases.');
@@ -209,18 +229,47 @@ export function compare(
     reasons.add('Matched cases did not use the same assigned worker.');
   const pairs = [];
   for (const repetition of [1, 2, 3]) {
-    const a = runs.find(
+    const a = timed.find(
       (run) => run.plan.repetition === repetition && run.plan.mode === plan.baseline,
     );
-    const b = runs.find(
+    const b = timed.find(
       (run) => run.plan.repetition === repetition && run.plan.mode === plan.measured,
     );
     if (!a || !b) {
       reasons.add('Three matched repetitions required.');
       continue;
     }
-    if (!fixedProof(a, b, proof))
+    if (!buildComparison && !fixedProof(a, b, proof))
       reasons.add('Fixed-work equivalence not verified for the timed binaries and selections.');
+    if (buildComparison) {
+      const before = a.build;
+      const after = b.build;
+      if (!before || !after || before.elapsedMs === null || after.elapsedMs === null)
+        reasons.add('Missing sealed build preparation or worker timing.');
+      else if (
+        requiresPrime &&
+        (before.status !== 'fresh' ||
+          after.status !== 'hit' ||
+          !prime?.build ||
+          before.buildIdentity !== prime.build.buildIdentity ||
+          after.buildIdentity !== prime.build.buildIdentity ||
+          after.originalBuildSha256 !== prime.build.originalBuildSha256 ||
+          b.executable !== prime.executable)
+      )
+        reasons.add(
+          'The reuse arm did not use the checked executable prepared for its matched fresh build.',
+        );
+      else if (plan.measured === 'changed-build' && before.buildIdentity === after.buildIdentity)
+        reasons.add('The changed compiler flag did not select a distinct build identity.');
+      else if (
+        plan.measured === 'corrupt-build' &&
+        (before.buildIdentity !== after.buildIdentity ||
+          after.status !== 'rebuilt' ||
+          after.rejection !== 'checksum-mismatch' ||
+          !after.retained)
+      )
+        reasons.add('The damaged cache entry did not receive a checked rebuild.');
+    }
     if (a.plan.comparisonIdentity !== b.plan.comparisonIdentity)
       reasons.add('Frozen pairing identity differs.');
     if (b.plan.sharedBuild) {
@@ -255,9 +304,10 @@ export function compare(
       commandB = value(b, 'commandP95Ms');
     const commandIncreaseMs = commandA !== null && commandB !== null ? commandB - commandA : null;
     if (
-      commandA === null ||
-      commandIncreaseMs === null ||
-      commandIncreaseMs > Math.max(2, commandA * 0.05)
+      !buildComparison &&
+      (commandA === null ||
+        commandIncreaseMs === null ||
+        commandIncreaseMs > Math.max(2, commandA * 0.05))
     )
       reasons.add('A paired command p95 is missing or exceeds max(5%, 2 ms).');
     if (server === null || owned === null)
@@ -275,11 +325,15 @@ export function compare(
   }
   const server = statistics(pairs.flatMap((row) => (row.server === null ? [] : [row.server])));
   const owned = statistics(pairs.flatMap((row) => (row.owned === null ? [] : [row.owned])));
-  if ((server?.median ?? 0) > 0.03 || (owned?.median ?? 0) > 0.03)
+  if (!buildComparison && ((server?.median ?? 0) > 0.03 || (owned?.median ?? 0) > 0.03))
     reasons.add('Median paired CPU per completed game-second exceeds 3% overhead.');
   return {
     id: plan.id,
-    status: reasons.size ? 'unqualified-overhead' : 'qualified',
+    status: !reasons.size
+      ? 'qualified'
+      : buildComparison
+        ? 'unqualified-build'
+        : 'unqualified-overhead',
     replayProofSha256: proof?.sha256 ?? null,
     reasons: [...reasons],
     server,

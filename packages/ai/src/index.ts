@@ -71,3 +71,13 @@ export {
 export type { PreparedSchema } from './validation.js';
 
 export { OpenAiRateGate } from './rate-gate.js';
+
+export {
+  createSharedExecutionClient,
+  loadJobExecutionClient,
+  sharedAttemptId,
+  executionUrl,
+  executionCapability,
+  SHARED_EXECUTION_CONTROL_BYTES,
+} from './shared-execution.js';
+export type { SharedExecutionGrant, SharedLane } from './shared-execution.js';

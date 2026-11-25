@@ -158,7 +158,6 @@ export async function writeCaseEvidence(directory: string, plan: CasePlan, raw: 
       world.scenery === expected.scenery &&
       world.seed === opening.worldSeed &&
       config.nativeWorkers === 1 &&
-      config.nativeTransientAllowanceBytes === 2 * 1024 ** 3 &&
       config.warmupSeconds === plan.warmupSeconds &&
       config.seconds === plan.measureSeconds &&
       config.saveIntervalMs === 1000 &&

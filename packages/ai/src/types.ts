@@ -145,6 +145,15 @@ export interface AiReceipt {
     deploymentId: string;
     infrastructureCostIncluded: false;
   };
+  /** Original paid worker attempt for later receipt observation. */
+  sharedExecution?: {
+    grantId: string;
+    attemptId: string;
+    campaignId: string;
+    jobId: string;
+    caseId: string;
+    sourceHash: string;
+  };
   contextDigest: string;
   providerRequestDigest?: string;
   startedAt: string;

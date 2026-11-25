@@ -20,6 +20,40 @@ export const sdkOwners: Readonly<Record<string, readonly string[]>> = {
   'infrastructure/assets/study-access.cts': ['@aws-sdk/client-secrets-manager'],
   'scripts/performance/profile-browser.mjs': ['@playwright/test'],
   'scripts/art/texel-splatting/run.mjs': ['@playwright/test'],
+  'scripts/verification-workers/aws.mjs': ['@aws-sdk/credential-providers'],
+  'scripts/verification-workers/artifacts.mjs': ['@aws-sdk/client-s3'],
+  'scripts/verification-workers/controller.mjs': [
+    '@aws-sdk/client-dynamodb',
+    '@aws-sdk/lib-dynamodb',
+    '@aws-sdk/client-ec2',
+    '@aws-sdk/client-ssm',
+    '@aws-sdk/client-s3',
+    '@aws-sdk/client-scheduler',
+    '@aws-sdk/client-cloudtrail',
+  ],
+  'scripts/verification-workers/campaigns.mjs': ['@aws-sdk/lib-dynamodb', '@aws-sdk/client-lambda'],
+  'scripts/verification-workers/coordination.mjs': ['@aws-sdk/lib-dynamodb'],
+  'scripts/verification-workers/images.mjs': ['@aws-sdk/client-ec2', '@aws-sdk/client-ssm'],
+  'scripts/verification-workers/preflight.mjs': [
+    '@aws-sdk/client-service-quotas',
+    '@aws-sdk/client-ec2',
+  ],
+  'scripts/verification-workers/cli.mjs': ['@aws-sdk/client-lambda', '@aws-sdk/client-sts'],
+  'scripts/verification-workers/deploy.mjs': [
+    '@aws-sdk/client-cloudformation',
+    '@aws-sdk/client-sts',
+    '@aws-sdk/client-ec2',
+    '@aws-sdk/client-dynamodb',
+    '@aws-sdk/lib-dynamodb',
+    '@aws-sdk/client-lambda',
+    '@aws-sdk/client-ssm',
+  ],
+  'scripts/verification-workers/quarantine.mjs': ['@aws-sdk/client-ec2', '@aws-sdk/client-ssm'],
+  'scripts/verification-workers/supervisor.mjs': [
+    '@aws-sdk/client-dynamodb',
+    '@aws-sdk/lib-dynamodb',
+    '@aws-sdk/client-lambda',
+  ],
 };
 
 /** The Rust server uses its own socket owner. OIDC takes that owner's custom
@@ -143,9 +177,19 @@ export const inboundOwners: Readonly<Record<string, string>> = {
 };
 
 export const networkDependencies: Readonly<Record<string, string>> = {
-  '@aws-sdk/client-s3': 'asset-storage.ts',
-  '@aws-sdk/client-sts': 'asset-storage.ts',
-  '@aws-sdk/credential-providers': 'asset-storage.ts',
+  '@aws-sdk/client-s3': 'Asset storage and bounded managed verification artifacts.',
+  '@aws-sdk/client-cloudformation': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-dynamodb': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/lib-dynamodb': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-ec2': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-lambda': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-service-quotas':
+    'Read-only campaign capacity admission through verification aws.mjs bounded owner.',
+  '@aws-sdk/client-scheduler': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-ssm': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-cloudtrail': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-sts': 'Asset storage and managed verification account checks.',
+  '@aws-sdk/credential-providers': 'Asset storage and managed verification scoped credentials.',
   '@smithy/node-http-handler': 'asset-storage.ts',
   '@aws-sdk/client-secrets-manager':
     'Generated study-access source; the runtime supplies this exact SDK family.',
@@ -198,6 +242,8 @@ export const continuousBrowserPaths = new Set([
 export const dynamicModuleOwners: Readonly<
   Record<string, string | { readonly members: readonly string[]; readonly purpose: string }>
 > = {
+  'scripts/verification-workers/workspace-check.mjs':
+    'Loads only the admitted checkout workspace-binding guard before any database or game starts.',
   'scripts/compare-world-survival.ts':
     'Loads exact selected local domain/spatial source paths for offline comparison.',
   'scripts/performance/workspace-bindings.ts':

@@ -37,6 +37,10 @@ const reuseExecutable = (row: Comparison) =>
   row.measured === 'enabled' || row.measured === 'sampled';
 
 function placement(row: Comparison, repetition: number, position: number, mode: Mode) {
+  if (repetition === 0) {
+    const id = `${row.id}-prime`;
+    return { id, runnerCaseId: id, sharedBuild: undefined };
+  }
   const pair = `${row.id}-r${repetition}`;
   const id = `${pair}-${mode}`;
   return {
@@ -49,6 +53,18 @@ function placement(row: Comparison, repetition: number, position: number, mode: 
         }
       : undefined,
   };
+}
+
+function comparisonOrder(row: Comparison) {
+  // A fresh build deliberately doesn't populate the cache. Give the timed
+  // reuse cases an untimed preparer on their own worker before the first pair.
+  const order = [1, 2, 3].flatMap((repetition) => {
+    const arms = repetition === 2 ? [row.measured, row.baseline] : [row.baseline, row.measured];
+    return arms.map((arm, position) => ({ repetition, position, arm }));
+  });
+  if (row.baseline === 'fresh-build')
+    order.unshift({ repetition: 0, position: 0, arm: 'reuse-build' });
+  return order;
 }
 
 export type FrozenPlan = {
@@ -89,7 +105,15 @@ const related = {
   default: ['sampling-control', 'sql'],
   disabled: ['enabled'],
   'sampling-control': ['sampled'],
+  'fresh-build': ['reuse-build'],
+  'reuse-build': ['changed-build', 'corrupt-build'],
 } as const;
+
+function validComparison(baseline: Mode, measured: Mode) {
+  return Object.entries(related).some(
+    ([control, arms]) => control === baseline && (arms as readonly Mode[]).includes(measured),
+  );
+}
 
 function comparison(value: unknown, selection: string[], registry: Probe[]): Comparison {
   const candidate = object(value, 'comparison');
@@ -104,10 +128,8 @@ function comparison(value: unknown, selection: string[], registry: Probe[]): Com
   ]);
   const baseline = mode(candidate.baseline);
   const measured = mode(candidate.measured);
-  const valid = Object.entries(related).some(
-    ([control, arms]) => control === baseline && (arms as readonly Mode[]).includes(measured),
-  );
-  if (!valid) throw new Error(`Invalid isolated comparison ${baseline} → ${measured}.`);
+  if (!validComparison(baseline, measured))
+    throw new Error(`Invalid isolated comparison ${baseline} → ${measured}.`);
   if (
     measured !== 'enabled' &&
     (candidate.probeIds !== undefined || candidate.samplingProbability !== undefined)
@@ -271,7 +293,10 @@ export async function planCampaign(path: string, root: string) {
     new Set(comparisons.map((item) => item.id)).size !== comparisons.length
   )
     throw new Error('Use a finite list of uniquely named comparisons.');
-  if ((caseDeadlineSeconds * 6 + 120) * comparisons.length + 480 > deadlineSeconds)
+  const jobDeadlines = comparisons.map(
+    (row) => comparisonOrder(row).length * caseDeadlineSeconds + 120,
+  );
+  if (jobDeadlines.reduce((total, seconds) => total + seconds, 480) > deadlineSeconds)
     throw new Error('Campaign deadline must cover the ordered workload and runner cleanup.');
 
   const { resolvePinnedInputs } = await import('./inputs.js');
@@ -299,38 +324,34 @@ export async function planCampaign(path: string, root: string) {
         .filter((entry) => mainInputs.has(entry.id))
         .map((entry) => [entry.id, entry.sha256]),
     });
-    for (const repetition of [1, 2, 3]) {
-      const order =
-        repetition === 2 ? [item.measured, item.baseline] : [item.baseline, item.measured];
-      for (const [position, arm] of order.entries()) {
-        const uses = new Set([
-          ...mainInputs,
-          ...(arm === 'sampled' ? ['profile', 'linux-tools'] : arm === 'sql' ? ['sql'] : []),
-        ]);
-        cases.push({
-          ...placement(item, repetition, position, arm),
-          source: arm === 'untouched' ? gameSource : toolSource,
-          toolSource,
-          mode: arm,
-          probeIds: arm === 'enabled' ? item.probeIds : [],
-          samplingProbability: arm === 'enabled' ? item.samplingProbability : 1,
-          repetition,
-          comparisonId: item.id,
-          comparisonIdentity: proof,
-          scenarioId: opening.scenarioId,
-          seed: opening.seed,
-          warmupSeconds: opening.warmupSeconds,
-          measureSeconds: opening.measureSeconds,
-          drainSeconds: opening.drainSeconds,
-          hardDeadlineSeconds: caseDeadlineSeconds,
-          expectedWork: opening.expectedWork,
-          inputHashes: Object.fromEntries(
-            bundles.filter((entry) => uses.has(entry.id)).map((entry) => [entry.id, entry.sha256]),
-          ),
-          hardware: standardWorker,
-          requiredArtifacts: expectedArtifacts(arm),
-        });
-      }
+    for (const { repetition, position, arm } of comparisonOrder(item)) {
+      const uses = new Set([
+        ...mainInputs,
+        ...(arm === 'sampled' ? ['profile', 'linux-tools'] : arm === 'sql' ? ['sql'] : []),
+      ]);
+      cases.push({
+        ...placement(item, repetition, position, arm),
+        source: arm === 'untouched' ? gameSource : toolSource,
+        toolSource,
+        mode: arm,
+        probeIds: arm === 'enabled' ? item.probeIds : [],
+        samplingProbability: arm === 'enabled' ? item.samplingProbability : 1,
+        repetition,
+        comparisonId: item.id,
+        comparisonIdentity: proof,
+        scenarioId: opening.scenarioId,
+        seed: opening.seed,
+        warmupSeconds: opening.warmupSeconds,
+        measureSeconds: opening.measureSeconds,
+        drainSeconds: opening.drainSeconds,
+        hardDeadlineSeconds: caseDeadlineSeconds,
+        expectedWork: opening.expectedWork,
+        inputHashes: Object.fromEntries(
+          bundles.filter((entry) => uses.has(entry.id)).map((entry) => [entry.id, entry.sha256]),
+        ),
+        hardware: standardWorker,
+        requiredArtifacts: expectedArtifacts(arm),
+      });
     }
   }
   const plan: FrozenPlan = {
@@ -364,11 +385,11 @@ export async function planCampaign(path: string, root: string) {
       { id: 'campaign', root: outputDirectory, paths: ['plan.json'] },
       { id: 'campaign-tool', root: campaignTool, paths },
     ],
-    jobs: comparisons.map((row) => ({
+    jobs: comparisons.map((row, index) => ({
       id: row.id,
       mode: 'batch',
       acceptance: 'measurement',
-      timeoutSeconds: caseDeadlineSeconds * 6 + 120,
+      timeoutSeconds: jobDeadlines[index],
       outputLimitBytes: 256 * 1024 ** 2,
       diskLimitBytes: 40 * 1024 ** 3,
       environment: { instanceType: standardWorker.instanceType, node: '24.13.0', pnpm: '10.33.0' },
@@ -424,22 +445,20 @@ export function parsePlan(value: unknown): FrozenPlan {
     !ids.length ||
     ids.length > 5 ||
     new Set(ids).size !== ids.length ||
-    verified.cases.length !== 6 * ids.length
+    verified.cases.length !==
+      verified.comparisons.reduce((count, row) => count + comparisonOrder(row).length, 0)
   )
     throw new Error('Invalid finite comparison roster.');
   for (const row of verified.comparisons) {
+    if (!validComparison(row.baseline, row.measured))
+      throw new Error('Frozen plan contains an invalid comparison.');
     const cases = verified.cases.filter((item) => item.comparisonId === row.id);
-    const expected = [1, 2, 3].flatMap((repetition) => {
-      const before = mode(row.baseline);
-      const after = mode(row.measured);
-      return (repetition === 2 ? [after, before] : [before, after]).map(
-        (arm) => [repetition, arm] as const,
-      );
-    });
-    if (cases.length !== expected.length) throw new Error('Comparison needs three matched pairs.');
+    const expected = comparisonOrder(row);
+    if (cases.length !== expected.length)
+      throw new Error('Comparison differs from its planned order.');
     for (const [index, item] of cases.entries()) {
-      const [repetition, arm] = expected[index]!;
-      const location = placement(row, repetition, index % 2, arm);
+      const { repetition, position, arm } = expected[index]!;
+      const location = placement(row, repetition, position, arm);
       if (
         item.id !== location.id ||
         item.runnerCaseId !== location.runnerCaseId ||

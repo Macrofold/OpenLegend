@@ -3,6 +3,7 @@ import { readFile, realpath } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import type { CasePlan } from './contract.js';
 import {
+  buildMode,
   containedFile,
   digest,
   groupRunnerCases,
@@ -181,6 +182,27 @@ export async function managedReader(
   if (Object.entries(standardWorker).some(([key, value]) => machine[key] !== value))
     throw new Error('Results did not run on the standard worker profile.');
   const resultMember = (item: CasePlan, file: string) => `${workerResultPath(item)}/${file}`;
+  const timeline = expected.some((item) => buildMode(item.mode))
+    ? new Map(
+        list(
+          (await sealedRead(root, entries, 'timeline.json', jsonArtifactBytes)).json,
+          'worker phase',
+          512,
+        ).map((entry) => {
+          const event = object(entry, 'worker phase');
+          return [text(event.name, 'worker phase name'), event] as const;
+        }),
+      )
+    : undefined;
+  function phase(item: CasePlan, name: string) {
+    const event = object(timeline?.get(`${item.runnerCaseId}:${name}`), 'recorded worker phase');
+    if (event.outcome !== 'completed')
+      throw new Error('The build measurement needs completed worker phases.');
+    return {
+      startMs: number(event.startMonoMs, 'worker phase start'),
+      elapsedMs: number(event.elapsedMs, 'worker phase elapsed time'),
+    };
+  }
   return {
     read: async (item: CasePlan, file: string, jsonLimit?: number) =>
       sealedRead(root, entries, resultMember(item, file), jsonLimit),
@@ -189,6 +211,21 @@ export async function managedReader(
         entries.has(resultMember(item, file)),
       ),
     source,
+    buildTiming(item: CasePlan, preparationMs: number, gameplayMs: number) {
+      const source = phase(item, 'source');
+      const profile = phase(item, 'profile');
+      const cleanup = phase(item, 'case-cleanup');
+      if (
+        source.startMs + source.elapsedMs > profile.startMs ||
+        preparationMs + gameplayMs > profile.elapsedMs ||
+        profile.startMs + profile.elapsedMs > cleanup.startMs
+      )
+        throw new Error('The build and gameplay durations do not fit the recorded worker phases.');
+      return {
+        preparationMs: profile.startMs - source.startMs + preparationMs,
+        elapsedMs: cleanup.startMs + cleanup.elapsedMs - source.startMs,
+      };
+    },
     instanceId: text(machine.instanceId, 'owned instance', /^i-[0-9a-f]+$/),
     runId: text(manifest.runId, 'run identity', identifier),
     generation: integer(manifest.generation, 'claim generation', 1, Number.MAX_SAFE_INTEGER),
@@ -486,6 +523,53 @@ function traceWitness(
   };
 }
 
+function buildEvidence(
+  toolchain: Record<string, unknown>,
+  identity: Record<string, unknown>,
+  executable: string,
+  managed: { preparationMs: number; elapsedMs: number } | undefined,
+) {
+  const record = object(toolchain.buildReuse, 'build reuse receipt');
+  const compilation = object(record.rustCompilation, 'compilation time');
+  const original = object(record.originalBuild, 'original build receipt');
+  const buildIdentity = text(record.identity, 'build input checksum', sha256);
+  const status = record.status;
+  const elapsed = number(compilation.elapsedMs, 'compilation elapsed time');
+  const cpu =
+    number(compilation.userSeconds, 'compiler user CPU') +
+    number(compilation.systemSeconds, 'compiler system CPU');
+  if (
+    (status !== 'fresh' && status !== 'hit' && status !== 'miss' && status !== 'rebuilt') ||
+    buildIdentity !== digest(record.inputs) ||
+    object(original.executable).sha256 !== executable ||
+    (status === 'hit'
+      ? elapsed !== 0 || cpu !== 0 || record.bytesReused !== object(toolchain.executable).bytes
+      : elapsed === 0)
+  )
+    throw new Error(
+      'The build measurement disagrees with its verified executable and compiler receipt.',
+    );
+  return {
+    status,
+    buildIdentity,
+    originalBuildSha256: digest(original),
+    retained: record.retained === true,
+    rejection: record.rejection,
+    reusedBytes: number(record.bytesReused, 'reused executable bytes'),
+    preparationMs: managed?.preparationMs ?? number(identity.preparationMs, 'case preparation'),
+    elapsedMs: managed?.elapsedMs ?? null,
+    gameplayMs: number(identity.gameplayMs, 'gameplay launcher elapsed time'),
+    compilationMs: elapsed,
+    compilationCpuSeconds: cpu,
+    identityMs: number(record.identityMs, 'build input verification time'),
+    cacheValidationMs: number(record.validationMs, 'cached artifact verification time'),
+    executableValidationMs: number(
+      toolchain.executableValidationMs,
+      'executable interface verification time',
+    ),
+  };
+}
+
 export type CaseResult = {
   plan: CasePlan;
   status: 'completed' | 'missing' | 'failed' | 'unsupported';
@@ -495,6 +579,7 @@ export type CaseResult = {
   executable?: string;
   sourceArchive?: string;
   cleanup?: { status: unknown; clean: unknown; estimateMicroUsd: unknown };
+  build?: ReturnType<typeof buildEvidence>;
   workload?: Record<string, unknown>;
   resources?: Record<string, unknown>;
   metrics?: Metrics;
@@ -582,10 +667,31 @@ export async function readCase(
         identity.instanceId !== reader.instanceId)
     )
       throw new Error('Case manifest refers to another worker execution.');
+    let build;
     if (executable) {
-      const build = await readJson('toolchain.json');
-      if (build.source !== plan.source || object(build.executable).sha256 !== executable)
+      const toolchain = await readJson('toolchain.json');
+      if (toolchain.source !== plan.source || object(toolchain.executable).sha256 !== executable)
         throw new Error('Case executable differs from the source-bound build receipt.');
+      if (buildMode(plan.mode)) {
+        const execution = object(toolchain.execution, 'measured build execution');
+        if (
+          execution.runId !== identity.runId ||
+          execution.generation !== identity.generation ||
+          execution.caseId !== identity.runnerCaseId ||
+          toolchain.sourceArchiveSha256 !== identity.sourceArchiveSha256
+        )
+          throw new Error('Build measurement refers to another worker execution.');
+        build = buildEvidence(
+          toolchain,
+          identity,
+          executable,
+          reader?.buildTiming(
+            plan,
+            number(identity.preparationMs, 'case preparation'),
+            number(identity.gameplayMs, 'gameplay launcher elapsed time'),
+          ),
+        );
+      }
     }
     const diagnosticFile =
       plan.mode === 'sampled' ? 'cpu-samples.json' : plan.mode === 'sql' ? 'sql.json' : undefined;
@@ -609,6 +715,7 @@ export async function readCase(
       executable,
       database,
       sourceArchive,
+      build,
       workload,
       resources,
       timeline,

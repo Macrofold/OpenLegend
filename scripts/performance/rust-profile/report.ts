@@ -1,7 +1,7 @@
 import { mkdir, readFile, realpath, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
-import { containedFile, digest, isMissing, object } from './contract.js';
+import { buildMode, containedFile, digest, isMissing, object } from './contract.js';
 import { parsePlan } from './plan.js';
 import { managedReader, readCase } from './report-evidence.js';
 import type { CaseResult } from './report-evidence.js';
@@ -68,10 +68,14 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
   const comparisons = await Promise.all(
     plan.comparisons.map(async (item) => {
       let proof: FixedWork | undefined, proofError: string | undefined;
-      try {
-        proof = await readFixedWork(campaign, item.id);
-      } catch (error) {
-        proofError = isMissing(error) ? 'No fixed-work safety proof was collected.' : String(error);
+      if (!buildMode(item.measured)) {
+        try {
+          proof = await readFixedWork(campaign, item.id);
+        } catch (error) {
+          proofError = isMissing(error)
+            ? 'No fixed-work safety proof was collected.'
+            : String(error);
+        }
       }
       return compare(
         item,
@@ -133,16 +137,45 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
           : null,
     };
   });
+  const buildFields = [
+    ['Preparation (s)', 'preparationMs', 1000],
+    ['Case elapsed through cleanup (s)', 'elapsedMs', 1000],
+    ['Cargo elapsed (s)', 'compilationMs', 1000],
+    ['Cargo CPU (s)', 'compilationCpuSeconds', 1],
+    ['Input verification (ms)', 'identityMs', 1],
+    ['Cached copy and checksum (ms)', 'cacheValidationMs', 1],
+    ['Executable checks (ms)', 'executableValidationMs', 1],
+    ['Gameplay launcher (s)', 'gameplayMs', 1000],
+  ] as const;
   const byArm = plan.comparisons.map((item) => ({
     comparison: item.id,
     arms: [item.baseline, item.measured].map((mode) => {
+      const expectedBuild =
+        item.baseline === 'fresh-build' ? (mode === 'fresh-build' ? 'fresh' : 'hit') : undefined;
       const selected = cases.filter(
         (run) =>
-          run.plan.comparisonId === item.id && run.plan.mode === mode && run.status === 'completed',
+          run.plan.comparisonId === item.id &&
+          run.plan.mode === mode &&
+          run.plan.repetition > 0 &&
+          run.status === 'completed' &&
+          (!expectedBuild || run.build?.status === expectedBuild),
       );
       return {
         mode,
         n: selected.length,
+        buildStatistics: buildMode(mode)
+          ? Object.fromEntries(
+              buildFields.map(([, key]) => [
+                key,
+                statistics(
+                  selected.flatMap((run) => {
+                    const value = run.build?.[key];
+                    return typeof value === 'number' ? [value] : [];
+                  }),
+                ),
+              ]),
+            )
+          : undefined,
         statistics: {
           serverCorePercent: statistics(selected.flatMap((run) => run.serverCorePercent ?? [])),
           postgresCorePercent: statistics(selected.flatMap((run) => run.postgresCorePercent ?? [])),
@@ -256,10 +289,30 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
     ]),
   );
   const rounded = (value: number | null) => (value === null ? 'unavailable' : value.toFixed(3));
-  const summary = (value: ReturnType<typeof statistics>) =>
+  const summary = (value: ReturnType<typeof statistics>, scale = 1) =>
     value
-      ? `${rounded(value.median)} / ${rounded(value.mean)} / ${rounded(value.p95)} (n=${value.n})`
+      ? `${rounded(value.median / scale)} / ${rounded(value.mean / scale)} / ${rounded(value.p95 / scale)} (n=${value.n})`
       : 'unavailable';
+  const preparationRows = byArm.flatMap((comparison) =>
+    comparison.arms.flatMap((arm) =>
+      arm.buildStatistics
+        ? [
+            `<tr><td>${escape(comparison.comparison)} / ${escape(arm.mode)}</td>${buildFields
+              .map(
+                ([, key, scale]) =>
+                  `<td>${summary(arm.buildStatistics?.[key] ?? null, scale)}</td>`,
+              )
+              .join('')}</tr>`,
+          ]
+        : [],
+    ),
+  );
+  const preparation = preparationRows.length
+    ? `<h2>Build preparation median / average / p95</h2>
+<p>Preparation starts at source staging and case elapsed ends after database and workspace cleanup. Cache misses are excluded from verified reuse timings. See qualification before interpreting a comparison.</p>
+<table><thead><tr><th>Comparison / arm</th>${buildFields.map(([label]) => `<th>${escape(label)}</th>`).join('')}</tr></thead><tbody>
+${preparationRows.join('\n')}</tbody></table>`
+    : '';
   function latencyCell(run: CaseResult, key: string) {
     const latency = object(run.workload?.latency ?? {})[key];
     if (typeof latency === 'number') return rounded(latency);
@@ -348,6 +401,7 @@ ${cases.map((run) => `<tr><td>${escape(run.plan.id)}</td><td>${escape(run.status
 <table><thead><tr><th>Comparison / arm</th><th>Server % of one core</th><th>PostgreSQL %</th><th>Game speed %</th><th>Owned CPU ms/game-s</th></tr></thead><tbody>
 ${byArm.flatMap((item) => item.arms.map((arm) => `<tr><td>${escape(item.comparison)} / ${escape(arm.mode)}</td><td>${summary(arm.statistics.serverCorePercent)}</td><td>${summary(arm.statistics.postgresCorePercent)}</td><td>${summary(arm.statistics.achievedGameSpeedPercent)}</td><td>${summary(arm.statistics.ownedCpuMsPerGameSecond)}</td></tr>`)).join('\n')}
 </tbody></table>
+${preparation}
 <h2>Player-facing latency in ms</h2>
 <p>Median / average / p95 for actual steady commands. Stream receipt, browser display, and durable observation are separate.</p>
 <table><thead><tr><th>Case</th><th>Reply</th><th>Stream receipt</th><th>Browser display</th><th>Durable observation</th><th>Cold reopen</th></tr></thead><tbody>
