@@ -133,6 +133,8 @@ The [native campaign audit](../maintainers/verification-workers.md#native-campai
 
 Use the producing tool’s ordinary teardown and the [verification record rules](../../.agents/rules/verification.md#run-and-report-the-selected-checks). If a particular tool repeatedly leaves large disposable builds or extractions, fix that tool first. Collection, evidence, recovery and spending receipts keep their existing checks.
 
+During local input packaging, use copy-on-write storage for identical compressed archives when the filesystem supports it. Keep each campaign's own archive path and verify the shared copy against the exact compressed checksum before replacing the new file. A local lookup points to an existing campaign archive without keeping its bytes alive after cleanup. A missing or unusable copy leaves the newly packed archive available for upload and recovery.
+
 A general cleanup command is deferred. Revisit the [optional design](verification-scratch-cleanup-option.md) only if a concrete recurring problem remains after producer cleanup. It adds no routine step or worker delivery gate.
 
 ## Implementation and review boundaries
