@@ -21,6 +21,7 @@ import {
   rustServerNetworkOwners,
   sdkOwners,
   testSourceOwners,
+  type LocalBinaryArgument,
 } from './network-boundary-inventory.js';
 
 export interface BoundaryFailure {
@@ -483,25 +484,26 @@ export function inspectNetworkSource(
     const values = stringAt(expression);
     return !!values?.length && values.every((value) => value === expected);
   };
+  const namedImport = (expression: ts.Expression, specifier: string, symbol: string): boolean => {
+    if (!ts.isIdentifier(expression)) return false;
+    const declaration = declarationOf(expression);
+    const imported =
+      declaration &&
+      ts.isImportSpecifier(declaration) &&
+      (declaration.propertyName ?? declaration.name).text === symbol &&
+      declaration.parent.parent.parent;
+    return (
+      !!imported &&
+      ts.isImportDeclaration(imported) &&
+      ts.isStringLiteral(imported.moduleSpecifier) &&
+      imported.moduleSpecifier.text === specifier
+    );
+  };
   const localEntry = (expression: ts.Expression | undefined, entry: string): boolean => {
     if (
       !expression ||
       !ts.isCallExpression(expression) ||
-      !ts.isIdentifier(expression.expression) ||
-      expression.expression.text !== 'fileURLToPath'
-    )
-      return false;
-    const declaration = declarationOf(expression.expression);
-    const imported =
-      declaration &&
-      ts.isImportSpecifier(declaration) &&
-      (declaration.propertyName ?? declaration.name).text === 'fileURLToPath' &&
-      declaration.parent.parent.parent;
-    if (
-      !imported ||
-      !ts.isImportDeclaration(imported) ||
-      !ts.isStringLiteral(imported.moduleSpecifier) ||
-      imported.moduleSpecifier.text !== 'node:url'
+      !namedImport(expression.expression, 'node:url', 'fileURLToPath')
     )
       return false;
     const input = expression.arguments[0];
@@ -515,6 +517,56 @@ export function inspectNetworkSource(
       input.arguments?.length === 2 &&
       exactLiteral(input.arguments[0], entry) &&
       input.arguments[1]?.getText(file) === 'import.meta.url'
+    );
+  };
+  const resolvedLocalPath = (expression: ts.Expression | undefined): boolean => {
+    const declaration = expression && ts.isIdentifier(expression) && declarationOf(expression);
+    if (
+      !declaration ||
+      !ts.isVariableDeclaration(declaration) ||
+      !ts.isVariableDeclarationList(declaration.parent) ||
+      (declaration.parent.flags & ts.NodeFlags.Const) === 0
+    )
+      return false;
+    const resolved = declaration.initializer;
+    return (
+      !!resolved &&
+      ts.isAwaitExpression(resolved) &&
+      ts.isCallExpression(resolved.expression) &&
+      resolved.expression.arguments.length === 1 &&
+      namedImport(resolved.expression.expression, 'node:fs/promises', 'realpath')
+    );
+  };
+  const approvedLiterals = (expression: ts.Expression | undefined, allowed: readonly string[]) => {
+    const values = stringAt(expression);
+    return !!values?.length && values.every((value) => allowed.includes(value));
+  };
+  const matchesBinaryArgument = (
+    expression: ts.Expression | undefined,
+    expected: LocalBinaryArgument,
+  ): boolean => {
+    if (expected === null) return expression !== undefined;
+    if (typeof expected === 'string') return exactLiteral(expression, expected);
+    if ('realPath' in expected) return resolvedLocalPath(expression);
+    return approvedLiterals(expression, expected);
+  };
+  const archivedModule = (expression: ts.Expression | undefined, members: readonly string[]) => {
+    if (
+      !expression ||
+      !ts.isPropertyAccessExpression(expression) ||
+      expression.name.text !== 'href' ||
+      !ts.isCallExpression(expression.expression) ||
+      !namedImport(expression.expression.expression, 'node:url', 'pathToFileURL')
+    )
+      return false;
+    const [path] = expression.expression.arguments;
+    return (
+      expression.expression.arguments.length === 1 &&
+      !!path &&
+      ts.isCallExpression(path) &&
+      namedImport(path.expression, 'node:path', 'join') &&
+      path.arguments.length === 2 &&
+      approvedLiterals(path.arguments[1], members)
     );
   };
   const visit = (node: ts.Node) => {
@@ -538,8 +590,11 @@ export function inspectNetworkSource(
     ) {
       const name = node.arguments[0];
       if (name && ts.isStringLiteralLikeNode(name)) inspectImport(node, name.text);
-      else if (!test && !Object.hasOwn(dynamicModuleOwners, path))
-        report(node, 'Dynamic module loading needs an exact reviewed local-source owner.');
+      else if (!test) {
+        const owner = Object.hasOwn(dynamicModuleOwners, path) && dynamicModuleOwners[path];
+        if (!owner || (typeof owner !== 'string' && !archivedModule(name, owner.members)))
+          report(node, 'Dynamic module loading needs an exact reviewed local-source owner.');
+      }
     }
     if (!raw && !test) {
       if (
@@ -699,35 +754,36 @@ export function inspectNetworkSource(
             program.expression.text === 'process' &&
             globalReference(program.expression) &&
             program.name.text === 'execPath';
-          let allowed = false;
-          const binaryProfiles = localBinaryCommands[path];
-          const programs = program && stringAt(program);
-          if (binaryProfiles && programs?.length && values?.length) {
-            allowed = programs.every((program) =>
+          const binaryProfiles = localBinaryCommands[path] ?? [];
+          const programs = stringAt(program) ?? [undefined];
+          let allowed =
+            !!values?.length &&
+            programs.every((binary) =>
               values.every(
                 (args) =>
                   !incompleteArgv.has(args) &&
                   binaryProfiles.some(
                     (profile) =>
                       (profile.kind ?? 'spawnSync') === command &&
-                      profile.program === program &&
+                      (typeof profile.program === 'string'
+                        ? profile.program === binary
+                        : binary === undefined && resolvedLocalPath(program)) &&
                       profile.args.length === args.length &&
                       profile.args.every((expected, index) =>
-                        expected === null
-                          ? args[index] !== undefined
-                          : exactLiteral(args[index], expected),
+                        matchesBinaryArgument(args[index], expected),
                       ),
                   ),
               ),
             );
-          } else if (
+          if (
+            !allowed &&
             nodePolicy?.kind === 'spawnSync' &&
             command === 'spawnSync' &&
             nodeProgram &&
             values?.length === 1
           ) {
             allowed = values[0]?.length === 1 && localEntry(values[0][0], nodePolicy.entry);
-          } else if (git && command !== 'fork') {
+          } else if (!allowed && git && command !== 'fork') {
             const commands = localGitCommands[path] ?? [];
             allowed =
               !!values?.length &&
@@ -760,13 +816,18 @@ export function inspectNetworkSource(
                   (noExternalDiff && noTextConversion)
                 );
               });
-          } else if (nodePolicy?.kind === command && nodeProgram && values?.length === 1) {
+          } else if (
+            !allowed &&
+            nodePolicy?.kind === command &&
+            nodeProgram &&
+            values?.length === 1
+          ) {
             const arguments_ = values[0]!;
             allowed =
               exactLiteral(arguments_[0], '--import') &&
               exactLiteral(arguments_[1], 'tsx') &&
               localEntry(arguments_[2], nodePolicy.entry);
-          } else if (nodePolicy?.kind === 'fork' && command === 'fork' && program) {
+          } else if (!allowed && nodePolicy?.kind === 'fork' && command === 'fork' && program) {
             // fork's module and startup flags are both executable acquisition.
             const execArgv =
               options &&

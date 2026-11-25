@@ -1,8 +1,8 @@
 # Compact perception and independent runtime completion
 
-| Status      | Current progress                                                                                                       | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Supported reception and BK24 sparse history are integrated; combined operating and tooling qualification remains open. | 2026-11-05   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Supported reception and sparse history are integrated and sustained workload inputs are available, with operating qualification still open. | 2026-11-25   |
 
 **Design updated 2026-10-31 06:24 UTC; implementation architecture used 2026-10-31 06:24 UTC, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`.** This is the implementation-level companion to the [feature specification](attention-and-scenes-feature-spec.md) and [technical design](attention-and-scenes-tech-design.md). The compact runtime is integrated in the working branch; supported lifecycle and consumer checks pass; complete-game operating passes remain unmet. Section 13 specifies the installed contact/group conversion; §13.9 records the branch snapshot and §14 owns remaining VW integration and combined qualification. [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) owns implementation tasks and current status.
 
@@ -341,6 +341,8 @@ Retain the existing nine core model scenarios, native cliff variants, storage fa
 Frame headers occur once per receiver opportunity with admitted changes; unchanged values do not produce field entries. As an **illustrative codec budget**, 12–24 bytes per compact pose association would mean 216–432 KB/second for those 18,000 associations, before frame headers, actual shared poses, indexes, JSON/SQL and allocation overhead. This is a design estimate, not an achieved binary codec or a claim about actual JSON sizes. Measure the real encoding; do not raise quotas to hide expansion. A six-minute normal-play recent window can therefore still occupy substantial aggregate cold storage. Keep bounded resident tails and indexed reads; do not keep everyone's full window in each world snapshot.
 
 A quiet unchanged region should create no visual values/history, narrow sight tests or recurring sensory timer jobs, except actual pending sensory-law deadlines. Work proportional to actual required occurrences remains. No-loop goals are concrete: no motion-pair payload, no unchanged description regeneration from observer movement, no attention-triggered terrain baselines, no per-field loss envelopes, no list allocation for a count, no ordinary command's cold ownership query, no retained whole world in an optional request.
+
+The [sustained workload inputs and collection instructions](../../scripts/performance/witness-sustained-metrics.md) cover the combined Main opening and both crowd controller mixes on the Rust server, including the current limit on repeated provider-free NPC work.
 
 **Qualification order and workload:**
 

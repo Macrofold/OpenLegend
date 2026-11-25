@@ -43,6 +43,10 @@ export const localProcessOwners: Readonly<Record<string, string>> = {
   'scripts/decision-benchmark/run.ts': 'Local Git revision/diff inspection only.',
   'scripts/performance/rust-profile/registry.ts':
     'Read-only Git object and probe inventory for offline Rust campaign planning.',
+  'scripts/performance/witness-sustained-driver.ts':
+    'Extracts only named archive members from a resolved local path and checks their digests before staging.',
+  'scripts/performance/witness-sustained.ts':
+    'Reads local Git and OS metadata, starts the supplied local Rust release on loopback, and forks the checked-in signed workload client.',
   'scripts/check-agent-guidance.mjs': 'Local Git inventory only.',
   'scripts/check-assets.ts': 'Local Git inventory only.',
   'scripts/assets/migration.ts': 'Local Git object inspection; no fetch/clone/pull.',
@@ -57,6 +61,7 @@ export const localGitCommands: Readonly<Record<string, readonly string[]>> = {
   'scripts/decision-benchmark/main.ts': ['rev-parse'],
   'scripts/decision-benchmark/run.ts': ['rev-parse', 'ls-files', 'diff'],
   'scripts/performance/rust-profile/registry.ts': ['cat-file', 'ls-tree', 'grep', 'diff'],
+  'scripts/performance/witness-sustained.ts': ['rev-parse', 'status'],
   'scripts/check-agent-guidance.mjs': ['ls-files'],
   'scripts/check-assets.ts': ['ls-files'],
   'scripts/assets/migration.ts': [
@@ -76,7 +81,15 @@ export const localGitCommands: Readonly<Record<string, readonly string[]>> = {
 /** The only local Node children execute these checked-in files, never strings. */
 export const localNodeEntries: Readonly<
   Record<string, { kind: 'spawn' | 'fork' | 'spawnSync'; entry: string }>
-> = {};
+> = {
+  'scripts/performance/witness-sustained.ts': {
+    kind: 'fork',
+    entry: './witness-sustained-client.ts',
+  },
+};
+
+type ResolvedLocalPath = { readonly realPath: true };
+export type LocalBinaryArgument = string | readonly string[] | ResolvedLocalPath | null;
 
 /** Complete argv is closed and data is confined to the named local inputs.
  * By default the runner is spawnSync for the existing offline compiler calls. */
@@ -84,12 +97,31 @@ export const localBinaryCommands: Readonly<
   Record<
     string,
     readonly {
-      readonly program: string;
-      readonly kind?: 'execFile';
-      readonly args: readonly (string | null)[];
+      readonly program: string | ResolvedLocalPath;
+      readonly kind?: 'execFile' | 'execFileSync' | 'spawn';
+      readonly args: readonly LocalBinaryArgument[];
     }[]
   >
 > = {
+  'scripts/performance/witness-sustained-driver.ts': [
+    {
+      program: 'tar',
+      kind: 'execFile',
+      args: [
+        '-xOzf',
+        { realPath: true },
+        [
+          'ordinary/typed-provider.mts',
+          'ordinary/stream.mts',
+          'ordinary/linux-process-accounting.mjs',
+        ],
+      ],
+    },
+  ],
+  'scripts/performance/witness-sustained.ts': [
+    { program: 'getconf', kind: 'execFileSync', args: [['CLK_TCK', 'PAGESIZE']] },
+    { program: { realPath: true }, kind: 'spawn', args: ['serve', null] },
+  ],
   'scripts/assets/restore-rust-world.ts': [
     {
       program: 'openlegend-game-server',
@@ -160,12 +192,24 @@ export const continuousBrowserPaths = new Set([
   '/api/chat/preview',
 ]);
 
-/** Dynamic loading is confined to these exact local source/binding owners. */
-export const dynamicModuleOwners: Readonly<Record<string, string>> = {
+/** Dynamic loading is confined to these exact local source/binding owners.
+ * Archived modules also pin the filenames. The fixture verifies hashes before
+ * writing any of those files to its private run directory. */
+export const dynamicModuleOwners: Readonly<
+  Record<string, string | { readonly members: readonly string[]; readonly purpose: string }>
+> = {
   'scripts/compare-world-survival.ts':
     'Loads exact selected local domain/spatial source paths for offline comparison.',
   'scripts/performance/workspace-bindings.ts':
     'Verifies the managed case’s declared local workspace package bindings without loading them.',
+  'scripts/performance/witness-sustained.ts': {
+    members: ['typed-provider.mts', 'linux-process-accounting.mjs'],
+    purpose: 'Loads the verified loopback provider and Linux resource observer for this case.',
+  },
+  'scripts/performance/witness-sustained-client.ts': {
+    members: ['stream.mts'],
+    purpose: 'Loads the verified signed stream reader from its parent’s private run directory.',
+  },
 };
 
 /** Generated cloud source is checked against its canonical source by the required

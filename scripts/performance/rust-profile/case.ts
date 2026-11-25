@@ -1,17 +1,8 @@
 import { createHash } from 'node:crypto';
 import { createNetworkOwner } from '@open-legend/network';
 import { runRemoteProcess } from '@open-legend/network/node';
-import {
-  lstat,
-  mkdir,
-  mkdtemp,
-  readFile,
-  realpath,
-  rm,
-  symlink,
-  writeFile,
-} from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import { readCaseBuild } from './case-build.js';
 import { readRaw, writeCaseEvidence } from './case-evidence.js';
@@ -20,13 +11,11 @@ import type { CasePlan } from './contract.js';
 import { writeCpuEvidence } from './cpu-evidence.js';
 import { stageFixture } from './fixture.js';
 import { verifyCaseInputs } from './inputs.js';
-
-async function supervisorFile(path: string) {
-  const file = await lstat(path);
-  if (!file.isFile() || file.uid !== 0 || file.mode & 0o222)
-    throw new Error('The case needs the root-owned managed worker execution receipt.');
-  return object(JSON.parse(await readFile(path, 'utf8')));
-}
+import {
+  assertWorkerPostgresDatabase,
+  readVerifiedWorkerPostgres,
+  readVerifiedWorkerSource,
+} from './managed-postgres.js';
 
 function environment(name: string) {
   return text(process.env[name], name);
@@ -39,32 +28,24 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
   const initializedAt = new Date().toISOString();
   const sourcePath = environment('OPENLEGEND_VERIFICATION_MANIFEST');
   const inputsRoot = environment('OPENLEGEND_JOB_INPUTS');
-  const source = await supervisorFile(sourcePath);
-  const execution = object(source.execution);
+  const { receipt: source, execution, commit } = await readVerifiedWorkerSource(sourcePath);
   const hardware = object(execution.hardware);
   const machine = object(execution.machine);
-  const postgres = await supervisorFile(environment('OPENLEGEND_JOB_POSTGRES_OWNERSHIP'));
-  for (const key of ['runId', 'generation', 'caseId'])
-    if (postgres[key] !== execution[key])
-      throw new Error('PostgreSQL receipt refers to another case.');
+  await readVerifiedWorkerPostgres(environment('OPENLEGEND_JOB_POSTGRES_OWNERSHIP'), execution);
   const database = new URL(environment('DATABASE_URL'));
+  assertWorkerPostgresDatabase(database);
   if (
-    (await realpath(process.cwd())) !== (await realpath(join(dirname(sourcePath), 'source'))) ||
-    source.commit !== plan.source ||
+    commit !== plan.source ||
     execution.caseId !== plan.runnerCaseId ||
     hardware.instanceType !== plan.hardware.instanceType ||
     hardware.vcpus !== plan.hardware.vcpus ||
     machine.memoryMiB !== plan.hardware.memoryMiB ||
     typeof hardware.memoryMiB !== 'number' ||
     hardware.memoryMiB < 15 * 1024 ||
-    postgres.exclusiveCluster !== true ||
-    postgres.status !== 'verified' ||
     process.platform !== 'linux' ||
     process.arch !== 'x64' ||
     process.getuid?.() === 0 ||
     environment('AI_BUDGET_USD') !== '0' ||
-    database.hostname !== '127.0.0.1' ||
-    database.port !== '5432' ||
     !database.pathname.slice(1).startsWith(environment('OPENLEGEND_FIXTURE_DATABASE_PREFIX'))
   ) {
     throw new Error('Case ownership, executable source, worker or fresh database is unverified.');
