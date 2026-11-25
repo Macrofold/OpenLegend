@@ -25,9 +25,17 @@ A separate run held Ada’s proposed response after the request received the exa
 
 This was an untimed check of real callers under controlled provider choices on branch revision `09686fab2` and executable SHA-256 `47c814f13ca6dc83a66d1bae33a950f5991e42a58bb6eda53f6f11421a207ee1`. The Rust debug process used `RUST_MIN_STACK=16777216` after an earlier debug run exhausted a Tokio worker’s default stack. The first shared-cluster attempt also timed out before the game reached its six-hour threshold, and subsequent setup hit a temporary busy refusal and a PostgreSQL maintenance timeout. The completed cases used their own loopback PostgreSQL service and fresh databases. The driver and bounded receipts are in the local verification archive under `native-runtime-foundations/witness-memory-references-20261125`.
 
-Previously inspected objects were reviewed in code. The existing TypeScript inspection produced the expected private item encounter in a fixture, but the archived Rust baseline refused that mixed-history opening before listening. The signed live run qualifies the visible branches, their category, the personally acquired place, the calendar interval and the exact heard speech.
+The signed run qualified the visible branches, their category, the personally acquired place, the calendar interval and the exact heard speech. The initial inspected-object fixture added a TypeScript encounter before startup. The Rust server refused that mixed-history opening before listening. The [Rust inspection run below](#recalling-a-previously-inspected-object) covers that separate path.
 
 Reference behavior is specified in [Witness decisions and personal memory](../projects/witness-decisions-and-memory-tech-design.md#4-keep-literal-memory-and-attach-references).
+
+## Recalling a previously inspected object
+
+In a fresh world, a disposable driver had Ada inspect a fish in a ground pile through the ordinary Rust inspection command. Rust checked sight and reach and saved one private record of that particular fish for Ada. A signed player then picked up the fish. PostgreSQL showed the same fish in the player's inventory and the pile disappeared from Ada's current view.
+
+The player asked Ada about the fish through the normal conversation endpoint. The controlled HTTPS provider selected the remembered fish from Ada's permitted choices. The game saved her spoken reply and a private thought citing the exact fish and the original inspection revision. After a cold restart on the same PostgreSQL database, the first request returned its saved receipt and the player asked a new question. The second decision used the original inspection again and saved a new reply and thought. Both thoughts referenced the same fish and the same inspection, with no new sighting or inspection.
+
+This untimed check used integrated revision `4ce6bf71555997c4f83f98c37d0a19cd53f4ac02` and release executable SHA-256 `63c52ba96c0673f7d452d36a2165d30a003ac344972f198c1480eb1ad00baa33`. Its Rust source matches `af343567083d8581011c2ab566ba94e782d8de04`. PostgreSQL 14.17 ran locally with ordinary durability. Both server processes shut down cleanly and released their tracked allocations. The fixture, result and failed setup attempts are in the local verification archive `native-runtime-foundations/witness-inspected-object-20261125.4Gjdgv`. The driver chose the inspection action and the provider response. Autonomous inspection choices and live-model citation accuracy remain unmeasured. New and cumulative Jev costs were $0. Total task commitments were $0 with no outstanding reservations.
 
 ## Implementation review and regression checks
 
