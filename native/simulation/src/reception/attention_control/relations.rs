@@ -638,7 +638,8 @@ pub(crate) fn evaluate_attention_relations(
     let mut remaining = opportunity.candidates;
     let mut evaluations = Vec::new();
     for (ordinal, anchor) in opportunity.anchors.iter().enumerate() {
-        let captured = if anchor.source_id == observer {
+        let is_observer = anchor.source_id == observer;
+        let captured = if is_observer {
             None
         } else {
             scene
@@ -647,7 +648,7 @@ pub(crate) fn evaluate_attention_relations(
                 .transpose()?
                 .flatten()
         };
-        let body = if anchor.source_id == observer {
+        let body = if is_observer {
             own
         } else {
             let Some(body) = &captured else { continue };
@@ -682,7 +683,11 @@ pub(crate) fn evaluate_attention_relations(
                     proof: Vec::new(),
                 });
             }
-            let separation = measurement::body(&body, &Body::received(neighbor))?;
+            let separation = if is_observer {
+                measurement::body_around_observer(&body, neighbor)
+            } else {
+                measurement::body(&body, &Body::received(neighbor))
+            }?;
             if separation.decrease.is_none() && separation.lower <= policy.body.clear {
                 return None;
             }

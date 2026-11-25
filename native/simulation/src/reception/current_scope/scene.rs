@@ -41,6 +41,9 @@ pub(crate) struct SceneQueryBody<'a> {
 pub(crate) struct BodyMotion {
     pub earlier: LocationGeometrySample,
     pub later: LocationGeometrySample,
+    /// Private positions at the two actual visual measurements.
+    #[serde(skip)]
+    pub observer_positions: Option<[Point; 2]>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -235,6 +238,13 @@ impl<'a> ReceivedSceneRead<'a> {
             Some(SensoryFacet::ObservedMotion { earlier, later, .. }) => Some(BodyMotion {
                 earlier: motion_sample(earlier),
                 later: motion_sample(later),
+                // A frame belongs to acquisition, not later confirmation.
+                observer_positions: (earlier.acquired_at == earlier.measured_through
+                    && later.acquired_at == later.measured_through)
+                    .then_some([
+                        earlier.frame.position_at_observation,
+                        later.frame.position_at_observation,
+                    ]),
             }),
             _ => None,
         };

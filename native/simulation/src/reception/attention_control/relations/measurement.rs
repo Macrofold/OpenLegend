@@ -126,6 +126,62 @@ pub(crate) fn body(first: &Body, second: &Body) -> Option<Separation> {
         decrease,
     })
 }
+pub(super) fn body_around_observer(
+    observer: &Body,
+    neighbor: &ReceivedSceneBody,
+) -> Option<Separation> {
+    let target = Body::received(neighbor);
+    let mut separation = body(observer, &target)?;
+    // An old frame cannot supply the position for a current relation.
+    if separation.decrease.is_none() && separation.at == observer.span.through {
+        separation.decrease = paired_decrease(observer, neighbor, target);
+    }
+    Some(separation)
+}
+
+fn paired_decrease(observer: &Body, neighbor: &ReceivedSceneBody, target: Body) -> Option<f64> {
+    let motion = neighbor.motion.as_ref()?;
+    let [earlier_observer, later_observer] = motion.observer_positions?;
+    if later_observer != observer.position
+        || motion.later.sample.value_measured_through != observer.span.through
+    {
+        return None;
+    }
+    // Reuse ordinary uncertainty math without extending either frame into an interval.
+    let exact = |location: &LocationGeometrySample| {
+        let at = location.sample.value_measured_through;
+        let point = sample(location).point?;
+        Some(PointSample {
+            span: Span {
+                from: at,
+                through: at,
+            },
+            point: Some(point),
+        })
+    };
+    let earlier = exact(&motion.earlier)?;
+    let later = exact(&motion.later)?;
+    let frame = |position, sample: PointSample| PointSample {
+        span: sample.span,
+        point: Some((position, 0.0)),
+    };
+    let pair = |body: Body, earlier, later: PointSample| Body {
+        span: later.span,
+        location: Some(later),
+        motion: Some((earlier, later)),
+        ..body
+    };
+    body(
+        &pair(
+            *observer,
+            frame(earlier_observer, earlier),
+            frame(later_observer, later),
+        ),
+        &pair(target, earlier, later),
+    )?
+    .decrease
+}
+
 pub(crate) fn boundary(
     anchor: &Body,
     boundary: &ObservedBoundary,
