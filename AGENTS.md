@@ -20,7 +20,7 @@ For a tiny, self-contained edit such as a spelling correction, say what changed 
 
 - **Behavior changes and decisions.** Describe what changed, why, the tradeoff and any earlier decision or limit it replaces.
 - **Open decisions/questions.** List the choices that still need Mike.
-- **Remaining work in this session.** Report readiness for the destination or stopping point Mike agreed to. If he asked for a local commit on a feature branch, say whether it is ready for his review there. List only unfinished implementation, integration, documentation, review fixes, required checks, questions or blockers. An unrun required check stays open.
+- **Remaining work in this session.** Report readiness for the destination or stopping point Mike agreed to. If he asked for a local commit on a feature branch, say whether the work is ready for review on that branch. List only unfinished implementation, integration, documentation, review fixes, required checks, questions or blockers. An unrun required check stays open.
 
 When you performed cleanup, add **Cleanup** to the task handoff with one sentence saying what you removed, stopped, released or restored. Otherwise omit it.
 

@@ -5,7 +5,7 @@ description: Squash-merge the newest local/origin source branch into a destinati
 
 # Squash-merge a branch and push
 
-Usage: `merge-branch <source>` or `merge-branch <source> into <destination>`. Default to the working repository's freshly verified `origin` default branch; in Open Legend this is local `main`. An invocation authorizes the selected integration and normal destination push. Reading/editing the skill or an ordinary merge request does not itself authorize publication.
+Usage: `merge-branch <source>` or `merge-branch <source> into <destination>`. See [Prepare the destination](#prepare-the-destination) for destination selection. An invocation authorizes the selected integration and normal destination push. Reading/editing the skill or an ordinary merge request does not itself authorize publication.
 
 Operate on the working repository, even when the global entrypoint loads this file from another checkout. Apply the target repository's instructions and verification rules. In Open Legend, follow [Rebase](../openlegend-rebase/SKILL.md) for preservation and conflict stops, and [rebase verification](../../rules/verification.md#rebase-verification) for proportional checks. Those project-specific links apply only to Open Legend.
 
@@ -31,7 +31,7 @@ Honor an explicitly pinned revision. Freeze the chosen full hash for both merge 
 
 ## Prepare the destination
 
-An explicit destination wins. Otherwise query origin's advertised HEAD, not a stale default pointer. Refresh the exact destination origin ref. Fast-forward a behind local destination; retain an ahead destination; stop for developer-directed reconciliation if they diverge. Do not reset/rebase shared history or force-push to make this operation succeed.
+Use the explicit destination when supplied. If the invocation omits the destination, query the working repository's `origin` for its advertised `HEAD` and use the local branch with the same name as that freshly verified default branch. Refresh the exact destination origin ref. Fast-forward a behind local destination; retain an ahead destination; stop for developer-directed reconciliation if they diverge. Do not reset/rebase shared history or force-push to make this operation succeed.
 
 Require a clean destination and no unfinished merge/rebase/cherry-pick/revert. Do not discard, auto-stash or commit unrelated edits. Reuse an authorized destination checkout; never take over another task's checkout or force one branch into two worktrees. A missing local destination may be created from its verified origin tip under repository policy. Do not invent a base.
 
