@@ -26,7 +26,9 @@ mod managed_access;
 pub use control::{ControlChange, ControlOperation, ControlRequest};
 pub(crate) use control::{DepartureControl, PendingExit, RestoredExitAttempts};
 pub(crate) use desktop::DesktopBrowser;
-pub(crate) use managed_access::{AccessUpdateError, UpdateGrant, assert_saved_grant};
+pub(crate) use managed_access::{
+    AccessUpdateError, UpdateGrant, assert_saved_access_manager, assert_saved_grant,
+};
 
 pub(crate) const LOCAL_ISSUER: &str = "https://local.openlegend.invalid";
 pub(crate) const LOCAL_SUBJECT: &str = "local-player";
@@ -170,9 +172,16 @@ pub struct WorldGrant {
     revision: u64,
 }
 
+impl WorldGrant {
+    fn can_manage_access(&self) -> bool {
+        self.capabilities.contains(&Capability::ManageAccess)
+    }
+}
+
 pub(crate) struct ViewAccess {
     pub controlling: bool,
     pub can_save: bool,
+    pub can_retry_npc_replies: bool,
     pub can_operate: bool,
     pub can_inspect: bool,
     pub can_create: bool,
@@ -670,6 +679,20 @@ impl Authority {
         })
     }
 
+    /// Check administrative permission and current character control together.
+    pub(crate) fn current_npc_reply_retry<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        use_scope: impl FnOnce(&RequestScope) -> T,
+    ) -> Result<T, AccessError> {
+        self.with_current(authorized, Capability::Play, true, |scope, grant, _| {
+            if !grant.can_manage_access() {
+                return Err(AccessError::Forbidden);
+            }
+            Ok(use_scope(scope))
+        })?
+    }
+
     pub(crate) fn view_access(
         &self,
         authorized: &AuthorizedScope,
@@ -681,8 +704,9 @@ impl Authority {
             |_, grant, controlling| ViewAccess {
                 controlling,
                 can_save: grant.capabilities.contains(&Capability::Save),
+                can_retry_npc_replies: controlling && grant.can_manage_access(),
                 can_operate: grant.capabilities.contains(&Capability::Create)
-                    || grant.capabilities.contains(&Capability::ManageAccess),
+                    || grant.can_manage_access(),
                 can_inspect: grant.capabilities.contains(&Capability::Inspect),
                 can_create: grant.capabilities.contains(&Capability::Create),
                 local: self.local,

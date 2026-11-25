@@ -8,6 +8,8 @@
 
 **Client checks.** Disposable source checks cover the steering replay bound, exact support IDs, matching support candidates, skipping unchanged body transforms and locating Mac and Windows build products. The client reacquires state after a stale-scope refusal and keeps the original receipt. Unresolved receipts reserve the slice’s single pending slot. UE04 owns the full recovery controls. The retained browser build, TypeScript and network boundary checks passed.
 
+The packaged Mac client received reply outcomes from the signed stream, sent a second message after a held reply finished, and completed one administrator retry without repeating the original speech. [Reply status verification](../benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#unreal-reply-status-after-lookup-removal)
+
 **Current batch.** Follow the [existing-game migration scope](../projects/unreal-engine-5-migration-feature-spec.md#existing-game-migration-scope). Complete the retained browser gameplay callers in Unreal, bring across the existing usable art, and provide the native launch path. Building and construction, invention, cooperation and creator work stay with their existing owners. Use focused code, build and real-server checks. A hand-tested playthrough, public release or new art approval is a separate milestone.
 
 **Gameplay interruptions.** The local [interruption checks](#gameplay-interruptions--november-25-2026) cover UE02 connection and control, UE03 movement and UE04 drafts and original results. The native player uses the world’s offered actions and its speech composer.

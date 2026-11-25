@@ -52,6 +52,7 @@ impl Director {
         scope: Arc<AuthorizedScope>,
         mut custody: ByteReservation,
     ) -> Result<SubmitResult, WorldError> {
+        self.authority.current_npc_reply_retry(&scope, |_| ())?;
         if !valid_request_id(&input.request_id) || !valid_request_id(&input.original_request_id) {
             return Err(AccessError::Forbidden.into());
         }
@@ -123,7 +124,7 @@ impl Director {
         let cancelled = || SubmitResult::refused("cancelled", "Your retry was not started.");
         loop {
             self.authority
-                .current(&retry.scope, Capability::Play, true, |_, _| ())?;
+                .current_npc_reply_retry(&retry.scope, |_| ())?;
             if *stopped.borrow() {
                 return refuse(cancelled());
             }
@@ -203,7 +204,7 @@ impl Director {
                 Err(result) => return refuse(result),
             };
             self.authority
-                .current(&retry.scope, Capability::Play, true, |_, _| ())?;
+                .current_npc_reply_retry(&retry.scope, |_| ())?;
             if *stopped.borrow() {
                 return refuse(cancelled());
             }
@@ -244,7 +245,7 @@ impl Director {
                 .store
                 .admit_conversation_retry(job.clone(), stopped.clone(), move || {
                     authority
-                        .current(&selected, Capability::Play, true, |_, _| ())
+                        .current_npc_reply_retry(&selected, |_| ())
                         .map_err(|error| match error {
                             AccessError::Availability => StoreError::WriterUnavailable,
                             _ => StoreError::StaleCut,
@@ -268,7 +269,7 @@ impl Director {
             });
         }
         self.authority
-            .current(&retry.scope, Capability::Play, true, |_, _| ())?;
+            .current_npc_reply_retry(&retry.scope, |_| ())?;
         refuse(if *stopped.borrow() {
             cancelled()
         } else {
@@ -282,7 +283,7 @@ impl Director {
         prior: Arc<AdmittedJob>,
     ) -> Result<SubmitResult, WorldError> {
         self.authority
-            .current(&retry.scope, Capability::Play, true, |_, _| ())?;
+            .current_npc_reply_retry(&retry.scope, |_| ())?;
         Ok(
             if prior.job.fingerprint == retry.fingerprint
                 && prior.job.retry_of.as_deref() == Some(&retry.original)
@@ -312,7 +313,7 @@ impl Director {
             .world
             .capture(move |session| {
                 Ok(
-                    authority.current(&retry.scope, Capability::Play, true, |scope, _| {
+                    authority.current_npc_reply_retry(&retry.scope, |scope| {
                         let target = &original.job.request.npc_id;
                         let event = original
                             .job

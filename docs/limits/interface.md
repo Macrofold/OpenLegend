@@ -58,7 +58,7 @@ Original recommendation: **Keep**.
 
 **Current — rechecked 2026-10-16. Restrictiveness: Safe (live snapshot only).**
 
-The live browser snapshot still scans only the newest 512 perceived events and carries at most 30 conversation entries and 60 journal entries. These feed live consumers (captions, overhead notices, reply status); they are not the history views. Events (**Load older events**, **Load newer events**, time seek and search) pages through retained permitted occurrences; Character records retains the separate personal story and promises with keyset cursors ([HR06](hearing-and-speech.md#hr06--history-paging-and-growth)).
+The live browser snapshot still scans only the newest 512 perceived events and carries at most 30 conversation entries and 60 journal entries. These feed live consumers such as captions, overhead notices and Trade’s recent conversation. Reply outcomes appear in the signed recent-job display and the original request’s receipt. Events (**Load older events**, **Load newer events**, time seek and search) pages through retained permitted occurrences; Character records retains the separate personal story and promises with keyset cursors ([HR06](hearing-and-speech.md#hr06--history-paging-and-growth)).
 
 **Reason / tradeoff:** Keep the live update small; durable history routes provide complete older access.
 

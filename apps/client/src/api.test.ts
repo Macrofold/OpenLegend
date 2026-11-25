@@ -249,6 +249,7 @@ function publicView(): import('@open-legend/protocol').GameView {
       controlling: true,
       controlledElsewhere: false,
       canManageSaves: false,
+      canRetryNpcReplies: false,
       mode: 'local',
     },
     inventionPolicy: { revision: 1, playerLocked: false, agentLocked: false },

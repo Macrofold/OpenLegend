@@ -149,14 +149,6 @@ impl Views {
                 host,
             )
             .await?;
-            if let Some((outcomes, funding)) = game
-                .store
-                .player_speech_replies(&scope.scope, view.speech_reply_ids())
-                .await
-                .map_err(ViewError::Store)?
-            {
-                view = view.attach_speech_replies(outcomes, funding)?;
-            }
             view.attach_presentation_release(game.installed_assets().map(Arc::as_ref), &game.store)
                 .await?;
             Ok(ViewAttempt {

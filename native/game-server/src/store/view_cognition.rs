@@ -4,13 +4,13 @@
 use super::{Store, StoreError, StoreResult, read::admitted_query};
 use crate::{
     authority::RequestScope,
-    player_events::{SpeechReply, SpeechReplyStatus},
+    player_events::SpeechReplyStatus,
     player_view::{
         AccountAmount, AiBudget, AiJob, AiMode, AiUsage, AiUsageReport, AiView, ViewTelemetry,
     },
 };
 use indexmap::IndexMap;
-use openlegend_simulation::{encoding::json_record, host::ByteReservation, text::JsText};
+use openlegend_simulation::{encoding::json_record, text::JsText};
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -179,83 +179,6 @@ impl Store {
                     _custody: custody,
                 })
         })).await
-    }
-
-    /// Read the latest permitted reply for each selected speech event using
-    /// the job index in a single operational snapshot. The caller owns the
-    /// result's custody and rechecks the authorized view before disclosure.
-    pub(crate) async fn player_speech_replies<'a>(
-        &self,
-        scope: &RequestScope,
-        selected: impl Iterator<Item = &'a str>,
-    ) -> StoreResult<Option<(IndexMap<String, SpeechReply>, ByteReservation)>> {
-        let mut ids = Vec::new();
-        let mut parameters = self.budget.reserve(0).map_err(|_| StoreError::Capacity)?;
-        for id in selected {
-            let bytes = parameters
-                .bytes()
-                .checked_add(512 + 4 * id.len())
-                .ok_or(StoreError::Capacity)?;
-            parameters.resize(bytes).map_err(|_| StoreError::Capacity)?;
-            ids.push(json_record(id).map_err(|_| StoreError::InvalidRecord)?);
-        }
-        if ids.is_empty() {
-            return Ok(None);
-        }
-        let key_bytes = scope
-            .account_id
-            .len()
-            .checked_add(scope.actor_id.len())
-            .and_then(|length| length.checked_mul(6))
-            .and_then(|length| length.checked_add(64))
-            .and_then(|length| length.checked_add(parameters.bytes()))
-            .ok_or(StoreError::Capacity)?;
-        parameters
-            .resize(key_bytes)
-            .map_err(|_| StoreError::Capacity)?;
-        let account = json_record(&scope.account_id).map_err(|_| StoreError::InvalidRecord)?;
-        let actor = json_record(&scope.actor_id).map_err(|_| StoreError::InvalidRecord)?;
-        let budget = self.budget.clone();
-        self.read_operational(move |tx| {
-            Box::pin(async move {
-                // Apply owner selection before choosing the latest attempt.
-                // Routing keys and message text retain their JSON encoding.
-                let (mut custody, rows) = admitted_query(
-                    tx,
-                    "SELECT DISTINCT ON (selection #>> '{playerSpeechEventId}') \
-                       selection #>> '{playerSpeechEventId}' AS speech, id, \
-                       (selection->'status')::text AS status, selection->>'displayMessage' AS message \
-                     FROM jobs WHERE selection #>> '{kind}'='chat' \
-                       AND selection #>> '{playerSpeechEventId}'=ANY($1) \
-                       AND (selection->'authority'='null'::jsonb OR \
-                         (selection #>> '{authority,accountId}'=$2 AND \
-                          selection #>> '{authority,actorId}'=$3)) \
-                     ORDER BY selection #>> '{playerSpeechEventId}',created_at DESC,id DESC",
-                    &[&ids, &account, &actor],
-                    &budget,
-                ).await?;
-                drop((ids, account, actor, parameters));
-                let mut result = IndexMap::with_capacity(rows.len());
-                let invalid = |_| StoreError::InvalidRecord;
-                for row in &rows {
-                    let speech: String = serde_json::from_str(row.try_get(0)?).map_err(invalid)?;
-                    let status = serde_json::from_str(row.try_get(2)?).map_err(invalid)?;
-                    let message = serde_json::from_str(row.try_get(3)?).map_err(invalid)?;
-                    result.insert(speech, SpeechReply { id: row.try_get(1)?, status, message });
-                }
-                drop(rows);
-                if result.is_empty() {
-                    return Ok(None);
-                }
-                let bytes = result.iter().try_fold(
-                    openlegend_simulation::host::map_storage::<String, SpeechReply>(result.capacity()).ok_or(StoreError::Capacity)?,
-                    |bytes, (event, job)| bytes.checked_add(event.capacity())?
-                        .checked_add(job.id.capacity())?.checked_add(job.message.storage_bytes()),
-                ).ok_or(StoreError::Capacity)?;
-                custody.resize(bytes).map_err(|_| StoreError::Capacity)?;
-                Ok(Some((result, custody)))
-            })
-        }).await
     }
 }
 

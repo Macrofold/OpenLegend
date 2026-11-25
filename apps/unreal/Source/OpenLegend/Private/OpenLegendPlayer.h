@@ -90,9 +90,8 @@ private:
     FString Outcome, SessionStatus;
     FText LatestSpeech;
     TWeakPtr<FJsonValue> SpeechEvents;
-    TWeakPtr<FJsonValue> ConversationEvents;
-    OpenLegend::FObject RetrySpeech;
-    FString DraftTarget, PendingJob;
+    TWeakPtr<FJsonValue> ReplyJobs;
+    FString DraftTarget, PendingJob, ReplyWords, FailedReplyId, FailedReplyMessage;
     FString ReceiptRoute, ReceiptOwner, ReceiptTimeline;
     FOpenLegendReceiptHandle ReceiptHandle;
     TSharedPtr<FJsonObject> Receipt;
@@ -160,7 +159,8 @@ private:
     void SubmitConversation(const TCHAR* Route, TSharedPtr<FJsonObject> Request, bool bSubmitDraft);
     void RetryConversation();
     bool CanRetryConversation() const;
-    void ApplyConversation(const OpenLegend::FObject& View);
+    void ApplyReplyJobs(const OpenLegend::FObject& View);
+    bool FinishReply(const FString& Status, const FString& Message);
     bool RetainReceipt(const OpenLegend::FObject& View);
     /** Sends an admitted write. Its completion belongs only to the exact retained lookup. */
     bool SendRetainedRequest(const TCHAR* Route, TSharedPtr<FJsonObject> Body);

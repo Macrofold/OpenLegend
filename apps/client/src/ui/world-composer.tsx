@@ -263,7 +263,8 @@ function ScopedWorldComposer({
               ? 'Shorten these words before sending.'
               : null;
   const currentSubmission = submitted[key];
-  const failedReply = failedReplies[key];
+  const canRetryReply = view.access?.canRetryNpcReplies === true;
+  const failedReply = canRetryReply ? failedReplies[key] : undefined;
   const waitingForAct = !!currentSubmission;
   function finishSubmission(attempt: Attempt, job: Pick<AiJobView, 'id' | 'status' | 'message'>) {
     if (job.status === 'completed') return;
@@ -318,6 +319,7 @@ function ScopedWorldComposer({
   async function send(reconcile?: Attempt, recovery = false) {
     if (
       pendingRequest.current?.scope === scope ||
+      (!recovery && !!reconcile?.retryOf && !canRetryReply) ||
       (!recovery && !available?.available) ||
       (!reconcile && (blocked || !text.trim() || !intent || waitingForAct || uncertain))
     )

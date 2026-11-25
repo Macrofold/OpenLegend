@@ -5,7 +5,7 @@
 use super::{
     ACCESS_COLUMN_BYTES, AccessError, AccessUpdateError, Authority, AuthorizedScope, Capability,
     RequestScope,
-    managed_access::{GrantChange, GrantRecord, assert_manager, audit},
+    managed_access::{GrantChange, GrantRecord, assert_saved_access_manager, audit},
     now_ms,
 };
 use crate::store::{OrdinaryProjection, PrefixProjection, StoreError, StoreResult, sql_ordinal};
@@ -186,7 +186,7 @@ impl BindingPlan {
     /// Persist one exact grant, both released controls, permanent owners and
     /// the existing binding receipt. The native publication owns the same SQL transaction.
     pub(crate) async fn write(&self, tx: &Transaction<'_>) -> StoreResult<()> {
-        assert_manager(tx, &self.scope).await?;
+        assert_saved_access_manager(tx, &self.scope).await?;
         let world = &self.scope.world_id;
         let account = &self.request.account_id;
         let previous = self.previous_actor()?;

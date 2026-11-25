@@ -4,7 +4,7 @@
 use super::{
     ACCESS_COLUMN_BYTES, Access, AccessError, Authority, AuthorizedScope, Capability, TokenHash,
     digest_text, granted_actor,
-    managed_access::{GrantRecord, assert_manager, audit},
+    managed_access::{GrantRecord, assert_saved_access_manager, audit},
     now_ms, token_hash,
 };
 use crate::store::{
@@ -469,7 +469,7 @@ impl Authority {
         let hash = digest_text(token_hash(&token)?);
         let budget = self.budget.clone();
         let result = self.store.operational(move |tx| Box::pin(async move {
-            assert_manager(tx,&scope).await?;
+            assert_saved_access_manager(tx, &scope).await?;
             let now = now_ms();
             let id = request.id.to_string();
             let world = &scope.world_id;
@@ -537,7 +537,7 @@ impl Authority {
         self.store
             .operational(move |tx| {
                 Box::pin(async move {
-                    assert_manager(tx, &scope).await?;
+                    assert_saved_access_manager(tx, &scope).await?;
                     let row = tx
                         .query_opt(
                             "SELECT CASE WHEN octet_length(payload)<=$3 THEN payload ELSE '' END \

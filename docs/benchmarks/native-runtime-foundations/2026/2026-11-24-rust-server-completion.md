@@ -140,3 +140,86 @@ The 7,654 reply lookups ran at 14.2 per second. Their elapsed time was **0.84–
 Campaign `81e117ac-95f8-43b2-8756-e770f176999d` exhausted its build allowance before gameplay and cleaned up. The retry `00715088-867a-4446-b063-3b1fa6262710` increased the build allowance and preserved the selected probes and inputs. Collected manifest `f68f4003b581` and reduced report `7a464caaaddd` identify the results. The direct timings support attribution. Recorder overhead remains unqualified because there is no fixed-work safety proof and one pair exceeded the frozen game-time tolerance.
 
 Both campaigns completed worker cleanup. EC2 and the runner confirmed the retained worker stopped at generation 596. The two campaigns settled at $0.281890 and $0.424636 estimated use, with zero hold remaining for either. Controlled model spend was $0.
+
+### Compact reply reader correctness on November 25
+
+The signed caller checked base commit `3a408a1f22f4869570abd40339900bf0665ee78b` with unrelated simulation-save diagnostic probes in the executable (`530a074ee0f4`). The reply reader, authorization and delivery paths came from the pinned base. The test used disposable PostgreSQL, two independently signed characters and a controlled local provider. Result `8996c77a16f1`.
+
+- Two signed state reads and two live stream openings selected no speech eligible for private reply status. A loopback PostgreSQL relay saw zero reply sizing queries and zero reply body queries.
+- In a second run, two tabs with the same signed session saw the same attempt go from pending to completed on their own streams. The second tab observed without taking control. An independently signed witness heard the utterance without seeing its private reply status. The three signed state reads and three stream openings before the utterance again issued zero reply queries. Result `037f7afe2a12`.
+- The speaker saw the failed original attempt, the failed first retry, and the newest attempt while its provider reply was held. Releasing the provider call advanced that same attempt to completed on the same stream. Reopening the saved world showed the same latest attempt and the original receipt. Replaying the receipt caused no duplicate provider call.
+- A nearby signed player saw the speaker's utterance via the state endpoint and the live stream, with no private reply status. In a separate held state read, PostgreSQL finished sizing the speaker's result before the relay held the body fetch. Withdrawing the speaker's access while the fetch was held caused the endpoint to return HTTP 403 with no reply information after release.
+- With one speech and three saved attempts, each actual query used the speech index. The sizing query and the body query each visited three attempt rows in one scan, with three shared buffer hits and zero buffer reads. The permitted result was one row and 162 bytes for the transfer-size check. Forcing that same speech ID through the compact SQL with the nearby player's authority yielded zero rows. These counts describe the exercised retry and warm database, with timings disabled.
+
+The server stopped, the disposable database was dropped and the private PostgreSQL cluster stopped. External model spend was $0.
+
+### Compact reply reader during ordinary play
+
+The first diagnostic campaign, `6e63f1b0-3000-4012-a309-7531ce5e0cc1`, completed the gameplay with one viewer and with two tabs on the same account. Traces included unrelated database work and hit the capture limit in both runs. The separate player's stream closed when the restored world resumed because its character lacked a verified controller. Those runs do not qualify the database timings or the three-viewer comparison. The runner verified cleanup and termination of the separate worker and settled at $0.281277 estimated use with no reservation remaining.
+
+The completed diagnostic campaign, `a39a2058-7922-4fdc-9faa-0916fe2cb572`, used a separate standard `m7i.xlarge` worker in `us-east-2` (slot 4, generation 123, four vCPUs, 16 GiB). Each setup used the same Rust executable (`33a634956205`) and a separate PostgreSQL database. The source was `3a408a1f22f4` plus reply-only recording probes in `343c814f0408`. Each 180-second window kept the ordinary clock and saves running. Each run completed 34 walks, two steering gestures and two controlled replies, then reopened the saved world and recovered its movement receipt. The separate player controlled their own stationary character with Play permission. The speaker could also manage saves. The recorder dropped zero observations.
+
+| Work per 180 seconds                   | One viewer | Two tabs on one account | Two different players |
+| -------------------------------------- | ---------: | ----------------------: | --------------------: |
+| Delivered stream updates               |      3,155 |                   6,285 |                 6,029 |
+| Updates with a reply-status transition |          4 |                       8 |                     4 |
+| Updates without a transition           |      3,151 |                   6,277 |                 6,025 |
+| Speech IDs selected by the server      |      3,314 |                   6,562 |                 3,130 |
+| Server selections that skipped SQL     |        715 |                   1,443 |                 3,719 |
+| Reply lookups started                  |      2,457 |                   4,861 |                 2,325 |
+| Reply lookups per second               |      13.65 |                   27.01 |                 12.92 |
+| Reply lookups per delivered update     |      0.779 |                   0.773 |                 0.386 |
+| Reply read transactions committed      |      2,456 |                   4,861 |                 2,325 |
+| Transfer-size SELECTs completed        |      2,457 |                   4,861 |                 2,325 |
+| Reply-body SELECTs completed           |      2,454 |                   4,839 |                 2,318 |
+| Confirmed reply SQL statements         |      9,824 |                  19,422 |                 9,293 |
+| Reply body rows returned               |      3,292 |                   6,515 |                 3,108 |
+| PostgreSQL result-row bytes            |    521,883 |               1,032,538 |               492,879 |
+
+Statement counts include transaction start, commit and completed SELECTs. One lookup in the single-viewer run was canceled after its transaction started. The statement count includes the confirmed work before cancellation. Result-row bytes include the size result and body rows with their PostgreSQL row framing. Query parameters and other protocol messages are outside that byte count. The numerator for lookups per update covers signed HTTP and stream preparation, including attempts that produced no later stream update. The denominator counts updates received by the stream clients. The separate player received 3,035 updates, heard the speaker and selected zero private reply speech IDs.
+
+| Timing per operation, median / average / p95 |            One viewer | Two tabs on one account | Two different players |
+| -------------------------------------------- | --------------------: | ----------------------: | --------------------: |
+| Wait for the read connection (µs)            |   2.42 / 12.27 / 3.45 |     2.10 / 11.44 / 3.12 |   2.42 / 12.40 / 3.38 |
+| Reply lookup (ms)                            |    1.28 / 1.44 / 2.67 |      1.17 / 1.32 / 2.42 |    1.25 / 1.38 / 2.47 |
+| Database transaction elapsed (ms)            |    1.27 / 1.42 / 2.67 |      1.16 / 1.30 / 2.39 |    1.23 / 1.35 / 2.42 |
+| Transfer-size SELECT wait (ms)               |    0.57 / 0.65 / 1.12 |      0.51 / 0.60 / 1.07 |    0.56 / 0.63 / 1.09 |
+| Reply-body SELECT wait (ms)                  |    0.31 / 0.43 / 0.98 |      0.30 / 0.39 / 0.90 |    0.32 / 0.41 / 0.92 |
+| First stream update showing a walk (ms)      | 57.07 / 56.57 / 79.25 |  65.24 / 67.70 / 103.95 | 54.19 / 50.87 / 73.53 |
+
+Reply timing distributions use the observed operations in each window, with medians and p95s reported at the upper edge of their recorder bins. Database transaction elapsed time includes PostgreSQL waits and the application's work while the connection is held. The two SELECT waits include the driver and loopback transport. PostgreSQL execution time within an individual SQL statement was unavailable. Walk timings use the 32 steady-window walks per run at the signed stream client, before browser rendering.
+
+| Whole-window resources and progress | One viewer | Two tabs on one account | Two different players |
+| ----------------------------------- | ---------: | ----------------------: | --------------------: |
+| Game server CPU (% of one vCPU)     |      49.44 |                   54.24 |                 57.26 |
+| PostgreSQL CPU (% of one vCPU)      |       6.94 |                    9.67 |                  8.61 |
+| Game speed (% of intended)          |    100.028 |                 100.000 |               100.028 |
+| All PostgreSQL commits              |      9,323 |                  15,090 |                11,798 |
+
+**Disposition at the time.** The measured cost alone did not justify changing the compact reader for the tested load. Two tabs nearly doubled the reply SQL traffic and received eight status transitions in 6,285 updates. Even in that case the reply transactions held the read connection for about 6.32 seconds of the 180-second window, returned about 1.03 MB of result rows and had a 2.39 ms p95 transaction time. Waiting for the connection stayed below 4 µs at p95 in all three setups. The engine completed ordinary saves and continued at the intended game speed. Each lookup took its own database snapshot and rechecked permission before release. This instrumented study recorded one run per viewer setup under the former wire contract. The subsequent [reply policy](../../../narration-and-conversations.md#explicit-failed-response-retry) removes the redundant per-speech fields from signed views and keeps pending and terminal status in Speak. These figures remain the historical baseline, with no clean successor speedup measurement.
+
+The collected manifest starts `6a8b080866ff`, the cleanup receipt `42d4d9a0445e` and the reduced report `7c2690d57712`.
+
+The runner verified process and database cleanup. EC2 confirmed both dedicated workers terminated, and slot 4 returned empty at generation 123. The completed campaign settled at $0.254023 estimated use. The two campaigns together used $0.535300 of the shared allocation, with zero outstanding reservation and $0.433408 still available. External model spend was $0.
+
+### Reply lookup removal and administrator retry
+
+The successor keeps ordinary speech in signed state and live updates and carries pending and terminal reply information through recent activity and exact receipts. A disposable PostgreSQL relay recorded zero calls to the retired conversation reply query while the signed speaker and witness received actual speech. It independently counted 134 recent-activity body reads and eight exact-job body reads across retry and receipt callers. The scope change preserves the already measured baseline above and eliminates the dedicated caller, with no claim about elapsed player latency, CPU use or broader SQL traffic.
+
+Signed Chrome exercised Play alone and Play with Manage access against the built Rust server. The ordinary player saw the failure and kept their newer draft. The Retry button was absent, and a direct retry request returned HTTP 403 without a job or provider call. The player sent new words and recovered the completed reply through its own receipt. The administrator saw and clicked Retry, watched the held reply finish, and recovered the completed attempt. The original speech remained one occurrence. Signed state and the same live streams carried the committed words without the retired fields.
+
+A separate signed HTTP and stream replay refused attempts to retry a superseded failure and to retry from an administrator tab that lacked control. Both owner tabs saw the latest permitted attempt complete, and a separately signed witness heard the speech without receiving the private attempt. PostgreSQL held a genuine exact receipt read after its size check. A committed access change caused the old request to return HTTP 403 with no private details. A fresh Play grant could read the same exact receipt. Cold recovery caused no extra model dispatch. A follow-up signed walk after the held reply completed reached its target on the same stream with the original words and completed job still visible. The replay again observed zero calls to the retired query. Result `3a6c44c9855e`.
+
+The Rust executable starts `7897d214c528`. The signed replay result starts `80aea9d88d4f`, and the ordinary and administrator Chrome results start `50f2c889d796` and `3ef3b8d84145`. An initial browser fixture seeded an unpaused opening and was corrected before either role qualified. An initial SQL classifier matched unrelated NPC scheduling reads and was narrowed to the retired query's exact fields before the replay. The controlled providers made no external calls. The servers and private PostgreSQL clusters stopped and the disposable databases were dropped. This was correctness verification. No clean server comparison ran under the remaining shared allocation.
+
+### Review checks for retry and Trade
+
+The review uses the same saved administrator check for retry, access changes, character binding and invitations. The check runs within the existing write transaction. This is server access policy. The installed world still determines whether a resident can hear and answer.
+
+A signed retry reached an exact queued write and waited in PostgreSQL. A separately signed administrator removed Manage access while the write waited. The old request returned HTTP 403 when the write was released. PostgreSQL saved no retry and the provider received no retry request. The speaker retained Play and control, and their original failed receipt was still recoverable. The rebuilt Rust executable starts `1bd488cb41dc` and the held-write result starts `704dc388c990`. Signed Chrome also verified the controlling administrator could complete a normal retry on that build. Result `7151083ab9b5`.
+
+A signed Play-only Chrome session also recovered a new completed reply and verified that Trade rendered the player's original words. Signed state and the live stream carried those words without the retired reply fields. Result `11ac876f8562` and Trade screenshot `5b09904ad58c`. At 1440 × 960, In view covered the Speak close button during the first run. The verification used Hide In view to continue through the normal controls, and the [shared panel issue](../../../maintainers/ui-ux.md#uiux19) remains tracked. The controlled provider made no external calls. Test servers stopped and disposable databases were dropped. These were correctness checks.
+
+### Unreal reply status after lookup removal
+
+The arm64 Mac Development build used source `228bc5367730` (executable SHA-256 starts `491c7d2d25b4`) and the integrated Rust release (SHA-256 starts `63c52ba96c06`). In a disposable PostgreSQL Base world with a local HTTPS provider, the packaged player saw a held reply complete on its signed stream and sent a second message without checking a receipt. The second reply’s controlled failure showed its reason and the original words. A single explicit administrator retry completed on the same stream. Two original speech events and three attempts were saved, with statuses completed, failed and completed. The provider was local and the run incurred $0 in external charges.

@@ -4,7 +4,7 @@
 use crate::{
     boot::CurrentServer,
     live_save::LiveSaves,
-    player_events::{PreparedPlayerEvents, SpeechReply, prepare as prepare_events},
+    player_events::{PreparedPlayerEvents, prepare as prepare_events},
     player_references::ReferenceIssuer,
     player_scene::{PreparedContacts, PreparedSelf, SceneError, prepare_contacts, prepare_self},
     store::{NarrationBanner, StoreError},
@@ -94,6 +94,7 @@ pub struct PlayerAccess {
     pub controlling: bool,
     pub controlled_elsewhere: bool,
     pub can_manage_saves: bool,
+    pub can_retry_npc_replies: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub time_speeds: Option<&'static [f64]>,
     pub can_operate: bool,
@@ -659,9 +660,6 @@ impl PreparedPlayerView {
     pub fn event_ids(&self) -> &[String] {
         self.owned.events.event_ids()
     }
-    pub fn speech_reply_ids(&self) -> impl Iterator<Item = &str> {
-        self.owned.events.speech_reply_ids()
-    }
 
     /// Read the current installed-artwork grant only for the accepted saved
     /// binding. Call after other async projection reads and immediately before
@@ -696,20 +694,6 @@ impl PreparedPlayerView {
         Ok(())
     }
 
-    /// Join only the selected speech events' independently admitted job
-    /// products. The original read and disclosure boundary stay intact.
-    pub fn attach_speech_replies(
-        mut self,
-        replies: IndexMap<String, SpeechReply>,
-        custody: ByteReservation,
-    ) -> Result<Self, ViewError> {
-        self.owned.events = self
-            .owned
-            .events
-            .attach_replies(replies, custody)
-            .map_err(ViewError::Event)?;
-        Ok(self)
-    }
     pub fn revision(&self) -> u64 {
         self.owned.host.revision
     }

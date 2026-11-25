@@ -580,18 +580,6 @@ pub struct ConversationEvent {
     speaker: JsText,
     text: JsText,
     time: f64,
-    #[serde(flatten)]
-    reply: Option<ReplyStatus>,
-}
-
-#[derive(PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct ReplyStatus {
-    reply_status: SpeechReplyStatus,
-    reply_request_id: String,
-    retryable: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    reply_reason: Option<JsText>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -615,20 +603,12 @@ impl SpeechReplyStatus {
     }
 }
 
-#[derive(Deserialize)]
-pub struct SpeechReply {
-    pub id: String,
-    pub status: SpeechReplyStatus,
-    pub message: JsText,
-}
-
 mod formatting;
 
 pub struct PreparedPlayerEvents {
     journal: Vec<PublicEvent>,
     conversation: Vec<ConversationEvent>,
     event_ids: Vec<String>,
-    _reply_custody: Option<ByteReservation>,
     _custody: ByteReservation,
 }
 
@@ -642,59 +622,6 @@ impl PreparedPlayerEvents {
     /// These IDs must all pass `player_publication` before transport takes a frame.
     pub fn event_ids(&self) -> &[String] {
         &self.event_ids
-    }
-    pub fn speech_reply_ids(&self) -> impl Iterator<Item = &str> {
-        self.conversation
-            .iter()
-            .filter(|event| event.speaker_id.is_some())
-            .map(|event| event.id.as_str())
-    }
-    /// Take the independently admitted lookup result. The selected reply text
-    /// keeps its own backing through the last frame consumer.
-    pub fn attach_replies(
-        mut self,
-        mut replies: IndexMap<String, SpeechReply>,
-        mut custody: ByteReservation,
-    ) -> Result<Self, PlayerEventError> {
-        if self._reply_custody.is_some() {
-            return Err(PlayerEventError::InvalidCapture);
-        }
-        let mut retained = 0usize;
-        for event in &mut self.conversation {
-            if event.speaker_id.is_some()
-                && let Some(reply) = replies.shift_remove(&event.id)
-                && !reply.message.is_empty()
-            {
-                event.reply = Some(ReplyStatus {
-                    reply_status: reply.status,
-                    reply_request_id: reply.id,
-                    retryable: reply.status == SpeechReplyStatus::Failed,
-                    reply_reason: matches!(
-                        reply.status,
-                        SpeechReplyStatus::Failed
-                            | SpeechReplyStatus::Cancelled
-                            | SpeechReplyStatus::Stale
-                    )
-                    .then_some(reply.message),
-                });
-                let reply = event.reply.as_ref().expect("attached reply");
-                retained = retained
-                    .checked_add(reply.reply_request_id.capacity())
-                    .and_then(|bytes| {
-                        bytes.checked_add(
-                            reply.reply_reason.as_ref().map_or(0, JsText::storage_bytes),
-                        )
-                    })
-                    .ok_or(PlayerEventError::Capacity)?;
-            }
-        }
-        drop(replies);
-        if retained > custody.bytes() {
-            return Err(PlayerEventError::Capacity);
-        }
-        custody.resize(retained)?;
-        self._reply_custody = Some(custody);
-        Ok(self)
     }
 }
 
@@ -746,7 +673,6 @@ pub fn prepare(
         journal: Vec::new(),
         conversation: Vec::new(),
         event_ids: Vec::new(),
-        _reply_custody: None,
         _custody: custody,
     };
     for account in accounts {
@@ -846,7 +772,6 @@ fn conversation_row(
         speaker: speaker.cloned().unwrap_or_else(|| "Someone".into()),
         text,
         time: at,
-        reply: None,
     }
 }
 

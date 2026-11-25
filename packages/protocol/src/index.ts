@@ -1008,13 +1008,8 @@ export interface PublicEvent {
 }
 
 export interface ChatMessage {
-  replyRequestId?: string;
-  retryable?: boolean;
   kind?: 'speech' | 'action';
   mechanical?: boolean;
-  replyStatus?: AiJobView['status'];
-  /** Permitted explanation of a failed, cancelled or stale reply. */
-  replyReason?: string;
   id: string;
   speakerId?: string;
   speech?: PerceivedSpeech;
@@ -1076,6 +1071,8 @@ export interface GameView {
     /** Another page holds current control, including while its stream is starting. */
     controlledElsewhere: boolean;
     canManageSaves: boolean;
+    /** The current controller also has permission to manage world access. */
+    canRetryNpcReplies: boolean;
     /** Current creator debugging choices, provided only when available. */
     timeSpeeds?: readonly number[];
     /** Creator or access manager: may open the separate World operations console. */

@@ -1,8 +1,8 @@
 # World-first player experience
 
-| Status      | Current progress                                                                                                                                            | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Compact HUD review fixes preserve tasks through Game, keep work review reachable and respect authored units; the parent speech decision and CI remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Administrative reply retry is implemented and verified. The parent speech decision and broader project verification remain open. | 2026-11-25   |
 
 Implementation-aligned update: **2026-10-17 02:45 UTC** (second review of inspection entrypoints, responsive Game focus restoration and current-work tooltip activation).
 
@@ -24,7 +24,7 @@ Ordinary reads and action buttons share a 500 ms visual loading delay: no flash 
 
 ## Speaking and hearing
 
-Speaking is an action in the world. A compact Speak input replaces the player conversation window. It has a recipient when deliberately addressed, the existing volume control, explicit Send and cancel/hide. Right-click Speak uses the chosen person; speaking without a recipient addresses the surrounding scene. Drafts survive hiding, pause and temporary connection loss. Speaking remains available when AI configuration or allowance prevents a generated reply; that native choice is made before sending and never retries a refused or uncertain paid request as duplicate speech. Native conversation participation and independently selected replies remain; removing a transcript window does not remove response admission or request recovery. Each addressed draft retains its own pending reply and recovery controls. Checking an old reply reads the original request, even when other activity has pushed it out of the recent display; it never repeats the spoken words or buys another reply.
+Speaking is an action in the world. A compact Speak input replaces the player conversation window. It has a recipient when deliberately addressed, the existing volume control, explicit Send and cancel/hide. Right-click Speak uses the chosen person; speaking without a recipient addresses the surrounding scene. Drafts survive hiding, pause and temporary connection loss. Speaking remains available when AI configuration or allowance prevents a generated reply; that native choice is made before sending and never retries a refused or uncertain paid request as duplicate speech. Native conversation participation and independently selected replies remain; removing a transcript window does not remove response admission or request recovery. Each addressed draft retains its own pending reply, ending reason and recovery controls. Checking an old reply reads the original request even after other activity has pushed it out of the recent display. A failed reply can be retried only by an administrator currently controlling the original speaker. Other players can say new words. The [reply policy](../narration-and-conversations.md#explicit-failed-response-retry) defines administrator access and the difference between retry and recovery.
 
 Every heard utterance is presented visually. On-screen speakers have plain readable text above their heads. Directed speech has a smaller `To Ada:` line above the quoted words, using only the recipient identity the listener perceived. Partially understood speech contains only the permitted fragments and explicit gaps; a faint voice never reveals unheard words. Camera movement does not change hearing or grant speaker identity.
 

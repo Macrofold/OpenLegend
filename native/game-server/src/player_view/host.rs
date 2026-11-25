@@ -99,6 +99,7 @@ pub(crate) async fn capture_host(
             controlling: access.controlling,
             controlled_elsewhere,
             can_manage_saves: access.can_save,
+            can_retry_npc_replies: access.can_retry_npc_replies,
             time_speeds: (god_mode && access.can_create)
                 .then(crate::control_format::speeds)
                 .transpose()

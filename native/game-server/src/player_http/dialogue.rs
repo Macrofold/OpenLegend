@@ -49,16 +49,23 @@ pub(super) async fn chat(State(state): State<PlayerRoutes>, request: Request) ->
             .await
     };
     match result {
-        Ok(result) => match state
-            .authority
-            .current(&access, Capability::Play, false, |_, _| match result {
+        Ok(result) => {
+            let publish = || match result {
                 SubmitResult::Job(job) => reply(&state, status, &job_report(&job, true)),
                 SubmitResult::Command(outcome, _custody) => reply(&state, status, &outcome),
                 SubmitResult::Refusal { code, message } => refusal(status, code, message),
-            }) {
-            Ok(response) => response,
-            Err(error) => access_failure(error),
-        },
+            };
+            let response = if retry {
+                state
+                    .authority
+                    .current_npc_reply_retry(&access, |_| publish())
+            } else {
+                state
+                    .authority
+                    .current(&access, Capability::Play, false, |_, _| publish())
+            };
+            response.unwrap_or_else(access_failure)
+        }
         Err(error) => failed(error),
     }
 }

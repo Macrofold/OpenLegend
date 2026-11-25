@@ -24,6 +24,8 @@ The package recipe imports the selected existing browser models and motion from 
 
 The player keeps one pending command or chat receipt per recovery scope in the OS credential vault. It retains the exact original lookup before dispatch. The [receipt bound](../../docs/limits/interface.md#unreal-client-qualification) covers the original request plus metadata. Pending requests remain recoverable after the same account returns. Unreal stores neither a second world nor another copy of the server's conversation state.
 
+Unreal follows the acknowledged reply ID in the signed recent jobs. **Check result** uses the original receipt if a reply leaves that list or its acknowledgement was lost. **Retry reply** is available for a confirmed failure while the player controls the original speaker and has **Manage access**.
+
 ## Optional local Mac smoke check
 
 Use this disposable setup when an interactive diagnostic is useful. The code delivery does not require a hand-tested playthrough.

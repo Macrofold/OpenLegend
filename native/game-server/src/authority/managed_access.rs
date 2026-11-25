@@ -92,7 +92,11 @@ pub(super) async fn audit(
     Ok(())
 }
 
-pub(super) async fn assert_manager(tx: &Transaction<'_>, scope: &RequestScope) -> StoreResult<()> {
+/// Recheck the saved access-management grant before an administrative write.
+pub(crate) async fn assert_saved_access_manager(
+    tx: &Transaction<'_>,
+    scope: &RequestScope,
+) -> StoreResult<()> {
     assert_saved_grant(tx, scope, "manage-access").await
 }
 
@@ -202,7 +206,7 @@ impl Authority {
         signal();
         let scope = authorized.scope.clone();
         let result = self.store.operational(move |tx| Box::pin(async move {
-            assert_manager(tx, &scope).await?;
+            assert_saved_access_manager(tx, &scope).await?;
             let limit = ACCESS_COLUMN_BYTES;
             let row = tx.query_opt(
                 "SELECT account_id,actor_id,revision,capabilities FROM auth_grants \

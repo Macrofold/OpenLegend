@@ -356,6 +356,10 @@ void AOpenLegendPlayer::ApplyView()
         CancelPick();
         bAttackPointerHeld = false;
         Outcome.Reset();
+        ReplyWords.Reset();
+        FailedReplyId.Reset();
+        FailedReplyMessage.Reset();
+        ReplyJobs.Reset();
         if (View && Receipt && !ReceiptOwnerMatches(View)) FinishReceipt();
         bCheckedReceipt = false;
         SelectedTimeline = Timeline;
@@ -373,7 +377,7 @@ void AOpenLegendPlayer::ApplyView()
         ApplyInputMode();
     }
     UpdateRecentSpeech(View);
-    ApplyConversation(View);
+    ApplyReplyJobs(View);
     if (!View)
     {
         bSending = false;
@@ -989,57 +993,66 @@ void AOpenLegendPlayer::SubmitConversation(const TCHAR* Route, TSharedPtr<FJsonO
     Receipt->SetStringField(TEXT("timeline"), String(View, TEXT("saveTimeline")));
     if (!RetainReceipt(View)) return;
     SubmittedDraft.Reset();
-    if (bSubmitDraft) SubmittedDraft = DraftRevision;
+    if (bSubmitDraft)
+    {
+        SubmittedDraft = DraftRevision;
+        ReplyWords = String(Request, TEXT("text"));
+        FailedReplyId.Reset();
+        FailedReplyMessage.Reset();
+    }
     SendRetainedRequest(Route, MoveTemp(Request));
 }
 
 bool AOpenLegendPlayer::CanRetryConversation() const
 {
-    return RetrySpeech && Steering.CanControl() && !bSending && !Receipt;
+    const auto* Owner = Session();
+    const auto View = Owner ? Owner->GetView() : nullptr;
+    return !FailedReplyId.IsEmpty() && Steering.CanControl() && !bSending && !Receipt
+        && Bool(Object(View, TEXT("access")), TEXT("canRetryNpcReplies"));
 }
 
 void AOpenLegendPlayer::RetryConversation()
 {
     if (!CanRetryConversation()) return;
     auto Request = MakeShared<FJsonObject>();
-    Request->SetStringField(TEXT("originalRequestId"), String(RetrySpeech, TEXT("replyRequestId")));
+    Request->SetStringField(TEXT("originalRequestId"), FailedReplyId);
     // Only the explicit player action creates a new attempt; both sends use the same receipt route.
     SubmitConversation(TEXT("/api/chat/retry"), Request, false);
 }
 
-void AOpenLegendPlayer::ApplyConversation(const FObject& View)
+void AOpenLegendPlayer::ApplyReplyJobs(const FObject& View)
 {
-    const auto Events = View ? View->TryGetField(TEXT("conversation")) : nullptr;
-    if (Events && Events == ConversationEvents.Pin()) return;
-    ConversationEvents = Events;
-    RetrySpeech.Reset();
-    bool bFoundLatest = false;
-    const auto& Conversation = Array(View, TEXT("conversation"));
-    for (int32 Index = Conversation.Num() - 1; Index >= 0; --Index)
+    if (PendingJob.IsEmpty() || !ReceiptOwnerMatches(View)) return;
+    const auto Ai = Object(View, TEXT("ai"));
+    const auto Jobs = Ai ? Ai->TryGetField(TEXT("jobs")) : nullptr;
+    if (!Jobs || Jobs == ReplyJobs.Pin()) return;
+    ReplyJobs = Jobs;
+    // Match only our acknowledged request. If it leaves the recent list,
+    // the original receipt remains available through Check result.
+    for (const auto& Entry : Array(Ai, TEXT("jobs")))
     {
-        const auto Speech = Record(Conversation[Index]);
-        const FString Job = String(Speech, TEXT("replyRequestId"));
-        if (Job.IsEmpty()) continue;
-        const FString Status = String(Speech, TEXT("replyStatus"));
-        if (!bFoundLatest)
+        const auto Job = Record(Entry);
+        if (String(Job, TEXT("id")).Equals(PendingJob, ESearchCase::CaseSensitive))
         {
-            bFoundLatest = true;
-            if (Status == TEXT("failed") && Bool(Speech, TEXT("retryable"))) RetrySpeech = Speech;
+            FinishReply(String(Job, TEXT("status")), String(Job, TEXT("message")));
+            return;
         }
-        // Unacknowledged submissions keep their original lookup, even if a similar event is visible.
-        if (!PendingJob.IsEmpty() && Job.Equals(PendingJob, ESearchCase::CaseSensitive))
-        {
-            if (Status == TEXT("completed") || Status == TEXT("failed")
-                || Status == TEXT("cancelled") || Status == TEXT("stale"))
-            {
-                Outcome = String(Speech, TEXT("replyReason"));
-                if (Outcome.IsEmpty() && Status == TEXT("completed")) Outcome = TEXT("Reply completed.");
-                FinishReceipt();
-            }
-            break;
-        }
-        if (bFoundLatest && PendingJob.IsEmpty()) break;
     }
+}
+
+bool AOpenLegendPlayer::FinishReply(const FString& Status, const FString& Message)
+{
+    const bool bFailed = Status == TEXT("failed");
+    if (!bFailed && Status != TEXT("completed") && Status != TEXT("cancelled") && Status != TEXT("stale"))
+        return false;
+    if (bFailed)
+    {
+        FailedReplyId = PendingJob;
+        FailedReplyMessage = Message;
+    }
+    Outcome = Message.IsEmpty() && Status == TEXT("completed") ? TEXT("Reply completed.") : Message;
+    FinishReceipt();
+    return true;
 }
 
 bool AOpenLegendPlayer::RetainReceipt(const FObject& View)
@@ -1095,6 +1108,7 @@ void AOpenLegendPlayer::FinishReceipt()
     Receipt.Reset();
     bSending = false;
     PendingJob.Reset();
+    if (FailedReplyId.IsEmpty()) ReplyWords.Reset();
     SubmittedDraft.Reset();
 }
 
@@ -1119,7 +1133,12 @@ void AOpenLegendPlayer::FinishRequest(int32 Status, const FObject& Result)
         return;
     }
     const FString Job = String(Result, TEXT("jobId"));
-    if (!Job.IsEmpty()) PendingJob = Job;
+    if (!Job.IsEmpty())
+    {
+        PendingJob = Job;
+        FailedReplyId.Reset();
+        FailedReplyMessage.Reset();
+    }
     const FString JobStatus = String(Result, TEXT("jobStatus"));
     const bool bAccepted = Bool(Result, TEXT("ok")) || !JobStatus.IsEmpty();
     Outcome = Message.IsEmpty() ? (bAccepted ? TEXT("Request accepted.") : TEXT("Request refused.")) : Message;
@@ -1132,10 +1151,11 @@ void AOpenLegendPlayer::FinishRequest(int32 Status, const FObject& Result)
     if (JobStatus == TEXT("queued") || JobStatus == TEXT("judging") || JobStatus == TEXT("generating"))
     {
         // The final stream update can arrive before this HTTP response.
-        ConversationEvents.Reset();
-        if (const auto* Owner = Session()) ApplyConversation(Owner->GetView());
+        ReplyJobs.Reset();
+        if (const auto* Owner = Session()) ApplyReplyJobs(Owner->GetView());
         return;
     }
+    if (!PendingJob.IsEmpty() && FinishReply(JobStatus, Message)) return;
     FinishReceipt();
     if (Attack && Original) Attack->AcceptCommandResult(Original, Status, Result);
 }
@@ -1411,16 +1431,15 @@ void AOpenLegendPlayer::BuildHud()
         ]
         + SVerticalBox::Slot().AutoHeight()[
             SNew(SVerticalBox)
-            .Visibility_Lambda([this] { return RetrySpeech ? EVisibility::Visible : EVisibility::Collapsed; })
+            .Visibility_Lambda([this] { return CanRetryConversation() ? EVisibility::Visible : EVisibility::Collapsed; })
             + SVerticalBox::Slot().AutoHeight()[
                 SNew(STextBlock).AutoWrapText(true).Text_Lambda([this]
                 {
-                    return FText::FromString(String(RetrySpeech, TEXT("replyReason")) + TEXT("\n")
-                        + String(RetrySpeech, TEXT("text")));
+                    return FText::FromString(ReplyWords.IsEmpty()
+                        ? FailedReplyMessage : FailedReplyMessage + TEXT("\n") + ReplyWords);
                 })]
             + SVerticalBox::Slot().AutoHeight()[
                 SNew(SButton).Text(FText::FromString(TEXT("Retry reply")))
-                .IsEnabled_Lambda([this] { return CanRetryConversation(); })
                 .OnClicked_Lambda([this] { RetryConversation(); return Done(); })]
         ];
 

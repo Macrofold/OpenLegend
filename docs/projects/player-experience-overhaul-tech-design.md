@@ -1,8 +1,8 @@
 # World-first player experience: technical design
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Compact HUD review is implemented and verified; Game retains existing tasks, with the parent speech decision and CI still open. | 2026-10-17   |
+| Status      | Current progress                                                                                                                                         | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Administrative retry and removal of redundant live reply fields are implemented and verified. The parent speech decision and broader checks remain open. | 2026-11-25   |
 
 ## Design use and scope
 
@@ -39,6 +39,16 @@ Reuse the existing listener-specific speech evidence and durable perceived histo
 Events use structured semantic categories and authored descriptions. Existing event-time causes and numbers are preserved; server projection reveals only what the particular observer may know. Do not parse arbitrary English to infer hunger, attack or causality. Reuse the shared event rendering/knowledge owner for live and historical evidence. Entity links carry permitted identity and open current or explicitly remembered detail. Reusable mechanic explanations consume authored meter/mechanic descriptions rather than a client hunger rule.
 
 Use existing keyset/history-range reads for navigation; add indexed range predicates where needed rather than downloading all history. If new SQL is required, inspect the production query plan on representative disposable PostgreSQL data. Timestamp grouping is a derived rendering concern using the installed clock. Search/filter/time selection does not alter canonical memories. The selected world explicitly opts event types into player display with `displayToPlayer`, false by default. God-only **Show all events** removes that display exclusion within the same character’s permitted history; it does not expand sensory knowledge or bypass source authorization.
+
+### November 25 follow-up — Reply status and administrative retry
+
+The [accepted reply policy](../narration-and-conversations.md#explicit-failed-response-retry) keeps pending and terminal outcomes in the originating Speak draft. In the [measured opening](../benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#compact-reply-reader-during-ordinary-play), two tabs for the same player performed 4,861 private reply lookups for eight status transitions. Since the Speak draft already uses the signed recent-job display and exact receipt recovery, remove the parallel per-speech metadata from ordinary state reads and streams. Actual spoken words, captured hearing, captions, Events and Trade’s use of recent conversation stay on their existing read paths. There is no new cache or query. The scope is roughly two hundred lines of Rust, protocol and client changes. The main risks are losing a reply outcome or permitting another paid attempt after a permission change.
+
+1. In the Rust player view, remove the independently stored reply lookup and per-speech reply fields together. Keep conversation selection, permission checks and snapshots for retained reads. Remove the matching optional fields from the shared wire type and keep exact stored attempt and receipt identities.
+2. Use the existing Manage access grant and current control to decide whether the Speak draft can offer manual retry. The server rechecks both permissions, including after the queue write and before committing a new attempt. The existing retry owner still checks the original speaker, exact request, latest failure, lack of accepted effects, recipient availability and spending. Keep accepted receipt recovery on its existing authority path.
+3. Verify through the signed state endpoint and real streams that ordinary movement, Trade conversation and current speaker/witness disclosure still work. Check that a held reply ends the visible pending state, a failed reply retains its reason without repeating speech, an ordinary player and an administrator without control cannot buy a retry, and an authorized retry selects the latest attempt. Revoke access during a held read or queue write and verify refusal without disclosure or another provider dispatch. Check exact recovery of an accepted reply and retry without a second dispatch. Use disposable PostgreSQL and a controlled local provider. Count any remaining per-speech reply SQL through the real routes and leave the historical diagnostic timings separate. Any clean whole-server performance claim requires its own matched comparison on the standard worker.
+
+[Delivery verification](../benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#reply-lookup-removal-and-administrator-retry) records the signed browser and PostgreSQL checks. The [review checks](../benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#review-checks-for-retry-and-trade) verified rendered Trade conversation and withdrawal of Manage access during a held retry write.
 
 ## Placement interface
 

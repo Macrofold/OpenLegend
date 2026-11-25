@@ -3,7 +3,7 @@
 
 use super::{CommitError, Store, StoreError, StoreResult, read::admitted_query};
 use crate::{
-    authority::{RequestScope, assert_saved_grant},
+    authority::{RequestScope, assert_saved_access_manager},
     player_events::SpeechReplyStatus,
 };
 use indexmap::IndexMap;
@@ -282,7 +282,7 @@ impl Store {
                 if !eligible {
                     return Ok(false);
                 }
-                assert_saved_grant(tx, selected, "play").await?;
+                assert_saved_access_manager(tx, selected).await?;
                 if *stopped.borrow() {
                     return Err(StoreError::Cancelled);
                 }
