@@ -1836,7 +1836,7 @@ impl NativeWorldSession {
         self.session
             .capture_save()
             .map(|prefix| RuntimeSave { prefix })
-            .map_err(failure)
+            .map_err(session_failure)
     }
     pub fn acknowledge(&mut self, ack: RuntimeSaveAcknowledgement) -> Result<(), RuntimeError> {
         self.session
