@@ -176,9 +176,8 @@ export const operationSchema = z
             z
               .object({
                 subjectId: z.string(),
-                range: z
-                  .object({ start: z.number().int().min(0), end: z.number().int().min(1) })
-                  .strict(),
+                passage: z.string().min(1),
+                occurrence: z.number().int().min(1).nullable(),
               })
               .strict(),
           )
@@ -540,8 +539,8 @@ export function boundResponseSchema(
       })
       .nullable(),
     think: (() => {
-      const plain = operationSchema.shape.think
-        .unwrap()
+      const thought = operationSchema.shape.think.unwrap();
+      const plain = thought
         .omit({ references: true })
         .extend({ aboutEntityIds: z.array(entityId).max(8) });
       return z
@@ -549,13 +548,7 @@ export function boundResponseSchema(
           plain,
           plain.extend({
             references: z.array(
-              z
-                .object({
-                  subjectId: entityId,
-                  range: operationSchema.shape.think.unwrap().shape.references.unwrap().element
-                    .shape.range,
-                })
-                .strict(),
+              thought.shape.references.unwrap().element.extend({ subjectId: entityId }),
             ),
           }),
         ])

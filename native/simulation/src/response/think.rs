@@ -11,6 +11,7 @@ use crate::narration::{NarratedAccount, Narration, NarrationPart, PersonRole};
 use crate::reception::ObserverSubject;
 use crate::text::JsText;
 use indexmap::IndexSet;
+use std::num::NonZeroUsize;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -24,7 +25,8 @@ pub(crate) struct Thought {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ThoughtReference {
     subject_id: Option<ThoughtSubject>,
-    range: LiteralRange,
+    passage: JsText,
+    occurrence: Option<NonZeroUsize>,
 }
 
 #[derive(Deserialize)]
@@ -140,9 +142,6 @@ pub(crate) fn remember_thought(
             .units_len()
             .checked_sub(units)
             .ok_or(ExecutionError::Invariant)?;
-        let _units_storage =
-            budget.reserve(units.checked_mul(2).ok_or(ExecutionError::Capacity)?)?;
-        let units = thought.text.units().collect::<Vec<_>>();
         let mut annotation_space = budget.reserve(
             literal_references
                 .storage_bytes()
@@ -178,12 +177,12 @@ pub(crate) fn remember_thought(
             let Some(subject) = &mention.subject_id else {
                 continue;
             };
-            if !mention.range.fits(&units) {
+            let words = &mention.passage;
+            let Some(range) =
+                LiteralRange::exact_occurrence(&thought.text, words, mention.occurrence)
+                    .and_then(|range| range.shifted(prefix))
+            else {
                 continue;
-            }
-            let range = LiteralRange {
-                start: prefix + mention.range.start,
-                end: prefix + mention.range.end,
             };
             let offer = match subject {
                 ThoughtSubject::Entity(id) => offers.and_then(|offers| offers.get(id)),
@@ -209,14 +208,8 @@ pub(crate) fn remember_thought(
                         ..
                     } => {
                         let passage = offer.passage.as_ref().ok_or(ExecutionError::Invariant)?;
-                        let quoted_words = thought
-                            .text
-                            .borrowed()
-                            .slice(mention.range.start..mention.range.end)
-                            .ok_or(ExecutionError::Invariant)?;
-                        let Some(range) =
-                            LiteralRange::unique_quotation(passage, quoted_words, budget)?
-                                .and_then(|range| range.shifted(original.start))
+                        let Some(range) = LiteralRange::exact_occurrence(passage, words, None)
+                            .and_then(|range| range.shifted(original.start))
                         else {
                             continue;
                         };

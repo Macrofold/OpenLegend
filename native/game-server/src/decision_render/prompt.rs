@@ -123,9 +123,11 @@ impl PreparedPrompt {
     ) -> Result<Vec<&'a str>, RenderError> {
         const GUIDE: &str = concat!(
             "## Thought references\n",
-            "Optional references for private thoughts. Keep your own words. Leave unknown references unbound. ",
-            "To annotate a passage in think.text, use a listed reference as subjectId in think.references ",
-            "with its start (inclusive) and end (exclusive) in UTF-16 units. ",
+            "When a private thought refers to a person, object, place, category, time or quotation ",
+            "identified by your evidence, cite each supported mention in think.references. ",
+            "Use the supplied reference as subjectId and copy the exact words of the mention from think.text into passage. ",
+            "Set occurrence to null if passage appears once, or to its position among repeated matches ",
+            "counting from 1. Keep your own words and leave uncertain mentions unbound. ",
             "These references grant no physical targets. A quotation must copy exact received words ",
             "from one passage and cannot fill a gap. Interpret relative time using the moment ",
             "of the cited evidence, or this decision for your own plans. ",

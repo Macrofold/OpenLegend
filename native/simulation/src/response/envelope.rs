@@ -209,11 +209,10 @@ fn valid_operation(value: &SqlCell) -> bool {
                 && get("references").is_none_or(|references| {
                     references.as_array().is_some_and(|references| {
                         references.iter().all(|reference| {
-                            exact(reference, &["subjectId", "range"], &[])
-                                && reference.get("subjectId").is_some_and(text)
-                                && reference.get("range").is_some_and(|range| {
-                                    exact(range, &["start", "end"], &[])
-                                        && all_fields(range, &["start", "end"], safe_integer)
+                            exact(reference, &["subjectId", "passage", "occurrence"], &[])
+                                && all_fields(reference, &["subjectId", "passage"], text)
+                                && nullable(reference.get("occurrence"), |value| {
+                                    count(value) && value.as_f64().is_some_and(|n| n > 0.0)
                                 })
                         })
                     })

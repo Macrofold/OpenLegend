@@ -8,7 +8,7 @@ use crate::reception::ObserverSubject;
 use crate::text::{JsText, TextSlice};
 use crate::values::{DefinitionPin, is_safe_record_id};
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
+use std::num::NonZeroUsize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -49,65 +49,61 @@ impl LiteralRange {
         Some(passage)
     }
 
-    /// Find a single complete occurrence in an exact received passage. The
-    /// ordinary Unicode path searches borrowed strings. An exceptional text
-    /// with isolated surrogates is compared as code units without changing it.
-    pub(crate) fn unique_quotation(
-        passage: &JsText,
-        quote: TextSlice<'_>,
-        budget: &crate::host::ByteBudget,
-    ) -> Result<Option<Self>, ExperienceError> {
-        if quote.is_empty() {
-            return Ok(None);
+    /// Locate exact words by their one-based occurrence, or require a unique match.
+    /// Overlapping matches count. Ordinary Unicode searches borrow the strings;
+    /// isolated surrogates are compared as code units without changing the text.
+    pub(crate) fn exact_occurrence(
+        literal: &JsText,
+        words: &JsText,
+        occurrence: Option<NonZeroUsize>,
+    ) -> Option<Self> {
+        if words.is_empty() {
+            return None;
         }
-        if let (Some(passage), Some(needle)) = (passage.as_unicode(), quote.as_unicode()) {
-            let Some(start) = passage.find(needle) else {
-                return Ok(None);
-            };
-            // Advance by one scalar so overlapping occurrences also count.
-            let next = start
-                + needle
-                    .chars()
-                    .next()
-                    .expect("nonempty quotation")
-                    .len_utf8();
-            if passage[next..].contains(needle) {
-                return Ok(None);
-            }
-            let start = passage[..start].encode_utf16().count();
-            return Ok(Some(Self {
-                start,
-                end: start + quote.units_len(),
-            }));
-        }
-        let _storage;
-        let units = match passage {
-            JsText::Utf16 { units, .. } => Cow::Borrowed(units.as_slice()),
-            JsText::Unicode(_) => {
-                _storage = budget
-                    .reserve(
-                        passage
-                            .units_len()
-                            .checked_mul(2)
-                            .ok_or(ExperienceError::Capacity)?,
-                    )
-                    .map_err(|_| ExperienceError::Capacity)?;
-                Cow::Owned(passage.units().collect::<Vec<_>>())
-            }
-        };
-        let mut matches =
-            units
-                .windows(quote.units_len())
-                .enumerate()
-                .filter_map(|(start, candidate)| {
-                    let range = Self {
-                        start,
-                        end: start + quote.units_len(),
-                    };
-                    (range.fits(&units) && candidate.iter().copied().eq(quote.units()))
-                        .then_some(range)
+        match literal {
+            JsText::Unicode(literal) => {
+                // An isolated surrogate cannot match at a Unicode character boundary.
+                let needle = words.as_unicode()?;
+                let advance = needle.chars().next()?.len_utf8();
+                let mut offset = 0;
+                let starts = std::iter::from_fn(|| {
+                    let start = offset + literal[offset..].find(needle)?;
+                    offset = start + advance;
+                    Some(start)
                 });
-        Ok(matches.next().filter(|_| matches.next().is_none()))
+                let start = select_occurrence(starts, occurrence)?;
+                let start = literal[..start].encode_utf16().count();
+                Some(Self {
+                    start,
+                    end: start + words.units_len(),
+                })
+            }
+            JsText::Utf16 { units, .. } => {
+                let width = words.units_len();
+                let ranges = units
+                    .windows(width)
+                    .enumerate()
+                    .filter_map(|(start, candidate)| {
+                        let range = Self {
+                            start,
+                            end: start + width,
+                        };
+                        (range.fits(units) && candidate.iter().copied().eq(words.units()))
+                            .then_some(range)
+                    });
+                select_occurrence(ranges, occurrence)
+            }
+        }
+    }
+}
+
+fn select_occurrence<T>(
+    mut matches: impl Iterator<Item = T>,
+    occurrence: Option<NonZeroUsize>,
+) -> Option<T> {
+    match occurrence {
+        Some(occurrence) => matches.nth(occurrence.get() - 1),
+        None => matches.next().filter(|_| matches.next().is_none()),
     }
 }
 
