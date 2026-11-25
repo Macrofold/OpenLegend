@@ -87,6 +87,7 @@ struct Source<'a> {
     #[serde(serialize_with = "serialize_search_text")]
     search_text: &'a JsText,
     linguistic: i64,
+    preserve_literal: i64,
     payload_bytes: i64,
     retention_class: openlegend_simulation::experience::AwarenessRetentionClass,
 }
@@ -472,6 +473,14 @@ impl AccountRow {
             sequence: sql_ordinal(awareness.sequence)?,
             search_text: &text,
             linguistic: i64::from(linguistic),
+            preserve_literal: i64::from(
+                linguistic
+                    || openlegend_simulation::experience::requires_verbatim_participants(
+                        PersonalSourceKind::Awareness,
+                        actor,
+                        awareness.entity_ids.iter().map(String::as_str),
+                    ),
+            ),
             payload_bytes: i64::try_from(payload_bytes).map_err(|_| StoreError::Capacity)?,
             retention_class: awareness.retention_class,
         })

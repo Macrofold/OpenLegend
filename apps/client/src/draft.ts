@@ -11,6 +11,7 @@ export interface ComposerDraft {
   text: string;
   revision: string;
   item?: ComposerItem;
+  publicAppeal?: string;
 }
 export const emptyDraft = (): ComposerDraft => ({ text: '', revision: '' });
 
@@ -73,7 +74,13 @@ export function readDraft(
         item: { itemId: item.itemId, name: item.name },
       };
     }
-    return { text: draft.text, revision: draft.revision };
+    return {
+      text: draft.text,
+      revision: draft.revision,
+      ...('publicAppeal' in draft && typeof draft.publicAppeal === 'string'
+        ? { publicAppeal: draft.publicAppeal }
+        : {}),
+    };
   } catch {
     // Privacy and quota failures must not prevent editing in memory.
     return emptyDraft();

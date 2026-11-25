@@ -51,6 +51,7 @@ pub enum NpcOfferMeaning {
         page: &'static str,
     },
     Inspection,
+    PublicAppeal,
     Learned {
         choice: std::sync::Arc<crate::activity::LearnedSequenceChoice>,
     },

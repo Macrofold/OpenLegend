@@ -235,6 +235,7 @@ impl PlanControlCursor {
                     .ok_or(ExecutionError::Invariant)?;
                 step.result_evidence = evidence;
                 step.status = StepStatus::Cancelled;
+                step.watch = None;
                 step.outcome = Some(result);
                 self.index = index + 1;
             }
@@ -328,8 +329,12 @@ impl PlanControlCursor {
         let suffix = rules.text(&rules.stopped_summary, &fields);
         let (summary, _render) =
             super::memory::personal_possessive(&self.actor, suffix, &self.budget)?;
-        let evidence =
-            super::memory::append_report(core, &self.actor, summary, rules.control_importance)?;
+        let evidence = super::memory::append_annotated_report(
+            core,
+            &self.actor,
+            summary,
+            rules.control_importance,
+        )?;
         let pointer_bytes = evidence
             .heap_bytes()
             .ok_or(ExecutionError::Capacity)?
@@ -447,6 +452,7 @@ impl PlanControlCursor {
                             .and_then(|p| p.steps.get_mut(index))
                             .ok_or(ExecutionError::Invariant)?;
                         step.status = StepStatus::Cancelled;
+                        step.watch = None;
                         step.outcome = Some(result);
                         self.index += 1;
                     }
@@ -527,6 +533,7 @@ impl PlanControlCursor {
                     for step in &mut steps {
                         if step.status == StepStatus::Queued {
                             step.status = StepStatus::Cancelled;
+                            step.watch = None;
                             step.outcome = Some(self.message(&rules.discarded_paused, false)?);
                         }
                     }
@@ -612,6 +619,7 @@ impl PlanControlCursor {
                             .ok_or(ExecutionError::Capacity)?)?;
                         let mut archived = step.clone();
                         archived.status = StepStatus::Cancelled;
+                        archived.watch = None;
                         archived.outcome = Some(self.message(&rules.paused_restart, false)?);
                         let mut next = step.clone();
                         core.physical().reserve_plan_growth(

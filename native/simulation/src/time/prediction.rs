@@ -319,6 +319,20 @@ impl MechanicalForecast {
             if entity.has_memory() {
                 bound.at(crate::conditions::next_condition_review(entity));
             }
+            if let Some(watch) = actor
+                .agency
+                .plan
+                .as_ref()
+                .filter(|plan| plan.status == crate::plans::PlanStatus::Active)
+                .and_then(|plan| {
+                    plan.steps
+                        .iter()
+                        .find(|step| step.status == crate::plans::StepStatus::Queued)
+                })
+                .and_then(|step| step.watch.as_ref())
+            {
+                bound.at(watch.deadline());
+            }
             for definition in installed
                 .attributes
                 .values()

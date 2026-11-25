@@ -22,8 +22,10 @@ use index::AppraisalIndex;
 mod hydration;
 mod read;
 mod response;
-pub use read::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
+mod sensitivity;
 pub use read::RuntimePrivateFeeling;
+pub use read::{RuntimeNpcFeeling, RuntimeNpcFeelingTarget, RuntimeNpcFeelings};
+pub(crate) use sensitivity::{AppearanceSensitivities, SensitivityOnset, receive_appearance_sensitivity};
 pub(crate) use read::{ACTIVE_PAGE, private_appraisal_page};
 pub(crate) use read::{AppraisalScope, CapturedActorAppraisals, capture_actor_appraisals, capture_validity_views};
 pub(crate) use response::{
@@ -70,6 +72,12 @@ pub(crate) struct Definition {
     pub lifetime: LifetimeLaw,
     pub reflection: bool,
     pub decision: bool,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub native_appearance: Option<bool>,
 }
 pub(crate) struct InstalledAppraisalDefinition {
     pub value: Definition,
@@ -279,6 +287,39 @@ fn pin(definition: &Definition) -> Result<DefinitionPin, InstallError> {
         ),
     })
 }
+fn valid_saved_cause(value: &Appraisal, definition: &Definition) -> bool {
+    if definition.native_appearance.is_none() {
+        return value.cause.as_ref().is_none_or(|cause| {
+            cause.source_kind != "native-exposure"
+                && matches!(cause.kind.as_str(), "perceived-event" | "remembered")
+        });
+    }
+    if value.state == "invalidated" {
+        return value.cause.is_none();
+    }
+    value.cause.as_ref().is_some_and(|cause| {
+        definition.native_appearance == Some(true)
+            && cause.source_kind == "native-exposure"
+            && cause.kind == "perceived-event"
+            && cause.actor_id == value.actor_id
+            && cause.occurrence_id == value.creation_operation.id
+            && cause.subject_ids.is_empty()
+            && cause.recall_episode_id.is_none()
+            && value.target_id.is_none()
+            && crate::values::is_safe_record_id(&cause.source_id)
+            && cause
+                .source_version
+                .split_once(':')
+                .is_some_and(|(revision, ordinal)| {
+                    revision
+                        .parse::<u64>()
+                        .is_ok_and(|value| value > 0 && value <= crate::identity::MAX_SAFE_INTEGER)
+                        && ordinal
+                            .parse::<u64>()
+                            .is_ok_and(|value| value <= crate::identity::MAX_SAFE_INTEGER)
+                })
+    })
+}
 pub(crate) fn install_appraisals(
     import: &mut RowImport,
     present: bool,
@@ -299,6 +340,18 @@ pub(crate) fn install_appraisals(
         if definition.implementation != "appraisal-v1"
             || !matches!(definition.stacking.as_str(), "target" | "cause")
             || definitions.contains_key(&definition.id)
+            || definition.native_appearance.is_some_and(|grant| {
+                !grant
+                    || definition.decision
+                    || definition.reflection
+                    || definition.stacking != "cause"
+                    || !matches!(definition.value, ValueLaw::Scaled { .. })
+                    || !matches!(definition.lifetime, LifetimeLaw::Decays { .. })
+                    || !definition
+                        .causes
+                        .iter()
+                        .any(|cause| cause == "perceived-event")
+            })
         {
             return Err(InstallError::DefinitionBody);
         }
@@ -311,6 +364,29 @@ pub(crate) fn install_appraisals(
                 _storage: None,
             }),
         );
+    }
+    if let Some(rule) = &installed.event_appraisal_rules.value().appearance {
+        let valid = definitions
+            .get(&rule.definition_id)
+            .is_some_and(|definition| {
+                definition.value.native_appearance == Some(true)
+                    && matches!(definition.value.value, ValueLaw::Scaled { min, max }
+                    if min.is_finite() && max.is_finite() && rule.intensity.is_finite()
+                        && rule.intensity > min && rule.intensity <= max)
+                    && matches!(&definition.value.lifetime, LifetimeLaw::Decays { per_hour, bands }
+                    if per_hour.is_finite() && *per_hour > 0.0
+                        && bands.iter().all(|band| band.is_finite()))
+            });
+        if !valid
+            || rule.coverage.is_empty()
+            || rule.coverage.encode_utf16().count() > 200
+            || rule
+                .expression_verb
+                .as_ref()
+                .is_some_and(|verb| verb.trim().is_empty() || verb.encode_utf16().count() > 80)
+        {
+            return Err(InstallError::DefinitionBody);
+        }
     }
     let root = take_collection(
         import,
@@ -351,10 +427,10 @@ pub(crate) fn install_appraisals(
                 || value.id != source.slot
                 || definitions
                     .get(&value.definition_pin.id)
-                    .is_none_or(|definition| definition.pin != value.definition_pin)
-                || value.cause.as_ref().is_some_and(|cause| {
-                    !matches!(cause.kind.as_str(), "perceived-event" | "remembered")
-                })
+                    .is_none_or(|definition| {
+                        definition.pin != value.definition_pin
+                            || !valid_saved_cause(&value, &definition.value)
+                    })
             {
                 return Err(InstallError::CurrentFormat);
             }
@@ -805,7 +881,8 @@ pub(crate) fn appraise_perceived_event(
     let ValueLaw::Scaled { min, max } = definition.value.value else {
         return Err(ExecutionError::UnsupportedFamily);
     };
-    if !value.is_finite()
+    if definition.value.native_appearance.is_some()
+        || !value.is_finite()
         || value < min
         || value > max
         || !definition
@@ -873,60 +950,16 @@ pub(crate) fn appraise_perceived_event(
         subject_ids: vec![target.to_owned()],
         recall_episode_id: None,
     };
-    let value = AppraisalValue::Scaled { value };
-    #[derive(Serialize)]
-    struct OperationBody<'a> {
-        definition: &'a DefinitionPin,
-        cause: &'a PerceivedCause,
-        #[serde(rename = "targetId")]
-        target_id: Option<&'a str>,
-        value: &'a AppraisalValue,
-    }
-    let body = canonical_shape(&OperationBody {
-        definition: pin,
-        cause: &cause,
-        target_id: Some(target),
-        value: &value,
-    })?;
     let now = core.state.physical.header.sim_time;
-    let lifetime = match definition.value.lifetime {
-        LifetimeLaw::Persistent => AppraisalLifetime::Persistent,
-        LifetimeLaw::Expires { seconds } => AppraisalLifetime::Expires { at: now + seconds },
-        LifetimeLaw::Decays { .. } => AppraisalLifetime::Decays {
-            anchor_time: now,
-            anchor_value: match value {
-                AppraisalValue::Scaled { value } => value,
-                _ => return Err(ExecutionError::Invariant),
-            },
-        },
-        LifetimeLaw::ConditionSustained => return Err(ExecutionError::UnsupportedFamily),
-    };
-    let mut record = Appraisal {
-        id: id.clone(),
-        actor_id: actor.to_owned(),
-        revision: 1,
-        definition_pin: pin.clone(),
-        target_id: Some(target.to_owned()),
+    let record = native_reaction_record(
+        &definition,
+        Some(target),
+        id.clone(),
         stack_key,
-        state: "active".to_owned(),
-        cause: Some(cause),
-        interpretation_source: None,
+        cause,
         value,
-        lifetime,
-        created_at: now,
-        changed_at: now,
-        last_operation: AppraisalOperation {
-            id: event.id.clone(),
-            body: body.clone(),
-        },
-        creation_operation: AppraisalOperation {
-            id: event.id.clone(),
-            body,
-        },
-        predecessor_id: None,
-        next_at: None,
-    };
-    record.next_at = next_deadline(&record, &definition.value, now);
+        now,
+    )?;
     if json_record(&record)
         .map_err(|_| ExecutionError::Invariant)?
         .encode_utf16()
@@ -936,27 +969,7 @@ pub(crate) fn appraise_perceived_event(
     {
         return Ok(());
     }
-    let request = crate::work::WorkRequest {
-        id: id.clone(),
-        parent_id: None,
-        actor_id: actor.to_owned(),
-        module_id: pin.id.clone(),
-        definition_pin: pin.clone(),
-        limit: WorkVector {
-            effects: 32,
-            tests: 64,
-            depth: 1,
-            ..Default::default()
-        },
-        allocation: WorkVector {
-            live: 1,
-            retained_bytes: 8192,
-            subscriptions: 1,
-            ..Default::default()
-        },
-        recurrence: None,
-    };
-    match core.physical().admit_work(request) {
+    match admit_native_reaction(core, &record) {
         Ok(()) => {}
         Err(ExecutionError::Work(crate::work::WorkError::Unavailable(_))) => return Ok(()),
         Err(error) => return Err(error),
@@ -1003,6 +1016,139 @@ pub(crate) fn appraise_perceived_event(
     }
     put(core, record, reservation, checked.as_ref())?;
     core.journal.cognition.note_appraisal_change(actor)
+}
+
+fn native_reaction_record(
+    definition: &InstalledAppraisalDefinition,
+    target: Option<&str>,
+    id: String,
+    stack_key: String,
+    cause: PerceivedCause,
+    amount: f64,
+    at: f64,
+) -> Result<Appraisal, ExecutionError> {
+    #[derive(Serialize)]
+    struct OperationBody<'a> {
+        definition: &'a DefinitionPin,
+        cause: &'a PerceivedCause,
+        #[serde(rename = "targetId")]
+        target_id: Option<&'a str>,
+        value: &'a AppraisalValue,
+    }
+    let value = AppraisalValue::Scaled { value: amount };
+    let body = canonical_shape(&OperationBody {
+        definition: &definition.pin,
+        cause: &cause,
+        target_id: target,
+        value: &value,
+    })?;
+    let lifetime = match definition.value.lifetime {
+        LifetimeLaw::Persistent => AppraisalLifetime::Persistent,
+        LifetimeLaw::Expires { seconds } => AppraisalLifetime::Expires { at: at + seconds },
+        LifetimeLaw::Decays { .. } => AppraisalLifetime::Decays {
+            anchor_time: at,
+            anchor_value: amount,
+        },
+        LifetimeLaw::ConditionSustained => return Err(ExecutionError::UnsupportedFamily),
+    };
+    let operation = AppraisalOperation {
+        id: cause.occurrence_id.clone(),
+        body,
+    };
+    let mut record = Appraisal {
+        id,
+        actor_id: cause.actor_id.clone(),
+        revision: 1,
+        definition_pin: definition.pin.clone(),
+        target_id: target.map(str::to_owned),
+        stack_key,
+        state: "active".to_owned(),
+        cause: Some(cause),
+        interpretation_source: None,
+        value,
+        lifetime,
+        created_at: at,
+        changed_at: at,
+        last_operation: operation.clone(),
+        creation_operation: operation,
+        predecessor_id: None,
+        next_at: None,
+    };
+    record.next_at = next_deadline(&record, &definition.value, at);
+    Ok(record)
+}
+
+fn admit_native_reaction(
+    core: &mut CoreMutation<'_>,
+    record: &Appraisal,
+) -> Result<(), ExecutionError> {
+    core.physical().admit_work(crate::work::WorkRequest {
+        id: record.id.clone(),
+        parent_id: None,
+        actor_id: record.actor_id.clone(),
+        module_id: record.definition_pin.id.clone(),
+        definition_pin: record.definition_pin.clone(),
+        limit: WorkVector {
+            effects: 32,
+            tests: 64,
+            depth: 1,
+            ..Default::default()
+        },
+        allocation: WorkVector {
+            live: 1,
+            retained_bytes: 8192,
+            subscriptions: 1,
+            ..Default::default()
+        },
+        recurrence: None,
+    })
+}
+
+fn appraise_recognized_appearance(
+    core: &mut CoreMutation<'_>,
+    cause: PerceivedCause,
+    rule: &crate::worlds::base_appraisals::AppearanceReaction,
+    budget: &ByteBudget,
+) -> Result<(), ExecutionError> {
+    let definition = core
+        .state
+        .appraisals
+        .definitions
+        .get(&rule.definition_id)
+        .filter(|definition| definition.value.native_appearance == Some(true))
+        .cloned()
+        .ok_or(ExecutionError::Invariant)?;
+    let actor = cause.actor_id.clone();
+    let reservation = budget.reserve(8192 * 4)?;
+    let (stack, id) = response::identity(
+        &actor,
+        &definition.pin,
+        None,
+        &cause.occurrence_id,
+        &definition.value.stacking,
+    )?;
+    let record = native_reaction_record(
+        &definition,
+        None,
+        id.clone(),
+        stack,
+        cause,
+        rule.intensity,
+        core.state.physical.header.sim_time,
+    )?;
+    let checked = response::CheckedCreation::fresh_native_acquisition(&actor, &id);
+    if core
+        .state
+        .appraisals
+        .owners
+        .get(&actor)
+        .is_some_and(|owner| !owner.active_complete || owner.records.contains_key(&id))
+    {
+        return Err(ExecutionError::Invariant);
+    }
+    admit_native_reaction(core, &record)?;
+    put(core, record, reservation, Some(&checked))?;
+    core.journal.cognition.note_appraisal_change(&actor)
 }
 
 /// Consume one due native lifetime, then deliver its actual private occurrence
@@ -1133,6 +1279,7 @@ pub(crate) fn invalidate_appraisals(
     actor_id: &str,
     budget: &ByteBudget,
 ) -> Result<InvalidatedAppraisals, ExecutionError> {
+    sensitivity::redact_onsets(core, actor_id, budget)?;
     let owner = core.state.appraisals.owners.get(actor_id);
     if owner.is_some_and(|owner| !owner.coverage.complete) {
         return Err(ExecutionError::Invariant);

@@ -1,8 +1,8 @@
 # Witness decisions and personal memory — technical design
 
-| Status      | Current progress                                                                            | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The overheard speech matcher exists. Live integration and qualification are open in PS04-A. | 2026-11-22   |
+| Status      | Current progress                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | The Rust candidate compiles. Gameplay, playability and cost qualification remain open in PS04-A. | 2026-11-24   |
 
 A player can make fifty people witness the same performance and still get fifty different accounts of it. The implementation must answer three separate questions: **what reached this witness, what requires their choice now, and what can they recall later?** The [feature](../features/noticing-and-remembering/README.md) owns those answers. The steps below extend the existing perception, decision and memory owners. A quiet witness can supply a useful lead later even if the server never asked a model about the performance.
 

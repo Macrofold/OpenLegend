@@ -77,6 +77,7 @@ impl NativeWorldSession {
             after_sequence: 0,
             weighed_through,
             selection,
+            schedule_through: Some(self.session.durable_identity_through()),
         };
         capture_queue_inputs(state, &request, &self.budget)
             .map_err(|error| session_failure(error.into()))

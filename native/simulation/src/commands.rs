@@ -304,6 +304,7 @@ pub(crate) enum NativeCommand {
         target_id: Option<String>,
         target_role: Option<SpeechTargetRole>,
         self_introduction: Option<crate::text::JsText>,
+        public_appeal: Option<String>,
         volume: Option<String>,
     },
     StatusEffect {
@@ -399,7 +400,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,ammo_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String,tools:crate::manufacturing::ToolSelection);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,public_appeal:String,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,ammo_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String,item_id:String,gathering_mode:crate::gathering::GatheringMode,expected_revision:u64,placement_revision:u64,quantity:u64,heat_id:String,preparation_id:String,preparation_version:u64,preparation_digest:String,inputs:indexmap::IndexMap<String,String>,recipe_id:String,tools:crate::manufacturing::ToolSelection);
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -771,9 +772,21 @@ impl<'de> Deserialize<'de> for NativeCommand {
         if (input.target_life.is_some() && (input.kind != "strike"
                 || headers.human_initiated.is_some() || input.weapon_item_id.is_none()))
             || (input.kind != "gather" && input.gathering_mode.is_some())
-            || (!matches!(input.kind.as_str(), "gather" | "feed" | "fish" | "pickup" | "drop" | "eat" | "equip" | "unequip") && input.item_id.is_some())
-            || (input.kind != "unequip" && (input.expected_revision.is_some() || input.placement_revision.is_some()))
-            || input.quantity.is_some_and(|n| !matches!(input.kind.as_str(), "pickup" | "drop") || n == 0 || n > crate::identity::MAX_SAFE_INTEGER)
+            || input
+                .public_appeal
+                .as_deref()
+                .is_some_and(|id| input.kind != "say" || !is_safe_record_id(id))
+            || (!matches!(
+                input.kind.as_str(),
+                "gather" | "feed" | "fish" | "pickup" | "drop" | "eat" | "equip" | "unequip"
+            ) && input.item_id.is_some())
+            || (input.kind != "unequip"
+                && (input.expected_revision.is_some() || input.placement_revision.is_some()))
+            || input.quantity.is_some_and(|n| {
+                !matches!(input.kind.as_str(), "pickup" | "drop")
+                    || n == 0
+                    || n > crate::identity::MAX_SAFE_INTEGER
+            })
             || (input.kind != "practice-shot" && input.ammo_item_id.is_some())
             || (input.kind != "craft" && (input.recipe_id.is_some() || input.tools.is_some()))
             || input
@@ -969,6 +982,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
                 target_id: input.target_id,
                 target_role: input.target_role,
                 self_introduction: input.self_introduction,
+                public_appeal: input.public_appeal,
                 volume: input.volume,
             }),
             "status-effect" if !extras_for_status => Ok(Self::StatusEffect {

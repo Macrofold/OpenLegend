@@ -15,6 +15,7 @@ use std::sync::Arc;
 const OPTIONAL_LIMIT: i64 = 300;
 const REQUIRED_LIMIT: usize = 8192;
 
+#[derive(Clone, Copy)]
 pub(crate) struct RecallScope<'a> {
     pub(crate) world: &'a str,
     pub(crate) generation: &'a str,
@@ -127,6 +128,24 @@ impl Store {
         &self,
         scope: RecallScope<'_>,
     ) -> StoreResult<RecallReferences> {
+        self.recall_references_with_limit(scope, OPTIONAL_LIMIT)
+            .await
+    }
+
+    /// Reuse the same indexed commitment and correction read after optional
+    /// discovery exceeds transfer capacity. Its required overflow still fails.
+    pub(crate) async fn required_recall_references(
+        &self,
+        scope: RecallScope<'_>,
+    ) -> StoreResult<RecallReferences> {
+        self.recall_references_with_limit(scope, 0).await
+    }
+
+    async fn recall_references_with_limit(
+        &self,
+        scope: RecallScope<'_>,
+        optional_limit: i64,
+    ) -> StoreResult<RecallReferences> {
         if scope.world.is_empty()
             || scope.generation.is_empty()
             || scope.actor.is_empty()
@@ -171,7 +190,7 @@ impl Store {
                         &at,
                         &identity,
                         &required_limit,
-                        &OPTIONAL_LIMIT,
+                        &optional_limit,
                     ],
                     &budget,
                 )
@@ -194,7 +213,8 @@ impl Store {
                 let mut result = RecallReferences {
                     required: Vec::new(),
                     optional: Vec::new(),
-                    fills_direct_limit: rows.first().map_or(Ok(false), |row| row.try_get(4))?,
+                    fills_direct_limit: optional_limit > 0
+                        && rows.first().map_or(Ok(false), |row| row.try_get(4))?,
                     _custody: budget.reserve(bytes).map_err(|_| StoreError::Capacity)?,
                 };
                 result

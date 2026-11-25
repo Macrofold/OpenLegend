@@ -112,6 +112,8 @@ Use existing permitted activity/event presentation for the cue, with world-autho
 
 Renewed visibility of the **same already known preparation/aim commitment** restores its observed-active association but is not a new hostile occurrence and does not clear a deliberate Speak override. Use the existing admitted observation/occurrence identity to establish prior exposure, even if the short UI grace already expired. A first observation of previously unknown directed preparation, a new commitment, a newly witnessed release or a fresh qualifying outcome can advance hostility. When renewed exposure later ends, use the actual last-known boundary for grace; neither repeated visibility updates nor incidental phase rendering renew it. Private plans and ordinary approach remain undisclosed even when the server knows their eventual target.
 
+The bundled witness rule lets an awake NPC who sees both an active attack preparation and its intended recipient consider warning that person when they are within plausible speech range. It uses the same private observation and its existing receipt. The NPC may stay silent. Any spoken warning travels through ordinary hearing and may be missed. A bystander does not get a separate report that the threat has ended or that someone reached safety. Physical intervention still requires its own current sight, reach and action conditions. [Witness play and comparison](../../projects/witness-decisions-and-memory-tech-design.md#6-build-order-and-experiment-gates)
+
 Actual physical contact is personally felt even when the performer cannot be
 seen. The recipient retains the impact and their own bodily result; an unseen
 performer, weapon and location remain unidentified. Their personal danger record

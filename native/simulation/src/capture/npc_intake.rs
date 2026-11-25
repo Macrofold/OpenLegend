@@ -4,7 +4,7 @@ use super::*;
 use crate::encoding::{json_record, json_record_len, sha256_hex};
 use crate::experience::{
     PersonalSourceKind,
-    intake::{IntakeSelection, unseen_intake},
+    intake::{IntakeSelection, PersonalChoices, intake_urgency, unseen_intake},
 };
 use crate::status::{AttributeAudience, EffectBindings, project_attributes};
 use serde::{Deserialize, ser::SerializeSeq};
@@ -25,6 +25,10 @@ pub(crate) struct NpcIntakeReadRequest {
     )]
     pub weighed_through: Option<u64>,
     pub selection: IntakeSelection,
+    /// The stand-alone scheduler selects only source sequences already saved
+    /// with any interactive job that owns them. Keep the cut fixed on recheck.
+    #[serde(skip)]
+    pub schedule_through: Option<u64>,
 }
 pub(crate) struct NpcIntakeCapture {
     request: NpcIntakeReadRequest,
@@ -159,16 +163,22 @@ impl NpcIntakeCapture {
             && self.witness.inspection == current.inspection)
     }
 }
-struct Headers<'a>(Option<&'a crate::experience::PersonalSourceCollection>);
+struct Headers<'a> {
+    collection: Option<&'a crate::experience::PersonalSourceCollection>,
+    personal: Option<PersonalChoices<'a>>,
+}
 impl Serialize for Headers<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut out = serializer.serialize_seq(None)?;
         for record in self
-            .0
+            .collection
             .into_iter()
             .flat_map(|collection| collection.records())
         {
-            out.serialize_element(&(record.position(), &record.header().reference))?;
+            let header = record.header();
+            if self.personal.is_none_or(|choices| choices.matches(header)) {
+                out.serialize_element(&(record.position(), &header.reference))?;
+            }
         }
         out.end()
     }
@@ -478,15 +488,17 @@ fn prepare(
     let packets = matches!(output, IntakeOutput::Packets);
     let schedule = matches!(output, IntakeOutput::Schedule);
     let full = packets || schedule;
-    let unseen = unseen_intake(
-        &state.experience,
-        id,
-        request.after_sequence,
-        request.weighed_through,
-        request.selection,
-        &state.installed.cognition.significant_event_types,
-        budget,
-    )?;
+    let significant = state.installed.cognition.significant_event_types.as_slice();
+    let account_law = state.installed.account_law();
+    let personal = request.schedule_through.map(|_| PersonalChoices {
+        life: actor.physical_life.unwrap_or(0),
+        preferred_importance: request.selection.preferred_importance,
+        significant,
+        speech_event: &state.installed.occurrence_rules.value().speech_event,
+        speech_result: account_law.result_event_type("say"),
+    });
+    let (awareness_through, urgency) =
+        intake_urgency(&state.experience, id, request.weighed_through, personal)?;
     use crate::reception::AttentionReadProduct;
     let attention_output = match output {
         IntakeOutput::Packets => AttentionReadProduct::Bridge,
@@ -716,7 +728,10 @@ fn prepare(
         PersonalSourceKind::Awareness,
         PersonalSourceKind::Summary,
     ] {
-        add!(Headers(state.experience.optional_collection(id, kind)?));
+        add!(Headers {
+            collection: state.experience.optional_collection(id, kind)?,
+            personal,
+        });
     }
     let inner = state
         .minds
@@ -789,8 +804,8 @@ fn prepare(
             eligible: enrolled && !actor.incapacitated,
             values: tokens,
             dependency_token: dependencies,
-            awareness_through: unseen.awareness_through,
-            urgency: unseen.urgency,
+            awareness_through,
+            urgency,
             discovery_reservation: reservation.map(str::to_owned),
             _storage: token_storage,
         }));
@@ -819,8 +834,8 @@ fn prepare(
             .capability_blocked(Some(entity), "speech")?,
         values: &tokens,
         dependency_token: &dependencies,
-        awareness_through: unseen.awareness_through,
-        urgency: unseen.urgency,
+        awareness_through,
+        urgency,
         discovery: actor.agency.semantic.as_ref().map(|semantic| Discovery {
             state: &semantic.discovery,
             reservation: semantic.reservation.as_deref(),
@@ -830,6 +845,16 @@ fn prepare(
         let (text, storage) = encode_inputs(&input, budget)?;
         return Ok(PreparedIntake::QueuePacket(text, storage));
     }
+
+    let unseen = unseen_intake(
+        &state.experience,
+        id,
+        request.after_sequence,
+        request.selection,
+        significant,
+        request.schedule_through.zip(personal),
+        budget,
+    )?;
 
     // Compact intake describes only admitted plan identity, status and step
     // outcomes. Use the same finite support owner as the executor.
@@ -1066,6 +1091,7 @@ fn prepare(
             schedule::Inputs {
                 actor_id: id,
                 accepted_cut: state.accepted_cut,
+                durable_sequence: request.schedule_through.ok_or(ExecutionError::Invariant)?,
                 at: state.physical.header.sim_time,
                 actor,
                 unseen: &unseen,

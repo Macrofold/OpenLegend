@@ -554,7 +554,12 @@ export function selectedNativeLawDefinitions(
       },
     },
     socialDefaults: BASE_SOCIAL_POLICY,
-    speechAction: BASE_SPEECH_ACTION,
+    speechAction: {
+      ...BASE_SPEECH_ACTION,
+      publicAppeals: BASE_SPEECH_ACTION.publicAppeals.filter(
+        (appeal) => world.itemDefinitions[appeal.itemDefinition]?.portable,
+      ),
+    },
     ordinaryActions: BASE_ORDINARY_ACTION_RULES,
     travelHost:
       activityHostForCommand(world, 'outing') === BASE_OUTING_HOST

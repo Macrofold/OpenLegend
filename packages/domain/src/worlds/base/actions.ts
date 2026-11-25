@@ -20,7 +20,7 @@ export const BASE_ACTION_DEFAULTS = {
  * execution receives this same definition rather than universalizing it. */
 export const BASE_SPEECH_ACTION = {
   id: 'wilderness:speech-action',
-  version: 1,
+  version: 2,
   maximumCharacters: 1500,
   eventType: 'speech',
   noSpeech: { code: 'no-speech', message: 'This actor cannot speak.' },
@@ -35,6 +35,22 @@ export const BASE_SPEECH_ACTION = {
     code: 'invalid-recipient',
     message: 'The intended recipient is not a person.',
   },
+  invalidPublicAppeal: {
+    code: 'invalid-public-appeal',
+    message: 'Choose an available request and say it to everyone who can hear.',
+  },
+  publicAppeals: [
+    {
+      id: 'ask-for-cooked-fish',
+      label: 'Ask for a cooked fish',
+      invitation: 'Could someone spare',
+      between: ' ',
+      contribution: 'a cooked fish',
+      closing: '?',
+      itemDefinition: 'cooked_river_fish',
+    },
+  ],
+  overheardReferenceExperiment: false,
   success: { code: 'spoken', message: 'Spoken.' },
 } as const;
 

@@ -4,14 +4,14 @@ use super::{
     Arc, ByteBudget, ByteReservation, CallFailure, CapacityError, CurrentServer, PersonalSources,
     ProjectionPurpose, ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket, Work, capacity,
     capture_origin, consumer, describe_experience, ensure_running, invalid, json, packet_failure,
-    personal_description, personal_evidence, project, project_markers,
+    personal_description, personal_evidence, project,
 };
 use crate::{
     decision_dispatch::DecisionDispatch,
     decision_render::{BoundAttention, RenderError},
     npc::semantic_index::EmbeddingModel,
-    store::RecallScope,
-    world::NpcBinding,
+    store::{RecallScope, StoreError},
+    world::{NpcBinding, WorldError},
 };
 mod semantic;
 use openlegend_simulation::capture::{NpcPersonalSelection, NpcSourceSelection};
@@ -76,13 +76,25 @@ pub(in crate::npc::decide) async fn collect(
         at: origin.at,
         identity_through: origin.identity_through,
     };
-    let references = game
-        .store
-        .recall_references(scope)
-        .await
-        .map_err(|error| CallFailure::World(crate::world::WorldError::Storage(error)))?;
+    let references = match game.store.recall_references(scope).await {
+        Err(StoreError::Capacity) => {
+            ensure_running(work)?;
+            game.store.required_recall_references(scope).await
+        }
+        result => result,
+    }
+    .map_err(|error| CallFailure::World(WorldError::Storage(error)))?;
     let semantic = match embedding.filter(|_| references.fills_direct_limit) {
-        Some(model) => semantic::rank(game, dispatch, model, work, &origin).await?,
+        Some(model) => match semantic::rank(game, dispatch, model, work, &origin).await {
+            Err(error)
+                if matches!(error.cause().1, CallFailure::World(blocked)
+                    if blocked.is_admission_refusal()
+                        || matches!(blocked, WorldError::Storage(StoreError::Capacity))) =>
+            {
+                None
+            }
+            result => result?,
+        },
         None => None,
     };
     let ranked = semantic
@@ -321,11 +333,7 @@ impl Collected {
             } else {
                 "memory"
             };
-            let mut candidate = json!({"kind":kind,"text":description,"experience":[experience]});
-            // Candidate prose grants no executable identity. The final
-            // decision issues any usable aliases from its fresh capture.
-            project_markers(&mut candidate, &HashMap::new(), &[]);
-            ranked.push(candidate);
+            ranked.push(json!({"kind":kind,"text":description,"experience":[experience]}));
         }
         let request = match game.cognition.recall_attention(
             context.fields.as_object().ok_or(CallFailure::Invalid)?,

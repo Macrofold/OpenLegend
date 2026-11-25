@@ -11,6 +11,9 @@ mod activity;
 mod control;
 mod encoding;
 mod requested;
+mod watch;
+pub use watch::WatchRequest;
+pub(crate) use watch::{AdmittedWatch, TypedPlan, WatchControl, receive_watch_sighting, watch_place_id};
 pub(crate) use activity::{
     ActivityExecution, RequestedActivityInitialError, require_supported_activity,
 };
@@ -98,6 +101,8 @@ pub enum PlanMode {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct PlanStep {
     #[serde(default, deserialize_with = "deserialize_present_option")]
+    pub watch: Option<Box<WatchControl>>,
+    #[serde(default, deserialize_with = "deserialize_present_option")]
     pub activity_key: Option<crate::text::JsText>,
     pub id: String,
     pub command: NativeCommand,
@@ -154,6 +159,7 @@ impl Clone for PlanStep {
             copied
         });
         Self {
+            watch: self.watch.clone(),
             activity_key: self.activity_key.clone(),
             id: self.id.clone(),
             command: self.command.clone(),
@@ -189,6 +195,7 @@ impl ActorPlan {
 impl HeapBytes for PlanStep {
     fn heap_bytes(&self) -> Option<usize> {
         heap_sum([
+            self.watch.heap_bytes()?,
             self.target_episodes.heap_bytes()?,
             self.activity_key.heap_bytes()?,
             self.id.heap_bytes()?,

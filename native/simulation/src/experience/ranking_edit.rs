@@ -150,6 +150,20 @@ pub(super) fn replace_source(
                 }
             }
         } else if let Some(text) = &wording.text {
+            if before.header.has_literal_references
+                && body.get::<crate::text::JsText>(text_field(kind))?.as_ref() != Some(text)
+            {
+                let references: LiteralReferences = body
+                    .get("literalReferences")?
+                    .ok_or(ExperienceError::InvalidBody("literal references"))?;
+                if references.requires_verbatim(actor) {
+                    return Err(ExperienceError::InvalidBody(
+                        "replacement wording requires personal references",
+                    )
+                    .into());
+                }
+                body.remove("literalReferences");
+            }
             body.set(text_field(kind), text)?;
         }
     }

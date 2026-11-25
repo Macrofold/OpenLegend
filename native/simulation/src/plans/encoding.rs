@@ -32,6 +32,9 @@ impl Serialize for PlanStep {
         if let Some(evidence) = &self.result_evidence {
             map.serialize_entry("resultEvidence", evidence)?;
         }
+        if let Some(watch) = &self.watch {
+            map.serialize_entry("watch", watch)?;
+        }
         map.end()
     }
 }

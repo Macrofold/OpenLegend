@@ -147,6 +147,7 @@ impl HeapBytes for NativeCommand {
                 text,
                 target_id,
                 self_introduction,
+                public_appeal,
                 volume,
                 ..
             } => heap_sum([
@@ -154,6 +155,7 @@ impl HeapBytes for NativeCommand {
                 text.heap_bytes()?,
                 target_id.heap_bytes()?,
                 self_introduction.heap_bytes()?,
+                public_appeal.heap_bytes()?,
                 volume.heap_bytes()?,
             ]),
             Self::StatusEffect {

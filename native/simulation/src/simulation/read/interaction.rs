@@ -28,6 +28,8 @@ pub struct PlayerInteractionFacts<'a> {
     pub recipient_name: Option<&'a crate::text::JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
     recipient_description: Option<crate::worlds::base_knowledge::OwnedPersonalName>,
+    #[serde(skip)]
+    public_appeals: &'a [crate::worlds::base_speech::PublicAppeal],
 }
 
 impl PlayerInteractionFacts<'_> {
@@ -35,6 +37,42 @@ impl PlayerInteractionFacts<'_> {
         self.recipient_description
             .as_ref()
             .map(|description| description.name())
+    }
+
+    /// Detach only the installed choices for an available ambient composer.
+    /// The caller carries this independent storage until the response is sent.
+    pub fn prepare_public_appeals(
+        &self,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<
+        (
+            Vec<crate::speech::PublicAppealChoice>,
+            crate::host::ByteReservation,
+        ),
+        crate::host::CapacityError,
+    > {
+        use crate::speech::PublicAppealChoice;
+        let bytes = self
+            .public_appeals
+            .iter()
+            .try_fold(0usize, |bytes, appeal| {
+                bytes
+                    .checked_add(size_of::<PublicAppealChoice>())?
+                    .checked_add(appeal.id.len())?
+                    .checked_add(appeal.label.len())?
+                    .checked_add(appeal.word_bytes())
+            })
+            .ok_or(crate::host::CapacityError)?;
+        let custody = budget.reserve(bytes)?;
+        let mut choices = Vec::with_capacity(self.public_appeals.len());
+        for appeal in self.public_appeals {
+            choices.push(PublicAppealChoice {
+                id: appeal.id.clone(),
+                label: appeal.label.clone(),
+                text: appeal.words(),
+            });
+        }
+        Ok((choices, custody))
     }
 }
 
@@ -198,6 +236,11 @@ impl Simulation {
             addressed_source,
             recipient_name,
             recipient_description,
+            public_appeals: if actor_available && speaking && target_id.is_none() {
+                &self.state.installed.speech_action.value().public_appeals
+            } else {
+                &[]
+            },
         })
     }
 }

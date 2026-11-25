@@ -14,6 +14,7 @@ export async function initializeMemorySchema(db: Pick<SqlDatabase, 'exec'>): Pro
         event_id TEXT, memory_kind TEXT, acquisition TEXT, event_type TEXT,
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
         search_text TEXT NOT NULL DEFAULT '', linguistic BIGINT NOT NULL,payload_bytes BIGINT NOT NULL,retention_class TEXT NOT NULL,
+        preserve_literal BIGINT NOT NULL,
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_dialogue_order ON recall_sources(world_id,actor_id,sequence DESC,id DESC)
         WHERE source_kind='awareness' AND eligible=1 AND linguistic=1;

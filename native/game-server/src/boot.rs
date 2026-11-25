@@ -603,7 +603,7 @@ impl CurrentServer {
                         RuntimeProviderInput::geometry(answer, custody)?
                     }
                     None => {
-                        match crate::operation_format::answer(&question, &budget, language.as_deref())? {
+                        match crate::operation_format::answer(&question, &budget, language.as_ref())? {
                             Some(answer) => answer,
                             None => cognition.answer_choices(&question, &budget)
                                 .map_err(openlegend_simulation::runtime::RuntimeError::application_refused)?

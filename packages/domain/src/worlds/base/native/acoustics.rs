@@ -143,6 +143,11 @@ impl AcousticPolicy {
         self.reach_at_level(hearing_floor_db_spl, self.source_level(volume), threshold)
     }
 
+    /// Upper bound without listener-specific hearing or obstructing geometry.
+    pub(crate) fn unobstructed_word_reach(&self, volume: SpeechVolume) -> f64 {
+        self.reach(self.background_level_db_spl, volume, Some(self.thresholds_db.partial))
+    }
+
     pub fn exposure_at_level(
         &self,
         hearing_floor_db_spl: f64,

@@ -4,11 +4,12 @@
 use crate::encoding::content_hash;
 use crate::geometry::GeometryBinding;
 use crate::host::{ByteBudget, ByteReservation};
-use crate::reception::SpeechSegment;
+use crate::reception::{PerceivedSpeech, SpeechSegment};
 use crate::text::JsText;
 use crate::values::deserialize_safe_integer;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::mem::size_of;
+use std::ops::Range;
 use std::sync::Arc;
 
 mod contact;
@@ -27,12 +28,43 @@ pub struct SpeechWord {
     pub end: u64,
 }
 
+/// The installed local language implementation can only classify this
+/// already acquired passage. It receives no world handle or mutable state
+/// and uses the caller's allowance for temporary text work. None means the
+/// optional check could not be served, separate from a supported nonmatch.
+pub trait SpeechReferenceProvider: Send + Sync {
+    fn match_heard_reference(
+        &self,
+        speech: &PerceivedSpeech,
+        self_name: &JsText,
+        budget: &ByteBudget,
+    ) -> Option<SpeechReferenceMatch>;
+}
+
+#[derive(Clone, Copy)]
+pub enum SpeechReferenceMatch {
+    NoMatch,
+    NameOnly,
+    Passage(usize),
+}
+
+/// Prepared only for the untargeted Speak composer. The accepted command
+/// checks its chosen ID and exact words again against the active world.
+#[derive(Serialize)]
+pub struct PublicAppealChoice {
+    pub id: String,
+    pub label: String,
+    pub text: String,
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct UtteranceAnswer {
     pub binding: GeometryBinding,
     pub words: Vec<SpeechWord>,
     pub lowercase: JsText,
+    #[serde(skip)]
+    pub references: Option<Arc<dyn SpeechReferenceProvider>>,
 }
 
 #[derive(Debug)]
@@ -45,12 +77,14 @@ pub(crate) struct SpeechWords {
     text: Arc<JsText>,
     lowercase: JsText,
     words: Vec<SpeechWord>,
+    references: Option<Arc<dyn SpeechReferenceProvider>>,
     _reservation: ByteReservation,
 }
 
 pub(crate) struct HeardSegments {
     pub segments: Vec<SpeechSegment>,
     pub reservation: ByteReservation,
+    pub heard_terms: bool,
 }
 
 impl SpeechWords {
@@ -70,12 +104,14 @@ impl SpeechWords {
         Ok(HeardSegments {
             segments,
             reservation,
+            heard_terms: true,
         })
     }
     pub(crate) fn prepare(
         text: &JsText,
         words: Vec<SpeechWord>,
         lowercase: JsText,
+        references: Option<Arc<dyn SpeechReferenceProvider>>,
         budget: &ByteBudget,
     ) -> Result<Self, SpeechError> {
         let mut previous = 0;
@@ -99,6 +135,7 @@ impl SpeechWords {
             text: Arc::new(text.clone()),
             lowercase,
             words,
+            references,
             _reservation: reservation,
         })
     }
@@ -110,9 +147,14 @@ impl SpeechWords {
         &self.lowercase
     }
 
+    pub(crate) fn references(&self) -> Option<&dyn SpeechReferenceProvider> {
+        self.references.as_deref()
+    }
+
     pub(crate) fn partial(
         &self,
         key: &str,
+        required_terms: Option<[Range<usize>; 2]>,
         budget: &ByteBudget,
     ) -> Result<HeardSegments, SpeechError> {
         let count = self.words.len();
@@ -165,6 +207,7 @@ impl SpeechWords {
             }
         }
         let mut segments = Vec::new();
+        let mut heard_terms = [false; 2];
         segments
             .try_reserve_exact(count.max(1))
             .map_err(|_| SpeechError::Capacity)?;
@@ -181,11 +224,14 @@ impl SpeechWords {
                 } else {
                     self.words[at - 1].end as usize
                 };
+                let start = self.words[from].start as usize;
+                if let Some(required) = &required_terms {
+                    for (term, heard) in required.iter().zip(&mut heard_terms) {
+                        *heard |= start <= term.start && term.end <= end;
+                    }
+                }
                 segments.push(SpeechSegment::Heard {
-                    text: self
-                        .text
-                        .slice(self.words[from].start as usize..end)
-                        .trimmed(),
+                    text: self.text.slice(start..end).trimmed(),
                 });
             } else {
                 segments.push(SpeechSegment::Unintelligible);
@@ -212,6 +258,7 @@ impl SpeechWords {
         Ok(HeardSegments {
             segments,
             reservation,
+            heard_terms: heard_terms.into_iter().all(|heard| heard),
         })
     }
 }

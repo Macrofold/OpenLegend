@@ -66,4 +66,5 @@ sites! {
     52, RELEASE_DEBT,  "S02.01.discarded",      "discarded game microsecond";
     53, READ_OP,       "S13.read.operational",  "operational read";
     54, READ_SIM,      "S13.read.simulation",   "simulation cut read";
+    55, SPEECH_REFERENCE, "S08.speech.reference", "heard personal reference check";
 }

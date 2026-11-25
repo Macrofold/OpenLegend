@@ -19,6 +19,8 @@ pub(crate) struct PlanEditInput {
     pub expected_revision: u64,
     #[serde(deserialize_with = "deserialize_nullable")]
     pub goal_id: Option<String>,
+    #[serde(skip)]
+    pub watch: Option<AdmittedWatch>,
 }
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
@@ -127,6 +129,7 @@ impl PlanEditCursor {
             target_episodes.insert(target.to_owned(), episode);
         }
         PlanStep {
+            watch: None,
             target_episodes: Some(target_episodes),
             activity_key: None,
             id: command.envelope().id.clone(),
@@ -175,6 +178,14 @@ impl PlanEditCursor {
                     + self.input.goal_id.as_ref().map_or(0, String::len)
                     + size_of::<ActorPlan>(),
             )
+            .and_then(|bytes| {
+                bytes.checked_add(
+                    self.input
+                        .watch
+                        .as_ref()
+                        .map_or(Some(0), |watch| watch.value.heap_bytes())?,
+                )
+            })
             .ok_or(ExecutionError::Capacity)?;
         let old_len = if append {
             core.state
@@ -208,6 +219,16 @@ impl PlanEditCursor {
                 .into_iter()
                 .map(|command| Self::captured_step(core, command)),
         );
+        let watched = self.input.watch.take();
+        let _watch_storage = if let Some(AdmittedWatch { value, _storage }) = watched {
+            if steps.len() != 1 || !matches!(steps[0].command, NativeCommand::Move { .. }) {
+                return Err(ExecutionError::Invariant);
+            }
+            steps[0].watch = Some(value);
+            Some(_storage)
+        } else {
+            None
+        };
         let installed = core.state.installed.clone();
         let rules = &installed.ordinary_actions.value().plan;
         let plan_id_len = if append {
@@ -223,7 +244,16 @@ impl PlanEditCursor {
         } else {
             self.input.id.len()
         };
-        self.reserve(rules.queued.code.len() + rules.queued.message.len() * 8 + plan_id_len)?;
+        let report = if steps.iter().any(|step| step.watch.is_some()) {
+            &rules
+                .watch
+                .as_ref()
+                .ok_or(ExecutionError::UnsupportedFamily)?
+                .waiting
+        } else {
+            &rules.queued
+        };
+        self.reserve(report.code.len() + report.message.len() * 8 + plan_id_len)?;
         let actor = &self.input.actor_id;
         if append {
             let mut physical = core.physical();
@@ -259,7 +289,7 @@ impl PlanEditCursor {
         }
         core.physical().advance_agency_revision(actor)?;
         core.physical().advance_plan_generation(actor)?;
-        let mut result = rules.queued.outcome(true);
+        let mut result = report.outcome(true);
         result.plan_id = Some(
             core.state
                 .physical

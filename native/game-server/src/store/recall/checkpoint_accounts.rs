@@ -97,6 +97,9 @@ struct Body {
     resolved: Option<bool>,
     summary: Option<JsText>,
     text: Option<JsText>,
+    literal_references: Option<openlegend_simulation::experience::LiteralReferences>,
+    #[serde(default)]
+    entity_ids: Vec<String>,
     #[serde(default)]
     sources: Vec<PersonalSourceRef>,
     manifest: Option<Manifest>,
@@ -488,6 +491,16 @@ fn compile_account(
         })
         .ok_or(StoreError::InvalidRecord)?,
         linguistic: 0,
+        preserve_literal: i64::from(
+            openlegend_simulation::experience::requires_verbatim_participants(
+                kind,
+                actor,
+                data.entity_ids.iter().map(String::as_str),
+            ) || data
+                .literal_references
+                .as_ref()
+                .is_some_and(|refs| refs.requires_verbatim(actor)),
+        ),
         payload_bytes: payload.len().try_into().map_err(|_| StoreError::Capacity)?,
         retention_class: AwarenessRetentionClass::Memory,
     })
@@ -501,6 +514,15 @@ fn compile_account(
         learning: Vec::new(),
     };
     let mut manifest_observations = Vec::new();
+    if let Some(references) = &data.literal_references {
+        for reference in &references.references {
+            if let openlegend_simulation::experience::LiteralReference::Source { source, .. } =
+                reference
+            {
+                builder.personal(source, "literal-reference")?;
+            }
+        }
+    }
     if let Some(manifest) = &data.manifest {
         if summary {
             for original in &data.sources {

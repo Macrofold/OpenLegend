@@ -54,11 +54,12 @@ pub use learning::{RuntimeActivityLearning, RuntimeActivityLearningStep};
 mod startup;
 pub use maintenance::{
     RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
-    RuntimeConsolidationReading, RuntimeConsolidationReadings, RuntimeConsolidationTicket,
-    RuntimeDreamReview, RuntimeHourlyReview, RuntimeMaintenancePublication, RuntimeMaintenanceRead,
-    RuntimeMemoryIndex, RuntimePreparedDream, RuntimeReflectionBinding,
-    RuntimeReflectionEvidenceAlias, RuntimeReflectionFile, RuntimeReflectionFiles,
-    RuntimeReflectionOpportunity, RuntimeReflectionTicket,
+    RuntimeConsolidationReading, RuntimeConsolidationReadings,
+    RuntimeConsolidationReferenceBinding, RuntimeConsolidationTicket, RuntimeDreamReview,
+    RuntimeHourlyReview, RuntimeMaintenancePublication, RuntimeMaintenanceRead, RuntimeMemoryIndex,
+    RuntimePreparedDream, RuntimeReflectionBinding, RuntimeReflectionEvidenceAlias,
+    RuntimeReflectionFile, RuntimeReflectionFiles, RuntimeReflectionOpportunity,
+    RuntimeReflectionTicket,
 };
 mod npc;
 pub(crate) use npc::remembered_places::RememberedPlaces;
@@ -140,6 +141,7 @@ pub use player::{
     RuntimeResourceOffer, RuntimeStatusChoice, RuntimeStatusMenu, StockGroupRefusal,
     StockGroupRequest, TypedWalk, VisibleFuel, stock_group_limit_message,
 };
+pub use crate::plans::WatchRequest;
 pub use player::{
     InspectedRecipeRecord, RuntimeCatalogueOffer, RuntimeFollowOffer, RuntimeWorldStorage,
 };
@@ -289,7 +291,8 @@ fn session_failure(error: crate::simulation::SessionError) -> RuntimeError {
         };
     }
     let capacity = match &error {
-        SessionError::Drive(DriveError::Capacity) => true,
+        SessionError::Drive(DriveError::Capacity)
+        | SessionError::Save(crate::records::save::SaveError::Capacity) => true,
         SessionError::Execution(error)
         | SessionError::Drive(DriveError::Semantic(
             AdvanceError::Execution(error)
@@ -399,6 +402,7 @@ impl RuntimeProviderInput {
         binding: crate::geometry::GeometryBinding,
         words: Vec<crate::speech::SpeechWord>,
         lowercase: crate::text::JsText,
+        references: Option<Arc<dyn crate::speech::SpeechReferenceProvider>>,
         mut custody: ByteReservation,
     ) -> Result<Self, RuntimeError> {
         use std::mem::size_of;
@@ -414,6 +418,7 @@ impl RuntimeProviderInput {
                 binding,
                 words,
                 lowercase,
+                references,
             })),
             custody,
         })

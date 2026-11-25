@@ -231,7 +231,7 @@ pub(crate) struct CommandCursor {
     evasion_path: Option<Box<crate::movement::MotionOperation>>,
     hearth: Option<hearth::PreparedHearth>,
     travel: Option<Box<travel::Consent>>,
-    typed_plan_mode: Option<crate::plans::PlanMode>,
+    typed_plan_mode: Option<crate::plans::TypedPlan>,
     typed_plan: Option<Box<typed_plan::PreparedWalk>>,
     binding: GeometryBinding,
     resolved: Option<SurfacePoint>,
@@ -311,6 +311,11 @@ impl CommandCursor {
 
     pub(crate) fn needs_known_places(&self) -> bool {
         !self.options.preview && matches!(self.command, NativeCommand::Say { .. })
+    }
+
+    pub(crate) fn watch_place_actor(&self) -> Option<&str> {
+        self.typed_plan_mode.as_ref()?.watch.as_ref()?;
+        Some(self.actor_id())
     }
 
     fn canonical(&self) -> &str {
@@ -454,7 +459,7 @@ impl CommandCursor {
             _reservation: reservation,
         })
     }
-    pub(crate) fn with_typed_plan(mut self, mode: Option<crate::plans::PlanMode>) -> Self {
+    pub(crate) fn with_typed_plan(mut self, mode: Option<crate::plans::TypedPlan>) -> Self {
         self.typed_plan_mode = mode;
         self
     }

@@ -2,7 +2,7 @@
 //! IDs remain available for application only; the provider gets local handles.
 
 use super::*;
-use crate::experience::PersonalSourceKind;
+use crate::experience::{LiteralReferences, PersonalSourceKind};
 use crate::text::JsText;
 
 pub struct RuntimeConsolidationReadings {
@@ -13,6 +13,7 @@ pub struct RuntimeConsolidationReadings {
 pub struct RuntimeConsolidationReading {
     pub key: String,
     pub text: JsText,
+    pub references: LiteralReferences,
     pub protected: bool,
     pub kind: PersonalSourceKind,
     pub at: f64,
@@ -28,7 +29,9 @@ impl RuntimeConsolidationTicket {
         &self,
         budget: &ByteBudget,
     ) -> Result<RuntimeConsolidationReadings, RuntimeError> {
-        use crate::experience::consolidation::{consolidation_key, consolidation_reading};
+        use crate::experience::consolidation::{
+            consolidation_key, consolidation_reading, protected_source,
+        };
 
         if !budget.owns(&self._storage) || !self.sources_ready() {
             return Err(failure("consolidation source preparation changed"));
@@ -54,17 +57,16 @@ impl RuntimeConsolidationTicket {
             if captured.selection != index {
                 return Err(failure("consolidation sources are out of order"));
             }
-            let protected = header.importance >= self.limits.protected_importance;
-            let (mut text, mut text_custody) =
-                consolidation_reading(record, budget).map_err(failure)?;
-            if !protected {
-                let (redacted, redaction) = without_routing_annotations(&text, budget)?;
-                if let Some(redacted) = redacted {
-                    text = redacted;
-                    text_custody = redaction;
-                }
-            }
+            let protected = protected_source(header, self.limits.protected_importance);
+            let (text, text_custody) = consolidation_reading(record, budget).map_err(failure)?;
             custody.merge(text_custody)?;
+            let references = if protected {
+                LiteralReferences::default()
+            } else {
+                let (references, held) = record.read_literal_references(budget).map_err(failure)?;
+                custody.merge(held)?;
+                references
+            };
             let source = if header.reference.kind == PersonalSourceKind::Awareness {
                 #[derive(Deserialize)]
                 struct Awareness<'a> {
@@ -82,6 +84,7 @@ impl RuntimeConsolidationTicket {
             readings.push(RuntimeConsolidationReading {
                 key: consolidation_key(&header.reference).map_err(failure)?,
                 text,
+                references,
                 protected,
                 kind: header.reference.kind,
                 at: header.at,
@@ -91,45 +94,4 @@ impl RuntimeConsolidationTicket {
         }
         Ok(RuntimeConsolidationReadings { readings, custody })
     }
-}
-
-// Matches Source's historicalAccountText projection without replacing isolated
-// UTF-16 units. Stored protected text never passes through this projection.
-fn without_routing_annotations(
-    text: &JsText,
-    budget: &ByteBudget,
-) -> Result<(Option<JsText>, ByteReservation), RuntimeError> {
-    const PREFIX: [u16; 4] = [40, 73, 68, 58];
-    if !text.units().any(|unit| unit == PREFIX[0]) {
-        return Ok((None, budget.reserve(0)?));
-    }
-    let bytes = text
-        .units_len()
-        .checked_mul(20)
-        .ok_or_else(|| failure("capacity"))?;
-    let mut custody = budget.reserve(bytes)?;
-    let units: Vec<_> = text.units().collect();
-    let mut retained = Vec::with_capacity(units.len());
-    let mut i = 0;
-    while i < units.len() {
-        if units[i..].starts_with(&PREFIX) {
-            let rest = &units[i + PREFIX.len()..];
-            let end = rest.iter().position(|&unit| {
-                matches!(unit, 40 | 41)
-                    || char::from_u32(unit.into()).is_some_and(crate::encoding::is_js_whitespace)
-            });
-            if let Some(end) = end.filter(|&end| end != 0 && rest[end] == 41) {
-                while matches!(retained.last(), Some(9 | 32)) {
-                    retained.pop();
-                }
-                i += PREFIX.len() + end + 1;
-                continue;
-            }
-        }
-        retained.push(units[i]);
-        i += 1;
-    }
-    let result = (retained.len() != units.len()).then(|| JsText::from_units(retained));
-    custody.resize(result.as_ref().map_or(0, JsText::storage_bytes))?;
-    Ok((result, custody))
 }

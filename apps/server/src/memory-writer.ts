@@ -366,12 +366,18 @@ function* sourceRows(
       kind === 'awareness' && hasLinguisticSpeech(value as unknown as Awareness) ? 1 : 0,
       Buffer.byteLength(row.payload),
       kind === 'awareness' ? value['retentionClass'] : 'memory',
+      (kind === 'awareness' && hasLinguisticSpeech(value as unknown as Awareness)) ||
+      (kind !== 'summary' &&
+        Array.isArray(value['entityIds']) &&
+        value['entityIds'].some((id) => id !== actorId))
+        ? 1
+        : 0,
     ];
     // These are the actual SQL fields: required times/ranks cannot become NULL,
     // sequence must fit BIGINT exactly, and supplied text must remain text.
     for (let index = 0; index < values.length; index++) {
       const part = values[index];
-      if ((index >= 10 && index <= 14) || (index >= 16 && index <= 17)) {
+      if ((index >= 10 && index <= 14) || (index >= 16 && index <= 17) || index === 19) {
         if (
           typeof part !== 'number' ||
           !Number.isFinite(part) ||
@@ -779,6 +785,7 @@ export class MemoryWriter<Database extends SqlDatabase = SqlDatabase> {
       'linguistic',
       'payload_bytes',
       'retention_class',
+      'preserve_literal',
     ];
     const repository = this;
     for (const kind of Object.keys(sourceTables) as SourceKind[]) {

@@ -256,6 +256,15 @@ fn assemble_selected_core(
     let speech_action = selected::<crate::worlds::InstalledSpeechAction>(speech_action, budget)?;
     let ordinary_actions =
         selected::<crate::worlds::InstalledOrdinaryActionRules>(ordinary_actions, budget)?;
+    if ordinary_actions
+        .value()
+        .plan
+        .watch
+        .as_ref()
+        .is_some_and(|watch| !watch.valid())
+    {
+        return Err(InstallError::DefinitionBody.into());
+    }
     let fire_care = fire_care.map(|input| selected::<crate::fire_care::FireCare>(input, budget)).transpose()?;
     if fire_care.as_ref().is_some_and(|rule| !rule.value().valid()
         || !meanings.manifest.activity_hosts.contains(&rule.value().host)) {
@@ -329,6 +338,9 @@ fn assemble_selected_core(
         meanings.status_policy.clock_offset_hours, finite_rain_input.as_ref(), budget,
     )?;
     drop((_finite_rain_preparation, finite_rain_input, finite_rain_row));
+    if !speech_action.value().valid(&retained) {
+        return Err(InstallError::DefinitionBody.into());
+    }
     physical.gifts.validate_definitions(&retained, budget)?;
     crate::flight::validate_corridors(
         &retained.flight_corridors,
@@ -503,6 +515,8 @@ fn assemble_selected_core(
         &physical.entities,
         &installed.mind_limits,
         &schema,
+        physical.header.sim_time,
+        &installed.event_appraisal_rules,
         budget,
     )?;
     let administration = crate::administration::install_administration(

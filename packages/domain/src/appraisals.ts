@@ -56,6 +56,8 @@ export interface AppraisalDefinition {
     | { kind: 'condition-sustained' };
   reflection: boolean;
   decision: boolean;
+  /** Separately grants the installed native appearance reaction producer. */
+  nativeAppearance?: true;
 }
 export interface AppraisalPolicy {
   definitions: AppraisalDefinition[];
@@ -67,7 +69,7 @@ export interface AppraisalEvidence {
   kind: 'perceived-event' | 'remembered';
   actorId: string;
   sourceId: string;
-  sourceKind: 'event' | import('./types.js').ExperienceEntry['source'];
+  sourceKind: 'event' | 'native-exposure' | import('./types.js').ExperienceEntry['source'];
   sourceVersion: string;
   occurrenceId: string;
   coverage: string;
@@ -218,18 +220,22 @@ export function validateAppraisalPolicy(policy: AppraisalPolicy | undefined): vo
   const ids = new Set<string>();
   for (const definition of policy.definitions) {
     if (
-      !hasRecordFields(definition, [
-        'id',
-        'version',
-        'implementation',
-        'label',
-        'causes',
-        'stacking',
-        'value',
-        'lifetime',
-        'reflection',
-        'decision',
-      ]) ||
+      !hasRecordFields(
+        definition,
+        [
+          'id',
+          'version',
+          'implementation',
+          'label',
+          'causes',
+          'stacking',
+          'value',
+          'lifetime',
+          'reflection',
+          'decision',
+        ],
+        ['nativeAppearance'],
+      ) ||
       !isSafeRecordId(definition.id) ||
       ids.has(definition.id) ||
       !Number.isSafeInteger(definition.version) ||
@@ -241,6 +247,13 @@ export function validateAppraisalPolicy(policy: AppraisalPolicy | undefined): vo
       !['cause', 'target'].includes(definition.stacking) ||
       typeof definition.reflection !== 'boolean' ||
       typeof definition.decision !== 'boolean' ||
+      (Object.hasOwn(definition, 'nativeAppearance') &&
+        (definition.nativeAppearance !== true ||
+          definition.decision ||
+          definition.reflection ||
+          definition.stacking !== 'cause' ||
+          definition.value?.kind !== 'scaled' ||
+          definition.lifetime?.kind !== 'decays')) ||
       !Array.isArray(definition.causes) ||
       !definition.causes.length ||
       new Set(definition.causes).size !== definition.causes.length ||
@@ -359,7 +372,7 @@ function validEvidence(source: AppraisalEvidence): boolean {
       ],
       ['recallEpisodeId'],
     ) &&
-    ['event', 'awareness', 'memory', 'summary'].includes(source.sourceKind) &&
+    ['event', 'awareness', 'memory', 'summary', 'native-exposure'].includes(source.sourceKind) &&
     isSafeRecordId(source.occurrenceId) &&
     typeof source.sourceVersion === 'string' &&
     source.sourceVersion.length <= 128 &&
@@ -1220,6 +1233,11 @@ export function validateAppraisals(world: WorldState): void {
       if (cause.kind === 'perceived-event' || cause.kind === 'remembered') {
         if (
           !validEvidence(cause) ||
+          (cause.sourceKind === 'native-exposure') !== (definition.nativeAppearance === true) ||
+          (cause.sourceKind === 'native-exposure' &&
+            (cause.kind !== 'perceived-event' ||
+              record.targetId !== null ||
+              cause.subjectIds.length)) ||
           !sourceAllowed(world, actorId, cause, { sources: [cause], subjects: [] }) ||
           (record.targetId !== null && !cause.subjectIds.includes(record.targetId))
         )

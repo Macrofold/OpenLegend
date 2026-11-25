@@ -73,6 +73,8 @@ pub(crate) use retention::{
 pub use retention::{AgedAccount, AgedAccounts, RetentionPreparation, render_account_summary};
 mod memory;
 pub(crate) use impression::{reinforce_experience, remember_interpretation};
+mod literal;
+pub use literal::{LiteralBinding, LiteralRange, LiteralReference, LiteralReferences};
 pub(crate) use memory::{
     MemoryAcquisitionError, MemoryAdmission, acquire_memory, encoded_body_bound,
     prepare_memory_admission,
@@ -334,6 +336,9 @@ pub struct PersonalSourceHeader {
     pub event_id: Option<String>,
     pub evidence_source_id: Option<String>,
     pub evidence_target_id: Option<String>,
+    pub receiver_role: Option<crate::reception::TriggerKind>,
+    pub speech_choice: bool,
+    pub witness_help: bool,
     pub heard_addressed_speech: bool,
     pub activity_id: Option<String>,
     pub source_receipt: Option<TemporalReceiptLocator>,
@@ -341,6 +346,10 @@ pub struct PersonalSourceHeader {
     pub source: Option<String>,
     pub class: AccountClass,
     pub protected: bool,
+    /// Exact wording or personal attribution would be lost by an unverified
+    /// paraphrase. Maintenance uses the existing protected-source path.
+    pub preserve_literal: bool,
+    pub has_literal_references: bool,
     pub expires_at: Option<f64>,
     pub retention: Option<ExperienceRetention>,
     pub impression: Option<PersonalImpressionHeader>,
@@ -654,6 +663,13 @@ fn source_dependencies(
     if let Some(observation) = body.get("observation") {
         ids.insert(text(object(observation)?, "id")?.to_owned());
     }
+    if let Some(references) = body.get("literalReferences") {
+        for reference in references["references"].as_array().into_iter().flatten() {
+            if let Some(source) = reference.get("source") {
+                ids.insert(text(object(source)?, "id")?.to_owned());
+            }
+        }
+    }
     if kind == PersonalSourceKind::Summary {
         for source in source_references(
             body.get("sources")
@@ -717,6 +733,50 @@ fn source_dependencies(
         }
     }
     Ok(ids.into_iter().collect())
+}
+
+fn held_literal(
+    body: &Map<String, Value>,
+    kind: PersonalSourceKind,
+    actor: &str,
+    class: &AccountClass,
+    protected: bool,
+) -> bool {
+    protected
+        || *class == AccountClass::Speech
+        || requires_verbatim_participants(
+            kind,
+            actor,
+            body.get("entityIds")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str),
+        )
+        || body.get("literalReferences").is_some_and(|references| {
+            references["references"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(
+                    |reference| match reference.get("kind").and_then(Value::as_str) {
+                        Some("subject") => reference["subject"]["entityId"].as_str() != Some(actor),
+                        Some(_) => true,
+                        None => false,
+                    },
+                )
+        })
+}
+
+/// Keep firsthand accounts involving other participants while native code
+/// cannot prove that a paraphrase preserves their identities and roles. Both
+/// the native record and its maintenance eligibility projection use this rule.
+pub fn requires_verbatim_participants<'a>(
+    kind: PersonalSourceKind,
+    actor: &str,
+    mut participants: impl Iterator<Item = &'a str>,
+) -> bool {
+    kind != PersonalSourceKind::Summary && participants.any(|id| id != actor)
 }
 
 fn header(
@@ -978,6 +1038,24 @@ fn header(
         } else {
             None
         },
+        receiver_role: body
+            .get("triggerKind")
+            .filter(|value| !value.is_null())
+            .map(|value| {
+                serde_json::from_value(value.clone())
+                    .map_err(|_| ExperienceError::InvalidBody("triggerKind"))
+            })
+            .transpose()?,
+        speech_choice: kind == PersonalSourceKind::Awareness
+            && body
+                .get("eventData")
+                .and_then(|data| data.get("speechChoice"))
+                .is_some(),
+        witness_help: kind == PersonalSourceKind::Awareness
+            && body
+                .get("eventData")
+                .and_then(|data| data.get("witnessHelp"))
+                .is_some(),
         heard_addressed_speech: kind == PersonalSourceKind::Awareness
             && speech.is_some_and(|speech| {
                 speech.get("perception").and_then(Value::as_str) == Some("heard")
@@ -991,6 +1069,8 @@ fn header(
         source_receipt,
         record_kind,
         source,
+        preserve_literal: held_literal(body, kind, actor_id, &class, protected),
+        has_literal_references: body.contains_key("literalReferences"),
         class,
         protected,
         expires_at: optional_number(body, "expiresAt")?,
@@ -1046,7 +1126,14 @@ impl PersonalSourceRecord {
         budget: &crate::host::ByteBudget,
     ) -> Result<Self, ExperienceError> {
         let body = header_input::header_input(&row.payload)?;
-        let header = header(object(&body)?, kind, actor_id, &row.payload, meaning)?;
+        let body = object(&body)?;
+        if body.contains_key("literalReferences") {
+            let _decode = budget
+                .reserve(memory::encoded_body_bound(&row.payload)?)
+                .map_err(|_| ExperienceError::Capacity)?;
+            literal::decode_record(kind, &row.payload)?;
+        }
+        let header = header(body, kind, actor_id, &row.payload, meaning)?;
         if header.class == AccountClass::Sensory
             && header.expires_at.is_none_or(|at| !at.is_finite())
         {
@@ -1096,6 +1183,34 @@ impl PersonalSourceRecord {
     }
     pub fn payload(&self) -> &str {
         &self.payload
+    }
+    /// Decode the selected account's reference table from its immutable body.
+    /// The returned reservation owns that copy independently of this record.
+    pub(crate) fn read_literal_references(
+        &self,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<(LiteralReferences, crate::host::ByteReservation), ExperienceError> {
+        let bound = if self.header.has_literal_references {
+            memory::encoded_body_bound(&self.payload)?
+        } else {
+            0
+        };
+        let mut custody = budget
+            .reserve(bound)
+            .map_err(|_| ExperienceError::Capacity)?;
+        let annotations = if self.header.has_literal_references {
+            literal::decode_record(self.header.reference.kind, &self.payload)?
+        } else {
+            LiteralReferences::default()
+        };
+        custody
+            .resize(
+                annotations
+                    .storage_bytes()
+                    .ok_or(ExperienceError::Capacity)?,
+            )
+            .map_err(|_| ExperienceError::Capacity)?;
+        Ok((annotations, custody))
     }
     pub fn position(&self) -> u64 {
         self.position

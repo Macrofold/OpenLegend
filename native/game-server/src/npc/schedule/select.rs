@@ -31,6 +31,10 @@ pub(super) struct Proposal {
     pub(super) causes: Vec<usize>,
     pub(super) review_key: Option<String>,
     pub(super) discovery: Option<u64>,
+    pub(super) handled_through: u64,
+    pub(super) more: bool,
+    pub(super) waiting_for_save: Option<u64>,
+    pub(super) capacity_at: Option<u64>,
 }
 
 type ReadResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
@@ -46,15 +50,11 @@ impl Inspection {
     pub(super) fn at(&self) -> f64 {
         self.read.at
     }
-    pub(super) fn sequence(&self) -> u64 {
-        self.read.max_sequence
-    }
-
     pub(super) fn speech_ids(&self) -> Vec<String> {
         self.read
             .records
             .iter()
-            .filter(|item| item.event_type() == "speech")
+            .filter(|item| item.addressed)
             .map(|item| item.event().to_owned())
             .collect()
     }
@@ -67,31 +67,47 @@ impl Inspection {
         discovery_at: f64,
     ) -> ReadResult<Proposal> {
         let facts = &self.read;
-        let mut unseen = facts
+        const LIMIT: usize = 8;
+        let mut unseen = Vec::with_capacity(LIMIT);
+        let mut handled_through = prior.cursor.watermark.unwrap_or(0);
+        let mut first_unserved = facts.first_unserved;
+        let mut capacity_at = first_unserved
+            .filter(|&sequence| sequence <= facts.durable_sequence && facts.records.is_empty());
+        for group in facts
             .records
-            .iter()
-            .filter(|item| {
-                item.sequence() > prior.cursor.watermark.unwrap_or(0)
-                    && self.eligible(policy, prior, item)
-            })
-            .collect::<Vec<_>>();
-        unseen.sort_by_key(|item| std::cmp::Reverse(item.sequence()));
+            .chunk_by(|left, right| left.sequence() == right.sequence())
+        {
+            let eligible = || group.iter().filter(|item| self.eligible(prior, item));
+            if eligible().count() > LIMIT - unseen.len() {
+                first_unserved = Some(group[0].sequence());
+                if unseen.is_empty() {
+                    capacity_at = first_unserved;
+                }
+                break;
+            }
+            unseen.extend(eligible());
+            handled_through = group[0].sequence();
+        }
+        let waiting_for_save = first_unserved.filter(|&sequence| sequence > facts.durable_sequence);
+        let more = first_unserved.is_some() && capacity_at.is_none();
         let urgent = facts
             .interruptions
             .iter()
             .rev()
             .find(|interrupt| unseen.iter().any(|item| item.event() == interrupt.as_str()));
         let latest_result = self.prepared_result(policy, &unseen);
-        if let Some(priority) = unseen.iter().position(|item| {
-            urgent
-                .as_ref()
-                .is_some_and(|other| other.as_str() == item.event())
-                || latest_result.as_deref() == Some(item.event())
-        }) {
-            let item = unseen.remove(priority);
-            unseen.insert(0, item);
-        }
-        unseen.truncate(8);
+        // The lead describes the decision's purpose. Its source stays in
+        // chronological order alongside the other required evidence.
+        let lead = unseen
+            .iter()
+            .find(|item| {
+                urgent
+                    .as_ref()
+                    .is_some_and(|other| other.as_str() == item.event())
+                    || latest_result.as_deref() == Some(item.event())
+            })
+            .or_else(|| unseen.first())
+            .copied();
 
         let previous = &prior.cursor;
         let blocked = facts.blocked_plan.as_ref();
@@ -142,12 +158,13 @@ impl Inspection {
         let changed = previous
             .semantic_revision
             .as_ref()
-            .is_some_and(|revision| revision != &semantic_revision);
+            .map_or(blocked.is_some(), |revision| revision != &semantic_revision);
         let new_review = review.key.is_some() && review.key != previous.review_key;
         let causes = causes.collect::<Vec<_>>();
         let discovery = if let Some(interval) = facts.discovery_interval
             && policy.discovery
             && unseen.is_empty()
+            && first_unserved.is_none()
             && causes.is_empty()
             && !changed
             && !new_review
@@ -178,7 +195,7 @@ impl Inspection {
             && previous.attempted_opportunity.as_deref() != Some(opportunity.as_str());
         let text = if let Some(protection) = protection {
             protection.into()
-        } else if let Some(item) = unseen.first() {
+        } else if let Some(item) = lead {
             let mut text = JsText::from("Situation change: ");
             if let Some(summary) = item.summary() {
                 text.push_text(summary);
@@ -201,7 +218,7 @@ impl Inspection {
             next_at: review.next_at,
             fingerprint,
             semantic_revision,
-            evidence: unseen.first().map(|item| item.event().to_owned()),
+            evidence: lead.map(|item| item.event().to_owned()),
             reflection_cue: unseen.iter().position(|item| item.reflection_cue),
             causes: (0..causes.len()).collect(),
             attempt: available && !blocks,
@@ -212,15 +229,16 @@ impl Inspection {
             discovery,
             opportunity,
             text,
+            handled_through,
+            more,
+            waiting_for_save,
+            capacity_at,
         })
     }
 
-    fn eligible(&self, policy: &SchedulingPolicy, prior: &ThoughtRead, item: &ScheduleEvidence) -> bool {
+    fn eligible(&self, prior: &ThoughtRead, item: &ScheduleEvidence) -> bool {
         let facts = &self.read;
-        if (item.speaker() == facts.actor_id
-            && matches!(item.event_type(), "speech" | "speech-result"))
-            || prior.speech.contains(item.event())
-        {
+        if item.addressed && prior.speech.contains(item.event()) {
             return false;
         }
         let original = facts.events.iter().find(|event| event.id == item.event());
@@ -245,10 +263,7 @@ impl Inspection {
                 return false;
             }
         }
-        item.importance() >= 6.
-            || policy
-                .significant_events
-                .contains(original.map_or("", |event| &event.kind))
+        true
     }
 
     fn prepared_result(&self, policy: &SchedulingPolicy, unseen: &[&ScheduleEvidence]) -> Option<String> {

@@ -442,6 +442,7 @@ impl PlanResumeCursor {
                                 &mut self.paused.as_mut().ok_or(ExecutionError::Invariant)?.steps
                                     [index];
                             step.status = StepStatus::Blocked;
+                            step.watch = None;
                             step.outcome = Some(result);
                         }
                     }
@@ -488,7 +489,7 @@ impl PlanResumeCursor {
                     let suffix = rules.text(template, &fields);
                     let (summary, _guard) =
                         super::memory::personal_possessive(&self.actor, suffix, &self.budget)?;
-                    let evidence = super::memory::append_report(
+                    let evidence = super::memory::append_annotated_report(
                         core,
                         &self.actor,
                         summary,

@@ -7,8 +7,11 @@ use crate::capture::maintenance::{
     MaintenancePurpose,
 };
 use crate::capture::{NpcHistoricalScope, NpcSourceSelection, PreparedNpcSources};
-pub use crate::experience::consolidation::ConsolidationGroup as RuntimeConsolidationGroup;
 use crate::experience::consolidation::ConsolidationLimits;
+pub use crate::experience::consolidation::{
+    ConsolidationGroup as RuntimeConsolidationGroup,
+    ConsolidationReferenceBinding as RuntimeConsolidationReferenceBinding,
+};
 use crate::host::retained_size::HeapBytes;
 use std::mem::size_of;
 mod dream;
@@ -489,6 +492,7 @@ impl RuntimeConsolidationTicket {
             groups.push(RuntimeConsolidationGroup {
                 source_keys: vec![key],
                 text,
+                references: Vec::new(),
             });
         }
         Ok(Some((groups, storage)))
@@ -549,10 +553,12 @@ impl RuntimeConsolidationTicket {
 
     fn has_routine(&self) -> bool {
         self.sources.as_ref().is_some_and(|sources| {
-            sources
-                .personal
-                .iter()
-                .any(|source| source.record.header().importance < self.limits.protected_importance)
+            sources.personal.iter().any(|source| {
+                !crate::experience::consolidation::protected_source(
+                    source.record.header(),
+                    self.limits.protected_importance,
+                )
+            })
         })
     }
     pub fn candidate_key(&self) -> Option<CandidateKey> {

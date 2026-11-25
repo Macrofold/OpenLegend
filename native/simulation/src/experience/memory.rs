@@ -187,6 +187,16 @@ pub(crate) fn prepare_memory_admission(
         return Ok(MemoryAdmission::Complete(None));
     }
     let projected = body.projection()?;
+    if let Some(annotations) = body.get::<LiteralReferences>("literalReferences")? {
+        annotations.validate(&summary)?;
+        super::literal::validate_sources(
+            &annotations,
+            &summary,
+            &core.state.experience,
+            actor_id,
+            budget,
+        )?;
+    }
     let kind = text(&projected, "kind")?.to_owned();
     let source = text(&projected, "source")?.to_owned();
     let importance = number(&projected, "importance")?.clamp(0.0, 10.0);

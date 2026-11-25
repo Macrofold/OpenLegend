@@ -221,6 +221,8 @@ struct ResidentWork {
     first_cut: u64,
     dirty_since: Option<Instant>,
     order: u64,
+    reported_capacity_at: Option<u64>,
+    waiting_for_save: Option<u64>,
     _entry_custody: ByteReservation,
 }
 
@@ -228,6 +230,14 @@ struct ResidentWork {
 struct WakeTimes {
     inspect_at: f64,
     discovery_at: f64,
+}
+
+struct Inspected {
+    wake: WakeTimes,
+    pending: bool,
+    advance: bool,
+    capacity_at: Option<u64>,
+    waiting_for_save: Option<u64>,
 }
 
 #[derive(Default)]
@@ -265,6 +275,7 @@ impl Queue {
                 let urgency = previous.observed.urgency.max(observed.urgency);
                 previous.observed = observed;
                 previous.observed.urgency = urgency;
+                previous.waiting_for_save = None;
             } else {
                 previous.observed.awareness_through = observed.awareness_through;
             }
@@ -283,6 +294,8 @@ impl Queue {
                     observed,
                     dirty_since: Some(Instant::now()),
                     order: self.next_order,
+                    reported_capacity_at: None,
+                    waiting_for_save: None,
                     _entry_custody: storage,
                 },
             );
@@ -290,11 +303,28 @@ impl Queue {
         Ok(())
     }
 
-    fn acknowledge(&mut self, actor: &str, wake: WakeTimes) {
+    fn acknowledge(&mut self, actor: &str, result: Inspected) {
         if let Some(work) = self.work.get_mut(actor) {
-            work.dirty_since = None;
+            work.dirty_since = if result.pending {
+                if result.advance {
+                    Some(Instant::now())
+                } else {
+                    work.dirty_since.or_else(|| Some(Instant::now()))
+                }
+            } else {
+                None
+            };
+            if let Some(sequence) = result.capacity_at
+                && work.reported_capacity_at != Some(sequence)
+            {
+                eprintln!(
+                    "NPC scheduling: a required evidence group exceeds capacity at sequence {sequence}"
+                );
+            }
+            work.reported_capacity_at = result.capacity_at;
+            work.waiting_for_save = result.waiting_for_save;
             work.observed.urgency = 0.;
-            work.wake = wake;
+            work.wake = result.wake;
         }
     }
 }
@@ -312,6 +342,8 @@ impl Director {
             return;
         }
         let mut publications = self.saves.subscribe();
+        let mut saved = self.game.world.durability_changes();
+        let mut slots = self.slots.changes();
         let mut queue = Queue::default();
         loop {
             if *stop.borrow() {
@@ -321,7 +353,11 @@ impl Director {
             // job together. Stop between passes so COMMIT keeps its owner.
             let result = self.scheduling_pass(&inbox, &mut queue).await;
             match result {
-                Ok(())
+                Ok(true) => {
+                    tokio::task::yield_now().await;
+                    continue;
+                }
+                Ok(false)
                 | Err(WorldError::Host(
                     openlegend_world_host::pool::HostError::Busy
                     | openlegend_world_host::pool::HostError::Capacity,
@@ -343,6 +379,8 @@ impl Director {
             tokio::select! {
                 _ = stop.changed() => return,
                 changed = publications.changed() => if changed.is_err() { return; },
+                changed = saved.changed() => if changed.is_err() { return; },
+                changed = slots.changed() => if changed.is_err() { return; },
             }
         }
     }
@@ -351,15 +389,16 @@ impl Director {
         self: &Arc<Self>,
         inbox: &ScheduleInbox,
         queue: &mut Queue,
-    ) -> Result<(), WorldError> {
+    ) -> Result<bool, WorldError> {
         let policy = &self.game.cognition.scheduling;
-        let (generation, clock) = self
+        let (generation, clock, saved_sequence) = self
             .game
             .world
             .capture(|session| {
                 Ok((
                     session.accepted_progress()?.generation.to_owned(),
                     session.clock()?,
+                    session.npc_schedule_durable_identity()?,
                 ))
             })
             .await?;
@@ -396,7 +435,7 @@ impl Director {
             }
         }
         if clock.paused {
-            return Ok(());
+            return Ok(false);
         }
 
         for _ in 0..policy.reads_per_pass {
@@ -457,6 +496,9 @@ impl Director {
             .values()
             .filter(|work| {
                 work.observed.eligible
+                    && work
+                        .waiting_for_save
+                        .is_none_or(|sequence| sequence <= saved_sequence)
                     && (work.dirty_since.is_some() || work.wake.inspect_at <= clock.at)
             })
             .collect::<Vec<_>>();
@@ -487,11 +529,13 @@ impl Director {
         });
         if let Some(work) = work {
             let actor = work.observed.actor_id.clone();
-            if let Some(wake) = self.inspect_work(work, policy, inbox).await? {
-                queue.acknowledge(&actor, wake);
+            if let Some(result) = self.inspect_work(work, policy, inbox).await? {
+                let next = result.pending && result.advance;
+                queue.acknowledge(&actor, result);
+                return Ok(next);
             }
         }
-        Ok(())
+        Ok(false)
     }
 
     async fn inspect_work(
@@ -499,7 +543,7 @@ impl Director {
         work: &ResidentWork,
         policy: &SchedulingPolicy,
         inbox: &ScheduleInbox,
-    ) -> Result<Option<WakeTimes>, WorldError> {
+    ) -> Result<Option<Inspected>, WorldError> {
         let observed = &work.observed;
         self.game
             .world
@@ -552,7 +596,7 @@ impl Director {
                 work.wake.discovery_at,
             )
             .map_err(RuntimeError::application_refused)?;
-        let (at, accepted_cut, sequence) = (plan.at(), plan.through(), plan.sequence());
+        let (at, accepted_cut) = (plan.at(), plan.through());
         drop(plan);
         let read = trigger.clone();
         let actor = observed.actor_id.clone();
@@ -577,17 +621,33 @@ impl Director {
         let world = observed.world_id.clone();
         let generation = observed.generation.clone();
         let actor = observed.actor_id.clone();
+        let prefix_advanced = proposal.handled_through > prior.cursor.watermark.unwrap_or(0);
         if !proposal.attempt {
-            if cursor.semantic_revision != prior.cursor.semantic_revision || proposal.skipped {
+            // An already owned address or expired trigger can clear the way
+            // for a later page. Quiet incidental witnesses need no cursor write.
+            let advance = proposal.more && prefix_advanced && proposal.references.is_empty();
+            if advance
+                || cursor.semantic_revision != prior.cursor.semantic_revision
+                || proposal.skipped
+            {
                 if proposal.skipped {
                     cursor.skipped_opportunity = Some(proposal.opportunity);
+                }
+                if advance {
+                    cursor.watermark = Some(proposal.handled_through);
                 }
                 store
                     .accept_thought(world, generation, actor, prior, cursor, None, None)
                     .await
                     .map_err(WorldError::Commit)?;
             }
-            return Ok(Some(wake));
+            return Ok(Some(Inspected {
+                wake,
+                pending: (advance || proposal.waiting_for_save.is_some()) && !proposal.skipped,
+                advance: advance && proposal.waiting_for_save.is_none(),
+                capacity_at: proposal.capacity_at,
+                waiting_for_save: proposal.waiting_for_save.filter(|_| !proposal.skipped),
+            }));
         }
         let id = format!("thought-{}", uuid::Uuid::new_v4());
         let priority = if observed.urgency >= policy.urgent {
@@ -635,7 +695,7 @@ impl Director {
                 .cursor
                 .watermark
                 .unwrap_or(0)
-                .max(sequence)
+                .max(proposal.handled_through)
                 .min(durably_known),
         );
         let cue = proposal
@@ -694,6 +754,12 @@ impl Director {
                 ticket.finish().await;
             }
         })?;
-        Ok(Some(wake))
+        Ok(Some(Inspected {
+            wake,
+            pending: proposal.more,
+            advance: proposal.more && proposal.waiting_for_save.is_none(),
+            capacity_at: proposal.capacity_at,
+            waiting_for_save: proposal.waiting_for_save,
+        }))
     }
 }

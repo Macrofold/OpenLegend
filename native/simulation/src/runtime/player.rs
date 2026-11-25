@@ -419,6 +419,7 @@ pub struct TypedWalk<'a> {
     pub z: f64,
     pub support: Option<&'a str>,
     pub mode: crate::plans::PlanMode,
+    pub watch: Option<(&'a crate::plans::WatchRequest, &'a str)>,
 }
 
 pub struct RuntimeGatherOffer<'a> {
@@ -776,6 +777,29 @@ impl NativeWorldSession {
             Ok(value) => value,
             Err(reason) => return Ok(Err(reason)),
         };
+        let watch = match input.watch {
+            Some((watch, subject)) => {
+                let bytes = subject
+                    .len()
+                    .checked_add(watch.place_id.len())
+                    .and_then(|bytes| {
+                        bytes
+                            .checked_add(size_of::<(crate::plans::WatchRequest, ByteReservation)>())
+                    })
+                    .ok_or(CapacityError)?;
+                let custody = self.budget.reserve(bytes)?;
+                Some(Box::new((
+                    crate::plans::WatchRequest {
+                        subject_id: subject.to_owned(),
+                        place_id: watch.place_id.clone(),
+                        trigger: watch.trigger,
+                        until: watch.until,
+                    },
+                    custody,
+                )))
+            }
+            None => None,
+        };
         let _surface = self.budget.reserve(surface.len())?;
         let point = crate::state::SurfacePoint {
             x: input.x,
@@ -789,7 +813,10 @@ impl NativeWorldSession {
             RuntimePlayerCommand::Move(&point),
             false,
             None,
-            Some(input.mode),
+            Some(crate::plans::TypedPlan {
+                mode: input.mode,
+                watch,
+            }),
         )
         .map(Ok)
     }
@@ -826,7 +853,7 @@ impl NativeWorldSession {
         command: RuntimePlayerCommand<'_>,
         preview: bool,
         materials: Option<std::sync::Arc<crate::construction_gather::MaterialGrants>>,
-        plan: Option<crate::plans::PlanMode>,
+        plan: Option<crate::plans::TypedPlan>,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         // Size the live input copies and both small escaped JSON records.

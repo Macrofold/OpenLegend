@@ -65,7 +65,7 @@ struct ActivityMemory {
     source: String,
 }
 
-// The native activity/plan owners append their own work episodes here.
+// Native activity/plan and response owners append private episodes here.
 // Other memory forms and edits need their own projection.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -83,9 +83,11 @@ struct ResultBody {
     at: f64,
     sequence: u64,
     summary: JsText,
+    literal_references: Option<openlegend_simulation::experience::LiteralReferences>,
     entity_ids: Vec<String>,
     event_type: Option<String>,
     speaker_id: Option<String>,
+    response_id: Option<String>,
     source_receipt: Option<TemporalReceiptLocator>,
     retention: ExperienceRetention,
 }
@@ -182,18 +184,29 @@ impl Store {
             }
             let body: ResultBody = serde_json::from_str(&row.payload)
                 .map_err(|_| StoreError::DerivedProjectionRequired)?;
-            let work_result = match &body.activity_id {
-                Some(activity) => !activity.is_empty(),
-                // A plan report has no particular physical activity or
-                // event. Its own acquired receipt follows the same check.
-                None => body.event_type.is_none(),
+            let admitted = if let Some(response) = &body.response_id {
+                !response.is_empty()
+                    && body.activity_id.is_none()
+                    && body.event_type.is_none()
+                    && body.speaker_id.is_none()
+            } else {
+                // A plan report has no particular activity or event. Both
+                // kinds keep the existing internal result restrictions.
+                body.source == "internal"
+                    && body.entity_ids.as_slice() == [body.actor_id.as_str()]
+                    && match &body.activity_id {
+                        Some(activity) => !activity.is_empty(),
+                        None => body.event_type.is_none(),
+                    }
             };
             if body.kind != "episode"
-                || body.source != "internal"
-                || !work_result
+                || !admitted
                 || body.actor_id != field(actor_column)?
                 || body.id != field(id_column)?
-                || body.entity_ids.as_slice() != [body.actor_id.as_str()]
+                || body
+                    .literal_references
+                    .as_ref()
+                    .is_some_and(|value| value.source_references().next().is_some())
                 || body.source_receipt != body.retention.receipt
                 || body
                     .source_receipt
@@ -221,6 +234,16 @@ impl Store {
                 sequence: sql_ordinal(body.sequence)?,
                 search_text: &body.summary,
                 linguistic: 0,
+                preserve_literal: i64::from(
+                    openlegend_simulation::experience::requires_verbatim_participants(
+                        PersonalSourceKind::Memory,
+                        &body.actor_id,
+                        body.entity_ids.iter().map(String::as_str),
+                    ) || body
+                        .literal_references
+                        .as_ref()
+                        .is_some_and(|value| value.requires_verbatim(&body.actor_id)),
+                ),
                 payload_bytes: i64::try_from(row.payload.len())
                     .map_err(|_| StoreError::Capacity)?,
                 retention_class: AwarenessRetentionClass::Memory,

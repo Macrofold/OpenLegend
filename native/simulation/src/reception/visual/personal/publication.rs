@@ -83,7 +83,7 @@ pub(crate) struct ObserverReceptionCursor {
     batch: Option<EncounterBatch>,
     event: Option<EventCursor>,
     expected: Option<ExpectedEvent>,
-    place_event: bool,
+    visual_occurrence: bool,
     events: Vec<CompletedEvent>,
     reservation: Option<ByteReservation>,
 }
@@ -118,7 +118,7 @@ impl ObserverReceptionCursor {
             batch: None,
             event: None,
             expected: None,
-            place_event: false,
+            visual_occurrence: false,
             events: Vec::new(),
             reservation: Some(reservation),
         })
@@ -168,9 +168,9 @@ impl ObserverReceptionCursor {
                     self.events.push(completed);
                     self.event = None;
                     self.expected = None;
-                    if std::mem::take(&mut self.place_event) {
+                    if std::mem::take(&mut self.visual_occurrence) {
                         answer = Some(ObserverReceptionAnswer::Visual(
-                            PersonalVisualAnswer::PlaceComplete,
+                            PersonalVisualAnswer::OccurrenceComplete,
                         ));
                     }
                 }
@@ -193,10 +193,10 @@ impl ObserverReceptionCursor {
                     let received = match step {
                         PersonalVisualStep::Geometry(_) => return Ok(Progress::Geometry),
                         PersonalVisualStep::Language(_) => return Ok(Progress::Language),
-                        PersonalVisualStep::Place(staged) => {
-                            // Place acquisition is an immediate private account in
-                            // Source, before episode IDs and visual reception.
-                            let StagedPlace {
+                        PersonalVisualStep::Occurrence(staged) => {
+                            // The receiving cursor preserves each real occurrence's
+                            // causal position and resumes only after its own acquisition.
+                            let StagedVisualOccurrence {
                                 event: staged,
                                 _reservation,
                             } = staged;
@@ -232,7 +232,7 @@ impl ObserverReceptionCursor {
                                 budget,
                             )?);
                             self.expected = Some(expected);
-                            self.place_event = true;
+                            self.visual_occurrence = true;
                             return Ok(Progress::Event);
                         }
                         PersonalVisualStep::Received(value) => value,

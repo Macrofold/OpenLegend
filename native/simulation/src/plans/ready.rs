@@ -87,6 +87,7 @@ impl ReadyPlanStep {
                 .find(|step| step.id == self.step)
                 .ok_or(ExecutionError::Invariant)?;
             step.status = StepStatus::Running;
+            step.watch = None;
             step.action_id = Some(action_id.clone());
             step.outcome = Some(result.clone());
             plan.revision = plan
@@ -477,11 +478,37 @@ impl PlanReadyCursor {
                         super::activity::append_invoke(core, &self.actor, command)?;
                         continue;
                     }
-                    let Some(next) = plan.steps.iter().find(|s| s.status == StepStatus::Queued)
+                    let Some((index, next)) = plan
+                        .steps
+                        .iter()
+                        .enumerate()
+                        .find(|(_, s)| s.status == StepStatus::Queued)
                     else {
                         self.phase = Phase::Complete;
                         continue;
                     };
+                    if let Some(watch) = &next.watch {
+                        use super::watch::WatchProgress;
+                        let progress = watch.progress(core, &self.actor)?;
+                        match progress {
+                            WatchProgress::Ready => {}
+                            WatchProgress::Waiting => {
+                                self.phase = Phase::Complete;
+                                continue;
+                            }
+                            WatchProgress::Expired | WatchProgress::Withdrawn => {
+                                super::watch::end_without_match(
+                                    core,
+                                    &self.actor,
+                                    index,
+                                    progress,
+                                    &self.budget,
+                                )?;
+                                self.phase = Phase::Complete;
+                                continue;
+                            }
+                        }
+                    }
                     let target = match &next.command {
                         NativeCommand::Say { target_id, .. } => target_id.as_deref(),
                         NativeCommand::StatusEffect { target_id, .. } => Some(target_id.as_str()),

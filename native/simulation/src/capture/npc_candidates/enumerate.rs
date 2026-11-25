@@ -2,6 +2,95 @@
 use super::*;
 
 impl NpcCandidateCursor {
+    fn offer_public_appeals(
+        &mut self,
+        state: &crate::simulation::SimulationState,
+        speaker: &crate::state::Entity,
+        preparation_id: &str,
+    ) -> Result<(), ExecutionError> {
+        let speech = state.installed.speech_action.value();
+        if speech.public_appeals.is_empty()
+            || !speaker.actively_participates()
+            || !speaker
+                .actor
+                .as_ref()
+                .is_some_and(|actor| actor.alive && !actor.incapacitated)
+            || !crate::worlds::InstalledSpeechAction::allows_speaker(speaker)
+            || state
+                .installed
+                .capabilities
+                .capability_blocked(Some(speaker), "speech")?
+        {
+            return Ok(());
+        }
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct SpeechInput<'a> {
+            id: &'a str,
+            actor_id: &'a str,
+            #[serde(rename = "type")]
+            kind: &'static str,
+            text: &'a crate::text::JsText,
+            public_appeal: &'a str,
+        }
+        for appeal in &speech.public_appeals {
+            let bytes = appeal.word_bytes();
+            let _words = self.budget.reserve(bytes)?;
+            let text = crate::text::JsText::from(appeal.words());
+            let (command, mut guard) = self.bind_offer(
+                preparation_id,
+                None,
+                &SpeechInput {
+                    id: preparation_id,
+                    actor_id: &self.actor,
+                    kind: "say",
+                    text: &text,
+                    public_appeal: &appeal.id,
+                },
+                5,
+                0,
+                |envelope| {
+                    Ok(NativeCommand::Say {
+                        envelope,
+                        text: text.clone(),
+                        target_id: None,
+                        target_role: None,
+                        self_introduction: None,
+                        public_appeal: Some(appeal.id.clone()),
+                        volume: None,
+                    })
+                },
+            )?;
+            let (id, id_custody) = self.id(&["public-appeal", &appeal.id])?;
+            guard.merge(id_custody)?;
+            let description_bytes = bytes
+                .checked_add(appeal.label.len() + 8)
+                .ok_or(ExecutionError::Capacity)?;
+            guard.resize(
+                guard
+                    .bytes()
+                    .checked_add(description_bytes)
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            let mut description = String::with_capacity(description_bytes);
+            description.push_str(&appeal.label);
+            description.push_str(": “");
+            description.push_str(text.as_unicode().ok_or(ExecutionError::Invariant)?);
+            description.push('”');
+            self.append(PreparedNpcOffer {
+                description: Some(description.into()),
+                id,
+                meaning: NpcOfferMeaning::PublicAppeal,
+                command: PreparedNpcInstruction::Command(command),
+                transition: WorkTransitionMode::Continue,
+                temporary: None,
+                next_at: None,
+                _storage: guard,
+            })?;
+        }
+        Ok(())
+    }
+
     fn offer_inspection(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -190,6 +279,7 @@ impl NpcCandidateCursor {
             }
             Enumerate::Continue => {
                 self.stage = Enumerate::Follow(0, 0);
+                self.offer_public_appeals(core.state, actor_entity, preparation_id)?;
                 let received = self.offer_gift_replies(core, actor_entity)?;
                 let plan_pending = actor.agency.plan.as_ref().is_some_and(|plan| {
                     plan.status == crate::plans::PlanStatus::Active

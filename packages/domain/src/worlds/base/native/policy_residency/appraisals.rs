@@ -7,7 +7,13 @@ heap_record!(EventAppraisalRules {
     event_type,
     damage_field,
     definition_id,
-    fallback_max_health
+    fallback_max_health,
+    appearance
+});
+heap_record!(AppearanceReaction {
+    definition_id,
+    coverage,
+    expression_verb
 });
 
 crate::install::definition_layout!(EventAppraisalRules; arrays []; maps []);

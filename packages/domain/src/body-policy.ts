@@ -69,6 +69,7 @@ export interface BodyPolicy {
     encounters: null | {
       recentSeconds: number;
       visiblePreparation: boolean;
+      witnessWarning: boolean;
       preparingStrike: string;
       aiming: string;
       ended: string;
@@ -204,6 +205,7 @@ export function validateBodyPolicy(
       fields(encounter, [
         'recentSeconds',
         'visiblePreparation',
+        'witnessWarning',
         'preparingStrike',
         'aiming',
         'ended',
@@ -213,7 +215,8 @@ export function validateBodyPolicy(
       ]);
       if (
         ![encounter.recentSeconds].every((n) => Number.isFinite(n) && n > 0) ||
-        typeof encounter.visiblePreparation !== 'boolean'
+        typeof encounter.visiblePreparation !== 'boolean' ||
+        typeof encounter.witnessWarning !== 'boolean'
       )
         throw new Error('Invalid installed encounter policy.');
       for (const value of [

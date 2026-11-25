@@ -844,6 +844,10 @@ impl HostedWorld {
         Ok(())
     }
 
+    pub(crate) fn durability_changes(&self) -> watch::Receiver<u64> {
+        self.durable.subscribe()
+    }
+
     /// Wait for the caller's already selected accepted prefix under the
     /// ordinary save timer. Subsequent world activity cannot extend it.
     pub(crate) async fn when_durable(

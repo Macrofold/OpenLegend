@@ -30,6 +30,14 @@ The [Rust matcher](../../../packages/domain/src/worlds/base/native/spoken_refere
 
 “Oren” alone can draw attention. “Oren … money” with missing words can only give name recognition. “Oren pocketed the toll money” stays ordinary speech because that predicate is outside this experiment. Support for a name or clause never establishes who the speaker meant or whether a claim is true. The [live comparison](../../projects/witness-decisions-and-memory-tech-design.md#6-build-order-and-experiment-gates) determines whether this grammar is worth enabling. Expand the wording only when a repeatable play case shows an important missed interaction.
 
+Live classification uses the event-time personal name and the exact heard passage from the existing speech receiver. Current name editing supports private labels for other people. A self-introduction can teach those listeners a label while the speaker keeps their authored self-name. When the experiment is enabled, a complete match lets that listener consider a response. A name alone preserves the ordinary heard direction and words. Automatic turning toward the speaker needs a separate supported response. The experiment is off in the bundled setting pending paired live qualification.
+
+The optional profiler's `S08.speech.reference` probe counts a capacity or language refusal separately from a completed check. An unserved check leaves the actual speech, history and other decisions intact.
+
+## Public requests
+
+The Speak menu offers **Ask for a cooked fish** in worlds that install cooked river fish. Choosing it fills in the actual words and still requires **Say**. Editing the line makes it ordinary speech. An NPC can choose the same authored request in its available actions. Each listener needs to hear the invitation and the requested contribution at their actual positions in the line. An awake NPC with a fish it can offer may choose to volunteer. Giving an item still uses its own offer, stock and acceptance checks. Bystanders can observe an exchange without knowing its terms. A glimpse of that exchange alone cannot settle their own decision about the request. [Who gets a decision](../../features/noticing-and-remembering/who-gets-a-decision.md#a-public-request-asks-for-a-particular-kind-of-answer)
+
 ## Maintained records
 
 - Implementation and qualification: [NST01–NST10](../../maintainers/npc-speech-streaming.md), coordinated with [SPK](../../maintainers/speech-and-social-perception.md).

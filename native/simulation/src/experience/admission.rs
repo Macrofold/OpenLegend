@@ -221,7 +221,12 @@ pub(crate) fn prepare_awareness_admission(
     for input in input {
         let awareness = input.awareness;
         let mut reason = if has_memory {
-            selected_reason(awareness, &law)
+            // The event receiver has the event-time facts that authorize a
+            // required account. Speech and sound still use their own inputs.
+            match input.encoding.factory {
+                super::awareness_encoding::AwarenessFactory::Event { recording } => recording,
+                _ => selected_reason(awareness, &law),
+            }
         } else {
             RecordingReason::None
         };

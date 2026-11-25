@@ -14,12 +14,13 @@ use openlegend_simulation::{
     runtime::{LocalFormat, MovementAttemptSyntax, RuntimeProvider, RuntimeProviderInput},
 };
 use openlegend_world_host::pool::HostError;
+use std::sync::Arc;
 /// Borrow the funded request and return only the rendered value. The existing
 /// cursors still check the ticket and own the result's meaning and effects.
 pub(crate) fn answer(
     request: &RuntimeProvider,
     budget: &ByteBudget,
-    language: Option<&LanguageProvider>,
+    language: Option<&Arc<LanguageProvider>>,
 ) -> Result<Option<RuntimeProviderInput>, WorldError> {
     if let Some(answer) = request.normalize_attempts(budget, |description, label| {
         use crate::language::movement_attempt::{movement_name, parse_offset, proposed_name};
@@ -59,11 +60,11 @@ pub(crate) fn answer(
         return Ok(Some(answer));
     }
     if let Some(answer) = request.with_utterance(|binding, text| {
+        let language = language.ok_or(WorldError::ProviderKind)?;
         let prepared = language
-            .ok_or(WorldError::ProviderKind)?
             .utterance(text, budget)
             .map_err(WorldError::Language)?;
-        Ok::<_, WorldError>(prepared.into_answer(binding)?)
+        Ok::<_, WorldError>(prepared.into_answer(binding, language.clone())?)
     })? {
         return answer.map(Some);
     }
@@ -76,7 +77,7 @@ pub(crate) fn answer(
     })? {
         return answer.map(Some);
     }
-    if let Some(answer) = answer_collation(request, budget, language)? {
+    if let Some(answer) = answer_collation(request, budget, language.map(Arc::as_ref))? {
         return Ok(Some(answer));
     }
     if let Some(answer) =
@@ -93,7 +94,13 @@ pub(crate) fn answer(
         return answer.map(Some);
     }
     if let Some(answer) = request.with_digest(|binding, value, retained_bytes| {
-        typed_digest(binding, value, retained_bytes, budget, language)
+        typed_digest(
+            binding,
+            value,
+            retained_bytes,
+            budget,
+            language.map(Arc::as_ref),
+        )
     })? {
         return answer.map(Some);
     }

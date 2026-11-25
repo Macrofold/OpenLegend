@@ -478,27 +478,10 @@ impl<'a> PersonalNameReader<'a> {
         if local.is_some() {
             return Ok(local);
         }
-        let Some(episode) = self.episode(id).filter(|episode| !episode.is_empty()) else {
-            return Ok(None);
-        };
         if self.current_body_grant(id)?.is_none() {
             return Ok(None);
         }
-        Ok(self.identities().and_then(|identities| {
-            identities
-                .iter()
-                .enumerate()
-                .filter(|(_, (_, identity))| {
-                    identity.seed_only != Some(true)
-                        && !identity.authored
-                        && identity.encounter_id.as_ref() == Some(episode)
-                })
-                .min_by_key(|(at, (key, _))| {
-                    crate::encoding::array_index(key)
-                        .map_or((1, *at as u64), |index| (0, u64::from(index)))
-                })
-                .map(|(_, (_, identity))| identity)
-        }))
+        Ok(current_episode_identity(self.reception, self.observer_id, id, None))
     }
     pub(crate) fn current_body_grant(
         &self,
@@ -694,9 +677,18 @@ impl<'a> PersonalNameReader<'a> {
         let entity = self.entities.get(id).ok_or_else(unavailable)?;
         Ok(Some(outward_body_name(self.rules, entity)))
     }
+    /// Event-time personal self-name used by ordinary naming and the
+    /// overheard-speech experiment. Never returns a public fallback label.
+    pub(crate) fn self_proper_name(&self) -> Option<&'a crate::text::JsText> {
+        self.entities
+            .get(self.observer_id)
+            .map(|entity| &entity.name)
+            .filter(|name| !name.is_empty())
+    }
+
     pub(crate) fn observer_name(&self, id: &str) -> Result<PersonalName<'_>, ReceivedError> {
         let known = if self.observer_id == id {
-            self.entities.get(id).map(|entity| &entity.name)
+            self.self_proper_name()
         } else {
             self.current_body_identity(id)?.and_then(|identity| {
                 identity
@@ -706,7 +698,7 @@ impl<'a> PersonalNameReader<'a> {
                     .or_else(|| (!identity.given_name.is_empty()).then_some(&identity.given_name))
             })
         };
-        if let Some(name) = known.filter(|name| !name.is_empty()) {
+        if let Some(name) = known {
             return Ok(PersonalName {
                 name: name.into(),
                 name_form: Some("proper"),
@@ -829,6 +821,36 @@ impl<'a> PersonalNameReader<'a> {
             _reservation: reservation,
         })
     }
+}
+
+/// A recognized contact can keep a personal identity within its received
+/// encounter. The caller must already hold a current eligible visual body.
+pub(crate) fn current_episode_identity<'a>(
+    reception: &'a ReceptionState,
+    observer: &str,
+    subject: &str,
+    individual: Option<&str>,
+) -> Option<&'a ObserverIdentity> {
+    let episode = reception.perception_episodes.as_ref()?.get(observer)?
+        .get(subject).filter(|episode| !episode.is_empty())?;
+    let identities = reception.observer_identities.as_ref()?.get(observer)?;
+    let current = |identity: &&ObserverIdentity| {
+        identity.seed_only != Some(true)
+            && !identity.authored
+            && identity.encounter_id.as_ref() == Some(episode)
+    };
+    if let Some(individual) = individual {
+        return identities.get(individual).filter(current);
+    }
+    identities
+        .iter()
+        .enumerate()
+        .filter(|(_, (_, identity))| current(identity))
+        .min_by_key(|(at, (key, _))| {
+            crate::encoding::array_index(key)
+                .map_or((1, *at as u64), |index| (0, u64::from(index)))
+        })
+        .map(|(_, (_, identity))| identity)
 }
 fn named(identity: &ObserverIdentity) -> bool {
     identity

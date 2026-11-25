@@ -90,16 +90,16 @@ pub(crate) struct ReceivedPersonalVisual {
 pub(crate) enum PersonalVisualAnswer {
     Geometry(GeometryAnswers),
     Language(CollationAnswer),
-    PlaceComplete,
+    OccurrenceComplete,
 }
 pub(crate) enum PersonalVisualStep<'a> {
     Geometry(&'a GeometryQueries),
     Language(&'a CollationRequest),
-    Place(StagedPlace),
+    Occurrence(StagedVisualOccurrence),
     Received(ReceivedPersonalVisual),
 }
 
-pub(crate) struct StagedPlace {
+pub(crate) struct StagedVisualOccurrence {
     event: crate::execution::StagedOccurrence,
     _reservation: ByteReservation,
 }
@@ -108,7 +108,7 @@ fn stage_place(
     observer: &str,
     place: &crate::reception::places::InstalledPlace,
     budget: &ByteBudget,
-) -> Result<StagedPlace, ExecutionError> {
+) -> Result<StagedVisualOccurrence, ExecutionError> {
     use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
     let location = core
         .state
@@ -121,7 +121,7 @@ fn stage_place(
         .map_or("Observed support", |surface| surface.name.as_str());
     let _reservation = budget.reserve(
         heap_sum([
-            size_of::<StagedPlace>(),
+            size_of::<StagedVisualOccurrence>(),
             size_of::<EventEmissionIntent>(),
             place
                 .heap_bytes()
@@ -175,10 +175,81 @@ fn stage_place(
             mechanism_fields: place.mechanism_fields.clone(),
         }),
     })?;
-    Ok(StagedPlace {
+    Ok(StagedVisualOccurrence {
         event,
         _reservation,
     })
+}
+
+fn stage_sensitivity_expression(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    budget: &ByteBudget,
+) -> Result<Option<StagedVisualOccurrence>, ExecutionError> {
+    use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
+    use crate::narration::{Narration, NarrationPart, PersonRole};
+    let installed = Arc::clone(&core.state.installed);
+    let Some(verb) = installed
+        .event_appraisal_rules
+        .value()
+        .appearance
+        .as_ref()
+        .and_then(|rule| rule.expression_verb.as_deref())
+    else {
+        return Ok(None);
+    };
+    let expression = &installed
+        .occurrence_rules
+        .value()
+        .response
+        .expression
+        .event_type;
+    let _reservation = budget.reserve(
+        heap_sum([
+            size_of::<StagedVisualOccurrence>(),
+            size_of::<EventEmissionIntent>(),
+            4 * size_of::<NarrationPart>(),
+            observer
+                .len()
+                .checked_mul(3)
+                .ok_or(ExecutionError::Capacity)?,
+            expression.len(),
+            verb.len(),
+            128,
+        ])
+        .ok_or(ExecutionError::Capacity)?,
+    )?;
+    // The outward movement is its own physical occurrence. Its witnesses
+    // learn no fear, cause, private cue or identity of the triggering person.
+    let event = core.stage_event(EventEmissionIntent {
+        event_type: expression.clone(),
+        text: EmissionText::Narration(Narration {
+            parts: vec![
+                NarrationPart::Participant {
+                    entity_id: observer.to_owned(),
+                    role: PersonRole::Subject,
+                    article: None,
+                },
+                NarrationPart::Literal(" ".into()),
+                NarrationPart::Verb {
+                    subject_id: observer.to_owned(),
+                    verb: verb.to_owned(),
+                },
+                NarrationPart::Literal(".".into()),
+            ],
+        }),
+        audience: AudienceSelection::Physical,
+        source_id: Some(observer.to_owned()),
+        target_id: None,
+        data: None,
+        scope: EventScope::External,
+        origin: None,
+        exposure: None,
+    })?;
+    Ok(Some(StagedVisualOccurrence {
+        event,
+        _reservation,
+    }))
 }
 
 enum Phase {
@@ -187,6 +258,7 @@ enum Phase {
     Physical,
     Geometry,
     Contacts,
+    Sensitivities,
     Finish,
     Done,
 }
@@ -202,7 +274,8 @@ pub(crate) struct PersonalVisualCursor {
     eligible: IndexSet<String>,
     places: Vec<(String, bool)>,
     place_at: usize,
-    place_waiting: bool,
+    occurrence_waiting: bool,
+    sensitivity_at: usize,
     geometry: Option<GeometryReceptionCursor>,
     acquired_geometry: Option<CompletedGeometryReception>,
     contacts: Vec<String>,
@@ -268,7 +341,8 @@ impl PersonalVisualCursor {
             eligible: IndexSet::new(),
             places: Vec::new(),
             place_at: 0,
-            place_waiting: false,
+            occurrence_waiting: false,
+            sensitivity_at: 0,
             geometry: None,
             acquired_geometry: None,
             contacts: Vec::new(),
@@ -311,11 +385,14 @@ impl PersonalVisualCursor {
                     self.phase = Phase::Places;
                 }
                 Phase::Places => {
-                    if self.place_waiting {
-                        if !matches!(answer.take(), Some(PersonalVisualAnswer::PlaceComplete)) {
+                    if self.occurrence_waiting {
+                        if !matches!(
+                            answer.take(),
+                            Some(PersonalVisualAnswer::OccurrenceComplete)
+                        ) {
                             return Err(invalid());
                         }
-                        self.place_waiting = false;
+                        self.occurrence_waiting = false;
                     } else if answer.is_some() {
                         return Err(invalid());
                     }
@@ -339,8 +416,8 @@ impl PersonalVisualCursor {
                         self.place_at += 1;
                         if *acquired {
                             let staged = stage_place(core, observer, place, budget)?;
-                            self.place_waiting = true;
-                            return Ok(PersonalVisualStep::Place(staged));
+                            self.occurrence_waiting = true;
+                            return Ok(PersonalVisualStep::Occurrence(staged));
                         }
                     }
                     self.phase = Phase::Physical;
@@ -366,7 +443,7 @@ impl PersonalVisualCursor {
                         Some(PersonalVisualAnswer::Language(a)) => {
                             Some(GeometryReceptionAnswer::Language(a))
                         }
-                        Some(PersonalVisualAnswer::PlaceComplete) => return Err(invalid()),
+                        Some(PersonalVisualAnswer::OccurrenceComplete) => return Err(invalid()),
                         None => None,
                     };
                     let result = self
@@ -428,13 +505,50 @@ impl PersonalVisualCursor {
                             ));
                         }
                     }
+                    let visual = self.visual.as_mut().ok_or_else(invalid)?;
+                    visual.settle_housekeeping(core, budget)?;
+                    evaluate_attention_relations(core, &visual.observer.actor_id, budget)?;
+                    visual.current.finish(core, budget)?;
+                    crate::plans::receive_watch_sighting(core, &visual.observer.actor_id)?;
+                    self.phase = Phase::Sensitivities;
+                }
+                Phase::Sensitivities => {
+                    if self.occurrence_waiting {
+                        if !matches!(
+                            answer.take(),
+                            Some(PersonalVisualAnswer::OccurrenceComplete)
+                        ) {
+                            return Err(invalid());
+                        }
+                        self.occurrence_waiting = false;
+                    } else if answer.is_some() {
+                        return Err(invalid());
+                    }
+                    let visual = self.visual.as_ref().ok_or_else(invalid)?;
+                    if let Some(changed) = &visual.appearance_changes {
+                        while let Some(subject) = changed.get_index(self.sensitivity_at) {
+                            self.sensitivity_at += 1;
+                            if crate::appraisals::receive_appearance_sensitivity(
+                                    core,
+                                    &visual.observer.actor_id,
+                                    subject,
+                                    budget,
+                                )?
+                                && let Some(staged) = stage_sensitivity_expression(
+                                    core,
+                                    &visual.observer.actor_id,
+                                    budget,
+                                )?
+                            {
+                                self.occurrence_waiting = true;
+                                return Ok(PersonalVisualStep::Occurrence(staged));
+                            }
+                        }
+                    }
                     self.phase = Phase::Finish;
                 }
                 Phase::Finish => {
                     let mut visual = self.visual.take().ok_or_else(invalid)?;
-                    visual.settle_housekeeping(core, budget)?;
-                    evaluate_attention_relations(core, &visual.observer.actor_id, budget)?;
-                    visual.current.finish(core, budget)?;
                     visual.reserve(
                         visual
                             .notices
@@ -780,6 +894,12 @@ impl PersonalVisualCursor {
             detail.finish_checks(core, false, budget)?;
             detail.reservation.merge(visual.reservation)?;
             detail.notices = visual.notices; // only broad changes produce notices
+            // A detail check can reuse an appearance already acquired in the
+            // broad cut. Supply that actual change to the enrolled observer.
+            if let Some(mut changed) = visual.appearance_changes {
+                changed.extend(detail.appearance_changes.take().ok_or_else(invalid)?);
+                detail.appearance_changes = Some(changed);
+            }
             visual = detail;
         }
         self.visual = Some(visual);

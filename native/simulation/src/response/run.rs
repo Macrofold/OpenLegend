@@ -1447,6 +1447,7 @@ impl ResponseCursor {
                                         mode: crate::plans::PlanMode::Enqueue,
                                         expected_revision: 0,
                                         goal_id: None,
+                                        watch: None,
                                     };
                                     let input = std::mem::replace(input, placeholder);
                                     self.active = Some(Active::Plan(PlanEditCursor::new(
@@ -1676,6 +1677,7 @@ impl ResponseCursor {
                                                     mode,
                                                     expected_revision: revision,
                                                     goal_id: None,
+                                                    watch: None,
                                                 }),
                                             )?;
                                         }

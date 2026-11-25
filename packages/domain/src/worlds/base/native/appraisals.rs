@@ -15,6 +15,25 @@ pub(crate) struct EventAppraisalRules {
     pub damage_field: String,
     pub definition_id: String,
     pub fallback_max_health: f64,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub appearance: Option<AppearanceReaction>,
+}
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct AppearanceReaction {
+    pub definition_id: String,
+    pub intensity: f64,
+    pub coverage: String,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub expression_verb: Option<String>,
 }
 impl crate::install::DefinitionIdentity for EventAppraisalRules {
     fn definition_id(&self) -> &str {

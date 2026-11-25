@@ -466,6 +466,7 @@ pub(crate) fn prepare(
             .or_else(|| mind.last_dream_episode.clone()),
         contents_storage: None,
         metadata_storage: None,
+        sensitivities: None,
     };
     let mut inner = InnerWorld {
         revision: next(input.expected_revision)?,

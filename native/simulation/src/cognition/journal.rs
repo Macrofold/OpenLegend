@@ -23,6 +23,11 @@ enum Undo {
         actor: String,
         before: u64,
     },
+    Sensitivity {
+        actor: String,
+        subject: String,
+        prior: Option<(String, crate::appraisals::SensitivityOnset)>,
+    },
     InnerRevision {
         actor: String,
         before: u64,
@@ -128,6 +133,7 @@ impl CognitionJournal {
                     CognitionChange::InnerWorld(actor)
                 }
                 Undo::MindRevision { actor, .. } => CognitionChange::MindRevision(actor),
+                Undo::Sensitivity { actor, .. } => CognitionChange::MindRevision(actor),
                 Undo::Record { actor, index, .. } => CognitionChange::MindRecord {
                     actor,
                     index: *index,
@@ -192,11 +198,48 @@ impl CognitionJournal {
         self.retained_bytes = retained;
         Ok(())
     }
+    /// Replace only the one changed onset. Its body and map-node custody
+    /// remain with the live profile or rollback until acceptance.
+    pub(crate) fn set_sensitivity_onset(
+        &mut self,
+        state: &mut MindState,
+        actor: &str,
+        subject: &str,
+        onset: Option<crate::appraisals::SensitivityOnset>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let profile = state
+            .minds
+            .as_mut()
+            .and_then(|minds| minds.get_mut(actor))
+            .and_then(|mind| mind.sensitivities.as_mut())
+            .ok_or(ExecutionError::Invariant)?;
+        if let Some(previous) = profile.onsets.get(subject) {
+            budget.retain_record(previous.storage.as_ref().ok_or(ExecutionError::Invariant)?)?;
+        }
+        self.reserve(
+            1,
+            actor
+                .len()
+                .checked_add(subject.len())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let prior = profile.onsets.remove_entry(subject);
+        if let Some(onset) = onset {
+            profile.onsets.insert(subject.to_owned(), onset);
+        }
+        self.undo.push(Undo::Sensitivity {
+            actor: actor.to_owned(),
+            subject: subject.to_owned(),
+            prior,
+        });
+        Ok(())
+    }
     pub(super) fn publish(
         &mut self,
         state: &mut MindState,
         actor: &str,
-        publication: super::reflection::PreparedMindPublication,
+        mut publication: super::reflection::PreparedMindPublication,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
         let mind = state
@@ -218,14 +261,15 @@ impl CognitionJournal {
             budget.retain_record(guard.ok_or(ExecutionError::Invariant)?)?;
         }
         self.reserve(1, actor.len())?;
-        let before_mind = std::mem::replace(
-            state
-                .minds
-                .as_mut()
-                .and_then(|m| m.get_mut(actor))
-                .ok_or(ExecutionError::Invariant)?,
-            publication.mind,
-        );
+        let mind = state
+            .minds
+            .as_mut()
+            .and_then(|m| m.get_mut(actor))
+            .ok_or(ExecutionError::Invariant)?;
+        // A model publication controls documents, never private authored
+        // sensitivity terms or their accepted exposure progress.
+        publication.mind.sensitivities = mind.sensitivities.take();
+        let before_mind = std::mem::replace(mind, publication.mind);
         let before_inner = std::mem::replace(
             state
                 .inner_worlds
@@ -509,12 +553,18 @@ impl CognitionJournal {
         }
         while self.undo.len() > checkpoint.undo {
             match self.undo.pop().ok_or(ExecutionError::Invariant)? {
-                Undo::Publication { actor, mind, inner } => {
-                    *state
+                Undo::Publication {
+                    actor,
+                    mut mind,
+                    inner,
+                } => {
+                    let active = state
                         .minds
                         .as_mut()
                         .and_then(|m| m.get_mut(&actor))
-                        .ok_or(ExecutionError::Invariant)? = mind;
+                        .ok_or(ExecutionError::Invariant)?;
+                    mind.sensitivities = active.sensitivities.take();
+                    *active = mind;
                     *state
                         .inner_worlds
                         .as_mut()
@@ -537,6 +587,22 @@ impl CognitionJournal {
                         .and_then(|minds| minds.get_mut(&actor))
                         .ok_or(ExecutionError::Invariant)?
                         .revision = before
+                }
+                Undo::Sensitivity {
+                    actor,
+                    subject,
+                    prior,
+                } => {
+                    let profile = state
+                        .minds
+                        .as_mut()
+                        .and_then(|minds| minds.get_mut(&actor))
+                        .and_then(|mind| mind.sensitivities.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    profile.onsets.remove(&subject);
+                    if let Some((key, value)) = prior {
+                        profile.onsets.insert(key, value);
+                    }
                 }
                 Undo::InnerRevision { actor, before } => {
                     state

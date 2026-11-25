@@ -82,6 +82,7 @@ pub enum RuntimePlayerCommand<'a> {
         text: &'a JsText,
         target: Option<(&'a str, SpeechTargetRole)>,
         volume: Option<SpeechVolume>,
+        public_appeal: Option<&'a str>,
     },
     DirectedSpeech {
         text: &'a JsText,
@@ -199,7 +200,16 @@ impl RuntimePlayerCommand<'_> {
                 target.len() + weapon.map_or(0, str::len) + ammunition.map_or(0, str::len)
             }
             Self::TendFire { target, item, .. } => target.len() + item.map_or(0, str::len),
-            Self::Say { text, target, .. } => text.storage_bytes() + target.map_or(0, |(id, _)| id.len()),
+            Self::Say {
+                text,
+                target,
+                public_appeal,
+                ..
+            } => {
+                text.storage_bytes()
+                    + target.map_or(0, |(id, _)| id.len())
+                    + public_appeal.map_or(0, str::len)
+            }
             Self::DirectedSpeech { text, target, .. } => text.storage_bytes() + target.len(),
             Self::Status { target, definition, .. } => target.len() + definition.len(),
             Self::Cook { heat, preparation_id, preparation_digest, inputs, .. } => {
@@ -365,6 +375,8 @@ impl RuntimePlayerCommand<'_> {
             text: Option<&'a JsText>,
             #[serde(skip_serializing_if = "Option::is_none")]
             volume: Option<SpeechVolume>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            public_appeal: Option<&'a str>,
         }
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
@@ -392,6 +404,8 @@ impl RuntimePlayerCommand<'_> {
             item_id: Option<&'a str>,
             #[serde(skip_serializing_if = "Option::is_none")]
             placement_revision: Option<u64>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            public_appeal: Option<&'a str>,
             #[serde(skip_serializing_if = "Option::is_none")]
             quantity: Option<u64>,
             #[serde(skip_serializing_if = "Option::is_none")]
@@ -464,15 +478,26 @@ impl RuntimePlayerCommand<'_> {
             Self::Craft { recipe, tools } => (Some(recipe), tools),
             _ => (None, None),
         };
-        let (text, target_role, volume) = match self {
-            Self::Say { text, target, volume } => (Some(text), target.map(|(_, role)| role), volume),
-            _ => (None, None, None),
+        let (text, target_role, volume, public_appeal) = match self {
+            Self::Say {
+                text,
+                target,
+                volume,
+                public_appeal,
+            } => (
+                Some(text),
+                target.map(|(_, role)| role),
+                volume,
+                public_appeal,
+            ),
+            _ => (None, None, None, None),
         };
         let headers = player_headers(id, actor);
         let unsafe_id = |id: &str| !crate::values::is_safe_record_id(id);
         if !headers.valid()
             || recipe_id.is_some_and(unsafe_id)
             || item_id.is_some_and(unsafe_id)
+            || public_appeal.is_some_and(unsafe_id)
             || (matches!(self, Self::Gather { .. } | Self::Fish { .. } | Self::Pickup { .. })
                 && target_id.is_some_and(unsafe_id))
             || (matches!(self, Self::Pickup { .. }) && quantity.is_some() && item_id.is_none())
@@ -509,6 +534,7 @@ impl RuntimePlayerCommand<'_> {
                 target_role,
                 text,
                 volume,
+                public_appeal,
             },
             4 + [
                 destination.is_some(),
@@ -524,6 +550,7 @@ impl RuntimePlayerCommand<'_> {
                 text.is_some(),
                 target_role.is_some(),
                 volume.is_some(),
+                public_appeal.is_some(),
             ]
             .into_iter()
             .filter(|value| *value)
@@ -544,6 +571,7 @@ impl RuntimePlayerCommand<'_> {
             id,
             item_id,
             placement_revision,
+            public_appeal,
             quantity,
             recipe_id,
             target_id,
@@ -591,9 +619,21 @@ impl RuntimePlayerCommand<'_> {
                 recipe_id: recipe.into(),
                 tools: tools.cloned(),
             },
-            Self::Say { text, target, volume } => bound_speech(envelope, text, target, volume),
-            Self::Pickup { target, item, quantity } => NativeCommand::Pickup {
-                envelope, target_id: target.into(), item_id: item.map(str::to_owned), quantity,
+            Self::Say {
+                text,
+                target,
+                volume,
+                public_appeal,
+            } => bound_speech(envelope, text, target, volume, public_appeal),
+            Self::Pickup {
+                target,
+                item,
+                quantity,
+            } => NativeCommand::Pickup {
+                envelope,
+                target_id: target.into(),
+                item_id: item.map(str::to_owned),
+                quantity,
             },
             Self::Drop { item, quantity } => NativeCommand::Drop {
                 envelope,
@@ -692,6 +732,7 @@ fn bind_directed_speech(
         text,
         Some((target, role)),
         Some(volume),
+        None,
     );
     Ok((command, signature))
 }
@@ -714,10 +755,17 @@ impl NativeCommand {
     pub(crate) fn learned_speech_fields(&self) -> Option<(&JsText, &JsText)> {
         match self {
             Self::Say {
-                envelope, text, target_id: None, target_role: None,
-                volume: None, self_introduction: None,
-            } if envelope.chosen_purpose.is_none() && envelope.cooperation.is_none()
-                && envelope.combat_help_id.is_none() && envelope.human_initiated.is_none() =>
+                envelope,
+                text,
+                target_id: None,
+                target_role: None,
+                volume: None,
+                self_introduction: None,
+                public_appeal: None,
+            } if envelope.chosen_purpose.is_none()
+                && envelope.cooperation.is_none()
+                && envelope.combat_help_id.is_none()
+                && envelope.human_initiated.is_none() =>
             {
                 Some((envelope.purpose.as_ref()?, text))
             }
@@ -751,7 +799,7 @@ impl NativeCommand {
         };
         let retained = leaf.text.heap_bytes().ok_or(ExecutionError::Capacity)?;
         let (envelope, mut storage) = learned_envelope(&input.command, &input, 5, retained, budget)?;
-        let command = bound_speech(envelope, leaf.text, None, None);
+        let command = bound_speech(envelope, leaf.text, None, None, None);
         storage.resize(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
         Ok((command, storage))
     }
@@ -871,6 +919,7 @@ fn bound_speech(
     text: &JsText,
     target: Option<(&str, SpeechTargetRole)>,
     volume: Option<SpeechVolume>,
+    public_appeal: Option<&str>,
 ) -> NativeCommand {
     NativeCommand::Say {
         envelope,
@@ -878,6 +927,7 @@ fn bound_speech(
         target_id: target.map(|(id, _)| id.to_owned()),
         target_role: target.map(|(_, role)| role),
         self_introduction: None,
+        public_appeal: public_appeal.map(str::to_owned),
         volume: volume.map(|value| value.id().to_owned()),
     }
 }

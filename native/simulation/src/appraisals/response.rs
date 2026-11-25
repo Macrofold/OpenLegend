@@ -78,6 +78,14 @@ pub(super) struct CheckedCreation {
     id: String,
 }
 impl CheckedCreation {
+    // The native cue owner allocated a new operation identity and consumes the
+    // corresponding acquired onset in the same candidate as this insertion.
+    pub(super) fn fresh_native_acquisition(actor: &str, id: &str) -> Self {
+        Self {
+            actor: actor.to_owned(),
+            id: id.to_owned(),
+        }
+    }
     pub(super) fn fresh_occurrence(
         core: &CoreMutation<'_>,
         event: &WorldEvent,

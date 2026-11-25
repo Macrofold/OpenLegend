@@ -346,6 +346,7 @@ fn plan(
         mode,
         expected_revision: revision,
         goal_id: goal,
+        watch: None,
     }))
 }
 fn supported(
@@ -545,6 +546,17 @@ pub(super) fn prepare(
                 return Ok(ActionIntent::Command(NativeCommand::npc_handover(
                     actor, id, handover, budget,
                 )?));
+            }
+            if let Some(raw) = choice.invocation.as_ref().filter(|raw| {
+                raw.get("type").and_then(SqlCell::as_str) == Some("say")
+                    && raw.get("publicAppeal").and_then(SqlCell::as_str).is_some()
+            }) {
+                // Public speech is an immediate utterance, independent of
+                // another activity. It never edits or replaces chosen work.
+                return Ok(match supported(raw, actor, &id, budget)? {
+                    Ok(command) => ActionIntent::Command(command),
+                    Err(result) => result,
+                });
             }
             if !choice.expected_work.current(core.state, actor)
                 || (choice.transition != WorkTransitionMode::Continue
@@ -918,6 +930,7 @@ pub(super) fn prepare_plan(
             .and_then(|a| a.agency.plan.as_ref())
             .map_or(0, |p| p.revision);
         if !steps.is_empty()
+            || data.get("watch").is_some_and(|value| !value.is_null())
             || !data.get("goalId").is_some_and(SqlCell::is_null)
             || data.get("expectedRevision").and_then(SqlCell::as_u64) != Some(current)
         {
@@ -982,7 +995,49 @@ pub(super) fn prepare_plan(
             Err(result) => return Ok(result),
         }
     }
-    plan(
+    let prepared_watch = if let Some(watch) = data.get("watch").filter(|value| !value.is_null()) {
+        let subject = watch
+            .get("subjectId")
+            .and_then(SqlCell::as_str)
+            .ok_or(ExecutionError::Invariant)?;
+        let place = watch
+            .get("placeLabel")
+            .and_then(SqlCell::as_text)
+            .ok_or(ExecutionError::Invariant)?;
+        let rules = &core.state.installed.ordinary_actions.value().plan;
+        let refusal = rules
+            .watch
+            .as_ref()
+            .map_or(&rules.unsupported_capability, |rules| &rules.unavailable);
+        let Some(place_id) = crate::plans::watch_place_id(core.state, actor, place)
+            .filter(|_| bindings.proposal_target_name(subject).is_some())
+        else {
+            return result(false, &refusal.code, &refusal.message, budget);
+        };
+        if !matches!(commands.as_slice(), [NativeCommand::Move { .. }]) {
+            return result(
+                false,
+                &rules.invalid_command.code,
+                &rules.invalid_command.message,
+                budget,
+            );
+        }
+        let _input = budget.reserve(subject.len() + place_id.len() + 256)?;
+        let watch = crate::plans::WatchRequest {
+            subject_id: subject.to_owned(),
+            place_id: place_id.to_owned(),
+            trigger: decode(watch.get("trigger").ok_or(ExecutionError::Invariant)?)?,
+            until: watch.get("until").and_then(SqlCell::as_f64),
+        };
+        let Some(watch) = crate::plans::WatchControl::prepare(core.state, actor, &watch, budget)?
+        else {
+            return result(false, &refusal.code, &refusal.message, budget);
+        };
+        Some(watch)
+    } else {
+        None
+    };
+    let mut intent = plan(
         core,
         actor,
         &id,
@@ -990,5 +1045,9 @@ pub(super) fn prepare_plan(
         mode,
         goal.and_then(|id| id.as_unicode().map(str::to_owned)),
         data.get("expectedRevision").and_then(SqlCell::as_u64),
-    )
+    )?;
+    if let ActionIntent::Plan(input) = &mut intent {
+        input.watch = prepared_watch;
+    }
+    Ok(intent)
 }

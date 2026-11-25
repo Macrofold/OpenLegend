@@ -1803,8 +1803,12 @@ impl OperationDriver {
             OperationCursor::Command(command) => command.needs_known_places(),
             _ => false,
         };
-        let known_places = if prepares_places {
-            match KnownPlacesPreparation::prepare(core, budget) {
+        let watch_place_actor = match &cursor {
+            OperationCursor::Command(command) => command.watch_place_actor(),
+            _ => None,
+        };
+        let known_places = if prepares_places || watch_place_actor.is_some() {
+            match KnownPlacesPreparation::prepare(core, budget, watch_place_actor) {
                 Ok(prepared) => prepared,
                 Err(error) => {
                     cursor.abort(core)?;
@@ -2061,6 +2065,7 @@ fn poll_event(
             binding: v.binding,
             words: v.words,
             lowercase: v.lowercase,
+            references: v.references,
         });
     }
     if matches!(route, Some(EventReply::Collation)) {

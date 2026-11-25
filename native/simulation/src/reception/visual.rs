@@ -48,6 +48,7 @@ pub(super) struct VisualReception {
     lost_individuals: IndexSet<String>,
     current: CurrentReceptionLifetime,
     attention_changes: IndexSet<String>,
+    appearance_changes: Option<IndexSet<String>>,
     geometry_changes: IndexSet<String>,
     checked: IndexSet<String>,
     detailed: IndexSet<String>,
@@ -216,7 +217,20 @@ fn begin_visual(
         .try_fold(0usize, |sum, (id, _)| sum.checked_add(id.len()))
         .ok_or(ExecutionError::Capacity)?;
     let before_attention = owner(core, &sight.observer().actor_id)?.attention.as_ref();
+    let enrolled = core
+        .state
+        .minds
+        .appearance_sensitivities(&sight.observer().actor_id)
+        .is_some();
+    let appearance_bytes = if enrolled {
+        crate::host::retained_size::map_storage::<String, ()>(count)
+            .and_then(|bytes| bytes.checked_add(id_bytes))
+            .ok_or(ExecutionError::Capacity)?
+    } else {
+        0
+    };
     let extra = heap_sum([
+        appearance_bytes,
         id_bytes.checked_mul(7).ok_or(ExecutionError::Capacity)?,
         crate::host::retained_size::map_storage::<String, crate::text::JsText>(count)
             .ok_or(ExecutionError::Capacity)?
@@ -305,6 +319,7 @@ fn begin_visual(
         lost_individuals: IndexSet::new(),
         current,
         attention_changes: IndexSet::with_capacity(count),
+        appearance_changes: enrolled.then(|| IndexSet::with_capacity(count)),
         geometry_changes: IndexSet::with_capacity(count),
         checked: IndexSet::with_capacity(count),
         detailed: IndexSet::with_capacity(count),

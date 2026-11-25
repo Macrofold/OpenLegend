@@ -138,6 +138,22 @@ export interface ActorMind {
   thoughts: PrivateThought[];
   lastReflectionAt: number;
   lastDreamEpisode: string | null;
+  /** Private world-author enrollment. Native reception owns its accepted onsets. */
+  sensitivities?: {
+    rule: import('./world-modules.js').DefinitionPin;
+    cues: string[];
+    onsets: Record<
+      string,
+      {
+        appearance: string;
+        subjectLife: number;
+        observerLife: number;
+        proof?: import('./perception-evidence.js').ObservationFactKey;
+        operationId: string;
+        at: number;
+      }
+    >;
+  };
 }
 export interface CognitionBinding {
   /** Model callers bind opaque references; native callers can already supply owned IDs. */

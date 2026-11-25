@@ -57,6 +57,7 @@ impl HeapBytes for ProjectileContact {
 heap_record!(EncounterPolicy {
     recent_seconds,
     visible_preparation,
+    witness_warning,
     preparing_strike,
     aiming,
     ended,

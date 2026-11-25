@@ -46,6 +46,7 @@ type Attempt = {
   key: string;
   intent: WorldIntent;
   directReply: boolean;
+  publicAppeal?: string;
   retryOf?: string;
   timeline: string;
   commandEpoch: string | undefined;
@@ -253,9 +254,14 @@ function ScopedWorldComposer({
         ? null
         : !available.available
           ? available.reason
-          : spokenText.length > (directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500)
-            ? 'Shorten these words before sending.'
-            : null;
+          : draft.publicAppeal &&
+              !available.publicAppeals?.some(
+                (appeal) => appeal.id === draft.publicAppeal && appeal.text === spokenText,
+              )
+            ? 'This request changed. Edit the words to speak normally, or choose the request again.'
+            : spokenText.length > (directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500)
+              ? 'Shorten these words before sending.'
+              : null;
   const currentSubmission = submitted[key];
   const failedReply = failedReplies[key];
   const waitingForAct = !!currentSubmission;
@@ -334,6 +340,7 @@ function ScopedWorldComposer({
           item: mentionedItem ? { id: mentionedItem.itemId, name: mentionedItem.name } : undefined,
         },
         directReply,
+        publicAppeal: draft.publicAppeal,
         timeline: view.saveTimeline ?? '',
         commandEpoch: view.commandEpoch,
       };
@@ -353,6 +360,7 @@ function ScopedWorldComposer({
         type: 'say' as const,
         text: attempt.text,
         volume: attempt.volume,
+        ...(attempt.publicAppeal ? { publicAppeal: attempt.publicAppeal } : {}),
         ...(attempt.intent.targetId ? { targetId: attempt.intent.targetId } : {}),
       };
       let result: ApiResult;
@@ -589,6 +597,27 @@ function ScopedWorldComposer({
               />
             </div>
           )}
+          {!mentionedItem &&
+            !text &&
+            !uncertain &&
+            available?.publicAppeals?.map((appeal) => (
+              <Button
+                key={appeal.id}
+                size="sm"
+                variant="secondary"
+                isDisabled={sending}
+                onPress={() => {
+                  writeDraft(key, {
+                    text: appeal.text,
+                    publicAppeal: appeal.id,
+                    revision: crypto.randomUUID(),
+                  });
+                  input.current?.focus();
+                }}
+              >
+                {appeal.label}
+              </Button>
+            ))}
           <div className="ol-world-composer-input">
             <WorldIntentIcon mode={intent?.mode ?? 'act'} />
             <ConversationComposer
@@ -600,7 +629,12 @@ function ScopedWorldComposer({
               maxLength={directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500}
               value={text}
               onChange={(value) =>
-                writeDraft(key, { ...draft, text: value, revision: crypto.randomUUID() })
+                writeDraft(key, {
+                  ...draft,
+                  text: value,
+                  publicAppeal: undefined,
+                  revision: crypto.randomUUID(),
+                })
               }
               onSubmit={() => send()}
               inputDisabled={!!uncertain}

@@ -39,6 +39,19 @@ impl OwnedCurrentFacet {
     }
 }
 
+/// The actual current personal facts needed by an installed sight watch.
+#[derive(Clone, Copy)]
+pub(crate) struct WatchSighting<'a> {
+    pub(crate) subject: &'a str,
+    pub(crate) body: CurrentNativeFacet<'a>,
+    pub(crate) identity: CurrentNativeFacet<'a>,
+    pub(crate) location: CurrentNativeFacet<'a>,
+    pub(crate) learning_support: &'a [String],
+    pub(crate) name_support: &'a [String],
+    pub(crate) position: Point,
+    pub(crate) error: f64,
+}
+
 pub(crate) struct CurrentBodyReadScope<'a> {
     reception: &'a ReceptionState,
     values: Option<&'a crate::received::ReceivedValues>,
@@ -201,6 +214,102 @@ impl<'a> CurrentBodyReadScope<'a> {
         };
         self.location_for_body(id, body)
     }
+    /// One current identified visual target and its separately received point.
+    /// An incomplete or occluded contact cannot report a negative observation.
+    pub(crate) fn watch_sighting(
+        &self,
+        id: &str,
+        individual: Option<&str>,
+    ) -> Result<Option<WatchSighting<'a>>, ReceivedError> {
+        let Some(body) = self.native_body(id)? else {
+            return Ok(None);
+        };
+        if body.grant.subject_physical_life.is_none() {
+            return Ok(None);
+        }
+        let Some(location) = self.location_for_body(id, body)? else {
+            return Ok(None);
+        };
+        let point = match self.value(&location.field.value.reference) {
+            Some(ReceivedValueFragment::BodyPose(value)) => (value.pose.position, 0.0),
+            Some(ReceivedValueFragment::Location(value)) => match &value.location {
+                ObservedLocation::Point {
+                    point,
+                    error_radius,
+                } => (point.position(), *error_radius),
+                _ => return Ok(None),
+            },
+            _ => return Ok(None),
+        };
+        let identity = self.sight_association(id)?;
+        let supported = identity
+            .map(|input| self.received_association(body, input))
+            .transpose()?
+            .flatten();
+        let (subject, identity, learning_support, name_support) =
+            if let (Some(input), Some(ObserverSubject::Individual { individual_id })) =
+                (identity, supported)
+            {
+                let Some(ReceivedValueFragment::Sensory(SensoryFacet::Association {
+                    learning_support,
+                    ..
+                })) = self.value(&input.field.value.reference)
+                else {
+                    return Err(unavailable());
+                };
+                (individual_id, input, learning_support.as_deref().unwrap_or(&[]), &[][..])
+            } else {
+                let Some(person) = crate::worlds::base_knowledge::current_episode_identity(
+                    self.reception,
+                    &self.observer.id,
+                    id,
+                    individual,
+                ) else {
+                    return Ok(None);
+                };
+                let Some(individual_id) = &person.individual_id else {
+                    return Ok(None);
+                };
+                let name_support = person.name_evidence_ids.as_deref().unwrap_or(&[]);
+                if self.experience.actor(&self.observer.id).is_some_and(|history| {
+                    history.privacy.revoked(individual_id)
+                        || name_support.iter().any(|id| history.privacy.revoked(id))
+                }) {
+                    return Ok(None);
+                }
+                (individual_id, body, &[][..], name_support)
+            };
+        Ok(Some(WatchSighting {
+            subject,
+            body,
+            identity,
+            location,
+            learning_support,
+            name_support,
+            position: point.0,
+            error: point.1,
+        }))
+    }
+
+    /// The world can interpret an outward appearance the observer actually
+    /// received. The physical subject never supplies the answer.
+    pub(crate) fn recognized_appearance(
+        &self,
+        id: &str,
+    ) -> Result<Option<(CurrentNativeFacet<'a>, &'a str, u64)>, ReceivedError> {
+        let Some(body) = self.native_body(id)? else {
+            return Ok(None);
+        };
+        let Some(ReceivedValueFragment::Body(value)) = self.value(&body.field.value.reference)
+        else {
+            return Err(unavailable());
+        };
+        Ok(value
+            .body
+            .appearance
+            .as_unicode()
+            .map(|appearance| (body, appearance, self.owner.life)))
+    }
     fn location_for_body(
         &self,
         id: &str,
@@ -344,22 +453,28 @@ impl<'a> CurrentBodyReadScope<'a> {
             .native_body(id)?
             .and_then(|body| body.field.local_subject.as_ref()))
     }
-    pub(crate) fn association(&self, id: &str) -> Result<Option<&ObserverSubject>, ReceivedError> {
+    pub(crate) fn association(
+        &self,
+        id: &str,
+    ) -> Result<Option<&'a ObserverSubject>, ReceivedError> {
         let Some(body) = self.native_body(id)? else {
             return Ok(None);
         };
-        let Some(input) = self.native(
+        let Some(input) = self.sight_association(id)? else {
+            return Ok(None);
+        };
+        self.received_association(body, input)
+    }
+
+    fn sight_association(&self, id: &str) -> Result<Option<CurrentNativeFacet<'a>>, ReceivedError> {
+        self.native(
             id,
             "association",
             CurrentFacetSelector {
                 modality: Some(Modality::Sight),
                 ..Default::default()
             },
-        )?
-        else {
-            return Ok(None);
-        };
-        self.received_association(body, input)
+        )
     }
     /// Correspondence uses the actual acquired body and association even while
     /// its physical freshness is unchecked. A live-body reader still performs

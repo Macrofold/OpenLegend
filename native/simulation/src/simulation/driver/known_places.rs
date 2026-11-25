@@ -72,7 +72,36 @@ impl KnownPlacesPreparation {
     pub(super) fn prepare(
         core: &CoreMutation<'_>,
         budget: &ByteBudget,
+        selected_actor: Option<&str>,
     ) -> Result<Option<Self>, DriveError> {
+        if let Some(actor) = selected_actor {
+            if core.state.experience.known_places(actor).is_ok() {
+                return Ok(None);
+            }
+            let Some((history, life)) = core.state.experience.actor(actor).zip(
+                core.state
+                    .physical
+                    .entities
+                    .get(actor)
+                    .and_then(|entity| entity.physical_life()),
+            ) else {
+                return Ok(None);
+            };
+            let storage = budget
+                .reserve(size_of::<Self>() + size_of::<ExpectedActor>() + actor.len())
+                .map_err(|_| DriveError::Capacity)?;
+            return Ok(Some(Self {
+                actors: vec![ExpectedActor {
+                    id: actor.to_owned(),
+                    physical_life: life,
+                    privacy_revision: history.privacy.revision(),
+                    revision: core.state.experience.known_place_revision(actor),
+                }],
+                next: 0,
+                pending: None,
+                _storage: storage,
+            }));
+        }
         let selected = || -> Result<_, DriveError> {
             Ok(core
                 .state

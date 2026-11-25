@@ -648,7 +648,7 @@ impl Session {
         input: crate::commands::CommandStart,
         options: crate::commands::CommandOptions,
         material_gather: crate::construction_gather::ConstructionGather,
-        typed_plan: Option<crate::plans::PlanMode>,
+        typed_plan: Option<crate::plans::TypedPlan>,
         strike: Option<crate::contact::review::PlayerStrike<'_>>,
     ) -> Result<CandidateKey, SessionError> {
         let preview = options.preview;

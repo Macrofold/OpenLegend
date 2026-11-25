@@ -36,6 +36,22 @@ pub(super) fn cell(value: &impl Serialize) -> Result<SqlCell, ExecutionError> {
 pub struct ConsolidationGroup {
     pub source_keys: Vec<String>,
     pub text: JsText,
+    #[serde(default)]
+    pub references: Vec<ConsolidationReferenceBinding>,
+}
+
+/// A proposed range names a specific offered source-local reference. Native
+/// selection, rather than provider output, supplies the authorized identity.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ConsolidationReferenceBinding {
+    pub source_key: String,
+    pub reference: usize,
+    pub range: LiteralRange,
+}
+
+pub(crate) fn protected_source(header: &PersonalSourceHeader, threshold: f64) -> bool {
+    header.preserve_literal || header.importance >= threshold
 }
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -140,7 +156,7 @@ impl ConsolidationFormatRequest {
         )?;
         let mut readings = Vec::with_capacity(self.sources.len());
         for source in &self.sources {
-            if source.record.header().importance < threshold {
+            if !protected_source(source.record.header(), threshold) {
                 readings.push(JsText::default());
                 continue;
             }
@@ -296,7 +312,7 @@ impl PreparedConsolidation {
             if positions.insert(key, index).is_some() {
                 return Err(ExecutionError::InvalidCheckpoint.into());
             }
-            if h.importance < limits.protected_importance {
+            if !protected_source(h, limits.protected_importance) {
                 retired.push(index);
             }
         }
@@ -318,9 +334,15 @@ impl PreparedConsolidation {
                 indices.push(index);
             }
             if indices.iter().any(|i| {
-                request.sources[*i].record.header().importance >= limits.protected_importance
+                protected_source(
+                    request.sources[*i].record.header(),
+                    limits.protected_importance,
+                )
             }) {
-                if indices.len() != 1 || group.text != answer.readings[indices[0]] {
+                if indices.len() != 1
+                    || group.text != answer.readings[indices[0]]
+                    || !group.references.is_empty()
+                {
                     return Err(ExecutionError::InvalidCheckpoint.into());
                 }
                 continue;
@@ -331,6 +353,14 @@ impl PreparedConsolidation {
                 return Err(ExecutionError::InvalidCheckpoint.into());
             }
             let entries: Vec<_> = indices.iter().map(|i| &request.sources[*i]).collect();
+            let annotations = validate_group_references(
+                &group.text,
+                &group.references,
+                &indices,
+                &positions,
+                &request.sources,
+                budget,
+            )?;
             let first_summary = entries
                 .iter()
                 .find(|s| s.reference.kind == PersonalSourceKind::Summary);
@@ -401,6 +431,9 @@ impl PreparedConsolidation {
             value.insert("id".into(), id.into());
             value.insert("revision".into(), cell(&revision)?);
             value.insert("text".into(), SqlCell::Text(group.text));
+            if !annotations.is_empty() {
+                value.insert("literalReferences".into(), cell(&annotations)?);
+            }
             value.insert("from".into(), cell(&from)?);
             value.insert("to".into(), cell(&to)?);
             value.insert(
@@ -930,6 +963,75 @@ impl HeapBytes for ConsolidationGroup {
     fn heap_bytes(&self) -> Option<usize> {
         self.source_keys
             .heap_bytes()?
-            .checked_add(self.text.heap_bytes()?)
+            .checked_add(self.text.heap_bytes()?)?
+            .checked_add(self.references.heap_bytes()?)
     }
+}
+
+impl HeapBytes for ConsolidationReferenceBinding {
+    fn heap_bytes(&self) -> Option<usize> {
+        self.source_key.heap_bytes()
+    }
+}
+
+fn validate_group_references(
+    literal: &JsText,
+    bindings: &[ConsolidationReferenceBinding],
+    group: &[usize],
+    positions: &IndexMap<String, usize>,
+    sources: &[Source],
+    budget: &ByteBudget,
+) -> Result<LiteralReferences, ExecutionError> {
+    let mut result = LiteralReferences::default();
+    if bindings.is_empty() {
+        return Ok(result);
+    }
+    let mut prepared = IndexMap::new();
+    let invalid = ExecutionError::InvalidCheckpoint;
+    for binding in bindings {
+        let index = *positions
+            .get(&binding.source_key)
+            .filter(|index| group.binary_search(index).is_ok())
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let (table, original, _storage) = match prepared.entry(index) {
+            indexmap::map::Entry::Occupied(entry) => entry.into_mut(),
+            indexmap::map::Entry::Vacant(entry) => {
+                let record = &sources[index].record;
+                let table = crate::experience::literal::decode_record(
+                    record.header().reference.kind,
+                    record.payload(),
+                )?;
+                let (source, storage) = consolidation_reading(record, budget)?;
+                entry.insert((table, source, storage))
+            }
+        };
+        let reference = table
+            .references
+            .get(binding.reference)
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let range = binding.range;
+        let passage = literal
+            .borrowed()
+            .slice(range.start..range.end)
+            .filter(|passage| !passage.is_empty())
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        // A copied term can retain its original reference. An arbitrary
+        // rewrite or a claim that changes who did what cannot borrow one.
+        let identical_passage = table
+            .bindings
+            .iter()
+            .filter(|prior| prior.reference == binding.reference)
+            .any(|prior| {
+                original
+                    .borrowed()
+                    .slice(prior.range.start..prior.range.end)
+                    .is_some_and(|original| original.units().eq(passage.units()))
+            });
+        if !identical_passage {
+            return Err(invalid);
+        }
+        result.bind(reference.clone(), range);
+    }
+    result.validate(literal)?;
+    Ok(result)
 }

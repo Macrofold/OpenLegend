@@ -13,6 +13,12 @@ pub(crate) struct PlanRules {
     pub step_limit: ActionMessage,
     pub unsupported_capability: ActionMessage,
     pub invalid_command: ActionMessage,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub watch: Option<WatchRules>,
     pub chosen_activity_active: ActionMessage,
     pub invalid_outputs: ActionMessage,
     pub plan_blocked: ActionMessage,
@@ -47,6 +53,26 @@ pub(crate) struct PlanRules {
     pub refused_result: String,
     pub result_importance: f64,
     pub control_importance: f64,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct WatchRules {
+    pub default_seconds: f64,
+    pub maximum_seconds: f64,
+    pub unavailable: ActionMessage,
+    pub expired: ActionMessage,
+    pub withdrawn: ActionMessage,
+    pub waiting: ActionMessage,
+}
+
+impl WatchRules {
+    pub(crate) fn valid(&self) -> bool {
+        self.default_seconds.is_finite()
+            && self.maximum_seconds.is_finite()
+            && self.default_seconds > 0.0
+            && self.default_seconds <= self.maximum_seconds
+    }
 }
 impl PlanRules {
     /// Select the compiled requested-movement branch using the same authored

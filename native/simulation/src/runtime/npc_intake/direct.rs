@@ -69,6 +69,7 @@ impl NativeWorldSession {
             after_sequence,
             weighed_through,
             selection,
+            schedule_through: Some(self.session.durable_identity_through()),
         };
         let (read, facts) =
             crate::capture::npc_intake::capture_schedule(state, request, &self.budget)

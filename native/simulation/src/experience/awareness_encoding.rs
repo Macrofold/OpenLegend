@@ -3,6 +3,7 @@
 //! filled by account admission. No field-order registry enters saved state.
 
 use super::Awareness;
+use crate::attention::RecordingReason;
 use crate::reception::{ReceivedReference, SoundAcquisition};
 use indexmap::IndexMap;
 use serde::ser::SerializeMap;
@@ -10,7 +11,7 @@ use serde::{Serialize, Serializer};
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum AwarenessFactory {
-    Event,
+    Event { recording: RecordingReason },
     Speech,
     Sound { voice_like: bool },
 }
@@ -52,7 +53,7 @@ impl Serialize for Body<'_> {
         }
         field!("retentionClass", &b.retention_class);
         match self.encoding.factory {
-            AwarenessFactory::Event => {
+            AwarenessFactory::Event { .. } => {
                 optional!("exposure", &b.exposure);
                 field!("eventId", &b.event_id);
                 field!("actorId", &b.actor_id);
@@ -94,6 +95,9 @@ impl Serialize for Body<'_> {
                 field!("text", &b.text);
                 optional!("content", &b.content);
                 optional!("speech", &b.speech);
+                if let Some(value) = &b.event_data {
+                    field!("eventData", &JsMap(value));
+                }
                 field!("modality", &b.modality);
                 field!("recognized", &b.recognized);
                 field!("intelligible", &b.intelligible);

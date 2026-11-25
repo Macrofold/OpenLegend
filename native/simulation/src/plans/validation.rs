@@ -171,9 +171,11 @@ pub(crate) fn valid_command(
             text,
             target_id,
             volume,
+            public_appeal,
             ..
         } => {
             !text.trim_is_empty()
+                && public_appeal.is_none()
                 && (text.units_len() as u64) <= world.speech_action.value().maximum_characters
                 && target_id.as_ref().is_none_or(|id| is_safe_record_id(id))
                 && volume
@@ -397,10 +399,20 @@ pub(crate) fn validate_installation(
                 if plan.steps[..index].iter().any(|s| s.id == entry.id) {
                     return Err(InstallError::CurrentFormat);
                 }
+                if entry
+                    .watch
+                    .as_ref()
+                    .is_some_and(|watch| !watch.valid_saved(entry, id, state))
+                {
+                    return Err(InstallError::CurrentFormat);
+                }
                 step(entry, id, world)?;
             }
         }
         for entry in &agency.history {
+            if entry.watch.is_some() {
+                return Err(InstallError::CurrentFormat);
+            }
             step(entry, id, world)?;
         }
     }

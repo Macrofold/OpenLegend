@@ -425,6 +425,48 @@ pub fn render_narration_parts(
     self_id: Option<&str>,
     person: GrammaticalPerson,
 ) -> JsText {
+    render_parts::<false>(narration, names, self_id, person, |_, _| {})
+}
+
+pub(crate) struct NarratedAccount {
+    pub text: JsText,
+    pub references: crate::experience::LiteralReferences,
+}
+
+/// Render a lasting first-person account and bind its actual narrator spans.
+/// Any other named role needs separate personal identity evidence. A name in
+/// a literal part, including a quotation, never mints a reference.
+pub(crate) fn render_self_account(
+    narration: &Narration,
+    names: &IndexMap<String, Named>,
+    actor: &str,
+) -> NarratedAccount {
+    use crate::experience::{LiteralReference, LiteralReferences};
+    let mut references = LiteralReferences::default();
+    let text = render_parts::<true>(
+        narration,
+        names,
+        Some(actor),
+        GrammaticalPerson::First,
+        |entity_id, range| {
+            if entity_id == actor && range.start < range.end {
+                let subject = crate::reception::ObserverSubject::Entity {
+                    entity_id: actor.into(),
+                };
+                references.bind(LiteralReference::Subject { subject }, range);
+            }
+        },
+    );
+    NarratedAccount { text, references }
+}
+
+fn render_parts<const TRACK_PARTICIPANTS: bool>(
+    narration: &Narration,
+    names: &IndexMap<String, Named>,
+    self_id: Option<&str>,
+    person: GrammaticalPerson,
+    mut participant: impl FnMut(&str, crate::experience::LiteralRange),
+) -> JsText {
     let unknown = Named {
         name: "unidentified individual".into(),
         name_form: None,
@@ -452,6 +494,11 @@ pub fn render_narration_parts(
                 role,
                 article,
             } => {
+                let start = if TRACK_PARTICIPANTS {
+                    text.units_len()
+                } else {
+                    0
+                };
                 let self_subject = personal && self_id == Some(entity_id.as_str());
                 let subject = named(entity_id);
                 let article = article.unwrap_or(if personal {
@@ -477,6 +524,15 @@ pub fn render_narration_parts(
                     text.push_text(&first_case(&value, true));
                 } else {
                     text.push_text(&value);
+                }
+                if TRACK_PARTICIPANTS {
+                    participant(
+                        entity_id,
+                        crate::experience::LiteralRange {
+                            start,
+                            end: text.units_len(),
+                        },
+                    );
                 }
             }
         }

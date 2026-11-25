@@ -221,6 +221,12 @@ struct CommandInput {
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     volume: Option<SpeechVolume>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    public_appeal: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     definition_id: Option<String>,
     #[serde(
         default,
@@ -721,6 +727,7 @@ impl PlayerCommands {
                             self.references.clone(),
                             InteractionMode::Speak,
                             facts.request.command.target_id.clone(),
+                            false,
                         )
                         .await?;
                     if !available.available {
@@ -1425,7 +1432,9 @@ impl CommandRequest {
             || (!matches!(command.kind, CommandKind::Follow)
                 && (command.distance.is_some() || command.follow_until.is_some() || command.complete_follow.is_some()))
             || (!matches!(command.kind, CommandKind::Say)
-                && (command.text.is_some() || command.volume.is_some()))
+                && (command.text.is_some()
+                    || command.volume.is_some()
+                    || command.public_appeal.is_some()))
             || (!matches!(
                 command.kind,
                 CommandKind::StatusEffect | CommandKind::Strike
@@ -1679,6 +1688,10 @@ impl CommandRequest {
                     && command.item_id.is_none()
                     && command.gathering_mode.is_none()
                     && command.target_id.as_deref().is_none_or(id)
+                    && command.public_appeal.as_deref().is_none_or(|appeal| {
+                        command.target_id.is_none()
+                            && openlegend_simulation::values::is_safe_record_id(appeal)
+                    })
                     && command.text.is_some() => Ok(()),
             CommandKind::StatusEffect
                 if command.position.is_none()
@@ -2045,6 +2058,7 @@ impl PreparedRequest {
                 text: input.text.as_ref().ok_or(StoreError::InvalidRecord)?,
                 target: speech_target,
                 volume: input.volume,
+                public_appeal: input.public_appeal.as_deref(),
             }),
             CommandKind::StatusEffect => Ok(RuntimePlayerCommand::Status {
                 target: target.ok_or(StoreError::InvalidRecord)?,

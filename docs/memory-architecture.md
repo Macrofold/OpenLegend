@@ -168,7 +168,7 @@ Recent events are experiences, not a separate duplicated context section. One re
 
 Entity references use `display name (ID:token)` in cognition context. The [knowledge reference contract](knowledge.md#subject-binding) defines observer/encounter-scoped opaque tokens and collision handling. No species prefix appears in a token. A server-only map for each decision resolves only its permitted references; unknown tokens fail rather than selecting a same-named actor. Current entity-reference operations pass canonical IDs to the domain, which rechecks authority. Every observed actor includes an explicit species (or unknown); an obvious species-only display label is rendered with an indefinite article, such as “a deer.” Observer-known names follow the [base-world identity policy](worlds/base/knowledge.md#identity-and-recognition); visibility alone does not reveal them.
 
-Structured speech targets, expression targets and thought references use the token alone. Explicit `(ID:token)` annotations in proposed actions, private thoughts and goal objectives resolve before persistence. Persisted goal, thought and note annotations use only person associations acquired in that request’s captured context; body-only references retain literal wording with unresolved identity. Current intentions reproject those acquired associations; historical prose omits canonical routing annotations and keeps its source-scoped participants or retained document subject. Native attempt interpretation sees the same short references as the original decision; bare ambiguous prose never authorizes name-based target matching. Quotes, old prose and names are not rewritten by substring guesses. Memory entity references are labeled as referenced identities, not inferred subject/object roles. Short tokens and relative positions stay out of entity embedding text. Tokens identify offered references, not knowledge of names or permission to act. Observer-scoped encounter references and recognition are governed by [Knowledge](knowledge.md#subject-binding).
+Structured speech targets, expression targets and thought references use the token alone. Explicit `(ID:token)` markers in proposed action and goal intentions resolve before persistence. Private thoughts and note prose retain their literal words, including characters that resemble markers. Notes keep their subject separately. A thought can bind passages by UTF-16 range to subjects offered in its captured context. Native renderers can attach references at the point where they emit an identified participant. These bindings belong to that exact text revision. The original words remain available without bindings or model calls, subject to ordinary retention and privacy. Recalled identities use request-local handles. Only a currently permitted action binding can target a body. Short tokens and relative positions stay out of entity embedding text. [Witness reference and recall contract](features/noticing-and-remembering/what-a-witness-can-remember.md#exact-words-and-references) · [Knowledge](knowledge.md#subject-binding)
 
 Model-facing typed spatial facts use the decision's captured observer-relative frame while stored evidence retains its exact original coordinates, times and acquisition frame. Literal learned coordinate wording and quoted sources stay literal. Fixed received-frame destinations and current actor-relative intentions remain distinct under the [spatial presentation contract](projects/attention-and-scenes-tech-design.md#54-geometric-context-without-an-all-pairs-graph).
 
@@ -396,7 +396,7 @@ World commits and awareness delivery must be recoverable together; duplicate del
 
 ## 6. Hourly consolidation and six-hour raw recall
 
-**Host coverage.** Source and the stand-alone Rust scheduler run hourly cleanup and completed-day review. The [combined Rust journey](verification/attention-and-memory-core.md#hourly-cleanup-and-completed-day-review-in-one-running-world--november-22-2026) covers both age boundaries, protected publication, actor-scoped recall and cold continuation. The [Rust host recipe](projects/completed/2026/rust-server-completion-tech-design.md#long-lived-character-memories) and [NSC04-R2](maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server) retain the remaining evidence and scheduling cases.
+**Host coverage.** The stand-alone Rust scheduler runs hourly cleanup and completed-day review. The [combined Rust journey](verification/attention-and-memory-core.md#hourly-cleanup-and-completed-day-review-in-one-running-world--november-22-2026) covers both age boundaries, protected publication, actor-scoped recall and cold continuation. The [Rust host recipe](projects/completed/2026/rust-server-completion-tech-design.md#long-lived-character-memories) and [NSC04-R2](maintainers/native-simulation-core.md#full-game-on-the-stand-alone-server) retain the remaining evidence and scheduling cases. [PS04-A](maintainers/product-scalability.md#ps04-a--core-attention-and-recording) tracks literal reference and annotated-summary qualification.
 
 **Current account consolidation.** The hourly/daily batcher reads independently retained personal-memory and awareness accounts, not the ordinary attended temporal-receipt stream. Hourly batches select routine accounts **older than six game hours** only while another legitimate retention reason keeps them available. That age threshold does not postpone native expiry or promise a final review of six-hour recent history. Preserve up to the newest 512 eligible linguistic sources within the selected exact-speech byte allowance; whole older sources leave that protection and follow ordinary retention, while active obligations retain their necessary exact language separately. This count bound avoids tying conversational continuity to accelerated simulation time while keeping storage finite. A delayed older backlog is not dumped raw into the next conversation.
 
@@ -416,9 +416,12 @@ invalidate later use. Native creator additions derive summary attribution and
 chronology from existing sources, rather than accepting supplied relationship
 claims. No raw global event substitutes for a missing observer record.
 
-The hourly and daily readers select protected speech using the same saved
-heard-speech flag as dialogue recall. They select the eligible actor and exact
-record revisions before reading the original words.
+The hourly and daily readers select the eligible actor and exact record
+revisions before reading the original words. An account whose exact wording or
+personal attribution cannot safely be rewritten stays on the protected-source
+path while retained. This preserves the original record without extending its
+retention. The saved eligibility flag keeps such a source from starting an
+hourly batch on its own.
 
 Complete tagged source records reach maintenance and model preparation. A summary
 stores one native-derived typed coverage collection, including selected source
@@ -427,7 +430,11 @@ The existing dependency index projects that exact coverage; it is not independen
 writable memory. Protected incidents retain their complete original records;
 hourly selection begins at the first eligible routine source and includes
 intervening protected incidents as chronological barriers. A protected-only
-history does not request another cleanup batch.
+history does not request another cleanup batch. Routine groups can return
+ordered literal pieces with separate reference occurrences. The native owner
+checks the group's actual sources and original passages before replacing a
+record. An exact literal containing `(ID:seal)` passes through unchanged. See
+the [witness implementation design](projects/witness-decisions-and-memory-tech-design.md#5-consolidate-correct-and-reopen) for this format and its limits.
 
 The server prepares one chronological maintenance batch with at most 128 sources and 512 KiB of evidence. SQL measures encoded source bodies before hydration; both the selected raw payloads and normalized evidence must fit the byte allowance. Hourly batches stay within the existing six-hour neighborhood and calendar day; the newest 512 speech sources and native commitments remain protected. Database selection includes important incidents after its first routine source in order, preserving barriers while earlier protected originals remain untouched. All model-request partitions of that selected batch must validate before its one atomic publication. The existing domain owner still enforces exact coverage, unchanged protected incidents and source identity, while database revision/generation and retention checks reject stale results.
 

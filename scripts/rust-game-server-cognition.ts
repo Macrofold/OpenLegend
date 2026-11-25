@@ -244,6 +244,9 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
       [
         { addressed: false, speech: false },
         { addressed: false, speech: true },
+        // A direct address and an independent physical cause can share a turn.
+        // Keep the reply route and require normal action preparation.
+        { addressed: true, speech: false },
         { addressed: true, speech: true },
       ].map(({ addressed, speech }) => ({
         addressed,
@@ -284,7 +287,6 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
       selection: NPC_INTAKE_SELECTION,
       actorPaths: Object.fromEntries(RECORD_ACTOR_PATHS),
       stimuli: STIMULUS_POLICY,
-      significantEvents: world.cognitionPolicy.significantEventTypes,
       policyRevision: world.cognitionPolicy.revision,
       bodyPolicyPin: world.moduleManifest.bodyPolicyPin,
       discovery: attention.semantic.discovery,

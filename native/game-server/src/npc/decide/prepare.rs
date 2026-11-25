@@ -566,11 +566,70 @@ fn project(
     let mut conversation = Vec::new();
     let mut recall = Vec::new();
     let mut rendered_trigger = None;
+    let mut historical_references = Vec::new();
     for (index, &(_, entry)) in source_entries.iter().enumerate() {
         let value = &entry.value;
         let (display, at) = personal_description(entry)?;
         let event_time = display_time(at);
-        let fact = json!({"text":display,"at":at,"eventType":value.event_type,"acquisition":value.modality,"observerRelationship":value.trigger_kind,"eventTime":event_time});
+        let mut fact = experience_fact(entry, &display, at, &event_time);
+        if let Some(references) = &value.literal_references {
+            let literal = match entry.reference.kind {
+                PersonalSourceKind::Memory => value.summary.as_ref(),
+                _ => match &value.text {
+                    Some(openlegend_simulation::narration::NativeText::Literal(text)) => Some(text),
+                    _ => None,
+                },
+            }
+            .ok_or(CallFailure::Invalid)?;
+            let mut bindings = Vec::new();
+            use openlegend_simulation::{experience::LiteralReference, reception::ObserverSubject};
+            for binding in &references.bindings {
+                let reference = references
+                    .references
+                    .get(binding.reference)
+                    .ok_or(CallFailure::Invalid)?;
+                let current_self = matches!(reference, LiteralReference::Subject {
+                    subject: ObserverSubject::Entity { entity_id },
+                } if entity_id == &work.actor);
+                let id = if current_self {
+                    self_reference.as_str()
+                } else {
+                    // A historical individual does not inherit a current
+                    // action handle even when the same body is in view.
+                    let ordinal = historical_references
+                        .iter()
+                        .position(|(prior, _)| *prior == reference)
+                        .unwrap_or_else(|| {
+                            let ordinal = historical_references.len();
+                            historical_references.push((
+                                reference,
+                                alias(&reference_key, "past-reference", ordinal),
+                            ));
+                            ordinal
+                        });
+                    historical_references[ordinal].1.as_str()
+                };
+                let range = binding.range;
+                let passage = literal.slice(range.start..range.end);
+                let kind = match reference {
+                    LiteralReference::Subject { .. } => "subject",
+                    LiteralReference::Object { .. } => "object",
+                    LiteralReference::Place { .. } => "place",
+                    LiteralReference::Category { .. } => "category",
+                    LiteralReference::Time { .. } => "time",
+                    LiteralReference::Source { quote: Some(_), .. } => "exactQuotation",
+                    LiteralReference::Source { quote: None, .. } => "personalSource",
+                };
+                let mut display = json!({"passage":prompt_text(&passage),"kind":kind,"reference":id,"offset":range.start});
+                if let LiteralReference::Time { from, through, .. } = reference {
+                    display["gameSeconds"] = json!({"from":from,"through":through});
+                }
+                bindings.push(display);
+            }
+            if !bindings.is_empty() {
+                fact["personalReferences"] = Value::Array(bindings);
+            }
+        }
         let line = format!("{display} ({event_time})");
         if value.event_type.as_deref() == Some("speech") {
             conversation.push(line);
@@ -851,17 +910,19 @@ fn describe_experience(
     entry: &PersonalSource,
     description: &str,
 ) -> Result<Value, CallFailure> {
-    let value = &entry.value;
     let at = personal_time(entry);
     if !at.is_finite() {
         return Err(CallFailure::Invalid);
     }
     let world = &game.view_policy().world;
-    Ok(
-        json!({"text":description,"at":at,"eventType":value.event_type,
-        "acquisition":value.modality,"observerRelationship":value.trigger_kind,
-        "eventTime": game_time(at, world.offset_hours, world.day_label.as_deref())}),
-    )
+    let event_time = game_time(at, world.offset_hours, world.day_label.as_deref());
+    Ok(experience_fact(entry, description, at, &event_time))
+}
+
+fn experience_fact(entry: &PersonalSource, description: &str, at: f64, event_time: &str) -> Value {
+    let value = &entry.value;
+    json!({"text":description,"at":at,"eventType":value.event_type,
+        "acquisition":value.modality,"observerRelationship":value.trigger_kind,"eventTime":event_time})
 }
 
 fn personal_time(entry: &PersonalSource) -> f64 {
@@ -1288,9 +1349,24 @@ fn project_markers(value: &mut Value, canonical: &HashMap<&str, String>, issued:
             result.push_str(rest);
             *value = result;
         }
-        Value::Object(fields) => fields
-            .values_mut()
-            .for_each(|value| project_markers(value, canonical, issued)),
+        Value::Object(fields) => {
+            for (key, value) in fields {
+                // These fields carry personal literal text, including quotation
+                // and user-authored notes. Their routing handles are separate.
+                if !matches!(
+                    key.as_str(),
+                    "experience"
+                        | "recall"
+                        | "conversation"
+                        | "stimulus"
+                        | "triggerFacts"
+                        | "notepad"
+                        | "knowledge"
+                ) {
+                    project_markers(value, canonical, issued);
+                }
+            }
+        }
         Value::Array(items) => items
             .iter_mut()
             .for_each(|value| project_markers(value, canonical, issued)),

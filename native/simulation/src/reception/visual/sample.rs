@@ -464,6 +464,13 @@ pub(super) fn receive_subject(
         if !changed {
             continue;
         }
+        if let (Some(appearance_changes), SensoryFacet::Body { body }) =
+            (&mut phase.appearance_changes, &facet)
+            && life.is_some()
+            && !matches!(&previous, Some(SensoryFacet::Body { body: old }) if old.appearance == body.appearance)
+        {
+            appearance_changes.insert(subject.into());
+        }
         phase.attention_changes.insert(subject.into());
         if kind == "location" {
             phase.geometry_changes.insert(subject.into());

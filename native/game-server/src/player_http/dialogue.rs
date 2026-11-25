@@ -208,6 +208,7 @@ pub(super) async fn availability(
             state.references.clone(),
             input.mode,
             input.target_id,
+            true,
         )
         .await
     {

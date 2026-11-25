@@ -7,7 +7,7 @@ import { BASE_PARTICIPATION_PRESENTATION } from './participation.js';
  * families. Source and the compiled native family consume this same data. */
 export const BASE_ORDINARY_ACTION_RULES = {
   id: 'wilderness:ordinary-action-rules',
-  version: 1,
+  version: 2,
   plan: BASE_PLAN_RULES,
   travel: BASE_TRAVEL_RULES,
   participation: BASE_PARTICIPATION_PRESENTATION,

@@ -3,7 +3,7 @@
 
 use super::*;
 use crate::npc::{human_request, valid_request_id};
-use openlegend_simulation::runtime::{PlanMode, TypedWalk};
+use openlegend_simulation::runtime::{PlanMode, TypedWalk, WatchRequest};
 use std::sync::OnceLock;
 mod point_text;
 use point_text::PointWords;
@@ -11,6 +11,12 @@ use point_text::PointWords;
 enum ParsedAction {
     Stop(Option<Stop>),
     Walk(PointWords),
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct TypedSlots {
+    watch: WatchRequest,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -21,7 +27,6 @@ pub(crate) struct ActionAttempt {
     mode: PlanMode,
     #[serde(default, deserialize_with = "deserialize_present_option")]
     target_id: Option<String>,
-    // This narrow stage refuses a selected detail, since it cannot apply it.
     #[serde(default, deserialize_with = "deserialize_present_option")]
     slots: Option<Box<RawValue>>,
 }
@@ -291,7 +296,24 @@ impl PlayerCommands {
                 })?;
         }
         self.maintenance.allow_ordinary(&self.authority, &scope)?;
-        if input.input.target_id.is_some() || input.input.slots.is_some() {
+        let _slot_storage = input
+            .input
+            .slots
+            .as_ref()
+            .map(|slots| {
+                budget.reserve(
+                    slots.get().len().saturating_mul(2) + std::mem::size_of::<TypedSlots>(),
+                )
+            })
+            .transpose()
+            .map_err(|_| StoreError::Capacity)?;
+        let slots = input
+            .input
+            .slots
+            .as_ref()
+            .map(|slots| serde_json::from_str::<TypedSlots>(slots.get()))
+            .transpose();
+        if input.input.target_id.is_some() || slots.is_err() {
             return self
                 .authority
                 .current(&scope, Capability::Play, true, |_, _| {
@@ -324,10 +346,24 @@ impl PlayerCommands {
                     "Type a stop request or a destination such as “walk to 17, 14”. Use the action controls for other requests.", budget)
             })?;
         };
+        let slots = slots.map_err(|_| StoreError::InvalidRecord)?;
+        if slots.is_some() && !matches!(action, ParsedAction::Walk(_)) {
+            return self
+                .authority
+                .current(&scope, Capability::Play, true, |_, _| {
+                    refuse(
+                        "invalid-action",
+                        "Remove the watch from this request.",
+                        budget,
+                    )
+                })?;
+        }
         let _ordinary = self.saves.enter_ordinary().await;
         self.saves.check_admission(tokio::time::Instant::now())?;
         let begin_scope = scope.clone();
         let begin_authority = self.authority.clone();
+        let begin_references = self.references.clone();
+        let begin_budget = budget.clone();
         let finish_scope = scope.clone();
         let finish_authority = self.authority.clone();
         let admit = input.clone();
@@ -382,23 +418,42 @@ impl PlayerCommands {
                                 false,
                             )?))
                         }
-                        ParsedAction::Walk(point) => match world.begin_player_typed_walk(
-                            &admit.id,
-                            account,
-                            actor,
-                            TypedWalk {
-                                x: point.x,
-                                z: point.z,
-                                support: point.support.as_deref(),
-                                mode: admit.input.mode,
-                            },
-                        )? {
-                            Ok(candidate) => Ok(ApplicationStart::Candidate(candidate)),
-                            Err(reason) => Ok(ApplicationStart::Existing(ResultOwner::Refused(
-                                "invalid-action",
-                                reason.message,
-                            ))),
-                        },
+                        ParsedAction::Walk(point) => {
+                            let watch_subject = if let Some(slots) = &slots {
+                                let Some(subject) = begin_references.resolve_contact(
+                                    world,
+                                    &begin_scope.scope,
+                                    &slots.watch.subject_id,
+                                    &begin_budget,
+                                )? else {
+                                    return Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                        "invalid-action", "Choose the person from your current view.",
+                                    )));
+                                };
+                                Some(subject)
+                            } else {
+                                None
+                            };
+                            match world.begin_player_typed_walk(
+                                &admit.id,
+                                account,
+                                actor,
+                                TypedWalk {
+                                    x: point.x,
+                                    z: point.z,
+                                    support: point.support.as_deref(),
+                                    mode: admit.input.mode,
+                                    watch: slots.as_ref().zip(watch_subject.as_ref())
+                                        .map(|(slots, subject)| (&slots.watch, subject.id.as_str())),
+                                },
+                            )? {
+                                Ok(candidate) => Ok(ApplicationStart::Candidate(candidate)),
+                                Err(reason) => Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                    "invalid-action",
+                                    reason.message,
+                                ))),
+                            }
+                        }
                     }
                 },
                 move |question| {

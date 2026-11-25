@@ -9,6 +9,7 @@ use crate::host::retained_size::HeapBytes;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::narration::{
     GrammaticalPerson, Narration, NarrationPart, PersonRole, render_narration_parts,
+    render_self_account,
 };
 use crate::received::{
     ActionResultKind, ActionResultOutcome, ActionResultStatus, ActionResultValue, ReceivedError,
@@ -105,6 +106,8 @@ struct ResultMemoryDraft {
     #[serde(skip_serializing_if = "Option::is_none")]
     speaker_id: Option<String>,
     summary: crate::text::JsText,
+    #[serde(skip_serializing_if = "LiteralReferences::is_empty")]
+    literal_references: LiteralReferences,
     entity_ids: Vec<String>,
 }
 
@@ -208,23 +211,20 @@ pub(crate) fn prepare_activity_result(
     let mut description =
         crate::text::JsText::from(format!(" action {status} at simulation time {time}: "));
     description.push_text(&exact);
-    let text = render_narration_parts(
-        &Narration {
-            parts: vec![
-                NarrationPart::Participant {
-                    entity_id: actor_id.to_owned(),
-                    role: PersonRole::Possessive,
-                    article: None,
-                },
-                NarrationPart::Literal(description),
-            ],
-        },
-        &names,
-        Some(actor_id),
-        GrammaticalPerson::First,
-    );
+    let narration = Narration {
+        parts: vec![
+            NarrationPart::Participant {
+                entity_id: actor_id.to_owned(),
+                role: PersonRole::Possessive,
+                article: None,
+            },
+            NarrationPart::Literal(description),
+        ],
+    };
     let physical_life = body.physical_life.unwrap_or(0);
     if routine {
+        let text =
+            render_narration_parts(&narration, &names, Some(actor_id), GrammaticalPerson::First);
         return Ok(ActivityResultAcquisition::Recent(PendingRecentResult {
             actor_id: actor_id.to_owned(),
             occurrence_id: occurrence_id.to_owned(),
@@ -250,6 +250,7 @@ pub(crate) fn prepare_activity_result(
     let event_type = law
         .result_event_type(context.command_type)
         .map(str::to_owned);
+    let account = render_self_account(&narration, &names, actor_id);
     let draft = ResultMemoryDraft {
         kind: "episode",
         source: "internal",
@@ -262,7 +263,8 @@ pub(crate) fn prepare_activity_result(
         activity_id: occurrence_id.to_owned(),
         speaker_id: event_type.as_ref().map(|_| actor_id.to_owned()),
         event_type,
-        summary: text,
+        summary: account.text,
+        literal_references: account.references,
         entity_ids: vec![actor_id.to_owned()],
     };
     let draft = json_record(&draft).map_err(|_| ResultAcquisitionError::Encoding)?;

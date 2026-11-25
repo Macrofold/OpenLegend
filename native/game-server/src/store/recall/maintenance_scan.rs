@@ -422,7 +422,7 @@ impl Store {
                         break;
                     }
                     let bytes = row
-                        .try_get::<_, Option<i32>>(6)?
+                        .try_get::<_, Option<i32>>(7)?
                         .and_then(|bytes| usize::try_from(bytes).ok())
                         .filter(|bytes| *bytes > 0)
                         .ok_or(StoreError::InvalidRecord)?;
@@ -438,7 +438,12 @@ impl Store {
                     if !(0. ..=10.).contains(&importance) {
                         return Err(StoreError::InvalidRecord);
                     }
-                    protected_only &= importance >= queries.protected_importance;
+                    let preserve_literal: i64 = row.try_get(6)?;
+                    if !matches!(preserve_literal, 0 | 1) {
+                        return Err(StoreError::InvalidRecord);
+                    }
+                    protected_only &=
+                        importance >= queries.protected_importance || preserve_literal == 1;
                     let id: &str = row.try_get(1)?;
                     let revision: &str = row.try_get(2)?;
                     retained = retained

@@ -60,10 +60,10 @@ impl AppraisalState {
                 || self
                     .definitions
                     .get(&value.definition_pin.id)
-                    .is_none_or(|definition| definition.pin != value.definition_pin)
-                || value.cause.as_ref().is_some_and(|cause| {
-                    !matches!(cause.kind.as_str(), "perceived-event" | "remembered")
-                })
+                    .is_none_or(|definition| {
+                        definition.pin != value.definition_pin
+                            || !valid_saved_cause(&value, &definition.value)
+                    })
             {
                 return Err(ExecutionError::Invariant);
             }

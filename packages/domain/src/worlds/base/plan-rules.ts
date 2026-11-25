@@ -19,6 +19,23 @@ export const BASE_PLAN_RULES = {
     message: 'This world does not install a requested action.',
   },
   invalidCommand: { code: 'invalid-plan', message: 'Only native physical work can be queued.' },
+  watch: {
+    defaultSeconds: 3600,
+    maximumSeconds: 86400,
+    unavailable: {
+      code: 'watch-unavailable',
+      message: 'Choose someone you recognize and a place you know before starting a watch.',
+    },
+    expired: {
+      code: 'watch-expired',
+      message: 'The watch ended without a confirmed sighting. The planned action did not start.',
+    },
+    withdrawn: {
+      code: 'watch-withdrawn',
+      message: 'The person or place could no longer be confirmed for this watch.',
+    },
+    waiting: { code: 'watching', message: 'The action is ready when you see them there.' },
+  },
   chosenActivityActive: {
     code: 'chosen-activity-active',
     message:
@@ -87,3 +104,6 @@ export const BASE_PLAN_RULES = {
   resultImportance: 5,
   controlImportance: 6,
 } as const;
+/** Only the bundled watch method's admitted terms belong in this instruction. */
+export const BASE_WATCH_TERM_INSTRUCTIONS =
+  'With one offered walk, you can wait until you see a person you recognize at an exact place you know. Use their current reference and the complete familiar place name. A sighting waits for a new sighting. Presence can report what is already true or wait for a change.';

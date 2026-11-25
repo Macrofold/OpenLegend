@@ -14,7 +14,8 @@ pub struct NpcScheduleFacts {
     pub actor_id: String,
     pub accepted_cut: u64,
     pub at: f64,
-    pub max_sequence: u64,
+    pub durable_sequence: u64,
+    pub first_unserved: Option<u64>,
     pub records: Vec<ScheduleEvidence>,
     pub interruptions: Vec<String>,
     pub goal: JsText,
@@ -51,6 +52,7 @@ impl NpcScheduleFacts {
 pub struct ScheduleEvidence {
     pub kind: PersonalSourceKind,
     pub reflection_cue: bool,
+    pub addressed: bool,
     value: EvidenceValue,
 }
 
@@ -67,9 +69,6 @@ struct EvidenceValue {
         deserialize_with = "crate::values::deserialize_present_safe_integer"
     )]
     sequence: Option<u64>,
-    importance: Option<f64>,
-    source_id: Option<String>,
-    speaker_id: Option<String>,
     #[serde(default, deserialize_with = "literal_text")]
     text: Option<JsText>,
     #[serde(default, deserialize_with = "literal_text")]
@@ -79,8 +78,6 @@ heap_record!(EvidenceValue {
     id,
     event_id,
     event_type,
-    source_id,
-    speaker_id,
     text,
     summary
 });
@@ -106,19 +103,6 @@ impl ScheduleEvidence {
     }
     pub fn sequence(&self) -> u64 {
         self.value.sequence.unwrap_or_default()
-    }
-    pub fn importance(&self) -> f64 {
-        self.value.importance.unwrap_or_default()
-    }
-    pub fn speaker(&self) -> &str {
-        if self.kind == PersonalSourceKind::Awareness {
-            self.value.source_id.as_deref().unwrap_or_default()
-        } else {
-            self.value.speaker_id.as_deref().unwrap_or_default()
-        }
-    }
-    pub fn event_type(&self) -> &str {
-        self.value.event_type.as_deref().unwrap_or_default()
     }
 }
 
@@ -168,6 +152,7 @@ pub struct ScheduleEvent {
 pub(super) struct Inputs<'a> {
     pub(super) actor_id: &'a str,
     pub(super) accepted_cut: u64,
+    pub(super) durable_sequence: u64,
     pub(super) at: f64,
     pub(super) actor: &'a crate::state::ActorState,
     pub(super) unseen: &'a crate::experience::intake::UnseenIntake<'a>,
@@ -286,6 +271,7 @@ pub(super) fn capture(
         selected.push(ScheduleEvidence {
             kind: record.kind,
             reflection_cue,
+            addressed: record.addressed,
             value,
         });
     }
@@ -368,7 +354,8 @@ pub(super) fn capture(
         actor_id: input.actor_id.to_owned(),
         accepted_cut: input.accepted_cut,
         at: input.at,
-        max_sequence: input.unseen.max_sequence,
+        durable_sequence: input.durable_sequence,
+        first_unserved: input.unseen.first_unserved,
         records: selected,
         interruptions: interrupt_ids,
         goal,

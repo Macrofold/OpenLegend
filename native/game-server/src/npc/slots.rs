@@ -91,6 +91,7 @@ impl Drop for WaitingSend {
                     .lock()
                     .expect("decision ordering owner poisoned"),
             );
+            owner.changed.send_modify(|revision| *revision += 1);
         }
     }
 }
@@ -118,6 +119,10 @@ pub(super) enum Admission {
 }
 
 impl Slots {
+    pub(super) fn changes(&self) -> watch::Receiver<u64> {
+        self.changed.subscribe()
+    }
+
     pub(super) fn new(budget: ByteBudget, maximum: usize) -> Self {
         Self {
             budget,

@@ -236,13 +236,8 @@ impl ActorResponse {
                 {
                     scalar(subject, aliases.entities, storage)?;
                 }
-                prose(
-                    note.get_mut("text").ok_or_else(invalid)?,
-                    aliases,
-                    true,
-                    budget,
-                    storage,
-                )?;
+                // Note text and its subject are separate. A literal that
+                // resembles an ID marker remains exactly what was written.
             }
             if let Some(name) = operation.get_mut("name").filter(|value| !value.is_null()) {
                 let subject = object(name)?.get_mut("subjectId").ok_or_else(invalid)?;
@@ -255,13 +250,8 @@ impl ActorResponse {
             }
             if let Some(think) = operation.get_mut("think").filter(|value| !value.is_null()) {
                 let think = object(think)?;
-                prose(
-                    think.get_mut("text").ok_or_else(invalid)?,
-                    aliases,
-                    true,
-                    budget,
-                    storage,
-                )?;
+                // Thought prose is an exact account. Only the structured
+                // subjects below carry reference authority.
                 let SqlCell::Array(subjects) =
                     think.get_mut("aboutEntityIds").ok_or_else(invalid)?
                 else {
@@ -269,6 +259,17 @@ impl ActorResponse {
                 };
                 for subject in subjects {
                     scalar(subject, aliases.entities, storage)?;
+                }
+                if let Some(references) = think.get_mut("references") {
+                    let SqlCell::Array(references) = references else {
+                        return Err(invalid());
+                    };
+                    for reference in references {
+                        let subject = object(reference)?
+                            .get_mut("subjectId")
+                            .ok_or_else(invalid)?;
+                        scalar(subject, aliases.entities, storage)?;
+                    }
                 }
             }
             if let Some(goal) = operation.get_mut("goal").filter(|value| !value.is_null()) {
@@ -279,6 +280,12 @@ impl ActorResponse {
                     budget,
                     storage,
                 )?;
+            }
+            if let Some(plan) = operation.get_mut("plan").filter(|value| !value.is_null())
+                && let Some(watch) = object(plan)?.get_mut("watch").filter(|value| !value.is_null())
+            {
+                let subject = object(watch)?.get_mut("subjectId").ok_or_else(invalid)?;
+                scalar(subject, aliases.physical, storage)?;
             }
             if let Some(act) = operation.get_mut("act").filter(|value| !value.is_null()) {
                 let act = object(act)?;
@@ -423,15 +430,6 @@ impl ResponseAliases<'_> {
                 } else if field == "nameChanges" {
                     return Err(invalid());
                 }
-                if field == "knowledgeChanges" {
-                    prose(
-                        change.get_mut("text").ok_or_else(invalid)?,
-                        self,
-                        true,
-                        budget,
-                        storage,
-                    )?;
-                }
             }
         }
         let SqlCell::Array(goals) = object(publication)?
@@ -448,15 +446,6 @@ impl ResponseAliases<'_> {
                 budget,
                 storage,
             )?;
-        }
-        let SqlCell::Array(thoughts) = object(publication)?
-            .get_mut("thoughts")
-            .ok_or_else(invalid)?
-        else {
-            return Err(invalid());
-        };
-        for thought in thoughts {
-            prose(thought, self, true, budget, storage)?;
         }
         self.resolve_interpretation_records(
             object(publication)?

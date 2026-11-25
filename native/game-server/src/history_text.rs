@@ -130,7 +130,7 @@ pub(crate) fn described<'a>(
                 location: position, ..
             } => location(&position).into(),
             MaterializedTemporalValue::Other(fragment) => match fragment {
-                ReceivedValueFragment::PersonalAccount(value) => historical_account(&value.text),
+                ReceivedValueFragment::PersonalAccount(value) => value.text.clone(),
                 ReceivedValueFragment::ActionResult(value) => historical_account(&value.text),
                 ReceivedValueFragment::Sensory(facet) => match facet {
                     SensoryFacet::Description { text } => text.clone(),

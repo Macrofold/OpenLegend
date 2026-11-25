@@ -599,6 +599,7 @@ pub(crate) fn append_invoke(
     }
     let id = command.envelope().id.clone();
     current.steps.push(PlanStep {
+        watch: None,
         activity_key: Some(key.clone()),
         id,
         command,

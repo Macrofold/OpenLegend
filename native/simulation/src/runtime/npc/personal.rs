@@ -49,6 +49,7 @@ pub struct RuntimeNpcPersonalFacts {
     pub text: Option<NativeText>,
     pub content: Option<NativeText>,
     pub summary: Option<JsText>,
+    pub literal_references: Option<crate::experience::LiteralReferences>,
     event_data: Option<GuardCueFacts>,
 }
 

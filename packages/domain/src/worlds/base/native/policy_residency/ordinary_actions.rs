@@ -84,6 +84,12 @@ heap_record!(OrdinaryActionRules {
     action_stopped_event,
     movement_arrival_event
 });
+heap_record!(WatchRules {
+    unavailable,
+    expired,
+    withdrawn,
+    waiting
+});
 heap_record!(NaturalContactText {
     missed,
     connected,
@@ -100,6 +106,7 @@ heap_record!(PlanRules {
     step_limit,
     unsupported_capability,
     invalid_command,
+    watch,
     chosen_activity_active,
     invalid_outputs,
     plan_blocked,

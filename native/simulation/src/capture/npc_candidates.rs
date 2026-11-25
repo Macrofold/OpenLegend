@@ -576,9 +576,12 @@ impl NpcCandidateCursor {
                             .ok_or(ExecutionError::Capacity)?,
                     )?;
                     for (offer, description) in self.offers.iter_mut().zip(answer.descriptions) {
-                        // Handover terms are already exact. The format adapter
-                        // only supplies a placeholder for this issued row.
-                        if offer.command.handover().is_some() {
+                        // Completed interaction terms already carry their
+                        // authored wording. The formatter adds no more detail.
+                        if matches!(
+                            offer.meaning,
+                            NpcOfferMeaning::Handover { .. } | NpcOfferMeaning::PublicAppeal
+                        ) {
                             continue;
                         }
                         if let Some(prepared) = offer.description.as_mut() {

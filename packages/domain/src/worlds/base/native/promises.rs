@@ -84,6 +84,7 @@ struct PromiseMemoryDraft<'a> {
     kind: &'static str,
     source: &'static str,
     summary: &'a crate::text::JsText,
+    literal_references: &'a crate::experience::LiteralReferences,
     event_id: &'a str,
     event_type: &'a str,
     speaker_id: &'a str,
@@ -106,8 +107,7 @@ pub(crate) fn prepare_spoken_promise(
         ExperienceError, MemoryAcquisitionError, MemoryAdmission, PersonalSourceKind,
     };
     use crate::narration::{
-        GrammaticalPerson, Narration, NarrationPart, PersonRole, narration_render_bound,
-        render_narration_parts,
+        Narration, NarrationPart, PersonRole, narration_render_bound, render_self_account,
     };
     use std::mem::size_of;
     let installed = std::sync::Arc::clone(&core.state.installed);
@@ -174,19 +174,16 @@ pub(crate) fn prepare_spoken_promise(
         .resize(
             input_bytes
                 .checked_add(render_bound)
+                .and_then(|bytes| bytes.checked_add(actor.len() + 512))
                 .ok_or(ExperienceError::Capacity)?,
         )
         .map_err(|_| ExperienceError::Capacity)?;
-    let summary = render_narration_parts(
-        &narration,
-        &indexmap::IndexMap::new(),
-        Some(actor),
-        GrammaticalPerson::First,
-    );
+    let summary = render_self_account(&narration, &indexmap::IndexMap::new(), actor);
     let draft = PromiseMemoryDraft {
         kind: "commitment",
         source: "observed",
-        summary: &summary,
+        summary: &summary.text,
+        literal_references: &summary.references,
         event_id: &event.id,
         event_type: &rules.speech_event,
         speaker_id: actor,
@@ -208,7 +205,8 @@ pub(crate) fn prepare_spoken_promise(
     reservation
         .resize(
             input_bytes
-                .checked_add(summary.storage_bytes())
+                .checked_add(summary.text.storage_bytes())
+                .and_then(|size| size.checked_add(summary.references.storage_bytes()?))
                 .and_then(|size| size.checked_add(bytes))
                 .ok_or(ExperienceError::Capacity)?,
         )

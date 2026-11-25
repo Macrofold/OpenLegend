@@ -68,7 +68,10 @@ impl DecisionPolicy {
         if let Meaning::Learned { choice } = &offer.meaning {
             return Ok(choice.description.clone());
         }
-        if matches!(offer.meaning, Meaning::Handover { .. }) {
+        if matches!(
+            offer.meaning,
+            Meaning::Handover { .. } | Meaning::PublicAppeal
+        ) {
             return Ok(JsText::default());
         }
         let words = &self.choices;
@@ -92,6 +95,7 @@ impl DecisionPolicy {
             Meaning::Learned { .. } => return Err(WorldError::ProviderKind),
             Meaning::Activities => text(&words["activities"])?.to_owned(),
             Meaning::Inspection => text(&words["inspection"])?.to_owned(),
+            Meaning::PublicAppeal => return Err(WorldError::ProviderKind),
             Meaning::ActivityPage { page } => {
                 openlegend_simulation::activity::inspection_next_label(page)
                     .ok_or(WorldError::ProviderKind)?

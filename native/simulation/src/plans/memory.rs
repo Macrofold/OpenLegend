@@ -2,9 +2,9 @@
 //! owner as other memories; a plan retains only the returned evidence pointer.
 use super::*;
 use crate::execution::{CoreMutation, ExecutionError};
-use crate::experience::{acquire_memory, prepare_memory_admission};
+use crate::experience::{LiteralReferences, acquire_memory, prepare_memory_admission};
 use crate::host::retained_size::HeapBytes;
-use crate::narration::{GrammaticalPerson, Narration, NarrationPart, PersonRole};
+use crate::narration::{NarratedAccount, Narration, NarrationPart, PersonRole};
 use crate::text::JsText;
 use std::mem::size_of;
 
@@ -16,12 +16,31 @@ struct PlanMemory<'a> {
     importance: f64,
     entity_ids: [&'a str; 1],
     summary: JsText,
+    #[serde(skip_serializing_if = "LiteralReferences::is_empty")]
+    literal_references: LiteralReferences,
 }
 
 pub(super) fn append_report(
     core: &mut CoreMutation<'_>,
     actor: &str,
     summary: JsText,
+    importance: f64,
+) -> Result<Option<ResultEvidence>, ExecutionError> {
+    append_annotated_report(
+        core,
+        actor,
+        NarratedAccount {
+            text: summary,
+            references: LiteralReferences::default(),
+        },
+        importance,
+    )
+}
+
+pub(super) fn append_annotated_report(
+    core: &mut CoreMutation<'_>,
+    actor: &str,
+    summary: NarratedAccount,
     importance: f64,
 ) -> Result<Option<ResultEvidence>, ExecutionError> {
     if !core
@@ -39,7 +58,8 @@ pub(super) fn append_report(
         source: "internal",
         importance,
         entity_ids: [actor],
-        summary,
+        summary: summary.text,
+        literal_references: summary.references,
     };
     let bytes = crate::encoding::json_record_len(&draft).map_err(|_| ExecutionError::Invariant)?;
     let _guard = budget.reserve(
@@ -62,17 +82,17 @@ pub(super) fn personal_possessive(
     actor: &str,
     suffix: JsText,
     budget: &crate::host::ByteBudget,
-) -> Result<(JsText, crate::host::ByteReservation), ExecutionError> {
+) -> Result<(NarratedAccount, crate::host::ByteReservation), ExecutionError> {
     let bytes = suffix
         .heap_bytes()
         .and_then(|bytes| bytes.checked_mul(4))
-        .and_then(|bytes| bytes.checked_add(actor.len() + 2 * size_of::<NarrationPart>() + 512))
+        .and_then(|bytes| bytes.checked_add(actor.len() * 2 + 2 * size_of::<NarrationPart>() + 512))
         .ok_or(ExecutionError::Capacity)?;
     let guard = budget.reserve(bytes)?;
     // The only participant is this exact observer in possessive role. The
     // shared grammar returns the first-person pronoun before consulting names;
     // no other person's name, visibility or identity is supplied or guessed.
-    let text = crate::narration::render_narration_parts(
+    let account = crate::narration::render_self_account(
         &Narration {
             parts: vec![
                 NarrationPart::Participant {
@@ -84,8 +104,7 @@ pub(super) fn personal_possessive(
             ],
         },
         &IndexMap::new(),
-        Some(actor),
-        GrammaticalPerson::First,
+        actor,
     );
-    Ok((text, guard))
+    Ok((account, guard))
 }

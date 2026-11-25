@@ -148,7 +148,7 @@ async function storageSchema() {
     after: ['$6', '$7', '$8'] as [string, string, string],
     speech: ['$1', '$2'] as [string, string],
     limit: '$9',
-    fields: 'r.source_kind,r.id,r.revision,r.at,r.sequence,r.importance',
+    fields: 'r.source_kind,r.id,r.revision,r.at,r.sequence,r.importance,r.preserve_literal',
   };
   return {
     version: DATABASE_SCHEMA,

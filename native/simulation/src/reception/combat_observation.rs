@@ -226,14 +226,67 @@ pub(crate) fn next_attack_cue(
             },
         );
         let source_life = source.physical_life().ok_or(ExecutionError::Invariant)?;
-        let wording = if action.is_natural_contact() { &policy.preparing_strike } else { &policy.aiming };
+        let witness_help = policy.witness_warning
+            && !directed
+            && source_id != &observer.actor_id
+            && previous
+                .and_then(|seen| seen.get(&observer.actor_id))
+                .is_none_or(|prior| prior.life != observer.physical_life)
+            && state
+                .entities
+                .get(&observer.actor_id)
+                .zip(state.entities.get(target_id))
+                .map(|(witness, target)| {
+                    crate::worlds::InstalledSpeechAction::can_warn(
+                        &core.state.installed,
+                        witness,
+                        target,
+                    )
+                })
+                .transpose()?
+                .unwrap_or(false);
+        let wording = if action.is_natural_contact() {
+            &policy.preparing_strike
+        } else {
+            &policy.aiming
+        };
         let event_storage = budget.reserve(
             1024 + 3 * (source_id.len() + target_id.len())
                 + 2 * action.id.len()
                 + 2 * observer.actor_id.len()
-                + 2 * wording.len(),
+                + 2 * wording.len()
+                + if witness_help {
+                    map_storage::<String, EventScalar>(7).ok_or(ExecutionError::Capacity)?
+                        + "witnessHelpwarn-observed-target".len()
+                } else {
+                    0
+                },
         )?;
         let action_id = action.id.clone();
+        let mut data = IndexMap::with_capacity(6 + usize::from(witness_help));
+        data.extend([
+            (
+                "actionId".into(),
+                EventScalar::Text(action_id.clone().into()),
+            ),
+            ("sourceLife".into(), EventScalar::Number(source_life as f64)),
+            ("targetLife".into(), EventScalar::Number(target_life as f64)),
+            ("semanticTrigger".into(), EventScalar::Boolean(true)),
+            (
+                "importance".into(),
+                EventScalar::Number(combat.impact_attention.importance),
+            ),
+            (
+                "urgency".into(),
+                EventScalar::Number(combat.impact_attention.urgency),
+            ),
+        ]);
+        if witness_help {
+            data.insert(
+                "witnessHelp".into(),
+                EventScalar::Text("warn-observed-target".into()),
+            );
+        }
         let event = EventEmissionIntent {
             event_type: ATTACK_CUE_EVENT.to_owned(),
             text: EmissionText::Narration(preparation_narration(
@@ -247,23 +300,7 @@ pub(crate) fn next_attack_cue(
             target_id: Some(target_id.to_owned()),
             scope: EventScope::Private,
             exposure: None,
-            data: Some(IndexMap::from([
-                (
-                    "actionId".into(),
-                    EventScalar::Text(action_id.clone().into()),
-                ),
-                ("sourceLife".into(), EventScalar::Number(source_life as f64)),
-                ("targetLife".into(), EventScalar::Number(target_life as f64)),
-                ("semanticTrigger".into(), EventScalar::Boolean(true)),
-                (
-                    "importance".into(),
-                    EventScalar::Number(combat.impact_attention.importance),
-                ),
-                (
-                    "urgency".into(),
-                    EventScalar::Number(combat.impact_attention.urgency),
-                ),
-            ])),
+            data: Some(data),
         };
         let source = state
             .entities

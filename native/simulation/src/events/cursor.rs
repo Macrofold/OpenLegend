@@ -252,6 +252,7 @@ pub(crate) enum EventAnswer {
         binding: GeometryBinding,
         words: Vec<SpeechWord>,
         lowercase: crate::text::JsText,
+        references: Option<std::sync::Arc<dyn crate::speech::SpeechReferenceProvider>>,
     },
     Collation(CollationAnswer),
     Words(WordsAnswer),
@@ -784,6 +785,7 @@ impl EventCursor {
                     binding,
                     words,
                     lowercase,
+                    references,
                 } => {
                     let Phase::Utterance { binding: expected } = self.phase else {
                         return Err(invalid());
@@ -796,6 +798,7 @@ impl EventCursor {
                             event_text(self.event()?, "text").ok_or_else(invalid)?,
                             words,
                             lowercase,
+                            references,
                             budget,
                         )
                         .map_err(|_| ExecutionError::Invariant)?,
@@ -966,10 +969,6 @@ impl EventCursor {
                         });
                         Some(value)
                     } else {
-                        self.current_encoding = Some(AwarenessEncoding {
-                            factory: AwarenessFactory::Event,
-                            source_receipt_before_observation: false,
-                        });
                         let value = prepare_receiver_awareness(
                             core,
                             self.event()?,
@@ -980,6 +979,10 @@ impl EventCursor {
                         )?;
                         match value {
                             Some(value) => {
+                                self.current_encoding = Some(AwarenessEncoding {
+                                    factory: AwarenessFactory::Event { recording: value.recording },
+                                    source_receipt_before_observation: false,
+                                });
                                 self.reservation.merge(value.reservation)?;
                                 Some(value.awareness)
                             }

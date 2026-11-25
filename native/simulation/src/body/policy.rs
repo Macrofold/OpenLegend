@@ -130,6 +130,7 @@ pub(crate) enum ProjectileContact {
 pub(crate) struct EncounterPolicy {
     pub recent_seconds: f64,
     pub visible_preparation: bool,
+    pub witness_warning: bool,
     pub preparing_strike: String,
     pub aiming: String,
     pub ended: String,

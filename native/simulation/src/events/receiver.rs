@@ -25,6 +25,7 @@ pub(super) struct Receiver {
 pub(super) struct PreparedEventAwareness {
     pub awareness: Awareness,
     pub reservation: ByteReservation,
+    pub recording: RecordingReason,
 }
 fn truth(data: Option<&IndexMap<String, EventScalar>>, key: &str) -> bool {
     matches!(
@@ -161,19 +162,35 @@ pub(super) fn prepare_receiver_awareness(
             receive(core, target, event, kind, source, struck, budget)?;
         }
     }
-    let reason = law.recording_reason(RecordingInput {
-        source: RecordingSource::Awareness,
-        event_type: Some(selection.event_type()),
-        modality: Some(receiver.modality.as_str()),
-        trigger_kind: Some(trigger.as_str()),
-        own: selection.source_id() == Some(&receiver.actor_id) || trigger == TriggerKind::SelfEvent,
-        has_exposure: event.exposure.is_some(),
-        exposure_kind,
-        consequence: matches!(
-            trigger,
-            TriggerKind::SelfEvent | TriggerKind::DirectedAction
-        ),
-    });
+    // The exact, private attack cue was already checked against its active
+    // observation receipt by the occurrence owner. Preserve a real choice's
+    // account independently of the event's authored importance.
+    let witness_help = trigger == TriggerKind::ObservedEvent
+        && event.scope == Some(EventScope::Private)
+        && selection.event_type() == crate::reception::combat_observation::ATTACK_CUE_EVENT
+        && matches!(event.audience.as_slice(), [observer] if observer == target)
+        && matches!(
+            event.data.as_ref().and_then(|data| data.get("witnessHelp")),
+            Some(EventScalar::Text(value)) if value.as_unicode() == Some("warn-observed-target")
+        );
+    let reason = if witness_help {
+        RecordingReason::Required
+    } else {
+        law.recording_reason(RecordingInput {
+            source: RecordingSource::Awareness,
+            event_type: Some(selection.event_type()),
+            modality: Some(receiver.modality.as_str()),
+            trigger_kind: Some(trigger.as_str()),
+            own: selection.source_id() == Some(&receiver.actor_id)
+                || trigger == TriggerKind::SelfEvent,
+            has_exposure: event.exposure.is_some(),
+            exposure_kind,
+            consequence: matches!(
+                trigger,
+                TriggerKind::SelfEvent | TriggerKind::DirectedAction
+            ),
+        })
+    };
     let ids = selection
         .references()
         .iter()
@@ -320,6 +337,7 @@ pub(super) fn prepare_receiver_awareness(
         None
     };
     Ok(Some(PreparedEventAwareness {
+        recording: reason,
         awareness: Awareness {
             retention_class: AwarenessRetentionClass::Memory,
             exposure: event.exposure.clone(),

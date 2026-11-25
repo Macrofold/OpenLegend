@@ -110,6 +110,9 @@ impl CommandOperation {
     pub(crate) fn needs_known_places(&self) -> bool {
         self.cursor.needs_known_places()
     }
+    pub(crate) fn watch_place_actor(&self) -> Option<&str> {
+        self.cursor.watch_place_actor()
+    }
     pub(crate) fn is_complete(&self) -> bool {
         self.child.is_none() && self.reservation.is_none()
     }

@@ -1,7 +1,7 @@
 use openlegend_simulation::{runtime::RuntimeNpcIntakeSelection, values::DefinitionPin};
 use serde::Deserialize;
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::num::NonZeroU32;
 
 /// Compiled from the existing native Source scheduler and selected world.
@@ -14,7 +14,6 @@ pub(crate) struct SchedulingPolicy {
     pub(crate) selection: RuntimeNpcIntakeSelection,
     pub(crate) actor_paths: HashMap<String, usize>,
     pub(crate) stimuli: StimulusPolicy,
-    pub(crate) significant_events: HashSet<String>,
     pub(crate) policy_revision: u64,
     pub(crate) body_policy_pin: Option<Value>,
     pub(crate) discovery: bool,

@@ -77,6 +77,8 @@ pub(crate) struct InteractionAvailability {
     pub(crate) reply: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     recipient_name: Option<openlegend_simulation::text::JsText>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    public_appeals: Vec<openlegend_simulation::speech::PublicAppealChoice>,
     #[serde(skip)]
     _custody: Option<ByteReservation>,
 }
@@ -89,6 +91,7 @@ impl InteractionAvailability {
             reason: Some(why),
             reply: false,
             recipient_name: None,
+            public_appeals: Vec::new(),
             _custody: None,
         }
     }
@@ -98,6 +101,7 @@ struct EligibleInteraction {
     payer: String,
     reply: bool,
     name: Option<openlegend_simulation::text::JsText>,
+    public_appeals: Vec<openlegend_simulation::speech::PublicAppealChoice>,
     _custody: ByteReservation,
 }
 
@@ -274,16 +278,24 @@ impl Director {
 
     /// Spending availability is a separate await. Re-read the installed
     /// actor/recipient and live control before reporting what Send can do.
+    /// Only the composer asks for detached public appeal choices.
     pub(crate) async fn availability(
         &self,
         scope: Arc<AuthorizedScope>,
         references: Arc<ReferenceIssuer>,
         mode: openlegend_simulation::runtime::InteractionMode,
         target: Option<String>,
+        include_appeals: bool,
     ) -> Result<InteractionAvailability, WorldError> {
         let target = target.map(Arc::new);
         let before = match self
-            .interaction(scope.clone(), references.clone(), mode, target.clone())
+            .interaction(
+                scope.clone(),
+                references.clone(),
+                mode,
+                target.clone(),
+                false,
+            )
             .await?
         {
             Ok(before) => before,
@@ -304,7 +316,10 @@ impl Director {
             .store
             .model_allowance(&before.payer, allowance, ceiling)
             .await?;
-        let after = match self.interaction(scope, references, mode, target).await? {
+        let after = match self
+            .interaction(scope, references, mode, target, funded && include_appeals)
+            .await?
+        {
             Ok(after) => after,
             Err(refused) => return Ok(refused),
         };
@@ -337,6 +352,7 @@ impl Director {
             reason: None,
             reply: after.reply,
             recipient_name: after.name,
+            public_appeals: after.public_appeals,
             _custody: Some(after._custody),
         })
     }
@@ -347,6 +363,7 @@ impl Director {
         references: Arc<ReferenceIssuer>,
         mode: openlegend_simulation::runtime::InteractionMode,
         target: Option<Arc<String>>,
+        include_appeals: bool,
     ) -> Result<Result<EligibleInteraction, InteractionAvailability>, WorldError> {
         use openlegend_simulation::runtime::{InteractionMode, RuntimeError};
         let authority = self.authority.clone();
@@ -385,6 +402,7 @@ impl Director {
                                         payer: if target.reply { target.actor } else { fields.actor_id.to_owned() },
                                         reply: target.reply,
                                         name: Some(target.name),
+                                        public_appeals: Vec::new(),
                                         _custody,
                                     }))
                                 }
@@ -411,13 +429,22 @@ impl Director {
                                         },
                                     );
                                 }
-                                let _custody = budget
+                                let mut _custody = budget
                                     .reserve(256 + facts.funding_actor_id.len())
                                     .map_err(RuntimeError::from)?;
+                                let public_appeals = if include_appeals {
+                                    let (choices, custody) =
+                                        facts.prepare_public_appeals(&budget)?;
+                                    _custody.merge(custody)?;
+                                    choices
+                                } else {
+                                    Vec::new()
+                                };
                                 Ok(Ok(EligibleInteraction {
                                     payer: facts.funding_actor_id.to_owned(),
                                     reply: facts.reply,
                                     name: None,
+                                    public_appeals,
                                     _custody,
                                 }))
                             },

@@ -154,27 +154,19 @@ Original recommendation: **Completed removals**.
 
 ## LA038
 
-**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
+**Current selection limit · Restrictiveness: Safe.**
 
-A spontaneous cognition request describes at most the 8 newest significant experiences that could have caused the character to think.
+The stand-alone scheduler prepares up to eight required personal accounts for one decision from the oldest unhandled sequence groups. An equal-sequence group fits together or stays pending. Related context and separately required sources retain their existing admission.
 
-**Reason / tradeoff:** Select the events needed to explain the current situation rather than cutting the trigger description at eight regardless of meaning.
-
-[Implementation starting point](../../apps/server/src/decision-context.ts).
-
-Original recommendation: **Replace**.
+**Reason / tradeoff:** Bound one decision without losing the next one. A group that cannot fit on its own remains unacknowledged until a relevant change. [Selection and qualification](../projects/witness-decisions-and-memory-tech-design.md#2-select-personal-reasons-before-selecting-prompt-detail).
 
 ## LA039
 
-**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
+**Stand-alone admission candidate · Restrictiveness: Medium.**
 
-An experience normally qualifies to trigger spontaneous thinking when its importance is at least 6, or its event type is explicitly configured as significant. The [specified rule for ordinary witnesses](#cg19--ordinary-witnesses-and-personal-reactions) also requires an individual reason for an immediate paid decision.
+A witness needs a [personally supported reason](#cg19--ordinary-witnesses-and-personal-reactions) for an immediate decision. Received direct address can qualify below the previous score of 6. Importance and configured event types still guide reconsideration of personally experienced consequences.
 
-**Reason / tradeoff:** Review whether this importance cutoff misses meaningful situations before changing how often characters think.
-
-[Implementation starting point](../../apps/server/src/decision-context.ts).
-
-Original recommendation: **Review**.
+**Reason / tradeoff:** Retain meaningful quiet choices while leaving ordinary observations for later recall. [Current implementation and qualification](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording).
 
 ## LA040
 

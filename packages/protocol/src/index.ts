@@ -55,6 +55,8 @@ export interface PlayerInteractionAvailability {
   reason: string | null;
   /** Operational reply routing only; it grants no hearing or promised response. */
   reply: boolean;
+  /** Explicit ambient speech choices supplied by the installed world. */
+  publicAppeals?: ReadonlyArray<{ id: string; label: string; text: string }>;
 }
 
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
@@ -139,6 +141,7 @@ export interface CommandInput {
   expectedScope?: string;
   text?: string;
   volume?: SpeechVolume;
+  publicAppeal?: string;
   facing?: number;
   aimId?: string;
   autoEquip?: boolean;

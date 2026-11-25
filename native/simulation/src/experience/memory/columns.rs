@@ -85,6 +85,11 @@ fn recognition_ids(
 fn individual_ids(body: &Map<String, Value>) -> Result<Vec<String>, ExperienceError> {
     let mut ids = IndexSet::new();
     let mut seen = IndexSet::new();
+    if let Some(annotations) = child(body, "literalReferences")? {
+        for reference in array(annotations, "references")? {
+            add_subject(&mut ids, reference.get("subject"))?;
+        }
+    }
     if let Some(evidence) = child(body, "evidence")? {
         recognition_ids(&mut ids, evidence)?
     }
@@ -176,6 +181,15 @@ fn retention_metadata(
     } else {
         for original in &originals {
             aliases.insert(text(object(original)?, "id")?.to_owned());
+        }
+    }
+    // Text references participate in privacy invalidation. They do not add
+    // original-body retention or grant another read of an expired source.
+    if let Some(annotations) = child(body, "literalReferences")? {
+        for reference in array(annotations, "references")? {
+            if let Some(source) = reference.get("source") {
+                aliases.insert(text(object(source)?, "id")?.to_owned());
+            }
         }
     }
     let mut learning = if let Some(recognition) = child(body, "evidence")?

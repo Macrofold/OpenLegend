@@ -229,6 +229,51 @@ fn transcript(segments: &[SpeechSegment], _bytes: usize) -> crate::text::JsText 
     result
 }
 
+fn prepare_personal_reference(
+    words: &SpeechWords,
+    speech: &PerceivedSpeech,
+    name: &crate::text::JsText,
+    budget: &ByteBudget,
+    reservation: &mut ByteReservation,
+) -> Option<usize> {
+    use crate::speech::SpeechReferenceMatch;
+    // The diagnostics count an unserved optional check independently of
+    // a completed name-only or no-match result. No ordinary event fails.
+    let checked = crate::profile_call!(
+        SPEECH_REFERENCE,
+        {
+            match words
+                .references()?
+                .match_heard_reference(speech, name, budget)?
+            {
+                SpeechReferenceMatch::Passage(index) => {
+                    if !matches!(
+                        speech.segments.get(index),
+                        Some(SpeechSegment::Heard { .. })
+                    ) {
+                        None
+                    } else {
+                        let bytes = map_storage::<String, EventScalar>(2)?.checked_add(
+                            "speechChoiceoverheard-personal-referenceheardReferencePassage".len(),
+                        )?;
+                        reservation
+                            .resize(reservation.bytes().checked_add(bytes)?)
+                            .ok()?;
+                        Some(Some(index))
+                    }
+                }
+                SpeechReferenceMatch::NoMatch | SpeechReferenceMatch::NameOnly => Some(None),
+            }
+        },
+        |checked: &Option<Option<usize>>| if checked.is_some() {
+            crate::profile::Outcome::Completed
+        } else {
+            crate::profile::Outcome::Refused
+        }
+    );
+    checked.flatten()
+}
+
 fn assemble(
     core: &mut CoreMutation<'_>,
     contacts: &SpeechContacts,
@@ -514,6 +559,10 @@ fn assemble(
         "shout" => SpeechVolume::Shout,
         _ => return Err(ExecutionError::Invariant),
     };
+    let appeal = (!own && perception == SpeechPerception::Heard)
+        .then(|| data_text(event, "publicAppeal"))
+        .flatten()
+        .and_then(|id| core.state.installed.speech_action.value().public_appeal(id));
     let mut segments = match detail {
         InstalledHearingDetail::Clear => capacity(words.clear(budget))?,
         InstalledHearingDetail::Partial => {
@@ -524,14 +573,24 @@ fn assemble(
                     "{}:{}:{}",
                     core.state.physical.header.seed, event.id, observer_id
                 ),
+                appeal.map(|appeal| appeal.required_terms()),
                 budget,
             ))?
         }
         _ => HeardSegments {
             segments: Vec::new(),
             reservation: budget.reserve(size_of::<HeardSegments>())?,
+            heard_terms: false,
         },
     };
+    let volunteering =
+        appeal.filter(|appeal| segments.heard_terms && appeal.can_supply(core.state, observer));
+    let choice_bytes = volunteering
+        .map_or(Some(0), |appeal| {
+            map_storage::<String, EventScalar>(1)?
+                .checked_add("speechChoice".len() + appeal.id.len())
+        })
+        .ok_or(ExecutionError::Capacity)?;
     let word_bytes = transcript_size(&segments.segments).ok_or(ExecutionError::Capacity)?;
     let name_bytes = |name: crate::worlds::base_knowledge::PersonalName<'_>| {
         name.name.storage_bytes()
@@ -563,6 +622,7 @@ fn assemble(
         .ok_or(ExecutionError::Capacity)?;
     let own_bytes = heap_sum([
         size_of::<PreparedSpeechAwareness>(),
+        choice_bytes,
         text_bound.checked_mul(4).ok_or(ExecutionError::Capacity)?,
         event.id.len(),
         observer_id.len(),
@@ -592,7 +652,7 @@ fn assemble(
         event_text(event, "selfIntroduction").map_or(0, crate::text::JsText::storage_bytes),
     ])
     .ok_or(ExecutionError::Capacity)?;
-    let reservation = budget.reserve(own_bytes)?;
+    let mut reservation = budget.reserve(own_bytes)?;
     let speaker = speaker.map(from_personal);
     let addressee = addressee.map(from_personal);
     let mut speech = PerceivedSpeech {
@@ -642,6 +702,29 @@ fn assemble(
         recipient.filter(|id| Some(*id) == target)
     };
     let addressed = !own && recipient == Some(observer_id);
+    let personal_reference = if !own
+        && !addressed
+        && volunteering.is_none()
+        && has_memory
+        && observer
+            .actor
+            .as_ref()
+            .is_some_and(|actor| actor.controller == "npc")
+        && core
+            .state
+            .installed
+            .speech_action
+            .value()
+            .overheard_reference_experiment
+        && speech.perception == SpeechPerception::Heard
+        && speech.intelligibility != Intelligibility::None
+    {
+        reader.self_proper_name().and_then(|name| {
+            prepare_personal_reference(words, &speech, name, budget, &mut reservation)
+        })
+    } else {
+        None
+    };
     let words = transcript(&speech.segments, word_bytes);
     let text = narration::speech_presentation(SpeechPresentationInput {
         speaker: speaker.as_ref(),
@@ -739,7 +822,23 @@ fn assemble(
         }),
         recognition: None,
         received_features: None,
-        event_data: None,
+        event_data: match (volunteering, personal_reference) {
+            (Some(appeal), _) => Some(IndexMap::from([(
+                "speechChoice".into(),
+                EventScalar::Text(appeal.id.clone().into()),
+            )])),
+            (_, Some(passage)) => Some(IndexMap::from([
+                (
+                    "speechChoice".into(),
+                    EventScalar::Text("overheard-personal-reference".into()),
+                ),
+                (
+                    "heardReferencePassage".into(),
+                    EventScalar::Number(passage as f64),
+                ),
+            ])),
+            _ => None,
+        },
         references: None,
         retention: None,
         change: None,

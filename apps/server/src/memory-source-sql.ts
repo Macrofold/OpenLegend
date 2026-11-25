@@ -52,6 +52,7 @@ function consolidationRecentSpeechSql(world: string, actor: string): string {
 export function consolidationAnchorSql(scope: string, cutoff: string, speech: [string, string]) {
   return `SELECT r.at,r.sequence,r.id FROM recall_sources r
     WHERE ${scope} AND r.at<=${cutoff} AND r.importance<${EXPERIENCE_LIMITS.protectedImportance}
+      AND r.preserve_literal=0
       AND (r.source_kind='awareness' OR r.memory_kind='episode')
       AND r.id NOT IN (${consolidationRecentSpeechSql(...speech)})
     ORDER BY r.at,r.sequence,r.id LIMIT 1`;
@@ -114,6 +115,7 @@ export function memoryProjectionSql(hardBytes: string, input = '?'): string {
     'linguistic',
     'payload_bytes',
     'retention_class',
+    'preserve_literal',
   ];
   const sourceKeys = ['world_id', 'actor_id', 'id', 'source_kind']
     .map((field) => `octet_length(r.${field})`)

@@ -7,8 +7,8 @@ mod reflection;
 pub(super) mod witness;
 pub use consolidation::{
     RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
-    RuntimeConsolidationReading, RuntimeConsolidationReadings, RuntimeConsolidationTicket,
-    RuntimePreparedDream,
+    RuntimeConsolidationReading, RuntimeConsolidationReadings,
+    RuntimeConsolidationReferenceBinding, RuntimeConsolidationTicket, RuntimePreparedDream,
 };
 pub use index::RuntimeMemoryIndex;
 pub use reflection::{

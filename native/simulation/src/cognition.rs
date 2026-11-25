@@ -140,6 +140,12 @@ pub(crate) struct ActorMind {
     pub last_reflection_at: f64,
     #[serde(deserialize_with = "deserialize_nullable")]
     pub last_dream_episode: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub sensitivities: Option<Box<crate::appraisals::AppearanceSensitivities>>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -174,6 +180,12 @@ pub(crate) struct MindState {
     _storage: crate::host::ResidentReservation,
 }
 impl MindState {
+    pub(crate) fn appearance_sensitivities(
+        &self,
+        actor: &str,
+    ) -> Option<&crate::appraisals::AppearanceSensitivities> {
+        self.minds.as_ref()?.get(actor)?.sensitivities.as_deref()
+    }
     /// Source pins every retained individual interpretation, including resolved
     /// records. Retirement does not infer that an interpretation was forgotten.
     pub(crate) fn pinned_individuals<'a>(&'a self, actor: &str) -> impl Iterator<Item = &'a str> {
@@ -242,6 +254,10 @@ pub(crate) fn install_minds(
     entities: &EntityStore,
     limits: &MindLimits,
     schema: &RecordSchema,
+    now: f64,
+    appraisal_policy: &crate::install::VerifiedDefinition<
+        crate::worlds::InstalledEventAppraisalRules,
+    >,
     budget: &crate::host::ByteBudget,
 ) -> Result<MindState, InstallError> {
     let owners = take_collection(import, "mind_state", "[\"world\"]", minds_present, true)?;
@@ -255,14 +271,15 @@ pub(crate) fn install_minds(
             owners.coverage.next_ordinal,
         )?;
         plain_columns(&row, "mind_state", schema)?;
-        if !entities
+        let entity = entities
             .get(&row.slot)
-            .is_some_and(|entity| entity.actor.is_some())
-        {
-            return Err(InstallError::ParentPresence);
-        }
+            .filter(|entity| entity.actor.is_some())
+            .ok_or(InstallError::ParentPresence)?;
         let mut mind: ActorMind =
             serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+        if let Some(sensitivities) = &mut mind.sensitivities {
+            sensitivities.restore(entity, now, appraisal_policy, budget)?;
+        }
         if !mind.documents.is_empty() || !mind.records.is_empty() || !mind.thoughts.is_empty() {
             return Err(InstallError::CurrentFormat);
         }

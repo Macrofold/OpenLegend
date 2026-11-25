@@ -5,10 +5,13 @@ use super::*;
 use crate::commands::{
     CommandChoiceAnswer, CommandChoiceCursor, CommandChoiceStep, WorkTransitionMode,
 };
-use crate::plans::{PlanEditCursor, PlanEditInput, PlanEditStep, PlanMode};
+use crate::plans::{
+    AdmittedWatch, PlanEditCursor, PlanEditInput, PlanEditStep, PlanMode, TypedPlan, WatchControl,
+};
 
 pub(super) struct PreparedWalk {
     mode: PlanMode,
+    watch: Option<AdmittedWatch>,
     command: Option<NativeCommand>,
     choice: Option<CommandChoiceCursor>,
     edit: Option<PlanEditCursor>,
@@ -46,12 +49,30 @@ impl CommandCursor {
         &mut self,
         core: &mut CoreMutation<'_>,
     ) -> Result<Progress, ExecutionError> {
-        let mode = self
+        let TypedPlan { mode, watch } = self
             .typed_plan_mode
             .take()
             .ok_or(ExecutionError::Invariant)?;
         let NativeCommand::Move { destination, .. } = &self.command else {
             return Err(ExecutionError::UnsupportedFamily);
+        };
+        let watch = match watch {
+            Some(request) => {
+                let Some(control) =
+                    WatchControl::prepare(core.state, self.actor_id(), &request.0, &self.budget)?
+                else {
+                    let rules = &core.state.installed.ordinary_actions.value().plan;
+                    let message = rules
+                        .watch
+                        .as_ref()
+                        .map_or(&rules.unsupported_capability, |watch| &watch.unavailable);
+                    self.reserve(message.code.len() + message.message.len() * 8)?;
+                    self.refuse(message);
+                    return self.drive(core, None);
+                };
+                Some(control)
+            }
+            None => None,
         };
         let id = &self.command.envelope().id;
         let actor = self.actor_id();
@@ -83,6 +104,7 @@ impl CommandCursor {
         )?;
         self.typed_plan = Some(Box::new(PreparedWalk {
             mode,
+            watch,
             command: Some(command),
             choice: Some(choice),
             edit: None,
@@ -148,6 +170,7 @@ impl CommandCursor {
                     expected_revision,
                     goal_id: None,
                     commands: vec![child.command.take().ok_or(ExecutionError::Invariant)?],
+                    watch: child.watch.take(),
                 },
                 &self.budget,
             )?);

@@ -8,7 +8,7 @@ use openlegend_simulation::{
     host::{ByteBudget, ByteReservation},
     reception::{Intelligibility, PerceivedSpeech, SpeechPerception, SpeechSegment},
     runtime::{RuntimeError, RuntimeProviderInput},
-    speech::SpeechWord,
+    speech::{SpeechReferenceMatch, SpeechReferenceProvider, SpeechWord},
     text::JsText,
     worlds::base_spoken_reference::{SpokenWords, match_passage},
 };
@@ -16,6 +16,7 @@ use std::{
     ffi::{c_char, c_void},
     ops::Range,
     ptr::NonNull,
+    sync::Arc,
 };
 
 type Open = unsafe extern "C" fn(i32, *const c_char, *const u16, i32, *mut i32) -> *mut c_void;
@@ -69,8 +70,15 @@ impl PreparedUtterance {
     pub(crate) fn into_answer(
         self,
         binding: GeometryBinding,
+        references: Arc<dyn SpeechReferenceProvider>,
     ) -> Result<RuntimeProviderInput, RuntimeError> {
-        RuntimeProviderInput::utterance(binding, self.words, self.lowercase, self.custody)
+        RuntimeProviderInput::utterance(
+            binding,
+            self.words,
+            self.lowercase,
+            Some(references),
+            self.custody,
+        )
     }
 }
 
@@ -295,6 +303,23 @@ impl LanguageProvider {
             start = end;
         }
         Ok(())
+    }
+}
+
+impl SpeechReferenceProvider for LanguageProvider {
+    fn match_heard_reference(
+        &self,
+        speech: &PerceivedSpeech,
+        self_name: &JsText,
+        budget: &ByteBudget,
+    ) -> Option<SpeechReferenceMatch> {
+        match self.match_base_spoken_reference(speech, &[self_name], budget).ok()? {
+            SpokenReference::None => Some(SpeechReferenceMatch::NoMatch),
+            SpokenReference::NameOnly => Some(SpeechReferenceMatch::NameOnly),
+            SpokenReference::PossiblePersonalReference { passage, .. } => speech.segments.iter()
+                .position(|segment| matches!(segment, SpeechSegment::Heard { text } if std::ptr::eq(text, passage)))
+                .map(SpeechReferenceMatch::Passage),
+        }
     }
 }
 

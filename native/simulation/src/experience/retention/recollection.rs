@@ -48,6 +48,8 @@ struct Recollection<'a> {
     kind: &'static str,
     source: &'static str,
     summary: &'a JsText,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    literal_references: Option<LiteralReferences>,
     at: f64,
     entity_ids: Vec<String>,
     importance: f64,
@@ -67,6 +69,11 @@ struct Fading {
     expires_at: f64,
     weakened: bool,
     claims: Vec<Box<RawValue>>,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct OriginalSubject {
+    source_subject: Option<crate::reception::ObserverSubject>,
 }
 fn raw<T: Serialize>(value: &T) -> Result<Box<RawValue>, ExecutionError> {
     RawValue::from_string(json_record(value).map_err(|_| ExecutionError::Invariant)?)
@@ -117,6 +124,7 @@ fn fade(mut body: memory::MemoryBody, now: f64) -> Result<Option<String>, Execut
     impression.insert("claims".to_owned(), raw(&claims)?);
     impression.insert("weakened".to_owned(), raw(&true)?);
     body.set("summary", &JsText::from(""))?;
+    body.remove("literalReferences");
     body.set("impression", &impression)?;
     Ok(Some(body.encoded()?))
 }
@@ -213,6 +221,13 @@ pub(super) fn released(
         return Ok(None);
     }
     let weakened = weaken_at <= now;
+    let projection = body.projection()?;
+    let references: Option<LiteralReferences> = body.get("literalReferences")?;
+    let subject = body
+        .get::<crate::reception::ObserverSubject>("sourceSubject")?
+        .or(body
+            .get::<OriginalSubject>("evidence")?
+            .and_then(|evidence| evidence.source_subject));
     let mut claims = Vec::with_capacity(2);
     if let Some(event) = record.header.event_type.as_ref() {
         let inference = record.header.reference.kind == PersonalSourceKind::Summary
@@ -220,16 +235,28 @@ pub(super) fn released(
                 record.header.source.as_deref(),
                 Some("inferred" | "self_thought")
             );
-        claims.push(claim(
-            "occurrence",
-            [
-                ("eventType", cell(event)?),
-                (
-                    "role",
-                    cell(&if inference { "inference" } else { "direct" })?,
-                ),
-            ],
-        ));
+        let role = if inference { "inference" } else { "direct" };
+        if let Some(subject) = subject {
+            // Only an existing source-role fact identifies the participant.
+            // Recognized names and association candidates elsewhere in the
+            // account are not proof that those people played this role.
+            claims.push(claim(
+                "occurrence",
+                [
+                    ("eventType", cell(event)?),
+                    ("role", cell(&role)?),
+                    ("subject", cell(&subject)?),
+                ],
+            ));
+        } else if !references
+            .as_ref()
+            .is_some_and(|refs| refs.requires_verbatim(&record.header.actor_id))
+        {
+            claims.push(claim(
+                "occurrence",
+                [("eventType", cell(event)?), ("role", cell(&role)?)],
+            ));
+        }
     }
     if !weakened && !summary.trim_is_empty() {
         claims.push(claim("interpretation", [("text", cell(&summary)?)]));
@@ -240,7 +267,6 @@ pub(super) fn released(
     {
         return Ok(None);
     }
-    let projection = body.projection()?;
     let mut originals: Vec<&Value> = Vec::new();
     if record.header.reference.kind != PersonalSourceKind::Awareness {
         if let Some(values) = projection
@@ -284,6 +310,13 @@ pub(super) fn released(
                 .unwrap_or_default(),
         );
     }
+    if let Some(references) = &references {
+        for reference in &references.references {
+            if let LiteralReference::Source { source, .. } = reference {
+                dependencies.push(raw(source)?);
+            }
+        }
+    }
     for dependency in super::super::manifest_dependencies::observation_dependencies(&originals)? {
         dependencies.push(raw(&dependency)?);
     }
@@ -296,6 +329,7 @@ pub(super) fn released(
         kind: "impression",
         source: "inferred",
         summary: if weakened { &empty } else { &summary },
+        literal_references: if weakened { None } else { references },
         at: record.header.at,
         entity_ids: body.get("entityIds")?.ok_or(ExecutionError::Invariant)?,
         importance: record.header.importance,

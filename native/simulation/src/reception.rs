@@ -142,7 +142,7 @@ pub(crate) use save::encode_perception_owner_changes;
 mod storage;
 pub use storage::*;
 mod current_scope;
-pub(crate) use current_scope::CurrentBodyReadScope;
+pub(crate) use current_scope::{CurrentBodyReadScope, WatchSighting};
 pub use current_scope::OwnedCurrentFacet;
 pub(crate) use current_scope::{
     BodyGeometry, BodyMotion, GeometrySample, LocationGeometrySample, OwnedSceneBody,

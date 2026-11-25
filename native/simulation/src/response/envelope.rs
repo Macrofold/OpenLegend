@@ -86,6 +86,29 @@ fn one_of(value: &SqlCell, choices: &[&str]) -> bool {
 fn nullable(value: Option<&SqlCell>, valid: impl FnOnce(&SqlCell) -> bool) -> bool {
     value.is_none_or(|value| value.is_null() || valid(value))
 }
+fn watch(value: &SqlCell) -> bool {
+    exact(value, &["subjectId", "placeLabel", "trigger"], &["until"])
+        && all_fields(value, &["subjectId", "placeLabel"], text)
+        && value
+            .get("placeLabel")
+            .and_then(SqlCell::as_text)
+            .is_some_and(|label| !label.trim_is_empty() && label.units_len() <= 160)
+        && value
+            .get("until")
+            .is_none_or(|n| n.as_f64().is_some_and(|n| n.is_finite() && n > 0.0))
+        && value.get("trigger").is_some_and(|trigger| {
+            match trigger.get("kind").and_then(SqlCell::as_str) {
+                Some("sighting") => exact(trigger, &["kind"], &[]),
+                Some("presence") => {
+                    exact(trigger, &["kind", "initial"], &[])
+                        && trigger.get("initial").is_some_and(|initial| {
+                            one_of(initial, &["report-current", "changes-only"])
+                        })
+                }
+                _ => false,
+            }
+        })
+}
 fn safe_id(value: &SqlCell) -> bool {
     value.as_str().is_some_and(is_safe_record_id)
 }
@@ -180,9 +203,21 @@ fn valid_operation(value: &SqlCell) -> bool {
                 })
         }
         ResponseKind::Think => {
-            exact(data, &["text", "aboutEntityIds"], &[])
+            exact(data, &["text", "aboutEntityIds"], &["references"])
                 && get("text").is_some_and(text)
                 && get("aboutEntityIds").and_then(strings).is_some()
+                && get("references").is_none_or(|references| {
+                    references.as_array().is_some_and(|references| {
+                        references.iter().all(|reference| {
+                            exact(reference, &["subjectId", "range"], &[])
+                                && reference.get("subjectId").is_some_and(text)
+                                && reference.get("range").is_some_and(|range| {
+                                    exact(range, &["start", "end"], &[])
+                                        && all_fields(range, &["start", "end"], safe_integer)
+                                })
+                        })
+                    })
+                })
         }
         ResponseKind::Act => {
             exact(
@@ -227,7 +262,11 @@ fn valid_operation(value: &SqlCell) -> bool {
                 && get("expectedRevision").is_some_and(|v| v.is_null() || count(v))
         }
         ResponseKind::Plan => {
-            exact(data, &["mode", "expectedRevision", "goalId", "steps"], &[])
+            exact(
+                data,
+                &["mode", "expectedRevision", "goalId", "steps"],
+                &["watch"],
+            ) && nullable(get("watch"), watch)
                 && get("mode")
                     .is_some_and(|v| one_of(v, &["enqueue", "replace", "interrupt", "cancel"]))
                 && get("expectedRevision").is_some_and(count)

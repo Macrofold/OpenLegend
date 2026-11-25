@@ -8,18 +8,18 @@ use crate::{
 };
 use openlegend_simulation::{
     encoding::{json_record, json_record_len},
-    experience::PersonalSourceKind,
+    experience::{LiteralRange, PersonalSourceKind},
     host::{ByteBudget, ByteReservation, CapacityError},
     records::SqlCell,
     runtime::{
         RuntimeConsolidationDream, RuntimeConsolidationGroup, RuntimeConsolidationReadings,
-        RuntimeError,
+        RuntimeConsolidationReferenceBinding, RuntimeError,
     },
     text::JsText,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{mem::size_of, ops::Range};
+use std::{collections::HashMap, mem::size_of, ops::Range};
 
 pub(super) struct Partitions {
     pub values: Vec<Partition>,
@@ -178,6 +178,14 @@ struct Facts<'a> {
     source: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     event_type: Option<&'a str>,
+    #[serde(skip_serializing_if = "<[OfferedReference]>::is_empty")]
+    references: &'a [OfferedReference],
+}
+
+#[derive(Serialize)]
+struct OfferedReference {
+    handle: String,
+    passage: JsText,
 }
 
 /// Prepare one network string per admitted partition. The authoritative
@@ -211,6 +219,33 @@ pub(super) fn partitions(
         }
         let handle = format!("s{index}");
         let event_time = game_time(reading.at, world.offset_hours, world.day_label.as_deref());
+        let reference_bytes = reading
+            .references
+            .bindings
+            .iter()
+            .try_fold(0usize, |total, binding| {
+                let range = binding.range;
+                total
+                    .checked_add(size_of::<OfferedReference>() + 64)?
+                    .checked_add((range.end - range.start).checked_mul(20)?)
+            })
+            .ok_or(CapacityError)
+            .map_err(RuntimeError::from)?;
+        let _offered = budget
+            .reserve(reference_bytes)
+            .map_err(RuntimeError::from)?;
+        let references: Vec<_> = reading
+            .references
+            .bindings
+            .iter()
+            .map(|binding| {
+                let range = binding.range;
+                OfferedReference {
+                    handle: format!("{handle}.r{}", binding.reference),
+                    passage: reading.text.slice(range.start..range.end),
+                }
+            })
+            .collect();
         let fields = Reading {
             experience: Experience {
                 source: reading.kind,
@@ -222,6 +257,7 @@ pub(super) fn partitions(
                     summary: &reading.text,
                     source: reading.source.as_deref(),
                     event_type: reading.event_type.as_deref(),
+                    references: &references,
                 },
             },
             at: &event_time,
@@ -336,7 +372,122 @@ struct Answer {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Group {
     source_ids: Vec<String>,
+    text: Option<JsText>,
+    annotated: Option<Annotated>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Annotated {
+    occurrences: Vec<Occurrence>,
+    pieces: Vec<Piece>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Occurrence {
+    key: String,
+    reference: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Piece {
     text: JsText,
+    occurrences: Vec<String>,
+}
+
+impl Annotated {
+    /// Join the exact pieces once. Each declared occurrence must occupy one
+    /// continuous run, even when two runs cross or reuse an offered handle.
+    fn join(
+        self,
+        sources: &[(usize, String, usize)],
+        first: usize,
+        source_keys: &[String],
+        custody: &mut ByteReservation,
+    ) -> Result<(JsText, Vec<RuntimeConsolidationReferenceBinding>), CallFailure> {
+        if self.occurrences.is_empty() || self.pieces.is_empty() {
+            return Err(CallFailure::Invalid);
+        }
+        let mut keys = HashMap::with_capacity(self.occurrences.len());
+        let mut bindings = Vec::with_capacity(self.occurrences.len());
+        for occurrence in self.occurrences {
+            let (source, reference) = occurrence
+                .reference
+                .split_once(".r")
+                .ok_or(CallFailure::Invalid)?;
+            let source: usize = source
+                .strip_prefix('s')
+                .and_then(|index| index.parse().ok())
+                .ok_or(CallFailure::Invalid)?;
+            let reference: usize = reference.parse().map_err(|_| CallFailure::Invalid)?;
+            let position = source
+                .checked_sub(first)
+                .filter(|&index| index < source_keys.len())
+                .ok_or(CallFailure::Invalid)?;
+            if reference >= sources[source].2
+                || keys.insert(occurrence.key, bindings.len()).is_some()
+            {
+                return Err(CallFailure::Invalid);
+            }
+            let source_key = &source_keys[position];
+            custody
+                .resize(
+                    custody
+                        .bytes()
+                        .checked_add(source_key.len())
+                        .ok_or_else(|| capacity(CapacityError))?,
+                )
+                .map_err(capacity)?;
+            bindings.push(RuntimeConsolidationReferenceBinding {
+                source_key: source_key.clone(),
+                reference,
+                range: LiteralRange { start: 0, end: 0 },
+            });
+        }
+        let units = self
+            .pieces
+            .iter()
+            .try_fold(0usize, |total, piece| {
+                total.checked_add(piece.text.units_len())
+            })
+            .ok_or_else(|| capacity(CapacityError))?;
+        custody
+            .resize(
+                custody
+                    .bytes()
+                    .checked_add(
+                        units
+                            .checked_mul(20)
+                            .ok_or_else(|| capacity(CapacityError))?,
+                    )
+                    .ok_or_else(|| capacity(CapacityError))?,
+            )
+            .map_err(capacity)?;
+        let mut text = Vec::with_capacity(units);
+        for piece in self.pieces {
+            let start = text.len();
+            text.extend(piece.text.units());
+            let end = text.len();
+            if start == end {
+                return Err(CallFailure::Invalid);
+            }
+            for key in piece.occurrences {
+                let binding = &mut bindings[*keys.get(&key).ok_or(CallFailure::Invalid)?];
+                if binding.range.end == 0 {
+                    binding.range.start = start;
+                } else if binding.range.end != start {
+                    return Err(CallFailure::Invalid);
+                }
+                binding.range.end = end;
+            }
+        }
+        if bindings.iter().any(|binding| binding.range.end == 0) {
+            return Err(CallFailure::Invalid);
+        }
+        Ok((JsText::from_units(text), bindings))
+    }
 }
 
 pub(super) struct Decoded {
@@ -369,7 +520,7 @@ pub(super) fn decode(
 }
 
 pub(super) struct Coverage {
-    routine: Vec<(usize, String)>,
+    routine: Vec<(usize, String, usize)>,
     covered: usize,
     groups: Vec<(usize, RuntimeConsolidationGroup)>,
     custody: ByteReservation,
@@ -386,7 +537,7 @@ impl Coverage {
                 512 + count
                     * (size_of::<(usize, RuntimeConsolidationGroup)>()
                         + size_of::<RuntimeConsolidationGroup>()
-                        + size_of::<(usize, String)>()
+                        + size_of::<(usize, String, usize)>()
                         + size_of::<String>()),
             )
             .map_err(capacity)?;
@@ -402,10 +553,11 @@ impl Coverage {
                     RuntimeConsolidationGroup {
                         source_keys: vec![item.key],
                         text: item.text,
+                        references: Vec::new(),
                     },
                 ));
             } else {
-                routine.push((position, item.key));
+                routine.push((position, item.key, item.references.references.len()));
             }
         }
         // Only the private keys and protected originals are still held.
@@ -441,7 +593,8 @@ impl Coverage {
             if group.source_ids.is_empty() || group.source_ids.len() > range.end - self.covered {
                 return Err(CallFailure::Invalid);
             }
-            let first = self.routine[self.covered].0;
+            let first_source = self.covered;
+            let first = self.routine[first_source].0;
             let mut old = None;
             let mut keys = Vec::with_capacity(group.source_ids.len());
             for id in group.source_ids {
@@ -449,7 +602,7 @@ impl Coverage {
                 if index >= range.end || id != format!("s{index}") {
                     return Err(CallFailure::Invalid);
                 }
-                let (position, key) = &mut self.routine[index];
+                let (position, key, _) = &mut self.routine[index];
                 if old.is_some_and(|last| last + 1 != *position) {
                     return Err(CallFailure::Invalid);
                 }
@@ -457,16 +610,28 @@ impl Coverage {
                 self.covered += 1;
                 old = Some(*position);
             }
-            let text = group.text.trimmed();
-            if text.units_len() == 0 || text.utf8_len() as u64 > max_bytes {
+            let (text, references) = match (group.text, group.annotated) {
+                (Some(text), None) => (text, Vec::new()),
+                (None, Some(annotated)) => {
+                    annotated.join(&self.routine, first_source, &keys, &mut custody)?
+                }
+                _ => return Err(CallFailure::Invalid),
+            };
+            if text.trim_is_empty() || text.utf8_len() as u64 > max_bytes {
                 return Err(CallFailure::Invalid);
             }
             retained += text.storage_bytes();
+            retained += references.capacity() * size_of::<RuntimeConsolidationReferenceBinding>()
+                + references
+                    .iter()
+                    .map(|binding| binding.source_key.capacity())
+                    .sum::<usize>();
             self.groups.push((
                 first,
                 RuntimeConsolidationGroup {
                     source_keys: keys,
                     text,
+                    references,
                 },
             ));
         }

@@ -12,7 +12,7 @@ import { initializeWorldAgentSchema } from './world-agent-storage-schema.js';
 import { WORLD_RECORD_TABLES } from './world-record-schema.js';
 import { WorldRecords } from './world-records.js';
 
-export const DATABASE_SCHEMA = '66';
+export const DATABASE_SCHEMA = '67';
 
 /** Detect gameplay or operational leftovers without counting their rows. An
  * external art catalog and the creation registration may predate a world. */
