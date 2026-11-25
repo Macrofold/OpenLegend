@@ -176,12 +176,11 @@ impl CurrentJournal {
         state: &'a ReceptionState,
         before: CurrentCheckpoint,
         selected: &mut super::super::save::Headers<'a>,
-        schema: &crate::records::RecordSchema,
         budget: &ByteBudget,
     ) -> Result<(), RecordEncodingError> {
         for change in self.undo.get(before.operations..).ok_or_else(error)? {
             if let Some(observer) = header_subject(change) {
-                super::super::save::select_header(selected, state, observer, schema, budget)?;
+                super::super::save::select_header(selected, state, observer, budget)?;
             }
         }
         Ok(())
@@ -204,35 +203,31 @@ impl CurrentJournal {
             };
             let entry = selected.get_mut(observer).ok_or_else(error)?;
             match change {
-                CurrentUndo::VisualConfirmation { prior, .. } => entry.reserve(prior)?,
-                CurrentUndo::Life { prior, .. } => entry.reserve(&prior.observer)?,
-                CurrentUndo::GapMember { prior, .. } => entry.reserve(prior)?,
-                CurrentUndo::Gaps { prior, .. } => entry.reserve(prior)?,
+                CurrentUndo::GapMember { subject, prior, .. } => {
+                    entry.restore_gap(subject, prior.as_ref())?;
+                    continue;
+                }
+                CurrentUndo::Gaps { prior, .. } => {
+                    entry.restore_gaps(prior)?;
+                    continue;
+                }
                 _ => {}
             }
             let header = entry.value.as_mut().ok_or_else(error)?;
             match change {
                 CurrentUndo::VisualConfirmation { prior, .. } => {
-                    header.visual_confirmation = prior.clone()
+                    header.visual_confirmation = prior.as_ref()
                 }
                 CurrentUndo::MotionMember { root_present, .. } => {
                     header.motion_samples = root_present.then_some(ChildMarker)
                 }
                 CurrentUndo::MotionExpiry { prior, .. } => header.motion_expires_at = *prior,
-                CurrentUndo::GapMember { subject, prior, .. } => {
-                    header.gaps.shift_remove(subject);
-                    if let Some((at, prior)) = prior {
-                        header
-                            .gaps
-                            .shift_insert(*at, subject.clone(), prior.clone());
-                    }
-                }
                 CurrentUndo::Attention { prior, .. } => {
                     header.attention = prior.as_ref().map(|_| ChildMarker)
                 }
                 CurrentUndo::Life { prior, .. } => {
                     header.life = prior.number;
-                    header.observer = prior.observer.clone();
+                    header.observer = prior.observer.as_ref();
                     header.support = prior.support.as_ref();
                 }
                 CurrentUndo::NextContact { prior, .. } => header.next_contact = *prior,
@@ -243,7 +238,6 @@ impl CurrentJournal {
                     header.motion_samples = Some(ChildMarker);
                     header.motion_expires_at = *expires_at;
                 }
-                CurrentUndo::Gaps { prior, .. } => header.gaps = prior.clone(),
                 _ => return Err(error()),
             }
         }

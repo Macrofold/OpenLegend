@@ -31,7 +31,7 @@ mod backup_restore;
 pub use crate::store::checkpoint::BackupPredecessor;
 pub use backup_restore::{BackupRestoreMode, restore_world};
 
-const TRANSIENT_BYTES: usize = 2 * 1024 * 1024 * 1024;
+const TRANSIENT_BYTES: usize = 10 * 1024 * 1024 * 1024;
 type BootError = Box<dyn Error + Send + Sync>;
 
 /// Release filenames are fixed. Only the operator selects this release

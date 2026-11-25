@@ -4,7 +4,6 @@
 use super::*;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::received::{ReceivedError, ReceivedValueReference, TemporalCurrentGroupCheckpoint};
-use crate::reception::current_journal::received_content_copy_bytes;
 use indexmap::{IndexMap, IndexSet};
 use std::{
     hash::{Hash, Hasher},
@@ -184,14 +183,14 @@ fn preflight(
     state: &ReceptionState,
     observer: &str,
     subject: &str,
-    content: bool,
     extra: usize,
 ) -> Result<(), ReceivedError> {
     let mut bytes = extra;
     if let Some(contact) = owner(state, observer)?.current.get(subject) {
         // Each covered partition can split into two masks; the projection,
         // selected-mask copy and coalescing buffer coexist. The journal funds
-        // its separate before-image. No observation/body payload is cloned.
+        // its separate before-image. Groups share their received bodies.
+        // Replacing a field reserves its new body separately.
         bytes = bytes
             .checked_add(
                 super::current_journal::contact_copy_heap(contact)?
@@ -199,13 +198,6 @@ fn preflight(
                     .ok_or_else(capacity)?,
             )
             .ok_or_else(capacity)?;
-        if content {
-            for group in &contact.content.groups {
-                bytes = bytes
-                    .checked_add(received_content_copy_bytes(&group.received)?)
-                    .ok_or_else(capacity)?;
-            }
-        }
     }
     journal.reserve_growth(bytes)
 }
@@ -350,7 +342,7 @@ fn current_facet_set_in_batch(
         ])
         .ok_or_else(capacity)
     })?;
-    preflight(journal, state, observer, address.subject_id, false, extra)?;
+    preflight(journal, state, observer, address.subject_id, extra)?;
     if input.is_some()
         || owner(state, observer)?
             .current
@@ -407,17 +399,6 @@ fn current_facet_set_in_batch(
             .contains_key(address.subject_id)
     {
         return Ok(());
-    }
-    if let Some(contact) = owner(state, observer)?.current.get(address.subject_id) {
-        let bytes = contact
-            .content
-            .groups
-            .iter()
-            .try_fold(0usize, |sum, group| {
-                sum.checked_add(received_content_copy_bytes(&group.received).ok()?)
-            })
-            .ok_or_else(capacity)?;
-        journal.reserve_growth(bytes)?;
     }
     if let Some(channel) = channel {
         let bytes = crate::encoding::json_record_len(&(
@@ -563,6 +544,7 @@ fn current_facet_set_in_batch(
                 received: journal.received_content(
                     input.grant.clone(),
                     IndexMap::from([(address.kind.to_owned(), input.field)]),
+                    None,
                 )?,
                 metadata: merge_partitions(partitions)?,
             });
@@ -666,7 +648,7 @@ fn current_groups_set_recording_in_batch(
                 sum.checked_add(change.recording.heap_bytes()?.checked_mul(4)?)
             })
             .ok_or_else(capacity)?;
-        preflight(journal, state, observer, subject, false, extra)?;
+        preflight(journal, state, observer, subject, extra)?;
         let mut groups = contact.content.groups.clone();
         let mut changed = false;
         for group in &mut groups {
@@ -748,7 +730,7 @@ fn materialize_current_checks_in_batch(
         selected.entry(key.subject_id).or_default().push(key);
     }
     for (subject, fields) in selected {
-        preflight(journal, state, observer, subject, false, 0)?;
+        preflight(journal, state, observer, subject, 0)?;
         let projected = {
             let owner = owner(state, observer)?;
             let Some(contact) = owner.current.get(subject) else {
@@ -861,7 +843,7 @@ fn current_set_unchecked_in_batch(
         }
     }
     for (subject, masks) in by_subject {
-        preflight(journal, state, observer, subject, false, 0)?;
+        preflight(journal, state, observer, subject, 0)?;
         let projected =
             {
                 let owner = owner(state, observer)?;
@@ -1010,7 +992,6 @@ fn current_confirm_groups_in_batch(
         state,
         observer,
         subject,
-        false,
         received
             .frame_ref
             .heap_bytes()

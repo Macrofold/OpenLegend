@@ -475,7 +475,7 @@ impl CurrentJournal {
                 )?)
             })
             .ok_or_else(capacity)?;
-        self.reserve_growth(bound)?;
+        let prepared = self.budget.reserve(bound).map_err(|_| capacity())?;
         let grant = group.received.grant.clone();
         let mut fields = group.received.fields.clone();
         if let Some(field) = field {
@@ -483,13 +483,16 @@ impl CurrentJournal {
         } else {
             fields.shift_remove(kind);
         }
-        group.received = self.received_content(grant, fields)?;
+        group.received = self.received_content(grant, fields, Some(prepared))?;
         Ok(())
     }
+    /// Retain a received body with its actual allocation size. A caller
+    /// replacing a field transfers its construction reservation to the body.
     pub(super) fn received_content(
-        &mut self,
+        &self,
         grant: CurrentFacetGrant,
         fields: IndexMap<String, CurrentStoredField>,
+        prepared: Option<ByteReservation>,
     ) -> Result<Arc<CurrentReceivedContent>, ReceivedError> {
         let mut content = CurrentReceivedContent {
             grant,
@@ -497,10 +500,21 @@ impl CurrentJournal {
             storage: None,
         };
         let bytes = received_content_copy_bytes(&content)?;
-        self.reserve_growth(bytes)?;
+        let storage = match prepared {
+            Some(mut storage) if bytes <= storage.bytes() => {
+                storage.resize(bytes).map_err(|_| capacity())?;
+                storage
+            }
+            Some(_) => {
+                return Err(ReceivedError(
+                    "Prepared current received content exceeded its admitted size.",
+                ));
+            }
+            None => self.budget.reserve(bytes).map_err(|_| capacity())?,
+        };
         content.storage = Some(
             self.budget
-                .adopt_record(self.reservation.split_off(bytes).map_err(|_| capacity())?)
+                .adopt_record(storage)
                 .map_err(|_| capacity())?,
         );
         Ok(Arc::new(content))

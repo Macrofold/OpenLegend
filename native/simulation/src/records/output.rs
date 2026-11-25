@@ -9,6 +9,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RecordEncodingError(pub &'static str);
+impl RecordEncodingError {
+    pub(crate) const TRANSIENT_CAPACITY: Self =
+        Self("Native record preparation exceeds its byte allowance.");
+}
 impl std::fmt::Display for RecordEncodingError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.0)

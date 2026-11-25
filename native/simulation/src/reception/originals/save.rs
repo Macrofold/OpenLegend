@@ -2,7 +2,7 @@
 //! collection. Undo reconstitutes only that finite parent's actual predecessor.
 use super::super::save::{Headers, error, select_header};
 use super::*;
-use crate::records::{RecordEncodingError, RecordSchema};
+use crate::records::RecordEncodingError;
 fn subject(change: &OriginalUndo) -> &str {
     match change {
         OriginalUndo::Complete { observer, .. }
@@ -23,11 +23,10 @@ impl OriginalJournal {
         state: &'a ReceptionState,
         before: OriginalCheckpoint,
         selected: &mut Headers<'a>,
-        schema: &RecordSchema,
         budget: &ByteBudget,
     ) -> Result<(), RecordEncodingError> {
         for change in self.undo.get(before.operations..).ok_or_else(error)? {
-            select_header(selected, state, subject(change), schema, budget)?;
+            select_header(selected, state, subject(change), budget)?;
         }
         Ok(())
     }
@@ -44,30 +43,19 @@ impl OriginalJournal {
             .rev()
         {
             let entry = selected.get_mut(subject(change)).ok_or_else(error)?;
-            if let OriginalUndo::PhaseReset {
-                received, receipts, ..
-            } = change
-            {
-                entry.reserve(&(received, receipts))?;
-            }
-            if matches!(change, OriginalUndo::OwnerInsert { .. }) {
-                entry.value = None;
-                continue;
-            }
-            let header = entry.value.as_mut().ok_or_else(error)?;
             match change {
-                OriginalUndo::Complete {
-                    position, prior, ..
-                } => *header.received.get_mut(*position).ok_or_else(error)? = prior.clone(),
+                OriginalUndo::OwnerInsert { .. } => entry.clear()?,
                 OriginalUndo::PhaseReset {
                     sequence,
                     received,
                     receipts,
                     ..
+                } => entry.restore_phase(received, receipts, *sequence)?,
+                OriginalUndo::Complete {
+                    position, prior, ..
                 } => {
-                    header.received_at_sequence = *sequence;
-                    header.received = received.clone();
-                    header.receipts = receipts.clone();
+                    let header = entry.value.as_mut().ok_or_else(error)?;
+                    *header.received.get_mut(*position).ok_or_else(error)? = prior.clone();
                 }
                 OriginalUndo::Append {
                     key,
@@ -75,6 +63,7 @@ impl OriginalJournal {
                     original_id,
                     ..
                 } => {
+                    let header = entry.value.as_mut().ok_or_else(error)?;
                     if header.received.len() != position + 1
                         || header
                             .received
@@ -87,7 +76,6 @@ impl OriginalJournal {
                     header.received.pop();
                     header.receipts.shift_remove(key);
                 }
-                OriginalUndo::OwnerInsert { .. } => unreachable!(),
             }
         }
         Ok(())

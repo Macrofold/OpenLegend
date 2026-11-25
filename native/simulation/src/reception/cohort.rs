@@ -16,7 +16,11 @@ fn invalid() -> ReceivedError {
     ReceivedError("Current recording cohort has changed or is unavailable.")
 }
 fn capacity() -> ReceivedError {
-    ReceivedError("Current recording cohort exceeds native byte allowance.")
+    // The clock keeps the elapsed offer pending after a resource refusal.
+    ReceivedError::TRANSIENT_CAPACITY
+}
+fn unprepared_storage() -> ReceivedError {
+    ReceivedError("Current recording cohort exceeds its prepared storage.")
 }
 #[derive(PartialEq, Eq)]
 pub(super) struct TrackDescriptor {
@@ -113,7 +117,7 @@ impl CurrentCohort {
         let retained =
             crate::host::retained_size::HeapBytes::heap_bytes(&tracks).ok_or_else(capacity)?;
         if retained > scratch.bytes() {
-            return Err(capacity());
+            return Err(unprepared_storage());
         }
         scratch.resize(retained).map_err(|_| capacity())?;
         Ok(OwnedSelectedTracks {
@@ -208,7 +212,7 @@ impl CurrentCohort {
         // and the Arc backing; received bodies stay under their existing owners.
         let retained = allocation::retained(&cohort)?;
         if retained > cohort._reservation.bytes() {
-            return Err(capacity());
+            return Err(unprepared_storage());
         }
         cohort
             ._reservation

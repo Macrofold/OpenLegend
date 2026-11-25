@@ -266,6 +266,7 @@ fn session_failure(error: crate::simulation::SessionError) -> RuntimeError {
     use crate::execution::ExecutionError;
     use crate::experience::ExperienceError;
     use crate::reception::ObserverReceptionError;
+    use crate::records::RecordEncodingError;
     use crate::records::save::SaveError;
     use crate::simulation::{DriveError, PublicationError, SessionError};
     use crate::time::AdvanceError;
@@ -296,6 +297,9 @@ fn session_failure(error: crate::simulation::SessionError) -> RuntimeError {
         SessionError::Drive(DriveError::Capacity)
         | SessionError::Save(SaveError::Capacity)
         | SessionError::Publication(PublicationError::Save(SaveError::Capacity))
+        | SessionError::Publication(PublicationError::Records(
+            RecordEncodingError::TRANSIENT_CAPACITY,
+        ))
         | SessionError::History(ExperienceError::Capacity) => true,
         SessionError::Execution(error)
         | SessionError::Publication(PublicationError::Execution(error))
