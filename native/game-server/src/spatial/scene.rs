@@ -1,7 +1,7 @@
 //! Map-bound support and collision data shared by all physical queries.
 
 use super::{
-    Bounds, EPS, Point, SKIN, SpatialError, add, coordinates, cross, dot, extent, length, point,
+    Bounds, EPS, Point, SKIN, SpatialError, coordinates, dot, extent, point,
     scale, sub,
 };
 use super::{
@@ -13,25 +13,10 @@ use openlegend_simulation::{
     state::BodyProfile,
 };
 
-pub(super) struct Plane {
-    pub normal: Point,
-    pub bound: f64,
-}
+pub(super) use openlegend_simulation::geometry::PanelPlane as Plane;
 
-impl Plane {
-    fn new(x: f64, y: f64, z: f64, bound: f64) -> Self {
-        Self {
-            normal: Point { x, y, z },
-            bound,
-        }
-    }
-
-    fn at(normal: Point, point: Point) -> Self {
-        Self {
-            normal,
-            bound: dot(normal, point),
-        }
-    }
+fn axis_plane(x: f64, y: f64, z: f64, bound: f64) -> Plane {
+    Plane { normal: Point { x, y, z }, bound }
 }
 
 pub(super) struct Shape {
@@ -166,15 +151,15 @@ impl Scene {
                 transmission: surface.acoustic_transmission,
                 solid: Some(solid),
                 planes: [
-                    Plane::new(1.0, 0.0, 0.0, s.max_x),
-                    Plane::new(-1.0, 0.0, 0.0, -s.min_x),
-                    Plane::new(0.0, 0.0, 1.0, s.max_z),
-                    Plane::new(0.0, 0.0, -1.0, -s.min_z),
-                    Plane::new(-s.slope_x, 1.0, -s.slope_z, intercept),
+                    axis_plane(1.0, 0.0, 0.0, s.max_x),
+                    axis_plane(-1.0, 0.0, 0.0, -s.min_x),
+                    axis_plane(0.0, 0.0, 1.0, s.max_z),
+                    axis_plane(0.0, 0.0, -1.0, -s.min_z),
+                    axis_plane(-s.slope_x, 1.0, -s.slope_z, intercept),
                     match surface.solid_base {
-                        Some(y) => Plane::new(0.0, -1.0, 0.0, -y),
+                        Some(y) => axis_plane(0.0, -1.0, 0.0, -y),
                         None => {
-                            Plane::new(s.slope_x, -1.0, s.slope_z, surface.thickness - intercept)
+                            axis_plane(s.slope_x, -1.0, s.slope_z, surface.thickness - intercept)
                         }
                     },
                 ],
@@ -401,31 +386,8 @@ impl Shape {
         transmission: f64,
     ) -> Result<Self, SpatialError> {
         let (vertices, planes, edges) = if let Some(panel) = panel {
-            let [a, b, _, d] = panel.corners;
-            let u = sub(b, a);
-            let v = sub(d, a);
-            let normal = unit(cross(u, v))?;
-            let down = scale(normal, -1.0);
-            let vertices = std::array::from_fn(|i| {
-                if i < 4 {
-                    panel.corners[i]
-                } else {
-                    add(panel.corners[i - 4], scale(down, panel.thickness))
-                }
-            });
-            let mut planes = [
-                Plane::at(normal, a),
-                Plane::at(down, vertices[4]),
-                Plane::at(normal, a),
-                Plane::at(normal, a),
-                Plane::at(normal, a),
-                Plane::at(normal, a),
-            ];
-            for i in 0..4 {
-                let edge = sub(panel.corners[(i + 1) % 4], panel.corners[i]);
-                planes[i + 2] = Plane::at(unit(cross(edge, normal))?, panel.corners[i]);
-            }
-            (vertices, planes, vec![u, v, down])
+            let prism = panel.prism().ok_or(SpatialError::InvalidMap)?;
+            (prism.vertices, prism.planes, Vec::from(prism.edges))
         } else {
             let low = coordinates(bounds.min);
             let high = coordinates(bounds.max);
@@ -467,18 +429,6 @@ impl Shape {
             solid,
         })
     }
-}
-
-fn unit(p: Point) -> Result<Point, SpatialError> {
-    let len = length(p);
-    if len <= 0.0 || !len.is_finite() {
-        return Err(SpatialError::InvalidMap);
-    }
-    Ok(Point {
-        x: p.x / len,
-        y: p.y / len,
-        z: p.z / len,
-    })
 }
 
 pub(super) fn clip(

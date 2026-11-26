@@ -59,13 +59,14 @@ impl PhysicalMutation<'_> {
             life,
             pairs: IndexMap::new(),
             unknown: IndexMap::new(),
+            recovery:None,
             next_at: None,
         });
         if next.life != life {
             return Err(ExecutionError::Invariant);
         }
         edit(&mut next)?;
-        let next = (!next.pairs.is_empty() || !next.unknown.is_empty()).then_some(next);
+        let next = (!next.pairs.is_empty() || !next.unknown.is_empty() || next.recovery.is_some()).then_some(next);
         if next.as_ref() == before {
             return Ok(());
         }

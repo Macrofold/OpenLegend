@@ -223,6 +223,7 @@ struct ResidentWork {
     order: u64,
     reported_capacity_at: Option<u64>,
     waiting_for_save: Option<u64>,
+    waiting_for_cut: Option<u64>,
     _entry_custody: ByteReservation,
 }
 
@@ -238,6 +239,7 @@ struct Inspected {
     advance: bool,
     capacity_at: Option<u64>,
     waiting_for_save: Option<u64>,
+    waiting_for_cut: Option<u64>,
 }
 
 #[derive(Default)]
@@ -276,8 +278,10 @@ impl Queue {
                 previous.observed = observed;
                 previous.observed.urgency = urgency;
                 previous.waiting_for_save = None;
-            } else {
+                previous.waiting_for_cut = None;
+            } else if observed.awareness_through > previous.observed.awareness_through {
                 previous.observed.awareness_through = observed.awareness_through;
+                previous.observed.accepted_cut = observed.accepted_cut;
             }
         } else {
             let storage = budget.reserve(actor.len().checked_add(512).ok_or(CapacityError)?)?;
@@ -296,6 +300,7 @@ impl Queue {
                     order: self.next_order,
                     reported_capacity_at: None,
                     waiting_for_save: None,
+                    waiting_for_cut: None,
                     _entry_custody: storage,
                 },
             );
@@ -305,6 +310,11 @@ impl Queue {
 
     fn acknowledge(&mut self, actor: &str, result: Inspected) {
         if let Some(work) = self.work.get_mut(actor) {
+            work.waiting_for_cut = result.waiting_for_cut;
+            if result.waiting_for_cut.is_some() {
+                // Keep the actor's priority until the shared writer confirms this exact prefix.
+                return;
+            }
             work.dirty_since = if result.pending {
                 if result.advance {
                     Some(Instant::now())
@@ -351,7 +361,8 @@ impl Director {
             }
             // A pass can be committing the next opportunity and its durable
             // job together. Stop between passes so COMMIT keeps its owner.
-            let result = self.scheduling_pass(&inbox, &mut queue).await;
+            let durable_cut = *saved.borrow_and_update();
+            let result = self.scheduling_pass(&inbox, &mut queue, durable_cut).await;
             match result {
                 Ok(true) => {
                     tokio::task::yield_now().await;
@@ -389,6 +400,7 @@ impl Director {
         self: &Arc<Self>,
         inbox: &ScheduleInbox,
         queue: &mut Queue,
+        durable_cut: u64,
     ) -> Result<bool, WorldError> {
         use crate::lab::decisions::runs::Autonomy;
         let (autonomy, focal, participants) = self.lab_controls().map_or((Autonomy::All,None,None),|lab|lab.autonomous_scope());
@@ -500,6 +512,7 @@ impl Director {
             .filter(|work| {
                 work.observed.eligible && (autonomy!=Autonomy::Focal || focal.as_deref()==Some(&work.observed.actor_id))
                     && participants.as_ref().is_none_or(|selected|selected.allows(&work.observed.actor_id))
+                    && work.waiting_for_cut.is_none_or(|cut| cut <= durable_cut)
                     && work
                         .waiting_for_save
                         .is_none_or(|sequence| sequence <= saved_sequence)
@@ -533,8 +546,8 @@ impl Director {
         });
         if let Some(work) = work {
             let actor = work.observed.actor_id.clone();
-            if let Some(result) = self.inspect_work(work, policy, inbox).await? {
-                let next = result.pending && result.advance;
+            if let Some(result) = self.inspect_work(work, policy, inbox, durable_cut).await? {
+                let next = result.waiting_for_cut.is_some() || result.pending && result.advance;
                 queue.acknowledge(&actor, result);
                 return Ok(next);
             }
@@ -547,12 +560,9 @@ impl Director {
         work: &ResidentWork,
         policy: &SchedulingPolicy,
         inbox: &ScheduleInbox,
+        durable_cut: u64,
     ) -> Result<Option<Inspected>, WorldError> {
         let observed = &work.observed;
-        self.game
-            .world
-            .when_durable(work.first_cut, Instant::now())
-            .await?;
         let store = &self.game.store;
         let prior = store
             .thought_read(
@@ -602,6 +612,30 @@ impl Director {
             .map_err(RuntimeError::application_refused)?;
         let (at, accepted_cut) = (plan.at(), plan.through());
         drop(plan);
+        // The evidence reader's sequence and the writer's cut are different counters.
+        // Request this captured cut only for an eligible opportunity or an unserved source.
+        // The writer publishes ACK; the simulation clock and model never wait on one another.
+        if let Some(sequence) = proposal.evidence_to_save {
+            let source_cut = if sequence <= observed.awareness_through {
+                observed.accepted_cut
+            } else {
+                accepted_cut
+            };
+            self.saves.request_evidence_cut(source_cut)?;
+        } else if proposal.attempt {
+            self.saves.request_evidence_cut(work.first_cut)?;
+        }
+        if work.first_cut > durable_cut {
+            return Ok(Some(Inspected {
+                wake: work.wake,
+                pending: true,
+                advance: false,
+                capacity_at: None,
+                waiting_for_save: None,
+                waiting_for_cut: Some(work.first_cut),
+            }));
+        }
+
         let read = trigger.clone();
         let actor = observed.actor_id.clone();
         let wanted = proposal.references.clone();
@@ -646,6 +680,7 @@ impl Director {
                     .map_err(WorldError::Commit)?;
             }
             return Ok(Some(Inspected {
+                waiting_for_cut: None,
                 wake,
                 pending: (advance || proposal.waiting_for_save.is_some()) && !proposal.skipped,
                 advance: advance && proposal.waiting_for_save.is_none(),
@@ -759,6 +794,7 @@ impl Director {
             }
         })?;
         Ok(Some(Inspected {
+            waiting_for_cut: None,
             wake,
             pending: proposal.more,
             advance: proposal.more && proposal.waiting_for_save.is_none(),

@@ -1077,16 +1077,16 @@ pub(super) fn install_inventory(
         if let Some(parent_id) = parent_id(entity) {
             let parent = entities.get(parent_id).ok_or(InstallError::CurrentFormat)?;
             let lot = entity.item.as_ref().ok_or(InstallError::CurrentFormat)?;
+            let material = MaterialPresence::of(entity, definitions.items[&lot.definition_pin.id].exposure.as_ref())
+                .map_err(|_| InstallError::CurrentFormat)?;
+            exposure.prepare_insert(material, budget).map_err(|_| InstallError::Capacity)?;
+            exposure.insert(entities.handle(id).ok_or(InstallError::CurrentFormat)?, material);
             if let Some(structure) = &parent.assembly {
                 // Structural parts are attached at a single physical slot. They
                 // aren't equipped possessions, so never enter bag/hand indexes.
                 structure.installed_part(entities, parent_id, id).ok_or(InstallError::CurrentFormat)?;
                 continue;
             }
-            let material = MaterialPresence::of(entity, definitions.items[&lot.definition_pin.id].exposure.as_ref())
-                .map_err(|_| InstallError::CurrentFormat)?;
-            exposure.prepare_insert(material, budget).map_err(|_| InstallError::Capacity)?;
-            exposure.insert(entities.handle(id).ok_or(InstallError::CurrentFormat)?, material);
             if !(parent.actor.is_some() || parent.kind == pile_kind || parent.container.is_some())
                 || parent.retirement.is_some()
             {

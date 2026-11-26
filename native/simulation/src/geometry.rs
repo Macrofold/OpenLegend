@@ -6,6 +6,8 @@ use crate::host::CandidateKey;
 use crate::reception::BoundsQueryCursor;
 use crate::state::{BodyProfile, Bounds, NavigationRequest, Point, SurfacePoint};
 use crate::values::{deserialize_present_option, deserialize_safe_integer};
+mod panel;
+pub use panel::{PanelPlane, PanelPrism};
 pub(crate) mod rain;
 mod residency;
 mod route;

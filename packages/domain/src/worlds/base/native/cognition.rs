@@ -213,3 +213,11 @@ impl OccurrenceRules {
 
 #[path = "policy_residency/cognition.rs"]
 mod policy_residency;
+
+pub(crate) fn recovery_observation(evasion: bool) -> &'static str {
+    #[derive(serde::Deserialize)]
+    struct RecoveryWords { combat: &'static str, evasion: &'static str }
+    static WORDS: std::sync::LazyLock<RecoveryWords> = std::sync::LazyLock::new(||
+        serde_json::from_str(include_str!("../encounter-recovery.json")).expect("bundled recovery observation"));
+    if evasion { WORDS.evasion } else { WORDS.combat }
+}

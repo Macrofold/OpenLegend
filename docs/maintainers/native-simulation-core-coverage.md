@@ -250,6 +250,8 @@ The retired TypeScript paths in this inventory identify the pre-cutover source a
 
 ### Default-server cutover dispositions
 
+The table records the source branch's cutover decision. In the integration branch, a signed two-player coaching invitation and acceptance survived a named save and reopen, and the instructor could end the saved lesson. A preinstalled flat canopy also passed an elapsed rain and cold reopen check. Connected construction, gate operation, the full coaching feedback path and managed before/after measurements are still in progress.
+
 The [approved cutover scope](../projects/completed/2026/rust-server-completion-feature-spec.md#rust-cutover-scope) determines which callers must close before Rust becomes the default. The historical rows and plans below locate both retained and deferred work. In a mixed row, apply the deferral to the named capability and keep the prerequisites its retained callers use.
 
 | Deferred area                                                                                | Retained boundary                                                                                                                                                                                                                                                                                                          |

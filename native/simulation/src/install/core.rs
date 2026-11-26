@@ -321,6 +321,7 @@ fn assemble_selected_core(
         purpose,
         root,
         &PhysicalDefinitions {
+            prepared_response_pin: cognition.prepared_responses.as_ref(),
             senses: &meanings.senses,
             default_senses: &meanings.default_senses,
             response_profiles: &meanings.response_profiles,

@@ -1,10 +1,13 @@
-//! Rectangular rain over a footprint without installed assembly cover.
+//! Rectangular rain over a footprint, with an allocation-free open-air path.
 //! Selected weather supplies at most two sources and combines them by maximum.
 
 use crate::{
     weather::IncidentRain,
     work::{WorkError, WorkMeters, WorkUnit},
 };
+
+mod cover;
+pub(crate) use cover::{Cover, Footprint, LocalCovers};
 
 const AXIS_EDGES: usize = 6;
 const MOTION_CUTS: usize = 20;
@@ -31,6 +34,7 @@ impl Rectangle {
 
 #[derive(Debug)]
 pub(crate) enum ExposureError {
+    Capacity,
     Invalid,
     Work(WorkError),
 }
@@ -38,6 +42,12 @@ pub(crate) enum ExposureError {
 impl From<WorkError> for ExposureError {
     fn from(error: WorkError) -> Self {
         Self::Work(error)
+    }
+}
+
+impl From<crate::host::CapacityError> for ExposureError {
+    fn from(_: crate::host::CapacityError) -> Self {
+        Self::Capacity
     }
 }
 

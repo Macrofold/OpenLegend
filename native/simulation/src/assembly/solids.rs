@@ -189,6 +189,7 @@ impl Assembly {
         entities: &EntityStore,
         definitions: &RetainedDefinitions,
         output: &mut Vec<SpatialBlocker>,
+        covers: &mut Vec<crate::geometry::rain::Cover>,
     ) -> Result<(), InstallError> {
         if self.retirement().is_some() {
             return Ok(());
@@ -252,6 +253,15 @@ impl Assembly {
                                 .ok_or_else(bad)?;
                             let (bounds, panel) =
                                 roof(room, &rules.bay, attached.bay, heights, &profile.sheet);
+                            covers.push(
+                                crate::geometry::rain::Cover::prepare(
+                                    id.clone(),
+                                    &bounds,
+                                    &panel,
+                                    profile.sheet.transmission,
+                                )
+                                .ok_or_else(bad)?,
+                            );
                             (bounds, Some(panel), &rules.materials.cover)
                         }
                         ShelterRole::Binding => unreachable!(),

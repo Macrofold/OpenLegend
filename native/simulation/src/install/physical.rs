@@ -21,6 +21,7 @@ use imported::{install_entities, take_window, take_work};
 /// Borrowed immutable meanings needed by physical admission, before root
 /// content and geometry join the final InstalledWorld allocation.
 pub(crate) struct PhysicalDefinitions<'a> {
+    pub prepared_response_pin: Option<&'a crate::values::DefinitionPin>,
     pub fire_out: Option<&'a crate::worlds::base_cognition::FireOutRule>,
     pub senses: &'a IndexMap<String, super::VerifiedDefinition<crate::reception::SenseDefinition>>,
     pub default_senses: &'a [String],
@@ -671,14 +672,6 @@ fn validate_entity(
     }
     let pending_family = [
         (entity.replenisher.is_some(), "replenishment source"),
-        // Covering a material must change its elapsed wetting. Until that owner
-        // consumes the installed panel, reject a positive covered opening.
-        (entity.assembly.as_deref().is_some_and(|assembly| match assembly {
-            crate::assembly::Assembly::Shelter { parts, .. } => parts.values().any(|part| {
-                part.role == crate::assembly::ShelterRole::Cover
-            }),
-            crate::assembly::Assembly::Boundary { .. } => false,
-        }), "canopy rain coverage"),
         (
             entity
                 .mechanism_fields
@@ -783,21 +776,16 @@ fn validate_entity(
             ) {
                 return Err(InstallError::CurrentFormat);
             }
-            let initial = match (&definition.schema, &state.value) {
+            match (&definition.schema, &state.value) {
                 (
-                    crate::status::AttributeSchema::Number {
-                        min, max, initial, ..
-                    },
+                    crate::status::AttributeSchema::Number { min, max, .. },
                     crate::values::AttributeValue::Number(value),
-                ) if value.is_finite() && value >= min && value <= max => value == initial,
+                ) if value.is_finite() && value >= min && value <= max => (),
                 (
-                    crate::status::AttributeSchema::Category { choices, initial },
+                    crate::status::AttributeSchema::Category { choices, .. },
                     crate::values::AttributeValue::Category(value),
-                ) if choices.contains(value) => value == initial,
+                ) if choices.contains(value) => (),
                 _ => return Err(InstallError::CurrentFormat),
-            };
-            if entity.item.is_some() && !initial {
-                return Err(InstallError::UnsupportedFamily("active material condition"));
             }
             let latched = definition
                 .concern
@@ -849,7 +837,7 @@ fn validate_entity(
         }) || actor.encounters.as_ref().is_some_and(|encounters| {
             installed.body_policy.and_then(|body| body.combat.as_ref())
                 .and_then(|combat| combat.encounters.as_ref()).is_none()
-                || !encounters.valid(actor.physical_life.unwrap_or(0), now)
+                || !encounters.valid(actor.physical_life.unwrap_or(0), now, installed.prepared_response_pin)
         })
         {
             return Err(InstallError::CurrentFormat);
@@ -1165,6 +1153,27 @@ pub(super) fn validate_physical_item_references(
     let retained = &installed.retained;
     for id in state.entities.ordered_ids() {
         let entity = state.entities.get(id).ok_or(InstallError::CurrentFormat)?;
+        if let Some(lot) = &entity.item {
+            let item = retained.items.get(&lot.definition_pin.id).ok_or(InstallError::DefinitionPin)?;
+            for (id, attribute) in entity.stored_attributes().into_iter().flatten() {
+                let definition = installed.attributes.get(id).ok_or(InstallError::CurrentFormat)?.value();
+                let initial = match (&definition.schema, &attribute.value) {
+                    (
+                        crate::status::AttributeSchema::Number { initial, .. },
+                        crate::values::AttributeValue::Number(value),
+                    ) => value == initial,
+                    (
+                        crate::status::AttributeSchema::Category { initial, .. },
+                        crate::values::AttributeValue::Category(value),
+                    ) => value == initial,
+                    // Physical admission already validated the stored attribute's type.
+                    _ => return Err(InstallError::CurrentFormat),
+                };
+                if !initial && item.exposure.as_ref().is_none_or(|material| material.law.moisture_attribute != *id) {
+                    return Err(InstallError::UnsupportedFamily("active material condition"));
+                }
+            }
+        }
         if let Some(structure) = &entity.assembly {
             let family = retained.structures.get(&structure.family().id).ok_or(InstallError::DefinitionPin)?;
             structure.validate_root(entity, &state.entities, family, state.header.sim_time)?;

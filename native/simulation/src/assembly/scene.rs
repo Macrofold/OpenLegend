@@ -2,7 +2,7 @@
 //! in-flight questions can pin the old shapes while an edit prepares its successor.
 use super::{Assembly, family::FamilyRules};
 use crate::{
-    geometry::SpatialBlocker,
+    geometry::{SpatialBlocker, rain::Cover},
     host::{
         ByteBudget, ResidentReservation,
         retained_size::{HeapBytes, map_storage},
@@ -20,6 +20,7 @@ pub struct StructureScene {
 }
 struct RootShapes {
     blockers: Vec<SpatialBlocker>,
+    covers: Vec<Cover>,
     _storage: ResidentReservation,
 }
 impl StructureScene {
@@ -31,6 +32,16 @@ impl StructureScene {
     }
     pub(crate) fn root(&self, id: &str) -> &[SpatialBlocker] {
         self.roots.get(id).map_or(&[], |r| r.blockers.as_slice())
+    }
+    pub(crate) fn covers(&self) -> impl Iterator<Item = &Cover> {
+        self.roots.values().flat_map(|root| root.covers.iter())
+    }
+    pub(crate) fn cover(&self, root: &str, part: &str) -> Option<&Cover> {
+        self.roots
+            .get(root)?
+            .covers
+            .iter()
+            .find(|cover| cover.id == part)
     }
     /// Reuse every unaffected group's shapes. Older candidate/read references
     /// keep their immutable pieces and their component's allocation alive.
@@ -51,6 +62,15 @@ impl StructureScene {
             .as_deref()
             .ok_or(InstallError::CurrentFormat)?;
         let updated = RootShapes::prepare(root, assembly, entities, definitions, budget)?;
+        if let Some(updated) = &updated {
+            Self::validate_covers(
+                &updated.covers,
+                self.roots
+                    .iter()
+                    .filter(|(id, _)| *id != &root.id)
+                    .flat_map(|(_, shape)| &shape.covers),
+            )?;
+        }
         let capacity = self
             .roots
             .len()
@@ -134,6 +154,12 @@ impl StructureScene {
             if let Some(shapes) =
                 RootShapes::prepare(root, assembly, entities, definitions, budget)?
             {
+                Self::validate_covers(
+                    &shapes.covers,
+                    table
+                        .values()
+                        .flat_map(|entry: &Arc<RootShapes>| &entry.covers),
+                )?;
                 table.insert(root.id.clone(), shapes);
             }
         }
@@ -156,6 +182,20 @@ impl StructureScene {
                 .adopt_record(owned)
                 .map_err(|_| InstallError::Capacity)?,
         })))
+    }
+
+    fn validate_covers<'a>(
+        covers: &[Cover],
+        previous: impl Clone + Iterator<Item = &'a Cover>,
+    ) -> Result<(), InstallError> {
+        for (index, cover) in covers.iter().enumerate() {
+            if covers[..index].iter().any(|other| !cover.compatible(other))
+                || previous.clone().any(|other| !cover.compatible(other))
+            {
+                return Err(InstallError::CurrentFormat);
+            }
+        }
+        Ok(())
     }
 }
 impl RootShapes {
@@ -201,17 +241,30 @@ impl RootShapes {
         if count == 0 {
             return Ok(None);
         }
+        let cover_count = match assembly {
+            Assembly::Shelter { parts, .. } => parts
+                .values()
+                .filter(|part| part.role == super::ShelterRole::Cover)
+                .count(),
+            Assembly::Boundary { .. } => 0,
+        };
+        let cover_bytes = (size_of::<Cover>() + Cover::HEAP_BOUND)
+            .checked_mul(cover_count)
+            .ok_or(InstallError::Capacity)?;
         let bound = (size_of::<SpatialBlocker>() + 4 * size_of::<Bounds>())
             .checked_add(label_bytes)
             .and_then(|per| per.checked_mul(count))
             .and_then(|n| n.checked_add(id_bytes?))
+            .and_then(|n| n.checked_add(cover_bytes + if cover_count > 0 { id_bytes? } else { 0 }))
             .and_then(|n| n.checked_add(size_of::<Self>() + 3 * size_of::<usize>()))
             .ok_or(InstallError::Capacity)?;
         let mut admit = budget.reserve(bound).map_err(|_| InstallError::Capacity)?;
         let mut blockers = Vec::with_capacity(count);
-        assembly.append_solids(root, entities, definitions, &mut blockers)?;
+        let mut covers = Vec::with_capacity(cover_count);
+        assembly.append_solids(root, entities, definitions, &mut blockers, &mut covers)?;
         let bytes = blockers
             .heap_bytes()
+            .and_then(|n| n.checked_add(covers.heap_bytes()?))
             .and_then(|n| n.checked_add(size_of::<Self>() + 3 * size_of::<usize>()))
             .ok_or(InstallError::Capacity)?;
         if bytes > admit.bytes() {
@@ -220,6 +273,7 @@ impl RootShapes {
         admit.resize(bytes).map_err(|_| InstallError::Capacity)?;
         Ok(Some(Arc::new(Self {
             blockers,
+            covers,
             _storage: budget
                 .adopt_record(admit)
                 .map_err(|_| InstallError::Capacity)?,

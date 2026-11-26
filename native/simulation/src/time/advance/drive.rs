@@ -100,7 +100,7 @@ impl AdvanceCursor {
                 self.endpoint_answer = Some(EndpointAnswer::Occurrence(receipt))
             }
             EventDestination::Projectile => self.projectile_event = Some(receipt),
-            EventDestination::Appraisal
+            EventDestination::Recovery | EventDestination::Appraisal
             | EventDestination::Territorial
             | EventDestination::Flight => {}
             EventDestination::Travel => self.travel.as_mut().ok_or_else(invalid)?.link_notice(core, &receipt)?,
@@ -732,6 +732,13 @@ impl AdvanceCursor {
                         .entities
                         .resolve(handle)
                         .ok_or(ExecutionError::Invariant)?;
+                    if crate::combat_encounters::recovery::due(entity,core.state.physical.header.sim_time) {
+                        if let Some(notice)=crate::combat_encounters::recovery::observe_due(core,handle,budget)? {
+                            self.stage_event(core,notice,EventDestination::Recovery,budget)?;
+                            return Ok(Progress::Event);
+                        }
+                        continue;
+                    }
                     let actor = entity.actor.as_ref().ok_or(ExecutionError::Invariant)?;
                     if !actor.alive || actor.incapacitated {
                         self.next += 1;

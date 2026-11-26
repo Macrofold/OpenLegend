@@ -35,6 +35,7 @@ impl MoveAdvanceCursor {
         core.use_owned_lots(&self.actor_id, action_id, debit)?;
         core.physical()
             .retain_combat_recovery(&self.actor_id, recovery)?;
+        crate::combat_encounters::recovery::arm(core,&self.actor_id,false)?;
         let epsilon = core.state.installed.time_epsilon;
         if !core
             .physical()

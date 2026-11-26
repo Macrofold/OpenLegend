@@ -33,6 +33,7 @@ pub(super) struct Proposal {
     pub(super) discovery: Option<u64>,
     pub(super) handled_through: u64,
     pub(super) more: bool,
+    pub(super) evidence_to_save: Option<u64>,
     pub(super) waiting_for_save: Option<u64>,
     pub(super) capacity_at: Option<u64>,
 }
@@ -231,6 +232,7 @@ impl Inspection {
             text,
             handled_through,
             more,
+            evidence_to_save: waiting_for_save.filter(|_| !blocks),
             waiting_for_save,
             capacity_at,
         })

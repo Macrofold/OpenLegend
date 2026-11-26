@@ -1,3 +1,4 @@
+import recoveryWords from './encounter-recovery.json' with { type: 'json' };
 import { resultEvidenceId, sameResultEvidence } from '../../result-evidence.js';
 import { distance3D, type SurfacePoint } from '@open-legend/spatial';
 import { entityGet } from '../../entity-collection.js';
@@ -53,9 +54,9 @@ export function baseThreatObservation(
     case 'range-left':
       return `${label} has stayed beyond the ${range} m reach I was considering.`;
     case 'combat-ready':
-      return 'My wait before another strike or guard has ended.';
+      return recoveryWords.combat;
     case 'evasion-ready':
-      return 'I have recovered from that short evasion.';
+      return recoveryWords.evasion;
   }
 }
 

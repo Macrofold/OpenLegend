@@ -365,6 +365,7 @@ enum NavigationAfter {
     Publication,
 }
 enum EventDestination {
+    Recovery,
     Reconcile,
     Motion,
     Flight,

@@ -53,6 +53,8 @@ The October 14 boundary correction moves initial state, homogeneous equivalence 
 
 **SH03 selected delivery:** the finite shower, exact footprint/layer coverage, movement boundary integration and material state pass native/SQL/browser checks. Fully covered/exposed/half-covered fiber yields 0 / 2⁄3 / 1⁄3 moisture. Worn/carried/reinstalled wet cloak continuity passes. The last broad checkbox retains wider bag, pin/removal and atomic-failure combinations; unsupported nested exposure is explicitly refused.
 
+**Stand-alone Rust correctness and performance experiment.** A signed Main scenario with a preinstalled flat canopy ran the existing finite shower. The saved moisture values were 0, 0.07 and 0.14 for sheltered, half-sheltered and exposed fiber. The exposed upper face reached 0.14. The paused world reopened with the same saved state. Compare this change in isolation against the previous TypeScript simulation using identical weather and elapsed cuts. Include a moving basket, a sloping roof, stacked coverings, and many dispersed bays. Check condition updates and saved material rows. On the managed worker, compare time per weather slice, candidates visited and resident bytes with and without installed cover. Ordinary building, removal and broad scale remain unqualified.
+
 ## SH04 — Separate drying and the complete first useful release
 
 **Owners:** INV-6.4's separate consumer, SC02/06/07, PO03/07/08 and BW07. **Dependencies:** SH03. **Sources:** [feature minimum release](../projects/editable-shelters-feature-spec.md#11-delivery-stages-and-acceptance) and [technical §6/§7.3](../projects/editable-shelters-tech-design.md#73-replacement-rain-and-destination-traces).

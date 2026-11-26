@@ -24,6 +24,7 @@ pub struct RuntimeWorldStorage<'a> {
     pub inspection: Option<&'a InventoryInspection>,
     actor: &'a str,
     state: &'a SimulationState,
+    budget: &'a ByteBudget,
 }
 
 pub struct InspectedItemRead<'a> {
@@ -184,6 +185,7 @@ impl<'a> RuntimeWorldStorage<'a> {
                 self.state,
                 body,
                 definition.exposure.as_ref(),
+                self.budget,
             )
             .map_err(failure)?,
             container: definition.is_container(),
@@ -410,6 +412,7 @@ impl NativeWorldSession {
                             inspection,
                             actor: &root.actor.id,
                             state: &simulation.state,
+                            budget: &self.budget,
                         },
                         &self.budget,
                     )

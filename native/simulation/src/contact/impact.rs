@@ -1151,6 +1151,7 @@ impl ImpactCursor {
         };
         core.physical()
             .retain_combat_recovery(&self.target, deadline)?;
+        crate::combat_encounters::recovery::arm(core,&self.target,false)?;
         if let ActionFinish::Personal(pending) =
             core.begin_finish_action(&self.target, &id, result)?
         {
@@ -1320,6 +1321,7 @@ impl ImpactCursor {
             },
             recovery,
         )?;
+        crate::combat_encounters::recovery::arm(core,&self.source,false)?;
         if let Some(request) = self.requested.as_ref() {
             core.physical().retain_committed_strike_input(&self.source, &self.action, request.input)?;
         }

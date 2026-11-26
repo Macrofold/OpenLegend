@@ -184,6 +184,7 @@ pub(crate) fn apply_contact(
         seconds,
         Some(now + seconds),
     )?;
+        crate::combat_encounters::recovery::arm(core,defender,false)?;
     Ok(after)
 }
 
@@ -261,6 +262,7 @@ pub(crate) fn advance(
     let remaining = (until - now).clamp(0.0, total);
     core.physical()
         .advance_guard(defender, phase, remaining, total, recovery)?;
+        if recovery.is_some(){crate::combat_encounters::recovery::arm(core,defender,false)?;}
     Ok(Some(phase == GuardPhase::Recovery && remaining == 0.0))
 }
 

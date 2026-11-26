@@ -2192,6 +2192,7 @@ impl CommandCursor {
                     }
                     if let Some(repeat) = evasion_repeat {
                         core.physical().retain_evasion_recovery(&actor_id, repeat)?;
+        crate::combat_encounters::recovery::arm(core,&actor_id,true)?;
                     }
                     if let Some(heading) = guard_heading {
                         core.physical().set_heading(&actor_id, heading)?;

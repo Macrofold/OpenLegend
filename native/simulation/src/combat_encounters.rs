@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 mod authorities;
 pub(crate) use authorities::{apply_control, end_owned, field_id, receive, select_owned, withdraw};
+pub(crate) mod recovery;
 mod maintenance;
 pub(crate) use maintenance::{
     CheckedFlights, SeenAttack, expire_due, next_encounter_work_at, restore_seen_action,
@@ -40,6 +41,8 @@ pub struct PersonalEncounters {
     pub(crate) life: u64,
     pub(crate) pairs: IndexMap<String, PersonalEncounter>,
     pub(crate) unknown: IndexMap<String, UnidentifiedContact>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if="Option::is_none")]
+    pub(crate) recovery: Option<recovery::Recovery>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -47,7 +50,7 @@ pub struct PersonalEncounters {
     )]
     pub(crate) next_at: Option<f64>,
 }
-heap_record!(PersonalEncounters { pairs, unknown });
+heap_record!(PersonalEncounters { pairs, unknown, recovery });
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -317,12 +320,14 @@ impl PersonalEncounters {
             })
             .flatten()
             .chain(self.unknown.values().map(|contact| contact.until))
+            .chain(self.recovery.as_ref().into_iter().flat_map(|r|[r.combat_until,r.evasion_until]).flatten())
             .min_by(f64::total_cmp)
     }
 
-    pub(crate) fn valid(&self, life: u64, now: f64) -> bool {
+    pub(crate) fn valid(&self, life: u64, now: f64, profile:Option<&crate::values::DefinitionPin>) -> bool {
         let time = |at: f64| at.is_finite() && at >= 0.0;
         self.life == life
+            && self.recovery.as_ref().is_none_or(|r|Some(&r.definition)==profile && (r.combat_until.is_some() || r.evasion_until.is_some()) && r.combat_until.is_none_or(time) && r.evasion_until.is_none_or(time))
             && self.next_at.is_none_or(time)
             && self.next_at == self.deadline()
             && self.pairs.iter().all(|(target, pair)| {

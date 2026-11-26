@@ -116,6 +116,7 @@ impl ProtectedGameplaySave {
 }
 
 struct Pending {
+    requested_cut: Option<u64>,
     queue: VecDeque<(Instant, Arc<AcceptedSaveInput>)>,
     queue_custody: ByteReservation,
     receipt_reads: IndexMap<String, ReceiptReaders>,
@@ -185,6 +186,7 @@ impl LiveSaves {
             language,
             budget,
             pending: Mutex::new(Pending {
+                requested_cut: None,
                 queue: VecDeque::new(),
                 queue_custody,
                 receipt_reads: IndexMap::new(),
@@ -313,6 +315,23 @@ impl LiveSaves {
             self.wake.notify_one();
         }
         error
+    }
+
+    /// Ask the ordinary writer to commit a prefix already accepted by this generation.
+    /// Concurrent consumers share that write. A later world change never extends a covered request.
+    pub(crate) fn request_evidence_cut(&self, cut: u64) -> Result<(), WorldError> {
+        let mut pending = self.pending.lock().map_err(|_| StoreError::WriterUnavailable)?;
+        if pending.fault {
+            return Err(StoreError::WriterUnavailable.into());
+        }
+        if pending.queue.front().is_some_and(|(_, first)| first.through <= cut)
+            && pending.queue.back().is_some_and(|(_, last)| last.through >= cut)
+            && pending.requested_cut.is_none_or(|current| current < cut)
+        {
+            pending.requested_cut = Some(cut);
+            self.wake.notify_one();
+        }
+        Ok(())
     }
 
     pub(crate) fn publication_revision(&self) -> u64 {
@@ -542,16 +561,14 @@ impl LiveSaves {
                     return Err(StoreError::WriterUnavailable.into());
                 }
                 if detached.is_none() {
-                    let oldest = self
-                        .pending
-                        .lock()
-                        .map_err(|_| StoreError::WriterUnavailable)?
-                        .queue
-                        .front()
-                        .map(|(at, _)| *at);
-                    // A protected drain can settle the prefix that started this timer.
-                    // Check the current deadline while holding the sole flush owner.
-                    if oldest.is_none_or(|at| scheduled && at.elapsed() < SAVE_INTERVAL) {
+                    let ready = {
+                        let pending = self.pending.lock().map_err(|_| StoreError::WriterUnavailable)?;
+                        pending.queue.front().is_some_and(|(at, _)| {
+                            !scheduled || pending.requested_cut.is_some() || at.elapsed() >= SAVE_INTERVAL
+                        })
+                    };
+                    // A protected drain can settle the prefix that started the timer or requested this wake.
+                    if !ready {
                         return Ok(false);
                     }
                     let owner = self.clone();
@@ -631,6 +648,9 @@ impl LiveSaves {
                     .pending
                     .lock()
                     .map_err(|_| StoreError::WriterUnavailable)?;
+                if pending.requested_cut.is_some_and(|wanted| wanted <= through) {
+                    pending.requested_cut = None;
+                }
                 while pending
                     .queue
                     .front()
@@ -678,17 +698,18 @@ impl LiveSaves {
                 if pending.fault {
                     break Some(StoreError::WriterUnavailable.into());
                 }
-                pending.queue.front().map(|(at, _)| *at)
+                pending.queue.front().map(|(at, _)| (*at, pending.requested_cut.is_some()))
             };
             match oldest {
-                Some(at) => {
+                Some((at, requested)) => {
                     // A newer tail can already be due when the older prefix
                     // finishes. A refused capture or ACK turn gets a new
                     // opportunity without resetting the oldest acceptance.
-                    let due = (at + SAVE_INTERVAL).max(retry_at.unwrap_or(at));
+                    let due = (if requested { at } else { at + SAVE_INTERVAL }).max(retry_at.unwrap_or(at));
                     tokio::select! {
                         _ = stop.changed() => break None,
                         _ = tokio::time::sleep_until(due) => {},
+                        _ = self.wake.notified(), if !requested => continue,
                     }
                     retry_at = match self.flush_ready(true).await {
                         Ok(_) => None,

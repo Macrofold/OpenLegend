@@ -81,6 +81,7 @@ pub struct DirectInventory<'a> {
     pub can_act: bool,
     pub body_ports: &'a [EquipmentPort],
     state: &'a SimulationState,
+    budget: &'a ByteBudget,
     actor: &'a Entity,
     children: &'a [EntityHandle],
     eater: Option<crate::consumption::Eater<'a>>,
@@ -305,7 +306,7 @@ impl<'a> DirectInventory<'a> {
             description: slot.definition.description.as_ref(),
             properties: &slot.definition.properties,
             material_condition: crate::material_exposure::material_condition(
-                self.state, slot.entity, slot.definition.exposure.as_ref(),
+                self.state, slot.entity, slot.definition.exposure.as_ref(), self.budget,
             ).map_err(failure)?,
             equipment_ports: slot.definition.equipment_ports(),
             equipment_fits: crate::execution::equipment_fits(self.state, self.actor, slot.entity),
@@ -458,6 +459,7 @@ impl NativeWorldSession {
                 children: state.inventory.direct_items(&parent.id),
                 eater,
                 action_problem,
+                budget: &self.budget,
             }),
             &self.budget,
         ))
