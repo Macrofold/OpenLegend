@@ -77,7 +77,6 @@ pub(crate) struct CoreInstallation {
     pub remaining_rows: RowImport,
     pub remaining_children: WorldChildren,
     pub archived_event_count: Option<u64>,
-    pub assembly_geometry_revision: Option<u64>,
     pub story_policy_revision: Option<u64>,
 }
 fn child(children: &mut WorldChildren, field: &str, required: bool) -> Result<bool, InstallError> {
@@ -669,7 +668,6 @@ fn assemble_selected_core(
         remaining_rows: import,
         remaining_children: children,
         archived_event_count,
-        assembly_geometry_revision,
         story_policy_revision,
     })
 }

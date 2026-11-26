@@ -152,6 +152,8 @@ Independent willingness remains CP10.
 
 ## CP07 — Revocable alliance, ceasefire and after-conflict evidence
 
+**Stand-alone Rust gap.** Basic outing invitations and replies are implemented. The signed player commands and views for proposing, revising, answering and ending alliances and ceasefires still need Rust support. Earlier agreement evidence below applies to Main's existing game.
+
 **Owners:** focused `social-compacts.ts`, existing receipt/knowledge/event/attack cancellation and authority owners. **Dependencies:** CP02, CP03 cleanup, CTR current threats and ordinary permissions. **Design:** [compact contract](../projects/first-playable-cooperation-tech-design.md#mutual-alliances-and-finite-ceasefires).
 
 - [x] Add exact pair/revision/terms/assent and selected lifetime records for alliance and ceasefire. Do not replace these separate meanings with a friendship score, party membership or blanket grant.

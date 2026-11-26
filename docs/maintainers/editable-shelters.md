@@ -21,6 +21,8 @@ The October 14 boundary correction moves initial state, homogeneous equivalence 
 
 ## SH02 — One flat bay through ordinary build, use, alter and reclaim
 
+**Stand-alone Rust gap.** The ordinary Build menu has no canopy or wall choices on the Rust integration branch. The host needs the signed catalogue, preview and start commands and the existing phased build, shelter rest, removal and reclaim behavior. This also blocks ordinary wall construction and repair under SH09 and SH11. The installed canopy weather check below used a prebuilt structure.
+
 **Owners:** INV-6.4, SW03/04/07/08/10/11/15, PO04/06/07 and BW07. **Dependencies:** SH01. **Sources:** [technical §3–§5](../projects/editable-shelters-tech-design.md#3-pure-evaluation-admission-and-ordinary-work), [world geometry/work](../worlds/base/editable-shelters.md#qualified-geometry-for-px05).
 
 - [x] Add pure edit evaluation and installed activity request/phase commands with exact site, materials, costs, work stances and reclaim destinations. Direct controls and known-language bindings use the same native admission; previews change no stock, RNG, IDs, events or current work.

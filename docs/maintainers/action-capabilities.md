@@ -399,6 +399,8 @@ Delivered September 29, 2026 under the [project plan](../projects/completed/comp
 
 ## Main integration boundary
 
+**Stand-alone Rust gap.** The player's Act field handles Stop and coordinate-based Walk. Other typed actions and the player activity catalogue, preview and execution controls still need Rust support. The direct installed action menu remains available.
+
 The current [AR integration](action-reconciliation.md) rebases native grounding/follow onto main's account/control authority, placement, resource claims, shared navigation, dependency invalidation and canonical record/checkpoint owners. Main's elapsed integration and cold-history queries supersede older branch-only fixed-step and raw-array-cursor optimizations. No new per-feature save version is introduced. [Current evidence](../verification/native-action-integration.md) supersedes handoff claims for this source; AC acceptance checkboxes remain open unless their complete criteria are satisfied. BW05's typed pickup/drop quantity binding is now delivered through the shared invocation adapter and approval path.
 
 ## Learned food activities: proposal boundary

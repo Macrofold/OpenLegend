@@ -34,6 +34,8 @@ Product preparation is complete. Runtime evidence is recorded separately below; 
 
 ## PC04 — Voluntary coaching
 
+**Stand-alone Rust status.** A signed invitation and accepted lesson survived a named save and reopen. The instructor then ended the lesson. The complete ordinary path from a witnessed release and visible outcome to feedback still needs verification on Rust.
+
 The checked delivery below records the original qualified coaching consumer. Current finite projectile travel introduces the separately open observation gap below; the earlier evidence does not qualify that changed timing.
 
 - [x] Deliver actual teacher/learner choice, required observation and guided feedback, with a willing practiced coach and an independent route when no teacher is available.

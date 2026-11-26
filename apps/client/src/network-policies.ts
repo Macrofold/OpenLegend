@@ -27,6 +27,7 @@ routes(
   [
     '/api/cognition-lab/decisions',
     '/api/cognition-lab/decisions/settings',
+    '/api/cognition-lab/guides',
     '/api/cognition-lab/runs',
   ],
   'read',

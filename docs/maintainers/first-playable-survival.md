@@ -124,6 +124,8 @@ one current inventory calculation. Browser rendering remains part of final quali
 
 ## SV06 — Choose finite batches without repetitive clicking
 
+**Stand-alone Rust gap.** Single actions are available. Restore the signed repeat-work catalogue, preview and start path for gathering, crafting and meals, including Stop and saved continuation. The earlier acceptance below applies to Main's existing game.
+
 The prepared world now installs its count/wording policy from `activities.yaml`.
 A native compiler produces at most sixteen ordinary steps in the existing
 executor, preserving recipe/source/tool meaning without reserving future stock.

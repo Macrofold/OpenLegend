@@ -20,16 +20,16 @@ The Lab has its own copy of a world. It uses the game's real mechanics, but it d
 
 ## Open the Lab
 
-If OpenLegend is not installed yet, start with [Run locally](../README.md#run-locally). For an already configured checkout, run these commands from its folder:
+If OpenLegend is not installed yet, start with [Run locally](../README.md#run-locally). For an already configured checkout, use the reviewed release directory from the local setup instructions and run these commands from the checkout:
 
 ```sh
 pnpm setup:lab
-pnpm run dev
+pnpm run dev "$reviewed_release"
 ```
 
 Open the address printed by the server and add `/cognition`. For example, if the server uses port 3211, open `http://127.0.0.1:3211/cognition`. Macrofold is a separate service; its address is not the Lab's address.
 
-You need creator access. Local development uses `OPEN_LEGEND_GOD_MODE=true` in `.env`; a hosted installation uses your account's creator permission. The setup command creates the separate Lab database after PostgreSQL is configured.
+You need creator access. Local development uses `OPEN_LEGEND_GOD_MODE=true` in `.env`; a hosted installation uses your account's creator permission. The setup command creates the separate Lab database and checkpoint directory. Before preparing a world with artwork, initialize the Lab storage and use the existing artwork synchronization procedure for that database. The Lab account needs permission to use the selected release. [Artwork setup](asset-workflow.md#shared-asset-authority)
 
 For live character responses, follow [Live AI setup](live-ai-setup.md). The server needs credentials for the AI service, called the provider, and a positive `OPEN_LEGEND_LAB_BUDGET_USD` allowance. That allowance defaults to zero. Restart the server after changing its configuration. Keep credentials on the server, not in a prompt or browser field.
 
